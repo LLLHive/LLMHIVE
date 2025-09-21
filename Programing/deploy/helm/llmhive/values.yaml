@@ -1,0 +1,39 @@
+replicaCount: 1
+
+image:
+  repository: llmhive/fastapi
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  host: ""
+  tls: false
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+useExternalSecret: false
+externalSecret:
+  gsmSecretName: ""
+
+workloadIdentity:
+  ksaName: ""
+  gsaEmail: ""
