@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: Programing/Dockerfile
+    image: llmhive_fastapi:local
+    env_file:
+      - Programing/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: llmhive
+      POSTGRES_PASSWORD: llmhive
+      POSTGRES_DB: llmhive
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

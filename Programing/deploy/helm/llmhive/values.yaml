@@ -1,0 +1,31 @@
+image:
+  repository: llmhive_fastapi
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  host: ""
+  tls: false
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+useExternalSecret: false
+externalSecret:
+  gsmSecretName: ""
+
+workloadIdentity:
+  ksaName: default
+  gsaEmail: ""
+
+replicaCount: 1
