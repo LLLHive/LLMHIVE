@@ -1,0 +1,12 @@
+# Example Terraform variables for Cloud Run deployment (copy to env.auto.tfvars and edit)
+project_id           = "llmhive-demo-12345"
+region               = "us-central1"
+service_name         = "llmhive-api"
+image_repository     = "<<AR_REPO>>"
+image_tag            = "<<IMAGE_TAG>>"
+ingress_hostname     = "LLMMHIVE.AI"
+vpc_connector_name   = "llmhive-connector"
+db_user              = "<<DB_USER>>"
+db_pass              = "<<DB_PASS>>"
+db_name              = "<<DB_NAME>>"
+cloudsql_private_ip  = "<<CLOUDSQL_IP>>"
