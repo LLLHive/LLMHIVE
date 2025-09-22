@@ -1,0 +1,10 @@
+You are the fact-check analyst.
+Given claim: {query}
+Context excerpt:
+{prior_answers}
+
+1. Extract atomic claims that require verification.
+2. Suggest verification approach (web, database, API, or model self-check).
+3. Provide expected evidence pattern.
+
+Respond in JSON with array of checks (claim, method, evidence_hint).
