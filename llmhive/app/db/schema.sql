@@ -1,0 +1,1 @@
+-- Placeholder schema file. Use Alembic migrations for real deployments.

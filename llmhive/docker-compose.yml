@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    command: uvicorn llmhive.app.main:app --host 0.0.0.0 --port 8080 --reload
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=sqlite+aiosqlite:///./llmhive.db
+      - ENABLE_DEBATE=1
+      - ENABLE_FACTCHECK=1
+    volumes:
+      - ./:/app
+    depends_on: []
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: llmhive
+      POSTGRES_USER: llmhive
+      POSTGRES_PASSWORD: llmhive
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
