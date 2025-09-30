@@ -1,17 +1,19 @@
 version: "3.9"
+
 services:
   api:
     build: .
     command: uvicorn llmhive.app.main:app --host 0.0.0.0 --port 8080 --reload
+    environment:
+      DATABASE_URL: postgresql+psycopg://llmhive:llmhive@db:5432/llmhive
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     ports:
       - "8080:8080"
-    environment:
-      - DB_URL=sqlite+aiosqlite:///./llmhive.db
-      - ENABLE_DEBATE=1
-      - ENABLE_FACTCHECK=1
     volumes:
       - ./:/app
-    depends_on: []
+    depends_on:
+      - db
+
   db:
     image: postgres:15-alpine
     environment:
@@ -19,8 +21,9 @@ services:
       POSTGRES_USER: llmhive
       POSTGRES_PASSWORD: llmhive
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
 volumes:
   pgdata:
