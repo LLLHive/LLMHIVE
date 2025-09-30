@@ -1,20 +1,15 @@
-from fastapi.testclient import TestClient
-
-from llmhive.app.main import app
-
-
-client = TestClient(app)
+"""API tests for orchestration endpoint."""
+from llmhive.app.schemas import OrchestrationRequest
 
 
-def test_orchestrate_endpoint_returns_response():
-    payload = {
-        "query": "Summarize the benefits of using async orchestration.",
-        "options": {"accuracy": 0.7, "speed": 0.5, "creativity": 0.4, "cost": 0.6},
-    }
-    response = client.post("/api/v1/orchestrate", json=payload)
+def test_orchestrate_endpoint(client):
+    payload = OrchestrationRequest(prompt="List benefits of solar power", models=["stub-model-a", "stub-model-b"])
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
     assert response.status_code == 200
     data = response.json()
-    assert "final_answer" in data
-    assert data["confidence"] >= 0.0
-    assert not any(tag in data["final_answer"].lower() for tag in ["openai", "anthropic", "azure", "google"])
-    assert data["citations"] == [] or isinstance(data["citations"], list)
+    assert data["prompt"] == payload.prompt
+    assert len(data["initial_responses"]) == 2
+    assert data["final_response"]
+    assert isinstance(data["critiques"], list)
+    assert isinstance(data["improvements"], list)

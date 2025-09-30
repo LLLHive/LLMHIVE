@@ -1,0 +1,59 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/example/llmhive
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+
+workloadIdentity:
+  serviceAccountName: llmhive-api
+  gsaEmail: gsa@example.iam.gserviceaccount.com
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: llmhive.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+externalSecret:
+  enabled: true
+  name: llmhive-secrets
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gsm-store
+  targetSecretName: llmhive-app-secrets
+  data:
+    - secretKey: DATABASE_URL
+      remoteRef:
+        key: projects/example-project/secrets/llmhive-database-url
+        version: latest
+
+env: []
+
+podAnnotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
