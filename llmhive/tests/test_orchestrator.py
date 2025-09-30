@@ -1,20 +1,18 @@
+"""Unit tests for the orchestrator workflow."""
 import pytest
 
-from llmhive.app.orchestration.orchestrator import OrchestrationOptions, Orchestrator
+from llmhive.app.orchestrator import Orchestrator
+from llmhive.app.services.stub_provider import StubProvider
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_run_produces_confident_answer():
-    orchestrator = Orchestrator()
-    options = OrchestrationOptions(
-        accuracy=0.6,
-        speed=0.4,
-        creativity=0.5,
-        cost=0.5,
-        max_tokens=400,
-    )
-    result = await orchestrator.run("Explain test-time scaling in LLM ensembles", options)
-    assert result.final_answer
-    assert 0.0 <= result.confidence <= 1.0
-    assert isinstance(result.key_points, list)
-    assert isinstance(result.timings, dict)
+async def test_orchestrator_generates_all_stages() -> None:
+    orchestrator = Orchestrator(providers={"stub": StubProvider(seed=42)})
+    artifacts = await orchestrator.orchestrate("Explain the water cycle.", ["stub-model-a", "stub-model-b"])
+
+    assert len(artifacts.initial_responses) == 2
+    assert artifacts.critiques, "Expected critiques to be generated"
+    assert len(artifacts.improvements) == 2
+    assert artifacts.final_response.content
+    for result in artifacts.initial_responses:
+        assert "Response" in result.content
