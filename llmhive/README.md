@@ -38,7 +38,7 @@ llmhive/
 ```
 
 ---
-
+<!-- Trigger Cloud Build -->
 ## 1. Local development
 
 ### 1.1 Prerequisites
