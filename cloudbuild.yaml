@@ -1,9 +1,11 @@
-options:
-  logging: CLOUD_LOGGING_ONLY
-
 steps:
-  - name: gcr.io/cloud-builders/docker
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/llmhive/llmhive:$COMMIT_SHA', '.']
+  # Build the image from the Dockerfile at repo root
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$SHORT_SHA', '.']
+
+  # Push the image so it’s saved and visible as an artifact
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$SHORT_SHA']
 
 images:
-  - 'gcr.io/$PROJECT_ID/llmhive/llmhive:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$SHORT_SHA'
