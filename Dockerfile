@@ -14,3 +14,4 @@ EXPOSE 8080
 
 # Start orchestrator API (the real LLMHive app)
 CMD ["uvicorn", "llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+
