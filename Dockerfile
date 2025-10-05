@@ -4,17 +4,16 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files first
-COPY requirements.txt ./
-
-# Install dependencies
+# Copy dependency list and install
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the full project
-COPY . .
+# Copy the full application package into the image
+# (This folder contains your FastAPI app at src/llmhive/app/main.py)
+COPY src/llmhive /app/llmhive
 
-# Expose the port used by Cloud Run
+# Cloud Run listens on port 8080
 EXPOSE 8080
 
-# Run the orchestrator entry point
-CMD ["uvicorn", "src.llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start the full LLMHive app (NOT the tiny root-only app)
+CMD ["uvicorn", "llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
