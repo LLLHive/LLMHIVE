@@ -1,19 +1,20 @@
-# Use Python 3.11
+# Use a lightweight Python base image
 FROM python:3.11-slim
 
-# Create app folder
+# Set the working directory
 WORKDIR /app
 
-# Install deps
-COPY requirements.txt .
+# Copy dependency files first
+COPY requirements.txt ./
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Add source
-COPY main.py .
+# Copy the rest of the source code
+COPY . .
 
-# Cloud Run listens on $PORT
-ENV PORT=8080
+# Expose the Cloud Run port
 EXPOSE 8080
 
-# Start FastAPI app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start the full orchestrator app
+CMD ["uvicorn", "src.llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
