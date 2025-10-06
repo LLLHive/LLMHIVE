@@ -2,12 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy ONLY the real LLMHive app package into the image
-# Your repo shows the app at: llmhive/src/llmhive/app/main.py
+# Copy ONLY the real LLMHive package into the image
+# Your full app is at: llmhive/src/llmhive/app/main.py
 COPY llmhive/src/llmhive /app/llmhive
 
 # Make imports & logs reliable
