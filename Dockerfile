@@ -2,17 +2,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install Python deps
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy ONLY the real LLMHive package into the image
-# Your full app is at: llmhive/src/llmhive/app/main.py
-COPY llmhive/src/llmhive /app/llmhive
+# Copy the whole repo so src/ is available
+COPY . .
 
-# Make imports & logs reliable
-ENV PYTHONUNBUFFERED=1 PYTHONPATH="/app"
-
-# Cloud Run exposes $PORT; default to 8080 locally/dev
+# Cloud Run port
 EXPOSE 8080
-CMD ["sh","-c","python -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}"]
+
+# Run the correct FastAPI app path
+CMD ["uvicorn", "src.llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
