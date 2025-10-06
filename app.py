@@ -1,3 +1,3 @@
-# Root-level entrypoint that imports the real FastAPI app.
-# Your full app lives at llmhive/src/llmhive/app/main.py
+# Root-level entrypoint that exposes the FULL LLMHive API.
+# Your full app is at llmhive/src/llmhive/app/main.py
 from llmhive.app.main import app  # exposes 'app' for Uvicorn
