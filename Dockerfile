@@ -6,11 +6,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the full repo (so /app/src exists)
+# Copy the full repo (so /app/src/llmhive exists)
 COPY . .
 
 # Make 'src' importable so 'from src.llmhive.app.main import app' works
-ENV PYTHONPATH="/app/src"
+ENV PYTHONPATH="/app/src/llmhive"
 
 # Cloud Run default port is 8080
 ENV PORT=8080
