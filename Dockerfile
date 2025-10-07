@@ -15,5 +15,5 @@ ENV PYTHONPATH="/app/src/llmhive"
 # Cloud Run default port is 8080
 ENV PORT=8080
 
-# Start the FULL app via the root app.py
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", $port]
+# Start the FULL app via the root main.py
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", $port]
