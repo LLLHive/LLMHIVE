@@ -1,21 +1,19 @@
-# Use lightweight Python base image
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy dependency file and install requirements
+# Install deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the full project
+# Copy the full repo (so /app/src exists)
 COPY . .
 
-# Tell Python where to find src folder
+# Make 'src' importable so 'from src.llmhive.app.main import app' works
 ENV PYTHONPATH="/app/src"
 
-# Cloud Run expects the app to listen on PORT (default 8080)
+# Cloud Run default port is 8080
 ENV PORT=8080
 
-# Run the full LLMHive FastAPI app
+# Start the FULL app via the root app.py
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
