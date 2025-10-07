@@ -16,4 +16,4 @@ ENV PYTHONPATH="/app/src"
 ENV PORT=8080
 
 # Start the FULL app via the root app.py
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", $port]
