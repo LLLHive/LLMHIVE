@@ -16,4 +16,4 @@ ENV PYTHONPATH="/app/src/llmhive"
 ENV PORT=8080
 
 # Start the FULL app via the root main.py
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", $port]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
