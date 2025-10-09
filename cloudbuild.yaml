@@ -3,7 +3,11 @@ substitutions:
   _REGION: us-east1
   _IMAGE: gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 steps:
+  o
   - name: gcr.io/cloud-builders/docker
     args:  ['build', '-t', '${_IMAGE}', '-f', 'llmhive/Dockerfile', './llmhive']
 
