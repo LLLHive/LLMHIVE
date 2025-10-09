@@ -1,19 +1,24 @@
 substitutions:
   _SERVICE: llmhive-orchestrator
   _REGION: us-east1
- _IMAGE: gcr.io/llmhive-orchestrator/llmhive-orchestrator
+  # Fixed image name (no commit SHA) so manual triggers work
+  _IMAGE: gcr.io/llmhive-orchestrator/llmhive-orchestrator
 
 options:
+  # Store build logs in Cloud Logging when using a user-managed service account
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  
+  # Build the container image from the llmhive/Dockerfile
   - name: gcr.io/cloud-builders/docker
-    args:  ['build', '-t', '${_IMAGE}', '-f', 'llmhive/Dockerfile', './llmhive']
-
+    args: ['build',
+           '-t', '${_IMAGE}',
+           '-f', 'llmhive/Dockerfile',
+           './llmhive']
+  # Push the image to the project’s container registry
   - name: gcr.io/cloud-builders/docker
     args: ['push', '${_IMAGE}']
-
+  # Deploy to Cloud Run
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
@@ -26,5 +31,6 @@ steps:
       - --allow-unauthenticated
       - --quiet
 
+# List of images built; makes it easy to find them in Cloud Build UI
 images:
   - ${_IMAGE}
