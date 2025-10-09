@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 8080
 
 # Start the FastAPI app with Uvicorn, binding to 0.0.0.0 and using the Cloud Run PORT env variable
-CM uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}
