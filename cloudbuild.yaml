@@ -1,7 +1,7 @@
 substitutions:
   _SERVICE: llmhive-orchestrator
   _REGION: us-east1
-  __IMAGE: gcr.io/llmhive-orchestrator/llmhive-orchestrator:$COMMIT_SHA
+  _IMAGE: gcr.io/llmhive-orchestrator/llmhive-orchestrator:$COMMIT_SHA
 
 options:
   logging: CLOUD_LOGGING_ONLY
