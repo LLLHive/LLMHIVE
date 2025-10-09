@@ -5,7 +5,7 @@ substitutions:
 
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: ['build', '-t', '${_IMAGE}', '.']
+    args:  ['build', '-t', '${_IMAGE}', '-f', 'llmhive/Dockerfile', './llmhive']
 
   - name: gcr.io/cloud-builders/docker
     args: ['push', '${_IMAGE}']
