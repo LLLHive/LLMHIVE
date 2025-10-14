@@ -28,5 +28,8 @@ app = FastAPI(
     description="LLMHive orchestrates multiple LLMs through debate and synthesis.",
     lifespan=lifespan,
 )
-
+# Root health alias (Cloud Run probes this without the /api/v1 prefix)
+@app.get("/healthz", include_in_schema=False)
+async def healthz_alias():
+    return {"status": "ok"}
 app.include_router(api_router, prefix="/api/v1")
