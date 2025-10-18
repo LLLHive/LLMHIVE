@@ -1,19 +1,26 @@
 FROM python:3.11-slim
 
+# Python run-time settings
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=8080
 
+# Set working directory inside the container
 WORKDIR /app
 
-# Install dependencies first (leverages Docker layer caching)
+# Install Python requirements
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy all source code into the image
-COPY . .
+# Copy only the app code into the container
+COPY llmhive/src/llmhive /app/llmhive
 
-# Ensure Python can resolve our package layout
-ENV PYTHONPATH=/app:/app/llmhive:/app/llmhive/src
+# Make sure Python can find the llmhive package
+ENV PYTHONPATH=/app
 
-# Start Uvicorn on the port Cloud Run provides (default 8080)
-CMD ["sh","-c","uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}"]
+# Expose the port Cloud Run expects
+EXPOSE 8080
+
+# Start the FastAPI app; Cloud Run sets PORT
+CMD ["uvicorn", "llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
