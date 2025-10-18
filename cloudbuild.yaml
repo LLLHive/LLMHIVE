@@ -15,24 +15,19 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args: ['push', '${_IMAGE}:$COMMIT_SHA']
 
-  # ...
-steps:
-  # (previous build and push steps)
+  # 3) Deploy the image to Cloud Run
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
       - run
       - deploy
       - '${_SERVICE}'
-      - '--image=${_IMAGE}:${COMMIT_SHA}'
+      - '--image=${_IMAGE}:$COMMIT_SHA'
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
+      - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db'
       - '--quiet'
-      - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db'  # <--- add this line
-images:
-  - '${_IMAGE}'
-
 
 images:
   - '${_IMAGE}'
