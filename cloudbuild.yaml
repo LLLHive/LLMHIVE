@@ -7,27 +7,21 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1) Build the image using the Dockerfile in the repo root
   - name: gcr.io/cloud-builders/docker
-    args: ['build', '-t', '${_IMAGE}:$COMMIT_SHA', '.']
-
-  # 2) Push the image to Artifact Registry
+    args: ['build','-t','${_IMAGE}','-f','llmhive/Dockerfile','./llmhive']
   - name: gcr.io/cloud-builders/docker
-    args: ['push', '${_IMAGE}:$COMMIT_SHA']
-
-  # 3) Deploy the image to Cloud Run
+    args: ['push','${_IMAGE}']
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
       - run
       - deploy
-      - '${_SERVICE}'
-      - '--image=${_IMAGE}:$COMMIT_SHA'
-      - '--region=${_REGION}'
-      - '--platform=managed'
-      - '--allow-unauthenticated'
-      - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db'
-      - '--quiet'
+      - ${_SERVICE}
+      - --image=${_IMAGE}
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --quiet
 
 images:
-  - '${_IMAGE}'
+  - ${_IMAGE}
