@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
-# Avoid Python writing bytecode and use unbuffered output
-ENV PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONPATH=/app:/app/llmhive:/app/llmhive/src \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PORT=8080
