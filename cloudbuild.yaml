@@ -1,5 +1,3 @@
-New Code cloudbuild
-
 substitutions:
   _SERVICE: llmhive-orchestrator
   _REGION: us-east1
