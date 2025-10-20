@@ -1,14 +1,18 @@
 """Unit tests for the orchestrator workflow."""
+import asyncio
+
 import pytest
 
 from llmhive.app.orchestrator import Orchestrator
+from llmhive.app.services.base import ProviderNotConfiguredError
 from llmhive.app.services.stub_provider import StubProvider
 
 
-@pytest.mark.asyncio
-async def test_orchestrator_generates_all_stages() -> None:
+def test_orchestrator_generates_all_stages() -> None:
     orchestrator = Orchestrator(providers={"stub": StubProvider(seed=42)})
-    artifacts = await orchestrator.orchestrate("Explain the water cycle.", ["stub-model-a", "stub-model-b"])
+    artifacts = asyncio.run(
+        orchestrator.orchestrate("Explain the water cycle.", ["stub-model-a", "stub-model-b"])
+    )
 
     assert len(artifacts.initial_responses) == 2
     assert artifacts.critiques, "Expected critiques to be generated"
@@ -31,14 +35,34 @@ def test_provider_status_reports_availability() -> None:
     assert "Missing API key" in status["openai"]["error"]
 
 
-@pytest.mark.asyncio
-async def test_orchestrator_resolves_model_aliases() -> None:
+def test_orchestrator_resolves_model_aliases() -> None:
     orchestrator = Orchestrator(
         providers={"stub": StubProvider(seed=7)},
-        model_aliases={"gpt-4": "gpt-4o-mini"},
+        model_aliases={"gpt-4": "stub-gpt-4"},
     )
 
-    artifacts = await orchestrator.orchestrate("Test alias support", ["GPT-4"])
+    artifacts = asyncio.run(orchestrator.orchestrate("Test alias support", ["GPT-4"]))
 
     assert artifacts.initial_responses[0].model == "GPT-4"
     assert "GPT-4" in artifacts.final_response.content
+
+
+def test_orchestrator_raises_when_provider_missing() -> None:
+    orchestrator = Orchestrator(providers={"stub": StubProvider(seed=11)})
+
+    with pytest.raises(ProviderNotConfiguredError) as excinfo:
+        asyncio.run(orchestrator.orchestrate("Need GPT", ["gpt-4"]))
+
+    assert "OpenAI provider is not configured" in str(excinfo.value)
+
+
+def test_orchestration_endpoint_returns_503_when_provider_missing(client) -> None:
+    response = client.post(
+        "/api/v1/orchestration/",
+        json={"prompt": "Test", "models": ["gpt-4"]},
+    )
+
+    assert response.status_code == 503
+    payload = response.json()["detail"]
+    assert "OpenAI provider is not configured" in payload["message"]
+    assert "providers" in payload

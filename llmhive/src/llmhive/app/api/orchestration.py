@@ -8,6 +8,7 @@ from ..database import get_db
 from ..models import Task
 from ..orchestrator import Orchestrator
 from ..schemas import Critique, Improvement, ModelAnswer, OrchestrationRequest, OrchestrationResponse
+from ..services.base import ProviderNotConfiguredError
 
 router = APIRouter()
 _orchestrator = Orchestrator()
@@ -24,6 +25,14 @@ async def orchestrate(
         artifacts = await _orchestrator.orchestrate(payload.prompt, payload.models)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except ProviderNotConfiguredError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "message": str(exc),
+                "providers": _orchestrator.provider_status(),
+            },
+        ) from exc
 
     initial = [ModelAnswer(model=ans.model, content=ans.content) for ans in artifacts.initial_responses]
     critiques = [
