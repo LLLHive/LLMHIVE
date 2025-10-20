@@ -1,0 +1,65 @@
+*** Begin Patch
+*** Update File: llmhive/src/llmhive/app/services/openai_provider.py
+@@
+-from openai import AsyncOpenAI
+-from openai.types.chat import ChatCompletion
++"""OpenAI provider implementation with lazy imports.
++
++This module defers importing the OpenAI client until the provider is
++initialized. Importing the library at module import time can cause
++container start failures if the `openai` package is missing or
++incompatible (e.g., due to a pydantic version mismatch). Moving the
++imports inside `__init__` ensures that a missing dependency fails
++gracefully by raising `ProviderNotConfiguredError`, allowing the
++orchestrator to fall back to the stub provider instead of crashing the
++application.
++"""
++
++from typing import TYPE_CHECKING
++
++if TYPE_CHECKING:
++    # These imports are for type checking only and will not be executed at
++    # runtime unless tools like mypy inspect the module. The actual
++    # import of AsyncOpenAI happens in `__init__`.
++    try:
++        from openai import AsyncOpenAI  # type: ignore
++        from openai.types.chat import ChatCompletion  # type: ignore
++    except Exception:
++        pass
+@@
+-class OpenAIProvider(LLMProvider):
+-    """Interact with OpenAI chat completion models."""
+-
+-    def __init__(self, api_key: str | None = None, timeout: float | None = None) -> None:
+-        key = api_key or settings.openai_api_key
+-        if not key:
+-            raise ProviderNotConfiguredError("OpenAI API key is missing.")
+-        self.client = AsyncOpenAI(api_key=key, timeout=timeout or settings.openai_timeout_seconds)
++class OpenAIProvider(LLMProvider):
++    """Interact with OpenAI chat completion models.
++
++    This provider lazily imports the OpenAI client to avoid crashing
++    applications where the `openai` library is not installed or
++    incompatible. If the import fails, the constructor will raise
++    `ProviderNotConfiguredError` to signal that this provider cannot be
++    used, allowing the orchestrator to fall back to another provider.
++    """
++
++    def __init__(self, api_key: str | None = None, timeout: float | None = None) -> None:
++        # Attempt to import the OpenAI client when instantiating the provider.
++        try:
++            from openai import AsyncOpenAI  # type: ignore
++        except Exception as exc:
++            # Wrap any import error in a ProviderNotConfiguredError so the
++            # orchestrator can gracefully skip this provider when the library
++            # is missing or incompatible (e.g., due to pydantic version
++            # conflicts). The original exception is chained for debugging.
++            raise ProviderNotConfiguredError(
++                f"OpenAI library import failed: {exc}. Install a compatible 'openai' package or remove OpenAI models from your configuration."
++            ) from exc
++
++        key = api_key or settings.openai_api_key
++        if not key:
++            raise ProviderNotConfiguredError("OpenAI API key is missing.")
++        self.client = AsyncOpenAI(api_key=key, timeout=timeout or settings.openai_timeout_seconds)
+*** End Patch
