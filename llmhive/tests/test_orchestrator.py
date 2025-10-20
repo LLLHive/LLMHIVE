@@ -29,3 +29,16 @@ def test_provider_status_reports_availability() -> None:
     status = orchestrator.provider_status()
     assert status["openai"]["status"] == "unavailable"
     assert "Missing API key" in status["openai"]["error"]
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_resolves_model_aliases() -> None:
+    orchestrator = Orchestrator(
+        providers={"stub": StubProvider(seed=7)},
+        model_aliases={"gpt-4": "gpt-4o-mini"},
+    )
+
+    artifacts = await orchestrator.orchestrate("Test alias support", ["GPT-4"])
+
+    assert artifacts.initial_responses[0].model == "GPT-4"
+    assert "GPT-4" in artifacts.final_response.content
