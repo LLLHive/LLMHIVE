@@ -16,3 +16,16 @@ async def test_orchestrator_generates_all_stages() -> None:
     assert artifacts.final_response.content
     for result in artifacts.initial_responses:
         assert "Response" in result.content
+
+
+def test_provider_status_reports_availability() -> None:
+    orchestrator = Orchestrator(providers={"stub": StubProvider(seed=123)})
+    status = orchestrator.provider_status()
+    assert status == {
+        "stub": {"status": "available", "provider": "StubProvider"},
+    }
+
+    orchestrator.provider_errors["openai"] = "Missing API key"
+    status = orchestrator.provider_status()
+    assert status["openai"]["status"] == "unavailable"
+    assert "Missing API key" in status["openai"]["error"]

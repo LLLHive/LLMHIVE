@@ -29,16 +29,20 @@ class Orchestrator:
     """Coordinates the multi-stage collaboration workflow across models."""
 
     def __init__(self, providers: Dict[str, LLMProvider] | None = None) -> None:
+        self.provider_errors: Dict[str, str] = {}
         if providers is None:
             providers = self._default_providers()
         self.providers = providers
 
     def _default_providers(self) -> Dict[str, LLMProvider]:
         mapping: Dict[str, LLMProvider] = {}
+        self.provider_errors.clear()
         try:
             mapping["openai"] = OpenAIProvider()
-        except ProviderNotConfiguredError:
-            logger.info("OpenAI provider not configured; falling back to stub provider.")
+        except ProviderNotConfiguredError as exc:
+            error_message = str(exc)
+            self.provider_errors["openai"] = error_message
+            logger.info("OpenAI provider not configured; falling back to stub provider: %s", error_message)
         if "openai" not in mapping:
             mapping["stub"] = StubProvider()
         else:
@@ -49,6 +53,20 @@ class Orchestrator:
         if model.startswith("gpt") and "openai" in self.providers:
             return self.providers["openai"]
         return self.providers.get("stub", StubProvider())
+
+    def provider_status(self) -> Dict[str, Dict[str, str]]:
+        """Expose provider availability details for diagnostics."""
+
+        status: Dict[str, Dict[str, str]] = {}
+        for name, provider in self.providers.items():
+            status[name] = {
+                "status": "available",
+                "provider": provider.__class__.__name__,
+            }
+        for name, message in self.provider_errors.items():
+            status.setdefault(name, {"provider": None})
+            status[name].update({"status": "unavailable", "error": message})
+        return status
 
     async def _gather_with_handling(self, coroutines: Sequence[asyncio.Future]) -> list[LLMResult]:
         results: list[LLMResult] = []
