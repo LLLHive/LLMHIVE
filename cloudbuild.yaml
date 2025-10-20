@@ -26,7 +26,7 @@ steps:
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db'
+      - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db,GIT_COMMIT=$COMMIT_SHA'
       - '--quiet'
 
 images:
