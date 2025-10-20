@@ -1,6 +1,8 @@
 """Orchestration API endpoints."""
 from __future__ import annotations
 
+from functools import lru_cache
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -11,18 +13,29 @@ from ..schemas import Critique, Improvement, ModelAnswer, OrchestrationRequest, 
 from ..services.base import ProviderNotConfiguredError
 
 router = APIRouter()
-_orchestrator = Orchestrator()
+
+
+@lru_cache()
+def get_orchestrator() -> Orchestrator:
+    """Return a cached orchestrator instance.
+
+    Using a cached factory keeps provider initialization lazy while ensuring
+    each process picks up environment configuration changes after restarts.
+    """
+
+    return Orchestrator()
 
 
 @router.post("/", response_model=OrchestrationResponse, status_code=status.HTTP_200_OK)
 async def orchestrate(
     payload: OrchestrationRequest,
     db: Session = Depends(get_db),
+    orchestrator: Orchestrator = Depends(get_orchestrator),
 ) -> OrchestrationResponse:
     """Run the multi-LLM orchestration workflow and persist the result."""
 
     try:
-        artifacts = await _orchestrator.orchestrate(payload.prompt, payload.models)
+        artifacts = await orchestrator.orchestrate(payload.prompt, payload.models)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except ProviderNotConfiguredError as exc:
@@ -30,7 +43,7 @@ async def orchestrate(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "message": str(exc),
-                "providers": _orchestrator.provider_status(),
+                "providers": orchestrator.provider_status(),
             },
         ) from exc
 

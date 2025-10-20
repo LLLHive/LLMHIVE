@@ -87,8 +87,6 @@ class Orchestrator:
             )
         if key.startswith("stub") and "stub" in self.providers:
             return "stub", self.providers["stub"]
-        if "stub" in self.providers:
-            return "stub", self.providers["stub"]
         raise ProviderNotConfiguredError(
             f"No provider is available for model '{canonical_model}'. Configure an alias or install a provider."
         )

@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from ..config import settings
-from ..orchestrator import Orchestrator
+from .orchestration import get_orchestrator
 
 router = APIRouter()
 
@@ -40,7 +40,7 @@ def _deployment_metadata() -> dict[str, Any]:
 
 
 def _health_payload() -> dict[str, object]:
-    orchestrator = Orchestrator()
+    orchestrator = get_orchestrator()
     return {
         "status": "ok",
         "providers": orchestrator.provider_status(),
