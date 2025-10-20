@@ -69,13 +69,29 @@ class Orchestrator:
         canonical = self.model_aliases.get(requested.lower(), requested)
         return requested, canonical
 
-    def _select_provider(self, canonical_model: str) -> LLMProvider:
+    def _select_provider(self, canonical_model: str) -> tuple[str | None, LLMProvider]:
         key = canonical_model.lower()
-        if key.startswith("gpt") and "openai" in self.providers:
-            return self.providers["openai"]
-        if "grok" in key and "grok" in self.providers:
-            return self.providers["grok"]
-        return self.providers.get("stub", StubProvider())
+        if key.startswith("gpt"):
+            provider = self.providers.get("openai")
+            if provider is not None:
+                return "openai", provider
+            raise ProviderNotConfiguredError(
+                "OpenAI provider is not configured; set OPENAI_API_KEY to call GPT models."
+            )
+        if key.startswith("grok"):
+            provider = self.providers.get("grok")
+            if provider is not None:
+                return "grok", provider
+            raise ProviderNotConfiguredError(
+                "Grok provider is not configured; set GROK_API_KEY to call Grok models."
+            )
+        if key.startswith("stub") and "stub" in self.providers:
+            return "stub", self.providers["stub"]
+        if "stub" in self.providers:
+            return "stub", self.providers["stub"]
+        raise ProviderNotConfiguredError(
+            f"No provider is available for model '{canonical_model}'. Configure an alias or install a provider."
+        )
 
     def provider_status(self) -> Dict[str, Dict[str, str]]:
         """Expose provider availability details for diagnostics."""
@@ -91,17 +107,33 @@ class Orchestrator:
             status[name].update({"status": "unavailable", "error": message})
         return status
 
-    async def _gather_with_handling(self, coroutines: Sequence[asyncio.Future]) -> list[LLMResult]:
-        results: list[LLMResult] = []
-        for coro in asyncio.as_completed(coroutines):
-            try:
-                result = await coro
-                results.append(result)
-            except ProviderNotConfiguredError as exc:
-                logger.warning("Provider misconfiguration: %s", exc)
-            except Exception as exc:  # pragma: no cover - defensive catch
-                logger.exception("Provider call failed", exc_info=exc)
-        return results
+    async def _gather_with_handling(
+        self,
+        coroutines: Sequence[asyncio.Future],
+        task_metadata: Sequence[tuple[str | None, str]],
+        stage: str,
+    ) -> list[LLMResult]:
+        results = await asyncio.gather(*[asyncio.create_task(coro) for coro in coroutines], return_exceptions=True)
+        failures: list[str] = []
+        successful: list[LLMResult] = []
+        for (provider_key, label), result in zip(task_metadata, results):
+            if isinstance(result, ProviderNotConfiguredError):
+                message = str(result)
+                if provider_key:
+                    self.provider_errors[provider_key] = message
+                failures.append(f"{label}: {message}")
+            elif isinstance(result, Exception):  # pragma: no cover - defensive catch
+                message = str(result)
+                if provider_key:
+                    self.provider_errors[provider_key] = message
+                logger.exception("Provider call failed", exc_info=result)
+                failures.append(f"{label}: {message}")
+            else:
+                successful.append(result)
+        if failures:
+            combined = "; ".join(failures)
+            raise ProviderNotConfiguredError(f"Provider failures during {stage}: {combined}")
+        return successful
 
     async def orchestrate(self, prompt: str, models: Iterable[str] | None = None) -> OrchestrationArtifacts:
         """Run the multi-stage orchestration for the provided prompt."""
@@ -115,34 +147,45 @@ class Orchestrator:
         # Independent responses
         resolved_models = [self._resolve_model(model) for model in model_list]
 
-        completion_tasks = [
-            self._select_provider(canonical).complete(prompt, model=canonical)
-            for _, canonical in resolved_models
-        ]
-        initial_responses = await self._gather_with_handling(completion_tasks)
+        completion_tasks = []
+        completion_metadata: list[tuple[str | None, str]] = []
+        for requested, canonical in resolved_models:
+            provider_key, provider = self._select_provider(canonical)
+            completion_tasks.append(provider.complete(prompt, model=canonical))
+            completion_metadata.append((provider_key, f"{requested} ({canonical})"))
+        initial_responses = await self._gather_with_handling(
+            completion_tasks, completion_metadata, stage="initial response generation"
+        )
 
         for result, (requested, _) in zip(initial_responses, resolved_models):
             result.model = requested
 
         # Cross critiques
-        critique_tasks: list[asyncio.Task[LLMResult]] = []
+        critique_tasks: list[asyncio.Future] = []
+        critique_metadata: list[tuple[str | None, str]] = []
         for author_result in initial_responses:
             for target_result in initial_responses:
                 if author_result.model == target_result.model:
                     continue
                 _, canonical_author = self._resolve_model(author_result.model)
-                provider = self._select_provider(canonical_author)
+                provider_key, provider = self._select_provider(canonical_author)
                 critique_tasks.append(
-                    asyncio.create_task(
-                        provider.critique(
-                            prompt,
-                            target_answer=target_result.content,
-                            author=author_result.model,
-                            model=canonical_author,
-                        )
+                    provider.critique(
+                        prompt,
+                        target_answer=target_result.content,
+                        author=author_result.model,
+                        model=canonical_author,
                     )
                 )
-        critique_results = await self._gather_with_handling(critique_tasks)
+                critique_metadata.append(
+                    (
+                        provider_key,
+                        f"critique {author_result.model}→{target_result.model} ({canonical_author})",
+                    )
+                )
+        critique_results = await self._gather_with_handling(
+            critique_tasks, critique_metadata, stage="peer critique"
+        )
         critiques: list[Tuple[str, str, LLMResult]] = []
         index = 0
         for author_result in initial_responses:
@@ -158,21 +201,23 @@ class Orchestrator:
             critiques_by_model[target].append(critique.content)
 
         # Improvement stage
-        improvement_tasks = []
+        improvement_tasks: list[asyncio.Future] = []
+        improvement_metadata: list[tuple[str | None, str]] = []
         for response in initial_responses:
             _, canonical_model = self._resolve_model(response.model)
-            provider = self._select_provider(canonical_model)
+            provider_key, provider = self._select_provider(canonical_model)
             improvement_tasks.append(
-                asyncio.create_task(
-                    provider.improve(
-                        prompt,
-                        previous_answer=response.content,
-                        critiques=critiques_by_model.get(response.model, []),
-                        model=canonical_model,
-                    )
+                provider.improve(
+                    prompt,
+                    previous_answer=response.content,
+                    critiques=critiques_by_model.get(response.model, []),
+                    model=canonical_model,
                 )
             )
-        improvements = await self._gather_with_handling(improvement_tasks)
+            improvement_metadata.append((provider_key, f"improve {response.model} ({canonical_model})"))
+        improvements = await self._gather_with_handling(
+            improvement_tasks, improvement_metadata, stage="answer improvement"
+        )
 
         for result, (requested, _) in zip(improvements, resolved_models):
             result.model = requested
@@ -180,8 +225,13 @@ class Orchestrator:
         # Final synthesis
         synthesis_prompt = self._build_synthesis_prompt(prompt, improvements, initial_responses)
         first_requested, first_canonical = resolved_models[0]
-        synthesizer = self._select_provider(first_canonical)
-        final_response = await synthesizer.complete(synthesis_prompt, model=first_canonical)
+        provider_key, synthesizer = self._select_provider(first_canonical)
+        try:
+            final_response = await synthesizer.complete(synthesis_prompt, model=first_canonical)
+        except ProviderNotConfiguredError as exc:
+            if provider_key:
+                self.provider_errors[provider_key] = str(exc)
+            raise
         final_response.model = first_requested
 
         return OrchestrationArtifacts(
