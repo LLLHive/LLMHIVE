@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletion
 
 from ..config import settings
 from .base import LLMProvider, LLMResult, ProviderNotConfiguredError
