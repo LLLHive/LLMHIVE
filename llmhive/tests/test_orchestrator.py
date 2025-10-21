@@ -6,6 +6,7 @@ import pytest
 from llmhive.app.orchestrator import Orchestrator
 from llmhive.app.services.base import ProviderNotConfiguredError
 from llmhive.app.services.stub_provider import StubProvider
+from llmhive.app.schemas import OrchestrationRequest
 
 
 def test_orchestrator_generates_all_stages() -> None:
@@ -66,3 +67,12 @@ def test_orchestration_endpoint_returns_503_when_provider_missing(client) -> Non
     payload = response.json()["detail"]
     assert "OpenAI provider is not configured" in payload["message"]
     assert "providers" in payload
+
+
+def test_orchestration_request_splits_models() -> None:
+    request = OrchestrationRequest(
+        prompt="Capital?",
+        models=["Grock, GPT-4 , GPT-3.5", "   stub-debug  "],
+    )
+
+    assert request.models == ["Grock", "GPT-4", "GPT-3.5", "stub-debug"]

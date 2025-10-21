@@ -51,16 +51,14 @@ class Orchestrator:
         except ProviderNotConfiguredError as exc:
             error_message = str(exc)
             self.provider_errors["openai"] = error_message
-            logger.info("OpenAI provider not configured; falling back to stub provider: %s", error_message)
+            logger.info("OpenAI provider not configured; continuing without OpenAI: %s", error_message)
         try:
             mapping["grok"] = GrokProvider()
         except ProviderNotConfiguredError as exc:
             error_message = str(exc)
             self.provider_errors["grok"] = error_message
             logger.info("Grok provider not configured; continuing without Grok: %s", error_message)
-        if "openai" not in mapping:
-            mapping["stub"] = StubProvider()
-        else:
+        if settings.enable_stub_provider:
             mapping.setdefault("stub", StubProvider())
         return mapping
 
