@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Critique(BaseModel):
@@ -36,6 +36,25 @@ class OrchestrationRequest(BaseModel):
     models: Optional[List[str]] = Field(
         default=None, description="Optional explicit list of model identifiers"
     )
+
+    @field_validator("models", mode="before")
+    @classmethod
+    def _split_comma_separated(cls, value):  # type: ignore[override]
+        if value is None:
+            return value
+        if isinstance(value, str):
+            candidates = [value]
+        else:
+            candidates = list(value)
+
+        expanded: list[str] = []
+        for candidate in candidates:
+            if not isinstance(candidate, str):
+                continue
+            parts = [part.strip() for part in candidate.split(",") if part.strip()]
+            if parts:
+                expanded.extend(parts)
+        return expanded or None
 
 
 class OrchestrationResponse(BaseModel):

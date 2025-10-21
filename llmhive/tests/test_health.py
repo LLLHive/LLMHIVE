@@ -13,9 +13,9 @@ def test_health_endpoint(client, monkeypatch):
     assert payload["status"] == "ok"
     assert "providers" in payload
     providers = payload["providers"]
-    assert providers["stub"]["status"] == "available"
+    assert providers["openai"]["status"] == "unavailable"
     assert "grok" in providers
-    assert providers["grok"]["status"] in {"available", "unavailable"}
+    assert providers["grok"]["status"] == "unavailable"
     assert "default_models" in payload
     deployment = payload["deployment"]
     assert deployment["git_commit"] == "abc1234"

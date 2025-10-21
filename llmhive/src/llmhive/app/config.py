@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     grok_api_key: str | None = Field(default=None, alias="GROK_API_KEY")
     grok_base_url: str = Field(default="https://api.x.ai/v1", alias="GROK_BASE_URL")
     grok_timeout_seconds: float = Field(default=45.0, alias="GROK_TIMEOUT_SECONDS")
+    enable_stub_provider: bool = Field(default=False, alias="ENABLE_STUB_PROVIDER")
     model_aliases: Dict[str, str] = Field(
         default_factory=lambda: {
             "gpt-4": "gpt-4o-mini",
@@ -35,6 +36,7 @@ class Settings(BaseSettings):
             "gpt-3": "gpt-3.5-turbo",
             "gpt3": "gpt-3.5-turbo",
             "grok": "grok-beta",
+            "grock": "grok-beta",
             "grok-1": "grok-1",
             "grok-beta": "grok-beta",
         },
