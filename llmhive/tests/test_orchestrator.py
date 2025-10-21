@@ -9,6 +9,13 @@ from llmhive.app.services.stub_provider import StubProvider
 from llmhive.app.schemas import OrchestrationRequest
 
 
+def test_stub_provider_rejects_real_models() -> None:
+    provider = StubProvider(seed=1)
+
+    with pytest.raises(ProviderNotConfiguredError):
+        asyncio.run(provider.complete("hello", model="gpt-4"))
+
+
 def test_orchestrator_generates_all_stages() -> None:
     orchestrator = Orchestrator(providers={"stub": StubProvider(seed=42)})
     artifacts = asyncio.run(
