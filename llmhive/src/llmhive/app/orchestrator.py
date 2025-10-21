@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
@@ -43,11 +44,25 @@ class Orchestrator:
             providers = self._default_providers()
         self.providers = providers
 
+    def _get_key(self, *candidates: str) -> str | None:
+        """Return the first available credential from settings or the raw environment."""
+
+        for name in candidates:
+            value = getattr(settings, name, None)
+            if value:
+                return value
+            env_name = name.upper()
+            value = os.getenv(env_name)
+            if value:
+                return value
+        return None
+
     def _default_providers(self) -> Dict[str, LLMProvider]:
         mapping: Dict[str, LLMProvider] = {}
         self.provider_errors.clear()
         try:
-            mapping["openai"] = OpenAIProvider()
+            openai_key = self._get_key("openai_api_key", "OPENAI_API_KEY", "OPENAI_KEY")
+            mapping["openai"] = OpenAIProvider(api_key=openai_key)
             logger.info("OpenAI provider configured.")
         except ProviderNotConfiguredError as exc:
             error_message = str(exc)
@@ -57,7 +72,8 @@ class Orchestrator:
                 error_message,
             )
         try:
-            mapping["grok"] = GrokProvider()
+            grok_key = self._get_key("grok_api_key", "GROK_API_KEY", "GROCK_API_KEY", "XAI_API_KEY")
+            mapping["grok"] = GrokProvider(api_key=grok_key)
             logger.info("Grok provider configured.")
         except ProviderNotConfiguredError as exc:
             error_message = str(exc)
@@ -76,9 +92,9 @@ class Orchestrator:
         available = sorted(mapping.keys())
         logger.info("Provider mapping completed. Available providers: %s", available)
         missing_keys = []
-        if not settings.openai_api_key:
+        if not self._get_key("openai_api_key", "OPENAI_API_KEY", "OPENAI_KEY"):
             missing_keys.append("OPENAI_API_KEY")
-        if not settings.grok_api_key:
+        if not self._get_key("grok_api_key", "GROK_API_KEY", "GROCK_API_KEY", "XAI_API_KEY"):
             missing_keys.append("GROK_API_KEY")
         if missing_keys:
             logger.debug("Provider API keys missing for: %s", missing_keys)
