@@ -154,6 +154,11 @@ class Settings(BaseSettings):
         },
         alias="MODEL_ALIASES",
     )
+    enable_stub_provider: bool = Field(
+        default=False,
+        alias="ENABLE_STUB_PROVIDER",
+        description="If true, registers the stub provider as a fallback for development environments.",
+    )
 
     @field_validator("default_models", mode="before")
     @classmethod
