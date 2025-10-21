@@ -138,7 +138,6 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("GROK_BASE_URL", "GROCK_BASE_URL", "XAI_BASE_URL"),
     )
     grok_timeout_seconds: float = Field(default=45.0, alias="GROK_TIMEOUT_SECONDS")
-    enable_stub_provider: bool = Field(default=False, alias="ENABLE_STUB_PROVIDER")
     model_aliases: Dict[str, str] = Field(
         default_factory=lambda: {
             "gpt-4": "gpt-4o-mini",

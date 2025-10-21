@@ -47,12 +47,23 @@ async def orchestrate(
             },
         ) from exc
 
-    initial = [ModelAnswer(model=ans.model, content=ans.content) for ans in artifacts.initial_responses]
+    initial = [
+        ModelAnswer(model=ans.model, content=ans.content, provider=ans.provider)
+        for ans in artifacts.initial_responses
+    ]
     critiques = [
-        Critique(author=author, target=target, feedback=result.content)
+        Critique(
+            author=author,
+            target=target,
+            feedback=result.content,
+            provider=result.provider,
+        )
         for author, target, result in artifacts.critiques
     ]
-    improvements = [Improvement(model=item.model, content=item.content) for item in artifacts.improvements]
+    improvements = [
+        Improvement(model=item.model, content=item.content, provider=item.provider)
+        for item in artifacts.improvements
+    ]
 
     task = Task(
         prompt=payload.prompt,
@@ -72,5 +83,6 @@ async def orchestrate(
         critiques=critiques,
         improvements=improvements,
         final_response=artifacts.final_response.content,
+        final_provider=artifacts.final_response.provider,
     )
     return response
