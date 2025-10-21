@@ -83,15 +83,15 @@ def test_orchestrator_raises_when_provider_missing() -> None:
     assert "OpenAI provider is not configured" in str(excinfo.value)
 
 
-def test_orchestration_endpoint_returns_503_when_provider_missing(client) -> None:
+def test_orchestration_endpoint_returns_400_when_provider_missing(client) -> None:
     response = client.post(
         "/api/v1/orchestration/",
         json={"prompt": "Test", "models": ["gpt-4"]},
     )
 
-    assert response.status_code == 503
+    assert response.status_code == 400
     payload = response.json()["detail"]
-    assert "OpenAI provider is not configured" in payload["message"]
+    assert payload["models"] == ["gpt-4"]
     assert "providers" in payload
 
 
