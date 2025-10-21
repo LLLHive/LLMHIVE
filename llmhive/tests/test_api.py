@@ -62,3 +62,18 @@ def test_orchestrate_raises_when_stub_used_for_real_model(client):
 
     assert response.status_code == 400
     assert response.json()["detail"]["models"] == ["gpt-4"]
+
+
+def test_providers_endpoint_lists_stub_provider(client):
+    orchestrator = Orchestrator(providers={"stub": StubProvider(seed=3)})
+    client.app.dependency_overrides[get_orchestrator] = lambda: orchestrator
+
+    response = client.get("/api/v1/providers/")
+
+    client.app.dependency_overrides.pop(get_orchestrator, None)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "providers" in payload
+    assert "available_providers" in payload
+    assert "stub" in payload["available_providers"]

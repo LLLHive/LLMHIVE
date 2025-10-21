@@ -159,6 +159,11 @@ class Settings(BaseSettings):
         alias="ENABLE_STUB_PROVIDER",
         description="If true, registers the stub provider as a fallback for development environments.",
     )
+    fail_on_stub_responses: bool = Field(
+        default=False,
+        alias="FAIL_ON_STUB_RESPONSES",
+        description="Return 503 responses when only stub outputs are produced, highlighting configuration issues.",
+    )
 
     @field_validator("default_models", mode="before")
     @classmethod
