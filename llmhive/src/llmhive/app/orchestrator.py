@@ -67,6 +67,21 @@ class Orchestrator:
         canonical = self.model_aliases.get(requested.lower(), requested)
         return requested, canonical
 
+    def _validate_stub_usage(self, provider_key: str | None, requested: str, canonical: str) -> None:
+        """Disallow routing non-stub model names through the stub provider."""
+
+        if provider_key != "stub":
+            return
+
+        requested_lower = requested.lower()
+        canonical_lower = canonical.lower()
+        if "stub" in requested_lower and "stub" in canonical_lower:
+            return
+        raise ProviderNotConfiguredError(
+            "Stub provider can only be used for explicit stub models. Configure real credentials for"
+            f" '{requested}'."
+        )
+
     def _select_provider(self, canonical_model: str) -> tuple[str | None, LLMProvider]:
         key = canonical_model.lower()
         if key.startswith("gpt"):
@@ -147,6 +162,7 @@ class Orchestrator:
         completion_metadata: list[tuple[str | None, str]] = []
         for requested, canonical in resolved_models:
             provider_key, provider = self._select_provider(canonical)
+            self._validate_stub_usage(provider_key, requested, canonical)
             completion_tasks.append(provider.complete(prompt, model=canonical))
             completion_metadata.append((provider_key, f"{requested} ({canonical})"))
         initial_responses = await self._gather_with_handling(
@@ -165,6 +181,7 @@ class Orchestrator:
                     continue
                 _, canonical_author = self._resolve_model(author_result.model)
                 provider_key, provider = self._select_provider(canonical_author)
+                self._validate_stub_usage(provider_key, author_result.model, canonical_author)
                 critique_tasks.append(
                     provider.critique(
                         prompt,
@@ -202,6 +219,7 @@ class Orchestrator:
         for response in initial_responses:
             _, canonical_model = self._resolve_model(response.model)
             provider_key, provider = self._select_provider(canonical_model)
+            self._validate_stub_usage(provider_key, response.model, canonical_model)
             improvement_tasks.append(
                 provider.improve(
                     prompt,
@@ -222,6 +240,7 @@ class Orchestrator:
         synthesis_prompt = self._build_synthesis_prompt(prompt, improvements, initial_responses)
         first_requested, first_canonical = resolved_models[0]
         provider_key, synthesizer = self._select_provider(first_canonical)
+        self._validate_stub_usage(provider_key, first_requested, first_canonical)
         try:
             final_response = await synthesizer.complete(synthesis_prompt, model=first_canonical)
         except ProviderNotConfiguredError as exc:

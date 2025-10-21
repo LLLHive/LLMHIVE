@@ -36,16 +36,28 @@ def test_provider_status_reports_availability() -> None:
     assert "Missing API key" in status["openai"]["error"]
 
 
-def test_orchestrator_resolves_model_aliases() -> None:
+def test_orchestrator_allows_explicit_stub_aliases() -> None:
     orchestrator = Orchestrator(
         providers={"stub": StubProvider(seed=7)},
+        model_aliases={"stub-debug": "stub-gpt-4"},
+    )
+
+    artifacts = asyncio.run(orchestrator.orchestrate("Test alias support", ["stub-debug"]))
+
+    assert artifacts.initial_responses[0].model == "stub-debug"
+    assert "stub-debug" in artifacts.final_response.content
+
+
+def test_orchestrator_blocks_stub_fallback_for_real_models() -> None:
+    orchestrator = Orchestrator(
+        providers={"stub": StubProvider(seed=21)},
         model_aliases={"gpt-4": "stub-gpt-4"},
     )
 
-    artifacts = asyncio.run(orchestrator.orchestrate("Test alias support", ["GPT-4"]))
+    with pytest.raises(ProviderNotConfiguredError) as excinfo:
+        asyncio.run(orchestrator.orchestrate("Prevent silent fallback", ["GPT-4"]))
 
-    assert artifacts.initial_responses[0].model == "GPT-4"
-    assert "GPT-4" in artifacts.final_response.content
+    assert "Stub provider" in str(excinfo.value)
 
 
 def test_orchestrator_raises_when_provider_missing() -> None:
