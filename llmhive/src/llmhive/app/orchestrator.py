@@ -66,9 +66,12 @@ class Orchestrator:
                 "Grok provider not configured; continuing without Grok support: %s",
                 error_message,
             )
-        if "stub" not in mapping:
-            mapping["stub"] = StubProvider()
-            logger.debug("Stub provider configured for development and testing fallback.")
+        if settings.enable_stub_provider:
+            if "stub" not in mapping:
+                mapping["stub"] = StubProvider()
+                logger.debug("Stub provider configured for development and testing fallback.")
+        else:
+            logger.debug("Stub provider disabled. Set ENABLE_STUB_PROVIDER=1 to enable the fallback.")
 
         available = sorted(mapping.keys())
         logger.info("Provider mapping completed. Available providers: %s", available)
