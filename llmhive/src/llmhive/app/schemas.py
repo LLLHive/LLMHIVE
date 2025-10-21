@@ -13,6 +13,9 @@ class Critique(BaseModel):
     author: str = Field(..., description="Model providing the critique")
     target: str = Field(..., description="Model whose answer is being critiqued")
     feedback: str = Field(..., description="Feedback text")
+    provider: str | None = Field(
+        default=None, description="Provider that generated the critique"
+    )
 
 
 class ModelAnswer(BaseModel):
@@ -20,6 +23,9 @@ class ModelAnswer(BaseModel):
 
     model: str
     content: str
+    provider: str | None = Field(
+        default=None, description="Provider that generated the answer"
+    )
 
 
 class Improvement(BaseModel):
@@ -27,6 +33,9 @@ class Improvement(BaseModel):
 
     model: str
     content: str
+    provider: str | None = Field(
+        default=None, description="Provider that generated the improvement"
+    )
 
 
 class OrchestrationRequest(BaseModel):
@@ -66,6 +75,9 @@ class OrchestrationResponse(BaseModel):
     critiques: List[Critique]
     improvements: List[Improvement]
     final_response: str
+    final_provider: str | None = Field(
+        default=None, description="Provider that generated the final synthesized response"
+    )
 
 
 class TaskRecord(BaseModel):

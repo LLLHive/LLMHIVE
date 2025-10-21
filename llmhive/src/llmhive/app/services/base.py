@@ -21,6 +21,7 @@ class LLMResult:
     model: str
     tokens: int | None = None
     cost: float | None = None
+    provider: str | None = None
 
 
 class LLMProvider(Protocol):

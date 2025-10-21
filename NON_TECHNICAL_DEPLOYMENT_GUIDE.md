@@ -73,7 +73,8 @@ Before you start, make sure you have the following items ready:
 4. Click **Execute**.
 5. You should see a `200` response with:
    - `initial_responses` showing at least one model answer.
-   - `final_response` containing the synthesized answer. If the content looks like a placeholder (for example, `[GPT-4] Response to: ...`), the real model credentials may not be configured—contact engineering for help.
+   - `provider` fields identifying which backend actually produced each answer (for example, `"openai"` or `"grok"`). If you see `"stub"` anywhere, the service is still using the internal placeholder and real credentials are missing.
+   - `final_response` containing the synthesized answer. If the content looks like a placeholder (for example, `[GPT-4] Response to: ...`) or `final_provider` reports `"stub"`, the real model credentials may not be configured—contact engineering for help.
 
 ---
 

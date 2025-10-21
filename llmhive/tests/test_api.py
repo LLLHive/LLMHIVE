@@ -20,3 +20,6 @@ def test_orchestrate_endpoint(client):
     assert data["final_response"]
     assert isinstance(data["critiques"], list)
     assert isinstance(data["improvements"], list)
+    assert data["final_provider"] == "stub"
+    assert {item["provider"] for item in data["initial_responses"]} == {"stub"}
+    assert {item["provider"] for item in data["improvements"]} == {"stub"}

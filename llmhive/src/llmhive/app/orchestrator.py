@@ -11,7 +11,6 @@ from .config import settings
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
 from .services.grok_provider import GrokProvider
 from .services.openai_provider import OpenAIProvider
-from .services.stub_provider import StubProvider
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +57,6 @@ class Orchestrator:
             error_message = str(exc)
             self.provider_errors["grok"] = error_message
             logger.info("Grok provider not configured; continuing without Grok: %s", error_message)
-        if settings.enable_stub_provider:
-            mapping.setdefault("stub", StubProvider())
         return mapping
 
     def _resolve_model(self, model: str) -> tuple[str, str]:
@@ -160,21 +157,25 @@ class Orchestrator:
 
         completion_tasks = []
         completion_metadata: list[tuple[str | None, str]] = []
+        completion_bindings: list[tuple[str | None, str, str]] = []
         for requested, canonical in resolved_models:
             provider_key, provider = self._select_provider(canonical)
             self._validate_stub_usage(provider_key, requested, canonical)
             completion_tasks.append(provider.complete(prompt, model=canonical))
             completion_metadata.append((provider_key, f"{requested} ({canonical})"))
+            completion_bindings.append((provider_key, requested, canonical))
         initial_responses = await self._gather_with_handling(
             completion_tasks, completion_metadata, stage="initial response generation"
         )
 
-        for result, (requested, _) in zip(initial_responses, resolved_models):
+        for result, (provider_key, requested, _) in zip(initial_responses, completion_bindings):
             result.model = requested
+            result.provider = provider_key
 
         # Cross critiques
         critique_tasks: list[asyncio.Future] = []
         critique_metadata: list[tuple[str | None, str]] = []
+        critique_bindings: list[tuple[str | None, str, str]] = []
         for author_result in initial_responses:
             for target_result in initial_responses:
                 if author_result.model == target_result.model:
@@ -196,18 +197,14 @@ class Orchestrator:
                         f"critique {author_result.model}→{target_result.model} ({canonical_author})",
                     )
                 )
+                critique_bindings.append((provider_key, author_result.model, target_result.model))
         critique_results = await self._gather_with_handling(
             critique_tasks, critique_metadata, stage="peer critique"
         )
         critiques: list[Tuple[str, str, LLMResult]] = []
-        index = 0
-        for author_result in initial_responses:
-            for target_result in initial_responses:
-                if author_result.model == target_result.model:
-                    continue
-                if index < len(critique_results):
-                    critiques.append((author_result.model, target_result.model, critique_results[index]))
-                index += 1
+        for result, (provider_key, author_label, target_label) in zip(critique_results, critique_bindings):
+            result.provider = provider_key
+            critiques.append((author_label, target_label, result))
 
         critiques_by_model: Dict[str, list[str]] = defaultdict(list)
         for author, target, critique in critiques:
@@ -216,6 +213,7 @@ class Orchestrator:
         # Improvement stage
         improvement_tasks: list[asyncio.Future] = []
         improvement_metadata: list[tuple[str | None, str]] = []
+        improvement_bindings: list[tuple[str | None, str, str]] = []
         for response in initial_responses:
             _, canonical_model = self._resolve_model(response.model)
             provider_key, provider = self._select_provider(canonical_model)
@@ -229,12 +227,14 @@ class Orchestrator:
                 )
             )
             improvement_metadata.append((provider_key, f"improve {response.model} ({canonical_model})"))
+            improvement_bindings.append((provider_key, response.model, canonical_model))
         improvements = await self._gather_with_handling(
             improvement_tasks, improvement_metadata, stage="answer improvement"
         )
 
-        for result, (requested, _) in zip(improvements, resolved_models):
+        for result, (provider_key, requested, _) in zip(improvements, improvement_bindings):
             result.model = requested
+            result.provider = provider_key
 
         # Final synthesis
         synthesis_prompt = self._build_synthesis_prompt(prompt, improvements, initial_responses)
@@ -248,6 +248,7 @@ class Orchestrator:
                 self.provider_errors[provider_key] = str(exc)
             raise
         final_response.model = first_requested
+        final_response.provider = provider_key
 
         return OrchestrationArtifacts(
             initial_responses=initial_responses,

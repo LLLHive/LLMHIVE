@@ -26,8 +26,14 @@ def test_orchestrator_generates_all_stages() -> None:
     assert artifacts.critiques, "Expected critiques to be generated"
     assert len(artifacts.improvements) == 2
     assert artifacts.final_response.content
+    assert artifacts.final_response.provider == "stub"
     for result in artifacts.initial_responses:
         assert "Response" in result.content
+        assert result.provider == "stub"
+    for result in artifacts.improvements:
+        assert result.provider == "stub"
+    for _, _, critique in artifacts.critiques:
+        assert critique.provider == "stub"
 
 
 def test_provider_status_reports_availability() -> None:
@@ -53,6 +59,7 @@ def test_orchestrator_allows_explicit_stub_aliases() -> None:
 
     assert artifacts.initial_responses[0].model == "stub-debug"
     assert "stub-debug" in artifacts.final_response.content
+    assert artifacts.final_response.provider == "stub"
 
 
 def test_orchestrator_blocks_stub_fallback_for_real_models() -> None:
