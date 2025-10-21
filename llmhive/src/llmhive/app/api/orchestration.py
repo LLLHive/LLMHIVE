@@ -1,6 +1,7 @@
 """Orchestration API endpoints."""
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,6 +14,7 @@ from ..schemas import Critique, Improvement, ModelAnswer, OrchestrationRequest, 
 from ..services.base import ProviderNotConfiguredError
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @lru_cache()
@@ -34,8 +36,37 @@ async def orchestrate(
 ) -> OrchestrationResponse:
     """Run the multi-LLM orchestration workflow and persist the result."""
 
+    normalized_models: list[str] | None = None
+    if payload.models is not None:
+        normalized_models = [item.strip() for item in payload.models if isinstance(item, str) and item.strip()]
+        if not normalized_models:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": "At least one model must be provided in the 'models' array."},
+            )
+
+        unsupported: list[str] = []
+        for requested in normalized_models:
+            requested_label, canonical = orchestrator._resolve_model(requested)
+            try:
+                provider_key, _ = orchestrator._select_provider(canonical)
+                orchestrator._validate_stub_usage(provider_key, requested_label, canonical)
+            except ProviderNotConfiguredError as exc:
+                logger.warning("Requested model '%s' is not available: %s", requested_label, exc)
+                unsupported.append(requested_label)
+
+        if unsupported:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "message": "One or more requested models are not configured for this deployment.",
+                    "models": unsupported,
+                    "providers": orchestrator.provider_status(),
+                },
+            )
+
     try:
-        artifacts = await orchestrator.orchestrate(payload.prompt, payload.models)
+        artifacts = await orchestrator.orchestrate(payload.prompt, normalized_models)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except ProviderNotConfiguredError as exc:

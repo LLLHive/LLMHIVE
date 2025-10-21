@@ -43,7 +43,9 @@ class OrchestrationRequest(BaseModel):
 
     prompt: str = Field(..., description="Prompt to orchestrate across models")
     models: Optional[List[str]] = Field(
-        default=None, description="Optional explicit list of model identifiers"
+        default=None,
+        description="Optional explicit list of model identifiers",
+        examples=[["grok", "gpt-4"]],
     )
 
     @field_validator("models", mode="before")
