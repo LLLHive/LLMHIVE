@@ -38,7 +38,15 @@ async def orchestrate(
 
     normalized_models: list[str] | None = None
     if payload.models is not None:
-        normalized_models = [item.strip() for item in payload.models if isinstance(item, str) and item.strip()]
+        normalized_models = []
+        for item in payload.models:
+            if isinstance(item, str):
+                fragments = [part.strip() for part in item.split(",") if part.strip()]
+                if fragments:
+                    normalized_models.extend(fragments)
+            elif item is not None:
+                normalized_models.append(str(item).strip())
+        normalized_models = [model for model in normalized_models if model]
         if not normalized_models:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

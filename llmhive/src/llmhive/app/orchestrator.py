@@ -11,6 +11,7 @@ from .config import settings
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
 from .services.grok_provider import GrokProvider
 from .services.openai_provider import OpenAIProvider
+from .services.stub_provider import StubProvider
 
 logger = logging.getLogger(__name__)
 
@@ -47,16 +48,37 @@ class Orchestrator:
         self.provider_errors.clear()
         try:
             mapping["openai"] = OpenAIProvider()
+            logger.info("OpenAI provider configured.")
         except ProviderNotConfiguredError as exc:
             error_message = str(exc)
             self.provider_errors["openai"] = error_message
-            logger.info("OpenAI provider not configured; continuing without OpenAI: %s", error_message)
+            logger.warning(
+                "OpenAI provider not configured; continuing without OpenAI support: %s",
+                error_message,
+            )
         try:
             mapping["grok"] = GrokProvider()
+            logger.info("Grok provider configured.")
         except ProviderNotConfiguredError as exc:
             error_message = str(exc)
             self.provider_errors["grok"] = error_message
-            logger.info("Grok provider not configured; continuing without Grok: %s", error_message)
+            logger.warning(
+                "Grok provider not configured; continuing without Grok support: %s",
+                error_message,
+            )
+        if "stub" not in mapping:
+            mapping["stub"] = StubProvider()
+            logger.debug("Stub provider configured for development and testing fallback.")
+
+        available = sorted(mapping.keys())
+        logger.info("Provider mapping completed. Available providers: %s", available)
+        missing_keys = []
+        if not settings.openai_api_key:
+            missing_keys.append("OPENAI_API_KEY")
+        if not settings.grok_api_key:
+            missing_keys.append("GROK_API_KEY")
+        if missing_keys:
+            logger.debug("Provider API keys missing for: %s", missing_keys)
         return mapping
 
     def _resolve_model(self, model: str) -> tuple[str, str]:
