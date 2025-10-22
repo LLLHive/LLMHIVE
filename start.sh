@@ -1,24 +1,17 @@
 #!/bin/sh
-# Cloud Run entrypoint script for LLMHive
-# - binds Gunicorn/Uvicorn to the PORT provided by Cloud Run
-# - logs non-sensitive environment diagnostics for provider secrets
-# - runs the FastAPI application via gunicorn with a uvicorn worker
-
 set -e
 
 PORT=${PORT:-8080}
 WORKERS=${WEB_CONCURRENCY:-1}
-PYTHONPATH=${PYTHONPATH:-/app/llmhive/src}
-export PYTHONPATH
 
 echo "=== start.sh: starting container ==="
 echo "PORT=${PORT}"
 echo "WEB_CONCURRENCY=${WORKERS}"
-echo "PYTHONPATH=${PYTHONPATH}"
-# Emit whether critical secrets are set without leaking their values
->&2 echo "OPENAI_API_KEY is ${OPENAI_API_KEY:+set}"
->&2 echo "GROK_API_KEY is ${GROK_API_KEY:+set}"
->&2 echo "ANTHROPIC_API_KEY is ${ANTHROPIC_API_KEY:+set}"
+# Print presence (not values) of key env vars so logs show if secrets are attached
+echo "OPENAI_API_KEY is ${OPENAI_API_KEY:+set}"
+echo "GROK_API_KEY is ${GROK_API_KEY:+set}"
+echo "ANTHROPIC_API_KEY is ${ANTHROPIC_API_KEY:+set}"
+echo "LLMHIVE_FAIL_ON_STUB is ${LLMHIVE_FAIL_ON_STUB:-unset}"
 
 sleep 0.1
 
