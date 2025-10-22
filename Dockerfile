@@ -3,7 +3,8 @@ FROM python:3.11-slim
 
 # Ensure logs are flushed immediately and disable Poetry virtualenv creation
 ENV PYTHONUNBUFFERED=1 \
-    POETRY_VIRTUALENVS_CREATE=false
+    POETRY_VIRTUALENVS_CREATE=false \
+    PYTHONPATH=/app/llmhive/src
 
 WORKDIR /app
 

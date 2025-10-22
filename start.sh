@@ -8,10 +8,13 @@ set -e
 
 PORT=${PORT:-8080}
 WORKERS=${WEB_CONCURRENCY:-1}
+PYTHONPATH=${PYTHONPATH:-/app/llmhive/src}
+export PYTHONPATH
 
 echo "=== start.sh: starting container ==="
 echo "PORT=${PORT}"
 echo "WEB_CONCURRENCY=${WORKERS}"
+echo "PYTHONPATH=${PYTHONPATH}"
 # Emit whether critical secrets are set without leaking their values
 >&2 echo "OPENAI_API_KEY is ${OPENAI_API_KEY:+set}"
 >&2 echo "GROK_API_KEY is ${GROK_API_KEY:+set}"
