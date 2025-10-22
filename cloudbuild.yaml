@@ -26,7 +26,8 @@ steps:
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db,GIT_COMMIT=$COMMIT_SHA'
+      # Use update-env-vars so image-defined defaults (like PYTHONPATH) are preserved
+      - '--update-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db,GIT_COMMIT=$COMMIT_SHA'
       - '--quiet'
 
 images:
