@@ -79,6 +79,7 @@ def test_providers_endpoint_lists_stub_provider(client):
     assert "stub" in payload["available_providers"]
     assert payload["unavailable_providers"] == []
     assert payload["providers"]["stub"]["stub"] is True
+    assert payload["fail_on_stub"] is False
 
 
 def test_orchestrate_raises_503_when_stub_responses_disallowed(client, monkeypatch):
