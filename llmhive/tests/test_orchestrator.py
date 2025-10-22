@@ -40,12 +40,18 @@ def test_provider_status_reports_availability() -> None:
     orchestrator = Orchestrator(providers={"stub": StubProvider(seed=123)})
     status = orchestrator.provider_status()
     assert status == {
-        "stub": {"status": "available", "provider": "StubProvider"},
+        "stub": {
+            "status": "available",
+            "provider": "StubProvider",
+            "configured": False,
+            "stub": True,
+        }
     }
 
     orchestrator.provider_errors["openai"] = "Missing API key"
     status = orchestrator.provider_status()
     assert status["openai"]["status"] == "unavailable"
+    assert status["openai"]["configured"] is False
     assert "Missing API key" in status["openai"]["error"]
 
 
