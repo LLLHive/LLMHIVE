@@ -1,24 +1,34 @@
+# Production-ready Dockerfile for deploying LLMHive on Cloud Run
 FROM python:3.11-slim
 
-# Python run-time settings
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PORT=8080
+# Ensure logs are flushed immediately and disable Poetry virtualenv creation
+ENV PYTHONUNBUFFERED=1 \
+    POETRY_VIRTUALENVS_CREATE=false
 
-# Set working directory inside the container
 WORKDIR /app
 
-# Install Python requirements
-COPY requirements.txt ./
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Install minimal system dependencies required for building wheels
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
-# Copy the application source tree and make sure Python can import it
-COPY llmhive/src/llmhive /app/llmhive
-ENV PYTHONPATH=/app
+# Install Python dependencies
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+  && pip install --no-cache-dir -r /app/requirements.txt \
+  && pip install --no-cache-dir gunicorn uvicorn
 
-# Expose the port Cloud Run expects
+# Copy the entire application source
+COPY . /app
+
+# Ensure the startup script is executable
+RUN chmod +x /app/start.sh
+
+# Cloud Run provides PORT at runtime; default to 8080 for local use
+ENV PORT=8080
 EXPOSE 8080
 
-# Start the FastAPI app; Cloud Run sets PORT
-CMD ["/bin/sh", "-c", "uvicorn llmhive.app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+# Delegate startup to start.sh so Gunicorn binds to the configured PORT
+CMD ["/app/start.sh"]
