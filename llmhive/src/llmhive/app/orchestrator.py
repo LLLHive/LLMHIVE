@@ -10,8 +10,12 @@ from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
 
 from .config import settings
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
-from .services.grok_provider import GrokProvider
 from .services.openai_provider import OpenAIProvider
+from .services.grok_provider import GrokProvider
+from .services.anthropic_provider import AnthropicProvider
+from .services.gemini_provider import GeminiProvider
+from .services.deepseek_provider import DeepSeekProvider
+from .services.manus_provider import ManusProvider
 from .services.stub_provider import StubProvider
 
 logger = logging.getLogger(__name__)
@@ -51,15 +55,19 @@ class Orchestrator:
             value = getattr(settings, name, None)
             if value:
                 return value
-            env_name = name.upper()
-            value = os.getenv(env_name)
-            if value:
-                return value
+            env_value = os.getenv(name)
+            if env_value:
+                return env_value
+            env_value = os.getenv(name.upper())
+            if env_value:
+                return env_value
         return None
 
     def _default_providers(self) -> Dict[str, LLMProvider]:
         mapping: Dict[str, LLMProvider] = {}
         self.provider_errors.clear()
+
+        # OpenAI / GPT family
         try:
             openai_key = self._get_key("openai_api_key", "OPENAI_API_KEY", "OPENAI_KEY")
             mapping["openai"] = OpenAIProvider(api_key=openai_key)
@@ -71,9 +79,30 @@ class Orchestrator:
                 "OpenAI provider not configured; continuing without OpenAI support: %s",
                 error_message,
             )
+
+        # Anthropic / Claude models
+        try:
+            anthropic_key = self._get_key("anthropic_api_key", "ANTHROPIC_API_KEY")
+            mapping["anthropic"] = AnthropicProvider(
+                api_key=anthropic_key,
+                timeout=getattr(settings, "anthropic_timeout_seconds", None),
+            )
+            logger.info("Anthropic provider configured.")
+        except ProviderNotConfiguredError as exc:
+            error_message = str(exc)
+            self.provider_errors["anthropic"] = error_message
+            logger.warning(
+                "Anthropic provider not configured; continuing without Anthropic support: %s",
+                error_message,
+            )
+
+        # Grok (xAI)
         try:
             grok_key = self._get_key("grok_api_key", "GROK_API_KEY", "GROCK_API_KEY", "XAI_API_KEY")
-            mapping["grok"] = GrokProvider(api_key=grok_key)
+            mapping["grok"] = GrokProvider(
+                api_key=grok_key,
+                timeout=getattr(settings, "grok_timeout_seconds", None),
+            )
             logger.info("Grok provider configured.")
         except ProviderNotConfiguredError as exc:
             error_message = str(exc)
@@ -82,6 +111,55 @@ class Orchestrator:
                 "Grok provider not configured; continuing without Grok support: %s",
                 error_message,
             )
+
+        # Gemini
+        try:
+            gemini_key = self._get_key("gemini_api_key", "GEMINI_API_KEY")
+            mapping["gemini"] = GeminiProvider(
+                api_key=gemini_key,
+                timeout=getattr(settings, "gemini_timeout_seconds", None),
+            )
+            logger.info("Gemini provider configured.")
+        except ProviderNotConfiguredError as exc:
+            error_message = str(exc)
+            self.provider_errors["gemini"] = error_message
+            logger.warning(
+                "Gemini provider not configured; continuing without Gemini support: %s",
+                error_message,
+            )
+
+        # DeepSeek
+        try:
+            deepseek_key = self._get_key("deepseek_api_key", "DEEPSEEK_API_KEY")
+            mapping["deepseek"] = DeepSeekProvider(
+                api_key=deepseek_key,
+                timeout=getattr(settings, "deepseek_timeout_seconds", None),
+            )
+            logger.info("DeepSeek provider configured.")
+        except ProviderNotConfiguredError as exc:
+            error_message = str(exc)
+            self.provider_errors["deepseek"] = error_message
+            logger.warning(
+                "DeepSeek provider not configured; continuing without DeepSeek support: %s",
+                error_message,
+            )
+
+        # Manus
+        try:
+            manus_key = self._get_key("manus_api_key", "MANUS_API_KEY")
+            mapping["manus"] = ManusProvider(
+                api_key=manus_key,
+                timeout=getattr(settings, "manus_timeout_seconds", None),
+            )
+            logger.info("Manus provider configured.")
+        except ProviderNotConfiguredError as exc:
+            error_message = str(exc)
+            self.provider_errors["manus"] = error_message
+            logger.warning(
+                "Manus provider not configured; continuing without Manus support: %s",
+                error_message,
+            )
+
         if settings.enable_stub_provider:
             if "stub" not in mapping:
                 mapping["stub"] = StubProvider()
@@ -91,11 +169,15 @@ class Orchestrator:
 
         available = sorted(mapping.keys())
         logger.info("Provider mapping completed. Available providers: %s", available)
-        missing_keys = []
-        if not self._get_key("openai_api_key", "OPENAI_API_KEY", "OPENAI_KEY"):
-            missing_keys.append("OPENAI_API_KEY")
-        if not self._get_key("grok_api_key", "GROK_API_KEY", "GROCK_API_KEY", "XAI_API_KEY"):
-            missing_keys.append("GROK_API_KEY")
+        expected_keys = {
+            "openai": ("openai_api_key", "OPENAI_API_KEY"),
+            "anthropic": ("anthropic_api_key", "ANTHROPIC_API_KEY"),
+            "grok": ("grok_api_key", "GROK_API_KEY", "GROCK_API_KEY", "XAI_API_KEY"),
+            "gemini": ("gemini_api_key", "GEMINI_API_KEY"),
+            "deepseek": ("deepseek_api_key", "DEEPSEEK_API_KEY"),
+            "manus": ("manus_api_key", "MANUS_API_KEY"),
+        }
+        missing_keys = [name for name, aliases in expected_keys.items() if not self._get_key(*aliases)]
         if missing_keys:
             logger.debug("Provider API keys missing for: %s", missing_keys)
         return mapping
@@ -129,12 +211,40 @@ class Orchestrator:
             raise ProviderNotConfiguredError(
                 "OpenAI provider is not configured; set OPENAI_API_KEY to call GPT models."
             )
+        if key.startswith("claude"):
+            provider = self.providers.get("anthropic")
+            if provider is not None:
+                return "anthropic", provider
+            raise ProviderNotConfiguredError(
+                "Anthropic provider is not configured; set ANTHROPIC_API_KEY to call Claude models."
+            )
         if key.startswith("grok"):
             provider = self.providers.get("grok")
             if provider is not None:
                 return "grok", provider
             raise ProviderNotConfiguredError(
                 "Grok provider is not configured; set GROK_API_KEY to call Grok models."
+            )
+        if key.startswith("gemini"):
+            provider = self.providers.get("gemini")
+            if provider is not None:
+                return "gemini", provider
+            raise ProviderNotConfiguredError(
+                "Gemini provider is not configured; set GEMINI_API_KEY to call Gemini models."
+            )
+        if key.startswith("deepseek"):
+            provider = self.providers.get("deepseek")
+            if provider is not None:
+                return "deepseek", provider
+            raise ProviderNotConfiguredError(
+                "DeepSeek provider is not configured; set DEEPSEEK_API_KEY to call DeepSeek models."
+            )
+        if key.startswith("manus"):
+            provider = self.providers.get("manus")
+            if provider is not None:
+                return "manus", provider
+            raise ProviderNotConfiguredError(
+                "Manus provider is not configured; set MANUS_API_KEY to call Manus models."
             )
         if key.startswith("stub") and "stub" in self.providers:
             return "stub", self.providers["stub"]
