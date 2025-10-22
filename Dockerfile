@@ -13,14 +13,14 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy only the app code into the container
-COPY llmhive/src/llmhive /app/llmhive
-
-# Make sure Python can find the llmhive package
-ENV PYTHONPATH=/app
+# Copy the packaged source tree and install it so imports work without a custom
+# PYTHONPATH. Installing the package avoids runtime import errors even if
+# deployment-time environment variables overwrite the image defaults.
+COPY llmhive /opt/llmhive
+RUN pip install --no-cache-dir /opt/llmhive --no-deps && rm -rf /opt/llmhive
 
 # Expose the port Cloud Run expects
 EXPOSE 8080
 
 # Start the FastAPI app; Cloud Run sets PORT
-CMD ["uvicorn", "llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["/bin/sh", "-c", "uvicorn llmhive.app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
