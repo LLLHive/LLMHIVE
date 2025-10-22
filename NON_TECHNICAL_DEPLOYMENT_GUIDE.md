@@ -87,6 +87,12 @@ After you finish the checks:
 
 ---
 
+## Need to configure provider secrets?
+
+If the `/api/v1/providers` diagnostics endpoint reports only the `stub` provider (or the orchestration API returns placeholder responses), follow the step-by-step **[Provider Secret Configuration Checklist](SECRET_MANAGER_SETUP.md)**. It includes exact `gcloud` commands for creating secrets, granting Cloud Run access, attaching the secrets as environment variables, and verifying that real providers such as OpenAI and Grok are active.
+
+---
+
 ### Need help?
 If any of the steps fail or the responses look incorrect:
 - Copy the error message or screenshot.
