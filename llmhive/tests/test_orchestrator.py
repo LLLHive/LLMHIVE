@@ -1,18 +1,110 @@
 """Unit tests for the orchestrator workflow."""
+import asyncio
+
 import pytest
 
 from llmhive.app.orchestrator import Orchestrator
+from llmhive.app.services.base import ProviderNotConfiguredError
 from llmhive.app.services.stub_provider import StubProvider
+from llmhive.app.schemas import OrchestrationRequest
 
 
-@pytest.mark.asyncio
-async def test_orchestrator_generates_all_stages() -> None:
+def test_stub_provider_rejects_real_models() -> None:
+    provider = StubProvider(seed=1)
+
+    with pytest.raises(ProviderNotConfiguredError):
+        asyncio.run(provider.complete("hello", model="gpt-4"))
+
+
+def test_orchestrator_generates_all_stages() -> None:
     orchestrator = Orchestrator(providers={"stub": StubProvider(seed=42)})
-    artifacts = await orchestrator.orchestrate("Explain the water cycle.", ["stub-model-a", "stub-model-b"])
+    artifacts = asyncio.run(
+        orchestrator.orchestrate("Explain the water cycle.", ["stub-model-a", "stub-model-b"])
+    )
 
     assert len(artifacts.initial_responses) == 2
     assert artifacts.critiques, "Expected critiques to be generated"
     assert len(artifacts.improvements) == 2
     assert artifacts.final_response.content
+    assert artifacts.final_response.provider == "stub"
     for result in artifacts.initial_responses:
         assert "Response" in result.content
+        assert result.provider == "stub"
+    for result in artifacts.improvements:
+        assert result.provider == "stub"
+    for _, _, critique in artifacts.critiques:
+        assert critique.provider == "stub"
+
+
+def test_provider_status_reports_availability() -> None:
+    orchestrator = Orchestrator(providers={"stub": StubProvider(seed=123)})
+    status = orchestrator.provider_status()
+    assert status == {
+        "stub": {
+            "status": "available",
+            "provider": "StubProvider",
+            "configured": False,
+            "stub": True,
+        }
+    }
+
+    orchestrator.provider_errors["openai"] = "Missing API key"
+    status = orchestrator.provider_status()
+    assert status["openai"]["status"] == "unavailable"
+    assert status["openai"]["configured"] is False
+    assert "Missing API key" in status["openai"]["error"]
+
+
+def test_orchestrator_allows_explicit_stub_aliases() -> None:
+    orchestrator = Orchestrator(
+        providers={"stub": StubProvider(seed=7)},
+        model_aliases={"stub-debug": "stub-gpt-4"},
+    )
+
+    artifacts = asyncio.run(orchestrator.orchestrate("Test alias support", ["stub-debug"]))
+
+    assert artifacts.initial_responses[0].model == "stub-debug"
+    assert "stub-debug" in artifacts.final_response.content
+    assert artifacts.final_response.provider == "stub"
+
+
+def test_orchestrator_blocks_stub_fallback_for_real_models() -> None:
+    orchestrator = Orchestrator(
+        providers={"stub": StubProvider(seed=21)},
+        model_aliases={"gpt-4": "stub-gpt-4"},
+    )
+
+    with pytest.raises(ProviderNotConfiguredError) as excinfo:
+        asyncio.run(orchestrator.orchestrate("Prevent silent fallback", ["GPT-4"]))
+
+    assert "Stub provider" in str(excinfo.value)
+
+
+def test_orchestrator_raises_when_provider_missing() -> None:
+    orchestrator = Orchestrator(providers={"stub": StubProvider(seed=11)})
+
+    with pytest.raises(ProviderNotConfiguredError) as excinfo:
+        asyncio.run(orchestrator.orchestrate("Need GPT", ["gpt-4"]))
+
+    assert "OpenAI provider is not configured" in str(excinfo.value)
+
+
+def test_orchestration_endpoint_returns_400_when_provider_missing(client) -> None:
+    response = client.post(
+        "/api/v1/orchestration/",
+        json={"prompt": "Test", "models": ["gpt-4"]},
+    )
+
+    assert response.status_code == 400
+    payload = response.json()["detail"]
+    assert payload["models"] == ["gpt-4"]
+    assert "providers" in payload
+
+
+def test_orchestration_request_splits_models() -> None:
+    request = OrchestrationRequest(
+        prompt="Capital?",
+        models=["Grock, GPT-4 , GPT-3.5", "   stub-debug  "],
+    )
+
+    assert request.models == ["Grock", "GPT-4", "GPT-3.5", "stub-debug"]

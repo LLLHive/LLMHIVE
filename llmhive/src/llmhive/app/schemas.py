@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Critique(BaseModel):
@@ -13,6 +13,9 @@ class Critique(BaseModel):
     author: str = Field(..., description="Model providing the critique")
     target: str = Field(..., description="Model whose answer is being critiqued")
     feedback: str = Field(..., description="Feedback text")
+    provider: str | None = Field(
+        default=None, description="Provider that generated the critique"
+    )
 
 
 class ModelAnswer(BaseModel):
@@ -20,6 +23,9 @@ class ModelAnswer(BaseModel):
 
     model: str
     content: str
+    provider: str | None = Field(
+        default=None, description="Provider that generated the answer"
+    )
 
 
 class Improvement(BaseModel):
@@ -27,6 +33,9 @@ class Improvement(BaseModel):
 
     model: str
     content: str
+    provider: str | None = Field(
+        default=None, description="Provider that generated the improvement"
+    )
 
 
 class OrchestrationRequest(BaseModel):
@@ -34,8 +43,29 @@ class OrchestrationRequest(BaseModel):
 
     prompt: str = Field(..., description="Prompt to orchestrate across models")
     models: Optional[List[str]] = Field(
-        default=None, description="Optional explicit list of model identifiers"
+        default=None,
+        description="Optional explicit list of model identifiers",
+        examples=[["grok", "gpt-4"]],
     )
+
+    @field_validator("models", mode="before")
+    @classmethod
+    def _split_comma_separated(cls, value):  # type: ignore[override]
+        if value is None:
+            return value
+        if isinstance(value, str):
+            candidates = [value]
+        else:
+            candidates = list(value)
+
+        expanded: list[str] = []
+        for candidate in candidates:
+            if not isinstance(candidate, str):
+                continue
+            parts = [part.strip() for part in candidate.split(",") if part.strip()]
+            if parts:
+                expanded.extend(parts)
+        return expanded or None
 
 
 class OrchestrationResponse(BaseModel):
@@ -47,6 +77,9 @@ class OrchestrationResponse(BaseModel):
     critiques: List[Critique]
     improvements: List[Improvement]
     final_response: str
+    final_provider: str | None = Field(
+        default=None, description="Provider that generated the final synthesized response"
+    )
 
 
 class TaskRecord(BaseModel):

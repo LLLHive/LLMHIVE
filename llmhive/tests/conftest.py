@@ -6,7 +6,10 @@ from pathlib import Path
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+src_path = ROOT / "src"
+if not src_path.exists():
+    src_path = ROOT / "llmhive" / "src"
+sys.path.insert(0, str(src_path))
 
 import pytest
 from fastapi.testclient import TestClient
