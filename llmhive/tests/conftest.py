@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("FAIL_ON_STUB_RESPONSES", "0")
 
 ROOT = Path(__file__).resolve().parents[2]
 src_path = ROOT / "src"
