@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Sequence, Tuple
@@ -11,6 +12,11 @@ from .config import settings
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
 from .services.openai_provider import OpenAIProvider
 from .services.stub_provider import StubProvider
+from .services.anthropic_provider import AnthropicProvider
+from .services.grok_provider import GrokProvider
+from .services.gemini_provider import GeminiProvider
+from .services.deepseek_provider import DeepSeekProvider
+from .services.manus_provider import ManusProvider
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +24,6 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class OrchestrationArtifacts:
     """Artifacts produced by the orchestrator stages."""
-
     initial_responses: list[LLMResult]
     critiques: list[Tuple[str, str, LLMResult]]  # (author, target, result)
     improvements: list[LLMResult]
@@ -32,22 +37,126 @@ class Orchestrator:
         if providers is None:
             providers = self._default_providers()
         self.providers = providers
+        logger.info("Orchestrator initialized with providers: %s", list(self.providers.keys()))
+
+    def _get_key(self, *candidates: str) -> str | None:
+        """
+        Return first non-empty value found either from settings.attr or from OS env.
+        Example: _get_key("openai_api_key", "OPENAI_API_KEY", "OPENAI_KEY")
+        """
+        for name in candidates:
+            val = getattr(settings, name, None)
+            if val:
+                return val
+            val = os.getenv(name)
+            if val:
+                return val
+            val = os.getenv(name.upper())
+            if val:
+                return val
+        return None
 
     def _default_providers(self) -> Dict[str, LLMProvider]:
         mapping: Dict[str, LLMProvider] = {}
+
+        # OpenAI / GPT family
         try:
-            mapping["openai"] = OpenAIProvider()
+            openai_key = self._get_key("openai_api_key", "OPENAI_API_KEY", "OPENAI_KEY")
+            if openai_key:
+                mapping["openai"] = OpenAIProvider(api_key=openai_key, timeout=getattr(settings, "openai_timeout_seconds", None))
+                logger.info("OpenAI provider configured.")
+            else:
+                raise ProviderNotConfiguredError("OpenAI API key not set")
         except ProviderNotConfiguredError:
-            logger.info("OpenAI provider not configured; falling back to stub provider.")
-        if "openai" not in mapping:
-            mapping["stub"] = StubProvider()
-        else:
-            mapping.setdefault("stub", StubProvider())
+            logger.info("OpenAI provider not configured; skipping.")
+
+        # Anthropic / Claude
+        try:
+            anthropic_key = self._get_key("anthropic_api_key", "ANTHROPIC_API_KEY")
+            if anthropic_key:
+                mapping["anthropic"] = AnthropicProvider(api_key=anthropic_key, timeout=getattr(settings, "anthropic_timeout_seconds", None))
+                logger.info("Anthropic provider configured.")
+            else:
+                raise ProviderNotConfiguredError("Anthropic API key not set")
+        except ProviderNotConfiguredError:
+            logger.info("Anthropic provider not configured; skipping.")
+
+        # Grok (xAI)
+        try:
+            grok_key = self._get_key("grok_api_key", "GROK_API_KEY")
+            if grok_key:
+                mapping["grok"] = GrokProvider(api_key=grok_key, timeout=getattr(settings, "grok_timeout_seconds", None))
+                logger.info("Grok provider configured.")
+            else:
+                raise ProviderNotConfiguredError("Grok API key not set")
+        except ProviderNotConfiguredError:
+            logger.info("Grok provider not configured; skipping.")
+
+        # Gemini (Google)
+        try:
+            gemini_key = self._get_key("gemini_api_key", "GEMINI_API_KEY")
+            if gemini_key:
+                mapping["gemini"] = GeminiProvider(api_key=gemini_key, timeout=getattr(settings, "gemini_timeout_seconds", None))
+                logger.info("Gemini provider configured.")
+            else:
+                raise ProviderNotConfiguredError("Gemini API key not set")
+        except ProviderNotConfiguredError:
+            logger.info("Gemini provider not configured; skipping.")
+
+        # DeepSeek
+        try:
+            deepseek_key = self._get_key("deepseek_api_key", "DEEPSEEK_API_KEY")
+            if deepseek_key:
+                mapping["deepseek"] = DeepSeekProvider(api_key=deepseek_key, timeout=getattr(settings, "deepseek_timeout_seconds", None))
+                logger.info("DeepSeek provider configured.")
+            else:
+                raise ProviderNotConfiguredError("DeepSeek API key not set")
+        except ProviderNotConfiguredError:
+            logger.info("DeepSeek provider not configured; skipping.")
+
+        # Manus (proxy)
+        try:
+            manus_key = self._get_key("manus_api_key", "MANUS_API_KEY")
+            if manus_key:
+                mapping["manus"] = ManusProvider(api_key=manus_key, timeout=getattr(settings, "manus_timeout_seconds", None))
+                logger.info("Manus provider configured.")
+            else:
+                raise ProviderNotConfiguredError("Manus API key not set")
+        except ProviderNotConfiguredError:
+            logger.info("Manus provider not configured; skipping.")
+
+        # Always provide a stub provider as a fallback
+        mapping.setdefault("stub", StubProvider())
+
+        logger.info("Provider mapping completed. Available providers: %s", list(mapping.keys()))
+        expected = {
+            "openai": ("openai_api_key", "OPENAI_API_KEY"),
+            "anthropic": ("anthropic_api_key", "ANTHROPIC_API_KEY"),
+            "grok": ("grok_api_key", "GROK_API_KEY"),
+            "gemini": ("gemini_api_key", "GEMINI_API_KEY"),
+            "deepseek": ("deepseek_api_key", "DEEPSEEK_API_KEY"),
+            "manus": ("manus_api_key", "MANUS_API_KEY"),
+        }
+        missing = [k for k, names in expected.items() if not self._get_key(*names)]
+        if missing:
+            logger.debug("Provider API keys missing for: %s", missing)
+
         return mapping
 
     def _select_provider(self, model: str) -> LLMProvider:
-        if model.startswith("gpt") and "openai" in self.providers:
+        lower = model.lower()
+        if lower.startswith("gpt") and "openai" in self.providers:
             return self.providers["openai"]
+        if lower.startswith("claude") and "anthropic" in self.providers:
+            return self.providers["anthropic"]
+        if lower.startswith("grok") and "grok" in self.providers:
+            return self.providers["grok"]
+        if lower.startswith("gemini") and "gemini" in self.providers:
+            return self.providers["gemini"]
+        if lower.startswith("deepseek") and "deepseek" in self.providers:
+            return self.providers["deepseek"]
+        if lower.startswith("manus") and "manus" in self.providers:
+            return self.providers["manus"]
         return self.providers.get("stub", StubProvider())
 
     async def _gather_with_handling(self, coroutines: Sequence[asyncio.Future]) -> list[LLMResult]:
@@ -57,14 +166,12 @@ class Orchestrator:
                 result = await coro
                 results.append(result)
             except ProviderNotConfiguredError as exc:
-                logger.warning("Provider misconfiguration: %s", exc)
-            except Exception as exc:  # pragma: no cover - defensive catch
+                logger.warning("Provider misconfiguration during call: %s", exc)
+            except Exception as exc:
                 logger.exception("Provider call failed", exc_info=exc)
         return results
 
     async def orchestrate(self, prompt: str, models: Iterable[str] | None = None) -> OrchestrationArtifacts:
-        """Run the multi-stage orchestration for the provided prompt."""
-
         model_list = list(models or settings.default_models)
         if not model_list:
             raise ValueError("At least one model must be provided")
@@ -144,18 +251,19 @@ class Orchestrator:
         improvements: Sequence[LLMResult],
         initial_responses: Sequence[LLMResult],
     ) -> str:
-        parts = [
-            "You are synthesizing answers from a collaborative team of AI experts.",
-            f"Original user prompt:\n{prompt}",
-            "Improved answers:",
-        ]
-        for result in improvements:
-            parts.append(f"- {result.model}: {result.content}")
+        parts: list[str] = []
+        parts.append("You are synthesizing answers from a collaborative team of AI experts.")
+        parts.append("")
+        parts.append("Original user prompt:")
+        parts.append(prompt)
+        parts.append("")
+        parts.append("Improved answers:")
+        for imp in improvements:
+            parts.append(f"- {imp.model}: {imp.content}")
+            parts.append("")
         parts.append("Initial answers for reference:")
-        for result in initial_responses:
-            parts.append(f"- {result.model}: {result.content}")
-        parts.append(
-            "Craft a single final response that combines the best insights, resolves disagreements,"
-            " and clearly communicates the answer to the user."
-        )
-        return "\n\n".join(parts)
+        for ans in initial_responses:
+            parts.append(f"- {ans.model}: {ans.content}")
+            parts.append("")
+        parts.append("Craft a single final response that combines the best insights, resolves disagreements, and clearly communicates the answer to the user.")
+        return "\n".join(parts)
