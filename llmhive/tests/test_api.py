@@ -79,3 +79,31 @@ def test_providers_endpoint_lists_stub_provider(client):
     assert "stub" in payload["available_providers"]
     assert payload["unavailable_providers"] == []
     assert payload["providers"]["stub"]["stub"] is True
+
+
+def test_orchestrate_raises_503_when_stub_responses_disallowed(client, monkeypatch):
+    monkeypatch.setenv("FAIL_ON_STUB_RESPONSES", "1")
+
+    from llmhive.app.config import reset_settings_cache
+
+    reset_settings_cache()
+    get_orchestrator.cache_clear()
+
+    orchestrator = Orchestrator(providers={"stub": StubProvider(seed=9)})
+    client.app.dependency_overrides[get_orchestrator] = lambda: orchestrator
+
+    try:
+        response = client.post(
+            "/api/v1/orchestration/",
+            json={"prompt": "Ping", "models": ["stub-model"]},
+        )
+    finally:
+        client.app.dependency_overrides.pop(get_orchestrator, None)
+        monkeypatch.setenv("FAIL_ON_STUB_RESPONSES", "0")
+        reset_settings_cache()
+        get_orchestrator.cache_clear()
+
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert detail["models"] == ["stub-model"]
+    assert "Stub provider responses are disabled" in detail["message"]

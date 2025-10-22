@@ -160,7 +160,7 @@ class Settings(BaseSettings):
         description="If true, registers the stub provider as a fallback for development environments.",
     )
     fail_on_stub_responses: bool = Field(
-        default=False,
+        default=True,
         alias="FAIL_ON_STUB_RESPONSES",
         description="Return 503 responses when only stub outputs are produced, highlighting configuration issues.",
     )
@@ -198,4 +198,6 @@ settings = get_settings()
 def reset_settings_cache() -> None:
     """Clear the cached settings so environment changes are reloaded."""
 
+    global settings
     get_settings.cache_clear()
+    settings = get_settings()

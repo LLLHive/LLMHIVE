@@ -7,7 +7,7 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from ..config import settings
+from ..config import get_settings
 from ..database import get_db
 from ..models import Task
 from ..orchestrator import Orchestrator
@@ -87,16 +87,24 @@ async def orchestrate(
             },
         ) from exc
 
-    if settings.fail_on_stub_responses and all(
-        response.content.startswith(f"[{response.model}]") for response in artifacts.initial_responses
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={
-                "message": "Only stub responses were generated. Check provider configuration or disable FAIL_ON_STUB_RESPONSES.",
-                "providers": orchestrator.provider_status(),
-            },
-        )
+    current_settings = get_settings()
+
+    if current_settings.fail_on_stub_responses:
+        stub_models = [
+            answer.model for answer in artifacts.initial_responses if answer.provider == "stub"
+        ]
+        if stub_models:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "message": (
+                        "Stub provider responses are disabled. Configure real provider credentials or set "
+                        "FAIL_ON_STUB_RESPONSES=0 for development overrides."
+                    ),
+                    "models": stub_models,
+                    "providers": orchestrator.provider_status(),
+                },
+            )
 
     initial = [
         ModelAnswer(model=ans.model, content=ans.content, provider=ans.provider)
