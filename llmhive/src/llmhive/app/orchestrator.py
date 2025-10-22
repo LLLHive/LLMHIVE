@@ -142,18 +142,30 @@ class Orchestrator:
             f"No provider is available for model '{canonical_model}'. Configure an alias or install a provider."
         )
 
-    def provider_status(self) -> Dict[str, Dict[str, str]]:
+    def provider_status(self) -> Dict[str, Dict[str, str | bool | None]]:
         """Expose provider availability details for diagnostics."""
 
-        status: Dict[str, Dict[str, str]] = {}
+        status: Dict[str, Dict[str, str | bool | None]] = {}
         for name, provider in self.providers.items():
-            status[name] = {
+            entry: Dict[str, str | bool | None] = {
                 "status": "available",
                 "provider": provider.__class__.__name__,
+                "configured": True,
             }
+            if name == "stub":
+                entry["stub"] = True
+                entry["configured"] = bool(settings.enable_stub_provider)
+            status[name] = entry
+
         for name, message in self.provider_errors.items():
-            status.setdefault(name, {"provider": None})
-            status[name].update({"status": "unavailable", "error": message})
+            entry = status.setdefault(name, {"provider": None})
+            entry.update(
+                {
+                    "status": "unavailable",
+                    "configured": False,
+                    "error": message,
+                }
+            )
         return status
 
     async def _gather_with_handling(

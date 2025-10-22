@@ -74,6 +74,8 @@ def test_providers_endpoint_lists_stub_provider(client):
 
     assert response.status_code == 200
     payload = response.json()
-    assert "providers" in payload
-    assert "available_providers" in payload
+    assert payload["stub_only"] is True
+    assert payload["real_providers"] == []
     assert "stub" in payload["available_providers"]
+    assert payload["unavailable_providers"] == []
+    assert payload["providers"]["stub"]["stub"] is True
