@@ -44,9 +44,7 @@ except Exception as e:
     logger.warning(f"Database initialization failed: {e}")
     logger.warning("Application will continue but database operations may fail")
 
-# Include API routers
-app.include_router(api_router, prefix="/api/v1")
-
+# Define root-level endpoints before including routers
 @app.get("/", summary="Root endpoint")
 async def root() -> dict[str, str]:
     """Root endpoint for basic verification."""
@@ -59,9 +57,17 @@ async def root() -> dict[str, str]:
 
 @app.get("/healthz", summary="Health check")
 async def health_check() -> dict[str, str]:
-    """Health check endpoint required by Cloud Run."""
+    """Health check endpoint required by Cloud Run.
+    
+    Note: This is a root-level health check endpoint (/healthz) separate from
+    the API-level health check (/api/v1/healthz). Cloud Run and other
+    infrastructure components typically expect health checks at the root level.
+    """
     logger.info("Health check endpoint called")
     return {"status": "ok"}
+
+# Include API routers
+app.include_router(api_router, prefix="/api/v1")
 
 # Startup event
 @app.on_event("startup")
