@@ -45,15 +45,16 @@ echo ""
 
 # Step 4: Run health check tests
 echo "Step 4: Running health check tests..."
-cd llmhive
-if PYTHONPATH=/home/runner/work/LLMHIVE/LLMHIVE/llmhive/src python -m pytest tests/test_health.py -v --tb=short 2>&1 | grep -q "3 passed"; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/llmhive"
+if PYTHONPATH="$SCRIPT_DIR/llmhive/src" python -m pytest tests/test_health.py -v --tb=short 2>&1 | grep -q "3 passed"; then
     echo -e "${GREEN}✓${NC} All health check tests passed (3/3)"
 else
     echo -e "${RED}✗${NC} Health check tests failed"
-    cd ..
+    cd "$SCRIPT_DIR"
     exit 1
 fi
-cd ..
+cd "$SCRIPT_DIR"
 echo ""
 
 # Step 5: Start the application and test endpoints
@@ -61,7 +62,7 @@ echo "Step 5: Starting application and testing endpoints..."
 echo "Starting uvicorn server on port 8080..."
 
 # Start uvicorn in background
-PYTHONPATH=/home/runner/work/LLMHIVE/LLMHIVE/llmhive/src \
+PYTHONPATH="$SCRIPT_DIR/llmhive/src" \
     PORT=8080 \
     uvicorn llmhive.app.main:app --host 0.0.0.0 --port 8080 > /tmp/uvicorn.log 2>&1 &
 UVICORN_PID=$!

@@ -39,8 +39,7 @@ async def health_check() -> dict[str, str]:
 The `cloudbuild.yaml` has been updated to include the `--no-cache` flag on line 11:
 
 ```yaml
-- name: gcr.io/cloud-builders/docker
-  args: ['build', '--no-cache', '-t', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA', '.']
+args: ['build', '--no-cache', '-t', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA', '.']
 ```
 
 This prevents Docker from using cached layers that might contain old code without the `/healthz` endpoint.
