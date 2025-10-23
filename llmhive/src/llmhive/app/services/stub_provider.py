@@ -7,6 +7,9 @@ from typing import List
 
 from .base import LLMProvider, LLMResult
 
+# Maximum length of prompt to include in fallback stub response
+MAX_PROMPT_PREVIEW_LENGTH = 100
+
 
 class StubProvider(LLMProvider):
     """Simple provider that fabricates plausible responses."""
@@ -47,7 +50,7 @@ class StubProvider(LLMProvider):
                 return "I would need to know which country you're asking about to answer what its capital is."
         
         # General questions - provide a generic but helpful response
-        return f"This is a stub response. The question '{prompt[:100]}' would normally be answered by a real LLM provider. Please configure API keys for OpenAI, Anthropic, or other providers to get actual AI responses."
+        return f"This is a stub response. The question '{prompt[:MAX_PROMPT_PREVIEW_LENGTH]}' would normally be answered by a real LLM provider. Please configure API keys for OpenAI, Anthropic, or other providers to get actual AI responses."
 
     async def complete(self, prompt: str, *, model: str) -> LLMResult:
         await self._sleep()
