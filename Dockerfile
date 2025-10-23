@@ -16,6 +16,10 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 # Copy only the app code into the container
 COPY llmhive/src/llmhive /app/llmhive
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Make sure Python can find the llmhive package
 ENV PYTHONPATH=/app
 
@@ -23,4 +27,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8080
 
 # Start the FastAPI app; Cloud Run sets PORT
-CMD ["uvicorn", "llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
