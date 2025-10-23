@@ -1,7 +1,7 @@
 substitutions:
   _SERVICE: llmhive-orchestrator
   _REGION: us-east1
-  _IMAGE: gcr.io/$PROJECT_ID/llmhive-orchestrator
+  _IMAGE: gcr.io/$$PROJECT_ID/llmhive-orchestrator
 
 options:
   logging: CLOUD_LOGGING_ONLY
