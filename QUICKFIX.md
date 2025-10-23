@@ -4,6 +4,8 @@ This guide addresses the two main issues reported in production:
 1. `/healthz` endpoint returning 404
 2. Orchestration returning stub responses
 
+> **Note:** This guide uses the production service URL `https://llmhive-orchestrator-792354158895.us-east1.run.app` and service name `llmhive-orchestrator`. Replace these with your actual values if different. You can find your service URL in the Cloud Run console or by running: `gcloud run services describe llmhive-orchestrator --region=us-east1 --format='value(status.url)'`
+
 ## Issue #1: `/healthz` Returns 404
 
 ### Verification
