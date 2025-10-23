@@ -27,6 +27,7 @@ steps:
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db'
+      - '--timeout=300'
       - '--quiet'
 
 images:

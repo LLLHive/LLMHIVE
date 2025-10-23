@@ -12,13 +12,39 @@ from .config import settings
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
 from .services.openai_provider import OpenAIProvider
 from .services.stub_provider import StubProvider
-from .services.anthropic_provider import AnthropicProvider
-from .services.grok_provider import GrokProvider
-from .services.gemini_provider import GeminiProvider
-from .services.deepseek_provider import DeepSeekProvider
-from .services.manus_provider import ManusProvider
 
 logger = logging.getLogger(__name__)
+
+# Import optional providers with fallback
+try:
+    from .services.anthropic_provider import AnthropicProvider
+except ImportError:
+    logger.warning("AnthropicProvider not available")
+    AnthropicProvider = None
+
+try:
+    from .services.grok_provider import GrokProvider
+except ImportError:
+    logger.warning("GrokProvider not available")
+    GrokProvider = None
+
+try:
+    from .services.gemini_provider import GeminiProvider
+except ImportError:
+    logger.warning("GeminiProvider not available")
+    GeminiProvider = None
+
+try:
+    from .services.deepseek_provider import DeepSeekProvider
+except ImportError:
+    logger.warning("DeepSeekProvider not available")
+    DeepSeekProvider = None
+
+try:
+    from .services.manus_provider import ManusProvider
+except ImportError:
+    logger.warning("ManusProvider not available")
+    ManusProvider = None
 
 
 @dataclass(slots=True)
@@ -72,6 +98,8 @@ class Orchestrator:
 
         # Anthropic / Claude
         try:
+            if AnthropicProvider is None:
+                raise ProviderNotConfiguredError("AnthropicProvider module not available")
             anthropic_key = self._get_key("anthropic_api_key", "ANTHROPIC_API_KEY")
             if anthropic_key:
                 mapping["anthropic"] = AnthropicProvider(api_key=anthropic_key, timeout=getattr(settings, "anthropic_timeout_seconds", None))
@@ -83,6 +111,8 @@ class Orchestrator:
 
         # Grok (xAI)
         try:
+            if GrokProvider is None:
+                raise ProviderNotConfiguredError("GrokProvider module not available")
             grok_key = self._get_key("grok_api_key", "GROK_API_KEY")
             if grok_key:
                 mapping["grok"] = GrokProvider(api_key=grok_key, timeout=getattr(settings, "grok_timeout_seconds", None))
@@ -94,6 +124,8 @@ class Orchestrator:
 
         # Gemini (Google)
         try:
+            if GeminiProvider is None:
+                raise ProviderNotConfiguredError("GeminiProvider module not available")
             gemini_key = self._get_key("gemini_api_key", "GEMINI_API_KEY")
             if gemini_key:
                 mapping["gemini"] = GeminiProvider(api_key=gemini_key, timeout=getattr(settings, "gemini_timeout_seconds", None))
@@ -105,6 +137,8 @@ class Orchestrator:
 
         # DeepSeek
         try:
+            if DeepSeekProvider is None:
+                raise ProviderNotConfiguredError("DeepSeekProvider module not available")
             deepseek_key = self._get_key("deepseek_api_key", "DEEPSEEK_API_KEY")
             if deepseek_key:
                 mapping["deepseek"] = DeepSeekProvider(api_key=deepseek_key, timeout=getattr(settings, "deepseek_timeout_seconds", None))
@@ -116,6 +150,8 @@ class Orchestrator:
 
         # Manus (proxy)
         try:
+            if ManusProvider is None:
+                raise ProviderNotConfiguredError("ManusProvider module not available")
             manus_key = self._get_key("manus_api_key", "MANUS_API_KEY")
             if manus_key:
                 mapping["manus"] = ManusProvider(api_key=manus_key, timeout=getattr(settings, "manus_timeout_seconds", None))
