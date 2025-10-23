@@ -1,7 +1,16 @@
-import os
+"""LLMHive FastAPI application main entry point."""
+from __future__ import annotations
+
 import logging
+import os
 import sys
-from flask import Flask, request, jsonify, Response
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .api import api_router
+from .database import engine
+from .models import Base
 
 # Configure comprehensive logging
 logging.basicConfig(
@@ -11,72 +20,53 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Import existing application components with error handling
+# Initialize FastAPI application
+app = FastAPI(
+    title="LLMHive Orchestrator API",
+    description="Multi-model orchestration service for LLM interactions",
+    version="1.0.0",
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Create database tables
 try:
-    from .orchestrator import Orchestrator
-    from .config import config
-    from .models import initialize_models
-    # Preserve other imports as needed
-except ImportError as e:
-    logger.warning(f"Some module imports failed: {e}")
-    logger.warning("Application will start in limited functionality mode")
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables initialized successfully")
+except Exception as e:
+    logger.warning(f"Database initialization failed: {e}")
+    logger.warning("Application will continue but database operations may fail")
 
-# Initialize Flask application
-app = Flask(__name__)
+# Include API routers
+app.include_router(api_router, prefix="/api/v1")
 
-# Essential health check endpoint for Cloud Run
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint required by Cloud Run"""
-    logger.info("Health check endpoint called")
-    return jsonify({"status": "healthy", "service": "llmhive-orchestrator"}), 200
-
-@app.route('/', methods=['GET'])
-def root():
-    """Root endpoint for basic verification"""
+@app.get("/", summary="Root endpoint")
+async def root() -> dict[str, str]:
+    """Root endpoint for basic verification."""
     logger.info("Root endpoint called")
-    return jsonify({
+    return {
         "service": "LLMHive Orchestrator API",
         "status": "online",
-        "version": config.VERSION if 'config' in locals() else "1.0.0"
-    })
+        "version": "1.0.0"
+    }
 
-# Preserve your existing API endpoints
-# This is a fallback in case your original endpoints have issues
-@app.route('/api/chat', methods=['POST'])
-def chat_endpoint():
-    """Temporary implementation to ensure service starts"""
-    try:
-        # Log request but don't include potentially sensitive data
-        logger.info(f"Received chat request from {request.remote_addr}")
-        
-        # Try to use existing orchestrator if available
-        if 'Orchestrator' in locals() or 'Orchestrator' in globals():
-            orchestrator = Orchestrator()
-            result = orchestrator.process_request(request.json)
-            return jsonify(result)
-        else:
-            # Fallback response if orchestrator isn't available
-            return jsonify({
-                "response": "LLMHive orchestrator is starting up. Full functionality will be available shortly.",
-                "status": "initializing"
-            })
-    except Exception as e:
-        logger.error(f"Error processing request: {str(e)}", exc_info=True)
-        return jsonify({"error": str(e), "status": "error"}), 500
+@app.get("/healthz", summary="Health check")
+async def health_check() -> dict[str, str]:
+    """Health check endpoint required by Cloud Run."""
+    logger.info("Health check endpoint called")
+    return {"status": "ok"}
 
-# Application factory pattern for gunicorn
-def create_app():
-    """Factory function that creates and configures the Flask app"""
-    # Initialize any required services here
-    logger.info("Initializing application through factory function")
-    return app
-
-# Direct execution entry point
-if __name__ == '__main__':
-    # Get port from environment variable with fallback to 8080
-    port = int(os.environ.get('PORT', 8080))
-    logger.info(f"Starting server on port {port}")
-    
-    # Critical: Bind to all network interfaces (0.0.0.0) for container compatibility
-    app.run(host='0.0.0.0', port=port, debug=False)
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    """Log startup information."""
+    port = os.environ.get('PORT', '8080')
+    logger.info(f"Application starting on port {port}")
+    logger.info("LLMHive Orchestrator API is ready")
