@@ -173,21 +173,29 @@ curl -X POST https://your-service-url.run.app/api/v1/orchestration/ \
 - `/api/v1/healthz` works
 - But `/healthz` returns 404
 
-**Possible Causes:**
-1. Old code deployed - redeploy with latest code
-2. Cloud Run routing issue - check Cloud Run console for errors
-3. Health check configuration - verify health check settings
+**Cause:**
+This issue was caused by Docker build cache in CloudBuild. The `/healthz` endpoint was added to the code, but cached Docker layers from previous builds were being reused, causing the old code (without the endpoint) to be deployed.
 
-**Solution:**
+**Fix:**
+The `cloudbuild.yaml` has been updated to include the `--no-cache` flag, which ensures fresh builds without using cached layers. Make sure you're using the latest version from the repository (commit 84b0a6f or later).
+
+**To apply the fix:**
 ```bash
-# Redeploy with latest code
+# 1. Pull the latest code with the fix
+git pull
+
+# 2. Redeploy with the updated cloudbuild.yaml (which includes --no-cache)
 gcloud builds submit --config cloudbuild.yaml
 
-# Check deployment logs
-gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=llmhive-orchestrator" --limit 50
+# 3. Get your service URL
+SERVICE_URL=$(gcloud run services describe llmhive-orchestrator --region=us-east1 --format='value(status.url)')
+echo "Service URL: $SERVICE_URL"
 
-# Verify service configuration
-gcloud run services describe llmhive-orchestrator --region=us-east1
+# 4. Test the endpoint (should return {"status":"ok"})
+curl $SERVICE_URL/healthz
+
+# 5. Check deployment logs to verify the new revision
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=llmhive-orchestrator" --limit 50
 ```
 
 ### Issue: Only Getting Stub Responses
