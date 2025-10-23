@@ -57,7 +57,12 @@ async def root() -> dict[str, str]:
 
 @app.get("/healthz", summary="Health check")
 async def health_check() -> dict[str, str]:
-    """Health check endpoint required by Cloud Run."""
+    """Health check endpoint required by Cloud Run.
+    
+    Note: This is a root-level health check endpoint (/healthz) separate from
+    the API-level health check (/api/v1/healthz). Cloud Run and other
+    infrastructure components typically expect health checks at the root level.
+    """
     logger.info("Health check endpoint called")
     return {"status": "ok"}
 
