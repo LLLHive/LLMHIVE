@@ -28,6 +28,41 @@ class StubProvider(LLMProvider):
         """
         prompt_lower = prompt.lower()
         
+        # Check if this is a synthesis prompt (from the orchestrator)
+        if prompt.startswith("You are synthesizing answers from a collaborative team"):
+            # Extract the original user prompt from the synthesis request
+            lines = prompt.split('\n')
+            original_prompt = ""
+            capture_next = False
+            for line in lines:
+                if capture_next and line.strip():
+                    original_prompt = line.strip()
+                    break
+                if line.strip() == "Original user prompt:":
+                    capture_next = True
+            
+            # If we found the original prompt, try to answer it
+            if original_prompt:
+                return self._generate_answer(original_prompt)
+            
+            # Otherwise, try to extract answer from the improved answers section
+            for i, line in enumerate(lines):
+                if line.strip().startswith("Improved answers:") or line.strip().startswith("- "):
+                    # Find first non-empty answer
+                    for j in range(i+1, len(lines)):
+                        if lines[j].strip().startswith("- ") and ":" in lines[j]:
+                            # Extract the answer after the model name
+                            answer = lines[j].split(":", 1)[1].strip()
+                            if answer and not answer.startswith("Improved by"):
+                                # Clean up improvement wrapper if present
+                                if "Improved by" in answer:
+                                    answer = answer.split("(considering:")[0].strip()
+                                    answer = answer.replace("Improved by " + lines[j].split(":")[0].strip() + ":", "").strip()
+                                return answer
+            
+            # Fallback for synthesis
+            return "Based on the collaborative analysis, this question requires more specific information to provide an accurate answer. Please configure real LLM providers for detailed responses."
+        
         # Capital city questions
         if "capital" in prompt_lower:
             if "spain" in prompt_lower:
