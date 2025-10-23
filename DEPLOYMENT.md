@@ -177,21 +177,25 @@ curl -X POST https://your-service-url.run.app/api/v1/orchestration/ \
 This issue was caused by Docker build cache in CloudBuild. The `/healthz` endpoint was added to the code, but cached Docker layers from previous builds were being reused, causing the old code (without the endpoint) to be deployed.
 
 **Fix:**
-The `cloudbuild.yaml` now includes the `--no-cache` flag to ensure fresh builds without using cached layers. This has been fixed in the latest version.
+The `cloudbuild.yaml` has been updated to include the `--no-cache` flag, which ensures fresh builds without using cached layers. Make sure you're using the latest version from the repository (commit 84b0a6f or later).
 
-**If you still see this issue:**
+**To apply the fix:**
 ```bash
-# Redeploy with the latest code (which includes --no-cache)
+# 1. Pull the latest code with the fix
+git pull
+
+# 2. Redeploy with the updated cloudbuild.yaml (which includes --no-cache)
 gcloud builds submit --config cloudbuild.yaml
 
-# Check deployment logs to verify the new revision
+# 3. Get your service URL
+SERVICE_URL=$(gcloud run services describe llmhive-orchestrator --region=us-east1 --format='value(status.url)')
+echo "Service URL: $SERVICE_URL"
+
+# 4. Test the endpoint (should return {"status":"ok"})
+curl $SERVICE_URL/healthz
+
+# 5. Check deployment logs to verify the new revision
 gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=llmhive-orchestrator" --limit 50
-
-# Verify service configuration
-gcloud run services describe llmhive-orchestrator --region=us-east1
-
-# Test the endpoint
-curl https://your-service-url.run.app/healthz
 ```
 
 ### Issue: Only Getting Stub Responses
