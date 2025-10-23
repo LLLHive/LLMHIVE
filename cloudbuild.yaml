@@ -1,7 +1,6 @@
 substitutions:
   _SERVICE: llmhive-orchestrator
   _REGION: us-east1
-  _IMAGE: gcr.io/$PROJECT_ID/llmhive-orchestrator
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -9,11 +8,11 @@ options:
 steps:
   # 1) Build the image using the Dockerfile in the repo root
   - name: gcr.io/cloud-builders/docker
-    args: ['build', '-t', '${_IMAGE}:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA', '.']
 
   # 2) Push the image to Artifact Registry
   - name: gcr.io/cloud-builders/docker
-    args: ['push', '${_IMAGE}:$COMMIT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA']
 
   # 3) Deploy the image to Cloud Run
   # IMPORTANT: To enable real LLM providers instead of stub responses, add API keys:
@@ -33,7 +32,7 @@ steps:
       - run
       - deploy
       - '${_SERVICE}'
-      - '--image=${_IMAGE}:$COMMIT_SHA'
+      - '--image=gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA'
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
@@ -50,4 +49,4 @@ steps:
       # - '--update-secrets=ANTHROPIC_API_KEY=anthropic-api-key:latest'
 
 images:
-  - '${_IMAGE}'
+  - 'gcr.io/$PROJECT_ID/llmhive-orchestrator'
