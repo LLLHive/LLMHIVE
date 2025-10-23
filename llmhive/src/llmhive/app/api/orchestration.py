@@ -76,25 +76,22 @@ async def orchestrate(
             detail="At least one model must be provided in the 'models' array.",
         )
 
-    # Validate each requested model maps to a configured non-stub provider.
-    unsupported: list[str] = []
+    # Log warning if models will use stub provider as fallback
+    # (allows execution to proceed even when real providers aren't configured)
+    stub_fallback: list[str] = []
     for m in normalized_models:
         try:
             provider = _orchestrator._select_provider(m)
         except Exception:
             provider = _orchestrator.providers.get("stub", StubProvider())
         if isinstance(provider, StubProvider) and not str(m).lower().startswith("stub"):
-            unsupported.append(m)
+            stub_fallback.append(m)
 
-    if unsupported:
-        logger.warning("Requested models do not have configured providers: %s", unsupported)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"The following models are not configured or supported in this deployment: {unsupported}. "
-                "Ensure provider API keys/settings are present and correct. "
-                "Call GET /api/v1/orchestration/providers to see what is configured."
-            ),
+    if stub_fallback:
+        logger.warning(
+            "The following models will use stub provider (real provider not configured): %s. "
+            "Call GET /api/v1/orchestration/providers to see what is configured.",
+            stub_fallback
         )
 
     # Run orchestration
@@ -106,8 +103,10 @@ async def orchestrate(
         logger.exception("Orchestration failed: %s", exc)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Orchestration failed; check server logs")
 
-    # Optional staging fail-fast: if all initial responses look like stubs, fail loudly so ops fix config
+    # Optional staging fail-fast: if all initial responses look like stubs AND real providers are configured,
+    # fail loudly so ops know there's a misconfiguration.
     # Controlled by env var LLMHIVE_FAIL_ON_STUB (default "true")
+    # Only fails if non-stub providers are configured (otherwise stub provider is the expected fallback)
     fail_on_stub = os.getenv("LLMHIVE_FAIL_ON_STUB", "true").lower() not in ("0", "false", "no")
     try:
         all_stub = all(
@@ -118,9 +117,12 @@ async def orchestrate(
     except Exception:
         all_stub = False
 
-    if fail_on_stub and all_stub:
+    # Check if any real (non-stub) providers are configured
+    has_real_providers = any(k != "stub" for k in _orchestrator.providers.keys())
+
+    if fail_on_stub and all_stub and has_real_providers:
         available = list(_orchestrator.providers.keys())
-        logger.error("All providers returned stub responses. Available providers: %s", available)
+        logger.error("All providers returned stub responses despite real providers being configured. Available providers: %s", available)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
