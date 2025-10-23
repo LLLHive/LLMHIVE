@@ -222,32 +222,32 @@ class Orchestrator:
         initial_responses = await self._gather_with_handling(completion_tasks)
 
         # Cross critiques
-        critique_tasks: list[asyncio.Task[LLMResult]] = []
+        critique_tasks: list[Tuple[str, str, asyncio.Task[LLMResult]]] = []
         for author_result in initial_responses:
             for target_result in initial_responses:
                 if author_result.model == target_result.model:
                     continue
                 provider = self._select_provider(author_result.model)
-                critique_tasks.append(
-                    asyncio.create_task(
-                        provider.critique(
-                            prompt,
-                            target_answer=target_result.content,
-                            author=author_result.model,
-                            model=author_result.model,
-                        )
+                task = asyncio.create_task(
+                    provider.critique(
+                        prompt,
+                        target_answer=target_result.content,
+                        author=author_result.model,
+                        model=author_result.model,
                     )
                 )
-        critique_results = await self._gather_with_handling(critique_tasks)
+                critique_tasks.append((author_result.model, target_result.model, task))
+        
+        # Gather critique results while preserving author-target mapping
         critiques: list[Tuple[str, str, LLMResult]] = []
-        index = 0
-        for author_result in initial_responses:
-            for target_result in initial_responses:
-                if author_result.model == target_result.model:
-                    continue
-                if index < len(critique_results):
-                    critiques.append((author_result.model, target_result.model, critique_results[index]))
-                index += 1
+        for author, target, task in critique_tasks:
+            try:
+                result = await task
+                critiques.append((author, target, result))
+            except ProviderNotConfiguredError as exc:
+                logger.warning("Provider misconfiguration during critique: %s", exc)
+            except Exception as exc:
+                logger.exception("Critique call failed", exc_info=exc)
 
         critiques_by_model: Dict[str, list[str]] = defaultdict(list)
         for author, target, critique in critiques:
