@@ -173,21 +173,25 @@ curl -X POST https://your-service-url.run.app/api/v1/orchestration/ \
 - `/api/v1/healthz` works
 - But `/healthz` returns 404
 
-**Possible Causes:**
-1. Old code deployed - redeploy with latest code
-2. Cloud Run routing issue - check Cloud Run console for errors
-3. Health check configuration - verify health check settings
+**Cause:**
+This issue was caused by Docker build cache in CloudBuild. The `/healthz` endpoint was added to the code, but cached Docker layers from previous builds were being reused, causing the old code (without the endpoint) to be deployed.
 
-**Solution:**
+**Fix:**
+The `cloudbuild.yaml` now includes the `--no-cache` flag to ensure fresh builds without using cached layers. This has been fixed in the latest version.
+
+**If you still see this issue:**
 ```bash
-# Redeploy with latest code
+# Redeploy with the latest code (which includes --no-cache)
 gcloud builds submit --config cloudbuild.yaml
 
-# Check deployment logs
+# Check deployment logs to verify the new revision
 gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=llmhive-orchestrator" --limit 50
 
 # Verify service configuration
 gcloud run services describe llmhive-orchestrator --region=us-east1
+
+# Test the endpoint
+curl https://your-service-url.run.app/healthz
 ```
 
 ### Issue: Only Getting Stub Responses
