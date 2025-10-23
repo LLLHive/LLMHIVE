@@ -31,9 +31,9 @@ def test_critique_authors_are_correct(client):
 def test_critique_authors_with_multiple_models(client):
     """Test critique authors with various model combinations."""
     test_cases = [
-        (["gpt-4", "claude-3"], 2),  # 2 models = 2 critiques (each critiques the other)
-        (["gpt-4", "gpt-5", "grok"], 6),  # 3 models = 6 critiques (3*2)
-        (["gpt-4", "gpt-5", "grok", "claude-3"], 12),  # 4 models = 12 critiques (4*3)
+        (["gpt-4", "claude-3"], 2),  # 2 models = 2×1 = 2 critiques (each critiques the other)
+        (["gpt-4", "gpt-5", "grok"], 6),  # 3 models = 3×2 = 6 critiques
+        (["gpt-4", "gpt-5", "grok", "claude-3"], 12),  # 4 models = 4×3 = 12 critiques
     ]
     
     for models, expected_critique_count in test_cases:
@@ -63,7 +63,7 @@ def test_critique_authors_with_multiple_models(client):
 def test_final_response_not_truncated(client):
     """Test that final response doesn't contain synthesis prompt text."""
     payload = OrchestrationRequest(
-        prompt="If a plane is on a treadmill moving at the same speed but in the opposite direction, can it take off?",
+        prompt="What is the capital of France?",
         models=["gpt-4", "gpt-5", "grok"]
     )
     response = client.post("/api/v1/orchestration/", json=payload.model_dump())
