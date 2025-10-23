@@ -103,10 +103,8 @@ async def orchestrate(
         logger.exception("Orchestration failed: %s", exc)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Orchestration failed; check server logs")
 
-    # Optional staging fail-fast: if all initial responses look like stubs AND real providers are configured,
-    # fail loudly so ops know there's a misconfiguration.
-    # Controlled by env var LLMHIVE_FAIL_ON_STUB (default "true")
-    # Only fails if non-stub providers are configured (otherwise stub provider is the expected fallback)
+    # Fail-fast if all responses are stubs when real providers are configured (LLMHIVE_FAIL_ON_STUB env var).
+    # Only fails if non-stub providers exist (otherwise stub provider is the expected fallback).
     fail_on_stub = os.getenv("LLMHIVE_FAIL_ON_STUB", "true").lower() not in ("0", "false", "no")
     try:
         all_stub = all(
@@ -122,7 +120,7 @@ async def orchestrate(
 
     if fail_on_stub and all_stub and has_real_providers:
         available = list(_orchestrator.providers.keys())
-        logger.error("All providers returned stub responses despite real providers being configured. Available providers: %s", available)
+        logger.error("All providers returned stub responses despite real providers being configured. Check provider configurations. Available providers: %s", available)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
