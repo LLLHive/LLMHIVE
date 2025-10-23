@@ -76,3 +76,20 @@ async def startup_event():
     port = os.environ.get('PORT', '8080')
     logger.info(f"Application starting on port {port}")
     logger.info("LLMHive Orchestrator API is ready")
+    
+    # Log registered routes for debugging
+    logger.info("Registered routes:")
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            logger.info(f"  {','.join(route.methods)} {route.path}")
+    
+    # Log provider configuration status
+    from .orchestrator import Orchestrator
+    orch = Orchestrator()
+    providers = list(orch.providers.keys())
+    logger.info(f"Configured providers: {providers}")
+    if len(providers) == 1 and providers[0] == "stub":
+        logger.warning("⚠️  Only stub provider is configured! No real LLM API keys found.")
+        logger.warning("   Set environment variables: OPENAI_API_KEY, ANTHROPIC_API_KEY, GROK_API_KEY, etc.")
+    else:
+        logger.info(f"✓ {len([p for p in providers if p != 'stub'])} real provider(s) configured")

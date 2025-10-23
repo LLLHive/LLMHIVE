@@ -16,6 +16,17 @@ steps:
     args: ['push', '${_IMAGE}:$COMMIT_SHA']
 
   # 3) Deploy the image to Cloud Run
+  # IMPORTANT: To enable real LLM providers instead of stub responses, add API keys:
+  #   - Use '--set-env-vars' or '--update-env-vars' to add:
+  #     OPENAI_API_KEY=<your-key>
+  #     ANTHROPIC_API_KEY=<your-key>
+  #     GROK_API_KEY=<your-key>
+  #     GEMINI_API_KEY=<your-key>
+  #     DEEPSEEK_API_KEY=<your-key>
+  #     MANUS_API_KEY=<your-key>
+  #   - OR use Secret Manager with '--set-secrets':
+  #     '--set-secrets=OPENAI_API_KEY=openai-key:latest'
+  #   - Without these keys, the orchestrator will only return stub responses
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
@@ -30,6 +41,13 @@ steps:
       - '--timeout=300'
       - '--port=8080'
       - '--quiet'
+      # Uncomment and configure these lines to enable real LLM providers:
+      # - '--update-env-vars=OPENAI_API_KEY=your-actual-openai-key'
+      # - '--update-env-vars=ANTHROPIC_API_KEY=your-actual-anthropic-key'
+      # - '--update-env-vars=GROK_API_KEY=your-actual-grok-key'
+      # OR use Secret Manager (recommended for production):
+      # - '--update-secrets=OPENAI_API_KEY=openai-api-key:latest'
+      # - '--update-secrets=ANTHROPIC_API_KEY=anthropic-api-key:latest'
 
 images:
   - '${_IMAGE}'
