@@ -12,11 +12,32 @@ from .config import settings
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
 from .services.openai_provider import OpenAIProvider
 from .services.stub_provider import StubProvider
-from .services.anthropic_provider import AnthropicProvider
-from .services.grok_provider import GrokProvider
-from .services.gemini_provider import GeminiProvider
-from .services.deepseek_provider import DeepSeekProvider
-from .services.manus_provider import ManusProvider
+
+# Try to import optional providers
+try:
+    from .services.anthropic_provider import AnthropicProvider
+except ImportError:
+    AnthropicProvider = None
+
+try:
+    from .services.grok_provider import GrokProvider
+except ImportError:
+    GrokProvider = None
+
+try:
+    from .services.gemini_provider import GeminiProvider
+except ImportError:
+    GeminiProvider = None
+
+try:
+    from .services.deepseek_provider import DeepSeekProvider
+except ImportError:
+    DeepSeekProvider = None
+
+try:
+    from .services.manus_provider import ManusProvider
+except ImportError:
+    ManusProvider = None
 
 logger = logging.getLogger(__name__)
 
@@ -73,55 +94,55 @@ class Orchestrator:
         # Anthropic / Claude
         try:
             anthropic_key = self._get_key("anthropic_api_key", "ANTHROPIC_API_KEY")
-            if anthropic_key:
+            if anthropic_key and AnthropicProvider is not None:
                 mapping["anthropic"] = AnthropicProvider(api_key=anthropic_key, timeout=getattr(settings, "anthropic_timeout_seconds", None))
                 logger.info("Anthropic provider configured.")
             else:
-                raise ProviderNotConfiguredError("Anthropic API key not set")
+                raise ProviderNotConfiguredError("Anthropic provider not available or API key not set")
         except ProviderNotConfiguredError:
             logger.info("Anthropic provider not configured; skipping.")
 
         # Grok (xAI)
         try:
             grok_key = self._get_key("grok_api_key", "GROK_API_KEY")
-            if grok_key:
+            if grok_key and GrokProvider is not None:
                 mapping["grok"] = GrokProvider(api_key=grok_key, timeout=getattr(settings, "grok_timeout_seconds", None))
                 logger.info("Grok provider configured.")
             else:
-                raise ProviderNotConfiguredError("Grok API key not set")
+                raise ProviderNotConfiguredError("Grok provider not available or API key not set")
         except ProviderNotConfiguredError:
             logger.info("Grok provider not configured; skipping.")
 
         # Gemini (Google)
         try:
             gemini_key = self._get_key("gemini_api_key", "GEMINI_API_KEY")
-            if gemini_key:
+            if gemini_key and GeminiProvider is not None:
                 mapping["gemini"] = GeminiProvider(api_key=gemini_key, timeout=getattr(settings, "gemini_timeout_seconds", None))
                 logger.info("Gemini provider configured.")
             else:
-                raise ProviderNotConfiguredError("Gemini API key not set")
+                raise ProviderNotConfiguredError("Gemini provider not available or API key not set")
         except ProviderNotConfiguredError:
             logger.info("Gemini provider not configured; skipping.")
 
         # DeepSeek
         try:
             deepseek_key = self._get_key("deepseek_api_key", "DEEPSEEK_API_KEY")
-            if deepseek_key:
+            if deepseek_key and DeepSeekProvider is not None:
                 mapping["deepseek"] = DeepSeekProvider(api_key=deepseek_key, timeout=getattr(settings, "deepseek_timeout_seconds", None))
                 logger.info("DeepSeek provider configured.")
             else:
-                raise ProviderNotConfiguredError("DeepSeek API key not set")
+                raise ProviderNotConfiguredError("DeepSeek provider not available or API key not set")
         except ProviderNotConfiguredError:
             logger.info("DeepSeek provider not configured; skipping.")
 
         # Manus (proxy)
         try:
             manus_key = self._get_key("manus_api_key", "MANUS_API_KEY")
-            if manus_key:
+            if manus_key and ManusProvider is not None:
                 mapping["manus"] = ManusProvider(api_key=manus_key, timeout=getattr(settings, "manus_timeout_seconds", None))
                 logger.info("Manus provider configured.")
             else:
-                raise ProviderNotConfiguredError("Manus API key not set")
+                raise ProviderNotConfiguredError("Manus provider not available or API key not set")
         except ProviderNotConfiguredError:
             logger.info("Manus provider not configured; skipping.")
 
