@@ -25,7 +25,9 @@ INFO -   GET /healthz  ← Route is registered!
 
 ### Root Cause
 
-The 404 error from Google (not from the application) indicates that **the latest code may not be deployed** to Cloud Run, or there's a Cloud Run routing configuration issue.
+The 404 error from Google (not from the application) indicates that **the latest code may not be deployed** to Cloud Run. This was caused by an incorrect project ID in `cloudbuild.yaml` which has now been fixed.
+
+**Fix Applied:** `cloudbuild.yaml` now uses `$PROJECT_ID` instead of a hardcoded project name, ensuring deployment works correctly.
 
 ### Solution
 
@@ -33,6 +35,7 @@ Redeploy the service to Cloud Run with the latest code:
 
 ```bash
 # From the repository root
+# Cloud Build will automatically use your current project ID
 gcloud builds submit --config cloudbuild.yaml
 ```
 
