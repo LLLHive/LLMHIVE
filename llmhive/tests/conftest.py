@@ -4,8 +4,9 @@ import sys
 from pathlib import Path
 
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("LLMHIVE_FAIL_ON_STUB", "false")  # Allow stub responses in tests
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]  # llmhive directory
 sys.path.insert(0, str(ROOT / "src"))
 
 import pytest
