@@ -24,5 +24,6 @@ async def process_prompt_stream(request: PromptRequest):
         response_stream = orchestrator.run(request.prompt)
         return StreamingResponse(response_stream, media_type="text/plain")
     except Exception as e:
-        print(f"An error occurred: {e}")
-        raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+        import logging
+        logging.error(f"Error in process_prompt_stream: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred while processing the prompt.")

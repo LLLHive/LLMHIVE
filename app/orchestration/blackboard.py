@@ -8,6 +8,9 @@ execution of a plan. It acts as the shared memory for the multi-agent team.
 
 from typing import Dict, Any, List
 from threading import Lock
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Blackboard:
     """
@@ -28,7 +31,7 @@ class Blackboard:
             for k in keys[:-1]:
                 d = d.setdefault(k, {})
             d[keys[-1]] = value
-            print(f"Blackboard SET: {key} = {str(value)[:80]}...")
+            logger.debug(f"Blackboard SET: {key} = {str(value)[:80]}...")
 
     def get(self, key: str, default: Any = None) -> Any:
         """

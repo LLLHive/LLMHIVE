@@ -33,7 +33,8 @@ class Orchestrator:
             "editor": EditorAgent, "lead": LeadAgent, "analyst": LeadAgent,
         }
         agent_class = role_map.get(role.lower())
-        if not agent_class: raise ValueError(f"No agent class found for role: {role}")
+        if not agent_class:
+            raise ValueError(f"No agent class found for role: {role}")
         return agent_class(model_id=model_id)
 
     async def _execute_step(self, step: Dict[str, Any], blackboard: Blackboard, dream_team: list):
@@ -68,7 +69,14 @@ class Orchestrator:
         plan = await self.planner.create_plan(prompt, context_history)
         print(f"Plan created with {len(plan.steps)} blocks. Reasoning: {plan.reasoning}")
 
-        all_roles = {s['role'] for block in plan.steps for s in block.get('steps', [])}
+        # Extract all required roles from the plan structure
+        all_roles = set()
+        for block in plan.steps:
+            if 'steps' in block:
+                for step in block['steps']:
+                    if 'role' in step:
+                        all_roles.add(step['role'])
+        
         dream_team = self.router.select_models(all_roles)
         print(f"Dream team selected: {[(m.model_id, m.role) for m in dream_team]}")
 
