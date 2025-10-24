@@ -102,6 +102,52 @@ def test_orchestrate_raises_when_stub_results_for_real_models(client):
     assert "Stub provider responses were generated" in detail["message"]
 
 
+def test_orchestrate_detects_stub_content_even_without_stub_provider(client):
+    class FakeOrchestrator:
+        def provider_status(self):
+            return {"openai": {"status": "available", "provider": "OpenAIProvider"}}
+
+        def _resolve_model(self, model: str):
+            return model, model
+
+        def _select_provider(self, model: str):  # pragma: no cover - simple stub
+            return "openai", object()
+
+        def _validate_stub_usage(self, provider_key, requested, canonical):
+            return None
+
+        async def orchestrate(self, prompt, models=None):  # pragma: no cover - exercised in test
+            return OrchestrationArtifacts(
+                initial_responses=[
+                    LLMResult(
+                        content="This is a stub response. Configure API keys.",
+                        model="gpt-4",
+                        provider="openai",
+                    )
+                ],
+                critiques=[],
+                improvements=[],
+                final_response=LLMResult(
+                    content="stub final", model="gpt-4", provider="openai"
+                ),
+            )
+
+    client.app.dependency_overrides[get_orchestrator] = lambda: FakeOrchestrator()
+
+    try:
+        response = client.post(
+            "/api/v1/orchestration/",
+            json={"prompt": "Ping", "models": ["gpt-4"]},
+        )
+    finally:
+        client.app.dependency_overrides.pop(get_orchestrator, None)
+
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert detail["models"] == ["gpt-4"]
+    assert "Stub provider responses" in detail["message"]
+
+
 def test_providers_endpoint_lists_stub_provider(client):
     orchestrator = Orchestrator(providers={"stub": StubProvider(seed=3)})
     client.app.dependency_overrides[get_orchestrator] = lambda: orchestrator
