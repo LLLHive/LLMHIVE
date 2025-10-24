@@ -27,6 +27,7 @@ class ModelPool:
     """
     def __init__(self):
         # This catalog would ideally be loaded from a config file or database.
+        # Currently only OpenAI and Anthropic providers are fully implemented.
         self._models = [
             ModelProfile(
                 model_id="gpt-4", provider="openai",
@@ -34,19 +35,19 @@ class ModelPool:
                 context_window=8192, cost_per_token=0.03
             ),
             ModelProfile(
+                model_id="gpt-4-turbo", provider="openai",
+                strengths=["reasoning", "coding", "general", "long-context"],
+                context_window=128000, cost_per_token=0.01
+            ),
+            ModelProfile(
                 model_id="claude-3-opus", provider="anthropic",
                 strengths=["writing", "long-context", "analysis"],
                 context_window=200000, cost_per_token=0.02
             ),
             ModelProfile(
-                model_id="gemini-pro", provider="google",
-                strengths=["creativity", "multimodal", "general"],
-                context_window=32768, cost_per_token=0.01
-            ),
-            ModelProfile(
-                model_id="deepseek-coder", provider="deepseek",
-                strengths=["coding", "technical"],
-                context_window=16384, cost_per_token=0.005
+                model_id="claude-3-sonnet", provider="anthropic",
+                strengths=["writing", "analysis", "general"],
+                context_window=200000, cost_per_token=0.01
             ),
         ]
         self._model_map = {model.model_id: model for model in self._models}

@@ -1,18 +1,14 @@
 """
 Base classes and interfaces for all LLM agents.
-
-This module defines the abstract `Agent` class, ensuring that all agents
-adhere to a common interface for execution and role management.
 """
 
 from abc import ABC, abstractmethod
+from typing import AsyncGenerator
 from ..models.llm_provider import LLMProvider, get_provider_for_model
 
 class Agent(ABC):
     """
     Abstract base class for all LLM agents.
-    It is initialized with a model_id and automatically gets the correct
-    LLM provider to execute its tasks.
     """
     def __init__(self, model_id: str, role: str):
         self.model_id = model_id
@@ -21,7 +17,11 @@ class Agent(ABC):
 
     @abstractmethod
     async def execute(self, prompt: str, context: str = "") -> str:
-        """
-        Executes the agent's task by formatting a prompt and calling the LLM provider.
-        """
+        """Executes the agent's task and returns the full response."""
         pass
+
+    async def execute_stream(self, prompt: str, context: str = "") -> AsyncGenerator[str, None]:
+        """Executes the agent's task and streams the response."""
+        full_prompt = f"{context}\n\nTask: {prompt}"
+        async for token in self.provider.generate_stream(prompt=full_prompt, model=self.model_id):
+            yield token
