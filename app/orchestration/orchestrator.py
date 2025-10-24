@@ -31,13 +31,17 @@ class Orchestrator:
         self.validator = Validator()
 
     def _get_agent_for_role(self, role: str, model_id: str) -> Agent:
-        """Factory function to get an agent instance based on role."""
+        """Factory function to get an agent instance based on role.
+        
+        Note: LeadAgent is used for 'analyst' role as it's suitable for 
+        general-purpose analysis tasks that require comprehensive reasoning.
+        """
         role_map = {
             "researcher": ResearcherAgent,
             "critic": CriticAgent,
             "editor": EditorAgent,
             "lead": LeadAgent,
-            "analyst": LeadAgent, # Use LeadAgent for analysis tasks as well
+            "analyst": LeadAgent,  # LeadAgent handles general-purpose analysis
         }
         agent_class = role_map.get(role.lower())
         if not agent_class:

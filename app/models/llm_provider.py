@@ -76,8 +76,9 @@ def get_provider_for_model(model_id: str) -> LLMProvider:
     if not provider_name:
         raise ValueError(f"No provider found for model_id: {model_id}")
 
-    provider_class, api_key = PROVIDER_MAP.get(provider_name)
-    if not provider_class:
+    provider_config = PROVIDER_MAP.get(provider_name)
+    if not provider_config:
         raise ValueError(f"Provider '{provider_name}' is not configured.")
     
+    provider_class, api_key = provider_config
     return provider_class(api_key=api_key)
