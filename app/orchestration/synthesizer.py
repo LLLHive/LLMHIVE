@@ -1,57 +1,49 @@
 """
 The Synthesizer component of the Orchestrator Engine.
 
-Responsible for aggregating the outputs from multiple LLM agents and
-merging them into a single, coherent, and polished final answer.
+Aggregates outputs and uses an LLM to merge them into a final, coherent answer.
 """
-
-from typing import Dict
+from typing import AsyncGenerator
 from .planner import Plan
+from .blackboard import Blackboard
 from ..agents import LeadAgent
 from ..config import settings
 
 class Synthesizer:
-    """
-    Combines partial results from different agents into a final response.
-    """
-    async def synthesize(self, partial_results: Dict[str, str], plan: Plan, original_prompt: str) -> str:
-        """
-        Synthesizes the final answer using an LLM to ensure coherence.
-        """
+    """Combines results from agents into a final response."""
+    async def synthesize_stream(self, blackboard: Blackboard, plan: Plan, original_prompt: str) -> AsyncGenerator[str, None]:
+        """Synthesizes the final answer and streams it token by token."""
         print(f"Synthesizing results with strategy: '{plan.synthesis_strategy}'")
 
-        if not partial_results:
-            return "I'm sorry, but I was unable to generate a response."
+        final_draft = blackboard.get("results.final_draft")
+        if final_draft:
+            # If a final draft already exists (e.g., from an editor), stream it directly.
+            # A real implementation might still use an LLM to ensure it's well-formatted.
+            for char in final_draft:
+                yield char
+            return
 
-        # For simple plans, just return the lead's answer
-        if len(partial_results) == 1 and "lead" in partial_results:
-            return partial_results["lead"]
-
-        # For complex plans, use an LLM to synthesize a final answer
-        synthesis_prompt = self._build_synthesis_prompt(partial_results, original_prompt)
+        # If no final draft, build a prompt to generate one
+        synthesis_prompt = self._build_synthesis_prompt(blackboard, original_prompt)
         
-        # Use a powerful model for the final synthesis
         synthesizer_agent = LeadAgent(model_id=settings.DEFAULT_MODEL)
         
-        print("Calling synthesizer LLM to merge results...")
-        final_answer = await synthesizer_agent.execute(synthesis_prompt)
-        
-        return final_answer
+        print("Calling synthesizer LLM to merge results and stream...")
+        async for token in synthesizer_agent.execute_stream(synthesis_prompt):
+            yield token
 
-    def _build_synthesis_prompt(self, partial_results: Dict[str, str], original_prompt: str) -> str:
+    def _build_synthesis_prompt(self, blackboard: Blackboard, original_prompt: str) -> str:
         """Constructs a prompt for the synthesizer LLM."""
-        prompt = f"You are a master editor. Your task is to synthesize the following partial results from different AI agents into a single, high-quality, and coherent final answer that directly addresses the user's original prompt.\n\n"
-        prompt += f"USER'S ORIGINAL PROMPT:\n---\n{original_prompt}\n---\n\n"
-        prompt += "PARTIAL RESULTS FROM AGENTS:\n---\n"
-
-        for role, result in partial_results.items():
-            prompt += f"## Contribution from {role.capitalize()} Agent:\n{result}\n\n"
-
-        prompt += "---\nINSTRUCTIONS:\n"
-        prompt += "1. Combine all the information into a single, well-structured response.\n"
-        prompt += "2. Ensure the tone is consistent, helpful, and clear.\n"
-        prompt += "3. Do not mention the different agents or the synthesis process in the final output.\n"
-        prompt += "4. Make sure the final answer directly and completely answers the user's original prompt.\n\n"
-        prompt += "FINAL SYNTHESIZED ANSWER:"
-
+        context = blackboard.get_full_context()
+        prompt = (
+            "You are a master editor. Your task is to synthesize the information provided in the context below into a single, high-quality, and coherent final answer that directly addresses the user's original prompt. The context contains outputs from various specialized AI agents.\n\n"
+            f"USER'S ORIGINAL PROMPT:\n---\n{original_prompt}\n---\n\n"
+            f"AVAILABLE CONTEXT FROM AGENT WORK:\n---\n{context}\n---\n\n"
+            "INSTRUCTIONS:\n"
+            "1. Read the original prompt and all agent contributions carefully.\n"
+            "2. Construct a single, comprehensive response that directly answers the user's prompt.\n"
+            "3. Ensure the tone is consistent, helpful, and clear. Do NOT mention the agents or the internal synthesis process.\n"
+            "4. If there are conflicting pieces of information, use your best judgment to resolve them or state the uncertainty clearly.\n\n"
+            "FINAL SYNTHESIZED ANSWER:"
+        )
         return prompt
