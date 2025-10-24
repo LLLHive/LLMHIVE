@@ -6,16 +6,16 @@ decomposition, creating a dynamic, structured execution plan in JSON format.
 """
 
 import json
-from typing import List
-from pydantic import BaseModel, Field
+from typing import List, Dict
+from pydantic import BaseModel, Field, ValidationError
 from ..agents import LeadAgent
 from ..config import settings
+from .blackboard import Blackboard
 
 class Plan(BaseModel):
     """Represents a structured execution plan."""
-    reasoning: str = Field(description="The reasoning behind the chosen plan.")
-    steps: List[dict] = Field(description="A list of steps, which can be sequential or parallel.")
-    synthesis_strategy: str = Field(default="llm_merge", description="Strategy for the final synthesis.")
+    reasoning: str
+    steps: List[Dict]
 
 class Planner:
     """
@@ -23,51 +23,39 @@ class Planner:
     """
     def __init__(self):
         # Use a powerful model for planning
-        self.planner_agent = LeadAgent(model_id=settings.DEFAULT_MODEL)
+        self.planner_agent = LeadAgent(model_id=settings.PLANNING_MODEL)
 
-    async def create_plan(self, prompt: str, context: List[str]) -> Plan:
+    async def create_plan(self, blackboard: Blackboard) -> Plan:
         """
         Creates a structured plan using an LLM to address the user's prompt.
         """
+        prompt = blackboard.get("original_prompt")
         print(f"Creating LLM-driven plan for prompt: '{prompt}'")
         
         planning_prompt = self._build_planning_prompt(prompt)
         
-        llm_response = await self.planner_agent.execute(planning_prompt)
+        for attempt in range(2): # Allow for one self-correction attempt
+            raw_response = await self.planner_agent.execute(planning_prompt)
+            
+            try:
+                plan_json_str = raw_response[raw_response.find('{'):raw_response.rfind('}')+1]
+                plan_data = json.loads(plan_json_str)
+                validated_plan = Plan(**plan_data)
+                blackboard.set("plan.raw", plan_data)
+                blackboard.set("plan.reasoning", validated_plan.reasoning)
+                return validated_plan
+            except (json.JSONDecodeError, ValidationError) as e:
+                error_msg = f"Plan validation failed on attempt {attempt + 1}: {e}. Raw response: {raw_response}"
+                print(f"WARNING: {error_msg}")
+                blackboard.append_to_list("logs.errors", error_msg)
+                planning_prompt = f"The previous plan you generated was invalid. Error: {e}. Please regenerate a valid JSON plan based on the original request. User Prompt: '{prompt}'"
         
-        try:
-            # Extract the JSON part of the response using a more robust approach
-            # Look for the first complete JSON object
-            start_idx = llm_response.find('{')
-            if start_idx == -1:
-                raise json.JSONDecodeError("No JSON object found", llm_response, 0)
-            
-            # Find the matching closing brace by counting brackets
-            brace_count = 0
-            end_idx = start_idx
-            for i in range(start_idx, len(llm_response)):
-                if llm_response[i] == '{':
-                    brace_count += 1
-                elif llm_response[i] == '}':
-                    brace_count -= 1
-                    if brace_count == 0:
-                        end_idx = i + 1
-                        break
-            
-            plan_json_str = llm_response[start_idx:end_idx]
-            plan_data = json.loads(plan_json_str)
-            return Plan(**plan_data)
-        except (json.JSONDecodeError, TypeError, KeyError, ValueError) as e:
-            print(f"Error parsing LLM plan, falling back to default. Error: {e}")
-            return self.fallback_plan(prompt)
+        print("ERROR: Failed to generate a valid plan after self-correction. Falling back to default.")
+        return self.fallback_plan(prompt)
 
     def fallback_plan(self, prompt: str) -> Plan:
         """A simple rule-based fallback plan."""
-        return Plan(
-            reasoning="Fell back to a simple, single-step plan.",
-            steps=[{"type": "sequential", "steps": [{"role": "lead", "task": "Provide a direct and comprehensive answer to the user's prompt."}]}],
-            synthesis_strategy="direct"
-        )
+        return Plan(reasoning="Fell back to default plan.", steps=[{"type": "simple", "role": "lead", "task": f"Provide a direct and comprehensive answer to: {prompt}"}])
 
     def _build_planning_prompt(self, prompt: str) -> str:
         return f"""
@@ -82,14 +70,10 @@ Available Agent Roles:
 Available Plan Types:
 1. `simple`: A single agent performs a single task.
    `{{"type": "simple", "role": "lead", "task": "..."}}`
-2. `sequential`: A series of agents perform tasks in order.
-   `{{"type": "sequential", "steps": [...]}}`
-3. `parallel`: Multiple agents perform tasks simultaneously.
-   `{{"type": "parallel", "steps": [...]}}`
-4. `critique_and_improve`: Generate parallel drafts, have them critique each other, then improve based on feedback. This is for maximum accuracy on complex, subjective, or creative tasks.
-   `{{"type": "critique_and_improve", "drafting_task": "...", "drafting_agents": ["lead", "analyst"], "improving_agent": "lead"}}`
+2. `critique_and_improve`: Generate parallel drafts, have them critique each other, then improve based on feedback. This is for maximum accuracy on complex, subjective, or creative tasks.
+   `{{"type": "critique_and_improve", "drafting_task": "...", "drafting_roles": ["lead", "analyst"], "critic_role": "{settings.CRITIQUE_MODEL}", "improving_role": "lead"}}`
 
-Based on the user's prompt, create the optimal plan. Prioritize `critique_and_improve` for complex, high-stakes queries.
+Based on the user's prompt, create the optimal plan. Prioritize `critique_and_improve` for complex, high-stakes queries. Your output MUST be a single, valid JSON object.
 
 User's Prompt: "{prompt}"
 

@@ -115,3 +115,11 @@ def get_provider_for_model(model_id: str) -> LLMProvider:
     
     provider_class, api_key = PROVIDER_MAP[provider_name]
     return provider_class(api_key=api_key)
+
+def get_provider_by_name(provider_name: str) -> LLMProvider:
+    """Factory function to get a provider instance by provider name."""
+    if provider_name not in PROVIDER_MAP:
+        raise ValueError(f"Provider '{provider_name}' is not configured or supported.")
+    
+    provider_class, api_key = PROVIDER_MAP[provider_name]
+    return provider_class(api_key=api_key)

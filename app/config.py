@@ -9,6 +9,7 @@ variables, making it easy to manage settings in different environments
 """
 
 from pydantic_settings import BaseSettings
+from typing import Optional
 import os
 
 class Settings(BaseSettings):
@@ -22,13 +23,24 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "your_anthropic_api_key_here")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "your_google_api_key_here")
 
+    # Model configuration file path
+    MODEL_CONFIG_PATH: str = "models.yaml"
+
+    # Default models for core tasks
+    PLANNING_MODEL: str = "gpt-4-turbo"
+    CRITIQUE_MODEL: str = "gpt-4"
+    SYNTHESIS_MODEL: str = "gpt-4-turbo"
+
     # Database and Cache configuration
     DATABASE_URL: str = "sqlite:///./llmhive.db"
     REDIS_URL: str = "redis://localhost:6379"
 
+    # Logging configuration
+    LOG_LEVEL: str = "INFO"
+
     # Application settings
     APP_NAME: str = "LLMHive"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     DEFAULT_MODEL: str = "gpt-4" # Default model for general tasks
 
