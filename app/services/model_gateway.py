@@ -8,7 +8,8 @@ APIs and response formats, exposing a standardized `call` method.
 
 from typing import List, Dict, Any, AsyncGenerator
 from pydantic import BaseModel
-from ..models.llm_provider import get_provider_for_model, LLMProvider
+from ..models.llm_provider import get_provider_by_name, LLMProvider
+from ..models.model_pool import model_pool
 
 class StandardizedResponse(BaseModel):
     """A standardized response object returned by the gateway."""
@@ -20,34 +21,33 @@ class ModelGateway:
     """A unified gateway to call any supported LLM provider."""
 
     async def call(
-        self,
-        provider_name: str,
-        model: str,
-        messages: List[Dict[str, str]],
-        stream: bool = False,
-        **kwargs
+        self, model_id: str, messages: List[Dict[str, str]], stream: bool = False, **kwargs
     ) -> StandardizedResponse | AsyncGenerator[str, None]:
-        """
-        Calls the specified model via its provider and returns a standardized response or stream.
+        """Calls the specified model via its provider."""
+        profile = model_pool.get_model_profile(model_id)
+        if not profile:
+            error_msg = f"Model '{model_id}' not found in ModelPool."
+            print(f"ERROR: {error_msg}")
+            if stream:
+                async def error_generator():
+                    yield error_msg
+                return error_generator()
+            return StandardizedResponse(content=error_msg)
 
-        Args:
-            provider_name: The name of the provider (e.g., 'openai', 'anthropic').
-            model: The specific model ID to use.
-            messages: The list of messages for the prompt.
-            stream: Whether to stream the response.
-            **kwargs: Additional provider-specific parameters.
-        """
         try:
-            provider = get_provider_for_model(provider_name)
-        except ValueError as e:
-            # Fallback to a default provider if the requested one is not found
-            print(f"Warning: {e}. Falling back to default provider.")
-            provider = get_provider_for_model("openai") # Assumes OpenAI is always available
-
-        if stream:
-            return self._stream_call(provider, model, messages, **kwargs)
-        else:
-            return await self._sync_call(provider, model, messages, **kwargs)
+            provider = get_provider_by_name(profile.provider)
+            if stream:
+                return self._stream_call(provider, model_id, messages, **kwargs)
+            else:
+                return await self._sync_call(provider, model_id, messages, **kwargs)
+        except Exception as e:
+            error_msg = f"Gateway error calling model '{model_id}': {e}"
+            print(f"ERROR: {error_msg}")
+            if stream:
+                async def error_generator():
+                    yield error_msg
+                return error_generator()
+            return StandardizedResponse(content=error_msg)
 
     async def _sync_call(
         self, provider: LLMProvider, model: str, messages: List[Dict[str, str]], **kwargs
