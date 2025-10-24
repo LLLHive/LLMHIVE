@@ -7,8 +7,10 @@ other attributes. The Orchestrator uses this information for dynamic model
 selection.
 """
 
+import yaml
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
+from ..config import settings
 
 class ModelProfile(BaseModel):
     """
@@ -22,40 +24,35 @@ class ModelProfile(BaseModel):
     role: Optional[str] = None # Role assigned for a specific task
 
 class ModelPool:
-    """
-    Manages the catalog of available LLMs.
-    """
-    def __init__(self):
-        # This catalog would ideally be loaded from a config file or database.
-        # Currently only OpenAI and Anthropic providers are fully implemented.
-        self._models = [
-            ModelProfile(
-                model_id="gpt-4", provider="openai",
-                strengths=["reasoning", "coding", "general"],
-                context_window=8192, cost_per_token=0.03
-            ),
-            ModelProfile(
-                model_id="gpt-4-turbo", provider="openai",
-                strengths=["reasoning", "coding", "general", "long-context"],
-                context_window=128000, cost_per_token=0.01
-            ),
-            ModelProfile(
-                model_id="claude-3-opus", provider="anthropic",
-                strengths=["writing", "long-context", "analysis"],
-                context_window=200000, cost_per_token=0.02
-            ),
-            ModelProfile(
-                model_id="claude-3-sonnet", provider="anthropic",
-                strengths=["writing", "analysis", "general"],
-                context_window=200000, cost_per_token=0.01
-            ),
-        ]
-        self._model_map = {model.model_id: model for model in self._models}
+    """Manages the catalog of available LLMs, loaded from a config file."""
+    def __init__(self, config_path: str = settings.MODEL_CONFIG_PATH):
+        self._models: Dict[str, ModelProfile] = self._load_models_from_config(config_path)
+        print(f"ModelPool loaded with {len(self._models)} models: {list(self._models.keys())}")
+
+    def _load_models_from_config(self, path: str) -> Dict[str, ModelProfile]:
+        try:
+            with open(path, 'r') as f:
+                config = yaml.safe_load(f)
+            models = [ModelProfile(**m) for m in config.get('models', [])]
+            return {model.model_id: model for model in models}
+        except FileNotFoundError:
+            print(f"Warning: Model config file not found at '{path}'. No models loaded.")
+            return {}
+        except Exception as e:
+            print(f"Error loading model config: {e}")
+            return {}
+
+    def get_model_profile(self, model_id: str) -> Optional[ModelProfile]:
+        """Retrieves a model profile by its ID."""
+        return self._models.get(model_id)
 
     def list_models(self) -> List[ModelProfile]:
-        """Returns a list of all available models."""
-        return self._models
+        """Returns a list of all available model profiles."""
+        return list(self._models.values())
 
     def get_model_by_id(self, model_id: str) -> Optional[ModelProfile]:
-        """Retrieves a model profile by its ID."""
-        return self._model_map.get(model_id)
+        """Retrieves a model profile by its ID. (Compatibility alias)"""
+        return self.get_model_profile(model_id)
+
+# Singleton instance
+model_pool = ModelPool()
