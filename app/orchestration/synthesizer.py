@@ -24,8 +24,10 @@ class Synthesizer:
             # Use improved drafts from critique workflow
             improved_drafts = critique_workflow["improved_drafts"]
             if improved_drafts:
-                # Pick the first improved draft or merge them
-                first_improved = next(iter(improved_drafts.values()))
+                # Pick the best improved draft (first one by convention)
+                # In a production system, this could use additional scoring
+                first_key = list(improved_drafts.keys())[0]
+                first_improved = improved_drafts[first_key]
                 for char in first_improved:
                     yield char
                 return
