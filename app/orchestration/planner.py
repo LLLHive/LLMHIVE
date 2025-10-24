@@ -36,11 +36,28 @@ class Planner:
         llm_response = await self.planner_agent.execute(planning_prompt)
         
         try:
-            # Extract the JSON part of the response
-            plan_json_str = llm_response[llm_response.find('{'):llm_response.rfind('}')+1]
+            # Extract the JSON part of the response using a more robust approach
+            # Look for the first complete JSON object
+            start_idx = llm_response.find('{')
+            if start_idx == -1:
+                raise json.JSONDecodeError("No JSON object found", llm_response, 0)
+            
+            # Find the matching closing brace by counting brackets
+            brace_count = 0
+            end_idx = start_idx
+            for i in range(start_idx, len(llm_response)):
+                if llm_response[i] == '{':
+                    brace_count += 1
+                elif llm_response[i] == '}':
+                    brace_count -= 1
+                    if brace_count == 0:
+                        end_idx = i + 1
+                        break
+            
+            plan_json_str = llm_response[start_idx:end_idx]
             plan_data = json.loads(plan_json_str)
             return Plan(**plan_data)
-        except (json.JSONDecodeError, TypeError, KeyError) as e:
+        except (json.JSONDecodeError, TypeError, KeyError, ValueError) as e:
             print(f"Error parsing LLM plan, falling back to default. Error: {e}")
             return self.fallback_plan(prompt)
 

@@ -97,10 +97,10 @@ PROVIDER_MAP = {
 }
 
 MODEL_PROVIDER_MAP = {
-    "gpt-4": "openai", "gpt-4-turbo": "openai",
-    "claude-3-opus": "anthropic", "claude-3-sonnet": "anthropic",
-    "gemini-pro": "google", # Google provider would be implemented similarly
-    "deepseek-coder": "openai", # Assuming DeepSeek has an OpenAI-compatible API
+    "gpt-4": "openai",
+    "gpt-4-turbo": "openai",
+    "claude-3-opus": "anthropic",
+    "claude-3-sonnet": "anthropic",
 }
 
 def get_provider_for_model(model_id: str) -> LLMProvider:
