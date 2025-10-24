@@ -11,11 +11,37 @@ from ..config import get_settings
 from ..database import get_db
 from ..models import Task
 from ..orchestrator import Orchestrator
-from ..schemas import Critique, Improvement, ModelAnswer, OrchestrationRequest, OrchestrationResponse
+from ..schemas import (
+    Critique,
+    Improvement,
+    ModelAnswer,
+    OrchestrationRequest,
+    OrchestrationResponse,
+)
 from ..services.base import ProviderNotConfiguredError
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _looks_like_stub_content(model: str, content: str) -> bool:
+    """Return True when the response content matches known stub patterns."""
+
+    if not content:
+        return False
+
+    normalized = content.strip().lower()
+    if not normalized:
+        return False
+
+    if normalized.startswith(f"[{model.lower()}] response to:"):
+        return True
+    if normalized.startswith("this is a stub response"):
+        return True
+    if "please configure api keys" in normalized:
+        return True
+
+    return False
 
 
 @lru_cache()
@@ -90,7 +116,9 @@ async def orchestrate(
     current_settings = get_settings()
 
     stub_models = [
-        answer.model for answer in artifacts.initial_responses if answer.provider == "stub"
+        answer.model
+        for answer in artifacts.initial_responses
+        if answer.provider == "stub" or _looks_like_stub_content(answer.model, answer.content)
     ]
 
     # Guardrail: real model names should never be served by the stub provider. If that
