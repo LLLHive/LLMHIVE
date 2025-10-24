@@ -30,9 +30,3 @@ class ModelSelector:
             if any(req in model.strengths for req in task_requirements):
                 selected_models.append(model)
         return selected_models
-
-
-# Example usage
-model_selector = ModelSelector()
-model_selector.add_model(ModelProfile("GPT-4", ["reasoning", "coding"], cost=0.06, latency=1.0))
-model_selector.add_model(ModelProfile("Claude", ["long-form writing"], cost=0.04, latency=1.2))
