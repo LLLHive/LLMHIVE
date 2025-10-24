@@ -6,6 +6,7 @@ of other agents. It helps ensure quality, accuracy, and adherence
 to instructions.
 """
 
+from typing import List, Dict
 from .base import Agent
 
 class CriticAgent(Agent):
@@ -15,19 +16,9 @@ class CriticAgent(Agent):
     def __init__(self, model_id: str = "gpt-4"):
         super().__init__(model_id, role="critic")
 
-    async def execute(self, prompt: str, context: str = "") -> str:
-        """
-        Evaluates the provided content based on a task prompt.
-        """
-        full_prompt = (
-            f"You are a meticulous critic. Your task is to review the following content based on the user's original request and the work of other agents. Provide constructive feedback.\n\n"
-            f"CONTEXT:\n---\n{context}\n---\n\n"
-            f"TASK FOR REVIEW: {prompt}\n\n"
-            f"Please provide your critique. Focus on accuracy, completeness, and clarity. Be specific in your feedback."
-        )
-
-        critique = await self.provider.generate(
-            prompt=full_prompt,
-            model=self.model_id
-        )
-        return critique
+    def _create_prompt(self, task: str, context: str) -> List[Dict[str, str]]:
+        """Creates the prompt messages for critique."""
+        # The 'task' for a critic is the content to be critiqued.
+        system_prompt = "You are a meticulous and constructive AI critic. Your task is to review a provided text and identify potential flaws, inaccuracies, or areas for improvement. Be specific and provide actionable feedback."
+        user_prompt = f"Please critique the following text. Focus on factual accuracy, logical consistency, clarity, and completeness. Do not be overly positive; your goal is to help improve the text.\n\nTEXT TO CRITIQUE:\n---\n{task}\n---\n\nADDITIONAL CONTEXT (for fact-checking and relevance):\n---\n{context}\n---"
+        return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]

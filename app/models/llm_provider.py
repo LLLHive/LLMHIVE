@@ -4,7 +4,7 @@ LLM Provider Interface and Factory.
 
 from abc import ABC, abstractmethod
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List, Dict
 from ..config import settings
 
 # Attempt to import real clients, but fail gracefully if not installed.
@@ -20,12 +20,12 @@ except ImportError:
 class LLMProvider(ABC):
     """Abstract base class for all LLM API providers."""
     @abstractmethod
-    async def generate(self, prompt: str, model: str, **kwargs) -> str:
+    async def generate(self, messages: List[Dict[str, str]], model: str, **kwargs) -> str:
         """Generates a full response."""
         pass
 
     @abstractmethod
-    async def generate_stream(self, prompt: str, model: str, **kwargs) -> AsyncGenerator[str, None]:
+    async def generate_stream(self, messages: List[Dict[str, str]], model: str, **kwargs) -> AsyncGenerator[str, None]:
         """Generates a response token by token."""
         pass
 
@@ -36,26 +36,25 @@ class OpenAIProvider(LLMProvider):
             raise ImportError("OpenAI client not found. Please install with 'pip install openai'.")
         self.client = AsyncOpenAI(api_key=api_key)
 
-    async def generate(self, prompt: str, model: str, **kwargs) -> str:
+    async def generate(self, messages: List[Dict[str, str]], model: str, **kwargs) -> str:
         print(f"Calling OpenAI model '{model}'...")
         try:
             response = await self.client.chat.completions.create(
-                model=model, messages=[{"role": "user", "content": prompt}], **kwargs
+                model=model, messages=messages, **kwargs
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content or ""
         except Exception as e:
             print(f"Error calling OpenAI: {e}")
             return f"Error: Could not get response from {model}."
 
-    async def generate_stream(self, prompt: str, model: str, **kwargs) -> AsyncGenerator[str, None]:
+    async def generate_stream(self, messages: List[Dict[str, str]], model: str, **kwargs) -> AsyncGenerator[str, None]:
         print(f"Streaming from OpenAI model '{model}'...")
         try:
             stream = await self.client.chat.completions.create(
-                model=model, messages=[{"role": "user", "content": prompt}], stream=True, **kwargs
+                model=model, messages=messages, stream=True, **kwargs
             )
             async for chunk in stream:
-                content = chunk.choices[0].delta.content
-                if content:
+                if content := chunk.choices[0].delta.content:
                     yield content
         except Exception as e:
             print(f"Error streaming from OpenAI: {e}")
@@ -68,22 +67,27 @@ class AnthropicProvider(LLMProvider):
             raise ImportError("Anthropic client not found. Please install with 'pip install anthropic'.")
         self.client = AsyncAnthropic(api_key=api_key)
 
-    async def generate(self, prompt: str, model: str, **kwargs) -> str:
+    async def generate(self, messages: List[Dict[str, str]], model: str, **kwargs) -> str:
         print(f"Calling Anthropic model '{model}'...")
         try:
+            # Anthropic requires system prompt to be a top-level parameter
+            system_prompt = next((msg['content'] for msg in messages if msg['role'] == 'system'), None)
+            user_messages = [msg for msg in messages if msg['role'] != 'system']
             response = await self.client.messages.create(
-                model=model, max_tokens=2048, messages=[{"role": "user", "content": prompt}], **kwargs
+                model=model, max_tokens=4096, messages=user_messages, system=system_prompt, **kwargs
             )
             return response.content[0].text
         except Exception as e:
             print(f"Error calling Anthropic: {e}")
             return f"Error: Could not get response from {model}."
 
-    async def generate_stream(self, prompt: str, model: str, **kwargs) -> AsyncGenerator[str, None]:
+    async def generate_stream(self, messages: List[Dict[str, str]], model: str, **kwargs) -> AsyncGenerator[str, None]:
         print(f"Streaming from Anthropic model '{model}'...")
         try:
+            system_prompt = next((msg['content'] for msg in messages if msg['role'] == 'system'), None)
+            user_messages = [msg for msg in messages if msg['role'] != 'system']
             async with self.client.messages.stream(
-                model=model, max_tokens=2048, messages=[{"role": "user", "content": prompt}], **kwargs
+                model=model, max_tokens=4096, messages=user_messages, system=system_prompt, **kwargs
             ) as stream:
                 async for text in stream.text_stream:
                     yield text
