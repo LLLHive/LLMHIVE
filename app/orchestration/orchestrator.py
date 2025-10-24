@@ -6,7 +6,7 @@ workflow from prompt analysis to final response synthesis. It coordinates
 the various components like the Planner, Router, and Synthesizer.
 """
 import asyncio
-from typing import Dict, Any, AsyncGenerator
+from typing import Dict, Any, AsyncGenerator, List
 
 from .planner import Planner
 from .router import Router
@@ -56,6 +56,56 @@ class Orchestrator:
             
         blackboard.set(output_key, result)
 
+    async def _execute_task(self, role: str, task: str, context: str, dream_team: list) -> str:
+        """Executes a single agent task and returns the result."""
+        model_profile = next((m for m in dream_team if m.role == role), dream_team[0])
+        agent = self._get_agent_for_role(role, model_profile.model_id)
+        print(f"Executing: Role '{role}' with task: '{task[:50]}...'")
+        result = await agent.execute(task, context=context)
+        if self.validator.check_content_policy(result):
+            return "[Content Redacted due to Policy Violation]"
+        return result
+
+    async def _execute_critique_and_improve(self, block: Dict[str, Any], blackboard: Blackboard, dream_team: list):
+        """Executes the high-accuracy critique and improve workflow."""
+        drafting_task = block['drafting_task']
+        drafting_roles = block['drafting_agents']
+        improving_role = block['improving_agent']
+        
+        print(f"\n--- Starting Critique & Improve Workflow ---")
+        # 1. Parallel Drafting
+        context = blackboard.get_full_context()
+        drafting_coros = {role: self._execute_task(role, drafting_task, context, dream_team) for role in drafting_roles}
+        draft_results = await asyncio.gather(*drafting_coros.values())
+        drafts = dict(zip(drafting_roles, draft_results))
+        for role, draft in drafts.items():
+            blackboard.set(f"results.draft_{role}", draft)
+        
+        # 2. Cross-Critique
+        critique_coros = {}
+        for i, (role, draft) in enumerate(drafts.items()):
+            critic_role = drafting_roles[(i + 1) % len(drafting_roles)] # Other agent acts as critic
+            critique_task = draft # The content to critique is the other's draft
+            critic_agent = self._get_agent_for_role("critic", self.router.get_best_model_for_role("critic").model_id)
+            critique_coros[f"critique_on_{role}"] = critic_agent.execute(critique_task, context=context)
+        
+        critique_results = await asyncio.gather(*critique_coros.values())
+        critiques = dict(zip(critique_coros.keys(), critique_results))
+        for key, critique in critiques.items():
+            blackboard.set(f"results.{key}", critique)
+
+        # 3. Improvement
+        improvement_coros = {}
+        for role, draft in drafts.items():
+            feedback = critiques.get(f"critique_on_{role}", "No feedback received.")
+            improvement_task = f"Based on the following critique, please improve your original draft.\n\nCRITIQUE:\n{feedback}\n\nORIGINAL DRAFT:\n{draft}"
+            improvement_coros[f"improved_{role}"] = self._execute_task(improving_role, improvement_task, context, dream_team)
+        
+        improved_results = await asyncio.gather(*improvement_coros.values())
+        for i, role in enumerate(drafting_roles):
+             blackboard.set(f"results.improved_{role}", improved_results[i])
+        print("--- Critique & Improve Workflow Complete ---\n")
+
     async def run(self, prompt: str) -> AsyncGenerator[str, None]:
         """
         Executes the full orchestration pipeline and streams the final answer.
@@ -76,6 +126,9 @@ class Orchestrator:
                 for step in block['steps']:
                     if 'role' in step:
                         all_roles.add(step['role'])
+            elif block.get('type') == 'critique_and_improve':
+                all_roles.update(block.get('drafting_agents', []))
+                all_roles.add(block.get('improving_agent', 'lead'))
         
         dream_team = self.router.select_models(all_roles)
         print(f"Dream team selected: {[(m.model_id, m.role) for m in dream_team]}")
@@ -89,6 +142,8 @@ class Orchestrator:
             elif block['type'] == 'parallel':
                 tasks = [self._execute_step(step, blackboard, dream_team) for step in block['steps']]
                 await asyncio.gather(*tasks)
+            elif block['type'] == 'critique_and_improve':
+                await self._execute_critique_and_improve(block, blackboard, dream_team)
 
         # Iterative Refinement Example (Critic-Editor loop)
         critic_feedback = blackboard.get("results.critic")
