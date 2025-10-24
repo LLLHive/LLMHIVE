@@ -17,11 +17,17 @@ class CriticAgent(Agent):
 
     async def execute(self, prompt: str, context: str = "") -> str:
         """
-        Evaluates the provided content.
-
-        This is a stub. A real implementation would use an LLM call with a
-        specialized prompt to review the context.
+        Evaluates the provided content based on a task prompt.
         """
-        print(f"Critic Agent ({self.model_id}) evaluating: '{context}'")
-        critique = f"This is a good start, but consider elaborating on the key points. The section on '{prompt}' could be clearer."
+        full_prompt = (
+            f"You are a meticulous critic. Your task is to review the following content based on the user's original request and the work of other agents. Provide constructive feedback.\n\n"
+            f"CONTEXT:\n---\n{context}\n---\n\n"
+            f"TASK FOR REVIEW: {prompt}\n\n"
+            f"Please provide your critique. Focus on accuracy, completeness, and clarity. Be specific in your feedback."
+        )
+
+        critique = await self.provider.generate(
+            prompt=full_prompt,
+            model=self.model_id
+        )
         return critique

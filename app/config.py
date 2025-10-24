@@ -18,9 +18,9 @@ class Settings(BaseSettings):
     OpenAI API key, define an environment variable named `OPENAI_API_KEY`.
     """
     # API Keys for various LLM providers
-    OPENAI_API_KEY: str = "your_openai_api_key_here"
-    ANTHROPIC_API_KEY: str = "your_anthropic_api_key_here"
-    GOOGLE_API_KEY: str = "your_google_api_key_here"
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "your_openai_api_key_here")
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "your_anthropic_api_key_here")
+    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "your_google_api_key_here")
 
     # Database and Cache configuration
     DATABASE_URL: str = "sqlite:///./llmhive.db"
@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "LLMHive"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
+    DEFAULT_MODEL: str = "gpt-4" # Default model for general tasks
 
     class Config:
         # This allows loading variables from a .env file for local development
