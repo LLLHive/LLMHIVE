@@ -89,22 +89,41 @@ async def orchestrate(
 
     current_settings = get_settings()
 
-    if current_settings.fail_on_stub_responses:
-        stub_models = [
-            answer.model for answer in artifacts.initial_responses if answer.provider == "stub"
-        ]
-        if stub_models:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={
-                    "message": (
-                        "Stub provider responses are disabled. Configure real provider credentials or set "
-                        "FAIL_ON_STUB_RESPONSES=0 for development overrides."
-                    ),
-                    "models": stub_models,
-                    "providers": orchestrator.provider_status(),
-                },
-            )
+    stub_models = [
+        answer.model for answer in artifacts.initial_responses if answer.provider == "stub"
+    ]
+
+    # Guardrail: real model names should never be served by the stub provider. If that
+    # happens we fail loudly regardless of the fail-on-stub setting so operators know
+    # credentials are missing or misconfigured.
+    real_model_stub_responses = [
+        model for model in stub_models if "stub" not in model.lower()
+    ]
+    if real_model_stub_responses:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "message": (
+                    "Stub provider responses were generated for real model requests. "
+                    "Verify provider API keys and deployment settings."
+                ),
+                "models": real_model_stub_responses,
+                "providers": orchestrator.provider_status(),
+            },
+        )
+
+    if current_settings.fail_on_stub_responses and stub_models:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "message": (
+                    "Stub provider responses are disabled. Configure real provider credentials or set "
+                    "FAIL_ON_STUB_RESPONSES=0 for development overrides."
+                ),
+                "models": stub_models,
+                "providers": orchestrator.provider_status(),
+            },
+        )
 
     initial = [
         ModelAnswer(model=ans.model, content=ans.content, provider=ans.provider)
