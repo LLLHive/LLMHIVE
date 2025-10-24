@@ -6,6 +6,7 @@ external sources (like web search or databases), and providing supporting
 evidence for other agents.
 """
 
+from typing import List, Dict
 from .base import Agent
 import asyncio
 
@@ -23,23 +24,31 @@ class ResearcherAgent(Agent):
         await asyncio.sleep(1) # Simulate network latency
         return f"Simulated search results show that '{query}' is tied to recent AI advancements and has significant economic implications."
 
-    async def execute(self, prompt: str, context: str = "") -> str:
+    def _create_prompt(self, task: str, context: str) -> List[Dict[str, str]]:
+        """Creates the prompt messages for research synthesis."""
+        synthesis_prompt = (
+            f"You are a research analyst. Based on the following search results, synthesize the key findings and provide a summary for the topic: '{task}'.\n\n"
+            f"SEARCH RESULTS:\n---\n{context}\n---\n\n"
+            f"Please provide a concise summary of your findings."
+        )
+        return [{"role": "user", "content": synthesis_prompt}]
+
+    async def execute(self, task: str, context: str = "") -> str:
         """
         Performs research on the given topic, using a simulated web search.
         """
         # A real agent might first use an LLM to determine what to search for.
-        search_query = prompt
+        search_query = task
         
         search_results = await self._search_web(search_query)
 
-        synthesis_prompt = (
-            f"You are a research analyst. Based on the following search results, synthesize the key findings and provide a summary for the topic: '{prompt}'.\n\n"
-            f"SEARCH RESULTS:\n---\n{search_results}\n---\n\n"
-            f"Please provide a concise summary of your findings."
-        )
+        # Override context with search results for research synthesis
+        messages = self._create_prompt(task, search_results)
         
-        research_summary = await self.provider.generate(
-            prompt=synthesis_prompt,
-            model=self.model_id
+        from ..services.model_gateway import model_gateway
+        response = await model_gateway.call(
+            provider_name=self.provider_name,
+            model=self.model_id,
+            messages=messages
         )
-        return research_summary
+        return response.content

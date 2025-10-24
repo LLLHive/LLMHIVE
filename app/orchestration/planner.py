@@ -71,52 +71,27 @@ class Planner:
 
     def _build_planning_prompt(self, prompt: str) -> str:
         return f"""
-You are an expert AI orchestrator. Your job is to create a detailed, step-by-step execution plan to answer a user's prompt by coordinating a team of specialized AI agents.
+You are an expert AI orchestrator creating a JSON execution plan for a team of AI agents.
 
 Available Agent Roles:
-- lead: A general-purpose, high-capability agent for drafting, analysis, or complex reasoning.
-- researcher: An agent with web search capabilities to find up-to-date information.
-- critic: An agent that reviews the work of other agents for accuracy, clarity, and completeness.
-- editor: An agent that refines and polishes text into a final, well-formatted response.
+- lead: General-purpose agent for drafting and analysis.
+- researcher: Agent with web search to find facts.
+- critic: Agent that reviews another agent's work.
+- editor: Agent that polishes final text.
 
-Your plan must be in a valid JSON format. The plan can include 'sequential' and 'parallel' execution blocks.
+Available Plan Types:
+1. `simple`: A single agent performs a single task.
+   `{{"type": "simple", "role": "lead", "task": "..."}}`
+2. `sequential`: A series of agents perform tasks in order.
+   `{{"type": "sequential", "steps": [...]}}`
+3. `parallel`: Multiple agents perform tasks simultaneously.
+   `{{"type": "parallel", "steps": [...]}}`
+4. `critique_and_improve`: Generate parallel drafts, have them critique each other, then improve based on feedback. This is for maximum accuracy on complex, subjective, or creative tasks.
+   `{{"type": "critique_and_improve", "drafting_task": "...", "drafting_agents": ["lead", "analyst"], "improving_agent": "lead"}}`
 
-- Use 'sequential' when steps must happen in order.
-- Use 'parallel' when tasks can be performed simultaneously (e.g., getting two different perspectives).
-
-Example for a complex research query:
-{{
-  "reasoning": "The user is asking a complex question that requires research, analysis, and a well-structured answer. I will first use a researcher to gather facts, then have a lead agent analyze them, a critic to review the analysis, and finally an editor to polish the response.",
-  "steps": [
-    {{
-      "type": "sequential",
-      "steps": [
-        {{"role": "researcher", "task": "Gather up-to-date information and key facts about the user's query."}},
-        {{"role": "lead", "task": "Analyze the gathered information and draft a comprehensive answer."}},
-        {{"role": "critic", "task": "Review the drafted answer for factual accuracy and logical consistency. Provide specific feedback for improvement."}},
-        {{"role": "editor", "task": "Incorporate the critic's feedback into the draft and produce a polished, final answer."}}
-      ]
-    }}
-  ],
-  "synthesis_strategy": "llm_merge"
-}}
-
-Example for a query asking for pros and cons:
-{{
-  "reasoning": "The user wants pros and cons. I can get two perspectives in parallel to generate diverse ideas and then merge them.",
-  "steps": [
-    {{
-      "type": "parallel",
-      "steps": [
-        {{"role": "lead", "task": "Generate a strong argument for the 'pros' of the user's query.", "output_key": "pros_argument"}},
-        {{"role": "lead", "task": "Generate a strong argument for the 'cons' of the user's query.", "output_key": "cons_argument"}}
-      ]
-    }}
-  ],
-  "synthesis_strategy": "llm_merge"
-}}
+Based on the user's prompt, create the optimal plan. Prioritize `critique_and_improve` for complex, high-stakes queries.
 
 User's Prompt: "{prompt}"
 
-Now, create the JSON plan for this prompt.
+JSON Plan:
 """
