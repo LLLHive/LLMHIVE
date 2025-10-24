@@ -1,8 +1,9 @@
 """API tests for orchestration endpoint."""
 
 from llmhive.app.api.orchestration import get_orchestrator
-from llmhive.app.orchestrator import Orchestrator
+from llmhive.app.orchestrator import Orchestrator, OrchestrationArtifacts
 from llmhive.app.schemas import OrchestrationRequest
+from llmhive.app.services.base import LLMResult
 from llmhive.app.services.stub_provider import StubProvider
 
 
@@ -62,6 +63,43 @@ def test_orchestrate_raises_when_stub_used_for_real_model(client):
 
     assert response.status_code == 400
     assert response.json()["detail"]["models"] == ["gpt-4"]
+
+
+def test_orchestrate_raises_when_stub_results_for_real_models(client):
+    class FakeStubOrchestrator:
+        def provider_status(self):
+            return {"stub": {"status": "available", "stub": True, "provider": "StubProvider"}}
+
+        async def orchestrate(self, prompt, models=None):  # pragma: no cover - exercised in test
+            return OrchestrationArtifacts(
+                initial_responses=[
+                    LLMResult(
+                        content="stub",
+                        model="gpt-4",
+                        provider="stub",
+                    )
+                ],
+                critiques=[],
+                improvements=[],
+                final_response=LLMResult(
+                    content="stub final", model="gpt-4", provider="stub"
+                ),
+            )
+
+    client.app.dependency_overrides[get_orchestrator] = lambda: FakeStubOrchestrator()
+
+    try:
+        response = client.post(
+            "/api/v1/orchestration/",
+            json={"prompt": "Ping"},
+        )
+    finally:
+        client.app.dependency_overrides.pop(get_orchestrator, None)
+
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert detail["models"] == ["gpt-4"]
+    assert "Stub provider responses were generated" in detail["message"]
 
 
 def test_providers_endpoint_lists_stub_provider(client):
