@@ -84,6 +84,30 @@ class StubProvider(LLMProvider):
             else:
                 return "I would need to know which country you're asking about to answer what its capital is."
         
+        # List questions about cities
+        if "list" in prompt_lower or "largest" in prompt_lower or "biggest" in prompt_lower:
+            if ("europe" in prompt_lower or "european" in prompt_lower) and ("city" in prompt_lower or "cities" in prompt_lower):
+                return """Here are Europe's 5 largest cities by population:
+1. Istanbul, Turkey
+2. Moscow, Russia
+3. London, United Kingdom
+4. Saint Petersburg, Russia
+5. Berlin, Germany"""
+            elif ("world" in prompt_lower or "global" in prompt_lower) and ("city" in prompt_lower or "cities" in prompt_lower):
+                return """Here are the world's 5 largest cities by population:
+1. Tokyo, Japan
+2. Delhi, India
+3. Shanghai, China
+4. São Paulo, Brazil
+5. Mexico City, Mexico"""
+            elif ("usa" in prompt_lower or "united states" in prompt_lower or "american" in prompt_lower or " us " in prompt_lower or prompt_lower.startswith("us ") or prompt_lower.endswith(" us")) and ("city" in prompt_lower or "cities" in prompt_lower):
+                return """Here are the 5 largest cities in the United States by population:
+1. New York City, New York
+2. Los Angeles, California
+3. Chicago, Illinois
+4. Houston, Texas
+5. Phoenix, Arizona"""
+        
         # General questions - provide a generic but helpful response
         return f"This is a stub response. The question '{prompt[:MAX_PROMPT_PREVIEW_LENGTH]}' would normally be answered by a real LLM provider. Please configure API keys for OpenAI, Anthropic, or other providers to get actual AI responses."
 
