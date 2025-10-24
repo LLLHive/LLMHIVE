@@ -53,11 +53,20 @@ class Blackboard:
         Appends a value to a list on the blackboard. Creates the list if it doesn't exist.
         """
         with self._lock:
-            current_list = self.get(key, [])
+            # Get the current list directly without calling self.get() to avoid deadlock
+            keys = key.split('.')
+            d = self._data
+            for k in keys[:-1]:
+                d = d.setdefault(k, {})
+            
+            final_key = keys[-1]
+            if final_key not in d:
+                d[final_key] = []
+            
+            current_list = d[final_key]
             if not isinstance(current_list, list):
                 raise TypeError(f"Key '{key}' does not point to a list.")
             current_list.append(value)
-            self.set(key, current_list)
 
     def get_full_context(self) -> str:
         """
