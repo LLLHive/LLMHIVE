@@ -6,22 +6,18 @@ workflow from prompt analysis to final response synthesis. It coordinates
 the various components like the Planner, Router, and Synthesizer.
 """
 import asyncio
-from typing import Dict
+from typing import Dict, Any, AsyncGenerator
 
-from .planner import Planner, Plan
+from .planner import Planner
 from .router import Router
 from .synthesizer import Synthesizer
+from .blackboard import Blackboard
 from ..memory.conversation_memory import ConversationMemory
-from ..agents import (
-    Agent, ResearcherAgent, CriticAgent, EditorAgent, LeadAgent
-)
+from ..agents import Agent, ResearcherAgent, CriticAgent, EditorAgent, LeadAgent
 from ..core.validators import Validator
 
-
 class Orchestrator:
-    """
-    Orchestrates the multi-agent workflow.
-    """
+    """Orchestrates the multi-agent workflow."""
     def __init__(self, user_id: str):
         self.user_id = user_id
         self.planner = Planner()
@@ -31,75 +27,90 @@ class Orchestrator:
         self.validator = Validator()
 
     def _get_agent_for_role(self, role: str, model_id: str) -> Agent:
-        """Factory function to get an agent instance based on role.
-        
-        Note: LeadAgent is used for 'analyst' role as it's suitable for 
-        general-purpose analysis tasks that require comprehensive reasoning.
-        """
+        """Factory function to get an agent instance based on role."""
         role_map = {
-            "researcher": ResearcherAgent,
-            "critic": CriticAgent,
-            "editor": EditorAgent,
-            "lead": LeadAgent,
-            "analyst": LeadAgent,  # LeadAgent handles general-purpose analysis
+            "researcher": ResearcherAgent, "critic": CriticAgent,
+            "editor": EditorAgent, "lead": LeadAgent, "analyst": LeadAgent,
         }
         agent_class = role_map.get(role.lower())
         if not agent_class:
             raise ValueError(f"No agent class found for role: {role}")
         return agent_class(model_id=model_id)
 
-    async def run(self, prompt: str) -> str:
+    async def _execute_step(self, step: Dict[str, Any], blackboard: Blackboard, dream_team: list):
+        """Executes a single agent task."""
+        agent_role = step['role']
+        task_prompt = step['task']
+        output_key = step.get('output_key', f"results.{agent_role}")
+
+        model_profile = next((m for m in dream_team if m.role == agent_role), dream_team[0])
+        agent = self._get_agent_for_role(agent_role, model_profile.model_id)
+        
+        print(f"Executing: Role '{agent_role}' using model '{agent.model_id}'")
+        
+        context = blackboard.get_full_context()
+        result = await agent.execute(task_prompt, context=context)
+        
+        if self.validator.check_content_policy(result):
+            result = "[Content Redacted due to Policy Violation]"
+            
+        blackboard.set(output_key, result)
+
+    async def run(self, prompt: str) -> AsyncGenerator[str, None]:
         """
-        Executes the full orchestration pipeline for a given prompt.
+        Executes the full orchestration pipeline and streams the final answer.
         """
         print(f"Orchestrator running for user '{self.user_id}' with prompt: '{prompt}'")
-
-        # 1. Get context from memory
+        
+        blackboard = Blackboard(prompt)
         context_history = self.memory.retrieve_history()
+        blackboard.set("history", context_history)
 
-        # 2. Analyze prompt and create a plan
-        plan = self.planner.create_plan(prompt, context_history)
-        print(f"Plan created with {len(plan.steps)} steps.")
+        plan = await self.planner.create_plan(prompt, context_history)
+        print(f"Plan created with {len(plan.steps)} blocks. Reasoning: {plan.reasoning}")
 
-        # 3. Select models based on the plan
-        dream_team = self.router.select_models(plan)
-        print(f"Dream team selected: {[model.model_id for model in dream_team]}")
+        # Extract all required roles from the plan structure
+        all_roles = set()
+        for block in plan.steps:
+            if 'steps' in block:
+                for step in block['steps']:
+                    if 'role' in step:
+                        all_roles.add(step['role'])
+        
+        dream_team = self.router.select_models(all_roles)
+        print(f"Dream team selected: {[(m.model_id, m.role) for m in dream_team]}")
 
-        # 4. Execute the plan
-        partial_results: Dict[str, str] = {}
-        shared_context = f"Original Prompt: {prompt}\n\nConversation History:\n{''.join(context_history)}"
+        # Execute plan blocks
+        for i, block in enumerate(plan.steps):
+            print(f"Executing block {i+1}/{len(plan.steps)}: Type '{block['type']}'")
+            if block['type'] == 'sequential':
+                for step in block['steps']:
+                    await self._execute_step(step, blackboard, dream_team)
+            elif block['type'] == 'parallel':
+                tasks = [self._execute_step(step, blackboard, dream_team) for step in block['steps']]
+                await asyncio.gather(*tasks)
 
-        # Sequentially execute steps to allow building on previous results
-        for i, step in enumerate(plan.steps):
-            agent_role = step['role']
-            task_prompt = step['task']
+        # Iterative Refinement Example (Critic-Editor loop)
+        critic_feedback = blackboard.get("results.critic")
+        if critic_feedback:
+            print("Critic feedback found. Starting refinement loop...")
+            refinement_task = "Incorporate the following critic feedback into the draft answer and produce the final version."
+            editor_agent = self._get_agent_for_role("editor", self.router.get_best_model_for_role("editor").model_id)
+            final_draft = await editor_agent.execute(refinement_task, context=blackboard.get_full_context())
+            blackboard.set("results.final_draft", final_draft)
 
-            # Find the model assigned to this role, or use the first in the team as fallback
-            model_profile = next((m for m in dream_team if m.role == agent_role), dream_team[0])
-            agent = self._get_agent_for_role(agent_role, model_profile.model_id)
-            
-            print(f"Executing step {i+1}/{len(plan.steps)}: Role '{agent_role}' using model '{agent.model_id}'")
+        # Synthesize and stream the final answer
+        final_answer_stream = self.synthesizer.synthesize_stream(blackboard, plan, prompt)
+        
+        final_answer_text = ""
+        async for token in final_answer_stream:
+            final_answer_text += token
+            yield token
+        
+        print(f"Final Answer: {final_answer_text}")
 
-            # The agent receives the specific task and the shared context (including previous results)
-            result = await agent.execute(task_prompt, context=shared_context)
-
-            # Validate the intermediate result
-            if self.validator.check_content_policy(result):
-                result = "[Content Redacted due to Policy Violation]"
-
-            partial_results[agent_role] = result
-            # Update shared context for the next agent
-            shared_context += f"\n\n--- Result from {agent_role} ---\n{result}"
-
-        # 5. Synthesize the final answer using an LLM
-        final_answer = await self.synthesizer.synthesize(partial_results, plan, prompt)
-        print(f"Synthesized answer: {final_answer}")
-
-        # 6. Final validation
-        if self.validator.check_for_pii(final_answer):
-            final_answer += "\n\n[Warning: This response may contain sensitive information.]"
-
-        # 7. Store interaction in memory
-        self.memory.store_interaction(prompt, final_answer)
-
-        return final_answer
+        # Final validation and memory update
+        if self.validator.check_for_pii(final_answer_text):
+            yield "\n\n[Warning: This response may contain sensitive information.]"
+        
+        self.memory.store_interaction(prompt, final_answer_text)
