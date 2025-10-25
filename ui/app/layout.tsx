@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
@@ -7,13 +8,15 @@ export const metadata: Metadata = {
   description: "Multi-Agent LLM Orchestration Platform",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode; }>) {
+  const session = await auth();
+  
   return (
     <html lang="en">
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider session={session}>{children}</SessionProvider>
       </body>
     </html>
   );
