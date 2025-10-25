@@ -7,7 +7,7 @@ class Router:
         self.preferred_models = preferred_models
 
     def assign_models_to_roles(self, required_roles: Set[str]) -> Dict[str, str]:
-        assignments: Dict[str, str] = {{}}
+        assignments: Dict[str, str] = {}
         
         available_models = model_pool.list_models()
         if self.preferred_models:
