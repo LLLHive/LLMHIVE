@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "your_openai_api_key_here")
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "your_anthropic_api_key_here")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "your_google_api_key_here")
+    TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "your_tavily_api_key_here")  # API Key for web search tool
 
     # Model configuration file path
     MODEL_CONFIG_PATH: str = "models.yaml"
@@ -40,7 +41,7 @@ class Settings(BaseSettings):
 
     # Application settings
     APP_NAME: str = "LLMHive"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "1.1.0"
     DEBUG: bool = False
     DEFAULT_MODEL: str = "gpt-4" # Default model for general tasks
 
