@@ -21,9 +21,12 @@ app = FastAPI(
 
 # Add CORS Middleware
 # This allows our Vercel-hosted frontend to make requests to this backend.
+# Configure allowed origins via the CORS_ORIGINS environment variable.
+# For production, set CORS_ORIGINS to your frontend domain (e.g., "https://llmhive.vercel.app")
+allowed_origins = settings.CORS_ORIGINS.split(",") if settings.CORS_ORIGINS else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, you should restrict this to your frontend's domain.
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
