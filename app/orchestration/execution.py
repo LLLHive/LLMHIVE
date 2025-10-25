@@ -8,11 +8,15 @@ from ..core.validators import Validator
 def get_agent(role: str, model_id: str) -> Agent:
     """Factory function to instantiate an agent."""
     role_map = {
-        "researcher": ResearcherAgent, "critic": CriticAgent,
-        "editor": EditorAgent, "lead": LeadAgent, "analyst": LeadAgent,
+        "researcher": ResearcherAgent,
+        "critic": CriticAgent,
+        "editor": EditorAgent,
+        "lead": LeadAgent,
+        "analyst": LeadAgent,
     }
     agent_class = role_map.get(role.lower())
-    if not agent_class: raise ValueError(f"Agent role '{role}' not supported.")
+    if not agent_class:
+        raise ValueError(f"Agent role '{role}' not supported.")
     return agent_class(model_id=model_id)
 
 async def execute_task(role: str, model_id: str, task: str, blackboard: Blackboard) -> str:

@@ -35,10 +35,6 @@ class Router:
             best_model = self._find_best_model_for_role(role, available_models)
             assignments[role] = best_model.model_id
         
-        # Ensure critic role gets a strong model if not otherwise assigned
-        if "critic" in required_roles and "critic" not in assignments:
-             assignments["critic"] = settings.CRITIQUE_MODEL
-        
         print(f"Router assignments: {assignments}")
         return assignments
 
