@@ -1,26 +1,14 @@
-"""
-Shared Task Execution Logic for Protocols.
-"""
 from .blackboard import Blackboard
 from ..agents import Agent, ResearcherAgent, CriticAgent, EditorAgent, LeadAgent
 from ..core.validators import Validator
 
 def get_agent(role: str, model_id: str) -> Agent:
-    """Factory function to instantiate an agent."""
-    role_map = {
-        "researcher": ResearcherAgent,
-        "critic": CriticAgent,
-        "editor": EditorAgent,
-        "lead": LeadAgent,
-        "analyst": LeadAgent,
-    }
+    role_map = {"researcher": ResearcherAgent, "critic": CriticAgent, "editor": EditorAgent, "lead": LeadAgent, "analyst": LeadAgent}
     agent_class = role_map.get(role.lower())
-    if not agent_class:
-        raise ValueError(f"Agent role '{role}' not supported.")
+    if not agent_class: raise ValueError(f"Agent role '{role}' not supported.")
     return agent_class(model_id=model_id)
 
 async def execute_task(role: str, model_id: str, task: str, blackboard: Blackboard) -> str:
-    """Executes a single, robust agent task and returns the result."""
     context = blackboard.get_full_context()
     validator = Validator()
     try:
@@ -32,6 +20,5 @@ async def execute_task(role: str, model_id: str, task: str, blackboard: Blackboa
         return result
     except Exception as e:
         error_msg = f"FAILURE: Role '{role}' on model '{model_id}' failed. Error: {e}"
-        print(f"ERROR: {error_msg}")
         blackboard.append_to_list("logs.errors", error_msg)
         return f"Agent {role} failed to execute."

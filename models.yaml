@@ -1,12 +1,9 @@
-# Central configuration for all available LLM models in LLMHive.
-# This file is the single source of truth for model management.
-
 models:
   - model_id: "gpt-4-turbo"
     provider: "openai"
     strengths: ["reasoning", "coding", "general"]
     context_window: 128000
-    cost_per_token: 0.01 # Example cost
+    cost_per_token: 0.01
 
   - model_id: "gpt-4"
     provider: "openai"

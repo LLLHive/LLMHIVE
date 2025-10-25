@@ -1,12 +1,4 @@
-"""
-The Orchestrator Engine for LLMHive.
-
-This is the "brain" of the platform, responsible for managing the entire
-workflow from prompt analysis to final response synthesis. It coordinates
-the various components like the Planner, Router, and Synthesizer.
-"""
 from typing import Any, AsyncGenerator, List, Set, Optional, Dict
-
 from .planner import Planner
 from .router import Router
 from .synthesizer import Synthesizer
@@ -16,7 +8,6 @@ from ..protocols.simple_protocol import SimpleProtocol
 from ..protocols.critique_and_improve_protocol import CritiqueAndImproveProtocol
 
 class Orchestrator:
-    """Orchestrates the multi-agent workflow."""
     def __init__(self, user_id: str, preferred_models: Optional[List[str]] = None, preferred_protocol: Optional[str] = None):
         self.user_id = user_id
         self.planner = Planner(preferred_protocol)
@@ -29,11 +20,6 @@ class Orchestrator:
         }
 
     async def run(self, prompt: str) -> AsyncGenerator[str, None]:
-        """
-        Executes the full orchestration pipeline and streams the final answer.
-        """
-        print(f"Orchestrator running for user '{self.user_id}' with prompt: '{prompt}'")
-        
         blackboard = Blackboard(prompt)
         blackboard.set("history", "\n".join(self.memory.retrieve_history()))
 
@@ -59,7 +45,6 @@ class Orchestrator:
         self.memory.store_interaction(prompt, final_answer_text)
 
     def _extract_roles_from_plan(self, protocol: str, params: Dict[str, Any]) -> Set[str]:
-        """Extract all unique roles from the plan."""
         roles = set()
         if protocol == "simple":
             roles.add(params.get("role", "lead"))
