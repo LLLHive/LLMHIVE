@@ -4,25 +4,35 @@ The Router component of the Orchestrator Engine.
 Responsible for dynamic model selection ("Dream Team" assembly).
 """
 
-from typing import Set, Dict, List
+from typing import Set, Dict, List, Optional
 from ..models.model_pool import model_pool, ModelProfile
+from ..config import settings
 
 class Router:
     """Selects the optimal set of LLMs for a given set of required roles."""
-    def __init__(self):
-        pass
+    def __init__(self, preferred_models: Optional[List[str]] = None):
+        self.preferred_models = preferred_models
 
     def assign_models_to_roles(self, required_roles: Set[str]) -> Dict[str, str]:
         """Assigns the best available model for each required role."""
         assignments: Dict[str, str] = {}
-        all_models = model_pool.list_models()
-        if not all_models:
-            raise ValueError("ModelPool is empty. Cannot make assignments.")
+        
+        available_models = model_pool.list_models()
+        if self.preferred_models:
+            # Filter the pool to only include user-preferred models
+            preferred_pool = [m for m in available_models if m.model_id in self.preferred_models]
+            if preferred_pool:
+                available_models = preferred_pool
+            else:
+                print(f"Warning: None of the preferred models {self.preferred_models} are available. Using all models.")
+
+        if not available_models:
+            raise ValueError("ModelPool is empty or filtered to empty. Cannot make assignments.")
 
         for role in required_roles:
             # Find the best model for this role based on strengths
             # This logic can be enhanced with cost-analysis, latency, etc.
-            best_model = self._find_best_model_for_role(role, all_models)
+            best_model = self._find_best_model_for_role(role, available_models)
             assignments[role] = best_model.model_id
         
         print(f"Router assignments: {assignments}")
