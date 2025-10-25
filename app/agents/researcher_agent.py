@@ -21,8 +21,13 @@ class ResearcherAgent(Agent):
         super().__init__(model_id, role="researcher")
 
     def _create_prompt(self, task: str, context: str) -> List[Dict[str, str]]:
-        """Required abstract method - not used as execute is overridden."""
-        # This is a fallback that should not normally be called
+        """
+        Required abstract method from base Agent class.
+        Note: This method is not normally used since execute() is overridden.
+        It serves as a fallback if the base class execute() is ever called directly.
+        The context parameter is intentionally unused as the ResearcherAgent
+        manages its own context based on web search availability.
+        """
         return self._create_internal_knowledge_prompt(task)
 
     def _create_search_synthesis_prompt(self, task: str, context: str) -> List[Dict[str, str]]:
