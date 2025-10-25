@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 from typing import Optional, List
-from ..orchestration.orchestrator import Orchestrator
+from orchestration.orchestrator import Orchestrator
 
 class PromptRequest(BaseModel):
     user_id: str
@@ -11,6 +11,13 @@ class PromptRequest(BaseModel):
     preferred_protocol: Optional[str] = None
 
 router = APIRouter()
+
+@router.get("/health", status_code=200)
+def health_check():
+    """
+    Simple health check endpoint.
+    """
+    return {"status": "ok"}
 
 @router.post("/prompt", summary="Submit a prompt to LLMHive")
 async def process_prompt_stream(request: PromptRequest):
