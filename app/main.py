@@ -8,6 +8,7 @@ respective components.
 """
 
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 from .api.endpoints import router as api_router
 from .config import settings
 
@@ -16,6 +17,16 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="LLMHive: A Multi-Agent LLM Orchestration Platform"
+)
+
+# Add CORS Middleware
+# This allows our Vercel-hosted frontend to make requests to this backend.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, you should restrict this to your frontend's domain.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/", summary="Health Check", description="Root endpoint to check if the application is running.")
