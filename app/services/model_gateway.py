@@ -7,11 +7,16 @@ class StandardizedResponse(BaseModel):
     content: str
 
 class ModelGateway:
-    async def call(self, model_id: str, messages: List[Dict[str, str]], stream: bool = False, **kwargs) -> StandardizedResponse | AsyncGenerator[str, None]:
+    async def call(self, model_id: str, messages: List[Dict[str, str]], stream: bool = False, **kwargs):
+        """
+        Call a model through the gateway.
+        Returns StandardizedResponse for sync calls or AsyncGenerator for stream calls.
+        """
         profile = model_pool.get_model_profile(model_id)
         if not profile:
             error_msg = f"Model '{model_id}' not found in ModelPool."
-            if stream: yield error_msg; return
+            if stream:
+                return self._error_stream(error_msg)
             return StandardizedResponse(content=error_msg)
 
         try:
@@ -22,7 +27,8 @@ class ModelGateway:
                 return await self._sync_call(provider, model_id, messages, **kwargs)
         except Exception as e:
             error_msg = f"Gateway error calling model '{model_id}': {e}"
-            if stream: yield error_msg; return
+            if stream:
+                return self._error_stream(error_msg)
             return StandardizedResponse(content=error_msg)
 
     async def _sync_call(self, provider: LLMProvider, model: str, messages: List[Dict[str, str]], **kwargs) -> StandardizedResponse:
@@ -32,5 +38,9 @@ class ModelGateway:
     async def _stream_call(self, provider: LLMProvider, model: str, messages: List[Dict[str, str]], **kwargs) -> AsyncGenerator[str, None]:
         async for token in provider.generate_stream(messages=messages, model=model, **kwargs):
             yield token
+
+    async def _error_stream(self, error_msg: str) -> AsyncGenerator[str, None]:
+        """Helper to return error messages as a stream."""
+        yield error_msg
 
 model_gateway = ModelGateway()

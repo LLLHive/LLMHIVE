@@ -11,8 +11,10 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 from ..config import settings
 
-# Apply the instructor patch to the OpenAI client
-client = instructor.patch(AsyncOpenAI(api_key=settings.OPENAI_API_KEY))
+# Conditionally create the OpenAI client only if the API key is available
+client = None
+if settings.OPENAI_API_KEY:
+    client = instructor.patch(AsyncOpenAI(api_key=settings.OPENAI_API_KEY))
 
 class Plan(BaseModel):
     reasoning: str
@@ -43,6 +45,11 @@ class Planner:
                     "improving_role": "lead"
                 }
             )
+
+        # Check if OpenAI client is available
+        if not client:
+            print("WARNING: OpenAI API key not configured. Falling back to default plan.")
+            return self.fallback_plan(prompt)
 
         print(f"Creating LLM-driven plan for prompt: '{prompt}'")
         prompt_for_planner = self._build_planning_prompt(prompt)

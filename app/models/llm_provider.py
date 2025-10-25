@@ -1,3 +1,7 @@
+"""
+LLM Provider Interface and Factory.
+"""
+
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, List, Dict
 from ..config import settings
@@ -63,10 +67,21 @@ class AnthropicProvider(LLMProvider):
         except Exception as e:
             yield f"Error: Could not stream from {model}."
 
-PROVIDER_MAP = {{ "openai": (OpenAIProvider, settings.OPENAI_API_KEY), "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY) }}
+PROVIDER_CLASS_MAP = {
+    "openai": (OpenAIProvider, settings.OPENAI_API_KEY),
+    "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY)
+}
 
 def get_provider_by_name(provider_name: str) -> LLMProvider:
-    if provider_name not in PROVIDER_MAP:
+    """
+    Initializes and returns a provider instance, checking for API key existence first.
+    """
+    if provider_name not in PROVIDER_CLASS_MAP:
         raise ValueError(f"Provider '{provider_name}' is not configured.")
-    provider_class, api_key = PROVIDER_MAP[provider_name]
+    
+    provider_class, api_key = PROVIDER_CLASS_MAP[provider_name]
+    
+    if not api_key:
+        raise ValueError(f"API key for provider '{provider_name}' is not set. Cannot initialize.")
+        
     return provider_class(api_key=api_key)
