@@ -13,4 +13,7 @@ set -e
 #   - llmhive.app.main: the file `llmhive/app/main.py`
 #   - app: the `app = FastAPI()` object inside that file.
 
+# Use PORT environment variable if set by Cloud Run, otherwise default to 8080
+PORT=${PORT:-8080}
+
 exec gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT llmhive.app.main:app
