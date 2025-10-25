@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.1.0"
     DEBUG: bool = False
     DEFAULT_MODEL: str = "gpt-4" # Default model for general tasks
+    
+    # CORS configuration
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")  # Comma-separated list of allowed origins
 
     class Config:
         # This allows loading variables from a .env file for local development
