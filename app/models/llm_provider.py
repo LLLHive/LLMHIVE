@@ -67,21 +67,29 @@ class AnthropicProvider(LLMProvider):
         except Exception as e:
             yield f"Error: Could not stream from {model}."
 
+
+# Import stub provider
+from .stub_provider import StubProvider
+
 PROVIDER_CLASS_MAP = {
     "openai": (OpenAIProvider, settings.OPENAI_API_KEY),
-    "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY)
+    "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY),
+    "stub": (StubProvider, "stub")
 }
 
 def get_provider_by_name(provider_name: str) -> LLMProvider:
     """
     Initializes and returns a provider instance, checking for API key existence first.
+    Falls back to stub provider if requested provider is not available.
     """
-    if provider_name not in PROVIDER_CLASS_MAP:
-        raise ValueError(f"Provider '{provider_name}' is not configured.")
+    # If provider not in map or is stub, use stub
+    if provider_name not in PROVIDER_CLASS_MAP or provider_name == "stub":
+        return StubProvider()
     
     provider_class, api_key = PROVIDER_CLASS_MAP[provider_name]
     
+    # If no API key, fall back to stub
     if not api_key:
-        raise ValueError(f"API key for provider '{provider_name}' is not set. Cannot initialize.")
+        return StubProvider()
         
     return provider_class(api_key=api_key)
