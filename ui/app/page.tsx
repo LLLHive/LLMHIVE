@@ -21,37 +21,60 @@ export default function ChatPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { text: input, isUser: true };
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
+    // --- THIS IS THE NEW, LIVE API CONNECTION ---
     try {
-      // API call to our Python backend will be implemented here
-      // For now, we'll simulate a streaming response
-      const simulatedResponse = "This is a simulated streaming response from the LLMHive engine. In the real implementation, this text would stream in token by token from our powerful, multi-protocol AI backend.".split(' ');
-      
-      let streamedText = '';
-      setMessages((prev) => [...prev, { text: '', isUser: false }]);
+      const response = await fetch('/api/prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: 'demo-user-123', // In a real app, this would be dynamic
+          prompt: currentInput,
+          // You can optionally pass user preferences here
+          // preferred_protocol: 'critique_and_improve', 
+        }),
+      });
 
-      for (const word of simulatedResponse) {
-        await new Promise(resolve => setTimeout(resolve, 50)); // Simulate network latency
-        streamedText += word + ' ';
-        setMessages((prev) => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1].text = streamedText;
-          return newMessages;
-        });
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
       }
 
+      // Prepare for streaming
+      setMessages((prev) => [...prev, { text: '', isUser: false }]);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            lastMessage.text += chunk;
+            return newMessages;
+          });
+        }
+      }
     } catch (error) {
-      console.error("Error fetching response:", error);
-      setMessages((prev) => [...prev, { text: 'Sorry, something went wrong.', isUser: false }]);
+      console.error("Error fetching streaming response:", error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      setMessages((prev) => [...prev, { text: `Sorry, something went wrong: ${errorMessage}`, isUser: false }]);
     } finally {
       setIsLoading(false);
     }
+    // --- END OF LIVE API CONNECTION ---
   };
 
   return (
@@ -68,9 +91,9 @@ export default function ChatPage() {
               </div>
             </div>
           ))}
-          {isLoading && (
+          {isLoading && messages[messages.length - 1]?.isUser && (
             <div className="flex justify-start">
-              <div className="max-w-2xl p-3 rounded-lg bg-gray-700">
+              <div className="max-w-2xl p-3 rounded-lg bg-gray-700 animate-pulse">
                 <p>Thinking...</p>
               </div>
             </div>
