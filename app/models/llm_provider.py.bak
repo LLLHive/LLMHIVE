@@ -67,29 +67,46 @@ class AnthropicProvider(LLMProvider):
         except Exception as e:
             yield f"Error: Could not stream from {model}."
 
-
-# Import stub provider
-from .stub_provider import StubProvider
-
 PROVIDER_CLASS_MAP = {
     "openai": (OpenAIProvider, settings.OPENAI_API_KEY),
-    "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY),
-    "stub": (StubProvider, "stub")
+    "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY)
 }
 
 def get_provider_by_name(provider_name: str) -> LLMProvider:
     """
     Initializes and returns a provider instance, checking for API key existence first.
-    Falls back to stub provider if requested provider is not available.
     """
-    # If provider not in map or is stub, use stub
-    if provider_name not in PROVIDER_CLASS_MAP or provider_name == "stub":
-        return StubProvider()
+    if provider_name not in PROVIDER_CLASS_MAP:
+        raise ValueError(f"Provider '{provider_name}' is not configured.")
     
     provider_class, api_key = PROVIDER_CLASS_MAP[provider_name]
     
-    # If no API key, fall back to stub
     if not api_key:
-        return StubProvider()
+        raise ValueError(f"API key for provider '{provider_name}' is not set. Cannot initialize.")
         
     return provider_class(api_key=api_key)
+# Import stub provider  
+from .stub_provider import StubProvider
+
+# Add stub to provider map
+PROVIDER_CLASS_MAP["stub"] = (StubProvider, "stub")
+
+# Update get_provider_by_name to use stub fallback
+_original_get_provider = get_provider_by_name
+
+def get_provider_by_name(provider_name: str) -> LLMProvider:
+    """Get provider with stub fallback."""
+    if provider_name == "stub":
+        return StubProvider()
+    
+    try:
+        provider_class, api_key = PROVIDER_CLASS_MAP.get(provider_name, (None, None))
+        if not provider_class or not api_key:
+            # Fallback to stub
+            return StubProvider()
+        if provider_name == "stub":
+            return provider_class()
+        return provider_class(api_key=api_key)
+    except:
+        # Fallback to stub on any error
+        return StubProvider()
