@@ -1,11 +1,16 @@
-#!/bin/sh
-# Docker entrypoint script for Cloud Run deployment
-# This script ensures uvicorn listens on the PORT environment variable set by Cloud Run
-
+#!/bin/bash
 set -e
 
-# Use PORT environment variable if set, otherwise default to 8080
-PORT=${PORT:-8080}
+# This is the command to start the Gunicorn server.
+# Gunicorn is a production-grade server that manages Uvicorn workers.
+#
+# --workers 4: Starts 4 worker processes to handle requests.
+# --worker-class uvicorn.workers.UvicornWorker: Tells Gunicorn to use Uvicorn for handling the application.
+# --bind 0.0.0.0:$PORT: This is the critical part.
+#   - 0.0.0.0: Binds to all available network interfaces in the container, making it accessible.
+#   - $PORT: Uses the port number provided by the Google Cloud Run environment variable.
+# llmhive.app.main:app: Points to our FastAPI application instance.
+#   - llmhive.app.main: the file `llmhive/app/main.py`
+#   - app: the `app = FastAPI()` object inside that file.
 
-echo "Starting uvicorn on port $PORT..."
-exec uvicorn llmhive.app.main:app --host 0.0.0.0 --port "$PORT"
+exec gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT llmhive.app.main:app
