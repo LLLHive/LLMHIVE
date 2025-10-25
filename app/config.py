@@ -1,10 +1,14 @@
+"""
+Configuration module for LLMHive.
+"""
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 class Settings(BaseSettings):
-    OPENAI_API_KEY: str
-    ANTHROPIC_API_KEY: str
-    TAVILY_API_KEY: Optional[str] = None  # Optional: Web search capability
+    # --- ALL KEYS ARE NOW OPTIONAL ---
+    OPENAI_API_KEY: Optional[str] = None
+    ANTHROPIC_API_KEY: Optional[str] = None
+    TAVILY_API_KEY: Optional[str] = None
 
     MODEL_CONFIG_PATH: str = "models.yaml"
     PLANNING_MODEL: str = "gpt-4-turbo"
@@ -12,7 +16,7 @@ class Settings(BaseSettings):
     SYNTHESIS_MODEL: str = "gpt-4-turbo"
     LOG_LEVEL: str = "INFO"
     APP_NAME: str = "LLMHive"
-    APP_VERSION: str = "1.2.0"  # Version bump for optional Tavily feature
+    APP_VERSION: str = "1.3.0"  # Version bump for new feature
     
     class Config:
         env_file = ".env"
