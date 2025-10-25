@@ -21,4 +21,9 @@ app.add_middleware(
 async def root():
     return {"message": f"Welcome to {settings.APP_NAME} v{settings.APP_VERSION}"}
 
+@app.get("/healthz", summary="Cloud Run Health Check")
+async def health_check():
+    """Health check endpoint required by Cloud Run."""
+    return {"status": "ok"}
+
 app.include_router(api_router, prefix="/api")
