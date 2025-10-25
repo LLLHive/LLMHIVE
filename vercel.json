@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "ui/next.config.js",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "app/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/app/main.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/ui"
+    }
+  ]
+}
