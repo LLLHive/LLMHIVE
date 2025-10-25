@@ -14,7 +14,7 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args: ['push', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA']
 
-  # 3) Deploy the image to Cloud Run
+  # 3) Deploy the image to Cloud Run with a health check
   # IMPORTANT: To enable real LLM providers instead of stub responses, add API keys:
   #   - Use '--set-env-vars' or '--update-env-vars' to add:
   #     OPENAI_API_KEY=<your-key>
@@ -40,6 +40,8 @@ steps:
       - '--timeout=300'
       - '--port=8080'
       - '--quiet'
+      - '--startup-probe-request-path=/health'
+      - '--liveness-probe-request-path=/health'
       # Uncomment and configure these lines to enable real LLM providers:
       # - '--update-env-vars=OPENAI_API_KEY=your-actual-openai-key'
       # - '--update-env-vars=ANTHROPIC_API_KEY=your-actual-anthropic-key'
