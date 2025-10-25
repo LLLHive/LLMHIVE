@@ -1,18 +1,18 @@
 """
 The LLM-Powered Planner for LLMHive.
 
-Selects the optimal Thinking Protocol to handle the user's query.
+Selects the optimal Thinking Protocol using `instructor` for guaranteed
+structured output.
 """
 
-import json
+import instructor
+from openai import AsyncOpenAI
 from typing import Dict, Any, Optional
-from pydantic import BaseModel, ValidationError
-from ..agents import LeadAgent
+from pydantic import BaseModel
 from ..config import settings
 
-# Default parameters for protocols when user specifies a preferred protocol
-DEFAULT_CRITIQUE_DRAFTING_ROLES = ["lead", "analyst"]
-DEFAULT_IMPROVING_ROLE = "lead"
+# Apply the instructor patch to the OpenAI client
+client = instructor.patch(AsyncOpenAI(api_key=settings.OPENAI_API_KEY))
 
 class Plan(BaseModel):
     reasoning: str
@@ -22,10 +22,9 @@ class Plan(BaseModel):
 class Planner:
     """
     Analyzes prompts using an LLM to create dynamic execution plans.
+    Uses instructor library to guarantee structured output.
     """
     def __init__(self, preferred_protocol: Optional[str] = None):
-        # Use a powerful model for planning
-        self.planner_agent = LeadAgent(model_id=settings.PLANNING_MODEL)
         self.preferred_protocol = preferred_protocol
 
     async def create_plan(self, prompt: str) -> Plan:
@@ -33,37 +32,33 @@ class Planner:
         Creates a structured plan using an LLM to address the user's prompt.
         """
         if self.preferred_protocol:
-            print(f"User specified preferred protocol: '{self.preferred_protocol}'. Bypassing planner LLM.")
+            print(f"User specified preferred protocol: '{self.preferred_protocol}'.")
             return Plan(
                 reasoning=f"Using user-specified protocol '{self.preferred_protocol}'.",
                 protocol=self.preferred_protocol,
                 params={
                     "task": prompt,
                     "drafting_task": prompt,
-                    "drafting_roles": DEFAULT_CRITIQUE_DRAFTING_ROLES,
-                    "improving_role": DEFAULT_IMPROVING_ROLE
+                    "drafting_roles": ["lead", "analyst"],
+                    "improving_role": "lead"
                 }
             )
 
         print(f"Creating LLM-driven plan for prompt: '{prompt}'")
+        prompt_for_planner = self._build_planning_prompt(prompt)
         
-        planning_prompt = self._build_planning_prompt(prompt)
-        
-        for attempt in range(2): # Allow for one self-correction attempt
-            raw_response = await self.planner_agent.execute(planning_prompt)
-            
-            try:
-                plan_json_str = raw_response[raw_response.find('{'):raw_response.rfind('}')+1]
-                plan_data = json.loads(plan_json_str)
-                validated_plan = Plan(**plan_data)
-                return validated_plan
-            except (json.JSONDecodeError, ValidationError) as e:
-                error_msg = f"Plan validation failed on attempt {attempt + 1}: {e}."
-                print(f"WARNING: {error_msg}")
-                planning_prompt = f"The previous plan was invalid. Error: {e}. Please regenerate a valid JSON plan. User Prompt: '{prompt}'"
-        
-        print("ERROR: Failed to generate a valid plan. Falling back to default.")
-        return self.fallback_plan(prompt)
+        try:
+            # This call is now guaranteed to return a valid Plan object or raise an exception
+            plan = await client.chat.completions.create(
+                model=settings.PLANNING_MODEL,
+                response_model=Plan,
+                messages=[{"role": "user", "content": prompt_for_planner}],
+                max_retries=1,
+            )
+            return plan
+        except Exception as e:
+            print(f"ERROR: Failed to generate a valid plan with instructor: {e}. Falling back to default.")
+            return self.fallback_plan(prompt)
 
     def fallback_plan(self, prompt: str) -> Plan:
         """A simple rule-based fallback plan."""
@@ -71,19 +66,15 @@ class Planner:
 
     def _build_planning_prompt(self, prompt: str) -> str:
         return f"""
-You are an expert AI orchestrator. Your job is to select the best "Thinking Protocol" to answer a user's prompt and provide the parameters for it in a JSON format.
+You are an expert AI orchestrator. Your job is to select the best "Thinking Protocol" to answer a user's prompt.
 
 Available Protocols:
-1. `simple`: For straightforward questions. A single agent provides an answer.
+1. `simple`: For straightforward questions.
    - params: `{{"role": "lead", "task": "..."}}`
-2. `critique_and_improve`: For complex, subjective, or high-stakes queries requiring maximum accuracy. Multiple agents generate drafts, critique each other, and then improve their work.
+2. `critique_and_improve`: For complex or high-stakes queries requiring maximum accuracy.
    - params: `{{"drafting_task": "...", "drafting_roles": ["lead", "analyst"], "improving_role": "lead"}}`
 
-Based on the user's prompt, choose the optimal protocol.
+Analyze the user's prompt and choose the optimal protocol.
 
 User's Prompt: "{prompt}"
-
-Your output MUST be a single, valid JSON object containing "reasoning", "protocol", and "params".
-
-JSON Plan:
 """
