@@ -10,6 +10,10 @@ from pydantic import BaseModel, ValidationError
 from ..agents import LeadAgent
 from ..config import settings
 
+# Default parameters for protocols when user specifies a preferred protocol
+DEFAULT_CRITIQUE_DRAFTING_ROLES = ["lead", "analyst"]
+DEFAULT_IMPROVING_ROLE = "lead"
+
 class Plan(BaseModel):
     reasoning: str
     protocol: str  # The name of the protocol to use (e.g., 'simple', 'critique_and_improve')
@@ -33,7 +37,12 @@ class Planner:
             return Plan(
                 reasoning=f"Using user-specified protocol '{self.preferred_protocol}'.",
                 protocol=self.preferred_protocol,
-                params={"task": prompt, "drafting_task": prompt, "drafting_roles": ["lead", "analyst"], "improving_role": "lead"}
+                params={
+                    "task": prompt,
+                    "drafting_task": prompt,
+                    "drafting_roles": DEFAULT_CRITIQUE_DRAFTING_ROLES,
+                    "improving_role": DEFAULT_IMPROVING_ROLE
+                }
             )
 
         print(f"Creating LLM-driven plan for prompt: '{prompt}'")

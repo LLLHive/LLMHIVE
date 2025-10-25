@@ -34,7 +34,7 @@ class CritiqueAndImproveProtocol(BaseProtocol):
         critique_coros = {}
         for i, (role, draft) in enumerate(drafts.items()):
             critic_role = "critic"
-            critic_model_id = self.assignments.get(critic_role, settings.CRITIQUE_MODEL)
+            critic_model_id = self.assignments[critic_role]
             critique_task = f"Critique the following draft from the '{role}' agent:\n\n---\n{draft}\n---"
             critique_coros[f"critique_on_{role}"] = execute_task(critic_role, critic_model_id, critique_task, self.blackboard)
         
@@ -45,7 +45,7 @@ class CritiqueAndImproveProtocol(BaseProtocol):
         for role, draft in drafts.items():
             feedback = critiques.get(f"critique_on_{role}", "No feedback received.")
             improvement_task = f"Based on the following critique, improve your original draft.\n\nCRITIQUE:\n{feedback}\n\nORIGINAL DRAFT:\n{draft}"
-            improving_model_id = self.assignments.get(improving_role, settings.PLANNING_MODEL)
+            improving_model_id = self.assignments[improving_role]
             improvement_coros[f"improved_{role}"] = execute_task(improving_role, improving_model_id, improvement_task, self.blackboard)
         
         improved_drafts = dict(zip(improvement_coros.keys(), await asyncio.gather(*improvement_coros.values())))
