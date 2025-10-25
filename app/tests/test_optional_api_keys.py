@@ -43,8 +43,8 @@ async def test_gateway_handles_missing_api_key_gracefully():
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
         
-        # Should return error message, not crash
-        assert "error" in result.content.lower() or "not set" in result.content.lower()
+        # Should return specific error message about missing API key
+        assert "API key for provider 'openai' is not set" in result.content
         assert isinstance(result.content, str)
 
 
