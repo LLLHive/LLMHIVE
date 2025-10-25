@@ -9,6 +9,7 @@ from typing import List, Dict
 from .base import Agent
 from tavily import TavilyClient
 from ..config import settings
+from ..services.model_gateway import model_gateway
 
 class ResearcherAgent(Agent):
     """
@@ -38,7 +39,6 @@ class ResearcherAgent(Agent):
             # 2. Use the LLM to synthesize the findings into a high-quality answer
             # We pass the search results as the 'context' for the LLM prompt.
             messages = self._create_prompt(task, search_context)
-            from ..services.model_gateway import model_gateway
             response = await model_gateway.call(model_id=self.model_id, messages=messages)
             return response.content
 
