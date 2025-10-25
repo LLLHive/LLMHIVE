@@ -21,6 +21,13 @@ app.add_middleware(
 async def root():
     return {"message": f"Welcome to {settings.APP_NAME} v{settings.APP_VERSION}"}
 
+@app.get("/health", status_code=200, summary="Lightweight Health Check")
+def health():
+    """
+    Simple health check endpoint for Cloud Run probes.
+    """
+    return {"status": "ok"}
+
 @app.get("/healthz", summary="Cloud Run Health Check")
 async def health_check():
     """Health check endpoint required by Cloud Run."""
