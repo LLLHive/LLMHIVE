@@ -1,9 +1,9 @@
 """
-Test that the application handles missing API keys gracefully.
+Test that the application handles missing API keys gracefully with stub fallback.
 """
 import pytest
 from app.config import settings
-from app.models.llm_provider import get_provider_by_name
+from app.models.llm_provider import get_provider_by_name, StubProvider
 from app.services.model_gateway import model_gateway
 
 
@@ -15,37 +15,39 @@ def test_config_allows_optional_keys():
     assert settings.TAVILY_API_KEY is None or isinstance(settings.TAVILY_API_KEY, str)
 
 
-def test_provider_factory_raises_error_for_missing_key():
-    """Test that provider factory raises ValueError when API key is missing."""
-    # Assuming API keys are not set in test environment
+def test_provider_factory_falls_back_to_stub_for_missing_key():
+    """Test that provider factory falls back to stub when API key is missing."""
+    # When API keys are not set, should return stub provider
     if settings.OPENAI_API_KEY is None:
-        with pytest.raises(ValueError, match="API key for provider 'openai' is not set"):
-            get_provider_by_name('openai')
+        provider = get_provider_by_name('openai')
+        assert isinstance(provider, StubProvider), "Should fallback to StubProvider when API key missing"
     
     if settings.ANTHROPIC_API_KEY is None:
-        with pytest.raises(ValueError, match="API key for provider 'anthropic' is not set"):
-            get_provider_by_name('anthropic')
+        provider = get_provider_by_name('anthropic')
+        assert isinstance(provider, StubProvider), "Should fallback to StubProvider when API key missing"
 
 
-def test_provider_factory_raises_error_for_unknown_provider():
-    """Test that provider factory raises ValueError for unknown provider."""
-    with pytest.raises(ValueError, match="Provider 'unknown' is not configured"):
-        get_provider_by_name('unknown')
+def test_provider_factory_returns_stub_for_unknown_provider():
+    """Test that provider factory returns stub for unknown provider."""
+    provider = get_provider_by_name('unknown')
+    assert isinstance(provider, StubProvider), "Should return StubProvider for unknown provider"
 
 
 @pytest.mark.asyncio
-async def test_gateway_handles_missing_api_key_gracefully():
-    """Test that model gateway returns error message when API key is missing."""
-    # Assuming OpenAI API key is not set
+async def test_gateway_handles_missing_api_key_with_stub():
+    """Test that model gateway returns stub response when API key is missing."""
+    # When OpenAI API key is not set, should use stub provider
     if settings.OPENAI_API_KEY is None:
         result = await model_gateway.call(
             model_id='gpt-4-turbo',
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
         
-        # Should return specific error message about missing API key
-        assert "API key for provider 'openai' is not set" in result.content
+        # Should return stub response
         assert isinstance(result.content, str)
+        assert len(result.content) > 0, "Should return non-empty response"
+        # Stub responses typically mention being a stub or provide mock data
+        assert "stub" in result.content.lower() or "configure api" in result.content.lower() or "hello" in result.content.lower()
 
 
 def test_app_version_updated():
