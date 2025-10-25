@@ -1,6 +1,3 @@
-"""
-Agent module exports.
-"""
 from .base import Agent
 from .lead_agent import LeadAgent
 from .critic_agent import CriticAgent
