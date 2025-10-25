@@ -11,8 +11,17 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 from ..config import settings
 
-# Apply the instructor patch to the OpenAI client
-client = instructor.patch(AsyncOpenAI(api_key=settings.OPENAI_API_KEY))
+# Lazily initialize the client - will be set when first needed
+_client = None
+
+def get_client():
+    """Get or create the instructor-patched OpenAI client."""
+    global _client
+    if _client is None:
+        if not settings.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY is required for planning but is not set.")
+        _client = instructor.patch(AsyncOpenAI(api_key=settings.OPENAI_API_KEY))
+    return _client
 
 class Plan(BaseModel):
     reasoning: str
@@ -48,6 +57,8 @@ class Planner:
         prompt_for_planner = self._build_planning_prompt(prompt)
         
         try:
+            # Get the client (will raise if key not set)
+            client = get_client()
             # This call is now guaranteed to return a valid Plan object or raise an exception
             plan = await client.chat.completions.create(
                 model=settings.PLANNING_MODEL,

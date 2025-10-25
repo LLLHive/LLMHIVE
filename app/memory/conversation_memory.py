@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-_memory_store: Dict[str, List[Dict[str, str]]] = {{}}
+_memory_store: Dict[str, List[Dict[str, str]]] = {}
 
 class ConversationMemory:
     def __init__(self, user_id: str):
