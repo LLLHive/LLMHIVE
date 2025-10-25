@@ -1,30 +1,26 @@
+# 1. Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
-# Python run-time settings
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PORT=8080
+# 2. Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+ENV PORT=8080
 
-# Set working directory inside the container
+# 3. Set the working directory in the container
 WORKDIR /app
 
-# Install Python requirements
+# 4. Copy the requirements file and install dependencies
 COPY requirements.txt ./
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy only the app code into the container
-COPY llmhive/src/llmhive /app/llmhive
+# 5. Copy the application code into the container
+# This is the corrected step: It copies the 'app' directory
+COPY ./app /app
 
-# Copy entrypoint script
-COPY docker-entrypoint.sh /app/
+# 6. Make the entrypoint script executable
+COPY docker-entrypoint.sh .
 RUN chmod +x /app/docker-entrypoint.sh
 
-# Make sure Python can find the llmhive package
-ENV PYTHONPATH=/app
-
-# Expose the port Cloud Run expects
-EXPOSE 8080
-
-# Start the FastAPI app; Cloud Run sets PORT
+# 7. Set the entrypoint for the container
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
