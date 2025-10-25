@@ -1,54 +1,48 @@
 """
-The Researcher Agent.
+The Researcher Agent - Now with real web search capabilities.
 
-This agent is responsible for gathering information, fetching data from
-external sources (like web search or databases), and providing supporting
-evidence for other agents.
+This agent is responsible for gathering information using Tavily AI
+for web search and providing supporting evidence for other agents.
 """
 
 from typing import List, Dict
 from .base import Agent
-import asyncio
+from tavily import TavilyClient
+from ..config import settings
 
 class ResearcherAgent(Agent):
     """
-    An agent that gathers information. In a real system, this agent would
-    be augmented with tools like web search.
+    An agent that uses Tavily search tool to gather up-to-date information
+    from the web.
     """
     def __init__(self, model_id: str = "claude-3-opus"):
         super().__init__(model_id, role="researcher")
-
-    async def _search_web(self, query: str) -> str:
-        """Simulates a web search tool."""
-        print(f"Simulating web search for: '{query}'")
-        await asyncio.sleep(1) # Simulate network latency
-        return f"Simulated search results show that '{query}' is tied to recent AI advancements and has significant economic implications."
+        self.search_client = TavilyClient(api_key=settings.TAVILY_API_KEY)
 
     def _create_prompt(self, task: str, context: str) -> List[Dict[str, str]]:
-        """Creates the prompt messages for research synthesis."""
-        synthesis_prompt = (
-            f"You are a research analyst. Based on the following search results, synthesize the key findings and provide a summary for the topic: '{task}'.\n\n"
-            f"SEARCH RESULTS:\n---\n{context}\n---\n\n"
-            f"Please provide a concise summary of your findings."
-        )
-        return [{"role": "user", "content": synthesis_prompt}]
+        """The 'task' for a researcher is the topic to research."""
+        return [{"role": "user", "content": f"You are an expert researcher. Your goal is to provide a detailed, factual, and unbiased summary of the topic: '{task}'. Use the provided search results as your primary source of information. Cite your sources where possible.\n\nSEARCH RESULTS:\n---\n{context}\n---"}]
 
     async def execute(self, task: str, context: str = "") -> str:
         """
-        Performs research on the given topic, using a simulated web search.
+        Performs research by first using the search tool, then using an LLM
+        to synthesize the findings.
         """
-        # A real agent might first use an LLM to determine what to search for.
-        search_query = task
-        
-        search_results = await self._search_web(search_query)
+        print(f"Researcher Agent searching for: '{task}'")
+        try:
+            # 1. Use the search tool to get real-world information
+            search_results = self.search_client.search(query=task, search_depth="advanced", max_results=5)
+            # Format the results into a clean context string
+            search_context = "\n\n".join([f"Source: {res['url']}\nContent: {res['content']}" for res in search_results['results']])
+            
+            # 2. Use the LLM to synthesize the findings into a high-quality answer
+            # We pass the search results as the 'context' for the LLM prompt.
+            messages = self._create_prompt(task, search_context)
+            from ..services.model_gateway import model_gateway
+            response = await model_gateway.call(model_id=self.model_id, messages=messages)
+            return response.content
 
-        # Override context with search results for research synthesis
-        messages = self._create_prompt(task, search_results)
-        
-        from ..services.model_gateway import model_gateway
-        response = await model_gateway.call(
-            provider_name=self.provider_name,
-            model=self.model_id,
-            messages=messages
-        )
-        return response.content
+        except Exception as e:
+            error_msg = f"Error during research for '{task}': {e}"
+            print(f"ERROR: {error_msg}")
+            return error_msg
