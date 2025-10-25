@@ -20,6 +20,11 @@ class ResearcherAgent(Agent):
     def __init__(self, model_id: str):
         super().__init__(model_id, role="researcher")
 
+    def _create_prompt(self, task: str, context: str) -> List[Dict[str, str]]:
+        """Required abstract method - not used as execute is overridden."""
+        # This is a fallback that should not normally be called
+        return self._create_internal_knowledge_prompt(task)
+
     def _create_search_synthesis_prompt(self, task: str, context: str) -> List[Dict[str, str]]:
         """Prompt for when search results are available."""
         return [{"role": "user", "content": f"You are an expert researcher. Synthesize the provided search results into a detailed, factual, and unbiased summary for the topic: '{task}'. Cite your sources where possible.\n\nSEARCH RESULTS:\n---\n{context}\n---"}]
