@@ -1,7 +1,7 @@
 """
 Configuration module for LLMHive.
 """
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
@@ -18,8 +18,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "LLMHive"
     APP_VERSION: str = "1.3.0"  # Version bump for new feature
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = 'utf-8'
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding='utf-8'
+    )
 
 settings = Settings()
