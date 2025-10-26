@@ -1,7 +1,7 @@
 import yaml
 from pydantic import BaseModel
 from typing import List, Optional, Dict
-from ..config import settings
+from config import settings
 
 class ModelProfile(BaseModel):
     model_id: str
@@ -23,9 +23,9 @@ class ModelPool:
             models = [ModelProfile(**m) for m in config.get('models', [])]
             return {model.model_id: model for model in models}
         except FileNotFoundError:
-            return {{}}
+            return {}
         except Exception as e:
-            return {{}}
+            return {}
 
     def get_model_profile(self, model_id: str) -> Optional[ModelProfile]:
         return self._models.get(model_id)

@@ -4,7 +4,7 @@ LLM Provider Interface and Factory.
 
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, List, Dict
-from ..config import settings
+from config import settings
 
 try:
     from openai import AsyncOpenAI

@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, AsyncGenerator
 from pydantic import BaseModel
-from ..models.llm_provider import get_provider_by_name, LLMProvider
-from ..models.model_pool import model_pool
+from models.llm_provider import get_provider_by_name, LLMProvider
+from models.model_pool import model_pool
 
 class StandardizedResponse(BaseModel):
     content: str
