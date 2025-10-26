@@ -2,7 +2,7 @@ import instructor
 from openai import AsyncOpenAI
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
-from ..config import settings
+from app.config import settings
 
 # This check is important for graceful failure if the key is missing
 client = None
