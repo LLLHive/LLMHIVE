@@ -31,9 +31,11 @@ def get_secret(project_id: str, secret_id: str, version_id: str = "latest") -> s
         logger.info("Successfully fetched secret from Secret Manager")
         return response.payload.data.decode("UTF-8")
     except Exception as e:
-        logger.error("Could not fetch secret from Secret Manager")
-        # In a production environment, you might want to raise the exception
-        # to prevent the app from starting in a misconfigured state.
+        # Log error type without exposing sensitive details
+        error_type = type(e).__name__
+        logger.error(f"Failed to fetch secret from Secret Manager: {error_type}")
+        # Return empty string to allow app to start with fallback behavior
+        # Note: Calling code should check for empty string and handle accordingly
         return ""
 
 
