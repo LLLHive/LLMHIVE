@@ -52,11 +52,25 @@ async def startup_event():
     On application startup, load secrets into the settings object.
     """
     logger.info("Application startup sequence initiated.")
+    
+    # Load OPENAI_API_KEY from Secret Manager if not set
+    if not settings.OPENAI_API_KEY:
+        api_key = get_secret(settings.PROJECT_ID, "OPENAI_API_KEY")
+        if not api_key:
+            logger.warning("OPENAI_API_KEY secret could not be loaded. OpenAI provider will use stub fallback.")
+        else:
+            logger.info("OPENAI_API_KEY loaded from Secret Manager.")
+        settings.OPENAI_API_KEY = api_key
+    
+    # Load TAVILY_API_KEY from Secret Manager if not set
     if not settings.TAVILY_API_KEY:
         api_key = get_secret(settings.PROJECT_ID, "TAVILY_API_KEY")
         if not api_key:
-            logger.critical("TAVILY_API_KEY secret could not be loaded. The application might not function correctly.")
+            logger.warning("TAVILY_API_KEY secret could not be loaded. Web search functionality may not work.")
+        else:
+            logger.info("TAVILY_API_KEY loaded from Secret Manager.")
         settings.TAVILY_API_KEY = api_key
+    
     logger.info("Application startup complete.")
 
 
