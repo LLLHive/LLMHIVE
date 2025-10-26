@@ -1,46 +1,40 @@
-from typing import Set, Dict, List, Optional
-from models.model_pool import model_pool, ModelProfile
-from config import settings
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from .engine import OrchestrationEngine
+from .models import Job
+import logging
 
-class Router:
-    def __init__(self, preferred_models: Optional[List[str]] = None):
-        self.preferred_models = preferred_models
+logger = logging.getLogger("llmhive")
+router = APIRouter()
 
-    def assign_models_to_roles(self, required_roles: Set[str]) -> Dict[str, str]:
-        assignments: Dict[str, str] = {}
+# Initialize the engine once. It will be reused for all requests.
+engine = OrchestrationEngine()
+
+class PromptRequest(BaseModel):
+    prompt: str
+
+@router.post("/prompt", response_model=Job)
+async def submit_prompt(request: PromptRequest):
+    """
+    Accepts a user prompt, creates a Job, executes it via the
+    OrchestrationEngine, and returns the final state of the Job.
+    """
+    logger.info(f"Received new prompt request (length: {len(request.prompt)} chars)")
+    try:
+        # 1. Create a Job from the prompt
+        job = Job.from_prompt(request.prompt)
         
-        available_models = model_pool.list_models()
-        if self.preferred_models:
-            preferred_pool = [m for m in available_models if m.model_id in self.preferred_models]
-            if preferred_pool:
-                available_models = preferred_pool
-
-        if not available_models:
-            raise ValueError("ModelPool is empty or filtered to empty.")
-
-        for role in required_roles:
-            best_model = self._find_best_model_for_role(role, available_models)
-            assignments[role] = best_model.model_id
+        # 2. Execute the Job using the engine
+        completed_job = engine.execute_job(job)
         
-        if "critic" in required_roles and "critic" not in assignments:
-             assignments["critic"] = settings.CRITIQUE_MODEL
-        
-        return assignments
+        # 3. Return the completed job
+        return completed_job
 
-    def _find_best_model_for_role(self, role: str, models: List[ModelProfile]) -> ModelProfile:
-        role_preferences = {
-            "planner": ["reasoning"], "researcher": ["long-context"],
-            "critic": ["reasoning", "analysis"], "editor": ["writing"],
-            "lead": ["general", "reasoning"], "analyst": ["analysis"],
-        }.get(role, ["general"])
+    except Exception as e:
+        logger.critical(f"Unhandled exception in /prompt endpoint: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal server error occurred.")
 
-        candidates = []
-        for strength in role_preferences:
-            for model in models:
-                if strength in model.strengths:
-                    candidates.append(model)
-        
-        if not candidates:
-            return sorted(models, key=lambda m: m.cost_per_token)[0]
-
-        return sorted(candidates, key=lambda m: m.cost_per_token)[0]
+@router.get("/health")
+async def health_check():
+    """Simple health check for the orchestration service."""
+    return {"status": "ok"}
