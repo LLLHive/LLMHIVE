@@ -1,54 +1,27 @@
-substitutions:
-  _SERVICE: llmhive-orchestrator
-  _REGION: us-east1
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-
 steps:
-  # 1) Build the image using the Dockerfile in the repo root
-  - name: gcr.io/cloud-builders/docker
-    args: ['build', '--no-cache', '-t', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA', '.']
+# 1. Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}', '.']
 
-  # 2) Push the image to Artifact Registry
-  - name: gcr.io/cloud-builders/docker
-    args: ['push', 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA']
+# 2. Push the container image to Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}']
 
-  # 3) Deploy the image to Cloud Run with a health check
-  # IMPORTANT: To enable real LLM providers instead of stub responses, add API keys:
-  #   - Use '--set-env-vars' or '--update-env-vars' to add:
-  #     OPENAI_API_KEY=<your-key>
-  #     ANTHROPIC_API_KEY=<your-key>
-  #     GROK_API_KEY=<your-key>
-  #     GEMINI_API_KEY=<your-key>
-  #     DEEPSEEK_API_KEY=<your-key>
-  #     MANUS_API_KEY=<your-key>
-  #   - OR use Secret Manager with '--set-secrets':
-  #     '--set-secrets=OPENAI_API_KEY=openai-key:latest'
-  #   - Without these keys, the orchestrator will only return stub responses
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
-    args:
-      - run
-      - deploy
-      - '${_SERVICE}'
-      - '--image=gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA'
-      - '--region=${_REGION}'
-      - '--platform=managed'
-      - '--allow-unauthenticated'
-      - '--set-env-vars=DATABASE_URL=sqlite:////tmp/llmhive.db'
-      - '--timeout=300'
-      - '--port=8080'
-      - '--quiet'
-      - '--startup-probe-request-path=/health'
-      - '--liveness-probe-request-path=/health'
-      # Uncomment and configure these lines to enable real LLM providers:
-      # - '--update-env-vars=OPENAI_API_KEY=your-actual-openai-key'
-      # - '--update-env-vars=ANTHROPIC_API_KEY=your-actual-anthropic-key'
-      # - '--update-env-vars=GROK_API_KEY=your-actual-grok-key'
-      # OR use Secret Manager (recommended for production):
-      # - '--update-secrets=OPENAI_API_KEY=openai-api-key:latest'
-      # - '--update-secrets=ANTHROPIC_API_KEY=anthropic-api-key:latest'
+# 3. Deploy the container image to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - '${_SERVICE_NAME}'
+    - '--image=gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
+    - '--region=${_REGION}'
+    - '--platform=managed'
+    - '--quiet'
 
 images:
-  - 'gcr.io/$PROJECT_ID/llmhive-orchestrator'
+- 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
+
+substitutions:
+  _SERVICE_NAME: llmhive-orchestrator
+  _REGION: us-east1
