@@ -28,10 +28,10 @@ def get_secret(project_id: str, secret_id: str, version_id: str = "latest") -> s
         client = secretmanager.SecretManagerServiceClient()
         name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
         response = client.access_secret_version(request={"name": name})
-        logger.info(f"Successfully fetched secret: {secret_id}")
+        logger.info("Successfully fetched secret from Secret Manager")
         return response.payload.data.decode("UTF-8")
     except Exception as e:
-        logger.error(f"Could not fetch secret {secret_id}. Error: {e}")
+        logger.error("Could not fetch secret from Secret Manager")
         # In a production environment, you might want to raise the exception
         # to prevent the app from starting in a misconfigured state.
         return ""
