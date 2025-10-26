@@ -29,7 +29,9 @@ This fix addresses the "Service Unavailable" error in the Cloud Run service `llm
 ### Step 1: Create the Secret in Google Cloud Secret Manager
 
 ```bash
-# Replace YOUR_OPENAI_API_KEY_VALUE with your actual OpenAI API key
+# IMPORTANT: Replace YOUR_OPENAI_API_KEY_VALUE with your actual OpenAI API key
+# Never commit your actual API key to version control
+# Keep your API key secure and do not share it
 echo -n "YOUR_OPENAI_API_KEY_VALUE" | gcloud secrets create OPENAI_API_KEY \
     --project=llmhive-orchestrator \
     --data-file=-
@@ -122,6 +124,7 @@ The solution provides a two-tier approach for loading the API key:
 The secret is loading, but the value might be incorrect or the OpenAI API key is invalid.
 
 **Solution:**
+- **WARNING**: The following command displays the API key in plain text. Only use in secure environments.
 - Verify the secret value: `gcloud secrets versions access latest --secret=OPENAI_API_KEY --project=llmhive-orchestrator`
 - Check Cloud Run logs for OpenAI API errors
 - Test the API key directly using the OpenAI CLI or API

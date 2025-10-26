@@ -78,6 +78,8 @@ gcloud run services update llmhive-orchestrator \
 
 1. **Create secrets in Secret Manager:**
    ```bash
+   # IMPORTANT: Replace with your actual API keys
+   # Never commit real API keys to version control
    echo -n "your-openai-key" | gcloud secrets create OPENAI_API_KEY \
      --project=llmhive-orchestrator \
      --data-file=-
