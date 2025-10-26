@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, List, Set, Optional, Dict
 from .planner import Planner
-from .router import Router
+from .model_router import Router
 from .synthesizer import Synthesizer
 from .blackboard import Blackboard
 from memory.conversation_memory import ConversationMemory
