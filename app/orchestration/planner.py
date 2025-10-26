@@ -1,89 +1,44 @@
-import instructor
-from openai import AsyncOpenAI
-from typing import Dict, Any, Optional
-from pydantic import BaseModel
-from config import settings
-
-# Search keywords for determining if a query requires web search
-SEARCH_KEYWORDS = ["search", "find", "look up", "what is", "who is", "when", "where", "how"]
-
-# This check is important for graceful failure if the key is missing
-client = None
-if settings.OPENAI_API_KEY:
-    try:
-        client = instructor.patch(AsyncOpenAI(api_key=settings.OPENAI_API_KEY))
-    except Exception as e:
-        print(f"Failed to initialize OpenAI client for Planner: {e}")
-
-class Plan(BaseModel):
-    reasoning: str
-    protocol: str
-    params: Dict[str, Any] = {}
-    tool: Optional[str] = None
-    query: Optional[str] = None
+from models.language_model import LanguageModel
+from .models import Plan, Step
+import os
 
 class Planner:
-    def __init__(self, preferred_protocol: Optional[str] = None):
-        self.preferred_protocol = preferred_protocol
+    """
+    The Maestro. It analyzes the user's prompt and creates a multi-step plan.
+    """
+    def __init__(self):
+        # The planner uses its own LLM to reason about the plan.
+        self.llm = LanguageModel(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o")
 
     def plan(self, prompt: str) -> Plan:
-        """
-        Synchronous planning method for simple tool-based workflows.
-        This is a simplified version for Phase 1 of the N3 architecture.
-        """
-        # For now, we use a simple heuristic: if the prompt looks like a search query,
-        # use Tavily. Otherwise, use reasoning.
-        prompt_lower = prompt.lower()
-        
-        if any(keyword in prompt_lower for keyword in SEARCH_KEYWORDS):
-            return Plan(
-                reasoning="User query appears to require web search for current information.",
-                protocol="tool",
-                tool="tavily",
-                query=prompt
-            )
-        else:
-            return Plan(
-                reasoning="Query can be answered with internal knowledge.",
-                protocol="simple",
-                tool=None,
-                query=None
-            )
+        system_prompt = """You are the Maestro, an expert planner for a powerful AI orchestration engine. Your job is to analyze a user's prompt and create a clear, step-by-step plan to fulfill it.
 
-    async def create_plan(self, prompt: str) -> Plan:
-        if self.preferred_protocol:
-            return Plan(
-                reasoning=f"Using user-specified protocol '{self.preferred_protocol}'.",
-                protocol=self.preferred_protocol,
-                params={"task": prompt, "drafting_task": prompt, "drafting_roles": ["lead", "analyst"], "improving_role": "lead"}
-            )
+Available agents:
+- "tavily": A web search tool. Use it for any questions about recent events, facts, or public information.
+- "summarizer": An LLM agent that can summarize or transform text. Use it to process the results of other tools.
 
-        # Fallback if the client couldn't be initialized
-        if not client:
-            return self.fallback_plan(prompt)
+Based on the user's prompt, create a JSON object representing the plan.
+The plan should have "reasoning" and a list of "steps".
+Each step must have a "step_name" (a unique, single-word identifier), an "agent" to use, and a "prompt" for that agent.
+If a step needs to use the result of a previous step, use the template format `{{steps.step_name.result}}` in the prompt.
 
-        prompt_for_planner = self._build_planning_prompt(prompt)
-        
-        try:
-            plan = await client.chat.completions.create(
-                model=settings.PLANNING_MODEL,
-                response_model=Plan,
-                messages=[{"role": "user", "content": prompt_for_planner}],
-                max_retries=1,
-            )
-            return plan
-        except Exception as e:
-            return self.fallback_plan(prompt)
-
-    def fallback_plan(self, prompt: str) -> Plan:
-        return Plan(reasoning="Fell back to default plan.", protocol="simple", params={"role": "lead", "task": f"Provide a direct answer to: {prompt}"})
-
-    def _build_planning_prompt(self, prompt: str) -> str:
-        return f"""
-You are an expert AI orchestrator. Your job is to select the best "Thinking Protocol" to answer a user's prompt.
-Available Protocols:
-1. `simple`: For straightforward questions.
-2. `critique_and_improve`: For complex or high-stakes queries requiring maximum accuracy.
-Analyze the user's prompt and choose the optimal protocol.
-User's Prompt: "{prompt}"
+Example:
+User Prompt: "Search for the weather in SF and summarize it for a 5-year-old."
+{
+  "reasoning": "First, I will search for the weather. Then, I will use the summarizer to rephrase the result in simple terms.",
+  "steps": [
+    {
+      "step_name": "search",
+      "agent": "tavily",
+      "prompt": "Weather in San Francisco"
+    },
+    {
+      "step_name": "summarize",
+      "agent": "summarizer",
+      "prompt": "Summarize the following text for a 5-year-old: {{steps.search.result}}"
+    }
+  ]
+}
 """
+        plan_str = self.llm.generate(prompt, system_prompt=system_prompt, response_format={"type": "json_object"})
+        return Plan.model_validate_json(plan_str)
