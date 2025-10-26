@@ -1,8 +1,10 @@
-fastapi
-uvicorn[standard]
-gunicorn
-pydantic
+fastapi==0.111.0
+uvicorn==0.29.0
+gunicorn==22.0.0
+pydantic==2.7.1
 pydantic-settings
+google-cloud-secret-manager==2.19.0
+python-json-logger==2.0.7
 openai
 anthropic
 pyyaml
