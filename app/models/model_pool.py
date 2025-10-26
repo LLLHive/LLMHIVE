@@ -1,6 +1,6 @@
 import yaml
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any, Optional
 from config import settings
 
 # Tool support for the orchestration engine
@@ -9,6 +9,10 @@ try:
     tavily_available = True
 except ImportError:
     tavily_available = False
+
+# Tool configuration constants
+TAVILY_SEARCH_DEPTH = "basic"
+TAVILY_MAX_RESULTS = 5
 
 class Tool:
     """Base class for tools that can be used by the orchestration engine."""
@@ -31,7 +35,7 @@ class TavilyTool(Tool):
         if not self.client:
             return {"error": "Tavily tool is not available (missing API key or library)"}
         try:
-            results = self.client.search(query=query, search_depth="basic", max_results=5)
+            results = self.client.search(query=query, search_depth=TAVILY_SEARCH_DEPTH, max_results=TAVILY_MAX_RESULTS)
             return results
         except Exception as e:
             return {"error": f"Tavily search failed: {str(e)}"}
