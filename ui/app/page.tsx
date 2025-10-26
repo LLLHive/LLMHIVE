@@ -1,26 +1,55 @@
-'use client';
+import { auth, signIn, signOut } from "@/auth";
+import type { User } from "next-auth";
+import Link from "next/link";
+import PromptForm from "./components/PromptForm";
+import styles from "./page.module.css";
 
-import { useSession } from "next-auth/react";
-import LoginPage from "@/components/LoginPage";
-import ChatInterface from "@/components/ChatInterface";
+function SignIn() {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await signIn("github");
+      }}
+    >
+      <button type="submit" className={styles.authButton}>Sign in with GitHub</button>
+    </form>
+  );
+}
 
-export default function Home() {
-  const { data: session, status } = useSession();
+function SignOut({ user }: { user: User }) {
+  return (
+    <div className={styles.userInfo}>
+      <span>Welcome, {user?.name}</span>
+      <form
+        action={async () => {
+          "use server";
+          await signOut();
+        }}
+      >
+        <button type="submit" className={styles.authButton}>Sign Out</button>
+      </form>
+    </div>
+  );
+}
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-950">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading...</p>
-        </div>
+export default async function Home() {
+  const session = await auth();
+
+  return (
+    <main className={styles.main}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>LLMHive Orchestrator</h1>
+        {session?.user ? <SignOut user={session.user} /> : <SignIn />}
+      </header>
+
+      <div className={styles.content}>
+        {session?.user ? (
+          <PromptForm />
+        ) : (
+          <p className={styles.signInMessage}>Please sign in to use the orchestrator.</p>
+        )}
       </div>
-    );
-  }
-
-  if (!session?.user) {
-    return <LoginPage />;
-  }
-
-  return <ChatInterface user={session.user} />;
+    </main>
+  );
 }
