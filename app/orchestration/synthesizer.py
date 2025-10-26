@@ -1,7 +1,7 @@
 from typing import AsyncGenerator
 from .blackboard import Blackboard
-from ..agents import LeadAgent
-from ..config import settings
+from agents import LeadAgent
+from config import settings
 
 class Synthesizer:
     async def synthesize_stream(self, blackboard: Blackboard) -> AsyncGenerator[str, None]:

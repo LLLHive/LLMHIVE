@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, List, Dict
-from ..services.model_gateway import model_gateway
+from services.model_gateway import model_gateway
 
 class Agent(ABC):
     def __init__(self, model_id: str, role: str):
