@@ -3,9 +3,9 @@ from .planner import Planner
 from .router import Router
 from .synthesizer import Synthesizer
 from .blackboard import Blackboard
-from ..memory.conversation_memory import ConversationMemory
-from ..protocols.simple_protocol import SimpleProtocol
-from ..protocols.critique_and_improve_protocol import CritiqueAndImproveProtocol
+from memory.conversation_memory import ConversationMemory
+from protocols.simple_protocol import SimpleProtocol
+from protocols.critique_and_improve_protocol import CritiqueAndImproveProtocol
 
 class Orchestrator:
     def __init__(self, user_id: str, preferred_models: Optional[List[str]] = None, preferred_protocol: Optional[str] = None):
