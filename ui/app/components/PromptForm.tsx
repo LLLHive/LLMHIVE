@@ -31,8 +31,8 @@ export default function PromptForm() {
       const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setIsLoading(false);
     }

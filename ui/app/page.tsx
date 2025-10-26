@@ -1,4 +1,5 @@
 import { auth, signIn, signOut } from "@/auth";
+import type { User } from "next-auth";
 import Link from "next/link";
 import PromptForm from "./components/PromptForm";
 import styles from "./page.module.css";
@@ -16,7 +17,7 @@ function SignIn() {
   );
 }
 
-function SignOut({ user }: { user: any }) {
+function SignOut({ user }: { user: User }) {
   return (
     <div className={styles.userInfo}>
       <span>Welcome, {user?.name}</span>
