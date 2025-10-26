@@ -19,9 +19,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY ./app ./app
 COPY main.py .
 
-# Expose the port the app runs on
+# Expose the port the app runs on. This is for documentation; Cloud Run uses the PORT env var.
 EXPOSE 8080
 
-# Command to run the application using Gunicorn
-# This is the line we are fixing. It now correctly points to the `app` instance in `main.py`.
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8080", "main:app"]
+# Command to run the application using Gunicorn.
+# This is the final, correct implementation.
+# It uses the shell form (`sh -c`) to allow the use of the $PORT environment variable,
+# which is the standard and most robust way to run a web service on Cloud Run.
+CMD exec gunicorn --bind "0.0.0.0:${PORT:-8080}" --workers 4 --worker-class uvicorn.workers.UvicornWorker main:app
