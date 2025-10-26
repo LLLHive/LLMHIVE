@@ -1,26 +1,27 @@
-# 1. Use an official Python runtime as a parent image
+# Use the official lightweight Python image.
+# https://hub.docker.com/_/python
 FROM python:3.11-slim
 
-# 2. Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PIP_NO_CACHE_DIR=1
-ENV PORT=8080
+# Allow statements and log messages to be sent straight to the logs
+# without being buffered.
+ENV PYTHONUNBUFFERED 1
 
-# 3. Set the working directory in the container
+# Set the working directory in the container to /app
 WORKDIR /app
 
-# 4. Copy the requirements file and install dependencies
-COPY requirements.txt ./
+# Copy the requirements file into the container at /app
+COPY requirements.txt .
+
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy the application code into the container
-# This is the corrected step: It copies the 'app' directory
-COPY ./app /app
+# Copy the entire backend application code into the container at /app
+COPY ./app ./app
+COPY main.py .
 
-# 6. Make the entrypoint script executable
-COPY docker-entrypoint.sh .
-RUN chmod +x /app/docker-entrypoint.sh
+# Expose the port the app runs on
+EXPOSE 8080
 
-# 7. Set the entrypoint for the container
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Command to run the application using Gunicorn
+# This is the line we are fixing. It now correctly points to the `app` instance in `main.py`.
+CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8080", "main:app"]
