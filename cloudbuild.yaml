@@ -25,3 +25,6 @@ images:
 substitutions:
   _SERVICE_NAME: llmhive-orchestrator
   _REGION: us-east1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
