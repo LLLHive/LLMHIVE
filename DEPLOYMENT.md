@@ -78,37 +78,58 @@ gcloud run services update llmhive-orchestrator \
 
 1. **Create secrets in Secret Manager:**
    ```bash
-   echo -n "your-openai-key" | gcloud secrets create openai-api-key --data-file=-
-   echo -n "your-anthropic-key" | gcloud secrets create anthropic-api-key --data-file=-
+   echo -n "your-openai-key" | gcloud secrets create OPENAI_API_KEY \
+     --project=llmhive-orchestrator \
+     --data-file=-
+   echo -n "your-anthropic-key" | gcloud secrets create ANTHROPIC_API_KEY \
+     --project=llmhive-orchestrator \
+     --data-file=-
    ```
 
 2. **Grant Cloud Run access to secrets:**
    ```bash
-   gcloud secrets add-iam-policy-binding openai-api-key \
-     --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
-     --role="roles/secretmanager.secretAccessor"
+   gcloud secrets add-iam-policy-binding OPENAI_API_KEY \
+     --project=llmhive-orchestrator \
+     --role="roles/secretmanager.secretAccessor" \
+     --member="serviceAccount:llmhive-orchestrator@llmhive-orchestrator.iam.gserviceaccount.com"
+   
+   gcloud secrets add-iam-policy-binding ANTHROPIC_API_KEY \
+     --project=llmhive-orchestrator \
+     --role="roles/secretmanager.secretAccessor" \
+     --member="serviceAccount:llmhive-orchestrator@llmhive-orchestrator.iam.gserviceaccount.com"
    ```
 
 3. **Update Cloud Run service to use secrets:**
    ```bash
    gcloud run services update llmhive-orchestrator \
+     --project=llmhive-orchestrator \
      --region=us-east1 \
-     --update-secrets=OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest
+     --update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest
    ```
+
+   **Note:** The `cloudbuild.yaml` is already configured to mount the `OPENAI_API_KEY` secret. If you've created the secret in Secret Manager and granted the necessary permissions, the secret will be automatically available on the next deployment via Cloud Build.
 
 #### Method 3: Update cloudbuild.yaml
 
-Edit `cloudbuild.yaml` and uncomment the API key lines:
+The `cloudbuild.yaml` is already configured to mount the `OPENAI_API_KEY` secret from Secret Manager:
 
 ```yaml
-# Uncomment and configure:
-- '--update-env-vars=OPENAI_API_KEY=your-actual-openai-key'
-- '--update-env-vars=ANTHROPIC_API_KEY=your-actual-anthropic-key'
-# OR use Secret Manager:
-- '--update-secrets=OPENAI_API_KEY=openai-api-key:latest'
+- '--update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest'
 ```
 
-Then rebuild:
+To add additional API keys (e.g., Anthropic), edit the `cloudbuild.yaml` deploy step and add more secret mappings:
+
+```yaml
+- '--update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest'
+```
+
+Alternatively, you can use plain environment variables (not recommended for production):
+
+```yaml
+- '--update-env-vars=ANTHROPIC_API_KEY=your-actual-anthropic-key'
+```
+
+After making changes, rebuild and redeploy:
 ```bash
 gcloud builds submit --config cloudbuild.yaml
 ```
