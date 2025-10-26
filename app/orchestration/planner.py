@@ -4,6 +4,9 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 from config import settings
 
+# Search keywords for determining if a query requires web search
+SEARCH_KEYWORDS = ["search", "find", "look up", "what is", "who is", "when", "where", "how"]
+
 # This check is important for graceful failure if the key is missing
 client = None
 if settings.OPENAI_API_KEY:
@@ -30,10 +33,9 @@ class Planner:
         """
         # For now, we use a simple heuristic: if the prompt looks like a search query,
         # use Tavily. Otherwise, use reasoning.
-        search_keywords = ["search", "find", "look up", "what is", "who is", "when", "where", "how"]
         prompt_lower = prompt.lower()
         
-        if any(keyword in prompt_lower for keyword in search_keywords):
+        if any(keyword in prompt_lower for keyword in SEARCH_KEYWORDS):
             return Plan(
                 reasoning="User query appears to require web search for current information.",
                 protocol="tool",

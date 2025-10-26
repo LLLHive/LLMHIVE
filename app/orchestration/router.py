@@ -19,7 +19,7 @@ async def submit_prompt(request: PromptRequest):
     Accepts a user prompt, creates a Job, executes it via the
     OrchestrationEngine, and returns the final state of the Job.
     """
-    logger.info(f"Received new prompt request: '{request.prompt[:50]}...'")
+    logger.info(f"Received new prompt request (length: {len(request.prompt)} chars)")
     try:
         # 1. Create a Job from the prompt
         job = Job.from_prompt(request.prompt)
