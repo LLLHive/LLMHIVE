@@ -16,10 +16,37 @@ class Plan(BaseModel):
     reasoning: str
     protocol: str
     params: Dict[str, Any] = {}
+    tool: Optional[str] = None
+    query: Optional[str] = None
 
 class Planner:
     def __init__(self, preferred_protocol: Optional[str] = None):
         self.preferred_protocol = preferred_protocol
+
+    def plan(self, prompt: str) -> Plan:
+        """
+        Synchronous planning method for simple tool-based workflows.
+        This is a simplified version for Phase 1 of the N3 architecture.
+        """
+        # For now, we use a simple heuristic: if the prompt looks like a search query,
+        # use Tavily. Otherwise, use reasoning.
+        search_keywords = ["search", "find", "look up", "what is", "who is", "when", "where", "how"]
+        prompt_lower = prompt.lower()
+        
+        if any(keyword in prompt_lower for keyword in search_keywords):
+            return Plan(
+                reasoning="User query appears to require web search for current information.",
+                protocol="tool",
+                tool="tavily",
+                query=prompt
+            )
+        else:
+            return Plan(
+                reasoning="Query can be answered with internal knowledge.",
+                protocol="simple",
+                tool=None,
+                query=None
+            )
 
     async def create_plan(self, prompt: str) -> Plan:
         if self.preferred_protocol:
