@@ -1,6 +1,6 @@
 from typing import Set, Dict, List, Optional
-from ..models.model_pool import model_pool, ModelProfile
-from ..config import settings
+from models.model_pool import model_pool, ModelProfile
+from config import settings
 
 class Router:
     def __init__(self, preferred_models: Optional[List[str]] = None):
