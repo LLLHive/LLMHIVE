@@ -14,10 +14,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set the PYTHONPATH to include the /app directory
-# This is the crucial step that makes absolute imports like 'from config' work.
+# This ensures that Python can find modules like 'app' and its submodules directly
+# This is crucial for absolute imports like 'from app.config import settings' to work
 ENV PYTHONPATH=/app
 
 # Command to run the application using Gunicorn with Uvicorn workers
-# It binds to 0.0.0.0 and uses the PORT environment variable provided by Cloud Run.
-# 'main:app' uses our main.py which imports the FastAPI instance.
+# It binds to 0.0.0.0 and uses the PORT environment variable provided by Cloud Run
+# 'main:app' refers to the 'app' instance in main.py which imports from app/app.py
 CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} main:app -k uvicorn.workers.UvicornWorker"]
