@@ -18,6 +18,9 @@ class Planner:
 
         context = "Here are some similar tasks we have successfully executed in the past. Learn from their structure and reasoning to create the best possible plan for the new prompt.\n\n"
         for i, job in enumerate(jobs):
+            # Skip jobs without a plan (failed jobs)
+            if not job.plan:
+                continue
             context += f"--- Past Job Example {i+1} ---\n"
             context += f"Original Prompt: {job.shared_memory.original_prompt}\n"
             context += f"Reasoning: {job.plan.reasoning}\n"
