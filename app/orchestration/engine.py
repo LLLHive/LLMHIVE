@@ -12,14 +12,14 @@ class OrchestrationEngine:
         self.model_pool = model_pool
         self.archivist = Archivist()
         
-        # Use the "gpt-4o" model from the pool to initialize the Planner.
-        # This ensures the Planner has its dependency without managing API keys itself.
         planner_llm = self.model_pool.get_llm("gpt-4o")
         if not planner_llm:
             raise RuntimeError("Could not find 'gpt-4o' in model pool. Planner cannot be initialized.")
-        self.planner = Planner(llm=planner_llm)
         
-        logger.info("OrchestrationEngine initialized with multi-step and archival capabilities.")
+        # Pass both the LLM and the Archivist to the Planner
+        self.planner = Planner(llm=planner_llm, archivist=self.archivist)
+        
+        logger.info("OrchestrationEngine initialized with RAG planning and archival capabilities.")
 
     def _resolve_prompt_template(self, prompt_template: str, job: Job) -> str:
         """Resolves templates like {{steps.step_name.result}} from shared memory."""
@@ -37,9 +37,10 @@ class OrchestrationEngine:
 
     def execute_job(self, job: Job) -> Job:
         job.status = JobStatus.RUNNING
-        logger.info(f"Executing Job ID: {job.id} with multi-step engine.")
+        logger.info(f"Executing Job ID: {job.id} with RAG-enabled multi-step engine.")
         
         try:
+            # The planner now implicitly uses RAG to generate a better plan
             job.plan = self.planner.plan(job.shared_memory.original_prompt)
             logger.info(f"Job {job.id}: Plan created. Reasoning: {job.plan.reasoning}")
 
@@ -70,6 +71,7 @@ class OrchestrationEngine:
             logger.error(f"Job {job.id}: Execution failed. Error: {e}", exc_info=True)
         
         finally:
+            # The upgraded save_job method now saves to both Firestore and Vector Search
             self.archivist.save_job(job)
 
         return job
