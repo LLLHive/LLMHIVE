@@ -40,11 +40,9 @@ class OrchestrationEngine:
         logger.info(f"Executing Job ID: {job.id} with multi-step engine.")
         
         try:
-            # 1. Generate the plan
             job.plan = self.planner.plan(job.shared_memory.original_prompt)
             logger.info(f"Job {job.id}: Plan created. Reasoning: {job.plan.reasoning}")
 
-            # 2. Execute the plan's steps
             for step in job.plan.steps:
                 logger.info(f"Job {job.id}: Executing step '{step.step_name}' with agent '{step.agent}'.")
                 resolved_prompt = self._resolve_prompt_template(step.prompt, job)
@@ -72,9 +70,6 @@ class OrchestrationEngine:
             logger.error(f"Job {job.id}: Execution failed. Error: {e}", exc_info=True)
         
         finally:
-            # This block guarantees that the job is saved to our database
-            # regardless of whether it succeeded or failed. This is the core
-            # of The Archivist's function and our learning system.
             self.archivist.save_job(job)
 
         return job
