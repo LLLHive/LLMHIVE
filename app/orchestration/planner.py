@@ -1,4 +1,4 @@
-from models.language_model import LanguageModel
+from app.models.language_model import LanguageModel
 from .models import Plan
 
 class Planner:
