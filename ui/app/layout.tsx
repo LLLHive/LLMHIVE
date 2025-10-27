@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/auth";
-import { SessionProvider } from "next-auth/react";
 import "./globals.css";
+import SessionProviderClient from "./components/SessionProviderClient";
 
 export const metadata: Metadata = {
   title: "LLMHive",
@@ -16,7 +16,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SessionProvider session={session}>{children}</SessionProvider>
+        <SessionProviderClient session={session}>
+          {children}
+        </SessionProviderClient>
       </body>
     </html>
   );
