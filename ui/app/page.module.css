@@ -53,3 +53,17 @@
   font-size: 1.2rem;
   color: #888;
 }
+
+.error {
+  margin-top: 1rem;
+  color: #ff4d4d;
+  background-color: rgba(255, 77, 77, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.loading {
+  font-size: 1.2rem;
+  color: #888;
+  text-align: center;
+}

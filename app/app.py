@@ -35,7 +35,6 @@ def get_secret(project_id: str, secret_id: str, version_id: str = "latest") -> s
         error_type = type(e).__name__
         logger.error(f"Failed to fetch secret from Secret Manager: {error_type}")
         # Return empty string to allow app to start with fallback behavior
-        # Note: Calling code should check for empty string and handle accordingly
         return ""
 
 
@@ -82,5 +81,4 @@ async def health_check():
 
 
 # 5. INCLUDE THE EXISTING API ROUTER (CRITICAL)
-# This preserves our main API functionality.
 app.include_router(orchestration_router, prefix="/api")
