@@ -12,9 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the entire application source code from the repository root
 # into the container's root working directory (/app).
-# This creates the structure: /app/app, /app/config.py, /app/main.py, etc.
+# This creates the structure: /app/app, /app/main.py, /app/models.yaml, etc.
+# Note: config.py is inside the app/ directory, so it comes with the app/ copy.
 COPY app/ ./app/
-COPY config.py .
 COPY main.py .
 COPY models.yaml .
 
