@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from orchestration.router import router as orchestration_router
-from config import settings
+from app.orchestration.router import router as orchestration_router
+from app.config import settings
 from google.cloud import secretmanager
 from pythonjsonlogger import jsonlogger
 import logging
