@@ -5,12 +5,12 @@ from typing import Optional
 class Settings(BaseSettings):
     """
     Application settings, loaded from environment variables and .env file.
-    Secrets are loaded separately at application startup.
+    Secrets are loaded separately at application startup from Google Cloud Secret Manager.
     """
     # Google Cloud Project ID for Secret Manager
     PROJECT_ID: str = os.environ.get("GCP_PROJECT", "llmhive-orchestrator")
     
-    # API Keys (can be loaded from environment or Secret Manager)
+    # API Keys (loaded from environment variables or Secret Manager at startup)
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
     TAVILY_API_KEY: Optional[str] = None

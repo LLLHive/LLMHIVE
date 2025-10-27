@@ -20,12 +20,14 @@ export default function Sidebar({ user, onNewChat }: SidebarProps) {
         <button
           onClick={onNewChat}
           className="w-full py-3 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+          aria-label="Start a new chat"
         >
           <svg
             className="w-5 h-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -44,10 +46,10 @@ export default function Sidebar({ user, onNewChat }: SidebarProps) {
       {/* User Profile Section */}
       <div className="p-4 border-t border-gray-800">
         <div className="flex items-center gap-3 mb-3">
-          {user.image ? (
+          {user?.image ? (
             <Image
               src={user.image}
-              alt={user.name || "User"}
+              alt={user.name || "User avatar"}
               width={40}
               height={40}
               className="rounded-full"
@@ -55,20 +57,23 @@ export default function Sidebar({ user, onNewChat }: SidebarProps) {
           ) : (
             <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
               <span className="text-lg font-semibold text-gray-300">
-                {user.name?.charAt(0).toUpperCase() || "U"}
+                {user?.name?.charAt(0).toUpperCase() || "U"}
               </span>
             </div>
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">
-              {user.name || "User"}
+              {user?.name || "User"}
             </p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            <p className="text-xs text-gray-400 truncate">
+              {user?.email || "No email"}
+            </p>
           </div>
         </div>
         <button
           onClick={() => signOut()}
           className="w-full py-2 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
+          aria-label="Sign out from your account"
         >
           Sign Out
         </button>

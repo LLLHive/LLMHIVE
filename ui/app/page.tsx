@@ -3,6 +3,7 @@ import type { User } from "next-auth";
 import Link from "next/link";
 import PromptForm from "./components/PromptForm";
 import styles from "./page.module.css";
+import { Suspense } from "react";
 
 function SignIn() {
   return (
@@ -12,7 +13,9 @@ function SignIn() {
         await signIn("github");
       }}
     >
-      <button type="submit" className={styles.authButton}>Sign in with GitHub</button>
+      <button type="submit" className={styles.authButton}>
+        Sign in with GitHub
+      </button>
     </form>
   );
 }
@@ -20,36 +23,71 @@ function SignIn() {
 function SignOut({ user }: { user: User }) {
   return (
     <div className={styles.userInfo}>
-      <span>Welcome, {user?.name}</span>
+      <span>Welcome, {user?.name || "User"}</span>
       <form
         action={async () => {
           "use server";
           await signOut();
         }}
       >
-        <button type="submit" className={styles.authButton}>Sign Out</button>
+        <button type="submit" className={styles.authButton}>
+          Sign Out
+        </button>
       </form>
     </div>
   );
 }
 
-export default async function Home() {
-  const session = await auth();
-
+/**
+ * Error fallback component for PromptForm
+ */
+function PromptFormError() {
   return (
-    <main className={styles.main}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>LLMHive Orchestrator</h1>
-        {session?.user ? <SignOut user={session.user} /> : <SignIn />}
-      </header>
-
-      <div className={styles.content}>
-        {session?.user ? (
-          <PromptForm />
-        ) : (
-          <p className={styles.signInMessage}>Please sign in to use the orchestrator.</p>
-        )}
-      </div>
-    </main>
+    <div className={styles.errorContainer}>
+      <p className={styles.error}>
+        Unable to load the prompt form. Please try refreshing the page.
+      </p>
+    </div>
   );
+}
+
+export default async function Home() {
+  try {
+    const session = await auth();
+
+    return (
+      <main className={styles.main}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>LLMHive Orchestrator</h1>
+          {session?.user ? <SignOut user={session.user} /> : <SignIn />}
+        </header>
+
+        <div className={styles.content}>
+          {session?.user ? (
+            <Suspense fallback={<div className={styles.loading}>Loading...</div>}>
+              <PromptForm />
+            </Suspense>
+          ) : (
+            <p className={styles.signInMessage}>
+              Please sign in to use the orchestrator.
+            </p>
+          )}
+        </div>
+      </main>
+    );
+  } catch (error) {
+    console.error("Home page error:", error);
+    return (
+      <main className={styles.main}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>LLMHive Orchestrator</h1>
+        </header>
+        <div className={styles.content}>
+          <p className={styles.error}>
+            An error occurred while loading the page. Please try again later.
+          </p>
+        </div>
+      </main>
+    );
+  }
 }
