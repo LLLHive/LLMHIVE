@@ -38,19 +38,6 @@ function SignOut({ user }: { user: User }) {
   );
 }
 
-/**
- * Error fallback component for PromptForm
- */
-function PromptFormError() {
-  return (
-    <div className={styles.errorContainer}>
-      <p className={styles.error}>
-        Unable to load the prompt form. Please try refreshing the page.
-      </p>
-    </div>
-  );
-}
-
 export default async function Home() {
   try {
     const session = await auth();
