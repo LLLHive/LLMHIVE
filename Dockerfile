@@ -9,6 +9,9 @@ WORKDIR /app
 # which is crucial for making our absolute imports work correctly.
 ENV PYTHONPATH=/app
 
+# Ensure Python output is sent straight to logs without buffering
+ENV PYTHONUNBUFFERED=1
+
 # Copy the requirements file and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
