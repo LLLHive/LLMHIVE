@@ -5,3 +5,6 @@ python-dotenv
 openai
 tavily-python
 google-cloud-firestore
+pydantic-settings
+python-json-logger
+google-cloud-secret-manager
