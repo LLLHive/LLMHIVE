@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 from typing import Optional, List
-from orchestration.orchestrator import Orchestrator
+from app.orchestration.orchestrator import Orchestrator
 
 class PromptRequest(BaseModel):
     user_id: str

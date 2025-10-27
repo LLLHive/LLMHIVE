@@ -1,7 +1,7 @@
 from .models import Job, JobStatus, StepResult
 from .planner import Planner
 from .archivist import Archivist
-from models.model_pool import model_pool
+from app.models.model_pool import model_pool
 import logging
 import re
 
