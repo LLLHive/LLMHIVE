@@ -1,6 +1,6 @@
 from .blackboard import Blackboard
-from agents import Agent, ResearcherAgent, CriticAgent, EditorAgent, LeadAgent
-from core.validators import Validator
+from app.agents import Agent, ResearcherAgent, CriticAgent, EditorAgent, LeadAgent
+from app.core.validators import Validator
 
 def get_agent(role: str, model_id: str) -> Agent:
     role_map = {"researcher": ResearcherAgent, "critic": CriticAgent, "editor": EditorAgent, "lead": LeadAgent, "analyst": LeadAgent}

@@ -1,6 +1,6 @@
 from typing import List, Dict
 from .base import Agent
-from config import settings
+from app.config import settings
 
 try:
     from tavily import TavilyClient
