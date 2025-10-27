@@ -17,7 +17,7 @@ COPY llmhive/src/llmhive/ .
 
 # Set the PYTHONPATH to include the application's root directory.
 # This is the CRITICAL FIX that allows imports like 'from config' to work.
-ENV PYTHONPATH=/app:${PYTHONPATH}
+ENV PYTHONPATH=/app
 
 # Command to run the application using Gunicorn.
 # 'app.main:app' correctly points to the 'app' instance in the 'app/main.py' file.
