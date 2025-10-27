@@ -13,7 +13,9 @@ class ModelPool:
         self.llms = {}
 
         if self.tavily_api_key:
-            self.tools["tavily"] = TavilyClient(self.tavily_api_key)
+            tavily_client = TavilyClient(self.tavily_api_key)
+            self.tools["tavily"] = tavily_client
+            self.agents["tavily"] = tavily_client
         
         if self.openai_api_key:
             # Using a general-purpose LLM for summarization
