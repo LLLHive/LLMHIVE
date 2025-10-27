@@ -42,10 +42,12 @@ def test_shared_memory():
 
 def test_planner_initialization():
     """Test planner initialization."""
-    # Note: The new planner requires OpenAI API key to initialize
-    # This test just verifies it can be instantiated
+    # Note: The new planner requires a LanguageModel instance to initialize
+    # This test verifies it can be instantiated with dependency injection
     try:
-        planner = Planner()
+        from models.language_model import LanguageModel
+        llm = LanguageModel(api_key="sk-test-key", model="gpt-4o")
+        planner = Planner(llm=llm)
         assert planner.llm is not None
         print("✓ Planner initialization test passed")
     except Exception as e:
@@ -58,8 +60,17 @@ def test_engine_initialization():
         assert engine.planner is not None
         assert engine.model_pool is not None
         print("✓ Engine initialization test passed")
+    except RuntimeError as e:
+        if "gpt-4o" in str(e):
+            print(f"⚠ Engine initialization skipped (OpenAI API key may be missing): {e}")
+        else:
+            raise
     except Exception as e:
-        print(f"⚠ Engine initialization skipped (OpenAI API key may be missing): {e}")
+        # Skip on Firestore errors (expected in test environment)
+        if "credentials" in str(e).lower() or "firestore" in str(e).lower():
+            print(f"⚠ Engine initialization skipped (Google Cloud credentials not configured): {type(e).__name__}")
+        else:
+            print(f"⚠ Engine initialization skipped: {e}")
 
 def test_job_execution_without_api_keys():
     """Test job execution without API keys (should fail gracefully)."""
@@ -76,8 +87,17 @@ def test_job_execution_without_api_keys():
         assert len(completed_job.shared_memory.intermediate_steps) >= 0
         print(f"✓ Job execution test passed (status: {completed_job.status})")
         print(f"  Steps executed: {len(completed_job.shared_memory.intermediate_steps)}")
+    except RuntimeError as e:
+        if "gpt-4o" in str(e):
+            print(f"⚠ Job execution test skipped (OpenAI API key may be missing): {e}")
+        else:
+            raise
     except Exception as e:
-        print(f"⚠ Job execution test skipped (OpenAI API key may be missing): {e}")
+        # Skip on Firestore errors (expected in test environment)
+        if "credentials" in str(e).lower() or "firestore" in str(e).lower():
+            print(f"⚠ Job execution test skipped (Google Cloud credentials not configured): {type(e).__name__}")
+        else:
+            print(f"⚠ Job execution test skipped: {e}")
 
 if __name__ == "__main__":
     print("Running N3 Orchestration Engine Tests...\n")
