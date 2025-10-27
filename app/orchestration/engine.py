@@ -1,6 +1,6 @@
 from .models import Job, JobStatus, StepResult
 from .planner import Planner
-from .archivist import Archivist  # Import the new Archivist
+from .archivist import Archivist
 from models.model_pool import model_pool
 import logging
 import re
@@ -9,9 +9,16 @@ logger = logging.getLogger("llmhive")
 
 class OrchestrationEngine:
     def __init__(self):
-        self.planner = Planner()
         self.model_pool = model_pool
-        self.archivist = Archivist()  # Initialize the Archivist
+        self.archivist = Archivist()
+        
+        # Use the "gpt-4o" model from the pool to initialize the Planner.
+        # This ensures the Planner has its dependency without managing API keys itself.
+        planner_llm = self.model_pool.get_llm("gpt-4o")
+        if not planner_llm:
+            raise RuntimeError("Could not find 'gpt-4o' in model pool. Planner cannot be initialized.")
+        self.planner = Planner(llm=planner_llm)
+        
         logger.info("OrchestrationEngine initialized with multi-step and archival capabilities.")
 
     def _resolve_prompt_template(self, prompt_template: str, job: Job) -> str:
