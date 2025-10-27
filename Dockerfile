@@ -4,21 +4,21 @@ FROM python:3.11-slim-buster
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
+# Copy the requirements file into the container.
+# Note: We are copying from the llmhive subdirectory.
+COPY llmhive/requirements.txt .
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire application code into the container at /app
-COPY . .
+# Copy the application source code into the container.
+# This copies the contents of the llmhive/src/llmhive directory into /app.
+COPY llmhive/src/llmhive/ .
 
-# Set the PYTHONPATH to include the /app directory
-# This ensures that Python can find modules like 'app' and its submodules directly
-# This is crucial for absolute imports like 'from app.config import settings' to work
+# Set the PYTHONPATH to include the application's root directory.
+# This is the CRITICAL FIX that allows imports like 'from config' to work.
 ENV PYTHONPATH=/app
 
-# Command to run the application using Gunicorn with Uvicorn workers
-# It binds to 0.0.0.0 and uses the PORT environment variable provided by Cloud Run
-# 'main:app' refers to the 'app' instance in main.py which imports from app/app.py
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} main:app -k uvicorn.workers.UvicornWorker"]
+# Command to run the application using Gunicorn.
+# 'app.main:app' correctly points to the 'app' instance in the 'app/main.py' file.
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} app.main:app -k uvicorn.workers.UvicornWorker"]
