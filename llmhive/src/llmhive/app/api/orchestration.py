@@ -235,6 +235,12 @@ async def orchestrate(
         except Exception as exc:
             logger.exception("Failed to update memory entries: %s", exc)
 
+    step_outputs_payload = {
+        role: [ModelAnswer(model=result.model, content=result.content) for result in results]
+        for role, results in artifacts.step_outputs.items()
+    }
+    evaluation_text = artifacts.evaluation.content if artifacts.evaluation else None
+
     return OrchestrationResponse(
         prompt=payload.prompt,
         models=[ans.model for ans in artifacts.initial_responses],
@@ -247,4 +253,7 @@ async def orchestrate(
         plan=plan_dict,
         guardrails=guardrail_payload,
         context=context_string,
+        step_outputs=step_outputs_payload,
+        supporting_notes=artifacts.supporting_notes,
+        evaluation=evaluation_text,
     )
