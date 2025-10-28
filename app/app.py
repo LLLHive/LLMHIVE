@@ -9,6 +9,7 @@ from pythonjsonlogger import jsonlogger
 from fastapi.responses import JSONResponse
 import logging
 import os
+from typing import Final
 
 # 1. CONFIGURE STRUCTURED LOGGING
 # This must happen first to ensure all subsequent logs are structured.
@@ -50,26 +51,43 @@ app = FastAPI(
 )
 
 
+HEALTH_ENDPOINTS: Final[set[str]] = {"/healthz", "/health", "/_ah/health"}
+
+
+def _health_payload() -> dict[str, str]:
+    """Return the canonical payload used by every health endpoint."""
+    return {"status": "ok"}
+
+
+def _health_head_response() -> Response:
+    """Return an empty 200 response for HEAD health probes."""
+    return Response(status_code=200)
+
+
 @app.middleware("http")
 async def healthz_fallback_middleware(request: Request, call_next):
-    """Ensure /healthz always responds even if routing fails in production."""
+    """Ensure health endpoints always respond even if routing fails in production."""
     normalized_path = request.url.path.rstrip("/") or "/"
-    if normalized_path == "/healthz" and request.method in {"GET", "HEAD"}:
+    if normalized_path in HEALTH_ENDPOINTS and request.method in {"GET", "HEAD"}:
         try:
             response = await call_next(request)
         except HTTPException as exc:
             if exc.status_code != 404:
                 raise
-            logger.warning("/healthz route raised 404; serving fallback response")
-            return Response(status_code=200) if request.method == "HEAD" else JSONResponse({"status": "ok"})
+            logger.warning("%s route raised 404; serving fallback response", normalized_path)
+            return _health_head_response() if request.method == "HEAD" else JSONResponse(_health_payload())
+        except Exception:  # pragma: no cover - defensive safety net
+            logger.exception(
+                "Unhandled exception while serving %s; returning fallback health response",
+                normalized_path,
+            )
+            return _health_head_response() if request.method == "HEAD" else JSONResponse(_health_payload())
 
         if response.status_code != 404:
             return response
 
-        logger.warning("/healthz route returned 404; serving fallback response")
-        if request.method == "HEAD":
-            return Response(status_code=200)
-        return JSONResponse({"status": "ok"})
+        logger.warning("%s route returned 404; serving fallback response", normalized_path)
+        return _health_head_response() if request.method == "HEAD" else JSONResponse(_health_payload())
 
     return await call_next(request)
 
@@ -114,16 +132,40 @@ async def startup_event():
 
 
 # 4. ADD THE HEALTH CHECK ENDPOINT
-@app.get("/healthz", tags=["Health Check"])
+@app.get("/healthz", tags=["Health Check"], summary="Health check", include_in_schema=False)
 async def health_check() -> dict[str, str]:
     """Health check endpoint for Cloud Run readiness and liveness probes."""
-    return {"status": "ok"}
+    return _health_payload()
 
 
 @app.head("/healthz", tags=["Health Check"], include_in_schema=False)
 async def health_check_head() -> Response:
     """Fast HEAD response for Cloud Run health checks that use HEAD requests."""
-    return Response(status_code=200)
+    return _health_head_response()
+
+
+@app.get("/_ah/health", tags=["Health Check"], include_in_schema=False)
+async def app_engine_health_check() -> dict[str, str]:
+    """Compatibility endpoint for Google health checks that probe /_ah/health."""
+    return _health_payload()
+
+
+@app.head("/_ah/health", tags=["Health Check"], include_in_schema=False)
+async def app_engine_health_check_head() -> Response:
+    """HEAD variant for /_ah/health used by certain Google load balancers."""
+    return _health_head_response()
+
+
+@app.get("/health", tags=["Health Check"], include_in_schema=False)
+async def simple_health_alias() -> dict[str, str]:
+    """Backward-compatible root health endpoint alias."""
+    return _health_payload()
+
+
+@app.head("/health", tags=["Health Check"], include_in_schema=False)
+async def simple_health_alias_head() -> Response:
+    """HEAD variant for the /health alias."""
+    return _health_head_response()
 
 
 # 5. INCLUDE THE EXISTING API ROUTER (CRITICAL)
