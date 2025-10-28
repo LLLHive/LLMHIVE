@@ -7,7 +7,16 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("LLMHIVE_FAIL_ON_STUB", "false")  # Allow stub responses in tests
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+SRC_ROOT = ROOT / "llmhive" / "src"
+LEGACY_SRC_ROOT = ROOT / "src"
+
+if SRC_ROOT.exists():
+    sys.path.insert(0, str(SRC_ROOT))
+elif LEGACY_SRC_ROOT.exists():
+    # Support historic layouts where code lived directly under /src
+    sys.path.insert(0, str(LEGACY_SRC_ROOT))
+else:
+    raise RuntimeError("Unable to locate application source directory for tests")
 
 import pytest
 from fastapi.testclient import TestClient
