@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from app.orchestration.router import (
     router as orchestration_router,
     versioned_router as orchestration_v1_router,
@@ -90,9 +90,15 @@ async def startup_event():
 
 # 4. ADD THE HEALTH CHECK ENDPOINT
 @app.get("/healthz", tags=["Health Check"])
-async def health_check():
+async def health_check() -> dict[str, str]:
     """Health check endpoint for Cloud Run readiness and liveness probes."""
     return {"status": "ok"}
+
+
+@app.head("/healthz", tags=["Health Check"], include_in_schema=False)
+async def health_check_head() -> Response:
+    """Fast HEAD response for Cloud Run health checks that use HEAD requests."""
+    return Response(status_code=200)
 
 
 # 5. INCLUDE THE EXISTING API ROUTER (CRITICAL)

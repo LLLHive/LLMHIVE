@@ -17,12 +17,25 @@ def test_healthz_endpoint_exists():
     import sys
     sys.path.insert(0, '.')
     from app.app import app as fastapi_app
-    
+
     client = TestClient(fastapi_app)
     response = client.get('/healthz')
-    
+
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_healthz_head_endpoint():
+    """HEAD requests against /healthz should return 200 for Cloud Run probes."""
+    import sys
+    sys.path.insert(0, '.')
+    from app.app import app as fastapi_app
+
+    client = TestClient(fastapi_app)
+    response = client.head('/healthz')
+
+    assert response.status_code == 200
+    assert not response.content  # HEAD responses should have no body
 
 
 def test_structured_json_logging():
