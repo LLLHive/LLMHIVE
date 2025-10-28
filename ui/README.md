@@ -44,6 +44,9 @@ openssl rand -base64 32
 AUTH_SECRET=<your-generated-secret>
 GITHUB_ID=<your-github-client-id>
 GITHUB_SECRET=<your-github-client-secret>
+# URL where the Python orchestrator API is running
+# For local development the default FastAPI server listens on http://127.0.0.1:8000
+ORCHESTRATOR_API_BASE_URL=http://127.0.0.1:8000
 ```
 
 ### Installation
@@ -88,8 +91,13 @@ This application is configured to deploy to Vercel alongside the Python backend.
 
 **Required Environment Variables in Vercel:**
 - `AUTH_SECRET`: Your generated auth secret
-- `GITHUB_ID`: Your GitHub OAuth App Client ID  
+- `GITHUB_ID`: Your GitHub OAuth App Client ID
 - `GITHUB_SECRET`: Your GitHub OAuth App Client Secret
+- `ORCHESTRATOR_API_BASE_URL`: Base URL of your deployed FastAPI orchestrator (e.g. your Cloud Run service)
+
+You can optionally expose the same URL to the browser by setting `NEXT_PUBLIC_API_BASE_URL`. When this is left undefined, the UI
+will call the internal proxy route at `/api/v1/orchestration`, which forwards requests from Vercel to your backend. This avoids
+mixed-content issues when the orchestrator is only available over HTTP.
 
 **Important**: Update your GitHub OAuth App's callback URL to match your production domain:
 - `https://your-domain.com/api/auth/callback/github`
