@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Dict, Any
+from typing import Dict, Any
 from app.orchestration.blackboard import Blackboard
 
 class BaseProtocol(ABC):

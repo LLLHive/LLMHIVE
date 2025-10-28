@@ -23,7 +23,7 @@ class Router:
             assignments[role] = best_model.model_id
         
         if "critic" in required_roles and "critic" not in assignments:
-             assignments["critic"] = settings.CRITIQUE_MODEL
+            assignments["critic"] = settings.CRITIQUE_MODEL
         
         return assignments
 
