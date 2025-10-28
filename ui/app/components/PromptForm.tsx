@@ -62,6 +62,7 @@ const STRATEGY_OPTIONS: StrategyOption[] = [
 ];
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
+const ORCHESTRATION_ENDPOINT = "/api/v1/orchestration";
 
 export default function PromptForm({ userId, userName }: PromptFormProps) {
   const [prompt, setPrompt] = useState("");
@@ -129,45 +130,67 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
     setTeamMenuOpen(false);
 
     try {
-      const response = await fetch(`${API_BASE}/api/prompt`, {
+      const url = `${API_BASE}${ORCHESTRATION_ENDPOINT}`;
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "text/plain",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           user_id: userId ?? "guest",
           prompt,
-          preferred_models: normalizedTeam,
-          preferred_protocol: strategy ?? undefined,
-          requested_by: userName ?? undefined,
+          models: normalizedTeam,
+          enable_memory: true,
         }),
       });
 
       if (!response.ok) {
-        const message = response.statusText || "Unexpected API error";
+        const fallbackText = await response.text();
+        const message = fallbackText || response.statusText || "Unexpected API error";
         throw new Error(`API Error: ${message}`);
       }
 
-      if (!response.body) {
-        const fallbackText = await response.text();
-        setResult(fallbackText);
-        return;
+      const payload = await response.json();
+      const { final_response: finalResponse, plan, evaluation, supporting_notes: supportingNotes } =
+        payload;
+
+      const formattedSections: string[] = [];
+
+      if (finalResponse) {
+        formattedSections.push(`Final Response\n---------------\n${finalResponse}`);
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let streamedText = "";
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (value) {
-          streamedText += decoder.decode(value, { stream: true });
-          setResult(streamedText);
+      if (plan) {
+        const planSummary = [
+          plan.strategy ? `Strategy: ${plan.strategy}` : null,
+          plan.confidence ? `Confidence: ${plan.confidence}` : null,
+          Array.isArray(plan.focus_areas) && plan.focus_areas.length
+            ? `Focus Areas: ${plan.focus_areas.join(", ")}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join("\n");
+        if (planSummary) {
+          formattedSections.push(`Orchestration Plan\n------------------\n${planSummary}`);
         }
       }
-      streamedText += decoder.decode();
-      setResult(streamedText);
+
+      if (Array.isArray(supportingNotes) && supportingNotes.length > 0) {
+        formattedSections.push(
+          `Supporting Notes\n----------------\n${supportingNotes.map((note: string) => `• ${note}`).join("\n")}`
+        );
+      }
+
+      if (evaluation) {
+        formattedSections.push(`Evaluation\n----------\n${evaluation}`);
+      }
+
+      if (formattedSections.length === 0) {
+        formattedSections.push(JSON.stringify(payload, null, 2));
+      }
+
+      setResult(formattedSections.join("\n\n"));
     } catch (err) {
       const message = err instanceof Error ? err.message : "An unknown error occurred";
       setError(message);
