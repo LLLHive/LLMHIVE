@@ -1,9 +1,29 @@
-from google.cloud import firestore
-from google.cloud import aiplatform
-from vertexai.language_models import TextEmbeddingModel
-from .models import Job
+from __future__ import annotations
+
 import logging
-import os
+
+from .models import Job
+
+try:  # Optional dependency: Firestore client
+    from google.cloud import firestore  # type: ignore
+    FIRESTORE_AVAILABLE = True
+except Exception:  # pragma: no cover - handled by fallback behaviour
+    firestore = None  # type: ignore
+    FIRESTORE_AVAILABLE = False
+
+try:  # Optional dependency: Vertex AI platform
+    from google.cloud import aiplatform  # type: ignore
+    AIPLATFORM_AVAILABLE = True
+except Exception:  # pragma: no cover - handled by fallback behaviour
+    aiplatform = None  # type: ignore
+    AIPLATFORM_AVAILABLE = False
+
+try:  # Optional dependency: Vertex AI text embeddings
+    from vertexai.language_models import TextEmbeddingModel  # type: ignore
+    EMBEDDINGS_AVAILABLE = True
+except Exception:  # pragma: no cover - handled by fallback behaviour
+    TextEmbeddingModel = None  # type: ignore
+    EMBEDDINGS_AVAILABLE = False
 
 logger = logging.getLogger("llmhive")
 
@@ -15,34 +35,74 @@ ENDPOINT_ID = "llmhive-job-endpoint"
 EMBEDDING_MODEL_NAME = "textembedding-gecko@003"
 # ---
 
-class Archivist:
-    """
-    The Archivist. It handles all interactions with Firestore (long-term memory)
-    and Vertex AI Vector Search (semantic memory), using the native Vertex AI embedding model.
-    """
-    def __init__(self):
-        # Firestore client for saving full job details
-        self.db = firestore.Client()
-        self.collection_name = "jobs"
-        
-        # Initialize Vertex AI client
-        aiplatform.init(project=PROJECT_ID, location=REGION)
-        
-        # Get a reference to our deployed Vector Search endpoint
-        self.endpoint = aiplatform.MatchingEngineIndexEndpoint(ENDPOINT_ID)
 
-        # Get a reference to the Vertex AI text embedding model
-        self.embedding_model = TextEmbeddingModel.from_pretrained(EMBEDDING_MODEL_NAME)
-        
-        logger.info("Archivist initialized, connected to Firestore and Vertex AI Embedding Service.")
+class Archivist:
+    """Persist jobs and embeddings when cloud credentials are available.
+
+    In development and local testing environments we often do not have
+    Google Cloud credentials or the Vertex AI SDK installed.  Instead of
+    raising an exception during service start-up, the Archivist now detects
+    missing dependencies and gracefully degrades into a no-op implementation.
+    """
+
+    def __init__(self) -> None:
+        self.db = None
+        self.collection_name = "jobs"
+        self.endpoint = None
+        self.embedding_model = None
+        self.enabled = False
+
+        if not (FIRESTORE_AVAILABLE and AIPLATFORM_AVAILABLE and EMBEDDINGS_AVAILABLE):
+            logger.warning(
+                "Archivist dependencies are unavailable. Running in no-op mode."
+            )
+            return
+
+        try:
+            # Firestore client for saving full job details
+            self.db = firestore.Client()
+
+            # Initialize Vertex AI client
+            aiplatform.init(project=PROJECT_ID, location=REGION)
+
+            # Get a reference to our deployed Vector Search endpoint
+            self.endpoint = aiplatform.MatchingEngineIndexEndpoint(ENDPOINT_ID)
+
+            # Get a reference to the Vertex AI text embedding model
+            self.embedding_model = TextEmbeddingModel.from_pretrained(
+                EMBEDDING_MODEL_NAME
+            )
+
+            self.enabled = True
+            logger.info(
+                "Archivist initialized, connected to Firestore and Vertex AI Embedding Service."
+            )
+        except Exception as exc:  # pragma: no cover - requires cloud services
+            logger.warning(
+                "Archivist could not initialize cloud backends and will run in no-op mode: %s",
+                exc,
+            )
+            self.db = None
+            self.endpoint = None
+            self.embedding_model = None
+            self.enabled = False
 
     def _get_embedding(self, text: str) -> list[float]:
         """Generates an embedding for a given text using the Vertex AI API."""
+        if not (self.enabled and self.embedding_model):
+            raise RuntimeError("Embedding model is not available")
+
         response = self.embedding_model.get_embeddings([text])
         return response[0].values
 
     def save_job(self, job: Job):
         """Saves a job to Firestore and its embedding to Vector Search."""
+        if not self.enabled:
+            logger.debug(
+                "Archivist.save_job skipped because cloud backends are disabled."
+            )
+            return
+
         try:
             # 1. Save the full job object to Firestore
             doc_ref = self.db.collection(self.collection_name).document(job.id)
@@ -60,10 +120,19 @@ class Archivist:
             logger.info(f"Archivist saved embedding for Job ID: {job.id} to Vector Search.")
 
         except Exception as e:
-            logger.error(f"Archivist failed to save Job ID: {job.id}. Error: {e}", exc_info=True)
+            logger.error(
+                f"Archivist failed to save Job ID: {job.id}. Error: {e}",
+                exc_info=True,
+            )
 
     def find_similar_jobs(self, prompt: str, num_results: int = 3) -> list[Job]:
         """Finds similar past jobs using Vector Search."""
+        if not self.enabled:
+            logger.debug(
+                "Archivist.find_similar_jobs skipped because cloud backends are disabled."
+            )
+            return []
+
         try:
             # 1. Create an embedding for the new prompt via API call
             query_embedding = self._get_embedding(prompt)
@@ -87,5 +156,8 @@ class Archivist:
             logger.info(f"Archivist retrieved {len(similar_jobs)} full jobs from Firestore.")
             return similar_jobs
         except Exception as e:
-            logger.error(f"Archivist failed to find similar jobs. Error: {e}", exc_info=True)
-            return [] # Return an empty list on failure
+            logger.error(
+                f"Archivist failed to find similar jobs. Error: {e}",
+                exc_info=True,
+            )
+            return []  # Return an empty list on failure
