@@ -27,7 +27,16 @@ This guide walks you through deploying the LLMHive MVP Cockpit to Vercel.
 
 ### 3. Configure the Project
 
-Vercel will automatically detect the `vercel.json` configuration. You don't need to change any build settings.
+The repository contains both a FastAPI backend and the Next.js frontend. To deploy the UI you must tell Vercel to build only the `ui/` directory.
+
+1. In the **Project Settings** screen, expand **"Build & Output Settings"** (or click **"Settings" → "Build & Output Settings"** after the project is created).
+2. Set **Root Directory** to `ui`.
+3. Set **Framework Preset** to **Next.js**.
+4. Ensure the commands are:
+   - **Install Command**: `npm install`
+   - **Build Command**: `npm run build`
+   - Leave **Output Directory** blank (Vercel will use `.next`).
+5. Save the settings. If Vercel shows separate **Production Overrides**, repeat the same values there before saving.
 
 ### 4. Set Environment Variables
 
@@ -49,10 +58,7 @@ Before deploying, add the following environment variables:
 
 1. Click the **"Deploy"** button
 2. Wait approximately 2-3 minutes for the build and deployment to complete
-3. You'll see a progress screen showing:
-   - Building Next.js frontend
-   - Building Python backend
-   - Deploying to Vercel's CDN
+3. You'll see a progress screen showing the Next.js build steps. If the log mentions searching for a FastAPI entry point, go back to Step 3 and confirm the Framework Preset and Root Directory overrides are saved.
 
 ### 6. Access Your Application
 
@@ -89,15 +95,13 @@ To use a custom domain like `llmhive.com`:
 
 ### Build Failures
 
-**Frontend build fails:**
-- Check the build logs for specific errors
-- Ensure all TypeScript files are valid
-- Verify `package.json` dependencies are correct
+**"No FastAPI entrypoint found" error appears:**
+- Vercel is still trying to run the backend builder. Confirm **Framework Preset** is set to **Next.js** and **Root Directory** is `ui` in both the general settings and any **Production Overrides**.
+- Redeploy with build cache disabled after saving the overrides.
 
-**Backend build fails:**
-- Check that `requirements.txt` is in the root directory
-- Verify all Python dependencies are available on Vercel
-- Check Python version compatibility (Vercel uses Python 3.9+)
+**Frontend build fails:**
+- Check the build logs for specific TypeScript or dependency errors.
+- Verify `ui/package.json` lists all required dependencies and scripts.
 
 ### Runtime Errors
 
