@@ -51,6 +51,16 @@ except ImportError:
 
 
 @dataclass(slots=True)
+class ResponseAssessment:
+    """Lightweight quality assessment for a model response."""
+
+    result: LLMResult
+    score: float
+    flags: list[str]
+    highlights: list[str]
+
+
+@dataclass(slots=True)
 class OrchestrationArtifacts:
     """Artifacts produced by the orchestrator stages."""
 
@@ -64,6 +74,7 @@ class OrchestrationArtifacts:
     guardrail_report: GuardrailReport | None
     step_outputs: Dict[str, list[LLMResult]]
     supporting_notes: list[str]
+    quality_assessments: Dict[str, ResponseAssessment]
     evaluation: LLMResult | None
 
 
@@ -295,11 +306,25 @@ class Orchestrator:
                 step_outputs.setdefault(PlanRole.DRAFT.value, fallback_results)
             initial_responses = fallback_results[: len(model_list)]
 
+        quality_assessments: Dict[str, ResponseAssessment] = {}
+        quality_highlights: list[str] = []
+        if initial_responses:
+            assessments = self._analyze_response_quality(initial_responses)
+            selected, quality_assessments = self._select_top_responses(
+                assessments,
+                limit=len(model_list),
+                min_score=getattr(settings, "minimum_quality_score", 0.3),
+            )
+            if selected:
+                initial_responses = selected
+            quality_highlights = self._quality_highlights(quality_assessments)
+
         critique_subject = self._build_critique_subject(
             prompt=prompt,
             context=context,
             supporting_notes=supporting_notes,
             step_outputs=step_outputs,
+            quality_highlights=quality_highlights,
         )
         critiques, critiques_by_model = await self._run_cross_critiques(
             initial_responses,
@@ -316,6 +341,7 @@ class Orchestrator:
             supporting_notes=supporting_notes,
             critiques_by_model=critiques_by_model,
             step_outputs=step_outputs,
+            quality_assessments=quality_assessments,
         )
         improvement_tasks = []
         for response in initial_responses:
@@ -337,6 +363,7 @@ class Orchestrator:
         consensus_notes = self._derive_consensus(
             improvements or initial_responses,
             supporting_notes=supporting_notes,
+            quality_insights=quality_highlights,
         )
         synthesis_prompt = self._build_synthesis_prompt(
             prompt,
@@ -347,6 +374,7 @@ class Orchestrator:
             consensus_notes,
             step_outputs=step_outputs,
             supporting_notes=supporting_notes,
+            quality_assessments=quality_assessments,
         )
         synthesizer = self._select_provider(model_list[0])
         final_response = await synthesizer.complete(synthesis_prompt, model=model_list[0])
@@ -369,6 +397,7 @@ class Orchestrator:
                 consensus_notes=consensus_notes,
                 guardrail_report=guardrail_report,
                 supporting_notes=supporting_notes,
+                quality_assessments=quality_assessments,
             )
             evaluator_model = model_list[1] if len(model_list) > 1 else model_list[0]
             evaluator = self._select_provider(evaluator_model)
@@ -387,6 +416,7 @@ class Orchestrator:
             guardrail_report=guardrail_report,
             step_outputs=step_outputs,
             supporting_notes=supporting_notes,
+            quality_assessments=quality_assessments,
             evaluation=evaluation,
         )
 
@@ -552,6 +582,7 @@ class Orchestrator:
         context: str | None,
         supporting_notes: Sequence[str],
         step_outputs: Dict[str, Sequence[LLMResult]],
+        quality_highlights: Sequence[str] | None = None,
     ) -> str:
         parts = [
             "You are reviewing peer answers within the LLMHive orchestration pipeline.",
@@ -569,6 +600,10 @@ class Orchestrator:
             parts.append(
                 self._summaries_from_outputs(step_outputs[PlanRole.RESEARCH.value])
             )
+        if quality_highlights:
+            parts.append("Quality observations about peer drafts:")
+            for highlight in list(quality_highlights)[:4]:
+                parts.append(f"- {highlight}")
         parts.append("Original task:")
         parts.append(prompt)
         parts.append(
@@ -602,6 +637,7 @@ class Orchestrator:
         supporting_notes: Sequence[str],
         critiques_by_model: Dict[str, list[str]],
         step_outputs: Dict[str, Sequence[LLMResult]],
+        quality_assessments: Dict[str, ResponseAssessment],
     ) -> str:
         parts = [
             "Improve the draft answers leveraging critiques and supporting evidence.",
@@ -614,6 +650,13 @@ class Orchestrator:
             parts.append("Evidence and research leads:")
             for note in supporting_notes[:6]:
                 parts.append(f"- {note}")
+        if quality_assessments:
+            parts.append("Quality review of existing drafts:")
+            for assessment in list(quality_assessments.values())[:4]:
+                summary = "; ".join(assessment.highlights) or "Strong structure"
+                parts.append(
+                    f"- {assessment.result.model}: score={assessment.score:.2f}. {summary}"
+                )
         if step_outputs.get(PlanRole.FACT_CHECK.value):
             parts.append("Fact-check insights to respect:")
             parts.append(
@@ -638,6 +681,7 @@ class Orchestrator:
         responses: Sequence[LLMResult],
         *,
         supporting_notes: Sequence[str],
+        quality_insights: Sequence[str] | None = None,
         limit: int = 8,
     ) -> list[str]:
         consensus: list[str] = []
@@ -664,6 +708,15 @@ class Orchestrator:
                 continue
             seen.add(lowered)
             consensus.append(f"Evidence: {note}")
+        if quality_insights:
+            for highlight in quality_insights:
+                if len(consensus) >= limit:
+                    break
+                lowered = highlight.lower()
+                if lowered in seen:
+                    continue
+                seen.add(lowered)
+                consensus.append(f"Quality-signal: {highlight}")
         return consensus
 
     def _build_synthesis_prompt(
@@ -677,6 +730,7 @@ class Orchestrator:
         *,
         step_outputs: Dict[str, Sequence[LLMResult]],
         supporting_notes: Sequence[str],
+        quality_assessments: Dict[str, ResponseAssessment],
     ) -> str:
         parts: list[str] = []
         parts.append("You are synthesizing answers from a collaborative team of AI experts.")
@@ -720,6 +774,15 @@ class Orchestrator:
             parts.append("Initial answers to reconcile:")
             for ans in initial_responses:
                 parts.append(f"- {ans.model}: {self._truncate(ans.content, 220)}")
+        if quality_assessments:
+            parts.append("")
+            parts.append("Quality scoring from DeepConf-style filtering:")
+            for assessment in list(quality_assessments.values())[:5]:
+                highlight = "; ".join(assessment.highlights) or "Comprehensive coverage"
+                flag_text = f" Flags: {', '.join(assessment.flags)}" if assessment.flags else ""
+                parts.append(
+                    f"- {assessment.result.model}: {assessment.score:.2f} – {highlight}{flag_text}"
+                )
         if consensus_notes:
             parts.append("")
             parts.append("Consensus signals from the hive team:")
@@ -740,6 +803,7 @@ class Orchestrator:
         consensus_notes: Sequence[str],
         guardrail_report: GuardrailReport | None,
         supporting_notes: Sequence[str],
+        quality_assessments: Dict[str, ResponseAssessment],
     ) -> str:
         parts = [
             "Act as a quality assurance reviewer for the final orchestrated answer.",
@@ -759,6 +823,13 @@ class Orchestrator:
             parts.append("Guardrail issues detected:")
             for issue in guardrail_report.issues:
                 parts.append(f"- {issue}")
+        if quality_assessments:
+            parts.append("Model quality assessments considered during synthesis:")
+            for assessment in list(quality_assessments.values())[:4]:
+                summary = "; ".join(assessment.highlights) or "Well structured"
+                parts.append(
+                    f"- {assessment.result.model}: score {assessment.score:.2f} ({summary})"
+                )
         parts.append("Planned approach summary:")
         parts.append(plan.strategy)
         parts.append("Final answer to evaluate:")
@@ -767,6 +838,111 @@ class Orchestrator:
             "Respond with a concise evaluation summarizing strengths, risks, and any follow-up actions required."
         )
         return "\n".join(parts)
+
+    def _analyze_response_quality(
+        self, responses: Sequence[LLMResult]
+    ) -> list[ResponseAssessment]:
+        assessments: list[ResponseAssessment] = []
+        for result in responses:
+            text = result.content.strip()
+            score = 0.0
+            flags: list[str] = []
+            highlights: list[str] = []
+
+            length = len(text)
+            if length > 1200:
+                score += 0.45
+                highlights.append("Extensive coverage")
+            elif length > 600:
+                score += 0.35
+                highlights.append("Thorough response")
+            elif length > 300:
+                score += 0.25
+            elif length < 120:
+                score -= 0.2
+                flags.append("Very short")
+
+            if any(token in text.lower() for token in ("i am unsure", "cannot", "not sure")):
+                score -= 0.25
+                flags.append("Low confidence language")
+
+            if "as an ai language model" in text.lower():
+                score -= 0.3
+                flags.append("Meta disclaimer")
+
+            if "TODO" in text or "TBD" in text:
+                score -= 0.15
+                flags.append("Unresolved TODOs")
+
+            if "http" in text or "[" in text and "]" in text:
+                score += 0.1
+                highlights.append("Includes references")
+
+            if any(symbol in text for symbol in ("- ", "•", "1.", "2.")):
+                score += 0.05
+                highlights.append("Structured formatting")
+
+            if "analysis" in text.lower() or "reason" in text.lower():
+                score += 0.05
+
+            if "hallucination" in text.lower():
+                flags.append("Mentions hallucination handling")
+
+            final_score = max(min(score, 1.2), -0.5)
+            assessments.append(
+                ResponseAssessment(
+                    result=result,
+                    score=final_score,
+                    flags=flags,
+                    highlights=highlights,
+                )
+            )
+
+        assessments.sort(key=lambda assessment: assessment.score, reverse=True)
+        return assessments
+
+    def _select_top_responses(
+        self,
+        assessments: Sequence[ResponseAssessment],
+        *,
+        limit: int,
+        min_score: float,
+    ) -> Tuple[list[LLMResult], Dict[str, ResponseAssessment]]:
+        selected: list[LLMResult] = []
+        mapping: Dict[str, ResponseAssessment] = {}
+        for assessment in assessments:
+            if len(selected) >= limit:
+                break
+            if assessment.score < min_score and selected:
+                continue
+            if assessment.result.model in mapping:
+                continue
+            selected.append(assessment.result)
+            mapping[assessment.result.model] = assessment
+
+        if len(selected) < limit:
+            for assessment in assessments:
+                if assessment.result.model in mapping:
+                    continue
+                selected.append(assessment.result)
+                mapping[assessment.result.model] = assessment
+                if len(selected) >= limit:
+                    break
+
+        return selected, mapping
+
+    def _quality_highlights(
+        self, assessments: Dict[str, ResponseAssessment]
+    ) -> list[str]:
+        ordered = sorted(
+            assessments.values(), key=lambda assessment: assessment.score, reverse=True
+        )
+        notes: list[str] = []
+        for assessment in ordered:
+            summary = "; ".join(assessment.highlights) or "Solid structure"
+            flag_summary = f" (flags: {', '.join(assessment.flags)})" if assessment.flags else ""
+            notes.append(f"{assessment.result.model} scored {assessment.score:.2f}: {summary}{flag_summary}")
+        return notes
 
     def _truncate(self, text: str, limit: int = 200) -> str:
         cleaned = text.strip()
