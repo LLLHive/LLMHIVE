@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import api_router
@@ -58,13 +58,19 @@ async def root() -> dict[str, str]:
 @app.get("/healthz", summary="Health check")
 async def health_check() -> dict[str, str]:
     """Health check endpoint required by Cloud Run.
-    
+
     Note: This is a root-level health check endpoint (/healthz) separate from
     the API-level health check (/api/v1/healthz). Cloud Run and other
     infrastructure components typically expect health checks at the root level.
     """
     logger.info("Health check endpoint called")
     return {"status": "ok"}
+
+
+@app.head("/healthz", summary="Health check (HEAD)", include_in_schema=False)
+async def health_check_head() -> Response:
+    """Head-only health check variant for infrastructure probes."""
+    return Response(status_code=200)
 
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")
