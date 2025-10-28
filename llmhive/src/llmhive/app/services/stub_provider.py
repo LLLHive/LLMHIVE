@@ -16,6 +16,10 @@ class StubProvider(LLMProvider):
 
     def __init__(self, seed: int | None = None) -> None:
         self.random = random.Random(seed)
+        self._models: List[str] = ["stub-v1", "stub-researcher", "stub-critic"]
+
+    def list_models(self) -> List[str]:
+        return list(self._models)
 
     async def _sleep(self) -> None:
         await asyncio.sleep(self.random.uniform(0.01, 0.05))

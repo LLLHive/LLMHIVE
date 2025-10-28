@@ -48,6 +48,14 @@ class GeminiProvider(LLMProvider):
         genai.configure(api_key=key)
         self.genai = genai
         self.timeout = timeout or getattr(settings, "gemini_timeout_seconds", 45.0)
+        self._models = [
+            "gemini-1.5-pro",
+            "gemini-1.5-flash",
+            "gemini-1.0-pro-vision",
+        ]
+
+    def list_models(self) -> list[str]:
+        return list(self._models)
 
     async def _generate(self, prompt: str, *, model: str, system_instruction: str | None = None) -> LLMResult:
         try:
