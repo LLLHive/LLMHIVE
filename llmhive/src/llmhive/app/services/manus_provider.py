@@ -52,6 +52,10 @@ class ManusProvider(LLMProvider):
             base_url=url,
             timeout=timeout or getattr(settings, "manus_timeout_seconds", 45.0)
         )
+        self._models = ["manus-gpt-ensemble", "manus-claude-bridge", "manus-cascade-lite"]
+
+    def list_models(self) -> list[str]:
+        return list(self._models)
 
     async def _chat(self, messages: List[Dict[str, str]], *, model: str) -> LLMResult:
         try:

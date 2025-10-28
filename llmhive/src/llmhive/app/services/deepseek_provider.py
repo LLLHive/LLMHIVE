@@ -49,6 +49,10 @@ class DeepSeekProvider(LLMProvider):
             base_url="https://api.deepseek.com/v1",
             timeout=timeout or getattr(settings, "deepseek_timeout_seconds", 45.0)
         )
+        self._models = ["deepseek-chat", "deepseek-reasoner"]
+
+    def list_models(self) -> list[str]:
+        return list(self._models)
 
     async def _chat(self, messages: List[Dict[str, str]], *, model: str) -> LLMResult:
         try:

@@ -51,6 +51,14 @@ class AnthropicProvider(LLMProvider):
             api_key=key,
             timeout=timeout or getattr(settings, "anthropic_timeout_seconds", 45.0)
         )
+        self._models = [
+            "claude-3-opus-20240229",
+            "claude-3-sonnet-20240229",
+            "claude-3-haiku-20240307",
+        ]
+
+    def list_models(self) -> list[str]:
+        return list(self._models)
 
     async def _chat(self, messages: list[dict[str, str]], *, model: str, system: str | None = None) -> LLMResult:
         try:

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
+from ..memory import MemoryManager
 from ..models import Task
 from ..orchestrator import Orchestrator
 from ..schemas import (
@@ -41,7 +42,12 @@ def providers_status():
             except Exception:
                 models = []
             summary[k] = models
-        return {"available_providers": keys, "provider_model_summary": summary}
+        registry_summary = _orchestrator.model_registry.summarize()
+        return {
+            "available_providers": keys,
+            "provider_model_summary": summary,
+            "registry_summary": registry_summary,
+        }
     except Exception as exc:
         logger.exception("Failed to enumerate providers: %s", exc)
         raise HTTPException(status_code=500, detail="Failed to enumerate providers")
@@ -106,9 +112,29 @@ async def orchestrate(
             stub_fallback
         )
 
+    # Prepare memory context
+    memory_context = None
+    conversation = None
+    memory_manager: MemoryManager | None = None
+    context_string: str | None = None
+
+    if payload.enable_memory:
+        memory_manager = MemoryManager(db)
+        conversation = memory_manager.get_or_create_conversation(
+            payload.conversation_id,
+            user_id=payload.user_id,
+            topic=payload.topic,
+        )
+        memory_context = memory_manager.fetch_recent_context(conversation)
+        context_string = memory_context.as_prompt_context()
+
     # Run orchestration
     try:
-        artifacts = await _orchestrator.orchestrate(payload.prompt, normalized_models)
+        artifacts = await _orchestrator.orchestrate(
+            payload.prompt,
+            normalized_models,
+            context=context_string,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:
@@ -159,11 +185,55 @@ async def orchestrate(
             critiques=[item.model_dump() for item in critiques],
             improvements=[item.model_dump() for item in improvements],
             final_response=artifacts.final_response.content,
+            conversation_id=conversation.id if conversation else payload.conversation_id,
         )
         db.add(task)
         db.flush()
     except Exception as exc:
         logger.exception("Failed to persist orchestration task: %s", exc)
+
+    plan_dict = {
+        "strategy": artifacts.plan.strategy,
+        "confidence": artifacts.plan.confidence,
+        "focus_areas": list(artifacts.plan.focus_areas),
+        "steps": [
+            {
+                "role": step.role.value,
+                "description": step.description,
+                "required_capabilities": list(step.required_capabilities),
+                "candidate_models": list(step.candidate_models),
+                "parallelizable": step.parallelizable,
+            }
+            for step in artifacts.plan.steps
+        ],
+    }
+
+    guardrail_payload = None
+    if artifacts.guardrail_report is not None:
+        guardrail_payload = {
+            "passed": artifacts.guardrail_report.passed,
+            "issues": artifacts.guardrail_report.issues,
+            "advisories": artifacts.guardrail_report.advisories,
+        }
+
+    # Persist conversation memory after successful orchestration
+    if payload.enable_memory and memory_manager and conversation:
+        try:
+            memory_manager.append_entry(
+                conversation,
+                role="user",
+                content=payload.prompt,
+                metadata={"models": normalized_models},
+            )
+            memory_manager.append_entry(
+                conversation,
+                role="assistant",
+                content=artifacts.final_response.content,
+                metadata={"models": [ans.model for ans in artifacts.initial_responses]},
+            )
+            memory_manager.auto_summarize(conversation)
+        except Exception as exc:
+            logger.exception("Failed to update memory entries: %s", exc)
 
     return OrchestrationResponse(
         prompt=payload.prompt,
@@ -172,4 +242,9 @@ async def orchestrate(
         critiques=critiques,
         improvements=improvements,
         final_response=artifacts.final_response.content,
+        conversation_id=conversation.id if conversation else payload.conversation_id,
+        consensus_notes=artifacts.consensus_notes,
+        plan=plan_dict,
+        guardrails=guardrail_payload,
+        context=context_string,
     )

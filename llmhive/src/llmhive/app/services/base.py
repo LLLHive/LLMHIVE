@@ -41,3 +41,7 @@ class LLMProvider(Protocol):
         model: str,
     ) -> LLMResult:
         """Return an improved answer given critiques."""
+
+    def list_models(self) -> list[str]:
+        """Return the models exposed by this provider (best-effort)."""
+        raise NotImplementedError
