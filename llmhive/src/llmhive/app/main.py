@@ -55,7 +55,10 @@ async def root() -> dict[str, str]:
         "version": "1.0.0"
     }
 
-@app.get("/healthz", summary="Health check")
+HEALTH_PAYLOAD = {"status": "ok"}
+
+
+@app.get("/healthz", summary="Health check", include_in_schema=False)
 async def health_check() -> dict[str, str]:
     """Health check endpoint required by Cloud Run.
 
@@ -64,12 +67,38 @@ async def health_check() -> dict[str, str]:
     infrastructure components typically expect health checks at the root level.
     """
     logger.info("Health check endpoint called")
-    return {"status": "ok"}
+    return HEALTH_PAYLOAD
 
 
 @app.head("/healthz", summary="Health check (HEAD)", include_in_schema=False)
 async def health_check_head() -> Response:
     """Head-only health check variant for infrastructure probes."""
+    return Response(status_code=200)
+
+
+@app.get("/health", include_in_schema=False)
+async def health_alias() -> dict[str, str]:
+    """Backward compatible alias for legacy health checks."""
+    logger.info("Health alias endpoint called")
+    return HEALTH_PAYLOAD
+
+
+@app.head("/health", include_in_schema=False)
+async def health_alias_head() -> Response:
+    """HEAD alias for /health."""
+    return Response(status_code=200)
+
+
+@app.get("/_ah/health", include_in_schema=False)
+async def app_engine_health_alias() -> dict[str, str]:
+    """Compatibility endpoint for Google load balancer probes."""
+    logger.info("App Engine style health endpoint called")
+    return HEALTH_PAYLOAD
+
+
+@app.head("/_ah/health", include_in_schema=False)
+async def app_engine_health_alias_head() -> Response:
+    """HEAD alias for /_ah/health."""
     return Response(status_code=200)
 
 # Include API routers

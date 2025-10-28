@@ -38,6 +38,34 @@ def test_healthz_head_endpoint():
     assert not response.content  # HEAD responses should have no body
 
 
+def test_health_aliases():
+    """All supported health endpoint aliases should behave identically."""
+    import sys
+    sys.path.insert(0, '.')
+    from app.app import app as fastapi_app
+
+    client = TestClient(fastapi_app)
+
+    for path in ('/health', '/_ah/health', '/healthz'):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
+
+
+def test_health_alias_head_responses():
+    """HEAD requests against alias endpoints should mirror /healthz behaviour."""
+    import sys
+    sys.path.insert(0, '.')
+    from app.app import app as fastapi_app
+
+    client = TestClient(fastapi_app)
+
+    for path in ('/health', '/_ah/health', '/healthz'):
+        response = client.head(path)
+        assert response.status_code == 200
+        assert response.content == b""
+
+
 def test_structured_json_logging():
     """Test that structured JSON logging is configured correctly."""
     import sys
