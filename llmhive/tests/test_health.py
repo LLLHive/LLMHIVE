@@ -14,6 +14,14 @@ def test_root_health_head_endpoint(client):
     assert response.content == b""
 
 
+def test_root_health_aliases(client):
+    """Ensure legacy health endpoints continue to function."""
+    for path in ("/health", "/_ah/health"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
+
+
 def test_health_endpoint(client):
     response = client.get("/api/v1/healthz")
     assert response.status_code == 200
