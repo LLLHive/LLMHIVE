@@ -56,6 +56,18 @@ class OrchestrationResponse(BaseModel):
     plan: Dict[str, Any]
     guardrails: Optional[Dict[str, Any]]
     context: Optional[str]
+    step_outputs: Dict[str, List[ModelAnswer]] = Field(
+        default_factory=dict,
+        description="Outputs produced during each plan step.",
+    )
+    supporting_notes: List[str] = Field(
+        default_factory=list,
+        description="Aggregated research and fact-check snippets shared across agents.",
+    )
+    evaluation: Optional[str] = Field(
+        default=None,
+        description="Quality review summary of the final response.",
+    )
 
 
 class TaskRecord(BaseModel):
