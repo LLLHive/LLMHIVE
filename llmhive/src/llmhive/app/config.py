@@ -44,7 +44,10 @@ class Settings(BaseSettings):
     manus_api_key: str | None = Field(default=None, alias="MANUS_API_KEY")
     manus_base_url: str | None = Field(default=None, alias="MANUS_BASE_URL")
     manus_timeout_seconds: float = Field(default=45.0, alias="MANUS_TIMEOUT_SECONDS")
-    
+
+    # Orchestrator heuristics
+    minimum_quality_score: float = Field(default=0.3, alias="MINIMUM_QUALITY_SCORE")
+
     default_models: List[str] = Field(
         default_factory=lambda: ["gpt-4o-mini", "gpt-3.5-turbo"], alias="DEFAULT_MODELS"
     )
