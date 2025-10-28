@@ -36,6 +36,10 @@ class OrchestrationRequest(BaseModel):
     models: Optional[List[str]] = Field(
         default=None, description="Optional explicit list of model identifiers"
     )
+    user_id: Optional[str] = Field(default=None, description="Identifier for the requesting user")
+    conversation_id: Optional[int] = Field(default=None, description="Existing conversation identifier")
+    topic: Optional[str] = Field(default=None, description="Optional topic hint for memory organization")
+    enable_memory: bool = Field(default=True, description="Enable conversational memory retrieval and storage")
 
 
 class OrchestrationResponse(BaseModel):
@@ -47,6 +51,11 @@ class OrchestrationResponse(BaseModel):
     critiques: List[Critique]
     improvements: List[Improvement]
     final_response: str
+    conversation_id: Optional[int]
+    consensus_notes: List[str]
+    plan: Dict[str, Any]
+    guardrails: Optional[Dict[str, Any]]
+    context: Optional[str]
 
 
 class TaskRecord(BaseModel):
@@ -56,6 +65,7 @@ class TaskRecord(BaseModel):
     prompt: str
     models: List[str] = Field(alias="model_names")
     final_response: str
+    conversation_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

@@ -9,6 +9,9 @@ from dataclasses import dataclass
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 from .config import settings
+from .guardrails import GuardrailReport, SafetyValidator
+from .model_registry import ModelRegistry
+from .planner import PlanRole, ReasoningPlanner, ReasoningPlan
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
 from .services.openai_provider import OpenAIProvider
 from .services.stub_provider import StubProvider
@@ -50,10 +53,15 @@ except ImportError:
 @dataclass(slots=True)
 class OrchestrationArtifacts:
     """Artifacts produced by the orchestrator stages."""
+
+    plan: ReasoningPlan
+    context_prompt: str | None
     initial_responses: list[LLMResult]
     critiques: list[Tuple[str, str, LLMResult]]  # (author, target, result)
     improvements: list[LLMResult]
+    consensus_notes: list[str]
     final_response: LLMResult
+    guardrail_report: GuardrailReport | None
 
 
 class Orchestrator:
@@ -63,6 +71,9 @@ class Orchestrator:
         if providers is None:
             providers = self._default_providers()
         self.providers = providers
+        self.model_registry = ModelRegistry(self.providers)
+        self.planner = ReasoningPlanner()
+        self.guardrails = SafetyValidator()
         logger.info("Orchestrator initialized with providers: %s", list(self.providers.keys()))
 
     def _get_key(self, *candidates: str) -> str | None:
@@ -207,16 +218,37 @@ class Orchestrator:
                 logger.exception("Provider call failed", exc_info=exc)
         return results
 
-    async def orchestrate(self, prompt: str, models: Iterable[str] | None = None) -> OrchestrationArtifacts:
-        model_list = list(models or settings.default_models)
+    async def orchestrate(
+        self,
+        prompt: str,
+        models: Iterable[str] | None = None,
+        *,
+        context: str | None = None,
+    ) -> OrchestrationArtifacts:
+        plan = self.planner.create_plan(prompt, context=context)
+        if models:
+            model_list = list(dict.fromkeys(models))
+        else:
+            required_roles = [step.role.value for step in plan.steps if step.role != PlanRole.SYNTHESIZE]
+            required_capabilities = [list(step.required_capabilities or {"reasoning"}) for step in plan.steps if step.role != PlanRole.SYNTHESIZE]
+            suggested = self.model_registry.suggest_team(required_roles, required_capabilities)
+            if not suggested:
+                suggested = list(settings.default_models)
+            model_list = list(dict.fromkeys(suggested + plan.model_hints()))
+
         if not model_list:
             raise ValueError("At least one model must be provided")
 
         logger.info("Starting orchestration for %s", model_list)
 
+        context_prompt = context
+        augmented_prompt = prompt
+        if context:
+            augmented_prompt = f"Context from memory:\n{context}\n\nUser request:\n{prompt}"
+
         # Independent responses
         completion_tasks = [
-            self._select_provider(model).complete(prompt, model=model)
+            self._select_provider(model).complete(augmented_prompt, model=model)
             for model in model_list
         ]
         initial_responses = await self._gather_with_handling(completion_tasks)
@@ -230,7 +262,7 @@ class Orchestrator:
                 provider = self._select_provider(author_result.model)
                 task = asyncio.create_task(
                     provider.critique(
-                        prompt,
+                        augmented_prompt,
                         target_answer=target_result.content,
                         author=author_result.model,
                         model=author_result.model,
@@ -260,7 +292,7 @@ class Orchestrator:
             improvement_tasks.append(
                 asyncio.create_task(
                     provider.improve(
-                        prompt,
+                        augmented_prompt,
                         previous_answer=response.content,
                         critiques=critiques_by_model.get(response.model, []),
                         model=response.model,
@@ -270,15 +302,36 @@ class Orchestrator:
         improvements = await self._gather_with_handling(improvement_tasks)
 
         # Final synthesis
-        synthesis_prompt = self._build_synthesis_prompt(prompt, improvements, initial_responses)
+        consensus_notes = self._derive_consensus(improvements or initial_responses)
+        synthesis_prompt = self._build_synthesis_prompt(
+            prompt,
+            improvements,
+            initial_responses,
+            plan,
+            context,
+            consensus_notes,
+        )
         synthesizer = self._select_provider(model_list[0])
         final_response = await synthesizer.complete(synthesis_prompt, model=model_list[0])
 
+        guardrail_report = self.guardrails.inspect(final_response.content)
+        if guardrail_report.sanitized_content != final_response.content:
+            final_response = LLMResult(
+                content=guardrail_report.sanitized_content,
+                model=final_response.model,
+                tokens=final_response.tokens,
+                cost=final_response.cost,
+            )
+
         return OrchestrationArtifacts(
+            plan=plan,
+            context_prompt=context_prompt,
             initial_responses=initial_responses,
             critiques=critiques,
             improvements=improvements,
+            consensus_notes=consensus_notes,
             final_response=final_response,
+            guardrail_report=guardrail_report,
         )
 
     def _build_synthesis_prompt(
@@ -286,12 +339,28 @@ class Orchestrator:
         prompt: str,
         improvements: Sequence[LLMResult],
         initial_responses: Sequence[LLMResult],
+        plan: ReasoningPlan,
+        context: str | None,
+        consensus_notes: Sequence[str],
     ) -> str:
         parts: list[str] = []
         parts.append("You are synthesizing answers from a collaborative team of AI experts.")
+        parts.append("Follow the provided orchestration plan and memory context when composing the final answer.")
         parts.append("")
         parts.append("Original user prompt:")
         parts.append(prompt)
+        parts.append("")
+        if context:
+            parts.append("Relevant context from long-term memory:")
+            parts.append(context)
+            parts.append("")
+        parts.append("Reasoning strategy: ")
+        parts.append(plan.strategy)
+        parts.append("Focus areas: " + ", ".join(plan.focus_areas))
+        parts.append("")
+        parts.append("Planned steps:")
+        for step in plan.steps:
+            parts.append(f"- {step.role.value}: {step.description}")
         parts.append("")
         parts.append("Improved answers:")
         for imp in improvements:
@@ -301,5 +370,25 @@ class Orchestrator:
         for ans in initial_responses:
             parts.append(f"- {ans.model}: {ans.content}")
             parts.append("")
+        if consensus_notes:
+            parts.append("Consensus signals from the hive team:")
+            for note in consensus_notes:
+                parts.append(f"- {note}")
+            parts.append("")
         parts.append("Craft a single final response that combines the best insights, resolves disagreements, and clearly communicates the answer to the user.")
         return "\n".join(parts)
+
+    def _derive_consensus(self, responses: Sequence[LLMResult]) -> list[str]:
+        consensus: list[str] = []
+        seen: set[str] = set()
+        for response in responses:
+            sentences = [segment.strip() for segment in response.content.replace("\n", " ").split(".") if segment.strip()]
+            for sentence in sentences[:3]:
+                key = sentence.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                consensus.append(f"{response.model}: {sentence}.")
+                if len(consensus) >= 6:
+                    return consensus
+        return consensus
