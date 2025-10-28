@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, Response, Request, HTTPException
 from app.orchestration.router import (
     router as orchestration_router,
     versioned_router as orchestration_v1_router,
@@ -55,7 +55,14 @@ async def healthz_fallback_middleware(request: Request, call_next):
     """Ensure /healthz always responds even if routing fails in production."""
     normalized_path = request.url.path.rstrip("/") or "/"
     if normalized_path == "/healthz" and request.method in {"GET", "HEAD"}:
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except HTTPException as exc:
+            if exc.status_code != 404:
+                raise
+            logger.warning("/healthz route raised 404; serving fallback response")
+            return Response(status_code=200) if request.method == "HEAD" else JSONResponse({"status": "ok"})
+
         if response.status_code != 404:
             return response
 
