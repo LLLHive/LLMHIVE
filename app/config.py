@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     CRITIQUE_MODEL: str = "gpt-4"
     SYNTHESIS_MODEL: str = "gpt-4-turbo"
     
+    # Cross-origin resource sharing (CORS)
+    # Comma-separated list of allowed origins for the FastAPI service.
+    # Defaults to "*" for local development convenience. In production,
+    # set this to your deployed front-end domain(s).
+    CORS_ALLOW_ORIGINS: str = "*"
+
     # Application metadata
     LOG_LEVEL: str = "INFO"
     APP_NAME: str = "LLMHive"

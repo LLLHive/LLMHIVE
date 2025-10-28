@@ -5,6 +5,7 @@ import os
 from typing import Final
 
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.endpoints import router as api_router
@@ -77,6 +78,28 @@ app = FastAPI(
     description="API for orchestrating LLM agent interactions.",
     version="1.0.0"
 )
+
+
+def _parse_cors_origins(raw_origins: str) -> list[str]:
+    """Convert a comma-separated string of origins into a list."""
+
+    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    return origins or ["*"]
+
+
+configured_origins = _parse_cors_origins(settings.CORS_ALLOW_ORIGINS)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=configured_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+if "*" in configured_origins:
+    logger.info("CORS configured to allow all origins (development default).")
+else:
+    logger.info("CORS configured for origins: %s", ", ".join(configured_origins))
 
 
 HEALTH_ENDPOINTS: Final[set[str]] = {"/healthz", "/health", "/_ah/health"}
