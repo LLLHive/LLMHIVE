@@ -1,6 +1,5 @@
 import { auth, signIn, signOut } from "@/auth";
 import type { User } from "next-auth";
-import Link from "next/link";
 import PromptForm from "./components/PromptForm";
 import styles from "./page.module.css";
 import { Suspense } from "react";
@@ -23,7 +22,7 @@ function SignIn() {
 function SignOut({ user }: { user: User }) {
   return (
     <div className={styles.userInfo}>
-      <span>Welcome, {user?.name || "User"}</span>
+      <span className={styles.userGreeting}>Welcome, {user?.name || "Innovator"}</span>
       <form
         action={async () => {
           "use server";
@@ -41,23 +40,33 @@ function SignOut({ user }: { user: User }) {
 export default async function Home() {
   try {
     const session = await auth();
+    const user = session?.user ?? null;
 
     return (
       <main className={styles.main}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>LLMHive Orchestrator</h1>
-          {session?.user ? <SignOut user={session.user} /> : <SignIn />}
+        <header className={styles.hero}>
+          <div>
+            <h1 className={styles.title}>LLMHive Orchestration Studio</h1>
+            <p className={styles.subtitle}>
+              Assemble elite model ensembles, experiment with advanced reasoning patterns, and
+              stream the synthesis in real time—just like the next evolution of ChatGPT.
+            </p>
+          </div>
+          <div>{user ? <SignOut user={user} /> : <SignIn />}</div>
         </header>
 
         <div className={styles.content}>
-          {session?.user ? (
-            <Suspense fallback={<div className={styles.loading}>Loading...</div>}>
-              <PromptForm />
+          {user ? (
+            <Suspense fallback={<div className={styles.loading}>Loading orchestration cockpit…</div>}>
+              <PromptForm userId={user.email ?? user.id ?? "guest"} userName={user.name} />
             </Suspense>
           ) : (
-            <p className={styles.signInMessage}>
-              Please sign in to use the orchestrator.
-            </p>
+            <div className={styles.signInPanel}>
+              <p className={styles.signInMessage}>
+                Sign in to craft prompts, choose your dream team of frontier models, and unleash
+                LLMHive’s collaborative intelligence.
+              </p>
+            </div>
           )}
         </div>
       </main>
@@ -66,8 +75,11 @@ export default async function Home() {
     console.error("Home page error:", error);
     return (
       <main className={styles.main}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>LLMHive Orchestrator</h1>
+        <header className={styles.hero}>
+          <div>
+            <h1 className={styles.title}>LLMHive Orchestration Studio</h1>
+            <p className={styles.subtitle}>Experience next-generation collaborative intelligence.</p>
+          </div>
         </header>
         <div className={styles.content}>
           <p className={styles.error}>

@@ -2,68 +2,122 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  gap: 3rem;
+  padding: 3.5rem 2rem 4rem;
   min-height: 100vh;
-  background-color: #121212;
-  color: #f0f0f0;
+  background: radial-gradient(circle at top, rgba(70, 91, 255, 0.2), transparent 55%),
+    radial-gradient(circle at bottom, rgba(127, 90, 255, 0.12), transparent 40%),
+    #0b0c14;
+  color: #f5f8ff;
 }
 
-.header {
+.hero {
   width: 100%;
   max-width: 1200px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4rem;
+  gap: 1.5rem;
+  align-items: flex-start;
 }
 
 .title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: clamp(2.4rem, 3vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.subtitle {
+  color: #9fb2d8;
+  max-width: 640px;
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 .userInfo {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.userGreeting {
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #a9c5ff;
 }
 
 .authButton {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #333;
-  background-color: #242424;
-  color: #f0f0f0;
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(154, 191, 249, 0.35);
+  background: rgba(19, 24, 38, 0.85);
+  color: #f5f8ff;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.authButton:hover {
-  background-color: #333;
+.authButton:hover,
+.authButton:focus-visible {
+  border-color: #5aa3ff;
+  box-shadow: 0 0 0 3px rgba(90, 163, 255, 0.25);
 }
 
 .content {
   width: 100%;
-  max-width: 800px;
   display: flex;
   justify-content: center;
+  padding-bottom: 4rem;
+}
+
+.signInPanel {
+  max-width: 640px;
+  padding: 2.25rem 2.5rem;
+  border-radius: 18px;
+  border: 1px solid rgba(154, 191, 249, 0.25);
+  background: rgba(14, 16, 26, 0.85);
+  text-align: center;
+  box-shadow: 0 28px 44px -30px rgba(0, 0, 0, 0.55);
 }
 
 .signInMessage {
-  font-size: 1.2rem;
-  color: #888;
-}
-
-.error {
-  margin-top: 1rem;
-  color: #ff4d4d;
-  background-color: rgba(255, 77, 77, 0.1);
-  padding: 1rem;
-  border-radius: 8px;
+  font-size: 1.1rem;
+  color: #b8c8e8;
+  line-height: 1.7;
 }
 
 .loading {
-  font-size: 1.2rem;
-  color: #888;
-  text-align: center;
+  font-size: 1.1rem;
+  color: #a0b6e6;
+}
+
+.error {
+  color: #ff8585;
+  background-color: rgba(179, 53, 53, 0.18);
+  border: 1px solid rgba(255, 133, 133, 0.35);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .userInfo {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 2.5rem 1.25rem 3rem;
+  }
+
+  .signInPanel {
+    padding: 1.8rem 1.6rem;
+  }
 }
