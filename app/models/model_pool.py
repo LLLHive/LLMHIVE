@@ -13,6 +13,7 @@ from app.config import settings
 from .language_model import LanguageModel
 from .summarizer import Summarizer
 from .tavily_client import TavilyClient
+from .stub_language_model import StubLanguageModel
 
 try:  # PyYAML is optional in some deployment environments
     import yaml  # type: ignore
@@ -85,8 +86,13 @@ class ModelPool:
 
         if self.openai_api_key:
             general_llm = LanguageModel(self.openai_api_key, model="gpt-4o")
-            self.llms["gpt-4o"] = general_llm
-            self.agents["summarizer"] = Summarizer(llm=general_llm)
+        else:
+            general_llm = StubLanguageModel(model="gpt-4o")
+
+        # Always register the general LLM so the planner has a dependency even
+        # when we fall back to the stub implementation.
+        self.llms["gpt-4o"] = general_llm
+        self.agents["summarizer"] = Summarizer(llm=general_llm)
 
     def _load_models_into_pool(self) -> None:
         for profile in self._load_model_config():
