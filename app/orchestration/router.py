@@ -3,12 +3,21 @@ from pydantic import BaseModel
 from .engine import OrchestrationEngine
 from .models import Job
 import logging
+from typing import Optional
 
 logger = logging.getLogger("llmhive")
 router = APIRouter()
+versioned_router = APIRouter(prefix="/orchestration")
 
-# Initialize the engine once. It will be reused for all requests.
-engine = OrchestrationEngine()
+# Lazily instantiate the engine to avoid requiring cloud credentials during import.
+_engine: Optional[OrchestrationEngine] = None
+
+
+def get_engine() -> OrchestrationEngine:
+    global _engine
+    if _engine is None:
+        _engine = OrchestrationEngine()
+    return _engine
 
 class PromptRequest(BaseModel):
     prompt: str
@@ -25,7 +34,7 @@ async def submit_prompt(request: PromptRequest):
         job = Job.from_prompt(request.prompt)
         
         # 2. Execute the Job using the engine
-        completed_job = engine.execute_job(job)
+        completed_job = get_engine().execute_job(job)
         
         # 3. Return the completed job
         return completed_job
@@ -38,3 +47,15 @@ async def submit_prompt(request: PromptRequest):
 async def health_check():
     """Simple health check for the orchestration service."""
     return {"status": "ok"}
+
+
+@versioned_router.post("/", response_model=Job, tags=["Orchestration"])
+async def orchestrate_prompt(request: PromptRequest) -> Job:
+    """Versioned orchestration endpoint compatible with documented /api/v1 routes."""
+    return await submit_prompt(request)
+
+
+@versioned_router.get("/health", tags=["Orchestration"])
+async def orchestrator_health() -> dict[str, str]:
+    """Expose orchestration health check under the versioned API prefix."""
+    return await health_check()
