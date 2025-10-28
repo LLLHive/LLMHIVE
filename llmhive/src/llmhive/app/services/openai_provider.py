@@ -49,6 +49,17 @@ class OpenAIProvider(LLMProvider):
         if not key:
             raise ProviderNotConfiguredError("OpenAI API key is missing.")
         self.client = AsyncOpenAI(api_key=key, timeout=timeout or settings.openai_timeout_seconds)
+        self._models = [
+            "gpt-4.1",
+            "gpt-4o",
+            "gpt-4o-mini",
+            "gpt-4.1-mini",
+            "gpt-3.5-turbo",
+            "gpt-4o-audio-preview",
+        ]
+
+    def list_models(self) -> list[str]:
+        return list(self._models)
 
     async def _chat(self, messages: List[Dict[str, str]], *, model: str) -> LLMResult:
         try:

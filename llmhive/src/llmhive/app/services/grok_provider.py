@@ -50,6 +50,10 @@ class GrokProvider(LLMProvider):
             base_url="https://api.x.ai/v1",
             timeout=timeout or getattr(settings, "grok_timeout_seconds", 45.0)
         )
+        self._models = ["grok-1", "grok-beta"]
+
+    def list_models(self) -> list[str]:
+        return list(self._models)
 
     async def _chat(self, messages: List[Dict[str, str]], *, model: str) -> LLMResult:
         try:
