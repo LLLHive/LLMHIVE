@@ -6,6 +6,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from ..config import settings
 from ..database import get_db
 from ..models import Task
 from ..orchestrator import Orchestrator
@@ -61,7 +62,7 @@ async def orchestrate(
     """
 
     # Normalize models: accept either ["a","b"] or ["a, b"]
-    raw_models = payload.models or []
+    raw_models = payload.models or list(settings.default_models)
     normalized_models: list[str] = []
     for item in raw_models:
         if isinstance(item, str) and "," in item:
@@ -71,9 +72,20 @@ async def orchestrate(
             normalized_models.append(item.strip() if isinstance(item, str) else item)
 
     if not normalized_models:
+        logger.error(
+            "No models supplied and DEFAULT_MODELS configuration is empty."
+        )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="At least one model must be provided in the 'models' array.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "No models provided and no DEFAULT_MODELS configured. "
+                "Add models to the request or configure DEFAULT_MODELS."
+            ),
+        )
+
+    if payload.models is None:
+        logger.info(
+            "No models specified in request; using default models from settings.",
         )
 
     # Log warning if models will use stub provider as fallback
