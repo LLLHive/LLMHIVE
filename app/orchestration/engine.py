@@ -1,25 +1,38 @@
-from .models import Job, JobStatus, StepResult
-from .planner import Planner
-from .archivist import Archivist
-from app.models.model_pool import model_pool
+from __future__ import annotations
+
 import logging
 import re
 
+from app.config import settings
+from app.models.model_pool import model_pool
+
+from .archivist import Archivist
+from .models import Job, JobStatus, StepResult
+from .planner import Planner
+
+
 logger = logging.getLogger("llmhive")
+
 
 class OrchestrationEngine:
     def __init__(self):
         self.model_pool = model_pool
         self.archivist = Archivist()
-        
-        # Use the "gpt-4o" model from the pool to initialize the Planner.
-        # This ensures the Planner has its dependency without managing API keys itself.
-        planner_llm = self.model_pool.get_llm("gpt-4o")
-        if not planner_llm:
-            raise RuntimeError("Could not find 'gpt-4o' in model pool. Planner cannot be initialized.")
-        self.planner = Planner(llm=planner_llm)
-        
-        logger.info("OrchestrationEngine initialized with multi-step and archival capabilities.")
+
+        planner_model_id = settings.PLANNING_MODEL or "gpt-4o"
+        if not (
+            self.model_pool.get_llm(planner_model_id)
+            or self.model_pool.get_llm("gpt-4o")
+        ):
+            raise RuntimeError(
+                "Could not find a planning model in the model pool. Planner cannot be initialized."
+            )
+
+        self.planner = Planner()
+
+        logger.info(
+            "OrchestrationEngine initialized with multi-step and archival capabilities."
+        )
 
     def _resolve_prompt_template(self, prompt_template: str, job: Job) -> str:
         """Resolves templates like {{steps.step_name.result}} from shared memory."""

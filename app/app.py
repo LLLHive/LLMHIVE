@@ -1,44 +1,72 @@
-from fastapi import FastAPI, Response, Request, HTTPException
-from app.orchestration.router import (
-    router as orchestration_router,
-    versioned_router as orchestration_v1_router,
-)
-from app.config import settings
-from google.cloud import secretmanager
-from pythonjsonlogger import jsonlogger
-from fastapi.responses import JSONResponse
+from __future__ import annotations
+
 import logging
 import os
 from typing import Final
+
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
+
+from app.api.endpoints import router as api_router
+from app.config import settings
+from app.orchestration.router import versioned_router as orchestration_v1_router
+
+try:  # pragma: no cover - optional dependency in local tests
+    from google.cloud import secretmanager  # type: ignore
+except Exception:  # pragma: no cover - handled gracefully below
+    secretmanager = None  # type: ignore
+
+try:  # pragma: no cover - optional dependency in local tests
+    from pythonjsonlogger import jsonlogger
+except Exception as exc:  # pragma: no cover - logging configured without JSON formatting
+    jsonlogger = None  # type: ignore
+    logging.getLogger(__name__).warning(
+        "python-json-logger is unavailable (%s); falling back to plain logging.",
+        exc,
+    )
+
 
 # 1. CONFIGURE STRUCTURED LOGGING
 # This must happen first to ensure all subsequent logs are structured.
 logger = logging.getLogger("llmhive")
 logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
-logHandler = logging.StreamHandler()
-formatter = jsonlogger.JsonFormatter(
-    '%(asctime)s %(name)s %(levelname)s %(message)s'
-)
-logHandler.setFormatter(formatter)
+log_handler = logging.StreamHandler()
+if jsonlogger:
+    formatter = jsonlogger.JsonFormatter(
+        "%(asctime)s %(name)s %(levelname)s %(message)s"
+    )
+    log_handler.setFormatter(formatter)
+
 # Clear existing handlers to avoid duplicate logs
 if logger.hasHandlers():
     logger.handlers.clear()
-logger.addHandler(logHandler)
+logger.addHandler(log_handler)
 
 
 # 2. DEFINE THE SECRET FETCHER FUNCTION
 def get_secret(project_id: str, secret_id: str, version_id: str = "latest") -> str:
     """Retrieves a secret from Google Cloud Secret Manager."""
+    if not secretmanager:
+        logger.debug(
+            "Secret Manager client unavailable; returning empty secret for %s.",
+            secret_id,
+        )
+        return ""
+
     try:
         client = secretmanager.SecretManagerServiceClient()
         name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
         response = client.access_secret_version(request={"name": name})
         logger.info("Successfully fetched secret from Secret Manager")
         return response.payload.data.decode("UTF-8")
-    except Exception as e:
+    except Exception as exc:
         # Log error type without exposing sensitive details
-        error_type = type(e).__name__
-        logger.error(f"Failed to fetch secret from Secret Manager: {error_type}")
+        error_type = type(exc).__name__
+        logger.error(
+            "Failed to fetch secret '%s' from Secret Manager: %s",
+            secret_id,
+            error_type,
+        )
         # Return empty string to allow app to start with fallback behavior
         return ""
 
@@ -168,8 +196,8 @@ async def simple_health_alias_head() -> Response:
     return _health_head_response()
 
 
-# 5. INCLUDE THE EXISTING API ROUTER (CRITICAL)
-app.include_router(orchestration_router, prefix="/api")
+# 5. INCLUDE THE PUBLIC API ROUTER (STREAMING CAPABLE)
+app.include_router(api_router, prefix="/api")
 
 
 # 6. MOUNT VERSIONED ROUTES UNDER /api/v1 FOR CONSISTENCY WITH DOCUMENTATION
