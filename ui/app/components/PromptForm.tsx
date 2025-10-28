@@ -146,9 +146,19 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
       });
 
       if (!response.ok) {
+        const contentType = response.headers.get("content-type") ?? "";
+        if (contentType.includes("application/json")) {
+          const errorPayload = await response.json();
+          const message =
+            (typeof errorPayload.error === "string" && errorPayload.error) ||
+            (typeof errorPayload.detail === "string" && errorPayload.detail) ||
+            JSON.stringify(errorPayload, null, 2);
+          throw new Error(message);
+        }
+
         const fallbackText = await response.text();
         const message = fallbackText || response.statusText || "Unexpected API error";
-        throw new Error(`API Error: ${message}`);
+        throw new Error(message);
       }
 
       const payload = await response.json();
@@ -192,7 +202,11 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
 
       setResult(formattedSections.join("\n\n"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
+      let message = err instanceof Error ? err.message : "An unknown error occurred";
+      if (message === "Failed to fetch") {
+        message =
+          "Failed to reach the orchestration service. Verify the backend URL configuration or try again.";
+      }
       setError(message);
     } finally {
       setIsLoading(false);
