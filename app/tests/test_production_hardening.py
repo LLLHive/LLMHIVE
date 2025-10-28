@@ -144,10 +144,51 @@ def test_api_routes_preserved():
     import sys
     sys.path.insert(0, '.')
     from app.app import app as fastapi_app
-    
+
     client = TestClient(fastapi_app)
-    
+
     # Test that /api/health still exists
     response = client.get('/api/health')
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_root_endpoint_returns_status():
+    """Root URL should return a friendly status payload instead of 404."""
+    import sys
+    sys.path.insert(0, '.')
+    from app.app import app as fastapi_app
+
+    client = TestClient(fastapi_app)
+    response = client.get('/')
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["api_health"] == "/api/v1/healthz"
+
+
+def test_api_v1_healthz_endpoint():
+    """Ensure the documented /api/v1/healthz path is available."""
+    import sys
+    sys.path.insert(0, '.')
+    from app.app import app as fastapi_app
+
+    client = TestClient(fastapi_app)
+    response = client.get('/api/v1/healthz')
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_versioned_orchestration_health_endpoint():
+    """The orchestrator health check should also be exposed under /api/v1."""
+    import sys
+    sys.path.insert(0, '.')
+    from app.app import app as fastapi_app
+
+    client = TestClient(fastapi_app)
+    response = client.get('/api/v1/orchestration/health')
+
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}

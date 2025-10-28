@@ -1,5 +1,8 @@
 from fastapi import FastAPI
-from app.orchestration.router import router as orchestration_router
+from app.orchestration.router import (
+    router as orchestration_router,
+    versioned_router as orchestration_v1_router,
+)
 from app.config import settings
 from google.cloud import secretmanager
 from pythonjsonlogger import jsonlogger
@@ -45,6 +48,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
+@app.get("/", tags=["Service Information"])
+async def root() -> dict[str, str]:
+    """Provide a friendly response for the service root URL."""
+    return {
+        "service": "llmhive-orchestrator",
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/healthz",
+        "api_health": "/api/v1/healthz",
+    }
+
 @app.on_event("startup")
 async def startup_event():
     """
@@ -82,3 +97,13 @@ async def health_check():
 
 # 5. INCLUDE THE EXISTING API ROUTER (CRITICAL)
 app.include_router(orchestration_router, prefix="/api")
+
+
+# 6. MOUNT VERSIONED ROUTES UNDER /api/v1 FOR CONSISTENCY WITH DOCUMENTATION
+app.include_router(orchestration_v1_router, prefix="/api/v1")
+
+
+@app.get("/api/v1/healthz", tags=["Health Check"])
+async def api_health_check():
+    """Health check endpoint aligned with documented /api/v1 path."""
+    return await health_check()
