@@ -1,5 +1,5 @@
 """Test for the specific capital question scenario from the bug report."""
-import pytest
+from llmhive.app.api.orchestration import MODEL_ALIAS_MAP
 from llmhive.app.schemas import OrchestrationRequest
 
 
@@ -16,9 +16,10 @@ def test_capital_of_spain_question(client):
     
     # Verify the response structure
     assert data["prompt"] == payload.prompt
-    assert data["models"] == ["gpt-4"]
+    expected_model = MODEL_ALIAS_MAP.get("gpt-4", "gpt-4")
+    assert data["models"] == [expected_model]
     assert len(data["initial_responses"]) == 1
-    assert data["initial_responses"][0]["model"] == "gpt-4"
+    assert data["initial_responses"][0]["model"] == expected_model
     
     # Verify the content contains the actual answer
     initial_content = data["initial_responses"][0]["content"]

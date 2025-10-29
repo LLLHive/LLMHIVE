@@ -20,6 +20,21 @@ from ..schemas import (
 )
 from ..services.stub_provider import StubProvider
 
+# Mapping of common model aliases (often used by UI labels or older configs)
+# to the canonical identifiers expected by individual providers. This allows
+# the API to accept friendly names like "gpt-4-turbo" while routing requests
+# to the latest provider-specific model IDs (e.g. "gpt-4o").
+MODEL_ALIAS_MAP: dict[str, str] = {
+    "gpt-4-turbo": "gpt-4o",
+    "gpt4-turbo": "gpt-4o",
+    "gpt-4": "gpt-4.1",
+    "gpt4": "gpt-4.1",
+    "claude-3-opus": "claude-3-opus-20240229",
+    "claude-3-opus-latest": "claude-3-opus-20240229",
+    "claude-3-sonnet": "claude-3-sonnet-20240229",
+    "claude-3-sonnet-latest": "claude-3-sonnet-20240229",
+}
+
 logger = logging.getLogger(__name__)
 
 # Included in api/__init__.py with prefix "/orchestration"
@@ -90,6 +105,28 @@ async def orchestrate(
 
     # Deduplicate while preserving the caller's preferred ordering
     normalized_models = list(dict.fromkeys(normalized_models))
+
+    # Remap friendly aliases (e.g. "gpt-4-turbo") to provider canonical IDs
+    # so downstream provider clients receive model identifiers they recognize.
+    alias_remap: dict[str, str] = {}
+    canonical_models: list[str] = []
+    for model in normalized_models:
+        key = model.lower()
+        canonical = MODEL_ALIAS_MAP.get(key)
+        if canonical and canonical != model:
+            alias_remap[model] = canonical
+            canonical_models.append(canonical)
+        else:
+            canonical_models.append(canonical or model)
+
+    if alias_remap:
+        logger.info(
+            "Remapped model aliases supplied by client to canonical identifiers: %s",
+            alias_remap,
+        )
+
+    # Re-deduplicate after remapping to avoid duplicates caused by aliases
+    normalized_models = list(dict.fromkeys(canonical_models))
 
     if discarded_models:
         logger.warning(
