@@ -65,3 +65,51 @@ def test_orchestrate_endpoint_remaps_model_aliases(client):
     assert "gpt-4-turbo" not in returned_models
     assert "claude-3-opus" not in returned_models
     assert {"gpt-4o", "claude-3-opus-20240229"}.issubset(returned_models)
+
+
+def test_orchestrate_endpoint_handles_empty_initial_responses(monkeypatch, client):
+    """If every upstream provider fails, the API should still return 200 with stub synthesis."""
+
+    from llmhive.app.api import orchestration as orchestration_api
+    from llmhive.app.orchestrator import Orchestrator
+    from llmhive.app.services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
+
+    class _FailingProvider(LLMProvider):
+        def list_models(self) -> list[str]:
+            return ["gpt-4o"]
+
+        async def complete(self, prompt: str, *, model: str) -> LLMResult:  # pragma: no cover - raising path
+            raise ProviderNotConfiguredError("simulated failure")
+
+        async def critique(
+            self,
+            subject: str,
+            *,
+            target_answer: str,
+            author: str,
+            model: str,
+        ) -> LLMResult:  # pragma: no cover - raising path
+            raise ProviderNotConfiguredError("simulated failure")
+
+        async def improve(
+            self,
+            subject: str,
+            *,
+            previous_answer: str,
+            critiques: list[str],
+            model: str,
+        ) -> LLMResult:  # pragma: no cover - raising path
+            raise ProviderNotConfiguredError("simulated failure")
+
+    orchestrator = Orchestrator(providers={"openai": _FailingProvider()})
+    monkeypatch.setattr(orchestration_api, "_orchestrator", orchestrator)
+
+    payload = OrchestrationRequest(prompt="What is the capital of Spain?", models=["gpt-4o"])
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
+    assert response.status_code == 200
+    data = response.json()
+    # All upstream calls failed, so no initial responses were produced.
+    assert data["initial_responses"] == []
+    # Stub synthesis still produces the correct answer for common prompts.
+    assert "Madrid" in data["final_response"]

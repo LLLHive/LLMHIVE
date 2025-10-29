@@ -376,8 +376,34 @@ class Orchestrator:
             supporting_notes=supporting_notes,
             quality_assessments=quality_assessments,
         )
-        synthesizer = self._select_provider(model_list[0])
-        final_response = await synthesizer.complete(synthesis_prompt, model=model_list[0])
+        synthesizer_model = model_list[0]
+        synthesizer = self._select_provider(synthesizer_model)
+        try:
+            final_response = await synthesizer.complete(
+                synthesis_prompt, model=synthesizer_model
+            )
+        except ProviderNotConfiguredError as exc:
+            logger.warning(
+                "Primary synthesis provider '%s' unavailable (%s); falling back to stub.",
+                synthesizer_model,
+                exc,
+            )
+            fallback_provider = self.providers.get("stub") or StubProvider()
+            self.providers.setdefault("stub", fallback_provider)
+            final_response = await fallback_provider.complete(
+                synthesis_prompt, model=f"stub-fallback({synthesizer_model})"
+            )
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.exception(
+                "Unexpected synthesis failure with model '%s'; using stub fallback.",
+                synthesizer_model,
+                exc_info=exc,
+            )
+            fallback_provider = self.providers.get("stub") or StubProvider()
+            self.providers.setdefault("stub", fallback_provider)
+            final_response = await fallback_provider.complete(
+                synthesis_prompt, model=f"stub-fallback({synthesizer_model})"
+            )
 
         guardrail_report = self.guardrails.inspect(final_response.content)
         if guardrail_report.sanitized_content != final_response.content:

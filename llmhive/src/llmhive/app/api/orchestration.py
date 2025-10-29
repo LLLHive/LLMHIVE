@@ -211,10 +211,11 @@ async def orchestrate(
     # Only fails if non-stub providers exist (otherwise stub provider is the expected fallback).
     fail_on_stub = os.getenv("LLMHIVE_FAIL_ON_STUB", "true").lower() not in ("0", "false", "no")
     try:
-        all_stub = all(
+        initial_responses = artifacts.initial_responses
+        all_stub = bool(initial_responses) and all(
             isinstance(r.content, str)
             and r.content.startswith(f"[{r.model}] Response to:")
-            for r in artifacts.initial_responses
+            for r in initial_responses
         )
     except Exception:
         all_stub = False
