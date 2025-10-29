@@ -41,7 +41,7 @@ def test_various_list_questions(client):
         ("List the largest US cities", ["New York", "Los Angeles", "Chicago"]),
         ("List the 10 biggest cities in Spain", ["Madrid", "Barcelona", "Valencia"]),
     ]
-    
+
     for prompt, expected_keywords in test_cases:
         payload = OrchestrationRequest(
             prompt=prompt,
@@ -60,3 +60,52 @@ def test_various_list_questions(client):
         # Should contain at least one expected keyword
         assert any(keyword in initial_content for keyword in expected_keywords), \
             f"Expected one of {expected_keywords} in response to '{prompt}': {initial_content}"
+
+
+def test_city_list_respects_requested_count(client):
+    payload = OrchestrationRequest(
+        prompt="List the 3 largest cities in Spain",
+        models=["gpt-4"],
+    )
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
+    assert response.status_code == 200
+    data = response.json()
+    content = data["initial_responses"][0]["content"]
+
+    lines = [line for line in content.splitlines() if line.strip() and line[0].isdigit()]
+    assert len(lines) == 3, f"Expected exactly 3 lines, got {len(lines)}: {content}"
+    assert "Madrid" in content and "Barcelona" in content and "Valencia" in content
+
+
+def test_florida_cities_with_population(client):
+    payload = OrchestrationRequest(
+        prompt="List the 5 largest cities in Florida with their population",
+        models=["gpt-4"],
+    )
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
+    assert response.status_code == 200
+    data = response.json()
+    content = data["initial_responses"][0]["content"]
+
+    assert "Florida" in content
+    assert "population" in content.lower()
+    for city in ["Jacksonville", "Miami", "Tampa"]:
+        assert city in content, f"Expected {city} to appear in response: {content}"
+
+
+def test_best_coding_model_question(client):
+    payload = OrchestrationRequest(
+        prompt="Which is the best AI LLM model for coding?",
+        models=["gpt-4"],
+    )
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
+    assert response.status_code == 200
+    data = response.json()
+    content = data["initial_responses"][0]["content"]
+
+    assert "stub response" not in content.lower()
+    for model_name in ["GPT-4.1", "Claude 3 Opus", "Gemini 1.5 Pro"]:
+        assert model_name in content, f"Expected {model_name} in answer: {content}"
