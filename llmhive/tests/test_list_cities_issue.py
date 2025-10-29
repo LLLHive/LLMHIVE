@@ -109,3 +109,30 @@ def test_best_coding_model_question(client):
     assert "stub response" not in content.lower()
     for model_name in ["GPT-4.1", "Claude 3 Opus", "Gemini 1.5 Pro"]:
         assert model_name in content, f"Expected {model_name} in answer: {content}"
+
+
+def test_affordable_housing_developers_in_florida(client):
+    payload = OrchestrationRequest(
+        prompt="list the largest development companies in Florida that specialize in affordable housing",
+        models=["gpt-4"],
+    )
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
+    assert response.status_code == 200
+    data = response.json()
+
+    initial_content = data["initial_responses"][0]["content"]
+    assert "stub response" not in initial_content.lower()
+    for expected in [
+        "Housing Trust Group",
+        "Atlantic Pacific Communities",
+        "Related Urban",
+        "Pinnacle Housing Group",
+        "Carrfour Supportive Housing",
+    ]:
+        assert expected in initial_content, f"Expected '{expected}' in response: {initial_content}"
+
+    final_content = data["final_response"]
+    assert "stub response" not in final_content.lower()
+    assert "affordable" in final_content.lower()
+    assert "Florida" in final_content
