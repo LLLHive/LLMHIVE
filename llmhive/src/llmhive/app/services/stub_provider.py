@@ -94,6 +94,40 @@ class StubProvider(LLMProvider):
                 ("Fort Lauderdale", "183K"),
             ],
         }
+        self._affordable_developer_data: dict[str, List[Tuple[str, str, str]]] = {
+            "florida": [
+                (
+                    "Housing Trust Group (HTG)",
+                    "Coconut Grove, FL",
+                    "One of Florida's largest affordable and workforce housing developers with thousands of units delivered across the state.",
+                ),
+                (
+                    "Atlantic Pacific Communities",
+                    "Miami, FL",
+                    "LIHTC-focused developer and property manager building affordable communities in Miami-Dade, Broward, Palm Beach, and beyond.",
+                ),
+                (
+                    "Related Urban (The Related Group)",
+                    "Miami, FL",
+                    "Affordable and mixed-income arm of Related Group leading HOPE VI and public housing redevelopments statewide.",
+                ),
+                (
+                    "Pinnacle Housing Group",
+                    "Miami, FL",
+                    "Regional developer specializing in affordable and workforce housing with more than 10,000 units completed in Florida.",
+                ),
+                (
+                    "Carrfour Supportive Housing",
+                    "Miami, FL",
+                    "Nonprofit developer providing permanent supportive housing for formerly homeless and special-needs households across Florida.",
+                ),
+                (
+                    "Smith & Henzy Advisory Group",
+                    "Delray Beach, FL",
+                    "Advises and co-develops large-scale affordable housing and public-private partnerships throughout South Florida.",
+                ),
+            ]
+        }
 
     def list_models(self) -> List[str]:
         return list(self._models)
@@ -138,6 +172,23 @@ class StubProvider(LLMProvider):
             header += " (with approximate populations)"
         return header + "\n" + "\n".join(lines)
 
+    def _format_developer_list(
+        self,
+        developers: Sequence[Tuple[str, str, str]],
+        count: int | None,
+        *,
+        default: int,
+        region_label: str,
+    ) -> str:
+        total = count or default
+        total = max(1, min(total, len(developers)))
+        lines = [
+            f"{idx}. {name} — headquartered in {hq}. {summary}"
+            for idx, (name, hq, summary) in enumerate(developers[:total], start=1)
+        ]
+        header = f"Here are leading {region_label} affordable housing developers:"
+        return header + "\n" + "\n".join(lines)
+
     def _generate_answer(self, prompt: str) -> str:
         """Generate a simple, plausible answer based on the prompt.
         
@@ -180,7 +231,23 @@ class StubProvider(LLMProvider):
             
             # Fallback for synthesis
             return "Based on the collaborative analysis, this question requires more specific information to provide an accurate answer. Please configure real LLM providers for detailed responses."
-        
+
+        if (
+            "florida" in prompt_lower
+            and "affordable" in prompt_lower
+            and "housing" in prompt_lower
+            and ("developer" in prompt_lower or "development" in prompt_lower)
+        ):
+            count = self._extract_requested_count(prompt_lower)
+            developers = self._affordable_developer_data.get("florida", [])
+            if developers:
+                return self._format_developer_list(
+                    developers,
+                    count,
+                    default=5,
+                    region_label="Florida",
+                )
+
         # Capital city questions
         if "capital" in prompt_lower:
             if "spain" in prompt_lower:
