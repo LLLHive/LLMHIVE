@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     default_models: List[str] = Field(
         default_factory=lambda: ["gpt-4o-mini", "gpt-3.5-turbo"], alias="DEFAULT_MODELS"
     )
+    enable_live_research: bool = Field(
+        default=True, alias="ENABLE_LIVE_RESEARCH"
+    )
+    knowledge_max_hits: int = Field(default=3, alias="KNOWLEDGE_MAX_HITS")
+    web_search_timeout: float = Field(default=8.0, alias="WEB_SEARCH_TIMEOUT")
 
     model_config = {
         "env_file": ".env",
