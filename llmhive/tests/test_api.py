@@ -25,3 +25,26 @@ def test_orchestrate_endpoint_uses_default_models(client):
     assert data["prompt"] == payload["prompt"]
     assert len(data["initial_responses"]) == len(settings.default_models)
     assert sorted(data["models"]) == sorted(settings.default_models)
+
+
+def test_orchestrate_endpoint_strips_invalid_models(client):
+    payload = {
+        "prompt": "Explain how LLMHive handles orchestration.",
+        "models": [" gpt-4o-mini  ", "", "gpt-4o-mini"],
+    }
+
+    response = client.post("/api/v1/orchestration/", json=payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    # Only one unique, non-empty model should remain after normalization
+    assert data["models"] == ["gpt-4o-mini"]
+
+
+def test_orchestrate_endpoint_rejects_missing_models(client):
+    payload = {"prompt": "Test", "models": ["", "   "]}
+
+    response = client.post("/api/v1/orchestration/", json=payload)
+
+    assert response.status_code == 400
+    assert "No valid model names" in response.json()["detail"]
