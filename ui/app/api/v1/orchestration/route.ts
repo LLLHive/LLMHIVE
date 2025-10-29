@@ -6,7 +6,7 @@ const PUBLIC_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const CONFIGURED_BASE =
   process.env.ORCHESTRATOR_API_BASE_URL ?? (PUBLIC_BASE || undefined);
 
-const DEFAULT_LOCAL_BASE = "http://127.0.0.1:8000";
+const DEFAULT_LOCAL_BASE = "http://127.0.0.1:8080";
 const baseToUse = (CONFIGURED_BASE ?? DEFAULT_LOCAL_BASE).replace(/\/$/, "");
 const upstreamUrl = `${baseToUse}/api/v1/orchestration`;
 
