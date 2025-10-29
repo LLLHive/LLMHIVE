@@ -57,6 +57,9 @@ class Conversation(Base):
         "MemoryEntry", back_populates="conversation", cascade="all, delete-orphan"
     )
     tasks: Mapped[List["Task"]] = relationship("Task", back_populates="conversation")
+    knowledge_documents: Mapped[List["KnowledgeDocument"]] = relationship(
+        "KnowledgeDocument", back_populates="conversation", cascade="all, delete-orphan"
+    )
 
 
 class MemoryEntry(Base):
@@ -76,3 +79,31 @@ class MemoryEntry(Base):
     def render_for_prompt(self) -> str:
         prefix = "User" if self.role == "user" else "Assistant"
         return f"{prefix}: {self.content}"
+
+
+class KnowledgeDocument(Base):
+    """Embeddings-backed knowledge snippets for retrieval augmented generation."""
+
+    __tablename__ = "knowledge_documents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    conversation_id: Mapped[int | None] = mapped_column(
+        ForeignKey("conversations.id"), nullable=True, index=True
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[Dict[str, float]] = mapped_column(JSON, nullable=False, default=dict)
+    payload: Mapped[Dict[str, Any]] = mapped_column("metadata", JSON, nullable=False, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime, default=dt.datetime.utcnow, nullable=False, index=True
+    )
+    updated_at: Mapped[dt.datetime] = mapped_column(
+        DateTime,
+        default=dt.datetime.utcnow,
+        onupdate=dt.datetime.utcnow,
+        nullable=False,
+    )
+
+    conversation: Mapped[Conversation | None] = relationship(
+        "Conversation", back_populates="knowledge_documents"
+    )

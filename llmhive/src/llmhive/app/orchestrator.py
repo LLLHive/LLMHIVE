@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Sequence, Tuple
@@ -12,9 +13,11 @@ from .config import settings
 from .guardrails import GuardrailReport, SafetyValidator
 from .model_registry import ModelRegistry
 from .planner import PlanRole, PlanStep, ReasoningPlanner, ReasoningPlan
+from .prompt_optimizer import optimize_prompt
 from .services.base import LLMProvider, LLMResult, ProviderNotConfiguredError
 from .services.openai_provider import OpenAIProvider
 from .services.stub_provider import StubProvider
+from .services.web_research import WebDocument, WebResearchClient
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +64,31 @@ class ResponseAssessment:
 
 
 @dataclass(slots=True)
+class ModelUsage:
+    """Aggregated usage metrics for a single model."""
+
+    tokens: int = 0
+    cost: float = 0.0
+    responses: int = 0
+
+
+@dataclass(slots=True)
+class UsageSummary:
+    """Aggregated token/cost usage for an orchestration run."""
+
+    total_tokens: int
+    total_cost: float
+    response_count: int
+    per_model: Dict[str, ModelUsage]
+
+
+@dataclass(slots=True)
 class OrchestrationArtifacts:
     """Artifacts produced by the orchestrator stages."""
 
     plan: ReasoningPlan
     context_prompt: str | None
+    optimized_prompt: str
     initial_responses: list[LLMResult]
     critiques: list[Tuple[str, str, LLMResult]]  # (author, target, result)
     improvements: list[LLMResult]
@@ -76,6 +99,10 @@ class OrchestrationArtifacts:
     supporting_notes: list[str]
     quality_assessments: Dict[str, ResponseAssessment]
     evaluation: LLMResult | None
+    knowledge_snippets: list[str]
+    web_results: list[WebDocument]
+    confirmation_notes: list[str]
+    usage: UsageSummary
 
 
 class Orchestrator:
@@ -88,6 +115,9 @@ class Orchestrator:
         self.model_registry = ModelRegistry(self.providers)
         self.planner = ReasoningPlanner()
         self.guardrails = SafetyValidator()
+        self.web_research = WebResearchClient(
+            timeout=getattr(settings, "web_search_timeout", 8.0)
+        )
         logger.info("Orchestrator initialized with providers: %s", list(self.providers.keys()))
 
     def _get_key(self, *candidates: str) -> str | None:
@@ -238,8 +268,11 @@ class Orchestrator:
         models: Iterable[str] | None = None,
         *,
         context: str | None = None,
+        knowledge_snippets: Sequence[str] | None = None,
     ) -> OrchestrationArtifacts:
-        plan = self.planner.create_plan(prompt, context=context)
+        knowledge_snippets = list(knowledge_snippets or [])
+        plan_prompt = optimize_prompt(prompt, knowledge_snippets)
+        plan = self.planner.create_plan(plan_prompt, context=context)
         if models:
             model_list = list(dict.fromkeys(models))
         else:
@@ -256,12 +289,29 @@ class Orchestrator:
         logger.info("Starting orchestration for models: %s", model_list)
 
         context_prompt = context
-        augmented_prompt = prompt
+        augmented_prompt = plan_prompt
         if context:
-            augmented_prompt = f"Context from memory:\n{context}\n\nUser request:\n{prompt}"
+            augmented_prompt = (
+                "Context from memory:\n"
+                f"{context}\n\n"
+                f"Optimized request:\n{plan_prompt}"
+            )
 
         step_outputs: Dict[str, list[LLMResult]] = {}
-        supporting_notes: list[str] = []
+        supporting_notes: list[str] = list(knowledge_snippets)
+
+        web_documents: list[WebDocument] = []
+        if getattr(settings, "enable_live_research", True):
+            try:
+                web_documents = await self.web_research.search(prompt)
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.warning("Web research client raised %s", exc)
+                web_documents = []
+        if web_documents:
+            for doc in web_documents:
+                snippet = doc.snippet or doc.title
+                if snippet:
+                    supporting_notes.append(f"Web: {doc.title or 'result'} — {self._truncate(snippet, 220)}")
 
         # Execute the structured plan (excluding critique/synthesis which are handled separately)
         for step in plan.steps:
@@ -431,9 +481,26 @@ class Orchestrator:
         except Exception as exc:  # pragma: no cover - evaluation is best effort
             logger.warning("Evaluation stage failed: %s", exc)
 
+        confirmation_notes = self._confirmation_checks(
+            prompt=prompt,
+            final_answer=final_response.content,
+            knowledge_snippets=knowledge_snippets,
+            web_documents=web_documents,
+        )
+
+        usage_summary = self._summarize_usage(
+            initial_responses,
+            improvements,
+            [crit for _, _, crit in critiques],
+            [final_response],
+            [evaluation] if evaluation else [],
+            [result for outputs in step_outputs.values() for result in outputs],
+        )
+
         return OrchestrationArtifacts(
             plan=plan,
             context_prompt=context_prompt,
+            optimized_prompt=plan_prompt,
             initial_responses=initial_responses,
             critiques=critiques,
             improvements=improvements,
@@ -444,6 +511,56 @@ class Orchestrator:
             supporting_notes=supporting_notes,
             quality_assessments=quality_assessments,
             evaluation=evaluation,
+            knowledge_snippets=knowledge_snippets,
+            web_results=web_documents,
+            confirmation_notes=confirmation_notes,
+            usage=usage_summary,
+        )
+
+    def _summarize_usage(
+        self,
+        *collections: Sequence[LLMResult],
+    ) -> UsageSummary:
+        """Aggregate token and cost usage across result collections."""
+
+        seen: set[int] = set()
+        per_model: Dict[str, ModelUsage] = {}
+        total_tokens = 0
+        total_cost = 0.0
+        response_count = 0
+
+        for collection in collections:
+            for result in collection:
+                if result is None:
+                    continue
+                identity = id(result)
+                if identity in seen:
+                    continue
+                seen.add(identity)
+                response_count += 1
+
+                tokens = int(result.tokens or 0)
+                cost = float(result.cost or 0.0)
+                total_tokens += tokens
+                total_cost += cost
+
+                usage = per_model.get(result.model)
+                if usage is None:
+                    usage = ModelUsage()
+                    per_model[result.model] = usage
+                usage.tokens += tokens
+                usage.cost += cost
+                usage.responses += 1
+
+        total_cost = round(total_cost, 6)
+        for usage in per_model.values():
+            usage.cost = round(usage.cost, 6)
+
+        return UsageSummary(
+            total_tokens=total_tokens,
+            total_cost=total_cost,
+            response_count=response_count,
+            per_model=per_model,
         )
 
     def _models_for_step(self, step: PlanStep, available_models: Sequence[str]) -> list[str]:
@@ -819,6 +936,51 @@ class Orchestrator:
             "Produce a single, polished answer. Reference evidence when available and note any residual uncertainties."
         )
         return "\n".join(parts)
+
+    def _confirmation_checks(
+        self,
+        *,
+        prompt: str,
+        final_answer: str,
+        knowledge_snippets: Sequence[str],
+        web_documents: Sequence[WebDocument],
+    ) -> list[str]:
+        notes: list[str] = []
+        answer = final_answer.strip()
+        if not answer:
+            return ["Final response is empty; retry orchestration."]
+
+        normalized = answer.lower()
+        keywords = re.findall(r"[a-z]{5,}", prompt.lower())
+        missing = [word for word in keywords[:5] if word not in normalized]
+        if missing:
+            notes.append(
+                "Potentially missing prompt keywords: " + ", ".join(dict.fromkeys(missing))
+            )
+
+        if knowledge_snippets:
+            tag_hits = sum(
+                1
+                for idx in range(1, len(knowledge_snippets) + 1)
+                if f"[memory {idx}]" in normalized
+            )
+            if tag_hits == 0:
+                notes.append(
+                    "Final response does not explicitly reference retrieved memory snippets."
+                )
+
+        if web_documents:
+            referenced = any(
+                doc.url and doc.url.lower() in normalized for doc in web_documents if doc.url
+            )
+            if not referenced:
+                notes.append("Consider citing at least one live research source for traceability.")
+
+        if not notes:
+            notes.append(
+                "Confirmation checks passed: prompt coverage and grounding look healthy."
+            )
+        return notes
 
     def _build_evaluation_prompt(
         self,

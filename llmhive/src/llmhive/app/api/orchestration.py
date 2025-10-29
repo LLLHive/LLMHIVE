@@ -4,19 +4,26 @@ import logging
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
+from ..knowledge import KnowledgeBase
 from ..memory import MemoryManager
 from ..models import Task
 from ..orchestrator import Orchestrator
 from ..schemas import (
     Critique,
     Improvement,
+    KnowledgeHitSchema,
     ModelAnswer,
+    ModelQualitySchema,
+    ModelUsageMetrics,
     OrchestrationRequest,
     OrchestrationResponse,
+    UsageMetrics,
+    WebDocumentSchema,
 )
 from ..services.stub_provider import StubProvider
 
@@ -183,6 +190,11 @@ async def orchestrate(
     conversation = None
     memory_manager: MemoryManager | None = None
     context_string: str | None = None
+    knowledge_base: KnowledgeBase | None = None
+    knowledge_hits = []
+    knowledge_snippets: list[str] = []
+
+    db_dirty = False
 
     if payload.enable_memory:
         memory_manager = MemoryManager(db)
@@ -193,6 +205,21 @@ async def orchestrate(
         )
         memory_context = memory_manager.fetch_recent_context(conversation)
         context_string = memory_context.as_prompt_context()
+        if conversation in db.new:
+            db_dirty = True
+
+    if payload.enable_knowledge and payload.user_id:
+        knowledge_base = KnowledgeBase(db)
+        knowledge_hits = knowledge_base.search(
+            payload.user_id,
+            payload.prompt,
+            limit=settings.knowledge_max_hits,
+        )
+        knowledge_snippets = KnowledgeBase.snippets(knowledge_hits)
+        knowledge_block = KnowledgeBase.to_prompt_block(knowledge_hits)
+        if knowledge_block:
+            context_parts = [context_string, knowledge_block]
+            context_string = "\n\n".join([part for part in context_parts if part]) or None
 
     # Run orchestration
     try:
@@ -200,6 +227,7 @@ async def orchestrate(
             payload.prompt,
             normalized_models,
             context=context_string,
+            knowledge_snippets=knowledge_snippets,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
@@ -256,6 +284,7 @@ async def orchestrate(
         )
         db.add(task)
         db.flush()
+        db_dirty = True
     except Exception as exc:
         logger.exception("Failed to persist orchestration task: %s", exc)
 
@@ -292,15 +321,43 @@ async def orchestrate(
                 content=payload.prompt,
                 metadata={"models": normalized_models},
             )
+            db_dirty = True
+
             memory_manager.append_entry(
                 conversation,
                 role="assistant",
                 content=artifacts.final_response.content,
                 metadata={"models": [ans.model for ans in artifacts.initial_responses]},
             )
+            db_dirty = True
+
             memory_manager.auto_summarize(conversation)
+            db_dirty = True
+            if payload.enable_knowledge and knowledge_base and payload.user_id:
+                document = knowledge_base.record_interaction(
+                    user_id=payload.user_id,
+                    prompt=payload.prompt,
+                    response=artifacts.final_response.content,
+                    conversation_id=conversation.id,
+                    supporting_notes=artifacts.supporting_notes,
+                )
+                if document is not None:
+                    db_dirty = True
         except Exception as exc:
             logger.exception("Failed to update memory entries: %s", exc)
+    elif payload.enable_knowledge and knowledge_base and payload.user_id:
+        try:
+            document = knowledge_base.record_interaction(
+                user_id=payload.user_id,
+                prompt=payload.prompt,
+                response=artifacts.final_response.content,
+                conversation_id=conversation.id if conversation else payload.conversation_id,
+                supporting_notes=artifacts.supporting_notes,
+            )
+            if document is not None:
+                db_dirty = True
+        except Exception as exc:
+            logger.exception("Failed to persist knowledge document: %s", exc)
 
     step_outputs_payload = {
         role: [ModelAnswer(model=result.model, content=result.content) for result in results]
@@ -308,7 +365,41 @@ async def orchestrate(
     }
     evaluation_text = artifacts.evaluation.content if artifacts.evaluation else None
 
-    return OrchestrationResponse(
+    knowledge_payload = [
+        KnowledgeHitSchema(content=hit.content, score=hit.score, metadata=hit.metadata)
+        for hit in knowledge_hits
+    ]
+    web_payload = [
+        WebDocumentSchema(title=doc.title, url=doc.url, snippet=doc.snippet)
+        for doc in artifacts.web_results
+    ]
+
+    quality_payload = [
+        ModelQualitySchema(
+            model=model,
+            score=assessment.score,
+            flags=assessment.flags,
+            highlights=assessment.highlights,
+        )
+        for model, assessment in artifacts.quality_assessments.items()
+    ]
+    quality_payload.sort(key=lambda item: item.score, reverse=True)
+
+    usage_payload = UsageMetrics(
+        total_tokens=artifacts.usage.total_tokens,
+        total_cost=artifacts.usage.total_cost,
+        response_count=artifacts.usage.response_count,
+        per_model={
+            model: ModelUsageMetrics(
+                tokens=metrics.tokens,
+                cost=metrics.cost,
+                responses=metrics.responses,
+            )
+            for model, metrics in artifacts.usage.per_model.items()
+        },
+    )
+
+    response_payload = OrchestrationResponse(
         prompt=payload.prompt,
         models=[ans.model for ans in artifacts.initial_responses],
         initial_responses=initial,
@@ -323,4 +414,23 @@ async def orchestrate(
         step_outputs=step_outputs_payload,
         supporting_notes=artifacts.supporting_notes,
         evaluation=evaluation_text,
+        optimized_prompt=artifacts.optimized_prompt,
+        knowledge_hits=knowledge_payload,
+        web_results=web_payload,
+        confirmation=artifacts.confirmation_notes,
+        quality=quality_payload,
+        usage=usage_payload,
     )
+
+    if db_dirty:
+        try:
+            db.commit()
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.exception("Database commit failed: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to persist orchestration records",
+            ) from exc
+
+    return response_payload

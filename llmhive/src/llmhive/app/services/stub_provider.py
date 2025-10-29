@@ -232,6 +232,19 @@ class StubProvider(LLMProvider):
             # Fallback for synthesis
             return "Based on the collaborative analysis, this question requires more specific information to provide an accurate answer. Please configure real LLM providers for detailed responses."
 
+        if prompt.startswith("You are the") and "User request:" in prompt:
+            lines = prompt.split("\n")
+            original_prompt = ""
+            capture_next = False
+            for line in lines:
+                if capture_next and line.strip():
+                    original_prompt = line.strip()
+                    break
+                if line.strip() == "User request:":
+                    capture_next = True
+            if original_prompt:
+                return self._generate_answer(original_prompt)
+
         if (
             "florida" in prompt_lower
             and "affordable" in prompt_lower
