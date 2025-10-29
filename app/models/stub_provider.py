@@ -32,6 +32,22 @@ class StubProvider(LLMProvider):
         
         if "capital" in user_msg_lower and "spain" in user_msg_lower:
             return "The capital of Spain is Madrid."
+
+        if ("list" in user_msg_lower or "largest" in user_msg_lower or "biggest" in user_msg_lower) \
+            and "spain" in user_msg_lower and ("city" in user_msg_lower or "cities" in user_msg_lower):
+            return (
+                "Here are Spain's 10 largest cities by population:\n"
+                "1. Madrid\n"
+                "2. Barcelona\n"
+                "3. Valencia\n"
+                "4. Seville (Sevilla)\n"
+                "5. Zaragoza\n"
+                "6. Málaga\n"
+                "7. Murcia\n"
+                "8. Palma de Mallorca\n"
+                "9. Las Palmas de Gran Canaria\n"
+                "10. Bilbao"
+            )
         
         # Default response
         return f"This is a stub response from {model}. The system is working correctly, but no real LLM API keys are configured. Please add API keys to get actual AI-powered responses.\n\nYour question: {user_msg[:100]}..."

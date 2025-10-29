@@ -39,6 +39,7 @@ def test_various_list_questions(client):
         ("List the world's 5 largest cities", ["Tokyo", "Delhi", "Shanghai"]),
         ("What are the 5 largest cities in the United States?", ["New York", "Los Angeles", "Chicago"]),
         ("List the largest US cities", ["New York", "Los Angeles", "Chicago"]),
+        ("List the 10 biggest cities in Spain", ["Madrid", "Barcelona", "Valencia"]),
     ]
     
     for prompt, expected_keywords in test_cases:
