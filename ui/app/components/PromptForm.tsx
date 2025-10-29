@@ -25,22 +25,22 @@ type StrategyOption = {
 
 const MODEL_OPTIONS: Option[] = [
   {
-    value: "gpt-4-turbo",
-    label: "GPT-4 Turbo (OpenAI)",
+    value: "gpt-4o",
+    label: "GPT-4o (OpenAI)",
     description: "Elite reasoning speed, great for complex coding and synthesis.",
   },
   {
-    value: "gpt-4",
-    label: "GPT-4 Legacy (OpenAI)",
+    value: "gpt-4.1",
+    label: "GPT-4.1 (OpenAI)",
     description: "Time-tested depth for analysis-heavy or critical reasoning work.",
   },
   {
-    value: "claude-3-opus",
+    value: "claude-3-opus-20240229",
     label: "Claude 3 Opus (Anthropic)",
     description: "Expansive context window and eloquent long-form writing talent.",
   },
   {
-    value: "claude-3-sonnet",
+    value: "claude-3-sonnet-20240229",
     label: "Claude 3 Sonnet (Anthropic)",
     description: "Responsive collaborator tuned for narrative polish and UX copy.",
   },
