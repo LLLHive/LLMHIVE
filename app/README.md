@@ -74,12 +74,19 @@ Safety and quality assurance:
 ### Running the Application
 
 ```bash
+# Recommended: use the helper script from the repo root
+./scripts/run_backend.sh
+
 # Using uvicorn directly
-uvicorn app.main:app --reload
+python3 -m uvicorn app.app:app --host 0.0.0.0 --port 8080
 
 # Or with the application file at root
 python app.py
 ```
+
+> **Tip:** `scripts/run_backend.sh` automatically activates `.venv` (if present),
+> exports `PYTHONPATH` so the `app` package can be imported, and finally launches
+> Uvicorn. This removes the need to manage those steps manually on macOS.
 
 ### API Endpoints
 
