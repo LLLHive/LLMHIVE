@@ -70,14 +70,43 @@ async def orchestrate(
     # Normalize models: accept either ["a","b"] or ["a, b"]
     raw_models = payload.models or list(settings.default_models)
     normalized_models: list[str] = []
+    discarded_models: list[str] = []
     for item in raw_models:
-        if isinstance(item, str) and "," in item:
-            parts = [p.strip() for p in item.split(",") if p.strip()]
-            normalized_models.extend(parts)
+        if not isinstance(item, str):
+            discarded_models.append(repr(item))
+            continue
+
+        if "," in item:
+            candidates = [p.strip() for p in item.split(",")]
         else:
-            normalized_models.append(item.strip() if isinstance(item, str) else item)
+            candidates = [item.strip()]
+
+        valid = [candidate for candidate in candidates if candidate]
+        if not valid:
+            discarded_models.append(repr(item))
+            continue
+
+        normalized_models.extend(valid)
+
+    # Deduplicate while preserving the caller's preferred ordering
+    normalized_models = list(dict.fromkeys(normalized_models))
+
+    if discarded_models:
+        logger.warning(
+            "Ignoring invalid model identifiers supplied by client: %s",
+            discarded_models,
+        )
 
     if not normalized_models:
+        if payload.models is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "No valid model names were provided. Supply at least one non-empty "
+                    "string identifier or omit the models field to use defaults."
+                ),
+            )
+
         logger.error(
             "No models supplied and DEFAULT_MODELS configuration is empty."
         )
