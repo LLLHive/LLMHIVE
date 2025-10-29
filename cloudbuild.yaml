@@ -1,7 +1,7 @@
 steps:
 # 1. Build the container image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--no-cache', '-t', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}', '.']
+  args: ['build', '--no-cache', '-t', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}', 'llmhive']
 
 # 2. Push the container image to Container Registry
 - name: 'gcr.io/cloud-builders/docker'
