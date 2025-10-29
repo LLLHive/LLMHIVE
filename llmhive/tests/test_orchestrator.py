@@ -14,6 +14,10 @@ async def test_orchestrator_generates_all_stages() -> None:
     assert artifacts.critiques, "Expected critiques to be generated"
     assert len(artifacts.improvements) == 2
     assert artifacts.final_response.content
+    assert "Follow these directives" in artifacts.optimized_prompt
+    assert artifacts.confirmation_notes
+    assert artifacts.web_results, "Web research fallback should provide context"
+    assert artifacts.usage.response_count >= 1
     for result in artifacts.initial_responses:
         # Stub provider returns informative responses
         assert len(result.content) > 0
@@ -29,3 +33,5 @@ async def test_orchestrator_infers_models_when_only_stub_available() -> None:
     # The orchestrator should fall back to the stub model when no real providers exist.
     assert "stub-v1" in returned_models
     assert artifacts.final_response.content
+    assert artifacts.confirmation_notes
+    assert artifacts.usage.response_count >= 1
