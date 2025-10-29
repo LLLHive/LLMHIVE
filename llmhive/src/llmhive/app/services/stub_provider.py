@@ -104,6 +104,18 @@ class StubProvider(LLMProvider):
 3. Shanghai, China
 4. São Paulo, Brazil
 5. Mexico City, Mexico"""
+            elif "spain" in prompt_lower and ("city" in prompt_lower or "cities" in prompt_lower):
+                return """Here are Spain's 10 largest cities by population:
+1. Madrid
+2. Barcelona
+3. Valencia
+4. Seville (Sevilla)
+5. Zaragoza
+6. Málaga
+7. Murcia
+8. Palma de Mallorca
+9. Las Palmas de Gran Canaria
+10. Bilbao"""
             elif ("usa" in prompt_lower or "united states" in prompt_lower or "american" in prompt_lower or " us " in prompt_lower or prompt_lower.startswith("us ") or prompt_lower.endswith(" us")) and ("city" in prompt_lower or "cities" in prompt_lower):
                 return """Here are the 5 largest cities in the United States by population:
 1. New York City, New York
