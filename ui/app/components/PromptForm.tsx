@@ -1,6 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import {
+  ORCHESTRATION_PROXY_PATH,
+  buildOrchestrationUrl,
+} from "@/app/lib/orchestrationEndpoint";
 import styles from "./PromptForm.module.css";
 
 type PromptFormProps = {
@@ -61,8 +65,11 @@ const STRATEGY_OPTIONS: StrategyOption[] = [
   },
 ];
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
-const ORCHESTRATION_ENDPOINT = "/api/v1/orchestration";
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const API_BASE = RAW_API_BASE.trim();
+const DIRECT_ORCHESTRATION_URL = API_BASE
+  ? buildOrchestrationUrl(API_BASE)
+  : null;
 
 export default function PromptForm({ userId, userName }: PromptFormProps) {
   const [prompt, setPrompt] = useState("");
@@ -149,11 +156,9 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
           }),
         });
 
-      if (API_BASE) {
+      if (DIRECT_ORCHESTRATION_URL) {
         try {
-          response = await invokeOrchestrator(
-            `${API_BASE}${ORCHESTRATION_ENDPOINT}`
-          );
+          response = await invokeOrchestrator(DIRECT_ORCHESTRATION_URL);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           const isNetworkError =
@@ -169,7 +174,7 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
       if (!response) {
         try {
           triedProxyFallback = true;
-          response = await invokeOrchestrator(ORCHESTRATION_ENDPOINT);
+          response = await invokeOrchestrator(ORCHESTRATION_PROXY_PATH);
         } catch (err) {
           throw err;
         }
@@ -238,7 +243,7 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
           "Failed to reach the orchestration service. Verify the backend URL configuration or try again.";
       } else if (
         message === "NetworkError when attempting to fetch resource." &&
-        API_BASE
+        DIRECT_ORCHESTRATION_URL
       ) {
         if (directNetworkError && triedProxyFallback) {
           message =
