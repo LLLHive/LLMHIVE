@@ -1,6 +1,12 @@
 """Test that critique authors are correctly assigned."""
 import pytest
+from llmhive.app.api.orchestration import MODEL_ALIAS_MAP
 from llmhive.app.schemas import OrchestrationRequest
+
+
+def canonical(model: str) -> str:
+    """Return the canonical identifier for a model, accounting for aliases."""
+    return MODEL_ALIAS_MAP.get(model.lower(), model)
 
 
 def test_critique_authors_are_correct(client):
@@ -51,11 +57,13 @@ def test_critique_authors_with_multiple_models(client):
             f"Expected {expected_critique_count} critiques for {len(models)} models, got {len(data['critiques'])}"
         
         # Verify all authors are in the model list
+        expected_models = {canonical(name) for name in models}
+
         for critique in data["critiques"]:
-            assert critique["author"] in models, \
-                f"Critique author {critique['author']} not in model list {models}"
-            assert critique["target"] in models, \
-                f"Critique target {critique['target']} not in model list {models}"
+            assert critique["author"] in expected_models, \
+                f"Critique author {critique['author']} not in canonicalized model list {expected_models}"
+            assert critique["target"] in expected_models, \
+                f"Critique target {critique['target']} not in canonicalized model list {expected_models}"
             assert critique["author"] != critique["target"], \
                 "Critique author and target should not be the same"
 

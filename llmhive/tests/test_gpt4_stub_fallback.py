@@ -1,5 +1,10 @@
-"""Test that gpt-4 and other models can use stub provider as fallback."""
+"""Tests ensuring GPT-4 requests gracefully fall back to the stub provider."""
+from llmhive.app.api.orchestration import MODEL_ALIAS_MAP
 from llmhive.app.schemas import OrchestrationRequest
+
+
+def _canonical(model: str) -> str:
+    return MODEL_ALIAS_MAP.get(model.lower(), model)
 
 
 def test_gpt4_with_stub_provider(client):
@@ -13,9 +18,10 @@ def test_gpt4_with_stub_provider(client):
     assert response.status_code == 200
     data = response.json()
     assert data["prompt"] == payload.prompt
-    assert data["models"] == ["gpt-4"]
+    expected_model = _canonical("gpt-4")
+    assert data["models"] == [expected_model]
     assert len(data["initial_responses"]) == 1
-    assert data["initial_responses"][0]["model"] == "gpt-4"
+    assert data["initial_responses"][0]["model"] == expected_model
     # Stub provider now returns actual answers for common questions
     assert "Madrid" in data["initial_responses"][0]["content"]
 
@@ -31,7 +37,8 @@ def test_multiple_models_with_stub_provider(client):
     assert response.status_code == 200
     data = response.json()
     assert len(data["models"]) == 3
-    assert set(data["models"]) == {"gpt-4", "gpt-3.5-turbo", "claude-3"}
+    expected_models = {_canonical("gpt-4"), _canonical("gpt-3.5-turbo"), _canonical("claude-3")}
+    assert set(data["models"]) == expected_models
     assert len(data["initial_responses"]) == 3
     # All should use stub provider
     for resp in data["initial_responses"]:
