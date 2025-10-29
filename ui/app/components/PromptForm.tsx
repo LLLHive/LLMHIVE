@@ -9,7 +9,6 @@ import styles from "./PromptForm.module.css";
 
 type PromptFormProps = {
   userId?: string;
-  userName?: string | null;
 };
 
 type Option = {
@@ -19,7 +18,7 @@ type Option = {
 };
 
 type StrategyOption = {
-  value: string | null;
+  value: string;
   label: string;
   description: string;
 };
@@ -45,11 +44,16 @@ const MODEL_OPTIONS: Option[] = [
     label: "Claude 3 Sonnet (Anthropic)",
     description: "Responsive collaborator tuned for narrative polish and UX copy.",
   },
+  {
+    value: "gemini-1.5-pro",
+    label: "Gemini 1.5 Pro (Google)",
+    description: "Multimodal powerhouse with research-grade recall.",
+  },
 ];
 
 const STRATEGY_OPTIONS: StrategyOption[] = [
   {
-    value: null,
+    value: "auto",
     label: "Auto Orchestration",
     description: "Let LLMHive analyze the brief and assemble the optimal reasoning flow.",
   },
@@ -63,6 +67,11 @@ const STRATEGY_OPTIONS: StrategyOption[] = [
     label: "Critique & Elevate",
     description: "Drafting squad + critic refine the answer through iterative deep thinking.",
   },
+  {
+    value: "research_circle",
+    label: "Research Circle",
+    description: "Parallel agents scour sources before converging on the answer.",
+  },
 ];
 
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
@@ -71,70 +80,82 @@ const DIRECT_ORCHESTRATION_URL = API_BASE
   ? buildOrchestrationUrl(API_BASE)
   : null;
 
-export default function PromptForm({ userId, userName }: PromptFormProps) {
+export default function PromptForm({ userId }: PromptFormProps) {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [primaryModel, setPrimaryModel] = useState<string>(MODEL_OPTIONS[0]?.value ?? "");
-  const [dreamTeam, setDreamTeam] = useState<string[]>(() =>
-    MODEL_OPTIONS[0] ? [MODEL_OPTIONS[0].value] : []
+  const [selectedModels, setSelectedModels] = useState<string[]>(() =>
+    MODEL_OPTIONS.length > 0 ? [MODEL_OPTIONS[0].value] : []
   );
-  const [strategy, setStrategy] = useState<string | null>(null);
-  const [isTeamMenuOpen, setTeamMenuOpen] = useState(false);
+  const [selectedStrategies, setSelectedStrategies] = useState<string[]>([
+    STRATEGY_OPTIONS[0]?.value ?? "auto",
+  ]);
+  const [isModelMenuOpen, setModelMenuOpen] = useState(false);
+  const [isStrategyMenuOpen, setStrategyMenuOpen] = useState(false);
 
   const orchestratorSummary = useMemo(() => {
-    const summaryStrategy = STRATEGY_OPTIONS.find((option) => option.value === strategy);
-    const selectedModels = MODEL_OPTIONS.filter((model) =>
-      dreamTeam.includes(model.value)
+    const models = MODEL_OPTIONS.filter((model) =>
+      selectedModels.includes(model.value)
+    );
+    const strategies = STRATEGY_OPTIONS.filter((option) =>
+      selectedStrategies.includes(option.value)
     );
 
+    const strategyLabel = strategies.length
+      ? strategies.map((strategy) => strategy.label).join(", ")
+      : "Adaptive hive intelligence";
+
+    const strategyDescription = strategies.length
+      ? strategies.map((strategy) => strategy.description).join(" ")
+      : "Planner will auto-select between fast synthesis, critique loops, and research expansions.";
+
     return {
-      strategyLabel: summaryStrategy?.label ?? "Adaptive hive intelligence",
-      strategyDescription:
-        summaryStrategy?.description ??
-        "Planner will auto-select between fast synthesis, critique loops, and research expansions.",
-      selectedModels,
+      selectedModels: models,
+      strategyLabel,
+      strategyDescription,
     };
-  }, [dreamTeam, strategy]);
+  }, [selectedModels, selectedStrategies]);
 
-  const normalizedTeam = useMemo(() => {
-    const allModels = new Set<string>();
-    if (primaryModel) {
-      allModels.add(primaryModel);
-    }
-    dreamTeam.forEach((model) => allModels.add(model));
-    return Array.from(allModels);
-  }, [primaryModel, dreamTeam]);
-
-  const toggleDreamTeamModel = (modelId: string) => {
-    setDreamTeam((current) => {
-      if (modelId === primaryModel) {
-        return current.includes(modelId) ? current : [...current, modelId];
-      }
+  const toggleModelSelection = (modelId: string) => {
+    setSelectedModels((current) => {
       const exists = current.includes(modelId);
       if (exists) {
-        const filtered = current.filter((item) => item !== modelId);
-        // Ensure at least one model remains selected so the orchestrator always has guidance.
-        if (filtered.length === 0 && primaryModel !== modelId) {
-          return filtered;
-        }
-        return filtered.length === 0 ? [primaryModel] : filtered;
+        const filtered = current.filter((value) => value !== modelId);
+        return filtered.length === 0 ? current : filtered;
       }
       return [...current, modelId];
     });
   };
 
+  const toggleStrategySelection = (strategyId: string) => {
+    setSelectedStrategies((current) => {
+      const exists = current.includes(strategyId);
+      if (exists) {
+        const filtered = current.filter((value) => value !== strategyId);
+        return filtered.length === 0 ? [STRATEGY_OPTIONS[0].value] : filtered;
+      }
+      if (strategyId === STRATEGY_OPTIONS[0].value) {
+        return [strategyId];
+      }
+      const withoutAuto = current.filter(
+        (value) => value !== STRATEGY_OPTIONS[0].value
+      );
+      return [...withoutAuto, strategyId];
+    });
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!prompt.trim()) {
+    if (!prompt.trim() || selectedModels.length === 0) {
       return;
     }
 
     setIsLoading(true);
     setError("");
     setResult("");
-    setTeamMenuOpen(false);
+    setModelMenuOpen(false);
+    setStrategyMenuOpen(false);
 
     let response: Response | undefined;
     let directNetworkError = false;
@@ -151,7 +172,8 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
           body: JSON.stringify({
             user_id: userId ?? "guest",
             prompt,
-            models: normalizedTeam,
+            models: selectedModels,
+            reasoning_strategies: selectedStrategies,
             enable_memory: true,
           }),
         });
@@ -263,71 +285,36 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
     <div className={styles.container}>
       <section className={styles.commanderPanel}>
         <header className={styles.sectionHeader}>
-          <h2>Command the Hive</h2>
+          <h2>Orchestrate your collective</h2>
           <p>
-            Tailor your dream team of frontier models and thinking protocols. LLMHive will
-            choreograph the rest.
+            Select the frontier models and reasoning patterns to rally for your next synthesis.
           </p>
         </header>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.controlGrid}>
             <div className={styles.controlColumn}>
-              <label className={styles.label} htmlFor="primary-model">
-                Lead model
-              </label>
-              <div className={styles.selectWrapper}>
-                <select
-                  id="primary-model"
-                  className={styles.select}
-                  value={primaryModel}
-                  disabled={isLoading}
-                  onChange={(event) => {
-                    const newModel = event.target.value;
-                    setPrimaryModel(newModel);
-                    setDreamTeam((current) =>
-                      current.includes(newModel) ? current : [...current, newModel]
-                    );
-                  }}
-                >
-                  {MODEL_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <ul className={styles.optionDetails}>
-                {MODEL_OPTIONS.map((option) => (
-                  <li key={`${option.value}-detail`}>
-                    <strong>{option.label}:</strong> {option.description}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className={styles.controlColumn}>
-              <label className={styles.label}>Dream team</label>
+              <label className={styles.label}>LLM models</label>
               <div className={styles.dropdown}>
                 <button
                   type="button"
                   className={styles.dropdownToggle}
-                  onClick={() => setTeamMenuOpen((open) => !open)}
+                  onClick={() => setModelMenuOpen((open) => !open)}
                   disabled={isLoading}
-                  aria-expanded={isTeamMenuOpen}
+                  aria-expanded={isModelMenuOpen}
                 >
-                  {normalizedTeam.length} model{normalizedTeam.length === 1 ? "" : "s"} selected
+                  {selectedModels.length} model{selectedModels.length === 1 ? "" : "s"} enlisted
                 </button>
-                {isTeamMenuOpen && (
+                {isModelMenuOpen && (
                   <div className={styles.dropdownMenu} role="menu">
                     {MODEL_OPTIONS.map((option) => {
-                      const checked = normalizedTeam.includes(option.value);
+                      const checked = selectedModels.includes(option.value);
                       return (
                         <label key={option.value} className={styles.dropdownOption}>
                           <input
                             type="checkbox"
                             checked={checked}
-                            onChange={() => toggleDreamTeamModel(option.value)}
+                            onChange={() => toggleModelSelection(option.value)}
                           />
                           <span>
                             <span className={styles.dropdownOptionLabel}>{option.label}</span>
@@ -339,13 +326,13 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
                       );
                     })}
                     <p className={styles.dropdownHint}>
-                      Combine complementary experts—reasoning, research, creativity—for elite output.
+                      Activate at least one model to kick off the hive intelligence.
                     </p>
                   </div>
                 )}
               </div>
               <div className={styles.selectionChips}>
-                {normalizedTeam.map((modelId) => {
+                {selectedModels.map((modelId) => {
                   const model = MODEL_OPTIONS.find((option) => option.value === modelId);
                   return (
                     <span key={modelId} className={styles.chip}>
@@ -357,30 +344,44 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
             </div>
 
             <div className={styles.controlColumn}>
-              <label className={styles.label} htmlFor="strategy">
-                Thinking strategy
-              </label>
-              <div className={styles.selectWrapper}>
-                <select
-                  id="strategy"
-                  className={styles.select}
-                  value={strategy ?? ""}
+              <label className={styles.label}>Advanced reasoning strategies</label>
+              <div className={styles.dropdown}>
+                <button
+                  type="button"
+                  className={styles.dropdownToggle}
+                  onClick={() => setStrategyMenuOpen((open) => !open)}
                   disabled={isLoading}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setStrategy(value === "" ? null : value);
-                  }}
+                  aria-expanded={isStrategyMenuOpen}
                 >
-                  {STRATEGY_OPTIONS.map((option) => (
-                    <option key={option.label} value={option.value ?? ""}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  {selectedStrategies.length} strateg{selectedStrategies.length === 1 ? "y" : "ies"} engaged
+                </button>
+                {isStrategyMenuOpen && (
+                  <div className={styles.dropdownMenu} role="menu">
+                    {STRATEGY_OPTIONS.map((option) => {
+                      const checked = selectedStrategies.includes(option.value);
+                      return (
+                        <label key={option.value} className={styles.dropdownOption}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleStrategySelection(option.value)}
+                          />
+                          <span>
+                            <span className={styles.dropdownOptionLabel}>{option.label}</span>
+                            <span className={styles.dropdownOptionDescription}>
+                              {option.description}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                    <p className={styles.dropdownHint}>
+                      Auto Orchestration will deselect other modes to let the system decide.
+                    </p>
+                  </div>
+                )}
               </div>
-              <p className={styles.strategyDescription}>
-                {orchestratorSummary.strategyDescription}
-              </p>
+              <p className={styles.strategyDescription}>{orchestratorSummary.strategyDescription}</p>
             </div>
           </div>
 
@@ -392,7 +393,7 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
             className={styles.textarea}
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
-            placeholder="Act as the world's best software design engineer and AI expert..."
+            placeholder="Design a multi-agent evaluation loop that critiques product requirement documents."
             required
             disabled={isLoading}
           />
@@ -402,19 +403,22 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
               <span className={styles.summaryTitle}>Orchestration Blueprint</span>
               <ul className={styles.summaryList}>
                 <li>
-                  <strong>Lead:</strong> {MODEL_OPTIONS.find((option) => option.value === primaryModel)?.label ?? "Unassigned"}
+                  <strong>Models:</strong> {orchestratorSummary.selectedModels.length > 0
+                    ? orchestratorSummary.selectedModels.map((model) => model.label).join(", ")
+                    : "--"}
                 </li>
                 <li>
-                  <strong>Dream Team:</strong> {normalizedTeam.length > 0 ? normalizedTeam
-                    .map((modelId) => MODEL_OPTIONS.find((option) => option.value === modelId)?.label ?? modelId)
-                    .join(", ") : "--"}
-                </li>
-                <li>
-                  <strong>Strategy:</strong> {orchestratorSummary.strategyLabel}
+                  <strong>Strategies:</strong> {selectedStrategies.length > 0
+                    ? selectedStrategies
+                        .map((strategy) =>
+                          STRATEGY_OPTIONS.find((option) => option.value === strategy)?.label ?? strategy
+                        )
+                        .join(", ")
+                    : "--"}
                 </li>
               </ul>
             </div>
-            <button type="submit" className={styles.button} disabled={isLoading}>
+            <button type="submit" className={styles.button} disabled={isLoading || selectedModels.length === 0}>
               {isLoading ? "Orchestrating..." : "Launch orchestration"}
             </button>
           </div>

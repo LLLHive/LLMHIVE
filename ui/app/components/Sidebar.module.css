@@ -1,0 +1,312 @@
+.sidebar {
+  position: relative;
+  width: 300px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.75rem 1.5rem 1.75rem 1.25rem;
+  background: linear-gradient(180deg, rgba(11, 12, 20, 0.96), rgba(8, 9, 15, 0.92));
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e7ecfa;
+  transition: width 0.25s ease, min-width 0.25s ease;
+}
+
+.collapsed {
+  width: 96px;
+  min-width: 96px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0 0.35rem;
+}
+
+.collapseButton {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(151, 173, 227, 0.35);
+  background: rgba(16, 19, 30, 0.8);
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.collapseButton span {
+  display: block;
+  height: 2px;
+  width: 18px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, #5aa3ff, #7f5aff);
+  border-radius: 999px;
+}
+
+.collapseButton:hover {
+  border-color: #5aa3ff;
+  transform: translateY(-1px);
+}
+
+.brand {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9fc6ff;
+}
+
+.collapsed .brand {
+  display: none;
+}
+
+.newChatButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(90, 163, 255, 0.4);
+  background: linear-gradient(135deg, rgba(90, 163, 255, 0.22), rgba(127, 90, 255, 0.2));
+  color: #f4f7ff;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.newChatButton svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.newChatButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px -20px rgba(90, 163, 255, 0.6);
+}
+
+.collapsed .newChatButton span {
+  display: none;
+}
+
+.collapsed .newChatButton {
+  justify-content: center;
+  padding: 0.85rem;
+}
+
+.sectionList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(159, 198, 255, 0.7);
+}
+
+.section ul {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+  background: rgba(18, 21, 32, 0.65);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.navItem:hover,
+.navItem:focus-visible {
+  outline: none;
+  background: rgba(90, 163, 255, 0.16);
+  transform: translateX(3px);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(20, 24, 38, 0.9);
+  border: 1px solid rgba(111, 147, 214, 0.2);
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  opacity: 0.88;
+}
+
+.navCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.navCopy span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.navCopy small {
+  font-size: 0.75rem;
+  color: rgba(195, 207, 234, 0.7);
+}
+
+.collapsed .navCopy {
+  display: none;
+}
+
+.collapsed .navItem {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(18, 21, 32, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(90, 163, 255, 0.08);
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: radial-gradient(circle at 30% 30%, rgba(90, 163, 255, 0.45), rgba(15, 18, 28, 0.95));
+  border: 1px solid rgba(90, 163, 255, 0.4);
+  color: #f2f6ff;
+}
+
+.profileCopy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.profileName {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.profileCopy small {
+  font-size: 0.75rem;
+  color: rgba(182, 197, 229, 0.7);
+}
+
+.collapsed .profileCopy {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .sidebar {
+    width: 100%;
+    min-width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 40px -32px rgba(0, 0, 0, 0.8);
+    position: relative;
+  }
+
+  .brandRow {
+    padding: 0;
+  }
+
+  .sectionList {
+    flex-direction: row;
+    gap: 1.25rem;
+    overflow-x: auto;
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .section {
+    min-width: 200px;
+  }
+
+  .profileCard {
+    margin-left: auto;
+  }
+
+  .collapsed {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .collapsed .navCopy {
+    display: flex;
+  }
+
+  .collapsed .brand {
+    display: block;
+  }
+
+  .collapsed .navItem {
+    justify-content: flex-start;
+    padding: 0.75rem 0.9rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+
+  .sectionList {
+    width: 100%;
+  }
+
+  .profileCard {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
