@@ -27,9 +27,4 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # Command to run the application
-CMD exec gunicorn --bind :$PORT \
-    --workers 1 \
-    --threads 8 \
-    --timeout 0 \
-    "src.llmhive.app.main:app" \
-    -k uvicorn.workers.UvicornWorker
+CMD ["sh", "-c", "exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 src.llmhive.app.main:app -k uvicorn.workers.UvicornWorker"]
