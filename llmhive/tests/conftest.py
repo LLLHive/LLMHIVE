@@ -1,4 +1,6 @@
 """Test configuration for LLMHive."""
+import asyncio
+import inspect
 import os
 import sys
 from pathlib import Path
@@ -24,6 +26,30 @@ from fastapi.testclient import TestClient
 from llmhive.app.database import engine, session_scope
 from llmhive.app.main import app
 from llmhive.app.models import Base
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers",
+        "asyncio: mark test as asynchronous and execute it inside an event loop",
+    )
+
+
+def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
+    if inspect.iscoroutinefunction(pyfuncitem.obj):
+        loop = asyncio.new_event_loop()
+        try:
+            signature = inspect.signature(pyfuncitem.obj)
+            kwargs = {
+                name: value
+                for name, value in pyfuncitem.funcargs.items()
+                if name in signature.parameters
+            }
+            loop.run_until_complete(pyfuncitem.obj(**kwargs))
+        finally:
+            loop.close()
+        return True
+    return None
 
 
 @pytest.fixture(scope="session", autouse=True)

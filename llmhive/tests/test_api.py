@@ -14,6 +14,13 @@ def test_orchestrate_endpoint(client):
     assert data["final_response"]
     assert isinstance(data["critiques"], list)
     assert isinstance(data["improvements"], list)
+    assert "Follow these directives" in data["optimized_prompt"]
+    assert isinstance(data["knowledge_hits"], list)
+    assert isinstance(data["web_results"], list)
+    assert isinstance(data["confirmation"], list)
+    assert isinstance(data["quality"], list)
+    assert data["usage"]["response_count"] >= 1
+    assert isinstance(data["usage"]["per_model"], dict)
 
 
 def test_orchestrate_endpoint_uses_default_models(client):
@@ -25,6 +32,7 @@ def test_orchestrate_endpoint_uses_default_models(client):
     assert data["prompt"] == payload["prompt"]
     assert len(data["initial_responses"]) == len(settings.default_models)
     assert sorted(data["models"]) == sorted(settings.default_models)
+    assert data["optimized_prompt"]
 
 
 def test_orchestrate_endpoint_strips_invalid_models(client):
@@ -39,6 +47,8 @@ def test_orchestrate_endpoint_strips_invalid_models(client):
     data = response.json()
     # Only one unique, non-empty model should remain after normalization
     assert data["models"] == ["gpt-4o-mini"]
+    assert data["confirmation"], "Confirmation layer should emit guidance"
+    assert data["usage"]["response_count"] >= 1
 
 
 def test_orchestrate_endpoint_rejects_missing_models(client):
@@ -113,3 +123,4 @@ def test_orchestrate_endpoint_handles_empty_initial_responses(monkeypatch, clien
     assert data["initial_responses"] == []
     # Stub synthesis still produces the correct answer for common prompts.
     assert "Madrid" in data["final_response"]
+    assert data["usage"]["response_count"] >= 1
