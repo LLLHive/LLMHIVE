@@ -45,8 +45,8 @@ AUTH_SECRET=<your-generated-secret>
 GITHUB_ID=<your-github-client-id>
 GITHUB_SECRET=<your-github-client-secret>
 # URL where the Python orchestrator API is running
-# For local development the default FastAPI server listens on http://127.0.0.1:8000
-ORCHESTRATOR_API_BASE_URL=http://127.0.0.1:8000
+# For local development the default FastAPI server listens on http://127.0.0.1:8080
+ORCHESTRATOR_API_BASE_URL=http://127.0.0.1:8080
 ```
 
 ### Installation
