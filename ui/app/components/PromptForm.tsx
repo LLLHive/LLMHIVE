@@ -129,21 +129,51 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
     setResult("");
     setTeamMenuOpen(false);
 
+    let response: Response | undefined;
+    let directNetworkError = false;
+    let triedProxyFallback = false;
+
     try {
-      const url = `${API_BASE}${ORCHESTRATION_ENDPOINT}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          user_id: userId ?? "guest",
-          prompt,
-          models: normalizedTeam,
-          enable_memory: true,
-        }),
-      });
+      const invokeOrchestrator = (endpoint: string) =>
+        fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            user_id: userId ?? "guest",
+            prompt,
+            models: normalizedTeam,
+            enable_memory: true,
+          }),
+        });
+
+      if (API_BASE) {
+        try {
+          response = await invokeOrchestrator(
+            `${API_BASE}${ORCHESTRATION_ENDPOINT}`
+          );
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          const isNetworkError =
+            message === "Failed to fetch" ||
+            message === "NetworkError when attempting to fetch resource.";
+          if (!isNetworkError) {
+            throw err;
+          }
+          directNetworkError = true;
+        }
+      }
+
+      if (!response) {
+        try {
+          triedProxyFallback = true;
+          response = await invokeOrchestrator(ORCHESTRATION_ENDPOINT);
+        } catch (err) {
+          throw err;
+        }
+      }
 
       if (!response.ok) {
         const contentType = response.headers.get("content-type") ?? "";
@@ -206,6 +236,17 @@ export default function PromptForm({ userId, userName }: PromptFormProps) {
       if (message === "Failed to fetch") {
         message =
           "Failed to reach the orchestration service. Verify the backend URL configuration or try again.";
+      } else if (
+        message === "NetworkError when attempting to fetch resource." &&
+        API_BASE
+      ) {
+        if (directNetworkError && triedProxyFallback) {
+          message =
+            "Direct orchestration request failed due to a network error. Falling back to the internal proxy also failed. Double-check NEXT_PUBLIC_API_BASE_URL or clear it to use the proxy.";
+        } else {
+          message =
+            "Direct orchestration request failed due to a network error. The internal proxy was not attempted. Verify NEXT_PUBLIC_API_BASE_URL or remove it to use the proxy.";
+        }
       }
       setError(message);
     } finally {
