@@ -23,7 +23,10 @@ class ModelProfile:
         requested_set = set(requested)
         available = requested_set.intersection(self.capabilities)
         coverage = len(available) / max(len(requested_set), 1)
-        efficiency = 1.0 / (self.cost_rating + self.latency_rating)
+        # Guard against zero cost/latency values which we use for stub providers.
+        # Treat a zero total as "best possible" efficiency instead of raising.
+        denominator = self.cost_rating + self.latency_rating
+        efficiency = 1.0 / denominator if denominator else 1.0
         return coverage + 0.15 * efficiency
 
 
