@@ -124,3 +124,60 @@ def test_orchestrate_endpoint_handles_empty_initial_responses(monkeypatch, clien
     # Stub synthesis still produces the correct answer for common prompts.
     assert "Madrid" in data["final_response"]
     assert data["usage"]["response_count"] >= 1
+
+
+def test_orchestrate_endpoint_fails_when_stub_content_detected(monkeypatch, client):
+    """Return a 503 when real providers only emit stub placeholders."""
+
+    from llmhive.app.api import orchestration as orchestration_api
+    from llmhive.app.orchestrator import Orchestrator
+    from llmhive.app.services.base import LLMProvider, LLMResult
+    from llmhive.app.services.stub_provider import StubProvider
+
+    class _StubbyProvider(LLMProvider):
+        def list_models(self) -> list[str]:
+            return ["gpt-4o"]
+
+        async def complete(self, prompt: str, *, model: str) -> LLMResult:
+            return LLMResult(
+                content="This is a stub response. The question would normally be answered by a real LLM.",
+                model=model,
+            )
+
+        async def critique(
+            self,
+            subject: str,
+            *,
+            target_answer: str,
+            author: str,
+            model: str,
+        ) -> LLMResult:
+            return LLMResult(content="Placeholder critique", model=author)
+
+        async def improve(
+            self,
+            subject: str,
+            *,
+            previous_answer: str,
+            critiques: list[str],
+            model: str,
+        ) -> LLMResult:
+            return LLMResult(content="Placeholder improvement", model=model)
+
+    orchestrator = Orchestrator(
+        providers={
+            "openai": _StubbyProvider(),
+            "stub": StubProvider(seed=1234),
+        }
+    )
+    monkeypatch.setattr(orchestration_api, "_orchestrator", orchestrator)
+    monkeypatch.setenv("LLMHIVE_FAIL_ON_STUB", "true")
+
+    payload = OrchestrationRequest(
+        prompt="List Europe's five largest cities", models=["gpt-4o"]
+    )
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
+    assert response.status_code == 503
+    detail = response.json()["detail"].lower()
+    assert "stub" in detail
