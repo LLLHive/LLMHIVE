@@ -241,17 +241,22 @@ async def orchestrate(
     try:
         initial_responses = artifacts.initial_responses
         all_stub = bool(initial_responses) and all(
-            isinstance(r.content, str)
-            and r.content.startswith(f"[{r.model}] Response to:")
+            StubProvider.is_stub_content(r.content)
             for r in initial_responses
         )
     except Exception:
         all_stub = False
 
+    final_stub = False
+    try:
+        final_stub = StubProvider.is_stub_content(artifacts.final_response.content)
+    except Exception:
+        final_stub = False
+
     # Check if any real (non-stub) providers are configured
     has_real_providers = any(k != "stub" for k in _orchestrator.providers.keys())
 
-    if fail_on_stub and all_stub and has_real_providers:
+    if fail_on_stub and has_real_providers and (all_stub or final_stub):
         available = list(_orchestrator.providers.keys())
         logger.error("All providers returned stub responses despite real providers being configured. Check provider configurations. Available providers: %s", available)
         raise HTTPException(
