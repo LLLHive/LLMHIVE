@@ -23,16 +23,14 @@ function SignIn() {
 function SignOut({ user }: { user: User }) {
   return (
     <div className={styles.userInfo}>
-      <span className={styles.userGreeting}>Welcome, {user?.name || "Innovator"}</span>
+      <span className={styles.userGreeting}>Signed in as {user?.name || "Innovator"}</span>
       <form
         action={async () => {
           "use server";
           await signOut();
         }}
       >
-        <button type="submit" className={styles.authButton}>
-          Sign Out
-        </button>
+        <button type="submit" className={styles.authButton}>Sign out</button>
       </form>
     </div>
   );
@@ -47,20 +45,31 @@ export default async function Home() {
       <main className={styles.shell}>
         <Sidebar displayName={user?.name ?? user?.email ?? null} />
         <div className={styles.canvas}>
-          <div className={styles.backdrop} aria-hidden="true">
-            <div className={styles.glassOrb} />
-            <div className={styles.glowRing} />
-          </div>
-
           <header className={styles.hero}>
             <div className={styles.heroCopy}>
+              <div className={styles.breadcrumb}>Dashboard • Compose</div>
               <h1 className={styles.title}>LLMHive Orchestration Studio</h1>
               <p className={styles.subtitle}>
-                Shape your next-generation collective of agents with a cockpit that nods to the latest frontier model experiences.
+                Shape your collective of models, reasoning modes, and workflows in an interface inspired by the flagship LLM chat experiences.
               </p>
             </div>
             <div>{user ? <SignOut user={user} /> : <SignIn />}</div>
           </header>
+
+          <nav className={styles.menuRow} aria-label="Primary">
+            <button className={`${styles.menuButton} ${styles.menuButtonActive}`} type="button">
+              Compose
+            </button>
+            <button className={styles.menuButton} type="button">
+              Evaluations
+            </button>
+            <button className={styles.menuButton} type="button">
+              Activity
+            </button>
+            <button className={styles.menuButton} type="button">
+              Playground
+            </button>
+          </nav>
 
           <div className={styles.content}>
             {user ? (
@@ -85,12 +94,9 @@ export default async function Home() {
       <main className={styles.shell}>
         <Sidebar displayName={null} />
         <div className={styles.canvas}>
-          <div className={styles.backdrop} aria-hidden="true">
-            <div className={styles.glassOrb} />
-            <div className={styles.glowRing} />
-          </div>
           <header className={styles.hero}>
             <div className={styles.heroCopy}>
+              <div className={styles.breadcrumb}>Dashboard • Compose</div>
               <h1 className={styles.title}>LLMHive Orchestration Studio</h1>
               <p className={styles.subtitle}>Experience next-generation collaborative intelligence.</p>
             </div>
