@@ -15,6 +15,25 @@ MAX_PROMPT_PREVIEW_LENGTH = 100
 class StubProvider(LLMProvider):
     """Simple provider that fabricates plausible responses."""
 
+    _STUB_SIGNATURE = "this is a stub response"
+
+    @staticmethod
+    def is_stub_content(content: str | None) -> bool:
+        """Return ``True`` when *content* appears to be a stub placeholder."""
+
+        if not isinstance(content, str):
+            return False
+
+        normalized = content.strip().lower()
+        if not normalized:
+            return False
+
+        if normalized.startswith(StubProvider._STUB_SIGNATURE):
+            return True
+
+        # Legacy stub format used by earlier builds: "[model] Response to: ..."
+        return normalized.startswith("[") and " response to:" in normalized
+
     def __init__(self, seed: int | None = None) -> None:
         self.random = random.Random(seed)
         self._models: List[str] = ["stub-v1", "stub-researcher", "stub-critic"]
