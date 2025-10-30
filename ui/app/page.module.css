@@ -1,168 +1,162 @@
 .shell {
   display: flex;
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(70, 91, 255, 0.18), transparent 65%),
-    radial-gradient(circle at bottom, rgba(127, 90, 255, 0.12), transparent 45%),
-    #04050b;
-  color: #f5f8ff;
+  background: #ffffff;
+  color: #111827;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .canvas {
-  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 2.5rem 3rem 3rem;
-  overflow: hidden;
-}
-
-.backdrop {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-
-.glassOrb {
-  width: min(32vw, 320px);
-  height: min(32vw, 320px);
-  border-radius: 50%;
-  background: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.45), rgba(90, 163, 255, 0.06));
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: inset 0 40px 70px rgba(255, 255, 255, 0.15), inset 0 -30px 60px rgba(90, 163, 255, 0.25);
-  filter: blur(0.2px);
-  opacity: 0.5;
-  mix-blend-mode: screen;
-}
-
-.glowRing {
-  position: absolute;
-  width: min(45vw, 460px);
-  height: min(45vw, 460px);
-  border-radius: 50%;
-  border: 1px solid rgba(90, 163, 255, 0.25);
-  box-shadow: 0 0 120px rgba(90, 163, 255, 0.12);
-  opacity: 0.3;
-  animation: slowPulse 9s ease-in-out infinite;
-}
-
-@keyframes slowPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.28;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.4;
-  }
+  padding: 2.5rem 3rem;
+  background: #ffffff;
 }
 
 .hero {
-  position: relative;
-  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1.5rem;
+  gap: 2rem;
   padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .heroCopy {
-  max-width: 620px;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.6rem;
+  max-width: 640px;
+}
+
+.breadcrumb {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #6b7280;
 }
 
 .title {
-  font-size: clamp(2.5rem, 3.8vw, 3.3rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: clamp(2.25rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
 }
 
 .subtitle {
-  color: rgba(168, 189, 231, 0.78);
+  color: #4b5563;
   font-size: 1.05rem;
   line-height: 1.6;
-  max-width: 540px;
+  margin: 0;
 }
 
 .userInfo {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   gap: 0.75rem;
+  align-items: flex-end;
 }
 
 .userGreeting {
   font-size: 0.9rem;
-  letter-spacing: 0.04em;
+  color: #4b5563;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(159, 198, 255, 0.85);
 }
 
 .authButton {
-  padding: 0.65rem 1.6rem;
+  padding: 0.65rem 1.4rem;
   border-radius: 999px;
-  border: 1px solid rgba(154, 191, 249, 0.35);
-  background: rgba(13, 17, 28, 0.85);
-  color: #f5f8ff;
+  border: 1px solid #d1d5db;
+  background: #111827;
+  color: #ffffff;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .authButton:hover,
 .authButton:focus-visible {
-  border-color: rgba(90, 163, 255, 0.9);
-  box-shadow: 0 0 0 3px rgba(90, 163, 255, 0.25);
+  outline: none;
+  background: #1f2937;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.15);
+}
+
+.menuRow {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.25rem 0 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+}
+
+.menuButton {
+  padding: 0.65rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.menuButton:hover,
+.menuButton:focus-visible {
+  outline: none;
+  color: #111827;
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+
+.menuButtonActive {
+  color: #111827;
+  border-color: #111827;
+  background: #f3f4f6;
 }
 
 .content {
-  position: relative;
-  z-index: 1;
   flex: 1;
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  padding-bottom: 3rem;
 }
 
 .loading {
   font-size: 1.05rem;
-  color: rgba(178, 193, 224, 0.8);
+  color: #4b5563;
   padding-top: 3rem;
 }
 
 .welcomePanel {
   max-width: 420px;
-  padding: 2.25rem 2.5rem;
+  padding: 2rem 2.5rem;
   border-radius: 20px;
-  background: rgba(8, 11, 18, 0.7);
-  border: 1px solid rgba(154, 191, 249, 0.25);
-  box-shadow: 0 28px 60px -40px rgba(8, 16, 32, 0.9);
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
   text-align: center;
+  box-shadow: 0 10px 30px -20px rgba(15, 23, 42, 0.2);
 }
 
 .welcomePanel h2 {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   margin-bottom: 1rem;
+  color: #111827;
 }
 
 .welcomePanel p {
-  color: rgba(180, 196, 226, 0.78);
+  color: #4b5563;
   font-size: 1rem;
-  line-height: 1.7;
+  line-height: 1.65;
 }
 
 .error {
-  color: #ff9b9b;
-  background-color: rgba(179, 53, 53, 0.16);
-  border: 1px solid rgba(255, 133, 133, 0.35);
-  border-radius: 18px;
+  color: #b91c1c;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
   padding: 1.2rem 1.4rem;
 }
 
@@ -172,14 +166,13 @@
   }
 
   .canvas {
-    padding: 2rem 1.75rem 2.5rem;
+    padding: 2rem 1.75rem 3rem;
   }
-}
 
-@media (max-width: 780px) {
   .hero {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 1.5rem;
   }
 
   .userInfo {
@@ -187,12 +180,16 @@
   }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 720px) {
   .canvas {
-    padding: 1.75rem 1.4rem 2.5rem;
+    padding: 1.75rem 1.25rem 2.5rem;
   }
 
-  .welcomePanel {
-    padding: 1.9rem 1.8rem;
+  .menuRow {
+    flex-wrap: wrap;
+  }
+
+  .content {
+    justify-content: flex-start;
   }
 }

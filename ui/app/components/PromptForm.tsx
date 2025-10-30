@@ -49,6 +49,16 @@ const MODEL_OPTIONS: Option[] = [
     label: "Gemini 1.5 Pro (Google)",
     description: "Multimodal powerhouse with research-grade recall.",
   },
+  {
+    value: "grok-beta",
+    label: "Grok Beta (xAI)",
+    description: "Edgy reasoning with real-time awareness of the wider world.",
+  },
+  {
+    value: "llmhive-ensemble",
+    label: "LLMHive Ensemble",
+    description: "Balanced collective that routes prompts to the best-fit model automatically.",
+  },
 ];
 
 const STRATEGY_OPTIONS: StrategyOption[] = [
