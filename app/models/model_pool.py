@@ -185,6 +185,20 @@ class ModelPool:
                 context_window=200000,
                 cost_per_token=0.005,
             ),
+            ModelProfile(
+                model_id="gemini-pro",
+                provider="google",
+                strengths=["multimodal", "reasoning"],
+                context_window=128000,
+                cost_per_token=0.0025,
+            ),
+            ModelProfile(
+                model_id="grok-1",
+                provider="xai",
+                strengths=["real-time-information", "humor"],
+                context_window=8192,
+                cost_per_token=0.01,
+            ),
         ]
 
     def _resolve_config_path(self, configured_path: str) -> Optional[Path]:
