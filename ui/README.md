@@ -102,7 +102,7 @@ mixed-content issues when the orchestrator is only available over HTTP.
 **Important**: Update your GitHub OAuth App's callback URL to match your production domain:
 - `https://your-domain.com/api/auth/callback/github`
 
-See the root `vercel.json` for configuration details.
+**Need help finding your backend URL?** See [BACKEND_IDENTIFICATION_GUIDE.md](../BACKEND_IDENTIFICATION_GUIDE.md) for detailed instructions on checking your backend configuration.
 
 ## Project Structure
 
@@ -161,3 +161,5 @@ The application uses Tailwind CSS. Customize colors and themes in `tailwind.conf
 **"Invalid environment variables"**: Ensure all three variables (`AUTH_SECRET`, `GITHUB_ID`, `GITHUB_SECRET`) are set in `.env.local`.
 
 **Images not loading**: GitHub avatars should load automatically. If not, check the `next.config.js` image configuration.
+
+**Backend connection issues**: See [BACKEND_IDENTIFICATION_GUIDE.md](../BACKEND_IDENTIFICATION_GUIDE.md) for help identifying and configuring your backend URL.
