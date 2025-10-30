@@ -9,22 +9,11 @@
 .commanderPanel,
 .resultSection {
   position: relative;
-  background: rgba(9, 11, 18, 0.78);
-  border: 1px solid rgba(129, 167, 231, 0.22);
-  border-radius: 22px;
-  padding: 2.25rem;
-  box-shadow: 0 30px 90px -45px rgba(8, 16, 32, 0.95);
-  backdrop-filter: blur(22px);
-}
-
-.commanderPanel::before,
-.resultSection::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 20px;
-  border: 1px solid rgba(90, 163, 255, 0.1);
-  pointer-events: none;
+  padding: 2rem;
+  box-shadow: 0 20px 60px -40px rgba(15, 23, 42, 0.35);
 }
 
 .sectionHeader h2,
@@ -32,10 +21,11 @@
   font-size: 1.45rem;
   font-weight: 700;
   margin-bottom: 0.45rem;
+  color: #111827;
 }
 
 .sectionHeader p {
-  color: rgba(198, 210, 238, 0.75);
+  color: #4b5563;
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.55;
@@ -61,11 +51,11 @@
 }
 
 .label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(159, 198, 255, 0.88);
+  color: #6b7280;
 }
 
 .dropdown {
@@ -76,9 +66,9 @@
   width: 100%;
   padding: 0.85rem 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(129, 167, 231, 0.38);
-  background: rgba(13, 16, 27, 0.85);
-  color: #f4f7ff;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
   font-size: 0.95rem;
   text-align: left;
   cursor: pointer;
@@ -88,8 +78,8 @@
 .dropdownToggle:hover:not(:disabled),
 .dropdownToggle:focus-visible {
   outline: none;
-  border-color: rgba(90, 163, 255, 0.9);
-  box-shadow: 0 0 0 3px rgba(90, 163, 255, 0.25);
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
   transform: translateY(-1px);
 }
 
@@ -99,16 +89,16 @@
   left: 0;
   right: 0;
   z-index: 12;
-  background: rgba(10, 13, 22, 0.97);
+  background: #ffffff;
   border-radius: 16px;
-  border: 1px solid rgba(114, 150, 217, 0.35);
+  border: 1px solid #d1d5db;
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   max-height: 340px;
   overflow-y: auto;
-  box-shadow: 0 30px 60px -35px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 30px 60px -35px rgba(15, 23, 42, 0.25);
 }
 
 .dropdownOption {
@@ -116,12 +106,12 @@
   gap: 0.75rem;
   align-items: flex-start;
   cursor: pointer;
-  color: rgba(236, 243, 255, 0.95);
+  color: #111827;
 }
 
 .dropdownOption input {
   margin-top: 0.3rem;
-  accent-color: #7f5aff;
+  accent-color: #111827;
 }
 
 .dropdownOptionLabel {
@@ -132,14 +122,14 @@
 .dropdownOptionDescription {
   display: block;
   font-size: 0.8rem;
-  color: rgba(182, 197, 229, 0.72);
+  color: #6b7280;
   margin-top: 0.2rem;
 }
 
 .dropdownHint {
   font-size: 0.75rem;
-  color: rgba(150, 168, 210, 0.65);
-  border-top: 1px solid rgba(114, 150, 217, 0.25);
+  color: #6b7280;
+  border-top: 1px solid #e5e7eb;
   padding-top: 0.6rem;
   margin-top: 0.2rem;
 }
@@ -152,9 +142,9 @@
 }
 
 .chip {
-  background: linear-gradient(135deg, rgba(90, 163, 255, 0.28), rgba(127, 90, 255, 0.18));
-  border: 1px solid rgba(127, 90, 255, 0.35);
-  color: #f1f4ff;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #111827;
   border-radius: 999px;
   padding: 0.35rem 0.85rem;
   font-size: 0.78rem;
@@ -163,7 +153,7 @@
 
 .strategyDescription {
   font-size: 0.88rem;
-  color: rgba(198, 210, 238, 0.72);
+  color: #4b5563;
   line-height: 1.6;
 }
 
@@ -172,9 +162,9 @@
   min-height: 210px;
   padding: 1.35rem;
   border-radius: 18px;
-  border: 1px solid rgba(129, 167, 231, 0.28);
-  background: rgba(8, 10, 18, 0.85);
-  color: #f6f9ff;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
   font-size: 1rem;
   line-height: 1.65;
   resize: vertical;
@@ -183,8 +173,8 @@
 
 .textarea:focus {
   outline: none;
-  border-color: rgba(90, 163, 255, 0.8);
-  box-shadow: 0 0 0 3px rgba(90, 163, 255, 0.25);
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
 }
 
 .formFooter {
@@ -201,16 +191,16 @@
   gap: 0.45rem;
   padding: 0.95rem 1.1rem;
   border-radius: 16px;
-  background: rgba(13, 17, 28, 0.82);
-  border: 1px solid rgba(114, 150, 217, 0.25);
-  color: rgba(231, 237, 255, 0.95);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  color: #111827;
 }
 
 .summaryTitle {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(159, 198, 255, 0.9);
+  color: #6b7280;
 }
 
 .summaryList {
@@ -226,18 +216,21 @@
   padding: 0.95rem 1.8rem;
   border-radius: 16px;
   border: none;
-  background: linear-gradient(135deg, #5aa3ff, #7f5aff);
+  background: #111827;
   color: #ffffff;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   min-width: 220px;
 }
 
-.button:hover:not(:disabled) {
+.button:hover:not(:disabled),
+.button:focus-visible {
+  outline: none;
   transform: translateY(-1px);
-  box-shadow: 0 20px 35px -22px rgba(90, 163, 255, 0.65);
+  background: #1f2937;
+  box-shadow: 0 20px 35px -22px rgba(15, 23, 42, 0.45);
 }
 
 .button:disabled {
@@ -246,9 +239,9 @@
 }
 
 .error {
-  color: #ff9b9b;
-  background-color: rgba(179, 53, 53, 0.16);
-  border: 1px solid rgba(255, 133, 133, 0.4);
+  color: #b91c1c;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
   border-radius: 16px;
   padding: 1rem 1.25rem;
 }
@@ -265,7 +258,7 @@
   right: 1.5rem;
   height: 4px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(90, 163, 255, 0.18), rgba(127, 90, 255, 0.42));
+  background: #e5e7eb;
   overflow: hidden;
 }
 
@@ -275,7 +268,7 @@
   top: 0;
   bottom: 0;
   width: 35%;
-  background: linear-gradient(90deg, rgba(90, 163, 255, 0.35), rgba(127, 90, 255, 0.7));
+  background: linear-gradient(90deg, rgba(17, 24, 39, 0.15), rgba(17, 24, 39, 0.55));
   border-radius: 999px;
   animation: shimmer 1.4s infinite;
 }
@@ -290,12 +283,12 @@
 }
 
 .resultPre {
-  background: rgba(8, 11, 18, 0.88);
-  border: 1px solid rgba(114, 150, 217, 0.3);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 18px;
   padding: 1.6rem;
   min-height: 220px;
-  color: #f4f7ff;
+  color: #111827;
   white-space: pre-wrap;
   word-break: break-word;
   font-family: "JetBrains Mono", "Fira Code", monospace;
