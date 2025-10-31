@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # API Keys (loaded from environment variables or Secret Manager at startup)
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
     TAVILY_API_KEY: Optional[str] = None
 
     # Model configuration

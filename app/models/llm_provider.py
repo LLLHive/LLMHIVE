@@ -1,10 +1,11 @@
-"""
-LLM Provider Interface and Factory.
-"""
+"""LLM Provider Interface and Factory."""
 
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, List, Dict
+import logging
+from typing import AsyncGenerator, Dict, List
+
 from app.config import settings
+from app.providers import GeminiProvider
 
 try:
     from openai import AsyncOpenAI
@@ -14,6 +15,9 @@ try:
     from anthropic import AsyncAnthropic
 except ImportError:
     AsyncAnthropic = None
+
+logger = logging.getLogger("app.models.llm_provider")
+
 
 class LLMProvider(ABC):
     @abstractmethod
@@ -74,7 +78,8 @@ from .stub_provider import StubProvider
 PROVIDER_CLASS_MAP = {
     "openai": (OpenAIProvider, settings.OPENAI_API_KEY),
     "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY),
-    "stub": (StubProvider, "stub")
+    "google": (GeminiProvider, getattr(settings, "GEMINI_API_KEY", None)),
+    "stub": (StubProvider, "stub"),
 }
 
 def get_provider_by_name(provider_name: str) -> LLMProvider:
@@ -87,9 +92,17 @@ def get_provider_by_name(provider_name: str) -> LLMProvider:
         return StubProvider()
     
     provider_class, api_key = PROVIDER_CLASS_MAP[provider_name]
-    
+
     # If no API key, fall back to stub
     if not api_key:
         return StubProvider()
-        
-    return provider_class(api_key=api_key)
+
+    try:
+        return provider_class(api_key=api_key)
+    except Exception as exc:
+        logger.warning(
+            "Falling back to stub provider '%s' due to initialisation error: %s",
+            provider_name,
+            exc,
+        )
+        return StubProvider()
