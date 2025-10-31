@@ -7,7 +7,7 @@ from llmhive.app.services.base import ProviderNotConfiguredError
 from llmhive.app.services.openai_provider import OpenAIProvider
 from llmhive.app.services.grok_provider import GrokProvider
 from llmhive.app.services.anthropic_provider import AnthropicProvider
-from llmhive.app.services.gemini_provider import GeminiProvider
+from llmhive.providers.gemini import GeminiProvider
 from llmhive.app.services.deepseek_provider import DeepSeekProvider
 from llmhive.app.services.manus_provider import ManusProvider
 

@@ -165,6 +165,7 @@ def test_backward_compatibility_config():
     required_settings = [
         'OPENAI_API_KEY',
         'ANTHROPIC_API_KEY',
+        'GEMINI_API_KEY',
         'TAVILY_API_KEY',
         'MODEL_CONFIG_PATH',
         'PLANNING_MODEL',

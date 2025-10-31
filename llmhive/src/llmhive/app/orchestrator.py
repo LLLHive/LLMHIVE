@@ -35,7 +35,7 @@ except ImportError:
     GrokProvider = None
 
 try:
-    from .services.gemini_provider import GeminiProvider
+    from ..providers.gemini import GeminiProvider
 except ImportError:
     logger.warning("GeminiProvider not available")
     GeminiProvider = None
