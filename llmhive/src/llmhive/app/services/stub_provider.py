@@ -113,6 +113,20 @@ class StubProvider(LLMProvider):
                 ("Fort Lauderdale", "183K"),
             ],
         }
+        self._affluent_city_data: dict[str, List[Tuple[str, str]]] = {
+            "miami-dade": [
+                ("Golden Beach", "median household income about $216K"),
+                ("Key Biscayne", "median household income about $167K"),
+                ("Pinecrest", "median household income about $157K"),
+                ("Bal Harbour", "median household income about $138K"),
+                ("Palmetto Bay", "median household income about $121K"),
+                ("Coral Gables", "median household income about $111K"),
+                ("Bay Harbor Islands", "median household income about $108K"),
+                ("Surfside", "median household income about $104K"),
+                ("Aventura", "median household income about $82K"),
+                ("Miami Lakes", "median household income about $89K"),
+            ]
+        }
         self._affordable_developer_data: dict[str, List[Tuple[str, str, str]]] = {
             "florida": [
                 (
@@ -189,6 +203,23 @@ class StubProvider(LLMProvider):
         header = f"Here are the {total} largest cities in {label}:"
         if include_population:
             header += " (with approximate populations)"
+        return header + "\n" + "\n".join(lines)
+
+    def _format_affluent_city_list(
+        self,
+        cities: Sequence[Tuple[str, str]],
+        count: int | None,
+        *,
+        default: int,
+        region_label: str,
+    ) -> str:
+        total = count or default
+        total = max(1, min(total, len(cities)))
+        lines = [
+            f"{idx}. {name} — {income}"
+            for idx, (name, income) in enumerate(cities[:total], start=1)
+        ]
+        header = f"Here are {total} affluent cities in {region_label}:"
         return header + "\n" + "\n".join(lines)
 
     def _format_developer_list(
@@ -278,6 +309,26 @@ class StubProvider(LLMProvider):
                     count,
                     default=5,
                     region_label="Florida",
+                )
+
+        if (
+            "miami" in prompt_lower
+            and "dade" in prompt_lower
+            and (
+                "affluent" in prompt_lower
+                or "wealth" in prompt_lower
+                or "rich" in prompt_lower
+                or "wealthiest" in prompt_lower
+            )
+        ):
+            count = self._extract_requested_count(prompt_lower)
+            cities = self._affluent_city_data.get("miami-dade", [])
+            if cities:
+                return self._format_affluent_city_list(
+                    cities,
+                    count,
+                    default=10,
+                    region_label="Miami-Dade County, Florida",
                 )
 
         # Capital city questions

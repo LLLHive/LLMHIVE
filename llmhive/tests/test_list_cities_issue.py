@@ -136,3 +136,31 @@ def test_affordable_housing_developers_in_florida(client):
     assert "stub response" not in final_content.lower()
     assert "affordable" in final_content.lower()
     assert "Florida" in final_content
+
+
+def test_affluent_miami_dade_cities(client):
+    payload = OrchestrationRequest(
+        prompt="List the 10 most affluent cities in Miami Dade county Florida",
+        models=["gpt-4"],
+    )
+    response = client.post("/api/v1/orchestration/", json=payload.model_dump())
+
+    assert response.status_code == 200
+    data = response.json()
+    content = data["initial_responses"][0]["content"]
+
+    assert "stub response" not in content.lower()
+    assert "miami-dade county" in content.lower()
+    assert "affluent" in content.lower()
+
+    lines = [line for line in content.splitlines() if line.strip() and line.strip()[0].isdigit()]
+    assert len(lines) == 10, f"Expected 10 affluent cities, got {len(lines)}: {content}"
+
+    for city in [
+        "Pinecrest",
+        "Key Biscayne",
+        "Coral Gables",
+        "Palmetto Bay",
+        "Bal Harbour",
+    ]:
+        assert city in content, f"Expected {city} in affluent city list: {content}"
