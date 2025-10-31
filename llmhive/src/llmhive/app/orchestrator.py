@@ -103,6 +103,7 @@ class OrchestrationArtifacts:
     web_results: list[WebDocument]
     confirmation_notes: list[str]
     usage: UsageSummary
+    used_stub_provider: bool
 
 
 class Orchestrator:
@@ -273,6 +274,7 @@ class Orchestrator:
         knowledge_snippets = list(knowledge_snippets or [])
         plan_prompt = optimize_prompt(prompt, knowledge_snippets)
         plan = self.planner.create_plan(plan_prompt, context=context)
+        used_stub_provider = False
         if models:
             model_list = list(dict.fromkeys(models))
         else:
@@ -328,10 +330,12 @@ class Orchestrator:
                 step_outputs=step_outputs,
             )
             logger.debug("Executing plan step %s with models %s", step.role.value, step_models)
-            completion_tasks = [
-                self._select_provider(model).complete(step_prompt, model=model)
-                for model in step_models
-            ]
+            completion_tasks = []
+            for model in step_models:
+                provider = self._select_provider(model)
+                if isinstance(provider, StubProvider) and not model.lower().startswith("stub"):
+                    used_stub_provider = True
+                completion_tasks.append(provider.complete(step_prompt, model=model))
             results = await self._gather_with_handling(completion_tasks)
             if results:
                 step_outputs[step.role.value] = results
@@ -348,10 +352,12 @@ class Orchestrator:
                     break
             if not fallback_results:
                 # As an ultimate fallback, generate direct completions
-                completion_tasks = [
-                    self._select_provider(model).complete(augmented_prompt, model=model)
-                    for model in model_list
-                ]
+                completion_tasks = []
+                for model in model_list:
+                    provider = self._select_provider(model)
+                    if isinstance(provider, StubProvider) and not model.lower().startswith("stub"):
+                        used_stub_provider = True
+                    completion_tasks.append(provider.complete(augmented_prompt, model=model))
                 fallback_results = await self._gather_with_handling(completion_tasks)
                 step_outputs.setdefault(PlanRole.DRAFT.value, fallback_results)
             initial_responses = fallback_results[: len(model_list)]
@@ -396,6 +402,8 @@ class Orchestrator:
         improvement_tasks = []
         for response in initial_responses:
             provider = self._select_provider(response.model)
+            if isinstance(provider, StubProvider) and not response.model.lower().startswith("stub"):
+                used_stub_provider = True
             improvement_tasks.append(
                 asyncio.create_task(
                     provider.improve(
@@ -428,6 +436,8 @@ class Orchestrator:
         )
         synthesizer_model = model_list[0]
         synthesizer = self._select_provider(synthesizer_model)
+        if isinstance(synthesizer, StubProvider) and not synthesizer_model.lower().startswith("stub"):
+            used_stub_provider = True
         try:
             final_response = await synthesizer.complete(
                 synthesis_prompt, model=synthesizer_model
@@ -440,6 +450,7 @@ class Orchestrator:
             )
             fallback_provider = self.providers.get("stub") or StubProvider()
             self.providers.setdefault("stub", fallback_provider)
+            used_stub_provider = True
             final_response = await fallback_provider.complete(
                 synthesis_prompt, model=f"stub-fallback({synthesizer_model})"
             )
@@ -451,6 +462,7 @@ class Orchestrator:
             )
             fallback_provider = self.providers.get("stub") or StubProvider()
             self.providers.setdefault("stub", fallback_provider)
+            used_stub_provider = True
             final_response = await fallback_provider.complete(
                 synthesis_prompt, model=f"stub-fallback({synthesizer_model})"
             )
@@ -477,6 +489,8 @@ class Orchestrator:
             )
             evaluator_model = model_list[1] if len(model_list) > 1 else model_list[0]
             evaluator = self._select_provider(evaluator_model)
+            if isinstance(evaluator, StubProvider) and not evaluator_model.lower().startswith("stub"):
+                used_stub_provider = True
             evaluation = await evaluator.complete(evaluation_prompt, model=evaluator_model)
         except Exception as exc:  # pragma: no cover - evaluation is best effort
             logger.warning("Evaluation stage failed: %s", exc)
@@ -515,6 +529,7 @@ class Orchestrator:
             web_results=web_documents,
             confirmation_notes=confirmation_notes,
             usage=usage_summary,
+            used_stub_provider=used_stub_provider,
         )
 
     def _summarize_usage(
