@@ -252,14 +252,28 @@ class Orchestrator:
 
     async def _gather_with_handling(self, coroutines: Sequence[asyncio.Future]) -> list[LLMResult]:
         results: list[LLMResult] = []
+        failures: list[str] = []
         for coro in asyncio.as_completed(coroutines):
             try:
                 result = await coro
                 results.append(result)
             except ProviderNotConfiguredError as exc:
-                logger.warning("Provider misconfiguration during call: %s", exc)
+                error_msg = f"Provider misconfiguration: {exc}"
+                logger.warning(error_msg)
+                failures.append(error_msg)
             except Exception as exc:
+                error_msg = f"Provider call failed: {type(exc).__name__}: {str(exc)}"
                 logger.exception("Provider call failed", exc_info=exc)
+                failures.append(error_msg)
+        
+        # Store failures on the orchestrator instance for diagnostic purposes
+        if failures and not hasattr(self, '_recent_failures'):
+            self._recent_failures = []
+        if failures:
+            self._recent_failures.extend(failures)
+            # Keep only the last 10 failures to avoid memory issues
+            self._recent_failures = self._recent_failures[-10:]
+        
         return results
 
     async def orchestrate(

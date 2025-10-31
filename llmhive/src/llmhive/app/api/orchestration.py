@@ -258,13 +258,22 @@ async def orchestrate(
 
     if fail_on_stub and has_real_providers and (all_stub or final_stub):
         available = list(_orchestrator.providers.keys())
-        logger.error("All providers returned stub responses despite real providers being configured. Check provider configurations. Available providers: %s", available)
+        
+        # Include recent failure diagnostics if available
+        failure_info = ""
+        if hasattr(_orchestrator, '_recent_failures') and _orchestrator._recent_failures:
+            failure_details = _orchestrator._recent_failures[-3:]  # Show last 3 failures
+            failure_info = " Recent errors: " + "; ".join(failure_details)
+        
+        logger.error("All providers returned stub responses despite real providers being configured. Check provider configurations. Available providers: %s%s", available, failure_info)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
                 "No configured LLM providers produced real responses (received only stub placeholders). "
                 "Check provider API keys, Secret Manager access, and environment variables. "
-                f"Available providers at runtime: {available}. See GET /api/v1/orchestration/providers"
+                f"Available providers at runtime: {available}."
+                f"{failure_info} "
+                "See GET /api/v1/orchestration/providers for details."
             ),
         )
 

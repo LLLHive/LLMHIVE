@@ -1,8 +1,13 @@
 # Restoring Grok and Gemini responses (no more stub fallbacks)
 
 When the orchestrator prints `No configured LLM providers produced real responses` it means
-all non-stub providers failed to initialize. This runbook focuses on Grok (xAI) and Google
-Gemini because both share the same failure pattern reported in the logs.
+all non-stub providers failed to initialize or their API calls failed at runtime. This runbook 
+focuses on Grok (xAI) and Google Gemini because both share the same failure pattern reported 
+in the logs.
+
+**Key distinction:** If you see providers like `openai` or `grok` in the available providers 
+list but still get stub responses, it means the providers loaded successfully but their API 
+calls are failing. Check the error message for "Recent errors:" to see specific failure details.
 
 ## 1. Understand the orchestration flow
 
@@ -18,6 +23,18 @@ triggering the error you observed.【F:llmhive/src/llmhive/app/orchestrator.py�
 Use the `/api/v1/orchestration/providers` endpoint to list the providers that reached the
 runtime. The presence of `stub` with no `grok` or `gemini` entries confirms a configuration
 problem rather than an application bug.【F:llmhive/src/llmhive/app/api/orchestration.py†L45-L65】
+
+**How to call the diagnostic endpoint:**
+```bash
+# If running locally (default port 8080)
+curl http://localhost:8080/api/v1/orchestration/providers
+
+# If deployed to Cloud Run
+curl https://your-service-url.run.app/api/v1/orchestration/providers
+
+# Or open in your browser:
+# http://localhost:8080/api/v1/orchestration/providers
+```
 
 ## 3. Validate Grok configuration
 
