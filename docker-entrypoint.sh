@@ -1,17 +1,51 @@
-#!/bin/bash
+#!/bin/sh
+
+# Exit immediately if a command exits with a non-zero status
 set -e
 
-# This is the command to start the Gunicorn server.
-# Gunicorn is a production-grade server that manages Uvicorn workers.
-#
-# --workers 4: Starts 4 worker processes to handle requests.
-# --worker-class uvicorn.workers.UvicornWorker: Tells Gunicorn to use Uvicorn for handling the application.
-# --bind 0.0.0.0:$PORT: This is the critical part.
-#   - 0.0.0.0: Binds to all available network interfaces in the container, making it accessible.
-#   - $PORT: Uses the port number provided by the Google Cloud Run environment variable.
-# app:app: Points to our FastAPI application instance.
-#   - app: the module path to `app.py` in the /app directory
-#   - app: the `app = FastAPI()` object inside that file.
+# shellcheck disable=SC2039 # dash compatibility: using POSIX constructs only
+
+maybe_source_env_file() {
+    file="$1"
+    if [ -f "$file" ]; then
+        # Export variables defined in the env file without polluting the shell on failure
+        set -a
+        # shellcheck disable=SC1090
+        . "$file"
+        set +a
+    fi
+}
+
+maybe_export_from_file() {
+    var="$1"
+    file_var="${var}_FILE"
+
+    var_value=$(eval "printf '%s' \"\${$var:-}\"")
+    if [ -n "$var_value" ]; then
+        return
+    fi
+
+    file_value=$(eval "printf '%s' \"\${$file_var:-}\"")
+    if [ -n "$file_value" ] && [ -f "$file_value" ]; then
+        export "$var"="$(cat "$file_value")"
+        return
+    fi
+
+    for candidate in "/secrets/$var" "/var/run/secrets/$var"; do
+        if [ -f "$candidate" ]; then
+            export "$var"="$(cat "$candidate")"
+            return
+        fi
+    done
+}
+
+# Load environment variables if a .env file is present in common locations
+maybe_source_env_file "/app/src/.env"
+maybe_source_env_file "/app/.env"
+maybe_source_env_file ".env"
+
+# Ensure GEMINI_API_KEY is populated when provided as a mounted secret file
+maybe_export_from_file "GEMINI_API_KEY"
 
 # Use PORT environment variable if set by Cloud Run, otherwise default to 8080
 PORT=${PORT:-8080}

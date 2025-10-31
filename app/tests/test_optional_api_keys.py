@@ -12,6 +12,7 @@ def test_config_allows_optional_keys():
     # All API keys should be allowed to be None
     assert settings.OPENAI_API_KEY is None or isinstance(settings.OPENAI_API_KEY, str)
     assert settings.ANTHROPIC_API_KEY is None or isinstance(settings.ANTHROPIC_API_KEY, str)
+    assert settings.GEMINI_API_KEY is None or isinstance(settings.GEMINI_API_KEY, str)
     assert settings.TAVILY_API_KEY is None or isinstance(settings.TAVILY_API_KEY, str)
 
 
