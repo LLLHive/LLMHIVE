@@ -222,6 +222,8 @@ async def orchestrate(
             context_string = "\n\n".join([part for part in context_parts if part]) or None
 
     # Run orchestration
+    requested_stub_only = all(str(m).lower().startswith("stub") for m in normalized_models)
+
     try:
         artifacts = await _orchestrator.orchestrate(
             payload.prompt,
@@ -255,8 +257,15 @@ async def orchestrate(
 
     # Check if any real (non-stub) providers are configured
     has_real_providers = any(k != "stub" for k in _orchestrator.providers.keys())
+    used_stub_provider = getattr(artifacts, "used_stub_provider", False)
 
-    if fail_on_stub and has_real_providers and (all_stub or final_stub):
+    if (
+        fail_on_stub
+        and has_real_providers
+        and (all_stub or final_stub)
+        and not requested_stub_only
+        and not used_stub_provider
+    ):
         available = list(_orchestrator.providers.keys())
         logger.error("All providers returned stub responses despite real providers being configured. Check provider configurations. Available providers: %s", available)
         raise HTTPException(
