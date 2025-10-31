@@ -9,3 +9,4 @@ google-cloud-aiplatform
 pydantic-settings
 python-json-logger
 google-cloud-secret-manager
+google-generativeai
