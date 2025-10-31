@@ -38,6 +38,20 @@ class GeminiProvider(LLMProvider):
             "gemini-1.0-pro-vision",
         ]
 
+    def _create_structured_prompt(self, original_prompt: str) -> str:
+        """Wrap the original prompt with precision-focused instructions."""
+
+        return (
+            "You are an assistant tasked with answering the user's question exactly as asked.\n"
+            "Follow these rules:\n"
+            "1. Keep the scope restricted to the entities, locations, and time periods explicitly mentioned.\n"
+            "2. If the question lacks information, state the limitation instead of making assumptions.\n"
+            "3. Provide precise, factual, and concise responses.\n\n"
+            "User Question:\n"
+            f"{original_prompt}\n\n"
+            "Answer:"
+        )
+
     def list_models(self) -> list[str]:
         return list(self._models)
 
@@ -47,10 +61,11 @@ class GeminiProvider(LLMProvider):
         *,
         model: str,
         system_instruction: str | None = None,
+        wrap_prompt: bool = True,
     ) -> LLMResult:
         try:
             generation_config = {
-                "temperature": 0.6,
+                "temperature": 0.2,
                 "max_output_tokens": 4096,
             }
 
@@ -60,7 +75,9 @@ class GeminiProvider(LLMProvider):
                 system_instruction=system_instruction,
             )
 
-            response = await model_instance.generate_content_async(prompt)
+            structured_prompt = self._create_structured_prompt(prompt) if wrap_prompt else prompt
+
+            response = await model_instance.generate_content_async(structured_prompt)
             content = response.text if hasattr(response, "text") else ""
 
             return LLMResult(
@@ -100,6 +117,7 @@ Provide constructive critique of the above answer. Address accuracy, completenes
                 "You are reviewing another AI's answer. Be concise and point out factual errors, "
                 "missing information, and opportunities to improve the response."
             ),
+            wrap_prompt=False,
         )
         result.model = author
         return result
@@ -129,6 +147,7 @@ Refine your answer using these critiques. Return the improved answer."""
                 "You are improving your previous answer after receiving critiques from peer models. "
                 "Incorporate actionable feedback and provide a stronger final answer."
             ),
+            wrap_prompt=False,
         )
 
 
