@@ -80,25 +80,32 @@ gcloud run services update llmhive-orchestrator \
    ```bash
    # IMPORTANT: Replace with your actual API keys
    # Never commit real API keys to version control
-   echo -n "your-openai-key" | gcloud secrets create OPENAI_API_KEY \
+   # Note: Secret IDs use lowercase with hyphens (e.g., openai-api-key)
+   echo -n "your-openai-key" | gcloud secrets create openai-api-key \
      --project=llmhive-orchestrator \
      --data-file=-
-   echo -n "your-anthropic-key" | gcloud secrets create ANTHROPIC_API_KEY \
+   echo -n "your-grok-key" | gcloud secrets create grok-api-key \
+     --project=llmhive-orchestrator \
+     --data-file=-
+   echo -n "your-gemini-key" | gcloud secrets create gemini-api-key \
      --project=llmhive-orchestrator \
      --data-file=-
    ```
 
 2. **Grant Cloud Run access to secrets:**
    ```bash
-   gcloud secrets add-iam-policy-binding OPENAI_API_KEY \
-     --project=llmhive-orchestrator \
-     --role="roles/secretmanager.secretAccessor" \
-     --member="serviceAccount:llmhive-orchestrator@llmhive-orchestrator.iam.gserviceaccount.com"
+   # Get the runtime service account
+   RUNTIME_SA=$(gcloud run services describe llmhive-orchestrator \
+     --region=us-east1 \
+     --format='value(spec.template.spec.serviceAccountName)')
    
-   gcloud secrets add-iam-policy-binding ANTHROPIC_API_KEY \
-     --project=llmhive-orchestrator \
-     --role="roles/secretmanager.secretAccessor" \
-     --member="serviceAccount:llmhive-orchestrator@llmhive-orchestrator.iam.gserviceaccount.com"
+   # Grant access to each secret
+   for SECRET in openai-api-key grok-api-key gemini-api-key; do
+     gcloud secrets add-iam-policy-binding "$SECRET" \
+       --project=llmhive-orchestrator \
+       --role="roles/secretmanager.secretAccessor" \
+       --member="serviceAccount:$RUNTIME_SA"
+   done
    ```
 
 3. **Update Cloud Run service to use secrets:**
@@ -106,23 +113,30 @@ gcloud run services update llmhive-orchestrator \
    gcloud run services update llmhive-orchestrator \
      --project=llmhive-orchestrator \
      --region=us-east1 \
-     --update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest
+     --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest
    ```
+   
+   **Important:** The environment variable names (e.g., `OPENAI_API_KEY`) and Secret Manager secret IDs (e.g., `openai-api-key`) are different. The format is `ENV_VAR_NAME=secret-id:version`.
 
-   **Note:** The `cloudbuild.yaml` is already configured to mount the `OPENAI_API_KEY` secret. If you've created the secret in Secret Manager and granted the necessary permissions, the secret will be automatically available on the next deployment via Cloud Build.
+   **Note:** The `cloudbuild.yaml` is already configured to mount these secrets using the correct secret IDs. If you've created the secrets in Secret Manager and granted the necessary permissions, the secrets will be automatically available on the next deployment via Cloud Build.
 
 #### Method 3: Update cloudbuild.yaml
 
-The `cloudbuild.yaml` is already configured to mount the `OPENAI_API_KEY` secret from Secret Manager:
+The `cloudbuild.yaml` is already configured to mount secrets from Secret Manager using the correct secret IDs:
 
 ```yaml
-- '--update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest'
+- '--set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest'
 ```
+
+The format is: `--set-secrets=ENV_VAR_NAME=secret-id:version`
+- `ENV_VAR_NAME` is the environment variable name your app uses (e.g., `OPENAI_API_KEY`)
+- `secret-id` is the Secret Manager secret ID (e.g., `openai-api-key`)
+- `version` is the secret version (typically `latest`)
 
 To add additional API keys (e.g., Anthropic), edit the `cloudbuild.yaml` deploy step and add more secret mappings:
 
 ```yaml
-- '--update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest'
+- '--set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest'
 ```
 
 Alternatively, you can use plain environment variables (not recommended for production):
