@@ -1,6 +1,7 @@
 """Google Gemini provider implementation shared across runtimes."""
 from __future__ import annotations
 
+import re
 import ssl
 from typing import TYPE_CHECKING
 
@@ -40,11 +41,38 @@ class GeminiProvider(LLMProvider):
             "gemini-pro",
             "gemini-pro-vision",
         ]
+        # Map human readable labels and historical identifiers to the
+        # canonical Gemini model slugs expected by the API. Normalisation
+        # is handled in ``_resolve_model_name`` so we only need to cover the
+        # distinct variants we expect to see from the UI or configuration.
         self._aliases = {
             "gemini-pro": "gemini-1.5-pro",
             "gemini-pro-vision": "gemini-1.0-pro-vision",
             "gemini-1.0-pro": "gemini-1.5-pro",
+            "gemini 1.5 pro": "gemini-1.5-pro",
+            "gemini 1.5 pro (google)": "gemini-1.5-pro",
+            "gemini 1.5 flash": "gemini-1.5-flash",
+            "gemini 1.5 flash (google)": "gemini-1.5-flash",
+            "gemini pro vision": "gemini-1.0-pro-vision",
         }
+        self._normalized_lookup = self._build_normalized_lookup()
+
+    def _build_normalized_lookup(self) -> dict[str, str]:
+        """Return a mapping from normalised aliases to canonical slugs."""
+
+        def normalize(value: str) -> str:
+            cleaned = value.strip().lower()
+            # Replace any non alpha-numeric character with a dash to collapse
+            # strings such as "Gemini 1.5 Pro (Google)" or "gemini_pro" into a
+            # predictable lookup key.
+            return re.sub(r"[^a-z0-9]+", "-", cleaned).strip("-")
+
+        lookup: dict[str, str] = {}
+        for model in self._models:
+            lookup[normalize(model)] = model
+        for alias, target in self._aliases.items():
+            lookup[normalize(alias)] = target
+        return lookup
 
     def _create_structured_prompt(self, original_prompt: str) -> str:
         """Wrap the original prompt with precision-focused instructions."""
@@ -65,7 +93,10 @@ class GeminiProvider(LLMProvider):
 
     def _resolve_model_name(self, model: str) -> str:
         lookup = model.strip()
-        return self._aliases.get(lookup, lookup)
+        normalised_key = re.sub(r"[^a-z0-9]+", "-", lookup.lower()).strip("-")
+        if normalised_key in self._normalized_lookup:
+            return self._normalized_lookup[normalised_key]
+        return lookup
 
     async def _generate(
         self,

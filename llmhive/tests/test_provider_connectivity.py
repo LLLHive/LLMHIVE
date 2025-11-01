@@ -135,6 +135,27 @@ class TestGeminiProvider:
             with pytest.raises(ProviderNotConfiguredError, match="Google Generative AI library import failed"):
                 GeminiProvider(api_key="gemini-test-key-123")
 
+    @pytest.mark.parametrize(
+        "label,expected",
+        [
+            ("Gemini 1.5 Pro (Google)", "gemini-1.5-pro"),
+            ("Gemini 1.5 Flash", "gemini-1.5-flash"),
+            ("gemini pro", "gemini-1.5-pro"),
+            ("gemini_pro_vision", "gemini-1.0-pro-vision"),
+        ],
+    )
+    def test_gemini_provider_resolves_human_friendly_labels(self, label, expected):
+        """Ensure UI-facing labels map to the correct Gemini model slug."""
+
+        try:
+            import google.generativeai  # type: ignore
+            with patch('google.generativeai.configure'):
+                provider = GeminiProvider(api_key="gemini-test-key-456")
+        except ImportError:
+            pytest.skip("google-generativeai is not installed")
+
+        assert provider._resolve_model_name(label) == expected
+
 
 class TestDeepSeekProvider:
     """Test DeepSeek provider initialization and configuration."""
