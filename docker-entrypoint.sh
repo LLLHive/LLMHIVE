@@ -50,4 +50,8 @@ maybe_export_from_file "GEMINI_API_KEY"
 # Use PORT environment variable if set by Cloud Run, otherwise default to 8080
 PORT=${PORT:-8080}
 
-exec gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT app:app
+# Guarantee the modern package layout is importable even in minimalist runtime
+# environments that do not honour the Dockerfile PYTHONPATH.
+export PYTHONPATH="${PYTHONPATH:-}:$(pwd):$(pwd)/llmhive/src"
+
+exec gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT main:app

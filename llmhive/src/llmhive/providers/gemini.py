@@ -1,6 +1,7 @@
 """Google Gemini provider implementation shared across runtimes."""
 from __future__ import annotations
 
+import ssl
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - optional dependency for typing only
@@ -36,7 +37,14 @@ class GeminiProvider(LLMProvider):
             "gemini-1.5-pro",
             "gemini-1.5-flash",
             "gemini-1.0-pro-vision",
+            "gemini-pro",
+            "gemini-pro-vision",
         ]
+        self._aliases = {
+            "gemini-pro": "gemini-1.5-pro",
+            "gemini-pro-vision": "gemini-1.0-pro-vision",
+            "gemini-1.0-pro": "gemini-1.5-pro",
+        }
 
     def _create_structured_prompt(self, original_prompt: str) -> str:
         """Wrap the original prompt with precision-focused instructions."""
@@ -53,7 +61,11 @@ class GeminiProvider(LLMProvider):
         )
 
     def list_models(self) -> list[str]:
-        return list(self._models)
+        return sorted(set(self._models))
+
+    def _resolve_model_name(self, model: str) -> str:
+        lookup = model.strip()
+        return self._aliases.get(lookup, lookup)
 
     async def _generate(
         self,
@@ -64,13 +76,15 @@ class GeminiProvider(LLMProvider):
         wrap_prompt: bool = True,
     ) -> LLMResult:
         try:
+            resolved_model = self._resolve_model_name(model)
+
             generation_config = {
                 "temperature": 0.2,
                 "max_output_tokens": 4096,
             }
 
             model_instance = self.genai.GenerativeModel(
-                model_name=model,
+                model_name=resolved_model,
                 generation_config=generation_config,
                 system_instruction=system_instruction,
             )
@@ -86,6 +100,13 @@ class GeminiProvider(LLMProvider):
                 tokens=None,
                 cost=None,
             )
+        except ssl.SSLError as exc:
+            raise ProviderNotConfiguredError(
+                "SSL handshake with Google Generative AI failed. "
+                "If you use a corporate proxy or SSL inspection appliance, "
+                "configure your trusted certificate store so outbound HTTPS requests "
+                "to generativeai.googleapis.com succeed."
+            ) from exc
         except Exception as exc:
             raise ProviderNotConfiguredError(str(exc)) from exc
 
