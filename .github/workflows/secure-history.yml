@@ -1,4 +1,4 @@
-name: Security — purge env files & guard
+name: Purge env files & guard
 
 on:
   workflow_dispatch:             # Run manually from the Actions tab
