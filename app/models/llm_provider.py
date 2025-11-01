@@ -5,7 +5,7 @@ import logging
 from typing import AsyncGenerator, Dict, List
 
 from app.config import settings
-from app.providers import GeminiProvider
+from app.providers import GeminiProvider, GrokProvider
 
 try:
     from openai import AsyncOpenAI
@@ -79,6 +79,7 @@ PROVIDER_CLASS_MAP = {
     "openai": (OpenAIProvider, settings.OPENAI_API_KEY),
     "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY),
     "google": (GeminiProvider, getattr(settings, "GEMINI_API_KEY", None)),
+    "xai": (GrokProvider, getattr(settings, "GROK_API_KEY", None)),
     "stub": (StubProvider, "stub"),
 }
 

@@ -29,8 +29,8 @@ def test_all_required_models_present():
         'gpt-4': 'openai',
         'claude-3-opus': 'anthropic',
         'claude-3-sonnet': 'anthropic',
-        'gemini-pro': 'google',
-        'grok-1': 'xai',
+        'gemini-1.5-pro': 'google',
+        'grok-beta': 'xai',
     }
     
     for model_id, expected_provider in expected_models.items():
@@ -44,25 +44,25 @@ def test_model_attributes():
     """Test that models have correct attributes."""
     pool = ModelPool()
     
-    # Test gemini-pro
-    gemini = pool.get_model_profile('gemini-pro')
+    # Test gemini-1.5-pro
+    gemini = pool.get_model_profile('gemini-1.5-pro')
     assert gemini is not None
     assert gemini.provider == 'google'
     assert 'multimodal' in gemini.strengths
     assert 'reasoning' in gemini.strengths
     assert gemini.context_window == 128000
     assert gemini.cost_per_token == 0.0025
-    print("✓ gemini-pro attributes correct")
-    
-    # Test grok-1
-    grok = pool.get_model_profile('grok-1')
+    print("✓ gemini-1.5-pro attributes correct")
+
+    # Test grok-beta
+    grok = pool.get_model_profile('grok-beta')
     assert grok is not None
     assert grok.provider == 'xai'
     assert 'real-time-information' in grok.strengths
     assert 'humor' in grok.strengths
     assert grok.context_window == 8192
     assert grok.cost_per_token == 0.01
-    print("✓ grok-1 attributes correct")
+    print("✓ grok-beta attributes correct")
 
 
 def test_default_models_fallback():

@@ -1,16 +1,33 @@
+"""Application entrypoint that gracefully supports both runtime layouts.
+
+Historically the project exposed ``app.app:app`` as the FastAPI instance,
+while the refactored architecture ships the application code from the
+``llmhive/src`` directory.  Local development environments (and some
+deployment setups) still import :mod:`main` directly, so this module adds the
+``llmhive/src`` directory to :data:`sys.path` when present and then imports
+the FastAPI application from the modern location.  If the refactored package
+is unavailable we fall back to the legacy import so older deployments keep
+working.
 """
-Main entry point for the LLMHIVE FastAPI application.
-This module imports and exposes the FastAPI app instance for Gunicorn.
 
-IMPORTANT: This is the ONLY entry point used by:
-- Dockerfile: CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} main:app -k uvicorn.workers.UvicornWorker"]
-- Cloud Run deployment
-- Local development with uvicorn
+from __future__ import annotations
 
-Do NOT create alternative entry points as they will cause import conflicts and service unavailability errors.
-"""
+import sys
+from pathlib import Path
 
-# With PYTHONPATH=/app, we can import directly using absolute imports
-from app.app import app
+PROJECT_ROOT = Path(__file__).resolve().parent
+LLMHIVE_SRC = PROJECT_ROOT / "llmhive" / "src"
+
+if LLMHIVE_SRC.exists():
+    path_value = str(LLMHIVE_SRC)
+    if path_value not in sys.path:
+        sys.path.insert(0, path_value)
+
+try:
+    # Preferred import path for the refactored service layout.
+    from llmhive.app.main import app
+except ModuleNotFoundError:
+    # Fall back to the legacy package so older environments remain functional.
+    from app.app import app  # type: ignore[assignment]
 
 __all__ = ["app"]
