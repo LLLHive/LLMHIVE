@@ -1,45 +1,59 @@
 name: Purge env files and guard
 
 on:
-  # Manual run (if GitHub shows the green button for you)
-  workflow_dispatch: {}
-  # Alternate trigger: commit or edit the file .github/trigger/run-purge on main
+  workflow_dispatch: {}                 # manual button, if visible
+  # Fallback trigger: commit .github/trigger/run-purge on main
   push:
     branches: [main]
     paths:
       - '.github/trigger/run-purge'
 
 permissions:
-  contents: write
+  contents: write                       # needed to push
+
+concurrency:
+  group: purge-history
+  cancel-in-progress: true
 
 jobs:
   purge_history:
-    # Run on either manual dispatch or the push trigger
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+
     steps:
-      - name: Ensure runner can run git in this workspace
+      - name: Debug – show repo and token scope
         run: |
-          git config --global --add safe.directory '*'
+          echo "Repo: ${{ github.repository }}"
+          echo "Event: ${{ github.event_name }}"
+          git --version
+          python3 --version || true
 
-      - name: Prepare authenticated repo URL
-        run: |
-          echo "REPO_URL=https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" >> $GITHUB_ENV
+      - name: Ensure Python available (for git-filter-repo)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Mirror clone (ALL branches & tags)
+      - name: Install git-filter-repo and prepare PATH
         run: |
-          git clone --mirror "$REPO_URL" repo.mirror
-
-      - name: Install git-filter-repo
-        run: |
+          python3 -m pip install --user --upgrade pip
           python3 -m pip install --user git-filter-repo
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Remove env files from ENTIRE history
+      - name: Build authenticated remote URL
+        run: |
+          echo "REPO_URL=https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" >> $GITHUB_ENV
+
+      - name: Mirror clone ALL refs (branches + tags)
+        run: |
+          git clone --mirror "$REPO_URL" repo.mirror
+          echo "Cloned mirror."
+
+      - name: Run git filter-repo to remove env files from ALL history
         working-directory: repo.mirror
         run: |
           git filter-repo --path .env --path llmhive/env --invert-paths
+          echo "Filter complete."
 
       - name: Limit push to branches & tags (avoid PR refs)
         working-directory: repo.mirror
@@ -50,17 +64,19 @@ jobs:
           git config --unset-all remote.origin.push || true
           git config --add remote.origin.push +refs/heads/*:refs/heads/*
           git config --add remote.origin.push +refs/tags/*:refs/tags/*
+          git config --get-all remote.origin.push
 
-      - name: Force-push cleaned history (branches + tags)
+      - name: Force-push cleaned history (heads & tags)
         working-directory: repo.mirror
         run: |
+          set -x
           git push origin --force --all
           git push origin --force --tags
+          set +x
 
-      - name: Verify history is clean (should print 0 / 0)
+      - name: Verify history is clean (should be 0 / 0)
         working-directory: repo.mirror
         run: |
-          set -e
           c1=$(git log --all --pretty=format:%H -- .env | wc -l | tr -d ' ')
           c2=$(git log --all --pretty=format:%H -- llmhive/env | wc -l | tr -d ' ')
           echo ".env commits: $c1"
@@ -76,10 +92,8 @@ jobs:
         run: |
           DEFAULT_BRANCH=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
           git checkout "$DEFAULT_BRANCH"
-
           touch .gitignore
           grep -qxF ".env" .gitignore || echo ".env" >> .gitignore
-
           if [ ! -f .env.example ]; then
             cat > .env.example <<'EOF'
 # DO NOT COMMIT REAL KEYS
@@ -91,15 +105,12 @@ DEEPSEEK_API_KEY=
 MANUS_API_KEY=
 EOF
           fi
-
           git rm -f --cached .env llmhive/env 2>/dev/null || true
-
           git add .gitignore .env.example || true
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -m "chore(security): ensure .env ignored; add .env.example" || echo "Nothing to commit"
           git push origin "$DEFAULT_BRANCH"
 
-  # Guard: block any PR that tries to add env files again
   guard:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -107,7 +118,7 @@ EOF
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Fail if env files are tracked
+      - name: Block tracked env files
         run: |
           set -e
           bad=0
