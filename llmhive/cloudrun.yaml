@@ -1,8 +1,8 @@
 # Example configuration for deploying LLMHIVE to Cloud Run.
 # Build image: gcloud builds submit --tag gcr.io/PROJECT/llmhive
 # Deploy: gcloud run deploy llmhive --image gcr.io/PROJECT/llmhive --region=REGION \
-#   --platform=managed --allow-unauthenticated --set-env-vars DB_URL=... \
-#   --set-env-vars ENABLE_DEBATE=1 --set-env-vars ENABLE_FACTCHECK=1
+#   --platform=managed --allow-unauthenticated \
+#   --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
@@ -19,3 +19,21 @@ spec:
               value: "1"
             - name: ENABLE_FACTCHECK
               value: "1"
+            # Example: Mount secrets from Secret Manager
+            # Note: Secret IDs use lowercase with hyphens (e.g., openai-api-key)
+            # while environment variable names use uppercase with underscores (e.g., OPENAI_API_KEY)
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-api-key
+                  key: latest
+            - name: GROK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: grok-api-key
+                  key: latest
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gemini-api-key
+                  key: latest

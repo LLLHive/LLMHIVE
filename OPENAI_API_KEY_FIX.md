@@ -14,13 +14,14 @@ This fix addresses the "Service Unavailable" error in the Cloud Run service `llm
   - **Stub Mode**: Without API keys (for testing/development)
 
 ### 2. Updated `cloudbuild.yaml`
-- Added `--update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest` to the Cloud Run deployment configuration
-- This ensures that Cloud Run automatically mounts the secret from Secret Manager as an environment variable
+- Added `--set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest` to the Cloud Run deployment configuration
+- This ensures that Cloud Run automatically mounts the secrets from Secret Manager as environment variables
+- **Important**: Secret IDs in Secret Manager use lowercase with hyphens (e.g., `openai-api-key`), while environment variable names use uppercase with underscores (e.g., `OPENAI_API_KEY`)
 
 ### 3. Updated `DEPLOYMENT.md`
-- Corrected the secret naming convention to use `OPENAI_API_KEY` (uppercase) consistently
+- Corrected the secret naming convention: Secret IDs use lowercase with hyphens (e.g., `openai-api-key`), while environment variable names use uppercase with underscores (e.g., `OPENAI_API_KEY`)
 - Added the correct project ID and service account for the `llmhive-orchestrator` project
-- Clarified that `cloudbuild.yaml` is already configured for `OPENAI_API_KEY`
+- Clarified that `cloudbuild.yaml` is already configured to map environment variables to the correct Secret Manager secret IDs
 
 ## Manual Steps Required
 
@@ -28,11 +29,22 @@ This fix addresses the "Service Unavailable" error in the Cloud Run service `llm
 
 ### Step 1: Create the Secret in Google Cloud Secret Manager
 
+**Important:** Secret IDs in Secret Manager must use lowercase with hyphens (e.g., `openai-api-key`).
+
 ```bash
 # IMPORTANT: Replace YOUR_OPENAI_API_KEY_VALUE with your actual OpenAI API key
 # Never commit your actual API key to version control
 # Keep your API key secure and do not share it
-echo -n "YOUR_OPENAI_API_KEY_VALUE" | gcloud secrets create OPENAI_API_KEY \
+echo -n "YOUR_OPENAI_API_KEY_VALUE" | gcloud secrets create openai-api-key \
+    --project=llmhive-orchestrator \
+    --data-file=-
+
+# For other providers:
+echo -n "YOUR_GROK_API_KEY" | gcloud secrets create grok-api-key \
+    --project=llmhive-orchestrator \
+    --data-file=-
+
+echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create gemini-api-key \
     --project=llmhive-orchestrator \
     --data-file=-
 ```
@@ -40,10 +52,18 @@ echo -n "YOUR_OPENAI_API_KEY_VALUE" | gcloud secrets create OPENAI_API_KEY \
 ### Step 2: Grant the Cloud Run Service Account Access to the Secret
 
 ```bash
-gcloud secrets add-iam-policy-binding OPENAI_API_KEY \
+# Get the runtime service account
+RUNTIME_SA=$(gcloud run services describe llmhive-orchestrator \
+  --region=us-east1 \
+  --format='value(spec.template.spec.serviceAccountName)')
+
+# Grant access to each secret
+for SECRET in openai-api-key grok-api-key gemini-api-key; do
+  gcloud secrets add-iam-policy-binding "$SECRET" \
     --project=llmhive-orchestrator \
     --role="roles/secretmanager.secretAccessor" \
-    --member="serviceAccount:llmhive-orchestrator@llmhive-orchestrator.iam.gserviceaccount.com"
+    --member="serviceAccount:$RUNTIME_SA"
+done
 ```
 
 ### Step 3: Deploy the Changes
@@ -58,7 +78,7 @@ gcloud builds submit --config cloudbuild.yaml --project=llmhive-orchestrator
 gcloud run services update llmhive-orchestrator \
     --project=llmhive-orchestrator \
     --region=us-east1 \
-    --update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest
+    --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest
 ```
 
 ## Verification
@@ -94,10 +114,11 @@ After deployment, verify the service is working:
 The solution provides a two-tier approach for loading the API key:
 
 ### Tier 1: Cloud Run Native Secret Mounting (Recommended)
-- Cloud Run automatically mounts the secret from Secret Manager as an environment variable
-- The secret is available at container startup
+- Cloud Run automatically mounts the secrets from Secret Manager as environment variables
+- The secrets are available at container startup
 - This is the most secure and efficient method
-- Configured via `cloudbuild.yaml`: `--update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest`
+- Configured via `cloudbuild.yaml`: `--set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest`
+- **Format**: `ENV_VAR_NAME=secret-id:version` where the environment variable name uses uppercase with underscores, and the secret ID uses lowercase with hyphens
 
 ### Tier 2: Fallback via Secret Manager API
 - If the environment variable is not set, the startup event will attempt to fetch the secret using the Secret Manager API
@@ -109,14 +130,14 @@ The solution provides a two-tier approach for loading the API key:
 ### Issue: "OPENAI_API_KEY secret could not be loaded"
 
 **Possible causes:**
-1. The secret `OPENAI_API_KEY` doesn't exist in Secret Manager
+1. The secret with ID `openai-api-key` doesn't exist in Secret Manager
 2. The service account doesn't have permission to access the secret
 3. The secret name or project ID is incorrect
 
 **Solution:**
-- Verify the secret exists: `gcloud secrets describe OPENAI_API_KEY --project=llmhive-orchestrator`
-- Check IAM permissions: `gcloud secrets get-iam-policy OPENAI_API_KEY --project=llmhive-orchestrator`
-- Ensure the service account `llmhive-orchestrator@llmhive-orchestrator.iam.gserviceaccount.com` has the `roles/secretmanager.secretAccessor` role
+- Verify the secret exists: `gcloud secrets describe openai-api-key --project=llmhive-orchestrator`
+- Check IAM permissions: `gcloud secrets get-iam-policy openai-api-key --project=llmhive-orchestrator`
+- Ensure the service account has the `roles/secretmanager.secretAccessor` role
 
 ### Issue: Application still using stub responses
 
@@ -125,7 +146,7 @@ The secret is loading, but the value might be incorrect or the OpenAI API key is
 
 **Solution:**
 - **WARNING**: The following command displays the API key in plain text. Only use in secure environments.
-- Verify the secret value: `gcloud secrets versions access latest --secret=OPENAI_API_KEY --project=llmhive-orchestrator`
+- Verify the secret value: `gcloud secrets versions access latest --secret=openai-api-key --project=llmhive-orchestrator`
 - Check Cloud Run logs for OpenAI API errors
 - Test the API key directly using the OpenAI CLI or API
 
