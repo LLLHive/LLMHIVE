@@ -1,7 +1,8 @@
 """Test provider connectivity and initialization with API keys."""
+import builtins
 import os
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from llmhive.app.services.base import ProviderNotConfiguredError
 from llmhive.app.services.openai_provider import OpenAIProvider
@@ -26,6 +27,21 @@ class TestOpenAIProvider:
         assert provider.client is not None
         assert provider.client.api_key == "sk-test-key-123"
 
+    def test_openai_provider_reports_missing_dependency(self, monkeypatch):
+        """Test that OpenAI provider raises a helpful error when `openai` is missing."""
+
+        real_import = builtins.__import__
+
+        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "openai":
+                raise ImportError("No module named 'openai'")
+            return real_import(name, globals, locals, fromlist, level)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+
+        with pytest.raises(ProviderNotConfiguredError, match="OpenAI library import failed"):
+            OpenAIProvider(api_key="sk-test-key-123")
+
 
 class TestGrokProvider:
     """Test Grok provider initialization and configuration."""
@@ -48,6 +64,21 @@ class TestGrokProvider:
         provider = GrokProvider(api_key="xai-test-key")
         # The base URL should point to xAI's API (OpenAI client adds trailing slash)
         assert str(provider.client.base_url).rstrip('/') == "https://api.x.ai/v1"
+
+    def test_grok_provider_reports_missing_dependency(self, monkeypatch):
+        """Test that Grok provider raises a helpful error when OpenAI client is unavailable."""
+
+        real_import = builtins.__import__
+
+        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "openai":
+                raise ImportError("No module named 'openai'")
+            return real_import(name, globals, locals, fromlist, level)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+
+        with pytest.raises(ProviderNotConfiguredError, match="OpenAI library import failed"):
+            GrokProvider(api_key="xai-test-key")
 
 
 class TestAnthropicProvider:
