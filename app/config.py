@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
+    GROK_API_KEY: Optional[str] = None
     TAVILY_API_KEY: Optional[str] = None
 
     # Model configuration

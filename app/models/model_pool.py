@@ -186,14 +186,14 @@ class ModelPool:
                 cost_per_token=0.005,
             ),
             ModelProfile(
-                model_id="gemini-pro",
+                model_id="gemini-1.5-pro",
                 provider="google",
                 strengths=["multimodal", "reasoning"],
                 context_window=128000,
                 cost_per_token=0.0025,
             ),
             ModelProfile(
-                model_id="grok-1",
+                model_id="grok-beta",
                 provider="xai",
                 strengths=["real-time-information", "humor"],
                 context_window=8192,

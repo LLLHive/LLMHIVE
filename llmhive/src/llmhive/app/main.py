@@ -12,11 +12,12 @@ from .api import api_router
 from .database import engine
 from .models import Base
 
-# Configure comprehensive logging
+# Configure comprehensive logging as early as possible so that import-time
+# diagnostics (for example, when providers fail to configure) are captured.
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
