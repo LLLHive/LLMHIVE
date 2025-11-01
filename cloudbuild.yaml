@@ -17,6 +17,8 @@ steps:
     - '--image=gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
     - '--region=${_REGION}'
     - '--platform=managed'
+    # Mount API key secrets from Secret Manager
+    # Format: ENV_VAR_NAME=secret-id:version (env var uses uppercase_underscore, secret ID uses lowercase-hyphen)
     - '--set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest'
     - '--quiet'
 

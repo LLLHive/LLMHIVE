@@ -17,6 +17,13 @@ The following files have been updated in the repository:
 
 ## Manual Steps Required
 
+**Prerequisites:**
+- You need the following IAM permissions in the `llmhive-orchestrator` GCP project:
+  - `secretmanager.secrets.create` or `secretmanager.secrets.get` (to create/verify secrets)
+  - `secretmanager.secrets.setIamPolicy` (to grant access)
+  - `run.services.get` and `run.services.update` (to update Cloud Run)
+- If you don't have these permissions, share this document with your GCP administrator
+
 Before the next deployment, you need to ensure the secrets exist in Secret Manager with the correct IDs:
 
 ### Step 1: Set your project
