@@ -1,20 +1,19 @@
-name: Purge env files & guard
+name: Purge env files and guard
 
 on:
-  workflow_dispatch:             # Run manually from the Actions tab
-  pull_request:                  # Guard future PRs
+  workflow_dispatch: {}          # <-- ensures the green "Run workflow" button
+  pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write                # Needed to push changes
+  contents: write
 
 jobs:
-  # -------- Manual job: FULL cleanup + add template ----------
+  # ---------- Manual run: purge env files from current + history ----------
   purge_history:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
       - name: Prepare authenticated repo URL
         run: |
@@ -29,24 +28,22 @@ jobs:
           python3 -m pip install --user git-filter-repo
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Remove env files from the ENTIRE history
+      - name: Remove env files from ENTIRE history
         working-directory: repo.mirror
         run: |
-          # Remove both the top-level .env and llmhive/env everywhere
           git filter-repo --path .env --path llmhive/env --invert-paths
 
-      - name: Re-add origin & limit what we push (heads + tags only)
+      - name: Limit push to branches & tags (avoid PR refs)
         working-directory: repo.mirror
         run: |
           git remote remove origin || true
           git remote add origin "$REPO_URL"
-          # Avoid touching GitHub's hidden PR refs
           git config remote.origin.mirror false
           git config --unset-all remote.origin.push || true
           git config --add remote.origin.push +refs/heads/*:refs/heads/*
           git config --add remote.origin.push +refs/tags/*:refs/tags/*
 
-      - name: Force-push cleaned history (branches + tags only)
+      - name: Force-push cleaned history
         working-directory: repo.mirror
         run: |
           git push origin --force --all
@@ -60,29 +57,21 @@ jobs:
           c2=$(git log --all --pretty=format:%H -- llmhive/env | wc -l | tr -d ' ')
           echo ".env commits: $c1"
           echo "llmhive/env commits: $c2"
-          if [ "$c1" != "0" ] || [ "$c2" != "0" ]; then
-            echo "❌ Env files still present in history." >&2
-            exit 1
-          else
-            echo "✅ History clean."
-          fi
+          test "$c1" = "0" -a "$c2" = "0"
 
       - name: Normal clone to add ignore and template
         run: |
           git clone "$REPO_URL" repo.work
 
-      - name: Ensure .env is ignored and add .env.example
+      - name: Ensure .env ignored and add .env.example
         working-directory: repo.work
         run: |
-          # Detect default branch (e.g., main)
           DEFAULT_BRANCH=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
           git checkout "$DEFAULT_BRANCH"
 
-          # Keep .env out of Git forever
           touch .gitignore
           grep -qxF ".env" .gitignore || echo ".env" >> .gitignore
 
-          # Provide a safe example file (only if missing)
           if [ ! -f .env.example ]; then
             cat > .env.example <<'EOF'
 # DO NOT COMMIT REAL KEYS
@@ -95,15 +84,13 @@ MANUS_API_KEY=
 EOF
           fi
 
-          # Just in case: untrack any leftover env files (should not exist post-filter)
           git rm -f --cached .env llmhive/env 2>/dev/null || true
-
           git add .gitignore .env.example || true
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -m "chore(security): ensure .env ignored; add .env.example" || echo "Nothing to commit"
           git push origin "$DEFAULT_BRANCH"
 
-  # -------- PR guard: blocks re-introducing env files ----------
+  # ---------- PR guard: block re-introducing env files ----------
   guard:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
