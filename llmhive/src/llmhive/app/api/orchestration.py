@@ -40,6 +40,9 @@ MODEL_ALIAS_MAP: dict[str, str] = {
     "claude-3-opus-latest": "claude-3-opus-20240229",
     "claude-3-sonnet": "claude-3-sonnet-20240229",
     "claude-3-sonnet-latest": "claude-3-sonnet-20240229",
+    "gemini-pro": "gemini-1.5-pro",
+    "gemini-1.0-pro": "gemini-1.5-pro",
+    "grok-1": "grok-beta",
 }
 
 logger = logging.getLogger(__name__)
