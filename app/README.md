@@ -127,7 +127,13 @@ Configuration is managed through `app/config.py` using Pydantic settings. Set en
 ```env
 OPENAI_API_KEY=your_key_here
 ANTHROPIC_API_KEY=your_key_here
-GOOGLE_API_KEY=your_key_here
+GEMINI_API_KEY=your_key_here
+GROK_API_KEY=your_key_here
+OPENROUTER_API_KEY=your_key_here
+DEEPSEEK_API_KEY=your_key_here
+PERPLEXITY_API_KEY=your_key_here
+MISTRAL_API_KEY=your_key_here
+TOGETHER_API_KEY=your_key_here
 DATABASE_URL=sqlite:///./llmhive.db
 ```
 
@@ -138,6 +144,7 @@ See `requirements.txt` for the full list. Key dependencies:
 - Pydantic: Data validation and settings
 - Uvicorn: ASGI server
 - OpenAI/Anthropic/Google client libraries
+- Optional providers exposed through OpenRouter, DeepSeek, Perplexity, Mistral and Together
 
 ## Development
 

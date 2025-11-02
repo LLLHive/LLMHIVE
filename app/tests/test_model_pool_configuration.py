@@ -11,12 +11,12 @@ from app.models.model_pool import ModelPool
 
 
 def test_model_pool_loads_all_models():
-    """Test that ModelPool loads all 6 models from models.yaml."""
+    """Test that ModelPool loads all configured models from models.yaml."""
     pool = ModelPool()
     models = pool.list_models()
-    
-    # Should have exactly 6 models
-    assert len(models) == 6, f"Expected 6 models but got {len(models)}"
+
+    # Should have exactly 11 models
+    assert len(models) == 11, f"Expected 11 models but got {len(models)}"
     print(f"✓ ModelPool loaded {len(models)} models")
 
 
@@ -31,6 +31,11 @@ def test_all_required_models_present():
         'claude-3-sonnet': 'anthropic',
         'gemini-1.5-pro': 'google',
         'grok-beta': 'xai',
+        'openrouter/anthropic/claude-3.5-sonnet': 'openrouter',
+        'deepseek-chat': 'deepseek',
+        'perplexity-llama-3.1-70b-instruct': 'perplexity',
+        'mistral-large-latest': 'mistral',
+        'togethercomputer/llama-3-70b-instruct': 'together',
     }
     
     for model_id, expected_provider in expected_models.items():
@@ -66,7 +71,7 @@ def test_model_attributes():
 
 
 def test_default_models_fallback():
-    """Test that default models include all 6 models when config file is missing."""
+    """Test that default models include all models when config file is missing."""
     import tempfile
     import os
     
@@ -78,9 +83,9 @@ def test_default_models_fallback():
         # Create a new ModelPool instance (should use defaults)
         pool = ModelPool()
         models = pool.list_models()
-        
-        # Should still have 6 models from defaults
-        assert len(models) == 6, f"Expected 6 default models but got {len(models)}"
+
+        # Should still have 11 models from defaults
+        assert len(models) == 11, f"Expected 11 default models but got {len(models)}"
         print(f"✓ Default models fallback works: {len(models)} models")
         
     finally:

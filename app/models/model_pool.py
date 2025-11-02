@@ -199,6 +199,41 @@ class ModelPool:
                 context_window=8192,
                 cost_per_token=0.01,
             ),
+            ModelProfile(
+                model_id="openrouter/anthropic/claude-3.5-sonnet",
+                provider="openrouter",
+                strengths=["aggregation", "fallback"],
+                context_window=200000,
+                cost_per_token=0.015,
+            ),
+            ModelProfile(
+                model_id="deepseek-chat",
+                provider="deepseek",
+                strengths=["reasoning", "analysis"],
+                context_window=128000,
+                cost_per_token=0.002,
+            ),
+            ModelProfile(
+                model_id="perplexity-llama-3.1-70b-instruct",
+                provider="perplexity",
+                strengths=["research", "up-to-date"],
+                context_window=16384,
+                cost_per_token=0.003,
+            ),
+            ModelProfile(
+                model_id="mistral-large-latest",
+                provider="mistral",
+                strengths=["multilingual", "long-form"],
+                context_window=32000,
+                cost_per_token=0.003,
+            ),
+            ModelProfile(
+                model_id="togethercomputer/llama-3-70b-instruct",
+                provider="together",
+                strengths=["open-weights", "coding"],
+                context_window=8192,
+                cost_per_token=0.002,
+            ),
         ]
 
     def _resolve_config_path(self, configured_path: str) -> Optional[Path]:
