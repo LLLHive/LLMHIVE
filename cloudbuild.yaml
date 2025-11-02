@@ -1,31 +1,60 @@
-steps:
-# 1. Build the container image
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--no-cache', '-t', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}', 'llmhive']
+# cloudbuild.yaml — build, push, deploy to Cloud Run with correct Secret Manager mapping
 
-# 2. Push the container image to Container Registry
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}']
-
-# 3. Deploy the container image to Cloud Run
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: gcloud
-  args:
-    - 'run'
-    - 'deploy'
-    - '${_SERVICE_NAME}'
-    - '--image=gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
-    - '--region=${_REGION}'
-    - '--platform=managed'
-    - '--set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest'
-    - '--quiet'
-
-images:
-- 'gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${COMMIT_SHA}'
-
-substitutions:
-  _SERVICE_NAME: llmhive-orchestrator
-  _REGION: us-east1
-
+# Logs only to Cloud Logging to keep builds clean
 options:
   logging: CLOUD_LOGGING_ONLY
+
+# Customize these if you ever change region/service; current service uses us-east1
+substitutions:
+  _REGION: us-east1
+  _SERVICE_NAME: llmhive-orchestrator
+  # Image tag includes the commit SHA so each deploy has an immutable image
+  _IMAGE: gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA
+
+# Total build timeout (20 minutes is ample)
+timeout: "1200s"
+
+steps:
+  # 1) Build the Docker image from the repo root Dockerfile
+  - id: "Build image"
+    name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "${_IMAGE}", "."]
+
+  # 2) Push the image to Container Registry
+  - id: "Push image"
+    name: "gcr.io/cloud-builders/docker"
+    args: ["push", "${_IMAGE}"]
+
+  # 3) Deploy to Cloud Run with the CORRECT secret IDs (kebab-case)
+  #    IMPORTANT: Do not change the secret IDs to uppercase; the IDs in Secret Manager
+  #    are 'openai-api-key', 'grok-api-key', 'gemini-api-key'.
+  - id: "Deploy to Cloud Run"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        echo "Deploying ${_IMAGE} to Cloud Run service ${_SERVICE_NAME} in ${_REGION} ..."
+        gcloud run deploy "${_SERVICE_NAME}" \
+          --image "${_IMAGE}" \
+          --region "${_REGION}" \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest
+        echo "Deploy step complete."
+
+  # 4) Verify mapping so you can see it in the build logs after deploy
+  - id: "Verify env→secret mapping"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        echo "Cloud Run env→secret mapping for ${_SERVICE_NAME} (${_REGION}):"
+        gcloud run services describe "${_SERVICE_NAME}" --region "${_REGION}" \
+          --format='table(
+            spec.template.spec.containers[0].env[].name:label=ENV,
+            spec.template.spec.containers[0].env[].valueFrom.secretKeyRef.name:label=SECRET_ID)'
+        echo "If SECRET_ID shows: openai-api-key, grok-api-key, gemini-api-key -> ✅ correct."
