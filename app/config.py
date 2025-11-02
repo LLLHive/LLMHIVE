@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
     GROK_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: Optional[str] = None
+    PERPLEXITY_API_KEY: Optional[str] = None
+    MISTRAL_API_KEY: Optional[str] = None
+    TOGETHER_API_KEY: Optional[str] = None
     TAVILY_API_KEY: Optional[str] = None
 
     # Model configuration
@@ -32,7 +37,7 @@ class Settings(BaseSettings):
     # Application metadata
     LOG_LEVEL: str = "INFO"
     APP_NAME: str = "LLMHive"
-    APP_VERSION: str = "1.3.0"
+    APP_VERSION: str = "1.4.0"
 
     class Config:
         env_file = ".env"

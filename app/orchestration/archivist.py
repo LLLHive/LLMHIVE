@@ -1,29 +1,32 @@
 from __future__ import annotations
 
 import logging
+from types import SimpleNamespace
 
 from .models import Job
 
 try:  # Optional dependency: Firestore client
     from google.cloud import firestore  # type: ignore
-    FIRESTORE_AVAILABLE = True
 except Exception:  # pragma: no cover - handled by fallback behaviour
-    firestore = None  # type: ignore
-    FIRESTORE_AVAILABLE = False
+    firestore = SimpleNamespace(Client=None)  # type: ignore
 
 try:  # Optional dependency: Vertex AI platform
     from google.cloud import aiplatform  # type: ignore
-    AIPLATFORM_AVAILABLE = True
 except Exception:  # pragma: no cover - handled by fallback behaviour
-    aiplatform = None  # type: ignore
-    AIPLATFORM_AVAILABLE = False
+    aiplatform = SimpleNamespace(
+        init=lambda *args, **kwargs: None,
+        MatchingEngineIndexEndpoint=None,
+    )  # type: ignore
 
 try:  # Optional dependency: Vertex AI text embeddings
     from vertexai.language_models import TextEmbeddingModel  # type: ignore
-    EMBEDDINGS_AVAILABLE = True
 except Exception:  # pragma: no cover - handled by fallback behaviour
-    TextEmbeddingModel = None  # type: ignore
-    EMBEDDINGS_AVAILABLE = False
+    class _TextEmbeddingModelStub:  # pragma: no cover - testing stub
+        @classmethod
+        def from_pretrained(cls, *args, **kwargs):
+            raise RuntimeError("Vertex AI embeddings are unavailable")
+
+    TextEmbeddingModel = _TextEmbeddingModelStub  # type: ignore
 
 logger = logging.getLogger("llmhive")
 
@@ -52,7 +55,7 @@ class Archivist:
         self.embedding_model = None
         self.enabled = False
 
-        if not (FIRESTORE_AVAILABLE and AIPLATFORM_AVAILABLE and EMBEDDINGS_AVAILABLE):
+        if not self._dependencies_available():
             logger.warning(
                 "Archivist dependencies are unavailable. Running in no-op mode."
             )
@@ -94,6 +97,15 @@ class Archivist:
 
         response = self.embedding_model.get_embeddings([text])
         return response[0].values
+
+    @staticmethod
+    def _dependencies_available() -> bool:
+        """Check at runtime whether Firestore and Vertex AI clients are available."""
+
+        has_firestore = getattr(firestore, "Client", None) is not None
+        has_endpoint = getattr(aiplatform, "MatchingEngineIndexEndpoint", None) is not None
+        embedding_ctor = getattr(TextEmbeddingModel, "from_pretrained", None)
+        return has_firestore and has_endpoint and callable(embedding_ctor)
 
     def save_job(self, job: Job):
         """Saves a job to Firestore and its embedding to Vector Search."""

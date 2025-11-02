@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
+from types import SimpleNamespace, ModuleType
 from typing import Final
 
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -15,14 +17,21 @@ from app.orchestration.router import versioned_router as orchestration_v1_router
 try:  # pragma: no cover - optional dependency in local tests
     from google.cloud import secretmanager  # type: ignore
 except Exception:  # pragma: no cover - handled gracefully below
-    secretmanager = None  # type: ignore
+    secretmanager = SimpleNamespace(SecretManagerServiceClient=None)  # type: ignore
 
 try:  # pragma: no cover - optional dependency in local tests
     from pythonjsonlogger import jsonlogger
 except Exception as exc:  # pragma: no cover - logging configured without JSON formatting
-    jsonlogger = None  # type: ignore
+    fallback_module = ModuleType("pythonjsonlogger")
+
+    class _FallbackJsonFormatter(logging.Formatter):
+        """Minimal drop-in replacement used when python-json-logger is absent."""
+
+    fallback_module.jsonlogger = SimpleNamespace(JsonFormatter=_FallbackJsonFormatter)
+    sys.modules.setdefault("pythonjsonlogger", fallback_module)
+    jsonlogger = fallback_module.jsonlogger  # type: ignore
     logging.getLogger(__name__).warning(
-        "python-json-logger is unavailable (%s); falling back to plain logging.",
+        "python-json-logger is unavailable (%s); using fallback formatter.",
         exc,
     )
 
