@@ -15,18 +15,26 @@ steps:
   # 1) Build the Docker image
   - id: "Build image"
     name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
     args:
-      - build
-      - -t
-      - gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA
-      - .
+      - -c
+      - |
+        set -euo pipefail
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:${COMMIT_SHA}"
+        echo "Building ${IMAGE} ..."
+        docker build -t "${IMAGE}" .
 
   # 2) Push the image
   - id: "Push image"
     name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
     args:
-      - push
-      - gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA
+      - -c
+      - |
+        set -euo pipefail
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:${COMMIT_SHA}"
+        echo "Pushing ${IMAGE} ..."
+        docker push "${IMAGE}"
 
   # 3) Deploy to Cloud Run with CORRECT secret IDs (kebab-case)
   - id: "Deploy to Cloud Run"
@@ -36,8 +44,8 @@ steps:
       - -c
       - |
         set -euo pipefail
-        IMAGE="gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA"
-        echo "Deploying $IMAGE to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} ..."
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:${COMMIT_SHA}"
+        echo "Deploying ${IMAGE} to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} ..."
         gcloud run deploy "${_SERVICE_NAME}" \
           --image "${IMAGE}" \
           --region "${_REGION}" \
