@@ -21,6 +21,11 @@ build/
 env/
 ENV/
 
+# Python package metadata
+*.egg-info/
+dist/
+*.egg
+
 # IDE
 .vscode/
 .idea/

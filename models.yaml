@@ -23,15 +23,15 @@ models:
     context_window: 200000
     cost_per_token: 0.005
 
-  - model_id: "gemini-1.5-pro"
+  - model_id: "gemini-2.5-flash"
     provider: "google"
-    strengths: ["multimodal", "reasoning"]
+    strengths: ["multimodal", "reasoning", "speed"]
     context_window: 128000
     cost_per_token: 0.0025
 
-  - model_id: "grok-beta"
+  - model_id: "grok-3-mini"
     provider: "xai"
-    strengths: ["real-time-information", "humor"]
+    strengths: ["real-time-information", "reasoning"]
     context_window: 8192
     cost_per_token: 0.01
 

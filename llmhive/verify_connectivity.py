@@ -98,7 +98,7 @@ async def main():
         GrokProvider,
         os.getenv("GROK_API_KEY"),
         "Grok (xAI)",
-        "grok-beta"
+        "grok-3-mini"
     )
     
     # Test Anthropic
@@ -114,7 +114,7 @@ async def main():
         GeminiProvider,
         os.getenv("GEMINI_API_KEY"),
         "Google Gemini",
-        "gemini-pro"
+        "gemini-2.5-flash"
     )
     
     # Test DeepSeek
