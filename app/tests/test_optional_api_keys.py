@@ -14,6 +14,12 @@ def test_config_allows_optional_keys():
     assert settings.ANTHROPIC_API_KEY is None or isinstance(settings.ANTHROPIC_API_KEY, str)
     assert settings.GEMINI_API_KEY is None or isinstance(settings.GEMINI_API_KEY, str)
     assert settings.TAVILY_API_KEY is None or isinstance(settings.TAVILY_API_KEY, str)
+    assert settings.GROK_API_KEY is None or isinstance(settings.GROK_API_KEY, str)
+    assert settings.OPENROUTER_API_KEY is None or isinstance(settings.OPENROUTER_API_KEY, str)
+    assert settings.DEEPSEEK_API_KEY is None or isinstance(settings.DEEPSEEK_API_KEY, str)
+    assert settings.PERPLEXITY_API_KEY is None or isinstance(settings.PERPLEXITY_API_KEY, str)
+    assert settings.MISTRAL_API_KEY is None or isinstance(settings.MISTRAL_API_KEY, str)
+    assert settings.TOGETHER_API_KEY is None or isinstance(settings.TOGETHER_API_KEY, str)
 
 
 def test_provider_factory_falls_back_to_stub_for_missing_key():
@@ -23,9 +29,22 @@ def test_provider_factory_falls_back_to_stub_for_missing_key():
         provider = get_provider_by_name('openai')
         assert isinstance(provider, StubProvider), "Should fallback to StubProvider when API key missing"
     
-    if settings.ANTHROPIC_API_KEY is None:
-        provider = get_provider_by_name('anthropic')
-        assert isinstance(provider, StubProvider), "Should fallback to StubProvider when API key missing"
+    provider_requirements = {
+        'openai': settings.OPENAI_API_KEY,
+        'anthropic': settings.ANTHROPIC_API_KEY,
+        'google': settings.GEMINI_API_KEY,
+        'xai': settings.GROK_API_KEY,
+        'openrouter': settings.OPENROUTER_API_KEY,
+        'deepseek': settings.DEEPSEEK_API_KEY,
+        'perplexity': settings.PERPLEXITY_API_KEY,
+        'mistral': settings.MISTRAL_API_KEY,
+        'together': settings.TOGETHER_API_KEY,
+    }
+
+    for provider_name, api_key in provider_requirements.items():
+        if api_key is None:
+            provider = get_provider_by_name(provider_name)
+            assert isinstance(provider, StubProvider), "Should fallback to StubProvider when API key missing"
 
 
 def test_provider_factory_returns_stub_for_unknown_provider():
@@ -53,4 +72,4 @@ async def test_gateway_handles_missing_api_key_with_stub():
 
 def test_app_version_updated():
     """Test that app version was bumped to 1.3.0 for this feature."""
-    assert settings.APP_VERSION == "1.3.0"
+    assert settings.APP_VERSION == "1.4.0"

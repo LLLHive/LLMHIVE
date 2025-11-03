@@ -5,7 +5,15 @@ import logging
 from typing import AsyncGenerator, Dict, List
 
 from app.config import settings
-from app.providers import GeminiProvider, GrokProvider
+from app.providers import (
+    GeminiProvider,
+    GrokProvider,
+    OpenRouterProvider,
+    DeepSeekProvider,
+    PerplexityProvider,
+    MistralProvider,
+    TogetherProvider,
+)
 
 try:
     from openai import AsyncOpenAI
@@ -80,6 +88,11 @@ PROVIDER_CLASS_MAP = {
     "anthropic": (AnthropicProvider, settings.ANTHROPIC_API_KEY),
     "google": (GeminiProvider, getattr(settings, "GEMINI_API_KEY", None)),
     "xai": (GrokProvider, getattr(settings, "GROK_API_KEY", None)),
+    "openrouter": (OpenRouterProvider, getattr(settings, "OPENROUTER_API_KEY", None)),
+    "deepseek": (DeepSeekProvider, getattr(settings, "DEEPSEEK_API_KEY", None)),
+    "perplexity": (PerplexityProvider, getattr(settings, "PERPLEXITY_API_KEY", None)),
+    "mistral": (MistralProvider, getattr(settings, "MISTRAL_API_KEY", None)),
+    "together": (TogetherProvider, getattr(settings, "TOGETHER_API_KEY", None)),
     "stub": (StubProvider, "stub"),
 }
 

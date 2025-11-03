@@ -3,6 +3,7 @@ uvicorn
 gunicorn
 python-dotenv
 openai
+anthropic
 tavily-python
 google-cloud-firestore
 google-cloud-aiplatform
