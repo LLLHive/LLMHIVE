@@ -50,7 +50,7 @@ class GrokProvider(LLMProvider):
             base_url="https://api.x.ai/v1",
             timeout=timeout or getattr(settings, "grok_timeout_seconds", 45.0)
         )
-        self._models = ["grok-1", "grok-beta"]
+        self._models = ["grok-1", "grok-3-mini"]
 
     def list_models(self) -> list[str]:
         return list(self._models)

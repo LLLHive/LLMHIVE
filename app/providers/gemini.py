@@ -13,6 +13,7 @@ class GeminiProvider:
     """Lightweight asynchronous wrapper around the Google Generative AI SDK."""
 
     _SUPPORTED_MODELS: ClassVar[List[str]] = [
+        "gemini-2.5-flash",
         "gemini-1.5-pro",
         "gemini-pro",
         "gemini-pro-vision",
