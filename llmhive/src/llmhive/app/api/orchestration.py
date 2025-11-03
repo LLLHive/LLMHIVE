@@ -41,7 +41,7 @@ MODEL_ALIAS_MAP: dict[str, str] = {
     "claude-3-sonnet": "claude-3-sonnet-20240229",
     "claude-3-sonnet-latest": "claude-3-sonnet-20240229",
     "gemini-pro": "gemini-2.5-flash",
-    "gemini-1.0-pro": "gemini-1.5-pro",
+    "gemini-1.0-pro": "gemini-2.5-flash",
     "gemini-1.5-pro": "gemini-2.5-flash",
     "grok-1": "grok-3-mini",
     "grok-beta": "grok-3-mini",
