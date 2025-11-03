@@ -138,9 +138,10 @@ class TestGeminiProvider:
     @pytest.mark.parametrize(
         "label,expected",
         [
+            ("Gemini 2.5 Flash (Google)", "gemini-2.5-flash"),
             ("Gemini 1.5 Pro (Google)", "gemini-1.5-pro"),
             ("Gemini 1.5 Flash", "gemini-1.5-flash"),
-            ("gemini pro", "gemini-1.5-pro"),
+            ("gemini pro", "gemini-2.5-flash"),
             ("gemini_pro_vision", "gemini-1.0-pro-vision"),
         ],
     )

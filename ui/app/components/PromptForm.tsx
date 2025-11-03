@@ -45,14 +45,14 @@ const MODEL_OPTIONS: Option[] = [
     description: "Responsive collaborator tuned for narrative polish and UX copy.",
   },
   {
-    value: "gemini-1.5-pro",
-    label: "Gemini 1.5 Pro (Google)",
-    description: "Multimodal powerhouse with research-grade recall.",
+    value: "gemini-2.5-flash",
+    label: "Gemini 2.5 Flash (Google)",
+    description: "Latest multimodal model with fast reasoning and updated knowledge.",
   },
   {
-    value: "grok-beta",
-    label: "Grok Beta (xAI)",
-    description: "Edgy reasoning with real-time awareness of the wider world.",
+    value: "grok-3-mini",
+    label: "Grok 3 Mini (xAI)",
+    description: "Compact reasoning model with real-time awareness and faster responses.",
   },
   {
     value: "llmhive-ensemble",

@@ -81,7 +81,7 @@ class ReasoningPlanner:
                         role=PlanRole.RESEARCH,
                         description="Gather supporting evidence, statistics, or references relevant to the topic.",
                         required_capabilities={"retrieval", "analysis"},
-                        candidate_models=["gemini-1.5-pro", "claude-3-sonnet-20240229"],
+                        candidate_models=["gemini-2.5-flash", "claude-3-sonnet-20240229"],
                     ),
                     PlanStep(
                         role=PlanRole.DRAFT,

@@ -35,6 +35,7 @@ class GeminiProvider(LLMProvider):
         self.genai = genai
         self.timeout = timeout or getattr(settings, "gemini_timeout_seconds", 45.0)
         self._models = [
+            "gemini-2.5-flash",
             "gemini-1.5-pro",
             "gemini-1.5-flash",
             "gemini-1.0-pro-vision",
@@ -46,13 +47,15 @@ class GeminiProvider(LLMProvider):
         # is handled in ``_resolve_model_name`` so we only need to cover the
         # distinct variants we expect to see from the UI or configuration.
         self._aliases = {
-            "gemini-pro": "gemini-1.5-pro",
+            "gemini-pro": "gemini-2.5-flash",
             "gemini-pro-vision": "gemini-1.0-pro-vision",
-            "gemini-1.0-pro": "gemini-1.5-pro",
+            "gemini-1.0-pro": "gemini-2.5-flash",
             "gemini 1.5 pro": "gemini-1.5-pro",
             "gemini 1.5 pro (google)": "gemini-1.5-pro",
             "gemini 1.5 flash": "gemini-1.5-flash",
             "gemini 1.5 flash (google)": "gemini-1.5-flash",
+            "gemini 2.5 flash": "gemini-2.5-flash",
+            "gemini 2.5 flash (google)": "gemini-2.5-flash",
             "gemini pro vision": "gemini-1.0-pro-vision",
         }
         self._normalized_lookup = self._build_normalized_lookup()
