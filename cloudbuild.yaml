@@ -51,7 +51,7 @@ steps:
           --region "${_REGION}" \
           --platform managed \
           --allow-unauthenticated \
-          --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest
+          --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest
         echo "Deploy step complete."
 
   # 4) Verify mapping in the logs
