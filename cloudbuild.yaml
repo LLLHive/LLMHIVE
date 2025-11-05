@@ -67,4 +67,4 @@ steps:
           --format='table(
             spec.template.spec.containers[0].env[].name:label=ENV,
             spec.template.spec.containers[0].env[].valueFrom.secretKeyRef.name:label=SECRET_ID)'
-        echo "Expect SECRET_ID to be: openai-api-key, grok-api-key, gemini-api-key, anthropic-api-key, deepseek-api-key"
+        echo "Expect SECRET_ID to be: openai-api-key, grok-api-key, gemini-api-key, tavily-api-key"
