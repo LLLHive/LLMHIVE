@@ -1,11 +1,10 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ORCHESTRATION_PROXY_PATH,
   buildOrchestrationUrl,
 } from "@/app/lib/orchestrationEndpoint";
-import styles from "./PromptForm.module.css";
 
 type PromptFormProps = {
   userId?: string;
@@ -103,6 +102,24 @@ export default function PromptForm({ userId }: PromptFormProps) {
   ]);
   const [isModelMenuOpen, setModelMenuOpen] = useState(false);
   const [isStrategyMenuOpen, setStrategyMenuOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const handler = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        textarea.form?.requestSubmit();
+      }
+    };
+
+    textarea.addEventListener("keydown", handler);
+    return () => {
+      textarea.removeEventListener("keydown", handler);
+    };
+  }, []);
 
   const orchestratorSummary = useMemo(() => {
     const models = MODEL_OPTIONS.filter((model) =>
@@ -203,256 +220,267 @@ export default function PromptForm({ userId }: PromptFormProps) {
         }
       }
 
+      if (!response && !directNetworkError) {
+        response = await invokeOrchestrator(ORCHESTRATION_PROXY_PATH);
+      }
+
+      if (!response && directNetworkError) {
+        response = await invokeOrchestrator(ORCHESTRATION_PROXY_PATH);
+        triedProxyFallback = true;
+      }
+
       if (!response) {
-        try {
-          triedProxyFallback = true;
-          response = await invokeOrchestrator(ORCHESTRATION_PROXY_PATH);
-        } catch (err) {
-          throw err;
-        }
+        throw new Error("No response from orchestrator");
       }
 
       if (!response.ok) {
-        const contentType = response.headers.get("content-type") ?? "";
-        if (contentType.includes("application/json")) {
-          const errorPayload = await response.json();
-          const message =
-            (typeof errorPayload.error === "string" && errorPayload.error) ||
-            (typeof errorPayload.detail === "string" && errorPayload.detail) ||
-            JSON.stringify(errorPayload, null, 2);
-          throw new Error(message);
-        }
-
-        const fallbackText = await response.text();
-        const message = fallbackText || response.statusText || "Unexpected API error";
+        const payload = await response.json().catch(() => ({}));
+        const message =
+          typeof payload?.detail === "string"
+            ? payload.detail
+            : "Failed to orchestrate the request.";
         throw new Error(message);
       }
 
       const payload = await response.json();
-      const { final_response: finalResponse, plan, evaluation, supporting_notes: supportingNotes } =
-        payload;
-
-      const formattedSections: string[] = [];
-
-      if (finalResponse) {
-        formattedSections.push(`Final Response\n---------------\n${finalResponse}`);
-      }
-
-      if (plan) {
-        const planSummary = [
-          plan.strategy ? `Strategy: ${plan.strategy}` : null,
-          plan.confidence ? `Confidence: ${plan.confidence}` : null,
-          Array.isArray(plan.focus_areas) && plan.focus_areas.length
-            ? `Focus Areas: ${plan.focus_areas.join(", ")}`
-            : null,
-        ]
-          .filter(Boolean)
-          .join("\n");
-        if (planSummary) {
-          formattedSections.push(`Orchestration Plan\n------------------\n${planSummary}`);
-        }
-      }
-
-      if (Array.isArray(supportingNotes) && supportingNotes.length > 0) {
-        formattedSections.push(
-          `Supporting Notes\n----------------\n${supportingNotes.map((note: string) => `• ${note}`).join("\n")}`
-        );
-      }
-
-      if (evaluation) {
-        formattedSections.push(`Evaluation\n----------\n${evaluation}`);
-      }
-
-      if (formattedSections.length === 0) {
-        formattedSections.push(JSON.stringify(payload, null, 2));
-      }
-
-      setResult(formattedSections.join("\n\n"));
+      const text = payload?.result ?? JSON.stringify(payload, null, 2);
+      setResult(text);
     } catch (err) {
-      let message = err instanceof Error ? err.message : "An unknown error occurred";
-      if (message === "Failed to fetch") {
-        message =
-          "Failed to reach the orchestration service. Verify the backend URL configuration or try again.";
-      } else if (
-        message === "NetworkError when attempting to fetch resource." &&
-        DIRECT_ORCHESTRATION_URL
-      ) {
-        if (directNetworkError && triedProxyFallback) {
-          message =
-            "Direct orchestration request failed due to a network error. Falling back to the internal proxy also failed. Double-check NEXT_PUBLIC_API_BASE_URL or clear it to use the proxy.";
-        } else {
-          message =
-            "Direct orchestration request failed due to a network error. The internal proxy was not attempted. Verify NEXT_PUBLIC_API_BASE_URL or remove it to use the proxy.";
-        }
-      }
-      setError(message);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setError(
+        triedProxyFallback
+          ? `${message} (after proxy fallback)`
+          : message
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className={styles.container}>
-      <section className={styles.commanderPanel}>
-        <header className={styles.sectionHeader}>
-          <h2>Orchestrate your collective</h2>
-          <p>
-            Select the frontier models and reasoning patterns to rally for your next synthesis.
-          </p>
-        </header>
-
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.controlGrid}>
-            <div className={styles.controlColumn}>
-              <label className={styles.label}>LLM models</label>
-              <div className={styles.dropdown}>
-                <button
-                  type="button"
-                  className={styles.dropdownToggle}
-                  onClick={() => setModelMenuOpen((open) => !open)}
-                  disabled={isLoading}
-                  aria-expanded={isModelMenuOpen}
-                >
-                  {selectedModels.length} model{selectedModels.length === 1 ? "" : "s"} enlisted
-                </button>
-                {isModelMenuOpen && (
-                  <div className={styles.dropdownMenu} role="menu">
-                    {MODEL_OPTIONS.map((option) => {
-                      const checked = selectedModels.includes(option.value);
-                      return (
-                        <label key={option.value} className={styles.dropdownOption}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleModelSelection(option.value)}
-                          />
-                          <span>
-                            <span className={styles.dropdownOptionLabel}>{option.label}</span>
-                            <span className={styles.dropdownOptionDescription}>
-                              {option.description}
-                            </span>
-                          </span>
-                        </label>
-                      );
-                    })}
-                    <p className={styles.dropdownHint}>
-                      Activate at least one model to kick off the hive intelligence.
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className={styles.selectionChips}>
-                {selectedModels.map((modelId) => {
-                  const model = MODEL_OPTIONS.find((option) => option.value === modelId);
-                  return (
-                    <span key={modelId} className={styles.chip}>
-                      {model?.label ?? modelId}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className={styles.controlColumn}>
-              <label className={styles.label}>Advanced reasoning strategies</label>
-              <div className={styles.dropdown}>
-                <button
-                  type="button"
-                  className={styles.dropdownToggle}
-                  onClick={() => setStrategyMenuOpen((open) => !open)}
-                  disabled={isLoading}
-                  aria-expanded={isStrategyMenuOpen}
-                >
-                  {selectedStrategies.length} strateg{selectedStrategies.length === 1 ? "y" : "ies"} engaged
-                </button>
-                {isStrategyMenuOpen && (
-                  <div className={styles.dropdownMenu} role="menu">
-                    {STRATEGY_OPTIONS.map((option) => {
-                      const checked = selectedStrategies.includes(option.value);
-                      return (
-                        <label key={option.value} className={styles.dropdownOption}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleStrategySelection(option.value)}
-                          />
-                          <span>
-                            <span className={styles.dropdownOptionLabel}>{option.label}</span>
-                            <span className={styles.dropdownOptionDescription}>
-                              {option.description}
-                            </span>
-                          </span>
-                        </label>
-                      );
-                    })}
-                    <p className={styles.dropdownHint}>
-                      Auto Orchestration will deselect other modes to let the system decide.
-                    </p>
-                  </div>
-                )}
-              </div>
-              <p className={styles.strategyDescription}>{orchestratorSummary.strategyDescription}</p>
-            </div>
+    <section className="space-y-6">
+      <header className="glass rounded-2xl border border-border/60 bg-panel/80 p-6 shadow-app1">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.32em] text-textdim">Commander</p>
+            <h2 className="text-2xl font-semibold text-text">Orchestration Console</h2>
+            <p className="max-w-2xl text-sm text-textdim">
+              Select the models and reasoning strategies to deploy for this mission. LLMHive will route insight across the hive and return a fused response.
+            </p>
           </div>
+          <div className="flex gap-2">
+            <div className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-textdim">Ctrl / Cmd + Enter to run</div>
+          </div>
+        </div>
+      </header>
 
-          <label className={styles.label} htmlFor="prompt">
-            Prompt the hive
+      <form
+        className="glass rounded-2xl border border-border/80 bg-panel/80 p-6 shadow-app2"
+        onSubmit={handleSubmit}
+      >
+        <div className="grid gap-6 lg:grid-cols-2">
+          <fieldset className="flex flex-col gap-4">
+            <legend className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">
+              Model Collective
+            </legend>
+            <div className="relative">
+              <button
+                type="button"
+                className="focus-ring flex w-full items-center justify-between rounded-xl border border-border bg-panel px-4 py-3 text-left text-sm font-medium text-text shadow-inner transition duration-app1 ease-[var(--ease)] hover:border-primary/70"
+                onClick={() => setModelMenuOpen((open) => !open)}
+                aria-expanded={isModelMenuOpen}
+              >
+                <span>
+                  {selectedModels.length} selected
+                </span>
+                <span className="text-textdim">▼</span>
+              </button>
+              {isModelMenuOpen && (
+                <div className="scrollbar-thin absolute z-30 mt-3 w-full max-h-80 overflow-y-auto rounded-2xl border border-border/80 bg-panel2 p-3 shadow-app2">
+                  {MODEL_OPTIONS.map((model) => (
+                    <label
+                      key={model.value}
+                      className="flex cursor-pointer gap-3 rounded-xl p-3 transition duration-app1 ease-[var(--ease)] hover:bg-primary/10"
+                    >
+                      <input
+                        type="checkbox"
+                        className="accent-primary"
+                        checked={selectedModels.includes(model.value)}
+                        onChange={() => toggleModelSelection(model.value)}
+                      />
+                      <span>
+                        <span className="block text-sm font-semibold text-text">{model.label}</span>
+                        <span className="mt-1 block text-xs text-textdim">{model.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                  <p className="mt-4 border-t border-border/60 pt-3 text-xs text-textdim">
+                    At least one model must remain active to deploy the hive.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedModels.map((modelId) => {
+                const model = MODEL_OPTIONS.find((item) => item.value === modelId);
+                if (!model) return null;
+                return (
+                  <span
+                    key={modelId}
+                    className="rounded-full border border-border/80 bg-panel px-3 py-1 text-xs text-text"
+                  >
+                    {model.label}
+                  </span>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-4">
+            <legend className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">
+              Reasoning Strategy
+            </legend>
+            <div className="relative">
+              <button
+                type="button"
+                className="focus-ring flex w-full items-center justify-between rounded-xl border border-border bg-panel px-4 py-3 text-left text-sm font-medium text-text shadow-inner transition duration-app1 ease-[var(--ease)] hover:border-primary/70"
+                onClick={() => setStrategyMenuOpen((open) => !open)}
+                aria-expanded={isStrategyMenuOpen}
+              >
+                <span>
+                  {selectedStrategies.length} active
+                </span>
+                <span className="text-textdim">▼</span>
+              </button>
+              {isStrategyMenuOpen && (
+                <div className="scrollbar-thin absolute z-30 mt-3 w-full max-h-80 overflow-y-auto rounded-2xl border border-border/80 bg-panel2 p-3 shadow-app2">
+                  {STRATEGY_OPTIONS.map((strategy) => (
+                    <label
+                      key={strategy.value}
+                      className="flex cursor-pointer gap-3 rounded-xl p-3 transition duration-app1 ease-[var(--ease)] hover:bg-primary/10"
+                    >
+                      <input
+                        type="checkbox"
+                        className="accent-primary"
+                        checked={selectedStrategies.includes(strategy.value)}
+                        onChange={() => toggleStrategySelection(strategy.value)}
+                      />
+                      <span>
+                        <span className="block text-sm font-semibold text-text">{strategy.label}</span>
+                        <span className="mt-1 block text-xs text-textdim">{strategy.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                  <p className="mt-4 border-t border-border/60 pt-3 text-xs text-textdim">
+                    Selecting Auto Orchestration deselects other strategies.
+                  </p>
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-textdim">{orchestratorSummary.strategyDescription}</p>
+          </fieldset>
+        </div>
+
+        <div className="mt-8 space-y-4">
+          <label className="flex flex-col gap-2 text-sm text-text">
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">Mission Brief</span>
+            <textarea
+              ref={textareaRef}
+              className="focus-ring scrollbar-thin min-h-[220px] w-full resize-y rounded-2xl border border-border bg-panel px-4 py-4 text-sm leading-relaxed text-text placeholder:text-textdim/60"
+              placeholder="Describe the outcome you want the hive to pursue..."
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+            />
           </label>
-          <textarea
-            id="prompt"
-            className={styles.textarea}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            placeholder="Design a multi-agent evaluation loop that critiques product requirement documents."
-            required
-            disabled={isLoading}
-          />
-
-          <div className={styles.formFooter}>
-            <div className={styles.summaryPanel}>
-              <span className={styles.summaryTitle}>Orchestration Blueprint</span>
-              <ul className={styles.summaryList}>
-                <li>
-                  <strong>Models:</strong> {orchestratorSummary.selectedModels.length > 0
-                    ? orchestratorSummary.selectedModels.map((model) => model.label).join(", ")
-                    : "--"}
-                </li>
-                <li>
-                  <strong>Strategies:</strong> {selectedStrategies.length > 0
-                    ? selectedStrategies
-                        .map((strategy) =>
-                          STRATEGY_OPTIONS.find((option) => option.value === strategy)?.label ?? strategy
-                        )
-                        .join(", ")
-                    : "--"}
-                </li>
+          <div className="grid gap-4 rounded-2xl border border-border/80 bg-panel/70 p-4 sm:grid-cols-2">
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">Ensemble</h4>
+              <ul className="mt-2 space-y-1 text-sm text-textdim">
+                {orchestratorSummary.selectedModels.map((model) => (
+                  <li key={model.value}>{model.label}</li>
+                ))}
               </ul>
             </div>
-            <button type="submit" className={styles.button} disabled={isLoading || selectedModels.length === 0}>
-              {isLoading ? "Orchestrating..." : "Launch orchestration"}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">Strategy</h4>
+              <p className="mt-2 text-sm text-textdim">
+                {orchestratorSummary.strategyLabel}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3 text-sm text-textdim">
+            <span className="inline-flex h-3 w-3 rounded-full bg-primary" aria-hidden />
+            <span>Hive memory enabled for this run.</span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="reset"
+              className="focus-ring rounded-xl border border-border px-4 py-2 text-sm font-semibold text-text transition duration-app1 ease-[var(--ease)] hover:border-primary/70"
+              onClick={() => {
+                setPrompt("");
+                setResult("");
+                setError("");
+                setSelectedModels([MODEL_OPTIONS[0].value]);
+                setSelectedStrategies([STRATEGY_OPTIONS[0].value]);
+              }}
+            >
+              Reset
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-black transition duration-app1 ease-[var(--ease)] hover:bg-primary2 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isLoading ? "Deploying hive..." : "Run orchestration"}
             </button>
           </div>
-        </form>
-      </section>
-
-      {error && <div className={styles.error}>Error: {error}</div>}
-
-      <section className={styles.resultSection}>
-        <header className={styles.sectionHeader}>
-          <h3>Hive Response</h3>
-          <p>
-            {isLoading
-              ? "Agents are collaborating in real-time. Streaming response incoming..."
-              : "The final synthesis from your curated collective appears below."}
-          </p>
-        </header>
-        <div className={styles.resultContainer}>
-          {isLoading && <div className={styles.loadingBar} aria-hidden="true" />}
-          <pre className={styles.resultPre}>
-            <code>{result}</code>
-          </pre>
         </div>
-      </section>
-    </div>
+      </form>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="glass rounded-2xl border border-border/70 bg-panel/80 p-6 shadow-app1">
+          <h3 className="text-lg font-semibold text-text">Orchestration Output</h3>
+          <p className="mt-2 text-sm text-textdim">
+            Responses are synthesized across the active agents and appear here with trace metadata.
+          </p>
+          <div className="scrollbar-thin mt-4 max-h-72 overflow-y-auto rounded-xl border border-border/60 bg-panel/70 p-4 text-sm leading-relaxed text-text">
+            {error && (
+              <p className="text-danger">{error}</p>
+            )}
+            {!error && (result || isLoading) && (
+              <pre className="whitespace-pre-wrap text-text">{result || "Awaiting hive response..."}</pre>
+            )}
+            {!error && !result && !isLoading && (
+              <p className="text-textdim">
+                Launch a mission to view the orchestrated answer.
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="glass rounded-2xl border border-border/70 bg-panel/80 p-6 shadow-app1">
+          <h3 className="text-lg font-semibold text-text">Execution Log</h3>
+          <p className="mt-2 text-sm text-textdim">
+            Track which agents engaged, their status, and any follow-up actions required.
+          </p>
+          <ul className="mt-4 space-y-3 text-sm text-textdim">
+            <li className="flex items-center justify-between rounded-xl border border-border/60 bg-panel/80 px-4 py-3">
+              <span>Router Agent</span>
+              <span className="text-xs font-semibold text-success">Complete</span>
+            </li>
+            <li className="flex items-center justify-between rounded-xl border border-border/60 bg-panel/80 px-4 py-3">
+              <span>Critic Squad</span>
+              <span className="text-xs font-semibold text-warning">Reviewing</span>
+            </li>
+            <li className="flex items-center justify-between rounded-xl border border-border/60 bg-panel/80 px-4 py-3">
+              <span>Research Circle</span>
+              <span className="text-xs font-semibold text-textdim">Queued</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }
