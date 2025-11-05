@@ -259,48 +259,48 @@ export default function PromptForm({ userId }: PromptFormProps) {
 
   return (
     <section className="space-y-6">
-      <header className="glass rounded-2xl border border-border/60 bg-panel/80 p-6 shadow-app1">
+      <header className="glass rounded-2xl border border-border bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.32em] text-textdim">Commander</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-textDim">Commander</p>
             <h2 className="text-2xl font-semibold text-text">Orchestration Console</h2>
-            <p className="max-w-2xl text-sm text-textdim">
+            <p className="max-w-2xl text-sm text-textDim">
               Select the models and reasoning strategies to deploy for this mission. LLMHive will route insight across the hive and return a fused response.
             </p>
           </div>
           <div className="flex gap-2">
-            <div className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-textdim">Ctrl / Cmd + Enter to run</div>
+            <div className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-widest text-textDim">Ctrl / Cmd + Enter to run</div>
           </div>
         </div>
       </header>
 
       <form
-        className="glass rounded-2xl border border-border/80 bg-panel/80 p-6 shadow-app2"
+        className="glass rounded-2xl border border-border bg-white p-6 shadow-lg"
         onSubmit={handleSubmit}
       >
         <div className="grid gap-6 lg:grid-cols-2">
           <fieldset className="flex flex-col gap-4">
-            <legend className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">
+            <legend className="text-xs font-semibold uppercase tracking-[0.28em] text-textDim">
               Model Collective
             </legend>
             <div className="relative">
               <button
                 type="button"
-                className="focus-ring flex w-full items-center justify-between rounded-xl border border-border bg-panel px-4 py-3 text-left text-sm font-medium text-text shadow-inner transition duration-app1 ease-[var(--ease)] hover:border-primary/70"
+                className="focus-ring flex w-full items-center justify-between rounded-xl border border-border bg-panel px-4 py-3 text-left text-sm font-medium text-text shadow-inner transition duration-150 ease-soft hover:border-primary/70"
                 onClick={() => setModelMenuOpen((open) => !open)}
                 aria-expanded={isModelMenuOpen}
               >
                 <span>
                   {selectedModels.length} selected
                 </span>
-                <span className="text-textdim">▼</span>
+                <span className="text-textDim">▼</span>
               </button>
               {isModelMenuOpen && (
-                <div className="scrollbar-thin absolute z-30 mt-3 w-full max-h-80 overflow-y-auto rounded-2xl border border-border/80 bg-panel2 p-3 shadow-app2">
+                <div className="scrollbar-thin absolute z-30 mt-3 w-full max-h-80 overflow-y-auto rounded-2xl border border-border bg-panelAlt p-3 shadow-lg">
                   {MODEL_OPTIONS.map((model) => (
                     <label
                       key={model.value}
-                      className="flex cursor-pointer gap-3 rounded-xl p-3 transition duration-app1 ease-[var(--ease)] hover:bg-primary/10"
+                      className="flex cursor-pointer gap-3 rounded-xl p-3 transition duration-150 ease-soft hover:bg-primary/10"
                     >
                       <input
                         type="checkbox"
@@ -310,11 +310,11 @@ export default function PromptForm({ userId }: PromptFormProps) {
                       />
                       <span>
                         <span className="block text-sm font-semibold text-text">{model.label}</span>
-                        <span className="mt-1 block text-xs text-textdim">{model.description}</span>
+                        <span className="mt-1 block text-xs text-textDim">{model.description}</span>
                       </span>
                     </label>
                   ))}
-                  <p className="mt-4 border-t border-border/60 pt-3 text-xs text-textdim">
+                  <p className="mt-4 border-t border-border pt-3 text-xs text-textDim">
                     At least one model must remain active to deploy the hive.
                   </p>
                 </div>
@@ -327,7 +327,7 @@ export default function PromptForm({ userId }: PromptFormProps) {
                 return (
                   <span
                     key={modelId}
-                    className="rounded-full border border-border/80 bg-panel px-3 py-1 text-xs text-text"
+                    className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-text"
                   >
                     {model.label}
                   </span>
@@ -337,27 +337,27 @@ export default function PromptForm({ userId }: PromptFormProps) {
           </fieldset>
 
           <fieldset className="flex flex-col gap-4">
-            <legend className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">
+            <legend className="text-xs font-semibold uppercase tracking-[0.28em] text-textDim">
               Reasoning Strategy
             </legend>
             <div className="relative">
               <button
                 type="button"
-                className="focus-ring flex w-full items-center justify-between rounded-xl border border-border bg-panel px-4 py-3 text-left text-sm font-medium text-text shadow-inner transition duration-app1 ease-[var(--ease)] hover:border-primary/70"
+                className="focus-ring flex w-full items-center justify-between rounded-xl border border-border bg-panel px-4 py-3 text-left text-sm font-medium text-text shadow-inner transition duration-150 ease-soft hover:border-primary/70"
                 onClick={() => setStrategyMenuOpen((open) => !open)}
                 aria-expanded={isStrategyMenuOpen}
               >
                 <span>
                   {selectedStrategies.length} active
                 </span>
-                <span className="text-textdim">▼</span>
+                <span className="text-textDim">▼</span>
               </button>
               {isStrategyMenuOpen && (
-                <div className="scrollbar-thin absolute z-30 mt-3 w-full max-h-80 overflow-y-auto rounded-2xl border border-border/80 bg-panel2 p-3 shadow-app2">
+                <div className="scrollbar-thin absolute z-30 mt-3 w-full max-h-80 overflow-y-auto rounded-2xl border border-border bg-panelAlt p-3 shadow-lg">
                   {STRATEGY_OPTIONS.map((strategy) => (
                     <label
                       key={strategy.value}
-                      className="flex cursor-pointer gap-3 rounded-xl p-3 transition duration-app1 ease-[var(--ease)] hover:bg-primary/10"
+                      className="flex cursor-pointer gap-3 rounded-xl p-3 transition duration-150 ease-soft hover:bg-primary/10"
                     >
                       <input
                         type="checkbox"
@@ -367,43 +367,43 @@ export default function PromptForm({ userId }: PromptFormProps) {
                       />
                       <span>
                         <span className="block text-sm font-semibold text-text">{strategy.label}</span>
-                        <span className="mt-1 block text-xs text-textdim">{strategy.description}</span>
+                        <span className="mt-1 block text-xs text-textDim">{strategy.description}</span>
                       </span>
                     </label>
                   ))}
-                  <p className="mt-4 border-t border-border/60 pt-3 text-xs text-textdim">
+                  <p className="mt-4 border-t border-border pt-3 text-xs text-textDim">
                     Selecting Auto Orchestration deselects other strategies.
                   </p>
                 </div>
               )}
             </div>
-            <p className="text-sm text-textdim">{orchestratorSummary.strategyDescription}</p>
+            <p className="text-sm text-textDim">{orchestratorSummary.strategyDescription}</p>
           </fieldset>
         </div>
 
         <div className="mt-8 space-y-4">
           <label className="flex flex-col gap-2 text-sm text-text">
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">Mission Brief</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-textDim">Mission Brief</span>
             <textarea
               ref={textareaRef}
-              className="focus-ring scrollbar-thin min-h-[220px] w-full resize-y rounded-2xl border border-border bg-panel px-4 py-4 text-sm leading-relaxed text-text placeholder:text-textdim/60"
+              className="focus-ring scrollbar-thin min-h-[220px] w-full resize-y rounded-2xl border border-border bg-panel px-4 py-4 text-sm leading-relaxed text-text placeholder:text-textDim/60"
               placeholder="Describe the outcome you want the hive to pursue..."
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
             />
           </label>
-          <div className="grid gap-4 rounded-2xl border border-border/80 bg-panel/70 p-4 sm:grid-cols-2">
+          <div className="grid gap-4 rounded-2xl border border-border bg-panel p-4 sm:grid-cols-2">
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">Ensemble</h4>
-              <ul className="mt-2 space-y-1 text-sm text-textdim">
+              <h4 className="text-xs font-semibold uppercase tracking-[0.28em] text-textDim">Ensemble</h4>
+              <ul className="mt-2 space-y-1 text-sm text-textDim">
                 {orchestratorSummary.selectedModels.map((model) => (
                   <li key={model.value}>{model.label}</li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-[0.28em] text-textdim">Strategy</h4>
-              <p className="mt-2 text-sm text-textdim">
+              <h4 className="text-xs font-semibold uppercase tracking-[0.28em] text-textDim">Strategy</h4>
+              <p className="mt-2 text-sm text-textDim">
                 {orchestratorSummary.strategyLabel}
               </p>
             </div>
@@ -411,14 +411,14 @@ export default function PromptForm({ userId }: PromptFormProps) {
         </div>
 
         <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3 text-sm text-textdim">
+          <div className="flex items-center gap-3 text-sm text-textDim">
             <span className="inline-flex h-3 w-3 rounded-full bg-primary" aria-hidden />
             <span>Hive memory enabled for this run.</span>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
               type="reset"
-              className="focus-ring rounded-xl border border-border px-4 py-2 text-sm font-semibold text-text transition duration-app1 ease-[var(--ease)] hover:border-primary/70"
+              className="focus-ring rounded-button border border-border bg-panel px-4 py-2 text-sm font-semibold text-text transition-colors duration-150 ease-soft hover:bg-white"
               onClick={() => {
                 setPrompt("");
                 setResult("");
@@ -432,7 +432,7 @@ export default function PromptForm({ userId }: PromptFormProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-black transition duration-app1 ease-[var(--ease)] hover:bg-primary2 disabled:cursor-not-allowed disabled:opacity-70"
+              className="focus-ring inline-flex items-center justify-center gap-2 rounded-button bg-primary px-5 py-2 text-sm font-semibold text-white transition-colors duration-150 ease-soft hover:bg-primaryLight disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isLoading ? "Deploying hive..." : "Run orchestration"}
             </button>
@@ -441,12 +441,12 @@ export default function PromptForm({ userId }: PromptFormProps) {
       </form>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="glass rounded-2xl border border-border/70 bg-panel/80 p-6 shadow-app1">
+        <div className="glass rounded-2xl border border-border bg-white p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-text">Orchestration Output</h3>
-          <p className="mt-2 text-sm text-textdim">
+          <p className="mt-2 text-sm text-textDim">
             Responses are synthesized across the active agents and appear here with trace metadata.
           </p>
-          <div className="scrollbar-thin mt-4 max-h-72 overflow-y-auto rounded-xl border border-border/60 bg-panel/70 p-4 text-sm leading-relaxed text-text">
+          <div className="scrollbar-thin mt-4 max-h-72 overflow-y-auto rounded-xl border border-border bg-panel p-4 text-sm leading-relaxed text-text">
             {error && (
               <p className="text-danger">{error}</p>
             )}
@@ -454,29 +454,29 @@ export default function PromptForm({ userId }: PromptFormProps) {
               <pre className="whitespace-pre-wrap text-text">{result || "Awaiting hive response..."}</pre>
             )}
             {!error && !result && !isLoading && (
-              <p className="text-textdim">
+              <p className="text-textDim">
                 Launch a mission to view the orchestrated answer.
               </p>
             )}
           </div>
         </div>
-        <div className="glass rounded-2xl border border-border/70 bg-panel/80 p-6 shadow-app1">
+        <div className="glass rounded-2xl border border-border bg-white p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-text">Execution Log</h3>
-          <p className="mt-2 text-sm text-textdim">
+          <p className="mt-2 text-sm text-textDim">
             Track which agents engaged, their status, and any follow-up actions required.
           </p>
-          <ul className="mt-4 space-y-3 text-sm text-textdim">
-            <li className="flex items-center justify-between rounded-xl border border-border/60 bg-panel/80 px-4 py-3">
+          <ul className="mt-4 space-y-3 text-sm text-textDim">
+            <li className="flex items-center justify-between rounded-xl border border-border bg-white px-4 py-3">
               <span>Router Agent</span>
               <span className="text-xs font-semibold text-success">Complete</span>
             </li>
-            <li className="flex items-center justify-between rounded-xl border border-border/60 bg-panel/80 px-4 py-3">
+            <li className="flex items-center justify-between rounded-xl border border-border bg-white px-4 py-3">
               <span>Critic Squad</span>
               <span className="text-xs font-semibold text-warning">Reviewing</span>
             </li>
-            <li className="flex items-center justify-between rounded-xl border border-border/60 bg-panel/80 px-4 py-3">
+            <li className="flex items-center justify-between rounded-xl border border-border bg-white px-4 py-3">
               <span>Research Circle</span>
-              <span className="text-xs font-semibold text-textdim">Queued</span>
+              <span className="text-xs font-semibold text-textDim">Queued</span>
             </li>
           </ul>
         </div>

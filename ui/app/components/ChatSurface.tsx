@@ -58,17 +58,17 @@ export default function ChatSurface({ initialMessages }: ChatSurfaceProps) {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="glass rounded-2xl border border-border/80 bg-panel/80 p-6 shadow-app1">
-        <h2 className="text-xl font-semibold text-text">Welcome to LLMHive</h2>
-        <p className="mt-2 text-sm text-textdim">
+      <div className="glass rounded-card border border-border bg-white p-8 text-center shadow-sm">
+        <h2 className="text-3xl font-semibold text-text">Welcome to LLMHive</h2>
+        <p className="mt-2 text-base text-textDim">
           Orchestrate multiple LLMs toward a single goal. Spin up a mission or load a template to get started.
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           {focusQuickActions.map((chip) => (
             <button
               key={chip}
               type="button"
-              className="focus-ring rounded-full border border-border/70 bg-panel px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-textdim transition duration-app1 ease-[var(--ease)] hover:border-primary/60"
+              className="focus-ring rounded-button border border-border bg-panel px-4 py-2 text-xs font-semibold uppercase tracking-wide text-textDim transition-colors duration-150 ease-soft hover:bg-white"
             >
               {chip}
             </button>
@@ -84,41 +84,41 @@ export default function ChatSurface({ initialMessages }: ChatSurfaceProps) {
 
       <form
         onSubmit={handleSubmit}
-        className="sticky bottom-0 mt-auto border-t border-border/80 bg-gradient-to-t from-bg via-bg/90 to-transparent pt-4"
+        className="sticky bottom-0 mt-auto border-t border-transparent bg-gradient-to-t from-bg via-bg/90 to-transparent pt-4"
       >
-        <div className="glass flex flex-col gap-3 rounded-2xl border border-border/80 bg-panel/80 p-3 shadow-app2">
+        <div className="glass flex flex-col gap-3 rounded-card border border-border bg-white p-4 shadow-lg">
           <div className="flex items-center justify-between px-2">
-            <span className="text-xs uppercase tracking-[0.28em] text-textdim">
+            <span className="text-xs font-semibold uppercase tracking-wide text-textDim">
               Composer
             </span>
-            <span className="text-xs text-textdim">Ctrl / Cmd + Enter to run</span>
+            <span className="text-xs text-textDim">Ctrl / Cmd + Enter to run</span>
           </div>
           <textarea
             ref={textareaRef}
-            className="focus-ring scrollbar-thin max-h-48 w-full resize-none rounded-xl border border-border/70 bg-panel px-4 py-3 text-sm leading-relaxed text-text placeholder:text-textdim/60"
+            className="focus-ring scrollbar-thin max-h-48 w-full resize-none rounded-card border border-border bg-panel px-4 py-3 text-sm leading-relaxed text-text placeholder:text-textDim/70"
             rows={1}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Describe the mission for your hive..."
           />
-          <div className="flex items-center justify-between gap-4 px-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-2">
             <div className="flex gap-2">
               <button
                 type="button"
-                className="focus-ring rounded-lg border border-border/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-textdim transition duration-app1 ease-[var(--ease)] hover:border-primary/60"
+                className="focus-ring rounded-button border border-border bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-wide text-textDim transition-colors duration-150 ease-soft hover:bg-white"
               >
                 Attach
               </button>
               <button
                 type="button"
-                className="focus-ring rounded-lg border border-border/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-textdim transition duration-app1 ease-[var(--ease)] hover:border-primary/60"
+                className="focus-ring rounded-button border border-border bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-wide text-textDim transition-colors duration-150 ease-soft hover:bg-white"
               >
                 Settings
               </button>
             </div>
             <button
               type="submit"
-              className="focus-ring inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-black transition duration-app1 ease-[var(--ease)] hover:bg-primary2"
+              className="focus-ring inline-flex items-center gap-2 rounded-button bg-primary px-5 py-2 text-sm font-semibold text-white transition-colors duration-150 ease-soft hover:bg-primaryLight"
             >
               Run
             </button>
@@ -130,16 +130,17 @@ export default function ChatSurface({ initialMessages }: ChatSurfaceProps) {
 }
 
 function ChatBubble({ message }: { message: ChatMessage }) {
-  const alignment = message.role === "user" ? "items-end" : "items-start";
+  const alignment = message.role === "user" ? "justify-end" : "justify-start";
   const label = message.role === "assistant" ? "LLMHive" : "You";
-  const accent = message.role === "assistant" ? "border-primary/60" : "border-border/80";
+  const accentBorder =
+    message.role === "assistant" ? "border-primary" : "border-border";
 
   return (
     <div className={`flex ${alignment}`}>
       <div
-        className={`glass w-full max-w-2xl rounded-2xl border ${accent} bg-panel/80 p-4 text-sm leading-relaxed text-text shadow-app1`}
+        className={`glass max-w-[75%] rounded-card border ${accentBorder} bg-white px-5 py-4 text-sm leading-relaxed text-text shadow-sm`}
       >
-        <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.28em] text-textdim">
+        <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wide text-textDim">
           <span>{label}</span>
           <span>{message.role}</span>
         </div>

@@ -15,7 +15,7 @@ function SignInButton() {
     >
       <button
         type="submit"
-        className="focus-ring rounded-xl border border-border/70 bg-panel px-4 py-2 text-sm font-semibold text-text transition duration-app1 ease-[var(--ease)] hover:border-primary/60"
+        className="focus-ring rounded-button border border-border bg-panel px-4 py-2 text-sm font-semibold text-text transition-colors duration-150 ease-soft hover:bg-white"
       >
         Sign in with GitHub
       </button>
@@ -25,8 +25,8 @@ function SignInButton() {
 
 function SignOutButton({ user }: { user: User }) {
   return (
-    <div className="flex flex-col items-start gap-3 text-sm text-textdim">
-      <span className="rounded-xl border border-border/70 bg-panel/70 px-3 py-2">
+    <div className="flex flex-col items-start gap-3 text-sm text-textDim">
+      <span className="rounded-card border border-border bg-panelAlt px-3 py-2">
         Signed in as {user?.name ?? user?.email ?? "Innovator"}
       </span>
       <form
@@ -37,7 +37,7 @@ function SignOutButton({ user }: { user: User }) {
       >
         <button
           type="submit"
-          className="focus-ring rounded-xl border border-border/70 bg-panel px-4 py-2 text-sm font-semibold text-text transition duration-app1 ease-[var(--ease)] hover:border-primary/60"
+          className="focus-ring rounded-button border border-border bg-panel px-4 py-2 text-sm font-semibold text-text transition-colors duration-150 ease-soft hover:bg-white"
         >
           Sign out
         </button>
@@ -72,38 +72,35 @@ function RightPanelContent() {
           <AgentCard key={agent.name} {...agent} />
         ))}
       </div>
-      <div className="glass rounded-2xl border border-border/70 bg-panel/80 p-4 shadow-app1">
+      <div className="glass rounded-card border border-border bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-text">Orchestration Visualizer</h3>
-          <span className="text-xs uppercase tracking-[0.28em] text-textdim">Beta</span>
+          <span className="text-xs uppercase tracking-wide text-textDim">Beta</span>
         </div>
-        <div
-          id="orc-graph"
-          className="mt-3 h-40 w-full rounded-xl border border-border/60 bg-panel/60"
-        />
-        <p className="mt-3 text-xs text-textdim">
+        <div className="mt-3 h-40 w-full rounded-card border border-border bg-panel" />
+        <p className="mt-3 text-xs text-textDim">
           Visual sequencing of agent hand-offs and synchronization pulses will render here.
         </p>
       </div>
-      <section className="glass rounded-2xl border border-border/70 bg-panel/80 p-4 shadow-app1">
+      <section className="glass rounded-card border border-border bg-white p-4 shadow-sm">
         <header className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-text">Context</h3>
           <button
             type="button"
-            className="focus-ring rounded-lg border border-border/70 px-3 py-1 text-xs text-textdim transition duration-app1 ease-[var(--ease)] hover:border-primary/60"
+            className="focus-ring rounded-button border border-border bg-panel px-3 py-1 text-xs text-textDim transition-colors duration-150 ease-soft hover:bg-white"
           >
             Add file
           </button>
         </header>
-        <ul className="mt-3 space-y-2 text-xs text-textdim">
+        <ul className="mt-3 space-y-2 text-xs text-textDim">
           <li>• Market research brief.pdf</li>
           <li>• EU compliance checklist.md</li>
           <li>• Persona targets.json</li>
         </ul>
       </section>
-      <section className="glass rounded-2xl border border-border/70 bg-panel/80 p-4 shadow-app1">
+      <section className="glass rounded-card border border-border bg-white p-4 shadow-sm">
         <h3 className="text-sm font-semibold text-text">Run Status</h3>
-        <ul className="mt-3 space-y-2 text-xs text-textdim">
+        <ul className="mt-3 space-y-2 text-xs text-textDim">
           <li className="flex items-center justify-between">
             <span>01 • Ingestion</span>
             <span className="text-success">Complete</span>
@@ -114,7 +111,7 @@ function RightPanelContent() {
           </li>
           <li className="flex items-center justify-between">
             <span>03 • Critique</span>
-            <span className="text-textdim">Pending</span>
+            <span className="text-textDim">Pending</span>
           </li>
         </ul>
       </section>
@@ -130,13 +127,13 @@ function CollapsedUtilities() {
     { label: "Files", icon: "📁" },
   ];
   return (
-    <div className="flex flex-col items-center gap-4 text-xs text-textdim">
+    <div className="flex flex-col items-center gap-4 text-xs text-textDim">
       {items.map((item) => (
         <div key={item.label} className="flex flex-col items-center gap-1">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-panel/80 text-lg text-text">
+          <span className="flex h-12 w-12 items-center justify-center rounded-card border border-border bg-panel text-lg text-text">
             {item.icon}
           </span>
-          <span className="uppercase tracking-[0.28em]">{item.label}</span>
+          <span className="uppercase tracking-wide">{item.label}</span>
         </div>
       ))}
     </div>
@@ -155,28 +152,32 @@ function AgentCard({
   const statusLabel =
     status === "thinking" ? "Thinking" : status === "queued" ? "Queued" : "Idle";
   const statusColor =
-    status === "thinking" ? "bg-primary" : status === "queued" ? "bg-warning" : "bg-textdim";
+    status === "thinking"
+      ? "bg-primary"
+      : status === "queued"
+      ? "bg-warning"
+      : "bg-textDim";
 
   return (
-    <article className="glass flex flex-col gap-2 rounded-2xl border border-border/70 bg-panel/80 p-4 shadow-app1">
+    <article className="glass flex flex-col gap-2 rounded-card border border-border bg-white p-4 shadow-sm">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/70 bg-panel/80 text-lg">
+          <span className="flex h-10 w-10 items-center justify-center rounded-card border border-border bg-panel text-lg">
             🤖
           </span>
           <div>
             <h4 className="text-sm font-semibold text-text">{name}</h4>
-            <p className="text-xs text-textdim">{description}</p>
+            <p className="text-xs text-textDim">{description}</p>
           </div>
         </div>
-        <span className={`inline-flex items-center gap-2 text-xs uppercase tracking-[0.28em] text-textdim`}>
+        <span className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-textDim">
           <span className={`h-2 w-2 rounded-full ${statusColor}`} aria-hidden />
           {statusLabel}
         </span>
       </header>
       <button
         type="button"
-        className="focus-ring self-start rounded-lg border border-border/70 px-3 py-1 text-xs text-textdim transition duration-app1 ease-[var(--ease)] hover:border-primary/60"
+        className="focus-ring self-start rounded-button border border-border bg-panel px-3 py-1 text-xs text-textDim transition-colors duration-150 ease-soft hover:bg-white"
       >
         Optimize Prompt
       </button>
@@ -192,13 +193,39 @@ export default async function Home() {
 
   return (
     <AppShell
-      authSlot={authControls}
       displayName={user?.name ?? user?.email ?? null}
       rightPanel={<RightPanelContent />}
       rightPanelCollapsed={<CollapsedUtilities />}
     >
+      <section className="glass rounded-card border border-border bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <h1 className="text-3xl font-semibold text-text">Multi-LLM Orchestration HQ</h1>
+            <p className="max-w-2xl text-base text-textDim">
+              Command, monitor, and refine every agent in your hive from a bright, enterprise-grade cockpit. Launch orchestrations or revisit conversations with a single click.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button className="focus-ring rounded-button bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors duration-150 ease-soft hover:bg-primaryLight" type="button">
+                New Orchestration
+              </button>
+              <button className="focus-ring rounded-button border border-border bg-panel px-5 py-3 text-sm font-semibold text-text transition-colors duration-150 ease-soft hover:bg-white" type="button">
+                Connect Provider
+              </button>
+              <button className="focus-ring rounded-button border border-border bg-panel px-5 py-3 text-sm font-semibold text-text transition-colors duration-150 ease-soft hover:bg-white" type="button">
+                Import Dataset
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col items-start gap-3 text-sm text-textDim lg:items-end">
+            <span className="rounded-card border border-border bg-panelAlt px-3 py-2">
+              Status: <span className="font-semibold text-success">Online</span>
+            </span>
+            {authControls}
+          </div>
+        </div>
+      </section>
       <ChatSurface />
-      <Suspense fallback={<div className="glass rounded-2xl border border-border/80 bg-panel/80 p-6 text-sm text-textdim">Loading orchestration cockpit…</div>}>
+      <Suspense fallback={<div className="glass rounded-card border border-border bg-white p-6 text-sm text-textDim shadow-sm">Loading orchestration cockpit…</div>}>
         <PromptForm userId={user?.email ?? user?.id ?? "guest"} />
       </Suspense>
     </AppShell>

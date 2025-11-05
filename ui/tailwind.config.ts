@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"],
+  darkMode: false,
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,33 +10,41 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#0b1220",
-        panel: "#0f1a2b",
-        panel2: "#131e33",
-        text: "#e6e9ef",
-        textdim: "#a8b1c4",
+        bg: "#ffffff",
+        panel: "#f7f8fa",
+        panelAlt: "#eceff4",
+        text: "#1f2937",
+        textDim: "#6b7280",
         primary: "#ffb31a",
-        primary2: "#ffc74d",
-        border: "#22324a",
-        glassStroke: "#c9d2e0",
-        success: "#2dd4bf",
-        warning: "#f59e0b",
-        danger: "#ef4444",
+        primaryLight: "#ffc74d",
+        border: "#d1d5db",
+        success: "#1f9d55",
+        warning: "#b7791f",
+        danger: "#dc2626",
       },
       borderRadius: {
+        card: "8px",
+        button: "16px",
         xl: "24px",
-        lg: "16px",
       },
       boxShadow: {
-        app1: "0 2px 8px rgba(0,0,0,.35)",
-        app2: "0 6px 24px rgba(0,0,0,.45)",
+        sm: "0 1px 3px rgba(0,0,0,0.1)",
+        lg: "0 4px 20px rgba(0,0,0,0.1)",
+      },
+      fontFamily: {
+        sans: [
+          "Inter",
+          "Plus Jakarta Sans",
+          "Roboto Flex",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "sans-serif",
+        ],
       },
       transitionTimingFunction: {
-        app: "cubic-bezier(.22,.61,.36,1)",
-      },
-      transitionDuration: {
-        app1: "160ms",
-        app2: "260ms",
+        soft: "cubic-bezier(0.22,0.61,0.36,1)",
       },
     },
   },
