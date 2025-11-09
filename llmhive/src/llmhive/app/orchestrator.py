@@ -106,7 +106,59 @@ class OrchestrationArtifacts:
     used_stub_provider: bool
 
 
+class _OutputFormatterV1:
+    """Enforces a clean, consistent final Markdown structure."""
+    def __init__(self, require_citations=True):
+        self.require_citations = require_citations
+
+    def format(self, question:str, final_answer:str, web_results=None, assumptions=None, notes=None):
+        web_results = web_results or []
+        assumptions = [a for a in (assumptions or []) if a and a.strip()]
+        notes = [n for n in (notes or []) if n and n.strip()]
+
+        # Build sources list from web_results if present
+        src_lines = []
+        for d in web_results[:6]:
+            title = getattr(d, "title", None) or (d.get("title") if isinstance(d, dict) else None) or "source"
+            url = getattr(d, "url", None) or (d.get("url") if isinstance(d, dict) else None) or ""
+            snippet = getattr(d, "snippet", None) or (d.get("snippet") if isinstance(d, dict) else None) or ""
+            item = f"- **{title}** — {snippet[:160]}".rstrip()
+            if url: item += f"  \n  {url}"
+            src_lines.append(item)
+
+        # Assemble structured markdown
+        out = []
+        out.append("## Final Answer")
+        out.append(final_answer.strip())
+
+        # Make sure we always give quick scan
+        out.append("\n---\n### TL;DR")
+        tl = final_answer.strip().splitlines()[0]
+        if len(tl) > 240: tl = tl[:237] + "…"
+        out.append(f"- {tl}")
+
+        # Optional assumptions
+        if assumptions:
+            out.append("\n### Assumptions used")
+            for a in assumptions:
+                out.append(f"- {a.strip()}")
+
+        # Sources from web (if any)
+        if src_lines and self.require_citations:
+            out.append("\n### Sources")
+            out.extend(src_lines)
+
+        # No debug/notes after final unless explicitly requested
+        return "\n".join(out).strip()
+
 class Orchestrator:
+
+    def _needs_clarification(self, prompt:str)->bool:
+        """Very light heuristic: only true when critical fields are obviously missing."""
+        low = prompt.lower()
+        # Add lightweight checks; keep conservative to avoid loops
+        triggers = ["tbd", "unknown", "???", "<required", "{required}"]
+        return any(t in low for t in triggers)
     """Coordinates the multi-stage collaboration workflow across models."""
 
     def __init__(self, providers: Dict[str, LLMProvider] | None = None) -> None:
@@ -315,6 +367,21 @@ class Orchestrator:
                 if snippet:
                     supporting_notes.append(f"Web: {doc.title or 'result'} — {self._truncate(snippet, 220)}")
 
+            # Incorporate web search context into augmented_prompt for initial answers
+            web_lines = ["Context from web search:"]
+            for doc in web_documents[:3]:
+                snippet = doc.snippet or doc.title
+                if snippet:
+                    web_lines.append(f"- {doc.title or 'result'}: {self._truncate(snippet, 220)}")
+            web_block = "\n".join(web_lines)
+            if context_prompt:
+                augmented_prompt = (
+                    f"Context from memory:\n{context_prompt}\n\n"
+                    f"{web_block}\n\n"
+                    f"Optimized request:\n{plan_prompt}"
+                )
+            else:
+                augmented_prompt = f"{web_block}\n\nOptimized request:\n{plan_prompt}"
         # Execute the structured plan (excluding critique/synthesis which are handled separately)
         for step in plan.steps:
             if step.role in (PlanRole.CRITIQUE, PlanRole.SYNTHESIZE):
@@ -495,12 +562,7 @@ class Orchestrator:
         except Exception as exc:  # pragma: no cover - evaluation is best effort
             logger.warning("Evaluation stage failed: %s", exc)
 
-        confirmation_notes = self._confirmation_checks(
-            prompt=prompt,
-            final_answer=final_response.content,
-            knowledge_snippets=knowledge_snippets,
-            web_documents=web_documents,
-        )
+        confirmation_notes = []
 
         usage_summary = self._summarize_usage(
             initial_responses,
@@ -705,8 +767,6 @@ class Orchestrator:
         critique_tasks: list[Tuple[str, str, asyncio.Task[LLMResult]]] = []
         for author_result in initial_responses:
             for target_result in initial_responses:
-                if author_result.model == target_result.model:
-                    continue
                 provider = self._select_provider(author_result.model)
                 task = asyncio.create_task(
                     provider.critique(
