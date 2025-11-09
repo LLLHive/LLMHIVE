@@ -151,7 +151,22 @@ class _OutputFormatterV1:
         # No debug/notes after final unless explicitly requested
         return "\n".join(out).strip()
 
+try:
+    from app.models.claude_client import ClaudeClient
+except Exception:
+    ClaudeClient = None
 class Orchestrator:
+
+    def _call_claude(self, model: str, user_prompt: str, *, system_prompt: str=None, max_tokens: int=1200, temperature: float=0.2) -> str:
+        if ClaudeClient is None:
+            raise RuntimeError("ClaudeClient not available")
+        import os
+        api_key = os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise RuntimeError("CLAUDE_API_KEY not set")
+        client = ClaudeClient(api_key=api_key)
+        messages = [{"role": "user", "content": user_prompt}]
+        return client.complete(model=model, messages=messages, max_tokens=max_tokens, temperature=temperature, system=system_prompt)
 
     def _needs_clarification(self, prompt:str)->bool:
         """Very light heuristic: only true when critical fields are obviously missing."""
