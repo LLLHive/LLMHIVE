@@ -68,3 +68,20 @@ input:focus-visible {
   background: rgba(209, 213, 219, 0.6);
   border-radius: 999px;
 }
+
+/* Base dark background and text (in case a page forgets classes) */
+html, body {
+  background-color: #0b0f16; /* matches bg */
+  color: #e6e9ef;            /* matches text */
+}
+
+/* Smoked-glass panel helper used by cards/bars if needed */
+.glass {
+  /* Neutral dark panel w/ glass effect */
+  background-color: rgba(17, 24, 39, 0.8); /* ~ panel/80 */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  border: 1px solid #22324a; /* border */
+  border-radius: 12px;
+}
