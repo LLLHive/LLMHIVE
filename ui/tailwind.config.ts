@@ -9,14 +9,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#ffffff",
-        panel: "#f7f8fa",
-        panelAlt: "#eceff4",
-        text: "#1f2937",
-        textDim: "#6b7280",
+        bg: '#0b0f16',
+        panel: '#111827',
+        panelAlt: '#131e33',
+        text: '#e6e9ef',
+        textDim: '#9aa3b2',
+        border: '#22324a',
+        gold: '#ffb31a',
+        goldLight: '#ffc74d',
+        metal: '#c9d2e0',
         primary: "#ffb31a",
         primaryLight: "#ffc74d",
-        border: "#d1d5db",
         success: "#1f9d55",
         warning: "#b7791f",
         danger: "#dc2626",
