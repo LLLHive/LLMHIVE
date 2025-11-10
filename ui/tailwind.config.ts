@@ -1,5 +1,12 @@
 import type { Config } from 'tailwindcss'
 
+<<<<<<< HEAD
+=======
+/**
+ * Dark theme tokens for LLMHive.
+ * NOTE: This file lives in /ui/, so content globs are relative to that folder.
+ */
+>>>>>>> origin/main
 const config = {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
@@ -27,9 +34,22 @@ const config = {
         glass: '0 8px 24px rgba(0,0,0,0.35)',
       },
       fontFamily: {
+        // Inter first, then system fallbacks
         sans: [
+<<<<<<< HEAD
           'Inter','ui-sans-serif','system-ui','Segoe UI','Roboto',
           'Helvetica','Arial','Apple Color Emoji','Segoe UI Emoji'
+=======
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica',
+          'Arial',
+          'Apple Color Emoji',
+          'Segoe UI Emoji',
+>>>>>>> origin/main
         ],
       },
     },
