@@ -1,5 +1,5 @@
 export const ORCHESTRATION_PATH = "/api/v1/orchestration/";
-export const ORCHESTRATION_PROXY_PATH = "/api/v1/orchestration";
+export const ORCHESTRATION_PATH = "/api/v1/orchestration";
 
 function stripTrailingSlashes(value: string): string {
   return value.replace(/\/+$/, "");

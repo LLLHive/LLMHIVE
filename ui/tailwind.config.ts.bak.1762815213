@@ -58,4 +58,3 @@ const config = {
 } satisfies Config
 
 export default config
-// WARN: metal color not found where expected; no insertion performed.
