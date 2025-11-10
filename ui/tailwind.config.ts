@@ -1,53 +1,40 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss'
 
-const config: Config = {
+const config = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
       colors: {
-        bg: "#ffffff",
-        panel: "#f7f8fa",
-        panelAlt: "#eceff4",
-        text: "#1f2937",
-        textDim: "#6b7280",
-        primary: "#ffb31a",
-        primaryLight: "#ffc74d",
-        border: "#d1d5db",
-        success: "#1f9d55",
-        warning: "#b7791f",
-        danger: "#dc2626",
+        bg: '#0b0f16',
+        panel: '#111827',
+        'panel-alt': '#131e33',
+        text: '#e6e9ef',
+        'text-dim': '#9aa3b2',
+        border: '#22324a',
+        gold: '#ffb31a',
+        'gold-light': '#ffc74d',
+        metal: '#c9d2e0',
       },
       borderRadius: {
-        card: "8px",
-        button: "16px",
-        xl: "24px",
+        xl: '12px',
+        '2xl': '16px',
       },
       boxShadow: {
-        sm: "0 1px 3px rgba(0,0,0,0.1)",
-        lg: "0 4px 20px rgba(0,0,0,0.1)",
+        glass: '0 8px 24px rgba(0,0,0,0.35)',
       },
       fontFamily: {
         sans: [
-          "Inter",
-          "Plus Jakarta Sans",
-          "Roboto Flex",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "sans-serif",
+          'Inter','ui-sans-serif','system-ui','Segoe UI','Roboto',
+          'Helvetica','Arial','Apple Color Emoji','Segoe UI Emoji'
         ],
-      },
-      transitionTimingFunction: {
-        soft: "cubic-bezier(0.22,0.61,0.36,1)",
       },
     },
   },
   plugins: [],
-};
+} satisfies Config
 
-export default config;
+export default config

@@ -3,68 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --glass-fill: rgba(255, 255, 255, 0.6);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.1);
-  --radius-card: 8px;
-  --radius-button: 16px;
+  --glass-fill: rgba(17, 24, 39, 0.80);
+  --glass-border: #22324a;
+  --glass-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
-@layer base {
-  html,
-  body,
-  :host {
-    height: 100%;
-    background-color: theme("colors.bg");
-    color: theme("colors.text");
-    font-family: theme("fontFamily.sans");
-  }
-
-  body {
-    @apply antialiased bg-bg text-text;
-  }
-
-  ::selection {
-    @apply bg-primary text-white;
-  }
-
-  a {
-    @apply text-primary transition-colors duration-150 ease-soft;
-  }
-
-  button,
-  input,
-  textarea {
-    font-family: inherit;
-  }
-}
+html, body { background-color: #0b0f16; color: #e6e9ef; }
 
 .glass {
-  background: var(--glass-fill);
-  border: 1px solid rgba(209, 213, 219, 0.6);
-  backdrop-filter: saturate(130%) blur(6px);
-  box-shadow: var(--shadow-sm);
-  border-radius: var(--radius-card);
+  background-color: var(--glass-fill);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: var(--glass-shadow);
 }
 
-.focus-ring:focus-visible,
-button:focus-visible,
-a:focus-visible,
-textarea:focus-visible,
-input:focus-visible {
-  outline: 2px solid #ffc74d;
-  outline-offset: 2px;
-}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background-color: #22324a; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
 
-.scrollbar-thin::-webkit-scrollbar {
-  width: 8px;
-}
+.bg-white,.bg-gray-50,.bg-slate-50,.bg-neutral-50 { background-color: #111827 !important; }
+.bg-gray-100,.bg-slate-100,.bg-neutral-100 { background-color: #131e33 !important; }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
+.text-black,.text-gray-900,.text-slate-900,.text-neutral-900 { color: #e6e9ef !important; }
+.text-gray-600,.text-gray-500,.text-slate-600,.text-slate-500,.text-neutral-500 { color: #9aa3b2 !important; }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(209, 213, 219, 0.6);
-  border-radius: 999px;
-}
+.border-gray-200,.border-gray-300,.border-slate-200,.border-slate-300,.border-neutral-200,.border-neutral-300 { border-color: #22324a !important; }
+
+.hover\:bg-gray-50:hover,.hover\:bg-slate-50:hover,.hover\:bg-neutral-50:hover { background-color: #131e33 !important; }
+
+.bg-blue-500,.bg-indigo-500 { background-color: #ffb31a !important; }
+.hover\:bg-blue-600:hover,.hover\:bg-indigo-600:hover { background-color: #ffc74d !important; }
+.text-blue-500,.text-indigo-500 { color: #ffb31a !important; }
+.ring-blue-500,.focus\:ring-blue-500:focus { --tw-ring-color: #ffb31a !important; }
