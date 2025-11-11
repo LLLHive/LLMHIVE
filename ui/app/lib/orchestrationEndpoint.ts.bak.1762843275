@@ -1,0 +1,8 @@
+export const ORCHESTRATION_PATH = "/api/v1/orchestration/";     // canonical (trailing slash)
+export const ORCHESTRATION_PROXY_PATH = "/api/v1/orchestration"; // legacy (no trailing slash)
+
+/** Build full orchestrator URL using explicit base when provided, otherwise same-origin proxy. */
+export function buildOrchestrationUrl(base?: string): string {
+  const p = ORCHESTRATION_PATH;
+  return base ? base.replace(/\/+$/, "") + p : p;
+}
