@@ -1,61 +1,41 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from "tailwindcss";
 
-<<<<<<< HEAD
-=======
-/**
- * Dark theme tokens for LLMHive.
- * NOTE: This file lives in /ui/, so content globs are relative to that folder.
- */
->>>>>>> origin/main
-const config = {
+const config: Config = {
   content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./ui/**/*.{js,ts,jsx,tsx,mdx}"
   ],
   theme: {
     extend: {
       colors: {
-        bg: '#0b0f16',
-        panel: '#111827',
-        'panel-alt': '#131e33',
-        text: '#e6e9ef',
-        'text-dim': '#9aa3b2',
-        border: '#22324a',
-        gold: '#ffb31a',
-        'gold-light': '#ffc74d',
-        metal: '#c9d2e0',
+        bg: "#0b0f16",
+        panel: "#111827",
+        "panel-alt": "#131e33",
+        text: "#e6e9ef",
+        "text-dim": "#9aa3b2",
+        border: "#22324a",
+        metal: "#c9d2e0",
+        gold: "#ffb31a",
+        "gold-light": "#ffc74d",
+        // semantic
+        success: "#22c55e",
+        warning: "#f59e0b",
+        danger: "#ef4444",
+        // aliases (keep both old & new keys to avoid regressions)
+        panelAlt: "#131e33",
+        textDim: "#9aa3b2",
+        primary: "#ffb31a",
+        "primary-light": "#ffc74d"
       },
       borderRadius: {
-        xl: '12px',
-        '2xl': '16px',
-      },
-      boxShadow: {
-        glass: '0 8px 24px rgba(0,0,0,0.35)',
-      },
-      fontFamily: {
-        // Inter first, then system fallbacks
-        sans: [
-<<<<<<< HEAD
-          'Inter','ui-sans-serif','system-ui','Segoe UI','Roboto',
-          'Helvetica','Arial','Apple Color Emoji','Segoe UI Emoji'
-=======
-          'Inter',
-          'ui-sans-serif',
-          'system-ui',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica',
-          'Arial',
-          'Apple Color Emoji',
-          'Segoe UI Emoji',
->>>>>>> origin/main
-        ],
-      },
-    },
+        xl: "12px",
+        "2xl": "16px"
+      }
+    }
   },
-  plugins: [],
-} satisfies Config
+  plugins: []
+};
 
-export default config
-// WARN: metal color not found where expected; no insertion performed.
+export default config;

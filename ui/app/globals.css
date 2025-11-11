@@ -1,110 +1,28 @@
-/* ui/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Dark base + smoked-glass helpers */
+/* Smoked-glass tokens */
 :root {
-<<<<<<< HEAD
-  --glass-fill: rgba(17, 24, 39, 0.80);
-  --glass-border: #22324a;
-  --glass-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  --glass-fill: rgba(255, 255, 255, 0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-html, body { background-color: #0b0f16; color: #e6e9ef; }
-=======
-  /* smoked-glass tokens for dark UI */
-  --glass-fill: rgba(17, 24, 39, 0.80); /* panel (#111827) @ 80% */
-  --glass-border: #22324a;
-  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+@layer base {
+  html, body, :host {
+    height: 100%;
+    background-color: theme("colors.bg");
+    color: theme("colors.text");
+    font-family: theme("fontFamily.sans");
+  }
 }
 
-/* Safety: page-wide dark surface + readable text */
-html, body {
-  background-color: #0b0f16; /* bg */
-  color: #e6e9ef;            /* text */
+@layer utilities {
+  .glass { background-color: var(--glass-fill); backdrop-filter: blur(8px); }
+  .rounded-card { border-radius: 12px; }
+  .rounded-button { border-radius: 8px; }
+  .focus-ring:focus { outline: 2px solid theme("colors.gold"); outline-offset: 2px; }
+  .ease-soft { transition-timing-function: cubic-bezier(.25,.8,.25,1); }
+  .scrollbar-thin { scrollbar-width: thin; }
 }
->>>>>>> origin/main
-
-/* Optional utility: apply smoked-glass panel look */
-.glass {
-  background-color: var(--glass-fill);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  box-shadow: var(--glass-shadow);
-}
-
-<<<<<<< HEAD
-=======
-/* Subtle dark scrollbars */
->>>>>>> origin/main
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background-color: #22324a; border-radius: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-
-<<<<<<< HEAD
-.bg-white,.bg-gray-50,.bg-slate-50,.bg-neutral-50 { background-color: #111827 !important; }
-.bg-gray-100,.bg-slate-100,.bg-neutral-100 { background-color: #131e33 !important; }
-
-.text-black,.text-gray-900,.text-slate-900,.text-neutral-900 { color: #e6e9ef !important; }
-.text-gray-600,.text-gray-500,.text-slate-600,.text-slate-500,.text-neutral-500 { color: #9aa3b2 !important; }
-
-.border-gray-200,.border-gray-300,.border-slate-200,.border-slate-300,.border-neutral-200,.border-neutral-300 { border-color: #22324a !important; }
-
-.hover\:bg-gray-50:hover,.hover\:bg-slate-50:hover,.hover\:bg-neutral-50:hover { background-color: #131e33 !important; }
-
-.bg-blue-500,.bg-indigo-500 { background-color: #ffb31a !important; }
-.hover\:bg-blue-600:hover,.hover\:bg-indigo-600:hover { background-color: #ffc74d !important; }
-.text-blue-500,.text-indigo-500 { color: #ffb31a !important; }
-.ring-blue-500,.focus\:ring-blue-500:focus { --tw-ring-color: #ffb31a !important; }
-=======
-/* -----------------------------------------------------------
-   Global safe overrides so existing light classes render dark
-   (lets you avoid touching dozens of components right now)
-   ----------------------------------------------------------- */
-
-/* Light backgrounds → dark panels */
-.bg-white,
-.bg-gray-50,
-.bg-slate-50,
-.bg-neutral-50 { background-color: #111827 !important; } /* panel */
-.bg-gray-100,
-.bg-slate-100,
-.bg-neutral-100 { background-color: #131e33 !important; } /* panelAlt */
-
-/* Text colors → dark tokens */
-.text-black,
-.text-gray-900,
-.text-slate-900,
-.text-neutral-900 { color: #e6e9ef !important; } /* text */
-.text-gray-600,
-.text-gray-500,
-.text-slate-600,
-.text-slate-500,
-.text-neutral-500 { color: #9aa3b2 !important; } /* textDim */
-
-/* Borders → dark token */
-.border-gray-200,
-.border-gray-300,
-.border-slate-200,
-.border-slate-300,
-.border-neutral-200,
-.border-neutral-300 { border-color: #22324a !important; } /* border */
-
-/* Hover panels */
-.hover\:bg-gray-50:hover,
-.hover\:bg-slate-50:hover,
-.hover\:bg-neutral-50:hover { background-color: #131e33 !important; } /* panelAlt */
-
-/* Common primary blues → brand gold */
-.bg-blue-500,
-.bg-indigo-500 { background-color: #ffb31a !important; }      /* gold */
-.hover\:bg-blue-600:hover,
-.hover\:bg-indigo-600:hover { background-color: #ffc74d !important; } /* goldLight */
-.text-blue-500,
-.text-indigo-500 { color: #ffb31a !important; } /* gold */
-.ring-blue-500,
-.focus\:ring-blue-500:focus { --tw-ring-color: #ffb31a !important; } /* gold */
->>>>>>> origin/main
