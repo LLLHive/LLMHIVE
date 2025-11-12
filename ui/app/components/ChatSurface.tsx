@@ -58,9 +58,9 @@ export default function ChatSurface({ initialMessages }: ChatSurfaceProps) {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="glass rounded-card border border-border bg-panel p-8 text-center shadow-sm">
+      <div className="glass rounded-xl border border-border bg-panel p-8 text-center shadow-sm">
         <h2 className="text-3xl font-semibold text-text">Welcome to LLMHive</h2>
-        <p className="mt-2 text-base text-textDim">
+        <p className="mt-2 text-base text-text-dim">
           Orchestrate multiple LLMs toward a single goal. Spin up a mission or load a template to get started.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -68,7 +68,7 @@ export default function ChatSurface({ initialMessages }: ChatSurfaceProps) {
             <button
               key={chip}
               type="button"
-              className="focus-ring rounded-button border border-border bg-panel px-4 py-2 text-xs font-semibold uppercase tracking-wide text-textDim transition-colors duration-150 ease-soft hover:bg-panel"
+              className="focus-ring rounded-lg border border-border bg-panel px-4 py-2 text-xs font-semibold uppercase tracking-wide text-text-dim transition-colors duration-150 ease-soft hover:bg-panel"
             >
               {chip}
             </button>
@@ -86,16 +86,16 @@ export default function ChatSurface({ initialMessages }: ChatSurfaceProps) {
         onSubmit={handleSubmit}
         className="sticky bottom-0 mt-auto border-t border-transparent bg-gradient-to-t from-bg via-bg/90 to-transparent pt-4"
       >
-        <div className="glass flex flex-col gap-3 rounded-card border border-border bg-panel p-4 shadow-lg">
+        <div className="glass flex flex-col gap-3 rounded-xl border border-border bg-panel p-4 shadow-lg">
           <div className="flex items-center justify-between px-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-textDim">
+            <span className="text-xs font-semibold uppercase tracking-wide text-text-dim">
               Composer
             </span>
-            <span className="text-xs text-textDim">Ctrl / Cmd + Enter to run</span>
+            <span className="text-xs text-text-dim">Ctrl / Cmd + Enter to run</span>
           </div>
           <textarea
             ref={textareaRef}
-            className="focus-ring scrollbar-thin max-h-48 w-full resize-none rounded-card border border-border bg-panel px-4 py-3 text-sm leading-relaxed text-text placeholder:text-textDim/70"
+            className="focus-ring scrollbar-thin max-h-48 w-full resize-none rounded-xl border border-border bg-panel px-4 py-3 text-sm leading-relaxed text-text placeholder:text-text-dim/70"
             rows={1}
             value={input}
             onChange={(event) => setInput(event.target.value)}
@@ -105,20 +105,20 @@ export default function ChatSurface({ initialMessages }: ChatSurfaceProps) {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="focus-ring rounded-button border border-border bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-wide text-textDim transition-colors duration-150 ease-soft hover:bg-panel"
+                className="focus-ring rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-wide text-text-dim transition-colors duration-150 ease-soft hover:bg-panel"
               >
                 Attach
               </button>
               <button
                 type="button"
-                className="focus-ring rounded-button border border-border bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-wide text-textDim transition-colors duration-150 ease-soft hover:bg-panel"
+                className="focus-ring rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-wide text-text-dim transition-colors duration-150 ease-soft hover:bg-panel"
               >
                 Settings
               </button>
             </div>
             <button
               type="submit"
-              className="focus-ring inline-flex items-center gap-2 rounded-button bg-primary px-5 py-2 text-sm font-semibold text-white transition-colors duration-150 ease-soft hover:bg-primaryLight"
+              className="focus-ring inline-flex items-center gap-2 rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-white transition-colors duration-150 ease-soft hover:bg-goldLight"
             >
               Run
             </button>
@@ -133,14 +133,14 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   const alignment = message.role === "user" ? "justify-end" : "justify-start";
   const label = message.role === "assistant" ? "LLMHive" : "You";
   const accentBorder =
-    message.role === "assistant" ? "border-primary" : "border-border";
+    message.role === "assistant" ? "border-gold" : "border-border";
 
   return (
     <div className={`flex ${alignment}`}>
       <div
-        className={`glass max-w-[75%] rounded-card border ${accentBorder} bg-panel px-5 py-4 text-sm leading-relaxed text-text shadow-sm`}
+        className={`glass max-w-[75%] rounded-xl border ${accentBorder} bg-panel px-5 py-4 text-sm leading-relaxed text-text shadow-sm`}
       >
-        <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wide text-textDim">
+        <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wide text-text-dim">
           <span>{label}</span>
           <span>{message.role}</span>
         </div>
