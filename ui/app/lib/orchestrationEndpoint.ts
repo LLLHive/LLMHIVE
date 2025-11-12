@@ -1,10 +1,7 @@
-export const ORCHESTRATION_PATH = "/api/v1/orchestration/"; // NOTE: trailing slash required
+export const ORCHESTRATION_PATH = "/api/v1/orchestration/";
 
-/**
- * Build a full orchestration URL using NEXT_PUBLIC_API_BASE_URL when defined.
- * Ensures we don't end up with double slashes.
- */
-export function buildOrchestrationUrl(base?: string) {
-  const root = (base ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/+$/, "");
-  return `${root}${ORCHESTRATION_PATH}`;
+/** Build absolute orchestrator URL if NEXT_PUBLIC_API_BASE_URL is set. */
+export function orchestrationUrl(base?: string) {
+  const origin = (base || process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/,"");
+  return origin ? `${origin}${ORCHESTRATION_PATH}` : ORCHESTRATION_PATH;
 }

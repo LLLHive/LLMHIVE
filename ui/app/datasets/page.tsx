@@ -1,17 +1,8 @@
 import AppShell from '../components/AppShell';
-import LoginPage from '../components/LoginPage';
-import { auth } from '@/auth';
-
-export default async function DatasetsPage() {
-  const session = await auth?.();
-  if (!session?.user) {
-    return <LoginPage />;
-  }
+export default function DatasetsPage() {
   return (
     <AppShell title="Datasets">
-      <div className="mx-auto max-w-4xl text-text-dim py-10">
-        <p>Datasets coming soon…</p>
-      </div>
+      <p className="text-sm text-text-dim">🗂️ <strong>Datasets</strong> page is coming soon.</p>
     </AppShell>
   );
 }
