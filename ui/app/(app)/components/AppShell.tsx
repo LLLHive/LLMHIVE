@@ -1,3 +1,3 @@
 'use client';
-export { default } from '../../components/AppShell';
-export * from '../../components/AppShell';
+export { default } from '../components/AppShell';
+export * from '../components/AppShell';
