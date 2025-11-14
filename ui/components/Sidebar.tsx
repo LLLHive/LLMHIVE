@@ -1,0 +1,153 @@
+'use client'
+
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
+import type { Conversation } from "@/lib/types"
+import { Plus, Pin, PinOff, Trash2 } from "lucide-react"
+
+interface SidebarProps {
+  conversations: Conversation[]
+  currentConversationId: string | null
+  onNewChat: () => void
+  onSelectConversation: (id: string) => void
+  onDeleteConversation: (id: string) => void
+  onTogglePin: (id: string) => void
+}
+
+const formatTimestamp = (date: Date) => {
+  try {
+    return new Date(date).toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  } catch {
+    return ""
+  }
+}
+
+export function Sidebar({
+  conversations,
+  currentConversationId,
+  onNewChat,
+  onSelectConversation,
+  onDeleteConversation,
+  onTogglePin,
+}: SidebarProps) {
+  const pinned = conversations.filter((conv) => conv.pinned)
+  const others = conversations.filter((conv) => !conv.pinned)
+
+  return (
+    <aside className="w-[280px] border-r border-border bg-card/40 backdrop-blur-xl flex flex-col">
+      <div className="p-4 border-b border-border">
+        <Button className="w-full justify-center gap-2 bronze-gradient text-background" onClick={onNewChat}>
+          <Plus className="h-4 w-4" />
+          New Chat
+        </Button>
+      </div>
+
+      <ScrollArea className="flex-1 px-3 py-2">
+        {pinned.length > 0 && (
+          <ConversationSection
+            label="Pinned"
+            conversations={pinned}
+            currentConversationId={currentConversationId}
+            onSelectConversation={onSelectConversation}
+            onDeleteConversation={onDeleteConversation}
+            onTogglePin={onTogglePin}
+          />
+        )}
+
+        <ConversationSection
+          label="Recent"
+          conversations={others}
+          currentConversationId={currentConversationId}
+          onSelectConversation={onSelectConversation}
+          onDeleteConversation={onDeleteConversation}
+          onTogglePin={onTogglePin}
+          emptyMessage="Start a conversation to see it here."
+        />
+      </ScrollArea>
+    </aside>
+  )
+}
+
+interface ConversationSectionProps extends Omit<SidebarProps, "conversations" | "onNewChat"> {
+  conversations: Conversation[]
+  label: string
+  emptyMessage?: string
+}
+
+function ConversationSection({
+  label,
+  conversations,
+  currentConversationId,
+  onSelectConversation,
+  onDeleteConversation,
+  onTogglePin,
+  emptyMessage,
+}: ConversationSectionProps) {
+  return (
+    <div className="mb-4">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-2">{label}</div>
+      {conversations.length === 0 ? (
+        emptyMessage ? <p className="text-xs text-muted-foreground px-2">{emptyMessage}</p> : null
+      ) : (
+        <div className="space-y-1">
+          {conversations.map((conversation) => {
+            const isActive = conversation.id === currentConversationId
+            return (
+              <button
+                key={conversation.id}
+                type="button"
+                onClick={() => onSelectConversation(conversation.id)}
+                className={cn(
+                  "w-full rounded-lg border border-transparent bg-secondary/40 px-3 py-2 text-left transition hover:border-[var(--bronze)]/40",
+                  isActive && "bg-secondary border-[var(--bronze)]/60",
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium truncate">{conversation.title || "Untitled chat"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {conversation.messages.length} message{conversation.messages.length === 1 ? "" : "s"} ·{" "}
+                      {formatTimestamp(conversation.updatedAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onTogglePin(conversation.id)
+                      }}
+                      title={conversation.pinned ? "Unpin conversation" : "Pin conversation"}
+                    >
+                      {conversation.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDeleteConversation(conversation.id)
+                      }}
+                      title="Delete conversation"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default Sidebar
