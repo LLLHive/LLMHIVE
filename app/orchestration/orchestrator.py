@@ -1,0 +1,55 @@
+from typing import Any, AsyncGenerator, List, Set, Optional, Dict
+from .planner import Planner
+from .model_router import Router
+from .synthesizer import Synthesizer
+from .blackboard import Blackboard
+from app.memory.conversation_memory import ConversationMemory
+from app.protocols.simple_protocol import SimpleProtocol
+from app.protocols.critique_and_improve_protocol import CritiqueAndImproveProtocol
+
+class Orchestrator:
+    def __init__(self, user_id: str, preferred_models: Optional[List[str]] = None, preferred_protocol: Optional[str] = None):
+        self.user_id = user_id
+        self.planner = Planner(preferred_protocol)
+        self.router = Router(preferred_models)
+        self.synthesizer = Synthesizer()
+        self.memory = ConversationMemory(user_id)
+        self.protocol_map = {
+            "simple": SimpleProtocol,
+            "critique_and_improve": CritiqueAndImproveProtocol,
+        }
+
+    async def run(self, prompt: str) -> AsyncGenerator[str, None]:
+        blackboard = Blackboard(prompt)
+        blackboard.set("history", "\n".join(self.memory.retrieve_history()))
+
+        plan = await self.planner.create_plan(prompt)
+        blackboard.set("plan", plan.model_dump())
+        
+        roles = self._extract_roles_from_plan(plan.protocol, plan.params)
+        assignments = self.router.assign_models_to_roles(roles)
+        blackboard.set("assignments", assignments)
+        
+        protocol_class = self.protocol_map.get(plan.protocol)
+        if not protocol_class:
+            raise ValueError(f"Protocol '{plan.protocol}' is not registered.")
+            
+        protocol = protocol_class(blackboard, assignments, plan.params)
+        await protocol.execute()
+
+        final_answer_text = ""
+        async for token in self.synthesizer.synthesize_stream(blackboard):
+            final_answer_text += token
+            yield token
+        
+        self.memory.store_interaction(prompt, final_answer_text)
+
+    def _extract_roles_from_plan(self, protocol: str, params: Dict[str, Any]) -> Set[str]:
+        roles = set()
+        if protocol == "simple":
+            roles.add(params.get("role", "lead"))
+        elif protocol == "critique_and_improve":
+            roles.update(params.get("drafting_roles", []))
+            roles.add(params.get("improving_role", "lead"))
+            roles.add("critic")
+        return roles

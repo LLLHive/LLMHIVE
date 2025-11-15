@@ -1,0 +1,18 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "llmhive.fullname" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "llmhive.fullname" . }}
+  minReplicas: {{ .Values.replicaCount }}
+  maxReplicas: {{ .Values.replicaCount | add 3 }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

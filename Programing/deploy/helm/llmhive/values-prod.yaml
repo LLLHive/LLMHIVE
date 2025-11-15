@@ -1,0 +1,22 @@
+# Production-specific Helm values for LLMHIVE on GKE Autopilot
+image:
+  repository: "<REGION>-docker.pkg.dev/llmhive-demo-12345/<<AR_REPO>>/llmhive_fastapi"  # Container registry repo (replace <<AR_REPO>> and region)
+  tag: "<<IMAGE_TAG>>"                              # Image tag for the release (e.g., "v1.0.0")
+ingress:
+  enabled: true
+  host: "LLMMHIVE.AI"                               # Domain host for ingress (ensure DNS points to cluster ingress)
+  tls: true                                         # Use TLS (ManagedCertificate for this host is assumed)
+useExternalSecret: true
+externalSecret:
+  gsmSecretName: "projects/llmhive-demo-12345/secrets/llmhive_database_url"  # GSM secret resource name for the DB URL
+workloadIdentity:
+  ksaName: "llmhive-app"
+  gsaEmail: "llmhive-app-gsa@llmhive-demo-12345.iam.gserviceaccount.com"
+replicaCount: 1                                     # Start with 1 replica (HPA will scale as needed)
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "200m"
+    memory: "256Mi"

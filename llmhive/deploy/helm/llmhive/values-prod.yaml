@@ -1,0 +1,65 @@
+replicaCount: 2
+
+image:
+  repository: us-central1-docker.pkg.dev/your-project/llmhive/llmhive
+  tag: latest
+  pullPolicy: IfNotPresent
+
+workloadIdentity:
+  serviceAccountName: llmhive-api
+  gsaEmail: llmhive-gsa@your-project.iam.gserviceaccount.com
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 65
+
+ingress:
+  enabled: true
+  className: "gce"
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: llmhive-ip
+    networking.gke.io/managed-certificates: llmhive-cert
+  hosts:
+    - host: llmhive.ai
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+externalSecret:
+  enabled: true
+  name: llmhive-secrets
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gsm-store
+  targetSecretName: llmhive-app-secrets
+  data:
+    - secretKey: DATABASE_URL
+      remoteRef:
+        key: projects/your-project/secrets/llmhive_database_url
+        version: latest
+    - secretKey: OPENAI_API_KEY
+      remoteRef:
+        key: projects/your-project/secrets/openai_api_key
+        version: latest
+
+env:
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llmhive-app-secrets
+        key: OPENAI_API_KEY

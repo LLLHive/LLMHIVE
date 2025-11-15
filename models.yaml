@@ -1,0 +1,66 @@
+models:
+  - model_id: "gpt-4-turbo"
+    provider: "openai"
+    strengths: ["reasoning", "coding", "general"]
+    context_window: 128000
+    cost_per_token: 0.01
+
+  - model_id: "gpt-4"
+    provider: "openai"
+    strengths: ["reasoning", "analysis"]
+    context_window: 8192
+    cost_per_token: 0.03
+
+  - model_id: "claude-3-opus"
+    provider: "anthropic"
+    strengths: ["writing", "long-context", "analysis"]
+    context_window: 200000
+    cost_per_token: 0.025
+
+  - model_id: "claude-3-sonnet"
+    provider: "anthropic"
+    strengths: ["general", "writing"]
+    context_window: 200000
+    cost_per_token: 0.005
+
+  - model_id: "gemini-2.5-flash"
+    provider: "google"
+    strengths: ["multimodal", "reasoning", "speed"]
+    context_window: 128000
+    cost_per_token: 0.0025
+
+  - model_id: "grok-3-mini"
+    provider: "xai"
+    strengths: ["real-time-information", "reasoning"]
+    context_window: 8192
+    cost_per_token: 0.01
+
+  - model_id: "openrouter/anthropic/claude-3.5-sonnet"
+    provider: "openrouter"
+    strengths: ["aggregation", "fallback"]
+    context_window: 200000
+    cost_per_token: 0.015
+
+  - model_id: "deepseek-chat"
+    provider: "deepseek"
+    strengths: ["reasoning", "analysis"]
+    context_window: 128000
+    cost_per_token: 0.002
+
+  - model_id: "perplexity-llama-3.1-70b-instruct"
+    provider: "perplexity"
+    strengths: ["research", "up-to-date"]
+    context_window: 16384
+    cost_per_token: 0.003
+
+  - model_id: "mistral-large-latest"
+    provider: "mistral"
+    strengths: ["multilingual", "long-form"]
+    context_window: 32000
+    cost_per_token: 0.003
+
+  - model_id: "togethercomputer/llama-3-70b-instruct"
+    provider: "together"
+    strengths: ["open-weights", "coding"]
+    context_window: 8192
+    cost_per_token: 0.002
