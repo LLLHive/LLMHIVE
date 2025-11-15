@@ -1,11 +1,36 @@
 'use client'
 
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import type { Conversation } from "@/lib/types"
-import { Plus, Pin, PinOff, Trash2 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import {
+  Plus,
+  Pin,
+  PinOff,
+  Trash2,
+  MessageSquare,
+  Grid,
+  Compass,
+  Users,
+  Settings,
+  Share2,
+} from "lucide-react"
+const PRIMARY_NAV = [
+  { label: "Chats", icon: MessageSquare, href: "/" },
+  { label: "Projects", icon: Grid, href: "/projects" },
+  { label: "Discover", icon: Compass, href: "/discover" },
+]
+
+const COLLAB_NAV = [
+  { label: "Collaborate", icon: Users, href: "/collaborate" },
+  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Share", icon: Share2, href: "/share" },
+]
+
 
 interface SidebarProps {
   conversations: Conversation[]
@@ -50,7 +75,9 @@ export function Sidebar({
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 px-3 py-2">
+      <ScrollArea className="flex-1 px-3 py-2 space-y-6">
+        <SidebarNav title="Workspace" items={PRIMARY_NAV} />
+        <SidebarNav title="Team" items={COLLAB_NAV} />
         {pinned.length > 0 && (
           <ConversationSection
             label="Pinned"
@@ -155,3 +182,32 @@ function ConversationSection({
 }
 
 export default Sidebar
+
+type NavItem = {
+  label: string
+  icon: LucideIcon
+  href: string
+}
+
+function SidebarNav({ title, items }: { title: string; items: NavItem[] }) {
+  return (
+    <div className="space-y-2 px-1">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/50">{title}</p>
+      <div className="space-y-1">
+        {items.map((item) => {
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-card/80 transition-colors"
+            >
+              <Icon className="h-4 w-4 text-foreground/70" />
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

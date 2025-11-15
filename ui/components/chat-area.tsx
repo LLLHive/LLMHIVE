@@ -116,6 +116,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...(conversation?.messages || []), userMessage],
+          model: selectedModels[0],
           models: selectedModels,
           reasoningMode,
           capabilities: activeModels.map((model) => ({
