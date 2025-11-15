@@ -20,8 +20,8 @@ type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
 
 export function ChatHeader({
-  selectedModel,
-  onModelChange,
+  selectedModels,
+  onToggleModel,
   reasoningMode,
   onReasoningModeChange,
   orchestrationEngine,
@@ -31,8 +31,8 @@ export function ChatHeader({
   criteriaSettings,
   onCriteriaChange,
 }: {
-  selectedModel: string
-  onModelChange: (model: string) => void
+  selectedModels: string[]
+  onToggleModel: (model: string) => void
   reasoningMode: "deep" | "standard" | "fast"
   onReasoningModeChange: (mode: "deep" | "standard" | "fast") => void
   orchestrationEngine: OrchestrationEngine
@@ -62,11 +62,11 @@ export function ChatHeader({
                 {AVAILABLE_MODELS.filter((m) => m.provider === provider).map((model) => (
                   <DropdownMenuItem
                     key={model.id}
-                    onClick={() => onModelChange(model.id)}
+                    onClick={() => onToggleModel(model.id)}
                     className="gap-2 py-1.5 hover-lift"
                   >
                     <Checkbox
-                      checked={selectedModel === model.id}
+                      checked={selectedModels.includes(model.id)}
                       className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
                     />
                     <Image
@@ -193,7 +193,13 @@ export function ChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <CriteriaEqualizer settings={criteriaSettings} onChange={onCriteriaChange} />
+        <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1 text-[11px] text-muted-foreground uppercase tracking-wide">
+            <span>Models:</span>
+            <span className="font-semibold text-foreground">{selectedModels.length}</span>
+          </div>
+          <CriteriaEqualizer settings={criteriaSettings} onChange={onCriteriaChange} />
+        </div>
       </div>
 
     </header>

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -38,9 +39,12 @@ export function Sidebar({
   const others = conversations.filter((conv) => !conv.pinned)
 
   return (
-    <aside className="w-[280px] border-r border-border bg-card/40 backdrop-blur-xl flex flex-col">
-      <div className="p-4 border-b border-border">
-        <Button className="w-full justify-center gap-2 bronze-gradient text-background" onClick={onNewChat}>
+    <aside className="w-[280px] border-r border-border bg-card/60 backdrop-blur-xl flex flex-col">
+      <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+        <Image src="/logo-with-text.png" alt="LLMHive" width={120} height={32} className="h-8 w-auto" priority />
+      </div>
+      <div className="px-4 py-3 border-b border-border">
+        <Button className="w-full justify-center gap-2 bronze-gradient text-background shadow-lg" onClick={onNewChat}>
           <Plus className="h-4 w-4" />
           New Chat
         </Button>
@@ -89,7 +93,7 @@ function ConversationSection({
 }: ConversationSectionProps) {
   return (
     <div className="mb-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-2">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-foreground/70 mb-2 px-2">{label}</div>
       {conversations.length === 0 ? (
         emptyMessage ? <p className="text-xs text-muted-foreground px-2">{emptyMessage}</p> : null
       ) : (
@@ -108,8 +112,8 @@ function ConversationSection({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <p className="text-sm font-medium truncate">{conversation.title || "Untitled chat"}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-medium truncate text-foreground">{conversation.title || "Untitled chat"}</p>
+                    <p className="text-xs text-foreground/70">
                       {conversation.messages.length} message{conversation.messages.length === 1 ? "" : "s"} ·{" "}
                       {formatTimestamp(conversation.updatedAt)}
                     </p>

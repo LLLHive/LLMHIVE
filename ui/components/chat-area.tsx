@@ -42,7 +42,7 @@ type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "li
 
 export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAreaProps) {
   const [input, setInput] = useState("")
-  const [selectedModel, setSelectedModel] = useState("gpt-5-mini")
+  const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5-mini", "claude-3-opus"])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [reasoningMode, setReasoningMode] = useState<"deep" | "standard" | "fast">("standard")
   const [orchestrationEngine, setOrchestrationEngine] = useState<OrchestrationEngine>("hrm")
@@ -64,7 +64,18 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
   const [isLoading, setIsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const currentModel = getModelById(selectedModel)
+  const activeModels = selectedModels
+    .map((modelId) => getModelById(modelId))
+    .filter((model): model is NonNullable<ReturnType<typeof getModelById>> => Boolean(model))
+
+  const toggleModelSelection = (modelId: string) => {
+    setSelectedModels((prev) => {
+      if (prev.includes(modelId)) {
+        return prev.length === 1 ? prev : prev.filter((id) => id !== modelId)
+      }
+      return [...prev, modelId]
+    })
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -83,7 +94,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
   }
 
   const handleSend = async () => {
-    if (!input.trim() && attachments.length === 0) return
+    if ((!input.trim() && attachments.length === 0) || selectedModels.length === 0) return
 
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -105,9 +116,12 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...(conversation?.messages || []), userMessage],
-          model: selectedModel,
+          models: selectedModels,
           reasoningMode,
-          capabilities: currentModel?.capabilities,
+          capabilities: activeModels.map((model) => ({
+            id: model.id,
+            capabilities: model.capabilities,
+          })),
           criteriaSettings,
           orchestrationEngine,
           advancedFeatures,
@@ -133,7 +147,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         role: "assistant",
         content: assistantContent,
         timestamp: new Date(),
-        model: selectedModel,
+        model: selectedModels.join(", "),
         agents: [
           {
             agentId: "agent-general",
@@ -189,8 +203,8 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
       />
 
       <ChatHeader
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
+        selectedModels={selectedModels}
+        onToggleModel={toggleModelSelection}
         reasoningMode={reasoningMode}
         onReasoningModeChange={setReasoningMode}
         orchestrationEngine={orchestrationEngine}
@@ -356,7 +370,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
               <Button
                 size="icon"
                 onClick={handleSend}
-                disabled={(!input.trim() && attachments.length === 0) || isLoading}
+                disabled={(!input.trim() && attachments.length === 0) || isLoading || selectedModels.length === 0}
                 className="h-7 w-7 bronze-gradient disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" />
