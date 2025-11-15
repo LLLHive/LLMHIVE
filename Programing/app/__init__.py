@@ -1,1 +1,0 @@
-"""LLMHIVE FastAPI application package."""
