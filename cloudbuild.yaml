@@ -1,5 +1,6 @@
 # cloudbuild.yaml — build, push, deploy to Cloud Run with correct Secret Manager mapping
 # This version avoids nested substitutions so $PROJECT_ID and $COMMIT_SHA expand correctly.
+# NOTE: keep this file at the repo root so Google Cloud Build triggers can find it.
 
 options:
   logging: CLOUD_LOGGING_ONLY
