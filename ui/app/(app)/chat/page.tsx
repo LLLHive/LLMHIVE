@@ -1,5 +1,6 @@
-import dynamic from "next/dynamic";
-const ChatSurface = dynamic(() => import("../../components/ChatSurface"), { ssr: false });
+'use client';
+
+import ChatSurface from "../../components/ChatSurface";
 
 export default function ChatPage() {
   return (

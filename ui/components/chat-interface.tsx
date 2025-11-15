@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Sidebar } from "./sidebar"
+import { Sidebar } from "./Sidebar"
 import { ChatArea } from "./chat-area"
 import { ArtifactPanel } from "./artifact-panel"
 import type { Conversation, Message, Artifact } from "@/lib/types"

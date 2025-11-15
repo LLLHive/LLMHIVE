@@ -1,3 +1,5 @@
-import { handlers } from "@/auth";
+export async function GET() {
+  return Response.json({ error: "Authentication is not configured yet." }, { status: 501 });
+}
 
-export const { GET, POST } = handlers;
+export const POST = GET;
