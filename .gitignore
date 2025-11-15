@@ -1,0 +1,67 @@
+__pycache__/
+*.py[cod]
+.env
+.env.local
+.venv/
+venv/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Node.js and Next.js
+node_modules/
+.next/
+next-env.d.ts
+out/
+build/
+
+# Python virtual environments
+env/
+ENV/
+
+# Python package metadata
+*.egg-info/
+dist/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+# ---- Local toolchains & SDKs ----
+google-cloud-sdk/
+.gcloud/
+
+# ---- Python virtualenv & caches ----
+.venv/
+__pycache__/
+*.pyc
+
+# ---- OS/editor noise ----
+.DS_Store
+.vscode/
+.idea/
+
+# ---- Secrets & env files (never commit real values) ----
+.env
+.env.*
+# Ignore local Google Cloud SDK and other tools
+google-cloud-sdk/
+.gcloud/
+
+# Ignore Python virtual environments and caches
+.venv/
+__pycache__/
+*.pyc
+
+# Ignore OS/editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Ignore environment files (API keys, secrets)
+.env
+.env.*
