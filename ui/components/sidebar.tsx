@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { ProjectsPanel } from "./projects-panel"
 import { SettingsPanel } from "./settings-panel"
 import { CollaborationPanel } from "./collaboration-panel"
+import { MetricsPanel } from "./metrics-panel"
 
 interface SidebarProps {
   conversations: Conversation[]
@@ -235,6 +236,7 @@ export function Sidebar({
                     description="Pre-built prompts for common tasks"
                     color="from-orange-500 to-red-500"
                   />
+                  <MetricsPanel />
                 </div>
               )}
             </ScrollArea>

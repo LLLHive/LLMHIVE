@@ -36,10 +36,12 @@ export function ChatInterface() {
   }
 
   const addMessageToConversation = (conversationId: string, message: Message) => {
-    setConversations((prev) =>
-      prev.map((conv) => {
+    console.log("[LLMHive] Adding message to conversation:", { conversationId, message })
+    setConversations((prev) => {
+      const updated = prev.map((conv) => {
         if (conv.id === conversationId) {
           const updatedMessages = [...conv.messages, message]
+          console.log("[LLMHive] Updated conversation messages:", { convId: conv.id, messageCount: updatedMessages.length })
           return {
             ...conv,
             messages: updatedMessages,
@@ -51,8 +53,9 @@ export function ChatInterface() {
           }
         }
         return conv
-      }),
-    )
+      })
+      return updated
+    })
 
     if (message.artifact) {
       setCurrentArtifact(message.artifact)
@@ -62,13 +65,32 @@ export function ChatInterface() {
 
   const handleSendMessage = (message: Message) => {
     // Ensure we have a conversation to add messages to
-    let targetConversationId = currentConversationId
+    const targetConversationId = currentConversationId
     if (!targetConversationId) {
-      targetConversationId = handleNewChat()
-      // Wait for state update before adding message
-      setTimeout(() => {
-        addMessageToConversation(targetConversationId, message)
-      }, 10)
+      const newConvId = handleNewChat()
+      // Use functional update to ensure we're working with latest state
+      setConversations((prev) => {
+        const updated = prev.map((conv) => {
+          if (conv.id === newConvId) {
+            return {
+              ...conv,
+              messages: [...conv.messages, message],
+              updatedAt: new Date(),
+              title:
+                conv.title === "New Chat" && message.role === "user"
+                  ? message.content.slice(0, 50)
+                  : conv.title,
+            }
+          }
+          return conv
+        })
+        return updated
+      })
+      
+      if (message.artifact) {
+        setCurrentArtifact(message.artifact)
+        setShowArtifact(true)
+      }
     } else {
       // Add immediately if conversation exists
       addMessageToConversation(targetConversationId, message)

@@ -60,10 +60,10 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="group gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300"
+              className="group gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:border-transparent transition-all duration-300"
             >
-              <span className="text-foreground group-hover:text-primary-foreground">AI Agents ({selectedModels.length})</span>
-              <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+              <span className="text-foreground group-hover:text-primary-foreground transition-colors duration-300">AI Agents ({selectedModels.length})</span>
+              <ChevronDown className="h-2.5 w-2.5 opacity-50 group-hover:opacity-100 transition-opacity duration-300" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300" onCloseAutoFocus={(e) => e.preventDefault()}>

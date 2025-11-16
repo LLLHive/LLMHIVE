@@ -142,6 +142,19 @@ export function MessageBubble({
             </div>
           )}
 
+          {message.factCheckSummary && (
+            <div className="mt-3 p-3 rounded-lg bg-secondary/40 border border-border">
+              <p className="text-xs font-semibold text-[var(--bronze)] mb-1">Verification</p>
+              <p className="text-xs text-muted-foreground">{message.factCheckSummary}</p>
+            </div>
+          )}
+
+          {message.refinementRounds && message.refinementRounds > 1 && (
+            <p className="mt-3 text-[10px] text-muted-foreground">
+              Refined {message.refinementRounds} rounds to reach consensus.
+            </p>
+          )}
+
           {message.artifact && (
             <div className="mt-4 p-3 rounded-lg bg-secondary border border-border hover:border-[var(--bronze)] transition-colors">
               <div className="flex items-center justify-between mb-2">
