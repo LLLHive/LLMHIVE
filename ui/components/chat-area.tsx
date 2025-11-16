@@ -7,7 +7,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Paperclip, Mic, Code, FileText, Lightbulb, TrendingUp, ImageIcon, X, Briefcase } from 'lucide-react'
 import { getModelById } from "@/lib/models"
-import type { Conversation, Message, Attachment, Artifact, CriteriaSettings } from "@/lib/types"
+import type {
+  Conversation,
+  Message,
+  Attachment,
+  Artifact,
+  CriteriaSettings,
+  AgentContribution,
+  Citation,
+} from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
@@ -17,6 +25,7 @@ interface ChatAreaProps {
   conversation?: Conversation
   onSendMessage: (message: Message) => void
   onShowArtifact: (artifact: Artifact) => void
+  onConversationUpdate?: (backendConversationId?: number) => void
 }
 
 const firstRowSuggestions = [
@@ -39,12 +48,18 @@ const thirdRowSuggestions = [
 
 type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-ensemble"
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
+type ReasoningMode = "deep" | "standard" | "fast"
 
-export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAreaProps) {
+export function ChatArea({
+  conversation,
+  onSendMessage,
+  onShowArtifact,
+  onConversationUpdate,
+}: ChatAreaProps) {
   const [input, setInput] = useState("")
-  const [selectedModel, setSelectedModel] = useState("gpt-5-mini")
+  const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5-mini"])
   const [attachments, setAttachments] = useState<Attachment[]>([])
-  const [reasoningMode, setReasoningMode] = useState<"deep" | "standard" | "fast">("standard")
+  const [reasoningMode, setReasoningMode] = useState<ReasoningMode>("standard")
   const [orchestrationEngine, setOrchestrationEngine] = useState<OrchestrationEngine>("hrm")
   const [advancedFeatures, setAdvancedFeatures] = useState<AdvancedFeature[]>([
     "vector-db",
@@ -64,7 +79,8 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
   const [isLoading, setIsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const currentModel = getModelById(selectedModel)
+  const primaryModelId = selectedModels[0]
+  const currentModel = primaryModelId ? getModelById(primaryModelId) : undefined
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -84,6 +100,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
 
   const handleSend = async () => {
     if (!input.trim() && attachments.length === 0) return
+    if (selectedModels.length === 0) return
 
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -105,48 +122,82 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...(conversation?.messages || []), userMessage],
-          model: selectedModel,
+          models: selectedModels,
           reasoningMode,
           capabilities: currentModel?.capabilities,
           criteriaSettings,
           orchestrationEngine,
           advancedFeatures,
+          conversationId: conversation?.backendConversationId,
+          userId: "ui-session",
         }),
       })
 
-      if (!response.ok) throw new Error("Failed to get response")
+      const payload = await response.json().catch(() => null)
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let assistantContent = ""
+      if (!response.ok) {
+        const errorText =
+          (payload && (payload.error || payload?.backend?.detail || payload?.backend?.detail?.detail)) ||
+          "The orchestration engine returned an error. Please check backend logs."
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          assistantContent += decoder.decode(value)
+        const errorMessage: Message = {
+          id: `msg-${Date.now()}`,
+          role: "assistant",
+          content: errorText,
+          timestamp: new Date(),
         }
+        onSendMessage(errorMessage)
+        return
       }
 
+      const orchestration = payload?.orchestration
+
+      if (!orchestration) {
+        const errorMessage: Message = {
+          id: `msg-${Date.now()}`,
+          role: "assistant",
+          content: "The orchestration API responded without a payload. Please try again.",
+          timestamp: new Date(),
+        }
+        onSendMessage(errorMessage)
+        return
+      }
+
+      if (payload.conversationId && onConversationUpdate) {
+        onConversationUpdate(payload.conversationId)
+      }
+
+      // Extract final_response - handle both nested and flat structures
+      const finalResponse = orchestration.final_response || orchestration.finalResponse || "The hive could not produce a response for this request."
+      
       const assistantMessage: Message = {
-        id: `msg-${Date.now()}`,
+        id: `msg-${Date.now()}-assistant`,
         role: "assistant",
-        content: assistantContent,
+        content: finalResponse,
         timestamp: new Date(),
-        model: selectedModel,
-        agents: [
-          { type: "general", contribution: "Primary response", confidence: 0.9 },
-          { type: "research", contribution: "Fact verification", confidence: 0.85 },
-        ],
-        consensus: { level: 0.88, agreementCount: 5, totalAgents: 6 },
+        model: "LLMHive Orchestrator",
+      }
+
+      // Try to build full message with metadata if available
+      try {
+        const fullMessage = buildAssistantMessage({
+          orchestration,
+          fallbackModel: primaryModelId || "orchestrator",
+          reasoningMode,
+        })
+        Object.assign(assistantMessage, fullMessage)
+      } catch (err) {
+        console.warn("[LLMHive] Failed to build full message metadata:", err)
+        // Use basic message structure
       }
 
       onSendMessage(assistantMessage)
     } catch (error) {
+      console.error("[LLMHive] UI orchestration error:", error)
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,
         role: "assistant",
-        content: "I apologize, but I encountered an error. Please try again.",
+        content: "I’m sorry, but I couldn’t reach the orchestration engine. Please try again in a moment.",
         timestamp: new Date(),
       }
       onSendMessage(errorMessage)
@@ -172,8 +223,8 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
       />
 
       <ChatHeader
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
+        selectedModels={selectedModels}
+        onModelChange={setSelectedModels}
         reasoningMode={reasoningMode}
         onReasoningModeChange={setReasoningMode}
         orchestrationEngine={orchestrationEngine}
@@ -198,13 +249,13 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                     <Button
                       key={suggestion.label}
                       variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group"
+                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group hover:-translate-y-0.5 hover:shadow-lg"
                       onClick={() => setInput(suggestion.text)}
                     >
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
-                        <Icon className="h-4 w-4 text-background" />
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rotate-3">
+                        <Icon className="h-4 w-4 text-background transition-transform duration-500 group-hover:scale-110" />
                       </div>
-                      <div className="text-xs font-semibold text-white">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-500">{suggestion.label}</div>
                     </Button>
                   )
                 })}
@@ -217,13 +268,13 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                     <Button
                       key={suggestion.label}
                       variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group"
+                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group hover:-translate-y-0.5 hover:shadow-lg"
                       onClick={() => setInput(suggestion.text)}
                     >
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
-                        <Icon className="h-4 w-4 text-background" />
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rotate-3">
+                        <Icon className="h-4 w-4 text-background transition-transform duration-500 group-hover:scale-110" />
                       </div>
-                      <div className="text-xs font-semibold text-white">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-500">{suggestion.label}</div>
                     </Button>
                   )
                 })}
@@ -236,13 +287,13 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                     <Button
                       key={suggestion.label}
                       variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group"
+                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group hover:-translate-y-0.5 hover:shadow-lg"
                       onClick={() => setInput(suggestion.text)}
                     >
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
-                        <Icon className="h-4 w-4 text-background" />
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rotate-3">
+                        <Icon className="h-4 w-4 text-background transition-transform duration-500 group-hover:scale-110" />
                       </div>
-                      <div className="text-xs font-semibold text-white">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-500">{suggestion.label}</div>
                     </Button>
                   )
                 })}
@@ -284,10 +335,10 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         )}
       </ScrollArea>
 
-      {showInsights && selectedMessageForInsights?.agents && (
+      {showInsights && selectedMessageForInsights?.agents && selectedMessageForInsights?.consensus && (
         <AgentInsightsPanel
           agents={selectedMessageForInsights.agents}
-          consensus={selectedMessageForInsights.consensus!}
+          consensus={selectedMessageForInsights.consensus}
           citations={selectedMessageForInsights.citations}
           onClose={() => setShowInsights(false)}
         />
@@ -340,7 +391,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
               <Button
                 size="icon"
                 onClick={handleSend}
-                disabled={(!input.trim() && attachments.length === 0) || isLoading}
+                disabled={(!input.trim() && attachments.length === 0) || isLoading || selectedModels.length === 0}
                 className="h-7 w-7 bronze-gradient disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" />
@@ -355,3 +406,161 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
     </div>
   )
 }
+
+interface OrchestrationApiResponse {
+  final_response?: string
+  initial_responses?: { model?: string; content: string }[]
+  quality?: { model?: string; score?: number; confidence?: number; highlights?: string[] }[]
+  consensus_notes?: string[]
+  fact_check?: FactCheckPayload
+  refinement_rounds?: number
+  plan?: {
+    steps?: { role: string; description: string }[]
+  }
+}
+
+interface FactCheckClaim {
+  text: string
+  status?: string
+  evidence_urls?: string[]
+}
+
+interface FactCheckPayload {
+  verified_count?: number
+  contested_count?: number
+  claims?: FactCheckClaim[]
+}
+
+function buildAssistantMessage({
+  orchestration,
+  fallbackModel,
+  reasoningMode,
+}: {
+  orchestration: OrchestrationApiResponse
+  fallbackModel: string
+  reasoningMode: ReasoningMode
+}): Message {
+  const now = new Date()
+  const finalResponse = orchestration.final_response || "The hive could not produce a response for this request."
+  const quality = orchestration.quality || []
+
+  const avgQuality =
+    quality.length > 0
+      ? quality.reduce((acc, entry) => acc + (entry.confidence ?? entry.score ?? 0), 0) / quality.length
+      : undefined
+
+  const consensusConfidence = avgQuality !== undefined ? clampPercent(avgQuality) : undefined
+  const consensusNote = orchestration.consensus_notes?.[0]
+  const consensus =
+    consensusConfidence !== undefined
+      ? {
+          confidence: consensusConfidence,
+          debateOccurred: (orchestration.refinement_rounds ?? 1) > 1,
+          consensusNote,
+        }
+      : undefined
+
+  const agents = buildAgentContributions(orchestration.initial_responses || [], quality)
+  const citations = buildCitations(orchestration.fact_check)
+  const factCheckSummary = summarizeFactCheck(orchestration.fact_check)
+  const reasoningSteps = orchestration.plan?.steps?.map(
+    (step) => `${step.role.toUpperCase()}: ${step.description}`,
+  )
+
+  return {
+    id: `msg-${now.getTime()}-assistant`,
+    role: "assistant",
+    content: finalResponse,
+    timestamp: now,
+    model: "LLMHive Orchestrator",
+    agents: agents.length > 0 ? agents : undefined,
+    consensus,
+    citations: citations.length > 0 ? citations : undefined,
+    factCheckSummary,
+    refinementRounds: orchestration.refinement_rounds,
+    qualityScore: avgQuality,
+    confidence: consensusConfidence !== undefined ? consensusConfidence / 100 : undefined,
+    reasoning: reasoningSteps?.length
+      ? {
+          mode: reasoningMode,
+          steps: reasoningSteps,
+        }
+      : { mode: reasoningMode },
+  }
+}
+
+function buildAgentContributions(
+  responses: { model?: string; content: string }[],
+  quality: { model?: string; score?: number; confidence?: number }[],
+): AgentContribution[] {
+  return responses.map((response, idx) => {
+    const qualityEntry = quality.find((entry) => entry.model === response.model)
+    const confidenceScore = clampPercent(qualityEntry?.confidence ?? qualityEntry?.score)
+
+    return {
+      agentId: response.model || `model-${idx + 1}`,
+      agentName: response.model || `Model ${idx + 1}`,
+      agentType: inferAgentType(response.model),
+      contribution: response.content,
+      confidence: confidenceScore ?? 0,
+    }
+  })
+}
+
+function inferAgentType(model?: string): AgentContribution["agentType"] {
+  const value = (model || "").toLowerCase()
+  if (value.includes("legal") || value.includes("law")) return "legal"
+  if (value.includes("math")) return "math"
+  if (value.includes("research") || value.includes("gemini") || value.includes("sonnet")) return "research"
+  if (value.includes("code") || value.includes("gpt") || value.includes("deepseek")) return "code"
+  if (value.includes("creative") || value.includes("grok")) return "creative"
+  return "general"
+}
+
+function buildCitations(factCheck?: FactCheckPayload): Citation[] {
+  if (!factCheck?.claims) return []
+  const citations: Citation[] = []
+
+  factCheck.claims.forEach((claim, idx) => {
+    const url = claim.evidence_urls?.find(Boolean)
+    if (!url) return
+    let source = url
+    try {
+      source = new URL(url).hostname
+    } catch {
+      // ignore malformed URLs
+    }
+    citations.push({
+      id: `fact-${idx}`,
+      text: claim.text,
+      source,
+      url,
+      verified: claim.status === "verified",
+    })
+  })
+
+  return citations
+}
+
+function summarizeFactCheck(factCheck?: FactCheckPayload): string | undefined {
+  if (!factCheck?.claims || factCheck.claims.length === 0) return undefined
+  const total = factCheck.claims.length
+  const verified =
+    factCheck.verified_count ?? factCheck.claims.filter((claim) => claim.status === "verified").length
+  const contested =
+    factCheck.contested_count ??
+    factCheck.claims.filter((claim) => claim.status && claim.status !== "verified").length
+  const unresolved = Math.max(total - verified - contested, 0)
+
+  let summary = `Fact-check: ${verified}/${total} claims verified`
+  if (contested > 0) summary += ` · ${contested} contested`
+  if (unresolved > 0) summary += ` · ${unresolved} pending`
+  return summary
+}
+
+function clampPercent(value?: number): number | undefined {
+  if (typeof value !== "number" || Number.isNaN(value)) return undefined
+  const clamped = Math.min(Math.max(value, 0), 1)
+  return Math.round(clamped * 100)
+}
+
