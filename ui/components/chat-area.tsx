@@ -259,14 +259,14 @@ export function ChatArea({
                     <Button
                       key={suggestion.label}
                       variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-2 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group hover:-translate-y-1 hover:shadow-xl relative"
+                      className="h-auto flex flex-col items-center gap-2 p-4 border-2 border-border hover:bronze-gradient hover:border-[var(--bronze)] hover:text-primary-foreground transition-all duration-500 bg-card/50 backdrop-blur-xl group relative"
                       onClick={() => setInput(suggestion.text)}
                     >
-                      <div className="absolute inset-0 border-2 border-[var(--bronze)] rounded-lg transition-all duration-500 opacity-0 group-hover:opacity-100 -m-[2px]" />
+                      <div className="absolute inset-0 border-2 border-[var(--bronze)] rounded-lg transition-all duration-500 opacity-0 group-hover:opacity-100 -m-[2px] pointer-events-none" />
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rotate-3 relative z-10">
                         <Icon className="h-4 w-4 text-background transition-transform duration-500 group-hover:scale-110" />
                       </div>
-                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-500 relative z-10">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-foreground group-hover:text-primary-foreground transition-colors duration-500 relative z-10">{suggestion.label}</div>
                     </Button>
                   )
                 })}
@@ -279,14 +279,14 @@ export function ChatArea({
                     <Button
                       key={suggestion.label}
                       variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-2 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group hover:-translate-y-1 hover:shadow-xl relative"
+                      className="h-auto flex flex-col items-center gap-2 p-4 border-2 border-border hover:bronze-gradient hover:border-[var(--bronze)] hover:text-primary-foreground transition-all duration-500 bg-card/50 backdrop-blur-xl group relative"
                       onClick={() => setInput(suggestion.text)}
                     >
-                      <div className="absolute inset-0 border-2 border-[var(--bronze)] rounded-lg transition-all duration-500 opacity-0 group-hover:opacity-100 -m-[2px]" />
+                      <div className="absolute inset-0 border-2 border-[var(--bronze)] rounded-lg transition-all duration-500 opacity-0 group-hover:opacity-100 -m-[2px] pointer-events-none" />
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rotate-3 relative z-10">
                         <Icon className="h-4 w-4 text-background transition-transform duration-500 group-hover:scale-110" />
                       </div>
-                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-500 relative z-10">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-foreground group-hover:text-primary-foreground transition-colors duration-500 relative z-10">{suggestion.label}</div>
                     </Button>
                   )
                 })}
@@ -299,14 +299,14 @@ export function ChatArea({
                     <Button
                       key={suggestion.label}
                       variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-2 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group hover:-translate-y-1 hover:shadow-xl relative"
+                      className="h-auto flex flex-col items-center gap-2 p-4 border-2 border-border hover:bronze-gradient hover:border-[var(--bronze)] hover:text-primary-foreground transition-all duration-500 bg-card/50 backdrop-blur-xl group relative"
                       onClick={() => setInput(suggestion.text)}
                     >
-                      <div className="absolute inset-0 border-2 border-[var(--bronze)] rounded-lg transition-all duration-500 opacity-0 group-hover:opacity-100 -m-[2px]" />
+                      <div className="absolute inset-0 border-2 border-[var(--bronze)] rounded-lg transition-all duration-500 opacity-0 group-hover:opacity-100 -m-[2px] pointer-events-none" />
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rotate-3 relative z-10">
                         <Icon className="h-4 w-4 text-background transition-transform duration-500 group-hover:scale-110" />
                       </div>
-                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-500 relative z-10">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-foreground group-hover:text-primary-foreground transition-colors duration-500 relative z-10">{suggestion.label}</div>
                     </Button>
                   )
                 })}
