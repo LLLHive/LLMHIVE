@@ -1,42 +1,45 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Sidebar } from "./Sidebar"
+import { useState } from "react"
+import { Sidebar } from "./sidebar"
 import { ChatArea } from "./chat-area"
 import { ArtifactPanel } from "./artifact-panel"
 import type { Conversation, Message, Artifact } from "@/lib/types"
 
-const buildConversation = (title = "New Chat"): Conversation => ({
-  id: `conv-${crypto.randomUUID()}`,
-  title,
-  messages: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  model: "gpt-5",
-})
-
 export function ChatInterface() {
-  const initialConversation = useMemo(() => buildConversation(), [])
-  const [conversations, setConversations] = useState<Conversation[]>([initialConversation])
-  const [currentConversationId, setCurrentConversationId] = useState<string>(initialConversation.id)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [showArtifact, setShowArtifact] = useState(false)
   const [currentArtifact, setCurrentArtifact] = useState<Artifact | null>(null)
 
-  const currentConversation = conversations.find((c) => c.id === currentConversationId) ?? conversations[0]
+  const currentConversation = conversations.find((c) => c.id === currentConversationId)
 
   const handleNewChat = () => {
-    const newConv = buildConversation()
-    setConversations((prev) => [newConv, ...prev])
+    const newConv: Conversation = {
+      id: `conv-${Date.now()}`,
+      title: "New Chat",
+      messages: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      model: "gpt-5",
+    }
+    setConversations([newConv, ...conversations])
     setCurrentConversationId(newConv.id)
     setShowArtifact(false)
     setCurrentArtifact(null)
-    return newConv.id
   }
 
   const handleSendMessage = (message: Message) => {
-    const targetConversationId = currentConversationId || handleNewChat()
+    if (!currentConversationId) {
+      handleNewChat()
+      // Delay to ensure conversation is created
+      setTimeout(() => {
+        addMessageToCurrentConversation(message)
+      }, 50)
+      return
+    }
 
-    addMessageToConversation(targetConversationId, message)
+    addMessageToCurrentConversation(message)
 
     if (message.role === "user") {
       setTimeout(() => {
@@ -111,15 +114,15 @@ export function ChatInterface() {
             },
           ],
         }
-        addMessageToConversation(targetConversationId, aiResponse)
+        addMessageToCurrentConversation(aiResponse)
       }, 1500)
     }
   }
 
-  const addMessageToConversation = (conversationId: string, message: Message) => {
+  const addMessageToCurrentConversation = (message: Message) => {
     setConversations((prev) =>
       prev.map((conv) => {
-        if (conv.id === conversationId) {
+        if (conv.id === currentConversationId) {
           const updatedMessages = [...conv.messages, message]
           return {
             ...conv,
@@ -142,13 +145,7 @@ export function ChatInterface() {
   const handleSelectConversation = (id: string) => {
     setCurrentConversationId(id)
     const conv = conversations.find((c) => c.id === id)
-    if (!conv) {
-      setShowArtifact(false)
-      setCurrentArtifact(null)
-      return
-    }
-
-    const lastArtifact = [...conv.messages].reverse().find((m) => m.artifact)?.artifact
+    const lastArtifact = conv?.messages.reverse().find((m) => m.artifact)?.artifact
     if (lastArtifact) {
       setCurrentArtifact(lastArtifact)
       setShowArtifact(true)
@@ -159,22 +156,12 @@ export function ChatInterface() {
   }
 
   const handleDeleteConversation = (id: string) => {
-    setConversations((prev) => {
-      const remaining = prev.filter((c) => c.id !== id)
-      if (remaining.length === 0) {
-        const fresh = buildConversation()
-        setCurrentConversationId(fresh.id)
-        setShowArtifact(false)
-        setCurrentArtifact(null)
-        return [fresh]
-      }
-      if (currentConversationId === id) {
-        setCurrentConversationId(remaining[0].id)
-        setShowArtifact(false)
-        setCurrentArtifact(null)
-      }
-      return remaining
-    })
+    setConversations((prev) => prev.filter((c) => c.id !== id))
+    if (currentConversationId === id) {
+      setCurrentConversationId(null)
+      setShowArtifact(false)
+      setCurrentArtifact(null)
+    }
   }
 
   const handleTogglePin = (id: string) => {

@@ -57,10 +57,10 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
 
       const result = await response.json()
       setExecutionResult(result)
-    } catch (error) {
+    } catch (error: any) {
       setExecutionResult({
         success: false,
-        error: error instanceof Error ? error.message : "Failed to execute code",
+        error: error.message || "Failed to execute code",
       })
     } finally {
       setExecuting(false)

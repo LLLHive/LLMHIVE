@@ -11,12 +11,6 @@ import { Github, Cloud, Box, CheckCircle2, XCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import type { Integration } from "@/lib/types"
 
-type IntegrationConfigField = {
-  key: string
-  label: string
-  type: "text" | "password" | "textarea"
-}
-
 const availableIntegrations = [
   {
     id: "github",
@@ -45,24 +39,16 @@ const availableIntegrations = [
     description: "Deploy and manage projects directly from chat",
     fields: [{ key: "token", label: "Vercel Token", type: "password" }],
   },
-] as const
-
-type AvailableIntegration = (typeof availableIntegrations)[number]
-type IntegrationConfig = Record<string, string>
+]
 
 export function IntegrationsPanel() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [configuring, setConfiguring] = useState<string | null>(null)
 
-  const handleConnect = (integration: AvailableIntegration, config: IntegrationConfig) => {
+  const handleConnect = (id: string, config: Record<string, any>) => {
     setIntegrations((prev) => [
-      ...prev.filter((i) => i.id !== integration.id),
-      {
-        id: integration.id,
-        name: integration.name,
-        connected: true,
-        config,
-      },
+      ...prev.filter((i) => i.id !== id),
+      { id: id as any, name: id as any, connected: true, config },
     ])
     setConfiguring(null)
   }
@@ -138,19 +124,19 @@ function IntegrationForm({
   integration,
   onConnect,
 }: {
-  integration: AvailableIntegration
-  onConnect: (integration: AvailableIntegration, config: IntegrationConfig) => void
+  integration: (typeof availableIntegrations)[0]
+  onConnect: (id: string, config: Record<string, any>) => void
 }) {
-  const [config, setConfig] = useState<IntegrationConfig>({})
+  const [config, setConfig] = useState<Record<string, any>>({})
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onConnect(integration, config)
+    onConnect(integration.id, config)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {integration.fields.map((field: IntegrationConfigField) => (
+      {integration.fields.map((field) => (
         <div key={field.key} className="space-y-2">
           <Label htmlFor={field.key}>{field.label}</Label>
           {field.type === "textarea" ? (

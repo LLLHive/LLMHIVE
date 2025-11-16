@@ -9,8 +9,8 @@ export async function POST(req: Request) {
     console.log("[v0] Executing code:", { language, codeLength: code.length })
 
     // Validate language
-    const supportedLanguages = ["javascript", "typescript", "python"] as const
-    if (!supportedLanguages.includes(language as (typeof supportedLanguages)[number])) {
+    const supportedLanguages = ["javascript", "typescript", "python"]
+    if (!supportedLanguages.includes(language)) {
       return NextResponse.json({ error: `Unsupported language: ${language}` }, { status: 400 })
     }
 
@@ -19,11 +19,10 @@ export async function POST(req: Request) {
       try {
         // Create a safe execution environment
         const logs: string[] = []
-        const formatArgs = (args: unknown[]) => args.map((value) => String(value)).join(" ")
         const customConsole = {
-          log: (...args: unknown[]) => logs.push(formatArgs(args)),
-          error: (...args: unknown[]) => logs.push(`ERROR: ${formatArgs(args)}`),
-          warn: (...args: unknown[]) => logs.push(`WARN: ${formatArgs(args)}`),
+          log: (...args: any[]) => logs.push(args.map(String).join(" ")),
+          error: (...args: any[]) => logs.push("ERROR: " + args.map(String).join(" ")),
+          warn: (...args: any[]) => logs.push("WARN: " + args.map(String).join(" ")),
         }
 
         // Execute with limited scope
@@ -35,10 +34,10 @@ export async function POST(req: Request) {
           output: logs.join("\n") || "Code executed successfully (no output)",
           language,
         })
-      } catch (error) {
+      } catch (error: any) {
         return NextResponse.json({
           success: false,
-          error: error instanceof Error ? error.message : "Execution failed",
+          error: error.message,
           language,
         })
       }
@@ -54,11 +53,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ error: "Execution failed" }, { status: 500 })
-  } catch (error) {
+  } catch (error: any) {
     console.error("[v0] Code execution error:", error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to execute code" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: error.message || "Failed to execute code" }, { status: 500 })
   }
 }

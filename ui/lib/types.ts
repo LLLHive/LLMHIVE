@@ -103,7 +103,7 @@ export interface CriteriaSettings {
 
 export interface Integration {
   id: string
-  name: string
+  name: "github" | "google-cloud" | "vercel"
   connected: boolean
-  config?: Record<string, string | number | boolean | undefined>
+  config?: Record<string, any>
 }

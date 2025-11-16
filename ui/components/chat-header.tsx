@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -20,8 +19,8 @@ type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
 
 export function ChatHeader({
-  selectedModels,
-  onToggleModel,
+  selectedModel,
+  onModelChange,
   reasoningMode,
   onReasoningModeChange,
   orchestrationEngine,
@@ -30,9 +29,10 @@ export function ChatHeader({
   onToggleFeature,
   criteriaSettings,
   onCriteriaChange,
+  currentModel,
 }: {
-  selectedModels: string[]
-  onToggleModel: (model: string) => void
+  selectedModel: string
+  onModelChange: (model: string) => void
   reasoningMode: "deep" | "standard" | "fast"
   onReasoningModeChange: (mode: "deep" | "standard" | "fast") => void
   orchestrationEngine: OrchestrationEngine
@@ -41,6 +41,7 @@ export function ChatHeader({
   onToggleFeature: (feature: AdvancedFeature) => void
   criteriaSettings: CriteriaSettings
   onCriteriaChange: (settings: CriteriaSettings) => void
+  currentModel: any
 }) {
   return (
     <header className="border-b border-border p-3 flex items-center justify-between bg-card/50 backdrop-blur-xl sticky top-0 z-50">
@@ -62,20 +63,14 @@ export function ChatHeader({
                 {AVAILABLE_MODELS.filter((m) => m.provider === provider).map((model) => (
                   <DropdownMenuItem
                     key={model.id}
-                    onClick={() => onToggleModel(model.id)}
+                    onClick={() => onModelChange(model.id)}
                     className="gap-2 py-1.5 hover-lift"
                   >
-                    <Checkbox
-                      checked={selectedModels.includes(model.id)}
-                      className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
+                    <Checkbox 
+                      checked={selectedModel === model.id} 
+                      className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
                     />
-                    <Image
-                      src={getModelLogo(model.provider) || "/placeholder.svg"}
-                      alt={`${model.name} logo`}
-                      width={14}
-                      height={14}
-                      className="h-3.5 w-3.5 object-contain"
-                    />
+                    <img src={getModelLogo(model.provider) || "/placeholder.svg"} alt="" className="w-3.5 h-3.5" />
                     <span className="text-[11px]">{model.name}</span>
                   </DropdownMenuItem>
                 ))}
@@ -193,13 +188,7 @@ export function ChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-1 text-[11px] text-muted-foreground uppercase tracking-wide">
-            <span>Models:</span>
-            <span className="font-semibold text-foreground">{selectedModels.length}</span>
-          </div>
-          <CriteriaEqualizer settings={criteriaSettings} onChange={onCriteriaChange} />
-        </div>
+        <CriteriaEqualizer settings={criteriaSettings} onChange={onCriteriaChange} />
       </div>
 
     </header>
