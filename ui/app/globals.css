@@ -171,6 +171,13 @@
   transform: translateY(-1.5px) scale(1.01);
 }
 
+/* Ensure text remains visible when bronze gradient is applied */
+.hover\:bronze-gradient:hover,
+.hover\:bronze-gradient:hover span,
+.hover\:bronze-gradient:hover .text-foreground {
+  color: var(--primary-foreground) !important;
+}
+
 /* Hexagonal shape utility */
 .hexagon {
   clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
