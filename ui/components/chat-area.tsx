@@ -204,7 +204,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
                         <Icon className="h-4 w-4 text-background" />
                       </div>
-                      <div className="text-xs font-semibold">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-white">{suggestion.label}</div>
                     </Button>
                   )
                 })}
@@ -223,7 +223,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
                         <Icon className="h-4 w-4 text-background" />
                       </div>
-                      <div className="text-xs font-semibold">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-white">{suggestion.label}</div>
                     </Button>
                   )
                 })}
@@ -242,7 +242,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
                         <Icon className="h-4 w-4 text-background" />
                       </div>
-                      <div className="text-xs font-semibold">{suggestion.label}</div>
+                      <div className="text-xs font-semibold text-white">{suggestion.label}</div>
                     </Button>
                   )
                 })}
