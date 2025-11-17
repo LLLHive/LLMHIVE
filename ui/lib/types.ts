@@ -14,6 +14,11 @@ export interface Message {
   consensus?: ConsensusInfo
   citations?: Citation[]
   isProcessing?: boolean
+  // New orchestration metadata surfaced from backend
+  qualityScore?: number
+  confidence?: number
+  factCheckSummary?: string
+  refinementRounds?: number
 }
 
 export interface Attachment {
@@ -40,6 +45,7 @@ export interface Conversation {
   updatedAt: Date
   model: string
   pinned?: boolean
+  backendConversationId?: number
 }
 
 export interface Project {
