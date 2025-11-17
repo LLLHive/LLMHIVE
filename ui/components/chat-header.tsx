@@ -60,7 +60,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="group gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:border-transparent transition-all duration-300"
+              className="group gap-1.5 h-7 px-2.5 text-[11px] text-white bg-transparent hover:bronze-gradient hover:text-white hover:border-transparent transition-all duration-300"
             >
               <span className="text-foreground group-hover:text-primary-foreground transition-colors duration-300 whitespace-nowrap">AI Agents ({selectedModels.length})</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50 group-hover:opacity-100 group-hover:text-primary-foreground transition-all duration-300" />
@@ -101,7 +101,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="group gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:border-transparent transition-all duration-300"
+              className="group gap-1.5 h-7 px-2.5 text-[11px] text-white bg-transparent hover:bronze-gradient hover:text-white hover:border-transparent transition-all duration-300"
             >
               <span className="text-foreground group-hover:text-primary-foreground transition-colors duration-300 whitespace-nowrap">Tuning</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50 group-hover:opacity-100 group-hover:text-primary-foreground transition-all duration-300" />
@@ -141,7 +141,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="group gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:border-transparent transition-all duration-300"
+              className="group gap-1.5 h-7 px-2.5 text-[11px] text-white bg-transparent hover:bronze-gradient hover:text-white hover:border-transparent transition-all duration-300"
             >
               <span className="text-foreground group-hover:text-primary-foreground transition-colors duration-300 whitespace-nowrap">Orchestration</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50 group-hover:opacity-100 group-hover:text-primary-foreground transition-all duration-300" />
@@ -191,7 +191,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="group gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:border-transparent transition-all duration-300"
+              className="group gap-1.5 h-7 px-2.5 text-[11px] text-white bg-transparent hover:bronze-gradient hover:text-white hover:border-transparent transition-all duration-300"
             >
               <span className="text-foreground group-hover:text-primary-foreground transition-colors duration-300 whitespace-nowrap">Advanced</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50 group-hover:opacity-100 group-hover:text-primary-foreground transition-all duration-300" />
