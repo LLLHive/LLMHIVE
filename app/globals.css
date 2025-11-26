@@ -163,12 +163,16 @@
   );
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 6px rgba(0, 0, 0, 0.35), 0 6px 16px rgba(196, 142, 72, 0.25);
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Force dark text color when bronze gradient is applied */
+  color: #1a1a1a !important;
 }
 
 .bronze-gradient:hover {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(0, 0, 0, 0.45), 0 8px 28px
     rgba(196, 142, 72, 0.35);
   transform: translateY(-1.5px) scale(1.01);
+  /* Ensure text stays dark on hover */
+  color: #1a1a1a !important;
 }
 
 /* Hexagonal shape utility */
@@ -235,8 +239,7 @@
   background: rgba(12, 12, 12, 0.95);
   backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(196, 142, 72, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0
-    rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Buttery smooth hover lift with perfect shadow elevation */

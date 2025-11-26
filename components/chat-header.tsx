@@ -46,13 +46,12 @@ export function ChatHeader({
   return (
     <header className="border-b border-border p-3 flex items-center justify-between bg-card/50 backdrop-blur-xl sticky top-0 z-50">
       <div className="flex items-center justify-between gap-4 flex-1 px-8">
-        {/* AI Agents Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
             >
               <span>AI Agents</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -87,13 +86,12 @@ export function ChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Tuning */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
             >
               <span>Tuning</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -136,13 +134,12 @@ export function ChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Orchestration */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
             >
               <span>Orchestration</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -192,13 +189,12 @@ export function ChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Advanced */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
             >
               <span>Advanced</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
