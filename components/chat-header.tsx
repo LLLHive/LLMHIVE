@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -17,6 +19,18 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-ensemble"
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
+
+function HeaderDropdownButton({ children }: { children: React.ReactNode }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black"
+    >
+      {children}
+    </Button>
+  )
+}
 
 export function ChatHeader({
   selectedModel,
@@ -48,14 +62,10 @@ export function ChatHeader({
       <div className="flex items-center justify-between gap-4 flex-1 px-8">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
-            >
+            <HeaderDropdownButton>
               <span>AI Agents</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-            </Button>
+            </HeaderDropdownButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
@@ -88,14 +98,10 @@ export function ChatHeader({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
-            >
+            <HeaderDropdownButton>
               <span>Tuning</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-            </Button>
+            </HeaderDropdownButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
@@ -136,14 +142,10 @@ export function ChatHeader({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
-            >
+            <HeaderDropdownButton>
               <span>Orchestration</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-            </Button>
+            </HeaderDropdownButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-60 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
             <DropdownMenuItem
@@ -191,14 +193,10 @@ export function ChatHeader({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border-border hover:bg-[var(--bronze)] hover:border-[var(--bronze)] hover:text-black transition-all duration-300"
-            >
+            <HeaderDropdownButton>
               <span>Advanced</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
-            </Button>
+            </HeaderDropdownButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
             {(["vector-db", "rag", "shared-memory", "loop-back", "live-data"] as AdvancedFeature[]).map((feature) => (
