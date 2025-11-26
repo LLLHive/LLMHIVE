@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Sliders, Target, Zap, Palette } from 'lucide-react'
+import { Sliders, Target, Zap, Palette } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -27,11 +27,11 @@ export function CriteriaEqualizer({ settings, onChange }: CriteriaEqualizerProps
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           className={cn(
-            "gap-2 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300",
-            open && "bronze-gradient text-primary-foreground border-transparent",
+            "gap-2 h-7 px-2.5 text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black",
+            open && "bg-[#cd7f32] border-[#cd7f32] text-black",
           )}
         >
           <Sliders className="h-3.5 w-3.5" />
