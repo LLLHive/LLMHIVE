@@ -1,5 +1,8 @@
 const DEFAULT_API_BASE =
-  process.env.ORCHESTRATION_API_BASE || process.env.LLMHIVE_API_URL || "http://localhost:8000"
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.ORCHESTRATION_API_BASE ||
+  process.env.LLMHIVE_API_URL ||
+  "http://localhost:8000"
 const METRICS_ENDPOINT = `${DEFAULT_API_BASE.replace(/\/$/, "")}/api/v1/system/model-metrics`
 
 export async function GET() {

@@ -19,6 +19,25 @@ export interface Message {
   confidence?: number
   factCheckSummary?: string
   refinementRounds?: number
+  confirmation?: string[] // Confirmation notes/warnings from verification
+  modelFeedback?: ModelFeedback[] // Model Feedback: Performance feedback for each model
+  metadata?: {
+    requiresClarification?: boolean
+    originalQuery?: string
+    possibleInterpretations?: string[]
+    [key: string]: any
+  }
+}
+
+export interface ModelFeedback {
+  model_name: string
+  outcome: "success" | "partial" | "rejected" | "corrected" | "failed_verification" | "unknown"
+  was_used_in_final: boolean
+  response_time_ms?: number
+  token_usage?: number
+  confidence_score?: number
+  quality_score?: number
+  notes?: string
 }
 
 export interface Attachment {

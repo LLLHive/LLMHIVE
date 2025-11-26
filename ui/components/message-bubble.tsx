@@ -120,7 +120,32 @@ export function MessageBubble({
           </div>
         )}
 
-        <div className="rounded-2xl bg-card border border-border p-4">
+        <div className={cn(
+          "rounded-2xl bg-card border p-4",
+          message.metadata?.requiresClarification 
+            ? "border-yellow-500/50 bg-yellow-500/5" 
+            : message.metadata?.subscriptionError
+            ? "border-red-500/50 bg-red-500/5"
+            : "border-border"
+        )}>
+          {message.metadata?.requiresClarification && (
+            <div className="mb-3 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-1">Clarification Needed</p>
+              <p className="text-xs text-muted-foreground">Please provide more details to help me understand your query.</p>
+            </div>
+          )}
+          {message.metadata?.subscriptionError && (
+            <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">Subscription Limit Reached</p>
+              <p className="text-xs text-muted-foreground mb-2">{message.content}</p>
+              <a
+                href="mailto:support@llmhive.com?subject=Upgrade Request"
+                className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium"
+              >
+                Contact us to upgrade →
+              </a>
+            </div>
+          )}
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
 
           {message.citations && message.citations.length > 0 && (
@@ -153,6 +178,14 @@ export function MessageBubble({
             <p className="mt-3 text-[10px] text-muted-foreground">
               Refined {message.refinementRounds} rounds to reach consensus.
             </p>
+          )}
+
+          {message.role === 'assistant' && message.content && message.confirmation && message.confirmation.length > 0 && (
+            <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-3 pt-3 border-t border-border">
+              {message.confirmation.map((note: string, idx: number) => (
+                <p key={idx} className="mb-1">⚠️ {note}</p>
+              ))}
+            </div>
           )}
 
           {message.artifact && (

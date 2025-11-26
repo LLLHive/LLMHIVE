@@ -11,17 +11,20 @@ import {
   ExternalLink,
   CheckCircle2,
   AlertCircle,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import type { AgentContribution, Citation, ConsensusInfo } from "@/lib/types"
+import type { AgentContribution, Citation, ConsensusInfo, ModelFeedback } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 interface AgentInsightsPanelProps {
   agents: AgentContribution[]
   consensus: ConsensusInfo
   citations?: Citation[]
+  modelFeedback?: ModelFeedback[] // Model Feedback: Performance feedback for each model
   onClose: () => void
 }
 
@@ -43,7 +46,23 @@ const agentColors = {
   general: "from-gray-500 to-gray-600",
 }
 
-export function AgentInsightsPanel({ agents, consensus, citations, onClose }: AgentInsightsPanelProps) {
+export function AgentInsightsPanel({ agents, consensus, citations, modelFeedback, onClose }: AgentInsightsPanelProps) {
+  // Model Feedback: Helper function to get outcome icon and color
+  const getOutcomeDisplay = (outcome: ModelFeedback["outcome"], wasUsed: boolean) => {
+    if (wasUsed && outcome === "success") {
+      return { icon: CheckCircle2, color: "text-green-500", label: "Used in final answer" }
+    } else if (wasUsed && outcome === "corrected") {
+      return { icon: AlertTriangle, color: "text-yellow-500", label: "Used but corrected" }
+    } else if (outcome === "failed_verification") {
+      return { icon: XCircle, color: "text-red-500", label: "Failed verification" }
+    } else if (outcome === "rejected") {
+      return { icon: XCircle, color: "text-gray-500", label: "Answer discarded" }
+    } else if (outcome === "partial") {
+      return { icon: AlertCircle, color: "text-yellow-500", label: "Partial contribution" }
+    } else {
+      return { icon: AlertCircle, color: "text-gray-400", label: "Unknown outcome" }
+    }
+  }
   return (
     <div className="absolute top-0 right-0 h-full w-96 bg-background border-l border-border shadow-2xl flex flex-col z-50 animate-in slide-in-from-right duration-300">
       {/* Header */}
@@ -137,6 +156,73 @@ export function AgentInsightsPanel({ agents, consensus, citations, onClose }: Ag
             })}
           </div>
         </div>
+
+        {/* Model Feedback: Display model performance feedback */}
+        {modelFeedback && modelFeedback.length > 0 ? (
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <div className="w-1 h-4 bg-[var(--bronze)] rounded-full" />
+              Model Performance ({modelFeedback.length})
+            </h4>
+            <div className="space-y-3">
+              {modelFeedback.map((feedback, idx) => {
+                const outcomeDisplay = getOutcomeDisplay(feedback.outcome, feedback.was_used_in_final)
+                const OutcomeIcon = outcomeDisplay.icon
+                return (
+                  <div
+                    key={`${feedback.model_name}-${idx}`}
+                    className={cn(
+                      "p-3 rounded-lg border transition-colors",
+                      feedback.was_used_in_final
+                        ? "bg-card border-[var(--bronze)]/30"
+                        : "bg-secondary border-border"
+                    )}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <OutcomeIcon className={cn("h-4 w-4", outcomeDisplay.color)} />
+                        <span className="font-medium text-sm">{feedback.model_name}</span>
+                      </div>
+                      <Badge
+                        variant={feedback.was_used_in_final ? "default" : "outline"}
+                        className={cn(
+                          "text-xs",
+                          feedback.was_used_in_final && "bg-[var(--bronze)] text-white"
+                        )}
+                      >
+                        {outcomeDisplay.label}
+                      </Badge>
+                    </div>
+                    {feedback.notes && (
+                      <p className="text-xs text-muted-foreground mb-2">{feedback.notes}</p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      {feedback.quality_score !== undefined && (
+                        <span>Quality: {(feedback.quality_score * 100).toFixed(0)}%</span>
+                      )}
+                      {feedback.confidence_score !== undefined && (
+                        <span>Confidence: {(feedback.confidence_score * 100).toFixed(0)}%</span>
+                      )}
+                      {feedback.response_time_ms !== undefined && (
+                        <span>Time: {feedback.response_time_ms.toFixed(0)}ms</span>
+                      )}
+                      {feedback.token_usage !== undefined && (
+                        <span>Tokens: {feedback.token_usage}</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          // Model Feedback: Show message if no feedback available
+          <div className="mb-6 p-4 rounded-lg bg-secondary border border-border">
+            <p className="text-xs text-muted-foreground text-center">
+              No performance feedback available for this query
+            </p>
+          </div>
+        )}
 
         {/* Citations */}
         {citations && citations.length > 0 && (

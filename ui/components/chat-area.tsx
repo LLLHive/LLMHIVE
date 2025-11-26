@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -15,11 +15,13 @@ import type {
   CriteriaSettings,
   AgentContribution,
   Citation,
+  ModelFeedback,
 } from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
 import { ChatHeader } from "./chat-header"
+import { cn } from "@/lib/utils"
 
 interface ChatAreaProps {
   conversation?: Conversation
@@ -73,11 +75,18 @@ export function ChatArea({
     speed: 70,
     creativity: 50,
   })
+  const [preset, setPreset] = useState<string | null>(null)
+  const [useDeepconf, setUseDeepconf] = useState<boolean | null>(null)
+  const [useVerification, setUseVerification] = useState<boolean | null>(null)
+  const [formatStyle, setFormatStyle] = useState<"bullet" | "paragraph">("paragraph")
   const [showInsights, setShowInsights] = useState(false)
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
   const [incognitoMode, setIncognitoMode] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [pendingClarification, setPendingClarification] = useState<{ originalQuery: string; clarificationMessageId: string } | null>(null)
+  const [subscriptionError, setSubscriptionError] = useState<{ message: string; upgradeMessage?: string; tier?: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const primaryModelId = selectedModels[0]
   const currentModel = primaryModelId ? getModelById(primaryModelId) : undefined
@@ -102,6 +111,10 @@ export function ChatArea({
     if (!input.trim() && attachments.length === 0) return
     if (selectedModels.length === 0) return
 
+    // Clarification Loop: Check if this is a response to a clarification
+    const isClarificationResponse = pendingClarification !== null
+    const originalQuery = pendingClarification?.originalQuery || null
+
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
       role: "user",
@@ -112,9 +125,15 @@ export function ChatArea({
 
     onSendMessage(userMessage)
 
+    const userInput = input
     setInput("")
     setAttachments([])
     setIsLoading(true)
+
+    // Clarification Loop: Clear pending clarification after sending response
+    if (isClarificationResponse) {
+      setPendingClarification(null)
+    }
 
     try {
       const response = await fetch("/api/chat", {
@@ -128,6 +147,14 @@ export function ChatArea({
           criteriaSettings,
           orchestrationEngine,
           advancedFeatures,
+          preset,
+          useDeepconf,
+          useVerification,
+          formatStyle,
+          // Clarification Loop: Include clarification parameters if responding to clarification
+          clarificationResponse: isClarificationResponse ? userInput : undefined,
+          isClarificationResponse: isClarificationResponse,
+          originalQuery: originalQuery,
           conversationId: conversation?.backendConversationId,
           userId: "ui-session",
         }),
@@ -136,6 +163,40 @@ export function ChatArea({
       const payload = await response.json().catch(() => null)
 
       if (!response.ok) {
+        // Subscription Enforcement: Handle subscription limit errors
+        if (response.status === 403) {
+          const errorDetail = payload?.detail || payload?.backend?.detail || {}
+          const isSubscriptionError = 
+            errorDetail.error === "subscription_limit_exceeded" ||
+            errorDetail.error === "Usage limit exceeded" ||
+            errorDetail.error === "Tier limit exceeded" ||
+            errorDetail.message?.toLowerCase().includes("upgrade") ||
+            errorDetail.message?.toLowerCase().includes("limit")
+          
+          if (isSubscriptionError) {
+            setSubscriptionError({
+              message: errorDetail.message || "Subscription limit exceeded",
+              upgradeMessage: errorDetail.upgrade_message || errorDetail.message,
+              tier: errorDetail.tier || "free",
+            })
+            const errorMessage: Message = {
+              id: `msg-${Date.now()}`,
+              role: "assistant",
+              content: errorDetail.upgrade_message || errorDetail.message || "You've reached your subscription limit. Please upgrade to continue.",
+              timestamp: new Date(),
+              metadata: {
+                subscriptionError: true,
+                tier: errorDetail.tier,
+                limitType: errorDetail.limit_type,
+              },
+            }
+            onSendMessage(errorMessage)
+            setIsLoading(false)
+            return
+          }
+        }
+        
+        // Handle other errors
         const errorText =
           (payload && (payload.error || payload?.backend?.detail || payload?.backend?.detail?.detail)) ||
           "The orchestration engine returned an error. Please check backend logs."
@@ -149,10 +210,34 @@ export function ChatArea({
         onSendMessage(errorMessage)
         return
       }
+      
+      // Clear subscription error on successful request
+      if (subscriptionError) {
+        setSubscriptionError(null)
+      }
 
+      // Backend returns OrchestrationResponse directly, API route wraps it in 'orchestration' field
       const orchestration = payload?.orchestration
 
       if (!orchestration) {
+        // If payload itself is the orchestration response (direct backend response)
+        if (payload?.final_response) {
+          // Backend response was returned directly, use it
+          const directResponse = payload as any
+          const assistantMessage: Message = {
+            id: `msg-${Date.now()}-assistant`,
+            role: "assistant",
+            content: directResponse.final_response || "The hive could not produce a response for this request.",
+            timestamp: new Date(),
+            model: "LLMHive Orchestrator",
+          }
+          if (directResponse.conversation_id && onConversationUpdate) {
+            onConversationUpdate(directResponse.conversation_id)
+          }
+          onSendMessage(assistantMessage)
+          return
+        }
+        
         const errorMessage: Message = {
           id: `msg-${Date.now()}`,
           role: "assistant",
@@ -165,10 +250,39 @@ export function ChatArea({
 
       if (payload.conversationId && onConversationUpdate) {
         onConversationUpdate(payload.conversationId)
+      } else if (orchestration.conversation_id && onConversationUpdate) {
+        onConversationUpdate(orchestration.conversation_id)
       }
 
-      // Extract final_response - handle both nested and flat structures
-      const finalResponse = orchestration.final_response || orchestration.finalResponse || orchestration?.response || "The hive could not produce a response for this request."
+      // Clarification Loop: Check if clarification is needed
+      if (orchestration.requires_clarification && orchestration.clarification_question) {
+        // Display clarification question
+        const clarificationMessageId = `msg-${Date.now()}-clarification`
+        const clarificationMessage: Message = {
+          id: clarificationMessageId,
+          role: "assistant",
+          content: orchestration.clarification_question,
+          timestamp: new Date(),
+          model: "LLMHive Clarification",
+          // Store original query and possible interpretations for context
+          metadata: {
+            requiresClarification: true,
+            originalQuery: userMessage.content,
+            possibleInterpretations: orchestration.possible_interpretations || [],
+          },
+        }
+        onSendMessage(clarificationMessage)
+        // Store pending clarification so we know the next user message is a response
+        setPendingClarification({
+          originalQuery: userMessage.content,
+          clarificationMessageId: clarificationMessageId,
+        })
+        setIsLoading(false)
+        return  // Don't proceed with normal response
+      }
+      
+      // Extract final_response - backend returns it at root level of OrchestrationResponse
+      const finalResponse = orchestration.final_response || "The hive could not produce a response for this request."
       
       console.log("[LLMHive] Orchestration response:", { orchestration, finalResponse })
       
@@ -216,6 +330,13 @@ export function ChatArea({
 
   const displayMessages = conversation?.messages || []
   
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [displayMessages.length, isLoading])
+  
   console.log("[LLMHive] ChatArea render:", { 
     conversationId: conversation?.id, 
     messageCount: displayMessages.length,
@@ -244,6 +365,14 @@ export function ChatArea({
         criteriaSettings={criteriaSettings}
         onCriteriaChange={setCriteriaSettings}
         currentModel={currentModel}
+        preset={preset}
+        onPresetChange={setPreset}
+        useDeepconf={useDeepconf}
+        onUseDeepconfChange={setUseDeepconf}
+        useVerification={useVerification}
+        onUseVerificationChange={setUseVerification}
+        formatStyle={formatStyle}
+        onFormatStyleChange={setFormatStyle}
       />
 
       <HiveActivityIndicator active={isLoading} agentCount={6} />
@@ -344,6 +473,7 @@ export function ChatArea({
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </ScrollArea>
@@ -353,6 +483,7 @@ export function ChatArea({
           agents={selectedMessageForInsights.agents}
           consensus={selectedMessageForInsights.consensus}
           citations={selectedMessageForInsights.citations}
+          modelFeedback={selectedMessageForInsights.modelFeedback} // Model Feedback: Pass feedback data
           onClose={() => setShowInsights(false)}
         />
       )}
@@ -374,6 +505,26 @@ export function ChatArea({
           )}
 
           <div className="relative">
+            {pendingClarification && (
+              <div className="mb-2 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  <strong>Clarification needed:</strong> Please provide more details about your query.
+                </p>
+              </div>
+            )}
+            {subscriptionError && (
+              <div className="mb-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-xs text-red-600 dark:text-red-400 mb-1">
+                  <strong>Subscription Limit:</strong> {subscriptionError.message}
+                </p>
+                <a
+                  href="mailto:support@llmhive.com?subject=Upgrade Request"
+                  className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium"
+                >
+                  Contact us to upgrade →
+                </a>
+              </div>
+            )}
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -383,10 +534,21 @@ export function ChatArea({
                   handleSend()
                 }
               }}
-              placeholder="Ask the hive mind anything..."
-              className="min-h-[72px] pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)]"
+              placeholder={
+                pendingClarification
+                  ? "Please clarify your query..."
+                  : subscriptionError
+                  ? "Upgrade required to continue..."
+                  : "Ask the hive mind anything..."
+              }
+              className={cn(
+                "min-h-[72px] pr-20 sm:pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)] transition-colors",
+                pendingClarification && "border-yellow-500/50 focus:border-yellow-500",
+                subscriptionError && "border-red-500/50 focus:border-red-500"
+              )}
+              disabled={isLoading || !!subscriptionError}
             />
-            <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+            <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 flex-wrap">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -404,7 +566,7 @@ export function ChatArea({
               <Button
                 size="icon"
                 onClick={handleSend}
-                disabled={(!input.trim() && attachments.length === 0) || isLoading || selectedModels.length === 0}
+                disabled={(!input.trim() && attachments.length === 0) || isLoading || selectedModels.length === 0 || !!subscriptionError}
                 className="h-7 w-7 bronze-gradient disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" />
@@ -425,6 +587,8 @@ interface OrchestrationApiResponse {
   initial_responses?: { model?: string; content: string }[]
   quality?: { model?: string; score?: number; confidence?: number; highlights?: string[] }[]
   consensus_notes?: string[]
+  confirmation_notes?: string[] // Confirmation notes from verification
+  model_feedback?: ModelFeedback[] // Model Feedback: Performance feedback for each model
   fact_check?: FactCheckPayload
   refinement_rounds?: number
   plan?: {
@@ -446,7 +610,7 @@ interface FactCheckPayload {
 
 function buildAssistantMessage({
   orchestration,
-  fallbackModel,
+  fallbackModel: _fallbackModel,
   reasoningMode,
 }: {
   orchestration: OrchestrationApiResponse
@@ -493,6 +657,12 @@ function buildAssistantMessage({
     refinementRounds: orchestration.refinement_rounds,
     qualityScore: avgQuality,
     confidence: consensusConfidence !== undefined ? consensusConfidence / 100 : undefined,
+    confirmation: orchestration.confirmation_notes && orchestration.confirmation_notes.length > 0 
+      ? orchestration.confirmation_notes 
+      : undefined,
+    modelFeedback: orchestration.model_feedback && orchestration.model_feedback.length > 0
+      ? orchestration.model_feedback as ModelFeedback[]
+      : undefined, // Model Feedback: Extract feedback data from API response
     reasoning: reasoningSteps?.length
       ? {
           mode: reasoningMode,
