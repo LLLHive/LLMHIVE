@@ -19,8 +19,8 @@ type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
 
 export function ChatHeader({
-  selectedModels,
-  onModelToggle,
+  selectedModel,
+  onModelChange,
   reasoningMode,
   onReasoningModeChange,
   orchestrationEngine,
@@ -31,8 +31,8 @@ export function ChatHeader({
   onCriteriaChange,
   currentModel,
 }: {
-  selectedModels: string[]
-  onModelToggle: (model: string) => void
+  selectedModel: string
+  onModelChange: (model: string) => void
   reasoningMode: "deep" | "standard" | "fast"
   onReasoningModeChange: (mode: "deep" | "standard" | "fast") => void
   orchestrationEngine: OrchestrationEngine
@@ -49,8 +49,8 @@ export function ChatHeader({
         {/* AI Agents Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent !text-white hover:bg-[var(--bronze)]/20 hover:border-[var(--bronze)] transition-all duration-300">
-              <span>AI Agents {selectedModels.length > 0 && `(${selectedModels.length})`}</span>
+            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
+              <span>AI Agents</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
@@ -63,11 +63,11 @@ export function ChatHeader({
                 {AVAILABLE_MODELS.filter((m) => m.provider === provider).map((model) => (
                   <DropdownMenuItem
                     key={model.id}
-                    onClick={() => onModelToggle(model.id)}
+                    onClick={() => onModelChange(model.id)}
                     className="gap-2 py-1.5 hover-lift"
                   >
                     <Checkbox 
-                      checked={selectedModels.includes(model.id)} 
+                      checked={selectedModel === model.id} 
                       className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
                     />
                     <img src={getModelLogo(model.provider) || "/placeholder.svg"} alt="" className="w-3.5 h-3.5" />
@@ -83,7 +83,7 @@ export function ChatHeader({
         {/* Tuning */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent !text-white hover:bg-[var(--bronze)]/20 hover:border-[var(--bronze)] transition-all duration-300">
+            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
               <span>Tuning</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
@@ -119,7 +119,7 @@ export function ChatHeader({
         {/* Orchestration */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent !text-white hover:bg-[var(--bronze)]/20 hover:border-[var(--bronze)] transition-all duration-300">
+            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
               <span>Orchestration</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
@@ -165,7 +165,7 @@ export function ChatHeader({
         {/* Advanced */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent !text-white hover:bg-[var(--bronze)]/20 hover:border-[var(--bronze)] transition-all duration-300">
+            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
               <span>Advanced</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
