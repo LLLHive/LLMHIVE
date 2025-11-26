@@ -52,7 +52,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
             >
               <span>AI Agents</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -93,7 +93,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
             >
               <span>Tuning</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -142,7 +142,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
             >
               <span>Orchestration</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
@@ -198,7 +198,7 @@ export function ChatHeader({
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-[#1a1a1a] hover:border-transparent transition-all duration-300"
             >
               <span>Advanced</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
