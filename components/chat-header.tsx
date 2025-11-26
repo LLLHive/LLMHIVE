@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown } from "lucide-react"
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import type { CriteriaSettings } from "@/lib/types"
 import { CriteriaEqualizer } from "./criteria-equalizer"
@@ -49,12 +49,19 @@ export function ChatHeader({
         {/* AI Agents Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+            >
               <span>AI Agents</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
+          <DropdownMenuContent
+            align="start"
+            className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
+          >
             {["openai", "anthropic", "google", "xai", "meta"].map((provider) => (
               <div key={provider}>
                 <DropdownMenuLabel className="text-[9px] uppercase tracking-wider opacity-60">
@@ -64,11 +71,11 @@ export function ChatHeader({
                   <DropdownMenuItem
                     key={model.id}
                     onClick={() => onModelChange(model.id)}
-                    className="gap-2 py-1.5 hover-lift"
+                    className="gap-2 py-1.5 hover-lift hover:text-foreground"
                   >
-                    <Checkbox 
-                      checked={selectedModel === model.id} 
-                      className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+                    <Checkbox
+                      checked={selectedModel === model.id}
+                      className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
                     />
                     <img src={getModelLogo(model.provider) || "/placeholder.svg"} alt="" className="w-3.5 h-3.5" />
                     <span className="text-[11px]">{model.name}</span>
@@ -83,7 +90,11 @@ export function ChatHeader({
         {/* Tuning */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+            >
               <span>Tuning</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
@@ -92,24 +103,33 @@ export function ChatHeader({
             align="start"
             className="w-44 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
           >
-            <DropdownMenuItem onClick={() => onReasoningModeChange("deep")} className="gap-2 py-1.5 hover-lift">
-              <Checkbox 
-                checked={reasoningMode === "deep"} 
-                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+            <DropdownMenuItem
+              onClick={() => onReasoningModeChange("deep")}
+              className="gap-2 py-1.5 hover-lift hover:text-foreground"
+            >
+              <Checkbox
+                checked={reasoningMode === "deep"}
+                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
               <span className="text-[11px]">Deep Reasoning</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onReasoningModeChange("standard")} className="gap-2 py-1.5 hover-lift">
-              <Checkbox 
-                checked={reasoningMode === "standard"} 
-                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+            <DropdownMenuItem
+              onClick={() => onReasoningModeChange("standard")}
+              className="gap-2 py-1.5 hover-lift hover:text-foreground"
+            >
+              <Checkbox
+                checked={reasoningMode === "standard"}
+                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
               <span className="text-[11px]">Standard</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onReasoningModeChange("fast")} className="gap-2 py-1.5 hover-lift">
-              <Checkbox 
-                checked={reasoningMode === "fast"} 
-                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+            <DropdownMenuItem
+              onClick={() => onReasoningModeChange("fast")}
+              className="gap-2 py-1.5 hover-lift hover:text-foreground"
+            >
+              <Checkbox
+                checked={reasoningMode === "fast"}
+                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
               <span className="text-[11px]">Fast</span>
             </DropdownMenuItem>
@@ -119,43 +139,53 @@ export function ChatHeader({
         {/* Orchestration */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+            >
               <span>Orchestration</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-60 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
-            <DropdownMenuItem onClick={() => onOrchestrationChange("hrm")} className="gap-2 py-2 hover-lift text-xs">
-              <Checkbox 
-                checked={orchestrationEngine === "hrm"} 
-                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+            <DropdownMenuItem
+              onClick={() => onOrchestrationChange("hrm")}
+              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
+            >
+              <Checkbox
+                checked={orchestrationEngine === "hrm"}
+                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
               Hierarchical Role Management (HRM)
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onOrchestrationChange("prompt-diffusion")}
-              className="gap-2 py-2 hover-lift text-xs"
+              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
             >
-              <Checkbox 
-                checked={orchestrationEngine === "prompt-diffusion"} 
-                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+              <Checkbox
+                checked={orchestrationEngine === "prompt-diffusion"}
+                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
               Prompt Diffusion and Refinement
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOrchestrationChange("deep-conf")} className="gap-2 py-2 hover-lift text-xs">
-              <Checkbox 
-                checked={orchestrationEngine === "deep-conf"} 
-                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+            <DropdownMenuItem
+              onClick={() => onOrchestrationChange("deep-conf")}
+              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
+            >
+              <Checkbox
+                checked={orchestrationEngine === "deep-conf"}
+                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
               DeepConf (Deep Consensus Framework)
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onOrchestrationChange("adaptive-ensemble")}
-              className="gap-2 py-2 hover-lift text-xs"
+              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
             >
-              <Checkbox 
-                checked={orchestrationEngine === "adaptive-ensemble"} 
-                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+              <Checkbox
+                checked={orchestrationEngine === "adaptive-ensemble"}
+                className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
               Adaptive Ensemble Logic
             </DropdownMenuItem>
@@ -165,17 +195,25 @@ export function ChatHeader({
         {/* Advanced */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-primary-foreground hover:border-transparent transition-all duration-300">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent hover:bronze-gradient hover:text-background hover:border-transparent transition-all duration-300"
+            >
               <span>Advanced</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
             {(["vector-db", "rag", "shared-memory", "loop-back", "live-data"] as AdvancedFeature[]).map((feature) => (
-              <DropdownMenuItem key={feature} onClick={() => onToggleFeature(feature)} className="gap-2 py-2 hover-lift">
-                <Checkbox 
-                  checked={advancedFeatures.includes(feature)} 
-                  className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]" 
+              <DropdownMenuItem
+                key={feature}
+                onClick={() => onToggleFeature(feature)}
+                className="gap-2 py-2 hover-lift hover:text-foreground"
+              >
+                <Checkbox
+                  checked={advancedFeatures.includes(feature)}
+                  className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
                 />
                 <span className="text-xs">
                   {feature
@@ -190,7 +228,6 @@ export function ChatHeader({
 
         <CriteriaEqualizer settings={criteriaSettings} onChange={onCriteriaChange} />
       </div>
-
     </header>
   )
 }
