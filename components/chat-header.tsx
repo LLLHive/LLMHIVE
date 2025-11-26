@@ -1,16 +1,10 @@
 "use client"
 
 import type React from "react"
+import { forwardRef } from "react"
 
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import type { CriteriaSettings } from "@/lib/types"
@@ -20,21 +14,26 @@ import { Checkbox } from "@/components/ui/checkbox"
 type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-ensemble"
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
 
-function HeaderDropdownButton({ children }: { children: React.ReactNode }) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black"
-    >
-      {children}
-    </Button>
-  )
-}
+const HeaderDropdownButton = forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<typeof Button>>(
+  ({ children, ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        variant="ghost"
+        size="sm"
+        className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black"
+        {...props}
+      >
+        {children}
+      </Button>
+    )
+  },
+)
+HeaderDropdownButton.displayName = "HeaderDropdownButton"
 
 export function ChatHeader({
-  selectedModel,
-  onModelChange,
+  selectedModels,
+  onToggleModel,
   reasoningMode,
   onReasoningModeChange,
   orchestrationEngine,
@@ -45,8 +44,8 @@ export function ChatHeader({
   onCriteriaChange,
   currentModel,
 }: {
-  selectedModel: string
-  onModelChange: (model: string) => void
+  selectedModels: string[]
+  onToggleModel: (model: string) => void
   reasoningMode: "deep" | "standard" | "fast"
   onReasoningModeChange: (mode: "deep" | "standard" | "fast") => void
   orchestrationEngine: OrchestrationEngine
@@ -63,7 +62,7 @@ export function ChatHeader({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <HeaderDropdownButton>
-              <span>AI Agents</span>
+              <span>AI Agents ({selectedModels.length})</span>
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </HeaderDropdownButton>
           </DropdownMenuTrigger>
@@ -71,31 +70,27 @@ export function ChatHeader({
             align="start"
             className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
           >
-            {["openai", "anthropic", "google", "xai", "meta"].map((provider) => (
-              <div key={provider}>
-                <DropdownMenuLabel className="text-[9px] uppercase tracking-wider opacity-60">
-                  {provider}
-                </DropdownMenuLabel>
-                {AVAILABLE_MODELS.filter((m) => m.provider === provider).map((model) => (
-                  <DropdownMenuItem
-                    key={model.id}
-                    onClick={() => onModelChange(model.id)}
-                    className="gap-2 py-1.5 hover-lift hover:text-foreground"
-                  >
-                    <Checkbox
-                      checked={selectedModel === model.id}
-                      className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
-                    />
-                    <img src={getModelLogo(model.provider) || "/placeholder.svg"} alt="" className="w-3.5 h-3.5" />
-                    <span className="text-[11px]">{model.name}</span>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-              </div>
+            {AVAILABLE_MODELS.map((model) => (
+              <DropdownMenuItem
+                key={model.id}
+                onClick={(e) => {
+                  e.preventDefault()
+                  onToggleModel(model.id)
+                }}
+                className="gap-2 py-1.5 hover-lift hover:text-foreground"
+              >
+                <Checkbox
+                  checked={selectedModels.includes(model.id)}
+                  className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
+                />
+                <img src={getModelLogo(model.provider) || "/placeholder.svg"} alt="" className="w-3.5 h-3.5" />
+                <span className="text-[11px]">{model.name}</span>
+              </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* ... existing code for other dropdowns ... */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <HeaderDropdownButton>

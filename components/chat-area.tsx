@@ -42,7 +42,7 @@ type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "li
 
 export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAreaProps) {
   const [input, setInput] = useState("")
-  const [selectedModel, setSelectedModel] = useState("gpt-5-mini")
+  const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5-mini"])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [reasoningMode, setReasoningMode] = useState<"deep" | "standard" | "fast">("standard")
   const [orchestrationEngine, setOrchestrationEngine] = useState<OrchestrationEngine>("hrm")
@@ -64,7 +64,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
   const [isLoading, setIsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const currentModel = getModelById(selectedModel)
+  const currentModel = getModelById(selectedModels[0] || "gpt-5-mini")
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -105,7 +105,8 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...(conversation?.messages || []), userMessage],
-          model: selectedModel,
+          models: selectedModels,
+          model: selectedModels[0], // Keep for backward compatibility
           reasoningMode,
           capabilities: currentModel?.capabilities,
           criteriaSettings,
@@ -133,7 +134,7 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         role: "assistant",
         content: assistantContent,
         timestamp: new Date(),
-        model: selectedModel,
+        model: selectedModels[0],
         agents: [
           { type: "general", contribution: "Primary response", confidence: 0.9 },
           { type: "research", contribution: "Fact verification", confidence: 0.85 },
@@ -159,6 +160,17 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
     setAdvancedFeatures((prev) => (prev.includes(feature) ? prev.filter((f) => f !== feature) : [...prev, feature]))
   }
 
+  const toggleModel = (modelId: string) => {
+    setSelectedModels((prev) => {
+      if (prev.includes(modelId)) {
+        // Don't allow deselecting if it's the last one
+        if (prev.length === 1) return prev
+        return prev.filter((id) => id !== modelId)
+      }
+      return [...prev, modelId]
+    })
+  }
+
   const displayMessages = conversation?.messages || []
 
   return (
@@ -172,8 +184,8 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
       />
 
       <ChatHeader
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
+        selectedModels={selectedModels}
+        onToggleModel={toggleModel}
         reasoningMode={reasoningMode}
         onReasoningModeChange={setReasoningMode}
         orchestrationEngine={orchestrationEngine}
