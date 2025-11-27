@@ -5,59 +5,36 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Paperclip, Mic, Code, FileText, Lightbulb, TrendingUp, ImageIcon, X, Briefcase } from "lucide-react"
+import { Send, Paperclip, Mic, X, ImageIcon, FileText } from "lucide-react"
 import { getModelById } from "@/lib/models"
-import type { Conversation, Message, Attachment, Artifact, CriteriaSettings } from "@/lib/types"
+import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings } from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
-import { ChatHeader } from "./chat-header"
+import { ChatToolbar } from "./chat-toolbar"
 
 interface ChatAreaProps {
   conversation?: Conversation
   onSendMessage: (message: Message) => void
   onShowArtifact: (artifact: Artifact) => void
+  orchestratorSettings: OrchestratorSettings
+  onOrchestratorSettingsChange: (settings: Partial<OrchestratorSettings>) => void
+  onOpenAdvancedSettings: () => void
+  userAccountMenu?: React.ReactNode
 }
 
-const firstRowSuggestions = [
-  { icon: Lightbulb, label: "Prompt Optimization", text: "Optimize my prompt for better AI responses" },
-  { icon: Code, label: "Output Validation", text: "Validate and verify the output for accuracy" },
-  { icon: FileText, label: "Answer Structure", text: "Structure the answer with clear sections and examples" },
-]
-
-const secondRowSuggestions = [
-  { icon: TrendingUp, label: "Strategize", text: "Help me develop a comprehensive business strategy" },
-  { icon: FileText, label: "Write", text: "Draft a professional email" },
-  { icon: Lightbulb, label: "Learn", text: "Explain quantum computing in simple terms" },
-]
-
-const thirdRowSuggestions = [
-  { icon: Briefcase, label: "Industry Specific", text: "Provide industry-specific insights and solutions" },
-  { icon: Code, label: "Code", text: "Build a React component with TypeScript" },
-  { icon: FileText, label: "Shared Data", text: "Access and utilize shared data across conversations" },
-]
-
-type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-ensemble"
-type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
-
-export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAreaProps) {
+export function ChatArea({
+  conversation,
+  onSendMessage,
+  onShowArtifact,
+  orchestratorSettings,
+  onOrchestratorSettingsChange,
+  onOpenAdvancedSettings,
+  userAccountMenu,
+}: ChatAreaProps) {
   const [input, setInput] = useState("")
   const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5-mini"])
   const [attachments, setAttachments] = useState<Attachment[]>([])
-  const [reasoningMode, setReasoningMode] = useState<"deep" | "standard" | "fast">("standard")
-  const [orchestrationEngine, setOrchestrationEngine] = useState<OrchestrationEngine>("hrm")
-  const [advancedFeatures, setAdvancedFeatures] = useState<AdvancedFeature[]>([
-    "vector-db",
-    "rag",
-    "shared-memory",
-    "loop-back",
-    "live-data",
-  ])
-  const [criteriaSettings, setCriteriaSettings] = useState<CriteriaSettings>({
-    accuracy: 70,
-    speed: 70,
-    creativity: 50,
-  })
   const [showInsights, setShowInsights] = useState(false)
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
   const [incognitoMode, setIncognitoMode] = useState(true)
@@ -106,12 +83,8 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         body: JSON.stringify({
           messages: [...(conversation?.messages || []), userMessage],
           models: selectedModels,
-          model: selectedModels[0], // Keep for backward compatibility
-          reasoningMode,
-          capabilities: currentModel?.capabilities,
-          criteriaSettings,
-          orchestrationEngine,
-          advancedFeatures,
+          model: selectedModels[0],
+          orchestratorSettings,
         }),
       })
 
@@ -156,25 +129,11 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
     }
   }
 
-  const toggleAdvancedFeature = (feature: AdvancedFeature) => {
-    setAdvancedFeatures((prev) => (prev.includes(feature) ? prev.filter((f) => f !== feature) : [...prev, feature]))
-  }
-
-  const toggleModel = (modelId: string) => {
-    setSelectedModels((prev) => {
-      if (prev.includes(modelId)) {
-        // Don't allow deselecting if it's the last one
-        if (prev.length === 1) return prev
-        return prev.filter((id) => id !== modelId)
-      }
-      return [...prev, modelId]
-    })
-  }
-
   const displayMessages = conversation?.messages || []
 
   return (
-    <div className="flex-1 flex flex-col relative">
+    <div className="flex-1 flex flex-col relative min-h-0">
+      {/* Hexagonal pattern background */}
       <div
         className="absolute inset-0 opacity-[0.02] pointer-events-none"
         style={{
@@ -183,123 +142,49 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         }}
       />
 
-      <ChatHeader
-        selectedModels={selectedModels}
-        onToggleModel={toggleModel}
-        reasoningMode={reasoningMode}
-        onReasoningModeChange={setReasoningMode}
-        orchestrationEngine={orchestrationEngine}
-        onOrchestrationChange={setOrchestrationEngine}
-        advancedFeatures={advancedFeatures}
-        onToggleFeature={toggleAdvancedFeature}
-        criteriaSettings={criteriaSettings}
-        onCriteriaChange={setCriteriaSettings}
-        currentModel={currentModel}
-      />
+      <header className="border-b border-border p-3 flex items-center justify-between gap-4 bg-card/50 backdrop-blur-xl sticky top-0 z-40 flex-wrap">
+        <ChatToolbar
+          settings={orchestratorSettings}
+          onSettingsChange={onOrchestratorSettingsChange}
+          onOpenAdvanced={onOpenAdvancedSettings}
+        />
+        {userAccountMenu}
+      </header>
 
       <HiveActivityIndicator active={isLoading} agentCount={6} />
 
       <ScrollArea className="flex-1 relative z-10">
-        {displayMessages.length === 0 ? (
-          <div className="h-full flex flex-col items-center pt-[48px] max-w-4xl mx-auto px-4">
-            <div className="flex flex-col gap-2.5 w-full max-w-3xl">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-                {firstRowSuggestions.map((suggestion) => {
-                  const Icon = suggestion.icon
-                  return (
-                    <Button
-                      key={suggestion.label}
-                      variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group"
-                      onClick={() => setInput(suggestion.text)}
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
-                        <Icon className="h-4 w-4 text-background" />
-                      </div>
-                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-300">
-                        {suggestion.label}
-                      </div>
-                    </Button>
-                  )
-                })}
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+          {displayMessages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              onShowArtifact={onShowArtifact}
+              onShowInsights={() => {
+                setSelectedMessageForInsights(message)
+                setShowInsights(true)
+              }}
+              incognitoMode={incognitoMode}
+              onToggleIncognito={() => setIncognitoMode(!incognitoMode)}
+            />
+          ))}
+          {isLoading && (
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--bronze)] to-[var(--gold)] flex items-center justify-center">
+                <span className="text-xs font-bold text-background">AI</span>
               </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-                {secondRowSuggestions.map((suggestion) => {
-                  const Icon = suggestion.icon
-                  return (
-                    <Button
-                      key={suggestion.label}
-                      variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group"
-                      onClick={() => setInput(suggestion.text)}
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
-                        <Icon className="h-4 w-4 text-background" />
-                      </div>
-                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-300">
-                        {suggestion.label}
-                      </div>
-                    </Button>
-                  )
-                })}
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-                {thirdRowSuggestions.map((suggestion) => {
-                  const Icon = suggestion.icon
-                  return (
-                    <Button
-                      key={suggestion.label}
-                      variant="outline"
-                      className="h-auto flex flex-col items-center gap-2 p-4 border-border hover:border-[var(--bronze)] transition-all duration-500 bg-card/50 backdrop-blur-xl group"
-                      onClick={() => setInput(suggestion.text)}
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-[var(--gold)] flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:shadow-xl">
-                        <Icon className="h-4 w-4 text-background" />
-                      </div>
-                      <div className="text-xs font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors duration-300">
-                        {suggestion.label}
-                      </div>
-                    </Button>
-                  )
-                })}
+              <div className="flex gap-1.5 p-4">
+                {[0, 200, 400].map((delay) => (
+                  <div
+                    key={delay}
+                    className="w-1.5 h-1.5 rounded-full bg-[var(--bronze)] animate-bounce"
+                    style={{ animationDelay: `${delay}ms`, animationDuration: "1s" }}
+                  />
+                ))}
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-            {displayMessages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                onShowArtifact={onShowArtifact}
-                onShowInsights={() => {
-                  setSelectedMessageForInsights(message)
-                  setShowInsights(true)
-                }}
-                incognitoMode={incognitoMode}
-                onToggleIncognito={() => setIncognitoMode(!incognitoMode)}
-              />
-            ))}
-            {isLoading && (
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--bronze)] to-[var(--gold)] flex items-center justify-center">
-                  <span className="text-xs font-bold text-background">AI</span>
-                </div>
-                <div className="flex gap-1.5 p-4">
-                  {[0, 200, 400].map((delay) => (
-                    <div
-                      key={delay}
-                      className="w-1.5 h-1.5 rounded-full bg-[var(--bronze)] animate-bounce"
-                      style={{ animationDelay: `${delay}ms`, animationDuration: "1s" }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </ScrollArea>
 
       {showInsights && selectedMessageForInsights?.agents && (
@@ -311,14 +196,14 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
         />
       )}
 
-      <div className="border-t border-border p-4 bg-card/50 backdrop-blur-xl relative z-10">
+      <div className="border-t border-border p-3 md:p-4 bg-card/80 backdrop-blur-xl relative z-10 sticky bottom-0">
         <div className="max-w-4xl mx-auto">
           {attachments.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
               {attachments.map((att) => (
-                <div key={att.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border">
+                <div key={att.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border text-sm">
                   {att.type.startsWith("image/") ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-                  <span className="text-sm truncate max-w-[150px]">{att.name}</span>
+                  <span className="truncate max-w-[100px] md:max-w-[150px]">{att.name}</span>
                   <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => removeAttachment(att.id)}>
                     <X className="h-3 w-3" />
                   </Button>
@@ -338,9 +223,9 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                 }
               }}
               placeholder="Ask the hive mind anything..."
-              className="min-h-[72px] pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)]"
+              className="min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)] text-sm md:text-base"
             />
-            <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+            <div className="absolute bottom-2 md:bottom-2.5 right-2 md:right-2.5 flex items-center gap-1 md:gap-1.5">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -349,23 +234,28 @@ export function ChatArea({ conversation, onSendMessage, onShowArtifact }: ChatAr
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => fileInputRef.current?.click()}>
-                <Paperclip className="h-3.5 w-3.5" />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 md:h-8 md:w-8"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7">
-                <Mic className="h-3.5 w-3.5" />
+              <Button size="icon" variant="ghost" className="h-7 w-7 md:h-8 md:w-8">
+                <Mic className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
               <Button
                 size="icon"
                 onClick={handleSend}
                 disabled={(!input.trim() && attachments.length === 0) || isLoading}
-                className="h-7 w-7 bronze-gradient disabled:opacity-50"
+                className="h-7 w-7 md:h-8 md:w-8 bronze-gradient disabled:opacity-50"
               >
-                <Send className="h-3.5 w-3.5" />
+                <Send className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 text-center opacity-60">
+          <p className="text-[9px] md:text-[10px] text-muted-foreground mt-2 text-center opacity-60">
             LLMHive uses multiple AI agents for enhanced accuracy
           </p>
         </div>

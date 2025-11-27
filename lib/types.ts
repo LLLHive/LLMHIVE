@@ -107,3 +107,26 @@ export interface Integration {
   connected: boolean
   config?: Record<string, any>
 }
+
+export type ReasoningMode = "fast" | "standard" | "deep"
+export type DomainPack = "default" | "medical" | "legal" | "marketing" | "coding" | "research" | "finance"
+export type AgentMode = "single" | "team"
+
+export interface OrchestratorSettings {
+  reasoningMode: ReasoningMode
+  domainPack: DomainPack
+  agentMode: AgentMode
+  promptOptimization: boolean
+  outputValidation: boolean
+  answerStructure: boolean
+  sharedMemory: boolean
+  learnFromChat: boolean
+}
+
+export interface ChatTemplate {
+  id: string
+  title: string
+  description: string
+  icon: string
+  preset: Partial<OrchestratorSettings>
+}

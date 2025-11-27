@@ -3,14 +3,38 @@
 import { useState } from "react"
 import { Sidebar } from "./sidebar"
 import { ChatArea } from "./chat-area"
+import { HomeScreen } from "./home-screen"
 import { ArtifactPanel } from "./artifact-panel"
-import type { Conversation, Message, Artifact } from "@/lib/types"
+import { UserAccountMenu } from "./user-account-menu"
+import { AdvancedSettingsDrawer } from "./advanced-settings-drawer"
+import { Button } from "@/components/ui/button"
+import { Menu } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import type { Conversation, Message, Artifact, Project, OrchestratorSettings } from "@/lib/types"
+
+const defaultOrchestratorSettings: OrchestratorSettings = {
+  reasoningMode: "standard",
+  domainPack: "default",
+  agentMode: "single",
+  promptOptimization: false,
+  outputValidation: false,
+  answerStructure: false,
+  sharedMemory: false,
+  learnFromChat: false,
+}
 
 export function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [showArtifact, setShowArtifact] = useState(false)
   const [currentArtifact, setCurrentArtifact] = useState<Artifact | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [orchestratorSettings, setOrchestratorSettings] = useState<OrchestratorSettings>(defaultOrchestratorSettings)
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  // TODO: Wire this to your auth system (GITHUB_ID/GITHUB_SECRET, AUTH_SECRET)
+  const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
 
   const currentConversation = conversations.find((c) => c.id === currentConversationId)
 
@@ -27,102 +51,25 @@ export function ChatInterface() {
     setCurrentConversationId(newConv.id)
     setShowArtifact(false)
     setCurrentArtifact(null)
+    setMobileSidebarOpen(false)
+    return newConv.id
+  }
+
+  const handleStartFromTemplate = (preset: Partial<OrchestratorSettings>) => {
+    setOrchestratorSettings({ ...defaultOrchestratorSettings, ...preset })
+    handleNewChat()
   }
 
   const handleSendMessage = (message: Message) => {
-    if (!currentConversationId) {
-      handleNewChat()
-      // Delay to ensure conversation is created
-      setTimeout(() => {
-        addMessageToCurrentConversation(message)
-      }, 50)
-      return
+    let targetConversationId = currentConversationId
+
+    if (!targetConversationId) {
+      targetConversationId = handleNewChat()
     }
 
-    addMessageToCurrentConversation(message)
-
-    if (message.role === "user") {
-      setTimeout(() => {
-        const aiResponse: Message = {
-          id: `msg-${Date.now()}-ai`,
-          role: "assistant",
-          content:
-            "I've analyzed your request using our hive of specialized AI agents. Based on the collective intelligence of our legal, coding, research, and creative experts, here's a comprehensive response that synthesizes multiple perspectives.\n\nThe legal team verified all factual claims, the coding team optimized technical accuracy, and our research agents fact-checked against the latest sources.",
-          timestamp: new Date(),
-          model: "gpt-5-mini",
-          agents: [
-            {
-              agentId: "agent-legal-1",
-              agentName: "LegalExpert",
-              agentType: "legal",
-              contribution: "Verified legal facts and compliance requirements",
-              confidence: 92,
-              citations: [
-                {
-                  id: "cit-1",
-                  text: "Legal precedent reference",
-                  source: "Legal Database",
-                  url: "https://example.com/legal",
-                  verified: true,
-                },
-              ],
-            },
-            {
-              agentId: "agent-code-1",
-              agentName: "CodeGuru",
-              agentType: "code",
-              contribution: "Optimized technical implementation and code quality",
-              confidence: 95,
-            },
-            {
-              agentId: "agent-research-1",
-              agentName: "ResearchBot",
-              agentType: "research",
-              contribution: "Fact-checked claims against academic sources",
-              confidence: 88,
-              citations: [
-                {
-                  id: "cit-2",
-                  text: "Academic research citation",
-                  source: "Journal of AI Research",
-                  url: "https://example.com/research",
-                  verified: true,
-                },
-              ],
-            },
-          ],
-          consensus: {
-            confidence: 92,
-            debateOccurred: true,
-            consensusNote:
-              "Multiple perspectives were considered. The AI team reached consensus after evaluating different approaches to ensure accuracy and completeness.",
-          },
-          citations: [
-            {
-              id: "cit-3",
-              text: "General knowledge reference",
-              source: "Wikipedia",
-              url: "https://wikipedia.org",
-              verified: true,
-            },
-            {
-              id: "cit-4",
-              text: "Technical documentation",
-              source: "MDN Web Docs",
-              url: "https://developer.mozilla.org",
-              verified: true,
-            },
-          ],
-        }
-        addMessageToCurrentConversation(aiResponse)
-      }, 1500)
-    }
-  }
-
-  const addMessageToCurrentConversation = (message: Message) => {
     setConversations((prev) =>
       prev.map((conv) => {
-        if (conv.id === currentConversationId) {
+        if (conv.id === targetConversationId) {
           const updatedMessages = [...conv.messages, message]
           return {
             ...conv,
@@ -135,7 +82,6 @@ export function ChatInterface() {
       }),
     )
 
-    // Show artifact if message contains one
     if (message.artifact) {
       setCurrentArtifact(message.artifact)
       setShowArtifact(true)
@@ -144,6 +90,7 @@ export function ChatInterface() {
 
   const handleSelectConversation = (id: string) => {
     setCurrentConversationId(id)
+    setMobileSidebarOpen(false)
     const conv = conversations.find((c) => c.id === id)
     const lastArtifact = conv?.messages.reverse().find((m) => m.artifact)?.artifact
     if (lastArtifact) {
@@ -168,29 +115,123 @@ export function ChatInterface() {
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c)))
   }
 
+  const handleRenameConversation = (id: string, newTitle: string) => {
+    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title: newTitle } : c)))
+  }
+
+  const handleMoveToProject = (conversationId: string, projectId: string) => {
+    // TODO: Implement move to project logic with your backend
+    console.log(`Moving conversation ${conversationId} to project ${projectId}`)
+  }
+
+  const handleSignIn = () => {
+    // TODO: Integrate with your GitHub OAuth using GITHUB_ID/GITHUB_SECRET
+    console.log("Sign in triggered")
+  }
+
+  const handleSignOut = () => {
+    setUser(null)
+  }
+
+  const updateOrchestratorSettings = (updates: Partial<OrchestratorSettings>) => {
+    setOrchestratorSettings((prev) => ({ ...prev, ...updates }))
+  }
+
+  const sidebarContent = (
+    <Sidebar
+      conversations={conversations}
+      currentConversationId={currentConversationId}
+      onNewChat={handleNewChat}
+      onSelectConversation={handleSelectConversation}
+      onDeleteConversation={handleDeleteConversation}
+      onTogglePin={handleTogglePin}
+      onRenameConversation={handleRenameConversation}
+      onMoveToProject={handleMoveToProject}
+      projects={projects}
+      collapsed={sidebarCollapsed}
+      onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+    />
+  )
+
   return (
     <div className="flex h-full w-full bg-background relative">
-      <Sidebar
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onNewChat={handleNewChat}
-        onSelectConversation={handleSelectConversation}
-        onDeleteConversation={handleDeleteConversation}
-        onTogglePin={handleTogglePin}
-      />
-      <div className="flex flex-1 overflow-hidden">
-        <ChatArea
-          conversation={currentConversation}
-          onSendMessage={handleSendMessage}
-          onShowArtifact={(artifact) => {
-            setCurrentArtifact(artifact)
-            setShowArtifact(true)
-          }}
-        />
-        {showArtifact && currentArtifact && (
-          <ArtifactPanel artifact={currentArtifact} onClose={() => setShowArtifact(false)} />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block h-full">{sidebarContent}</div>
+
+      {/* Mobile Header with Hamburger */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 border-b border-border bg-card/95 backdrop-blur-xl flex items-center justify-between px-4">
+        <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-72">
+            <Sidebar
+              conversations={conversations}
+              currentConversationId={currentConversationId}
+              onNewChat={handleNewChat}
+              onSelectConversation={handleSelectConversation}
+              onDeleteConversation={handleDeleteConversation}
+              onTogglePin={handleTogglePin}
+              onRenameConversation={handleRenameConversation}
+              onMoveToProject={handleMoveToProject}
+              projects={projects}
+              collapsed={false}
+              onToggleCollapse={() => {}}
+            />
+          </SheetContent>
+        </Sheet>
+
+        <span className="text-lg font-bold bg-gradient-to-r from-orange-500 to-[var(--gold)] bg-clip-text text-transparent">
+          LLMHive
+        </span>
+
+        <UserAccountMenu user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden md:pt-0 pt-14">
+        {!currentConversationId ? (
+          <div className="flex-1 flex flex-col">
+            {/* Desktop User Account Menu */}
+            <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
+              <UserAccountMenu user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+            </div>
+            <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
+          </div>
+        ) : (
+          <>
+            <ChatArea
+              conversation={currentConversation}
+              onSendMessage={handleSendMessage}
+              onShowArtifact={(artifact) => {
+                setCurrentArtifact(artifact)
+                setShowArtifact(true)
+              }}
+              orchestratorSettings={orchestratorSettings}
+              onOrchestratorSettingsChange={updateOrchestratorSettings}
+              onOpenAdvancedSettings={() => setShowAdvancedSettings(true)}
+              userAccountMenu={
+                <div className="hidden md:block">
+                  <UserAccountMenu user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+                </div>
+              }
+            />
+            {showArtifact && currentArtifact && (
+              <ArtifactPanel artifact={currentArtifact} onClose={() => setShowArtifact(false)} />
+            )}
+          </>
         )}
       </div>
+
+      {/* Advanced Settings Drawer */}
+      <AdvancedSettingsDrawer
+        open={showAdvancedSettings}
+        onOpenChange={setShowAdvancedSettings}
+        settings={orchestratorSettings}
+        onSettingsChange={updateOrchestratorSettings}
+      />
     </div>
   )
 }

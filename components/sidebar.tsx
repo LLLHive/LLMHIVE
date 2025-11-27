@@ -6,13 +6,38 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, MessageSquare, Search, Settings, Sparkles, FolderOpen, Users, Pin, Trash2, MoreHorizontal, Globe, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  Plus,
+  MessageSquare,
+  Search,
+  Settings,
+  Sparkles,
+  FolderOpen,
+  Users,
+  Pin,
+  Trash2,
+  MoreHorizontal,
+  Globe,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  FolderInput,
+} from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { Conversation, Project } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { ProjectsPanel } from "./projects-panel"
 import { SettingsPanel } from "./settings-panel"
 import { CollaborationPanel } from "./collaboration-panel"
+import { RenameChatModal } from "./rename-chat-modal"
+import { MoveToProjectModal } from "./move-to-project-modal"
 
 interface SidebarProps {
   conversations: Conversation[]
@@ -21,6 +46,11 @@ interface SidebarProps {
   onSelectConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
   onTogglePin: (id: string) => void
+  onRenameConversation: (id: string, newTitle: string) => void
+  onMoveToProject: (conversationId: string, projectId: string) => void
+  projects: Project[]
+  collapsed: boolean
+  onToggleCollapse: () => void
 }
 
 export function Sidebar({
@@ -30,13 +60,19 @@ export function Sidebar({
   onSelectConversation,
   onDeleteConversation,
   onTogglePin,
+  onRenameConversation,
+  onMoveToProject,
+  projects,
+  collapsed,
+  onToggleCollapse,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"chats" | "projects" | "discover">("chats")
-  const [projects, setProjects] = useState<Project[]>([])
   const [showSettings, setShowSettings] = useState(false)
   const [showCollaboration, setShowCollaboration] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
+  const [renameModalOpen, setRenameModalOpen] = useState(false)
+  const [moveModalOpen, setMoveModalOpen] = useState(false)
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
 
   const filteredConversations = conversations.filter((conv) =>
     conv.title.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -45,41 +81,38 @@ export function Sidebar({
   const pinnedConversations = filteredConversations.filter((c) => c.pinned)
   const unpinnedConversations = filteredConversations.filter((c) => !c.pinned)
 
-  const handleCreateProject = (projectData: Omit<Project, "id" | "createdAt">) => {
-    const newProject: Project = {
-      ...projectData,
-      id: `proj-${Date.now()}`,
-      createdAt: new Date(),
-    }
-    setProjects([newProject, ...projects])
+  const handleRename = (id: string, conv: Conversation) => {
+    setSelectedConversation(conv)
+    setRenameModalOpen(true)
   }
 
-  const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter((p) => p.id !== id))
+  const handleMoveToProject = (id: string, conv: Conversation) => {
+    setSelectedConversation(conv)
+    setMoveModalOpen(true)
   }
 
   return (
     <>
       <aside
         className={cn(
-          "border-r border-border bg-sidebar flex flex-col transition-all duration-300 relative",
-          collapsed ? "w-16" : "w-[171px]", // Increased sidebar width by 3% from 166px to 171px
+          "border-r border-border bg-sidebar flex flex-col transition-all duration-300 relative h-full",
+          collapsed ? "w-16" : "w-64",
         )}
       >
         {/* Logo */}
         <div className="p-4 pb-2 border-b border-border flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <div className="relative w-[84px] h-[84px] -ml-1 -mt-1">
+              <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-[var(--gold)] bg-clip-text text-transparent -ml-5 mt-2">
+              <span className="text-lg font-bold bg-gradient-to-r from-orange-500 to-[var(--gold)] bg-clip-text text-transparent">
                 LLMHive
               </span>
             </div>
           )}
           {collapsed && (
-            <div className="relative w-[55px] h-[55px] mx-auto">
+            <div className="relative w-10 h-10 mx-auto">
               <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
             </div>
           )}
@@ -89,10 +122,7 @@ export function Sidebar({
           <>
             {/* New Chat Button */}
             <div className="p-3 pt-2">
-              <Button
-                onClick={onNewChat}
-                className="w-full justify-start gap-2 bronze-gradient hover:opacity-90 text-primary-foreground"
-              >
+              <Button onClick={onNewChat} className="w-full justify-start gap-2 bronze-gradient hover:opacity-90">
                 <Plus className="h-4 w-4" />
                 New Chat
               </Button>
@@ -107,7 +137,7 @@ export function Sidebar({
                 className={cn(
                   "w-full justify-start text-sm transition-all",
                   activeTab === "chats" && "bg-secondary",
-                  "hover:bronze-gradient hover:text-primary-foreground"
+                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
                 )}
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
@@ -120,7 +150,7 @@ export function Sidebar({
                 className={cn(
                   "w-full justify-start text-sm transition-all",
                   activeTab === "projects" && "bg-secondary",
-                  "hover:bronze-gradient hover:text-primary-foreground"
+                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
                 )}
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
@@ -133,7 +163,7 @@ export function Sidebar({
                 className={cn(
                   "w-full justify-start text-sm transition-all",
                   activeTab === "discover" && "bg-secondary",
-                  "hover:bronze-gradient hover:text-primary-foreground"
+                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
                 )}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -149,7 +179,7 @@ export function Sidebar({
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search conversations..."
+                    placeholder="Search chats..."
                     className="pl-9 bg-secondary border-border"
                   />
                 </div>
@@ -172,6 +202,8 @@ export function Sidebar({
                             onSelect={() => onSelectConversation(conv.id)}
                             onDelete={() => onDeleteConversation(conv.id)}
                             onTogglePin={() => onTogglePin(conv.id)}
+                            onRename={() => handleRename(conv.id, conv)}
+                            onMoveToProject={() => handleMoveToProject(conv.id, conv)}
                           />
                         ))}
                       </div>
@@ -198,6 +230,8 @@ export function Sidebar({
                             onSelect={() => onSelectConversation(conv.id)}
                             onDelete={() => onDeleteConversation(conv.id)}
                             onTogglePin={() => onTogglePin(conv.id)}
+                            onRename={() => handleRename(conv.id, conv)}
+                            onMoveToProject={() => handleMoveToProject(conv.id, conv)}
                           />
                         ))}
                       </div>
@@ -209,9 +243,9 @@ export function Sidebar({
               {activeTab === "projects" && (
                 <ProjectsPanel
                   projects={projects}
-                  onCreateProject={handleCreateProject}
-                  onDeleteProject={handleDeleteProject}
-                  onSelectProject={(id) => console.log("Select project:", id)}
+                  onCreateProject={() => {}}
+                  onDeleteProject={() => {}}
+                  onSelectProject={() => {}}
                 />
               )}
 
@@ -220,19 +254,19 @@ export function Sidebar({
                   <DiscoverCard
                     icon={Globe}
                     title="Web Search"
-                    description="Search the web with AI assistance"
+                    description="Search the web with AI"
                     color="from-blue-500 to-cyan-500"
                   />
                   <DiscoverCard
                     icon={BookOpen}
                     title="Knowledge Base"
-                    description="Explore curated AI prompts and guides"
+                    description="Explore AI prompts and guides"
                     color="from-purple-500 to-pink-500"
                   />
                   <DiscoverCard
                     icon={Sparkles}
                     title="AI Templates"
-                    description="Pre-built prompts for common tasks"
+                    description="Pre-built prompts"
                     color="from-orange-500 to-red-500"
                   />
                 </div>
@@ -304,12 +338,30 @@ export function Sidebar({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={onToggleCollapse}
           className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-border bg-sidebar hover:bg-secondary shadow-md z-50"
         >
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
         </Button>
       </aside>
+
+      {/* Modals */}
+      {selectedConversation && (
+        <>
+          <RenameChatModal
+            open={renameModalOpen}
+            onOpenChange={setRenameModalOpen}
+            currentTitle={selectedConversation.title}
+            onRename={(newTitle) => onRenameConversation(selectedConversation.id, newTitle)}
+          />
+          <MoveToProjectModal
+            open={moveModalOpen}
+            onOpenChange={setMoveModalOpen}
+            projects={projects}
+            onMove={(projectId) => onMoveToProject(selectedConversation.id, projectId)}
+          />
+        </>
+      )}
     </>
   )
 }
@@ -320,12 +372,16 @@ function ConversationItem({
   onSelect,
   onDelete,
   onTogglePin,
+  onRename,
+  onMoveToProject,
 }: {
   conversation: Conversation
   isActive: boolean
   onSelect: () => void
   onDelete: () => void
   onTogglePin: () => void
+  onRename: () => void
+  onMoveToProject: () => void
 }) {
   return (
     <div
@@ -348,12 +404,31 @@ function ConversationItem({
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
+              onRename()
+            }}
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
               onTogglePin()
             }}
           >
             <Pin className="h-4 w-4 mr-2" />
             {conversation.pinned ? "Unpin" : "Pin"}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onMoveToProject()
+            }}
+          >
+            <FolderInput className="h-4 w-4 mr-2" />
+            Move to Project...
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
