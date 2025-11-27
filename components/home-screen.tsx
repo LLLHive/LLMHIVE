@@ -66,15 +66,15 @@ const templates = [
 
 export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) {
   return (
-    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-32 md:pb-20 overflow-y-auto">
+    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20 overflow-y-auto">
       {/* Hero Section */}
-      <div className="text-center mb-1 md:mb-2">
+      <div className="text-center mb-0">
         {/* Logo Container */}
-        <div className="relative w-48 h-48 md:w-[360px] md:h-[360px] lg:w-[432px] lg:h-[432px] mx-auto mb-1 -mt-8 md:-mt-12 lg:-mt-16">
+        <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
           <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
         </div>
         {/* Title */}
-        <h1 className="-mt-6 md:-mt-8 text-3xl md:text-5xl lg:text-6xl font-bold mb-2 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
+        <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
           Welcome to LLMHive
         </h1>
         {/* Subtitle */}
@@ -84,13 +84,13 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
       </div>
 
       {/* Separator Line */}
-      <div className="w-16 h-px bg-border my-4" />
+      <div className="w-16 h-px bg-border my-2" />
 
       {/* New Chat Button */}
       <Button
         onClick={onNewChat}
         size="lg"
-        className="bronze-gradient mb-8 md:mb-12 h-12 md:h-14 px-8 md:px-10 text-base md:text-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
+        className="bronze-gradient mb-4 md:mb-6 h-12 md:h-14 px-8 md:px-10 text-base md:text-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
       >
         <MessageSquarePlus className="h-5 w-5 md:h-6 md:w-6" />
         New Chat
@@ -98,20 +98,20 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
 
       {/* Template Cards */}
       <div className="w-full max-w-4xl">
-        <p className="text-sm text-muted-foreground text-center mb-4">Or start from a template</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <p className="text-sm text-muted-foreground text-center mb-2">Or start from a template</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {templates.map((template) => {
             const Icon = template.icon
             return (
               <button
                 key={template.id}
                 onClick={() => onStartFromTemplate(template.preset)}
-                className="group flex flex-col items-center gap-3 p-4 md:p-6 rounded-xl border border-border hover:border-[var(--bronze)] bg-card/50 hover:bg-card/80 transition-all duration-300 cursor-pointer text-left"
+                className="group flex flex-col items-center gap-2 p-3 md:p-4 rounded-xl border border-border hover:border-[var(--bronze)] bg-card/50 hover:bg-card/80 transition-all duration-300 cursor-pointer text-left"
               >
                 <div
-                  className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}
                 >
-                  <Icon className="h-6 w-6 md:h-7 md:w-7 text-white" />
+                  <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 </div>
                 <div className="text-center">
                   <h3 className="text-sm md:text-base font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors">
