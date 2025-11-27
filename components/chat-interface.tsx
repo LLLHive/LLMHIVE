@@ -133,6 +133,13 @@ export function ChatInterface() {
     setUser(null)
   }
 
+  const handleGoHome = () => {
+    setCurrentConversationId(null)
+    setShowArtifact(false)
+    setCurrentArtifact(null)
+    setMobileSidebarOpen(false)
+  }
+
   const updateOrchestratorSettings = (updates: Partial<OrchestratorSettings>) => {
     setOrchestratorSettings((prev) => ({ ...prev, ...updates }))
   }
@@ -150,6 +157,7 @@ export function ChatInterface() {
       projects={projects}
       collapsed={sidebarCollapsed}
       onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      onGoHome={handleGoHome}
     />
   )
 
@@ -179,6 +187,7 @@ export function ChatInterface() {
               projects={projects}
               collapsed={false}
               onToggleCollapse={() => {}}
+              onGoHome={handleGoHome}
             />
           </SheetContent>
         </Sheet>

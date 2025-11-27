@@ -51,6 +51,7 @@ interface SidebarProps {
   projects: Project[]
   collapsed: boolean
   onToggleCollapse: () => void
+  onGoHome: () => void
 }
 
 export function Sidebar({
@@ -65,6 +66,7 @@ export function Sidebar({
   projects,
   collapsed,
   onToggleCollapse,
+  onGoHome,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"chats" | "projects" | "discover">("chats")
@@ -102,19 +104,25 @@ export function Sidebar({
         {/* Logo */}
         <div className="p-4 pb-2 border-b border-border flex items-center justify-between">
           {!collapsed && (
-            <div className="flex items-center gap-3">
+            <button
+              onClick={onGoHome}
+              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+            >
               <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-orange-500 to-[var(--gold)] bg-clip-text text-transparent">
                 LLMHive
               </span>
-            </div>
+            </button>
           )}
           {collapsed && (
-            <div className="relative w-10 h-10 mx-auto">
+            <button
+              onClick={onGoHome}
+              className="relative w-10 h-10 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
+            >
               <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
-            </div>
+            </button>
           )}
         </div>
 
