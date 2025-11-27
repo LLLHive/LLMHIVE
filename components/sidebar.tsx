@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Pencil,
   FolderInput,
+  Workflow,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -165,20 +166,20 @@ export function Sidebar({
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Projects
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleTabChange("discover")}
-                className={cn(
-                  "w-full justify-start text-sm transition-all",
-                  activeTab === "discover" && "bg-secondary",
-                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                )}
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Discover
-              </Button>
-              {/* Collaborate and Settings */}
+              <Link href="/discover" className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Discover
+                </Button>
+              </Link>
+              {/* Collaborate */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -187,7 +188,18 @@ export function Sidebar({
                 <Users className="h-4 w-4 mr-2" />
                 Collaborate
               </Button>
-              <Link href="/reasoning-settings" className="w-full">
+              {/* Orchestration link */}
+              <Link href="/orchestration" className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-sm text-[var(--bronze)] hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
+                >
+                  <Workflow className="h-4 w-4 mr-2" />
+                  Orchestration
+                </Button>
+              </Link>
+              <Link href="/settings" className="w-full">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -324,14 +336,22 @@ export function Sidebar({
             >
               <FolderOpen className="h-5 w-5" />
             </Button>
-            <Button
-              variant={activeTab === "discover" ? "secondary" : "ghost"}
-              size="icon"
-              onClick={() => handleTabChange("discover")}
-              className="w-10 h-10"
-            >
-              <Sparkles className="h-5 w-5" />
-            </Button>
+            <Link href="/discover">
+              <Button variant={activeTab === "discover" ? "secondary" : "ghost"} size="icon" className="w-10 h-10">
+                <Sparkles className="h-5 w-5" />
+              </Button>
+            </Link>
+            {/* Collapsed Orchestration icon */}
+            <Link href="/orchestration">
+              <Button variant="ghost" size="icon" className="w-10 h-10 text-[var(--bronze)]">
+                <Workflow className="h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon" className="w-10 h-10">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         )}
 
