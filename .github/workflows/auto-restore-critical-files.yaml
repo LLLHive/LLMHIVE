@@ -1,0 +1,85 @@
+name: Auto-Restore Critical Files
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  restore-critical-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed to restore files
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Check and restore cloudbuild.yaml
+        run: |
+          if [ ! -f "cloudbuild.yaml" ]; then
+            echo "❌ cloudbuild.yaml is missing! Restoring..."
+            git checkout 896cc246 -- cloudbuild.yaml || git checkout HEAD~10 -- cloudbuild.yaml
+            git add cloudbuild.yaml
+            echo "✅ Restored cloudbuild.yaml"
+          else
+            echo "✅ cloudbuild.yaml exists"
+          fi
+
+      - name: Check and restore Dockerfile
+        run: |
+          if [ ! -f "Dockerfile" ]; then
+            echo "❌ Dockerfile is missing! Restoring..."
+            git checkout 3bce4a1e -- Dockerfile || git checkout HEAD~10 -- Dockerfile
+            git add Dockerfile
+            echo "✅ Restored Dockerfile"
+          else
+            echo "✅ Dockerfile exists"
+          fi
+
+      - name: Check and restore requirements.txt
+        run: |
+          if [ ! -f "llmhive/requirements.txt" ]; then
+            echo "❌ llmhive/requirements.txt is missing! Restoring..."
+            git checkout 3bce4a1e -- llmhive/requirements.txt || git checkout HEAD~10 -- llmhive/requirements.txt
+            git add llmhive/requirements.txt
+            echo "✅ Restored llmhive/requirements.txt"
+          else
+            echo "✅ llmhive/requirements.txt exists"
+          fi
+
+      - name: Check and restore main.py
+        run: |
+          if [ ! -f "llmhive/src/llmhive/app/main.py" ]; then
+            echo "❌ llmhive/src/llmhive/app/main.py is missing! Restoring..."
+            git checkout 063aeed0 -- llmhive/src/llmhive/app/main.py 2>/dev/null || \
+            git checkout 3bce4a1e -- llmhive/src/llmhive/app/main.py || \
+            git checkout HEAD~10 -- llmhive/src/llmhive/app/main.py
+            git add llmhive/src/llmhive/app/main.py
+            echo "✅ Restored llmhive/src/llmhive/app/main.py"
+          else
+            echo "✅ llmhive/src/llmhive/app/main.py exists"
+          fi
+
+      - name: Commit and push restored files
+        if: git diff --staged --quiet == false
+        run: |
+          git commit -m "Auto-restore critical files deleted by V0/Vercel deployment" || echo "No changes to commit"
+          git push origin main || echo "Nothing to push or push failed"
+
+      - name: Summary
+        run: |
+          echo "## Critical Files Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          [ -f "cloudbuild.yaml" ] && echo "| cloudbuild.yaml | ✅ Exists |" >> $GITHUB_STEP_SUMMARY || echo "| cloudbuild.yaml | ❌ Missing |" >> $GITHUB_STEP_SUMMARY
+          [ -f "Dockerfile" ] && echo "| Dockerfile | ✅ Exists |" >> $GITHUB_STEP_SUMMARY || echo "| Dockerfile | ❌ Missing |" >> $GITHUB_STEP_SUMMARY
+          [ -f "llmhive/requirements.txt" ] && echo "| llmhive/requirements.txt | ✅ Exists |" >> $GITHUB_STEP_SUMMARY || echo "| llmhive/requirements.txt | ❌ Missing |" >> $GITHUB_STEP_SUMMARY
+          [ -f "llmhive/src/llmhive/app/main.py" ] && echo "| llmhive/src/llmhive/app/main.py | ✅ Exists |" >> $GITHUB_STEP_SUMMARY || echo "| llmhive/src/llmhive/app/main.py | ❌ Missing |" >> $GITHUB_STEP_SUMMARY
+
