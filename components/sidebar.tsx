@@ -5,7 +5,6 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import {
   Plus,
   MessageSquare,
@@ -34,10 +33,6 @@ import {
 import type { Conversation, Project } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { ProjectsPanel } from "./projects-panel"
-import { SettingsPanel } from "./settings-panel"
-import { CollaborationPanel } from "./collaboration-panel"
-import { RenameChatModal } from "./rename-chat-modal"
-import { MoveToProjectModal } from "./move-to-project-modal"
 
 interface SidebarProps {
   conversations: Conversation[]
@@ -69,11 +64,7 @@ export function Sidebar({
   onGoHome,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState<"chats" | "projects" | "discover">("chats")
-  const [showSettings, setShowSettings] = useState(false)
-  const [showCollaboration, setShowCollaboration] = useState(false)
-  const [renameModalOpen, setRenameModalOpen] = useState(false)
-  const [moveModalOpen, setMoveModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<"chats" | "projects" | "discover" | null>("chats")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
 
   const filteredConversations = conversations.filter((conv) =>
@@ -85,12 +76,20 @@ export function Sidebar({
 
   const handleRename = (id: string, conv: Conversation) => {
     setSelectedConversation(conv)
-    setRenameModalOpen(true)
+    setActiveTab("chats")
   }
 
   const handleMoveToProject = (id: string, conv: Conversation) => {
     setSelectedConversation(conv)
-    setMoveModalOpen(true)
+    setActiveTab("chats")
+  }
+
+  const handleTabChange = (tab: "chats" | "projects" | "discover") => {
+    if (activeTab === tab) {
+      setActiveTab(null)
+    } else {
+      setActiveTab(tab)
+    }
   }
 
   return (
@@ -141,7 +140,7 @@ export function Sidebar({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveTab("chats")}
+                onClick={() => handleTabChange("chats")}
                 className={cn(
                   "w-full justify-start text-sm transition-all",
                   activeTab === "chats" && "bg-secondary",
@@ -154,7 +153,7 @@ export function Sidebar({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveTab("projects")}
+                onClick={() => handleTabChange("projects")}
                 className={cn(
                   "w-full justify-start text-sm transition-all",
                   activeTab === "projects" && "bg-secondary",
@@ -167,7 +166,7 @@ export function Sidebar({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveTab("discover")}
+                onClick={() => handleTabChange("discover")}
                 className={cn(
                   "w-full justify-start text-sm transition-all",
                   activeTab === "discover" && "bg-secondary",
@@ -283,29 +282,15 @@ export function Sidebar({
 
             {/* Bottom Section */}
             <div className="p-3 border-t border-border space-y-1">
-              <Dialog open={showCollaboration} onOpenChange={setShowCollaboration}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
-                    <Users className="h-4 w-4" />
-                    Collaborate
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl h-[600px] p-0">
-                  <CollaborationPanel />
-                </DialogContent>
-              </Dialog>
+              <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
+                <Users className="h-4 w-4" />
+                Collaborate
+              </Button>
 
-              <Dialog open={showSettings} onOpenChange={setShowSettings}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl h-[700px] p-0">
-                  <SettingsPanel />
-                </DialogContent>
-              </Dialog>
+              <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
             </div>
           </>
         )}
@@ -318,7 +303,7 @@ export function Sidebar({
             <Button
               variant={activeTab === "chats" ? "secondary" : "ghost"}
               size="icon"
-              onClick={() => setActiveTab("chats")}
+              onClick={() => handleTabChange("chats")}
               className="w-10 h-10"
             >
               <MessageSquare className="h-5 w-5" />
@@ -326,7 +311,7 @@ export function Sidebar({
             <Button
               variant={activeTab === "projects" ? "secondary" : "ghost"}
               size="icon"
-              onClick={() => setActiveTab("projects")}
+              onClick={() => handleTabChange("projects")}
               className="w-10 h-10"
             >
               <FolderOpen className="h-5 w-5" />
@@ -334,7 +319,7 @@ export function Sidebar({
             <Button
               variant={activeTab === "discover" ? "secondary" : "ghost"}
               size="icon"
-              onClick={() => setActiveTab("discover")}
+              onClick={() => handleTabChange("discover")}
               className="w-10 h-10"
             >
               <Sparkles className="h-5 w-5" />
@@ -352,24 +337,6 @@ export function Sidebar({
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
         </Button>
       </aside>
-
-      {/* Modals */}
-      {selectedConversation && (
-        <>
-          <RenameChatModal
-            open={renameModalOpen}
-            onOpenChange={setRenameModalOpen}
-            currentTitle={selectedConversation.title}
-            onRename={(newTitle) => onRenameConversation(selectedConversation.id, newTitle)}
-          />
-          <MoveToProjectModal
-            open={moveModalOpen}
-            onOpenChange={setMoveModalOpen}
-            projects={projects}
-            onMove={(projectId) => onMoveToProject(selectedConversation.id, projectId)}
-          />
-        </>
-      )}
     </>
   )
 }

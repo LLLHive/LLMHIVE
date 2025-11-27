@@ -39,8 +39,7 @@ export function ProjectsPanel({ projects, onCreateProject, onDeleteProject, onSe
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Projects</h2>
+      <div className="flex items-center justify-start">
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
             <Button size="sm" className="bronze-gradient">

@@ -205,12 +205,14 @@ export function ChatInterface() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden md:pt-0 pt-14">
         {!currentConversationId ? (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Desktop User Account Menu */}
             <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
               <UserAccountMenu user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
             </div>
-            <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
+            <div className="flex-1 h-full overflow-auto">
+              <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
+            </div>
           </div>
         ) : (
           <>

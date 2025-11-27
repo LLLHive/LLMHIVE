@@ -66,15 +66,15 @@ const templates = [
 
 export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-start px-4 pt-0 pb-8">
+    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-32 md:pb-20 overflow-y-auto">
       {/* Hero Section */}
-      <div className="text-center mb-1">
+      <div className="text-center mb-1 md:mb-2">
         {/* Logo Container */}
-        <div className="relative w-72 h-72 md:w-[360px] md:h-[360px] lg:w-[432px] lg:h-[432px] mx-auto mb-1 -mt-8 md:-mt-12 lg:-mt-16">
+        <div className="relative w-48 h-48 md:w-[360px] md:h-[360px] lg:w-[432px] lg:h-[432px] mx-auto mb-1 -mt-8 md:-mt-12 lg:-mt-16">
           <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
         </div>
         {/* Title */}
-        <h1 className="-mt-8 md:-mt-10 text-4xl md:text-5xl lg:text-6xl font-bold mb-2 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
+        <h1 className="-mt-6 md:-mt-8 text-3xl md:text-5xl lg:text-6xl font-bold mb-2 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
           Welcome to LLMHive
         </h1>
         {/* Subtitle */}
@@ -98,8 +98,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
 
       {/* Template Cards */}
       <div className="w-full max-w-4xl">
-        <p className="text-xs md:text-sm text-muted-foreground text-center mb-4">Or start from a template</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <p className="text-sm text-muted-foreground text-center mb-4">Or start from a template</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {templates.map((template) => {
             const Icon = template.icon
             return (
