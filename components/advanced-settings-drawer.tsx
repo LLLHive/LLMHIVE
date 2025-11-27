@@ -53,7 +53,7 @@ export function AdvancedSettingsDrawer({
 }: AdvancedSettingsDrawerProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-96 bg-card border-l border-border">
+      <SheetContent side="right" className="w-[260px] sm:w-[280px] bg-card border-l border-border">
         <SheetHeader className="mb-6">
           <SheetTitle className="text-lg font-semibold">Advanced Tuning</SheetTitle>
         </SheetHeader>

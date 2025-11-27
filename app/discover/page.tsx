@@ -178,7 +178,7 @@ export default function DiscoverPage() {
 
       {/* Web Search Drawer */}
       <Sheet open={activeDrawer === "web-search"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
@@ -225,7 +225,7 @@ export default function DiscoverPage() {
 
       {/* Knowledge Base Drawer */}
       <Sheet open={activeDrawer === "knowledge-base"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -280,7 +280,7 @@ export default function DiscoverPage() {
 
       {/* AI Templates Drawer */}
       <Sheet open={activeDrawer === "ai-templates"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">

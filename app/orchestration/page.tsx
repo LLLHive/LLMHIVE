@@ -305,7 +305,7 @@ export default function OrchestrationPage() {
       <Sheet open={activeDrawer === "models"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
         <SheetContent
           side="right"
-          className="w-80 sm:w-96 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
         >
           <div className="p-5 border-b border-border/50">
             <SheetHeader className="space-y-1">
@@ -370,7 +370,7 @@ export default function OrchestrationPage() {
       <Sheet open={activeDrawer === "reasoning"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
         <SheetContent
           side="right"
-          className="w-80 sm:w-96 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
         >
           <div className="p-5 border-b border-border/50">
             <SheetHeader className="space-y-1">
@@ -450,7 +450,7 @@ export default function OrchestrationPage() {
       <Sheet open={activeDrawer === "tuning"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
         <SheetContent
           side="right"
-          className="w-80 sm:w-96 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
         >
           <div className="p-5 border-b border-border/50">
             <SheetHeader className="space-y-1">
@@ -509,7 +509,7 @@ export default function OrchestrationPage() {
       <Sheet open={activeDrawer === "features"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
         <SheetContent
           side="right"
-          className="w-80 sm:w-96 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
         >
           <div className="p-5 border-b border-border/50">
             <SheetHeader className="space-y-1">
@@ -566,7 +566,7 @@ export default function OrchestrationPage() {
       <Sheet open={activeDrawer === "tools"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
         <SheetContent
           side="right"
-          className="w-80 sm:w-96 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
         >
           <div className="p-5 border-b border-border/50">
             <SheetHeader className="space-y-1">
@@ -621,7 +621,10 @@ export default function OrchestrationPage() {
 
       {/* Standard Drawer */}
       <Sheet open={activeDrawer === "standard"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent side="right" className="w-72 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0">
+        <SheetContent
+          side="right"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+        >
           <div className="p-4 border-b border-border/50">
             <SheetHeader className="space-y-1">
               <SheetTitle className="text-sm font-medium flex items-center gap-2">
@@ -658,7 +661,10 @@ export default function OrchestrationPage() {
       </Sheet>
 
       <Sheet open={activeDrawer === "speed"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent side="right" className="w-72 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0">
+        <SheetContent
+          side="right"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+        >
           <div className="p-4 border-b border-border/50">
             <SheetHeader className="space-y-1">
               <SheetTitle className="text-sm font-medium flex items-center gap-2">
