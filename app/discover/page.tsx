@@ -111,11 +111,11 @@ export default function DiscoverPage() {
         onGoHome={() => (window.location.href = "/")}
       />
 
-      <main className="flex-1 min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20 overflow-y-auto">
+      <main className="flex-1 min-h-full flex flex-col items-center justify-start px-4 pt-8 md:pt-12 pb-20 overflow-y-auto">
         {/* Hero Section - identical structure to home page and orchestration */}
         <div className="text-center mb-0">
           {/* Logo Container - Same size as home page */}
-          <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
+          <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0">
             <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
           </div>
           <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
@@ -250,7 +250,9 @@ export default function DiscoverPage() {
                           {isSelected && <Check className="h-3 w-3 text-white" />}
                         </div>
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span className={`text-sm ${isSelected ? "text-[var(--bronze)]" : ""}`}>{category.label}</span>
+                        <span className={`text-sm block ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                          {category.label}
+                        </span>
                       </div>
                       <Badge variant="secondary" className="text-xs">
                         {category.count}

@@ -161,11 +161,11 @@ export default function SettingsPage() {
         onGoHome={() => (window.location.href = "/")}
       />
 
-      <main className="flex-1 min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20 overflow-y-auto">
+      <main className="flex-1 min-h-full flex flex-col items-center justify-start px-4 pt-8 md:pt-12 pb-20 overflow-y-auto">
         {/* Hero Section - identical structure to home page and orchestration */}
         <div className="text-center mb-0">
           {/* Logo Container - Same size as home page */}
-          <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
+          <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0">
             <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
           </div>
           <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
