@@ -74,13 +74,17 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
         </div>
         {/* Title */}
-        <h1 className="-mt-4 md:-mt-6 text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
+        <h1 className="-mt-8 md:-mt-10 text-4xl md:text-5xl lg:text-6xl font-bold mb-2 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
           Welcome to LLMHive
         </h1>
-        <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+        {/* Subtitle */}
+        <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
           Multi-agent AI orchestration for enhanced accuracy and deeper insights
         </p>
       </div>
+
+      {/* Separator Line */}
+      <div className="w-16 h-px bg-border my-4" />
 
       {/* New Chat Button */}
       <Button
