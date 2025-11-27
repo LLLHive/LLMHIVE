@@ -1,10 +1,12 @@
 "use client"
 
-import { Analytics as VercelAnalytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 
-export function Analytics() {
+export function AnalyticsWrapper() {
+  // Only render in production
   if (process.env.NODE_ENV !== "production") {
     return null
   }
-  return <VercelAnalytics />
+
+  return <Analytics />
 }
