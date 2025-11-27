@@ -194,7 +194,7 @@ export function Sidebar({
             )}
 
             {/* Content */}
-            <ScrollArea className="flex-1 px-3">
+            <ScrollArea className="flex-1 px-3 max-h-[200px]">
               {activeTab === "chats" && (
                 <div className="space-y-4">
                   {pinnedConversations.length > 0 && (
@@ -281,7 +281,7 @@ export function Sidebar({
             </ScrollArea>
 
             {/* Bottom Section */}
-            <div className="px-3 mt-auto space-y-1">
+            <div className="px-3 pb-3 space-y-1">
               <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
                 <Users className="h-4 w-4" />
                 Collaborate
