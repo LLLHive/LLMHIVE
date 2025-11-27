@@ -70,10 +70,11 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
       {/* Hero Section */}
       <div className="text-center mb-1">
         {/* Logo Container */}
-        <div className="relative w-48 h-48 md:w-[240px] md:h-[240px] lg:w-72 lg:h-72 mx-auto mb-1">
+        <div className="relative w-72 h-72 md:w-[360px] md:h-[360px] lg:w-[432px] lg:h-[432px] mx-auto mb-1 -mt-8 md:-mt-12 lg:-mt-16">
           <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
         </div>
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
+        {/* Title */}
+        <h1 className="-mt-4 md:-mt-6 text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
           Welcome to LLMHive
         </h1>
         <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">

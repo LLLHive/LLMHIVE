@@ -23,6 +23,7 @@ const defaultOrchestratorSettings: OrchestratorSettings = {
   learnFromChat: false,
   selectedModels: ["gpt-5"],
   advancedReasoningMethods: [],
+  advancedFeatures: [],
 }
 
 export function ChatInterface() {

@@ -119,6 +119,20 @@ export type AdvancedReasoningMethod =
   | "reflexion"
   | "least-to-most"
   | "plan-and-solve"
+  | "graph-of-thought"
+  | "algorithm-of-thought"
+  | "skeleton-of-thought"
+  | "cumulative-reasoning"
+  | "meta-prompting"
+
+export type AdvancedFeature =
+  | "vector-rag"
+  | "mcp-server"
+  | "personal-database"
+  | "modular-answer-feed"
+  | "memory-augmentation"
+  | "tool-use"
+  | "code-interpreter"
 
 export interface OrchestratorSettings {
   reasoningMode: ReasoningMode
@@ -131,6 +145,7 @@ export interface OrchestratorSettings {
   learnFromChat: boolean
   selectedModels: string[]
   advancedReasoningMethods: AdvancedReasoningMethod[]
+  advancedFeatures: AdvancedFeature[]
 }
 
 export interface ChatTemplate {
