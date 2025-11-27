@@ -24,6 +24,8 @@ import {
   Calculator,
   Lightbulb,
   Eye,
+  ExternalLink,
+  TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -247,10 +249,25 @@ export default function ReasoningSettingsPage() {
                             >
                               <Checkbox checked={isSelected} className="mt-0.5" />
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm">{method.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-sm">{method.name}</p>
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                    {method.year}
+                                  </Badge>
+                                </div>
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                   {method.shortDescription}
                                 </p>
+                                <a
+                                  href={method.referenceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-[var(--bronze)] hover:underline mt-1 inline-flex items-center gap-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  View Paper
+                                </a>
                               </div>
                             </div>
                           )
@@ -328,11 +345,27 @@ export default function ReasoningSettingsPage() {
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base">{method.name}</CardTitle>
-                            <Badge variant="secondary" className="mt-2">
-                              {CATEGORY_ICONS[method.category]}
-                              <span className="ml-1">{method.category}</span>
-                            </Badge>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <CardTitle className="text-base">{method.name}</CardTitle>
+                              <Badge variant="outline" className="text-xs">
+                                {method.year}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <Badge variant="secondary">
+                                {CATEGORY_ICONS[method.category]}
+                                <span className="ml-1">{method.category}</span>
+                              </Badge>
+                              <a
+                                href={method.referenceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-[var(--bronze)] hover:underline inline-flex items-center gap-1"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Reference Paper
+                              </a>
+                            </div>
                           </div>
                           <Button
                             variant="ghost"
@@ -346,6 +379,16 @@ export default function ReasoningSettingsPage() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">{method.shortDescription}</p>
+
+                        {method.benchmarkResults && (
+                          <div className="rounded-lg bg-[var(--bronze)]/10 p-3 border border-[var(--bronze)]/20">
+                            <h4 className="text-sm font-medium text-[var(--bronze)] mb-1 flex items-center gap-1">
+                              <TrendingUp className="h-3 w-3" />
+                              Benchmark Results
+                            </h4>
+                            <p className="text-xs text-muted-foreground">{method.benchmarkResults}</p>
+                          </div>
+                        )}
 
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div>
