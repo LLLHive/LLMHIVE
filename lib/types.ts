@@ -111,6 +111,14 @@ export interface Integration {
 export type ReasoningMode = "fast" | "standard" | "deep"
 export type DomainPack = "default" | "medical" | "legal" | "marketing" | "coding" | "research" | "finance"
 export type AgentMode = "single" | "team"
+export type AdvancedReasoningMethod =
+  | "chain-of-thought"
+  | "tree-of-thought"
+  | "self-consistency"
+  | "react"
+  | "reflexion"
+  | "least-to-most"
+  | "plan-and-solve"
 
 export interface OrchestratorSettings {
   reasoningMode: ReasoningMode
@@ -121,6 +129,8 @@ export interface OrchestratorSettings {
   answerStructure: boolean
   sharedMemory: boolean
   learnFromChat: boolean
+  selectedModels: string[]
+  advancedReasoningMethods: AdvancedReasoningMethod[]
 }
 
 export interface ChatTemplate {

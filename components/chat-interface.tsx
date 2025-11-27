@@ -21,6 +21,8 @@ const defaultOrchestratorSettings: OrchestratorSettings = {
   answerStructure: false,
   sharedMemory: false,
   learnFromChat: false,
+  selectedModels: ["gpt-5"],
+  advancedReasoningMethods: [],
 }
 
 export function ChatInterface() {
