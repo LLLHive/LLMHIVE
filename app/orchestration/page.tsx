@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles } from "lucide-react"
+import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles, Zap } from "lucide-react"
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import { REASONING_METHODS, REASONING_CATEGORIES } from "@/lib/reasoning-methods"
 import { Sidebar } from "@/components/sidebar"
@@ -55,6 +55,13 @@ const orchestrationCards = [
     description: "Temperature, tokens and sampling parameters",
     icon: Layers,
     color: "from-amber-500 to-yellow-500",
+  },
+  {
+    id: "speed",
+    title: "Speed",
+    description: "Response speed and processing depth",
+    icon: Zap,
+    color: "from-cyan-500 to-sky-500",
   },
 ]
 
@@ -143,7 +150,13 @@ const standardSettings = [
   },
 ]
 
-type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | null
+const speedOptions = [
+  { id: "fast", label: "Fast", description: "Quick responses with minimal processing" },
+  { id: "standard", label: "Standard", description: "Balanced speed and quality" },
+  { id: "deep", label: "Deep", description: "Thorough analysis with extended processing" },
+]
+
+type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | null
 
 export default function OrchestrationPage() {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
@@ -169,6 +182,7 @@ export default function OrchestrationPage() {
     frequencyPenalty: 0,
     presencePenalty: 0,
   })
+  const [selectedSpeed, setSelectedSpeed] = useState<string>("standard")
 
   const toggleModel = (id: string) => {
     setSelectedModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]))
@@ -198,6 +212,8 @@ export default function OrchestrationPage() {
         return selectedTools.length
       case "tuning":
         return Object.values(tuningSettings).filter(Boolean).length
+      case "speed":
+        return 1
       default:
         return 0
     }
@@ -638,6 +654,52 @@ export default function OrchestrationPage() {
               </div>
             ))}
           </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={activeDrawer === "speed"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent side="right" className="w-72 bg-background/95 backdrop-blur-xl border-l border-border/50 p-0">
+          <div className="p-4 border-b border-border/50">
+            <SheetHeader className="space-y-1">
+              <SheetTitle className="text-sm font-medium flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-sky-500/20 flex items-center justify-center">
+                  <Zap className="h-3 w-3 text-cyan-400" />
+                </div>
+                Speed
+              </SheetTitle>
+              <p className="text-[10px] text-muted-foreground">Response speed & processing depth</p>
+            </SheetHeader>
+          </div>
+          <ScrollArea className="h-[calc(100vh-120px)]">
+            <div className="p-3 space-y-1.5">
+              {speedOptions.map((option) => {
+                const isSelected = selectedSpeed === option.id
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => setSelectedSpeed(option.id)}
+                    className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                      isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
+                        isSelected ? "bg-[var(--bronze)] border-[var(--bronze)]" : "border-muted-foreground/30"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-2.5 w-2.5 text-black" />}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className={`text-xs font-medium ${isSelected ? "text-[var(--bronze)]" : "text-foreground"}`}>
+                        {option.label}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">{option.description}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
     </div>

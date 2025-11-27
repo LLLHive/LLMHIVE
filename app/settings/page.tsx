@@ -219,8 +219,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Sheet open={activeDrawer === "account"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+      {/* Account Drawer */}
+      <Sheet open={activeDrawer === "account"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
@@ -275,8 +276,9 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={activeDrawer === "api-keys"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+      {/* API Keys Drawer */}
+      <Sheet open={activeDrawer === "api-keys"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
@@ -330,8 +332,9 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={activeDrawer === "connections"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+      {/* Connections Drawer */}
+      <Sheet open={activeDrawer === "connections"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
@@ -382,8 +385,9 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={activeDrawer === "notifications"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+      {/* Notifications Drawer */}
+      <Sheet open={activeDrawer === "notifications"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
@@ -432,8 +436,9 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={activeDrawer === "privacy"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+      {/* Privacy Drawer */}
+      <Sheet open={activeDrawer === "privacy"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
@@ -482,8 +487,9 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={activeDrawer === "appearance"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+      {/* Appearance Drawer */}
+      <Sheet open={activeDrawer === "appearance"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
