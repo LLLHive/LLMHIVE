@@ -30,7 +30,7 @@ export function UserAccountMenu({ user, onSignIn, onSignOut }: UserAccountMenuPr
         variant="ghost"
         size="sm"
         onClick={onSignIn}
-        className="gap-2 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
+        className="gap-2 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)] hover:text-[var(--bronze)]"
       >
         <LogIn className="h-4 w-4" />
         <span className="hidden sm:inline">Sign In</span>
