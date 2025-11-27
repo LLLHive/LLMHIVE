@@ -68,9 +68,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   return (
     <div className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-8 md:pt-6">
       {/* Hero Section */}
-      <div className="text-center mb-1 md:mb-2">
+      <div className="text-center mb-0">
         {/* Logo Container */}
-        <div className="relative w-48 h-48 md:w-[240px] md:h-[240px] lg:w-72 lg:h-72 mx-auto mb-1">
+        <div className="relative w-48 h-48 md:w-[240px] md:h-[240px] lg:w-72 lg:h-72 mx-auto mb-0">
           <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
         </div>
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
