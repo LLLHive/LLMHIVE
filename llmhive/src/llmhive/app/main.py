@@ -115,6 +115,10 @@ app.include_router(api_router, prefix="/api/v1")
 from .routers import chat as chat_router
 app.include_router(chat_router.router)
 
+# Include chat router (at /v1/chat)
+from .routers import chat as chat_router
+app.include_router(chat_router.router)
+
 # Startup event
 @app.on_event("startup")
 async def startup_event():
