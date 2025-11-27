@@ -27,10 +27,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS
+# Configure CORS with specific origins
+origins = [
+    "https://llmhive.vercel.app",
+    "https://llmhive.ai",
+    "http://localhost",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -103,6 +110,10 @@ async def app_engine_health_alias_head() -> Response:
 
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")
+
+# Include chat router (at /v1/chat)
+from .routers import chat as chat_router
+app.include_router(chat_router.router)
 
 # Startup event
 @app.on_event("startup")
