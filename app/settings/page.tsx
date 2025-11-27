@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
+import { UserAccountMenu } from "@/components/user-account-menu"
 
 // Card data matching home page template card style exactly
 const settingsCards = [
@@ -98,6 +99,7 @@ type DrawerId = "account" | "api-keys" | "connections" | "notifications" | "priv
 export default function SettingsPage() {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
 
   // State for various settings
   const [connectedKeys, setConnectedKeys] = useState<string[]>(["openai"])
@@ -161,60 +163,62 @@ export default function SettingsPage() {
         onGoHome={() => (window.location.href = "/")}
       />
 
-      <main className="flex-1 min-h-full flex flex-col items-center justify-start px-4 pt-8 md:pt-12 pb-20 overflow-y-auto">
-        {/* Hero Section - identical structure to home page and orchestration */}
-        <div className="text-center mb-0">
-          {/* Logo Container - Same size as home page */}
-          <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0">
-            <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
-          </div>
-          <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
-            Settings
-          </h1>
-          {/* Subtitle */}
-          <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
-            Configure your account, integrations, and preferences
-          </p>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
+          <UserAccountMenu user={user} onSignIn={() => {}} onSignOut={() => setUser(null)} />
         </div>
 
-        {/* Separator Line - Same as Home Page */}
-        <div className="w-16 h-px bg-border my-2" />
+        <div className="flex-1 h-full overflow-auto">
+          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20">
+            <div className="text-center mb-0">
+              <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
+                <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+              </div>
+              <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
+                Settings
+              </h1>
+              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
+                Configure your account, integrations, and preferences
+              </p>
+            </div>
 
-        {/* Cards Grid - matching home page template cards */}
-        <div className="w-full max-w-5xl">
-          <p className="text-sm text-muted-foreground text-center mb-2">Select a category to configure</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-            {settingsCards.map((card) => {
-              const Icon = card.icon
-              const count = getCount(card.id)
-              return (
-                <button
-                  key={card.id}
-                  onClick={() => setActiveDrawer(card.id as DrawerId)}
-                  className="group relative p-4 md:p-5 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-all duration-300 hover:border-[var(--bronze)]/50 hover:shadow-lg hover:shadow-[var(--bronze)]/5 text-left"
-                >
-                  {count > 0 && (
-                    <Badge className="absolute top-2 right-2 bronze-gradient text-white text-xs px-1.5 py-0.5">
-                      {count}
-                    </Badge>
-                  )}
-                  <div
-                    className={`w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
-                  >
-                    <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-sm md:text-base mb-1 group-hover:text-[var(--bronze)] transition-colors">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">{card.description}</p>
-                </button>
-              )
-            })}
+            <div className="w-16 h-px bg-border my-2" />
+
+            <div className="w-full max-w-5xl">
+              <p className="text-sm text-muted-foreground text-center mb-2">Select a category to configure</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                {settingsCards.map((card) => {
+                  const Icon = card.icon
+                  const count = getCount(card.id)
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => setActiveDrawer(card.id as DrawerId)}
+                      className="group relative p-4 md:p-5 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-all duration-300 hover:border-[var(--bronze)]/50 hover:shadow-lg hover:shadow-[var(--bronze)]/5 text-left"
+                    >
+                      {count > 0 && (
+                        <Badge className="absolute top-2 right-2 bronze-gradient text-white text-xs px-1.5 py-0.5">
+                          {count}
+                        </Badge>
+                      )}
+                      <div
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
+                      >
+                        <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-sm md:text-base mb-1 group-hover:text-[var(--bronze)] transition-colors">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs md:text-sm text-muted-foreground">{card.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
 
-      {/* Account Drawer */}
       <Sheet open={activeDrawer === "account"} onOpenChange={() => setActiveDrawer(null)}>
         <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
@@ -230,7 +234,6 @@ export default function SettingsPage() {
           </SheetHeader>
           <ScrollArea className="h-[calc(100vh-100px)]">
             <div className="p-4 space-y-4">
-              {/* Avatar */}
               <div className="flex items-center gap-4 p-3 rounded-lg border border-border">
                 <div className="w-14 h-14 rounded-full bg-[var(--bronze)]/20 flex items-center justify-center">
                   <User className="h-7 w-7 text-[var(--bronze)]" />
@@ -240,19 +243,16 @@ export default function SettingsPage() {
                 </Button>
               </div>
 
-              {/* Name */}
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Display Name</Label>
                 <Input placeholder="Your name" defaultValue="User" className="bg-secondary/50 border-border" />
               </div>
 
-              {/* Email */}
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Email</Label>
                 <Input type="email" placeholder="your@email.com" className="bg-secondary/50 border-border" />
               </div>
 
-              {/* Bio */}
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Bio</Label>
                 <Input placeholder="Tell us about yourself" className="bg-secondary/50 border-border" />
@@ -263,7 +263,6 @@ export default function SettingsPage() {
                 Save Changes
               </Button>
 
-              {/* Danger Zone */}
               <div className="pt-4 border-t border-border">
                 <p className="text-xs text-destructive mb-2">Danger Zone</p>
                 <Button variant="destructive" size="sm" className="w-full">
@@ -276,7 +275,6 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      {/* API Keys Drawer */}
       <Sheet open={activeDrawer === "api-keys"} onOpenChange={() => setActiveDrawer(null)}>
         <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
@@ -332,7 +330,6 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Connections Drawer */}
       <Sheet open={activeDrawer === "connections"} onOpenChange={() => setActiveDrawer(null)}>
         <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
@@ -385,7 +382,6 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Notifications Drawer */}
       <Sheet open={activeDrawer === "notifications"} onOpenChange={() => setActiveDrawer(null)}>
         <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
@@ -436,7 +432,6 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Privacy Drawer */}
       <Sheet open={activeDrawer === "privacy"} onOpenChange={() => setActiveDrawer(null)}>
         <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
@@ -487,7 +482,6 @@ export default function SettingsPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Appearance Drawer */}
       <Sheet open={activeDrawer === "appearance"} onOpenChange={() => setActiveDrawer(null)}>
         <SheetContent className="w-[340px] sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
@@ -503,7 +497,6 @@ export default function SettingsPage() {
           </SheetHeader>
           <ScrollArea className="h-[calc(100vh-100px)]">
             <div className="p-4 space-y-4">
-              {/* Theme Selection */}
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Theme</Label>
                 <div className="flex gap-2">
@@ -523,7 +516,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Other appearance options */}
               <div className="space-y-2">
                 {appearanceOptions.map((option) => {
                   const isEnabled = appearanceSettings.includes(option.id)

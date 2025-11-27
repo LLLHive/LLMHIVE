@@ -21,6 +21,7 @@ import {
   Check,
 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
+import { UserAccountMenu } from "@/components/user-account-menu"
 
 // Card data matching home page template card style
 const discoverCards = [
@@ -74,6 +75,7 @@ export default function DiscoverPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([])
+  const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
 
   const toggleCategory = (id: string) => {
     setSelectedCategories((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
@@ -111,58 +113,68 @@ export default function DiscoverPage() {
         onGoHome={() => (window.location.href = "/")}
       />
 
-      <main className="flex-1 min-h-full flex flex-col items-center justify-start px-4 pt-8 md:pt-12 pb-20 overflow-y-auto">
-        {/* Hero Section - identical structure to home page and orchestration */}
-        <div className="text-center mb-0">
-          {/* Logo Container - Same size as home page */}
-          <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0">
-            <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
-          </div>
-          <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
-            Discover
-          </h1>
-          {/* Subtitle */}
-          <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
-            Explore AI-powered search, knowledge resources, and templates
-          </p>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Desktop User Account Menu - Same as Home page */}
+        <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
+          <UserAccountMenu user={user} onSignIn={() => {}} onSignOut={() => setUser(null)} />
         </div>
 
-        {/* Separator Line - Same as Home Page */}
-        <div className="w-16 h-px bg-border my-2" />
+        {/* Main Content in scrollable container */}
+        <div className="flex-1 h-full overflow-auto">
+          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20">
+            {/* Hero Section - identical structure to home page and orchestration */}
+            <div className="text-center mb-0">
+              {/* Logo Container - Same size as home page */}
+              <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
+                <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+              </div>
+              <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
+                Discover
+              </h1>
+              {/* Subtitle */}
+              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
+                Explore AI-powered search, knowledge resources, and templates
+              </p>
+            </div>
 
-        {/* Cards Grid - matching home page template cards */}
-        <div className="w-full max-w-4xl">
-          <p className="text-sm text-muted-foreground text-center mb-2">Select a category to explore</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-            {discoverCards.map((card) => {
-              const Icon = card.icon
-              const count = getCount(card.id)
-              return (
-                <button
-                  key={card.id}
-                  onClick={() => setActiveDrawer(card.id as DrawerId)}
-                  className="group relative p-4 md:p-5 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-all duration-300 hover:border-[var(--bronze)]/50 hover:shadow-lg hover:shadow-[var(--bronze)]/5 text-left"
-                >
-                  {count > 0 && (
-                    <Badge className="absolute top-2 right-2 bronze-gradient text-white text-xs px-1.5 py-0.5">
-                      {count}
-                    </Badge>
-                  )}
-                  <div
-                    className={`w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
-                  >
-                    <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-sm md:text-base mb-1 group-hover:text-[var(--bronze)] transition-colors">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">{card.description}</p>
-                </button>
-              )
-            })}
+            {/* Separator Line - Same as Home Page */}
+            <div className="w-16 h-px bg-border my-2" />
+
+            {/* Cards Grid - matching home page template cards */}
+            <div className="w-full max-w-4xl">
+              <p className="text-sm text-muted-foreground text-center mb-2">Select a category to explore</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                {discoverCards.map((card) => {
+                  const Icon = card.icon
+                  const count = getCount(card.id)
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => setActiveDrawer(card.id as DrawerId)}
+                      className="group relative p-4 md:p-5 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-all duration-300 hover:border-[var(--bronze)]/50 hover:shadow-lg hover:shadow-[var(--bronze)]/5 text-left"
+                    >
+                      {count > 0 && (
+                        <Badge className="absolute top-2 right-2 bronze-gradient text-white text-xs px-1.5 py-0.5">
+                          {count}
+                        </Badge>
+                      )}
+                      <div
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
+                      >
+                        <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-sm md:text-base mb-1 group-hover:text-[var(--bronze)] transition-colors">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs md:text-sm text-muted-foreground">{card.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Web Search Drawer */}
       <Sheet open={activeDrawer === "web-search"} onOpenChange={() => setActiveDrawer(null)}>
