@@ -176,6 +176,23 @@ export function Sidebar({
                 <Sparkles className="h-4 w-4 mr-2" />
                 Discover
               </Button>
+              {/* Collaborate and Settings */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sm hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Collaborate
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sm hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
             </div>
 
             {/* Search */}
@@ -194,7 +211,7 @@ export function Sidebar({
             )}
 
             {/* Content */}
-            <ScrollArea className="flex-1 px-3 max-h-[200px]">
+            <ScrollArea className="px-3 h-[180px]">
               {activeTab === "chats" && (
                 <div className="space-y-4">
                   {pinnedConversations.length > 0 && (
@@ -279,19 +296,6 @@ export function Sidebar({
                 </div>
               )}
             </ScrollArea>
-
-            {/* Bottom Section */}
-            <div className="px-3 pb-3 space-y-1">
-              <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
-                <Users className="h-4 w-4" />
-                Collaborate
-              </Button>
-
-              <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
-                <Settings className="h-4 w-4" />
-                Settings
-              </Button>
-            </div>
           </>
         )}
 
