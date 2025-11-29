@@ -95,11 +95,31 @@ export async function POST(req: NextRequest) {
     }
 
     // Forward request to FastAPI backend
-    const response = await fetch(`${apiBase}/v1/chat`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    })
+    let response: Response
+    try {
+      // Create AbortController for timeout (compatible with all runtimes)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+      
+      response = await fetch(`${apiBase}/v1/chat`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+      
+      clearTimeout(timeoutId)
+    } catch (fetchError: any) {
+      console.error("[Chat API] Fetch error:", fetchError)
+      return NextResponse.json(
+        {
+          error: "Failed to connect to backend",
+          details: fetchError instanceof Error ? fetchError.message : String(fetchError),
+          backendUrl: apiBase,
+        },
+        { status: 503 }
+      )
+    }
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -112,13 +132,15 @@ export async function POST(req: NextRequest) {
 
       console.error(
         `[Chat API] FastAPI error: ${response.status}`,
-        errorData
+        errorData,
+        `Backend URL: ${apiBase}`
       )
 
       return NextResponse.json(
         {
           error: errorData.detail || `Backend returned ${response.status}`,
           status: response.status,
+          backendUrl: apiBase,
         },
         { status: response.status }
       )
