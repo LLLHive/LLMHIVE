@@ -115,6 +115,14 @@ app.include_router(api_router, prefix="/api/v1")
 from .routers import chat as chat_router
 app.include_router(chat_router.router)
 
+# Include execute router (at /v1/execute/python)
+from .routers import execute as execute_router
+app.include_router(execute_router.router)
+
+# Include stub endpoints (file analysis, image generation, data visualization, collaboration)
+from .routers import stubs as stubs_router
+app.include_router(stubs_router.router)
+
 # Include chat router (at /v1/chat)
 from .routers import chat as chat_router
 app.include_router(chat_router.router)
