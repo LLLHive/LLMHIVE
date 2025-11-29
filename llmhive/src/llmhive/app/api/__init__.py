@@ -12,18 +12,25 @@ import logging
 
 from fastapi import APIRouter
 
-from ..api import status  # type: ignore
-
 logger = logging.getLogger(__name__)
 
 # Root API router that main.py includes with:
 #   app.include_router(api_router, prefix="/api/v1")
 api_router = APIRouter()
 
-# System/status endpoints (health, version info, etc.)
-if hasattr(status, "router"):
-    api_router.include_router(status.router, prefix="/system", tags=["system"])
-else:
-    logger.warning("Status router not found in api.status; /api/v1/system routes may be missing.")
+# Import and include sub-routers.
+# NOTE: Import from .status (sibling module) to avoid circular import with this
+# package, which is ``src.llmhive.app.api``.
+try:
+    from . import status  # type: ignore
+
+    if hasattr(status, "router"):
+        api_router.include_router(status.router, prefix="/system", tags=["system"])
+    else:
+        logger.warning(
+            "Status router not found in api.status; /api/v1/system routes may be missing."
+        )
+except Exception as exc:  # pragma: no cover - defensive logging only
+    logger.warning("Failed to import status router: %s", exc)
 
 
