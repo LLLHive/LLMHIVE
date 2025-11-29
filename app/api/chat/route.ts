@@ -101,14 +101,30 @@ export async function POST(req: NextRequest) {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
       
-      response = await fetch(`${apiBase}/v1/chat`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      })
-      
-      clearTimeout(timeoutId)
+      try {
+        response = await fetch(`${apiBase}/v1/chat`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+        // Check if it was a timeout/abort
+        if (fetchError.name === 'AbortError' || controller.signal.aborted) {
+          console.error("[Chat API] Request timeout after 60 seconds")
+          return NextResponse.json(
+            {
+              error: "Request timeout",
+              details: "The backend did not respond within 60 seconds",
+              backendUrl: apiBase,
+            },
+            { status: 504 }
+          )
+        }
+        throw fetchError // Re-throw other errors
+      }
     } catch (fetchError: any) {
       console.error("[Chat API] Fetch error:", fetchError)
       return NextResponse.json(
