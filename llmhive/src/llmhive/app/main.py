@@ -9,8 +9,15 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import api_router
-from .database import engine
-from .models import Base
+
+# Database imports are optional; some minimal deployments may not use the DB.
+try:
+    from .db import engine  # type: ignore
+    from .models import Base  # type: ignore
+except Exception as exc:  # pragma: no cover - defensive logging only
+    engine = None  # type: ignore
+    Base = None  # type: ignore
+    logging.getLogger(__name__).warning("Database imports failed: %s", exc)
 
 # Configure comprehensive logging
 logging.basicConfig(
@@ -43,13 +50,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create database tables
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables initialized successfully")
-except Exception as e:
-    logger.warning(f"Database initialization failed: {e}")
-    logger.warning("Application will continue but database operations may fail")
+# Create database tables (if DB is configured)
+if Base is not None and engine is not None:
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables initialized successfully")
+    except Exception as e:
+        logger.warning(f"Database initialization failed: {e}")
+        logger.warning("Application will continue but database operations may fail")
 
 # Define root-level endpoints before including routers
 @app.get("/", summary="Root endpoint")
