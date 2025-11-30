@@ -12,6 +12,8 @@ import os
 import secrets
 from typing import Optional
 
+logger = logging.getLogger(__name__)
+
 try:
     from cryptography.fernet import Fernet
     from cryptography.hazmat.primitives import hashes
@@ -23,8 +25,6 @@ except ImportError:
     Fernet = None  # type: ignore
     AESGCM = None  # type: ignore
     logger.warning("cryptography package not available, encryption disabled")
-
-logger = logging.getLogger(__name__)
 
 
 class EncryptionManager:
