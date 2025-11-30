@@ -33,4 +33,43 @@ try:
 except Exception as exc:  # pragma: no cover - defensive logging only
     logger.warning("Failed to import status router: %s", exc)
 
+# Billing API routes
+try:
+    from . import billing  # type: ignore
+    
+    if hasattr(billing, "router"):
+        api_router.include_router(billing.router, prefix="/billing", tags=["billing"])
+        logger.info("Billing API routes registered at /api/v1/billing")
+except Exception as exc:
+    logger.warning("Failed to import billing router: %s", exc)
+
+# Payment API routes (Stripe checkout)
+try:
+    from . import payment_routes  # type: ignore
+    
+    if hasattr(payment_routes, "router"):
+        api_router.include_router(payment_routes.router, prefix="/payments", tags=["payments"])
+        logger.info("Payment API routes registered at /api/v1/payments")
+except Exception as exc:
+    logger.warning("Failed to import payment routes: %s", exc)
+
+# Webhook routes (Stripe webhooks)
+try:
+    from . import webhooks  # type: ignore
+    
+    if hasattr(webhooks, "router"):
+        api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+        logger.info("Webhook routes registered at /api/v1/webhooks")
+except Exception as exc:
+    logger.warning("Failed to import webhook routes: %s", exc)
+
+# Admin API routes
+try:
+    from . import admin  # type: ignore
+    
+    if hasattr(admin, "router"):
+        api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+        logger.info("Admin API routes registered at /api/v1/admin")
+except Exception as exc:
+    logger.warning("Failed to import admin router: %s", exc)
 

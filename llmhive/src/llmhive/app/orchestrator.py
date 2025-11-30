@@ -187,6 +187,29 @@ except ImportError:
     LiveDataTool = None  # type: ignore
     logger.warning("Live data module not available")
 
+# Import billing enforcement components
+try:
+    from .billing.enforcement import (
+        SubscriptionEnforcer,
+        EnforcementResult,
+        create_enforcement_error,
+    )
+    from .billing.metering import (
+        UsageMeter,
+        UsageType,
+        get_usage_meter,
+        get_cost_estimator,
+    )
+    from .billing.usage import UsageTracker
+    BILLING_AVAILABLE = True
+except ImportError:
+    BILLING_AVAILABLE = False
+    SubscriptionEnforcer = None  # type: ignore
+    EnforcementResult = None  # type: ignore
+    UsageMeter = None  # type: ignore
+    get_usage_meter = None  # type: ignore
+    logger.warning("Billing module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -645,6 +668,64 @@ class Orchestrator:
             except Exception as e:
                 logger.warning("Security validation failed: %s", e)
                 security_issues.append(f"Security check error: {e}")
+        
+        # Phase -0.5: Billing Enforcement - Check subscription limits
+        user_tier = kwargs.get("user_tier", "free")
+        enforcement_passed = True
+        
+        if BILLING_AVAILABLE and user_id:
+            try:
+                # Get database session for enforcement check
+                from .database import SessionLocal
+                
+                with SessionLocal() as db_session:
+                    enforcer = SubscriptionEnforcer(db_session)
+                    
+                    # Estimate tokens for this request
+                    estimated_tokens = len(prompt) // 4 + 500  # Rough estimate
+                    
+                    # Check enforcement
+                    enforcement_result = enforcer.enforce_request(
+                        user_id=user_id,
+                        requested_models=len(models_to_use) if models_to_use else 1,
+                        estimated_tokens=estimated_tokens,
+                        protocol=kwargs.get("protocol"),
+                        feature=kwargs.get("feature"),
+                    )
+                    
+                    if not enforcement_result.allowed:
+                        enforcement_passed = False
+                        logger.warning(
+                            "Billing enforcement blocked request: user=%s, reason=%s",
+                            user_id,
+                            enforcement_result.reason,
+                        )
+                        
+                        # Return billing error response
+                        if LLMResult is None:
+                            class LLMResult:
+                                def __init__(self, content, model, tokens=0):
+                                    self.content = content
+                                    self.model = model
+                                    self.tokens_used = tokens
+                        
+                        error_message = enforcement_result.upgrade_message or enforcement_result.reason
+                        return LLMResult(
+                            content=f"⚠️ {error_message}\n\nTo continue using LLMHive, please upgrade your subscription.",
+                            model="billing_enforcement",
+                            tokens=0,
+                        )
+                    
+                    # Update user tier from subscription
+                    user_tier = enforcement_result.tier_name
+                    
+                    if scratchpad:
+                        scratchpad.write("user_tier", user_tier)
+                        scratchpad.write("enforcement_passed", True)
+                        
+            except Exception as e:
+                logger.warning("Billing enforcement check failed: %s", e)
+                # Continue without enforcement on error (fail open)
         
         # Phase 0: Prompt Diffusion (optional pre-processing)
         diffusion_result: Optional[Any] = None
@@ -1284,6 +1365,68 @@ class Orchestrator:
                 consensus_notes.append(
                     f"Key agreements: {len(consensus_result.key_agreements)}"
                 )
+        
+        # Record usage metering
+        if BILLING_AVAILABLE and user_id and get_usage_meter:
+            try:
+                from .database import SessionLocal
+                
+                meter = get_usage_meter()
+                tokens_used = getattr(result, 'tokens_used', 0)
+                
+                # Record token usage
+                if tokens_used > 0:
+                    # Estimate input/output split
+                    input_tokens = tokens_used // 3
+                    output_tokens = tokens_used - input_tokens
+                    
+                    meter.record_usage(
+                        user_id=user_id,
+                        usage_type=UsageType.TOKEN_INPUT,
+                        amount=input_tokens,
+                        model=result.model,
+                    )
+                    meter.record_usage(
+                        user_id=user_id,
+                        usage_type=UsageType.TOKEN_OUTPUT,
+                        amount=output_tokens,
+                        model=result.model,
+                    )
+                
+                # Record request
+                meter.record_usage(
+                    user_id=user_id,
+                    usage_type=UsageType.REQUEST,
+                    amount=1,
+                    model=result.model,
+                )
+                
+                # Also record in database for persistence
+                with SessionLocal() as db_session:
+                    from .billing.usage import UsageTracker
+                    tracker = UsageTracker(db_session)
+                    tracker.record_usage(
+                        user_id=user_id,
+                        tokens=tokens_used,
+                        requests=1,
+                        models_used=[result.model],
+                        metadata={
+                            "session_id": session_id,
+                            "verification_passed": verification_passed,
+                            "user_tier": user_tier,
+                        },
+                    )
+                    db_session.commit()
+                
+                logger.debug(
+                    "Recorded usage: user=%s, tokens=%d, model=%s",
+                    user_id,
+                    tokens_used,
+                    result.model,
+                )
+                
+            except Exception as e:
+                logger.warning("Failed to record usage metering: %s", e)
         
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(
