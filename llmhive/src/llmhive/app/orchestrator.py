@@ -99,6 +99,20 @@ except ImportError:
     TierAccessController = None  # type: ignore
     logger.warning("Guardrails module not available")
 
+# Import tool broker components
+try:
+    from .tool_broker import (
+        ToolBroker,
+        ToolResult,
+        get_tool_broker,
+    )
+    TOOL_BROKER_AVAILABLE = True
+except ImportError:
+    TOOL_BROKER_AVAILABLE = False
+    ToolBroker = None  # type: ignore
+    ToolResult = None  # type: ignore
+    logger.warning("Tool broker module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -200,6 +214,18 @@ class Orchestrator:
                 logger.info("Security guardrails initialized")
             except Exception as e:
                 logger.warning("Failed to initialize guardrails: %s", e)
+        
+        # Initialize tool broker if available
+        self.tool_broker: Optional[Any] = None
+        if TOOL_BROKER_AVAILABLE:
+            try:
+                self.tool_broker = get_tool_broker()
+                # Set memory manager for knowledge lookup
+                if self.memory_manager:
+                    self.tool_broker.memory_manager = self.memory_manager
+                logger.info("Tool broker initialized with %d tools", len(self.tool_broker.list_tools()))
+            except Exception as e:
+                logger.warning("Failed to initialize tool broker: %s", e)
         
         # Initialize providers from environment variables
         self._initialize_providers()
@@ -711,6 +737,43 @@ class Orchestrator:
             except Exception as e:
                 logger.warning("Output security check failed: %s", e)
         
+        # Tool execution - process any tool calls in model output
+        use_tools = kwargs.get("use_tools", True)
+        tool_results: List[Any] = []
+        
+        if use_tools and self.tool_broker and TOOL_BROKER_AVAILABLE:
+            try:
+                # Check if model output contains tool requests
+                if self.tool_broker.is_tool_request(result.content):
+                    logger.info("Detected tool request in model output")
+                    
+                    # Process tool calls
+                    user_tier = kwargs.get("user_tier", "free")
+                    processed_output, tool_results = await self.tool_broker.process_model_output_with_tools(
+                        result.content,
+                        user_tier=user_tier,
+                        max_tool_calls=kwargs.get("max_tool_calls", 5),
+                    )
+                    
+                    if processed_output != result.content:
+                        result = LLMResult(
+                            content=processed_output,
+                            model=result.model,
+                            tokens=getattr(result, 'tokens_used', 0),
+                        )
+                        
+                        if scratchpad:
+                            scratchpad.write("tool_calls_executed", len(tool_results))
+                            scratchpad.write("tool_results", [
+                                {"tool": r.tool_name, "success": r.success, "result": str(r.result)[:200]}
+                                for r in tool_results
+                            ])
+                        
+                        logger.info("Executed %d tool calls", len(tool_results))
+                        
+            except Exception as e:
+                logger.warning("Tool execution failed: %s", e)
+        
         # Fact verification and correction loop
         use_verification = kwargs.get("use_verification", True)
         verification_report = None
@@ -818,6 +881,15 @@ class Orchestrator:
             consensus_notes.append(f"Security actions: {len(security_issues)}")
         if use_guardrails and GUARDRAILS_AVAILABLE:
             consensus_notes.append("Guardrails: active")
+        
+        # Add tool execution info to consensus notes
+        if tool_results:
+            successful_tools = [r.tool_name for r in tool_results if r.success]
+            failed_tools = [r.tool_name for r in tool_results if not r.success]
+            if successful_tools:
+                consensus_notes.append(f"Tools used: {', '.join(successful_tools)}")
+            if failed_tools:
+                consensus_notes.append(f"Tool errors: {', '.join(failed_tools)}")
         
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(
