@@ -126,6 +126,23 @@ except ImportError:
     ToolResult = None  # type: ignore
     logger.warning("Tool broker module not available")
 
+# Import agent executor for autonomous tasks
+try:
+    from .agent_executor import (
+        AgentExecutor,
+        AgentExecutionResult,
+        AgentStep,
+        AgentAction,
+        AgentStatus,
+        AGENT_TIER_LIMITS,
+    )
+    AGENT_EXECUTOR_AVAILABLE = True
+except ImportError:
+    AGENT_EXECUTOR_AVAILABLE = False
+    AgentExecutor = None  # type: ignore
+    AgentExecutionResult = None  # type: ignore
+    logger.warning("Agent executor module not available")
+
 # Import prompt diffusion components
 try:
     from .orchestration.prompt_diffusion import (
@@ -335,6 +352,14 @@ class Orchestrator:
                 # Set memory manager for knowledge lookup
                 if self.memory_manager:
                     self.tool_broker.memory_manager = self.memory_manager
+        
+        # Initialize agent executor for autonomous tasks
+        self.agent_executor: Optional[Any] = None
+        if AGENT_EXECUTOR_AVAILABLE and AgentExecutor:
+            try:
+                # Will be fully initialized when providers are available
+                self.agent_executor = None  # Lazy init with providers
+                logger.info("Agent executor module available")
                 logger.info("Tool broker initialized with %d tools", len(self.tool_broker.list_tools()))
             except Exception as e:
                 logger.warning("Failed to initialize tool broker: %s", e)
@@ -1628,4 +1653,149 @@ class Orchestrator:
             accuracy_level=accuracy_level,
             **kwargs
         )
+    
+    async def orchestrate_autonomous(
+        self,
+        task: str,
+        *,
+        user_tier: str = "free",
+        model: Optional[str] = None,
+        max_iterations: Optional[int] = None,
+        max_tool_calls: Optional[int] = None,
+        on_step: Optional[Callable] = None,
+        **kwargs: Any
+    ) -> Any:
+        """
+        Execute a task autonomously using the AgentExecutor.
+        
+        This method enables AutoGPT-like behavior where the agent:
+        1. Plans a sequence of tool calls
+        2. Executes tools and integrates results
+        3. Iterates until answer is found or limits reached
+        
+        Example tasks:
+        - "Calculate 5! + sqrt(16)" -> Uses calculator tool
+        - "Research population of France in 1900, 1950, 2000" -> Multiple searches
+        
+        Args:
+            task: The task/question to solve autonomously
+            user_tier: User's tier (affects limits)
+            model: Model to use for agent reasoning
+            max_iterations: Override tier max iterations
+            max_tool_calls: Override tier max tool calls
+            on_step: Optional callback for each step (for streaming updates)
+            **kwargs: Additional parameters
+            
+        Returns:
+            AgentExecutionResult or LLMResult-like object
+        """
+        if not AGENT_EXECUTOR_AVAILABLE or not AgentExecutor:
+            logger.warning("Agent executor not available, falling back to regular orchestration")
+            return await self.orchestrate(task, **kwargs)
+        
+        if not self.tool_broker:
+            logger.warning("Tool broker not available, falling back to regular orchestration")
+            return await self.orchestrate(task, **kwargs)
+        
+        # Create or get agent executor
+        if self.agent_executor is None:
+            self.agent_executor = AgentExecutor(
+                providers=self.providers,
+                tool_broker=self.tool_broker,
+                default_model=model or "gpt-4o",
+            )
+        
+        # Execute task
+        result = await self.agent_executor.execute(
+            task,
+            user_tier=user_tier,
+            model=model,
+            max_iterations=max_iterations,
+            max_tool_calls=max_tool_calls,
+            on_step=on_step,
+        )
+        
+        # Convert to LLMResult-like format for consistency
+        if hasattr(result, 'final_answer'):
+            return LLMResult(
+                content=result.final_answer,
+                model=f"agent({model or 'default'})",
+                tokens=result.total_tokens,
+                metadata={
+                    "agent_status": result.status.value if hasattr(result.status, 'value') else str(result.status),
+                    "iterations": result.total_iterations,
+                    "tool_calls": result.total_tool_calls,
+                    "steps": [
+                        {
+                            "step": s.step_number,
+                            "action": s.action.value if hasattr(s.action, 'value') else str(s.action),
+                            "tool": s.tool_name,
+                            "result": s.tool_result[:200] if s.tool_result else None,
+                        }
+                        for s in result.steps
+                    ],
+                },
+            )
+        
+        return result
+    
+    async def orchestrate_multi_step(
+        self,
+        goal: str,
+        *,
+        steps: Optional[List[str]] = None,
+        user_tier: str = "pro",
+        **kwargs: Any
+    ) -> Any:
+        """
+        Execute a multi-step goal, optionally with predefined steps.
+        
+        If steps are provided, executes them in order.
+        Otherwise, lets the agent plan its own steps.
+        
+        Args:
+            goal: The overall goal to achieve
+            steps: Optional list of steps to execute
+            user_tier: User's tier
+            **kwargs: Additional parameters
+            
+        Returns:
+            Combined result of all steps
+        """
+        if steps:
+            # Execute predefined steps
+            results = []
+            context = f"Goal: {goal}\n"
+            
+            for i, step in enumerate(steps):
+                logger.info("Executing step %d/%d: %s", i+1, len(steps), step[:50])
+                
+                result = await self.orchestrate_autonomous(
+                    f"{step}\n\nContext: {context}",
+                    user_tier=user_tier,
+                    **kwargs
+                )
+                
+                if hasattr(result, 'content'):
+                    results.append(result.content)
+                    context += f"\nStep {i+1} result: {result.content[:500]}"
+            
+            # Synthesize final answer
+            synthesis_prompt = f"""
+Goal: {goal}
+
+Step results:
+{chr(10).join(f'{i+1}. {r}' for i, r in enumerate(results))}
+
+Synthesize these results into a final comprehensive answer:
+"""
+            return await self.orchestrate(synthesis_prompt, **kwargs)
+        
+        else:
+            # Let agent plan its own steps
+            return await self.orchestrate_autonomous(
+                goal,
+                user_tier=user_tier,
+                **kwargs
+            )
 
