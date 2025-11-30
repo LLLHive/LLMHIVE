@@ -45,6 +45,8 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    # Allow Vercel preview deployments (e.g., https://llmhive-*.vercel.app)
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,16 +62,7 @@ if Base is not None and engine is not None:
         logger.warning("Application will continue but database operations may fail")
 
 # Define root-level endpoints before including routers
-@app.get("/", summary="Root endpoint")
-async def root() -> dict[str, str]:
-    """Root endpoint for basic verification."""
-    logger.info("Root endpoint called")
-    return {
-        "service": "LLMHive Orchestrator API",
-        "status": "online",
-        "version": "1.0.0"
-    }
-
+# IMPORTANT: Health check endpoints must be defined FIRST to ensure proper registration
 HEALTH_PAYLOAD = {"status": "ok"}
 
 
@@ -115,6 +108,17 @@ async def app_engine_health_alias() -> dict[str, str]:
 async def app_engine_health_alias_head() -> Response:
     """HEAD alias for /_ah/health."""
     return Response(status_code=200)
+
+
+@app.get("/", summary="Root endpoint")
+async def root() -> dict[str, str]:
+    """Root endpoint for basic verification."""
+    logger.info("Root endpoint called")
+    return {
+        "service": "LLMHive Orchestrator API",
+        "status": "online",
+        "version": "1.0.0"
+    }
 
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")

@@ -1,0 +1,170 @@
+name: MCP 2.0 CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'llmhive/src/llmhive/app/mcp2/**'
+      - 'llmhive/tests/test_mcp2_*.py'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'llmhive/src/llmhive/app/mcp2/**'
+      - 'llmhive/tests/test_mcp2_*.py'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e "llmhive[dev]"
+    
+    - name: Run MCP 2.0 unit tests
+      run: |
+        pytest llmhive/tests/test_mcp2_system.py -v --cov=llmhive/app/mcp2 --cov-report=xml
+    
+    - name: Run MCP 2.0 security edge case tests
+      run: |
+        pytest llmhive/tests/test_mcp2_security_edge_cases.py -v
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: mcp2
+        name: mcp2-coverage
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+    
+    - name: Run Bandit security scan
+      run: |
+        bandit -r llmhive/src/llmhive/app/mcp2/ -f json -o bandit-report.json
+        # Fail on high-severity findings
+        bandit -r llmhive/src/llmhive/app/mcp2/ -ll || exit 1
+    
+    - name: Check for known vulnerabilities
+      run: |
+        safety check --json || true
+    
+    - name: Run linters
+      run: |
+        pip install flake8 black mypy
+        flake8 llmhive/src/llmhive/app/mcp2/ --max-line-length=120 --extend-ignore=E203,W503 || true
+        black --check llmhive/src/llmhive/app/mcp2/ || true
+        mypy llmhive/src/llmhive/app/mcp2/ --ignore-missing-imports || true
+
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e "llmhive[dev]"
+    
+    - name: Run integration tests
+      run: |
+        pytest llmhive/tests/test_mcp2_*.py::TestCodeExecutor -v
+      env:
+        MCP2_ENABLE_DEBUG: "true"
+
+  performance-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e "llmhive[dev]"
+    
+    - name: Run performance benchmarks
+      run: |
+        python -m pytest llmhive/tests/test_mcp2_*.py -v --benchmark-only || true
+    
+    - name: Measure token savings
+      run: |
+        python -c "
+from llmhive.app.mcp2 import ContextOptimizer
+optimizer = ContextOptimizer(max_output_tokens=500)
+large_data = {'items': [{'id': i} for i in range(10000)]}
+original_size = len(str(large_data))
+filtered = optimizer.filter_large_output(large_data)
+filtered_size = len(filtered)
+savings = optimizer.calculate_token_savings(original_size, filtered_size)
+print(f'Token savings: {savings[\"savings_percent\"]}%')
+assert savings['savings_percent'] > 90, 'Token savings should be >90%'
+"
+    
+  workspace-cleanup:
+    runs-on: ubuntu-latest
+    schedule:
+      - cron: '0 2 * * *'  # Daily at 2 AM
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Cleanup old workspaces
+      run: |
+        # This would clean up old sandbox workspaces in production
+        # For CI, this is a placeholder
+        echo "Workspace cleanup job - would remove workspaces older than 24 hours"
+    
+  docker-build:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: llmhive:mcp2-latest
+        cache-from: type=registry,ref=llmhive:mcp2-cache
+        cache-to: type=registry,ref=llmhive:mcp2-cache,mode=max
+    
+    - name: Scan image for vulnerabilities
+      run: |
+        # Placeholder for container scanning
+        echo "Container vulnerability scan would run here"
+

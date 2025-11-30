@@ -266,6 +266,25 @@ except ImportError:
     get_usage_meter = None  # type: ignore
     logger.warning("Billing module not available")
 
+# Import dialogue system components
+try:
+    from .dialogue import (
+        DialogueManager,
+        DialogueResult,
+        DialogueState,
+        get_dialogue_manager,
+    )
+    from .dialogue.ambiguity import AmbiguityDetector, detect_ambiguity
+    from .dialogue.clarification import ClarificationHandler, CLARIFICATION_SYSTEM_PROMPT
+    from .dialogue.suggestions import SuggestionEngine, SUGGESTION_SYSTEM_PROMPT
+    from .dialogue.scheduler import TaskScheduler, get_task_scheduler
+    DIALOGUE_AVAILABLE = True
+except ImportError:
+    DIALOGUE_AVAILABLE = False
+    DialogueManager = None  # type: ignore
+    get_dialogue_manager = None  # type: ignore
+    logger.warning("Dialogue system module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -461,6 +480,15 @@ class Orchestrator:
                 logger.info("Live data manager initialized")
             except Exception as e:
                 logger.warning("Failed to initialize live data manager: %s", e)
+        
+        # Initialize dialogue manager for clarifications and suggestions
+        self.dialogue_manager: Optional[Any] = None
+        if DIALOGUE_AVAILABLE and get_dialogue_manager:
+            try:
+                self.dialogue_manager = get_dialogue_manager()
+                logger.info("Dialogue manager initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize dialogue manager: %s", e)
         
         logger.info(f"Orchestrator initialized with {len(self.providers)} provider(s)")
     
@@ -967,6 +995,69 @@ class Orchestrator:
                 logger.warning("Billing enforcement check failed: %s", e)
                 # Continue without enforcement on error (fail open)
         
+        # Phase -0.3: Dialogue Pre-processing (clarification and schedule detection)
+        use_dialogue = kwargs.get("use_dialogue", True)
+        dialogue_result: Optional[Any] = None
+        
+        if use_dialogue and self.dialogue_manager and DIALOGUE_AVAILABLE:
+            try:
+                pre_result = await self.dialogue_manager.pre_process_query(
+                    query=prompt,
+                    session_id=session_id,
+                    user_id=user_id,
+                    check_ambiguity=True,
+                    check_schedule=True,
+                )
+                
+                if scratchpad:
+                    scratchpad.write("dialogue_pre_processed", True)
+                
+                # Handle schedule requests
+                if pre_result.is_schedule_request and pre_result.schedule_info:
+                    logger.info("Schedule request detected: %s", pre_result.schedule_info.get("message"))
+                    
+                    # Return schedule confirmation directly
+                    if LLMResult is None:
+                        class LLMResult:
+                            def __init__(self, content, model, tokens=0):
+                                self.content = content
+                                self.model = model
+                                self.tokens_used = tokens
+                    
+                    return LLMResult(
+                        content=pre_result.schedule_info.get("confirmation", "Reminder scheduled."),
+                        model="dialogue_scheduler",
+                        tokens=0,
+                    )
+                
+                # Handle clarification requests
+                if not pre_result.should_proceed and pre_result.needs_clarification:
+                    logger.info("Clarification needed for query")
+                    
+                    # Return clarification question to user
+                    if LLMResult is None:
+                        class LLMResult:
+                            def __init__(self, content, model, tokens=0):
+                                self.content = content
+                                self.model = model
+                                self.tokens_used = tokens
+                    
+                    return LLMResult(
+                        content=pre_result.clarification_question or "Could you please clarify your question?",
+                        model="dialogue_clarification",
+                        tokens=0,
+                    )
+                
+                # Use modified query if clarification was resolved
+                if pre_result.context_added:
+                    prompt = pre_result.modified_query
+                    if scratchpad:
+                        scratchpad.write("query_clarified", True)
+                        scratchpad.write("clarified_query", prompt)
+                
+            except Exception as e:
+                logger.warning("Dialogue pre-processing failed: %s", e)
+        
         # Phase 0: Prompt Diffusion (optional pre-processing)
         diffusion_result: Optional[Any] = None
         original_prompt = prompt  # Store original for transparency
@@ -1117,7 +1208,7 @@ class Orchestrator:
             class ProtocolResult:
                 def __init__(self, final_response, initial_responses=None, critiques=None, 
                            improvements=None, consensus_notes=None, step_outputs=None,
-                           supporting_notes=None, quality_assessments=None):
+                           supporting_notes=None, quality_assessments=None, suggestions=None):
                     self.final_response = final_response
                     self.initial_responses = initial_responses or []
                     self.critiques = critiques or []
@@ -1126,6 +1217,7 @@ class Orchestrator:
                     self.step_outputs = step_outputs or {}
                     self.supporting_notes = supporting_notes or []
                     self.quality_assessments = quality_assessments or {}
+                    self.suggestions = suggestions or []  # Proactive suggestions
         
         # Phase 1: Hierarchical Planning (if HRM enabled)
         hierarchical_plan = None
@@ -1747,6 +1839,41 @@ class Orchestrator:
             except Exception as e:
                 logger.warning("Failed to record usage metering: %s", e)
         
+        # Phase Final: Dialogue Post-processing (suggestions)
+        suggestions = []
+        if use_dialogue and self.dialogue_manager and DIALOGUE_AVAILABLE:
+            try:
+                response_text = result.content if hasattr(result, 'content') else str(result)
+                
+                dialogue_result = await self.dialogue_manager.process_response(
+                    response=response_text,
+                    query=original_prompt,
+                    session_id=session_id,
+                    user_id=user_id,
+                    user_tier=user_tier,
+                    generate_suggestions=True,
+                )
+                
+                # Update response if it was cleaned of tags
+                if dialogue_result.final_response != response_text:
+                    result.content = dialogue_result.final_response
+                
+                # Collect suggestions
+                suggestions = dialogue_result.suggestions
+                
+                if suggestions:
+                    logger.info("Generated %d suggestions", len(suggestions))
+                    if scratchpad:
+                        scratchpad.write("suggestions_generated", len(suggestions))
+                        scratchpad.write("suggestion_texts", [s.text for s in suggestions])
+                
+                # Add suggestion info to consensus notes
+                if suggestions:
+                    consensus_notes.append(f"Suggestions offered: {len(suggestions)}")
+                    
+            except Exception as e:
+                logger.warning("Dialogue post-processing failed: %s", e)
+        
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(
             final_response=result,
@@ -1756,6 +1883,7 @@ class Orchestrator:
             consensus_notes=consensus_notes,
             step_outputs={"answer": [result]},
             supporting_notes=supporting_notes,
+            suggestions=suggestions if suggestions else [],
             quality_assessments={},
         )
     

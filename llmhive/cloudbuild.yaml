@@ -1,0 +1,78 @@
+# cloudbuild.yaml — build, push, deploy to Cloud Run with correct Secret Manager mapping
+# NOTE: This copy lives under llmhive/ so Cloud Build triggers configured with
+#       Location: /llmhive/cloudbuild.yaml continue to work. The root-level
+#       cloudbuild.yaml is the canonical source; keep them in sync.
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Adjust if your region/service ever changes
+substitutions:
+  _REGION: us-east1
+  _SERVICE_NAME: llmhive-orchestrator
+
+timeout: "1200s"
+
+steps:
+  # 1) Build the Docker image (no cache to avoid stale deployments)
+  - id: "Build image"
+    name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        TAG="${COMMIT_SHA:-$BUILD_ID}"
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
+        echo "Building $${IMAGE} with --no-cache ..."
+        docker build --no-cache -t "$${IMAGE}" .
+
+  # 2) Push the image
+  - id: "Push image"
+    name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        TAG="${COMMIT_SHA:-$BUILD_ID}"
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
+        echo "Pushing $${IMAGE} ..."
+        docker push "$${IMAGE}"
+
+  # 3) Deploy to Cloud Run with CORRECT secret IDs (kebab-case)
+  - id: "Deploy to Cloud Run"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        TAG="${COMMIT_SHA:-$BUILD_ID}"
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
+        echo "Deploying $${IMAGE} to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} on port 8080..."
+        gcloud run deploy "${_SERVICE_NAME}" \
+          --image "$${IMAGE}" \
+          --region "${_REGION}" \
+          --platform managed \
+          --allow-unauthenticated \
+          --port=8080 \
+          --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest
+        echo "Deploy step complete."
+
+  # 4) Verify mapping in the logs
+  - id: "Verify env→secret mapping"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        echo "Cloud Run env→secret mapping for ${_SERVICE_NAME} (${_REGION}):"
+        gcloud run services describe "${_SERVICE_NAME}" --region "${_REGION}" \
+          --format='table(
+            spec.template.spec.containers[0].env[].name:label=ENV,
+            spec.template.spec.containers[0].env[].valueFrom.secretKeyRef.name:label=SECRET_ID)'
+        echo "Expect SECRET_ID to be: openai-api-key, grok-api-key, gemini-api-key, tavily-api-key"
+
+

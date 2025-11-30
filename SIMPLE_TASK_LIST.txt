@@ -1,0 +1,167 @@
+================================================================================
+LLMHIVE PROJECT - SIMPLE TASK LIST FOR YOU
+================================================================================
+
+Follow these steps in order. Each step is simple and explained clearly.
+
+================================================================================
+PART 1: SET UP STRIPE (PAYMENT SYSTEM)
+================================================================================
+
+STEP 1: Create Stripe Account
+-----------------------------
+1. Go to: https://stripe.com
+2. Click "Sign up"
+3. Enter your email and create password
+4. Complete setup
+5. Write down your login info
+
+Time: 10 minutes
+
+
+STEP 2: Get Your Secret Key
+----------------------------
+1. In Stripe, click "Developers" (left menu)
+2. Click "API keys"
+3. Find "Secret key" section
+4. Click "Reveal test key"
+5. Copy the key (starts with sk_test_)
+6. Save it somewhere safe
+
+Time: 3 minutes
+
+
+STEP 3: Set Up Webhook
+----------------------
+1. In Stripe, go to "Developers" → "Webhooks"
+2. Click "Add endpoint"
+3. Enter URL: https://your-website.com/api/v1/billing/webhooks/stripe
+   (Replace your-website.com with your actual website)
+4. Select these events:
+   - customer.subscription.created
+   - customer.subscription.updated
+   - customer.subscription.deleted
+   - invoice.payment_succeeded
+   - invoice.payment_failed
+5. Click "Add endpoint"
+6. Copy the "Signing secret" (starts with whsec_)
+7. Save it somewhere safe
+
+Time: 5 minutes
+
+
+STEP 4: Send Keys to Technical Person
+--------------------------------------
+Send this message to your technical person:
+
+"Hi [Name],
+
+I've set up Stripe. Please add these to the server:
+
+STRIPE_SECRET_KEY = [paste your secret key here]
+STRIPE_WEBHOOK_SECRET = [paste your webhook secret here]
+
+Also install: pip install stripe>=7.0.0
+
+Thanks!"
+
+Time: 2 minutes
+
+
+================================================================================
+PART 2: DATABASE SETUP
+================================================================================
+
+Send this message to your technical person:
+
+"Hi [Name],
+
+We need to create database tables for subscriptions and billing.
+Please run the database migration or use:
+Base.metadata.create_all(bind=engine)
+
+The migration file is at:
+llmhive/alembic/versions/001_add_billing_tables.py
+
+Thanks!"
+
+Time: Wait for tech person (usually 15-30 minutes)
+
+
+================================================================================
+PART 3: TEST EVERYTHING
+================================================================================
+
+STEP 1: Test Website
+--------------------
+1. Open your LLMHive website
+2. Try using the chat
+3. Does it work? ✅ Great!
+4. Does it show errors? ❌ Write down the error and contact tech person
+
+Time: 5 minutes
+
+
+STEP 2: Test Subscription
+--------------------------
+1. Go to your website
+2. Try to create a subscription
+3. Use test card: 4242 4242 4242 4242
+4. Does it work? ✅ Great!
+5. Does it fail? ❌ Write down error and contact tech person
+
+Time: 10 minutes
+
+
+================================================================================
+PART 4: FINAL CHECKLIST
+================================================================================
+
+Ask your technical person to check:
+
+[ ] All environment variables are set
+[ ] Database tables are created
+[ ] Stripe library is installed
+[ ] Server is running
+[ ] Website is accessible
+[ ] Health check works: /healthz
+[ ] No critical errors
+
+Time: 30-60 minutes (for tech person)
+
+
+================================================================================
+PART 5: GO LIVE!
+================================================================================
+
+Once everything is checked:
+1. Announce your launch!
+2. Share your website
+3. Monitor for issues
+
+Time: Ongoing
+
+
+================================================================================
+NEED HELP?
+================================================================================
+
+Contact your technical person if:
+- You don't understand a step
+- Something doesn't work
+- You see error messages
+
+Always include:
+- What you were trying to do
+- What step you were on
+- Any error messages
+
+
+================================================================================
+ESTIMATED TOTAL TIME: 2-4 hours
+================================================================================
+
+Most of this is waiting for your technical person to do their part.
+Your actual work time: About 30 minutes
+
+================================================================================

@@ -13,7 +13,7 @@ substitutions:
 timeout: "1200s"
 
 steps:
-  # 1) Build the Docker image
+  # 1) Build the Docker image (no cache to avoid stale deployments)
   - id: "Build image"
     name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
@@ -21,9 +21,13 @@ steps:
       - -c
       - |
         set -euo pipefail
-        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:${COMMIT_SHA}"
-        echo "Building $${IMAGE} ..."
-        docker build -t "$${IMAGE}" .
+        # Use COMMIT_SHA when available (GitHub/Cloud Build triggers),
+        # otherwise fall back to BUILD_ID for manual submits. BUILD_ID is
+        # stable across steps, so the same tag is used for build/push/deploy.
+        TAG="${COMMIT_SHA:-$BUILD_ID}"
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
+        echo "Building $${IMAGE} with --no-cache ..."
+        docker build --no-cache -t "$${IMAGE}" .
 
   # 2) Push the image
   - id: "Push image"
@@ -33,7 +37,8 @@ steps:
       - -c
       - |
         set -euo pipefail
-        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:${COMMIT_SHA}"
+        TAG="${COMMIT_SHA:-$BUILD_ID}"
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
         echo "Pushing $${IMAGE} ..."
         docker push "$${IMAGE}"
 
@@ -45,13 +50,15 @@ steps:
       - -c
       - |
         set -euo pipefail
-        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:${COMMIT_SHA}"
-        echo "Deploying $${IMAGE} to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} ..."
+        TAG="${COMMIT_SHA:-$BUILD_ID}"
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
+        echo "Deploying $${IMAGE} to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} on port 8080..."
         gcloud run deploy "${_SERVICE_NAME}" \
           --image "$${IMAGE}" \
           --region "${_REGION}" \
           --platform managed \
           --allow-unauthenticated \
+          --port=8080 \
           --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest
         echo "Deploy step complete."
 
