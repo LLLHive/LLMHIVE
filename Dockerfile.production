@@ -1,0 +1,144 @@
+# ============================================================================
+# LLMHive Production Dockerfile
+# ============================================================================
+# Multi-stage build for optimized production deployment
+# Includes: monitoring, caching, security hardening
+# ============================================================================
+
+# Stage 1: Builder
+FROM python:3.11-slim as builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libc6-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy and install requirements
+COPY llmhive/requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install production extras
+RUN pip install --no-cache-dir \
+    prometheus-client>=0.17.0 \
+    prometheus-fastapi-instrumentator>=6.0.0 \
+    structlog>=23.1.0 \
+    python-json-logger>=2.0.0 \
+    redis>=4.5.0 \
+    sentry-sdk[fastapi]>=1.25.0 \
+    slowapi>=0.1.8 \
+    secure>=0.3.0
+
+# ============================================================================
+# Stage 2: Production Runtime
+# ============================================================================
+FROM python:3.11-slim as production
+
+# Security: Create non-root user
+RUN groupadd -r llmhive && useradd -r -g llmhive llmhive
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=8080 \
+    WORKERS=4 \
+    THREADS=4 \
+    TIMEOUT=120 \
+    GRACEFUL_TIMEOUT=60 \
+    KEEP_ALIVE=5 \
+    MAX_REQUESTS=10000 \
+    MAX_REQUESTS_JITTER=1000 \
+    PYTHONPATH=/app \
+    # Monitoring
+    ENABLE_METRICS=true \
+    METRICS_PORT=9090 \
+    # Logging
+    LOG_LEVEL=INFO \
+    LOG_FORMAT=json \
+    # Security
+    SECURE_HEADERS=true \
+    # Cache
+    ENABLE_CACHE=true \
+    CACHE_TTL=3600
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy application code
+COPY --chown=llmhive:llmhive llmhive/ ./
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data /app/cache \
+    && chown -R llmhive:llmhive /app
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/healthz || exit 1
+
+# Switch to non-root user
+USER llmhive
+
+# Expose ports
+EXPOSE ${PORT} ${METRICS_PORT}
+
+# Start application with gunicorn
+CMD exec gunicorn \
+    --bind 0.0.0.0:${PORT} \
+    --workers ${WORKERS} \
+    --threads ${THREADS} \
+    --timeout ${TIMEOUT} \
+    --graceful-timeout ${GRACEFUL_TIMEOUT} \
+    --keep-alive ${KEEP_ALIVE} \
+    --max-requests ${MAX_REQUESTS} \
+    --max-requests-jitter ${MAX_REQUESTS_JITTER} \
+    --access-logfile - \
+    --error-logfile - \
+    --capture-output \
+    --enable-stdio-inheritance \
+    --preload \
+    "src.llmhive.app.main:app" \
+    -k uvicorn.workers.UvicornWorker
+
+# ============================================================================
+# Stage 3: Development (optional, for local testing)
+# ============================================================================
+FROM production as development
+
+USER root
+
+# Install development tools
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    locust \
+    httpx
+
+USER llmhive
+
+ENV LOG_LEVEL=DEBUG \
+    WORKERS=1
+
+CMD ["uvicorn", "src.llmhive.app.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+

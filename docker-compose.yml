@@ -1,0 +1,163 @@
+# ==============================================================================
+# Docker Compose for LLMHive Local Development and Testing
+# ==============================================================================
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose up -d llmhive      # Start LLMHive only
+#   docker-compose logs -f llmhive    # View logs
+#   docker-compose down               # Stop all services
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # LLMHive Orchestrator
+  # ===========================================================================
+  llmhive:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: production
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      - PORT=8080
+      - WORKERS=2
+      - THREADS=4
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - ENABLE_METRICS=true
+      - ENABLE_CACHE=true
+      - REDIS_URL=redis://redis:6379
+      # API Keys (use .env file)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GROK_API_KEY=${GROK_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - llmhive-data:/app/data
+      - llmhive-cache:/app/cache
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - llmhive-network
+
+  # ===========================================================================
+  # Redis for Caching and Rate Limiting
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - llmhive-network
+
+  # ===========================================================================
+  # Prometheus for Metrics
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - llmhive
+    restart: unless-stopped
+    networks:
+      - llmhive-network
+
+  # ===========================================================================
+  # Grafana for Dashboards
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=llmhive
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - llmhive-network
+
+  # ===========================================================================
+  # Load Testing with Locust
+  # ===========================================================================
+  locust:
+    image: locustio/locust:latest
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./llmhive/tests/load:/mnt/locust:ro
+    command: -f /mnt/locust/locustfile.py --host=http://llmhive:8080
+    depends_on:
+      - llmhive
+    profiles:
+      - testing
+    networks:
+      - llmhive-network
+
+  # ===========================================================================
+  # Development Mode (with hot reload)
+  # ===========================================================================
+  llmhive-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: development
+    ports:
+      - "8080:8080"
+    environment:
+      - LOG_LEVEL=DEBUG
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./llmhive:/app:ro
+    profiles:
+      - development
+    networks:
+      - llmhive-network
+
+networks:
+  llmhive-network:
+    driver: bridge
+
+volumes:
+  llmhive-data:
+  llmhive-cache:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
