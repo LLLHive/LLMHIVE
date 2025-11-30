@@ -143,6 +143,32 @@ except ImportError:
     AgentExecutionResult = None  # type: ignore
     logger.warning("Agent executor module not available")
 
+# Import local model provider and registry
+try:
+    from .providers import (
+        LOCAL_MODEL_AVAILABLE,
+        MODEL_REGISTRY_AVAILABLE,
+    )
+    if LOCAL_MODEL_AVAILABLE:
+        from .providers.local_model import (
+            LocalModelProvider,
+            ChatLocalModelProvider,
+            get_local_provider,
+        )
+    if MODEL_REGISTRY_AVAILABLE:
+        from .providers.model_registry import (
+            ModelRegistry,
+            ModelInfo,
+            ModelType,
+            get_model_registry,
+        )
+except ImportError:
+    LOCAL_MODEL_AVAILABLE = False
+    MODEL_REGISTRY_AVAILABLE = False
+    LocalModelProvider = None  # type: ignore
+    ModelRegistry = None  # type: ignore
+    logger.warning("Local model provider not available")
+
 # Import prompt diffusion components
 try:
     from .orchestration.prompt_diffusion import (
@@ -594,6 +620,180 @@ class Orchestrator:
         else:
             # Create minimal stub if import failed
             self._create_minimal_stub()
+        
+        # Initialize local model provider if configured
+        self._initialize_local_models()
+    
+    def _initialize_local_models(self) -> None:
+        """Initialize local model provider if configured."""
+        if not LOCAL_MODEL_AVAILABLE:
+            logger.info("Local model provider not available")
+            return
+        
+        local_model = os.getenv("LLMHIVE_LOCAL_MODEL")
+        if local_model:
+            try:
+                use_4bit = os.getenv("LLMHIVE_LOCAL_USE_4BIT", "true").lower() == "true"
+                
+                local_provider = ChatLocalModelProvider(
+                    model_name=local_model,
+                    use_4bit=use_4bit,
+                )
+                
+                self.providers["local"] = local_provider
+                logger.info("Local model provider initialized: %s (4bit=%s)", local_model, use_4bit)
+            except Exception as e:
+                logger.warning(f"Failed to initialize local model provider: {e}")
+        
+        # Initialize model registry
+        self.model_registry: Optional[Any] = None
+        if MODEL_REGISTRY_AVAILABLE:
+            try:
+                self.model_registry = get_model_registry()
+                logger.info("Model registry initialized with %d models", len(self.model_registry._models))
+            except Exception as e:
+                logger.warning(f"Failed to initialize model registry: {e}")
+    
+    def register_local_model(
+        self,
+        model_id: str,
+        model_path: str,
+        *,
+        domains: Optional[List[str]] = None,
+        use_4bit: bool = True,
+        preload: bool = False,
+    ) -> bool:
+        """
+        Register and optionally load a local/fine-tuned model.
+        
+        Args:
+            model_id: Unique identifier for the model
+            model_path: HuggingFace model ID or local path
+            domains: List of domains the model specializes in
+            use_4bit: Use 4-bit quantization
+            preload: Load model immediately
+            
+        Returns:
+            True if successful
+        """
+        if not LOCAL_MODEL_AVAILABLE:
+            logger.error("Local model provider not available")
+            return False
+        
+        try:
+            # Register in model registry
+            if self.model_registry:
+                self.model_registry.register(
+                    model_id=model_id,
+                    model_name=model_path,
+                    model_type=ModelType.FINE_TUNED if os.path.isdir(model_path) else ModelType.LOCAL,
+                    provider="local",
+                    model_path=model_path,
+                    domains=domains or ["general"],
+                    use_4bit=use_4bit,
+                )
+            
+            # Create provider
+            provider = ChatLocalModelProvider(
+                model_name=model_path,
+                use_4bit=use_4bit,
+            )
+            
+            if preload:
+                provider.load_model()
+            
+            self.providers[model_id] = provider
+            logger.info("Registered local model: %s", model_id)
+            return True
+            
+        except Exception as e:
+            logger.error("Failed to register local model %s: %s", model_id, e)
+            return False
+    
+    async def generate_with_local(
+        self,
+        prompt: str,
+        model_id: Optional[str] = None,
+        **kwargs,
+    ) -> Any:
+        """
+        Generate using a local model (for sensitive/offline queries).
+        
+        Args:
+            prompt: Input prompt
+            model_id: Specific local model ID (uses default if not specified)
+            **kwargs: Generation parameters
+            
+        Returns:
+            LLMResult-like object
+        """
+        # Find local provider
+        provider = None
+        
+        if model_id and model_id in self.providers:
+            provider = self.providers[model_id]
+        elif "local" in self.providers:
+            provider = self.providers["local"]
+        else:
+            # Try to find any local provider
+            for name, p in self.providers.items():
+                if hasattr(p, 'model_name') and hasattr(p, 'load_model'):
+                    provider = p
+                    break
+        
+        if not provider:
+            raise ValueError("No local model provider available")
+        
+        # Generate
+        result = await provider.generate(prompt, **kwargs)
+        
+        return LLMResult(
+            content=result.content,
+            model=result.model,
+            tokens=result.tokens_used,
+            metadata={
+                "provider": "local",
+                "generation_time_ms": result.generation_time_ms,
+            },
+        )
+    
+    def get_models_for_domain(
+        self,
+        domain: str,
+        include_local: bool = True,
+        limit: int = 3,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get best models for a domain.
+        
+        Args:
+            domain: Domain name (e.g., "coding", "medical")
+            include_local: Include local/fine-tuned models
+            limit: Maximum models to return
+            
+        Returns:
+            List of model info dicts
+        """
+        if not self.model_registry:
+            return []
+        
+        models = self.model_registry.get_models_for_domain(
+            domain,
+            limit=limit,
+            include_local=include_local,
+        )
+        
+        return [
+            {
+                "id": m.model_id,
+                "name": m.model_name,
+                "type": m.model_type.value,
+                "provider": m.provider,
+                "priority": m.priority,
+                "domains": m.domains,
+            }
+            for m in models
+        ]
     
     def _create_minimal_stub(self) -> None:
         """Create a minimal stub provider."""
