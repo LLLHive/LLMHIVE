@@ -141,6 +141,22 @@ except ImportError:
     ConsensusResult = None  # type: ignore
     logger.warning("Consensus manager module not available")
 
+# Import refinement loop components
+try:
+    from .orchestration.refinement_loop import (
+        RefinementLoopController,
+        RefinementResult,
+        RefinementConfig,
+        RefinementStrategy,
+        LoopStatus,
+    )
+    REFINEMENT_LOOP_AVAILABLE = True
+except ImportError:
+    REFINEMENT_LOOP_AVAILABLE = False
+    RefinementLoopController = None  # type: ignore
+    RefinementResult = None  # type: ignore
+    logger.warning("Refinement loop module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -286,6 +302,28 @@ class Orchestrator:
                 logger.info("Consensus manager initialized")
             except Exception as e:
                 logger.warning("Failed to initialize consensus manager: %s", e)
+        
+        # Initialize refinement loop controller after providers are ready
+        self.refinement_controller: Optional[Any] = None
+        if REFINEMENT_LOOP_AVAILABLE and RefinementLoopController:
+            try:
+                refinement_config = RefinementConfig(
+                    max_iterations=3,
+                    convergence_threshold=0.90,
+                    min_improvement_threshold=0.05,
+                    enable_prompt_refinement=True,
+                    enable_model_switching=True,
+                )
+                self.refinement_controller = RefinementLoopController(
+                    fact_checker=self.fact_checker,
+                    prompt_diffusion=self.prompt_diffusion if hasattr(self, 'prompt_diffusion') else None,
+                    providers=self.providers,
+                    memory_manager=self.memory_manager,
+                    config=refinement_config,
+                )
+                logger.info("Refinement loop controller initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize refinement controller: %s", e)
         
         logger.info(f"Orchestrator initialized with {len(self.providers)} provider(s)")
     
@@ -922,44 +960,94 @@ class Orchestrator:
             except Exception as e:
                 logger.warning("Tool execution failed: %s", e)
         
-        # Fact verification and correction loop
+        # Fact verification and iterative refinement loop
         use_verification = kwargs.get("use_verification", True)
+        use_refinement_loop = kwargs.get("use_refinement_loop", True)
         verification_report = None
+        refinement_result: Optional[Any] = None
         verification_passed = True
         
-        if use_verification and self.fact_checker and FACT_CHECK_AVAILABLE:
+        if use_verification and FACT_CHECK_AVAILABLE:
             try:
                 logger.info("Running fact verification on response")
                 
-                # Run verification and correction loop
-                corrected_answer, verification_report = await self.fact_checker.verify_and_correct_loop(
-                    result.content,
-                    prompt=prompt,
-                    max_iterations=2,
-                )
-                
-                # Update result if corrections were made
-                if corrected_answer != result.content:
-                    logger.info(
-                        "Answer corrected after verification (score: %.2f, corrections: %d)",
-                        verification_report.verification_score if verification_report else 0,
-                        verification_report.corrections_made if verification_report else 0,
-                    )
-                    result = LLMResult(
-                        content=corrected_answer,
+                # Use advanced refinement loop if available and enabled
+                if use_refinement_loop and self.refinement_controller and REFINEMENT_LOOP_AVAILABLE:
+                    logger.info("Using iterative refinement loop for self-correction")
+                    
+                    # Configure max iterations based on accuracy level
+                    max_iters = 2 if accuracy_level <= 3 else 3
+                    
+                    # Run the iterative refinement loop
+                    refinement_result = await self.refinement_controller.run_refinement_loop(
+                        answer=result.content,
+                        prompt=prompt,
                         model=result.model,
-                        tokens=getattr(result, 'tokens_used', 0),
+                        context=memory_context if memory_context else None,
+                        available_models=models_to_use if len(models_to_use) > 1 else None,
                     )
-                
-                verification_passed = (
-                    verification_report.is_valid if verification_report else True
-                )
-                
-                # Store verification result in scratchpad
-                if scratchpad and verification_report:
-                    scratchpad.write("verification_score", verification_report.verification_score)
-                    scratchpad.write("verification_passed", verification_passed)
-                    scratchpad.write("corrections_made", verification_report.corrections_made)
+                    
+                    # Update result with refined answer
+                    if refinement_result.final_answer != result.content:
+                        logger.info(
+                            "Answer refined after %d iterations (final score: %.2f, status: %s)",
+                            len(refinement_result.iterations),
+                            refinement_result.final_verification_score,
+                            refinement_result.final_status.value,
+                        )
+                        result = LLMResult(
+                            content=refinement_result.final_answer,
+                            model=result.model,
+                            tokens=getattr(result, 'tokens_used', 0),
+                        )
+                    
+                    verification_passed = (
+                        refinement_result.final_status == LoopStatus.PASSED or
+                        refinement_result.final_verification_score >= 0.7
+                    )
+                    
+                    # Store refinement result in scratchpad
+                    if scratchpad:
+                        scratchpad.write("refinement_iterations", len(refinement_result.iterations))
+                        scratchpad.write("refinement_status", refinement_result.final_status.value)
+                        scratchpad.write("verification_score", refinement_result.final_verification_score)
+                        scratchpad.write("issues_found", refinement_result.total_issues_found)
+                        scratchpad.write("issues_resolved", refinement_result.issues_resolved)
+                        scratchpad.write("strategies_used", [s.value for s in refinement_result.strategies_used])
+                        scratchpad.write("convergence_history", refinement_result.convergence_history)
+                        if refinement_result.transparency_notes:
+                            scratchpad.write("refinement_notes", refinement_result.transparency_notes)
+                    
+                else:
+                    # Fallback to basic fact checker loop
+                    corrected_answer, verification_report = await self.fact_checker.verify_and_correct_loop(
+                        result.content,
+                        prompt=prompt,
+                        max_iterations=2,
+                    )
+                    
+                    # Update result if corrections were made
+                    if corrected_answer != result.content:
+                        logger.info(
+                            "Answer corrected after verification (score: %.2f, corrections: %d)",
+                            verification_report.verification_score if verification_report else 0,
+                            verification_report.corrections_made if verification_report else 0,
+                        )
+                        result = LLMResult(
+                            content=corrected_answer,
+                            model=result.model,
+                            tokens=getattr(result, 'tokens_used', 0),
+                        )
+                    
+                    verification_passed = (
+                        verification_report.is_valid if verification_report else True
+                    )
+                    
+                    # Store verification result in scratchpad
+                    if scratchpad and verification_report:
+                        scratchpad.write("verification_score", verification_report.verification_score)
+                        scratchpad.write("verification_passed", verification_passed)
+                        scratchpad.write("corrections_made", verification_report.corrections_made)
                     
             except Exception as e:
                 logger.warning("Fact verification failed: %s", e)
@@ -1003,7 +1091,22 @@ class Orchestrator:
             consensus_notes.append("Adaptive routing enabled")
         if memory_context:
             consensus_notes.append(f"Memory context used ({len(memory_hits)} hits)")
-        if verification_report:
+        # Add refinement loop info to consensus notes
+        if refinement_result:
+            consensus_notes.append(
+                f"Refinement loop: {len(refinement_result.iterations)} iterations, "
+                f"status={refinement_result.final_status.value}, "
+                f"score={refinement_result.final_verification_score:.2f}"
+            )
+            if refinement_result.issues_resolved > 0:
+                consensus_notes.append(
+                    f"Issues resolved: {refinement_result.issues_resolved}/{refinement_result.total_issues_found}"
+                )
+            if refinement_result.strategies_used:
+                consensus_notes.append(
+                    f"Strategies used: {', '.join(s.value for s in refinement_result.strategies_used[:3])}"
+                )
+        elif verification_report:
             consensus_notes.append(
                 f"Fact verification: score={verification_report.verification_score:.2f}, "
                 f"verified={verification_report.verified_count}/{len(verification_report.items)}"
