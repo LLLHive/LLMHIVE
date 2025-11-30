@@ -63,6 +63,20 @@ except ImportError:
     Scratchpad = None  # type: ignore
     logger.warning("Memory module not available")
 
+# Import fact-checking components
+try:
+    from .fact_check import (
+        FactChecker,
+        VerificationReport,
+        verify_and_correct,
+    )
+    FACT_CHECK_AVAILABLE = True
+except ImportError:
+    FACT_CHECK_AVAILABLE = False
+    FactChecker = None  # type: ignore
+    VerificationReport = None  # type: ignore
+    logger.warning("Fact check module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -141,6 +155,18 @@ class Orchestrator:
                 logger.info("Memory manager initialized")
             except Exception as e:
                 logger.warning("Failed to initialize memory manager: %s", e)
+        
+        # Initialize fact checker if available
+        self.fact_checker: Optional[Any] = None
+        if FACT_CHECK_AVAILABLE and FactChecker:
+            try:
+                self.fact_checker = FactChecker(
+                    memory_manager=self.memory_manager,
+                    max_verification_iterations=2,
+                )
+                logger.info("Fact checker initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize fact checker: %s", e)
         
         # Initialize providers from environment variables
         self._initialize_providers()
@@ -567,24 +593,70 @@ class Orchestrator:
                     tokens=0
                 )
         
-        # Log performance feedback if available
+        # Infer domain for later use
         domain = None
+        if ADAPTIVE_ROUTING_AVAILABLE:
+            try:
+                domain = infer_domain(prompt)
+            except Exception:
+                pass
+        
+        # Fact verification and correction loop
+        use_verification = kwargs.get("use_verification", True)
+        verification_report = None
+        verification_passed = True
+        
+        if use_verification and self.fact_checker and FACT_CHECK_AVAILABLE:
+            try:
+                logger.info("Running fact verification on response")
+                
+                # Run verification and correction loop
+                corrected_answer, verification_report = await self.fact_checker.verify_and_correct_loop(
+                    result.content,
+                    prompt=prompt,
+                    max_iterations=2,
+                )
+                
+                # Update result if corrections were made
+                if corrected_answer != result.content:
+                    logger.info(
+                        "Answer corrected after verification (score: %.2f, corrections: %d)",
+                        verification_report.verification_score if verification_report else 0,
+                        verification_report.corrections_made if verification_report else 0,
+                    )
+                    result = LLMResult(
+                        content=corrected_answer,
+                        model=result.model,
+                        tokens=getattr(result, 'tokens_used', 0),
+                    )
+                
+                verification_passed = (
+                    verification_report.is_valid if verification_report else True
+                )
+                
+                # Store verification result in scratchpad
+                if scratchpad and verification_report:
+                    scratchpad.write("verification_score", verification_report.verification_score)
+                    scratchpad.write("verification_passed", verification_passed)
+                    scratchpad.write("corrections_made", verification_report.corrections_made)
+                    
+            except Exception as e:
+                logger.warning("Fact verification failed: %s", e)
+        
+        # Log performance feedback if available
         if PERFORMANCE_TRACKER_AVAILABLE and performance_tracker:
             try:
-                if ADAPTIVE_ROUTING_AVAILABLE:
-                    domain = infer_domain(prompt)
                 performance_tracker.log_run(
                     models_used=[result.model],
-                    success_flag=True,  # Will be updated by verification step
+                    success_flag=verification_passed,
                     latency_ms=None,
                     domain=domain,
                 )
             except Exception as e:
                 logger.debug("Failed to log performance: %s", e)
         
-        # Store verified answer in memory (after successful response)
-        # Note: In production, this should happen after fact verification passes
-        if use_memory and self.memory_manager and MEMORY_AVAILABLE:
+        # Store verified answer in memory only if verification passed
+        if use_memory and self.memory_manager and MEMORY_AVAILABLE and verification_passed:
             try:
                 # Store the Q&A pair
                 record_id = self.memory_manager.store_verified_answer(
@@ -593,8 +665,12 @@ class Orchestrator:
                     answer=result.content,
                     domain=domain,
                     user_id=user_id,
+                    additional_metadata={
+                        "verification_score": verification_report.verification_score if verification_report else 1.0,
+                        "corrections_made": verification_report.corrections_made if verification_report else 0,
+                    },
                 )
-                logger.info("Stored answer in memory: %s", record_id[:8] if record_id else "failed")
+                logger.info("Stored verified answer in memory: %s", record_id[:8] if record_id else "failed")
             except Exception as e:
                 logger.warning("Failed to store answer in memory: %s", e)
         
@@ -606,6 +682,13 @@ class Orchestrator:
             consensus_notes.append("Adaptive routing enabled")
         if memory_context:
             consensus_notes.append(f"Memory context used ({len(memory_hits)} hits)")
+        if verification_report:
+            consensus_notes.append(
+                f"Fact verification: score={verification_report.verification_score:.2f}, "
+                f"verified={verification_report.verified_count}/{len(verification_report.items)}"
+            )
+            if verification_report.corrections_made > 0:
+                consensus_notes.append(f"Corrections applied: {verification_report.corrections_made}")
         
         # Build supporting notes from scratchpad
         supporting_notes = []
@@ -613,6 +696,12 @@ class Orchestrator:
             scratchpad_context = scratchpad.get_context_string()
             if scratchpad_context:
                 supporting_notes.append(f"Scratchpad data: {scratchpad_context[:500]}")
+        
+        # Add verification details to supporting notes
+        if verification_report and verification_report.items:
+            for item in verification_report.items[:3]:  # Include top 3 verified facts
+                if item.verified:
+                    supporting_notes.append(f"Verified: {item.text[:100]}...")
         
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(
