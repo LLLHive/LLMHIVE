@@ -14,7 +14,7 @@ from ..models.orchestration import (
     DomainPack,
     AgentMode,
 )
-from ...app.orchestrator import Orchestrator
+from ..orchestrator import Orchestrator
 from .model_router import (
     get_models_for_reasoning_method,
     map_reasoning_mode_to_method,
@@ -129,6 +129,12 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             "learn_from_chat": request.tuning.learn_from_chat,
             "metadata": metadata_dict,
             "history": request.history or [],
+            # Orchestration Studio settings
+            "accuracy_level": request.orchestration.accuracy_level,
+            "use_hrm": request.orchestration.enable_hrm,
+            "use_prompt_diffusion": request.orchestration.enable_prompt_diffusion,
+            "use_deep_consensus": request.orchestration.enable_deep_consensus,
+            "use_adaptive_routing": request.orchestration.enable_adaptive_ensemble,
         }
         
         # Add criteria settings if provided (for dynamic criteria equaliser)
@@ -150,15 +156,28 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         )
         
         logger.info(
-            "Running orchestration: method=%s, domain=%s, agent_mode=%s, models=%s",
+            "Running orchestration: method=%s, domain=%s, agent_mode=%s, models=%s, "
+            "hrm=%s, adaptive=%s, accuracy=%d",
             reasoning_method.value,
             orchestration_config["domain_pack"],
             orchestration_config["agent_mode"],
             actual_models,
+            orchestration_config.get("use_hrm", False),
+            orchestration_config.get("use_adaptive_routing", False),
+            orchestration_config.get("accuracy_level", 3),
         )
         
         # Call the orchestrator with enhanced prompt and selected models
-        artifacts = await _orchestrator.orchestrate(enhanced_prompt, actual_models)
+        # Pass orchestration settings as kwargs
+        artifacts = await _orchestrator.orchestrate(
+            enhanced_prompt,
+            actual_models,
+            use_hrm=orchestration_config.get("use_hrm", False),
+            use_adaptive_routing=orchestration_config.get("use_adaptive_routing", False),
+            use_deep_consensus=orchestration_config.get("use_deep_consensus", False),
+            use_prompt_diffusion=orchestration_config.get("use_prompt_diffusion", False),
+            accuracy_level=orchestration_config.get("accuracy_level", 3),
+        )
         
         # Extract final response
         final_text = artifacts.final_response.content
@@ -179,7 +198,18 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             "initial_responses_count": len(artifacts.initial_responses),
             "critiques_count": len(artifacts.critiques),
             "improvements_count": len(artifacts.improvements),
+            "orchestration_settings": {
+                "accuracy_level": orchestration_config.get("accuracy_level", 3),
+                "hrm_enabled": orchestration_config.get("use_hrm", False),
+                "adaptive_routing_enabled": orchestration_config.get("use_adaptive_routing", False),
+                "deep_consensus_enabled": orchestration_config.get("use_deep_consensus", False),
+                "prompt_diffusion_enabled": orchestration_config.get("use_prompt_diffusion", False),
+            },
         }
+        
+        # Add consensus notes if available
+        if hasattr(artifacts, 'consensus_notes') and artifacts.consensus_notes:
+            extra["consensus_notes"] = artifacts.consensus_notes
         
         # Build response
         response = ChatResponse(

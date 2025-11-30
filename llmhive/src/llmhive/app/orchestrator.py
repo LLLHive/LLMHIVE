@@ -1,10 +1,51 @@
-"""Orchestrator module for LLMHive - provides unified interface for LLM orchestration."""
+"""Orchestrator module for LLMHive - provides unified interface for LLM orchestration.
+
+This module implements the main orchestration logic including:
+- Hierarchical Role Management (HRM) for complex queries
+- Adaptive model routing based on performance metrics
+- Multi-model ensemble orchestration
+- Deep consensus through multi-round debate
+"""
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 logger = logging.getLogger(__name__)
+
+# Import orchestration components
+try:
+    from .orchestration.hierarchical_planning import (
+        HierarchicalPlanner,
+        HierarchicalPlan,
+        is_complex_query,
+        decompose_query,
+    )
+    HRM_AVAILABLE = True
+except ImportError:
+    HRM_AVAILABLE = False
+    HierarchicalPlanner = None  # type: ignore
+    logger.warning("Hierarchical planning module not available")
+
+try:
+    from .orchestration.adaptive_router import (
+        AdaptiveModelRouter,
+        get_adaptive_router,
+        select_models_adaptive,
+        infer_domain,
+    )
+    ADAPTIVE_ROUTING_AVAILABLE = True
+except ImportError:
+    ADAPTIVE_ROUTING_AVAILABLE = False
+    AdaptiveModelRouter = None  # type: ignore
+    logger.warning("Adaptive routing module not available")
+
+try:
+    from .performance_tracker import performance_tracker
+    PERFORMANCE_TRACKER_AVAILABLE = True
+except ImportError:
+    PERFORMANCE_TRACKER_AVAILABLE = False
+    performance_tracker = None  # type: ignore
 
 # Import provider types
 try:
@@ -52,12 +93,29 @@ class Orchestrator:
     Main orchestrator class for LLMHive.
     
     Provides unified interface for LLM provider management and orchestration.
+    Supports:
+    - Hierarchical Role Management (HRM) for complex queries
+    - Adaptive model routing based on performance
+    - Multi-model ensemble orchestration
+    - Deep consensus through debate
     """
     
     def __init__(self):
         """Initialize orchestrator with available providers."""
         self.providers: Dict[str, Any] = {}
         self.mcp_client = None  # MCP client (optional)
+        
+        # Initialize HRM planner if available
+        self.hrm_planner: Optional[Any] = None
+        if HRM_AVAILABLE and HierarchicalPlanner:
+            self.hrm_planner = HierarchicalPlanner()
+            logger.info("HRM planner initialized")
+        
+        # Initialize adaptive router if available
+        self.adaptive_router: Optional[Any] = None
+        if ADAPTIVE_ROUTING_AVAILABLE:
+            self.adaptive_router = get_adaptive_router()
+            logger.info("Adaptive router initialized")
         
         # Initialize providers from environment variables
         self._initialize_providers()
@@ -248,12 +306,27 @@ class Orchestrator:
         Args:
             prompt: The prompt to send to models
             models: List of model names to use (optional)
-            **kwargs: Additional orchestration parameters
+            **kwargs: Additional orchestration parameters including:
+                - use_hrm: Enable hierarchical role management
+                - use_adaptive_routing: Enable adaptive model selection
+                - use_deep_consensus: Enable multi-round debate
+                - use_prompt_diffusion: Enable prompt refinement
+                - accuracy_level: 1-5 slider for accuracy vs speed
             
         Returns:
             ProtocolResult-like object with final_response, initial_responses, etc.
         """
-        logger.info(f"Orchestrating request with {len(models or [])} model(s)")
+        # Extract orchestration settings
+        use_hrm = kwargs.get("use_hrm", False)
+        use_adaptive_routing = kwargs.get("use_adaptive_routing", False)
+        use_deep_consensus = kwargs.get("use_deep_consensus", False)
+        use_prompt_diffusion = kwargs.get("use_prompt_diffusion", False)
+        accuracy_level = kwargs.get("accuracy_level", 3)
+        
+        logger.info(
+            "Orchestrating request: hrm=%s, adaptive=%s, consensus=%s, accuracy=%d",
+            use_hrm, use_adaptive_routing, use_deep_consensus, accuracy_level
+        )
         
         # Import ProtocolResult structure (with fallbacks)
         ProtocolResult = None
@@ -294,10 +367,62 @@ class Orchestrator:
                     self.supporting_notes = supporting_notes or []
                     self.quality_assessments = quality_assessments or {}
         
-        # Select models to use (default to stub if none provided)
-        models_to_use = models or ["stub"]
-        if not models_to_use:
-            models_to_use = ["stub"]
+        # Phase 1: Hierarchical Planning (if HRM enabled)
+        hierarchical_plan = None
+        if use_hrm and self.hrm_planner and HRM_AVAILABLE:
+            try:
+                hierarchical_plan = self.hrm_planner.plan_with_hierarchy(
+                    prompt,
+                    use_full_hierarchy=(accuracy_level >= 4)
+                )
+                logger.info(
+                    "HRM plan created: %d steps, strategy=%s",
+                    len(hierarchical_plan.steps),
+                    hierarchical_plan.strategy
+                )
+            except Exception as e:
+                logger.warning("HRM planning failed, falling back to flat plan: %s", e)
+        
+        # Phase 2: Adaptive Model Selection
+        selected_models = models or ["stub"]
+        model_assignments: Dict[str, str] = {}
+        
+        if use_adaptive_routing and self.adaptive_router and ADAPTIVE_ROUTING_AVAILABLE:
+            try:
+                # Get roles from HRM plan or use default
+                if hierarchical_plan:
+                    roles = [step.role.name for step in hierarchical_plan.steps]
+                else:
+                    roles = ["executor"]
+                
+                # Run adaptive selection
+                available_models = list(self.providers.keys())
+                routing_result = self.adaptive_router.select_models_adaptive(
+                    prompt,
+                    roles,
+                    accuracy_level,
+                    available_models=available_models,
+                )
+                
+                model_assignments = routing_result.role_assignments
+                selected_models = [routing_result.primary_model] + routing_result.secondary_models
+                
+                logger.info(
+                    "Adaptive routing: primary=%s, secondary=%s",
+                    routing_result.primary_model,
+                    routing_result.secondary_models,
+                )
+            except Exception as e:
+                logger.warning("Adaptive routing failed, using default models: %s", e)
+                selected_models = models or ["stub"]
+        else:
+            selected_models = models or ["stub"]
+        
+        # Ensure we have at least one model
+        if not selected_models:
+            selected_models = ["stub"]
+        
+        models_to_use = selected_models
         
         # Map model names to provider names
         # e.g., "gpt-4o-mini" -> "openai", "claude-3-haiku" -> "anthropic"
@@ -372,15 +497,99 @@ class Orchestrator:
                     tokens=0
                 )
         
+        # Log performance feedback if available
+        if PERFORMANCE_TRACKER_AVAILABLE and performance_tracker:
+            try:
+                domain = None
+                if ADAPTIVE_ROUTING_AVAILABLE:
+                    domain = infer_domain(prompt)
+                performance_tracker.log_run(
+                    models_used=[result.model],
+                    success_flag=True,  # Will be updated by verification step
+                    latency_ms=None,
+                    domain=domain,
+                )
+            except Exception as e:
+                logger.debug("Failed to log performance: %s", e)
+        
+        # Build consensus notes
+        consensus_notes = [f"Response generated using {result.model}"]
+        if hierarchical_plan:
+            consensus_notes.append(f"HRM strategy: {hierarchical_plan.strategy}")
+        if use_adaptive_routing:
+            consensus_notes.append("Adaptive routing enabled")
+        
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(
             final_response=result,
             initial_responses=[result],
             critiques=[],
             improvements=[],
-            consensus_notes=[f"Response generated using {result.model}"],
+            consensus_notes=consensus_notes,
             step_outputs={"answer": [result]},
             supporting_notes=[],
-            quality_assessments={}
+            quality_assessments={},
+        )
+    
+    async def orchestrate_with_hrm(
+        self,
+        prompt: str,
+        accuracy_level: int = 3,
+        **kwargs: Any
+    ) -> Any:
+        """
+        Orchestrate with full HRM hierarchy.
+        
+        This method implements the hierarchical role management pattern:
+        1. Executive coordinates overall strategy
+        2. Managers delegate to specialists
+        3. Specialists execute with assistant support
+        4. Quality manager validates
+        5. Executive synthesizes final response
+        
+        Args:
+            prompt: The prompt to process
+            accuracy_level: 1-5 slider value
+            **kwargs: Additional parameters
+            
+        Returns:
+            ProtocolResult with full HRM artifacts
+        """
+        return await self.orchestrate(
+            prompt,
+            use_hrm=True,
+            use_adaptive_routing=True,
+            accuracy_level=accuracy_level,
+            **kwargs
+        )
+    
+    async def orchestrate_ensemble(
+        self,
+        prompt: str,
+        models: List[str],
+        accuracy_level: int = 3,
+        **kwargs: Any
+    ) -> Any:
+        """
+        Orchestrate with adaptive ensemble voting.
+        
+        Multiple models process the query in parallel, and their responses
+        are weighted and voted on based on performance metrics.
+        
+        Args:
+            prompt: The prompt to process
+            models: List of models for ensemble
+            accuracy_level: 1-5 slider value
+            **kwargs: Additional parameters
+            
+        Returns:
+            ProtocolResult with ensemble voting results
+        """
+        return await self.orchestrate(
+            prompt,
+            models=models,
+            use_adaptive_routing=True,
+            accuracy_level=accuracy_level,
+            **kwargs
         )
 

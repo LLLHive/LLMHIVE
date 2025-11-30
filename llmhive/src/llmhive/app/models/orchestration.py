@@ -83,6 +83,43 @@ class ChatMetadata(BaseModel):
         }
 
 
+class OrchestrationSettings(BaseModel):
+    """Orchestration Studio settings for advanced orchestration control."""
+    accuracy_level: int = Field(
+        default=3,
+        ge=1,
+        le=5,
+        description="Accuracy vs Speed slider (1=fastest, 5=most accurate)"
+    )
+    enable_hrm: bool = Field(
+        default=False,
+        description="Enable Hierarchical Role Management (HRM)"
+    )
+    enable_prompt_diffusion: bool = Field(
+        default=False,
+        description="Enable Prompt Diffusion & Refinement"
+    )
+    enable_deep_consensus: bool = Field(
+        default=False,
+        description="Enable Deep Consensus (multi-round debate)"
+    )
+    enable_adaptive_ensemble: bool = Field(
+        default=False,
+        description="Enable Adaptive Ensemble Logic"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "accuracy_level": 3,
+                "enable_hrm": False,
+                "enable_prompt_diffusion": False,
+                "enable_deep_consensus": False,
+                "enable_adaptive_ensemble": False,
+            }
+        }
+
+
 class ChatRequest(BaseModel):
     """Request model for chat orchestration."""
     prompt: str = Field(..., description="User prompt/question")
@@ -94,6 +131,10 @@ class ChatRequest(BaseModel):
     domain_pack: DomainPack = Field(default=DomainPack.default, description="Domain specialization pack")
     agent_mode: AgentMode = Field(default=AgentMode.team, description="Agent collaboration mode")
     tuning: TuningOptions = Field(default_factory=TuningOptions, description="Tuning options")
+    orchestration: OrchestrationSettings = Field(
+        default_factory=OrchestrationSettings,
+        description="Orchestration Studio settings"
+    )
     metadata: ChatMetadata = Field(default_factory=ChatMetadata, description="Optional metadata")
     history: Optional[List[Dict[str, Any]]] = Field(
         default=None,
