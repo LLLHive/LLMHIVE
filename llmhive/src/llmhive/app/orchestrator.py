@@ -397,6 +397,9 @@ class Orchestrator:
                 # Set memory manager for knowledge lookup
                 if self.memory_manager:
                     self.tool_broker.memory_manager = self.memory_manager
+                logger.info("Tool broker initialized with %d tools", len(self.tool_broker.list_tools()))
+            except Exception as e:
+                logger.warning("Failed to initialize tool broker: %s", e)
         
         # Initialize agent executor for autonomous tasks
         self.agent_executor: Optional[Any] = None
@@ -405,9 +408,8 @@ class Orchestrator:
                 # Will be fully initialized when providers are available
                 self.agent_executor = None  # Lazy init with providers
                 logger.info("Agent executor module available")
-                logger.info("Tool broker initialized with %d tools", len(self.tool_broker.list_tools()))
             except Exception as e:
-                logger.warning("Failed to initialize tool broker: %s", e)
+                logger.warning("Failed to initialize agent executor: %s", e)
         
         # Prompt diffusion will be initialized after providers
         self.prompt_diffusion: Optional[Any] = None
