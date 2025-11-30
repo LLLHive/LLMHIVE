@@ -157,6 +157,36 @@ except ImportError:
     RefinementResult = None  # type: ignore
     logger.warning("Refinement loop module not available")
 
+# Import shared memory components
+try:
+    from .memory.shared_memory import (
+        SharedMemoryManager,
+        SharedMemoryEntry,
+        AccessLevel,
+        MemoryCategory,
+        get_shared_memory_manager,
+    )
+    SHARED_MEMORY_AVAILABLE = True
+except ImportError:
+    SHARED_MEMORY_AVAILABLE = False
+    SharedMemoryManager = None  # type: ignore
+    get_shared_memory_manager = None  # type: ignore
+    logger.warning("Shared memory module not available")
+
+# Import live data components
+try:
+    from .services.live_data import (
+        LiveDataManager,
+        LiveDataTool,
+        get_live_data_manager,
+    )
+    LIVE_DATA_AVAILABLE = True
+except ImportError:
+    LIVE_DATA_AVAILABLE = False
+    LiveDataManager = None  # type: ignore
+    LiveDataTool = None  # type: ignore
+    logger.warning("Live data module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -324,6 +354,24 @@ class Orchestrator:
                 logger.info("Refinement loop controller initialized")
             except Exception as e:
                 logger.warning("Failed to initialize refinement controller: %s", e)
+        
+        # Initialize shared memory manager
+        self.shared_memory: Optional[Any] = None
+        if SHARED_MEMORY_AVAILABLE and get_shared_memory_manager:
+            try:
+                self.shared_memory = get_shared_memory_manager()
+                logger.info("Shared memory manager initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize shared memory: %s", e)
+        
+        # Initialize live data manager
+        self.live_data: Optional[Any] = None
+        if LIVE_DATA_AVAILABLE and get_live_data_manager:
+            try:
+                self.live_data = get_live_data_manager()
+                logger.info("Live data manager initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize live data manager: %s", e)
         
         logger.info(f"Orchestrator initialized with {len(self.providers)} provider(s)")
     
@@ -641,6 +689,39 @@ class Orchestrator:
                 logger.warning("Prompt diffusion failed: %s", e)
                 # Continue with original prompt
         
+        # Phase 0.5: Shared Memory Retrieval (cross-session context)
+        shared_memory_context = ""
+        if self.shared_memory and SHARED_MEMORY_AVAILABLE and user_id:
+            try:
+                shared_memory_context = await self.shared_memory.build_context_string(
+                    user_id=user_id,
+                    session_id=session_id,
+                    max_length=1000,
+                )
+                if shared_memory_context:
+                    logger.info("Retrieved shared memory context (%d chars)", len(shared_memory_context))
+                    if scratchpad:
+                        scratchpad.write("shared_memory_used", True)
+            except Exception as e:
+                logger.warning("Shared memory retrieval failed: %s", e)
+        
+        # Phase 0.6: Live Data Retrieval (real-time information)
+        live_data_context = ""
+        use_live_data = kwargs.get("use_live_data", True)
+        
+        if use_live_data and self.live_data and LIVE_DATA_AVAILABLE:
+            try:
+                live_data_context = await self.live_data.get_context_for_query(
+                    prompt,
+                    max_feeds=3,
+                )
+                if live_data_context:
+                    logger.info("Retrieved live data context (%d chars)", len(live_data_context))
+                    if scratchpad:
+                        scratchpad.write("live_data_used", True)
+            except Exception as e:
+                logger.warning("Live data retrieval failed: %s", e)
+        
         # Phase 1: Memory Retrieval (before model dispatch)
         memory_context = ""
         memory_hits = []
@@ -665,10 +746,26 @@ class Orchestrator:
             except Exception as e:
                 logger.warning("Memory retrieval failed: %s", e)
         
-        # Prepend memory context to prompt if available
-        augmented_prompt = prompt
+        # Build augmented prompt with all context sources
+        context_parts = []
+        
+        # Add shared memory context (cross-session)
+        if shared_memory_context:
+            context_parts.append(shared_memory_context)
+        
+        # Add live data context (real-time)
+        if live_data_context:
+            context_parts.append(live_data_context)
+        
+        # Add memory context (session-specific)
         if memory_context:
-            augmented_prompt = f"{memory_context}\nUser Query: {prompt}"
+            context_parts.append(memory_context)
+        
+        # Build final augmented prompt
+        augmented_prompt = prompt
+        if context_parts:
+            context_str = "\n".join(context_parts)
+            augmented_prompt = f"{context_str}\nUser Query: {prompt}"
         
         # Import ProtocolResult structure (with fallbacks)
         ProtocolResult = None
@@ -1064,6 +1161,21 @@ class Orchestrator:
             except Exception as e:
                 logger.debug("Failed to log performance: %s", e)
         
+        # Store insights to shared memory for cross-session use
+        if self.shared_memory and SHARED_MEMORY_AVAILABLE and verification_passed and user_id:
+            try:
+                # Store as a verified insight
+                await self.shared_memory.store_conversation_insight(
+                    user_id=user_id,
+                    session_id=session_id,
+                    insight=f"Q: {prompt[:200]}\nA: {result.content[:500]}",
+                    verified=True,
+                    tags=[domain] if domain else None,
+                )
+                logger.debug("Stored verified insight to shared memory")
+            except Exception as e:
+                logger.debug("Failed to store shared memory insight: %s", e)
+        
         # Store verified answer in memory only if verification passed
         if use_memory and self.memory_manager and MEMORY_AVAILABLE and verification_passed:
             try:
@@ -1091,6 +1203,10 @@ class Orchestrator:
             consensus_notes.append("Adaptive routing enabled")
         if memory_context:
             consensus_notes.append(f"Memory context used ({len(memory_hits)} hits)")
+        if shared_memory_context:
+            consensus_notes.append("Cross-session shared memory used")
+        if live_data_context:
+            consensus_notes.append("Real-time live data integrated")
         # Add refinement loop info to consensus notes
         if refinement_result:
             consensus_notes.append(
