@@ -302,6 +302,21 @@ async def stripe_webhook(
         ) from exc
 
 
+# Alias route for user's preferred URL: /api/v1/stripe/webhook
+@router.post("/webhook", status_code=status.HTTP_200_OK)
+async def stripe_webhook_alias(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Alias for Stripe webhook at /api/v1/stripe/webhook.
+    
+    This is an alias route that calls the main stripe_webhook handler.
+    Configure this URL in your Stripe Dashboard:
+    https://llmhive-orchestrator-792354158895.us-east1.run.app/api/v1/stripe/webhook
+    """
+    return await stripe_webhook(request, db)
+
+
 @router.post("/stripe-webhook/test", status_code=status.HTTP_200_OK)
 async def test_stripe_webhook(
     event_type: str,

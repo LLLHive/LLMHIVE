@@ -60,6 +60,10 @@ try:
     if hasattr(webhooks, "router"):
         api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
         logger.info("Webhook routes registered at /api/v1/webhooks")
+        
+        # Also register at /stripe/webhook for user's preferred URL
+        api_router.include_router(webhooks.router, prefix="/stripe", tags=["stripe"])
+        logger.info("Stripe webhook routes also registered at /api/v1/stripe")
 except Exception as exc:
     logger.warning("Failed to import webhook routes: %s", exc)
 
