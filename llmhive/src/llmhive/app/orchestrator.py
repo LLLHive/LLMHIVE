@@ -18,13 +18,26 @@ try:
     from .orchestration.hierarchical_planning import (
         HierarchicalPlanner,
         HierarchicalPlan,
+        HierarchicalPlanStep,
+        TaskComplexity,
         is_complex_query,
         decompose_query,
+    )
+    from .orchestration.hierarchical_executor import (
+        HierarchicalPlanExecutor,
+        HRMBlackboard,
+        ExecutionResult as HRMExecutionResult,
+        StepResult,
+        StepStatus,
+        execute_hierarchical_plan,
     )
     HRM_AVAILABLE = True
 except ImportError:
     HRM_AVAILABLE = False
     HierarchicalPlanner = None  # type: ignore
+    HierarchicalPlanExecutor = None  # type: ignore
+    HRMBlackboard = None  # type: ignore
+    execute_hierarchical_plan = None  # type: ignore
     logger.warning("Hierarchical planning module not available")
 
 try:
@@ -268,11 +281,13 @@ class Orchestrator:
         self.providers: Dict[str, Any] = {}
         self.mcp_client = None  # MCP client (optional)
         
-        # Initialize HRM planner if available
+        # Initialize HRM planner and executor if available
         self.hrm_planner: Optional[Any] = None
+        self.hrm_executor: Optional[Any] = None
         if HRM_AVAILABLE and HierarchicalPlanner:
             self.hrm_planner = HierarchicalPlanner()
             logger.info("HRM planner initialized")
+            # Executor will be initialized later when providers are available
         
         # Initialize adaptive router if available
         self.adaptive_router: Optional[Any] = None
@@ -967,9 +982,88 @@ class Orchestrator:
         
         # Consensus result tracking
         consensus_result: Optional[Any] = None
+        hrm_execution_result: Optional[Any] = None
+        
+        # Phase 2.5: Hierarchical Plan Execution (if HRM enabled and plan exists)
+        # This executes the multi-step reasoning chain before consensus or single model
+        if hierarchical_plan and len(hierarchical_plan.steps) > 1 and HRM_AVAILABLE and execute_hierarchical_plan:
+            logger.info(
+                "Executing hierarchical plan: %d steps, strategy=%s",
+                len(hierarchical_plan.steps),
+                hierarchical_plan.strategy,
+            )
+            
+            try:
+                # Assign models to roles if we have model assignments
+                if model_assignments and hasattr(self.hrm_planner, 'assign_models_to_roles'):
+                    hierarchical_plan = self.hrm_planner.assign_models_to_roles(
+                        hierarchical_plan,
+                        model_assignments,
+                    )
+                
+                # Execute the hierarchical plan
+                hrm_execution_result = await execute_hierarchical_plan(
+                    plan=hierarchical_plan,
+                    providers=self.providers,
+                    context=memory_context if memory_context else None,
+                    accuracy_level=accuracy_level,
+                    model_assignments=model_assignments,
+                )
+                
+                # Check if execution was successful
+                if hrm_execution_result and hrm_execution_result.success:
+                    result = LLMResult(
+                        content=hrm_execution_result.final_answer,
+                        model=hrm_execution_result.final_model,
+                        tokens=hrm_execution_result.total_tokens,
+                    )
+                    
+                    # Store HRM execution info in scratchpad
+                    if scratchpad:
+                        scratchpad.write("hrm_execution_success", True)
+                        scratchpad.write("hrm_steps_completed", hrm_execution_result.steps_completed)
+                        scratchpad.write("hrm_total_latency_ms", hrm_execution_result.total_latency_ms)
+                        scratchpad.write("hrm_transparency_notes", hrm_execution_result.transparency_notes)
+                        
+                        # Store step details
+                        step_details = []
+                        for step_result in hrm_execution_result.step_results:
+                            step_details.append({
+                                "step_id": step_result.step_id,
+                                "role": step_result.role_name,
+                                "model": step_result.model_used,
+                                "status": step_result.status.value if hasattr(step_result.status, 'value') else str(step_result.status),
+                                "tokens": step_result.tokens_used,
+                                "latency_ms": step_result.latency_ms,
+                            })
+                        scratchpad.write("hrm_step_details", step_details)
+                        
+                        # Store blackboard summary
+                        if hrm_execution_result.blackboard:
+                            scratchpad.write("hrm_blackboard_summary", hrm_execution_result.blackboard.get_summary())
+                    
+                    logger.info(
+                        "Hierarchical execution complete: %d/%d steps, %d tokens, %.1fms",
+                        hrm_execution_result.steps_completed,
+                        len(hrm_execution_result.step_results),
+                        hrm_execution_result.total_tokens,
+                        hrm_execution_result.total_latency_ms,
+                    )
+                else:
+                    logger.warning(
+                        "Hierarchical execution incomplete, falling back to consensus/single model"
+                    )
+                    hrm_execution_result = None
+                    
+            except Exception as e:
+                logger.error("Hierarchical execution failed: %s, falling back", e)
+                hrm_execution_result = None
+                if scratchpad:
+                    scratchpad.write("hrm_execution_error", str(e))
         
         # Deep Consensus: Run multiple models in parallel and build consensus
-        if use_deep_consensus and self.consensus_manager and CONSENSUS_AVAILABLE and len(models_to_use) > 1:
+        # Skip if hierarchical execution already succeeded
+        if hrm_execution_result is None and use_deep_consensus and self.consensus_manager and CONSENSUS_AVAILABLE and len(models_to_use) > 1:
             logger.info("Using Deep Consensus with %d models", len(models_to_use))
             
             try:
@@ -1011,8 +1105,8 @@ class Orchestrator:
                 consensus_result = None
                 # Fall through to single model execution
         
-        # Single model execution (when consensus not used or failed)
-        if consensus_result is None:
+        # Single model execution (when HRM and consensus not used or failed)
+        if hrm_execution_result is None and consensus_result is None:
             # Get the provider for the first model
             first_model = models_to_use[0]
             provider_name = model_to_provider.get(first_model, first_model)

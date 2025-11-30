@@ -29,6 +29,30 @@ except ImportError:
     HierarchicalRole = None  # type: ignore
     TaskComplexity = None  # type: ignore
 
+# Hierarchical Executor
+try:
+    from .hierarchical_executor import (
+        HierarchicalPlanExecutor,
+        HRMBlackboard,
+        HRMBlackboardEntry,
+        ExecutionResult as HRMExecutionResult,
+        StepResult,
+        StepStatus,
+        ExecutionMode,
+        execute_hierarchical_plan,
+    )
+    HIERARCHICAL_EXECUTOR_AVAILABLE = True
+except ImportError:
+    HIERARCHICAL_EXECUTOR_AVAILABLE = False
+    HierarchicalPlanExecutor = None  # type: ignore
+    HRMBlackboard = None  # type: ignore
+    HRMBlackboardEntry = None  # type: ignore
+    HRMExecutionResult = None  # type: ignore
+    StepResult = None  # type: ignore
+    StepStatus = None  # type: ignore
+    ExecutionMode = None  # type: ignore
+    execute_hierarchical_plan = None  # type: ignore
+
 # Adaptive Router
 try:
     from .adaptive_router import (
@@ -74,6 +98,18 @@ if HIERARCHICAL_PLANNING_AVAILABLE:
         "TaskComplexity",
         "is_complex_query",
         "decompose_query",
+    ])
+
+if HIERARCHICAL_EXECUTOR_AVAILABLE:
+    __all__.extend([
+        "HierarchicalPlanExecutor",
+        "HRMBlackboard",
+        "HRMBlackboardEntry",
+        "HRMExecutionResult",
+        "StepResult",
+        "StepStatus",
+        "ExecutionMode",
+        "execute_hierarchical_plan",
     ])
 
 if ADAPTIVE_ROUTING_AVAILABLE:
