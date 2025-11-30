@@ -77,6 +77,28 @@ except ImportError:
     VerificationReport = None  # type: ignore
     logger.warning("Fact check module not available")
 
+# Import guardrails components
+try:
+    from .guardrails import (
+        SafetyValidator,
+        TierAccessController,
+        redact_sensitive_info,
+        check_output_policy,
+        enforce_output_policy,
+        assess_query_risk,
+        filter_query,
+        filter_output,
+        security_check,
+        get_safety_validator,
+        get_tier_controller,
+    )
+    GUARDRAILS_AVAILABLE = True
+except ImportError:
+    GUARDRAILS_AVAILABLE = False
+    SafetyValidator = None  # type: ignore
+    TierAccessController = None  # type: ignore
+    logger.warning("Guardrails module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -167,6 +189,17 @@ class Orchestrator:
                 logger.info("Fact checker initialized")
             except Exception as e:
                 logger.warning("Failed to initialize fact checker: %s", e)
+        
+        # Initialize guardrails if available
+        self.safety_validator: Optional[Any] = None
+        self.tier_controller: Optional[Any] = None
+        if GUARDRAILS_AVAILABLE:
+            try:
+                self.safety_validator = get_safety_validator()
+                self.tier_controller = get_tier_controller()
+                logger.info("Security guardrails initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize guardrails: %s", e)
         
         # Initialize providers from environment variables
         self._initialize_providers()
@@ -385,6 +418,65 @@ class Orchestrator:
         # Initialize scratchpad for this query
         scratchpad = Scratchpad() if MEMORY_AVAILABLE and Scratchpad else None
         
+        # Phase -1: Security - Input validation and tier checks
+        use_guardrails = kwargs.get("use_guardrails", True)
+        is_external_model = kwargs.get("is_external_model", True)
+        security_issues: List[str] = []
+        
+        if use_guardrails and GUARDRAILS_AVAILABLE and self.safety_validator:
+            try:
+                # Check tier-based restrictions
+                if self.tier_controller:
+                    tier_allowed, tier_reason = self.tier_controller.enforce_tier_restrictions(
+                        prompt, user_tier=kwargs.get("user_tier", "free")
+                    )
+                    if not tier_allowed:
+                        logger.warning("Tier restriction: %s", tier_reason)
+                        # Return early with tier restriction message
+                        if LLMResult is None:
+                            class LLMResult:
+                                def __init__(self, content, model, tokens=0):
+                                    self.content = content
+                                    self.model = model
+                                    self.tokens_used = tokens
+                        return LLMResult(
+                            content=tier_reason or "This query is not available for your tier.",
+                            model="guardrails",
+                            tokens=0,
+                        )
+                
+                # Validate input and sanitize
+                sanitized_query, is_allowed, rejection_reason = self.safety_validator.validate_input(
+                    prompt, user_tier=kwargs.get("user_tier", "free")
+                )
+                
+                if not is_allowed:
+                    logger.warning("Query blocked by guardrails: %s", rejection_reason)
+                    if LLMResult is None:
+                        class LLMResult:
+                            def __init__(self, content, model, tokens=0):
+                                self.content = content
+                                self.model = model
+                                self.tokens_used = tokens
+                    return LLMResult(
+                        content=rejection_reason or "I cannot process this request due to safety policies.",
+                        model="guardrails",
+                        tokens=0,
+                    )
+                
+                # Use sanitized query if external model
+                if is_external_model and sanitized_query != prompt:
+                    logger.info("Input sanitized for external model (redacted PII)")
+                    prompt = sanitized_query
+                    if scratchpad:
+                        scratchpad.write("original_prompt", kwargs.get("original_prompt", prompt))
+                        scratchpad.write("sanitized_prompt", prompt)
+                        scratchpad.write("input_sanitized", True)
+                
+            except Exception as e:
+                logger.warning("Security validation failed: %s", e)
+                security_issues.append(f"Security check error: {e}")
+        
         # Phase 0: Memory Retrieval (before model dispatch)
         memory_context = ""
         memory_hits = []
@@ -601,6 +693,24 @@ class Orchestrator:
             except Exception:
                 pass
         
+        # Output security check - sanitize before verification
+        if use_guardrails and GUARDRAILS_AVAILABLE and self.safety_validator:
+            try:
+                sanitized_output, is_safe = self.safety_validator.validate_output(result.content)
+                if sanitized_output != result.content:
+                    logger.info("Output sanitized by guardrails")
+                    result = LLMResult(
+                        content=sanitized_output,
+                        model=result.model,
+                        tokens=getattr(result, 'tokens_used', 0),
+                    )
+                    if scratchpad:
+                        scratchpad.write("output_sanitized", True)
+                        scratchpad.write("output_was_safe", is_safe)
+                        security_issues.append("Output sanitized")
+            except Exception as e:
+                logger.warning("Output security check failed: %s", e)
+        
         # Fact verification and correction loop
         use_verification = kwargs.get("use_verification", True)
         verification_report = None
@@ -702,6 +812,12 @@ class Orchestrator:
             for item in verification_report.items[:3]:  # Include top 3 verified facts
                 if item.verified:
                     supporting_notes.append(f"Verified: {item.text[:100]}...")
+        
+        # Add security info to consensus notes
+        if security_issues:
+            consensus_notes.append(f"Security actions: {len(security_issues)}")
+        if use_guardrails and GUARDRAILS_AVAILABLE:
+            consensus_notes.append("Guardrails: active")
         
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(
