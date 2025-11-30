@@ -115,7 +115,7 @@ function EventItem({
           {event.timestamp.toLocaleTimeString()}
         </span>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
