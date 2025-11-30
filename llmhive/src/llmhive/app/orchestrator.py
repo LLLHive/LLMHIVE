@@ -47,6 +47,22 @@ except ImportError:
     PERFORMANCE_TRACKER_AVAILABLE = False
     performance_tracker = None  # type: ignore
 
+# Import memory components
+try:
+    from .memory.persistent_memory import (
+        PersistentMemoryManager,
+        Scratchpad,
+        get_persistent_memory,
+        get_scratchpad,
+        query_scratchpad,
+    )
+    MEMORY_AVAILABLE = True
+except ImportError:
+    MEMORY_AVAILABLE = False
+    PersistentMemoryManager = None  # type: ignore
+    Scratchpad = None  # type: ignore
+    logger.warning("Memory module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -116,6 +132,15 @@ class Orchestrator:
         if ADAPTIVE_ROUTING_AVAILABLE:
             self.adaptive_router = get_adaptive_router()
             logger.info("Adaptive router initialized")
+        
+        # Initialize memory manager if available
+        self.memory_manager: Optional[Any] = None
+        if MEMORY_AVAILABLE:
+            try:
+                self.memory_manager = get_persistent_memory()
+                logger.info("Memory manager initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize memory manager: %s", e)
         
         # Initialize providers from environment variables
         self._initialize_providers()
@@ -321,12 +346,47 @@ class Orchestrator:
         use_adaptive_routing = kwargs.get("use_adaptive_routing", False)
         use_deep_consensus = kwargs.get("use_deep_consensus", False)
         use_prompt_diffusion = kwargs.get("use_prompt_diffusion", False)
+        use_memory = kwargs.get("use_memory", True)  # Memory enabled by default
         accuracy_level = kwargs.get("accuracy_level", 3)
+        user_id = kwargs.get("user_id")
+        session_id = kwargs.get("session_id", "default")
         
         logger.info(
-            "Orchestrating request: hrm=%s, adaptive=%s, consensus=%s, accuracy=%d",
-            use_hrm, use_adaptive_routing, use_deep_consensus, accuracy_level
+            "Orchestrating request: hrm=%s, adaptive=%s, consensus=%s, memory=%s, accuracy=%d",
+            use_hrm, use_adaptive_routing, use_deep_consensus, use_memory, accuracy_level
         )
+        
+        # Initialize scratchpad for this query
+        scratchpad = Scratchpad() if MEMORY_AVAILABLE and Scratchpad else None
+        
+        # Phase 0: Memory Retrieval (before model dispatch)
+        memory_context = ""
+        memory_hits = []
+        if use_memory and self.memory_manager and MEMORY_AVAILABLE:
+            try:
+                memory_context, memory_hits = self.memory_manager.get_relevant_context(
+                    query=prompt,
+                    user_id=user_id,
+                    max_context_length=2000,
+                    top_k=3,
+                )
+                if memory_context:
+                    logger.info(
+                        "Memory retrieval: Found %d relevant memories (context: %d chars)",
+                        len(memory_hits),
+                        len(memory_context),
+                    )
+                    # Store memory hits in scratchpad for other agents
+                    if scratchpad:
+                        scratchpad.write("memory_hits", memory_hits)
+                        scratchpad.write("memory_context", memory_context)
+            except Exception as e:
+                logger.warning("Memory retrieval failed: %s", e)
+        
+        # Prepend memory context to prompt if available
+        augmented_prompt = prompt
+        if memory_context:
+            augmented_prompt = f"{memory_context}\nUser Query: {prompt}"
         
         # Import ProtocolResult structure (with fallbacks)
         ProtocolResult = None
@@ -372,7 +432,7 @@ class Orchestrator:
         if use_hrm and self.hrm_planner and HRM_AVAILABLE:
             try:
                 hierarchical_plan = self.hrm_planner.plan_with_hierarchy(
-                    prompt,
+                    augmented_prompt,  # Use augmented prompt with memory context
                     use_full_hierarchy=(accuracy_level >= 4)
                 )
                 logger.info(
@@ -380,6 +440,10 @@ class Orchestrator:
                     len(hierarchical_plan.steps),
                     hierarchical_plan.strategy
                 )
+                # Store plan in scratchpad
+                if scratchpad:
+                    scratchpad.write("hrm_plan", hierarchical_plan.strategy)
+                    scratchpad.write("hrm_steps", len(hierarchical_plan.steps))
             except Exception as e:
                 logger.warning("HRM planning failed, falling back to flat plan: %s", e)
         
@@ -463,9 +527,9 @@ class Orchestrator:
                     import asyncio
                     import inspect
                     if inspect.iscoroutinefunction(provider.generate):
-                        provider_result = await provider.generate(prompt, model=model_name, **kwargs)
+                        provider_result = await provider.generate(augmented_prompt, model=model_name, **kwargs)
                     else:
-                        provider_result = provider.generate(prompt, model=model_name, **kwargs)
+                        provider_result = provider.generate(augmented_prompt, model=model_name, **kwargs)
                     # Extract content from result
                     if hasattr(provider_result, 'text'):
                         content = provider_result.text
@@ -480,7 +544,7 @@ class Orchestrator:
                     tokens = getattr(provider_result, 'tokens_used', 0)
                 else:
                     # Fallback for providers without generate method
-                    content = f"Stub response: {prompt[:100]}..."
+                    content = f"Stub response: {augmented_prompt[:100]}..."
                     model_name = "stub"
                     tokens = 0
                 
@@ -489,6 +553,12 @@ class Orchestrator:
                     model=model_name,
                     tokens=tokens
                 )
+                
+                # Store model output in scratchpad
+                if scratchpad:
+                    scratchpad.write("model_output", content)
+                    scratchpad.write("model_name", model_name)
+                    
             except Exception as e:
                 logger.error(f"Error generating response from provider: {e}")
                 result = LLMResult(
@@ -498,9 +568,9 @@ class Orchestrator:
                 )
         
         # Log performance feedback if available
+        domain = None
         if PERFORMANCE_TRACKER_AVAILABLE and performance_tracker:
             try:
-                domain = None
                 if ADAPTIVE_ROUTING_AVAILABLE:
                     domain = infer_domain(prompt)
                 performance_tracker.log_run(
@@ -512,12 +582,37 @@ class Orchestrator:
             except Exception as e:
                 logger.debug("Failed to log performance: %s", e)
         
+        # Store verified answer in memory (after successful response)
+        # Note: In production, this should happen after fact verification passes
+        if use_memory and self.memory_manager and MEMORY_AVAILABLE:
+            try:
+                # Store the Q&A pair
+                record_id = self.memory_manager.store_verified_answer(
+                    session_id=session_id,
+                    query=prompt,
+                    answer=result.content,
+                    domain=domain,
+                    user_id=user_id,
+                )
+                logger.info("Stored answer in memory: %s", record_id[:8] if record_id else "failed")
+            except Exception as e:
+                logger.warning("Failed to store answer in memory: %s", e)
+        
         # Build consensus notes
         consensus_notes = [f"Response generated using {result.model}"]
         if hierarchical_plan:
             consensus_notes.append(f"HRM strategy: {hierarchical_plan.strategy}")
         if use_adaptive_routing:
             consensus_notes.append("Adaptive routing enabled")
+        if memory_context:
+            consensus_notes.append(f"Memory context used ({len(memory_hits)} hits)")
+        
+        # Build supporting notes from scratchpad
+        supporting_notes = []
+        if scratchpad:
+            scratchpad_context = scratchpad.get_context_string()
+            if scratchpad_context:
+                supporting_notes.append(f"Scratchpad data: {scratchpad_context[:500]}")
         
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(
@@ -527,8 +622,41 @@ class Orchestrator:
             improvements=[],
             consensus_notes=consensus_notes,
             step_outputs={"answer": [result]},
-            supporting_notes=[],
+            supporting_notes=supporting_notes,
             quality_assessments={},
+        )
+    
+    async def orchestrate_with_memory(
+        self,
+        prompt: str,
+        user_id: Optional[str] = None,
+        session_id: str = "default",
+        **kwargs: Any
+    ) -> Any:
+        """
+        Orchestrate with full memory integration.
+        
+        This method:
+        1. Queries memory for relevant prior knowledge
+        2. Augments the prompt with memory context
+        3. Generates response
+        4. Stores verified answer in memory
+        
+        Args:
+            prompt: The prompt to process
+            user_id: User ID for memory namespace
+            session_id: Session ID for memory storage
+            **kwargs: Additional parameters
+            
+        Returns:
+            ProtocolResult with memory-augmented response
+        """
+        return await self.orchestrate(
+            prompt,
+            use_memory=True,
+            user_id=user_id,
+            session_id=session_id,
+            **kwargs
         )
     
     async def orchestrate_with_hrm(
