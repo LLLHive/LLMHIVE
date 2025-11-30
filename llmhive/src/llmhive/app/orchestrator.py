@@ -127,6 +127,20 @@ except ImportError:
     DiffusionResult = None  # type: ignore
     logger.warning("Prompt diffusion module not available")
 
+# Import consensus manager components
+try:
+    from .orchestration.consensus_manager import (
+        ConsensusManager,
+        ConsensusResult,
+        ConsensusStrategy,
+    )
+    CONSENSUS_AVAILABLE = True
+except ImportError:
+    CONSENSUS_AVAILABLE = False
+    ConsensusManager = None  # type: ignore
+    ConsensusResult = None  # type: ignore
+    logger.warning("Consensus manager module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -258,6 +272,20 @@ class Orchestrator:
                 logger.info("Prompt diffusion initialized")
             except Exception as e:
                 logger.warning("Failed to initialize prompt diffusion: %s", e)
+        
+        # Initialize consensus manager after providers are ready
+        self.consensus_manager: Optional[Any] = None
+        if CONSENSUS_AVAILABLE and ConsensusManager:
+            try:
+                self.consensus_manager = ConsensusManager(
+                    providers=self.providers,
+                    performance_tracker=performance_tracker if PERFORMANCE_TRACKER_AVAILABLE else None,
+                    max_debate_rounds=3,
+                    consensus_threshold=0.75,
+                )
+                logger.info("Consensus manager initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize consensus manager: %s", e)
         
         logger.info(f"Orchestrator initialized with {len(self.providers)} provider(s)")
     
@@ -721,67 +749,115 @@ class Orchestrator:
                 # Try direct match first
                 model_to_provider[model] = model
         
-        # Get the provider for the first model
-        first_model = models_to_use[0]
-        provider_name = model_to_provider.get(first_model, first_model)
-        provider = self.providers.get(provider_name) or self.providers.get("stub")
-        if not provider:
-            # Create minimal stub response
-            result = LLMResult(
-                content="I apologize, but no LLM providers are configured. Please configure at least one API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, GROK_API_KEY, or GEMINI_API_KEY).",
-                model="stub",
-                tokens=0
-            )
-        else:
-            # Try to generate a response using the provider
+        # Consensus result tracking
+        consensus_result: Optional[Any] = None
+        
+        # Deep Consensus: Run multiple models in parallel and build consensus
+        if use_deep_consensus and self.consensus_manager and CONSENSUS_AVAILABLE and len(models_to_use) > 1:
+            logger.info("Using Deep Consensus with %d models", len(models_to_use))
+            
             try:
-                # Check if provider has a generate method
-                if hasattr(provider, 'generate'):
-                    # Pass the actual model name to the provider
-                    model_name = first_model if first_model != provider_name else (models_to_use[0] if models_to_use else "default")
-                    # Check if generate is async
-                    import asyncio
-                    import inspect
-                    if inspect.iscoroutinefunction(provider.generate):
-                        provider_result = await provider.generate(augmented_prompt, model=model_name, **kwargs)
-                    else:
-                        provider_result = provider.generate(augmented_prompt, model=model_name, **kwargs)
-                    # Extract content from result
-                    if hasattr(provider_result, 'text'):
-                        content = provider_result.text
-                    elif hasattr(provider_result, 'content'):
-                        content = provider_result.content
-                    elif isinstance(provider_result, str):
-                        content = provider_result
-                    else:
-                        content = str(provider_result)
-                    
-                    model_name = getattr(provider_result, 'model', models_to_use[0])
-                    tokens = getattr(provider_result, 'tokens_used', 0)
-                else:
-                    # Fallback for providers without generate method
-                    content = f"Stub response: {augmented_prompt[:100]}..."
-                    model_name = "stub"
-                    tokens = 0
-                
-                result = LLMResult(
-                    content=content,
-                    model=model_name,
-                    tokens=tokens
+                # Build consensus from multiple models
+                consensus_result = await self.consensus_manager.build_consensus(
+                    prompt=augmented_prompt,
+                    models=models_to_use,
+                    context=memory_context if memory_context else None,
+                    accuracy_level=accuracy_level,
                 )
                 
-                # Store model output in scratchpad
-                if scratchpad:
-                    scratchpad.write("model_output", content)
-                    scratchpad.write("model_name", model_name)
-                    
-            except Exception as e:
-                logger.error(f"Error generating response from provider: {e}")
+                # Use consensus result
                 result = LLMResult(
-                    content=f"I apologize, but I encountered an error while processing your request: {str(e)}. Please try again.",
-                    model=models_to_use[0] if models_to_use else "stub",
+                    content=consensus_result.final_answer,
+                    model=f"consensus({','.join(consensus_result.participating_models[:3])}...)" if len(consensus_result.participating_models) > 3 else f"consensus({','.join(consensus_result.participating_models)})",
+                    tokens=sum(r.tokens for r in consensus_result.responses),
+                )
+                
+                # Store consensus info in scratchpad
+                if scratchpad:
+                    scratchpad.write("consensus_strategy", consensus_result.strategy_used.value)
+                    scratchpad.write("consensus_score", consensus_result.consensus_score.overall_score)
+                    scratchpad.write("consensus_models", consensus_result.participating_models)
+                    scratchpad.write("model_contributions", consensus_result.model_contributions)
+                    if consensus_result.debate_rounds:
+                        scratchpad.write("debate_rounds", len(consensus_result.debate_rounds))
+                    if consensus_result.key_agreements:
+                        scratchpad.write("key_agreements", consensus_result.key_agreements[:3])
+                
+                logger.info(
+                    "Consensus built: strategy=%s, score=%.2f, models=%d",
+                    consensus_result.strategy_used.value,
+                    consensus_result.consensus_score.overall_score,
+                    len(consensus_result.participating_models),
+                )
+                
+            except Exception as e:
+                logger.error("Deep consensus failed, falling back to single model: %s", e)
+                consensus_result = None
+                # Fall through to single model execution
+        
+        # Single model execution (when consensus not used or failed)
+        if consensus_result is None:
+            # Get the provider for the first model
+            first_model = models_to_use[0]
+            provider_name = model_to_provider.get(first_model, first_model)
+            provider = self.providers.get(provider_name) or self.providers.get("stub")
+            if not provider:
+                # Create minimal stub response
+                result = LLMResult(
+                    content="I apologize, but no LLM providers are configured. Please configure at least one API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, GROK_API_KEY, or GEMINI_API_KEY).",
+                    model="stub",
                     tokens=0
                 )
+            else:
+                # Try to generate a response using the provider
+                try:
+                    # Check if provider has a generate method
+                    if hasattr(provider, 'generate'):
+                        # Pass the actual model name to the provider
+                        model_name = first_model if first_model != provider_name else (models_to_use[0] if models_to_use else "default")
+                        # Check if generate is async
+                        import asyncio
+                        import inspect
+                        if inspect.iscoroutinefunction(provider.generate):
+                            provider_result = await provider.generate(augmented_prompt, model=model_name, **kwargs)
+                        else:
+                            provider_result = provider.generate(augmented_prompt, model=model_name, **kwargs)
+                        # Extract content from result
+                        if hasattr(provider_result, 'text'):
+                            content = provider_result.text
+                        elif hasattr(provider_result, 'content'):
+                            content = provider_result.content
+                        elif isinstance(provider_result, str):
+                            content = provider_result
+                        else:
+                            content = str(provider_result)
+                        
+                        model_name = getattr(provider_result, 'model', models_to_use[0])
+                        tokens = getattr(provider_result, 'tokens_used', 0)
+                    else:
+                        # Fallback for providers without generate method
+                        content = f"Stub response: {augmented_prompt[:100]}..."
+                        model_name = "stub"
+                        tokens = 0
+                    
+                    result = LLMResult(
+                        content=content,
+                        model=model_name,
+                        tokens=tokens
+                    )
+                    
+                    # Store model output in scratchpad
+                    if scratchpad:
+                        scratchpad.write("model_output", content)
+                        scratchpad.write("model_name", model_name)
+                        
+                except Exception as e:
+                    logger.error(f"Error generating response from provider: {e}")
+                    result = LLMResult(
+                        content=f"I apologize, but I encountered an error while processing your request: {str(e)}. Please try again.",
+                        model=models_to_use[0] if models_to_use else "stub",
+                        tokens=0
+                    )
         
         # Infer domain for later use
         domain = None
@@ -972,6 +1048,22 @@ class Orchestrator:
             if diffusion_result.clarifications_added:
                 consensus_notes.append(
                     f"Clarifications added: {len(diffusion_result.clarifications_added)}"
+                )
+        
+        # Add deep consensus info to consensus notes
+        if consensus_result:
+            consensus_notes.append(
+                f"Deep consensus: {consensus_result.strategy_used.value}, "
+                f"score={consensus_result.consensus_score.overall_score:.2f}, "
+                f"models={len(consensus_result.participating_models)}"
+            )
+            if consensus_result.debate_rounds:
+                consensus_notes.append(
+                    f"Debate rounds: {len(consensus_result.debate_rounds)}"
+                )
+            if consensus_result.key_agreements:
+                consensus_notes.append(
+                    f"Key agreements: {len(consensus_result.key_agreements)}"
                 )
         
         # Return ProtocolResult structure expected by orchestrator_adapter
