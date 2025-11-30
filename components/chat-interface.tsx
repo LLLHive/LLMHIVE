@@ -24,6 +24,12 @@ const defaultOrchestratorSettings: OrchestratorSettings = {
   selectedModels: ["gpt-5"],
   advancedReasoningMethods: [],
   advancedFeatures: [],
+  // Orchestration Studio defaults
+  accuracyLevel: 3,
+  enableHRM: false,
+  enablePromptDiffusion: false,
+  enableDeepConsensus: false,
+  enableAdaptiveEnsemble: false,
 }
 
 export function ChatInterface() {

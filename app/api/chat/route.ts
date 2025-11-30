@@ -68,6 +68,14 @@ export async function POST(req: NextRequest) {
         answer_structure: settings.answerStructure !== false,
         learn_from_chat: (settings.sharedMemory || settings.learnFromChat) !== false,
       },
+      // Orchestration Studio settings
+      orchestration: {
+        accuracy_level: settings.accuracyLevel || 3,
+        enable_hrm: settings.enableHRM || false,
+        enable_prompt_diffusion: settings.enablePromptDiffusion || false,
+        enable_deep_consensus: settings.enableDeepConsensus || false,
+        enable_adaptive_ensemble: settings.enableAdaptiveEnsemble || false,
+      },
       metadata: {
         chat_id: chatId || null,
         user_id: userId || null,

@@ -1,17 +1,20 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Paperclip, Mic, X, ImageIcon, FileText } from "lucide-react"
 import { getModelById } from "@/lib/models"
-import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings } from "@/lib/types"
+import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType } from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
 import { ChatToolbar } from "./chat-toolbar"
+import { OrchestrationStudio } from "./orchestration-studio"
+import { LiveStatusPanel } from "./live-status-panel"
+import { ModelsUsedDisplay } from "./models-used-display"
 
 interface ChatAreaProps {
   conversation?: Conversation
@@ -39,9 +42,93 @@ export function ChatArea({
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
   const [incognitoMode, setIncognitoMode] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [orchestrationStatus, setOrchestrationStatus] = useState<OrchestrationStatus>({
+    isActive: false,
+    currentStep: "",
+    events: [],
+    modelsUsed: [],
+  })
+  const [lastModelsUsed, setLastModelsUsed] = useState<string[]>([])
+  const [lastTokensUsed, setLastTokensUsed] = useState<number>(0)
+  const [lastLatencyMs, setLastLatencyMs] = useState<number>(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const eventIdRef = useRef(0)
 
   const currentModel = getModelById(selectedModels[0] || "gpt-5-mini")
+
+  // Add orchestration event
+  const addOrchestrationEvent = useCallback((
+    type: OrchestrationEventType,
+    message: string,
+    modelName?: string,
+    progress?: number
+  ) => {
+    setOrchestrationStatus((prev) => ({
+      ...prev,
+      currentStep: message,
+      events: [
+        ...prev.events,
+        {
+          id: `evt-${++eventIdRef.current}`,
+          type,
+          message,
+          timestamp: new Date(),
+          modelName,
+          progress,
+        },
+      ],
+    }))
+  }, [])
+
+  // Simulate orchestration events (will be replaced with real SSE/WebSocket events)
+  const simulateOrchestrationEvents = useCallback(async (settings: OrchestratorSettings) => {
+    const events: { type: OrchestrationEventType; message: string; delay: number; modelName?: string }[] = [
+      { type: "started", message: "Orchestration initiated", delay: 100 },
+    ]
+
+    if (settings.enablePromptDiffusion) {
+      events.push({ type: "refining_prompt", message: "Refining prompt with diffusion...", delay: 400 })
+    }
+
+    if (settings.enableHRM) {
+      events.push({ type: "dispatching_model", message: "Assigning hierarchical roles...", delay: 300 })
+    }
+
+    // Add model dispatches based on selected models
+    const models = settings.selectedModels || ["gpt-5"]
+    for (const modelId of models.slice(0, 3)) {
+      const model = getModelById(modelId)
+      events.push({
+        type: "dispatching_model",
+        message: `Dispatching to ${model?.name || modelId}...`,
+        delay: 200,
+        modelName: model?.name || modelId,
+      })
+    }
+
+    events.push({ type: "model_responding", message: "Models generating responses...", delay: 500 })
+
+    if (settings.enableDeepConsensus) {
+      events.push({ type: "model_critiquing", message: "Models critiquing each other...", delay: 400 })
+      events.push({ type: "consensus_building", message: "Building consensus...", delay: 300 })
+    }
+
+    if (settings.enableAdaptiveEnsemble) {
+      events.push({ type: "verifying_facts", message: "Verifying with adaptive ensemble...", delay: 350 })
+    }
+
+    if (settings.outputValidation) {
+      events.push({ type: "verifying_facts", message: "Validating output accuracy...", delay: 250 })
+    }
+
+    events.push({ type: "finalizing", message: "Finalizing response...", delay: 200 })
+
+    // Execute events with delays
+    for (const event of events) {
+      await new Promise((resolve) => setTimeout(resolve, event.delay))
+      addOrchestrationEvent(event.type, event.message, event.modelName)
+    }
+  }, [addOrchestrationEvent])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -76,6 +163,19 @@ export function ChatArea({
     setAttachments([])
     setIsLoading(true)
 
+    // Start orchestration status
+    const startTime = Date.now()
+    setOrchestrationStatus({
+      isActive: true,
+      currentStep: "Starting orchestration...",
+      events: [],
+      modelsUsed: [],
+      startTime: new Date(),
+    })
+
+    // Simulate orchestration events
+    simulateOrchestrationEvents(orchestratorSettings)
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -102,6 +202,9 @@ export function ChatArea({
         }
       }
 
+      const latencyMs = Date.now() - startTime
+      const modelsUsed = selectedModels.slice(0, 3)
+
       const assistantMessage: Message = {
         id: `msg-${Date.now()}`,
         role: "assistant",
@@ -109,13 +212,38 @@ export function ChatArea({
         timestamp: new Date(),
         model: selectedModels[0],
         agents: [
-          { type: "general", contribution: "Primary response", confidence: 0.9 },
-          { type: "research", contribution: "Fact verification", confidence: 0.85 },
+          { agentId: "agent-1", agentName: "General Agent", agentType: "general", contribution: "Primary response", confidence: 0.9 },
+          { agentId: "agent-2", agentName: "Research Agent", agentType: "research", contribution: "Fact verification", confidence: 0.85 },
         ],
-        consensus: { level: 0.88, agreementCount: 5, totalAgents: 6 },
+        consensus: { confidence: 88, debateOccurred: true, consensusNote: "All agents reached consensus" },
       }
 
       onSendMessage(assistantMessage)
+
+      // Complete orchestration
+      setOrchestrationStatus((prev) => ({
+        ...prev,
+        isActive: false,
+        currentStep: "Completed",
+        modelsUsed,
+        endTime: new Date(),
+        latencyMs,
+        events: [
+          ...prev.events,
+          {
+            id: `evt-${++eventIdRef.current}`,
+            type: "completed",
+            message: "Orchestration complete",
+            timestamp: new Date(),
+            progress: 100,
+          },
+        ],
+      }))
+
+      // Store for display
+      setLastModelsUsed(modelsUsed)
+      setLastLatencyMs(latencyMs)
+      setLastTokensUsed(Math.floor(Math.random() * 500) + 100) // Simulated, would come from API
     } catch (error) {
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,
@@ -124,6 +252,21 @@ export function ChatArea({
         timestamp: new Date(),
       }
       onSendMessage(errorMessage)
+
+      // Mark orchestration as error
+      setOrchestrationStatus((prev) => ({
+        ...prev,
+        isActive: false,
+        events: [
+          ...prev.events,
+          {
+            id: `evt-${++eventIdRef.current}`,
+            type: "error",
+            message: "Orchestration failed",
+            timestamp: new Date(),
+          },
+        ],
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -142,16 +285,32 @@ export function ChatArea({
         }}
       />
 
-      <header className="border-b border-border p-3 flex items-center justify-between gap-4 bg-card/50 backdrop-blur-xl sticky top-0 z-40 flex-wrap">
-        <ChatToolbar
+      <header className="border-b border-border p-3 bg-card/50 backdrop-blur-xl sticky top-0 z-40 space-y-3">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <ChatToolbar
+            settings={orchestratorSettings}
+            onSettingsChange={onOrchestratorSettingsChange}
+            onOpenAdvanced={onOpenAdvancedSettings}
+          />
+          {userAccountMenu}
+        </div>
+        {/* Orchestration Studio - Collapsible */}
+        <OrchestrationStudio
           settings={orchestratorSettings}
           onSettingsChange={onOrchestratorSettingsChange}
-          onOpenAdvanced={onOpenAdvancedSettings}
         />
-        {userAccountMenu}
       </header>
 
       <HiveActivityIndicator active={isLoading} agentCount={6} />
+
+      {/* Live Status Panel - Shows during orchestration */}
+      {(orchestrationStatus.isActive || orchestrationStatus.events.length > 0) && (
+        <div className="px-4 py-2 border-b border-border bg-card/30">
+          <div className="max-w-4xl mx-auto">
+            <LiveStatusPanel status={orchestrationStatus} />
+          </div>
+        </div>
+      )}
 
       <ScrollArea className="flex-1 relative z-10">
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -182,6 +341,17 @@ export function ChatArea({
                   />
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Models Used Display - Shows after response */}
+          {!isLoading && lastModelsUsed.length > 0 && displayMessages.length > 0 && (
+            <div className="flex justify-center py-2">
+              <ModelsUsedDisplay
+                modelIds={lastModelsUsed}
+                totalTokens={lastTokensUsed}
+                latencyMs={lastLatencyMs}
+              />
             </div>
           )}
         </div>

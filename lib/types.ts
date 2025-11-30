@@ -146,6 +146,46 @@ export interface OrchestratorSettings {
   selectedModels: string[]
   advancedReasoningMethods: AdvancedReasoningMethod[]
   advancedFeatures: AdvancedFeature[]
+  // Orchestration Studio settings
+  accuracyLevel: number // 1-5 slider (1=fastest, 5=most accurate)
+  enableHRM: boolean // Hierarchical Role Management
+  enablePromptDiffusion: boolean // Prompt Diffusion & Refinement
+  enableDeepConsensus: boolean // Deep Consensus (multi-round debate)
+  enableAdaptiveEnsemble: boolean // Adaptive Ensemble Logic
+}
+
+// Orchestration status event types
+export type OrchestrationEventType =
+  | "started"
+  | "refining_prompt"
+  | "dispatching_model"
+  | "model_responding"
+  | "model_critiquing"
+  | "verifying_facts"
+  | "consensus_building"
+  | "finalizing"
+  | "completed"
+  | "error"
+
+export interface OrchestrationEvent {
+  id: string
+  type: OrchestrationEventType
+  message: string
+  timestamp: Date
+  modelName?: string
+  progress?: number // 0-100
+  details?: string
+}
+
+export interface OrchestrationStatus {
+  isActive: boolean
+  currentStep: string
+  events: OrchestrationEvent[]
+  modelsUsed: string[]
+  startTime?: Date
+  endTime?: Date
+  totalTokens?: number
+  latencyMs?: number
 }
 
 export interface ChatTemplate {
