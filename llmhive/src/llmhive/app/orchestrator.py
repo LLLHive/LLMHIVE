@@ -113,6 +113,20 @@ except ImportError:
     ToolResult = None  # type: ignore
     logger.warning("Tool broker module not available")
 
+# Import prompt diffusion components
+try:
+    from .orchestration.prompt_diffusion import (
+        PromptDiffusion,
+        DiffusionResult,
+        RefinerRole,
+    )
+    PROMPT_DIFFUSION_AVAILABLE = True
+except ImportError:
+    PROMPT_DIFFUSION_AVAILABLE = False
+    PromptDiffusion = None  # type: ignore
+    DiffusionResult = None  # type: ignore
+    logger.warning("Prompt diffusion module not available")
+
 # Import provider types
 try:
     from ..providers.gemini import GeminiProvider
@@ -227,8 +241,23 @@ class Orchestrator:
             except Exception as e:
                 logger.warning("Failed to initialize tool broker: %s", e)
         
+        # Prompt diffusion will be initialized after providers
+        self.prompt_diffusion: Optional[Any] = None
+        
         # Initialize providers from environment variables
         self._initialize_providers()
+        
+        # Initialize prompt diffusion after providers are ready
+        if PROMPT_DIFFUSION_AVAILABLE and PromptDiffusion:
+            try:
+                self.prompt_diffusion = PromptDiffusion(
+                    providers=self.providers,
+                    max_rounds=3,
+                    convergence_threshold=0.85,
+                )
+                logger.info("Prompt diffusion initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize prompt diffusion: %s", e)
         
         logger.info(f"Orchestrator initialized with {len(self.providers)} provider(s)")
     
@@ -503,7 +532,50 @@ class Orchestrator:
                 logger.warning("Security validation failed: %s", e)
                 security_issues.append(f"Security check error: {e}")
         
-        # Phase 0: Memory Retrieval (before model dispatch)
+        # Phase 0: Prompt Diffusion (optional pre-processing)
+        diffusion_result: Optional[Any] = None
+        original_prompt = prompt  # Store original for transparency
+        
+        if use_prompt_diffusion and self.prompt_diffusion and PROMPT_DIFFUSION_AVAILABLE:
+            try:
+                logger.info("Running prompt diffusion refinement")
+                
+                # Determine models for refinement
+                diffusion_models = models_to_use[:2] if models_to_use else ["gpt-4o-mini"]
+                
+                # Run diffusion
+                diffusion_result = await self.prompt_diffusion.diffuse(
+                    initial_prompt=prompt,
+                    models=diffusion_models,
+                    context=kwargs.get("context"),
+                    domain=kwargs.get("domain"),
+                    analyze_ambiguity=kwargs.get("analyze_ambiguity", True),
+                )
+                
+                # Use refined prompt
+                if diffusion_result and diffusion_result.final_prompt != prompt:
+                    logger.info(
+                        "Prompt refined: %d rounds, convergence=%.2f, score=%.2f",
+                        diffusion_result.rounds_completed,
+                        diffusion_result.convergence_score,
+                        diffusion_result.best_version.score,
+                    )
+                    prompt = diffusion_result.final_prompt
+                    
+                    if scratchpad:
+                        scratchpad.write("original_prompt", original_prompt)
+                        scratchpad.write("refined_prompt", prompt)
+                        scratchpad.write("diffusion_rounds", diffusion_result.rounds_completed)
+                        scratchpad.write("diffusion_convergence", diffusion_result.convergence_score)
+                        scratchpad.write("diffusion_improvements", [
+                            imp for v in diffusion_result.versions for imp in v.improvements
+                        ])
+                
+            except Exception as e:
+                logger.warning("Prompt diffusion failed: %s", e)
+                # Continue with original prompt
+        
+        # Phase 1: Memory Retrieval (before model dispatch)
         memory_context = ""
         memory_hits = []
         if use_memory and self.memory_manager and MEMORY_AVAILABLE:
@@ -890,6 +962,17 @@ class Orchestrator:
                 consensus_notes.append(f"Tools used: {', '.join(successful_tools)}")
             if failed_tools:
                 consensus_notes.append(f"Tool errors: {', '.join(failed_tools)}")
+        
+        # Add prompt diffusion info to consensus notes
+        if diffusion_result:
+            consensus_notes.append(
+                f"Prompt refined: {diffusion_result.rounds_completed} rounds, "
+                f"score={diffusion_result.best_version.score:.2f}"
+            )
+            if diffusion_result.clarifications_added:
+                consensus_notes.append(
+                    f"Clarifications added: {len(diffusion_result.clarifications_added)}"
+                )
         
         # Return ProtocolResult structure expected by orchestrator_adapter
         return ProtocolResult(

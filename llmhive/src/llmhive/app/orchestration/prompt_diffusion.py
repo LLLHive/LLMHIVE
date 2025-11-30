@@ -1,381 +1,856 @@
-"""Prompt Diffusion and Refinement system for LLMHive orchestrator.
+"""Prompt Diffusion and Multi-Agent Prompt Refinement for LLMHive.
 
-Prompt Diffusion implements an iterative refinement process where multiple agents
-collaboratively refine prompts through multiple rounds, with each agent building
-upon previous versions. This creates a "diffusion" effect where the prompt
-gradually improves through collaborative iteration.
+This module implements an iterative refinement process where multiple agents
+with different roles and perspectives collaboratively improve prompts through
+multiple rounds of refinement. Each agent specializes in a different aspect:
+
+- Clarifier: Identifies ambiguities and adds clarifications
+- Expander: Adds context, examples, and constraints
+- Critic: Identifies weaknesses and suggests improvements
+- Synthesizer: Combines insights into a cohesive refined prompt
+- Specialist: Applies domain-specific knowledge
+
+The "diffusion" process creates a gradient of improvements, where each
+iteration builds upon the previous, gradually converging to an optimal prompt.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
-
-from ..services.base import LLMProvider, LLMResult
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
 
+# ==============================================================================
+# Refiner Roles
+# ==============================================================================
+
+class RefinerRole(str, Enum):
+    """Roles for prompt refinement agents."""
+    CLARIFIER = "clarifier"      # Identifies and resolves ambiguities
+    EXPANDER = "expander"        # Adds context, examples, constraints
+    CRITIC = "critic"            # Finds weaknesses and gaps
+    SYNTHESIZER = "synthesizer"  # Combines perspectives
+    SPECIALIST = "specialist"    # Domain-specific refinement
+    SIMPLIFIER = "simplifier"    # Reduces complexity while maintaining intent
+
+
+# Role-specific prompts for refinement
+ROLE_PROMPTS: Dict[RefinerRole, str] = {
+    RefinerRole.CLARIFIER: """You are a Clarification Specialist. Your job is to:
+1. Identify any ambiguous words, phrases, or requirements in the prompt
+2. Resolve ambiguities by adding specific definitions or examples
+3. Ensure the intent is crystal clear to any AI model
+4. Add clarifying questions if the user's intent is unclear
+
+Focus on: Ambiguity detection, term definition, intent clarification.""",
+
+    RefinerRole.EXPANDER: """You are a Context Expansion Specialist. Your job is to:
+1. Add relevant context that would help answer the prompt
+2. Include helpful examples or edge cases to consider
+3. Add constraints or requirements that are implied but not stated
+4. Expand abbreviations and technical terms
+
+Focus on: Context enrichment, example provision, constraint addition.""",
+
+    RefinerRole.CRITIC: """You are a Prompt Quality Critic. Your job is to:
+1. Identify weaknesses in the current prompt formulation
+2. Find gaps in information or unclear instructions
+3. Detect potential misinterpretations
+4. Suggest structural improvements
+
+Focus on: Weakness identification, gap analysis, structure improvement.""",
+
+    RefinerRole.SYNTHESIZER: """You are a Prompt Synthesis Specialist. Your job is to:
+1. Combine multiple perspectives into one cohesive prompt
+2. Resolve conflicting suggestions intelligently
+3. Create a balanced prompt that is clear yet comprehensive
+4. Maintain the original intent while incorporating improvements
+
+Focus on: Integration, coherence, balance.""",
+
+    RefinerRole.SPECIALIST: """You are a Domain Specialist. Your job is to:
+1. Add domain-specific terminology and concepts
+2. Include best practices from the relevant field
+3. Reference important frameworks or methodologies
+4. Ensure technical accuracy
+
+Focus on: Domain expertise, technical accuracy, best practices.""",
+
+    RefinerRole.SIMPLIFIER: """You are a Simplification Specialist. Your job is to:
+1. Reduce unnecessary complexity while keeping intent clear
+2. Remove redundant phrases and verbose language
+3. Make the prompt more direct and actionable
+4. Ensure the prompt is concise yet complete
+
+Focus on: Simplicity, directness, efficiency.""",
+}
+
+
+# ==============================================================================
+# Data Classes
+# ==============================================================================
+
 @dataclass(slots=True)
 class PromptVersion:
     """Represents a version of a prompt during the diffusion process."""
-
     version: int
     prompt: str
     author: str  # Model/agent that created this version
-    parent_version: Optional[int] = None  # Version this was derived from
-    score: float = 0.0  # Quality score for this version
-    improvements: List[str] = field(default_factory=list)  # List of improvements made
-    metadata: Dict[str, any] = field(default_factory=dict)  # type: ignore[type-arg]
+    role: Optional[RefinerRole] = None  # Role of the refiner
+    parent_version: Optional[int] = None
+    score: float = 0.0
+    improvements: List[str] = field(default_factory=list)
+    reasoning: str = ""  # Explanation of changes
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class RefinementStep:
+    """A single refinement step in the diffusion process."""
+    role: RefinerRole
+    model: str
+    input_prompt: str
+    output_prompt: str
+    score: float
+    reasoning: str
+    duration_ms: float = 0.0
 
 
 @dataclass(slots=True)
 class DiffusionResult:
     """Result of the prompt diffusion process."""
-
+    original_prompt: str
     final_prompt: str
     versions: List[PromptVersion]
-    convergence_score: float  # How well the diffusion converged
+    refinement_steps: List[RefinementStep]
+    convergence_score: float
     rounds_completed: int
     best_version: PromptVersion
+    total_duration_ms: float = 0.0
+    ambiguities_resolved: List[str] = field(default_factory=list)
+    clarifications_added: List[str] = field(default_factory=list)
+    
+    def get_refinement_summary(self) -> Dict[str, Any]:
+        """Get a summary of the refinement process for UI display."""
+        return {
+            "original_prompt": self.original_prompt,
+            "final_prompt": self.final_prompt,
+            "rounds_completed": self.rounds_completed,
+            "convergence_score": self.convergence_score,
+            "improvements": [
+                imp for v in self.versions for imp in v.improvements
+            ],
+            "refiners_used": [
+                {"role": step.role.value, "model": step.model}
+                for step in self.refinement_steps
+            ],
+            "ambiguities_resolved": self.ambiguities_resolved,
+            "clarifications_added": self.clarifications_added,
+        }
 
+
+@dataclass(slots=True)
+class AmbiguityAnalysis:
+    """Analysis of ambiguities in a prompt."""
+    ambiguities: List[str]
+    suggested_clarifications: List[str]
+    clarity_score: float  # 0-1, where 1 is perfectly clear
+    needs_user_input: bool
+
+
+# ==============================================================================
+# Multi-Agent Prompt Diffusion
+# ==============================================================================
 
 class PromptDiffusion:
-    """Manages the prompt diffusion and refinement process."""
-
+    """Multi-agent prompt diffusion and refinement system.
+    
+    Orchestrates multiple refiner agents with different roles to collaboratively
+    improve prompts through iterative refinement rounds.
+    
+    Features:
+    - Multiple specialized refiner roles
+    - Iterative refinement with convergence detection
+    - Ambiguity analysis and resolution
+    - Quality scoring and improvement tracking
+    - Transparency through version history
+    """
+    
+    DEFAULT_ROLES = [
+        RefinerRole.CLARIFIER,
+        RefinerRole.EXPANDER,
+        RefinerRole.SYNTHESIZER,
+    ]
+    
     def __init__(
         self,
-        providers: Dict[str, LLMProvider],
+        providers: Dict[str, Any],
         max_rounds: int = 3,
         convergence_threshold: float = 0.85,
+        min_improvement_threshold: float = 0.05,
+        enable_parallel_refinement: bool = True,
     ) -> None:
+        """
+        Initialize the prompt diffusion system.
+        
+        Args:
+            providers: Dict of LLM providers by name
+            max_rounds: Maximum refinement rounds (default: 3)
+            convergence_threshold: Score threshold for convergence (default: 0.85)
+            min_improvement_threshold: Minimum improvement to continue (default: 0.05)
+            enable_parallel_refinement: Run refiners in parallel (default: True)
+        """
         self.providers = providers
         self.max_rounds = max_rounds
         self.convergence_threshold = convergence_threshold
-
+        self.min_improvement_threshold = min_improvement_threshold
+        self.enable_parallel = enable_parallel_refinement
+    
     async def diffuse(
         self,
         initial_prompt: str,
         models: List[str],
         *,
+        roles: Optional[List[RefinerRole]] = None,
         context: Optional[str] = None,
         subject: Optional[str] = None,
+        domain: Optional[str] = None,
+        analyze_ambiguity: bool = True,
     ) -> DiffusionResult:
-        """Run the prompt diffusion process.
-
-        Args:
-            initial_prompt: The starting prompt
-            models: List of models to use for diffusion
-            context: Optional context to include
-            subject: Optional subject description for refinement
-
-        Returns:
-            DiffusionResult with final prompt and version history
         """
+        Run the multi-agent prompt diffusion process.
+        
+        Args:
+            initial_prompt: The starting prompt to refine
+            models: List of models to use for refinement
+            roles: Specific refiner roles to use (default: CLARIFIER, EXPANDER, SYNTHESIZER)
+            context: Optional additional context
+            subject: Optional subject description
+            domain: Optional domain for specialist refinement
+            analyze_ambiguity: Whether to analyze and resolve ambiguities
+            
+        Returns:
+            DiffusionResult with final prompt and refinement history
+        """
+        import time
+        start_time = time.time()
+        
         if not models:
             raise ValueError("At least one model is required for prompt diffusion")
-
+        
+        roles = roles or self.DEFAULT_ROLES
         versions: List[PromptVersion] = []
+        refinement_steps: List[RefinementStep] = []
         current_prompt = initial_prompt
-        convergence_scores: List[float] = []
-
+        
+        # Ambiguity analysis
+        ambiguities_resolved: List[str] = []
+        clarifications_added: List[str] = []
+        
+        if analyze_ambiguity:
+            ambiguity_analysis = await self._analyze_ambiguity(
+                initial_prompt, models[0]
+            )
+            if ambiguity_analysis.ambiguities:
+                logger.info(
+                    "Found %d ambiguities in prompt",
+                    len(ambiguity_analysis.ambiguities)
+                )
+        
         # Create initial version
         initial_version = PromptVersion(
             version=0,
             prompt=initial_prompt,
             author="user",
-            score=0.5,  # Baseline score
+            score=0.5,  # Baseline
         )
         versions.append(initial_version)
-
+        
+        # Run refinement rounds
+        previous_best_score = 0.5
+        
         for round_num in range(1, self.max_rounds + 1):
             logger.info("Prompt diffusion round %d/%d", round_num, self.max_rounds)
-
-            # Get refinements from all models in parallel
-            refinement_tasks = []
-            for model in models:
-                task = self._refine_prompt(
-                    current_prompt,
-                    model,
-                    round_num=round_num,
-                    previous_versions=versions,
-                    context=context,
-                    subject=subject,
-                )
-                refinement_tasks.append((model, task))
-
-            # Collect all refinements
-            refined_prompts: List[Tuple[str, str, float]] = []  # (model, prompt, score)
-            for model, task in refinement_tasks:
-                try:
-                    result = await task
-                    refined_prompts.append((model, result[0], result[1]))
-                except Exception as exc:
-                    logger.warning("Model %s failed to refine prompt: %s", model, exc)
-                    continue
-
-            if not refined_prompts:
+            
+            round_versions: List[PromptVersion] = []
+            round_steps: List[RefinementStep] = []
+            
+            # Apply each role's refinement
+            if self.enable_parallel:
+                # Run all roles in parallel
+                tasks = []
+                for i, role in enumerate(roles):
+                    model = models[i % len(models)]
+                    tasks.append(self._apply_role_refinement(
+                        current_prompt,
+                        role,
+                        model,
+                        round_num=round_num,
+                        context=context,
+                        domain=domain,
+                    ))
+                
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                for result in results:
+                    if isinstance(result, Exception):
+                        logger.warning("Refinement failed: %s", result)
+                        continue
+                    version, step = result
+                    round_versions.append(version)
+                    round_steps.append(step)
+            else:
+                # Sequential refinement (each builds on previous)
+                intermediate_prompt = current_prompt
+                for i, role in enumerate(roles):
+                    model = models[i % len(models)]
+                    try:
+                        version, step = await self._apply_role_refinement(
+                            intermediate_prompt,
+                            role,
+                            model,
+                            round_num=round_num,
+                            context=context,
+                            domain=domain,
+                        )
+                        round_versions.append(version)
+                        round_steps.append(step)
+                        intermediate_prompt = version.prompt
+                    except Exception as e:
+                        logger.warning("Role %s failed: %s", role.value, e)
+            
+            if not round_versions:
                 logger.warning("No successful refinements in round %d", round_num)
                 break
-
-            # Score and select best refinement
-            best_model, best_prompt, best_score = max(
-                refined_prompts, key=lambda x: x[2]
-            )
-
-            # Create version for best refinement
-            new_version = PromptVersion(
-                version=round_num,
-                prompt=best_prompt,
-                author=best_model,
-                parent_version=round_num - 1,
-                score=best_score,
-                improvements=self._extract_improvements(
-                    versions[-1].prompt, best_prompt
-                ),
-            )
-            versions.append(new_version)
-
-            # Calculate convergence (how similar is this to previous versions?)
-            convergence = self._calculate_convergence(versions)
-            convergence_scores.append(convergence)
-
-            logger.info(
-                "Round %d: Best score %.2f, Convergence %.2f",
-                round_num,
-                best_score,
-                convergence,
-            )
-
-            # Check for convergence
-            if convergence >= self.convergence_threshold:
-                logger.info(
-                    "Prompt diffusion converged at round %d (score: %.2f)",
+            
+            refinement_steps.extend(round_steps)
+            
+            # Synthesize if we have multiple versions
+            if len(round_versions) > 1:
+                synthesis_version = await self._synthesize_versions(
+                    round_versions,
+                    models[0],
                     round_num,
-                    convergence,
                 )
+                round_versions.append(synthesis_version)
+            
+            # Select best version from this round
+            best_version = max(round_versions, key=lambda v: v.score)
+            best_version.version = len(versions)
+            best_version.parent_version = len(versions) - 1
+            versions.append(best_version)
+            
+            # Track improvements
+            if best_version.role == RefinerRole.CLARIFIER:
+                clarifications_added.extend(best_version.improvements)
+            
+            # Check convergence
+            improvement = best_version.score - previous_best_score
+            convergence_score = self._calculate_convergence(versions)
+            
+            logger.info(
+                "Round %d: Score %.3f, Improvement %.3f, Convergence %.3f",
+                round_num, best_version.score, improvement, convergence_score
+            )
+            
+            # Stop if converged or no improvement
+            if convergence_score >= self.convergence_threshold:
+                logger.info("Prompt diffusion converged at round %d", round_num)
                 break
-
-            # Update current prompt for next round
-            current_prompt = best_prompt
-
-        # Select best version overall
-        best_version = max(versions, key=lambda v: v.score)
-
-        final_convergence = (
-            convergence_scores[-1] if convergence_scores else 0.0
-        )
-
+            
+            if improvement < self.min_improvement_threshold and round_num > 1:
+                logger.info("Minimal improvement, stopping refinement")
+                break
+            
+            previous_best_score = best_version.score
+            current_prompt = best_version.prompt
+        
+        # Final best version
+        final_best = max(versions, key=lambda v: v.score)
+        final_convergence = self._calculate_convergence(versions)
+        total_duration = (time.time() - start_time) * 1000
+        
         return DiffusionResult(
-            final_prompt=best_version.prompt,
+            original_prompt=initial_prompt,
+            final_prompt=final_best.prompt,
             versions=versions,
+            refinement_steps=refinement_steps,
             convergence_score=final_convergence,
             rounds_completed=len(versions) - 1,
-            best_version=best_version,
+            best_version=final_best,
+            total_duration_ms=total_duration,
+            ambiguities_resolved=ambiguities_resolved,
+            clarifications_added=clarifications_added,
         )
-
-    async def _refine_prompt(
+    
+    async def quick_refine(
         self,
-        current_prompt: str,
+        prompt: str,
         model: str,
         *,
-        round_num: int,
-        previous_versions: List[PromptVersion],
-        context: Optional[str] = None,
-        subject: Optional[str] = None,
+        focus: Optional[RefinerRole] = None,
     ) -> Tuple[str, float]:
-        """Refine a prompt using a specific model.
-
+        """
+        Quick single-pass refinement for simple prompts.
+        
+        Args:
+            prompt: Prompt to refine
+            model: Model to use
+            focus: Optional specific focus (default: SYNTHESIZER)
+            
         Returns:
             Tuple of (refined_prompt, quality_score)
         """
-        provider = self._select_provider(model)
-
-        # Build refinement prompt
-        refinement_prompt = self._build_refinement_prompt(
-            current_prompt,
-            round_num=round_num,
-            previous_versions=previous_versions,
-            context=context,
-            subject=subject,
+        role = focus or RefinerRole.SYNTHESIZER
+        version, _ = await self._apply_role_refinement(
+            prompt, role, model, round_num=1
         )
-
-        # Get refinement from model
-        result = await provider.complete(refinement_prompt, model=model)
-
-        refined_prompt = result.content.strip()
-
-        # Score the refinement
-        score = await self._score_refinement(
-            original=current_prompt,
-            refined=refined_prompt,
-            model=model,
-        )
-
-        return (refined_prompt, score)
-
-    def _build_refinement_prompt(
+        return version.prompt, version.score
+    
+    async def _apply_role_refinement(
         self,
-        current_prompt: str,
+        prompt: str,
+        role: RefinerRole,
+        model: str,
         *,
-        round_num: int,
-        previous_versions: List[PromptVersion],
+        round_num: int = 1,
         context: Optional[str] = None,
-        subject: Optional[str] = None,
+        domain: Optional[str] = None,
+    ) -> Tuple[PromptVersion, RefinementStep]:
+        """Apply a specific role's refinement to a prompt."""
+        import time
+        start_time = time.time()
+        
+        provider = self._select_provider(model)
+        
+        # Build refinement prompt
+        refinement_prompt = self._build_role_prompt(
+            prompt, role, round_num, context, domain
+        )
+        
+        # Get refinement
+        result = await provider.complete(refinement_prompt, model=model)
+        refined_prompt = self._extract_refined_prompt(result.content)
+        
+        # Score the refinement
+        score = await self._score_refinement(prompt, refined_prompt, model)
+        
+        # Extract improvements
+        improvements = self._extract_improvements(prompt, refined_prompt)
+        reasoning = self._extract_reasoning(result.content)
+        
+        duration = (time.time() - start_time) * 1000
+        
+        version = PromptVersion(
+            version=0,  # Will be set by caller
+            prompt=refined_prompt,
+            author=model,
+            role=role,
+            score=score,
+            improvements=improvements,
+            reasoning=reasoning,
+        )
+        
+        step = RefinementStep(
+            role=role,
+            model=model,
+            input_prompt=prompt,
+            output_prompt=refined_prompt,
+            score=score,
+            reasoning=reasoning,
+            duration_ms=duration,
+        )
+        
+        return version, step
+    
+    def _build_role_prompt(
+        self,
+        prompt: str,
+        role: RefinerRole,
+        round_num: int,
+        context: Optional[str] = None,
+        domain: Optional[str] = None,
     ) -> str:
-        """Build the prompt for refining another prompt."""
+        """Build the refinement prompt for a specific role."""
+        role_instruction = ROLE_PROMPTS.get(role, ROLE_PROMPTS[RefinerRole.SYNTHESIZER])
+        
         lines = [
-            "You are an expert at refining and optimizing prompts for AI models.",
+            role_instruction,
             "",
-            f"Current prompt (Round {round_num}):",
-            f'"{current_prompt}"',
+            "=" * 50,
+            f"CURRENT PROMPT (Round {round_num}):",
+            "=" * 50,
+            f'"{prompt}"',
             "",
         ]
-
-        if subject:
-            lines.append(f"Subject/Context: {subject}")
-            lines.append("")
-
-        if len(previous_versions) > 1:
-            lines.append("Previous versions for reference:")
-            for v in previous_versions[-3:]:  # Show last 3 versions
-                lines.append(f"  Round {v.version}: {v.prompt[:100]}...")
-            lines.append("")
-
+        
         if context:
-            lines.append(f"Additional context: {context}")
-            lines.append("")
-
-        lines.extend(
-            [
-                "Your task:",
-                "1. Analyze the current prompt for clarity, specificity, and effectiveness",
-                "2. Identify areas for improvement (clarity, detail, structure, etc.)",
-                "3. Create an improved version that:",
-                "   - Is more specific and actionable",
-                "   - Provides better context and constraints",
-                "   - Is clearer and easier to understand",
-                "   - Maintains the original intent",
+            lines.extend([
+                "ADDITIONAL CONTEXT:",
+                context,
                 "",
-                "Output ONLY the refined prompt, without any explanation or commentary.",
-                "The refined prompt should be ready to use directly.",
-            ]
-        )
-
+            ])
+        
+        if domain:
+            lines.extend([
+                f"DOMAIN: {domain}",
+                "",
+            ])
+        
+        lines.extend([
+            "=" * 50,
+            "YOUR TASK:",
+            "=" * 50,
+            "",
+            "1. Analyze the prompt based on your role's focus",
+            "2. Identify specific improvements you can make",
+            "3. Create an improved version of the prompt",
+            "",
+            "OUTPUT FORMAT:",
+            "First, briefly explain your reasoning (1-2 sentences).",
+            "Then output the refined prompt on a new line starting with 'REFINED PROMPT:'",
+            "",
+            "Example:",
+            "Reasoning: Added clarification about scope and added example case.",
+            "REFINED PROMPT: [Your improved prompt here]",
+        ])
+        
         return "\n".join(lines)
+    
+    def _extract_refined_prompt(self, content: str) -> str:
+        """Extract the refined prompt from model output."""
+        import re
+        
+        content = content.strip()
+        
+        # Look for explicit marker
+        if "REFINED PROMPT:" in content.upper():
+            parts = content.upper().split("REFINED PROMPT:", 1)
+            if len(parts) > 1:
+                # Get everything after the marker
+                refined = content[content.upper().find("REFINED PROMPT:") + 15:]
+                return refined.strip().strip('"\'')
+        
+        # Look for prompt in quotes
+        quote_match = re.search(r'"([^"]{20,})"', content)
+        if quote_match:
+            return quote_match.group(1)
+        
+        # If content is short enough, use as-is
+        if len(content) < 2000:
+            # Remove common prefixes
+            for prefix in ["Here's the refined prompt:", "Refined:", "Improved prompt:"]:
+                if content.lower().startswith(prefix.lower()):
+                    content = content[len(prefix):].strip()
+                    break
+            return content.strip().strip('"\'')
+        
+        # Last resort: first substantial line
+        lines = [l.strip() for l in content.split('\n') if len(l.strip()) > 20]
+        return lines[0] if lines else content[:500]
+    
+    def _extract_reasoning(self, content: str) -> str:
+        """Extract reasoning from model output."""
+        if "REFINED PROMPT:" in content.upper():
+            parts = content.split("REFINED PROMPT:", 1)
+            reasoning = parts[0].strip()
+            
+            # Clean up
+            for prefix in ["Reasoning:", "Analysis:", "Explanation:"]:
+                if reasoning.lower().startswith(prefix.lower()):
+                    reasoning = reasoning[len(prefix):].strip()
+            
+            return reasoning[:500]  # Limit length
+        
+        return ""
+    
+    async def _synthesize_versions(
+        self,
+        versions: List[PromptVersion],
+        model: str,
+        round_num: int,
+    ) -> PromptVersion:
+        """Synthesize multiple refined versions into one."""
+        provider = self._select_provider(model)
+        
+        # Build synthesis prompt
+        synthesis_prompt = [
+            "You are synthesizing multiple refined versions of a prompt into one optimal version.",
+            "",
+            "The following versions were created by different refinement agents:",
+        ]
+        
+        for i, v in enumerate(versions, 1):
+            role_name = v.role.value if v.role else "unknown"
+            synthesis_prompt.append(f"\nVersion {i} ({role_name}):")
+            synthesis_prompt.append(f'"{v.prompt}"')
+            if v.improvements:
+                synthesis_prompt.append(f"Improvements: {', '.join(v.improvements)}")
+        
+        synthesis_prompt.extend([
+            "",
+            "Create a single synthesized prompt that:",
+            "1. Combines the best aspects of all versions",
+            "2. Resolves any conflicts between versions",
+            "3. Is clear, comprehensive, and actionable",
+            "4. Maintains the original intent",
+            "",
+            "Output ONLY the synthesized prompt, no explanation needed.",
+        ])
+        
+        result = await provider.complete("\n".join(synthesis_prompt), model=model)
+        synthesized = self._extract_refined_prompt(result.content)
+        
+        # Score synthesis
+        # Use average of input versions as reference
+        avg_score = sum(v.score for v in versions) / len(versions)
+        # Synthesis should be at least as good as average
+        synthesis_score = min(1.0, avg_score + 0.1)
+        
+        return PromptVersion(
+            version=0,
+            prompt=synthesized,
+            author=model,
+            role=RefinerRole.SYNTHESIZER,
+            score=synthesis_score,
+            improvements=["Combined multiple perspectives"],
+        )
+    
+    async def _analyze_ambiguity(
+        self,
+        prompt: str,
+        model: str,
+    ) -> AmbiguityAnalysis:
+        """Analyze a prompt for ambiguities."""
+        provider = self._select_provider(model)
+        
+        analysis_prompt = f"""Analyze this prompt for ambiguities and unclear elements.
 
+Prompt: "{prompt}"
+
+Identify:
+1. Ambiguous words or phrases
+2. Missing context that would be helpful
+3. Unclear requirements or constraints
+
+Output format:
+AMBIGUITIES:
+- [List each ambiguity on a new line, or "None" if clear]
+
+SUGGESTED_CLARIFICATIONS:
+- [List suggested clarifications]
+
+CLARITY_SCORE: [0.0-1.0]
+NEEDS_USER_INPUT: [YES/NO]"""
+        
+        try:
+            result = await provider.complete(analysis_prompt, model=model)
+            return self._parse_ambiguity_analysis(result.content)
+        except Exception as e:
+            logger.warning("Ambiguity analysis failed: %s", e)
+            return AmbiguityAnalysis(
+                ambiguities=[],
+                suggested_clarifications=[],
+                clarity_score=0.7,
+                needs_user_input=False,
+            )
+    
+    def _parse_ambiguity_analysis(self, content: str) -> AmbiguityAnalysis:
+        """Parse ambiguity analysis from model output."""
+        import re
+        
+        ambiguities = []
+        clarifications = []
+        clarity_score = 0.7
+        needs_user_input = False
+        
+        # Extract ambiguities
+        if "AMBIGUITIES:" in content.upper():
+            section = content.upper().split("AMBIGUITIES:", 1)[1]
+            if "SUGGESTED_CLARIFICATIONS:" in section:
+                section = section.split("SUGGESTED_CLARIFICATIONS:")[0]
+            
+            for line in section.split("\n"):
+                line = line.strip().lstrip("-").strip()
+                if line and line.lower() != "none" and len(line) > 3:
+                    ambiguities.append(line)
+        
+        # Extract clarifications
+        if "SUGGESTED_CLARIFICATIONS:" in content.upper():
+            section = content.upper().split("SUGGESTED_CLARIFICATIONS:", 1)[1]
+            if "CLARITY_SCORE:" in section:
+                section = section.split("CLARITY_SCORE:")[0]
+            
+            for line in section.split("\n"):
+                line = line.strip().lstrip("-").strip()
+                if line and len(line) > 3:
+                    clarifications.append(line)
+        
+        # Extract clarity score
+        score_match = re.search(r"CLARITY_SCORE:\s*([\d.]+)", content, re.IGNORECASE)
+        if score_match:
+            try:
+                clarity_score = float(score_match.group(1))
+                clarity_score = min(1.0, max(0.0, clarity_score))
+            except ValueError:
+                pass
+        
+        # Check if user input needed
+        needs_user_input = "YES" in content.upper() and "NEEDS_USER_INPUT" in content.upper()
+        
+        return AmbiguityAnalysis(
+            ambiguities=ambiguities[:5],  # Limit
+            suggested_clarifications=clarifications[:5],
+            clarity_score=clarity_score,
+            needs_user_input=needs_user_input,
+        )
+    
     async def _score_refinement(
         self,
         original: str,
         refined: str,
         model: str,
     ) -> float:
-        """Score a refined prompt against the original.
-
-        Returns a score between 0.0 and 1.0.
-        """
+        """Score a refined prompt against the original."""
         provider = self._select_provider(model)
+        
+        scoring_prompt = f"""Rate this prompt refinement on a scale of 0.0 to 1.0.
 
-        scoring_prompt = f"""Evaluate this prompt refinement on a scale of 0.0 to 1.0.
+Original: "{original[:500]}"
+Refined: "{refined[:500]}"
 
-Original prompt:
-"{original}"
+Scoring criteria:
+- Clarity (0.0-0.25): Is the refined prompt clearer?
+- Specificity (0.0-0.25): Is it more specific and actionable?
+- Completeness (0.0-0.25): Does it cover all necessary aspects?
+- Intent preservation (0.0-0.25): Does it maintain the original intent?
 
-Refined prompt:
-"{refined}"
-
-Consider:
-- Clarity improvement (0.0-0.3)
-- Specificity improvement (0.0-0.3)
-- Structure improvement (0.0-0.2)
-- Maintains original intent (0.0-0.2)
-
-Respond with ONLY a number between 0.0 and 1.0, nothing else."""
-
+Respond with ONLY a decimal number between 0.0 and 1.0."""
+        
         try:
             result = await provider.complete(scoring_prompt, model=model)
-            score_text = result.content.strip()
-            # Extract number from response
             import re
-
-            match = re.search(r"(\d+\.?\d*)", score_text)
+            match = re.search(r"(\d+\.?\d*)", result.content.strip())
             if match:
                 score = float(match.group(1))
-                return min(1.0, max(0.0, score / 1.0))  # Normalize to 0-1
-        except Exception as exc:
-            logger.warning("Failed to score refinement: %s", exc)
-
-        # Default score based on length and similarity
-        length_improvement = min(1.0, len(refined) / max(len(original), 1))
-        return 0.5 + (length_improvement - 0.5) * 0.3  # Bias toward improvements
-
+                return min(1.0, max(0.0, score))
+        except Exception as e:
+            logger.warning("Scoring failed: %s", e)
+        
+        # Heuristic fallback
+        len_improvement = len(refined) / max(len(original), 1)
+        if 0.8 < len_improvement < 2.0:
+            return 0.6 + (len_improvement - 1.0) * 0.1
+        return 0.5
+    
     def _calculate_convergence(self, versions: List[PromptVersion]) -> float:
-        """Calculate how well the diffusion has converged.
-
-        Returns a score between 0.0 and 1.0, where 1.0 means perfect convergence.
-        """
+        """Calculate convergence score based on version history."""
         if len(versions) < 2:
             return 0.0
-
-        # Compare last two versions
+        
         last = versions[-1]
         prev = versions[-2]
-
-        # Simple similarity based on length and content overlap
-        length_similarity = 1.0 - abs(len(last.prompt) - len(prev.prompt)) / max(
+        
+        # Length similarity
+        len_sim = 1.0 - abs(len(last.prompt) - len(prev.prompt)) / max(
             len(last.prompt), len(prev.prompt), 1
         )
-
-        # Word overlap
+        
+        # Word overlap (Jaccard similarity)
         last_words = set(last.prompt.lower().split())
         prev_words = set(prev.prompt.lower().split())
         if last_words or prev_words:
-            overlap = len(last_words & prev_words) / max(
-                len(last_words | prev_words), 1
-            )
+            jaccard = len(last_words & prev_words) / len(last_words | prev_words)
         else:
-            overlap = 0.0
-
-        # Score improvement (higher scores indicate convergence)
+            jaccard = 0.0
+        
+        # Score trend
         score_improvement = max(0.0, last.score - prev.score)
-
-        # Convergence is high when prompts are similar and scores are improving
-        convergence = (length_similarity * 0.3 + overlap * 0.5 + score_improvement * 0.2)
-
+        
+        # Weighted convergence
+        convergence = (len_sim * 0.2 + jaccard * 0.5 + last.score * 0.3)
+        
         return min(1.0, convergence)
-
-    def _extract_improvements(
-        self, original: str, refined: str
-    ) -> List[str]:
-        """Extract a list of improvements made in the refinement."""
+    
+    def _extract_improvements(self, original: str, refined: str) -> List[str]:
+        """Extract improvements made in refinement."""
         improvements = []
-
-        if len(refined) > len(original) * 1.1:
-            improvements.append("Added more detail")
-        elif len(refined) < len(original) * 0.9:
+        
+        orig_len = len(original)
+        ref_len = len(refined)
+        
+        if ref_len > orig_len * 1.2:
+            improvements.append("Added detail and context")
+        elif ref_len < orig_len * 0.8:
             improvements.append("Made more concise")
-
-        # Simple keyword-based improvements
-        refined_lower = refined.lower()
-        if "specific" in refined_lower or "detailed" in refined_lower:
-            improvements.append("Increased specificity")
-        if "clear" in refined_lower or "explicit" in refined_lower:
-            improvements.append("Improved clarity")
-
+        
+        # Check for structural improvements
+        if '?' in refined and '?' not in original:
+            improvements.append("Added clarifying questions")
+        
+        if refined.count('.') > original.count('.'):
+            improvements.append("Improved structure")
+        
+        # Check for example addition
+        if any(marker in refined.lower() for marker in ['example', 'e.g.', 'for instance']):
+            if not any(marker in original.lower() for marker in ['example', 'e.g.', 'for instance']):
+                improvements.append("Added examples")
+        
         return improvements
-
-    def _select_provider(self, model: str) -> LLMProvider:
+    
+    def _select_provider(self, model: str) -> Any:
         """Select provider for a model."""
         model_lower = model.lower()
-        if model_lower.startswith("gpt") and "openai" in self.providers:
-            return self.providers["openai"]
-        if model_lower.startswith("claude") and "anthropic" in self.providers:
-            return self.providers["anthropic"]
-        if model_lower.startswith("grok") and "grok" in self.providers:
-            return self.providers["grok"]
-        if model_lower.startswith("gemini") and "gemini" in self.providers:
-            return self.providers["gemini"]
-        if model_lower.startswith("deepseek") and "deepseek" in self.providers:
-            return self.providers["deepseek"]
-        return self.providers.get("stub", self.providers.get(list(self.providers.keys())[0]))
+        
+        provider_map = {
+            "gpt": "openai",
+            "claude": "anthropic",
+            "grok": "grok",
+            "gemini": "gemini",
+            "deepseek": "deepseek",
+        }
+        
+        for prefix, provider_name in provider_map.items():
+            if model_lower.startswith(prefix) and provider_name in self.providers:
+                return self.providers[provider_name]
+        
+        # Fallback
+        if "stub" in self.providers:
+            return self.providers["stub"]
+        
+        return next(iter(self.providers.values()))
 
+
+# ==============================================================================
+# Convenience Functions
+# ==============================================================================
+
+async def refine_prompt(
+    prompt: str,
+    providers: Dict[str, Any],
+    models: List[str],
+    *,
+    max_rounds: int = 2,
+    roles: Optional[List[RefinerRole]] = None,
+) -> DiffusionResult:
+    """Convenience function to refine a prompt."""
+    diffusion = PromptDiffusion(
+        providers=providers,
+        max_rounds=max_rounds,
+    )
+    return await diffusion.diffuse(prompt, models, roles=roles)
+
+
+async def quick_clarify(
+    prompt: str,
+    provider: Any,
+    model: str,
+) -> str:
+    """Quick clarification pass on a prompt."""
+    diffusion = PromptDiffusion(providers={"default": provider})
+    refined, _ = await diffusion.quick_refine(prompt, model, focus=RefinerRole.CLARIFIER)
+    return refined
