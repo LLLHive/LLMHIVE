@@ -399,19 +399,20 @@ def get_pinecone_feedback_store() -> PineconeFeedbackStore:
 
 def create_feedback_router():
     """Create FastAPI router for feedback endpoints."""
-    from fastapi import APIRouter, HTTPException
-    from pydantic import BaseModel
+    from fastapi import APIRouter, HTTPException, Body
+    from pydantic import BaseModel, Field
     from typing import Optional
     
     router = APIRouter()
     
     class FeedbackRequest(BaseModel):
-        query: str
-        answer: str
-        feedback_type: str = "rating"  # thumbs_up, thumbs_down, rating
-        rating: Optional[float] = None  # 1-5 or 0-1
-        model_used: Optional[str] = None
-        session_id: Optional[str] = None
+        """Request model for submitting feedback."""
+        user_query: str = Field(..., description="The user's question/query")
+        answer_text: str = Field(..., description="The answer that was given")
+        feedback_type: str = Field(default="rating", description="thumbs_up, thumbs_down, or rating")
+        rating: Optional[float] = Field(default=None, description="Rating value (1-5 or 0-1)")
+        model_used: Optional[str] = Field(default=None, description="Model that generated the answer")
+        session_id: Optional[str] = Field(default=None, description="Session identifier")
     
     class FeedbackResponse(BaseModel):
         success: bool
@@ -419,20 +420,27 @@ def create_feedback_router():
         message: str
     
     @router.post("/feedback", response_model=FeedbackResponse)
-    async def submit_feedback(data: FeedbackRequest):
+    async def submit_feedback(feedback: FeedbackRequest = Body(...)):
         """Submit feedback on an answer.
         
         This feedback is stored in Pinecone for RLHF training.
+        
+        Request body:
+        - user_query: The user's question
+        - answer_text: The answer that was given
+        - feedback_type: thumbs_up, thumbs_down, or rating
+        - rating: Optional rating value (1-5 or 0-1)
+        - model_used: Optional model name
         """
         store = get_pinecone_feedback_store()
         
         record = await store.record_feedback(
-            query=data.query,
-            answer=data.answer,
-            feedback_type=data.feedback_type,
-            rating=data.rating,
-            model_used=data.model_used,
-            session_id=data.session_id,
+            query=feedback.user_query,
+            answer=feedback.answer_text,
+            feedback_type=feedback.feedback_type,
+            rating=feedback.rating,
+            model_used=feedback.model_used,
+            session_id=feedback.session_id,
         )
         
         if record:
@@ -449,42 +457,54 @@ def create_feedback_router():
     
     @router.get("/feedback/similar")
     async def find_similar(
-        query: str,
+        search_query: str,
         positive_only: bool = False,
         limit: int = 5,
     ):
-        """Find similar past feedback for a query."""
+        """Find similar past feedback for a query.
+        
+        Query params:
+        - search_query: The query to search for
+        - positive_only: Only return positive feedback
+        - limit: Maximum results
+        """
         store = get_pinecone_feedback_store()
         
         records = await store.find_similar_feedback(
-            query=query,
+            query=search_query,
             positive_only=positive_only,
             limit=limit,
         )
         
         return {
-            "query": query,
+            "search_query": search_query,
             "results": [r.to_dict() for r in records],
             "count": len(records),
         }
     
     @router.get("/feedback/examples")
     async def get_examples(
-        query: str,
+        search_query: str,
         num_positive: int = 3,
         num_negative: int = 2,
     ):
-        """Get positive and negative examples for RLHF training."""
+        """Get positive and negative examples for RLHF training.
+        
+        Query params:
+        - search_query: The query to find examples for
+        - num_positive: Number of positive examples
+        - num_negative: Number of negative examples
+        """
         store = get_pinecone_feedback_store()
         
         examples = await store.get_training_examples(
-            query=query,
+            query=search_query,
             num_positive=num_positive,
             num_negative=num_negative,
         )
         
         return {
-            "query": query,
+            "search_query": search_query,
             "positive": [r.to_dict() for r in examples["positive"]],
             "negative": [r.to_dict() for r in examples["negative"]],
         }
