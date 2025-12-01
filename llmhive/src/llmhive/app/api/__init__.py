@@ -77,3 +77,13 @@ try:
 except Exception as exc:
     logger.warning("Failed to import admin router: %s", exc)
 
+# RLHF Feedback routes (Pinecone-powered)
+try:
+    from ..rlhf.pinecone_feedback import create_feedback_router
+    
+    feedback_router = create_feedback_router()
+    api_router.include_router(feedback_router, prefix="/rlhf", tags=["rlhf"])
+    logger.info("RLHF Feedback routes registered at /api/v1/rlhf")
+except Exception as exc:
+    logger.warning("Failed to import RLHF feedback router: %s", exc)
+
