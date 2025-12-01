@@ -123,6 +123,10 @@ class OrchestrationSettings(BaseModel):
 class ChatRequest(BaseModel):
     """Request model for chat orchestration."""
     prompt: str = Field(..., description="User prompt/question")
+    models: Optional[List[str]] = Field(
+        default=None,
+        description="List of model IDs to use for orchestration (e.g., ['gpt-5', 'claude-sonnet-4.5', 'grok-4']). If not provided, models will be auto-selected."
+    )
     reasoning_mode: ReasoningMode = Field(default=ReasoningMode.standard, description="Reasoning depth mode (fast/standard/deep)")
     reasoning_method: Optional[ReasoningMethod] = Field(
         default=None,
@@ -187,6 +191,7 @@ class AgentTrace(BaseModel):
 class ChatResponse(BaseModel):
     """Response model for chat orchestration."""
     message: str = Field(..., description="Final assistant answer/message")
+    models_used: List[str] = Field(default_factory=list, description="List of models that participated in orchestration")
     reasoning_mode: ReasoningMode = Field(..., description="Reasoning mode used")
     reasoning_method: Optional[ReasoningMethod] = Field(
         default=None,

@@ -44,12 +44,41 @@ def _map_reasoning_mode(mode: ReasoningMode) -> int:
     return mapping.get(mode, 2)
 
 
+def _map_model_to_provider(model_id: str, available_providers: list) -> str:
+    """Map a user-selected model ID to an actual provider/model name."""
+    model_lower = model_id.lower()
+    
+    # Map future/UI model names to current available models
+    if "gpt-5" in model_lower or "gpt-4" in model_lower:
+        if "mini" in model_lower:
+            return FALLBACK_GPT_4O_MINI
+        return FALLBACK_GPT_4O
+    elif "claude" in model_lower:
+        if "haiku" in model_lower:
+            return FALLBACK_CLAUDE_3_HAIKU
+        return FALLBACK_CLAUDE_3_5
+    elif "gemini" in model_lower:
+        return FALLBACK_GEMINI_2_5
+    elif "grok" in model_lower:
+        return FALLBACK_GROK_BETA
+    elif "llama" in model_lower:
+        # Llama uses local model or stub
+        if "local" in available_providers:
+            return "local"
+        return "stub"
+    elif model_id in available_providers:
+        return model_id
+    else:
+        # Default to first available
+        return available_providers[0] if available_providers else "stub"
+
+
 async def run_orchestration(request: ChatRequest) -> ChatResponse:
     """
     Run orchestration with ChatRequest and return ChatResponse.
     
     This adapter builds an orchestration_config from the ChatRequest,
-    selects appropriate models based on reasoning method, and calls the orchestrator.
+    uses user-selected models if provided, and calls the orchestrator.
     """
     start_time = time.perf_counter()
     
@@ -67,43 +96,52 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             request.reasoning_mode.value,
         )
         
-        # Get available models from orchestrator
-        available_models = list(_orchestrator.providers.keys())
+        # Get available providers from orchestrator
+        available_providers = list(_orchestrator.providers.keys())
         
-        # Select models based on reasoning method
-        selected_models = get_models_for_reasoning_method(
-            reasoning_method,
-            available_models=available_models,
-        )
-        
-        # Map to actual model names that the orchestrator understands
-        # For now, use fallback models since we don't have GPT-5.1, Claude 4.5, etc. yet
-        actual_models = []
-        for model_id in selected_models:
-            # Map future models to current available models
-            if "gpt-5" in model_id or "gpt-4" in model_id:
-                actual_models.append(FALLBACK_GPT_4O_MINI if "mini" in model_id else FALLBACK_GPT_4O)
-            elif "claude" in model_id:
-                actual_models.append(FALLBACK_CLAUDE_3_HAIKU if "haiku" in model_id else FALLBACK_CLAUDE_3_5)
-            elif "gemini" in model_id:
-                actual_models.append(FALLBACK_GEMINI_2_5)
-            elif "grok" in model_id:
-                actual_models.append(FALLBACK_GROK_BETA)
-            else:
-                # Use first available model as fallback
-                actual_models.append(available_models[0] if available_models else "stub")
-        
-        # Remove duplicates while preserving order
-        seen = set()
-        actual_models = [m for m in actual_models if not (m in seen or seen.add(m))]
+        # Use user-selected models if provided, otherwise auto-select
+        if request.models and len(request.models) > 0:
+            logger.info("User selected models: %s", request.models)
+            
+            # Map user-selected model names to actual provider models
+            actual_models = []
+            user_model_names = []  # Track what the user selected for response
+            
+            for model_id in request.models:
+                mapped_model = _map_model_to_provider(model_id, available_providers)
+                if mapped_model not in actual_models:  # Avoid duplicates
+                    actual_models.append(mapped_model)
+                    user_model_names.append(model_id)
+            
+            logger.info(
+                "Mapped user models to providers: %s -> %s",
+                request.models,
+                actual_models,
+            )
+        else:
+            # Auto-select models based on reasoning method
+            selected_models = get_models_for_reasoning_method(
+                reasoning_method,
+                available_models=available_providers,
+            )
+            
+            # Map to actual model names
+            actual_models = []
+            user_model_names = []
+            for model_id in selected_models:
+                mapped = _map_model_to_provider(model_id, available_providers)
+                if mapped not in actual_models:
+                    actual_models.append(mapped)
+                    user_model_names.append(model_id)
         
         if not actual_models:
-            actual_models = ["gpt-4o-mini", "claude-3-haiku"]
+            actual_models = ["gpt-4o-mini"]
+            user_model_names = ["GPT-4o Mini"]
         
         logger.info(
-            "Selected models for method %s: %s",
-            reasoning_method.value,
+            "Final models for orchestration: %s (display: %s)",
             actual_models,
+            user_model_names,
         )
         
         # Extract criteria settings from metadata if provided
@@ -211,9 +249,14 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         if hasattr(artifacts, 'consensus_notes') and artifacts.consensus_notes:
             extra["consensus_notes"] = artifacts.consensus_notes
         
-        # Build response
+        # Add models used info to extra
+        extra["models_requested"] = request.models or []
+        extra["models_mapped"] = actual_models
+        
+        # Build response with models_used
         response = ChatResponse(
             message=final_text,
+            models_used=user_model_names,
             reasoning_mode=request.reasoning_mode,
             reasoning_method=request.reasoning_method,
             domain_pack=request.domain_pack,
@@ -241,6 +284,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # Return error response
         return ChatResponse(
             message=f"I apologize, but I encountered an error processing your request: {str(exc)}",
+            models_used=request.models or [],
             reasoning_mode=request.reasoning_mode,
             reasoning_method=request.reasoning_method,
             domain_pack=request.domain_pack,

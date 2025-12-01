@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const {
       messages,
+      models,  // User-selected models from the UI
       orchestratorSettings,
       chatId,
       userId,
@@ -56,8 +57,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Build the ChatRequest payload matching FastAPI ChatRequest model
+    // Include models selected by the user - these will be used for multi-model orchestration
+    const selectedModels = models || settings.selectedModels || []
+    
     const payload = {
       prompt,
+      models: selectedModels.length > 0 ? selectedModels : null,  // User-selected models for ensemble
       reasoning_mode: settings.reasoningMode || "standard",
       reasoning_method: settings.reasoningMethod || null, // Optional advanced reasoning method
       domain_pack: settings.domainPack || "default",
@@ -83,6 +88,12 @@ export async function POST(req: NextRequest) {
       },
       history,
     }
+    
+    console.log("[Chat API] Sending to backend:", {
+      prompt: prompt.slice(0, 50) + "...",
+      models: selectedModels,
+      orchestration: payload.orchestration,
+    })
 
     // Get backend URL and API key from environment
     const apiBase =
