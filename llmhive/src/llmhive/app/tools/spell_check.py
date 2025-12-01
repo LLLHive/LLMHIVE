@@ -538,26 +538,26 @@ def create_spell_check_router():
         suggestions: List[str]
     
     @router.post("/check", response_model=SpellCheckResponse)
-    async def check_spelling(request: SpellCheckRequest):
+    async def check_spelling(data: SpellCheckRequest):
         """Check text for spelling errors."""
         try:
-            result = spell_check_tool(request.text, request.mode)
+            result = spell_check_tool(data.text, data.mode)
             return SpellCheckResponse(**result)
         except Exception as e:
             logger.error(f"Spell check error: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     
     @router.post("/suggest", response_model=SuggestionsResponse)
-    async def get_suggestions(request: SuggestionsRequest):
+    async def get_suggestions(data: SuggestionsRequest):
         """Get spelling suggestions for a word."""
-        suggestions = get_suggestions_for_word(request.word)
-        return SuggestionsResponse(word=request.word, suggestions=suggestions)
+        suggestions = get_suggestions_for_word(data.word)
+        return SuggestionsResponse(word=data.word, suggestions=suggestions)
     
     @router.post("/correct")
-    async def auto_correct(request: SpellCheckRequest):
+    async def auto_correct(data: SpellCheckRequest):
         """Auto-correct text and return corrected version."""
-        corrected = correct_text(request.text)
-        return {"original": request.text, "corrected": corrected}
+        corrected = correct_text(data.text)
+        return {"original": data.text, "corrected": corrected}
     
     return router
 
