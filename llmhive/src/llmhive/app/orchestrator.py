@@ -546,6 +546,10 @@ class Orchestrator:
                         except Exception as e:
                             logger.error(f"OpenAI API error: {e}")
                             raise
+                    
+                    async def complete(self, prompt, model="gpt-4o-mini", **kwargs):
+                        """Alias for generate() - used by orchestration components."""
+                        return await self.generate(prompt, model=model, **kwargs)
                 
                 self.providers["openai"] = OpenAIProvider(client)
                 logger.info("OpenAI provider initialized")
@@ -612,6 +616,10 @@ class Orchestrator:
                         except Exception as e:
                             logger.error(f"Grok API error: {e}")
                             raise
+                    
+                    async def complete(self, prompt, model="grok-beta", **kwargs):
+                        """Alias for generate() - used by orchestration components."""
+                        return await self.generate(prompt, model=model, **kwargs)
                 
                 self.providers["grok"] = GrokProvider(api_key)
                 logger.info("Grok provider initialized")
@@ -660,6 +668,10 @@ class Orchestrator:
                         except Exception as e:
                             logger.error(f"Anthropic API error: {e}")
                             raise
+                    
+                    async def complete(self, prompt, model="claude-3-haiku-20240307", **kwargs):
+                        """Alias for generate() - used by orchestration components."""
+                        return await self.generate(prompt, model=model, **kwargs)
                 
                 self.providers["anthropic"] = AnthropicProvider(client)
                 logger.info("Anthropic provider initialized")
