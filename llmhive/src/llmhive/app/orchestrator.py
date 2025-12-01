@@ -288,11 +288,12 @@ except ImportError:
 
 # Import provider types
 try:
-    from ..providers.gemini import GeminiProvider
+    from .providers.gemini import GeminiProvider
     GEMINI_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     GEMINI_AVAILABLE = False
     GeminiProvider = None  # type: ignore
+    logger.warning("Gemini provider not available: %s", e)
 
 # Import stub provider as fallback
 STUB_AVAILABLE = False
