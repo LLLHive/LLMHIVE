@@ -87,3 +87,13 @@ try:
 except Exception as exc:
     logger.warning("Failed to import RLHF feedback router: %s", exc)
 
+# Spell Check routes
+try:
+    from ..tools.spell_check import create_spell_check_router
+    
+    spell_check_router = create_spell_check_router()
+    api_router.include_router(spell_check_router, prefix="/spellcheck", tags=["spellcheck"])
+    logger.info("Spell Check routes registered at /api/v1/spellcheck")
+except Exception as exc:
+    logger.warning("Failed to import spell check router: %s", exc)
+

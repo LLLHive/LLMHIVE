@@ -13,4 +13,5 @@ psycopg[binary]>=3.1
 stripe>=7.0.0
 google-cloud-firestore>=2.16.0
 pinecone>=5.0.0
+pyspellchecker>=0.8.0
 

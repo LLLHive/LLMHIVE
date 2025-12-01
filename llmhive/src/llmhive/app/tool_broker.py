@@ -275,10 +275,11 @@ class ToolBroker:
         
         # Allowed tools per tier
         self.tier_tools: Dict[str, Set[str]] = {
-            "free": {"calculator", "web_search"},
-            "pro": {"calculator", "web_search", "knowledge_lookup", "python_exec"},
-            "enterprise": {"calculator", "web_search", "knowledge_lookup", "python_exec", 
-                          "api_call", "advanced_search"},
+            "free": {"calculator", "web_search", "spell_check", "datetime", "convert"},
+            "pro": {"calculator", "web_search", "spell_check", "datetime", "convert", 
+                   "knowledge_lookup", "python_exec"},
+            "enterprise": {"calculator", "web_search", "spell_check", "datetime", "convert",
+                          "knowledge_lookup", "python_exec", "api_call", "advanced_search"},
         }
     
     def _register_builtin_tools(self) -> None:
@@ -358,6 +359,21 @@ class ToolBroker:
                     "value": "Numeric value to convert",
                     "from_unit": "Source unit",
                     "to_unit": "Target unit",
+                },
+            )
+        )
+        
+        # Spell check
+        self.register_tool(
+            ToolDefinition(
+                name="spell_check",
+                description="Check text for spelling errors and get corrections",
+                category=ToolCategory.COMPUTE,
+                handler=self._tool_spell_check,
+                is_async=False,
+                parameters={
+                    "text": "Text to check for spelling errors",
+                    "mode": "Optional: 'suggest', 'auto_correct', or 'highlight'",
                 },
             )
         )
@@ -891,6 +907,55 @@ class ToolBroker:
             return f"Unknown temperature unit: {to_unit}"
         
         return f"{value} {from_unit} = {result:.2f} {unit_name}"
+    
+    def _tool_spell_check(self, args: str) -> str:
+        """
+        Spell check tool: Check text for spelling errors.
+        
+        Args:
+            args: Text to check, optionally followed by | mode=suggest/auto_correct/highlight
+            
+        Returns:
+            Spell check results with corrections
+        """
+        try:
+            from .tools.spell_check import spell_check_tool, SpellCheckMode
+            
+            # Parse args for mode
+            mode = "auto_correct"
+            text = args
+            
+            if "|" in args:
+                parts = args.split("|", 1)
+                text = parts[0].strip()
+                mode_part = parts[1].strip().lower()
+                if "suggest" in mode_part:
+                    mode = "suggest"
+                elif "highlight" in mode_part:
+                    mode = "highlight"
+                elif "auto" in mode_part or "correct" in mode_part:
+                    mode = "auto_correct"
+            
+            result = spell_check_tool(text, mode)
+            
+            if result["error_count"] == 0:
+                return f"✓ No spelling errors found in: \"{text}\""
+            
+            # Format output
+            output_parts = [f"Found {result['error_count']} spelling error(s):"]
+            
+            for error in result["errors"]:
+                suggestions = ", ".join(error["suggestions"][:3]) if error["suggestions"] else "no suggestions"
+                output_parts.append(f"  • \"{error['word']}\" → {suggestions}")
+            
+            if result["was_corrected"]:
+                output_parts.append(f"\nCorrected text: \"{result['corrected']}\"")
+            
+            return "\n".join(output_parts)
+            
+        except Exception as e:
+            logger.warning("Spell check failed: %s", e)
+            return f"Spell check error: {str(e)}"
     
     # ==========================================================================
     # Orchestrator Integration Helpers
