@@ -419,7 +419,7 @@ def create_feedback_router():
         message: str
     
     @router.post("/feedback", response_model=FeedbackResponse)
-    async def submit_feedback(request: FeedbackRequest):
+    async def submit_feedback(data: FeedbackRequest):
         """Submit feedback on an answer.
         
         This feedback is stored in Pinecone for RLHF training.
@@ -427,12 +427,12 @@ def create_feedback_router():
         store = get_pinecone_feedback_store()
         
         record = await store.record_feedback(
-            query=request.query,
-            answer=request.answer,
-            feedback_type=request.feedback_type,
-            rating=request.rating,
-            model_used=request.model_used,
-            session_id=request.session_id,
+            query=data.query,
+            answer=data.answer,
+            feedback_type=data.feedback_type,
+            rating=data.rating,
+            model_used=data.model_used,
+            session_id=data.session_id,
         )
         
         if record:
