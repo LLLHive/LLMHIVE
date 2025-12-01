@@ -47,13 +47,15 @@ class GeminiProvider:
     }
     
     # Model name mapping (UI names to actual Gemini model names)
-    # Use just model name - SDK handles the full path
+    # Discovered available: gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash
     MODEL_MAPPING = {
-        "gemini-2.5-pro": "gemini-1.5-flash",
-        "gemini-2.5-flash": "gemini-1.5-flash", 
-        "gemini-2.0-flash": "gemini-1.5-flash",
-        "gemini-1.5-pro": "gemini-1.5-flash",
-        "gemini-pro": "gemini-1.5-flash",
+        "gemini-2.5-pro": "gemini-2.5-pro",
+        "gemini-2.5-flash": "gemini-2.5-flash", 
+        "gemini-2.0-flash": "gemini-2.0-flash",
+        "gemini-1.5-pro": "gemini-2.5-pro",  # Upgrade to 2.5
+        "gemini-1.5-flash": "gemini-2.5-flash",  # Upgrade to 2.5
+        "gemini-pro": "gemini-2.5-pro",
+        "gemini-flash": "gemini-2.5-flash",
     }
     
     def __init__(self, api_key: Optional[str] = None):
@@ -108,18 +110,13 @@ class GeminiProvider:
         """Map UI model names to actual Gemini model names."""
         model_lower = model.lower()
         mapped = self.MODEL_MAPPING.get(model_lower, model)
-        
-        # If we have a known default model from listing, use that
-        if self._default_model and mapped not in [self._default_model]:
-            logger.info("Overriding model %s with available model %s", mapped, self._default_model)
-            return self._default_model
-            
+        logger.debug("Gemini model mapping: %s -> %s", model, mapped)
         return mapped
     
     async def generate(
         self,
         prompt: str,
-        model: str = "gemini-1.5-flash",
+        model: str = "gemini-2.5-flash",
         **kwargs,
     ) -> GeminiResult:
         """
@@ -193,7 +190,7 @@ class GeminiProvider:
     async def complete(
         self,
         prompt: str,
-        model: str = "gemini-1.5-flash",
+        model: str = "gemini-2.5-flash",
         **kwargs,
     ) -> GeminiResult:
         """Alias for generate() - used by orchestration components."""
@@ -210,7 +207,8 @@ class GeminiProvider:
     def list_models(self) -> List[str]:
         """List available models."""
         return [
-            "gemini-1.5-flash",
-            "gemini-1.5-pro",
+            "gemini-2.5-pro",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
         ]
 
