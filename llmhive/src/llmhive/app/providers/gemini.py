@@ -74,6 +74,21 @@ class GeminiProvider:
             import google.generativeai as genai
             genai.configure(api_key=self.api_key)
             self._genai = genai
+            
+            # List available models for debugging
+            try:
+                available = [m.name for m in genai.list_models() if 'generateContent' in [method.name for method in getattr(m, 'supported_generation_methods', [])]]
+                logger.info("Gemini available models: %s", available[:5])  # Log first 5
+                if available:
+                    # Use the first available model as default
+                    self._default_model = available[0].replace("models/", "")
+                    logger.info("Gemini using default model: %s", self._default_model)
+                else:
+                    self._default_model = None
+            except Exception as e:
+                logger.warning("Could not list Gemini models: %s", e)
+                self._default_model = None
+                
             logger.info("Gemini provider initialized")
         except ImportError:
             raise ImportError(
@@ -84,7 +99,14 @@ class GeminiProvider:
     def _map_model_name(self, model: str) -> str:
         """Map UI model names to actual Gemini model names."""
         model_lower = model.lower()
-        return self.MODEL_MAPPING.get(model_lower, model)
+        mapped = self.MODEL_MAPPING.get(model_lower, model)
+        
+        # If we have a known default model from listing, use that
+        if self._default_model and mapped not in [self._default_model]:
+            logger.info("Overriding model %s with available model %s", mapped, self._default_model)
+            return self._default_model
+            
+        return mapped
     
     async def generate(
         self,
