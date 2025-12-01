@@ -397,30 +397,35 @@ def get_pinecone_feedback_store() -> PineconeFeedbackStore:
 # FastAPI Integration
 # ==============================================================================
 
+from pydantic import BaseModel, Field
+from typing import Optional as Opt
+
+# Models defined at module level to avoid forward reference issues
+class FeedbackRequestModel(BaseModel):
+    """Request model for submitting feedback."""
+    user_query: str = Field(..., description="The user's question/query")
+    answer_text: str = Field(..., description="The answer that was given")
+    feedback_type: str = Field(default="rating", description="thumbs_up, thumbs_down, or rating")
+    rating: Opt[float] = Field(default=None, description="Rating value (1-5 or 0-1)")
+    model_used: Opt[str] = Field(default=None, description="Model that generated the answer")
+    session_id: Opt[str] = Field(default=None, description="Session identifier")
+
+
+class FeedbackResponseModel(BaseModel):
+    """Response model for feedback submission."""
+    success: bool
+    feedback_id: Opt[str] = None
+    message: str
+
+
 def create_feedback_router():
     """Create FastAPI router for feedback endpoints."""
-    from fastapi import APIRouter, HTTPException, Body
-    from pydantic import BaseModel, Field
-    from typing import Optional
+    from fastapi import APIRouter, HTTPException
     
     router = APIRouter()
     
-    class FeedbackRequest(BaseModel):
-        """Request model for submitting feedback."""
-        user_query: str = Field(..., description="The user's question/query")
-        answer_text: str = Field(..., description="The answer that was given")
-        feedback_type: str = Field(default="rating", description="thumbs_up, thumbs_down, or rating")
-        rating: Optional[float] = Field(default=None, description="Rating value (1-5 or 0-1)")
-        model_used: Optional[str] = Field(default=None, description="Model that generated the answer")
-        session_id: Optional[str] = Field(default=None, description="Session identifier")
-    
-    class FeedbackResponse(BaseModel):
-        success: bool
-        feedback_id: Optional[str] = None
-        message: str
-    
-    @router.post("/feedback", response_model=FeedbackResponse)
-    async def submit_feedback(feedback: FeedbackRequest = Body(...)):
+    @router.post("/feedback", response_model=FeedbackResponseModel)
+    async def submit_feedback(feedback: FeedbackRequestModel):
         """Submit feedback on an answer.
         
         This feedback is stored in Pinecone for RLHF training.
@@ -444,13 +449,13 @@ def create_feedback_router():
         )
         
         if record:
-            return FeedbackResponse(
+            return FeedbackResponseModel(
                 success=True,
                 feedback_id=record.id,
                 message="Feedback recorded successfully",
             )
         else:
-            return FeedbackResponse(
+            return FeedbackResponseModel(
                 success=False,
                 message="Failed to record feedback - Pinecone may not be configured",
             )
