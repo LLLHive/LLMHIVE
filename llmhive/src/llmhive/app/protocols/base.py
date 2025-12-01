@@ -29,9 +29,15 @@ class ProtocolResult:
     step_outputs: Dict[str, List["LLMResult"]]
     supporting_notes: List[str]
     quality_assessments: Dict[str, any]  # ResponseAssessment objects
+    suggestions: List[any] = None  # Proactive suggestions from dialogue system
     evaluation: Optional["LLMResult"] = None
     refinement_rounds: int = 1
     accepted_after_refinement: bool = True
+    
+    def __post_init__(self):
+        """Initialize suggestions to empty list if None."""
+        if self.suggestions is None:
+            self.suggestions = []
 
 
 class BaseProtocol(ABC):
