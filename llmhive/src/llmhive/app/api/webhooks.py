@@ -1,7 +1,7 @@
 """Stripe webhook handling for subscription events.
 
-Stripe webhook handling: This module processes Stripe webhook events to keep
-subscriptions in sync with Stripe's payment system.
+Uses Firestore for subscription storage (no SQL database needed).
+No Vertex AI required - embeddings handled by Pinecone.
 """
 from __future__ import annotations
 
@@ -9,30 +9,31 @@ import datetime as dt
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Request, status
 
 from ..config import settings
-from ..database import get_db
+from ..firestore_db import (
+    FirestoreSubscriptionService,
+    is_firestore_available,
+)
 from ..billing.payments import get_payment_processor, STRIPE_AVAILABLE
-from ..billing.subscription import SubscriptionService
-from ..billing.pricing import TierName, get_pricing_manager
-from ..models import Subscription, SubscriptionStatus
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
+def get_subscription_service() -> FirestoreSubscriptionService:
+    """Get Firestore subscription service."""
+    return FirestoreSubscriptionService()
+
+
 @router.post("/stripe-webhook", status_code=status.HTTP_200_OK)
-async def stripe_webhook(
-    request: Request,
-    db: Session = Depends(get_db),
-) -> dict:
+async def stripe_webhook(request: Request) -> dict:
     """Stripe webhook handling: Process Stripe webhook events.
     
-    This endpoint receives webhook events from Stripe and updates our database
-    accordingly. It verifies the webhook signature before processing.
+    This endpoint receives webhook events from Stripe and updates Firestore.
+    No SQL database required - uses Firestore for subscription storage.
     
     Final path: /api/v1/webhooks/stripe-webhook
     
@@ -45,15 +46,11 @@ async def stripe_webhook(
     if not STRIPE_AVAILABLE:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Stripe integration not available",
+            detail="Stripe SDK not available. Install with: pip install stripe",
         )
     
-    processor = get_payment_processor()
-    if processor is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Stripe payment processor not configured",
-        )
+    if not is_firestore_available():
+        logger.warning("Firestore not available - subscription will not be persisted")
     
     # Stripe webhook handling: Get webhook signature from headers
     signature = request.headers.get("stripe-signature")
@@ -67,28 +64,27 @@ async def stripe_webhook(
     payload = await request.body()
     
     try:
-        # Stripe webhook handling: Verify webhook signature and construct event
-        result = processor.handle_webhook(
-            payload=payload,
-            signature=signature,
-            webhook_secret=settings.stripe_webhook_secret,
-            db_session=db,
-        )
-        
-        # Stripe webhook handling: Process additional events not handled by processor
         import stripe
+        
+        # Stripe webhook handling: Verify webhook signature and construct event
+        webhook_secret = settings.stripe_webhook_secret
+        if not webhook_secret:
+            logger.error("STRIPE_WEBHOOK_SECRET not configured")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Webhook secret not configured",
+            )
         
         event = stripe.Webhook.construct_event(
             payload,
             signature,
-            settings.stripe_webhook_secret or "",
+            webhook_secret,
         )
         
         event_type = event["type"]
         event_data = event["data"]["object"]
         
-        service = SubscriptionService(db)
-        pricing_manager = get_pricing_manager()
+        service = get_subscription_service()
         
         # Stripe webhook handling: Handle checkout.session.completed
         if event_type == "checkout.session.completed":
@@ -107,7 +103,7 @@ async def stripe_webhook(
                 )
                 return {"received": True, "processed": False, "error": "No user_id in session"}
             
-            # Stripe webhook handling: Get subscription and tier from session
+            # Stripe webhook handling: Get subscription from session
             stripe_subscription_id = session.get("subscription")
             if not stripe_subscription_id:
                 logger.warning(
@@ -123,43 +119,27 @@ async def stripe_webhook(
                 
                 # Stripe webhook handling: Get tier from metadata or price
                 metadata = session.get("metadata", {})
-                tier_name = metadata.get("tier", "pro").lower()  # Default to pro
-                
-                # Stripe webhook handling: Get billing cycle from metadata
+                tier_name = metadata.get("tier", "pro").lower()
                 billing_cycle = metadata.get("billing_cycle", "monthly")
                 
-                # Stripe webhook handling: Get period dates from subscription
-                period_start = dt.datetime.fromtimestamp(
-                    stripe_subscription.current_period_start,
-                    tz=dt.timezone.utc
-                ).replace(tzinfo=None)
-                period_end = dt.datetime.fromtimestamp(
-                    stripe_subscription.current_period_end,
-                    tz=dt.timezone.utc
-                ).replace(tzinfo=None)
+                # Stripe webhook handling: Check if subscription already exists
+                existing = service.get_subscription_by_stripe_id(stripe_subscription_id)
                 
-                # Stripe webhook handling: Create or update subscription in our DB
-                existing_subscription = (
-                    db.query(Subscription)
-                    .filter(Subscription.stripe_subscription_id == stripe_subscription_id)
-                    .first()
-                )
-                
-                if existing_subscription:
-                    # Stripe webhook handling: Update existing subscription
-                    existing_subscription.status = SubscriptionStatus.ACTIVE
-                    existing_subscription.tier_name = tier_name
-                    existing_subscription.billing_cycle = billing_cycle
-                    existing_subscription.current_period_start = period_start
-                    existing_subscription.current_period_end = period_end
-                    existing_subscription.stripe_customer_id = stripe_customer_id
+                if existing:
+                    # Update existing subscription
+                    service.update_subscription(existing["id"], {
+                        "status": "active",
+                        "tier_name": tier_name,
+                        "billing_cycle": billing_cycle,
+                        "stripe_customer_id": stripe_customer_id,
+                    })
                     logger.info(
                         "Stripe webhook handling: Updated subscription for user %s (tier: %s)",
                         user_id,
                         tier_name
                     )
                 else:
-                    # Stripe webhook handling: Create new subscription
+                    # Create new subscription in Firestore
                     subscription = service.create_subscription(
                         user_id=user_id,
                         tier_name=tier_name,
@@ -167,117 +147,74 @@ async def stripe_webhook(
                         stripe_customer_id=stripe_customer_id,
                         stripe_subscription_id=stripe_subscription_id,
                     )
-                    # Update period dates (create_subscription sets defaults)
-                    subscription.current_period_start = period_start
-                    subscription.current_period_end = period_end
-                    logger.info(
-                        "Stripe webhook handling: Created subscription for user %s (tier: %s, cycle: %s)",
-                        user_id,
-                        tier_name,
-                        billing_cycle
-                    )
-                
-                db.commit()
+                    
+                    if subscription:
+                        logger.info(
+                            "Stripe webhook handling: Created subscription %s for user %s (tier: %s)",
+                            subscription.get("id"),
+                            user_id,
+                            tier_name
+                        )
+                    else:
+                        logger.error("Failed to create subscription in Firestore")
                 
             except Exception as exc:
                 logger.exception(
                     "Stripe webhook handling: Failed to process checkout.session.completed: %s",
                     exc
                 )
-                db.rollback()
                 return {"received": True, "processed": False, "error": str(exc)}
         
         # Stripe webhook handling: Handle customer.subscription.updated
         elif event_type == "customer.subscription.updated":
             stripe_subscription_id = event_data.get("id")
-            subscription = (
-                db.query(Subscription)
-                .filter(Subscription.stripe_subscription_id == stripe_subscription_id)
-                .first()
-            )
+            subscription = service.get_subscription_by_stripe_id(stripe_subscription_id)
             
             if subscription:
-                # Stripe webhook handling: Update period dates
-                period_start = dt.datetime.fromtimestamp(
-                    event_data.get("current_period_start", 0),
-                    tz=dt.timezone.utc
-                ).replace(tzinfo=None)
-                period_end = dt.datetime.fromtimestamp(
-                    event_data.get("current_period_end", 0),
-                    tz=dt.timezone.utc
-                ).replace(tzinfo=None)
-                service.update_subscription_period(
-                    subscription.id,
-                    period_start,
-                    period_end,
-                )
-                
-                # Stripe webhook handling: Update status
+                # Stripe webhook handling: Map Stripe status to our status
                 status_map = {
-                    "active": SubscriptionStatus.ACTIVE,
-                    "canceled": SubscriptionStatus.CANCELLED,
-                    "past_due": SubscriptionStatus.PAST_DUE,
-                    "trialing": SubscriptionStatus.TRIALING,
-                    "unpaid": SubscriptionStatus.EXPIRED,
+                    "active": "active",
+                    "canceled": "cancelled",
+                    "past_due": "past_due",
+                    "trialing": "trialing",
+                    "unpaid": "expired",
                 }
                 stripe_status = event_data.get("status")
-                if stripe_status in status_map:
-                    service.update_subscription_status(subscription.id, status_map[stripe_status])
+                our_status = status_map.get(stripe_status, "active")
                 
-                # Stripe webhook handling: Update tier if changed in metadata
-                metadata = event_data.get("metadata", {})
-                if "tier_name" in metadata:
-                    new_tier = metadata["tier_name"]
-                    if new_tier != subscription.tier_name:
-                        tier = pricing_manager.get_tier(new_tier)
-                        if tier:
-                            subscription.tier_name = new_tier
-                            logger.info(
-                                "Stripe webhook handling: Updated tier for subscription %d: %s -> %s",
-                                subscription.id,
-                                subscription.tier_name,
-                                new_tier
-                            )
+                service.update_subscription(subscription["id"], {
+                    "status": our_status,
+                })
                 
-                db.commit()
+                logger.info(
+                    "Stripe webhook handling: Updated subscription %s status to %s",
+                    subscription["id"],
+                    our_status
+                )
         
         # Stripe webhook handling: Handle customer.subscription.deleted
         elif event_type == "customer.subscription.deleted":
             stripe_subscription_id = event_data.get("id")
-            subscription = (
-                db.query(Subscription)
-                .filter(Subscription.stripe_subscription_id == stripe_subscription_id)
-                .first()
-            )
+            subscription = service.get_subscription_by_stripe_id(stripe_subscription_id)
             
             if subscription:
-                # Stripe webhook handling: Cancel subscription
-                service.update_subscription_status(subscription.id, SubscriptionStatus.CANCELLED)
-                subscription.cancelled_at = dt.datetime.utcnow()
-                db.commit()
+                service.cancel_subscription(subscription["id"])
                 logger.info(
-                    "Stripe webhook handling: Cancelled subscription %d (user: %s)",
-                    subscription.id,
-                    subscription.user_id
+                    "Stripe webhook handling: Cancelled subscription %s (user: %s)",
+                    subscription["id"],
+                    subscription.get("user_id")
                 )
         
         # Stripe webhook handling: Handle invoice.payment_failed
         elif event_type == "invoice.payment_failed":
             stripe_subscription_id = event_data.get("subscription")
             if stripe_subscription_id:
-                subscription = (
-                    db.query(Subscription)
-                    .filter(Subscription.stripe_subscription_id == stripe_subscription_id)
-                    .first()
-                )
+                subscription = service.get_subscription_by_stripe_id(stripe_subscription_id)
                 if subscription:
-                    # Stripe webhook handling: Mark as past due
-                    service.update_subscription_status(subscription.id, SubscriptionStatus.PAST_DUE)
-                    db.commit()
+                    service.update_subscription_status(subscription["id"], "past_due")
                     logger.warning(
-                        "Stripe webhook handling: Payment failed for subscription %d (user: %s)",
-                        subscription.id,
-                        subscription.user_id
+                        "Stripe webhook handling: Payment failed for subscription %s",
+                        subscription["id"]
                     )
         
         return {"received": True, "processed": True, "event_type": event_type}
@@ -304,17 +241,14 @@ async def stripe_webhook(
 
 # Alias route for user's preferred URL: /api/v1/stripe/webhook
 @router.post("/webhook", status_code=status.HTTP_200_OK)
-async def stripe_webhook_alias(
-    request: Request,
-    db: Session = Depends(get_db),
-) -> dict:
+async def stripe_webhook_alias(request: Request) -> dict:
     """Alias for Stripe webhook at /api/v1/stripe/webhook.
     
     This is an alias route that calls the main stripe_webhook handler.
     Configure this URL in your Stripe Dashboard:
     https://llmhive-orchestrator-792354158895.us-east1.run.app/api/v1/stripe/webhook
     """
-    return await stripe_webhook(request, db)
+    return await stripe_webhook(request)
 
 
 @router.post("/stripe-webhook/test", status_code=status.HTTP_200_OK)
@@ -323,63 +257,81 @@ async def test_stripe_webhook(
     user_id: str,
     tier: str = "pro",
     billing_cycle: str = "monthly",
-    db: Session = Depends(get_db),
 ) -> dict:
     """Stripe webhook handling: Test endpoint to simulate webhook events.
     
-    This endpoint allows testing webhook processing without actual Stripe events.
-    Useful for development and testing.
+    Uses Firestore for storage - no SQL database needed.
     
-    Final path: /api/v1/webhooks/stripe-webhook/test?event_type={type}&user_id={id}&tier={tier}&billing_cycle={cycle}
+    Final path: /api/v1/webhooks/stripe-webhook/test?event_type={type}&user_id={id}
     
     Example:
-        POST /api/v1/webhooks/stripe-webhook/test?event_type=checkout.session.completed&user_id=user123&tier=pro&billing_cycle=monthly
+        POST /api/v1/webhooks/stripe-webhook/test?event_type=checkout.session.completed&user_id=user123&tier=pro
     """
+    if not is_firestore_available():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Firestore not available - ensure google-cloud-firestore is installed",
+        )
+    
     try:
-        service = SubscriptionService(db)
-        pricing_manager = get_pricing_manager()
+        service = get_subscription_service()
         
         # Stripe webhook handling: Simulate checkout.session.completed
         if event_type == "checkout.session.completed":
-            # Create subscription directly (simulating successful checkout)
-            subscription = service.create_subscription(
-                user_id=user_id,
-                tier_name=tier,
-                billing_cycle=billing_cycle,
-            )
-            db.commit()
+            # Check if user already has a subscription
+            existing = service.get_user_subscription(user_id)
             
-            logger.info(
-                "Stripe webhook handling: Test - Created subscription for user %s (tier: %s)",
-                user_id,
-                tier
-            )
-            
-            return {
-                "test": True,
-                "event_type": event_type,
-                "subscription_id": subscription.id,
-                "user_id": user_id,
-                "tier": tier,
-            }
+            if existing:
+                # Update existing
+                service.update_subscription(existing["id"], {
+                    "tier_name": tier,
+                    "billing_cycle": billing_cycle,
+                    "status": "active",
+                })
+                
+                return {
+                    "test": True,
+                    "event_type": event_type,
+                    "action": "updated",
+                    "subscription_id": existing["id"],
+                    "user_id": user_id,
+                    "tier": tier,
+                }
+            else:
+                # Create new subscription
+                subscription = service.create_subscription(
+                    user_id=user_id,
+                    tier_name=tier,
+                    billing_cycle=billing_cycle,
+                )
+                
+                if subscription:
+                    return {
+                        "test": True,
+                        "event_type": event_type,
+                        "action": "created",
+                        "subscription_id": subscription.get("id"),
+                        "user_id": user_id,
+                        "tier": tier,
+                    }
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to create subscription in Firestore",
+                    )
         
         # Stripe webhook handling: Simulate customer.subscription.deleted
         elif event_type == "customer.subscription.deleted":
             subscription = service.get_user_subscription(user_id)
             if subscription:
-                service.cancel_subscription(subscription.id, cancel_immediately=True)
-                db.commit()
-                
-                logger.info(
-                    "Stripe webhook handling: Test - Cancelled subscription for user %s",
-                    user_id
-                )
+                service.cancel_subscription(subscription["id"])
                 
                 return {
                     "test": True,
                     "event_type": event_type,
+                    "action": "cancelled",
+                    "subscription_id": subscription["id"],
                     "user_id": user_id,
-                    "cancelled": True,
                 }
             else:
                 return {
@@ -396,11 +348,46 @@ async def test_stripe_webhook(
                 "error": f"Unsupported test event type: {event_type}",
             }
             
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.exception("Stripe webhook handling: Test webhook failed: %s", exc)
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Test webhook failed: {exc}",
         ) from exc
 
+
+@router.get("/subscription/{user_id}", status_code=status.HTTP_200_OK)
+async def get_user_subscription(user_id: str) -> dict:
+    """Get subscription for a user.
+    
+    Returns the user's current subscription status from Firestore.
+    """
+    if not is_firestore_available():
+        return {
+            "user_id": user_id,
+            "subscription": None,
+            "error": "Firestore not available",
+        }
+    
+    service = get_subscription_service()
+    subscription = service.get_user_subscription(user_id)
+    
+    if subscription:
+        # Convert datetime objects to strings for JSON serialization
+        for key in ["created_at", "updated_at", "cancelled_at", "current_period_start", "current_period_end"]:
+            if key in subscription and subscription[key]:
+                if hasattr(subscription[key], 'isoformat'):
+                    subscription[key] = subscription[key].isoformat()
+        
+        return {
+            "user_id": user_id,
+            "subscription": subscription,
+        }
+    else:
+        return {
+            "user_id": user_id,
+            "subscription": None,
+            "tier": "free",  # Default tier for users without subscription
+        }

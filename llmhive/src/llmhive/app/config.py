@@ -44,6 +44,14 @@ class Settings:
     memory_ttl_days: int = int(os.getenv("MEMORY_TTL_DAYS", "90"))
     memory_max_results: int = int(os.getenv("MEMORY_MAX_RESULTS", "10"))
     memory_min_score: float = float(os.getenv("MEMORY_MIN_SCORE", "0.7"))
+    
+    # Stripe Configuration (Billing)
+    stripe_api_key: str | None = os.getenv("STRIPE_SECRET_KEY")
+    stripe_webhook_secret: str | None = os.getenv("STRIPE_WEBHOOK_SECRET")
+    stripe_publishable_key: str | None = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    
+    # Google Cloud Configuration
+    google_cloud_project: str | None = os.getenv("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT"))
 
 
 # Global settings instance
