@@ -514,7 +514,7 @@ def get_suggestions_for_word(word: str) -> List[str]:
 
 def create_spell_check_router():
     """Create FastAPI router for spell check endpoints."""
-    from fastapi import APIRouter, HTTPException
+    from fastapi import APIRouter, Body, HTTPException
     from pydantic import BaseModel, Field
     
     router = APIRouter()
@@ -538,26 +538,26 @@ def create_spell_check_router():
         suggestions: List[str]
     
     @router.post("/check", response_model=SpellCheckResponse)
-    async def check_spelling(data: SpellCheckRequest):
+    async def check_spelling(text: str = Body(...), mode: str = Body("auto_correct")):
         """Check text for spelling errors."""
         try:
-            result = spell_check_tool(data.text, data.mode)
+            result = spell_check_tool(text, mode)
             return SpellCheckResponse(**result)
         except Exception as e:
             logger.error(f"Spell check error: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     
     @router.post("/suggest", response_model=SuggestionsResponse)
-    async def get_suggestions(data: SuggestionsRequest):
+    async def get_suggestions(word: str = Body(..., embed=True)):
         """Get spelling suggestions for a word."""
-        suggestions = get_suggestions_for_word(data.word)
-        return SuggestionsResponse(word=data.word, suggestions=suggestions)
+        suggestions = get_suggestions_for_word(word)
+        return SuggestionsResponse(word=word, suggestions=suggestions)
     
     @router.post("/correct")
-    async def auto_correct(data: SpellCheckRequest):
+    async def auto_correct(text: str = Body(...), mode: str = Body("auto_correct")):
         """Auto-correct text and return corrected version."""
-        corrected = correct_text(data.text)
-        return {"original": data.text, "corrected": corrected}
+        corrected = correct_text(text)
+        return {"original": text, "corrected": corrected}
     
     return router
 
