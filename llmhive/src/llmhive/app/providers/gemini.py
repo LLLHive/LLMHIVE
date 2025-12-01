@@ -77,14 +77,22 @@ class GeminiProvider:
             
             # List available models for debugging
             try:
-                available = [m.name for m in genai.list_models() if 'generateContent' in [method.name for method in getattr(m, 'supported_generation_methods', [])]]
-                logger.info("Gemini available models: %s", available[:5])  # Log first 5
+                models_list = list(genai.list_models())
+                available = []
+                for m in models_list:
+                    # Check if model supports generateContent
+                    methods = getattr(m, 'supported_generation_methods', [])
+                    if 'generateContent' in methods:
+                        available.append(m.name)
+                
+                logger.info("Gemini available models: %s", available[:10])  # Log first 10
                 if available:
-                    # Use the first available model as default
+                    # Use the first available model as default (remove "models/" prefix)
                     self._default_model = available[0].replace("models/", "")
                     logger.info("Gemini using default model: %s", self._default_model)
                 else:
                     self._default_model = None
+                    logger.warning("No Gemini models with generateContent support found")
             except Exception as e:
                 logger.warning("Could not list Gemini models: %s", e)
                 self._default_model = None
