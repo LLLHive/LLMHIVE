@@ -506,6 +506,14 @@ class Orchestrator:
                 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
                 
                 class OpenAIProvider:
+                    # Orchestration kwargs to filter out (not valid for OpenAI API)
+                    ORCHESTRATION_KWARGS = {
+                        'use_hrm', 'use_adaptive_routing', 'use_deep_consensus', 
+                        'use_prompt_diffusion', 'use_memory', 'accuracy_level',
+                        'session_id', 'user_id', 'user_tier', 'enable_tools',
+                        'knowledge_snippets', 'context', 'plan', 'db_session',
+                    }
+                    
                     def __init__(self, client):
                         self.name = 'openai'
                         self.client = client
@@ -513,10 +521,15 @@ class Orchestrator:
                     async def generate(self, prompt, model="gpt-4o-mini", **kwargs):
                         """Generate response using OpenAI API."""
                         try:
+                            # Filter out orchestration-specific kwargs
+                            api_kwargs = {
+                                k: v for k, v in kwargs.items() 
+                                if k not in self.ORCHESTRATION_KWARGS
+                            }
                             response = self.client.chat.completions.create(
                                 model=model,
                                 messages=[{"role": "user", "content": prompt}],
-                                **kwargs
+                                **api_kwargs
                             )
                             class Result:
                                 def __init__(self, text, model, tokens):
@@ -546,6 +559,14 @@ class Orchestrator:
                 api_key = os.getenv("GROK_API_KEY")
                 
                 class GrokProvider:
+                    # Orchestration kwargs to filter out (not valid for Grok API)
+                    ORCHESTRATION_KWARGS = {
+                        'use_hrm', 'use_adaptive_routing', 'use_deep_consensus', 
+                        'use_prompt_diffusion', 'use_memory', 'accuracy_level',
+                        'session_id', 'user_id', 'user_tier', 'enable_tools',
+                        'knowledge_snippets', 'context', 'plan', 'db_session',
+                    }
+                    
                     def __init__(self, api_key):
                         self.name = 'grok'
                         self.api_key = api_key
@@ -554,6 +575,11 @@ class Orchestrator:
                     async def generate(self, prompt, model="grok-beta", **kwargs):
                         """Generate response using Grok (xAI) API."""
                         try:
+                            # Filter out orchestration-specific kwargs
+                            api_kwargs = {
+                                k: v for k, v in kwargs.items() 
+                                if k not in self.ORCHESTRATION_KWARGS
+                            }
                             async with httpx.AsyncClient() as client:
                                 response = await client.post(
                                     f"{self.base_url}/chat/completions",
@@ -564,7 +590,7 @@ class Orchestrator:
                                     json={
                                         "model": model,
                                         "messages": [{"role": "user", "content": prompt}],
-                                        **kwargs
+                                        **api_kwargs
                                     },
                                     timeout=30.0
                                 )
