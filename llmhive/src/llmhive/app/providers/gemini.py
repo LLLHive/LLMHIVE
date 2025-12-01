@@ -47,15 +47,15 @@ class GeminiProvider:
     }
     
     # Model name mapping (UI names to actual Gemini model names)
-    # Note: Use "gemini-1.5-flash-latest" or "gemini-1.5-pro-latest" for latest versions
+    # Google AI Studio models use format like "gemini-1.5-flash" or "gemini-pro"
     MODEL_MAPPING = {
-        "gemini-2.5-pro": "gemini-1.5-pro-latest",
-        "gemini-2.5-flash": "gemini-1.5-flash-latest",
-        "gemini-2.0-flash": "gemini-1.5-flash-latest",
-        "gemini-pro": "gemini-1.5-pro-latest",
-        "gemini-flash": "gemini-1.5-flash-latest",
-        "gemini-1.5-pro": "gemini-1.5-pro-latest",
-        "gemini-1.5-flash": "gemini-1.5-flash-latest",
+        "gemini-2.5-pro": "gemini-pro",
+        "gemini-2.5-flash": "gemini-pro",
+        "gemini-2.0-flash": "gemini-pro",
+        "gemini-1.5-pro": "gemini-pro",
+        "gemini-1.5-flash": "gemini-pro",
+        "gemini-1.5-pro-latest": "gemini-pro",
+        "gemini-1.5-flash-latest": "gemini-pro",
     }
     
     def __init__(self, api_key: Optional[str] = None):
@@ -91,7 +91,7 @@ class GeminiProvider:
     async def generate(
         self,
         prompt: str,
-        model: str = "gemini-1.5-flash-latest",
+        model: str = "gemini-pro",
         **kwargs,
     ) -> GeminiResult:
         """
@@ -165,7 +165,7 @@ class GeminiProvider:
     async def complete(
         self,
         prompt: str,
-        model: str = "gemini-1.5-flash-latest",
+        model: str = "gemini-pro",
         **kwargs,
     ) -> GeminiResult:
         """Alias for generate() - used by orchestration components."""
@@ -182,7 +182,7 @@ class GeminiProvider:
     def list_models(self) -> List[str]:
         """List available models."""
         return [
-            "gemini-1.5-pro-latest",
-            "gemini-1.5-flash-latest",
+            "gemini-pro",
+            "gemini-pro-vision",
         ]
 
