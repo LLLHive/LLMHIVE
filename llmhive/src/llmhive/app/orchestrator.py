@@ -640,7 +640,8 @@ class Orchestrator:
             try:
                 import httpx
                 
-                anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+                # Strip any whitespace/newlines from the API key (secrets sometimes have trailing newlines)
+                anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
                 
                 class AnthropicProvider:
                     """Anthropic provider using httpx for reliable async connections."""
