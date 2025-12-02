@@ -98,6 +98,32 @@ try:
 except ImportError:
     VERIFIER_PROMPT_AVAILABLE = False
 
+# Import Tool Verification for math, code, and factual verification
+try:
+    from ..orchestration.tool_verification import (
+        get_verification_pipeline,
+        VerificationPipeline,
+        VerificationType,
+    )
+    TOOL_VERIFICATION_AVAILABLE = True
+except ImportError:
+    TOOL_VERIFICATION_AVAILABLE = False
+    get_verification_pipeline = None
+
+# Import Tool Broker for automatic tool detection and execution
+try:
+    from ..orchestration.tool_broker import (
+        get_tool_broker,
+        ToolBroker,
+        ToolType,
+        ToolAnalysis,
+        check_and_execute_tools,
+    )
+    TOOL_BROKER_AVAILABLE = True
+except ImportError:
+    TOOL_BROKER_AVAILABLE = False
+    get_tool_broker = None
+
 logger = logging.getLogger(__name__)
 
 # Configuration
@@ -539,6 +565,47 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 logger.warning("PromptOps failed, using raw prompt: %s", e)
         
         # ========================================================================
+        # STEP 1.5: TOOL BROKER - Automatic Tool Detection and Execution
+        # ========================================================================
+        tool_context = ""
+        tool_results_info: Dict[str, Any] = {"used": False}
+        
+        if TOOL_BROKER_AVAILABLE and (prompt_spec is None or prompt_spec.analysis.requires_tools):
+            try:
+                broker = get_tool_broker()
+                tool_analysis = broker.analyze_tool_needs(base_prompt)
+                
+                if tool_analysis.requires_tools:
+                    logger.info(
+                        "Tool Broker: Detected need for tools: %s",
+                        [r.tool_type.value for r in tool_analysis.tool_requests],
+                    )
+                    
+                    # Execute tools in parallel
+                    tool_results = await broker.execute_tools(
+                        tool_analysis.tool_requests,
+                        parallel=True,
+                    )
+                    
+                    # Format results for model context
+                    tool_context = broker.format_tool_results(tool_results)
+                    
+                    # Track tool usage for response metadata
+                    tool_results_info = {
+                        "used": True,
+                        "tools": [t.value for t in tool_results.keys()],
+                        "success_count": sum(1 for r in tool_results.values() if r.success),
+                        "reasoning": tool_analysis.reasoning,
+                    }
+                    
+                    # Append tool context to the prompt
+                    if tool_context:
+                        base_prompt = f"{base_prompt}\n\n[Tool Results]\n{tool_context}"
+                        logger.info("Tool context added to prompt (%d chars)", len(tool_context))
+            except Exception as e:
+                logger.warning("Tool Broker failed: %s", e)
+        
+        # ========================================================================
         # STEP 2: AUTOMATIC MODEL SELECTION (When user selected "automatic")
         # ========================================================================
         # Check if we should use automatic model selection
@@ -690,6 +757,48 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     logger.warning("Quality boost failed: %s", e)
         
         # ========================================================================
+        # STEP 4: TOOL-BASED VERIFICATION (For code/math/factual tasks)
+        # ========================================================================
+        verification_confidence = 1.0
+        verification_issues: List[str] = []
+        
+        # Only verify for tasks that benefit from deterministic verification
+        should_verify = (
+            TOOL_VERIFICATION_AVAILABLE and
+            VERIFICATION_ENABLED and
+            task_type in ["code_generation", "debugging", "math_problem", "factual_question"]
+        )
+        
+        if should_verify:
+            try:
+                verification_pipeline = get_verification_pipeline()
+                
+                verified_text, verification_confidence, verification_issues = (
+                    await verification_pipeline.verify_answer(
+                        final_text,
+                        base_prompt,
+                        fix_errors=True,  # Auto-correct math/code errors
+                    )
+                )
+                
+                if verification_issues:
+                    logger.warning(
+                        "Verification found %d issues (confidence=%.2f): %s",
+                        len(verification_issues),
+                        verification_confidence,
+                        verification_issues[:3],
+                    )
+                    final_text = verified_text  # Use corrected version
+                else:
+                    logger.info(
+                        "Verification passed: task=%s, confidence=%.2f",
+                        task_type,
+                        verification_confidence,
+                    )
+            except Exception as e:
+                logger.warning("Tool verification failed: %s", e)
+        
+        # ========================================================================
         # FINAL STEP: ALWAYS-ON ANSWER REFINEMENT
         # ========================================================================
         if REFINER_AVAILABLE and REFINER_ALWAYS_ON:
@@ -790,6 +899,21 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         # Add task type detected
         extra["task_type"] = task_type
+        
+        # Add verification results to extra
+        if should_verify:
+            extra["verification"] = {
+                "performed": True,
+                "confidence": verification_confidence,
+                "issues_found": len(verification_issues),
+                "issues": verification_issues[:5] if verification_issues else [],
+                "corrected": bool(verification_issues),
+            }
+        else:
+            extra["verification"] = {"performed": False}
+        
+        # Add tool broker results to extra
+        extra["tool_broker"] = tool_results_info
         
         # Add models used info to extra
         extra["models_requested"] = request.models or []
