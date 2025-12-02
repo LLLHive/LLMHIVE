@@ -1,9 +1,16 @@
-"""Adapter service to bridge ChatRequest to internal orchestrator."""
+"""Adapter service to bridge ChatRequest to internal orchestrator.
+
+Enhanced with Elite Orchestration for maximum performance:
+- Intelligent model-task matching
+- Quality-weighted fusion
+- Parallel execution
+- Challenge and refine strategies
+"""
 from __future__ import annotations
 
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from ..models.orchestration import (
     ChatRequest,
@@ -32,10 +39,103 @@ from .model_router import (
 )
 from .reasoning_prompts import get_reasoning_prompt_template
 
+# Import Elite Orchestrator and Quality Booster
+try:
+    from ..orchestration.elite_orchestrator import (
+        EliteOrchestrator,
+        EliteResult,
+        get_best_model_for_task,
+    )
+    ELITE_AVAILABLE = True
+except ImportError:
+    ELITE_AVAILABLE = False
+    EliteOrchestrator = None
+
+try:
+    from ..orchestration.quality_booster import (
+        QualityBooster,
+        boost_response,
+    )
+    QUALITY_BOOSTER_AVAILABLE = True
+except ImportError:
+    QUALITY_BOOSTER_AVAILABLE = False
+    QualityBooster = None
+
 logger = logging.getLogger(__name__)
 
 # Global orchestrator instance
 _orchestrator = Orchestrator()
+
+# Elite orchestrator instance (initialized on first use)
+_elite_orchestrator: Optional[EliteOrchestrator] = None
+_quality_booster: Optional[QualityBooster] = None
+
+
+def _get_elite_orchestrator() -> Optional[EliteOrchestrator]:
+    """Get or create elite orchestrator instance."""
+    global _elite_orchestrator
+    if _elite_orchestrator is None and ELITE_AVAILABLE:
+        _elite_orchestrator = EliteOrchestrator(
+            providers=_orchestrator.providers,
+            performance_tracker=getattr(_orchestrator, 'performance_tracker', None),
+            enable_learning=True,
+        )
+        logger.info("Elite orchestrator initialized")
+    return _elite_orchestrator
+
+
+def _get_quality_booster() -> Optional[QualityBooster]:
+    """Get or create quality booster instance."""
+    global _quality_booster
+    if _quality_booster is None and QUALITY_BOOSTER_AVAILABLE:
+        _quality_booster = QualityBooster(
+            providers=_orchestrator.providers,
+            default_model="gpt-4o",
+        )
+        logger.info("Quality booster initialized")
+    return _quality_booster
+
+
+def _detect_task_type(prompt: str) -> str:
+    """Detect task type from prompt for optimal routing."""
+    prompt_lower = prompt.lower()
+    
+    if any(kw in prompt_lower for kw in ["code", "function", "implement", "debug", "program"]):
+        return "code_generation"
+    elif any(kw in prompt_lower for kw in ["calculate", "solve", "math", "equation"]):
+        return "math_problem"
+    elif any(kw in prompt_lower for kw in ["research", "analyze", "comprehensive", "in-depth"]):
+        return "research_analysis"
+    elif any(kw in prompt_lower for kw in ["explain", "what is", "how does", "why"]):
+        return "explanation"
+    elif any(kw in prompt_lower for kw in ["compare", "versus", "difference"]):
+        return "comparison"
+    elif any(kw in prompt_lower for kw in ["summarize", "summary", "tldr"]):
+        return "summarization"
+    elif any(kw in prompt_lower for kw in ["quick", "fast", "brief"]):
+        return "fast_response"
+    elif any(kw in prompt_lower for kw in ["detailed", "thorough", "complete"]):
+        return "high_quality"
+    else:
+        return "general"
+
+
+def _select_elite_strategy(accuracy_level: int, task_type: str, num_models: int) -> str:
+    """Select the best elite orchestration strategy."""
+    # High accuracy = use more sophisticated strategies
+    if accuracy_level >= 4:
+        if task_type in ["code_generation", "debugging"]:
+            return "challenge_and_refine"
+        elif task_type in ["research_analysis", "comparison"]:
+            return "expert_panel" if num_models >= 3 else "quality_weighted_fusion"
+        else:
+            return "best_of_n"
+    elif accuracy_level >= 3:
+        return "quality_weighted_fusion"
+    elif accuracy_level >= 2:
+        return "parallel_race"
+    else:
+        return "single_best"
 
 
 def _map_reasoning_mode(mode: ReasoningMode) -> int:
@@ -234,37 +334,111 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             orchestration_config.get("accuracy_level", 3),
         )
         
-        # Call the orchestrator with enhanced prompt and selected models
-        # Pass orchestration settings as kwargs
-        artifacts = await _orchestrator.orchestrate(
-            enhanced_prompt,
-            actual_models,
-            use_hrm=orchestration_config.get("use_hrm", False),
-            use_adaptive_routing=orchestration_config.get("use_adaptive_routing", False),
-            use_deep_consensus=orchestration_config.get("use_deep_consensus", False),
-            use_prompt_diffusion=orchestration_config.get("use_prompt_diffusion", False),
-            accuracy_level=orchestration_config.get("accuracy_level", 3),
+        # Detect task type for optimal routing
+        task_type = _detect_task_type(base_prompt)
+        accuracy_level = orchestration_config.get("accuracy_level", 3)
+        
+        # Determine if we should use elite orchestration
+        use_elite = (
+            ELITE_AVAILABLE and 
+            accuracy_level >= 3 and 
+            len(actual_models) >= 2
         )
         
-        # Extract final response
-        final_text = artifacts.final_response.content
+        elite_result = None
+        
+        if use_elite:
+            logger.info(
+                "Using ELITE orchestration: task=%s, accuracy=%d, strategy=auto",
+                task_type, accuracy_level
+            )
+            
+            elite = _get_elite_orchestrator()
+            if elite:
+                try:
+                    # Select strategy based on accuracy and task
+                    strategy = _select_elite_strategy(accuracy_level, task_type, len(actual_models))
+                    
+                    elite_result = await elite.orchestrate(
+                        enhanced_prompt,
+                        task_type=task_type,
+                        available_models=actual_models,
+                        strategy=strategy,
+                        quality_threshold=0.7,
+                        max_parallel=min(3, len(actual_models)),
+                    )
+                    
+                    final_text = elite_result.final_answer
+                    
+                    logger.info(
+                        "Elite orchestration complete: strategy=%s, quality=%.2f, models=%s",
+                        elite_result.strategy_used,
+                        elite_result.quality_score,
+                        elite_result.models_used,
+                    )
+                except Exception as e:
+                    logger.warning("Elite orchestration failed, falling back: %s", e)
+                    use_elite = False
+        
+        if not use_elite or elite_result is None:
+            # Standard orchestration path
+            artifacts = await _orchestrator.orchestrate(
+                enhanced_prompt,
+                actual_models,
+                use_hrm=orchestration_config.get("use_hrm", False),
+                use_adaptive_routing=orchestration_config.get("use_adaptive_routing", False),
+                use_deep_consensus=orchestration_config.get("use_deep_consensus", False),
+                use_prompt_diffusion=orchestration_config.get("use_prompt_diffusion", False),
+                accuracy_level=accuracy_level,
+            )
+            final_text = artifacts.final_response.content
+        
+        # Apply quality boosting for high accuracy requests
+        if QUALITY_BOOSTER_AVAILABLE and accuracy_level >= 4:
+            booster = _get_quality_booster()
+            if booster:
+                try:
+                    logger.info("Applying quality boost for high-accuracy request")
+                    boost_result = await booster.boost(
+                        base_prompt,
+                        final_text,
+                        techniques=["reflection", "verification"],
+                        max_iterations=1,
+                    )
+                    if boost_result.quality_improvement > 0:
+                        final_text = boost_result.boosted_response
+                        logger.info(
+                            "Quality boost applied: improvement=%.2f, techniques=%s",
+                            boost_result.quality_improvement,
+                            boost_result.techniques_applied,
+                        )
+                except Exception as e:
+                    logger.warning("Quality boost failed: %s", e)
         
         # Build agent traces from artifacts (if available)
         traces: list[AgentTrace] = []
         
-        # Extract token usage if available
+        # Extract token usage and other metrics
         token_usage = None
-        if hasattr(artifacts.final_response, 'tokens_used'):
-            token_usage = artifacts.final_response.tokens_used
+        quality_score = None
+        
+        if elite_result:
+            # Use elite orchestrator metrics
+            token_usage = elite_result.total_tokens
+            quality_score = elite_result.quality_score
+            actual_models_used = elite_result.models_used
+        elif 'artifacts' in dir() and artifacts:
+            if hasattr(artifacts.final_response, 'tokens_used'):
+                token_usage = artifacts.final_response.tokens_used
+            actual_models_used = actual_models
+        else:
+            actual_models_used = actual_models
         
         # Calculate latency
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         
-        # Build extra data from artifacts
+        # Build extra data
         extra: Dict[str, Any] = {
-            "initial_responses_count": len(artifacts.initial_responses),
-            "critiques_count": len(artifacts.critiques),
-            "improvements_count": len(artifacts.improvements),
             "orchestration_settings": {
                 "accuracy_level": orchestration_config.get("accuracy_level", 3),
                 "hrm_enabled": orchestration_config.get("use_hrm", False),
@@ -274,9 +448,29 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             },
         }
         
-        # Add consensus notes if available
-        if hasattr(artifacts, 'consensus_notes') and artifacts.consensus_notes:
-            extra["consensus_notes"] = artifacts.consensus_notes
+        # Add elite orchestrator info if used
+        if elite_result:
+            extra["elite_orchestration"] = {
+                "enabled": True,
+                "strategy": elite_result.strategy_used,
+                "synthesis_method": elite_result.synthesis_method,
+                "quality_score": elite_result.quality_score,
+                "confidence": elite_result.confidence,
+                "responses_generated": elite_result.responses_generated,
+                "primary_model": elite_result.primary_model,
+            }
+            extra["performance_notes"] = elite_result.performance_notes
+        else:
+            if 'artifacts' in dir() and artifacts:
+                extra["initial_responses_count"] = len(artifacts.initial_responses)
+                extra["critiques_count"] = len(artifacts.critiques)
+                extra["improvements_count"] = len(artifacts.improvements)
+                # Add consensus notes if available
+                if hasattr(artifacts, 'consensus_notes') and artifacts.consensus_notes:
+                    extra["consensus_notes"] = artifacts.consensus_notes
+        
+        # Add task type detected
+        extra["task_type"] = task_type
         
         # Add models used info to extra
         extra["models_requested"] = request.models or []

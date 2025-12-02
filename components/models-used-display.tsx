@@ -24,7 +24,10 @@ export function ModelsUsedDisplay({
   compact = false,
 }: ModelsUsedDisplayProps) {
   const models = useMemo(() => {
-    return modelIds.map((id) => {
+    // Filter out "automatic" and empty strings
+    const filteredIds = modelIds.filter(id => id && id !== "automatic")
+    
+    return filteredIds.map((id) => {
       const model = getModelById(id)
       return {
         id,
@@ -35,7 +38,8 @@ export function ModelsUsedDisplay({
     })
   }, [modelIds])
 
-  if (modelIds.length === 0) {
+  // Don't show if no valid models
+  if (models.length === 0) {
     return null
   }
 

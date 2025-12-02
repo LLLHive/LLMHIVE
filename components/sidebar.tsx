@@ -179,15 +179,17 @@ export function Sidebar({
                   Discover
                 </Button>
               </Link>
-              {/* Collaborate */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-sm hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Collaborate
-              </Button>
+              {/* Collaborate - Link to future collaboration page */}
+              <Link href="/settings" className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-sm hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Collaborate
+                </Button>
+              </Link>
               {/* Orchestration link */}
               <Link href="/orchestration" className="w-full">
                 <Button

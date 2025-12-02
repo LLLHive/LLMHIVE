@@ -80,6 +80,62 @@ except ImportError:
     DiffusionResult = None  # type: ignore
     PromptVersion = None  # type: ignore
 
+# PromptOps Layer
+try:
+    from .prompt_ops import (
+        PromptOps,
+        PromptSpecification,
+        QueryAnalysis,
+        TaskSegment,
+        TaskType,
+        QueryComplexity,
+        preprocess_query,
+        analyze_query,
+    )
+    PROMPT_OPS_AVAILABLE = True
+except ImportError:
+    PROMPT_OPS_AVAILABLE = False
+    PromptOps = None  # type: ignore
+    PromptSpecification = None  # type: ignore
+    QueryAnalysis = None  # type: ignore
+
+# Answer Refiner
+try:
+    from .answer_refiner import (
+        AnswerRefiner,
+        RefinedAnswer,
+        RefinementConfig,
+        OutputFormat,
+        refine_answer,
+        quick_format,
+    )
+    ANSWER_REFINER_AVAILABLE = True
+except ImportError:
+    ANSWER_REFINER_AVAILABLE = False
+    AnswerRefiner = None  # type: ignore
+    RefinedAnswer = None  # type: ignore
+
+# Prompt Templates
+try:
+    from .prompt_templates import (
+        PLANNER_SYSTEM_PROMPT,
+        VERIFIER_SYSTEM_PROMPT,
+        REFINER_SYSTEM_PROMPT,
+        build_planner_prompt,
+        build_verifier_prompt,
+        build_refiner_prompt,
+        build_solver_prompt,
+        build_debate_prompt,
+        build_fact_check_prompt,
+        get_prompt_template,
+    )
+    PROMPT_TEMPLATES_AVAILABLE = True
+except ImportError:
+    PROMPT_TEMPLATES_AVAILABLE = False
+    PLANNER_SYSTEM_PROMPT = ""  # type: ignore
+    VERIFIER_SYSTEM_PROMPT = ""  # type: ignore
+    REFINER_SYSTEM_PROMPT = ""  # type: ignore
+
 __all__ = [
     "Blackboard",
     "HRMRegistry",
@@ -125,3 +181,329 @@ if ADAPTIVE_ROUTING_AVAILABLE:
 if PROMPT_DIFFUSION_AVAILABLE:
     __all__.extend(["PromptDiffusion", "DiffusionResult", "PromptVersion"])
 
+if PROMPT_OPS_AVAILABLE:
+    __all__.extend([
+        "PromptOps",
+        "PromptSpecification",
+        "QueryAnalysis",
+        "TaskSegment",
+        "TaskType",
+        "QueryComplexity",
+        "preprocess_query",
+        "analyze_query",
+    ])
+
+if ANSWER_REFINER_AVAILABLE:
+    __all__.extend([
+        "AnswerRefiner",
+        "RefinedAnswer",
+        "RefinementConfig",
+        "OutputFormat",
+        "refine_answer",
+        "quick_format",
+    ])
+
+if PROMPT_TEMPLATES_AVAILABLE:
+    __all__.extend([
+        "PLANNER_SYSTEM_PROMPT",
+        "VERIFIER_SYSTEM_PROMPT",
+        "REFINER_SYSTEM_PROMPT",
+        "build_planner_prompt",
+        "build_verifier_prompt",
+        "build_refiner_prompt",
+        "build_solver_prompt",
+        "build_debate_prompt",
+        "build_fact_check_prompt",
+        "get_prompt_template",
+    ])
+
+# Elite Orchestrator
+try:
+    from .elite_orchestrator import (
+        EliteOrchestrator,
+        EliteResult,
+        ModelCapability,
+        MODEL_CAPABILITIES,
+        TASK_CAPABILITIES,
+        elite_orchestrate,
+        get_best_model_for_task,
+    )
+    ELITE_ORCHESTRATOR_AVAILABLE = True
+except ImportError:
+    ELITE_ORCHESTRATOR_AVAILABLE = False
+    EliteOrchestrator = None  # type: ignore
+    EliteResult = None  # type: ignore
+
+# Quality Booster
+try:
+    from .quality_booster import (
+        QualityBooster,
+        QualityResult,
+        FactualQualityBooster,
+        CodeQualityBooster,
+        boost_response,
+        generate_high_quality,
+    )
+    QUALITY_BOOSTER_AVAILABLE = True
+except ImportError:
+    QUALITY_BOOSTER_AVAILABLE = False
+    QualityBooster = None  # type: ignore
+    QualityResult = None  # type: ignore
+
+if ELITE_ORCHESTRATOR_AVAILABLE:
+    __all__.extend([
+        "EliteOrchestrator",
+        "EliteResult",
+        "ModelCapability",
+        "MODEL_CAPABILITIES",
+        "TASK_CAPABILITIES",
+        "elite_orchestrate",
+        "get_best_model_for_task",
+    ])
+
+if QUALITY_BOOSTER_AVAILABLE:
+    __all__.extend([
+        "QualityBooster",
+        "QualityResult",
+        "FactualQualityBooster",
+        "CodeQualityBooster",
+        "boost_response",
+        "generate_high_quality",
+    ])
+
+# Elite Prompts
+try:
+    from .elite_prompts import (
+        OrchestratorRole,
+        META_CONTROLLER_SYSTEM_PROMPT,
+        PLANNER_SYSTEM_PROMPT as ELITE_PLANNER_PROMPT,
+        VERIFIER_SYSTEM_PROMPT as ELITE_VERIFIER_PROMPT,
+        CHALLENGER_SYSTEM_PROMPT,
+        REFINER_SYSTEM_PROMPT as ELITE_REFINER_PROMPT,
+        ROUTER_SYSTEM_PROMPT,
+        TOOL_BROKER_SYSTEM_PROMPT,
+        get_system_prompt,
+        get_all_prompts,
+        SELF_CONSISTENCY_TEMPLATE,
+        DEBATE_TEMPLATE,
+        FACT_CHECK_TEMPLATE,
+        SYNTHESIS_TEMPLATE,
+        REFLECTION_TEMPLATE,
+    )
+    ELITE_PROMPTS_AVAILABLE = True
+except ImportError:
+    ELITE_PROMPTS_AVAILABLE = False
+    OrchestratorRole = None  # type: ignore
+
+# Tool Broker
+try:
+    from .tool_broker import (
+        ToolBroker,
+        ToolType,
+        ToolPriority,
+        ToolRequest,
+        ToolResult,
+        ToolAnalysis,
+        WebSearchTool,
+        CalculatorTool,
+        CodeExecutionTool,
+        get_tool_broker,
+        check_and_execute_tools,
+    )
+    TOOL_BROKER_AVAILABLE = True
+except ImportError:
+    TOOL_BROKER_AVAILABLE = False
+    ToolBroker = None  # type: ignore
+
+# Industry Dominance Controller
+try:
+    from .dominance_controller import (
+        IndustryDominanceController,
+        OrchestrationStrategy,
+        QueryComplexity as DominanceQueryComplexity,
+        QueryType as DominanceQueryType,
+        QualityMetrics,
+        OrchestrationResult,
+        ExecutionPlan,
+        QueryAnalyzer,
+        StrategySelector,
+        create_dominance_controller,
+    )
+    DOMINANCE_CONTROLLER_AVAILABLE = True
+except ImportError:
+    DOMINANCE_CONTROLLER_AVAILABLE = False
+    IndustryDominanceController = None  # type: ignore
+
+if ELITE_PROMPTS_AVAILABLE:
+    __all__.extend([
+        "OrchestratorRole",
+        "META_CONTROLLER_SYSTEM_PROMPT",
+        "ELITE_PLANNER_PROMPT",
+        "ELITE_VERIFIER_PROMPT",
+        "CHALLENGER_SYSTEM_PROMPT",
+        "ELITE_REFINER_PROMPT",
+        "ROUTER_SYSTEM_PROMPT",
+        "TOOL_BROKER_SYSTEM_PROMPT",
+        "get_system_prompt",
+        "get_all_prompts",
+        "SELF_CONSISTENCY_TEMPLATE",
+        "DEBATE_TEMPLATE",
+        "FACT_CHECK_TEMPLATE",
+        "SYNTHESIS_TEMPLATE",
+        "REFLECTION_TEMPLATE",
+    ])
+
+if TOOL_BROKER_AVAILABLE:
+    __all__.extend([
+        "ToolBroker",
+        "ToolType",
+        "ToolPriority",
+        "ToolRequest",
+        "ToolResult",
+        "ToolAnalysis",
+        "WebSearchTool",
+        "CalculatorTool",
+        "CodeExecutionTool",
+        "get_tool_broker",
+        "check_and_execute_tools",
+    ])
+
+if DOMINANCE_CONTROLLER_AVAILABLE:
+    __all__.extend([
+        "IndustryDominanceController",
+        "OrchestrationStrategy",
+        "DominanceQueryComplexity",
+        "DominanceQueryType",
+        "QualityMetrics",
+        "OrchestrationResult",
+        "ExecutionPlan",
+        "QueryAnalyzer",
+        "StrategySelector",
+        "create_dominance_controller",
+    ])
+
+# ==================== PERFORMANCE OPTIMIZATION MODULES ====================
+
+# Advanced Reasoning Engine
+try:
+    from .advanced_reasoning import (
+        AdvancedReasoningEngine,
+        ReasoningStrategy,
+        ReasoningResult,
+        ThoughtNode,
+        get_reasoning_engine,
+    )
+    ADVANCED_REASONING_AVAILABLE = True
+except ImportError:
+    ADVANCED_REASONING_AVAILABLE = False
+    AdvancedReasoningEngine = None  # type: ignore
+    ReasoningStrategy = None  # type: ignore
+    ReasoningResult = None  # type: ignore
+
+# Smart Ensemble
+try:
+    from .smart_ensemble import (
+        SmartEnsemble,
+        TaskCategory,
+        ModelProfile,
+        EnsembleResult,
+        get_smart_ensemble,
+    )
+    SMART_ENSEMBLE_AVAILABLE = True
+except ImportError:
+    SMART_ENSEMBLE_AVAILABLE = False
+    SmartEnsemble = None  # type: ignore
+    TaskCategory = None  # type: ignore
+
+# Tool Verification
+try:
+    from .tool_verification import (
+        ToolVerifier,
+        VerificationPipeline,
+        VerificationType,
+        VerificationResult,
+        get_verification_pipeline,
+    )
+    TOOL_VERIFICATION_AVAILABLE = True
+except ImportError:
+    TOOL_VERIFICATION_AVAILABLE = False
+    ToolVerifier = None  # type: ignore
+    VerificationPipeline = None  # type: ignore
+
+# Benchmark Strategies
+try:
+    from .benchmark_strategies import (
+        BenchmarkOptimizer,
+        BenchmarkType,
+        BenchmarkConfig,
+        BenchmarkResult,
+        BenchmarkRunner,
+    )
+    BENCHMARK_STRATEGIES_AVAILABLE = True
+except ImportError:
+    BENCHMARK_STRATEGIES_AVAILABLE = False
+    BenchmarkOptimizer = None  # type: ignore
+    BenchmarkType = None  # type: ignore
+
+# Performance Controller - The Brain
+try:
+    from .performance_controller import (
+        PerformanceController,
+        PerformanceMode,
+        PerformanceConfig,
+        PerformanceResult,
+        create_performance_controller,
+        get_performance_controller,
+    )
+    PERFORMANCE_CONTROLLER_AVAILABLE = True
+except ImportError:
+    PERFORMANCE_CONTROLLER_AVAILABLE = False
+    PerformanceController = None  # type: ignore
+    PerformanceMode = None  # type: ignore
+
+# Export performance modules
+if ADVANCED_REASONING_AVAILABLE:
+    __all__.extend([
+        "AdvancedReasoningEngine",
+        "ReasoningStrategy",
+        "ReasoningResult",
+        "ThoughtNode",
+        "get_reasoning_engine",
+    ])
+
+if SMART_ENSEMBLE_AVAILABLE:
+    __all__.extend([
+        "SmartEnsemble",
+        "TaskCategory",
+        "ModelProfile",
+        "EnsembleResult",
+        "get_smart_ensemble",
+    ])
+
+if TOOL_VERIFICATION_AVAILABLE:
+    __all__.extend([
+        "ToolVerifier",
+        "VerificationPipeline",
+        "VerificationType",
+        "VerificationResult",
+        "get_verification_pipeline",
+    ])
+
+if BENCHMARK_STRATEGIES_AVAILABLE:
+    __all__.extend([
+        "BenchmarkOptimizer",
+        "BenchmarkType",
+        "BenchmarkConfig",
+        "BenchmarkResult",
+        "BenchmarkRunner",
+    ])
+
+if PERFORMANCE_CONTROLLER_AVAILABLE:
+    __all__.extend([
+        "PerformanceController",
+        "PerformanceMode",
+        "PerformanceConfig",
+        "PerformanceResult",
+        "create_performance_controller",
+        "get_performance_controller",
+    ])

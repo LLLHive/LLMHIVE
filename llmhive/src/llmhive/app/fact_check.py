@@ -121,7 +121,7 @@ class VerificationReport:
             1 for i in self.items if i.status == VerificationStatus.CONTESTED
         )
         self.is_valid = self.verification_score >= 0.7 and contested_count == 0
-    
+
     @property
     def verified_count(self) -> int:
         return sum(1 for i in self.items if i.verified)
@@ -129,7 +129,7 @@ class VerificationReport:
     @property
     def unverified_count(self) -> int:
         return sum(1 for i in self.items if not i.verified)
-    
+
     @property
     def contested_count(self) -> int:
         return sum(1 for i in self.items if i.status == VerificationStatus.CONTESTED)

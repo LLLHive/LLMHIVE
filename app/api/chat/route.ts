@@ -58,7 +58,19 @@ export async function POST(req: NextRequest) {
 
     // Build the ChatRequest payload matching FastAPI ChatRequest model
     // Include models selected by the user - these will be used for multi-model orchestration
-    const selectedModels = models || settings.selectedModels || []
+    // Filter out "automatic" and use default models if needed
+    const DEFAULT_AUTO_MODELS = ["gpt-4o", "claude-sonnet-4", "deepseek-chat"]
+    let selectedModels = models || settings.selectedModels || []
+    
+    // Expand "automatic" to actual models
+    if (selectedModels.includes("automatic") || selectedModels.length === 0) {
+      selectedModels = DEFAULT_AUTO_MODELS
+    } else {
+      selectedModels = selectedModels.filter((m: string) => m !== "automatic")
+      if (selectedModels.length === 0) {
+        selectedModels = DEFAULT_AUTO_MODELS
+      }
+    }
     
     const payload = {
       prompt,
@@ -85,6 +97,8 @@ export async function POST(req: NextRequest) {
         chat_id: chatId || null,
         user_id: userId || null,
         project_id: projectId || null,
+        // Dynamic Criteria Equalizer settings
+        criteria: settings.criteria || { accuracy: 70, speed: 70, creativity: 50 },
       },
       history,
     }
@@ -184,10 +198,36 @@ export async function POST(req: NextRequest) {
     // Parse the ChatResponse from FastAPI
     const data = await response.json()
 
-    // Extract the message content
-    const messageContent = data.message || "No response received"
+    // Extract the message content and metadata
+    // Ensure we never return empty or placeholder messages
+    let messageContent = data.message
+    if (!messageContent || messageContent === "No response received" || messageContent.trim() === "") {
+      messageContent = "I apologize, but I couldn't generate a response. Please try again."
+      console.warn("[Chat API] Empty or invalid message from backend, using fallback")
+    }
+    
+    // Ensure models_used contains actual models, not "automatic"
+    let modelsUsed = data.models_used || selectedModels
+    if (Array.isArray(modelsUsed)) {
+      modelsUsed = modelsUsed.filter((m: string) => m && m !== "automatic")
+      if (modelsUsed.length === 0) {
+        modelsUsed = selectedModels
+      }
+    } else {
+      modelsUsed = selectedModels
+    }
+    
+    const tokensUsed = data.tokens_used || 0
+    const latencyMs = data.latency_ms || 0
 
-    // Return as streaming response (frontend expects stream)
+    console.log("[Chat API] Received from backend:", {
+      messageLength: messageContent.length,
+      modelsUsed,
+      tokensUsed,
+      latencyMs,
+    })
+
+    // Return as streaming response with metadata in headers
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
@@ -205,6 +245,12 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Transfer-Encoding": "chunked",
+        // Expose metadata in custom headers
+        "X-Models-Used": JSON.stringify(modelsUsed),
+        "X-Tokens-Used": String(tokensUsed),
+        "X-Latency-Ms": String(latencyMs),
+        // Allow frontend to access custom headers
+        "Access-Control-Expose-Headers": "X-Models-Used, X-Tokens-Used, X-Latency-Ms",
       },
     })
   } catch (error: any) {

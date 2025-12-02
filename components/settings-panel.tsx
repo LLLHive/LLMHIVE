@@ -160,16 +160,17 @@ export function SettingsPanel() {
                 <div className="pl-[52px] space-y-4">
                   <div className="space-y-2">
                     <Label>Default Model</Label>
-                    <Select defaultValue="gpt-5-mini">
+                    <Select defaultValue="gpt-4o">
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="gpt-5">GPT-5</SelectItem>
-                        <SelectItem value="gpt-5-mini">GPT-5 Mini</SelectItem>
-                        <SelectItem value="claude-sonnet-4.5">Claude Sonnet 4.5</SelectItem>
-                        <SelectItem value="grok-4">Grok 4</SelectItem>
+                        <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                        <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                        <SelectItem value="claude-sonnet-4">Claude Sonnet 4</SelectItem>
+                        <SelectItem value="grok-2">Grok 2</SelectItem>
                         <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                        <SelectItem value="deepseek-chat">DeepSeek V3</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

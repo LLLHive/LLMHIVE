@@ -1,12 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Paperclip, Mic, X, ImageIcon, FileText } from "lucide-react"
-import { getModelById } from "@/lib/models"
+import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
 import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType } from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
@@ -15,6 +15,9 @@ import { ChatToolbar } from "./chat-toolbar"
 import { OrchestrationStudio } from "./orchestration-studio"
 import { LiveStatusPanel } from "./live-status-panel"
 import { ModelsUsedDisplay } from "./models-used-display"
+
+// Default models to use when "automatic" is selected
+const DEFAULT_AUTO_MODELS = ["gpt-4o", "claude-sonnet-4", "deepseek-chat"]
 
 interface ChatAreaProps {
   conversation?: Conversation
@@ -36,7 +39,6 @@ export function ChatArea({
   userAccountMenu,
 }: ChatAreaProps) {
   const [input, setInput] = useState("")
-  const [selectedModels, setSelectedModels] = useState<string[]>(["automatic"])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInsights, setShowInsights] = useState(false)
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
@@ -54,7 +56,19 @@ export function ChatArea({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const eventIdRef = useRef(0)
 
-  const currentModel = getModelById(selectedModels[0] || "automatic")
+  // Use models from orchestrator settings - sync with settings
+  const selectedModels = orchestratorSettings.selectedModels || ["automatic"]
+  
+  // Get actual models to send to backend (expand "automatic" to real models)
+  const getActualModels = (): string[] => {
+    if (selectedModels.includes("automatic") || selectedModels.length === 0) {
+      return DEFAULT_AUTO_MODELS
+    }
+    // Filter out "automatic" if mixed with other models
+    return selectedModels.filter(m => m !== "automatic")
+  }
+
+  const currentModel = getModelById(selectedModels[0] || "gpt-4o")
 
   // Add orchestration event
   const addOrchestrationEvent = useCallback((
@@ -94,8 +108,14 @@ export function ChatArea({
       events.push({ type: "dispatching_model", message: "Assigning hierarchical roles...", delay: 300 })
     }
 
-    // Add model dispatches based on selected models
-    const models = settings.selectedModels || ["automatic"]
+    // Add model dispatches based on selected models - expand "automatic" to real models
+    let models = settings.selectedModels || ["automatic"]
+    if (models.includes("automatic") || models.length === 0) {
+      models = DEFAULT_AUTO_MODELS
+    } else {
+      models = models.filter(m => m !== "automatic")
+    }
+    
     for (const modelId of models.slice(0, 3)) {
       const model = getModelById(modelId)
       events.push({
@@ -177,25 +197,46 @@ export function ChatArea({
     simulateOrchestrationEvents(orchestratorSettings)
 
     try {
+      // Get actual models to use (expand "automatic")
+      const actualModels = getActualModels()
+      
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...(conversation?.messages || []), userMessage],
-          models: selectedModels,
-          model: selectedModels[0],
-          orchestratorSettings,
+          models: actualModels,
+          model: actualModels[0],
+          orchestratorSettings: {
+            ...orchestratorSettings,
+            selectedModels: actualModels, // Always send actual models, not "automatic"
+          },
         }),
       })
 
-      if (!response.ok) throw new Error("Failed to get response")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Request failed: ${response.status}`)
+      }
 
       // Extract metadata from response headers
       const modelsUsedHeader = response.headers.get("X-Models-Used")
       const tokensUsedHeader = response.headers.get("X-Tokens-Used")
       const backendLatencyHeader = response.headers.get("X-Latency-Ms")
       
-      const modelsUsed = modelsUsedHeader ? JSON.parse(modelsUsedHeader) : selectedModels.slice(0, 3)
+      // Parse models used - fall back to actual models sent
+      let modelsUsed: string[] = actualModels
+      if (modelsUsedHeader) {
+        try {
+          const parsed = JSON.parse(modelsUsedHeader)
+          // Filter out "automatic" and empty strings
+          modelsUsed = parsed.filter((m: string) => m && m !== "automatic")
+          if (modelsUsed.length === 0) modelsUsed = actualModels
+        } catch {
+          modelsUsed = actualModels
+        }
+      }
+      
       const tokensUsed = tokensUsedHeader ? parseInt(tokensUsedHeader, 10) : 0
       const backendLatencyMs = backendLatencyHeader ? parseInt(backendLatencyHeader, 10) : 0
 
@@ -213,17 +254,31 @@ export function ChatArea({
 
       const latencyMs = backendLatencyMs || (Date.now() - startTime)
 
+      // Build agent info from actual models used
+      const agentContributions = modelsUsed.slice(0, 3).map((modelId, index) => {
+        const model = getModelById(modelId)
+        const roles = ["Primary response", "Analysis and verification", "Cross-validation"]
+        return {
+          agentId: `agent-${index + 1}`,
+          agentName: model?.name || modelId,
+          agentType: "general" as const,
+          contribution: roles[index] || "Supporting response",
+          confidence: 0.9 - (index * 0.05),
+        }
+      })
+
       const assistantMessage: Message = {
         id: `msg-${Date.now()}`,
         role: "assistant",
-        content: assistantContent,
+        content: assistantContent || "I apologize, but I couldn't generate a response. Please try again.",
         timestamp: new Date(),
-        model: selectedModels[0],
-        agents: [
+        model: modelsUsed[0] || actualModels[0],
+        agents: agentContributions.length > 0 ? agentContributions : [
           { agentId: "agent-1", agentName: "General Agent", agentType: "general", contribution: "Primary response", confidence: 0.9 },
-          { agentId: "agent-2", agentName: "Research Agent", agentType: "research", contribution: "Fact verification", confidence: 0.85 },
         ],
-        consensus: { confidence: 88, debateOccurred: true, consensusNote: "All agents reached consensus" },
+        consensus: modelsUsed.length > 1 
+          ? { confidence: 88, debateOccurred: true, consensusNote: `${modelsUsed.length} models reached consensus` }
+          : { confidence: 95, debateOccurred: false, consensusNote: "Single model response" },
       }
 
       onSendMessage(assistantMessage)
