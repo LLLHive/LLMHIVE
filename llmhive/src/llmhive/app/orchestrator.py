@@ -639,7 +639,13 @@ class Orchestrator:
         if os.getenv("ANTHROPIC_API_KEY"):
             try:
                 import anthropic
-                client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+                import httpx
+                
+                # Create client with explicit timeout and transport
+                client = anthropic.Anthropic(
+                    api_key=os.getenv("ANTHROPIC_API_KEY"),
+                    timeout=httpx.Timeout(60.0, connect=10.0),
+                )
                 
                 class AnthropicProvider:
                     # Model mapping for Claude models
