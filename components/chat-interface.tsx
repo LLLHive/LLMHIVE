@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sidebar } from "./sidebar"
 import { ChatArea } from "./chat-area"
 import { HomeScreen } from "./home-screen"
@@ -11,32 +11,11 @@ import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import type { Conversation, Message, Artifact, Project, OrchestratorSettings } from "@/lib/types"
-
-const defaultOrchestratorSettings: OrchestratorSettings = {
-  reasoningMode: "standard",
-  domainPack: "default",
-  agentMode: "single",
-  promptOptimization: false,
-  outputValidation: false,
-  answerStructure: false,
-  sharedMemory: false,
-  learnFromChat: false,
-  selectedModels: ["automatic"],
-  advancedReasoningMethods: [],
-  advancedFeatures: [],
-  // Orchestration Studio defaults
-  accuracyLevel: 3,
-  enableHRM: false,
-  enablePromptDiffusion: false,
-  enableDeepConsensus: false,
-  enableAdaptiveEnsemble: false,
-  // Dynamic Criteria Equalizer defaults
-  criteria: {
-    accuracy: 70,
-    speed: 70,
-    creativity: 50,
-  },
-}
+import { 
+  loadOrchestratorSettings, 
+  saveOrchestratorSettings, 
+  DEFAULT_ORCHESTRATOR_SETTINGS 
+} from "@/lib/settings-storage"
 
 export function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -44,7 +23,15 @@ export function ChatInterface() {
   const [showArtifact, setShowArtifact] = useState(false)
   const [currentArtifact, setCurrentArtifact] = useState<Artifact | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
-  const [orchestratorSettings, setOrchestratorSettings] = useState<OrchestratorSettings>(defaultOrchestratorSettings)
+  const [orchestratorSettings, setOrchestratorSettings] = useState<OrchestratorSettings>(DEFAULT_ORCHESTRATOR_SETTINGS)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = loadOrchestratorSettings()
+    setOrchestratorSettings(savedSettings)
+    setSettingsLoaded(true)
+  }, [])
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -156,7 +143,12 @@ export function ChatInterface() {
   }
 
   const updateOrchestratorSettings = (updates: Partial<OrchestratorSettings>) => {
-    setOrchestratorSettings((prev) => ({ ...prev, ...updates }))
+    setOrchestratorSettings((prev) => {
+      const newSettings = { ...prev, ...updates }
+      // Persist to localStorage for cross-page access
+      saveOrchestratorSettings(newSettings)
+      return newSettings
+    })
   }
 
   const sidebarContent = (

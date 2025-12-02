@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
@@ -11,6 +11,7 @@ import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import { REASONING_METHODS, REASONING_CATEGORIES } from "@/lib/reasoning-methods"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
+import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settings-storage"
 
 // Card data matching home page template card style exactly
 const orchestrationCards = [
@@ -187,6 +188,7 @@ export default function OrchestrationPage() {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
 
   // State for all settings
   const [selectedModels, setSelectedModels] = useState<string[]>(["automatic"])
@@ -210,6 +212,40 @@ export default function OrchestrationPage() {
   const [selectedSpeed, setSelectedSpeed] = useState<string>("standard")
   const [selectedEliteStrategy, setSelectedEliteStrategy] = useState<string>("standard")
   const [selectedQualityOptions, setSelectedQualityOptions] = useState<string[]>(["verification", "consensus"])
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = loadOrchestratorSettings()
+    setSelectedModels(savedSettings.selectedModels || ["automatic"])
+    setSelectedMethods(savedSettings.advancedReasoningMethods || [])
+    setSelectedFeatures(savedSettings.advancedFeatures || [])
+    setTuningSettings({
+      promptOptimization: savedSettings.promptOptimization,
+      outputValidation: savedSettings.outputValidation,
+      answerStructure: savedSettings.answerStructure,
+      sharedMemory: savedSettings.sharedMemory,
+      learnFromChat: savedSettings.learnFromChat,
+    })
+    setSelectedSpeed(savedSettings.reasoningMode || "standard")
+    setSettingsLoaded(true)
+  }, [])
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    if (!settingsLoaded) return // Don't save during initial load
+    
+    saveOrchestratorSettings({
+      selectedModels,
+      advancedReasoningMethods: selectedMethods as any,
+      advancedFeatures: selectedFeatures as any,
+      promptOptimization: tuningSettings.promptOptimization,
+      outputValidation: tuningSettings.outputValidation,
+      answerStructure: tuningSettings.answerStructure,
+      sharedMemory: tuningSettings.sharedMemory,
+      learnFromChat: tuningSettings.learnFromChat,
+      reasoningMode: selectedSpeed as any,
+    })
+  }, [selectedModels, selectedMethods, selectedFeatures, tuningSettings, selectedSpeed, settingsLoaded])
 
   const toggleModel = (id: string) => {
     setSelectedModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]))
