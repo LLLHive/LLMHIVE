@@ -67,11 +67,22 @@ class TuningOptions(BaseModel):
         }
 
 
+class CriteriaSettings(BaseModel):
+    """Dynamic criteria settings for quality/speed/creativity balance."""
+    accuracy: int = Field(default=70, ge=0, le=100, description="Accuracy priority (0-100)")
+    speed: int = Field(default=70, ge=0, le=100, description="Speed priority (0-100)")
+    creativity: int = Field(default=50, ge=0, le=100, description="Creativity priority (0-100)")
+
+
 class ChatMetadata(BaseModel):
     """Optional metadata for chat tracking."""
     chat_id: Optional[str] = Field(default=None, description="Chat/conversation ID")
     user_id: Optional[str] = Field(default=None, description="User ID")
     project_id: Optional[str] = Field(default=None, description="Project ID")
+    criteria: Optional[CriteriaSettings] = Field(
+        default=None,
+        description="Dynamic criteria settings for quality/speed/creativity balance"
+    )
 
     class Config:
         json_schema_extra = {
@@ -79,6 +90,7 @@ class ChatMetadata(BaseModel):
                 "chat_id": "conv-123",
                 "user_id": "user-456",
                 "project_id": "proj-789",
+                "criteria": {"accuracy": 70, "speed": 70, "creativity": 50},
             }
         }
 
