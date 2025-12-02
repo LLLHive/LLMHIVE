@@ -635,17 +635,16 @@ class Orchestrator:
             except Exception as e:
                 logger.warning(f"Failed to initialize Gemini provider: {e}")
         
-        # Initialize Anthropic provider
+        # Initialize Anthropic provider using httpx directly (SDK has connection issues in Cloud Run)
         if os.getenv("ANTHROPIC_API_KEY"):
             try:
-                import anthropic
+                import httpx
                 
-                # Create async client for use in async functions
-                async_client = anthropic.AsyncAnthropic(
-                    api_key=os.getenv("ANTHROPIC_API_KEY"),
-                )
+                anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
                 
                 class AnthropicProvider:
+                    """Anthropic provider using httpx for reliable async connections."""
+                    
                     # Model mapping for Claude models
                     MODEL_MAPPING = {
                         "claude-sonnet-4.5": "claude-sonnet-4-20250514",
@@ -667,16 +666,17 @@ class Orchestrator:
                         'knowledge_snippets', 'context', 'plan', 'db_session',
                     }
                     
-                    def __init__(self, client):
+                    def __init__(self, api_key):
                         self.name = 'anthropic'
-                        self.client = client
+                        self.api_key = api_key
+                        self.base_url = "https://api.anthropic.com/v1/messages"
                     
                     def _map_model(self, model):
                         """Map UI model names to actual Claude model names."""
                         return self.MODEL_MAPPING.get(model.lower(), model)
                     
                     async def generate(self, prompt, model="claude-3-5-haiku-20241022", **kwargs):
-                        """Generate response using Anthropic API."""
+                        """Generate response using Anthropic API via httpx."""
                         # Filter out orchestration kwargs
                         api_kwargs = {k: v for k, v in kwargs.items() if k not in self.ORCHESTRATION_KWARGS}
                         
@@ -685,12 +685,23 @@ class Orchestrator:
                         logger.info("Anthropic calling model: %s (mapped from %s)", actual_model, model)
                         
                         try:
-                            # Use async client
-                            response = await self.client.messages.create(
-                                model=actual_model,
-                                max_tokens=api_kwargs.get('max_tokens', 2048),
-                                messages=[{"role": "user", "content": prompt}]
-                            )
+                            async with httpx.AsyncClient(timeout=60.0) as client:
+                                response = await client.post(
+                                    self.base_url,
+                                    headers={
+                                        "x-api-key": self.api_key,
+                                        "anthropic-version": "2023-06-01",
+                                        "content-type": "application/json",
+                                    },
+                                    json={
+                                        "model": actual_model,
+                                        "max_tokens": api_kwargs.get('max_tokens', 2048),
+                                        "messages": [{"role": "user", "content": prompt}]
+                                    }
+                                )
+                                response.raise_for_status()
+                                data = response.json()
+                                
                             class Result:
                                 def __init__(self, text, model, tokens):
                                     self.content = text
@@ -699,9 +710,9 @@ class Orchestrator:
                                     self.tokens_used = tokens
                             
                             return Result(
-                                text=response.content[0].text,
-                                model=response.model,
-                                tokens=response.usage.input_tokens + response.usage.output_tokens if hasattr(response, 'usage') else 0
+                                text=data["content"][0]["text"],
+                                model=data.get("model", actual_model),
+                                tokens=data.get("usage", {}).get("input_tokens", 0) + data.get("usage", {}).get("output_tokens", 0)
                             )
                         except Exception as e:
                             logger.error(f"Anthropic API error: {e}")
@@ -711,8 +722,8 @@ class Orchestrator:
                         """Alias for generate() - used by orchestration components."""
                         return await self.generate(prompt, model=model, **kwargs)
                 
-                self.providers["anthropic"] = AnthropicProvider(async_client)
-                logger.info("Anthropic provider initialized (async)")
+                self.providers["anthropic"] = AnthropicProvider(anthropic_api_key)
+                logger.info("Anthropic provider initialized (httpx)")
             except Exception as e:
                 logger.warning(f"Failed to initialize Anthropic provider: {e}")
         
