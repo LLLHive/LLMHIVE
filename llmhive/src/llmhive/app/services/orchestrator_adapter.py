@@ -21,9 +21,12 @@ from .model_router import (
     ReasoningMethod as RouterReasoningMethod,
     FALLBACK_GPT_4O,
     FALLBACK_GPT_4O_MINI,
+    FALLBACK_CLAUDE_SONNET_4,
     FALLBACK_CLAUDE_3_5,
     FALLBACK_CLAUDE_3_HAIKU,
     FALLBACK_GEMINI_2_5,
+    FALLBACK_GEMINI_2_5_FLASH,
+    FALLBACK_GROK_2,
     FALLBACK_GROK_BETA,
 )
 from .reasoning_prompts import get_reasoning_prompt_template
@@ -45,29 +48,50 @@ def _map_reasoning_mode(mode: ReasoningMode) -> int:
 
 
 def _map_model_to_provider(model_id: str, available_providers: list) -> str:
-    """Map a user-selected model ID to an actual provider/model name."""
+    """Map a user-selected model ID to an actual provider/model name.
+    
+    Latest models (December 2025):
+    - OpenAI: GPT-4o, GPT-4o-mini, o1, o1-mini
+    - Anthropic: Claude Sonnet 4, Claude 3.5 Sonnet, Claude 3.5 Haiku
+    - Google: Gemini 2.5 Pro, Gemini 2.5 Flash
+    - xAI: Grok-2, Grok-2-mini
+    """
     model_lower = model_id.lower()
     
-    # Map future/UI model names to current available models
-    if "gpt-5" in model_lower or "gpt-4" in model_lower:
+    # OpenAI models
+    if "gpt-5" in model_lower or "gpt-4" in model_lower or "o1" in model_lower:
         if "mini" in model_lower:
             return FALLBACK_GPT_4O_MINI
         return FALLBACK_GPT_4O
+    
+    # Anthropic Claude models
     elif "claude" in model_lower:
         if "haiku" in model_lower:
-            return FALLBACK_CLAUDE_3_HAIKU
-        return FALLBACK_CLAUDE_3_5
+            return FALLBACK_CLAUDE_3_HAIKU  # claude-3-5-haiku-20241022
+        elif "sonnet-4" in model_lower or "4.5" in model_lower or "opus" in model_lower:
+            return FALLBACK_CLAUDE_SONNET_4  # claude-sonnet-4-20250514
+        return FALLBACK_CLAUDE_3_5  # claude-3-5-sonnet-20241022
+    
+    # Google Gemini models
     elif "gemini" in model_lower:
-        return FALLBACK_GEMINI_2_5
+        if "flash" in model_lower:
+            return FALLBACK_GEMINI_2_5_FLASH  # gemini-2.5-flash
+        return FALLBACK_GEMINI_2_5  # gemini-2.5-pro
+    
+    # xAI Grok models - Use Grok-2 (latest)
     elif "grok" in model_lower:
-        return FALLBACK_GROK_BETA
+        return FALLBACK_GROK_2  # grok-2
+    
+    # Llama (local)
     elif "llama" in model_lower:
-        # Llama uses local model or stub
         if "local" in available_providers:
             return "local"
         return "stub"
+    
+    # Direct model name match
     elif model_id in available_providers:
         return model_id
+    
     else:
         # Default to first available
         return available_providers[0] if available_providers else "stub"

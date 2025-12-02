@@ -46,17 +46,25 @@ MODEL_QWEN3 = "qwen3"
 MODEL_MISTRAL_LARGE_2 = "mistral-large-2"
 MODEL_MIXTRAL_8X22B = "mixtral-8x22b"
 
-# Fallback models (current available models)
+# Fallback models (current available models - December 2025)
+# OpenAI: GPT-4o is the flagship, o1 for reasoning
 FALLBACK_GPT_4O = "gpt-4o"
 FALLBACK_GPT_4O_MINI = "gpt-4o-mini"
+# Anthropic: Claude Sonnet 4 is latest, Claude 3.5 Haiku for speed
+FALLBACK_CLAUDE_SONNET_4 = "claude-sonnet-4-20250514"
 FALLBACK_CLAUDE_3_5 = "claude-3-5-sonnet-20241022"
 FALLBACK_CLAUDE_3_HAIKU = "claude-3-5-haiku-20241022"
+# Google: Gemini 2.5 Pro is flagship
 FALLBACK_GEMINI_2_5 = "gemini-2.5-pro"
-FALLBACK_GROK_BETA = "grok-beta"
-FALLBACK_DEEPSEEK = "deepseek-chat"  # Current DeepSeek model
-FALLBACK_QWEN = "qwen2.5"  # Current Qwen model
-FALLBACK_MISTRAL = "mistral-large"  # Current Mistral model
-FALLBACK_MIXTRAL = "mixtral-8x7b"  # Current Mixtral model
+FALLBACK_GEMINI_2_5_FLASH = "gemini-2.5-flash"
+# xAI: Grok-2 is latest (replaces grok-beta)
+FALLBACK_GROK_2 = "grok-2"
+FALLBACK_GROK_BETA = "grok-beta"  # Legacy
+# Other providers
+FALLBACK_DEEPSEEK = "deepseek-chat"
+FALLBACK_QWEN = "qwen2.5"
+FALLBACK_MISTRAL = "mistral-large"
+FALLBACK_MIXTRAL = "mixtral-8x7b"
 
 
 # Model routing configuration for each reasoning method

@@ -577,7 +577,7 @@ class Orchestrator:
                         self.api_key = api_key
                         self.base_url = "https://api.x.ai/v1"
                     
-                    async def generate(self, prompt, model="grok-beta", **kwargs):
+                    async def generate(self, prompt, model="grok-2", **kwargs):
                         """Generate response using Grok (xAI) API."""
                         try:
                             # Filter out orchestration-specific kwargs
@@ -618,7 +618,7 @@ class Orchestrator:
                             logger.error(f"Grok API error: {e}")
                             raise
                     
-                    async def complete(self, prompt, model="grok-beta", **kwargs):
+                    async def complete(self, prompt, model="grok-2", **kwargs):
                         """Alias for generate() - used by orchestration components."""
                         return await self.generate(prompt, model=model, **kwargs)
                 
