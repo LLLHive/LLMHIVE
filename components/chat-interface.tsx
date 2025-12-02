@@ -21,7 +21,7 @@ const defaultOrchestratorSettings: OrchestratorSettings = {
   answerStructure: false,
   sharedMemory: false,
   learnFromChat: false,
-  selectedModels: ["gpt-5"],
+  selectedModels: ["automatic"],
   advancedReasoningMethods: [],
   advancedFeatures: [],
   // Orchestration Studio defaults
@@ -30,6 +30,12 @@ const defaultOrchestratorSettings: OrchestratorSettings = {
   enablePromptDiffusion: false,
   enableDeepConsensus: false,
   enableAdaptiveEnsemble: false,
+  // Dynamic Criteria Equalizer defaults
+  criteria: {
+    accuracy: 70,
+    speed: 70,
+    creativity: 50,
+  },
 }
 
 export function ChatInterface() {
@@ -54,7 +60,7 @@ export function ChatInterface() {
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
-      model: "gpt-5",
+      model: "gpt-4o",
     }
     setConversations([newConv, ...conversations])
     setCurrentConversationId(newConv.id)

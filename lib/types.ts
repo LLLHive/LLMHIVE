@@ -58,12 +58,13 @@ export interface ProjectFile {
   type: string
 }
 
-export type ModelProvider = "openai" | "anthropic" | "google" | "xai" | "meta"
+export type ModelProvider = "openai" | "anthropic" | "google" | "xai" | "deepseek" | "meta" | "orchestrator"
 
 export interface Model {
   id: string
   name: string
   provider: ModelProvider
+  description?: string
   capabilities: {
     vision: boolean
     codeExecution: boolean
@@ -112,6 +113,7 @@ export type ReasoningMode = "fast" | "standard" | "deep"
 export type DomainPack = "default" | "medical" | "legal" | "marketing" | "coding" | "research" | "finance"
 export type AgentMode = "single" | "team"
 export type AdvancedReasoningMethod =
+  | "automatic"
   | "chain-of-thought"
   | "tree-of-thought"
   | "self-consistency"
@@ -152,6 +154,8 @@ export interface OrchestratorSettings {
   enablePromptDiffusion: boolean // Prompt Diffusion & Refinement
   enableDeepConsensus: boolean // Deep Consensus (multi-round debate)
   enableAdaptiveEnsemble: boolean // Adaptive Ensemble Logic
+  // Dynamic Criteria Equalizer
+  criteria?: CriteriaSettings
 }
 
 // Orchestration status event types

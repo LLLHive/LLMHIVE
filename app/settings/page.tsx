@@ -151,8 +151,8 @@ export default function SettingsPage() {
       <Sidebar
         conversations={[]}
         currentConversationId={null}
-        onNewChat={() => {}}
-        onSelectConversation={() => {}}
+        onNewChat={() => (window.location.href = "/")}
+        onSelectConversation={() => (window.location.href = "/")}
         onDeleteConversation={() => {}}
         onTogglePin={() => {}}
         onRenameConversation={() => {}}

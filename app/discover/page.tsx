@@ -101,8 +101,8 @@ export default function DiscoverPage() {
       <Sidebar
         conversations={[]}
         currentConversationId={null}
-        onNewChat={() => {}}
-        onSelectConversation={() => {}}
+        onNewChat={() => (window.location.href = "/")}
+        onSelectConversation={() => (window.location.href = "/")}
         onDeleteConversation={() => {}}
         onTogglePin={() => {}}
         onRenameConversation={() => {}}

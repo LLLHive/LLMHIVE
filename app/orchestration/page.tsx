@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles, Zap } from "lucide-react"
+import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles, Zap, Crown, Target, Shield } from "lucide-react"
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import { REASONING_METHODS, REASONING_CATEGORIES } from "@/lib/reasoning-methods"
 import { Sidebar } from "@/components/sidebar"
@@ -14,6 +14,14 @@ import { UserAccountMenu } from "@/components/user-account-menu"
 
 // Card data matching home page template card style exactly
 const orchestrationCards = [
+  {
+    id: "elite",
+    title: "Elite Mode",
+    description: "Industry-leading orchestration strategies",
+    icon: Crown,
+    color: "from-yellow-500 to-amber-600",
+    isPremium: true,
+  },
   {
     id: "models",
     title: "Models",
@@ -50,11 +58,11 @@ const orchestrationCards = [
     color: "from-rose-500 to-pink-500",
   },
   {
-    id: "standard",
-    title: "Standard",
-    description: "Temperature, tokens and sampling parameters",
-    icon: Layers,
-    color: "from-amber-500 to-yellow-500",
+    id: "quality",
+    title: "Quality",
+    description: "Verification, challenge loops and fact-checking",
+    icon: Shield,
+    color: "from-green-500 to-emerald-600",
   },
   {
     id: "speed",
@@ -63,6 +71,23 @@ const orchestrationCards = [
     icon: Zap,
     color: "from-cyan-500 to-sky-500",
   },
+]
+
+// Elite Mode strategies
+const eliteStrategies = [
+  { id: "fast", label: "Fast", description: "Quick single-model responses", confidence: "70%" },
+  { id: "standard", label: "Standard", description: "Multi-model with verification", confidence: "80%" },
+  { id: "thorough", label: "Thorough", description: "Full pipeline with challenge loop", confidence: "90%" },
+  { id: "exhaustive", label: "Exhaustive", description: "All techniques including debate", confidence: "95%" },
+]
+
+// Quality assurance options
+const qualityOptions = [
+  { id: "verification", label: "Fact Verification", description: "Verify all factual claims" },
+  { id: "challenge", label: "Challenge Loop", description: "Adversarial stress-testing of answers" },
+  { id: "consensus", label: "Multi-Model Consensus", description: "Agreement between multiple models" },
+  { id: "reflection", label: "Self-Reflection", description: "Models critique and improve their output" },
+  { id: "tools", label: "Tool Integration", description: "Use search, calculator, code execution" },
 ]
 
 // Features list
@@ -156,7 +181,7 @@ const speedOptions = [
   { id: "deep", label: "Deep", description: "Thorough analysis with extended processing" },
 ]
 
-type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | null
+type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | "elite" | "quality" | null
 
 export default function OrchestrationPage() {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
@@ -164,7 +189,7 @@ export default function OrchestrationPage() {
   const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
 
   // State for all settings
-  const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5"])
+  const [selectedModels, setSelectedModels] = useState<string[]>(["automatic"])
   const [selectedMethods, setSelectedMethods] = useState<string[]>([])
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [selectedTools, setSelectedTools] = useState<string[]>([])
@@ -183,6 +208,8 @@ export default function OrchestrationPage() {
     presencePenalty: 0,
   })
   const [selectedSpeed, setSelectedSpeed] = useState<string>("standard")
+  const [selectedEliteStrategy, setSelectedEliteStrategy] = useState<string>("standard")
+  const [selectedQualityOptions, setSelectedQualityOptions] = useState<string[]>(["verification", "consensus"])
 
   const toggleModel = (id: string) => {
     setSelectedModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]))
@@ -200,6 +227,10 @@ export default function OrchestrationPage() {
     setSelectedTools((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
   }
 
+  const toggleQualityOption = (id: string) => {
+    setSelectedQualityOptions((prev) => (prev.includes(id) ? prev.filter((q) => q !== id) : [...prev, id]))
+  }
+
   const getCount = (id: string) => {
     switch (id) {
       case "models":
@@ -214,6 +245,10 @@ export default function OrchestrationPage() {
         return Object.values(tuningSettings).filter(Boolean).length
       case "speed":
         return 1
+      case "elite":
+        return 1 // Always show the selected strategy
+      case "quality":
+        return selectedQualityOptions.length
       default:
         return 0
     }
@@ -223,13 +258,17 @@ export default function OrchestrationPage() {
     <div className="flex h-screen bg-background">
       {/* Left Sidebar - Same as Home Page */}
       <Sidebar
-        isCollapsed={sidebarCollapsed}
+        collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         conversations={[]}
         currentConversationId={null}
-        onSelectConversation={() => {}}
-        onNewChat={() => {}}
+        onSelectConversation={() => (window.location.href = "/")}
+        onNewChat={() => (window.location.href = "/")}
         onDeleteConversation={() => {}}
+        onTogglePin={() => {}}
+        onRenameConversation={() => {}}
+        onMoveToProject={() => {}}
+        projects={[]}
         onGoHome={() => (window.location.href = "/")}
       />
 
@@ -702,6 +741,136 @@ export default function OrchestrationPage() {
                       <p className="text-[10px] text-muted-foreground">{option.description}</p>
                     </div>
                   </button>
+                )
+              })}
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Elite Mode Drawer */}
+      <Sheet open={activeDrawer === "elite"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent
+          side="right"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+        >
+          <div className="p-5 border-b border-border/50">
+            <SheetHeader className="space-y-1">
+              <SheetTitle className="text-base font-medium flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500/20 to-amber-500/20 flex items-center justify-center">
+                  <Crown className="h-4 w-4 text-yellow-400" />
+                </div>
+                Elite Mode
+                <Badge className="ml-auto bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[10px]">
+                  PRO
+                </Badge>
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground">Industry-leading orchestration strategies</p>
+            </SheetHeader>
+          </div>
+          <ScrollArea className="h-[calc(100vh-120px)]">
+            <div className="p-4 space-y-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Orchestration Strategy
+              </p>
+              {eliteStrategies.map((strategy) => {
+                const isSelected = selectedEliteStrategy === strategy.id
+                return (
+                  <button
+                    key={strategy.id}
+                    onClick={() => setSelectedEliteStrategy(strategy.id)}
+                    className={`w-full p-3 rounded-lg transition-all duration-200 text-left ${
+                      isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50 border border-border"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                            isSelected ? "bg-[var(--bronze)] border-[var(--bronze)]" : "border-muted-foreground/30"
+                          }`}
+                        >
+                          {isSelected && <Check className="h-2.5 w-2.5 text-black" />}
+                        </div>
+                        <span className={`text-sm font-medium ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                          {strategy.label}
+                        </span>
+                      </div>
+                      <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-400">
+                        {strategy.confidence}
+                      </Badge>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground ml-6">{strategy.description}</p>
+                  </button>
+                )
+              })}
+              
+              <div className="pt-4 border-t border-border/50 mt-4">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">
+                  How It Works
+                </p>
+                <div className="space-y-2 text-[10px] text-muted-foreground">
+                  <p>• <strong>Fast:</strong> Single best model, quick responses</p>
+                  <p>• <strong>Standard:</strong> Multi-model with quality fusion</p>
+                  <p>• <strong>Thorough:</strong> Challenge loop stress-tests answers</p>
+                  <p>• <strong>Exhaustive:</strong> Expert panel + debate + verification</p>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Quality Assurance Drawer */}
+      <Sheet open={activeDrawer === "quality"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent
+          side="right"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+        >
+          <div className="p-5 border-b border-border/50">
+            <SheetHeader className="space-y-1">
+              <SheetTitle className="text-base font-medium flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
+                  <Shield className="h-4 w-4 text-green-400" />
+                </div>
+                Quality
+                <span className="ml-auto text-xs font-normal text-[var(--bronze)] bg-[var(--bronze)]/10 px-2 py-0.5 rounded-full">
+                  {selectedQualityOptions.length} enabled
+                </span>
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground">Verification and quality assurance</p>
+            </SheetHeader>
+          </div>
+          <ScrollArea className="h-[calc(100vh-100px)]">
+            <div className="p-4 space-y-1.5">
+              {qualityOptions.map((option) => {
+                const isSelected = selectedQualityOptions.includes(option.id)
+                return (
+                  <div
+                    key={option.id}
+                    onClick={() => toggleQualityOption(option.id)}
+                    className={`group p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
+                      isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                          isSelected
+                            ? "border-[var(--bronze)] bg-[var(--bronze)]"
+                            : "border-muted-foreground/30 group-hover:border-muted-foreground/50"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-2.5 w-2.5 text-background" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                          {option.label}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground leading-tight">{option.description}</p>
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
             </div>

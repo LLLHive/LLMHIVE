@@ -14,6 +14,7 @@ import type {
   AdvancedFeature,
 } from "@/lib/types"
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
+import { CriteriaEqualizer } from "./criteria-equalizer"
 import Image from "next/image"
 
 interface ChatToolbarProps {
@@ -39,6 +40,7 @@ const domainPacks: { value: DomainPack; label: string }[] = [
 ]
 
 const advancedReasoningMethods: { value: AdvancedReasoningMethod; label: string; description: string }[] = [
+  { value: "automatic", label: "Automatic", description: "Let the orchestrator choose the best method" },
   { value: "chain-of-thought", label: "Chain of Thought", description: "Step-by-step reasoning" },
   { value: "tree-of-thought", label: "Tree of Thought", description: "Explore multiple paths" },
   { value: "graph-of-thought", label: "Graph of Thought", description: "Non-linear reasoning graph" },
@@ -101,7 +103,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
     }
   }
 
-  const selectedModels = settings.selectedModels || ["gpt-5"]
+  const selectedModels = settings.selectedModels || ["automatic"]
   const selectedReasoningMethods = settings.advancedReasoningMethods || []
   const selectedFeatures = settings.advancedFeatures || []
 
@@ -303,6 +305,12 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         <span className="hidden sm:inline">{settings.agentMode === "team" ? "Team" : "Single"}</span>
       </Button>
 
+      {/* Criteria Equalizer */}
+      <CriteriaEqualizer
+        settings={settings.criteria || { accuracy: 70, speed: 70, creativity: 50 }}
+        onChange={(criteria) => onSettingsChange({ criteria })}
+      />
+
       {/* Advanced Settings */}
       <Button
         variant="ghost"
@@ -311,7 +319,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
       >
         <Settings2 className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Tuning</span>
+        <span className="hidden sm:inline">Advanced</span>
       </Button>
     </div>
   )

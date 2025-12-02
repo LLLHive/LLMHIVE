@@ -1,6 +1,19 @@
 import type { Model } from "./types"
 
 export const AVAILABLE_MODELS: Model[] = [
+  // Automatic - Let the orchestrator decide
+  {
+    id: "automatic",
+    name: "Automatic",
+    provider: "orchestrator",
+    description: "Let the orchestrator select the best models for your task",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
   // OpenAI Models
   {
     id: "gpt-4o",
@@ -182,6 +195,7 @@ export function getModelDisplayName(apiModelName: string): string {
 
 export function getModelLogo(provider: string): string {
   const logos: Record<string, string> = {
+    orchestrator: "/logo.png",  // LLMHive logo for automatic selection
     openai: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
     anthropic: "/claude-logo.png",
     google: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",

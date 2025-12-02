@@ -36,7 +36,7 @@ export function ChatArea({
   userAccountMenu,
 }: ChatAreaProps) {
   const [input, setInput] = useState("")
-  const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-5-mini"])
+  const [selectedModels, setSelectedModels] = useState<string[]>(["automatic"])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInsights, setShowInsights] = useState(false)
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
@@ -54,7 +54,7 @@ export function ChatArea({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const eventIdRef = useRef(0)
 
-  const currentModel = getModelById(selectedModels[0] || "gpt-5-mini")
+  const currentModel = getModelById(selectedModels[0] || "automatic")
 
   // Add orchestration event
   const addOrchestrationEvent = useCallback((
@@ -95,7 +95,7 @@ export function ChatArea({
     }
 
     // Add model dispatches based on selected models
-    const models = settings.selectedModels || ["gpt-5"]
+    const models = settings.selectedModels || ["automatic"]
     for (const modelId of models.slice(0, 3)) {
       const model = getModelById(modelId)
       events.push({
@@ -190,6 +190,15 @@ export function ChatArea({
 
       if (!response.ok) throw new Error("Failed to get response")
 
+      // Extract metadata from response headers
+      const modelsUsedHeader = response.headers.get("X-Models-Used")
+      const tokensUsedHeader = response.headers.get("X-Tokens-Used")
+      const backendLatencyHeader = response.headers.get("X-Latency-Ms")
+      
+      const modelsUsed = modelsUsedHeader ? JSON.parse(modelsUsedHeader) : selectedModels.slice(0, 3)
+      const tokensUsed = tokensUsedHeader ? parseInt(tokensUsedHeader, 10) : 0
+      const backendLatencyMs = backendLatencyHeader ? parseInt(backendLatencyHeader, 10) : 0
+
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       let assistantContent = ""
@@ -202,8 +211,7 @@ export function ChatArea({
         }
       }
 
-      const latencyMs = Date.now() - startTime
-      const modelsUsed = selectedModels.slice(0, 3)
+      const latencyMs = backendLatencyMs || (Date.now() - startTime)
 
       const assistantMessage: Message = {
         id: `msg-${Date.now()}`,
@@ -240,10 +248,10 @@ export function ChatArea({
         ],
       }))
 
-      // Store for display
+      // Store for display (actual values from backend)
       setLastModelsUsed(modelsUsed)
       setLastLatencyMs(latencyMs)
-      setLastTokensUsed(Math.floor(Math.random() * 500) + 100) // Simulated, would come from API
+      setLastTokensUsed(tokensUsed)
     } catch (error) {
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,

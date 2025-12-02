@@ -12,6 +12,7 @@ export interface ReasoningMethodData {
 }
 
 export type ReasoningCategory =
+  | "Automatic"
   | "General Reasoning"
   | "Code Generation & Reasoning"
   | "Mathematical Reasoning"
@@ -19,6 +20,7 @@ export type ReasoningCategory =
   | "Multi-Modal Reasoning"
 
 export const REASONING_CATEGORIES: ReasoningCategory[] = [
+  "Automatic",
   "General Reasoning",
   "Code Generation & Reasoning",
   "Mathematical Reasoning",
@@ -27,6 +29,26 @@ export const REASONING_CATEGORIES: ReasoningCategory[] = [
 ]
 
 export const REASONING_METHODS: ReasoningMethodData[] = [
+  // Automatic - Let the Orchestrator decide
+  {
+    id: "automatic",
+    name: "Automatic",
+    year: 2025,
+    category: "Automatic",
+    shortDescription:
+      "Let the LLMHive orchestrator automatically select the optimal reasoning method based on your query.",
+    strengths: [
+      "Optimal method selection for each task",
+      "No configuration required",
+      "Adaptive to query complexity",
+      "Best overall performance",
+    ],
+    weaknesses: [
+      "Less control over specific method used",
+    ],
+    referenceUrl: "https://llmhive.ai/docs/automatic-reasoning",
+    benchmarkResults: "Achieves best average performance across all benchmarks by dynamically selecting optimal methods",
+  },
   // General Reasoning
   {
     id: "cot",
