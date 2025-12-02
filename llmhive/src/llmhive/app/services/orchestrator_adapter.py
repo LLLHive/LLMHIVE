@@ -1,16 +1,20 @@
 """Adapter service to bridge ChatRequest to internal orchestrator.
 
 Enhanced with Elite Orchestration for maximum performance:
+- PromptOps preprocessing (ALWAYS ON)
 - Intelligent model-task matching
 - Quality-weighted fusion
 - Parallel execution
 - Challenge and refine strategies
+- Verification gate with retry
+- Answer refinement (ALWAYS ON)
 """
 from __future__ import annotations
 
+import json
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 from ..models.orchestration import (
     ChatRequest,
@@ -36,6 +40,10 @@ from .model_router import (
     FALLBACK_GROK_2,
     FALLBACK_GROK_BETA,
     FALLBACK_DEEPSEEK,
+    # Automatic model selection functions
+    get_best_models_for_task,
+    get_diverse_ensemble,
+    MODEL_CAPABILITIES,
 )
 from .reasoning_prompts import get_reasoning_prompt_template
 
@@ -61,7 +69,41 @@ except ImportError:
     QUALITY_BOOSTER_AVAILABLE = False
     QualityBooster = None
 
+# Import PromptOps for always-on preprocessing
+try:
+    from ..orchestration.prompt_ops import PromptOps, PromptSpecification
+    PROMPTOPS_AVAILABLE = True
+except ImportError:
+    PROMPTOPS_AVAILABLE = False
+    PromptOps = None
+    PromptSpecification = None
+
+# Import Answer Refiner for polishing
+try:
+    from ..orchestration.answer_refiner import (
+        AnswerRefiner,
+        RefinementConfig,
+        OutputFormat,
+        ToneStyle,
+    )
+    REFINER_AVAILABLE = True
+except ImportError:
+    REFINER_AVAILABLE = False
+    AnswerRefiner = None
+
+# Import Prompt Templates for verification
+try:
+    from ..orchestration.prompt_templates import build_verifier_prompt
+    VERIFIER_PROMPT_AVAILABLE = True
+except ImportError:
+    VERIFIER_PROMPT_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
+
+# Configuration
+MAX_CHALLENGE_LOOPS = 2  # Max retry attempts on verification failure
+VERIFICATION_ENABLED = True  # Enable verification gate
+REFINER_ALWAYS_ON = True  # Always run answer refinement
 
 # Global orchestrator instance
 _orchestrator = Orchestrator()
@@ -120,22 +162,150 @@ def _detect_task_type(prompt: str) -> str:
         return "general"
 
 
-def _select_elite_strategy(accuracy_level: int, task_type: str, num_models: int) -> str:
-    """Select the best elite orchestration strategy."""
-    # High accuracy = use more sophisticated strategies
-    if accuracy_level >= 4:
-        if task_type in ["code_generation", "debugging"]:
-            return "challenge_and_refine"
-        elif task_type in ["research_analysis", "comparison"]:
-            return "expert_panel" if num_models >= 3 else "quality_weighted_fusion"
+def _select_elite_strategy(
+    accuracy_level: int,
+    task_type: str,
+    num_models: int,
+    complexity: str = "moderate",
+    criteria: Optional[dict] = None,
+    prompt_spec: Optional[Any] = None,
+) -> str:
+    """Select the best elite orchestration strategy intelligently.
+    
+    Strategies (in order of quality vs. speed tradeoff):
+    - single_best: Fastest - simple queries, single model (~100ms)
+    - parallel_race: Fast - speed-critical, first-win (~150ms)
+    - best_of_n: Medium - select best from multiple (~300ms)
+    - quality_weighted_fusion: Balanced - combine perspectives (~400ms)
+    - expert_panel: Thorough - multiple expert views (~600ms)
+    - challenge_and_refine: Most thorough - verification loop (~800ms)
+    
+    Selection considers:
+    - Task type (code/math need verification, research needs perspectives)
+    - Complexity (simple → fast, complex → thorough)
+    - Accuracy level (1-5, user preference)
+    - User criteria (speed, accuracy, creativity weights)
+    - PromptOps analysis (if available)
+    """
+    # Default criteria
+    if not criteria:
+        criteria = {"accuracy": 70, "speed": 50, "creativity": 50}
+    
+    speed_priority = criteria.get("speed", 50)
+    accuracy_priority = criteria.get("accuracy", 70)
+    creativity_priority = criteria.get("creativity", 50)
+    
+    # ========================================================================
+    # PHASE 1: HARD RULES (Task-specific requirements)
+    # ========================================================================
+    
+    # Code and math ALWAYS need verification (non-negotiable)
+    if task_type in ["code_generation", "debugging", "math_problem"]:
+        # But speed-optimize if user explicitly wants fast
+        if speed_priority >= 80 and accuracy_level <= 2:
+            logger.info("Strategy: Code/math with high speed priority -> best_of_n")
+            return "best_of_n"  # Skip challenge loop but still compare
+        logger.info("Strategy: Code/math task -> challenge_and_refine")
+        return "challenge_and_refine"
+    
+    # Factual questions with high accuracy need verification
+    if task_type == "factual_question" and accuracy_priority >= 80:
+        logger.info("Strategy: Factual question with high accuracy -> challenge_and_refine")
+        return "challenge_and_refine"
+    
+    # ========================================================================
+    # PHASE 2: FAST PATH (Speed-optimized)
+    # ========================================================================
+    
+    # Simple complexity OR explicit fast preference OR low accuracy setting
+    if complexity == "simple" or speed_priority >= 85 or accuracy_level <= 1:
+        if num_models == 1:
+            logger.info("Strategy: Fast mode, 1 model -> single_best")
+            return "single_best"
         else:
-            return "best_of_n"
-    elif accuracy_level >= 3:
+            logger.info("Strategy: Fast mode, multiple models -> parallel_race")
+            return "parallel_race"
+    
+    # ========================================================================
+    # PHASE 3: BALANCED SELECTION (Based on task characteristics)
+    # ========================================================================
+    
+    # Research and analysis tasks need multiple perspectives
+    if task_type in ["research_analysis", "comparison", "explanation"]:
+        if num_models >= 3 and accuracy_level >= 3:
+            logger.info("Strategy: Research task, 3+ models -> expert_panel")
+            return "expert_panel"
+        elif num_models >= 2:
+            logger.info("Strategy: Research task, 2+ models -> quality_weighted_fusion")
+            return "quality_weighted_fusion"
+    
+    # Creative writing benefits from multiple perspectives and synthesis
+    if task_type == "creative_writing":
+        if creativity_priority >= 70 and num_models >= 2:
+            logger.info("Strategy: Creative task, high creativity -> expert_panel")
+            return "expert_panel"  # More diverse outputs
+        logger.info("Strategy: Creative task -> quality_weighted_fusion")
         return "quality_weighted_fusion"
-    elif accuracy_level >= 2:
+    
+    # Planning tasks need structured approach
+    if task_type == "planning":
+        if accuracy_level >= 4:
+            logger.info("Strategy: Planning task, high accuracy -> challenge_and_refine")
+            return "challenge_and_refine"
+        logger.info("Strategy: Planning task -> best_of_n")
+        return "best_of_n"
+    
+    # ========================================================================
+    # PHASE 4: ACCURACY-DRIVEN SELECTION
+    # ========================================================================
+    
+    # Maximum accuracy requested
+    if accuracy_level >= 5 or accuracy_priority >= 90:
+        if num_models >= 2:
+            logger.info("Strategy: Maximum accuracy -> challenge_and_refine")
+            return "challenge_and_refine"
+        logger.info("Strategy: Maximum accuracy, 1 model -> single_best (with verification)")
+        return "single_best"  # Will use internal verification
+    
+    # High accuracy
+    if accuracy_level >= 4 or accuracy_priority >= 75:
+        if num_models >= 3:
+            logger.info("Strategy: High accuracy, 3+ models -> expert_panel")
+            return "expert_panel"
+        elif num_models >= 2:
+            logger.info("Strategy: High accuracy, 2+ models -> best_of_n")
+            return "best_of_n"
+    
+    # Medium accuracy
+    if accuracy_level >= 3:
+        if num_models >= 2:
+            logger.info("Strategy: Medium accuracy, 2+ models -> quality_weighted_fusion")
+            return "quality_weighted_fusion"
+    
+    # ========================================================================
+    # PHASE 5: COMPLEXITY-DRIVEN FALLBACK
+    # ========================================================================
+    
+    # Complex or research complexity
+    if complexity in ["complex", "research"]:
+        if num_models >= 2:
+            logger.info("Strategy: Complex task -> quality_weighted_fusion")
+            return "quality_weighted_fusion"
+    
+    # Moderate complexity
+    if complexity == "moderate" and num_models >= 2:
+        logger.info("Strategy: Moderate complexity -> parallel_race")
         return "parallel_race"
-    else:
-        return "single_best"
+    
+    # ========================================================================
+    # PHASE 6: DEFAULT
+    # ========================================================================
+    if num_models >= 2:
+        logger.info("Strategy: Default multi-model -> quality_weighted_fusion")
+        return "quality_weighted_fusion"
+    
+    logger.info("Strategy: Default single model -> single_best")
+    return "single_best"
 
 
 def _map_reasoning_mode(mode: ReasoningMode) -> int:
@@ -200,6 +370,22 @@ def _map_model_to_provider(model_id: str, available_providers: list) -> str:
     else:
         # Default to first available
         return available_providers[0] if available_providers else "stub"
+
+
+def _get_display_name(model_id: str) -> str:
+    """Get a user-friendly display name for a model."""
+    display_names = {
+        FALLBACK_GPT_4O: "GPT-4o",
+        FALLBACK_GPT_4O_MINI: "GPT-4o Mini",
+        FALLBACK_CLAUDE_SONNET_4: "Claude Sonnet 4",
+        FALLBACK_CLAUDE_3_5: "Claude 3.5 Sonnet",
+        FALLBACK_CLAUDE_3_HAIKU: "Claude 3.5 Haiku",
+        FALLBACK_GEMINI_2_5: "Gemini 2.5 Pro",
+        FALLBACK_GEMINI_2_5_FLASH: "Gemini 2.5 Flash",
+        FALLBACK_GROK_2: "Grok-2",
+        FALLBACK_DEEPSEEK: "DeepSeek V3",
+    }
+    return display_names.get(model_id, model_id)
 
 
 async def run_orchestration(request: ChatRequest) -> ChatResponse:
@@ -314,8 +500,89 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 criteria_settings.get("creativity", 50),
             )
         
-        # Enhance prompt with reasoning method template
+        # ========================================================================
+        # STEP 1: PROMPTOPS PREPROCESSING (Always On)
+        # ========================================================================
         base_prompt = request.prompt
+        prompt_spec: Optional[PromptSpecification] = None
+        detected_task_type = "general"
+        detected_complexity = "moderate"
+        
+        if PROMPTOPS_AVAILABLE:
+            try:
+                prompt_ops = PromptOps(providers=_orchestrator.providers)
+                prompt_spec = await prompt_ops.process(
+                    request.prompt,
+                    domain_hint=request.domain_pack.value,
+                )
+                
+                # Use PromptOps analysis
+                base_prompt = prompt_spec.refined_query
+                detected_task_type = prompt_spec.analysis.task_type.value
+                detected_complexity = prompt_spec.analysis.complexity.value
+                
+                logger.info(
+                    "PromptOps: task=%s, complexity=%s, tools=%s, confidence=%.2f",
+                    detected_task_type,
+                    detected_complexity,
+                    prompt_spec.analysis.tool_hints,
+                    prompt_spec.confidence,
+                )
+                
+                # Log any ambiguities or safety flags
+                if prompt_spec.analysis.ambiguities:
+                    logger.info("PromptOps detected ambiguities: %s", prompt_spec.analysis.ambiguities[:3])
+                if prompt_spec.safety_flags:
+                    logger.warning("PromptOps safety flags: %s", prompt_spec.safety_flags)
+                    
+            except Exception as e:
+                logger.warning("PromptOps failed, using raw prompt: %s", e)
+        
+        # ========================================================================
+        # STEP 2: AUTOMATIC MODEL SELECTION (When user selected "automatic")
+        # ========================================================================
+        # Check if we should use automatic model selection
+        is_automatic_mode = (
+            not request.models or  # No models provided
+            len(request.models) == 0 or  # Empty list
+            (len(request.models) == 1 and request.models[0].lower() in ["automatic", "auto"])
+        )
+        
+        if is_automatic_mode and detected_task_type != "general":
+            logger.info("Automatic mode: Re-selecting models based on task type '%s'", detected_task_type)
+            
+            # Get best models for the detected task type
+            auto_selected = get_best_models_for_task(
+                detected_task_type,
+                available_models=available_providers,
+                num_models=3,
+                criteria=criteria_settings,
+            )
+            
+            # For ensemble, ensure diversity
+            if orchestration_config.get("accuracy_level", 3) >= 3:
+                auto_selected = get_diverse_ensemble(
+                    detected_task_type,
+                    available_models=available_providers,
+                    num_models=min(3, len(available_providers)),
+                )
+            
+            # Map selected models to actual provider names
+            actual_models = []
+            user_model_names = []
+            for model_id in auto_selected:
+                mapped = _map_model_to_provider(model_id, available_providers)
+                if mapped not in actual_models:
+                    actual_models.append(mapped)
+                    user_model_names.append(_get_display_name(model_id))
+            
+            logger.info(
+                "Automatic model selection: task=%s -> models=%s",
+                detected_task_type,
+                actual_models,
+            )
+        
+        # Enhance prompt with reasoning method template
         enhanced_prompt = get_reasoning_prompt_template(
             reasoning_method,
             base_prompt,
@@ -334,8 +601,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             orchestration_config.get("accuracy_level", 3),
         )
         
-        # Detect task type for optimal routing
-        task_type = _detect_task_type(base_prompt)
+        # Use PromptOps task type if available, otherwise detect from prompt
+        task_type = detected_task_type if detected_task_type != "general" else _detect_task_type(base_prompt)
         accuracy_level = orchestration_config.get("accuracy_level", 3)
         
         # Determine if we should use elite orchestration
@@ -356,8 +623,15 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             elite = _get_elite_orchestrator()
             if elite:
                 try:
-                    # Select strategy based on accuracy and task
-                    strategy = _select_elite_strategy(accuracy_level, task_type, len(actual_models))
+                    # Select strategy based on accuracy, task, complexity, and user criteria
+                    strategy = _select_elite_strategy(
+                        accuracy_level=accuracy_level,
+                        task_type=task_type,
+                        num_models=len(actual_models),
+                        complexity=detected_complexity,
+                        criteria=criteria_settings,
+                        prompt_spec=prompt_spec,
+                    )
                     
                     elite_result = await elite.orchestrate(
                         enhanced_prompt,
@@ -414,6 +688,51 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         )
                 except Exception as e:
                     logger.warning("Quality boost failed: %s", e)
+        
+        # ========================================================================
+        # FINAL STEP: ALWAYS-ON ANSWER REFINEMENT
+        # ========================================================================
+        if REFINER_AVAILABLE and REFINER_ALWAYS_ON:
+            try:
+                # Detect output format from PromptOps analysis
+                output_format = OutputFormat.PARAGRAPH
+                if prompt_spec and prompt_spec.analysis.output_format:
+                    format_map = {
+                        "json": OutputFormat.JSON,
+                        "markdown": OutputFormat.MARKDOWN,
+                        "code": OutputFormat.CODE,
+                        "list": OutputFormat.BULLET,
+                        "table": OutputFormat.TABLE,
+                    }
+                    output_format = format_map.get(
+                        prompt_spec.analysis.output_format,
+                        OutputFormat.PARAGRAPH
+                    )
+                
+                refiner_config = RefinementConfig(
+                    output_format=output_format,
+                    tone=ToneStyle.PROFESSIONAL,
+                    include_confidence=accuracy_level >= 4,
+                    include_citations=accuracy_level >= 3,
+                    preserve_structure=True,
+                )
+                
+                refiner = AnswerRefiner(providers=_orchestrator.providers)
+                refined_answer = await refiner.refine(
+                    final_text,
+                    query=base_prompt,
+                    config=refiner_config,
+                )
+                
+                if refined_answer and refined_answer.refined_content:
+                    final_text = refined_answer.refined_content
+                    logger.info(
+                        "Answer refined: %d improvements, format=%s",
+                        len(refined_answer.improvements_made),
+                        refined_answer.format_applied.value,
+                    )
+            except Exception as e:
+                logger.warning("Answer refinement failed (using unrefined): %s", e)
         
         # Build agent traces from artifacts (if available)
         traces: list[AgentTrace] = []

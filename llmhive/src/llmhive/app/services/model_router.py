@@ -213,3 +213,264 @@ def map_reasoning_mode_to_method(reasoning_mode: str) -> ReasoningMethod:
         # Default to chain-of-thought
         return ReasoningMethod.chain_of_thought
 
+
+# ==============================================================================
+# Task-Type Based Model Selection (Automatic Routing)
+# ==============================================================================
+
+# Model capabilities for intelligent task routing
+# Each model is rated 0-100 on various capabilities
+MODEL_CAPABILITIES = {
+    FALLBACK_GPT_4O: {
+        "coding": 95,
+        "math": 90,
+        "reasoning": 95,
+        "creative": 85,
+        "factual": 90,
+        "analysis": 95,
+        "speed": 75,
+        "overall": 92,
+    },
+    FALLBACK_GPT_4O_MINI: {
+        "coding": 80,
+        "math": 75,
+        "reasoning": 80,
+        "creative": 75,
+        "factual": 80,
+        "analysis": 80,
+        "speed": 95,
+        "overall": 80,
+    },
+    FALLBACK_CLAUDE_SONNET_4: {
+        "coding": 95,
+        "math": 85,
+        "reasoning": 95,
+        "creative": 95,
+        "factual": 90,
+        "analysis": 95,
+        "speed": 70,
+        "overall": 93,
+    },
+    FALLBACK_CLAUDE_3_5: {
+        "coding": 90,
+        "math": 85,
+        "reasoning": 90,
+        "creative": 90,
+        "factual": 88,
+        "analysis": 90,
+        "speed": 80,
+        "overall": 89,
+    },
+    FALLBACK_CLAUDE_3_HAIKU: {
+        "coding": 75,
+        "math": 70,
+        "reasoning": 75,
+        "creative": 80,
+        "factual": 75,
+        "analysis": 75,
+        "speed": 98,
+        "overall": 78,
+    },
+    FALLBACK_GEMINI_2_5: {
+        "coding": 90,
+        "math": 90,
+        "reasoning": 92,
+        "creative": 80,
+        "factual": 92,
+        "analysis": 90,
+        "speed": 80,
+        "overall": 90,
+    },
+    FALLBACK_GEMINI_2_5_FLASH: {
+        "coding": 80,
+        "math": 80,
+        "reasoning": 82,
+        "creative": 75,
+        "factual": 85,
+        "analysis": 80,
+        "speed": 95,
+        "overall": 82,
+    },
+    FALLBACK_GROK_2: {
+        "coding": 85,
+        "math": 80,
+        "reasoning": 85,
+        "creative": 85,
+        "factual": 92,  # Excellent for real-time
+        "analysis": 85,
+        "speed": 85,
+        "overall": 86,
+    },
+    FALLBACK_DEEPSEEK: {
+        "coding": 95,  # Exceptional at coding
+        "math": 90,
+        "reasoning": 88,
+        "creative": 70,
+        "factual": 80,
+        "analysis": 85,
+        "speed": 90,
+        "overall": 86,
+    },
+}
+
+# Task type to capability mapping
+TASK_CAPABILITY_MAP = {
+    "code_generation": "coding",
+    "debugging": "coding",
+    "math_problem": "math",
+    "factual_question": "factual",
+    "research_analysis": "analysis",
+    "creative_writing": "creative",
+    "explanation": "reasoning",
+    "comparison": "analysis",
+    "planning": "reasoning",
+    "summarization": "analysis",
+    "general": "overall",
+}
+
+
+def get_best_models_for_task(
+    task_type: str,
+    available_models: Optional[List[str]] = None,
+    num_models: int = 3,
+    criteria: Optional[dict] = None,
+) -> List[str]:
+    """
+    Get the best models for a specific task type (Automatic Model Selection).
+    
+    Args:
+        task_type: Type of task (from PromptOps analysis)
+        available_models: Models actually available in the orchestrator
+        num_models: Maximum number of models to return
+        criteria: User criteria (accuracy, speed, creativity weights)
+        
+    Returns:
+        List of best models for the task, ordered by fit
+    """
+    # Map task type to capability
+    capability = TASK_CAPABILITY_MAP.get(task_type.lower(), "overall")
+    
+    # Default criteria if not provided
+    if not criteria:
+        criteria = {"accuracy": 70, "speed": 50, "creativity": 50}
+    
+    # Determine all candidate models
+    all_models = list(MODEL_CAPABILITIES.keys())
+    
+    if available_models:
+        # Filter to only available models
+        candidate_models = [m for m in all_models if m in available_models]
+    else:
+        candidate_models = all_models
+    
+    if not candidate_models:
+        # Fallback to defaults
+        return [FALLBACK_GPT_4O, FALLBACK_CLAUDE_3_5, FALLBACK_DEEPSEEK][:num_models]
+    
+    # Score each model based on task type and user criteria
+    model_scores = []
+    for model in candidate_models:
+        caps = MODEL_CAPABILITIES.get(model, {})
+        
+        # Base score from task capability
+        task_score = caps.get(capability, 50)
+        
+        # Adjust by criteria
+        # Accuracy: weight task-specific capability
+        accuracy_weight = criteria.get("accuracy", 70) / 100
+        accuracy_score = task_score * accuracy_weight
+        
+        # Speed: weight speed capability
+        speed_weight = criteria.get("speed", 50) / 100
+        speed_score = caps.get("speed", 50) * speed_weight
+        
+        # Creativity: weight creative capability
+        creativity_weight = criteria.get("creativity", 50) / 100
+        creativity_score = caps.get("creative", 50) * creativity_weight
+        
+        # Combined score
+        total_score = accuracy_score + speed_score * 0.3 + creativity_score * 0.2
+        model_scores.append((model, total_score))
+    
+    # Sort by score descending
+    model_scores.sort(key=lambda x: x[1], reverse=True)
+    
+    # Return top N models
+    selected = [m for m, _ in model_scores[:num_models]]
+    
+    logger.info(
+        "Task-type model selection: task=%s, capability=%s, selected=%s",
+        task_type,
+        capability,
+        selected,
+    )
+    
+    return selected
+
+
+def get_diverse_ensemble(
+    task_type: str,
+    available_models: Optional[List[str]] = None,
+    num_models: int = 3,
+) -> List[str]:
+    """
+    Get a diverse ensemble of models for multi-model orchestration.
+    
+    Ensures diversity by selecting from different providers.
+    
+    Args:
+        task_type: Type of task
+        available_models: Available models
+        num_models: Target ensemble size
+        
+    Returns:
+        Diverse list of models
+    """
+    # Define provider groups
+    provider_groups = {
+        "openai": [FALLBACK_GPT_4O, FALLBACK_GPT_4O_MINI],
+        "anthropic": [FALLBACK_CLAUDE_SONNET_4, FALLBACK_CLAUDE_3_5, FALLBACK_CLAUDE_3_HAIKU],
+        "google": [FALLBACK_GEMINI_2_5, FALLBACK_GEMINI_2_5_FLASH],
+        "xai": [FALLBACK_GROK_2],
+        "deepseek": [FALLBACK_DEEPSEEK],
+    }
+    
+    # Get best models for task
+    best_models = get_best_models_for_task(task_type, available_models, num_models=10)
+    
+    # Select one from each provider for diversity
+    ensemble = []
+    providers_used = set()
+    
+    for model in best_models:
+        if len(ensemble) >= num_models:
+            break
+        
+        # Find provider
+        provider = None
+        for p, models in provider_groups.items():
+            if model in models:
+                provider = p
+                break
+        
+        # Add if new provider
+        if provider and provider not in providers_used:
+            ensemble.append(model)
+            providers_used.add(provider)
+    
+    # Fill remaining slots with best remaining
+    for model in best_models:
+        if len(ensemble) >= num_models:
+            break
+        if model not in ensemble:
+            ensemble.append(model)
+    
+    logger.info(
+        "Diverse ensemble: task=%s, ensemble=%s, providers=%s",
+        task_type,
+        ensemble,
+        list(providers_used),
+    )
+    
+    return ensemble
+
