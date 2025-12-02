@@ -17,17 +17,16 @@ export async function GET() {
       }
     }
 
-    // Fallback: Return default agents list
+    // Fallback: Return default agents list (matching frontend model IDs)
     const defaultAgents = [
       { id: "gpt-4o", name: "GPT-4o", provider: "openai", available: true },
       { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai", available: true },
-      { id: "gpt-4-turbo", name: "GPT-4 Turbo", provider: "openai", available: true },
-      { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4", provider: "anthropic", available: true },
-      { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", provider: "anthropic", available: true },
-      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", provider: "google", available: true },
-      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "google", available: true },
+      { id: "claude-sonnet-4", name: "Claude Sonnet 4", provider: "anthropic", available: true },
+      { id: "claude-3.5-haiku", name: "Claude 3.5 Haiku", provider: "anthropic", available: true },
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "google", available: true },
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "google", available: true },
       { id: "grok-2", name: "Grok 2", provider: "xai", available: true },
-      { id: "llama-3.1-405b", name: "Llama 3.1 405B", provider: "meta", available: true },
+      { id: "deepseek-chat", name: "DeepSeek V3", provider: "deepseek", available: true },
     ]
 
     return Response.json({ agents: defaultAgents, source: "fallback" })

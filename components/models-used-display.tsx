@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { getModelById, getModelLogo } from "@/lib/models"
+import { getModelById, getModelLogo, getModelDisplayName } from "@/lib/models"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Clock, Cpu, Coins } from "lucide-react"
@@ -28,7 +28,7 @@ export function ModelsUsedDisplay({
       const model = getModelById(id)
       return {
         id,
-        name: model?.name || id,
+        name: getModelDisplayName(id), // Always get a nice display name
         provider: model?.provider || "unknown",
         logo: model ? getModelLogo(model.provider) : null,
       }
