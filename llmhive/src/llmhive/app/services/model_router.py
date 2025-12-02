@@ -49,8 +49,8 @@ MODEL_MIXTRAL_8X22B = "mixtral-8x22b"
 # Fallback models (current available models)
 FALLBACK_GPT_4O = "gpt-4o"
 FALLBACK_GPT_4O_MINI = "gpt-4o-mini"
-FALLBACK_CLAUDE_3_5 = "claude-3-5-sonnet"
-FALLBACK_CLAUDE_3_HAIKU = "claude-3-haiku"
+FALLBACK_CLAUDE_3_5 = "claude-3-5-sonnet-20241022"
+FALLBACK_CLAUDE_3_HAIKU = "claude-3-5-haiku-20241022"
 FALLBACK_GEMINI_2_5 = "gemini-2.5-pro"
 FALLBACK_GROK_BETA = "grok-beta"
 FALLBACK_DEEPSEEK = "deepseek-chat"  # Current DeepSeek model

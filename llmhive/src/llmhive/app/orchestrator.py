@@ -642,16 +642,47 @@ class Orchestrator:
                 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
                 
                 class AnthropicProvider:
+                    # Model mapping for Claude models
+                    MODEL_MAPPING = {
+                        "claude-sonnet-4.5": "claude-sonnet-4-20250514",
+                        "claude-sonnet-4": "claude-sonnet-4-20250514",
+                        "claude-haiku-4": "claude-3-5-haiku-20241022",
+                        "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
+                        "claude-3-5-haiku": "claude-3-5-haiku-20241022",
+                        "claude-3-sonnet": "claude-3-5-sonnet-20241022",
+                        "claude-3-haiku": "claude-3-5-haiku-20241022",
+                        "claude-sonnet": "claude-3-5-sonnet-20241022",
+                        "claude-haiku": "claude-3-5-haiku-20241022",
+                    }
+                    
+                    # Kwargs to filter out
+                    ORCHESTRATION_KWARGS = {
+                        'use_hrm', 'use_adaptive_routing', 'use_deep_consensus', 
+                        'use_prompt_diffusion', 'use_memory', 'accuracy_level',
+                        'session_id', 'user_id', 'user_tier', 'enable_tools',
+                        'knowledge_snippets', 'context', 'plan', 'db_session',
+                    }
+                    
                     def __init__(self, client):
                         self.name = 'anthropic'
                         self.client = client
                     
-                    async def generate(self, prompt, model="claude-3-haiku-20240307", **kwargs):
+                    def _map_model(self, model):
+                        """Map UI model names to actual Claude model names."""
+                        return self.MODEL_MAPPING.get(model.lower(), model)
+                    
+                    async def generate(self, prompt, model="claude-3-5-haiku-20241022", **kwargs):
                         """Generate response using Anthropic API."""
+                        # Filter out orchestration kwargs
+                        api_kwargs = {k: v for k, v in kwargs.items() if k not in self.ORCHESTRATION_KWARGS}
+                        
+                        # Map model name
+                        actual_model = self._map_model(model)
+                        
                         try:
                             response = self.client.messages.create(
-                                model=model,
-                                max_tokens=kwargs.get('max_tokens', 1024),
+                                model=actual_model,
+                                max_tokens=api_kwargs.get('max_tokens', 2048),
                                 messages=[{"role": "user", "content": prompt}]
                             )
                             class Result:
@@ -670,7 +701,7 @@ class Orchestrator:
                             logger.error(f"Anthropic API error: {e}")
                             raise
                     
-                    async def complete(self, prompt, model="claude-3-haiku-20240307", **kwargs):
+                    async def complete(self, prompt, model="claude-3-5-haiku-20241022", **kwargs):
                         """Alias for generate() - used by orchestration components."""
                         return await self.generate(prompt, model=model, **kwargs)
                 
