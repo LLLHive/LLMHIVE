@@ -639,12 +639,10 @@ class Orchestrator:
         if os.getenv("ANTHROPIC_API_KEY"):
             try:
                 import anthropic
-                import httpx
                 
-                # Create client with explicit timeout and transport
-                client = anthropic.Anthropic(
+                # Create async client for use in async functions
+                async_client = anthropic.AsyncAnthropic(
                     api_key=os.getenv("ANTHROPIC_API_KEY"),
-                    timeout=httpx.Timeout(60.0, connect=10.0),
                 )
                 
                 class AnthropicProvider:
@@ -684,9 +682,11 @@ class Orchestrator:
                         
                         # Map model name
                         actual_model = self._map_model(model)
+                        logger.info("Anthropic calling model: %s (mapped from %s)", actual_model, model)
                         
                         try:
-                            response = self.client.messages.create(
+                            # Use async client
+                            response = await self.client.messages.create(
                                 model=actual_model,
                                 max_tokens=api_kwargs.get('max_tokens', 2048),
                                 messages=[{"role": "user", "content": prompt}]
@@ -711,8 +711,8 @@ class Orchestrator:
                         """Alias for generate() - used by orchestration components."""
                         return await self.generate(prompt, model=model, **kwargs)
                 
-                self.providers["anthropic"] = AnthropicProvider(client)
-                logger.info("Anthropic provider initialized")
+                self.providers["anthropic"] = AnthropicProvider(async_client)
+                logger.info("Anthropic provider initialized (async)")
             except Exception as e:
                 logger.warning(f"Failed to initialize Anthropic provider: {e}")
         
