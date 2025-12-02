@@ -136,6 +136,23 @@ export type AdvancedFeature =
   | "tool-use"
   | "code-interpreter"
 
+export type EliteStrategy =
+  | "automatic"
+  | "single_best"
+  | "parallel_race"
+  | "best_of_n"
+  | "quality_weighted_fusion"
+  | "expert_panel"
+  | "challenge_and_refine"
+
+export type QualityOption =
+  | "verification"
+  | "consensus"
+  | "chain_of_thought"
+  | "self_consistency"
+  | "reflection"
+  | "decomposition"
+
 export interface OrchestratorSettings {
   reasoningMode: ReasoningMode
   domainPack: DomainPack
@@ -156,6 +173,13 @@ export interface OrchestratorSettings {
   enableAdaptiveEnsemble: boolean // Adaptive Ensemble Logic
   // Dynamic Criteria Equalizer
   criteria?: CriteriaSettings
+  // Elite Orchestration settings (new)
+  eliteStrategy?: EliteStrategy // Strategy for elite orchestration
+  qualityOptions?: QualityOption[] // Quality boosting techniques
+  enableToolBroker?: boolean // Automatic tool detection and execution
+  enableVerification?: boolean // Tool-based verification for code/math
+  enablePromptOps?: boolean // Always-on query preprocessing
+  enableAnswerRefiner?: boolean // Always-on answer polishing
 }
 
 // Orchestration status event types

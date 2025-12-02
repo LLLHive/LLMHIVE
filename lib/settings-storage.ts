@@ -9,7 +9,7 @@ import type { OrchestratorSettings } from "./types"
 
 const STORAGE_KEY = "llmhive-orchestrator-settings"
 
-// Default settings
+// Default settings - aligned with backend capabilities
 export const DEFAULT_ORCHESTRATOR_SETTINGS: OrchestratorSettings = {
   reasoningMode: "standard",
   domainPack: "default",
@@ -20,7 +20,7 @@ export const DEFAULT_ORCHESTRATOR_SETTINGS: OrchestratorSettings = {
   sharedMemory: false,
   learnFromChat: false,
   selectedModels: ["automatic"],
-  advancedReasoningMethods: [],
+  advancedReasoningMethods: ["automatic"],
   advancedFeatures: [],
   accuracyLevel: 3,
   enableHRM: false,
@@ -32,6 +32,13 @@ export const DEFAULT_ORCHESTRATOR_SETTINGS: OrchestratorSettings = {
     speed: 70,
     creativity: 50,
   },
+  // Elite Orchestration settings (default to automatic/on)
+  eliteStrategy: "automatic", // Let system choose strategy
+  qualityOptions: ["verification", "consensus"], // Default quality techniques
+  enableToolBroker: true, // Enable automatic tool detection
+  enableVerification: true, // Enable code/math verification
+  enablePromptOps: true, // Always-on prompt preprocessing
+  enableAnswerRefiner: true, // Always-on answer polishing
 }
 
 /**
