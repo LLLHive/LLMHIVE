@@ -728,6 +728,93 @@ class Orchestrator:
             except Exception as e:
                 logger.warning(f"Failed to initialize Anthropic provider: {e}")
         
+        # Initialize DeepSeek provider
+        if os.getenv("DEEPSEEK_API_KEY"):
+            try:
+                import httpx
+                
+                # Strip any whitespace/newlines from the API key
+                deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+                
+                class DeepSeekProvider:
+                    """DeepSeek provider using httpx (OpenAI-compatible API)."""
+                    
+                    # Model mapping
+                    MODEL_MAPPING = {
+                        "deepseek-v3": "deepseek-chat",
+                        "deepseek-chat": "deepseek-chat",
+                        "deepseek-coder": "deepseek-coder",
+                        "deepseek-reasoner": "deepseek-reasoner",
+                    }
+                    
+                    # Kwargs to filter out
+                    ORCHESTRATION_KWARGS = {
+                        'use_hrm', 'use_adaptive_routing', 'use_deep_consensus', 
+                        'use_prompt_diffusion', 'use_memory', 'accuracy_level',
+                        'session_id', 'user_id', 'user_tier', 'enable_tools',
+                        'knowledge_snippets', 'context', 'plan', 'db_session',
+                    }
+                    
+                    def __init__(self, api_key):
+                        self.name = 'deepseek'
+                        self.api_key = api_key
+                        self.base_url = "https://api.deepseek.com/chat/completions"
+                    
+                    def _map_model(self, model):
+                        """Map UI model names to actual DeepSeek model names."""
+                        return self.MODEL_MAPPING.get(model.lower(), "deepseek-chat")
+                    
+                    async def generate(self, prompt, model="deepseek-chat", **kwargs):
+                        """Generate response using DeepSeek API."""
+                        # Filter out orchestration kwargs
+                        api_kwargs = {k: v for k, v in kwargs.items() if k not in self.ORCHESTRATION_KWARGS}
+                        
+                        # Map model name
+                        actual_model = self._map_model(model)
+                        logger.info("DeepSeek calling model: %s", actual_model)
+                        
+                        try:
+                            async with httpx.AsyncClient(timeout=60.0) as client:
+                                response = await client.post(
+                                    self.base_url,
+                                    headers={
+                                        "Authorization": f"Bearer {self.api_key}",
+                                        "Content-Type": "application/json",
+                                    },
+                                    json={
+                                        "model": actual_model,
+                                        "messages": [{"role": "user", "content": prompt}],
+                                        "max_tokens": api_kwargs.get('max_tokens', 2048),
+                                    }
+                                )
+                                response.raise_for_status()
+                                data = response.json()
+                                
+                            class Result:
+                                def __init__(self, text, model, tokens):
+                                    self.content = text
+                                    self.text = text
+                                    self.model = model
+                                    self.tokens_used = tokens
+                            
+                            return Result(
+                                text=data["choices"][0]["message"]["content"],
+                                model=data.get("model", actual_model),
+                                tokens=data.get("usage", {}).get("total_tokens", 0)
+                            )
+                        except Exception as e:
+                            logger.error(f"DeepSeek API error: {e}")
+                            raise
+                    
+                    async def complete(self, prompt, model="deepseek-chat", **kwargs):
+                        """Alias for generate() - used by orchestration components."""
+                        return await self.generate(prompt, model=model, **kwargs)
+                
+                self.providers["deepseek"] = DeepSeekProvider(deepseek_api_key)
+                logger.info("DeepSeek provider initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize DeepSeek provider: {e}")
+        
         # Always add stub provider as fallback
         if STUB_AVAILABLE and StubProvider:
             try:
@@ -1384,6 +1471,8 @@ class Orchestrator:
                 model_to_provider[model] = "grok"
             elif "gemini" in model_lower:
                 model_to_provider[model] = "gemini"
+            elif "deepseek" in model_lower:
+                model_to_provider[model] = "deepseek"
             else:
                 # Try direct match first
                 model_to_provider[model] = model

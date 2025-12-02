@@ -28,6 +28,7 @@ from .model_router import (
     FALLBACK_GEMINI_2_5_FLASH,
     FALLBACK_GROK_2,
     FALLBACK_GROK_BETA,
+    FALLBACK_DEEPSEEK,
 )
 from .reasoning_prompts import get_reasoning_prompt_template
 
@@ -81,6 +82,10 @@ def _map_model_to_provider(model_id: str, available_providers: list) -> str:
     # xAI Grok models - Use Grok-2 (latest)
     elif "grok" in model_lower:
         return FALLBACK_GROK_2  # grok-2
+    
+    # DeepSeek models
+    elif "deepseek" in model_lower:
+        return FALLBACK_DEEPSEEK  # deepseek-chat
     
     # Llama (local)
     elif "llama" in model_lower:
