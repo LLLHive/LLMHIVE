@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 
+// Vercel serverless function configuration
+// Extend timeout for multi-model orchestration (Pro plan: up to 300s)
+export const maxDuration = 120 // 2 minutes max
+export const dynamic = "force-dynamic"
+
 /**
  * Chat API route - Proxies frontend requests to FastAPI backend.
  * 
@@ -131,8 +136,9 @@ export async function POST(req: NextRequest) {
     let response: Response
     try {
       // Create AbortController for timeout (compatible with all runtimes)
+      // Extended timeout for multi-model orchestration
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 110000) // 110 second timeout (below maxDuration)
       
       try {
         response = await fetch(`${apiBase}/v1/chat`, {
