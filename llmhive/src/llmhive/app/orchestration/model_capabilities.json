@@ -1,0 +1,158 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-01-01",
+  "description": "Model capability scores for LLMHive orchestration. Scores are 0-1, higher is better.",
+  "models": {
+    "gpt-4o": {
+      "coding": 0.95,
+      "reasoning": 0.95,
+      "math": 0.90,
+      "creative": 0.85,
+      "factual": 0.90,
+      "analysis": 0.92,
+      "summarization": 0.88,
+      "instruction_following": 0.95,
+      "speed": 0.70,
+      "quality": 0.95,
+      "cost_per_1k_tokens": 0.005
+    },
+    "gpt-4o-mini": {
+      "coding": 0.82,
+      "reasoning": 0.80,
+      "math": 0.78,
+      "creative": 0.75,
+      "factual": 0.80,
+      "analysis": 0.78,
+      "summarization": 0.82,
+      "instruction_following": 0.85,
+      "speed": 0.95,
+      "quality": 0.80,
+      "cost_per_1k_tokens": 0.00015
+    },
+    "claude-sonnet-4-20250514": {
+      "coding": 0.96,
+      "reasoning": 0.94,
+      "math": 0.88,
+      "creative": 0.90,
+      "factual": 0.88,
+      "analysis": 0.93,
+      "summarization": 0.90,
+      "instruction_following": 0.94,
+      "speed": 0.65,
+      "quality": 0.94,
+      "cost_per_1k_tokens": 0.003
+    },
+    "claude-3-5-haiku-20241022": {
+      "coding": 0.78,
+      "reasoning": 0.75,
+      "math": 0.72,
+      "creative": 0.70,
+      "factual": 0.75,
+      "analysis": 0.73,
+      "summarization": 0.80,
+      "instruction_following": 0.82,
+      "speed": 0.92,
+      "quality": 0.75,
+      "cost_per_1k_tokens": 0.00025
+    },
+    "gemini-2.5-pro": {
+      "coding": 0.88,
+      "reasoning": 0.90,
+      "math": 0.92,
+      "creative": 0.82,
+      "factual": 0.92,
+      "analysis": 0.91,
+      "summarization": 0.88,
+      "instruction_following": 0.88,
+      "speed": 0.75,
+      "quality": 0.90,
+      "cost_per_1k_tokens": 0.00125
+    },
+    "gemini-2.5-flash": {
+      "coding": 0.80,
+      "reasoning": 0.78,
+      "math": 0.80,
+      "creative": 0.75,
+      "factual": 0.82,
+      "analysis": 0.78,
+      "summarization": 0.82,
+      "instruction_following": 0.80,
+      "speed": 0.96,
+      "quality": 0.78,
+      "cost_per_1k_tokens": 0.000075
+    },
+    "deepseek-chat": {
+      "coding": 0.94,
+      "reasoning": 0.92,
+      "math": 0.93,
+      "creative": 0.75,
+      "factual": 0.85,
+      "analysis": 0.88,
+      "summarization": 0.82,
+      "instruction_following": 0.85,
+      "speed": 0.80,
+      "quality": 0.90,
+      "cost_per_1k_tokens": 0.00014
+    },
+    "grok-2": {
+      "coding": 0.85,
+      "reasoning": 0.88,
+      "math": 0.85,
+      "creative": 0.82,
+      "factual": 0.85,
+      "analysis": 0.85,
+      "summarization": 0.82,
+      "instruction_following": 0.85,
+      "speed": 0.78,
+      "quality": 0.85,
+      "cost_per_1k_tokens": 0.002
+    }
+  },
+  "task_capabilities": {
+    "code_generation": ["coding", "instruction_following"],
+    "debugging": ["coding", "reasoning"],
+    "math_problem": ["math", "reasoning"],
+    "research_analysis": ["analysis", "factual", "reasoning"],
+    "creative_writing": ["creative", "quality"],
+    "explanation": ["reasoning", "instruction_following"],
+    "summarization": ["summarization", "factual"],
+    "factual_question": ["factual", "reasoning"],
+    "planning": ["reasoning", "analysis"],
+    "comparison": ["analysis", "reasoning"],
+    "fast_response": ["speed"],
+    "high_quality": ["quality", "reasoning"]
+  },
+  "strategy_thresholds": {
+    "single_best": {
+      "max_models": 1,
+      "accuracy_level_max": 1
+    },
+    "parallel_race": {
+      "min_models": 2,
+      "max_models": 4,
+      "speed_priority": true
+    },
+    "best_of_n": {
+      "n": 3,
+      "accuracy_level_min": 3
+    },
+    "quality_weighted_fusion": {
+      "min_models": 2,
+      "accuracy_level_min": 2
+    },
+    "expert_panel": {
+      "min_models": 3,
+      "accuracy_level_min": 3,
+      "complexity": ["complex", "research"]
+    },
+    "challenge_and_refine": {
+      "min_models": 2,
+      "task_types": ["code_generation", "debugging", "math_problem"]
+    },
+    "self_consistency": {
+      "samples": 5,
+      "accuracy_level_min": 4
+    }
+  }
+}
+

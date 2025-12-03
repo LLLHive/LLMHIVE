@@ -1,572 +1,517 @@
-"""Persistent memory management for LLMHive.
+"""Persistent Memory Module for LLMHive Orchestrator.
 
-This module provides long-term memory storage and retrieval using vector databases,
-enabling the system to remember and reuse verified answers and facts across sessions.
+Implements vector-based persistent memory using FAISS for:
+- Conversation history storage and retrieval
+- Reference document embedding
+- Organization-wide knowledge sharing
+- Context-aware retrieval for RAG
+
+Features:
+- FAISS-based vector store
+- Embedding generation (OpenAI or local)
+- Multi-source context merging
+- Memory prioritization and trimming
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
-from contextlib import contextmanager
-
-from .embeddings import get_embedding_service, get_embedding, EmbeddingService
-from .vector_store import (
-    VectorStore,
-    MemoryRecord,
-    MemoryQueryResult,
-    get_global_vector_store,
-    InMemoryVectorStore,
-)
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Try to import FAISS
+try:
+    import faiss
+    import numpy as np
+    FAISS_AVAILABLE = True
+except ImportError:
+    FAISS_AVAILABLE = False
+    logger.info("FAISS not available, using simple memory store")
 
-@dataclass(slots=True)
-class MemoryHit:
-    """A memory retrieval result."""
-    text: str
-    score: float
+
+@dataclass
+class MemoryEntry:
+    """A single memory entry."""
+    id: str
+    content: str
+    embedding: Optional[List[float]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    record_id: str = ""
-    created_at: float = 0.0
-    
-    @property
-    def is_verified(self) -> bool:
-        """Check if this memory was verified."""
-        return self.metadata.get("verified", False)
-    
-    @property
-    def domain(self) -> Optional[str]:
-        """Get the domain tag if available."""
-        tags = self.metadata.get("tags", [])
-        return tags[0] if tags else None
+    timestamp: float = field(default_factory=time.time)
+    source: str = "conversation"
+    relevance_score: float = 1.0
 
 
-class Scratchpad:
-    """Short-term scratchpad for within-query data sharing.
+@dataclass
+class MemorySearchResult:
+    """Result from memory search."""
+    entries: List[MemoryEntry]
+    total_matches: int
+    search_time_ms: float
+
+
+class EmbeddingProvider:
+    """Handles embedding generation."""
     
-    This allows different roles/agents to share intermediate results
-    during a single query processing lifecycle.
-    """
+    def __init__(
+        self,
+        providers: Optional[Dict[str, Any]] = None,
+        model: str = "text-embedding-3-small",
+    ):
+        self.providers = providers or {}
+        self.model = model
+        self._dimension = 1536  # OpenAI default
     
-    def __init__(self):
-        """Initialize empty scratchpad."""
-        self._data: Dict[str, Any] = {}
-        self._timestamps: Dict[str, float] = {}
+    @property
+    def dimension(self) -> int:
+        return self._dimension
     
-    def write(self, key: str, value: Any) -> None:
-        """
-        Write a value to the scratchpad.
+    async def embed(self, text: str) -> List[float]:
+        """Generate embedding for text."""
+        if "openai" in self.providers:
+            try:
+                return await self._embed_openai(text)
+            except Exception as e:
+                logger.warning("OpenAI embedding failed: %s", e)
         
-        Args:
-            key: Key to store the value under
-            value: Value to store
-        """
-        self._data[key] = value
-        self._timestamps[key] = time.time()
-        logger.debug("Scratchpad: wrote key '%s'", key)
+        # Fallback to simple hash-based embedding (not semantic!)
+        return self._simple_embed(text)
     
-    def read(self, key: str, default: Any = None) -> Any:
-        """
-        Read a value from the scratchpad.
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for multiple texts."""
+        tasks = [self.embed(text) for text in texts]
+        return await asyncio.gather(*tasks)
+    
+    async def _embed_openai(self, text: str) -> List[float]:
+        """Use OpenAI for embeddings."""
+        provider = self.providers["openai"]
         
-        Args:
-            key: Key to read
-            default: Default value if key not found
+        # Truncate to avoid token limits
+        text = text[:8000]
+        
+        result = await provider.create_embedding(text, model=self.model)
+        return result.embedding
+    
+    def _simple_embed(self, text: str) -> List[float]:
+        """Simple hash-based embedding (fallback)."""
+        # This is NOT semantic - just for testing
+        import hashlib
+        
+        # Create consistent hash
+        text_hash = hashlib.sha256(text.encode()).digest()
+        
+        # Expand to dimension
+        embedding = []
+        for i in range(self._dimension):
+            byte_idx = i % len(text_hash)
+            embedding.append((text_hash[byte_idx] - 128) / 128.0)
+        
+        return embedding
+
+
+class VectorStore:
+    """FAISS-based vector store."""
+    
+    def __init__(self, dimension: int = 1536):
+        self.dimension = dimension
+        self._entries: Dict[str, MemoryEntry] = {}
+        self._id_to_idx: Dict[str, int] = {}
+        self._idx_to_id: Dict[int, str] = {}
+        
+        if FAISS_AVAILABLE:
+            self._index = faiss.IndexFlatIP(dimension)  # Inner product (cosine after norm)
+        else:
+            self._index = None
+            self._vectors: List[Tuple[str, List[float]]] = []
+    
+    def add(self, entry: MemoryEntry) -> None:
+        """Add an entry to the store."""
+        if entry.embedding is None:
+            return
+        
+        self._entries[entry.id] = entry
+        
+        if FAISS_AVAILABLE and self._index is not None:
+            # Normalize for cosine similarity
+            vec = np.array([entry.embedding], dtype=np.float32)
+            faiss.normalize_L2(vec)
             
-        Returns:
-            Stored value or default
-        """
-        return self._data.get(key, default)
+            idx = self._index.ntotal
+            self._index.add(vec)
+            self._id_to_idx[entry.id] = idx
+            self._idx_to_id[idx] = entry.id
+        else:
+            self._vectors.append((entry.id, entry.embedding))
     
-    def get_all(self) -> Dict[str, Any]:
-        """Get all scratchpad data."""
-        return dict(self._data)
-    
-    def clear(self) -> None:
-        """Clear all scratchpad data."""
-        self._data.clear()
-        self._timestamps.clear()
-        logger.debug("Scratchpad: cleared")
-    
-    def remove(self, key: str) -> bool:
-        """
-        Remove a key from the scratchpad.
-        
-        Args:
-            key: Key to remove
+    def search(
+        self,
+        query_embedding: List[float],
+        k: int = 5,
+    ) -> List[Tuple[str, float]]:
+        """Search for similar entries."""
+        if FAISS_AVAILABLE and self._index is not None and self._index.ntotal > 0:
+            # Normalize query
+            query = np.array([query_embedding], dtype=np.float32)
+            faiss.normalize_L2(query)
             
-        Returns:
-            True if key was found and removed
-        """
-        if key in self._data:
-            del self._data[key]
-            del self._timestamps[key]
+            # Search
+            k = min(k, self._index.ntotal)
+            scores, indices = self._index.search(query, k)
+            
+            results = []
+            for score, idx in zip(scores[0], indices[0]):
+                if idx >= 0 and idx in self._idx_to_id:
+                    entry_id = self._idx_to_id[idx]
+                    results.append((entry_id, float(score)))
+            
+            return results
+        else:
+            # Simple cosine similarity fallback
+            return self._simple_search(query_embedding, k)
+    
+    def _simple_search(
+        self,
+        query: List[float],
+        k: int,
+    ) -> List[Tuple[str, float]]:
+        """Simple search without FAISS."""
+        scores = []
+        
+        for entry_id, embedding in self._vectors:
+            # Cosine similarity
+            dot = sum(a * b for a, b in zip(query, embedding))
+            norm_q = sum(a * a for a in query) ** 0.5
+            norm_e = sum(a * a for a in embedding) ** 0.5
+            
+            if norm_q > 0 and norm_e > 0:
+                score = dot / (norm_q * norm_e)
+                scores.append((entry_id, score))
+        
+        scores.sort(key=lambda x: x[1], reverse=True)
+        return scores[:k]
+    
+    def get(self, entry_id: str) -> Optional[MemoryEntry]:
+        """Get entry by ID."""
+        return self._entries.get(entry_id)
+    
+    def delete(self, entry_id: str) -> bool:
+        """Delete entry by ID."""
+        if entry_id in self._entries:
+            del self._entries[entry_id]
+            # Note: FAISS doesn't support deletion easily
+            # In production, would need to rebuild index periodically
             return True
         return False
-    
-    def keys(self) -> List[str]:
-        """Get all keys in the scratchpad."""
-        return list(self._data.keys())
-    
-    def has(self, key: str) -> bool:
-        """Check if a key exists in the scratchpad."""
-        return key in self._data
-    
-    def append_to_list(self, key: str, value: Any) -> None:
-        """
-        Append a value to a list in the scratchpad.
-        Creates the list if it doesn't exist.
-        
-        Args:
-            key: Key for the list
-            value: Value to append
-        """
-        if key not in self._data:
-            self._data[key] = []
-        if isinstance(self._data[key], list):
-            self._data[key].append(value)
-            self._timestamps[key] = time.time()
-    
-    def get_context_string(self) -> str:
-        """
-        Get scratchpad contents as a formatted context string.
-        
-        Returns:
-            Formatted string of scratchpad contents
-        """
-        if not self._data:
-            return ""
-        
-        parts = []
-        for key, value in self._data.items():
-            if isinstance(value, str):
-                parts.append(f"[{key}]: {value[:500]}")
-            elif isinstance(value, list):
-                list_str = ", ".join(str(v)[:100] for v in value[:5])
-                parts.append(f"[{key}]: [{list_str}]")
-            else:
-                parts.append(f"[{key}]: {str(value)[:200]}")
-        
-        return "\n".join(parts)
 
 
-class PersistentMemoryManager:
-    """Manages persistent long-term memory using vector database.
+class PersistentMemory:
+    """Manages persistent memory with vector search.
     
-    Provides add_to_memory and query_memory functions for storing and
-    retrieving verified answers and facts across sessions.
+    Stores conversation turns, reference documents, and shared
+    knowledge with semantic retrieval capabilities.
     """
     
     def __init__(
         self,
-        vector_store: Optional[VectorStore] = None,
-        embedding_service: Optional[EmbeddingService] = None,
-        namespace_per_user: bool = True,
-        global_namespace: str = "global",
+        providers: Optional[Dict[str, Any]] = None,
+        storage_path: Optional[str] = None,
+        max_entries: int = 10000,
     ):
-        """
-        Initialize persistent memory manager.
+        """Initialize persistent memory.
         
         Args:
-            vector_store: Vector store backend
-            embedding_service: Embedding service
-            namespace_per_user: Use separate namespace per user
-            global_namespace: Name for global/shared namespace
+            providers: LLM providers (for embeddings)
+            storage_path: Path for persistent storage
+            max_entries: Maximum number of entries to keep
         """
-        self._vector_store = vector_store or get_global_vector_store()
-        self._embedding_service = embedding_service or get_embedding_service()
-        self._namespace_per_user = namespace_per_user
-        self._global_namespace = global_namespace
+        self.embedding_provider = EmbeddingProvider(providers)
+        self.vector_store = VectorStore(self.embedding_provider.dimension)
+        self.storage_path = storage_path
+        self.max_entries = max_entries
         
-        logger.info(
-            "PersistentMemoryManager initialized: per_user=%s, global_ns=%s",
-            namespace_per_user,
-            global_namespace,
-        )
+        if storage_path:
+            self._load_from_disk()
     
-    def _get_namespace(self, user_id: Optional[str] = None) -> str:
-        """Get the appropriate namespace for a user."""
-        if not user_id or not self._namespace_per_user:
-            return self._global_namespace
-        return f"user_{user_id}"
-    
-    def _generate_id(self, uid: str, text: str) -> str:
-        """Generate a unique ID for a memory record."""
-        combined = f"{uid}|{text}"
-        return hashlib.sha256(combined.encode()).hexdigest()[:32]
-    
-    def add_to_memory(
+    async def add_memory(
         self,
-        uid: str,
-        text: str,
+        content: str,
+        *,
+        source: str = "conversation",
         metadata: Optional[Dict[str, Any]] = None,
-        user_id: Optional[str] = None,
     ) -> str:
-        """
-        Add text to persistent memory.
+        """Add a memory entry.
         
         Args:
-            uid: Unique identifier (e.g., session_id + query)
-            text: Text to store
-            metadata: Optional metadata (e.g., {'verified': True, 'tags': ['medical']})
-            user_id: Optional user ID for namespace
+            content: Text content to store
+            source: Source type (conversation, document, shared)
+            metadata: Optional metadata
             
         Returns:
-            Record ID
+            Entry ID
         """
-        if not text or not text.strip():
-            logger.warning("add_to_memory: Empty text, skipping")
-            return ""
+        # Generate ID
+        entry_id = hashlib.sha256(
+            f"{content[:100]}{time.time()}".encode()
+        ).hexdigest()[:16]
         
         # Generate embedding
-        embedding = self._embedding_service.get_embedding(text)
+        embedding = await self.embedding_provider.embed(content)
         
-        # Generate record ID
-        record_id = self._generate_id(uid, text)
-        
-        # Build metadata
-        record_metadata = metadata or {}
-        record_metadata.setdefault("uid", uid)
-        record_metadata.setdefault("verified", False)
-        record_metadata.setdefault("tags", [])
-        
-        # Create record
-        record = MemoryRecord(
-            id=record_id,
-            text=text,
+        # Create entry
+        entry = MemoryEntry(
+            id=entry_id,
+            content=content,
             embedding=embedding,
-            metadata=record_metadata,
+            metadata=metadata or {},
+            source=source,
         )
         
-        # Get namespace
-        namespace = self._get_namespace(user_id)
+        # Add to store
+        self.vector_store.add(entry)
         
-        # Upsert to vector store
-        count = self._vector_store.upsert([record], namespace=namespace)
+        # Check limits
+        self._enforce_limits()
         
-        if count > 0:
-            logger.info(
-                "add_to_memory: Stored record %s in namespace '%s' (verified=%s)",
-                record_id[:8],
-                namespace,
-                record_metadata.get("verified"),
-            )
-        
-        return record_id
+        return entry_id
     
-    def query_memory(
+    async def search_memory(
         self,
-        query_text: str,
-        top_k: int = 5,
-        user_id: Optional[str] = None,
-        min_score: float = 0.7,
-        filter_verified: bool = False,
-        filter_tags: Optional[List[str]] = None,
-        include_global: bool = True,
-    ) -> List[MemoryHit]:
-        """
-        Query persistent memory for relevant stored items.
+        query: str,
+        k: int = 5,
+        source_filter: Optional[str] = None,
+    ) -> MemorySearchResult:
+        """Search memory for relevant entries.
         
         Args:
-            query_text: Query text to search for
-            top_k: Maximum number of results
-            user_id: Optional user ID for namespace
-            min_score: Minimum similarity score
-            filter_verified: Only return verified memories
-            filter_tags: Filter by tags
-            include_global: Also search global namespace
+            query: Search query
+            k: Number of results
+            source_filter: Optional source type filter
             
         Returns:
-            List of MemoryHit objects sorted by score
+            MemorySearchResult with matching entries
         """
-        if not query_text or not query_text.strip():
-            return []
+        start_time = time.time()
         
-        # Generate query embedding
-        query_embedding = self._embedding_service.get_embedding(query_text)
+        # Embed query
+        query_embedding = await self.embedding_provider.embed(query)
         
-        # Build metadata filter
-        filter_metadata = None
-        if filter_verified or filter_tags:
-            filter_metadata = {}
-            if filter_verified:
-                filter_metadata["verified"] = True
-            # Note: Tag filtering might need special handling in Pinecone
+        # Search
+        results = self.vector_store.search(query_embedding, k * 2)  # Over-fetch for filtering
         
-        all_hits: List[MemoryHit] = []
+        # Collect entries
+        entries = []
+        for entry_id, score in results:
+            entry = self.vector_store.get(entry_id)
+            if entry:
+                # Apply source filter
+                if source_filter and entry.source != source_filter:
+                    continue
+                
+                entry.relevance_score = score
+                entries.append(entry)
+                
+                if len(entries) >= k:
+                    break
         
-        # Query user namespace
-        namespace = self._get_namespace(user_id)
-        result = self._vector_store.query(
-            query_embedding=query_embedding,
-            top_k=top_k,
-            namespace=namespace,
-            filter_metadata=filter_metadata,
-            min_score=min_score,
+        return MemorySearchResult(
+            entries=entries,
+            total_matches=len(entries),
+            search_time_ms=(time.time() - start_time) * 1000,
         )
-        
-        for record in result.records:
-            all_hits.append(MemoryHit(
-                text=record.text,
-                score=record.score,
-                metadata=record.metadata,
-                record_id=record.id,
-                created_at=record.created_at,
-            ))
-        
-        # Also query global namespace if different
-        if include_global and namespace != self._global_namespace:
-            global_result = self._vector_store.query(
-                query_embedding=query_embedding,
-                top_k=top_k,
-                namespace=self._global_namespace,
-                filter_metadata=filter_metadata,
-                min_score=min_score,
-            )
-            
-            for record in global_result.records:
-                all_hits.append(MemoryHit(
-                    text=record.text,
-                    score=record.score,
-                    metadata=record.metadata,
-                    record_id=record.id,
-                    created_at=record.created_at,
-                ))
-        
-        # Filter by tags if specified (post-query filter)
-        if filter_tags:
-            all_hits = [
-                h for h in all_hits
-                if any(tag in h.metadata.get("tags", []) for tag in filter_tags)
-            ]
-        
-        # Sort by score descending and deduplicate
-        seen_ids = set()
-        unique_hits = []
-        for hit in sorted(all_hits, key=lambda h: h.score, reverse=True):
-            if hit.record_id not in seen_ids:
-                unique_hits.append(hit)
-                seen_ids.add(hit.record_id)
-        
-        # Return top K
-        results = unique_hits[:top_k]
-        
-        logger.info(
-            "query_memory: Found %d results for query (min_score=%.2f, namespace=%s)",
-            len(results),
-            min_score,
-            namespace,
-        )
-        
-        return results
     
-    def store_verified_answer(
+    async def get_relevant_context(
         self,
-        session_id: str,
         query: str,
-        answer: str,
-        domain: Optional[str] = None,
-        user_id: Optional[str] = None,
-        additional_metadata: Optional[Dict[str, Any]] = None,
+        *,
+        max_tokens: int = 1000,
+        include_conversation: bool = True,
+        include_documents: bool = True,
+        include_shared: bool = True,
     ) -> str:
-        """
-        Store a verified Q&A pair in memory.
-        
-        This is called after fact verification passes.
+        """Get relevant context for a query.
         
         Args:
-            session_id: Session identifier
-            query: Original query
-            answer: Verified answer
-            domain: Domain classification (e.g., 'medical', 'legal')
-            user_id: User ID
-            additional_metadata: Additional metadata to store
+            query: The query to find context for
+            max_tokens: Maximum tokens in context
+            include_conversation: Include conversation history
+            include_documents: Include reference documents
+            include_shared: Include shared knowledge
             
         Returns:
-            Record ID
+            Formatted context string
         """
-        # Combine query and answer for storage
-        combined_text = f"Q: {query}\nA: {answer}"
+        all_entries = []
         
-        # Build metadata
-        metadata = {
-            "verified": True,
-            "query": query[:500],  # Store original query
-            "session_id": session_id,
-            "type": "qa_pair",
-        }
+        # Search each source
+        sources_to_search = []
+        if include_conversation:
+            sources_to_search.append("conversation")
+        if include_documents:
+            sources_to_search.append("document")
+        if include_shared:
+            sources_to_search.append("shared")
         
-        if domain:
-            metadata["tags"] = [domain]
-            metadata["domain"] = domain
+        for source in sources_to_search:
+            result = await self.search_memory(query, k=3, source_filter=source)
+            all_entries.extend(result.entries)
         
-        if additional_metadata:
-            metadata.update(additional_metadata)
+        # Sort by relevance
+        all_entries.sort(key=lambda e: e.relevance_score, reverse=True)
         
-        # Generate unique ID from session + query
-        uid = f"{session_id}|{query}"
-        
-        return self.add_to_memory(
-            uid=uid,
-            text=combined_text,
-            metadata=metadata,
-            user_id=user_id,
-        )
-    
-    def get_relevant_context(
-        self,
-        query: str,
-        user_id: Optional[str] = None,
-        max_context_length: int = 2000,
-        top_k: int = 3,
-    ) -> Tuple[str, List[MemoryHit]]:
-        """
-        Get relevant context from memory to prepend to query.
-        
-        Args:
-            query: User query
-            user_id: User ID
-            max_context_length: Maximum context length in characters
-            top_k: Number of memory hits to consider
-            
-        Returns:
-            Tuple of (context_string, memory_hits)
-        """
-        hits = self.query_memory(
-            query_text=query,
-            top_k=top_k,
-            user_id=user_id,
-            min_score=0.75,  # Higher threshold for context injection
-            filter_verified=True,  # Only use verified memories
-        )
-        
-        if not hits:
-            return "", []
-        
-        # Build context string
+        # Build context with token limit
         context_parts = []
-        total_length = 0
-        selected_hits = []
+        total_chars = 0
+        max_chars = max_tokens * 4  # Rough estimate
         
-        for hit in hits:
-            hit_text = f"[Relevant prior knowledge (score: {hit.score:.2f})]\n{hit.text}"
-            
-            if total_length + len(hit_text) > max_context_length:
+        for entry in all_entries:
+            if total_chars + len(entry.content) > max_chars:
+                # Truncate or skip
+                remaining = max_chars - total_chars
+                if remaining > 100:
+                    context_parts.append(entry.content[:remaining] + "...")
                 break
             
-            context_parts.append(hit_text)
-            total_length += len(hit_text)
-            selected_hits.append(hit)
+            context_parts.append(entry.content)
+            total_chars += len(entry.content)
         
         if not context_parts:
-            return "", []
+            return ""
         
-        context = "\n\n".join(context_parts)
-        context = f"--- Relevant Context from Memory ---\n{context}\n--- End Context ---\n\n"
+        return "\n\n---\n\n".join(context_parts)
+    
+    def _enforce_limits(self) -> None:
+        """Enforce memory limits by removing old entries."""
+        if len(self.vector_store._entries) <= self.max_entries:
+            return
         
-        logger.info(
-            "get_relevant_context: Built context with %d memory hits (%d chars)",
-            len(selected_hits),
-            len(context),
+        # Remove oldest entries
+        entries = sorted(
+            self.vector_store._entries.values(),
+            key=lambda e: e.timestamp
         )
         
-        return context, selected_hits
+        to_remove = len(entries) - self.max_entries
+        for entry in entries[:to_remove]:
+            self.vector_store.delete(entry.id)
     
-    def delete_memory(
-        self,
-        record_ids: List[str],
-        user_id: Optional[str] = None,
-    ) -> int:
-        """
-        Delete memories by ID.
+    def _load_from_disk(self) -> None:
+        """Load memory from disk."""
+        if not self.storage_path:
+            return
         
-        Args:
-            record_ids: List of record IDs to delete
-            user_id: User ID for namespace
-            
-        Returns:
-            Number of records deleted
-        """
-        namespace = self._get_namespace(user_id)
-        return self._vector_store.delete(record_ids, namespace=namespace)
-    
-    def clear_user_memory(self, user_id: str) -> int:
-        """
-        Clear all memories for a user.
+        path = Path(self.storage_path)
+        if not path.exists():
+            return
         
-        Args:
-            user_id: User ID
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
             
-        Returns:
-            Number of records cleared
-        """
-        namespace = self._get_namespace(user_id)
-        return self._vector_store.clear_namespace(namespace)
-
-
-# Global instances
-_persistent_memory: Optional[PersistentMemoryManager] = None
-_scratchpad: Optional[Scratchpad] = None
-
-
-def get_persistent_memory() -> PersistentMemoryManager:
-    """Get the global persistent memory manager."""
-    global _persistent_memory
-    if _persistent_memory is None:
-        _persistent_memory = PersistentMemoryManager()
-    return _persistent_memory
-
-
-def get_scratchpad() -> Scratchpad:
-    """Get the global scratchpad instance."""
-    global _scratchpad
-    if _scratchpad is None:
-        _scratchpad = Scratchpad()
-    return _scratchpad
-
-
-@contextmanager
-def query_scratchpad():
-    """Context manager for a query-scoped scratchpad.
+            for entry_data in data.get("entries", []):
+                entry = MemoryEntry(
+                    id=entry_data["id"],
+                    content=entry_data["content"],
+                    embedding=entry_data.get("embedding"),
+                    metadata=entry_data.get("metadata", {}),
+                    timestamp=entry_data.get("timestamp", time.time()),
+                    source=entry_data.get("source", "conversation"),
+                )
+                if entry.embedding:
+                    self.vector_store.add(entry)
+            
+            logger.info("Loaded %d memory entries from %s", 
+                       len(self.vector_store._entries), path)
+        except Exception as e:
+            logger.error("Failed to load memory: %s", e)
     
-    Creates a fresh scratchpad for the duration of a query,
-    then clears it when done.
+    def save_to_disk(self) -> None:
+        """Save memory to disk."""
+        if not self.storage_path:
+            return
+        
+        path = Path(self.storage_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        
+        data = {
+            "entries": [
+                {
+                    "id": e.id,
+                    "content": e.content,
+                    "embedding": e.embedding,
+                    "metadata": e.metadata,
+                    "timestamp": e.timestamp,
+                    "source": e.source,
+                }
+                for e in self.vector_store._entries.values()
+            ]
+        }
+        
+        try:
+            with open(path, 'w') as f:
+                json.dump(data, f)
+            logger.info("Saved %d memory entries to %s", len(data["entries"]), path)
+        except Exception as e:
+            logger.error("Failed to save memory: %s", e)
+
+
+class SharedMemoryManager:
+    """Manages organization-wide shared knowledge.
     
-    Usage:
-        with query_scratchpad() as scratchpad:
-            scratchpad.write("model1_output", output1)
-            ...
+    Placeholder for future integration with organizational
+    knowledge bases and shared context.
     """
-    scratchpad = Scratchpad()
-    try:
-        yield scratchpad
-    finally:
-        scratchpad.clear()
+    
+    def __init__(self):
+        self._shared_facts: List[str] = []
+    
+    def add_shared_fact(self, fact: str) -> None:
+        """Add a shared fact."""
+        self._shared_facts.append(fact)
+    
+    def get_shared_context(self, query: str) -> str:
+        """Get relevant shared context for a query."""
+        # Placeholder - would use semantic search in production
+        return ""
 
 
-# Convenience functions
-def add_to_memory(
-    uid: str,
-    text: str,
-    metadata: Optional[Dict[str, Any]] = None,
+# ==============================================================================
+# Convenience Functions
+# ==============================================================================
+
+# Global memory instance
+_memory: Optional[PersistentMemory] = None
+
+
+def get_memory(
+    providers: Optional[Dict[str, Any]] = None,
+) -> PersistentMemory:
+    """Get or create the global memory instance."""
+    global _memory
+    if _memory is None:
+        _memory = PersistentMemory(providers=providers)
+    return _memory
+
+
+async def remember(
+    content: str,
+    source: str = "conversation",
 ) -> str:
-    """Add text to global memory."""
-    return get_persistent_memory().add_to_memory(uid, text, metadata)
+    """Convenience function to add memory."""
+    memory = get_memory()
+    return await memory.add_memory(content, source=source)
 
 
-def query_memory(
-    query_text: str,
-    top_k: int = 5,
-    user_id: Optional[str] = None,
-) -> List[MemoryHit]:
-    """Query global memory."""
-    return get_persistent_memory().query_memory(
-        query_text,
-        top_k=top_k,
-        user_id=user_id,
-    )
-
+async def recall(
+    query: str,
+    k: int = 5,
+) -> List[str]:
+    """Convenience function to recall memories."""
+    memory = get_memory()
+    result = await memory.search_memory(query, k=k)
+    return [e.content for e in result.entries]

@@ -507,3 +507,91 @@ if PERFORMANCE_CONTROLLER_AVAILABLE:
         "create_performance_controller",
         "get_performance_controller",
     ])
+
+# ==================== NEW ENHANCEMENT MODULES ====================
+
+# Model Config (Data-Driven Model Selection)
+try:
+    from .model_config import (
+        ModelConfigManager,
+        ModelCapability as ConfigModelCapability,
+        ModelProfile as ConfigModelProfile,
+        StrategyConfig,
+        get_config_manager,
+        get_model_capabilities,
+        get_best_models_for_task as config_get_best_models,
+    )
+    MODEL_CONFIG_AVAILABLE = True
+except ImportError:
+    MODEL_CONFIG_AVAILABLE = False
+    ModelConfigManager = None  # type: ignore
+    ConfigModelCapability = None  # type: ignore
+
+# Hierarchical Planning (Enhanced)
+try:
+    from .hierarchical_planning import (
+        HierarchicalPlanner as NewHierarchicalPlanner,
+        HierarchicalPlanExecutor as NewHierarchicalPlanExecutor,
+        PlanStep,
+        ExecutionPlan as NewExecutionPlan,
+        PlanResult,
+        PlanRole,
+        plan_and_execute,
+        should_use_hrm,
+    )
+    NEW_HIERARCHICAL_PLANNING_AVAILABLE = True
+except ImportError:
+    NEW_HIERARCHICAL_PLANNING_AVAILABLE = False
+    NewHierarchicalPlanner = None  # type: ignore
+    PlanStep = None  # type: ignore
+    PlanRole = None  # type: ignore
+
+# Consensus Manager (Multi-Model Synthesis)
+try:
+    from .consensus_manager import (
+        ConsensusManager,
+        ConsensusMethod,
+        ConsensusResult,
+        ModelResponse as ConsensusModelResponse,
+        synthesize_responses,
+        calculate_agreement,
+    )
+    CONSENSUS_MANAGER_AVAILABLE = True
+except ImportError:
+    CONSENSUS_MANAGER_AVAILABLE = False
+    ConsensusManager = None  # type: ignore
+    ConsensusMethod = None  # type: ignore
+
+# Export new modules
+if MODEL_CONFIG_AVAILABLE:
+    __all__.extend([
+        "ModelConfigManager",
+        "ConfigModelCapability",
+        "ConfigModelProfile",
+        "StrategyConfig",
+        "get_config_manager",
+        "get_model_capabilities",
+        "config_get_best_models",
+    ])
+
+if NEW_HIERARCHICAL_PLANNING_AVAILABLE:
+    __all__.extend([
+        "NewHierarchicalPlanner",
+        "NewHierarchicalPlanExecutor",
+        "PlanStep",
+        "NewExecutionPlan",
+        "PlanResult",
+        "PlanRole",
+        "plan_and_execute",
+        "should_use_hrm",
+    ])
+
+if CONSENSUS_MANAGER_AVAILABLE:
+    __all__.extend([
+        "ConsensusManager",
+        "ConsensusMethod",
+        "ConsensusResult",
+        "ConsensusModelResponse",
+        "synthesize_responses",
+        "calculate_agreement",
+    ])
