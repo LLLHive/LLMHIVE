@@ -58,7 +58,9 @@ export function ChatInterface() {
   }
 
   const handleStartFromTemplate = (preset: Partial<OrchestratorSettings>) => {
-    setOrchestratorSettings({ ...defaultOrchestratorSettings, ...preset })
+    const newSettings = { ...DEFAULT_ORCHESTRATOR_SETTINGS, ...preset }
+    setOrchestratorSettings(newSettings)
+    saveOrchestratorSettings(newSettings)
     handleNewChat()
   }
 
