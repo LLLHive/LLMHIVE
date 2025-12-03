@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
@@ -12,6 +13,7 @@ import { REASONING_METHODS, REASONING_CATEGORIES } from "@/lib/reasoning-methods
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settings-storage"
+import { ROUTES } from "@/lib/routes"
 
 // Card data matching home page template card style exactly
 const orchestrationCards = [
@@ -185,6 +187,7 @@ const speedOptions = [
 type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | "elite" | "quality" | null
 
 export default function OrchestrationPage() {
+  const router = useRouter()
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
@@ -310,14 +313,14 @@ export default function OrchestrationPage() {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         conversations={[]}
         currentConversationId={null}
-        onSelectConversation={() => (window.location.href = "/")}
-        onNewChat={() => (window.location.href = "/")}
+        onSelectConversation={() => router.push(ROUTES.HOME)}
+        onNewChat={() => router.push(ROUTES.HOME)}
         onDeleteConversation={() => {}}
         onTogglePin={() => {}}
         onRenameConversation={() => {}}
         onMoveToProject={() => {}}
         projects={[]}
-        onGoHome={() => (window.location.href = "/")}
+        onGoHome={() => router.push(ROUTES.HOME)}
       />
 
       {/* Main Content - Matching Home Page Style Exactly */}

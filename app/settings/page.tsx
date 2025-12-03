@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
+import { ROUTES } from "@/lib/routes"
 
 // Card data matching home page template card style exactly
 const settingsCards = [
@@ -97,6 +99,7 @@ const appearanceOptions = [
 type DrawerId = "account" | "api-keys" | "connections" | "notifications" | "privacy" | "appearance" | null
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
@@ -151,8 +154,8 @@ export default function SettingsPage() {
       <Sidebar
         conversations={[]}
         currentConversationId={null}
-        onNewChat={() => (window.location.href = "/")}
-        onSelectConversation={() => (window.location.href = "/")}
+        onNewChat={() => router.push(ROUTES.HOME)}
+        onSelectConversation={() => router.push(ROUTES.HOME)}
         onDeleteConversation={() => {}}
         onTogglePin={() => {}}
         onRenameConversation={() => {}}
@@ -160,7 +163,7 @@ export default function SettingsPage() {
         projects={[]}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onGoHome={() => (window.location.href = "/")}
+        onGoHome={() => router.push(ROUTES.HOME)}
       />
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">

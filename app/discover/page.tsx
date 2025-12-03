@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -22,6 +23,7 @@ import {
 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
+import { ROUTES } from "@/lib/routes"
 
 // Card data matching home page template card style
 const discoverCards = [
@@ -70,6 +72,7 @@ const aiTemplates = [
 type DrawerId = "web-search" | "knowledge-base" | "ai-templates" | null
 
 export default function DiscoverPage() {
+  const router = useRouter()
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -101,8 +104,8 @@ export default function DiscoverPage() {
       <Sidebar
         conversations={[]}
         currentConversationId={null}
-        onNewChat={() => (window.location.href = "/")}
-        onSelectConversation={() => (window.location.href = "/")}
+        onNewChat={() => router.push(ROUTES.HOME)}
+        onSelectConversation={() => router.push(ROUTES.HOME)}
         onDeleteConversation={() => {}}
         onTogglePin={() => {}}
         onRenameConversation={() => {}}
@@ -110,7 +113,7 @@ export default function DiscoverPage() {
         projects={[]}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onGoHome={() => (window.location.href = "/")}
+        onGoHome={() => router.push(ROUTES.HOME)}
       />
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
