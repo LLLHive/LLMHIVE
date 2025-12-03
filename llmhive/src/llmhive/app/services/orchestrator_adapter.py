@@ -487,21 +487,27 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         # Extract criteria settings from metadata if provided
         criteria_settings = None
+        metadata_dict: Dict[str, Any] = {}  # Initialize metadata_dict
+        
         if request.metadata:
+            # Get dict representation of metadata
+            if hasattr(request.metadata, 'model_dump'):
+                metadata_dict = request.metadata.model_dump(exclude_none=True)
+            elif hasattr(request.metadata, 'dict'):
+                metadata_dict = request.metadata.dict(exclude_none=True)
+            
             # Check for criteria object directly on metadata (new format)
             if hasattr(request.metadata, 'criteria') and request.metadata.criteria:
                 criteria_obj = request.metadata.criteria
-                if hasattr(criteria_obj, 'dict'):
-                    criteria_settings = criteria_obj.dict()
-                elif hasattr(criteria_obj, 'model_dump'):
+                if hasattr(criteria_obj, 'model_dump'):
                     criteria_settings = criteria_obj.model_dump()
+                elif hasattr(criteria_obj, 'dict'):
+                    criteria_settings = criteria_obj.dict()
                 elif isinstance(criteria_obj, dict):
                     criteria_settings = criteria_obj
             # Fallback: check dict representation
-            if not criteria_settings and hasattr(request.metadata, 'dict'):
-                metadata_dict = request.metadata.dict(exclude_none=True)
-                if 'criteria' in metadata_dict:
-                    criteria_settings = metadata_dict['criteria']
+            elif 'criteria' in metadata_dict:
+                criteria_settings = metadata_dict['criteria']
         
         # Build orchestration_config dict
         orchestration_config: Dict[str, Any] = {
