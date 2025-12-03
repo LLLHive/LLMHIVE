@@ -39,6 +39,14 @@ export const DEFAULT_ORCHESTRATOR_SETTINGS: OrchestratorSettings = {
   enableVerification: true, // Enable code/math verification
   enablePromptOps: true, // Always-on prompt preprocessing
   enableAnswerRefiner: true, // Always-on answer polishing
+  // Standard LLM parameters
+  standardValues: {
+    temperature: 0.7,
+    maxTokens: 2000,
+    topP: 0.9,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+  },
 }
 
 /**

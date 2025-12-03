@@ -124,6 +124,18 @@ except ImportError:
     TOOL_BROKER_AVAILABLE = False
     get_tool_broker = None
 
+# Import Pinecone Knowledge Base for RAG and learning
+try:
+    from ..knowledge.pinecone_kb import (
+        get_knowledge_base,
+        PineconeKnowledgeBase,
+        RecordType,
+    )
+    KNOWLEDGE_BASE_AVAILABLE = True
+except ImportError:
+    KNOWLEDGE_BASE_AVAILABLE = False
+    get_knowledge_base = None
+
 logger = logging.getLogger(__name__)
 
 # Configuration
@@ -162,6 +174,107 @@ def _get_quality_booster() -> Optional[QualityBooster]:
         )
         logger.info("Quality booster initialized")
     return _quality_booster
+
+
+# Knowledge base instance
+_knowledge_base: Optional[PineconeKnowledgeBase] = None
+
+
+def _get_knowledge_base() -> Optional[PineconeKnowledgeBase]:
+    """Get or create knowledge base instance for RAG and learning."""
+    global _knowledge_base
+    if _knowledge_base is None and KNOWLEDGE_BASE_AVAILABLE:
+        _knowledge_base = get_knowledge_base()
+        logger.info("Knowledge base initialized")
+    return _knowledge_base
+
+
+async def _augment_with_rag(
+    prompt: str,
+    domain: str = "default",
+    user_id: Optional[str] = None,
+    project_id: Optional[str] = None,
+) -> str:
+    """Augment prompt with relevant context from knowledge base."""
+    kb = _get_knowledge_base()
+    if not kb:
+        return prompt
+    
+    try:
+        augmented = await kb.augment_prompt(
+            query=prompt,
+            domain=domain,
+            user_id=user_id,
+            project_id=project_id,
+            max_context_length=1500,
+        )
+        if augmented != prompt:
+            logger.info("Prompt augmented with RAG context")
+        return augmented
+    except Exception as e:
+        logger.warning(f"RAG augmentation failed: {e}")
+        return prompt
+
+
+async def _store_answer_for_learning(
+    query: str,
+    answer: str,
+    models_used: List[str],
+    quality_score: float,
+    domain: str,
+    user_id: Optional[str] = None,
+    project_id: Optional[str] = None,
+    is_partial: bool = False,
+) -> None:
+    """Store answer in knowledge base for future learning."""
+    kb = _get_knowledge_base()
+    if not kb:
+        return
+    
+    try:
+        record_type = RecordType.PARTIAL_ANSWER if is_partial else RecordType.FINAL_ANSWER
+        await kb.store_answer(
+            query=query,
+            answer=answer,
+            models_used=models_used,
+            record_type=record_type,
+            quality_score=quality_score,
+            domain=domain,
+            user_id=user_id,
+            project_id=project_id,
+        )
+        logger.debug(f"Stored {'partial' if is_partial else 'final'} answer for learning")
+    except Exception as e:
+        logger.warning(f"Failed to store answer: {e}")
+
+
+async def _learn_orchestration_pattern(
+    query_type: str,
+    strategy_used: str,
+    models_used: List[str],
+    success: bool,
+    latency_ms: int,
+    quality_score: float,
+    user_id: Optional[str] = None,
+) -> None:
+    """Learn from orchestration pattern for future optimization."""
+    kb = _get_knowledge_base()
+    if not kb:
+        return
+    
+    try:
+        await kb.store_orchestration_pattern(
+            query_type=query_type,
+            strategy_used=strategy_used,
+            models_used=models_used,
+            success=success,
+            latency_ms=latency_ms,
+            quality_score=quality_score,
+            user_id=user_id,
+        )
+        logger.debug(f"Learned orchestration pattern: {strategy_used} for {query_type}")
+    except Exception as e:
+        logger.warning(f"Failed to learn pattern: {e}")
 
 
 def _detect_task_type(prompt: str) -> str:
@@ -540,9 +653,34 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             )
         
         # ========================================================================
+        # STEP 0: RAG AUGMENTATION (If enabled)
+        # ========================================================================
+        enable_rag = getattr(request.orchestration, 'enable_vector_rag', False)
+        user_id = metadata_dict.get('user_id')
+        project_id = metadata_dict.get('project_id')
+        
+        if enable_rag and KNOWLEDGE_BASE_AVAILABLE:
+            try:
+                augmented_prompt = await _augment_with_rag(
+                    prompt=request.prompt,
+                    domain=request.domain_pack.value,
+                    user_id=user_id,
+                    project_id=project_id,
+                )
+                original_prompt = request.prompt
+                # Note: We don't modify request.prompt directly, use augmented_prompt in the pipeline
+            except Exception as e:
+                logger.warning(f"RAG augmentation failed: {e}")
+                augmented_prompt = request.prompt
+                original_prompt = request.prompt
+        else:
+            augmented_prompt = request.prompt
+            original_prompt = request.prompt
+        
+        # ========================================================================
         # STEP 1: PROMPTOPS PREPROCESSING (Always On)
         # ========================================================================
-        base_prompt = request.prompt
+        base_prompt = augmented_prompt  # Use RAG-augmented prompt if available
         prompt_spec: Optional[PromptSpecification] = None
         detected_task_type = "general"
         detected_complexity = "moderate"
@@ -953,6 +1091,44 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             latency_ms,
             token_usage or "unknown",
         )
+        
+        # ========================================================================
+        # STEP FINAL: STORE ANSWER FOR LEARNING (If Vector RAG is enabled)
+        # ========================================================================
+        if enable_rag and KNOWLEDGE_BASE_AVAILABLE:
+            try:
+                # Calculate quality score based on verification and refinement
+                quality_score = 0.7  # Base score
+                if verification_result and hasattr(verification_result, 'passed') and verification_result.passed:
+                    quality_score += 0.2
+                if refined_text and refined_text != final_text:
+                    quality_score += 0.1
+                
+                # Store the final answer for future RAG retrieval
+                await _store_answer_for_learning(
+                    query=original_prompt,
+                    answer=final_text,
+                    models_used=actual_models,
+                    quality_score=min(quality_score, 1.0),
+                    domain=request.domain_pack.value,
+                    user_id=user_id,
+                    project_id=project_id,
+                    is_partial=False,
+                )
+                
+                # Learn the orchestration pattern
+                await _learn_orchestration_pattern(
+                    query_type=detected_task_type,
+                    strategy_used=selected_strategy,
+                    models_used=actual_models,
+                    success=True,
+                    latency_ms=latency_ms,
+                    quality_score=min(quality_score, 1.0),
+                    user_id=user_id,
+                )
+                
+            except Exception as e:
+                logger.warning(f"Failed to store answer for learning: {e}")
         
         return response
         

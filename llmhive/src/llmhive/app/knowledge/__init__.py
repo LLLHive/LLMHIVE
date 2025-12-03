@@ -1,11 +1,20 @@
-"""Enhanced knowledge base with RAG improvements."""
-from __future__ import annotations
+"""
+Knowledge Base Module for LLMHive Orchestrator
 
-from .enhanced_retrieval import EnhancedKnowledgeBase, MultiHopRetrieval, Reranker
+Provides vector database-backed knowledge storage and retrieval
+for orchestrator learning and RAG capabilities.
+"""
+
+from .pinecone_kb import (
+    PineconeKnowledgeBase,
+    KnowledgeRecord,
+    RecordType,
+    get_knowledge_base,
+)
 
 __all__ = [
-    "EnhancedKnowledgeBase",
-    "MultiHopRetrieval",
-    "Reranker",
+    "PineconeKnowledgeBase",
+    "KnowledgeRecord",
+    "RecordType",
+    "get_knowledge_base",
 ]
-

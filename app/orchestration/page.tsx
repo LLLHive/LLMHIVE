@@ -219,6 +219,9 @@ export default function OrchestrationPage() {
     setSelectedModels(savedSettings.selectedModels || ["automatic"])
     setSelectedMethods(savedSettings.advancedReasoningMethods || [])
     setSelectedFeatures(savedSettings.advancedFeatures || [])
+    setSelectedTools(savedSettings.advancedFeatures?.filter(f => 
+      ["web-search", "code-execution", "file-analysis", "image-generation", "data-visualization", "api-integration"].includes(f)
+    ) || [])
     setTuningSettings({
       promptOptimization: savedSettings.promptOptimization,
       outputValidation: savedSettings.outputValidation,
@@ -227,6 +230,12 @@ export default function OrchestrationPage() {
       learnFromChat: savedSettings.learnFromChat,
     })
     setSelectedSpeed(savedSettings.reasoningMode || "standard")
+    setSelectedEliteStrategy(savedSettings.eliteStrategy || "standard")
+    setSelectedQualityOptions(savedSettings.qualityOptions || ["verification", "consensus"])
+    // Load standard LLM values
+    if (savedSettings.standardValues) {
+      setStandardValues(savedSettings.standardValues)
+    }
     setSettingsLoaded(true)
   }, [])
 
@@ -237,15 +246,18 @@ export default function OrchestrationPage() {
     saveOrchestratorSettings({
       selectedModels,
       advancedReasoningMethods: selectedMethods as any,
-      advancedFeatures: selectedFeatures as any,
+      advancedFeatures: [...selectedFeatures, ...selectedTools] as any,
       promptOptimization: tuningSettings.promptOptimization,
       outputValidation: tuningSettings.outputValidation,
       answerStructure: tuningSettings.answerStructure,
       sharedMemory: tuningSettings.sharedMemory,
       learnFromChat: tuningSettings.learnFromChat,
       reasoningMode: selectedSpeed as any,
+      eliteStrategy: selectedEliteStrategy as any,
+      qualityOptions: selectedQualityOptions as any,
+      standardValues: standardValues,
     })
-  }, [selectedModels, selectedMethods, selectedFeatures, tuningSettings, selectedSpeed, settingsLoaded])
+  }, [selectedModels, selectedMethods, selectedFeatures, selectedTools, tuningSettings, selectedSpeed, selectedEliteStrategy, selectedQualityOptions, standardValues, settingsLoaded])
 
   const toggleModel = (id: string) => {
     setSelectedModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]))

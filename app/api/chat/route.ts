@@ -76,12 +76,23 @@ export async function POST(req: NextRequest) {
         selectedModels = DEFAULT_AUTO_MODELS
       }
     }
+
+    // Map advanced reasoning methods to the first non-automatic method selected
+    // This connects the UI reasoning method selection to the backend
+    const advancedMethods = settings.advancedReasoningMethods || []
+    const selectedReasoningMethod = advancedMethods.find((m: string) => m !== "automatic") || null
+    
+    // Determine elite strategy from settings (maps to backend orchestration strategy)
+    const eliteStrategy = settings.eliteStrategy !== "automatic" ? settings.eliteStrategy : null
+    
+    // Quality options selected by user
+    const qualityOptions = settings.qualityOptions || []
     
     const payload = {
       prompt,
       models: selectedModels.length > 0 ? selectedModels : null,  // User-selected models for ensemble
       reasoning_mode: settings.reasoningMode || "standard",
-      reasoning_method: settings.reasoningMethod || null, // Optional advanced reasoning method
+      reasoning_method: selectedReasoningMethod, // Map from advancedReasoningMethods dropdown
       domain_pack: settings.domainPack || "default",
       agent_mode: settings.agentMode || "team",
       tuning: {
@@ -97,6 +108,20 @@ export async function POST(req: NextRequest) {
         enable_prompt_diffusion: settings.enablePromptDiffusion || false,
         enable_deep_consensus: settings.enableDeepConsensus || false,
         enable_adaptive_ensemble: settings.enableAdaptiveEnsemble || false,
+        // NEW: Elite orchestration settings from UI
+        elite_strategy: eliteStrategy,
+        quality_options: qualityOptions.length > 0 ? qualityOptions : null,
+        // Standard LLM parameters
+        temperature: settings.standardValues?.temperature ?? 0.7,
+        max_tokens: settings.standardValues?.maxTokens ?? 2000,
+        top_p: settings.standardValues?.topP ?? 0.9,
+        frequency_penalty: settings.standardValues?.frequencyPenalty ?? 0,
+        presence_penalty: settings.standardValues?.presencePenalty ?? 0,
+        // Feature toggles
+        enable_tool_broker: settings.enableToolBroker !== false,
+        enable_verification: settings.enableVerification !== false,
+        enable_vector_rag: settings.advancedFeatures?.includes("vector-rag") || false,
+        enable_memory: settings.advancedFeatures?.includes("memory-augmentation") || false,
       },
       metadata: {
         chat_id: chatId || null,

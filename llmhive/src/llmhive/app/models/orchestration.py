@@ -97,6 +97,17 @@ class ChatMetadata(BaseModel):
         }
 
 
+class EliteStrategy(str, Enum):
+    """Elite orchestration strategies."""
+    automatic = "automatic"
+    single_best = "single_best"
+    parallel_race = "parallel_race"
+    best_of_n = "best_of_n"
+    quality_weighted_fusion = "quality_weighted_fusion"
+    expert_panel = "expert_panel"
+    challenge_and_refine = "challenge_and_refine"
+
+
 class OrchestrationSettings(BaseModel):
     """Orchestration Studio settings for advanced orchestration control."""
     accuracy_level: int = Field(
@@ -121,6 +132,63 @@ class OrchestrationSettings(BaseModel):
         default=False,
         description="Enable Adaptive Ensemble Logic"
     )
+    # Elite orchestration settings (from frontend)
+    elite_strategy: Optional[str] = Field(
+        default=None,
+        description="Elite orchestration strategy"
+    )
+    quality_options: Optional[List[str]] = Field(
+        default=None,
+        description="Quality boosting options"
+    )
+    # Standard LLM parameters
+    temperature: Optional[float] = Field(
+        default=0.7,
+        ge=0,
+        le=2,
+        description="Temperature for response generation"
+    )
+    max_tokens: Optional[int] = Field(
+        default=2000,
+        ge=100,
+        le=4000,
+        description="Maximum tokens in response"
+    )
+    top_p: Optional[float] = Field(
+        default=0.9,
+        ge=0,
+        le=1,
+        description="Top-p nucleus sampling"
+    )
+    frequency_penalty: Optional[float] = Field(
+        default=0,
+        ge=0,
+        le=2,
+        description="Frequency penalty"
+    )
+    presence_penalty: Optional[float] = Field(
+        default=0,
+        ge=0,
+        le=2,
+        description="Presence penalty"
+    )
+    # Feature toggles
+    enable_tool_broker: Optional[bool] = Field(
+        default=True,
+        description="Enable automatic tool detection and execution"
+    )
+    enable_verification: Optional[bool] = Field(
+        default=True,
+        description="Enable code/math verification"
+    )
+    enable_vector_rag: Optional[bool] = Field(
+        default=False,
+        description="Enable Vector RAG with Pinecone"
+    )
+    enable_memory: Optional[bool] = Field(
+        default=False,
+        description="Enable memory augmentation"
+    )
 
     class Config:
         json_schema_extra = {
@@ -130,6 +198,11 @@ class OrchestrationSettings(BaseModel):
                 "enable_prompt_diffusion": False,
                 "enable_deep_consensus": False,
                 "enable_adaptive_ensemble": False,
+                "elite_strategy": "automatic",
+                "quality_options": ["verification", "consensus"],
+                "temperature": 0.7,
+                "max_tokens": 2000,
+                "enable_vector_rag": False,
             }
         }
 

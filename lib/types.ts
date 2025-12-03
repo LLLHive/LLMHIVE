@@ -153,6 +153,14 @@ export type QualityOption =
   | "reflection"
   | "decomposition"
 
+export interface StandardLLMSettings {
+  temperature: number // 0-2, default 0.7
+  maxTokens: number // 100-4000, default 2000
+  topP: number // 0-1, default 0.9
+  frequencyPenalty: number // 0-2, default 0
+  presencePenalty: number // 0-2, default 0
+}
+
 export interface OrchestratorSettings {
   reasoningMode: ReasoningMode
   domainPack: DomainPack
@@ -173,13 +181,15 @@ export interface OrchestratorSettings {
   enableAdaptiveEnsemble: boolean // Adaptive Ensemble Logic
   // Dynamic Criteria Equalizer
   criteria?: CriteriaSettings
-  // Elite Orchestration settings (new)
+  // Elite Orchestration settings
   eliteStrategy?: EliteStrategy // Strategy for elite orchestration
   qualityOptions?: QualityOption[] // Quality boosting techniques
   enableToolBroker?: boolean // Automatic tool detection and execution
   enableVerification?: boolean // Tool-based verification for code/math
   enablePromptOps?: boolean // Always-on query preprocessing
   enableAnswerRefiner?: boolean // Always-on answer polishing
+  // Standard LLM parameters (sent to backend)
+  standardValues?: StandardLLMSettings
 }
 
 // Orchestration status event types
