@@ -1,70 +1,105 @@
-# Deployment Next Steps - Complete ✅
+# Deployment Next Steps
 
-## Issues Fixed
+## Cloud Run Deployment with Google Cloud Secret Manager
 
-### 1. ✅ Cloud Build Configuration
-- Fixed `cloudbuild.yaml` tag generation
-- Added backup `llmhive/cloudbuild.yaml` for subdirectory triggers
-- Fixed Docker image tag consistency across build/push/deploy steps
+The backend uses Google Cloud Secret Manager to securely store API keys. The secrets are mapped to environment variables in Cloud Run.
 
-### 2. ✅ Missing Orchestrator Module
-**Problem:** `ModuleNotFoundError: No module named 'src.llmhive.app.orchestrator'`
+### Secret Names in Google Cloud Secret Manager
 
-**Solution:** Created `llmhive/src/llmhive/app/orchestrator.py` with:
-- `Orchestrator` class with `providers` attribute
-- `orchestrate()` async method
-- Provider initialization from environment variables
-- Stub provider fallback
+| Secret Name | Environment Variable | Description |
+|-------------|---------------------|-------------|
+| `openai-api-key` | `OPENAI_API_KEY` | OpenAI API key for GPT models |
+| `anthropic-api-key` | `ANTHROPIC_API_KEY` | Anthropic API key for Claude |
+| `claude-api-key` | `CLAUDE_API_KEY` | Alternative Claude API key |
+| `gemini-api-key` | `GEMINI_API_KEY` | Google Gemini API key |
+| `grok-api-key` | `GROK_API_KEY` | xAI Grok API key |
+| `deepseek-api-key` | `DEEPSEEK_API_KEY` | DeepSeek API key |
+| `pinecone-api-key` | `PINECONE_API_KEY` | Pinecone vector database key |
+| `stripe-secret-key` | `STRIPE_SECRET_KEY` | Stripe payment key |
 
-## Current Status
+### Deploy Backend to Cloud Run
 
-- **Build:** Fixed and working
-- **Orchestrator Module:** Created
-- **Deployment:** In progress (new build triggered)
+```bash
+cd llmhive
 
-## Next Steps After Deployment
+gcloud run deploy llmhive-orchestrator \
+  --source . \
+  --region us-east1 \
+  --allow-unauthenticated \
+  --timeout=300 \
+  --memory=2Gi \
+  --set-secrets="OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,CLAUDE_API_KEY=claude-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,GROK_API_KEY=grok-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,PINECONE_API_KEY=pinecone-api-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest"
+```
 
-1. **Verify Service Health**
+### Verify Deployment
+
+1. **Check Service Health**
    ```bash
    curl https://llmhive-orchestrator-792354158895.us-east1.run.app/healthz
-   curl https://llmhive-orchestrator-792354158895.us-east1.run.app/
    ```
 
-2. **Check Logs**
+2. **View Current Secret Mappings**
+   ```bash
+   gcloud run services describe llmhive-orchestrator --region=us-east1 \
+     --format='table(spec.template.spec.containers[0].env[].name,spec.template.spec.containers[0].env[].valueFrom.secretKeyRef.key)'
+   ```
+
+3. **Check Logs for Provider Initialization**
    ```bash
    gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=llmhive-orchestrator" --limit=50 --project=llmhive-orchestrator
    ```
 
-3. **Test API Endpoints**
-   ```bash
-   # Test orchestration endpoint
-   curl -X POST https://llmhive-orchestrator-792354158895.us-east1.run.app/api/v1/orchestration/ \
-     -H "Content-Type: application/json" \
-     -d '{"prompt": "Hello, world!"}'
-   ```
+### Provider Status
 
-4. **Verify Secrets**
-   ```bash
-   gcloud run services describe llmhive-orchestrator --region=us-east1 \
-     --format='get(spec.template.spec.containers[0].env[].name,spec.template.spec.containers[0].env[].valueFrom.secretKeyRef.name)'
-   ```
+| Provider | Key Variable | Status |
+|----------|--------------|--------|
+| OpenAI | `OPENAI_API_KEY` | ✅ Configured |
+| Anthropic/Claude | `ANTHROPIC_API_KEY` or `CLAUDE_API_KEY` | ✅ Configured (both work) |
+| Gemini | `GEMINI_API_KEY` | ✅ Configured |
+| Grok | `GROK_API_KEY` | ✅ Configured |
+| DeepSeek | `DEEPSEEK_API_KEY` | ✅ Configured |
+| Pinecone | `PINECONE_API_KEY` | ✅ Configured (for Vector RAG) |
+| Stripe | `STRIPE_SECRET_KEY` | ✅ Configured (for billing) |
 
-## Files Modified
+### Add/Update a Secret in Google Cloud Secret Manager
 
-1. **`cloudbuild.yaml`** - Fixed tag generation and consistency
-2. **`llmhive/cloudbuild.yaml`** - Backup copy for subdirectory triggers  
-3. **`llmhive/src/llmhive/app/orchestrator.py`** - **NEW** - Created missing orchestrator module
+```bash
+# Create a new secret
+echo -n "your-api-key-value" | gcloud secrets create secret-name --data-file=-
 
-## Expected Behavior
+# Update an existing secret
+echo -n "your-new-api-key-value" | gcloud secrets versions add secret-name --data-file=-
 
-After deployment completes:
-- Service should start without import errors
-- `/healthz` endpoint should return `{"status":"ok"}`
-- `/` endpoint should return service info
-- Providers should initialize from Secret Manager secrets
+# View secret versions
+gcloud secrets versions list secret-name
+```
+
+### Test Individual Providers
+
+```bash
+# Test with DeepSeek
+curl -X POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Say hello", "models": ["deepseek-chat"]}'
+
+# Test with Claude
+curl -X POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Say hello", "models": ["claude-sonnet-4"]}'
+
+# Test with Stripe (billing check)
+curl https://llmhive-orchestrator-792354158895.us-east1.run.app/billing/status
+```
 
 ---
 
-**Status:** Deployment in progress  
-**Build:** Triggered with orchestrator fix
+## Files Related to Secrets
+
+| File | Purpose |
+|------|---------|
+| `llmhive/src/llmhive/app/config.py` | Settings with env var mappings |
+| `llmhive/src/llmhive/app/orchestrator.py` | Provider initialization |
+| `llmhive/src/llmhive/app/knowledge/pinecone_kb.py` | Pinecone knowledge base |
+| `llmhive/src/llmhive/app/billing/payments.py` | Stripe integration |
+| `llmhive/k8s/deployment.yaml` | Kubernetes secrets mapping |
 

@@ -16,7 +16,9 @@ class Settings:
     
     # Provider API keys (loaded from environment)
     openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
-    anthropic_api_key: str | None = os.getenv("ANTHROPIC_API_KEY")
+    # Support both ANTHROPIC_API_KEY and CLAUDE_API_KEY for Claude/Anthropic
+    anthropic_api_key: str | None = os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
+    claude_api_key: str | None = os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
     grok_api_key: str | None = os.getenv("GROK_API_KEY")
     gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
     deepseek_api_key: str | None = os.getenv("DEEPSEEK_API_KEY")

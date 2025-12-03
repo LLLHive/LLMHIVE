@@ -636,12 +636,14 @@ class Orchestrator:
                 logger.warning(f"Failed to initialize Gemini provider: {e}")
         
         # Initialize Anthropic provider using httpx directly (SDK has connection issues in Cloud Run)
-        if os.getenv("ANTHROPIC_API_KEY"):
+        # Support both ANTHROPIC_API_KEY and CLAUDE_API_KEY
+        claude_key = os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
+        if claude_key:
             try:
                 import httpx
                 
                 # Strip any whitespace/newlines from the API key (secrets sometimes have trailing newlines)
-                anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+                anthropic_api_key = claude_key.strip()
                 
                 class AnthropicProvider:
                     """Anthropic provider using httpx for reliable async connections."""

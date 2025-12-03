@@ -79,11 +79,41 @@ spec:
             secretKeyRef:
               name: llmhive-secrets
               key: anthropic-api-key
+        - name: CLAUDE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llmhive-secrets
+              key: claude-api-key
+              optional: true
         - name: GROK_API_KEY
           valueFrom:
             secretKeyRef:
               name: llmhive-secrets
               key: grok-api-key
+              optional: true
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llmhive-secrets
+              key: gemini-api-key
+              optional: true
+        - name: DEEPSEEK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llmhive-secrets
+              key: deepseek-api-key
+              optional: true
+        - name: PINECONE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llmhive-secrets
+              key: pinecone-api-key
+              optional: true
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llmhive-secrets
+              key: stripe-secret-key
               optional: true
         
         resources:
@@ -262,6 +292,7 @@ spec:
 
 ---
 # Secret template (apply with actual values)
+# For Cloud Run, these are mapped from Google Cloud Secret Manager
 apiVersion: v1
 kind: Secret
 metadata:
@@ -270,5 +301,10 @@ type: Opaque
 stringData:
   openai-api-key: "YOUR_OPENAI_KEY"
   anthropic-api-key: "YOUR_ANTHROPIC_KEY"
+  claude-api-key: "YOUR_CLAUDE_KEY"
   grok-api-key: "YOUR_GROK_KEY"
+  gemini-api-key: "YOUR_GEMINI_KEY"
+  deepseek-api-key: "YOUR_DEEPSEEK_KEY"
+  pinecone-api-key: "YOUR_PINECONE_KEY"
+  stripe-secret-key: "YOUR_STRIPE_KEY"
 
