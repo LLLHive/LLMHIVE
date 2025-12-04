@@ -136,6 +136,14 @@ app.include_router(stubs_router.router)
 from .routers import chat as chat_router
 app.include_router(chat_router.router)
 
+# Include agents router (at /v1/agents)
+from .routers import agents as agents_router
+app.include_router(agents_router.router)
+
+# Include reasoning config router (at /v1/reasoning-config)
+from .routers import reasoning_config as reasoning_config_router
+app.include_router(reasoning_config_router.router)
+
 # Startup event
 @app.on_event("startup")
 async def startup_event():
