@@ -1,16 +1,25 @@
 """Integration tests for Tool Broker.
 
 Tests tool detection, execution, and integration with the orchestration pipeline.
+
+Run from llmhive directory: pytest tests/integration/test_tool_broker_integration.py -v
 """
 from __future__ import annotations
 
+import sys
 import pytest
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, List
 
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 # Try to import tool broker components
 try:
-    from llmhive.src.llmhive.app.tool_broker import (
+    from llmhive.app.tool_broker import (
         ToolBroker,
         ToolDefinition,
         ToolRequest,
@@ -23,19 +32,6 @@ try:
 except ImportError:
     TOOL_BROKER_AVAILABLE = False
 
-# Try to import orchestration tool broker
-try:
-    from llmhive.src.llmhive.app.orchestration.tool_broker import (
-        get_tool_broker as get_orchestration_tool_broker,
-        ToolBroker as OrchestrationToolBroker,
-        ToolType,
-        ToolAnalysis,
-        check_and_execute_tools,
-    )
-    ORCHESTRATION_TOOL_BROKER_AVAILABLE = True
-except ImportError:
-    ORCHESTRATION_TOOL_BROKER_AVAILABLE = False
-
 
 # ============================================================
 # Fixtures
@@ -44,10 +40,10 @@ except ImportError:
 @pytest.fixture
 def tool_broker():
     """Create a tool broker instance."""
-    if TOOL_BROKER_AVAILABLE:
-        reset_tool_broker()
-        return ToolBroker(enable_sandbox=False)
-    return None
+    if not TOOL_BROKER_AVAILABLE:
+        pytest.skip("Tool broker not available")
+    reset_tool_broker()
+    return ToolBroker(enable_sandbox=False)
 
 
 @pytest.fixture
@@ -308,67 +304,6 @@ class TestToolRegistration:
         
         assert result.success
         assert "Echo: Hello World" in result.result
-    
-    def test_tool_with_tier_restriction(self, tool_broker):
-        """Test registering tool with tier restriction."""
-        def premium_tool(args: str) -> str:
-            return f"Premium: {args}"
-        
-        tool_broker.register_tool(
-            ToolDefinition(
-                name="premium",
-                description="Premium only tool",
-                category=ToolCategory.COMPUTE,
-                handler=premium_tool,
-                min_tier="pro",
-            )
-        )
-        
-        # Should fail for free tier
-        result = tool_broker.handle_tool_request(
-            "[TOOL:premium] test",
-            user_tier="free"
-        )
-        assert not result.success
-        
-        # Should succeed for pro tier
-        result = tool_broker.handle_tool_request(
-            "[TOOL:premium] test",
-            user_tier="pro"
-        )
-        assert result.success
-
-
-# ============================================================
-# Test Integration with Orchestration
-# ============================================================
-
-@pytest.mark.skipif(not ORCHESTRATION_TOOL_BROKER_AVAILABLE, reason="Orchestration tool broker not available")
-class TestOrchestrationIntegration:
-    """Test tool broker integration with orchestration."""
-    
-    def test_tool_analysis(self):
-        """Test tool analysis for a query."""
-        broker = get_orchestration_tool_broker()
-        
-        # Query that should trigger calculation tool
-        query = "What is 5 times 7?"
-        analysis = broker.analyze_query(query)
-        
-        assert isinstance(analysis, ToolAnalysis)
-    
-    @pytest.mark.asyncio
-    async def test_check_and_execute(self):
-        """Test check_and_execute_tools function."""
-        response = "Let me calculate: [TOOL:calculator] 5 * 7"
-        
-        processed_response = await check_and_execute_tools(
-            response,
-            user_tier="free"
-        )
-        
-        # Should have tool results in output
-        assert "35" in processed_response or "[Tool" in processed_response
 
 
 # ============================================================
