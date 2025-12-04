@@ -3,9 +3,12 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ROUTES } from "@/lib/routes"
 import {
   Plus,
   MessageSquare,
@@ -24,6 +27,7 @@ import {
   Pencil,
   FolderInput,
   Workflow,
+  Clock,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -66,9 +70,13 @@ export function Sidebar({
   onToggleCollapse,
   onGoHome,
 }: SidebarProps) {
+  const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"chats" | "projects" | "discover" | null>("chats")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+
+  // Helper to check if a route is active
+  const isActiveRoute = (route: string) => pathname === route
 
   const filteredConversations = conversations.filter((conv) =>
     conv.title.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -166,12 +174,13 @@ export function Sidebar({
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Projects
               </Button>
-              <Link href="/discover" className="w-full">
+              <Link href={ROUTES.DISCOVER} className="w-full">
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
                     "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.DISCOVER) && "bg-secondary text-[var(--bronze)]",
                     "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
                   )}
                 >
@@ -179,33 +188,52 @@ export function Sidebar({
                   Discover
                 </Button>
               </Link>
-              {/* Collaborate - Link to future collaboration page */}
-              <Link href="/settings" className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start text-sm hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Collaborate
-                </Button>
-              </Link>
+              {/* Collaborate - Coming Soon */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled
+                      className="w-full justify-start text-sm opacity-50 cursor-not-allowed"
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Collaborate
+                      <Clock className="h-3 w-3 ml-auto text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>Coming Soon</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {/* Orchestration link */}
-              <Link href="/orchestration" className="w-full">
+              <Link href={ROUTES.ORCHESTRATION} className="w-full">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-sm text-[var(--bronze)] hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.ORCHESTRATION) 
+                      ? "bg-secondary text-[var(--bronze)]" 
+                      : "text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
                 >
                   <Workflow className="h-4 w-4 mr-2" />
                   Orchestration
                 </Button>
               </Link>
-              <Link href="/settings" className="w-full">
+              <Link href={ROUTES.SETTINGS} className="w-full">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-sm hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.SETTINGS) && "bg-secondary text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
@@ -338,22 +366,55 @@ export function Sidebar({
             >
               <FolderOpen className="h-5 w-5" />
             </Button>
-            <Link href="/discover">
-              <Button variant={activeTab === "discover" ? "secondary" : "ghost"} size="icon" className="w-10 h-10">
-                <Sparkles className="h-5 w-5" />
-              </Button>
-            </Link>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={ROUTES.DISCOVER}>
+                    <Button 
+                      variant={isActiveRoute(ROUTES.DISCOVER) ? "secondary" : "ghost"} 
+                      size="icon" 
+                      className={cn("w-10 h-10", isActiveRoute(ROUTES.DISCOVER) && "text-[var(--bronze)]")}
+                    >
+                      <Sparkles className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Discover</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             {/* Collapsed Orchestration icon */}
-            <Link href="/orchestration">
-              <Button variant="ghost" size="icon" className="w-10 h-10 text-[var(--bronze)]">
-                <Workflow className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/settings">
-              <Button variant="ghost" size="icon" className="w-10 h-10">
-                <Settings className="h-5 w-5" />
-              </Button>
-            </Link>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={ROUTES.ORCHESTRATION}>
+                    <Button 
+                      variant={isActiveRoute(ROUTES.ORCHESTRATION) ? "secondary" : "ghost"} 
+                      size="icon" 
+                      className={cn("w-10 h-10 text-[var(--bronze)]")}
+                    >
+                      <Workflow className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Orchestration</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={ROUTES.SETTINGS}>
+                    <Button 
+                      variant={isActiveRoute(ROUTES.SETTINGS) ? "secondary" : "ghost"} 
+                      size="icon" 
+                      className={cn("w-10 h-10", isActiveRoute(ROUTES.SETTINGS) && "text-[var(--bronze)]")}
+                    >
+                      <Settings className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Settings</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         )}
 
