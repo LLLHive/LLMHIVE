@@ -89,21 +89,23 @@ class TestErrorMessageFormatting:
 class TestExceptionHandlingPatterns:
     """Test exception handling patterns work correctly."""
     
-    def test_timeout_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_timeout_error_handling(self):
         """Test handling of timeout errors."""
         async def simulate_timeout():
             raise TimeoutError("Request timed out")
         
         with pytest.raises(TimeoutError):
-            asyncio.get_event_loop().run_until_complete(simulate_timeout())
+            await simulate_timeout()
     
-    def test_connection_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_connection_error_handling(self):
         """Test handling of connection errors."""
         async def simulate_connection_error():
             raise ConnectionError("Failed to connect")
         
         with pytest.raises(ConnectionError):
-            asyncio.get_event_loop().run_until_complete(simulate_connection_error())
+            await simulate_connection_error()
     
     def test_value_error_with_message(self):
         """Test value errors include helpful messages."""
