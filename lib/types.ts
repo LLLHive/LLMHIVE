@@ -110,7 +110,7 @@ export interface Integration {
 }
 
 export type ReasoningMode = "fast" | "standard" | "deep"
-export type DomainPack = "default" | "medical" | "legal" | "marketing" | "coding" | "research" | "finance"
+export type DomainPack = "default" | "medical" | "legal" | "marketing" | "coding" | "research" | "finance" | "education" | "real_estate" | "creative"
 export type AgentMode = "single" | "team"
 export type AdvancedReasoningMethod =
   | "automatic"
