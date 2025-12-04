@@ -415,7 +415,8 @@ class TestMultiHopVerification:
         self.mock_web_client.search = mock_search
         
         fact = "Paris is the capital of France."
-        verified, evidence, confidence, source = await self.checker._multihop_verify(fact)
+        # _multihop_verify returns 3 values: (verified, evidence, confidence)
+        verified, evidence, confidence = await self.checker._multihop_verify(fact)
         
         # Should have tried alternative queries
         assert search_call_count[0] >= 1
@@ -504,15 +505,17 @@ class TestConvenienceFunctions:
     def test_correct_answer_function(self):
         """Test the correct_answer convenience function."""
         report = VerificationReport()
-        report.add_fact("Wrong fact.", False)
+        # Use exact case match between fact and text in answer
+        report.add_fact("This is wrong.", False)
         
         corrected = correct_answer(
-            "Original with wrong fact.",
+            "Original answer: This is wrong.",
             report,
-            {"Wrong fact.": "Correct fact."},
+            {"This is wrong.": "This is correct."},
         )
         
-        assert "Correct fact" in corrected or "[" in corrected
+        # Should replace the wrong fact with the correction
+        assert "This is correct" in corrected or "[" in corrected
 
 
 if __name__ == "__main__":

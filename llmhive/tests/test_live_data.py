@@ -487,8 +487,18 @@ class TestPollingIntegration:
         """Test starting and stopping polling."""
         await self.manager.start_polling()
         
+        # Manager should be running
         assert self.manager._running is True
-        assert len(self.manager._polling_tasks) > 0
+        
+        # Number of polling tasks depends on how many poll-mode feeds are registered
+        # With no feeds registered, this should be 0 (correct behavior)
+        num_poll_feeds = sum(
+            1 for feed in self.manager._feeds.values()
+            if hasattr(feed, 'config') and 
+               getattr(feed.config, 'fetch_mode', None) == FetchMode.POLL and
+               getattr(feed.config, 'enabled', True)
+        )
+        assert len(self.manager._polling_tasks) == num_poll_feeds
         
         await self.manager.stop_polling()
         

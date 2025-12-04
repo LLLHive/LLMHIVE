@@ -425,7 +425,7 @@ class FactChecker:
         evidence_parts = []
         
         for part in parts:
-            verified, evidence, confidence = await self._verify_fact(
+            verified, evidence, confidence, _source = await self._verify_fact(
                 part,
                 use_multihop=False,  # Avoid infinite recursion
             )

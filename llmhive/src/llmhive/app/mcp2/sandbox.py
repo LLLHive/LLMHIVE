@@ -312,10 +312,17 @@ for mod in _restricted_modules:
 _original_builtins = __builtins__
 _safe_builtins = {{}}
 _allowed_builtins = ['print', 'len', 'str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'range', 'enumerate', 'zip', 'map', 'filter', 'sorted', 'reversed', 'min', 'max', 'sum', 'abs', 'round', 'divmod', 'pow', 'all', 'any', 'isinstance', 'type', 'hasattr', 'getattr', 'setattr', 'delattr', 'callable', 'iter', 'next', 'open']
-for name in _allowed_builtins:
-    if hasattr(_original_builtins, name):
-        _safe_builtins[name] = getattr(_original_builtins, name)
-__builtins__ = type(__builtins__)(_safe_builtins)
+# Handle both dict and module types for __builtins__
+if isinstance(_original_builtins, dict):
+    for name in _allowed_builtins:
+        if name in _original_builtins:
+            _safe_builtins[name] = _original_builtins[name]
+else:
+    for name in _allowed_builtins:
+        if hasattr(_original_builtins, name):
+            _safe_builtins[name] = getattr(_original_builtins, name)
+# Set builtins to the restricted dict
+__builtins__ = _safe_builtins
 
 # Security: Override open() to restrict file access
 _original_open = open

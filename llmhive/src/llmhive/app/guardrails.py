@@ -41,19 +41,23 @@ class SensitiveDataType(str, Enum):
 
 
 # Regex patterns for sensitive data detection
+# IMPORTANT: Order matters! More specific patterns (like credit cards) must come BEFORE 
+# less specific patterns (like phone numbers) to avoid partial matches.
 SENSITIVE_PATTERNS: List[Tuple[re.Pattern, str, SensitiveDataType]] = [
+    # Credit card numbers - MUST come before phone to avoid partial matches
+    # Major card formats (Visa, MasterCard, Amex, Discover)
+    (re.compile(r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b'), "[REDACTED_CC]", SensitiveDataType.CREDIT_CARD),
+    # Credit cards with dashes/spaces (e.g., 4111-1111-1111-1111)
+    (re.compile(r'\b\d{4}[-\s]\d{4}[-\s]\d{4}[-\s]\d{4}\b'), "[REDACTED_CC]", SensitiveDataType.CREDIT_CARD),
+    
     # Social Security Number (XXX-XX-XXXX or XXXXXXXXX)
     (re.compile(r'\b\d{3}[-\s]?\d{2}[-\s]?\d{4}\b'), "[REDACTED_SSN]", SensitiveDataType.SSN),
     
     # Email addresses
     (re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'), "[REDACTED_EMAIL]", SensitiveDataType.EMAIL),
     
-    # Phone numbers (various formats)
+    # Phone numbers (various formats) - after credit cards to avoid partial matches
     (re.compile(r'\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}\b'), "[REDACTED_PHONE]", SensitiveDataType.PHONE),
-    
-    # Credit card numbers (major formats)
-    (re.compile(r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b'), "[REDACTED_CC]", SensitiveDataType.CREDIT_CARD),
-    (re.compile(r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b'), "[REDACTED_CC]", SensitiveDataType.CREDIT_CARD),
     
     # IP addresses (IPv4)
     (re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'), "[REDACTED_IP]", SensitiveDataType.IP_ADDRESS),
@@ -724,14 +728,18 @@ class ExecutionSandbox:
             return "", False, f"Code validation failed: {', '.join(violations)}"
         
         # Create restricted builtins
-        safe_builtins = {
-            k: v for k, v in __builtins__.__dict__.items()
-            if k not in self.FORBIDDEN_BUILTINS
-        } if isinstance(__builtins__, dict) else {
-            k: getattr(__builtins__, k)
-            for k in dir(__builtins__)
-            if k not in self.FORBIDDEN_BUILTINS and not k.startswith('_')
-        }
+        # __builtins__ can be either a dict or a module depending on context
+        if isinstance(__builtins__, dict):
+            safe_builtins = {
+                k: v for k, v in __builtins__.items()
+                if k not in self.FORBIDDEN_BUILTINS
+            }
+        else:
+            safe_builtins = {
+                k: getattr(__builtins__, k)
+                for k in dir(__builtins__)
+                if k not in self.FORBIDDEN_BUILTINS and not k.startswith('_')
+            }
         
         # Create restricted globals
         sandbox_globals = {
