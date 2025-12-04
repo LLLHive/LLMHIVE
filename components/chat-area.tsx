@@ -5,9 +5,9 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Paperclip, Mic, X, ImageIcon, FileText } from "lucide-react"
+import { Send, Paperclip, Mic, X, ImageIcon, FileText, RefreshCw } from "lucide-react"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
-import { sendChat, ApiError, NetworkError, TimeoutError } from "@/lib/api-client"
+import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
 import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType } from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
@@ -19,6 +19,14 @@ import { ModelsUsedDisplay } from "./models-used-display"
 
 // Default models to use when "automatic" is selected
 const DEFAULT_AUTO_MODELS = ["gpt-4o", "claude-sonnet-4", "deepseek-chat"]
+
+// Retry status for UI display
+interface RetryStatus {
+  isRetrying: boolean
+  attempt: number
+  maxAttempts: number
+  message: string
+}
 
 interface ChatAreaProps {
   conversation?: Conversation
@@ -45,6 +53,7 @@ export function ChatArea({
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
   const [incognitoMode, setIncognitoMode] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [retryStatus, setRetryStatus] = useState<RetryStatus | null>(null)
   const [orchestrationStatus, setOrchestrationStatus] = useState<OrchestrationStatus>({
     isActive: false,
     currentStep: "",
@@ -197,20 +206,45 @@ export function ChatArea({
     // Simulate orchestration events
     simulateOrchestrationEvents(orchestratorSettings)
 
+    // Retry callback to update UI
+    const handleRetry: RetryStatusCallback = (status) => {
+      setRetryStatus({
+        isRetrying: true,
+        attempt: status.attempt,
+        maxAttempts: status.maxAttempts,
+        message: `Retrying (${status.attempt}/${status.maxAttempts})... ${Math.round(status.delayMs / 1000)}s delay`,
+      })
+      
+      // Add retry event to orchestration status
+      addOrchestrationEvent(
+        "dispatching_model",
+        `Retrying request (attempt ${status.attempt}/${status.maxAttempts})...`
+      )
+    }
+
     try {
+      // Clear any previous retry status
+      setRetryStatus(null)
+      
       // Get actual models to use (expand "automatic")
       const actualModels = getActualModels()
       
-      // Use typed API client
-      const chatResponse = await sendChat({
-        messages: [...(conversation?.messages || []), userMessage],
-        models: actualModels,
-        orchestratorSettings: {
-          ...orchestratorSettings,
-          selectedModels: actualModels,
+      // Use typed API client with retry callback
+      const chatResponse = await sendChat(
+        {
+          messages: [...(conversation?.messages || []), userMessage],
+          models: actualModels,
+          orchestratorSettings: {
+            ...orchestratorSettings,
+            selectedModels: actualModels,
+          },
+          chatId: conversation?.id,
         },
-        chatId: conversation?.id,
-      })
+        handleRetry
+      )
+      
+      // Clear retry status on success
+      setRetryStatus(null)
 
       const { content: assistantContent, modelsUsed, tokensUsed, latencyMs } = chatResponse
 
@@ -268,19 +302,37 @@ export function ChatArea({
       setLastLatencyMs(latencyMs)
       setLastTokensUsed(tokensUsed)
     } catch (error) {
+      // Clear retry status
+      setRetryStatus(null)
+      
       // Create user-friendly error message based on error type
       let errorContent = "I apologize, but I encountered an error. Please try again."
       let errorDetail = "Orchestration failed"
+      let retryInfo = ""
+      
+      // Check for retry exhaustion
+      const hasRetryInfo = (err: unknown): err is { retriesExhausted?: boolean; retryInfo?: { attempts?: number } } => {
+        return typeof err === 'object' && err !== null
+      }
+      
+      if (hasRetryInfo(error) && error.retriesExhausted && error.retryInfo?.attempts) {
+        retryInfo = ` (retried ${error.retryInfo.attempts} times)`
+      }
       
       if (error instanceof TimeoutError) {
-        errorContent = "The request timed out. The backend may be overloaded. Please try again."
-        errorDetail = "Request timed out"
+        errorContent = `The request timed out${retryInfo}. The backend may be overloaded. Please try again later.`
+        errorDetail = `Request timed out${retryInfo}`
       } else if (error instanceof NetworkError) {
-        errorContent = "Unable to connect to the server. Please check your connection and try again."
-        errorDetail = "Network error"
+        errorContent = `Unable to connect to the server${retryInfo}. Please check your connection and try again.`
+        errorDetail = `Network error${retryInfo}`
       } else if (error instanceof ApiError) {
-        errorContent = `I encountered an error: ${error.message}`
-        errorDetail = `API error: ${error.status}`
+        if (error.retriesExhausted) {
+          errorContent = `The server is currently unavailable${retryInfo}. Please try again later.`
+          errorDetail = `Server error: ${error.status}${retryInfo}`
+        } else {
+          errorContent = `I encountered an error: ${error.message}`
+          errorDetail = `API error: ${error.status}`
+        }
       }
 
       const errorMessage: Message = {
@@ -307,6 +359,7 @@ export function ChatArea({
       }))
     } finally {
       setIsLoading(false)
+      setRetryStatus(null)
     }
   }
 
@@ -370,14 +423,23 @@ export function ChatArea({
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--bronze)] to-[var(--gold)] flex items-center justify-center">
                 <span className="text-xs font-bold text-background">AI</span>
               </div>
-              <div className="flex gap-1.5 p-4">
-                {[0, 200, 400].map((delay) => (
-                  <div
-                    key={delay}
-                    className="w-1.5 h-1.5 rounded-full bg-[var(--bronze)] animate-bounce"
-                    style={{ animationDelay: `${delay}ms`, animationDuration: "1s" }}
-                  />
-                ))}
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-1.5 p-4">
+                  {[0, 200, 400].map((delay) => (
+                    <div
+                      key={delay}
+                      className="w-1.5 h-1.5 rounded-full bg-[var(--bronze)] animate-bounce"
+                      style={{ animationDelay: `${delay}ms`, animationDuration: "1s" }}
+                    />
+                  ))}
+                </div>
+                {/* Retry Status Indicator */}
+                {retryStatus?.isRetrying && (
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm animate-pulse">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>{retryStatus.message}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
