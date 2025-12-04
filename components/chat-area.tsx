@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Paperclip, Mic, X, ImageIcon, FileText } from "lucide-react"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
+import { sendChat, ApiError, NetworkError, TimeoutError } from "@/lib/api-client"
 import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType } from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
@@ -200,59 +201,18 @@ export function ChatArea({
       // Get actual models to use (expand "automatic")
       const actualModels = getActualModels()
       
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...(conversation?.messages || []), userMessage],
-          models: actualModels,
-          model: actualModels[0],
-          orchestratorSettings: {
-            ...orchestratorSettings,
-            selectedModels: actualModels, // Always send actual models, not "automatic"
-          },
-        }),
+      // Use typed API client
+      const chatResponse = await sendChat({
+        messages: [...(conversation?.messages || []), userMessage],
+        models: actualModels,
+        orchestratorSettings: {
+          ...orchestratorSettings,
+          selectedModels: actualModels,
+        },
+        chatId: conversation?.id,
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Request failed: ${response.status}`)
-      }
-
-      // Extract metadata from response headers
-      const modelsUsedHeader = response.headers.get("X-Models-Used")
-      const tokensUsedHeader = response.headers.get("X-Tokens-Used")
-      const backendLatencyHeader = response.headers.get("X-Latency-Ms")
-      
-      // Parse models used - fall back to actual models sent
-      let modelsUsed: string[] = actualModels
-      if (modelsUsedHeader) {
-        try {
-          const parsed = JSON.parse(modelsUsedHeader)
-          // Filter out "automatic" and empty strings
-          modelsUsed = parsed.filter((m: string) => m && m !== "automatic")
-          if (modelsUsed.length === 0) modelsUsed = actualModels
-        } catch {
-          modelsUsed = actualModels
-        }
-      }
-      
-      const tokensUsed = tokensUsedHeader ? parseInt(tokensUsedHeader, 10) : 0
-      const backendLatencyMs = backendLatencyHeader ? parseInt(backendLatencyHeader, 10) : 0
-
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let assistantContent = ""
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          assistantContent += decoder.decode(value)
-        }
-      }
-
-      const latencyMs = backendLatencyMs || (Date.now() - startTime)
+      const { content: assistantContent, modelsUsed, tokensUsed, latencyMs } = chatResponse
 
       // Build agent info from actual models used
       const agentContributions = modelsUsed.slice(0, 3).map((modelId, index) => {
@@ -308,10 +268,25 @@ export function ChatArea({
       setLastLatencyMs(latencyMs)
       setLastTokensUsed(tokensUsed)
     } catch (error) {
+      // Create user-friendly error message based on error type
+      let errorContent = "I apologize, but I encountered an error. Please try again."
+      let errorDetail = "Orchestration failed"
+      
+      if (error instanceof TimeoutError) {
+        errorContent = "The request timed out. The backend may be overloaded. Please try again."
+        errorDetail = "Request timed out"
+      } else if (error instanceof NetworkError) {
+        errorContent = "Unable to connect to the server. Please check your connection and try again."
+        errorDetail = "Network error"
+      } else if (error instanceof ApiError) {
+        errorContent = `I encountered an error: ${error.message}`
+        errorDetail = `API error: ${error.status}`
+      }
+
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,
         role: "assistant",
-        content: "I apologize, but I encountered an error. Please try again.",
+        content: errorContent,
         timestamp: new Date(),
       }
       onSendMessage(errorMessage)
@@ -325,7 +300,7 @@ export function ChatArea({
           {
             id: `evt-${++eventIdRef.current}`,
             type: "error",
-            message: "Orchestration failed",
+            message: errorDetail,
             timestamp: new Date(),
           },
         ],
