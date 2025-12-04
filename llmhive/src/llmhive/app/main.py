@@ -4,13 +4,42 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import time
+import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .api import api_router
 from .startup_checks import validate_startup_config
+
+# Import error handling modules
+try:
+    from .errors import (
+        LLMHiveError,
+        ErrorCode,
+        build_error_response,
+        get_correlation_id,
+        set_correlation_id,
+        generate_correlation_id,
+        get_circuit_breaker,
+    )
+    from .logging_config import (
+        configure_logging,
+        request_id_var,
+        user_id_var,
+        session_id_var,
+        start_request_metrics,
+        end_request_metrics,
+    )
+    ERROR_HANDLING_AVAILABLE = True
+except ImportError as e:
+    ERROR_HANDLING_AVAILABLE = False
+    logging.getLogger(__name__).warning("Error handling modules not available: %s", e)
 
 # Database imports are optional; some minimal deployments may not use the DB.
 try:
@@ -21,12 +50,20 @@ except Exception as exc:  # pragma: no cover - defensive logging only
     Base = None  # type: ignore
     logging.getLogger(__name__).warning("Database imports failed: %s", exc)
 
-# Configure comprehensive logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
+# Configure logging - use structured logging if available
+if ERROR_HANDLING_AVAILABLE:
+    json_format = os.environ.get("LOG_FORMAT", "").lower() == "json"
+    configure_logging(
+        level=os.environ.get("LOG_LEVEL", "INFO"),
+        json_format=json_format,
+    )
+else:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[logging.StreamHandler(sys.stdout)]
+    )
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,6 +129,199 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# =============================================================================
+# Request Tracking Middleware
+# =============================================================================
+
+class RequestTrackingMiddleware(BaseHTTPMiddleware):
+    """Middleware for request tracking and correlation IDs.
+    
+    Adds:
+    - X-Request-ID header (generated or from client)
+    - X-Correlation-ID header for request tracing
+    - Request timing metrics
+    """
+    
+    async def dispatch(self, request: Request, call_next):
+        # Generate or extract request ID
+        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:12]
+        
+        # Generate or extract correlation ID
+        correlation_id = request.headers.get("X-Correlation-ID")
+        if not correlation_id:
+            if ERROR_HANDLING_AVAILABLE:
+                correlation_id = generate_correlation_id()
+            else:
+                correlation_id = str(uuid.uuid4())[:8]
+        
+        # Set context variables
+        if ERROR_HANDLING_AVAILABLE:
+            set_correlation_id(correlation_id)
+            request_id_var.set(request_id)
+            
+            # Extract user/session IDs if present
+            user_id = request.headers.get("X-User-ID", "")
+            session_id = request.headers.get("X-Session-ID", "")
+            user_id_var.set(user_id)
+            session_id_var.set(session_id)
+            
+            # Start request metrics
+            metrics = start_request_metrics(request_id, correlation_id)
+        
+        # Store in request state for access in routes
+        request.state.request_id = request_id
+        request.state.correlation_id = correlation_id
+        
+        start_time = time.perf_counter()
+        
+        try:
+            response = await call_next(request)
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            
+            # Add tracking headers to response
+            response.headers["X-Request-ID"] = request_id
+            response.headers["X-Correlation-ID"] = correlation_id
+            response.headers["X-Response-Time-Ms"] = f"{duration_ms:.0f}"
+            
+            # Log request completion
+            logger.info(
+                "%s %s %d %.0fms",
+                request.method,
+                request.url.path,
+                response.status_code,
+                duration_ms,
+                extra={
+                    "request_id": request_id,
+                    "correlation_id": correlation_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": response.status_code,
+                    "duration_ms": duration_ms,
+                },
+            )
+            
+            # End request metrics
+            if ERROR_HANDLING_AVAILABLE:
+                end_request_metrics(success=response.status_code < 400)
+            
+            return response
+            
+        except Exception as e:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            
+            logger.error(
+                "%s %s failed after %.0fms: %s",
+                request.method,
+                request.url.path,
+                duration_ms,
+                str(e),
+                extra={
+                    "request_id": request_id,
+                    "correlation_id": correlation_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "duration_ms": duration_ms,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+                exc_info=True,
+            )
+            
+            # End request metrics with error
+            if ERROR_HANDLING_AVAILABLE:
+                end_request_metrics(success=False, error=str(e))
+            
+            raise
+
+
+# =============================================================================
+# Error Handling Middleware
+# =============================================================================
+
+class ErrorHandlingMiddleware(BaseHTTPMiddleware):
+    """Middleware for consistent error handling.
+    
+    Catches all exceptions and returns standardized error responses.
+    """
+    
+    async def dispatch(self, request: Request, call_next):
+        try:
+            return await call_next(request)
+            
+        except Exception as e:
+            # Get request tracking info
+            request_id = getattr(request.state, "request_id", None)
+            correlation_id = getattr(request.state, "correlation_id", None)
+            
+            # Build error response
+            if ERROR_HANDLING_AVAILABLE and isinstance(e, LLMHiveError):
+                error_response = build_error_response(e, request_id=request_id)
+                status_code = self._get_status_code(e.code)
+            elif ERROR_HANDLING_AVAILABLE:
+                # Wrap generic exceptions
+                error_response = build_error_response(e, request_id=request_id)
+                status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            else:
+                # Fallback without error handling module
+                error_response = type('ErrorResponse', (), {
+                    'to_dict': lambda self: {
+                        "error": {
+                            "code": "E1000",
+                            "message": str(e),
+                            "details": {},
+                            "recoverable": True,
+                        },
+                        "correlation_id": correlation_id or "unknown",
+                        "request_id": request_id,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                })()
+                status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            
+            response = JSONResponse(
+                status_code=status_code,
+                content=error_response.to_dict(),
+            )
+            
+            # Add tracking headers
+            if request_id:
+                response.headers["X-Request-ID"] = request_id
+            if correlation_id:
+                response.headers["X-Correlation-ID"] = correlation_id
+            
+            return response
+    
+    def _get_status_code(self, error_code) -> int:
+        """Map error code to HTTP status code."""
+        if not ERROR_HANDLING_AVAILABLE:
+            return status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+        status_mapping = {
+            ErrorCode.VALIDATION_ERROR: status.HTTP_400_BAD_REQUEST,
+            ErrorCode.NOT_FOUND: status.HTTP_404_NOT_FOUND,
+            ErrorCode.UNAUTHORIZED: status.HTTP_401_UNAUTHORIZED,
+            ErrorCode.FORBIDDEN: status.HTTP_403_FORBIDDEN,
+            ErrorCode.RATE_LIMITED: status.HTTP_429_TOO_MANY_REQUESTS,
+            ErrorCode.TIMEOUT: status.HTTP_504_GATEWAY_TIMEOUT,
+            ErrorCode.PROVIDER_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
+            ErrorCode.PROVIDER_TIMEOUT: status.HTTP_504_GATEWAY_TIMEOUT,
+            ErrorCode.PROVIDER_RATE_LIMITED: status.HTTP_429_TOO_MANY_REQUESTS,
+            ErrorCode.ALL_PROVIDERS_FAILED: status.HTTP_503_SERVICE_UNAVAILABLE,
+            ErrorCode.CIRCUIT_OPEN: status.HTTP_503_SERVICE_UNAVAILABLE,
+            ErrorCode.INVALID_REQUEST: status.HTTP_400_BAD_REQUEST,
+            ErrorCode.CONTENT_POLICY_VIOLATION: status.HTTP_400_BAD_REQUEST,
+            ErrorCode.TIER_LIMIT_EXCEEDED: status.HTTP_403_FORBIDDEN,
+            ErrorCode.QUOTA_EXCEEDED: status.HTTP_429_TOO_MANY_REQUESTS,
+        }
+        return status_mapping.get(error_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Add middleware (order matters - error handling should be first)
+app.add_middleware(ErrorHandlingMiddleware)
+app.add_middleware(RequestTrackingMiddleware)
+
 
 # Create database tables (if DB is configured)
 if Base is not None and engine is not None:
@@ -160,6 +390,33 @@ async def root() -> dict[str, str]:
         "status": "online",
         "version": "1.0.0"
     }
+
+
+@app.get("/health/ready", include_in_schema=False)
+async def readiness_check() -> dict:
+    """Readiness check with provider and circuit breaker status."""
+    from .orchestrator import Orchestrator
+    orch = Orchestrator()
+    providers = list(orch.providers.keys())
+    
+    result = {
+        "status": "ready",
+        "providers": providers,
+        "provider_count": len(providers),
+    }
+    
+    # Add circuit breaker status if available
+    if ERROR_HANDLING_AVAILABLE:
+        breaker = get_circuit_breaker()
+        result["circuit_breakers"] = breaker.get_all_stats()
+    
+    return result
+
+
+@app.get("/health/live", include_in_schema=False)
+async def liveness_check() -> dict[str, str]:
+    """Simple liveness check (just confirms the process is running)."""
+    return {"status": "alive"}
 
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")
