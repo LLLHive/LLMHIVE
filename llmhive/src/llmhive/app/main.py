@@ -9,6 +9,7 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import api_router
+from .startup_checks import validate_startup_config
 
 # Database imports are optional; some minimal deployments may not use the DB.
 try:
@@ -123,10 +124,6 @@ async def root() -> dict[str, str]:
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")
 
-# Include chat router (at /v1/chat)
-from .routers import chat as chat_router
-app.include_router(chat_router.router)
-
 # Include execute router (at /v1/execute/python)
 from .routers import execute as execute_router
 app.include_router(execute_router.router)
@@ -146,6 +143,7 @@ async def startup_event():
     port = os.environ.get('PORT', '8080')
     logger.info(f"Application starting on port {port}")
     logger.info("LLMHive Orchestrator API is ready")
+    validate_startup_config()
     
     # Log registered routes for debugging
     logger.info("Registered routes:")

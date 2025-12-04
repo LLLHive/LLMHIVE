@@ -201,6 +201,9 @@ async def _augment_with_rag(
         return prompt
     
     try:
+        verification_result = None
+        refined_text = None
+        selected_strategy = "standard"
         augmented = await kb.augment_prompt(
             query=prompt,
             domain=domain,
@@ -850,6 +853,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         criteria=criteria_settings,
                         prompt_spec=prompt_spec,
                     )
+                    selected_strategy = strategy
                     
                     elite_result = await elite.orchestrate(
                         enhanced_prompt,
@@ -946,6 +950,10 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         task_type,
                         verification_confidence,
                     )
+                verification_result = {
+                    "passed": len(verification_issues) == 0,
+                    "confidence": verification_confidence,
+                }
             except Exception as e:
                 logger.warning("Tool verification failed: %s", e)
         
@@ -985,7 +993,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 )
                 
                 if refined_answer and refined_answer.refined_content:
-                    final_text = refined_answer.refined_content
+                    refined_text = refined_answer.refined_content
+                    final_text = refined_text
                     logger.info(
                         "Answer refined: %d improvements, format=%s",
                         len(refined_answer.improvements_made),
@@ -1099,7 +1108,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             try:
                 # Calculate quality score based on verification and refinement
                 quality_score = 0.7  # Base score
-                if verification_result and hasattr(verification_result, 'passed') and verification_result.passed:
+                if verification_result and verification_result.get("passed"):
                     quality_score += 0.2
                 if refined_text and refined_text != final_text:
                     quality_score += 0.1

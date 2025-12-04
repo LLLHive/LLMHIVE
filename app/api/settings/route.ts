@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { cookies } from "next/headers"
 
 /**
  * Comprehensive settings persistence API.
@@ -9,14 +10,12 @@ import { NextRequest, NextResponse } from "next/server"
  * - Advanced features
  * - User preferences
  * 
- * Environment variables:
- * - DATABASE_URL: Connection string for database (if using database storage)
- * - REDIS_URL: Connection string for Redis (if using Redis storage)
- * 
- * TODO: Implement actual database/Redis storage. Currently uses in-memory storage.
+ * Uses cookies for persistence across serverless cold starts.
  */
 
-// In-memory storage (replace with database/Redis in production)
+const SETTINGS_COOKIE_NAME = "llmhive-settings"
+const MAX_COOKIE_AGE = 60 * 60 * 24 * 365 // 1 year
+
 interface UserSettings {
   orchestratorSettings: {
     reasoningMode: string
@@ -43,7 +42,82 @@ interface UserSettings {
   }
 }
 
-const settingsStorage = new Map<string, UserSettings>()
+const DEFAULT_SETTINGS: UserSettings = {
+  orchestratorSettings: {
+    reasoningMode: "standard",
+    domainPack: "default",
+    agentMode: "team",
+    promptOptimization: true,
+    outputValidation: true,
+    answerStructure: true,
+    sharedMemory: false,
+    learnFromChat: false,
+    selectedModels: ["automatic"],
+    advancedReasoningMethods: [],
+    advancedFeatures: [],
+  },
+  criteriaSettings: {
+    accuracy: 70,
+    speed: 70,
+    creativity: 50,
+  },
+  preferences: {
+    incognitoMode: false,
+    theme: "dark",
+    language: "en",
+  },
+}
+
+async function getSettingsFromCookie(userId: string): Promise<UserSettings> {
+  try {
+    const cookieStore = await cookies()
+    const cookie = cookieStore.get(`${SETTINGS_COOKIE_NAME}-${userId}`)
+    
+    if (cookie?.value) {
+      const parsed = JSON.parse(decodeURIComponent(cookie.value))
+      // Merge with defaults to ensure all fields exist
+      return {
+        orchestratorSettings: { ...DEFAULT_SETTINGS.orchestratorSettings, ...parsed.orchestratorSettings },
+        criteriaSettings: { ...DEFAULT_SETTINGS.criteriaSettings, ...parsed.criteriaSettings },
+        preferences: { ...DEFAULT_SETTINGS.preferences, ...parsed.preferences },
+      }
+    }
+  } catch (error) {
+    console.warn("[settings] Failed to read cookie:", error)
+  }
+  
+  return DEFAULT_SETTINGS
+}
+
+async function saveSettingsToCookie(userId: string, settings: UserSettings): Promise<void> {
+  const cookieStore = await cookies()
+  const value = encodeURIComponent(JSON.stringify(settings))
+  
+  // Cookies have a ~4KB limit - if exceeded, store only essential data
+  if (value.length > 4000) {
+    console.warn("[settings] Settings too large for cookie, storing essential only")
+    const essential = {
+      criteriaSettings: settings.criteriaSettings,
+      orchestratorSettings: {
+        reasoningMode: settings.orchestratorSettings.reasoningMode,
+        selectedModels: settings.orchestratorSettings.selectedModels?.slice(0, 5),
+      },
+    }
+    cookieStore.set(`${SETTINGS_COOKIE_NAME}-${userId}`, encodeURIComponent(JSON.stringify(essential)), {
+      maxAge: MAX_COOKIE_AGE,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    })
+  } else {
+    cookieStore.set(`${SETTINGS_COOKIE_NAME}-${userId}`, value, {
+      maxAge: MAX_COOKIE_AGE,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    })
+  }
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -51,31 +125,7 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get("userId") || "default"
     const settingType = searchParams.get("type") // "all", "orchestrator", "criteria", "preferences"
 
-    const userSettings = settingsStorage.get(userId) || {
-      orchestratorSettings: {
-        reasoningMode: "standard",
-        domainPack: "default",
-        agentMode: "team",
-        promptOptimization: false,
-        outputValidation: false,
-        answerStructure: false,
-        sharedMemory: false,
-        learnFromChat: false,
-        selectedModels: ["gpt-4o-mini"],
-        advancedReasoningMethods: [],
-        advancedFeatures: [],
-      },
-      criteriaSettings: {
-        accuracy: 70,
-        speed: 70,
-        creativity: 50,
-      },
-      preferences: {
-        incognitoMode: false,
-        theme: "dark",
-        language: "en",
-      },
-    }
+    const userSettings = await getSettingsFromCookie(userId)
 
     if (settingType === "orchestrator") {
       return NextResponse.json({
@@ -98,10 +148,11 @@ export async function GET(req: NextRequest) {
       success: true,
       settings: userSettings,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to retrieve settings"
     console.error("[settings] GET error:", error)
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to retrieve settings" },
+      { success: false, error: message },
       { status: 500 }
     )
   }
@@ -112,12 +163,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { userId = "default", orchestratorSettings, criteriaSettings, preferences } = body
 
-    // Get existing settings or create new
-    const existing = settingsStorage.get(userId) || {
-      orchestratorSettings: {},
-      criteriaSettings: {},
-      preferences: {},
-    }
+    // Get existing settings
+    const existing = await getSettingsFromCookie(userId)
 
     // Merge new settings
     const updated: UserSettings = {
@@ -158,26 +205,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Store settings
-    settingsStorage.set(userId, updated)
-
-    // TODO: Persist to database/Redis
-    // Example:
-    // await db.userSettings.upsert({
-    //   where: { userId },
-    //   update: updated,
-    //   create: { userId, ...updated },
-    // })
+    // Persist to cookie
+    await saveSettingsToCookie(userId, updated)
 
     return NextResponse.json({
       success: true,
       message: "Settings saved successfully",
       settings: updated,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to save settings"
     console.error("[settings] POST error:", error)
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to save settings" },
+      { success: false, error: message },
       { status: 500 }
     )
   }

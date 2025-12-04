@@ -141,9 +141,18 @@ export async function POST(req: NextRequest) {
 
     // Get backend URL and API key from environment
     const apiBase =
-      process.env.ORCHESTRATOR_API_BASE_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://llmhive-orchestrator-792354158895.us-east1.run.app"
+      process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL
+    
+    if (!apiBase) {
+      console.error("[Chat API] Missing backend URL - set ORCHESTRATOR_API_BASE_URL or NEXT_PUBLIC_API_BASE_URL")
+      return NextResponse.json(
+        {
+          error: "Backend not configured",
+          details: "Set ORCHESTRATOR_API_BASE_URL (preferred) or NEXT_PUBLIC_API_BASE_URL",
+        },
+        { status: 503 },
+      )
+    }
     
     const apiKey = process.env.LLMHIVE_API_KEY
 
