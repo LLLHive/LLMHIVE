@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Try to import SQLAlchemy
 try:
     from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Enum, Text
-    from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.orm import declarative_base  # Updated import (SQLAlchemy 2.0+)
     SQLALCHEMY_AVAILABLE = True
     Base = declarative_base()
 except ImportError:

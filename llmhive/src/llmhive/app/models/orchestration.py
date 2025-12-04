@@ -4,7 +4,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReasoningMode(str, Enum):
@@ -58,8 +58,8 @@ class TuningOptions(BaseModel):
     answer_structure: bool = Field(default=True, description="Enable structured answer formatting")
     learn_from_chat: bool = Field(default=True, description="Enable learning from conversation history")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "prompt_optimization": True,
                 "output_validation": True,
@@ -67,6 +67,7 @@ class TuningOptions(BaseModel):
                 "learn_from_chat": True,
             }
         }
+    )
 
 
 class CriteriaSettings(BaseModel):
@@ -86,8 +87,8 @@ class ChatMetadata(BaseModel):
         description="Dynamic criteria settings for quality/speed/creativity balance"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "chat_id": "conv-123",
                 "user_id": "user-456",
@@ -95,6 +96,7 @@ class ChatMetadata(BaseModel):
                 "criteria": {"accuracy": 70, "speed": 70, "creativity": 50},
             }
         }
+    )
 
 
 class EliteStrategy(str, Enum):
@@ -190,8 +192,8 @@ class OrchestrationSettings(BaseModel):
         description="Enable memory augmentation"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "accuracy_level": 3,
                 "enable_hrm": False,
@@ -205,6 +207,7 @@ class OrchestrationSettings(BaseModel):
                 "enable_vector_rag": False,
             }
         }
+    )
 
 
 class ChatRequest(BaseModel):
@@ -232,8 +235,8 @@ class ChatRequest(BaseModel):
         description="Conversation history as list of {role, content} dicts"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "prompt": "What is the capital of France?",
                 "reasoning_mode": "standard",
@@ -254,6 +257,7 @@ class ChatRequest(BaseModel):
                 ],
             }
         }
+    )
 
 
 class AgentTrace(BaseModel):
@@ -264,8 +268,8 @@ class AgentTrace(BaseModel):
     confidence: Optional[float] = Field(default=None, description="Confidence score")
     timestamp: Optional[float] = Field(default=None, description="Processing timestamp")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "agent_id": "agent-1",
                 "agent_name": "researcher",
@@ -273,6 +277,7 @@ class AgentTrace(BaseModel):
                 "confidence": 0.95,
             }
         }
+    )
 
 
 class ChatResponse(BaseModel):
@@ -293,8 +298,8 @@ class ChatResponse(BaseModel):
     agent_traces: List[AgentTrace] = Field(default_factory=list, description="Agent trace information")
     extra: Dict[str, Any] = Field(default_factory=dict, description="Additional response data")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message": "The capital of France is Paris.",
                 "reasoning_mode": "standard",
@@ -315,4 +320,5 @@ class ChatResponse(BaseModel):
                 "extra": {},
             }
         }
+    )
 

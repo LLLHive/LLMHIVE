@@ -170,8 +170,8 @@ class SafeCalculator:
                 return node.value
             raise ValueError(f"Unsupported constant type: {type(node.value)}")
         
-        elif isinstance(node, ast.Num):  # Python 3.7 compatibility
-            return node.n
+        # Note: ast.Num was deprecated in Python 3.8 and removed in 3.14
+        # ast.Constant handles all numeric types in Python 3.8+
         
         elif isinstance(node, ast.Name):
             name = node.id.lower()
