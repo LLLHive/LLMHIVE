@@ -10,6 +10,7 @@ if str(_src_path) not in sys.path:
     sys.path.insert(0, str(_src_path))
 
 import datetime as dt
+from datetime import timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
@@ -266,8 +267,8 @@ class TestUsageMeter:
         charges = self.meter.calculate_overage(
             user_id="user_over",
             tier_name="pro",
-            period_start=dt.datetime.utcnow() - dt.timedelta(days=30),
-            period_end=dt.datetime.utcnow(),
+            period_start=dt.datetime.now(timezone.utc) - dt.timedelta(days=30),
+            period_end=dt.datetime.now(timezone.utc),
         )
         
         # Pro tier has overage, but requests don't have overage

@@ -10,6 +10,7 @@ Enterprise Metering: Provides comprehensive usage metering including:
 from __future__ import annotations
 
 import datetime as dt
+from datetime import timezone
 import logging
 import threading
 from collections import defaultdict
@@ -53,7 +54,7 @@ class UsageEvent:
     usage_type: UsageType
     amount: int
     model: Optional[str] = None
-    timestamp: dt.datetime = field(default_factory=dt.datetime.utcnow)
+    timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
     cost_usd: float = 0.0
 
@@ -380,7 +381,7 @@ class UsageMeter:
         """Reset usage for a user (called at period start)."""
         with self._lock:
             self._usage_cache[user_id].clear()
-            self._last_reset[user_id] = dt.datetime.utcnow()
+            self._last_reset[user_id] = dt.datetime.now(dt.timezone.utc)
         
         logger.info("Enterprise Metering: Reset usage for user %s", user_id)
     

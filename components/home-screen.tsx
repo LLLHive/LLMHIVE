@@ -34,6 +34,7 @@ const templates = [
       domainPack: "research" as const,
       agentMode: "team" as const,
       outputValidation: true,
+      enableDeepConsensus: true,
     },
   },
   {
@@ -57,6 +58,7 @@ const templates = [
     color: "from-blue-500 to-cyan-500",
     preset: {
       reasoningMode: "deep" as const,
+      domainPack: "legal" as const,
       agentMode: "team" as const,
       outputValidation: true,
       answerStructure: true,
