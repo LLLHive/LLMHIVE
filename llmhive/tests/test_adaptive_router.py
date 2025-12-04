@@ -1,10 +1,17 @@
 """Unit tests for adaptive model router module."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 import pytest
 
-from llmhive.src.llmhive.app.orchestration.adaptive_router import (
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
+from llmhive.app.orchestration.adaptive_router import (
     AdaptiveModelRouter,
     AdaptiveRoutingResult,
     ModelScore,
@@ -13,7 +20,7 @@ from llmhive.src.llmhive.app.orchestration.adaptive_router import (
     infer_domain,
     MODEL_PROFILES,
 )
-from llmhive.src.llmhive.app.performance_tracker import ModelPerformance
+from llmhive.app.performance_tracker import ModelPerformance
 
 
 class TestDomainInference:
@@ -249,7 +256,7 @@ class TestCascadeSelection:
         """Set up test fixtures."""
         self.router = AdaptiveModelRouter()
     
-    @patch('llmhive.src.llmhive.app.orchestration.adaptive_router.performance_tracker')
+    @patch('llmhive.app.orchestration.adaptive_router.performance_tracker')
     def test_cascade_escalates_on_low_confidence(self, mock_tracker):
         """Test that cascade escalates when confidence is low."""
         # Mock low quality history
@@ -271,7 +278,7 @@ class TestCascadeSelection:
         assert escalated is True
         assert model == "gpt-4o"
     
-    @patch('llmhive.src.llmhive.app.orchestration.adaptive_router.performance_tracker')
+    @patch('llmhive.app.orchestration.adaptive_router.performance_tracker')
     def test_cascade_stays_on_high_confidence(self, mock_tracker):
         """Test that cascade doesn't escalate when confidence is high."""
         # Mock high quality history

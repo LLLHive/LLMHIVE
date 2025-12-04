@@ -1,19 +1,27 @@
 """Unit tests for memory and vector database integration."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 from unittest.mock import MagicMock, patch
 import pytest
 
-from llmhive.src.llmhive.app.memory.embeddings import (
+from llmhive.app.memory.embeddings import (
     EmbeddingService,
     get_embedding,
 )
-from llmhive.src.llmhive.app.memory.vector_store import (
+from llmhive.app.memory.vector_store import (
     InMemoryVectorStore,
     MemoryRecord,
     MemoryQueryResult,
 )
-from llmhive.src.llmhive.app.memory.persistent_memory import (
+from llmhive.app.memory.persistent_memory import (
     PersistentMemoryManager,
     MemoryHit,
     Scratchpad,

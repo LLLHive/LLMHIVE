@@ -9,6 +9,14 @@ These tests verify:
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 import asyncio
 import json
 import os
@@ -24,7 +32,7 @@ except ImportError:
     TORCH_AVAILABLE = False
 
 # Import modules under test
-from llmhive.src.llmhive.app.providers.local_model import (
+from llmhive.app.providers.local_model import (
     LocalModelProvider,
     ChatLocalModelProvider,
     LocalModelConfig,
@@ -33,7 +41,7 @@ from llmhive.src.llmhive.app.providers.local_model import (
     GenerationResult,
     RECOMMENDED_MODELS,
 )
-from llmhive.src.llmhive.app.providers.fine_tuning import (
+from llmhive.app.providers.fine_tuning import (
     FineTuner,
     FineTuneConfig,
     FineTuneMethod,
@@ -43,7 +51,7 @@ from llmhive.src.llmhive.app.providers.fine_tuning import (
     DatasetPreparer,
     DatasetItem,
 )
-from llmhive.src.llmhive.app.providers.model_registry import (
+from llmhive.app.providers.model_registry import (
     ModelRegistry,
     ModelInfo,
     ModelType,

@@ -9,6 +9,14 @@ These tests verify:
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 import asyncio
 import json
 import os
@@ -20,26 +28,26 @@ from typing import Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import modules under test
-from llmhive.src.llmhive.app.rlhf.feedback import (
+from llmhive.app.rlhf.feedback import (
     FeedbackCollector,
     FeedbackEntry,
     FeedbackType,
     PreferencePair,
     FeedbackStats,
 )
-from llmhive.src.llmhive.app.rlhf.reward_model import (
+from llmhive.app.rlhf.reward_model import (
     RewardModel,
     RewardModelConfig,
     RewardScore,
     HeuristicRewardModel,
 )
-from llmhive.src.llmhive.app.rlhf.trainer import (
+from llmhive.app.rlhf.trainer import (
     RLHFTrainer,
     RLHFConfig,
     RLHFTrainingResult,
     PreferenceDataset,
 )
-from llmhive.src.llmhive.app.rlhf.ranker import (
+from llmhive.app.rlhf.ranker import (
     AnswerRanker,
     RankedAnswer,
     RankingResult,

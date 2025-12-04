@@ -1,0 +1,14 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/agents/route": "/api/agents",
+  "/api/chat/route": "/api/chat",
+  "/api/criteria/route": "/api/criteria",
+  "/api/execute/route": "/api/execute",
+  "/api/reasoning-config/route": "/api/reasoning-config",
+  "/api/settings/route": "/api/settings",
+  "/discover/page": "/discover",
+  "/orchestration/page": "/orchestration",
+  "/page": "/",
+  "/settings/page": "/settings"
+}

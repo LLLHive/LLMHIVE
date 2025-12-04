@@ -10,31 +10,38 @@ These tests verify:
 from __future__ import annotations
 
 import asyncio
+import sys
+from pathlib import Path
 import pytest
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 # Import modules under test
-from llmhive.src.llmhive.app.dialogue.ambiguity import (
+from llmhive.app.dialogue.ambiguity import (
     AmbiguityDetector,
     AmbiguityResult,
     AmbiguityType,
     detect_ambiguity,
 )
-from llmhive.src.llmhive.app.dialogue.clarification import (
+from llmhive.app.dialogue.clarification import (
     ClarificationHandler,
     ClarificationRequest,
     ClarificationState,
     ParsedResponse,
 )
-from llmhive.src.llmhive.app.dialogue.suggestions import (
+from llmhive.app.dialogue.suggestions import (
     SuggestionEngine,
     Suggestion,
     SuggestionType,
     SuggestionConfig,
 )
-from llmhive.src.llmhive.app.dialogue.scheduler import (
+from llmhive.app.dialogue.scheduler import (
     TaskScheduler,
     ScheduledTask,
     TaskStatus,
@@ -42,7 +49,7 @@ from llmhive.src.llmhive.app.dialogue.scheduler import (
     parse_time_expression,
     parse_reminder_request,
 )
-from llmhive.src.llmhive.app.dialogue.manager import (
+from llmhive.app.dialogue.manager import (
     DialogueManager,
     DialogueResult,
     DialogueState,

@@ -8,6 +8,14 @@ These tests verify the core HRM execution functionality:
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 import asyncio
 import pytest
 from datetime import datetime
@@ -15,14 +23,14 @@ from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import the modules under test
-from llmhive.src.llmhive.app.orchestration.hierarchical_planning import (
+from llmhive.app.orchestration.hierarchical_planning import (
     HierarchicalPlanner,
     HierarchicalPlan,
     HierarchicalPlanStep,
     HierarchicalRole,
     TaskComplexity,
 )
-from llmhive.src.llmhive.app.orchestration.hierarchical_executor import (
+from llmhive.app.orchestration.hierarchical_executor import (
     HierarchicalPlanExecutor,
     HRMBlackboard,
     HRMBlackboardEntry,
@@ -32,7 +40,7 @@ from llmhive.src.llmhive.app.orchestration.hierarchical_executor import (
     ExecutionMode,
     execute_hierarchical_plan,
 )
-from llmhive.src.llmhive.app.orchestration.hrm import RoleLevel
+from llmhive.app.orchestration.hrm import RoleLevel
 
 
 # ==============================================================================

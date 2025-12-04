@@ -9,32 +9,39 @@ These tests verify:
 from __future__ import annotations
 
 import asyncio
+import sys
+from pathlib import Path
 import pytest
 from datetime import datetime, date, timezone
 from typing import Dict, List, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 # Import modules under test
-from llmhive.src.llmhive.app.i18n.detection import (
+from llmhive.app.i18n.detection import (
     LanguageDetector,
     LanguageInfo,
     HeuristicDetector,
     detect_language,
     SUPPORTED_LANGUAGES,
 )
-from llmhive.src.llmhive.app.i18n.translation import (
+from llmhive.app.i18n.translation import (
     TranslationService,
     TranslationResult,
     MockTranslationBackend,
     translate_text,
 )
-from llmhive.src.llmhive.app.i18n.handler import (
+from llmhive.app.i18n.handler import (
     MultilingualHandler,
     MultilingualContext,
     ConversationLanguageTracker,
     SYSTEM_INSTRUCTIONS,
 )
-from llmhive.src.llmhive.app.i18n.localization import (
+from llmhive.app.i18n.localization import (
     LocaleFormatter,
     LocaleConfig,
     format_number,

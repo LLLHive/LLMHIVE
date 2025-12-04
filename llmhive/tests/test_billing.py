@@ -1,18 +1,26 @@
 """Comprehensive tests for LLMHive billing and monetization system."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 import datetime as dt
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
-from llmhive.src.llmhive.app.billing.pricing import (
+from llmhive.app.billing.pricing import (
     PricingTier,
     TierLimits,
     TierName,
     PricingTierManager,
     get_pricing_manager,
 )
-from llmhive.src.llmhive.app.billing.metering import (
+from llmhive.app.billing.metering import (
     UsageMeter,
     UsageType,
     UsageEvent,

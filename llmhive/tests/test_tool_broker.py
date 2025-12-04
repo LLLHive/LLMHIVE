@@ -2,10 +2,17 @@
 from __future__ import annotations
 
 import math
+import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
-from llmhive.src.llmhive.app.tool_broker import (
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
+from llmhive.app.tool_broker import (
     ToolBroker,
     ToolDefinition,
     ToolRequest,

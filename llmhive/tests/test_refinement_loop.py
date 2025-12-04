@@ -1,10 +1,18 @@
 """Unit tests for Loop-Back Refinement Controller."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
-from llmhive.src.llmhive.app.orchestration.refinement_loop import (
+from llmhive.app.orchestration.refinement_loop import (
     RefinementLoopController,
     RefinementResult,
     RefinementIteration,

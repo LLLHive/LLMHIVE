@@ -9,6 +9,14 @@ These tests verify:
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 import asyncio
 import base64
 import pytest
@@ -16,27 +24,27 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Any, Dict
 
 # Import modules under test
-from llmhive.src.llmhive.app.multimodal.image_analyzer import (
+from llmhive.app.multimodal.image_analyzer import (
     ImageAnalyzer,
     ImageAnalysisResult,
     AnalysisType,
     is_valid_image_url,
     encode_bytes_to_base64,
 )
-from llmhive.src.llmhive.app.multimodal.image_generator import (
+from llmhive.app.multimodal.image_generator import (
     ImageGenerator,
     ImageGenerationResult,
     ImageSize,
     ImageQuality,
     is_safe_prompt,
 )
-from llmhive.src.llmhive.app.multimodal.audio_processor import (
+from llmhive.app.multimodal.audio_processor import (
     AudioProcessor,
     TranscriptionResult,
     SpeechSynthesisResult,
     TTSVoice,
 )
-from llmhive.src.llmhive.app.multimodal.handler import (
+from llmhive.app.multimodal.handler import (
     MultimodalHandler,
     MultimodalInput,
     MultimodalOutput,

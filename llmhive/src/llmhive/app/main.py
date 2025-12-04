@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,11 +29,50 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI application
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for FastAPI application.
+    
+    Handles startup and shutdown events using the modern lifespan pattern
+    instead of deprecated @app.on_event decorators.
+    """
+    # === STARTUP ===
+    port = os.environ.get('PORT', '8080')
+    logger.info(f"Application starting on port {port}")
+    logger.info("LLMHive Orchestrator API is ready")
+    validate_startup_config()
+    
+    # Log registered routes for debugging
+    logger.info("Registered routes:")
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            logger.info(f"  {','.join(route.methods)} {route.path}")
+    
+    # Log provider configuration status
+    from .orchestrator import Orchestrator
+    orch = Orchestrator()
+    providers = list(orch.providers.keys())
+    logger.info(f"Configured providers: {providers}")
+    if len(providers) == 1 and providers[0] == "stub":
+        logger.warning("⚠️  Only stub provider is configured! No real LLM API keys found.")
+        logger.warning("   Set environment variables: OPENAI_API_KEY, ANTHROPIC_API_KEY, GROK_API_KEY, etc.")
+    else:
+        logger.info(f"✓ {len([p for p in providers if p != 'stub'])} real provider(s) configured")
+    
+    yield  # Application runs here
+    
+    # === SHUTDOWN ===
+    logger.info("Application shutting down")
+
+
+# Initialize FastAPI application with lifespan handler
 app = FastAPI(
     title="LLMHive Orchestrator API",
     description="Multi-model orchestration service for LLM interactions",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Configure CORS with specific origins
@@ -143,30 +183,3 @@ app.include_router(agents_router.router)
 # Include reasoning config router (at /v1/reasoning-config)
 from .routers import reasoning_config as reasoning_config_router
 app.include_router(reasoning_config_router.router)
-
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    """Log startup information."""
-    port = os.environ.get('PORT', '8080')
-    logger.info(f"Application starting on port {port}")
-    logger.info("LLMHive Orchestrator API is ready")
-    validate_startup_config()
-    
-    # Log registered routes for debugging
-    logger.info("Registered routes:")
-    for route in app.routes:
-        if hasattr(route, 'path') and hasattr(route, 'methods'):
-            logger.info(f"  {','.join(route.methods)} {route.path}")
-    
-    # Log provider configuration status
-    from .orchestrator import Orchestrator
-    orch = Orchestrator()
-    providers = list(orch.providers.keys())
-    logger.info(f"Configured providers: {providers}")
-    if len(providers) == 1 and providers[0] == "stub":
-        logger.warning("⚠️  Only stub provider is configured! No real LLM API keys found.")
-        logger.warning("   Set environment variables: OPENAI_API_KEY, ANTHROPIC_API_KEY, GROK_API_KEY, etc.")
-    else:
-        logger.info(f"✓ {len([p for p in providers if p != 'stub'])} real provider(s) configured")
-

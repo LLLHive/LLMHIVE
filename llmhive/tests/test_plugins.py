@@ -10,13 +10,20 @@ These tests verify:
 from __future__ import annotations
 
 import asyncio
+import sys
+from pathlib import Path
 import pytest
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 # Import modules under test
-from llmhive.src.llmhive.app.plugins.base import (
+from llmhive.app.plugins.base import (
     Plugin,
     PluginConfig,
     PluginManifest,
@@ -27,11 +34,11 @@ from llmhive.src.llmhive.app.plugins.base import (
     PluginTier,
     SimplePlugin,
 )
-from llmhive.src.llmhive.app.plugins.manager import (
+from llmhive.app.plugins.manager import (
     PluginManager,
     PluginRegistry,
 )
-from llmhive.src.llmhive.app.plugins.domain_router import (
+from llmhive.app.plugins.domain_router import (
     DomainPluginRouter,
     DomainMatch,
     DOMAIN_KEYWORDS,
@@ -488,7 +495,7 @@ class TestMathPlugin:
     
     @pytest.fixture
     def plugin(self):
-        from llmhive.src.llmhive.app.plugins.builtin.math_plugin import MathPlugin
+        from llmhive.app.plugins.builtin.math_plugin import MathPlugin
         return MathPlugin()
     
     @pytest.mark.asyncio
@@ -552,7 +559,7 @@ class TestWikiPlugin:
     
     @pytest.fixture
     def plugin(self):
-        from llmhive.src.llmhive.app.plugins.builtin.wiki_plugin import WikiPlugin
+        from llmhive.app.plugins.builtin.wiki_plugin import WikiPlugin
         return WikiPlugin()
     
     def test_plugin_config(self, plugin):
@@ -575,7 +582,7 @@ class TestNewsPlugin:
     
     @pytest.fixture
     def plugin(self):
-        from llmhive.src.llmhive.app.plugins.builtin.news_plugin import NewsPlugin
+        from llmhive.app.plugins.builtin.news_plugin import NewsPlugin
         return NewsPlugin()
     
     def test_plugin_config(self, plugin):
@@ -598,7 +605,7 @@ class TestWeatherPlugin:
     
     @pytest.fixture
     def plugin(self):
-        from llmhive.src.llmhive.app.plugins.builtin.weather_plugin import WeatherPlugin
+        from llmhive.app.plugins.builtin.weather_plugin import WeatherPlugin
         return WeatherPlugin()
     
     def test_plugin_config(self, plugin):

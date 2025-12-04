@@ -1,11 +1,19 @@
 """Unit tests for Shared Memory Module."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
 import pytest
 
-from llmhive.src.llmhive.app.memory.shared_memory import (
+from llmhive.app.memory.shared_memory import (
     SharedMemoryManager,
     SharedMemoryEntry,
     SharedMemoryQuery,
