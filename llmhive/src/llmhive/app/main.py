@@ -90,7 +90,9 @@ async def lifespan(app: FastAPI):
     logger.info("LLMHive Orchestrator API is ready")
     validate_startup_config()
     
-    # Initialize OpenTelemetry tracing
+    # Initialize OpenTelemetry tracing (SDK only, not middleware)
+    # NOTE: Middleware cannot be added during lifespan in newer FastAPI versions
+    # The tracing middleware is now set up before app.include_router() calls
     if TRACING_AVAILABLE:
         tracing_config = TracingConfig(
             service_name="llmhive-orchestrator",
@@ -99,8 +101,8 @@ async def lifespan(app: FastAPI):
             use_console_exporter=os.environ.get("OTEL_CONSOLE_EXPORT", "false").lower() == "true",
         )
         if init_tracing(tracing_config):
-            logger.info("✓ OpenTelemetry tracing initialized")
-            setup_fastapi_tracing(app, tracing_config)
+            logger.info("✓ OpenTelemetry tracing SDK initialized")
+            # NOTE: setup_fastapi_tracing is now called after app creation, not here
         else:
             logger.warning("OpenTelemetry tracing initialization failed")
     else:
@@ -346,6 +348,20 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
 # Add middleware (order matters - error handling should be first)
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(RequestTrackingMiddleware)
+
+# Set up OpenTelemetry tracing middleware (must be done before app starts)
+if TRACING_AVAILABLE:
+    try:
+        tracing_config = TracingConfig(
+            service_name="llmhive-orchestrator",
+            service_version="1.0.0",
+            otlp_endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"),
+            use_console_exporter=os.environ.get("OTEL_CONSOLE_EXPORT", "false").lower() == "true",
+        )
+        setup_fastapi_tracing(app, tracing_config)
+        logger.info("OpenTelemetry tracing middleware configured")
+    except Exception as e:
+        logger.warning(f"Failed to setup OpenTelemetry tracing: {e}")
 
 
 # Create database tables (if DB is configured)
