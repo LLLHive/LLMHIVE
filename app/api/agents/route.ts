@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server"
+
 export async function GET() {
   try {
     const orchestratorUrl = process.env.ORCHESTRATOR_API_BASE_URL
@@ -13,7 +15,7 @@ export async function GET() {
 
       if (response.ok) {
         const agents = await response.json()
-        return Response.json(agents)
+        return NextResponse.json(agents)
       }
     }
 
@@ -29,9 +31,9 @@ export async function GET() {
       { id: "deepseek-chat", name: "DeepSeek V3", provider: "deepseek", available: true },
     ]
 
-    return Response.json({ agents: defaultAgents, source: "fallback" })
+    return NextResponse.json({ agents: defaultAgents, source: "fallback" })
   } catch (error) {
     console.error("[v0] Agents API error:", error)
-    return Response.json({ error: "Failed to fetch agents" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch agents" }, { status: 500 })
   }
 }
