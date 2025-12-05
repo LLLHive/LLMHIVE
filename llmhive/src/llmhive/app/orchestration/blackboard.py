@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import threading
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, List
 
 logger = logging.getLogger(__name__)
@@ -60,14 +60,14 @@ class Blackboard:
             if metadata:
                 self._metadata[key].update(metadata)
             
-            self._metadata[key]["updated_at"] = datetime.utcnow().isoformat()
+            self._metadata[key]["updated_at"] = datetime.now(timezone.utc).isoformat()
             
             # Record in history
             self._history.append({
                 "action": "set",
                 "key": key,
                 "agent_role": agent_role,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             
             logger.debug(f"Blackboard set: {key} by {agent_role or 'unknown'}")
@@ -116,7 +116,7 @@ class Blackboard:
                 "action": "update",
                 "key": key,
                 "agent_role": agent_role,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             })
 
     def append(self, key: str, value: Any, agent_role: Optional[str] = None) -> None:
@@ -140,7 +140,7 @@ class Blackboard:
                 "action": "append",
                 "key": key,
                 "agent_role": agent_role,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             
             logger.debug(f"Blackboard append: {key} by {agent_role or 'unknown'}")
@@ -205,6 +205,6 @@ class Blackboard:
                     "total_operations": len(self._history),
                     "keys": list(self._data.keys()),
                 },
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 

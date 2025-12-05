@@ -50,6 +50,15 @@ except Exception as exc:  # pragma: no cover - defensive logging only
     Base = None  # type: ignore
     logging.getLogger(__name__).warning("Database imports failed: %s", exc)
 
+# OpenTelemetry tracing imports (optional)
+try:
+    from .telemetry import init_tracing, TracingConfig
+    from .telemetry.middleware import setup_fastapi_tracing
+    TRACING_AVAILABLE = True
+except ImportError as e:
+    TRACING_AVAILABLE = False
+    logging.getLogger(__name__).info("OpenTelemetry tracing not available: %s", e)
+
 # Configure logging - use structured logging if available
 if ERROR_HANDLING_AVAILABLE:
     json_format = os.environ.get("LOG_FORMAT", "").lower() == "json"
@@ -80,6 +89,22 @@ async def lifespan(app: FastAPI):
     logger.info(f"Application starting on port {port}")
     logger.info("LLMHive Orchestrator API is ready")
     validate_startup_config()
+    
+    # Initialize OpenTelemetry tracing
+    if TRACING_AVAILABLE:
+        tracing_config = TracingConfig(
+            service_name="llmhive-orchestrator",
+            service_version="1.0.0",
+            otlp_endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"),
+            use_console_exporter=os.environ.get("OTEL_CONSOLE_EXPORT", "false").lower() == "true",
+        )
+        if init_tracing(tracing_config):
+            logger.info("✓ OpenTelemetry tracing initialized")
+            setup_fastapi_tracing(app, tracing_config)
+        else:
+            logger.warning("OpenTelemetry tracing initialization failed")
+    else:
+        logger.info("OpenTelemetry tracing not available (install opentelemetry packages)")
     
     # Log registered routes for debugging
     logger.info("Registered routes:")
@@ -440,3 +465,7 @@ app.include_router(agents_router.router)
 # Include reasoning config router (at /v1/reasoning-config)
 from .routers import reasoning_config as reasoning_config_router
 app.include_router(reasoning_config_router.router)
+
+# Include clarification router (at /v1/clarify)
+from .routers import clarification as clarification_router
+app.include_router(clarification_router.router)

@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, status
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def update_status(
         "model": model,
         "progress": progress,
         "message": message or f"Processing: {stage}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     logger.debug("Status updated for query %s: %s - %s", query_id, stage, status_value)
     return _status_store[query_id]

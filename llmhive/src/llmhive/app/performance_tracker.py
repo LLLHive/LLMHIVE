@@ -20,6 +20,23 @@ from typing import Dict, List, Mapping, Optional, Protocol
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class ModelUsage:
+    """Usage statistics for a single model."""
+    tokens: int = 0
+    cost: float = 0.0
+    responses: int = 0
+
+
+@dataclass
+class UsageSummary:
+    """Summary of usage across all models in a request."""
+    total_tokens: int = 0
+    total_cost: float = 0.0
+    response_count: int = 0
+    per_model: Dict[str, ModelUsage] = field(default_factory=dict)
+
+
 @dataclass(slots=True)
 class ModelPerformance:
     """Aggregated performance statistics for a single model.

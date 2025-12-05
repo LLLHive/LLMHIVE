@@ -42,7 +42,138 @@ class SubscriptionStatus(str, enum.Enum):
     PENDING = "pending"
 
 
+class AccountTier(str, enum.Enum):
+    """User account tier levels."""
+    FREE = "free"
+    PRO = "pro"
+    ENTERPRISE = "enterprise"
+
+
+class FeedbackOutcome(str, enum.Enum):
+    """Outcome of model feedback."""
+    SUCCESS = "success"
+    FAILURE = "failure"
+    PARTIAL = "partial"
+    TIMEOUT = "timeout"
+    ERROR = "error"
+
+
 if SQLALCHEMY_AVAILABLE:
+    class User(Base):
+        """User model."""
+        __tablename__ = "users"
+        
+        id = Column(Integer, primary_key=True, index=True)
+        user_id = Column(String(255), unique=True, nullable=False, index=True)
+        email = Column(String(255), nullable=True)
+        account_tier = Column(Enum(AccountTier), nullable=False, default=AccountTier.FREE)
+        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+        
+        def __repr__(self):
+            return f"<User(id={self.id}, user_id={self.user_id}, tier={self.account_tier})>"
+
+
+    class Conversation(Base):
+        """Conversation model for chat history."""
+        __tablename__ = "conversations"
+        
+        id = Column(Integer, primary_key=True, index=True)
+        user_id = Column(String(255), nullable=False, index=True)
+        topic = Column(String(500), nullable=True)
+        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+        
+        def __repr__(self):
+            return f"<Conversation(id={self.id}, user_id={self.user_id}, topic={self.topic})>"
+
+
+    class MemoryEntry(Base):
+        """Memory entry for persistent storage."""
+        __tablename__ = "memory_entries"
+        
+        id = Column(Integer, primary_key=True, index=True)
+        user_id = Column(String(255), nullable=False, index=True)
+        conversation_id = Column(Integer, nullable=True)
+        content = Column(Text, nullable=False)
+        metadata_json = Column(Text, nullable=True)  # JSON string
+        is_encrypted = Column(Boolean, default=False)
+        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        expires_at = Column(DateTime, nullable=True)
+        
+        def __repr__(self):
+            return f"<MemoryEntry(id={self.id}, user_id={self.user_id})>"
+
+
+    class KnowledgeDocument(Base):
+        """Knowledge document for RAG."""
+        __tablename__ = "knowledge_documents"
+        
+        id = Column(Integer, primary_key=True, index=True)
+        user_id = Column(String(255), nullable=True, index=True)
+        title = Column(String(500), nullable=True)
+        content = Column(Text, nullable=False)
+        source = Column(String(500), nullable=True)
+        embedding_id = Column(String(255), nullable=True)  # Vector store ID
+        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        
+        def __repr__(self):
+            return f"<KnowledgeDocument(id={self.id}, title={self.title})>"
+
+
+    class Task(Base):
+        """Task model for orchestration tracking."""
+        __tablename__ = "tasks"
+        
+        id = Column(Integer, primary_key=True, index=True)
+        session_id = Column(String(255), nullable=True, index=True)
+        query = Column(Text, nullable=False)
+        status = Column(String(50), default="pending")
+        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        completed_at = Column(DateTime, nullable=True)
+        
+        def __repr__(self):
+            return f"<Task(id={self.id}, status={self.status})>"
+
+
+    class ModelFeedback(Base):
+        """Model feedback for performance tracking."""
+        __tablename__ = "model_feedback"
+        
+        id = Column(Integer, primary_key=True, index=True)
+        task_id = Column(Integer, nullable=True)
+        session_id = Column(String(255), nullable=True)
+        model_name = Column(String(100), nullable=False)
+        outcome = Column(Enum(FeedbackOutcome), nullable=False)
+        was_used_in_final = Column(Boolean, default=False)
+        response_time_ms = Column(Float, nullable=True)
+        token_usage = Column(Integer, nullable=True)
+        confidence_score = Column(Float, nullable=True)
+        quality_score = Column(Float, nullable=True)
+        notes = Column(Text, nullable=True)
+        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        
+        def __repr__(self):
+            return f"<ModelFeedback(id={self.id}, model={self.model_name}, outcome={self.outcome})>"
+
+
+    class ModelMetric(Base):
+        """Aggregate model metrics."""
+        __tablename__ = "model_metrics"
+        
+        id = Column(Integer, primary_key=True, index=True)
+        model_name = Column(String(100), unique=True, nullable=False, index=True)
+        total_calls = Column(Integer, default=0)
+        success_count = Column(Integer, default=0)
+        failure_count = Column(Integer, default=0)
+        avg_response_time_ms = Column(Float, default=0.0)
+        avg_quality_score = Column(Float, default=0.0)
+        updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+        
+        def __repr__(self):
+            return f"<ModelMetric(model={self.model_name}, calls={self.total_calls})>"
+
+
     class Subscription(Base):
         """Subscription model for billing."""
         __tablename__ = "subscriptions"
@@ -113,6 +244,79 @@ if SQLALCHEMY_AVAILABLE:
 
 else:
     # Stub classes for when SQLAlchemy is not available
+    class User:
+        """Stub User class for type hints."""
+        id: int
+        user_id: str
+        email: Optional[str]
+        account_tier: AccountTier
+        created_at: datetime.datetime
+        updated_at: datetime.datetime
+    
+    class Conversation:
+        """Stub Conversation class for type hints."""
+        id: int
+        user_id: str
+        topic: Optional[str]
+        created_at: datetime.datetime
+        updated_at: datetime.datetime
+    
+    class MemoryEntry:
+        """Stub MemoryEntry class for type hints."""
+        id: int
+        user_id: str
+        conversation_id: Optional[int]
+        content: str
+        metadata_json: Optional[str]
+        is_encrypted: bool
+        created_at: datetime.datetime
+        expires_at: Optional[datetime.datetime]
+    
+    class KnowledgeDocument:
+        """Stub KnowledgeDocument class for type hints."""
+        id: int
+        user_id: Optional[str]
+        title: Optional[str]
+        content: str
+        source: Optional[str]
+        embedding_id: Optional[str]
+        created_at: datetime.datetime
+    
+    class Task:
+        """Stub Task class for type hints."""
+        id: int
+        session_id: Optional[str]
+        query: str
+        status: str
+        created_at: datetime.datetime
+        completed_at: Optional[datetime.datetime]
+    
+    class ModelFeedback:
+        """Stub ModelFeedback class for type hints."""
+        id: int
+        task_id: Optional[int]
+        session_id: Optional[str]
+        model_name: str
+        outcome: FeedbackOutcome
+        was_used_in_final: bool
+        response_time_ms: Optional[float]
+        token_usage: Optional[int]
+        confidence_score: Optional[float]
+        quality_score: Optional[float]
+        notes: Optional[str]
+        created_at: datetime.datetime
+    
+    class ModelMetric:
+        """Stub ModelMetric class for type hints."""
+        id: int
+        model_name: str
+        total_calls: int
+        success_count: int
+        failure_count: int
+        avg_response_time_ms: float
+        avg_quality_score: float
+        updated_at: datetime.datetime
+    
     class Subscription:
         """Stub Subscription class for type hints."""
         id: int
@@ -154,10 +358,23 @@ else:
 # Export all models
 __all__ = [
     "Base",
-    "Subscription",
+    "SQLALCHEMY_AVAILABLE",
+    # Enums
+    "AccountTier",
+    "FeedbackOutcome",
     "SubscriptionStatus",
+    # Core models
+    "User",
+    "Conversation",
+    "MemoryEntry",
+    "KnowledgeDocument",
+    "Task",
+    # Feedback models
+    "ModelFeedback",
+    "ModelMetric",
+    # Billing models
+    "Subscription",
     "UsageRecord",
     "UserFeedback",
-    "SQLALCHEMY_AVAILABLE",
 ]
 

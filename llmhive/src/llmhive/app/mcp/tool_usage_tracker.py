@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class ToolUsageTracker:
         """
         stats = self._usage_stats[tool_name]
         stats["calls"] += 1
-        stats["last_used"] = datetime.utcnow().isoformat()
+        stats["last_used"] = datetime.now(timezone.utc).isoformat()
         stats["total_time"] += duration
 
         if success:
@@ -62,7 +62,7 @@ class ToolUsageTracker:
             "tool": tool_name,
             "success": success,
             "duration": duration,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "error": error,
         })
 

@@ -389,9 +389,13 @@ class LoadTester:
         
         def percentile(values: List[float], p: float) -> float:
             if not values:
-                return 0
-            idx = int(len(values) * p / 100)
-            return values[min(idx, len(values) - 1)]
+                return 0.0
+            n = len(values)
+            idx = (n - 1) * p / 100
+            lower = int(idx)
+            upper = min(lower + 1, n - 1)
+            weight = idx - lower
+            return values[lower] * (1 - weight) + values[upper] * weight
         
         return LoadTestResult(
             test_name=test_name,

@@ -22,7 +22,7 @@ import time
 import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from collections import defaultdict
@@ -82,13 +82,17 @@ class LiveDataPoint:
     @property
     def is_stale(self) -> bool:
         """Check if data is stale."""
-        age = datetime.utcnow() - self.timestamp
+        now = datetime.now(timezone.utc)
+        ts = self.timestamp if self.timestamp.tzinfo else self.timestamp.replace(tzinfo=timezone.utc)
+        age = now - ts
         return age.total_seconds() > self.ttl_seconds
     
     @property
     def age_seconds(self) -> float:
         """Get age in seconds."""
-        return (datetime.utcnow() - self.timestamp).total_seconds()
+        now = datetime.now(timezone.utc)
+        ts = self.timestamp if self.timestamp.tzinfo else self.timestamp.replace(tzinfo=timezone.utc)
+        return (now - ts).total_seconds()
     
     def to_context_string(self) -> str:
         """Convert to context string for prompt augmentation."""
@@ -126,7 +130,7 @@ class LiveDataSubscription:
     feed_id: str
     callback: Callable[[LiveDataPoint], None]
     filter_params: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     active: bool = True
 
 
@@ -168,7 +172,7 @@ class DataFeed(ABC):
         try:
             data = await self.fetch(**params)
             self._cached_data = data
-            self._last_fetch = datetime.utcnow()
+            self._last_fetch = datetime.now(timezone.utc)
             self._error_count = 0
             return data
         except Exception as e:
@@ -186,7 +190,7 @@ class DataFeed(ABC):
                 feed_id=self.feed_id,
                 data_type=self.feed_type,
                 content={"error": str(e)},
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 source=self.config.source_url,
                 status=DataStatus.ERROR,
                 confidence=0.0,
@@ -220,14 +224,14 @@ class WeatherFeed(DataFeed):
             "conditions": conditions,
             "humidity": humidity,
             "wind_mph": random.randint(0, 20),
-            "updated": datetime.utcnow().isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
         }
         
         return LiveDataPoint(
             feed_id=self.feed_id,
             data_type=DataFeedType.WEATHER,
             content=content,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             source="weather_api",
             status=DataStatus.FRESH,
             ttl_seconds=self.config.ttl_seconds,
@@ -264,14 +268,14 @@ class StockFeed(DataFeed):
             "high": round(price + random.uniform(0, 2), 2),
             "low": round(price - random.uniform(0, 2), 2),
             "volume": random.randint(1000000, 50000000),
-            "updated": datetime.utcnow().isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
         }
         
         return LiveDataPoint(
             feed_id=self.feed_id,
             data_type=DataFeedType.STOCK,
             content=content,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             source="stock_api",
             status=DataStatus.FRESH,
             ttl_seconds=self.config.ttl_seconds,
@@ -305,14 +309,14 @@ class CryptoFeed(DataFeed):
             "change_24h_percent": change_24h,
             "market_cap": round(price * random.randint(1000000, 100000000)),
             "volume_24h": round(random.uniform(1000000, 50000000)),
-            "updated": datetime.utcnow().isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
         }
         
         return LiveDataPoint(
             feed_id=self.feed_id,
             data_type=DataFeedType.CRYPTO,
             content=content,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             source="crypto_api",
             status=DataStatus.FRESH,
             ttl_seconds=self.config.ttl_seconds,
@@ -340,14 +344,14 @@ class NewsFeed(DataFeed):
             "headlines": random.sample(headlines, min(3, len(headlines))),
             "article_count": random.randint(10, 50),
             "trending": random.choice([True, False]),
-            "updated": datetime.utcnow().isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
         }
         
         return LiveDataPoint(
             feed_id=self.feed_id,
             data_type=DataFeedType.NEWS,
             content=content,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             source="news_api",
             status=DataStatus.FRESH,
             ttl_seconds=self.config.ttl_seconds,

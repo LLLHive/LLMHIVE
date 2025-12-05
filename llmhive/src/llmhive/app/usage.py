@@ -345,7 +345,7 @@ def prepare_stripe_usage_record(
         stripe.UsageRecords.create(
             subscription_item=subscription_item_id,
             quantity=tokens_used,
-            timestamp=int(dt.datetime.utcnow().timestamp()),
+            timestamp=int(dt.datetime.now(dt.timezone.utc).timestamp()),
         )
     """
     try:
@@ -369,7 +369,7 @@ def prepare_stripe_usage_record(
             "stripe_subscription_id": subscription.stripe_subscription_id,
             "stripe_customer_id": subscription.stripe_customer_id,
             "quantity": tokens_used,  # Or requests, depending on your metering
-            "timestamp": int(dt.datetime.utcnow().timestamp()),
+            "timestamp": int(dt.datetime.now(dt.timezone.utc).timestamp()),
             "action": "increment",  # or "set" depending on your billing model
         }
         

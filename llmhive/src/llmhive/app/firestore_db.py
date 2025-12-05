@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -88,10 +88,10 @@ class FirestoreSubscriptionService:
                 "billing_cycle": billing_cycle,
                 "stripe_customer_id": stripe_customer_id,
                 "stripe_subscription_id": stripe_subscription_id,
-                "current_period_start": datetime.utcnow(),
+                "current_period_start": datetime.now(timezone.utc),
                 "current_period_end": None,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
                 "cancelled_at": None,
             }
             
@@ -174,7 +174,7 @@ class FirestoreSubscriptionService:
             return False
         
         try:
-            updates["updated_at"] = datetime.utcnow()
+            updates["updated_at"] = datetime.now(timezone.utc)
             self.db.collection(self.COLLECTION).document(subscription_id).update(updates)
             logger.info("Updated subscription %s", subscription_id)
             return True
@@ -186,7 +186,7 @@ class FirestoreSubscriptionService:
         """Cancel a subscription."""
         return self.update_subscription(subscription_id, {
             "status": "cancelled",
-            "cancelled_at": datetime.utcnow(),
+            "cancelled_at": datetime.now(timezone.utc),
         })
     
     def update_subscription_status(self, subscription_id: str, status: str) -> bool:
@@ -240,7 +240,7 @@ class FirestoreUsageService:
                 "requests_count": requests_count,
                 "cost_usd": cost_usd,
                 "model_used": model_used,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
             }
             
             doc_ref.set(usage_data)
@@ -331,7 +331,7 @@ class FirestoreFeedbackService:
                 "user_id": user_id,
                 "model_used": model_used,
                 "session_id": session_id,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
             }
             
             doc_ref.set(feedback_data)

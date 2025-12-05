@@ -24,7 +24,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,9 @@ class AccessControl:
         """Check if entry has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        now = datetime.now(timezone.utc)
+        exp = self.expires_at if self.expires_at.tzinfo else self.expires_at.replace(tzinfo=timezone.utc)
+        return now > exp
 
 
 @dataclass(slots=True)
@@ -294,7 +296,8 @@ class InMemorySharedStore(SharedMemoryStore):
                 # Check age
                 if query.max_age_hours:
                     max_age = timedelta(hours=query.max_age_hours)
-                    if datetime.utcnow() - entry.created_at > max_age:
+                    created = entry.created_at if entry.created_at.tzinfo else entry.created_at.replace(tzinfo=timezone.utc)
+                    if datetime.now(timezone.utc) - created > max_age:
                         continue
                 
                 results.append(entry)
@@ -330,7 +333,7 @@ class InMemorySharedStore(SharedMemoryStore):
                 if hasattr(entry, key) and key not in ('id', 'owner_id'):
                     setattr(entry, key, value)
             
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(timezone.utc)
             return True
     
     async def delete(self, entry_id: str, user_id: str) -> bool:
@@ -366,7 +369,7 @@ class InMemorySharedStore(SharedMemoryStore):
             if entry.access_control.access_level == AccessLevel.PRIVATE:
                 entry.access_control.access_level = AccessLevel.USER
             
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(timezone.utc)
             return True
 
 
@@ -451,7 +454,7 @@ class SharedMemoryManager:
         
         # Calculate expiration
         ttl = ttl_hours if ttl_hours is not None else self._default_ttl_hours
-        expires_at = datetime.utcnow() + timedelta(hours=ttl) if ttl > 0 else None
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl) if ttl > 0 else None
         
         # Build access control
         access_control = AccessControl(

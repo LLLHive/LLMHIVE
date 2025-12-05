@@ -322,3 +322,178 @@ class ChatResponse(BaseModel):
         }
     )
 
+
+# ==============================================================================
+# Clarification Models
+# ==============================================================================
+
+class ClarificationStatus(str, Enum):
+    """Status of the clarification process."""
+    not_needed = "not_needed"
+    pending_query = "pending_query"
+    pending_preferences = "pending_preferences"
+    completed = "completed"
+    skipped = "skipped"
+
+
+class DetailLevel(str, Enum):
+    """Level of detail for the answer."""
+    brief = "brief"
+    standard = "standard"
+    detailed = "detailed"
+    exhaustive = "exhaustive"
+
+
+class AnswerFormat(str, Enum):
+    """Format for the answer."""
+    paragraph = "paragraph"
+    bullet_points = "bullet_points"
+    numbered_list = "numbered_list"
+    code_focused = "code_focused"
+    table = "table"
+    structured = "structured"
+    conversational = "conversational"
+
+
+class AnswerTone(str, Enum):
+    """Tone/style for the answer."""
+    formal = "formal"
+    casual = "casual"
+    technical = "technical"
+    simplified = "simplified"
+    educational = "educational"
+
+
+class ClarificationQuestion(BaseModel):
+    """A single clarification question."""
+    id: str = Field(..., description="Unique question identifier")
+    question: str = Field(..., description="The clarification question")
+    category: str = Field(..., description="Category: 'query' or 'preference'")
+    options: Optional[List[str]] = Field(default=None, description="Multiple choice options")
+    default_answer: Optional[str] = Field(default=None, description="Default answer if skipped")
+    required: bool = Field(default=True, description="Whether answer is required")
+
+
+class AnswerPreferences(BaseModel):
+    """User's preferences for answer format and style."""
+    detail_level: DetailLevel = Field(default=DetailLevel.standard, description="Level of detail")
+    format: AnswerFormat = Field(default=AnswerFormat.paragraph, description="Answer format")
+    tone: AnswerTone = Field(default=AnswerTone.formal, description="Answer tone/style")
+    max_length: Optional[int] = Field(default=None, description="Optional word limit")
+    include_examples: bool = Field(default=True, description="Include examples")
+    include_citations: bool = Field(default=False, description="Include citations")
+    custom_instructions: Optional[str] = Field(default=None, description="Custom instructions")
+
+
+class ClarificationRequest(BaseModel):
+    """Request for clarification from the user."""
+    status: ClarificationStatus = Field(..., description="Clarification status")
+    original_query: str = Field(..., description="Original user query")
+    ambiguity_summary: Optional[str] = Field(default=None, description="Why clarification is needed")
+    query_questions: List[ClarificationQuestion] = Field(
+        default_factory=list,
+        description="Questions about the query (up to 3)"
+    )
+    preference_questions: List[ClarificationQuestion] = Field(
+        default_factory=list,
+        description="Questions about answer preferences (3 standard questions)"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "status": "pending_query",
+                "original_query": "Tell me about the Phoenix project",
+                "ambiguity_summary": "The term 'Phoenix project' could refer to multiple things.",
+                "query_questions": [
+                    {
+                        "id": "q1",
+                        "question": "Which Phoenix project are you referring to?",
+                        "category": "query",
+                        "options": ["NASA Phoenix Mars Mission", "Phoenix Framework", "The Phoenix Project book"],
+                        "required": True
+                    }
+                ],
+                "preference_questions": [
+                    {
+                        "id": "pref_detail",
+                        "question": "How detailed of an answer would you like?",
+                        "category": "preference",
+                        "options": ["Brief", "Standard", "Detailed", "Exhaustive"],
+                        "default_answer": "Standard",
+                        "required": False
+                    }
+                ]
+            }
+        }
+    )
+
+
+class ClarificationResponse(BaseModel):
+    """User's responses to clarification questions."""
+    query_answers: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Answers to query questions (question_id -> answer)"
+    )
+    preference_answers: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Answers to preference questions"
+    )
+    skipped: bool = Field(default=False, description="Whether user skipped clarification")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "query_answers": {
+                    "q1": "NASA Phoenix Mars Mission"
+                },
+                "preference_answers": {
+                    "pref_detail": "Detailed",
+                    "pref_format": "Bullet Points",
+                    "pref_tone": "Educational"
+                },
+                "skipped": False
+            }
+        }
+    )
+
+
+class ChatRequestWithClarification(ChatRequest):
+    """Extended chat request that includes clarification responses."""
+    clarification_response: Optional[ClarificationResponse] = Field(
+        default=None,
+        description="User's responses to clarification questions"
+    )
+    skip_clarification: bool = Field(
+        default=False,
+        description="Skip the clarification step"
+    )
+
+
+class ChatResponseWithClarification(BaseModel):
+    """Response that may include clarification request instead of answer."""
+    needs_clarification: bool = Field(..., description="Whether clarification is needed")
+    clarification_request: Optional[ClarificationRequest] = Field(
+        default=None,
+        description="Clarification questions if needed"
+    )
+    response: Optional[ChatResponse] = Field(
+        default=None,
+        description="Chat response if no clarification needed"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "needs_clarification": True,
+                "clarification_request": {
+                    "status": "pending_query",
+                    "original_query": "Tell me about the Phoenix project",
+                    "query_questions": [{"id": "q1", "question": "Which Phoenix project?", "category": "query", "required": True}],
+                    "preference_questions": []
+                },
+                "response": None
+            }
+        }
+    )
+

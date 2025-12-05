@@ -5,6 +5,14 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: 'Enable debug mode'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   e2e:
@@ -26,12 +34,19 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: Build application
         run: npm run build
         env:
-          # Provide mock env vars for build
           NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
 
       - name: Run Playwright tests
@@ -40,7 +55,7 @@ jobs:
           CI: true
           PLAYWRIGHT_BASE_URL: http://localhost:3000
 
-      - name: Upload test results
+      - name: Upload HTML report
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -56,11 +71,21 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  # Separate job for visual regression (optional)
-  visual-regression:
-    name: Visual Regression Tests
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots
+          path: test-results/**/*.png
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Separate job for running tests against production (optional)
+  e2e-production:
+    name: E2E Tests (Production)
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: e2e
     timeout-minutes: 30
     
     steps:
@@ -79,20 +104,19 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Build application
-        run: npm run build
-        env:
-          NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
-
-      - name: Run visual tests (Chromium only)
-        run: npm run test:e2e:chromium
+      - name: Run smoke tests against production
+        run: npx playwright test tests/e2e/navigation.spec.ts --project=chromium
         env:
           CI: true
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PRODUCTION_URL || 'http://localhost:3000' }}
+        continue-on-error: true
 
-      - name: Upload screenshots
+      - name: Upload production test results
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: visual-regression-screenshots
-          path: test-results/
+          name: production-test-results
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 7

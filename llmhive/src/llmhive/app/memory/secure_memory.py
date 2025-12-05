@@ -118,7 +118,7 @@ class SecureMemoryManager:
             content=encrypted_content,  # Encryption: Store encrypted content
             content_encrypted=is_encrypted,  # Encryption: Flag for decryption
             payload=metadata or {},
-            created_at=dt.datetime.utcnow(),
+            created_at=dt.datetime.now(dt.timezone.utc),
         )
         self.session.add(entry)
         self.session.flush()  # Flush to get the ID
@@ -148,7 +148,7 @@ class SecureMemoryManager:
         try:
             max_entries = settings.memory_max_entries_per_user
             max_age_days = settings.memory_max_age_days
-            cutoff_date = dt.datetime.utcnow() - dt.timedelta(days=max_age_days)
+            cutoff_date = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=max_age_days)
             
             # Retention Policy: Build query to find entries to prune
             query = select(MemoryEntry)

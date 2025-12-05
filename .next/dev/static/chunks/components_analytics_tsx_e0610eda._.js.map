@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/camilodiaz/LLMHIVE/components/analytics.tsx"],"sourcesContent":["\"use client\"\n\nimport { Analytics } from \"@vercel/analytics/react\"\n\nexport function AnalyticsWrapper() {\n  // Only render in production\n  if (process.env.NODE_ENV !== \"production\") {\n    return null\n  }\n\n  return <Analytics />\n}\n"],"names":[],"mappings":";;;;AAMM;;AAJN;AAFA;;;AAIO,SAAS;IACd,4BAA4B;IAC5B,wCAA2C;QACzC,OAAO;IACT;;;AAGF;KAPgB","debugId":null}}]
-}

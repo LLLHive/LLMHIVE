@@ -172,12 +172,22 @@ def contains_answer(predicted: str, expected: str) -> bool:
 
 
 def percentile(values: List[float], p: float) -> float:
-    """Calculate percentile."""
+    """Calculate percentile using linear interpolation.
+    
+    Uses the standard 0-indexed percentile calculation where p=50
+    returns the median value.
+    """
     if not values:
         return 0.0
     sorted_values = sorted(values)
-    idx = int(len(sorted_values) * p / 100)
-    return sorted_values[min(idx, len(sorted_values) - 1)]
+    n = len(sorted_values)
+    # Use (n-1) for 0-based indexing to get correct percentile
+    idx = (n - 1) * p / 100
+    lower = int(idx)
+    upper = min(lower + 1, n - 1)
+    # Linear interpolation between adjacent values
+    weight = idx - lower
+    return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
 
 
 # ==============================================================================

@@ -97,3 +97,13 @@ try:
 except Exception as exc:
     logger.warning("Failed to import spell check router: %s", exc)
 
+# Metrics and observability routes
+try:
+    from . import metrics  # type: ignore
+    
+    if hasattr(metrics, "router"):
+        api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
+        logger.info("Metrics routes registered at /api/v1/metrics")
+except Exception as exc:
+    logger.warning("Failed to import metrics router: %s", exc)
+

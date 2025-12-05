@@ -62,7 +62,7 @@ class SubscriptionService:
             raise ValueError(f"Invalid billing cycle: {billing_cycle}. Must be 'monthly' or 'annual'")
 
         # Calculate period dates
-        now = dt.datetime.utcnow()
+        now = dt.datetime.now(dt.timezone.utc)
         if billing_cycle == "annual":
             period_end = now + dt.timedelta(days=365)
         else:
@@ -144,7 +144,7 @@ class SubscriptionService:
             raise ValueError(f"Cannot renew subscription {subscription_id}: status is {subscription.status}")
 
         # Calculate new period
-        now = dt.datetime.utcnow()
+        now = dt.datetime.now(dt.timezone.utc)
         if subscription.billing_cycle == "annual":
             period_duration = dt.timedelta(days=365)
         else:
@@ -189,8 +189,8 @@ class SubscriptionService:
 
         if cancel_immediately:
             subscription.status = SubscriptionStatus.CANCELLED
-            subscription.cancelled_at = dt.datetime.utcnow()
-            subscription.current_period_end = dt.datetime.utcnow()
+            subscription.cancelled_at = dt.datetime.now(dt.timezone.utc)
+            subscription.current_period_end = dt.datetime.now(dt.timezone.utc)
             subscription.cancel_at_period_end = False
         else:
             subscription.cancel_at_period_end = True
@@ -352,7 +352,7 @@ class SubscriptionService:
         subscription.status = status
 
         if status == SubscriptionStatus.CANCELLED and subscription.cancelled_at is None:
-            subscription.cancelled_at = dt.datetime.utcnow()
+            subscription.cancelled_at = dt.datetime.now(dt.timezone.utc)
 
         self.session.flush()
 

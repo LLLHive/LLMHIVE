@@ -5,9 +5,13 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Paperclip, Mic, X, ImageIcon, FileText, RefreshCw } from "lucide-react"
+import { Send, Paperclip, Mic, X, ImageIcon, FileText, RefreshCw, AlertCircle, Sparkles, Brain, Code, Briefcase } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
 import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
+import { toast } from "@/lib/toast"
+import { ErrorBoundary } from "@/components/error-boundary"
+import { Skeleton } from "@/components/loading-skeleton"
 import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType } from "@/lib/types"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
@@ -26,6 +30,14 @@ interface RetryStatus {
   attempt: number
   maxAttempts: number
   message: string
+}
+
+// Error state for displaying inline retry button
+interface ErrorState {
+  hasError: boolean
+  message: string
+  canRetry: boolean
+  lastInput?: string
 }
 
 interface ChatAreaProps {
@@ -54,6 +66,7 @@ export function ChatArea({
   const [incognitoMode, setIncognitoMode] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [retryStatus, setRetryStatus] = useState<RetryStatus | null>(null)
+  const [errorState, setErrorState] = useState<ErrorState>({ hasError: false, message: "", canRetry: false })
   const [orchestrationStatus, setOrchestrationStatus] = useState<OrchestrationStatus>({
     isActive: false,
     currentStep: "",
@@ -79,6 +92,35 @@ export function ChatArea({
   }
 
   const currentModel = getModelById(selectedModels[0] || "gpt-4o")
+  
+  // Get active mode display info based on orchestrator settings
+  const getActiveModeInfo = () => {
+    const { reasoningMode, domainPack, agentMode } = orchestratorSettings
+    
+    // Check for specific templates based on settings
+    if (domainPack === "coding") {
+      return { label: "Code & Debug", icon: Code, color: "from-emerald-500 to-teal-500" }
+    }
+    if (domainPack === "research" || (reasoningMode === "deep" && agentMode === "team")) {
+      return { label: "Research Mode", icon: Brain, color: "from-purple-500 to-indigo-500" }
+    }
+    if (domainPack && domainPack !== "default") {
+      // Industry pack
+      const packLabels: Record<string, string> = {
+        legal: "Legal Pack",
+        medical: "Medical Pack",
+        marketing: "Marketing Pack",
+        education: "Education Pack",
+        finance: "Finance Pack",
+        real_estate: "Real Estate Pack",
+      }
+      return { label: packLabels[domainPack] || `${domainPack} Pack`, icon: Briefcase, color: "from-blue-500 to-cyan-500" }
+    }
+    // General assistant
+    return { label: "General Assistant", icon: Sparkles, color: "from-orange-500 to-amber-500" }
+  }
+  
+  const activeModeInfo = getActiveModeInfo()
 
   // Add orchestration event
   const addOrchestrationEvent = useCallback((
@@ -223,8 +265,9 @@ export function ChatArea({
     }
 
     try {
-      // Clear any previous retry status
+      // Clear any previous retry status and error state
       setRetryStatus(null)
+      setErrorState({ hasError: false, message: "", canRetry: false })
       
       // Get actual models to use (expand "automatic")
       const actualModels = getActualModels()
@@ -309,6 +352,7 @@ export function ChatArea({
       let errorContent = "I apologize, but I encountered an error. Please try again."
       let errorDetail = "Orchestration failed"
       let retryInfo = ""
+      let canRetry = true
       
       // Check for retry exhaustion
       const hasRetryInfo = (err: unknown): err is { retriesExhausted?: boolean; retryInfo?: { attempts?: number } } => {
@@ -322,18 +366,37 @@ export function ChatArea({
       if (error instanceof TimeoutError) {
         errorContent = `The request timed out${retryInfo}. The backend may be overloaded. Please try again later.`
         errorDetail = `Request timed out${retryInfo}`
+        toast.timeout()
       } else if (error instanceof NetworkError) {
         errorContent = `Unable to connect to the server${retryInfo}. Please check your connection and try again.`
         errorDetail = `Network error${retryInfo}`
+        toast.networkError()
       } else if (error instanceof ApiError) {
         if (error.retriesExhausted) {
           errorContent = `The server is currently unavailable${retryInfo}. Please try again later.`
           errorDetail = `Server error: ${error.status}${retryInfo}`
+          toast.apiError({ status: error.status, message: error.message })
+        } else if (error.status === 401 || error.status === 403) {
+          errorContent = `Authentication error: ${error.message}`
+          errorDetail = `Auth error: ${error.status}`
+          canRetry = false
+          toast.apiError({ status: error.status, message: error.message })
         } else {
           errorContent = `I encountered an error: ${error.message}`
           errorDetail = `API error: ${error.status}`
+          toast.apiError({ status: error.status, message: error.message })
         }
+      } else {
+        toast.error("An unexpected error occurred", { description: "Please try again." })
       }
+
+      // Store error state for retry button
+      setErrorState({
+        hasError: true,
+        message: errorContent,
+        canRetry,
+        lastInput: userMessage.content,
+      })
 
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,
@@ -378,11 +441,23 @@ export function ChatArea({
 
       <header className="border-b border-border p-3 bg-card/50 backdrop-blur-xl sticky top-0 z-40 space-y-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <ChatToolbar
-            settings={orchestratorSettings}
-            onSettingsChange={onOrchestratorSettingsChange}
-            onOpenAdvanced={onOpenAdvancedSettings}
-          />
+          {/* Active Mode Badge */}
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant="outline" 
+              className={`gap-1.5 px-2.5 py-1 border-0 bg-gradient-to-r ${activeModeInfo.color} text-white font-medium`}
+            >
+              <activeModeInfo.icon className="h-3.5 w-3.5" />
+              {activeModeInfo.label}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-4 flex-wrap flex-1 justify-center">
+            <ChatToolbar
+              settings={orchestratorSettings}
+              onSettingsChange={onOrchestratorSettingsChange}
+              onOpenAdvanced={onOpenAdvancedSettings}
+            />
+          </div>
           {userAccountMenu}
         </div>
         {/* Orchestration Studio - Collapsible */}
@@ -441,6 +516,25 @@ export function ChatArea({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Error Retry Button */}
+          {!isLoading && errorState.hasError && errorState.canRetry && errorState.lastInput && (
+            <div className="flex justify-center py-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                onClick={() => {
+                  setInput(errorState.lastInput || "")
+                  setErrorState({ hasError: false, message: "", canRetry: false })
+                  toast.info("Ready to retry", { description: "Click send to try again." })
+                }}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry Last Message
+              </Button>
             </div>
           )}
 
@@ -531,5 +625,25 @@ export function ChatArea({
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * ChatArea wrapped with ErrorBoundary for graceful error handling.
+ * Use this version in production to catch and display errors nicely.
+ */
+export function ChatAreaWithErrorBoundary(props: ChatAreaProps) {
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // Log to console (would also log to error reporting service)
+        console.error("[ChatArea Error]", error, errorInfo)
+        toast.error("Chat Error", {
+          description: "Something went wrong. Please try refreshing the page.",
+        })
+      }}
+    >
+      <ChatArea {...props} />
+    </ErrorBoundary>
   )
 }

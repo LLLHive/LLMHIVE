@@ -85,11 +85,18 @@ class TestMetrics:
         assert f1_score("", "test") == 0.0
     
     def test_percentile(self):
-        """Test percentile calculation."""
+        """Test percentile calculation with linear interpolation."""
         values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         
-        assert percentile(values, 50) == 5
-        assert percentile(values, 90) == 9
+        # 50th percentile (median) of 1-10 is 5.5 (average of 5 and 6)
+        assert percentile(values, 50) == 5.5
+        # 90th percentile: idx = 9 * 0.9 = 8.1, interpolate between 9 and 10
+        assert 9.0 <= percentile(values, 90) <= 9.2
+        # 0th percentile is first element
+        assert percentile(values, 0) == 1
+        # 100th percentile is last element
+        assert percentile(values, 100) == 10
+        # Empty list returns 0
         assert percentile([], 50) == 0.0
 
 

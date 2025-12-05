@@ -404,7 +404,7 @@ def admin_grant_tier(
         )
         
         # Set custom period end
-        now = dt.datetime.utcnow()
+        now = dt.datetime.now(dt.timezone.utc)
         subscription.current_period_end = now + dt.timedelta(days=days)
         
         db.commit()

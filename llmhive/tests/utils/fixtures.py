@@ -1,13 +1,29 @@
 """Test fixtures and utilities for LLMHive testing."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 import pytest
 import asyncio
 from typing import Dict, Any, List
 from unittest.mock import Mock, AsyncMock, MagicMock
 
-from llmhive.app.config import settings
-from llmhive.app.database import get_db
+try:
+    from llmhive.app.config import settings
+except ImportError:
+    settings = MagicMock()
+
+try:
+    from llmhive.app.database import get_db
+except ImportError:
+    get_db = None
+
 from llmhive.app.orchestrator import Orchestrator
 from llmhive.app.models import User, MemoryEntry, KnowledgeDocument
 

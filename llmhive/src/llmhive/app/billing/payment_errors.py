@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ class PaymentErrorHandler:
             "action": "log",
             "subscription_id": subscription_id,
             "user_id": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         if not STRIPE_AVAILABLE:
@@ -210,7 +210,7 @@ class WebhookErrorHandler:
             "error_message": str(error),
             "event_type": event_type,
             "event_id": event_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "action": "log",
         }
 

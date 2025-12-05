@@ -1,0 +1,3961 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LLMHive Orchestrator API",
+    "description": "Multi-model orchestration service for LLM interactions",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Root endpoint",
+        "description": "Root endpoint for basic verification.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/{query_id}": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Status",
+        "description": "Get the current status of a query.\n\nReturns status information including:\n- stage: Current processing stage (e.g., \"planning\", \"model_query\", \"verification\", \"complete\")\n- status: Status of current stage (e.g., \"running\", \"completed\", \"error\")\n- model: Current model being used (if applicable)\n- progress: Progress percentage (0-100)\n- message: Human-readable status message\n- timestamp: Last update timestamp",
+        "operationId": "get_status_api_v1_system__query_id__get",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Status Api V1 System  Query Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Update Status",
+        "description": "Update the status of a query.\n\nThis endpoint is called internally by the orchestrator to update query status.",
+        "operationId": "update_status_api_v1_system__query_id__post",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query Id"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Stage"
+            }
+          },
+          {
+            "name": "status_value",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "running",
+              "title": "Status Value"
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          {
+            "name": "progress",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Progress"
+            }
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Message"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Status Api V1 System  Query Id  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Clear Status",
+        "description": "Clear status for a query (cleanup after completion).",
+        "operationId": "clear_status_api_v1_system__query_id__delete",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Clear Status Api V1 System  Query Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscriptions": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Create Subscription",
+        "description": "Create a new subscription for a user.\n\nSubscription tiers: Creates subscription and logs tier change for audit.\n\nFinal path: /api/v1/billing/subscriptions?user_id={user_id}",
+        "operationId": "create_subscription_api_v1_billing_subscriptions_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscriptions/{subscription_id}": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Get Subscription",
+        "description": "Get a subscription by ID.\n\nFinal path: /api/v1/billing/subscriptions/{subscription_id}",
+        "operationId": "get_subscription_api_v1_billing_subscriptions__subscription_id__get",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Subscription Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Update Subscription",
+        "description": "Update a subscription.\n\nFinal path: /api/v1/billing/subscriptions/{subscription_id}",
+        "operationId": "update_subscription_api_v1_billing_subscriptions__subscription_id__patch",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Subscription Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscriptions/user/{user_id}": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Get User Subscription",
+        "description": "Get the active subscription for a user.\n\nFinal path: /api/v1/billing/subscriptions/user/{user_id}",
+        "operationId": "get_user_subscription_api_v1_billing_subscriptions_user__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SubscriptionResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get User Subscription Api V1 Billing Subscriptions User  User Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscription": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Get Subscription Info",
+        "description": "Get current subscription info for a user (for frontend).\n\nSubscription tiers: Returns tier info with feature flags and limits.\n\nFinal path: /api/v1/billing/subscription?user_id={user_id}",
+        "operationId": "get_subscription_info_api_v1_billing_subscription_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Subscription Info Api V1 Billing Subscription Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscriptions/{subscription_id}/cancel": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Cancel Subscription",
+        "description": "Cancel a subscription.\n\nFinal path: /api/v1/billing/subscriptions/{subscription_id}/cancel",
+        "operationId": "cancel_subscription_api_v1_billing_subscriptions__subscription_id__cancel_post",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Subscription Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscriptions/{subscription_id}/upgrade": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Upgrade Subscription",
+        "description": "Upgrade a subscription to a higher tier.\n\nSubscription tiers: Upgrades subscription and logs tier change for audit.\n\nFinal path: /api/v1/billing/subscriptions/{subscription_id}/upgrade?new_tier_name={tier}",
+        "operationId": "upgrade_subscription_api_v1_billing_subscriptions__subscription_id__upgrade_post",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Subscription Id"
+            }
+          },
+          {
+            "name": "new_tier_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "New Tier Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscriptions/{subscription_id}/downgrade": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Downgrade Subscription",
+        "description": "Downgrade a subscription to a lower tier.\n\nSubscription tiers: Downgrades subscription and logs tier change for audit.\n\nFinal path: /api/v1/billing/subscriptions/{subscription_id}/downgrade?new_tier_name={tier}",
+        "operationId": "downgrade_subscription_api_v1_billing_subscriptions__subscription_id__downgrade_post",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Subscription Id"
+            }
+          },
+          {
+            "name": "new_tier_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "New Tier Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/tiers": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "List Pricing Tiers",
+        "description": "List all available pricing tiers.\n\nFinal path: /api/v1/billing/tiers",
+        "operationId": "list_pricing_tiers_api_v1_billing_tiers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/webhooks/stripe": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Stripe Webhook",
+        "description": "Handle Stripe webhook events.\n\nFinal path: /api/v1/billing/webhooks/stripe\n\nThis endpoint should be configured in Stripe dashboard to receive webhook events.",
+        "operationId": "stripe_webhook_api_v1_billing_webhooks_stripe_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stripe Webhook Api V1 Billing Webhooks Stripe Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/usage/{user_id}": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Get Usage Summary",
+        "description": "Get usage summary for a user.\n\nFinal path: /api/v1/billing/usage/{user_id}",
+        "operationId": "get_usage_summary_api_v1_billing_usage__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Usage Summary Api V1 Billing Usage  User Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/usage/{user_id}/history": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Get Usage History",
+        "description": "Get usage history for a user.\n\nFinal path: /api/v1/billing/usage/{user_id}/history?limit={limit}",
+        "operationId": "get_usage_history_api_v1_billing_usage__user_id__history_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Usage History Api V1 Billing Usage  User Id  History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/usage/{user_id}/limits": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Check Usage Limits",
+        "description": "Check if user's requested usage is within their tier limits.\n\nFinal path: /api/v1/billing/usage/{user_id}/limits?requested_tokens={tokens}&requested_models={models}",
+        "operationId": "check_usage_limits_api_v1_billing_usage__user_id__limits_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "requested_tokens",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Requested Tokens"
+            }
+          },
+          {
+            "name": "requested_models",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "title": "Requested Models"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Check Usage Limits Api V1 Billing Usage  User Id  Limits Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/billing/estimate": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Estimate Cost",
+        "description": "Estimate monthly cost for a tier and expected usage.\n\nFinal path: /api/v1/billing/billing/estimate?tier_name={tier}&estimated_tokens_per_month={tokens}&estimated_requests_per_month={requests}",
+        "operationId": "estimate_cost_api_v1_billing_billing_estimate_get",
+        "parameters": [
+          {
+            "name": "tier_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tier Name"
+            }
+          },
+          {
+            "name": "estimated_tokens_per_month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Estimated Tokens Per Month"
+            }
+          },
+          {
+            "name": "estimated_requests_per_month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Estimated Requests Per Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Estimate Cost Api V1 Billing Billing Estimate Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payments/create-checkout-session": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Create Checkout Session",
+        "description": "Stripe webhook handling: Create a Stripe Checkout session for subscription payment.\n\nThis endpoint creates a Stripe Checkout session that redirects the user to Stripe's\nhosted payment page. After successful payment, Stripe will send a webhook event.\n\nFinal path: /api/v1/payments/create-checkout-session",
+        "operationId": "create_checkout_session_api_v1_payments_create_checkout_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payments/checkout-session/{session_id}": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Get Checkout Session",
+        "description": "Stripe webhook handling: Get checkout session details.\n\nUseful for checking session status after redirect.\n\nFinal path: /api/v1/payments/checkout-session/{session_id}",
+        "operationId": "get_checkout_session_api_v1_payments_checkout_session__session_id__get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Checkout Session Api V1 Payments Checkout Session  Session Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/stripe-webhook": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Stripe Webhook",
+        "description": "Stripe webhook handling: Process Stripe webhook events.\n\nThis endpoint receives webhook events from Stripe and updates Firestore.\nNo SQL database required - uses Firestore for subscription storage.\n\nFinal path: /api/v1/webhooks/stripe-webhook\n\nNote: In production, configure this endpoint in Stripe Dashboard:\n- Go to Developers > Webhooks\n- Add endpoint URL\n- Select events: checkout.session.completed, customer.subscription.*, invoice.payment_*\n- Copy webhook signing secret to STRIPE_WEBHOOK_SECRET",
+        "operationId": "stripe_webhook_api_v1_webhooks_stripe_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stripe Webhook Api V1 Webhooks Stripe Webhook Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/webhook": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Stripe Webhook Alias",
+        "description": "Alias for Stripe webhook at /api/v1/stripe/webhook.\n\nThis is an alias route that calls the main stripe_webhook handler.\nConfigure this URL in your Stripe Dashboard:\nhttps://llmhive-orchestrator-792354158895.us-east1.run.app/api/v1/stripe/webhook",
+        "operationId": "stripe_webhook_alias_api_v1_webhooks_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stripe Webhook Alias Api V1 Webhooks Webhook Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/stripe-webhook/test": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Test Stripe Webhook",
+        "description": "Stripe webhook handling: Test endpoint to simulate webhook events.\n\nUses Firestore for storage - no SQL database needed.\n\nFinal path: /api/v1/webhooks/stripe-webhook/test?event_type={type}&user_id={id}\n\nExample:\n    POST /api/v1/webhooks/stripe-webhook/test?event_type=checkout.session.completed&user_id=user123&tier=pro",
+        "operationId": "test_stripe_webhook_api_v1_webhooks_stripe_webhook_test_post",
+        "parameters": [
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "tier",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "pro",
+              "title": "Tier"
+            }
+          },
+          {
+            "name": "billing_cycle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "monthly",
+              "title": "Billing Cycle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Test Stripe Webhook Api V1 Webhooks Stripe Webhook Test Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/subscription/{user_id}": {
+      "get": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Get User Subscription",
+        "description": "Get subscription for a user.\n\nReturns the user's current subscription status from Firestore.",
+        "operationId": "get_user_subscription_api_v1_webhooks_subscription__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get User Subscription Api V1 Webhooks Subscription  User Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stripe/stripe-webhook": {
+      "post": {
+        "tags": [
+          "stripe"
+        ],
+        "summary": "Stripe Webhook",
+        "description": "Stripe webhook handling: Process Stripe webhook events.\n\nThis endpoint receives webhook events from Stripe and updates Firestore.\nNo SQL database required - uses Firestore for subscription storage.\n\nFinal path: /api/v1/webhooks/stripe-webhook\n\nNote: In production, configure this endpoint in Stripe Dashboard:\n- Go to Developers > Webhooks\n- Add endpoint URL\n- Select events: checkout.session.completed, customer.subscription.*, invoice.payment_*\n- Copy webhook signing secret to STRIPE_WEBHOOK_SECRET",
+        "operationId": "stripe_webhook_api_v1_stripe_stripe_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stripe Webhook Api V1 Stripe Stripe Webhook Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stripe/webhook": {
+      "post": {
+        "tags": [
+          "stripe"
+        ],
+        "summary": "Stripe Webhook Alias",
+        "description": "Alias for Stripe webhook at /api/v1/stripe/webhook.\n\nThis is an alias route that calls the main stripe_webhook handler.\nConfigure this URL in your Stripe Dashboard:\nhttps://llmhive-orchestrator-792354158895.us-east1.run.app/api/v1/stripe/webhook",
+        "operationId": "stripe_webhook_alias_api_v1_stripe_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stripe Webhook Alias Api V1 Stripe Webhook Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stripe/stripe-webhook/test": {
+      "post": {
+        "tags": [
+          "stripe"
+        ],
+        "summary": "Test Stripe Webhook",
+        "description": "Stripe webhook handling: Test endpoint to simulate webhook events.\n\nUses Firestore for storage - no SQL database needed.\n\nFinal path: /api/v1/webhooks/stripe-webhook/test?event_type={type}&user_id={id}\n\nExample:\n    POST /api/v1/webhooks/stripe-webhook/test?event_type=checkout.session.completed&user_id=user123&tier=pro",
+        "operationId": "test_stripe_webhook_api_v1_stripe_stripe_webhook_test_post",
+        "parameters": [
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "tier",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "pro",
+              "title": "Tier"
+            }
+          },
+          {
+            "name": "billing_cycle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "monthly",
+              "title": "Billing Cycle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Test Stripe Webhook Api V1 Stripe Stripe Webhook Test Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stripe/subscription/{user_id}": {
+      "get": {
+        "tags": [
+          "stripe"
+        ],
+        "summary": "Get User Subscription",
+        "description": "Get subscription for a user.\n\nReturns the user's current subscription status from Firestore.",
+        "operationId": "get_user_subscription_api_v1_stripe_subscription__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get User Subscription Api V1 Stripe Subscription  User Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rlhf/feedback": {
+      "post": {
+        "tags": [
+          "rlhf"
+        ],
+        "summary": "Submit Feedback",
+        "description": "Submit feedback on an answer.\n\nThis feedback is stored in Pinecone for RLHF training.\n\nRequest body:\n- user_query: The user's question\n- answer_text: The answer that was given\n- feedback_type: thumbs_up, thumbs_down, or rating\n- rating: Optional rating value (1-5 or 0-1)\n- model_used: Optional model name",
+        "operationId": "submit_feedback_api_v1_rlhf_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequestModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponseModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rlhf/feedback/similar": {
+      "get": {
+        "tags": [
+          "rlhf"
+        ],
+        "summary": "Find Similar",
+        "description": "Find similar past feedback for a query.\n\nQuery params:\n- search_query: The query to search for\n- positive_only: Only return positive feedback\n- limit: Maximum results",
+        "operationId": "find_similar_api_v1_rlhf_feedback_similar_get",
+        "parameters": [
+          {
+            "name": "search_query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Search Query"
+            }
+          },
+          {
+            "name": "positive_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Positive Only"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 5,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rlhf/feedback/examples": {
+      "get": {
+        "tags": [
+          "rlhf"
+        ],
+        "summary": "Get Examples",
+        "description": "Get positive and negative examples for RLHF training.\n\nQuery params:\n- search_query: The query to find examples for\n- num_positive: Number of positive examples\n- num_negative: Number of negative examples",
+        "operationId": "get_examples_api_v1_rlhf_feedback_examples_get",
+        "parameters": [
+          {
+            "name": "search_query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Search Query"
+            }
+          },
+          {
+            "name": "num_positive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 3,
+              "title": "Num Positive"
+            }
+          },
+          {
+            "name": "num_negative",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 2,
+              "title": "Num Negative"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rlhf/feedback/stats": {
+      "get": {
+        "tags": [
+          "rlhf"
+        ],
+        "summary": "Get Stats",
+        "description": "Get feedback statistics.",
+        "operationId": "get_stats_api_v1_rlhf_feedback_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spellcheck/check": {
+      "post": {
+        "tags": [
+          "spellcheck"
+        ],
+        "summary": "Check Spelling",
+        "description": "Check text for spelling errors.",
+        "operationId": "check_spelling_api_v1_spellcheck_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_check_spelling_api_v1_spellcheck_check_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpellCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spellcheck/suggest": {
+      "post": {
+        "tags": [
+          "spellcheck"
+        ],
+        "summary": "Get Suggestions",
+        "description": "Get spelling suggestions for a word.",
+        "operationId": "get_suggestions_api_v1_spellcheck_suggest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_get_suggestions_api_v1_spellcheck_suggest_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spellcheck/correct": {
+      "post": {
+        "tags": [
+          "spellcheck"
+        ],
+        "summary": "Auto Correct",
+        "description": "Auto-correct text and return corrected version.",
+        "operationId": "auto_correct_api_v1_spellcheck_correct_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_auto_correct_api_v1_spellcheck_correct_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/health": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Health Check",
+        "description": "Basic health check endpoint.\n\nReturns:\n    HealthResponse with status and timestamp",
+        "operationId": "health_check_api_v1_metrics_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/health/live": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Liveness Probe",
+        "description": "Kubernetes liveness probe endpoint.\n\nReturns 200 if the application is running.",
+        "operationId": "liveness_probe_api_v1_metrics_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Liveness Probe Api V1 Metrics Health Live Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/health/ready": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Readiness Probe",
+        "description": "Kubernetes readiness probe endpoint.\n\nChecks if the application is ready to receive traffic.",
+        "operationId": "readiness_probe_api_v1_metrics_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Readiness Probe Api V1 Metrics Health Ready Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/metrics": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Get Metrics",
+        "description": "Get application metrics.\n\nReturns:\n    MetricsResponse with current metrics",
+        "operationId": "get_metrics_api_v1_metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/metrics/prometheus": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Prometheus Metrics",
+        "description": "Prometheus-compatible metrics endpoint.\n\nReturns metrics in Prometheus text format.",
+        "operationId": "prometheus_metrics_api_v1_metrics_metrics_prometheus_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/execute/python": {
+      "post": {
+        "tags": [
+          "execute"
+        ],
+        "summary": "Execute Python",
+        "description": "Execute Python code in MCP 2 sandbox.\n\nThis endpoint provides secure Python code execution with:\n- Process isolation\n- Resource limits (timeout, memory, CPU)\n- Security validation\n- Restricted imports",
+        "operationId": "execute_python_v1_execute_python_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/v1/analyze/file": {
+      "post": {
+        "tags": [
+          "stubs"
+        ],
+        "summary": "Analyze File",
+        "description": "Analyze a file (stub endpoint).\n\nTODO: Implement file analysis functionality:\n- Extract text content from various file formats\n- Perform code analysis for programming files\n- Extract metadata and structure\n- Generate summaries and insights",
+        "operationId": "analyze_file_v1_analyze_file_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/v1/generate/image": {
+      "post": {
+        "tags": [
+          "stubs"
+        ],
+        "summary": "Generate Image",
+        "description": "Generate an image from a text prompt (stub endpoint).\n\nTODO: Implement image generation functionality:\n- Integrate with DALL-E, Midjourney, Stable Diffusion, or similar\n- Support various styles and sizes\n- Handle image storage and retrieval\n- Provide image editing capabilities",
+        "operationId": "generate_image_v1_generate_image_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/v1/visualize/data": {
+      "post": {
+        "tags": [
+          "stubs"
+        ],
+        "summary": "Visualize Data",
+        "description": "Generate a data visualization (stub endpoint).\n\nTODO: Implement data visualization functionality:\n- Support various chart types (bar, line, pie, scatter, etc.)\n- Generate interactive charts\n- Export to various formats (PNG, SVG, PDF)\n- Support real-time data updates",
+        "operationId": "visualize_data_v1_visualize_data_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataVisualizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataVisualizationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/v1/collaborate": {
+      "post": {
+        "tags": [
+          "stubs"
+        ],
+        "summary": "Collaborate",
+        "description": "Handle collaboration features (stub endpoint).\n\nTODO: Implement collaboration functionality:\n- Share conversations and projects\n- Invite collaborators\n- Real-time collaboration\n- Comments and annotations\n- Permission management\n- Activity tracking",
+        "operationId": "collaborate_v1_collaborate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollaborationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/v1/chat": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Chat Endpoint",
+        "description": "Chat orchestration endpoint.\n\nAccepts a ChatRequest with prompt, reasoning mode, domain pack, agent mode,\ntuning options, metadata, and conversation history.\n\nReturns a ChatResponse with the final answer and orchestration artifacts.",
+        "operationId": "chat_endpoint_v1_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/agents": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "List Agents",
+        "description": "List available LLM models/agents.\n\nReturns all known models with their availability status based on\nwhether the corresponding provider API keys are configured.\n\nReturns:\n    AgentsResponse with list of agents and source identifier.",
+        "operationId": "list_agents_agents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reasoning-config": {
+      "get": {
+        "tags": [
+          "reasoning"
+        ],
+        "summary": "Get Reasoning Config",
+        "description": "Get current reasoning configuration.\n\nArgs:\n    user_id: Optional user identifier for per-user config.\n    \nReturns:\n    Current reasoning configuration.",
+        "operationId": "get_reasoning_config_reasoning_config_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningConfigResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "reasoning"
+        ],
+        "summary": "Save Reasoning Config",
+        "description": "Save reasoning configuration.\n\nArgs:\n    request: The reasoning configuration to save.\n    user_id: Optional user identifier for per-user config.\n    \nReturns:\n    Success response with saved configuration.\n    \nRaises:\n    HTTPException: If validation fails.",
+        "operationId": "save_reasoning_config_reasoning_config_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasoningConfigRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningConfigSaveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reasoning-methods": {
+      "get": {
+        "tags": [
+          "reasoning"
+        ],
+        "summary": "List Reasoning Methods",
+        "description": "List available reasoning methods.\n\nReturns:\n    List of available reasoning method identifiers.",
+        "operationId": "list_reasoning_methods_reasoning_methods_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response List Reasoning Methods Reasoning Methods Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AgentInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "capabilities": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capabilities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "provider",
+          "available"
+        ],
+        "title": "AgentInfo",
+        "description": "Information about an available agent/model."
+      },
+      "AgentMode": {
+        "type": "string",
+        "enum": [
+          "single",
+          "team"
+        ],
+        "title": "AgentMode",
+        "description": "Agent collaboration mode."
+      },
+      "AgentTrace": {
+        "properties": {
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id",
+            "description": "Agent identifier"
+          },
+          "agent_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Name",
+            "description": "Agent name/type"
+          },
+          "contribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contribution",
+            "description": "Agent's contribution"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence",
+            "description": "Confidence score"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp",
+            "description": "Processing timestamp"
+          }
+        },
+        "type": "object",
+        "title": "AgentTrace",
+        "description": "Trace information for agent contributions.",
+        "example": {
+          "agent_id": "agent-1",
+          "agent_name": "researcher",
+          "confidence": 0.95,
+          "contribution": "Verified fact about France"
+        }
+      },
+      "AgentsResponse": {
+        "properties": {
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentInfo"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "backend"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agents"
+        ],
+        "title": "AgentsResponse",
+        "description": "Response containing list of available agents."
+      },
+      "Body_auto_correct_api_v1_spellcheck_correct_post": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "auto_correct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "Body_auto_correct_api_v1_spellcheck_correct_post"
+      },
+      "Body_check_spelling_api_v1_spellcheck_check_post": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "auto_correct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "Body_check_spelling_api_v1_spellcheck_check_post"
+      },
+      "Body_get_suggestions_api_v1_spellcheck_suggest_post": {
+        "properties": {
+          "word": {
+            "type": "string",
+            "title": "Word"
+          }
+        },
+        "type": "object",
+        "required": [
+          "word"
+        ],
+        "title": "Body_get_suggestions_api_v1_spellcheck_suggest_post"
+      },
+      "CancelSubscriptionRequest": {
+        "properties": {
+          "cancel_immediately": {
+            "type": "boolean",
+            "title": "Cancel Immediately",
+            "description": "Cancel immediately or at period end",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "CancelSubscriptionRequest",
+        "description": "Request to cancel a subscription."
+      },
+      "ChatMetadata": {
+        "properties": {
+          "chat_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Id",
+            "description": "Chat/conversation ID"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "User ID"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id",
+            "description": "Project ID"
+          },
+          "criteria": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CriteriaSettings"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Dynamic criteria settings for quality/speed/creativity balance"
+          }
+        },
+        "type": "object",
+        "title": "ChatMetadata",
+        "description": "Optional metadata for chat tracking.",
+        "example": {
+          "chat_id": "conv-123",
+          "criteria": {
+            "accuracy": 70,
+            "creativity": 50,
+            "speed": 70
+          },
+          "project_id": "proj-789",
+          "user_id": "user-456"
+        }
+      },
+      "ChatRequest": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "title": "Prompt",
+            "description": "User prompt/question"
+          },
+          "models": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Models",
+            "description": "List of model IDs to use for orchestration (e.g., ['gpt-5', 'claude-sonnet-4.5', 'grok-4']). If not provided, models will be auto-selected."
+          },
+          "reasoning_mode": {
+            "$ref": "#/components/schemas/llmhive__app__models__orchestration__ReasoningMode",
+            "description": "Reasoning depth mode (fast/standard/deep)",
+            "default": "standard"
+          },
+          "reasoning_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReasoningMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Advanced reasoning method (chain-of-thought, tree-of-thought, react, plan-and-solve, self-consistency, reflexion). If not provided, will be inferred from reasoning_mode."
+          },
+          "domain_pack": {
+            "$ref": "#/components/schemas/DomainPack",
+            "description": "Domain specialization pack",
+            "default": "default"
+          },
+          "agent_mode": {
+            "$ref": "#/components/schemas/AgentMode",
+            "description": "Agent collaboration mode",
+            "default": "team"
+          },
+          "tuning": {
+            "$ref": "#/components/schemas/TuningOptions",
+            "description": "Tuning options"
+          },
+          "orchestration": {
+            "$ref": "#/components/schemas/OrchestrationSettings",
+            "description": "Orchestration Studio settings"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ChatMetadata",
+            "description": "Optional metadata"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History",
+            "description": "Conversation history as list of {role, content} dicts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "ChatRequest",
+        "description": "Request model for chat orchestration.",
+        "example": {
+          "agent_mode": "team",
+          "domain_pack": "default",
+          "history": [
+            {
+              "content": "Hello",
+              "role": "user"
+            },
+            {
+              "content": "Hi! How can I help?",
+              "role": "assistant"
+            }
+          ],
+          "metadata": {
+            "chat_id": "conv-123"
+          },
+          "prompt": "What is the capital of France?",
+          "reasoning_mode": "standard",
+          "tuning": {
+            "answer_structure": true,
+            "learn_from_chat": true,
+            "output_validation": true,
+            "prompt_optimization": true
+          }
+        }
+      },
+      "ChatResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Final assistant answer/message"
+          },
+          "models_used": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Models Used",
+            "description": "List of models that participated in orchestration"
+          },
+          "reasoning_mode": {
+            "$ref": "#/components/schemas/ReasoningMode-Output",
+            "description": "Reasoning mode used"
+          },
+          "reasoning_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReasoningMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Advanced reasoning method used (if specified)"
+          },
+          "domain_pack": {
+            "$ref": "#/components/schemas/DomainPack",
+            "description": "Domain pack used"
+          },
+          "agent_mode": {
+            "$ref": "#/components/schemas/AgentMode",
+            "description": "Agent mode used"
+          },
+          "used_tuning": {
+            "$ref": "#/components/schemas/TuningOptions",
+            "description": "Tuning options that were applied"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ChatMetadata",
+            "description": "Metadata (echoed from request)"
+          },
+          "tokens_used": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokens Used",
+            "description": "Total tokens consumed"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms",
+            "description": "Processing latency in milliseconds"
+          },
+          "agent_traces": {
+            "items": {
+              "$ref": "#/components/schemas/AgentTrace"
+            },
+            "type": "array",
+            "title": "Agent Traces",
+            "description": "Agent trace information"
+          },
+          "extra": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra",
+            "description": "Additional response data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "reasoning_mode",
+          "domain_pack",
+          "agent_mode",
+          "used_tuning",
+          "metadata"
+        ],
+        "title": "ChatResponse",
+        "description": "Response model for chat orchestration.",
+        "example": {
+          "agent_mode": "team",
+          "agent_traces": [],
+          "domain_pack": "default",
+          "extra": {},
+          "latency_ms": 1200,
+          "message": "The capital of France is Paris.",
+          "metadata": {
+            "chat_id": "conv-123"
+          },
+          "reasoning_mode": "standard",
+          "tokens_used": 150,
+          "used_tuning": {
+            "answer_structure": true,
+            "learn_from_chat": true,
+            "output_validation": true,
+            "prompt_optimization": true
+          }
+        }
+      },
+      "CheckoutSessionResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Redirect user to the URL to complete payment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "url"
+        ],
+        "title": "CheckoutSessionResponse",
+        "description": "Response with checkout session URL."
+      },
+      "CollaborationRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "Collaboration action (share, invite, comment, etc.)"
+          },
+          "resource_id": {
+            "type": "string",
+            "title": "Resource Id",
+            "description": "Resource identifier"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Participants",
+            "description": "List of participant identifiers"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Additional metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "resource_id"
+        ],
+        "title": "CollaborationRequest",
+        "description": "Request model for collaboration features."
+      },
+      "CollaborationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result",
+            "description": "Collaboration result"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message",
+            "default": "Collaboration endpoint is not yet implemented"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "CollaborationResponse",
+        "description": "Response model for collaboration features."
+      },
+      "CreateCheckoutRequest": {
+        "properties": {
+          "tier": {
+            "type": "string",
+            "title": "Tier",
+            "description": "Pricing tier name (free, pro, enterprise)"
+          },
+          "billing_cycle": {
+            "type": "string",
+            "title": "Billing Cycle",
+            "description": "Billing cycle: 'monthly' or 'annual'",
+            "default": "monthly"
+          },
+          "user_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Email",
+            "description": "User email for Stripe customer"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "Internal user ID to link subscription"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier",
+          "user_id"
+        ],
+        "title": "CreateCheckoutRequest",
+        "description": "Request to create a Stripe checkout session."
+      },
+      "CreateSubscriptionRequest": {
+        "properties": {
+          "tier_name": {
+            "type": "string",
+            "title": "Tier Name",
+            "description": "Pricing tier name (free, pro, enterprise)"
+          },
+          "billing_cycle": {
+            "type": "string",
+            "title": "Billing Cycle",
+            "description": "Billing cycle: 'monthly' or 'annual'",
+            "default": "monthly"
+          },
+          "stripe_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stripe Customer Id",
+            "description": "Stripe customer ID (if available)"
+          },
+          "stripe_subscription_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stripe Subscription Id",
+            "description": "Stripe subscription ID (if available)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier_name"
+        ],
+        "title": "CreateSubscriptionRequest",
+        "description": "Request to create a subscription."
+      },
+      "CriteriaSettings": {
+        "properties": {
+          "accuracy": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Accuracy",
+            "description": "Accuracy priority (0-100)",
+            "default": 70
+          },
+          "speed": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Speed",
+            "description": "Speed priority (0-100)",
+            "default": 70
+          },
+          "creativity": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Creativity",
+            "description": "Creativity priority (0-100)",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "title": "CriteriaSettings",
+        "description": "Dynamic criteria settings for quality/speed/creativity balance."
+      },
+      "DataVisualizationRequest": {
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "description": "Data to visualize"
+          },
+          "chart_type": {
+            "type": "string",
+            "title": "Chart Type",
+            "description": "Type of chart to generate",
+            "default": "bar"
+          },
+          "options": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Options",
+            "description": "Chart options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "DataVisualizationRequest",
+        "description": "Request model for data visualization."
+      },
+      "DataVisualizationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "chart_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chart Url",
+            "description": "URL of generated chart"
+          },
+          "chart_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Chart Data",
+            "description": "Chart data structure"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message",
+            "default": "Data visualization endpoint is not yet implemented"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "DataVisualizationResponse",
+        "description": "Response model for data visualization."
+      },
+      "DomainPack": {
+        "type": "string",
+        "enum": [
+          "default",
+          "medical",
+          "legal",
+          "marketing",
+          "coding",
+          "research",
+          "finance"
+        ],
+        "title": "DomainPack",
+        "description": "Domain/industry pack for specialized prompts."
+      },
+      "ExecuteRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Code to execute"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "description": "Programming language",
+            "default": "python"
+          },
+          "session_token": {
+            "type": "string",
+            "title": "Session Token",
+            "description": "Session token for sandbox isolation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "session_token"
+        ],
+        "title": "ExecuteRequest",
+        "description": "Request model for code execution."
+      },
+      "ExecuteResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "description": "Execution output",
+            "default": ""
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if execution failed"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Additional metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "ExecuteResponse",
+        "description": "Response model for code execution."
+      },
+      "FeedbackRequestModel": {
+        "properties": {
+          "user_query": {
+            "type": "string",
+            "title": "User Query",
+            "description": "The user's question/query"
+          },
+          "answer_text": {
+            "type": "string",
+            "title": "Answer Text",
+            "description": "The answer that was given"
+          },
+          "feedback_type": {
+            "type": "string",
+            "title": "Feedback Type",
+            "description": "thumbs_up, thumbs_down, or rating",
+            "default": "rating"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating",
+            "description": "Rating value (1-5 or 0-1)"
+          },
+          "model_used": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Used",
+            "description": "Model that generated the answer"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id",
+            "description": "Session identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_query",
+          "answer_text"
+        ],
+        "title": "FeedbackRequestModel",
+        "description": "Request model for submitting feedback."
+      },
+      "FeedbackResponseModel": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "feedback_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "FeedbackResponseModel",
+        "description": "Response model for feedback submission."
+      },
+      "FileAnalysisRequest": {
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "title": "File Id",
+            "description": "File identifier"
+          },
+          "analysis_type": {
+            "type": "string",
+            "title": "Analysis Type",
+            "description": "Type of analysis to perform",
+            "default": "general"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_id"
+        ],
+        "title": "FileAnalysisRequest",
+        "description": "Request model for file analysis."
+      },
+      "FileAnalysisResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "analysis": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Analysis",
+            "description": "Analysis results"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message",
+            "default": "File analysis endpoint is not yet implemented"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "FileAnalysisResponse",
+        "description": "Response model for file analysis."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1.0.0"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "default": "development"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "title": "HealthResponse",
+        "description": "Health check response."
+      },
+      "ImageGenerationRequest": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "title": "Prompt",
+            "description": "Text prompt for image generation"
+          },
+          "style": {
+            "type": "string",
+            "title": "Style",
+            "description": "Image style",
+            "default": "realistic"
+          },
+          "size": {
+            "type": "string",
+            "title": "Size",
+            "description": "Image dimensions",
+            "default": "1024x1024"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "ImageGenerationRequest",
+        "description": "Request model for image generation."
+      },
+      "ImageGenerationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url",
+            "description": "URL of generated image"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message",
+            "default": "Image generation endpoint is not yet implemented"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "ImageGenerationResponse",
+        "description": "Response model for image generation."
+      },
+      "MetricsResponse": {
+        "properties": {
+          "uptime_seconds": {
+            "type": "number",
+            "title": "Uptime Seconds"
+          },
+          "request_count": {
+            "type": "integer",
+            "title": "Request Count"
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count"
+          },
+          "error_rate": {
+            "type": "number",
+            "title": "Error Rate"
+          },
+          "orchestrations": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Orchestrations"
+          },
+          "models_used": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Models Used"
+          },
+          "agents_invoked": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Agents Invoked"
+          },
+          "config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uptime_seconds",
+          "request_count",
+          "error_count",
+          "error_rate",
+          "orchestrations",
+          "models_used",
+          "agents_invoked",
+          "config"
+        ],
+        "title": "MetricsResponse",
+        "description": "Metrics response model."
+      },
+      "OrchestrationSettings": {
+        "properties": {
+          "accuracy_level": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Accuracy Level",
+            "description": "Accuracy vs Speed slider (1=fastest, 5=most accurate)",
+            "default": 3
+          },
+          "enable_hrm": {
+            "type": "boolean",
+            "title": "Enable Hrm",
+            "description": "Enable Hierarchical Role Management (HRM)",
+            "default": false
+          },
+          "enable_prompt_diffusion": {
+            "type": "boolean",
+            "title": "Enable Prompt Diffusion",
+            "description": "Enable Prompt Diffusion & Refinement",
+            "default": false
+          },
+          "enable_deep_consensus": {
+            "type": "boolean",
+            "title": "Enable Deep Consensus",
+            "description": "Enable Deep Consensus (multi-round debate)",
+            "default": false
+          },
+          "enable_adaptive_ensemble": {
+            "type": "boolean",
+            "title": "Enable Adaptive Ensemble",
+            "description": "Enable Adaptive Ensemble Logic",
+            "default": false
+          },
+          "elite_strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elite Strategy",
+            "description": "Elite orchestration strategy"
+          },
+          "quality_options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Options",
+            "description": "Quality boosting options"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature",
+            "description": "Temperature for response generation",
+            "default": 0.7
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 4000.0,
+                "minimum": 100.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tokens",
+            "description": "Maximum tokens in response",
+            "default": 2000
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P",
+            "description": "Top-p nucleus sampling",
+            "default": 0.9
+          },
+          "frequency_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Penalty",
+            "description": "Frequency penalty",
+            "default": 0
+          },
+          "presence_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presence Penalty",
+            "description": "Presence penalty",
+            "default": 0
+          },
+          "enable_tool_broker": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Tool Broker",
+            "description": "Enable automatic tool detection and execution",
+            "default": true
+          },
+          "enable_verification": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Verification",
+            "description": "Enable code/math verification",
+            "default": true
+          },
+          "enable_vector_rag": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Vector Rag",
+            "description": "Enable Vector RAG with Pinecone",
+            "default": false
+          },
+          "enable_memory": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Memory",
+            "description": "Enable memory augmentation",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "OrchestrationSettings",
+        "description": "Orchestration Studio settings for advanced orchestration control.",
+        "example": {
+          "accuracy_level": 3,
+          "elite_strategy": "automatic",
+          "enable_adaptive_ensemble": false,
+          "enable_deep_consensus": false,
+          "enable_hrm": false,
+          "enable_prompt_diffusion": false,
+          "enable_vector_rag": false,
+          "max_tokens": 2000,
+          "quality_options": [
+            "verification",
+            "consensus"
+          ],
+          "temperature": 0.7
+        }
+      },
+      "ReasoningConfigRequest": {
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/llmhive__app__routers__reasoning_config__ReasoningMode",
+            "description": "Reasoning mode: 'auto' or 'manual'"
+          },
+          "selectedMethods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Selectedmethods",
+            "description": "List of selected reasoning methods (required for manual mode)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "ReasoningConfigRequest",
+        "description": "Request body for updating reasoning configuration."
+      },
+      "ReasoningConfigResponse": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "selectedMethods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Selectedmethods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "selectedMethods"
+        ],
+        "title": "ReasoningConfigResponse",
+        "description": "Response containing reasoning configuration."
+      },
+      "ReasoningConfigSaveResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "config": {
+            "$ref": "#/components/schemas/ReasoningConfigResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "config"
+        ],
+        "title": "ReasoningConfigSaveResponse",
+        "description": "Response after saving reasoning configuration."
+      },
+      "ReasoningMethod": {
+        "type": "string",
+        "enum": [
+          "chain-of-thought",
+          "tree-of-thought",
+          "react",
+          "plan-and-solve",
+          "self-consistency",
+          "reflexion",
+          "hierarchical-decomposition",
+          "iterative-refinement",
+          "confidence-filtering",
+          "dynamic-planning"
+        ],
+        "title": "ReasoningMethod",
+        "description": "Advanced reasoning methods for LLM orchestration.\n\nBased on research: \"Implementing Advanced Reasoning Methods with Optimal LLMs (2025)\""
+      },
+      "ReasoningMode-Output": {
+        "type": "string",
+        "enum": [
+          "fast",
+          "standard",
+          "deep"
+        ],
+        "title": "ReasoningMode",
+        "description": "Reasoning depth mode (simple)."
+      },
+      "SpellCheckResponse": {
+        "properties": {
+          "original": {
+            "type": "string",
+            "title": "Original"
+          },
+          "corrected": {
+            "type": "string",
+            "title": "Corrected"
+          },
+          "errors": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count"
+          },
+          "was_corrected": {
+            "type": "boolean",
+            "title": "Was Corrected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "original",
+          "corrected",
+          "errors",
+          "error_count",
+          "was_corrected"
+        ],
+        "title": "SpellCheckResponse"
+      },
+      "SubscriptionResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "tier_name": {
+            "type": "string",
+            "title": "Tier Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "billing_cycle": {
+            "type": "string",
+            "title": "Billing Cycle"
+          },
+          "current_period_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Current Period Start"
+          },
+          "current_period_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Current Period End"
+          },
+          "cancel_at_period_end": {
+            "type": "boolean",
+            "title": "Cancel At Period End"
+          },
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "tier_name",
+          "status",
+          "billing_cycle",
+          "current_period_start",
+          "current_period_end",
+          "cancel_at_period_end",
+          "cancelled_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SubscriptionResponse",
+        "description": "Subscription response model."
+      },
+      "SuggestionsResponse": {
+        "properties": {
+          "word": {
+            "type": "string",
+            "title": "Word"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suggestions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "word",
+          "suggestions"
+        ],
+        "title": "SuggestionsResponse"
+      },
+      "TuningOptions": {
+        "properties": {
+          "prompt_optimization": {
+            "type": "boolean",
+            "title": "Prompt Optimization",
+            "description": "Enable prompt optimization",
+            "default": true
+          },
+          "output_validation": {
+            "type": "boolean",
+            "title": "Output Validation",
+            "description": "Enable output validation",
+            "default": true
+          },
+          "answer_structure": {
+            "type": "boolean",
+            "title": "Answer Structure",
+            "description": "Enable structured answer formatting",
+            "default": true
+          },
+          "learn_from_chat": {
+            "type": "boolean",
+            "title": "Learn From Chat",
+            "description": "Enable learning from conversation history",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "TuningOptions",
+        "description": "Tuning options for orchestration.",
+        "example": {
+          "answer_structure": true,
+          "learn_from_chat": true,
+          "output_validation": true,
+          "prompt_optimization": true
+        }
+      },
+      "UpdateSubscriptionRequest": {
+        "properties": {
+          "tier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier Name",
+            "description": "New tier name"
+          },
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle",
+            "description": "New billing cycle"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "New status"
+          }
+        },
+        "type": "object",
+        "title": "UpdateSubscriptionRequest",
+        "description": "Request to update a subscription."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "llmhive__app__models__orchestration__ReasoningMode": {
+        "type": "string",
+        "enum": [
+          "fast",
+          "standard",
+          "deep"
+        ],
+        "title": "ReasoningMode",
+        "description": "Reasoning depth mode (simple)."
+      },
+      "llmhive__app__routers__reasoning_config__ReasoningMode": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "manual"
+        ],
+        "title": "ReasoningMode",
+        "description": "Available reasoning modes."
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for authentication"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "JWT token authentication"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development"
+    },
+    {
+      "url": "https://api.llmhive.ai",
+      "description": "Production API"
+    }
+  ],
+  "tags": [
+    {
+      "name": "chat",
+      "description": "Chat orchestration endpoints for multi-model LLM interactions"
+    },
+    {
+      "name": "agents",
+      "description": "Available LLM models and their capabilities"
+    },
+    {
+      "name": "execute",
+      "description": "Code execution in sandboxed environment"
+    },
+    {
+      "name": "reasoning",
+      "description": "Reasoning mode configuration"
+    },
+    {
+      "name": "stubs",
+      "description": "Placeholder endpoints for future features"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    },
+    {
+      "BearerAuth": []
+    }
+  ]
+}
