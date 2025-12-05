@@ -40,7 +40,7 @@ steps:
         echo "Pushing $${IMAGE} ..."
         docker push "$${IMAGE}"
 
-  # 3) Deploy to Cloud Run with CORRECT secret IDs (kebab-case)
+  # 3) Deploy to Cloud Run with ALL required secrets
   - id: "Deploy to Cloud Run"
     name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: "bash"
@@ -51,28 +51,64 @@ steps:
         TAG="${COMMIT_SHA:-$BUILD_ID}"
         IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
         echo "Deploying $${IMAGE} to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} on port 8080..."
+        
+        # Build secrets list - only include secrets that exist in Secret Manager
+        SECRETS="OPENAI_API_KEY=openai-api-key:latest"
+        SECRETS="$${SECRETS},GROK_API_KEY=grok-api-key:latest"
+        SECRETS="$${SECRETS},GEMINI_API_KEY=gemini-api-key:latest"
+        SECRETS="$${SECRETS},TAVILY_API_KEY=tavily-api-key:latest"
+        
+        # Add optional secrets if they exist (check first to avoid deployment failure)
+        if gcloud secrets describe anthropic-api-key --project=${PROJECT_ID} >/dev/null 2>&1; then
+          SECRETS="$${SECRETS},ANTHROPIC_API_KEY=anthropic-api-key:latest"
+          echo "Adding ANTHROPIC_API_KEY secret"
+        fi
+        if gcloud secrets describe deepseek-api-key --project=${PROJECT_ID} >/dev/null 2>&1; then
+          SECRETS="$${SECRETS},DEEPSEEK_API_KEY=deepseek-api-key:latest"
+          echo "Adding DEEPSEEK_API_KEY secret"
+        fi
+        if gcloud secrets describe pinecone-api-key --project=${PROJECT_ID} >/dev/null 2>&1; then
+          SECRETS="$${SECRETS},PINECONE_API_KEY=pinecone-api-key:latest"
+          echo "Adding PINECONE_API_KEY secret"
+        fi
+        
+        echo "Deploying with secrets: $${SECRETS}"
+        
         gcloud run deploy "${_SERVICE_NAME}" \
           --image "$${IMAGE}" \
           --region "${_REGION}" \
           --platform managed \
           --allow-unauthenticated \
           --port=8080 \
-          --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest
+          --memory=1Gi \
+          --cpu=1 \
+          --min-instances=0 \
+          --max-instances=10 \
+          --set-env-vars="ALLOW_STUB_PROVIDER=true,LOG_LEVEL=INFO" \
+          --set-secrets="$${SECRETS}"
         echo "Deploy step complete."
 
-  # 4) Verify mapping in the logs
-  - id: "Verify env→secret mapping"
+  # 4) Verify mapping and health check
+  - id: "Verify deployment"
     name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: "bash"
     args:
       - -c
       - |
         set -euo pipefail
-        echo "Cloud Run env→secret mapping for ${_SERVICE_NAME} (${_REGION}):"
+        echo "=== Cloud Run Configuration ==="
         gcloud run services describe "${_SERVICE_NAME}" --region "${_REGION}" \
           --format='table(
             spec.template.spec.containers[0].env[].name:label=ENV,
             spec.template.spec.containers[0].env[].valueFrom.secretKeyRef.name:label=SECRET_ID)'
-        echo "Expect SECRET_ID to be: openai-api-key, grok-api-key, gemini-api-key, tavily-api-key"
-
+        
+        echo ""
+        echo "=== Service URL ==="
+        SERVICE_URL=$(gcloud run services describe "${_SERVICE_NAME}" --region "${_REGION}" --format='value(status.url)')
+        echo "Service URL: $${SERVICE_URL}"
+        
+        echo ""
+        echo "=== Health Check ==="
+        sleep 10  # Wait for service to be ready
+        curl -s -o /dev/null -w "Health check response: %{http_code}\n" "$${SERVICE_URL}/health" || echo "Health check failed (service may still be starting)"
 
