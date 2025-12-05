@@ -195,7 +195,7 @@ export interface AgentInfo {
   provider?: string
   available?: boolean
   description: string | null
-  capabilities: dict | null
+  capabilities: Record<string, unknown> | null
 }
 
 export interface AgentsResponse {
@@ -221,9 +221,9 @@ export interface ExecuteResponse {
   /** Execution output */
   output?: string
   /** Error message if execution failed */
-  error: str | None
+  error: string | null
   /** Additional metadata */
-  metadata?: dict
+  metadata?: Record<string, unknown>
 }
 
 // ============================================================
@@ -240,7 +240,7 @@ export interface FileAnalysisRequest {
 export interface FileAnalysisResponse {
   success?: boolean
   /** Analysis results */
-  analysis?: dict
+  analysis?: Record<string, unknown>
   /** Status message */
   message?: string
 }
@@ -257,26 +257,26 @@ export interface ImageGenerationRequest {
 export interface ImageGenerationResponse {
   success?: boolean
   /** URL of generated image */
-  image_url: str | None
+  image_url: string | null
   /** Status message */
   message?: string
 }
 
 export interface DataVisualizationRequest {
   /** Data to visualize */
-  data?: dict
+  data?: Record<string, unknown>
   /** Type of chart to generate */
   chart_type?: string
   /** Chart options */
-  options?: dict
+  options?: Record<string, unknown>
 }
 
 export interface DataVisualizationResponse {
   success?: boolean
   /** URL of generated chart */
-  chart_url: str | None
+  chart_url: string | null
   /** Chart data structure */
-  chart_data?: dict
+  chart_data?: Record<string, unknown>
   /** Status message */
   message?: string
 }
@@ -289,13 +289,13 @@ export interface CollaborationRequest {
   /** List of participant identifiers */
   participants?: Array<string>
   /** Additional metadata */
-  metadata?: dict
+  metadata?: Record<string, unknown>
 }
 
 export interface CollaborationResponse {
   success?: boolean
   /** Collaboration result */
-  result?: dict
+  result?: Record<string, unknown>
   /** Status message */
   message?: string
 }
