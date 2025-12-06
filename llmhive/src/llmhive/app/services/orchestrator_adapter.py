@@ -47,6 +47,17 @@ from .model_router import (
 )
 from .reasoning_prompts import get_reasoning_prompt_template
 
+# Import Clarification Manager for ambiguity detection
+try:
+    from ..orchestration.clarification_manager import (
+        ClarificationManager,
+        ClarificationStatus,
+    )
+    CLARIFICATION_AVAILABLE = True
+except ImportError:
+    CLARIFICATION_AVAILABLE = False
+    ClarificationManager = None
+
 # Import Elite Orchestrator and Quality Booster
 try:
     from ..orchestration.elite_orchestrator import (
@@ -719,6 +730,42 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 logger.warning("PromptOps failed, using raw prompt: %s", e)
         
         # ========================================================================
+        # STEP 1.25: CLARIFICATION CHECK (Optional - adds questions to extra)
+        # ========================================================================
+        clarification_questions = []
+        if CLARIFICATION_AVAILABLE and prompt_spec and prompt_spec.analysis.ambiguities:
+            try:
+                clarification_mgr = ClarificationManager()
+                # Check if prompt is ambiguous enough to warrant clarification
+                needs_clarification = await clarification_mgr.analyze_query(request.prompt)
+                
+                if needs_clarification.status != ClarificationStatus.NOT_NEEDED:
+                    # Generate clarifying questions
+                    questions = await clarification_mgr.generate_questions(
+                        request.prompt,
+                        max_query_questions=3,
+                        max_preference_questions=3,
+                    )
+                    
+                    if questions:
+                        clarification_questions = [
+                            {
+                                "id": q.id,
+                                "question": q.question,
+                                "category": q.category,
+                                "options": q.options,
+                                "required": q.required,
+                            }
+                            for q in questions
+                        ]
+                        logger.info(
+                            "Clarification: Generated %d questions for ambiguous query",
+                            len(clarification_questions)
+                        )
+            except Exception as e:
+                logger.warning("Clarification check failed: %s", e)
+        
+        # ========================================================================
         # STEP 1.5: TOOL BROKER - Automatic Tool Detection and Execution
         # ========================================================================
         tool_context = ""
@@ -1068,6 +1115,13 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         # Add task type detected
         extra["task_type"] = task_type
+        
+        # Add clarification questions if generated (frontend can optionally display)
+        if clarification_questions:
+            extra["clarification"] = {
+                "suggested_questions": clarification_questions,
+                "note": "These questions could help refine the answer. Consider asking them as follow-up.",
+            }
         
         # Add verification results to extra
         if should_verify:
