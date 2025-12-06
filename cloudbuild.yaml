@@ -25,9 +25,9 @@ steps:
         # otherwise fall back to BUILD_ID for manual submits. BUILD_ID is
         # stable across steps, so the same tag is used for build/push/deploy.
         TAG="${COMMIT_SHA:-$BUILD_ID}"
-        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
-        echo "Building $${IMAGE} with --no-cache ..."
-        docker build --no-cache -t "$${IMAGE}" .
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$TAG"
+        echo "Building $IMAGE with --no-cache ..."
+        docker build --no-cache -t "$IMAGE" .
 
   # 2) Push the image
   - id: "Push image"
@@ -38,9 +38,9 @@ steps:
       - |
         set -euo pipefail
         TAG="${COMMIT_SHA:-$BUILD_ID}"
-        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
-        echo "Pushing $${IMAGE} ..."
-        docker push "$${IMAGE}"
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$TAG"
+        echo "Pushing $IMAGE ..."
+        docker push "$IMAGE"
 
   # 3) Deploy to Cloud Run with ALL required secrets
   - id: "Deploy to Cloud Run"
@@ -51,51 +51,26 @@ steps:
       - |
         set -euo pipefail
         TAG="${COMMIT_SHA:-$BUILD_ID}"
-        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
-        echo "Deploying $${IMAGE} to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} on port 8080..."
+        IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$TAG"
+        echo "Deploying $IMAGE to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} on port 8080..."
         
-        # Build secrets list dynamically - check each secret and add if it exists
-        SECRETS=""
+        # Build secrets list - include all configured secrets
+        # Note: Using static list to avoid Cloud Build substitution conflicts
+        SECRETS="OPENAI_API_KEY=openai-api-key:latest"
+        SECRETS="$SECRETS,ANTHROPIC_API_KEY=anthropic-api-key:latest"
+        SECRETS="$SECRETS,GROK_API_KEY=grok-api-key:latest"
+        SECRETS="$SECRETS,GEMINI_API_KEY=gemini-api-key:latest"
+        SECRETS="$SECRETS,DEEPSEEK_API_KEY=deepseek-api-key:latest"
+        SECRETS="$SECRETS,TAVILY_API_KEY=tavily-api-key:latest"
+        SECRETS="$SECRETS,PINECONE_API_KEY=pinecone-api-key:latest"
+        SECRETS="$SECRETS,API_KEY=api-key:latest"
+        SECRETS="$SECRETS,STRIPE_SECRET_KEY=stripe-secret-key:latest"
+        SECRETS="$SECRETS,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest"
         
-        # Function to add secret if it exists
-        add_secret() {
-          local env_name="$1"
-          local secret_name="$2"
-          if gcloud secrets describe "$secret_name" --project=${PROJECT_ID} >/dev/null 2>&1; then
-            if [ -n "$SECRETS" ]; then
-              SECRETS="$${SECRETS},"
-            fi
-            SECRETS="$${SECRETS}$${env_name}=$${secret_name}:latest"
-            echo "✓ Adding $env_name from secret $secret_name"
-          else
-            echo "⚠ Secret $secret_name not found, skipping $env_name"
-          fi
-        }
-        
-        # LLM Provider API Keys
-        add_secret "OPENAI_API_KEY" "openai-api-key"
-        add_secret "ANTHROPIC_API_KEY" "anthropic-api-key"
-        add_secret "GROK_API_KEY" "grok-api-key"
-        add_secret "GEMINI_API_KEY" "gemini-api-key"
-        add_secret "DEEPSEEK_API_KEY" "deepseek-api-key"
-        
-        # Search/Tools API Keys
-        add_secret "TAVILY_API_KEY" "tavily-api-key"
-        
-        # Vector Database
-        add_secret "PINECONE_API_KEY" "pinecone-api-key"
-        
-        # Authentication
-        add_secret "API_KEY" "api-key"
-        
-        # Billing (Stripe)
-        add_secret "STRIPE_SECRET_KEY" "stripe-secret-key"
-        add_secret "STRIPE_WEBHOOK_SECRET" "stripe-webhook-secret"
-        
-        echo "Deploying with secrets: $${SECRETS}"
+        echo "Deploying with secrets: $SECRETS"
         
         gcloud run deploy "${_SERVICE_NAME}" \
-          --image "$${IMAGE}" \
+          --image "$IMAGE" \
           --region "${_REGION}" \
           --platform managed \
           --allow-unauthenticated \
@@ -105,7 +80,7 @@ steps:
           --min-instances=0 \
           --max-instances=10 \
           --set-env-vars="ALLOW_STUB_PROVIDER=true,LOG_LEVEL=INFO" \
-          --set-secrets="$${SECRETS}"
+          --set-secrets="$SECRETS"
         echo "Deploy step complete."
 
   # 4) Verify mapping and health check
@@ -125,10 +100,10 @@ steps:
         echo ""
         echo "=== Service URL ==="
         SERVICE_URL=$(gcloud run services describe "${_SERVICE_NAME}" --region "${_REGION}" --format='value(status.url)')
-        echo "Service URL: $${SERVICE_URL}"
+        echo "Service URL: $SERVICE_URL"
         
         echo ""
         echo "=== Health Check ==="
         sleep 10  # Wait for service to be ready
-        curl -s -o /dev/null -w "Health check response: %{http_code}\n" "$${SERVICE_URL}/health" || echo "Health check failed (service may still be starting)"
+        curl -s -o /dev/null -w "Health check response: %{http_code}\n" "$SERVICE_URL/health" || echo "Health check failed (service may still be starting)"
 
