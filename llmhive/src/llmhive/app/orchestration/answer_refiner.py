@@ -171,6 +171,47 @@ class AnswerRefiner:
         self.providers = providers or {}
         self.default_config = default_config or RefinementConfig()
     
+    def _strip_meta_commentary(self, content: str) -> str:
+        """Strip meta-commentary that may have leaked from orchestration.
+        
+        This removes patterns like:
+        - "Here is the improved answer..."
+        - "I have addressed the feedback..."
+        - Self-critique sections
+        - "Confidence Level: X/10" internal notes
+        """
+        # Patterns that indicate meta-commentary (case-insensitive)
+        meta_patterns = [
+            r"^```\w*\s*\n",  # Code fence at start with language tag
+            r"The response is comprehensive.*?However,.*?refinement.*?:",
+            r"Here is the improved answer[:\s]*",
+            r"I have addressed the feedback.*?",
+            r"Based on the feedback.*?here is.*?:",
+            r"\*\*Improved Response\*\*[:\s]*",
+            r"---\s*\n\s*\*\*Errors or Inaccuracies\*\*.*?---",
+            r"\d+\.\s*\*\*(Completeness|Errors|Clarity|Missing Information)\*\*:.*?(?=\d+\.\s*\*\*|\Z)",
+            r"\*\*Confidence Level\*\*:\s*\d+/\d+.*?$",
+            r"Ultimately,\s*this response strives to.*?$",
+        ]
+        
+        cleaned = content
+        for pattern in meta_patterns:
+            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
+        
+        # Remove orphaned closing code fences if we removed opening ones
+        if not re.search(r"```\w*\s*\n", cleaned) and cleaned.strip().endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        
+        # Remove leading/trailing whitespace
+        cleaned = cleaned.strip()
+        
+        # If we stripped too much, return original
+        if len(cleaned) < len(content) * 0.3:
+            logger.warning("Meta-commentary stripping removed too much content, keeping original")
+            return content
+        
+        return cleaned
+    
     async def refine(
         self,
         content: str,
@@ -204,6 +245,11 @@ class AnswerRefiner:
         config = config or self.default_config
         improvements_made: List[str] = []
         refinement_notes: List[str] = []
+        
+        # Strip meta-commentary that may have leaked from orchestration
+        content = self._strip_meta_commentary(content)
+        if content != content:
+            improvements_made.append("Removed meta-commentary from response")
         
         # Apply domain-based tone if not explicitly set
         if config.domain != "general" and config.tone == ToneStyle.PROFESSIONAL:

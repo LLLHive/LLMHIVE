@@ -666,15 +666,23 @@ Otherwise, list specific issues that need fixing."""
                 break
             
             # Refine based on challenge
-            refine_prompt = f"""Improve this answer based on the feedback:
+            refine_prompt = f"""Improve this answer based on the feedback below.
+
+IMPORTANT: Your response should be the IMPROVED ANSWER ONLY - do NOT include:
+- The feedback itself
+- Meta-commentary about the improvements
+- Self-critique or analysis of the answer
+- Phrases like "Here is the improved answer" or "I have addressed..."
+
+Just provide the clean, improved final answer that a user would read.
 
 Original question: {prompt}
 
 Current answer: {current_answer}
 
-Feedback: {challenge.content}
+Feedback to address (incorporate silently, do not repeat): {challenge.content}
 
-Provide an improved answer that addresses all the feedback."""
+Provide the improved answer:"""
 
             refined = await self._call_model(best_model, refine_prompt)
             total_tokens += refined.tokens_used
