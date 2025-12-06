@@ -52,25 +52,43 @@ steps:
         IMAGE="gcr.io/${PROJECT_ID}/llmhive-orchestrator:$${TAG}"
         echo "Deploying $${IMAGE} to Cloud Run service ${_SERVICE_NAME} in region ${_REGION} on port 8080..."
         
-        # Build secrets list - only include secrets that exist in Secret Manager
-        SECRETS="OPENAI_API_KEY=openai-api-key:latest"
-        SECRETS="$${SECRETS},GROK_API_KEY=grok-api-key:latest"
-        SECRETS="$${SECRETS},GEMINI_API_KEY=gemini-api-key:latest"
-        SECRETS="$${SECRETS},TAVILY_API_KEY=tavily-api-key:latest"
+        # Build secrets list dynamically - check each secret and add if it exists
+        SECRETS=""
         
-        # Add optional secrets if they exist (check first to avoid deployment failure)
-        if gcloud secrets describe anthropic-api-key --project=${PROJECT_ID} >/dev/null 2>&1; then
-          SECRETS="$${SECRETS},ANTHROPIC_API_KEY=anthropic-api-key:latest"
-          echo "Adding ANTHROPIC_API_KEY secret"
-        fi
-        if gcloud secrets describe deepseek-api-key --project=${PROJECT_ID} >/dev/null 2>&1; then
-          SECRETS="$${SECRETS},DEEPSEEK_API_KEY=deepseek-api-key:latest"
-          echo "Adding DEEPSEEK_API_KEY secret"
-        fi
-        if gcloud secrets describe pinecone-api-key --project=${PROJECT_ID} >/dev/null 2>&1; then
-          SECRETS="$${SECRETS},PINECONE_API_KEY=pinecone-api-key:latest"
-          echo "Adding PINECONE_API_KEY secret"
-        fi
+        # Function to add secret if it exists
+        add_secret() {
+          local env_name="$1"
+          local secret_name="$2"
+          if gcloud secrets describe "$secret_name" --project=${PROJECT_ID} >/dev/null 2>&1; then
+            if [ -n "$SECRETS" ]; then
+              SECRETS="$${SECRETS},"
+            fi
+            SECRETS="$${SECRETS}$${env_name}=$${secret_name}:latest"
+            echo "✓ Adding $env_name from secret $secret_name"
+          else
+            echo "⚠ Secret $secret_name not found, skipping $env_name"
+          fi
+        }
+        
+        # LLM Provider API Keys
+        add_secret "OPENAI_API_KEY" "openai-api-key"
+        add_secret "ANTHROPIC_API_KEY" "anthropic-api-key"
+        add_secret "GROK_API_KEY" "grok-api-key"
+        add_secret "GEMINI_API_KEY" "gemini-api-key"
+        add_secret "DEEPSEEK_API_KEY" "deepseek-api-key"
+        
+        # Search/Tools API Keys
+        add_secret "TAVILY_API_KEY" "tavily-api-key"
+        
+        # Vector Database
+        add_secret "PINECONE_API_KEY" "pinecone-api-key"
+        
+        # Authentication
+        add_secret "API_KEY" "api-key"
+        
+        # Billing (Stripe)
+        add_secret "STRIPE_SECRET_KEY" "stripe-secret-key"
+        add_secret "STRIPE_WEBHOOK_SECRET" "stripe-webhook-secret"
         
         echo "Deploying with secrets: $${SECRETS}"
         
