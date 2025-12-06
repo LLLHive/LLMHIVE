@@ -21,6 +21,32 @@ export const dynamic = "force-dynamic"
  */
 
 export async function POST(req: NextRequest) {
+  // Debug: Log environment variable status at the start of every request
+  const apiBase = process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL
+  const apiKey = process.env.LLMHIVE_API_KEY
+  
+  console.log("[Chat API] Environment check:", {
+    ORCHESTRATOR_API_BASE_URL: apiBase ? `${apiBase.substring(0, 30)}...` : "NOT SET",
+    LLMHIVE_API_KEY: apiKey ? `${apiKey.substring(0, 10)}...` : "NOT SET",
+    NODE_ENV: process.env.NODE_ENV,
+  })
+
+  // If backend URL is not configured, return helpful error
+  if (!apiBase) {
+    console.error("[Chat API] CRITICAL: Backend URL not configured!")
+    return NextResponse.json(
+      {
+        error: "Backend not configured",
+        details: "ORCHESTRATOR_API_BASE_URL environment variable is not set. Please configure it in Vercel Project Settings → Environment Variables.",
+        debug: {
+          ORCHESTRATOR_API_BASE_URL: "NOT SET",
+          NEXT_PUBLIC_API_BASE_URL: "NOT SET",
+        }
+      },
+      { status: 503 }
+    )
+  }
+
   try {
     const body = await req.json()
     const {
@@ -137,24 +163,8 @@ export async function POST(req: NextRequest) {
       prompt: prompt.slice(0, 50) + "...",
       models: selectedModels,
       orchestration: payload.orchestration,
+      backendUrl: apiBase,
     })
-
-    // Get backend URL and API key from environment
-    const apiBase =
-      process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL
-    
-    if (!apiBase) {
-      console.error("[Chat API] Missing backend URL - set ORCHESTRATOR_API_BASE_URL or NEXT_PUBLIC_API_BASE_URL")
-      return NextResponse.json(
-        {
-          error: "Backend not configured",
-          details: "Set ORCHESTRATOR_API_BASE_URL (preferred) or NEXT_PUBLIC_API_BASE_URL",
-        },
-        { status: 503 },
-      )
-    }
-    
-    const apiKey = process.env.LLMHIVE_API_KEY
 
     // Build headers
     const headers: Record<string, string> = {
