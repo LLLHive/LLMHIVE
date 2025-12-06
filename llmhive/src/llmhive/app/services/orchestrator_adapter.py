@@ -752,10 +752,19 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         "reasoning": tool_analysis.reasoning,
                     }
                     
-                    # Append tool context to the prompt
+                    # Append tool context to the prompt with explicit instructions
                     if tool_context:
-                        base_prompt = f"{base_prompt}\n\n[Tool Results]\n{tool_context}"
-                        logger.info("Tool context added to prompt (%d chars)", len(tool_context))
+                        tool_instruction = (
+                            "\n\n=== IMPORTANT: REAL-TIME DATA BELOW ===\n"
+                            "The following information was retrieved from current web searches. "
+                            "You MUST use this data to answer the question. Do NOT claim you cannot "
+                            "access current information - the data below is current as of today.\n\n"
+                            f"{tool_context}\n"
+                            "=== END OF REAL-TIME DATA ===\n\n"
+                            "Based on the real-time data above, provide a comprehensive answer."
+                        )
+                        base_prompt = f"{base_prompt}{tool_instruction}"
+                        logger.info("Tool context added to prompt with instructions (%d chars)", len(tool_context))
             except Exception as e:
                 logger.warning("Tool Broker failed: %s", e)
         

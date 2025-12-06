@@ -500,14 +500,23 @@ class ToolBroker:
     # Expanded keywords that trigger tool usage
     SEARCH_TRIGGERS = [
         # Time-sensitive
-        "latest", "current", "recent", "today", "2024", "2025",
-        "news", "update", "now", "real-time", "live",
+        "latest", "current", "recent", "today", "2024", "2025", "2026",
+        "news", "update", "now", "real-time", "live", "right now",
+        "as of", "this year", "this month", "this week",
+        # Rankings and lists (often need current data)
+        "top 10", "top 5", "top 20", "best", "leading", "ranking",
+        "most popular", "highest rated", "number one", "#1",
+        # Technology/fast-changing domains
+        "llm", "ai model", "gpt", "claude", "gemini", "chatgpt",
+        "cryptocurrency", "bitcoin", "stock", "market",
         # Factual queries
         "who is", "when did", "what year", "where is",
         "how many", "population of", "price of", "stock price",
         "weather", "score", "result", "statistics",
         # Verification
         "is it true", "fact check", "verify", "confirm",
+        # Explicit current data requests
+        "no old data", "current data", "up to date", "updated",
     ]
     
     CALC_TRIGGERS = [
@@ -568,7 +577,21 @@ class ToolBroker:
         has_dependencies = False
         
         # Check for search needs - expanded triggers
-        if any(trigger in query_lower for trigger in self.SEARCH_TRIGGERS):
+        needs_search = any(trigger in query_lower for trigger in self.SEARCH_TRIGGERS)
+        
+        # Also check for date patterns that indicate current data needed
+        # Patterns: 12/6/25, 12/06/2025, December 2025, Dec 2025, etc.
+        date_patterns = [
+            r'\d{1,2}/\d{1,2}/\d{2,4}',  # 12/6/25 or 12/06/2025
+            r'\d{1,2}-\d{1,2}-\d{2,4}',  # 12-6-25 or 12-06-2025
+            r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{4}',  # December 2025
+            r'\d{4}',  # Just a year like 2025
+        ]
+        if any(re.search(p, query_lower) for p in date_patterns):
+            needs_search = True
+            reasoning_parts.append("Query contains date reference indicating current data needed")
+        
+        if needs_search:
             tool_requests.append(ToolRequest(
                 tool_type=ToolType.WEB_SEARCH,
                 query=self._extract_search_query(query),

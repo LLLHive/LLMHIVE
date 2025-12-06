@@ -125,6 +125,21 @@ async def lifespan(app: FastAPI):
     else:
         logger.info(f"✓ {len([p for p in providers if p != 'stub'])} real provider(s) configured")
     
+    # Configure Tool Broker with Tavily web search
+    try:
+        from .services.web_research import web_search_formatted, get_web_research_client
+        from .orchestration.tool_broker import configure_tool_broker
+        
+        web_client = get_web_research_client()
+        if web_client.is_available:
+            # Configure tool broker with Tavily search function
+            configure_tool_broker(search_fn=web_search_formatted)
+            logger.info("✓ Tool Broker configured with Tavily web search")
+        else:
+            logger.warning("⚠️  Tavily web search not available (TAVILY_API_KEY not set)")
+    except ImportError as e:
+        logger.warning(f"Tool Broker configuration failed: {e}")
+    
     yield  # Application runs here
     
     # === SHUTDOWN ===
