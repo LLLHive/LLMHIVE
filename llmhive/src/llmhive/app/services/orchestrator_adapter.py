@@ -698,6 +698,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         prompt_spec: Optional[PromptSpecification] = None
         detected_task_type = "general"
         detected_complexity = "moderate"
+        is_strict_format = False
+        requested_output_format: Optional[str] = None
         
         if PROMPTOPS_AVAILABLE:
             try:
@@ -711,6 +713,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 base_prompt = prompt_spec.refined_query
                 detected_task_type = prompt_spec.analysis.task_type.value
                 detected_complexity = prompt_spec.analysis.complexity.value
+                requested_output_format = prompt_spec.analysis.output_format
                 
                 logger.info(
                     "PromptOps: task=%s, complexity=%s, tools=%s, confidence=%.2f",
@@ -764,6 +767,46 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         )
             except Exception as e:
                 logger.warning("Clarification check failed: %s", e)
+        
+        # ========================================================================
+        # STEP 1.4: EXPLICIT HISTORY CONTEXT INJECTION (Multi-turn reliability)
+        # ========================================================================
+        if request.history:
+            try:
+                history_snippets = []
+                for msg in request.history[-6:]:  # last 6 turns for context
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    content = content[:400]  # cap length per turn
+                    prefix = "User" if role == "user" else "Assistant"
+                    history_snippets.append(f"- {prefix}: {content}")
+                
+                if history_snippets:
+                    history_block = "\n".join(history_snippets)
+                    base_prompt = (
+                        f"{base_prompt}\n\n"
+                        "[CONTEXT FROM PREVIOUS MESSAGES]\n"
+                        f"{history_block}\n"
+                        "You MUST use this context and not contradict it. "
+                        "Do not claim the preferences are missing; they are provided above. "
+                        "Do not invent new preferences; rely ONLY on the context above."
+                    )
+            except Exception as e:
+                logger.warning("Failed to inject history context: %s", e)
+        
+        # ========================================================================
+        # STEP 1.45: OUTPUT FORMAT ENFORCEMENT (JSON-only)
+        # ========================================================================
+        if requested_output_format and requested_output_format.startswith("json"):
+            if requested_output_format.endswith("_strict"):
+                is_strict_format = True
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "[OUTPUT FORMAT]\n"
+                "Return ONLY a single JSON object with the required keys. "
+                "Do not include any prose, explanations, or markdown fences. "
+                "Output must be valid JSON."
+            )
         
         # ========================================================================
         # STEP 1.5: TOOL BROKER - Automatic Tool Detection and Execution
@@ -1020,7 +1063,6 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             try:
                 # Detect output format from PromptOps analysis
                 output_format = OutputFormat.PARAGRAPH
-                is_strict_format = False
                 if prompt_spec and prompt_spec.analysis.output_format:
                     fmt = prompt_spec.analysis.output_format
                     # Check for strict format (e.g., "json_strict" means output ONLY JSON)
@@ -1081,6 +1123,22 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         len(refined_answer.improvements_made),
                         refined_answer.format_applied.value,
                     )
+                
+                # Final safeguard for strict JSON output
+                if is_strict_format and (prompt_spec and prompt_spec.analysis.output_format and prompt_spec.analysis.output_format.startswith("json")):
+                    import re, json as _json
+                    json_match = re.search(r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\])', final_text, re.DOTALL)
+                    if json_match:
+                        candidate = json_match.group(1)
+                        try:
+                            _json.loads(candidate)
+                            final_text = candidate
+                            logger.info("Strict JSON: validated JSON extraction after refinement")
+                        except Exception:
+                            final_text = candidate
+                            logger.warning("Strict JSON: extracted JSON but parsing failed; returning best-effort JSON text")
+                    else:
+                        logger.warning("Strict JSON requested but no JSON found after refinement; returning original text")
             except Exception as e:
                 logger.warning("Answer refinement failed (using unrefined): %s", e)
         
