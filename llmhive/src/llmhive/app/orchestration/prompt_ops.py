@@ -888,9 +888,13 @@ Output ONLY the clarified query, nothing else."""
         return criteria
     
     def _detect_output_format(self, query_lower: str) -> Optional[str]:
-        """Detect expected output format."""
+        """Detect expected output format.
+        
+        Also detects strict format requirements like "only JSON" which
+        means the output should contain ONLY the formatted data, no explanations.
+        """
         format_indicators = {
-            "json": ["json", "json format", "in json"],
+            "json": ["json", "json format", "in json", "as json"],
             "markdown": ["markdown", "md format"],
             "code": ["code", "script", "function", "program"],
             "list": ["list", "bullet", "numbered"],
@@ -898,8 +902,24 @@ Output ONLY the clarified query, nothing else."""
             "essay": ["essay", "paragraph form"],
         }
         
+        # Check for strict format requirements (no extra text)
+        strict_patterns = [
+            r"only\s+(?:the\s+)?json",
+            r"just\s+(?:the\s+)?json",
+            r"provide\s+only\s+(?:the\s+)?json",
+            r"output\s+only\s+(?:the\s+)?json",
+            r"no\s+(?:extra\s+)?(?:commentary|explanation|text)",
+            r"json\s+only",
+            r"nothing\s+else",
+            r"without\s+(?:any\s+)?(?:additional|extra)\s+(?:text|explanation)",
+        ]
+        
+        is_strict = any(re.search(p, query_lower) for p in strict_patterns)
+        
         for fmt, indicators in format_indicators.items():
             if any(ind in query_lower for ind in indicators):
+                if is_strict:
+                    return f"{fmt}_strict"  # e.g., "json_strict"
                 return fmt
         
         return None
@@ -1213,9 +1233,23 @@ Output ONLY the clarified query, nothing else."""
         if analysis.output_format:
             additions.append(f"Output format: {analysis.output_format}")
         
-        # Add recent history summary
-        if history and len(history) > 2:
-            additions.append("Conversation continues from previous context")
+        # Add recent history context - CRITICAL for multi-turn conversations
+        if history and len(history) >= 1:
+            # Summarize key facts from history that might be needed
+            history_summary_parts = []
+            for msg in history[-6:]:  # Last 6 messages for context
+                role = msg.get("role", "user")
+                content = msg.get("content", "")[:300]  # Limit each message
+                if role == "user":
+                    history_summary_parts.append(f"User said: {content}")
+                elif role == "assistant":
+                    history_summary_parts.append(f"Assistant said: {content}")
+            
+            if history_summary_parts:
+                history_context = "\n".join(history_summary_parts)
+                additions.append(
+                    f"IMPORTANT - Previous conversation context (you MUST use this information):\n{history_context}"
+                )
         
         return additions
     

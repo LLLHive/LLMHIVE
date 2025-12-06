@@ -70,7 +70,8 @@ class RefinementConfig:
     output_format: OutputFormat = OutputFormat.PARAGRAPH
     tone: ToneStyle = ToneStyle.PROFESSIONAL
     audience: AudienceLevel = AudienceLevel.GENERAL
-    max_length: Optional[int] = None
+    max_length: Optional[int] = None  # Maximum characters
+    max_words: Optional[int] = None   # Maximum words
     include_confidence: bool = True
     include_citations: bool = True
     preserve_structure: bool = True
@@ -310,10 +311,17 @@ class AnswerRefiner:
             if verified_count > 0:
                 improvements_made.append(f"Integrated {verified_count} verification annotations")
         
-        # Step 7: Enforce length constraints
+        # Step 7: Enforce length constraints (characters)
         if config.max_length and len(styled) > config.max_length:
             styled = self._enforce_length(styled, config.max_length)
             improvements_made.append(f"Trimmed to max length {config.max_length}")
+        
+        # Step 7b: Enforce word limit constraints
+        if config.max_words:
+            word_count = len(styled.split())
+            if word_count > config.max_words:
+                styled = self._enforce_word_limit(styled, config.max_words)
+                improvements_made.append(f"Trimmed to max {config.max_words} words")
         
         # Step 8: Add tool sources if available
         if tool_results and config.include_sources:
@@ -785,7 +793,7 @@ Output ONLY the refined text, no commentary."""
         return ''
     
     def _enforce_length(self, content: str, max_length: int) -> str:
-        """Enforce maximum length constraint."""
+        """Enforce maximum character length constraint."""
         if len(content) <= max_length:
             return content
         
@@ -801,6 +809,28 @@ Output ONLY the refined text, no commentary."""
         
         if best_cut > max_length * 0.7:
             return truncated[:best_cut + 1] + "\n\n[Response truncated for length]"
+        
+        return truncated + "..."
+    
+    def _enforce_word_limit(self, content: str, max_words: int) -> str:
+        """Enforce maximum word count constraint."""
+        words = content.split()
+        if len(words) <= max_words:
+            return content
+        
+        # Truncate to max_words
+        truncated_words = words[:max_words]
+        truncated = ' '.join(truncated_words)
+        
+        # Try to end at sentence boundary
+        last_period = truncated.rfind('.')
+        last_question = truncated.rfind('?')
+        last_exclaim = truncated.rfind('!')
+        
+        best_cut = max(last_period, last_question, last_exclaim)
+        
+        if best_cut > len(truncated) * 0.7:
+            return truncated[:best_cut + 1]
         
         return truncated + "..."
     

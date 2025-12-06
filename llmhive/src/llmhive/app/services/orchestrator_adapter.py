@@ -1020,7 +1020,14 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             try:
                 # Detect output format from PromptOps analysis
                 output_format = OutputFormat.PARAGRAPH
+                is_strict_format = False
                 if prompt_spec and prompt_spec.analysis.output_format:
+                    fmt = prompt_spec.analysis.output_format
+                    # Check for strict format (e.g., "json_strict" means output ONLY JSON)
+                    if fmt.endswith("_strict"):
+                        is_strict_format = True
+                        fmt = fmt.replace("_strict", "")
+                    
                     format_map = {
                         "json": OutputFormat.JSON,
                         "markdown": OutputFormat.MARKDOWN,
@@ -1028,10 +1035,27 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         "list": OutputFormat.BULLET,
                         "table": OutputFormat.TABLE,
                     }
-                    output_format = format_map.get(
-                        prompt_spec.analysis.output_format,
-                        OutputFormat.PARAGRAPH
-                    )
+                    output_format = format_map.get(fmt, OutputFormat.PARAGRAPH)
+                    
+                    # For strict JSON, extract only the JSON from the response
+                    if is_strict_format and fmt == "json":
+                        import re
+                        # Find JSON object or array in the response
+                        json_match = re.search(r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\])', final_text, re.DOTALL)
+                        if json_match:
+                            final_text = json_match.group(1)
+                            logger.info("Strict JSON format: extracted JSON from response")
+                
+                # Extract word limit from constraints if specified
+                max_words = None
+                if prompt_spec and prompt_spec.analysis.constraints:
+                    for constraint in prompt_spec.analysis.constraints:
+                        if "Maximum" in constraint and "words" in constraint:
+                            import re
+                            match = re.search(r'Maximum\s+(\d+)\s+words', constraint)
+                            if match:
+                                max_words = int(match.group(1))
+                                logger.info(f"Word limit detected: {max_words} words")
                 
                 refiner_config = RefinementConfig(
                     output_format=output_format,
@@ -1039,6 +1063,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     include_confidence=accuracy_level >= 4,
                     include_citations=accuracy_level >= 3,
                     preserve_structure=True,
+                    max_words=max_words,
                 )
                 
                 refiner = AnswerRefiner(providers=_orchestrator.providers)
