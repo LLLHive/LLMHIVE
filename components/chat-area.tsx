@@ -348,13 +348,20 @@ export function ChatArea({
   }
 
   const handleSend = async (skipClarification: boolean = false) => {
-    if (!input.trim() && attachments.length === 0) return
+    console.log("🔍 handleSend called:", { input, skipClarification, enableClarificationQuestions: orchestratorSettings.enableClarificationQuestions })
+    
+    if (!input.trim() && attachments.length === 0) {
+      console.log("⚠️ Empty input, returning early")
+      return
+    }
 
     // Check if clarification questions are enabled and not skipped
     if (orchestratorSettings.enableClarificationQuestions && !skipClarification && !pendingClarification) {
       const clarificationDecision = shouldAskClarification(input)
+      console.log("🔍 Clarification decision:", clarificationDecision)
       
       if (clarificationDecision.shouldAskClarification && clarificationDecision.questions.length > 0) {
+        console.log("✅ Showing clarification questions!")
         // Store the input and show clarification questions
         setPendingInput(input)
         setPendingClarification(clarificationDecision)
