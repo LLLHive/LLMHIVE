@@ -14,6 +14,7 @@ import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settings-storage"
 import { ROUTES } from "@/lib/routes"
+import { useAuth } from "@/lib/auth-context"
 
 // Card data matching home page template card style exactly
 const orchestrationCards = [
@@ -188,9 +189,9 @@ type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "stan
 
 export default function OrchestrationPage() {
   const router = useRouter()
+  const auth = useAuth()
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
 
   // State for all settings
@@ -327,7 +328,7 @@ export default function OrchestrationPage() {
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Desktop User Account Menu - Same as Home page */}
         <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
-          <UserAccountMenu user={user} onSignIn={() => {}} onSignOut={() => setUser(null)} />
+          <UserAccountMenu />
         </div>
 
         {/* Main Content in scrollable container */}

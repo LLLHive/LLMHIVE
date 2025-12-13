@@ -47,6 +47,10 @@ export const DEFAULT_ORCHESTRATOR_SETTINGS: OrchestratorSettings = {
     frequencyPenalty: 0,
     presencePenalty: 0,
   },
+  // UI/UX settings
+  enableSpellCheck: true, // Spell check enabled by default
+  answerFormat: "default", // Natural conversational format
+  enableClarificationQuestions: true, // Ask clarifying questions when needed
 }
 
 /**

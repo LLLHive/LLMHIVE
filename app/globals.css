@@ -276,3 +276,50 @@
   transition-duration: 120ms;
   transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
 }
+
+/* ===== APPEARANCE SETTINGS - Compact Mode ===== */
+.compact-mode {
+  --spacing-multiplier: 0.75;
+}
+
+.compact-mode .p-4 {
+  padding: 0.75rem !important;
+}
+
+.compact-mode .p-3 {
+  padding: 0.5rem !important;
+}
+
+.compact-mode .mb-4, .compact-mode .my-4 {
+  margin-bottom: 0.75rem !important;
+}
+
+.compact-mode .gap-4 {
+  gap: 0.75rem !important;
+}
+
+.compact-mode .gap-3 {
+  gap: 0.5rem !important;
+}
+
+.compact-mode .text-base {
+  font-size: 0.875rem !important;
+}
+
+.compact-mode .text-sm {
+  font-size: 0.75rem !important;
+}
+
+/* ===== APPEARANCE SETTINGS - Disable Animations ===== */
+.no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.no-animations .fade-in,
+.no-animations .slide-in,
+.no-animations .animate-pulse,
+.no-animations .animate-spin,
+.no-animations .animate-ping {
+  animation: none !important;
+}

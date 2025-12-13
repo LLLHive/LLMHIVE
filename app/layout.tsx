@@ -4,6 +4,9 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { AnalyticsWrapper } from "@/components/analytics"
 import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/lib/auth-context"
+import { AppearanceSettingsLoader } from "@/components/appearance-settings-loader"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -27,19 +30,29 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        {children}
-        <Toaster 
-          position="bottom-right"
-          closeButton
-          richColors
-          expand={false}
-          toastOptions={{
-            duration: 4000,
-          }}
-        />
-        <AnalyticsWrapper />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <AuthProvider>
+            <AppearanceSettingsLoader />
+            {children}
+            <Toaster 
+              position="bottom-right"
+              closeButton
+              richColors
+              expand={false}
+              toastOptions={{
+                duration: 4000,
+              }}
+            />
+            <AnalyticsWrapper />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

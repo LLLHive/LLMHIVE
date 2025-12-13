@@ -1,6 +1,7 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -12,6 +13,17 @@ import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save } 
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
+import { useAuth } from "@/lib/auth-context"
+import { toast } from "@/lib/toast"
+
+// LocalStorage keys for settings persistence
+const STORAGE_KEYS = {
+  APPEARANCE: "llmhive-appearance-settings",
+  NOTIFICATIONS: "llmhive-notification-settings",
+  PRIVACY: "llmhive-privacy-settings",
+  API_KEYS: "llmhive-api-keys",
+  CONNECTIONS: "llmhive-connections",
+}
 
 // Card data matching home page template card style exactly
 const settingsCards = [
@@ -100,37 +112,105 @@ type DrawerId = "account" | "api-keys" | "connections" | "notifications" | "priv
 
 export default function SettingsPage() {
   const router = useRouter()
+  const auth = useAuth()
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
 
-  // State for various settings
-  const [connectedKeys, setConnectedKeys] = useState<string[]>(["openai"])
-  const [connectedServices, setConnectedServices] = useState<string[]>(["github"])
-  const [enabledNotifications, setEnabledNotifications] = useState<string[]>(["email", "updates"])
-  const [privacySettings, setPrivacySettings] = useState<string[]>(["shareUsage"])
-  const [appearanceSettings, setAppearanceSettings] = useState<string[]>(["animations"])
-  const [selectedTheme, setSelectedTheme] = useState("dark")
+  // State for various settings - initialized from localStorage
+  const [connectedKeys, setConnectedKeys] = useState<string[]>([])
+  const [connectedServices, setConnectedServices] = useState<string[]>([])
+  const [enabledNotifications, setEnabledNotifications] = useState<string[]>([])
+  const [privacySettings, setPrivacySettings] = useState<string[]>([])
+  const [appearanceSettings, setAppearanceSettings] = useState<string[]>([])
+  
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    setMounted(true)
+    
+    // Load all settings from localStorage
+    try {
+      const savedAppearance = localStorage.getItem(STORAGE_KEYS.APPEARANCE)
+      const savedNotifications = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)
+      const savedPrivacy = localStorage.getItem(STORAGE_KEYS.PRIVACY)
+      const savedApiKeys = localStorage.getItem(STORAGE_KEYS.API_KEYS)
+      const savedConnections = localStorage.getItem(STORAGE_KEYS.CONNECTIONS)
+      
+      const parsedAppearance = savedAppearance ? JSON.parse(savedAppearance) : ["animations"]
+      setAppearanceSettings(parsedAppearance)
+      setEnabledNotifications(savedNotifications ? JSON.parse(savedNotifications) : ["email", "updates"])
+      setPrivacySettings(savedPrivacy ? JSON.parse(savedPrivacy) : ["shareUsage"])
+      setConnectedKeys(savedApiKeys ? JSON.parse(savedApiKeys) : ["openai"])
+      setConnectedServices(savedConnections ? JSON.parse(savedConnections) : ["github"])
+      
+      // Apply appearance settings on load
+      document.documentElement.classList.toggle('compact-mode', parsedAppearance.includes('compactMode'))
+      document.documentElement.classList.toggle('no-animations', !parsedAppearance.includes('animations'))
+    } catch (e) {
+      console.error("Failed to load settings:", e)
+      // Fallback to defaults
+      setAppearanceSettings(["animations"])
+      setEnabledNotifications(["email", "updates"])
+      setPrivacySettings(["shareUsage"])
+      setConnectedKeys(["openai"])
+      setConnectedServices(["github"])
+    }
+  }, [])
 
-  const toggleKey = (id: string) => {
-    setConnectedKeys((prev) => (prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]))
-  }
+  const toggleKey = useCallback((id: string) => {
+    setConnectedKeys((prev) => {
+      const next = prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]
+      localStorage.setItem(STORAGE_KEYS.API_KEYS, JSON.stringify(next))
+      toast.success(`API key ${prev.includes(id) ? 'removed' : 'added'}`)
+      return next
+    })
+  }, [])
 
-  const toggleService = (id: string) => {
-    setConnectedServices((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]))
-  }
+  const toggleService = useCallback((id: string) => {
+    setConnectedServices((prev) => {
+      const next = prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+      localStorage.setItem(STORAGE_KEYS.CONNECTIONS, JSON.stringify(next))
+      toast.success(`Service ${prev.includes(id) ? 'disconnected' : 'connected'}`)
+      return next
+    })
+  }, [])
 
-  const toggleNotification = (id: string) => {
-    setEnabledNotifications((prev) => (prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]))
-  }
+  const toggleNotification = useCallback((id: string) => {
+    setEnabledNotifications((prev) => {
+      const next = prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]
+      localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(next))
+      toast.success(`Notification setting updated`)
+      return next
+    })
+  }, [])
 
-  const togglePrivacy = (id: string) => {
-    setPrivacySettings((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
-  }
+  const togglePrivacy = useCallback((id: string) => {
+    setPrivacySettings((prev) => {
+      const next = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+      localStorage.setItem(STORAGE_KEYS.PRIVACY, JSON.stringify(next))
+      toast.success(`Privacy setting updated`)
+      return next
+    })
+  }, [])
 
-  const toggleAppearance = (id: string) => {
-    setAppearanceSettings((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]))
-  }
+  const toggleAppearance = useCallback((id: string) => {
+    setAppearanceSettings((prev) => {
+      const next = prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+      localStorage.setItem(STORAGE_KEYS.APPEARANCE, JSON.stringify(next))
+      
+      // Actually apply appearance settings
+      if (id === 'compactMode') {
+        document.documentElement.classList.toggle('compact-mode', !prev.includes(id))
+      }
+      if (id === 'animations') {
+        document.documentElement.classList.toggle('no-animations', prev.includes(id))
+      }
+      
+      toast.success(`${id === 'compactMode' ? 'Compact mode' : id === 'animations' ? 'Animations' : 'Sound effects'} ${prev.includes(id) ? 'disabled' : 'enabled'}`)
+      return next
+    })
+  }, [])
 
   const getCount = (id: string) => {
     switch (id) {
@@ -168,7 +248,7 @@ export default function SettingsPage() {
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
-          <UserAccountMenu user={user} onSignIn={() => {}} onSignOut={() => setUser(null)} />
+          <UserAccountMenu />
         </div>
 
         <div className="flex-1 h-full overflow-auto">
@@ -508,21 +588,28 @@ export default function SettingsPage() {
             <div className="p-4 space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Theme</Label>
-                <div className="flex gap-2">
-                  {["light", "dark", "system"].map((theme) => (
-                    <button
-                      key={theme}
-                      onClick={() => setSelectedTheme(theme)}
-                      className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
-                        selectedTheme === theme
-                          ? "border-[var(--bronze)] bg-[var(--bronze)]/10 text-[var(--bronze)]"
-                          : "border-border hover:border-[var(--bronze)]/50"
-                      }`}
-                    >
-                      {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                    </button>
-                  ))}
-                </div>
+                {mounted ? (
+                  <div className="flex gap-2">
+                    {["light", "dark", "system"].map((themeOption) => (
+                      <button
+                        key={themeOption}
+                        onClick={() => setTheme(themeOption)}
+                        className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
+                          theme === themeOption
+                            ? "border-[var(--bronze)] bg-[var(--bronze)]/10 text-[var(--bronze)]"
+                            : "border-border hover:border-[var(--bronze)]/50"
+                        }`}
+                      >
+                        {themeOption.charAt(0).toUpperCase() + themeOption.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-10 bg-secondary/50 animate-pulse rounded-lg" />
+                )}
+                <p className="text-[10px] text-muted-foreground">
+                  Currently: {mounted ? resolvedTheme : "loading..."}
+                </p>
               </div>
 
               <div className="space-y-2">

@@ -1,14 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Sidebar } from "./sidebar"
 import { ChatArea } from "./chat-area"
 import { HomeScreen } from "./home-screen"
 import { ArtifactPanel } from "./artifact-panel"
 import { UserAccountMenu } from "./user-account-menu"
 import { AdvancedSettingsDrawer } from "./advanced-settings-drawer"
+import { RenameChatModal } from "./rename-chat-modal"
+import { MoveToProjectModal } from "./move-to-project-modal"
+import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal"
 import { Button } from "@/components/ui/button"
-import { Menu } from "lucide-react"
+import { Menu, Keyboard } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import type { Conversation, Message, Artifact, Project, OrchestratorSettings } from "@/lib/types"
 import { 
@@ -16,8 +19,15 @@ import {
   saveOrchestratorSettings, 
   DEFAULT_ORCHESTRATOR_SETTINGS 
 } from "@/lib/settings-storage"
+import { useAuth } from "@/lib/auth-context"
+import { toast } from "@/lib/toast"
+
+// Storage keys
+const CONVERSATIONS_KEY = "llmhive-conversations"
+const PROJECTS_KEY = "llmhive-projects"
 
 export function ChatInterface() {
+  const auth = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [showArtifact, setShowArtifact] = useState(false)
@@ -25,18 +35,147 @@ export function ChatInterface() {
   const [projects, setProjects] = useState<Project[]>([])
   const [orchestratorSettings, setOrchestratorSettings] = useState<OrchestratorSettings>(DEFAULT_ORCHESTRATOR_SETTINGS)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
-  
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    const savedSettings = loadOrchestratorSettings()
-    setOrchestratorSettings(savedSettings)
-    setSettingsLoaded(true)
-  }, [])
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  // TODO: Wire this to your auth system (GITHUB_ID/GITHUB_SECRET, AUTH_SECRET)
-  const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
+  
+  // Rename modal state
+  const [showRenameModal, setShowRenameModal] = useState(false)
+  const [renameConversationId, setRenameConversationId] = useState<string | null>(null)
+  
+  // Move to project modal state
+  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [moveConversationId, setMoveConversationId] = useState<string | null>(null)
+  
+  // Keyboard shortcuts modal state
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false)
+  
+  // Load settings and data from localStorage on mount
+  useEffect(() => {
+    const savedSettings = loadOrchestratorSettings()
+    setOrchestratorSettings(savedSettings)
+    
+    // Load conversations
+    try {
+      const savedConversations = localStorage.getItem(CONVERSATIONS_KEY)
+      if (savedConversations) {
+        const parsed = JSON.parse(savedConversations)
+        // Restore Date objects
+        const restored = parsed.map((c: any) => ({
+          ...c,
+          createdAt: new Date(c.createdAt),
+          updatedAt: new Date(c.updatedAt),
+          messages: c.messages.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+          })),
+        }))
+        setConversations(restored)
+      }
+    } catch (e) {
+      console.error("Failed to load conversations:", e)
+    }
+    
+    // Load projects
+    try {
+      const savedProjects = localStorage.getItem(PROJECTS_KEY)
+      if (savedProjects) {
+        const parsed = JSON.parse(savedProjects)
+        const restored = parsed.map((p: any) => ({
+          ...p,
+          createdAt: new Date(p.createdAt),
+        }))
+        setProjects(restored)
+      }
+    } catch (e) {
+      console.error("Failed to load projects:", e)
+    }
+    
+    setSettingsLoaded(true)
+  }, [])
+  
+  // Persist conversations when they change
+  useEffect(() => {
+    if (settingsLoaded && conversations.length > 0) {
+      try {
+        localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations))
+      } catch (e) {
+        console.error("Failed to save conversations:", e)
+      }
+    }
+  }, [conversations, settingsLoaded])
+  
+  // Persist projects when they change
+  useEffect(() => {
+    if (settingsLoaded) {
+      try {
+        localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects))
+      } catch (e) {
+        console.error("Failed to save projects:", e)
+      }
+    }
+  }, [projects, settingsLoaded])
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0
+      const cmdKey = isMac ? e.metaKey : e.ctrlKey
+      
+      // Don't trigger in input fields except for specific shortcuts
+      const target = e.target as HTMLElement
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable
+      
+      // Cmd/Ctrl + N: New chat
+      if (cmdKey && e.key === "n" && !e.shiftKey) {
+        e.preventDefault()
+        handleNewChat()
+        toast.info("New chat created")
+        return
+      }
+      
+      // Cmd/Ctrl + /: Show shortcuts
+      if (cmdKey && e.key === "/") {
+        e.preventDefault()
+        setShowShortcutsModal(true)
+        return
+      }
+      
+      // Escape: Close modals
+      if (e.key === "Escape") {
+        if (showShortcutsModal) {
+          setShowShortcutsModal(false)
+          return
+        }
+        if (showRenameModal) {
+          setShowRenameModal(false)
+          return
+        }
+        if (showMoveModal) {
+          setShowMoveModal(false)
+          return
+        }
+        if (showAdvancedSettings) {
+          setShowAdvancedSettings(false)
+          return
+        }
+        if (showArtifact) {
+          setShowArtifact(false)
+          return
+        }
+      }
+      
+      // Cmd/Ctrl + ,: Open settings
+      if (cmdKey && e.key === "," && !isInput) {
+        e.preventDefault()
+        setShowAdvancedSettings(true)
+        return
+      }
+    }
+    
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [showShortcutsModal, showRenameModal, showMoveModal, showAdvancedSettings, showArtifact])
 
   const currentConversation = conversations.find((c) => c.id === currentConversationId)
 
@@ -124,17 +263,57 @@ export function ChatInterface() {
   }
 
   const handleMoveToProject = (conversationId: string, projectId: string) => {
-    // TODO: Implement move to project logic with your backend
-    console.log(`Moving conversation ${conversationId} to project ${projectId}`)
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId) {
+          // Add conversation to project if not already there
+          if (!project.conversations.includes(conversationId)) {
+            return { ...project, conversations: [...project.conversations, conversationId] }
+          }
+        } else {
+          // Remove from other projects
+          return { ...project, conversations: project.conversations.filter((id) => id !== conversationId) }
+        }
+        return project
+      })
+    )
+    toast.success("Moved to project successfully")
+    setShowMoveModal(false)
+    setMoveConversationId(null)
   }
 
-  const handleSignIn = () => {
-    // TODO: Integrate with your GitHub OAuth using GITHUB_ID/GITHUB_SECRET
-    console.log("Sign in triggered")
+  const handleOpenMoveModal = (conversationId: string) => {
+    setMoveConversationId(conversationId)
+    setShowMoveModal(true)
   }
 
-  const handleSignOut = () => {
-    setUser(null)
+  const handleOpenRenameModal = (conversationId: string) => {
+    setRenameConversationId(conversationId)
+    setShowRenameModal(true)
+  }
+
+  const handleCreateProject = (project: Omit<Project, "id" | "createdAt">) => {
+    const newProject: Project = {
+      ...project,
+      id: `project-${Date.now()}`,
+      createdAt: new Date(),
+    }
+    setProjects((prev) => [...prev, newProject])
+    toast.success(`Project "${newProject.name}" created`)
+  }
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects((prev) => prev.filter((p) => p.id !== projectId))
+    toast.info("Project deleted")
+  }
+
+  const handleSelectProject = (projectId: string) => {
+    const project = projects.find((p) => p.id === projectId)
+    if (project && project.conversations.length > 0) {
+      // Select the first conversation in the project
+      setCurrentConversationId(project.conversations[0])
+      toast.info(`Viewing project: ${project.name}`)
+    }
   }
 
   const handleGoHome = () => {
@@ -161,12 +340,15 @@ export function ChatInterface() {
       onSelectConversation={handleSelectConversation}
       onDeleteConversation={handleDeleteConversation}
       onTogglePin={handleTogglePin}
-      onRenameConversation={handleRenameConversation}
-      onMoveToProject={handleMoveToProject}
+      onRenameConversation={handleOpenRenameModal}
+      onMoveToProject={handleOpenMoveModal}
       projects={projects}
       collapsed={sidebarCollapsed}
       onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       onGoHome={handleGoHome}
+      onCreateProject={handleCreateProject}
+      onDeleteProject={handleDeleteProject}
+      onSelectProject={handleSelectProject}
     />
   )
 
@@ -191,12 +373,15 @@ export function ChatInterface() {
               onSelectConversation={handleSelectConversation}
               onDeleteConversation={handleDeleteConversation}
               onTogglePin={handleTogglePin}
-              onRenameConversation={handleRenameConversation}
-              onMoveToProject={handleMoveToProject}
+              onRenameConversation={handleOpenRenameModal}
+              onMoveToProject={handleOpenMoveModal}
               projects={projects}
               collapsed={false}
               onToggleCollapse={() => {}}
               onGoHome={handleGoHome}
+              onCreateProject={handleCreateProject}
+              onDeleteProject={handleDeleteProject}
+              onSelectProject={handleSelectProject}
             />
           </SheetContent>
         </Sheet>
@@ -205,7 +390,7 @@ export function ChatInterface() {
           LLMHive
         </span>
 
-        <UserAccountMenu user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+        <UserAccountMenu />
       </div>
 
       {/* Main Content */}
@@ -214,7 +399,7 @@ export function ChatInterface() {
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Desktop User Account Menu */}
             <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
-              <UserAccountMenu user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+              <UserAccountMenu />
             </div>
             <div className="flex-1 h-full overflow-auto">
               <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
@@ -234,7 +419,7 @@ export function ChatInterface() {
               onOpenAdvancedSettings={() => setShowAdvancedSettings(true)}
               userAccountMenu={
                 <div className="hidden md:block">
-                  <UserAccountMenu user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+                  <UserAccountMenu />
                 </div>
               }
             />
@@ -251,6 +436,49 @@ export function ChatInterface() {
         onOpenChange={setShowAdvancedSettings}
         settings={orchestratorSettings}
         onSettingsChange={updateOrchestratorSettings}
+      />
+
+      {/* Rename Chat Modal */}
+      <RenameChatModal
+        open={showRenameModal}
+        onOpenChange={setShowRenameModal}
+        currentTitle={conversations.find((c) => c.id === renameConversationId)?.title ?? ""}
+        onRename={(newTitle) => {
+          if (renameConversationId) {
+            handleRenameConversation(renameConversationId, newTitle)
+            toast.success("Chat renamed successfully")
+          }
+          setShowRenameModal(false)
+          setRenameConversationId(null)
+        }}
+      />
+
+      {/* Move to Project Modal */}
+      <MoveToProjectModal
+        open={showMoveModal}
+        onOpenChange={setShowMoveModal}
+        projects={projects}
+        onMove={(projectId) => {
+          if (moveConversationId) {
+            handleMoveToProject(moveConversationId, projectId)
+          }
+        }}
+        onCreateProject={() => {
+          setShowMoveModal(false)
+          // Create a default project and then re-open
+          handleCreateProject({
+            name: "New Project",
+            description: "Created from move dialog",
+            conversations: moveConversationId ? [moveConversationId] : [],
+            files: [],
+          })
+        }}
+      />
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        open={showShortcutsModal}
+        onOpenChange={setShowShortcutsModal}
       />
     </div>
   )

@@ -2,9 +2,16 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Maximize2, Code, Share2, Eye, EyeOff } from "lucide-react"
+import { Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Maximize2, Code, Share2, Eye, EyeOff, Twitter, Link, MessageSquare } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { Message, Artifact } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { toast } from "@/lib/toast"
 
 interface MessageBubbleProps {
   message: Message
@@ -12,6 +19,7 @@ interface MessageBubbleProps {
   onShowInsights: () => void
   incognitoMode: boolean
   onToggleIncognito: () => void
+  onRegenerate?: () => void
 }
 
 export function MessageBubble({
@@ -20,25 +28,58 @@ export function MessageBubble({
   onShowInsights,
   incognitoMode,
   onToggleIncognito,
+  onRegenerate,
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
   const [liked, setLiked] = useState(false)
   const [disliked, setDisliked] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content)
     setCopied(true)
+    toast.success("Copied to clipboard")
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handleLike = () => {
     setLiked(!liked)
     if (disliked) setDisliked(false)
+    if (!liked) {
+      toast.success("Thanks for your feedback!")
+    }
   }
 
   const handleDislike = () => {
     setDisliked(!disliked)
     if (liked) setLiked(false)
+    if (!disliked) {
+      toast.info("We'll work on improving this")
+    }
+  }
+  
+  const handleRegenerate = () => {
+    if (onRegenerate) {
+      setIsRegenerating(true)
+      onRegenerate()
+      setTimeout(() => setIsRegenerating(false), 500)
+    } else {
+      toast.info("Regeneration not available for this message")
+    }
+  }
+  
+  const handleShare = async (method: 'copy-link' | 'twitter') => {
+    const text = message.content.slice(0, 280)
+    
+    if (method === 'copy-link') {
+      // Create a shareable format
+      const shareText = `LLMHive Response:\n\n${message.content}`
+      await navigator.clipboard.writeText(shareText)
+      toast.success("Response copied for sharing")
+    } else if (method === 'twitter') {
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}%0A%0A—%20via%20LLMHive`
+      window.open(twitterUrl, '_blank', 'width=550,height=420')
+    }
   }
 
   if (message.role === "user") {
@@ -171,14 +212,21 @@ export function MessageBubble({
         </div>
 
         <div className="flex items-center gap-1 mt-2">
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCopy}>
-            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="h-7 w-7" 
+            onClick={handleCopy}
+            title="Copy response"
+          >
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
           </Button>
           <Button
             size="icon"
             variant="ghost"
             className={cn("h-7 w-7", liked && "text-[var(--bronze)]")}
             onClick={handleLike}
+            title="Good response"
           >
             <ThumbsUp className="h-3 w-3" />
           </Button>
@@ -187,15 +235,40 @@ export function MessageBubble({
             variant="ghost"
             className={cn("h-7 w-7", disliked && "text-destructive")}
             onClick={handleDislike}
+            title="Poor response"
           >
             <ThumbsDown className="h-3 w-3" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7">
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className={cn("h-7 w-7", isRegenerating && "animate-spin")}
+            onClick={handleRegenerate}
+            title="Regenerate response"
+            disabled={isRegenerating}
+          >
             <RefreshCw className="h-3 w-3" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7">
-            <Share2 className="h-3 w-3" />
-          </Button>
+          
+          {/* Share dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-7 w-7" title="Share response">
+                <Share2 className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-40">
+              <DropdownMenuItem onClick={() => handleShare('copy-link')} className="gap-2 cursor-pointer">
+                <Link className="h-3 w-3" />
+                <span className="text-xs">Copy to share</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShare('twitter')} className="gap-2 cursor-pointer">
+                <Twitter className="h-3 w-3" />
+                <span className="text-xs">Share on X</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           {message.agents && message.agents.length > 0 && (
             <Button size="sm" variant="ghost" className="h-7 gap-1 hover:text-[var(--bronze)]" onClick={onShowInsights}>
               <Eye className="h-3 w-3" />

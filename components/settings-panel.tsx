@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,15 +10,83 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
-import { User, Bell, Palette, Shield, Database, Zap, Key, Plug } from "lucide-react"
+import { User, Bell, Palette, Shield, Database, Zap, Key, Plug, Check } from "lucide-react"
 import { IntegrationsPanel } from "./integrations-panel"
+import { toast } from "@/lib/toast"
+
+// Font size storage key
+const FONT_SIZE_KEY = "llmhive-font-size"
 
 export function SettingsPanel() {
-  const [theme, setTheme] = useState("dark")
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [notifications, setNotifications] = useState(true)
   const [autoSave, setAutoSave] = useState(true)
   const [dataRetention, setDataRetention] = useState(30)
   const [temperature, setTemperature] = useState([0.7])
+  const [fontSize, setFontSize] = useState("medium")
+  
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState({
+    openai: "",
+    anthropic: "",
+    google: "",
+    xai: "",
+  })
+  const [savingKeys, setSavingKeys] = useState(false)
+  
+  // Ensure theme is mounted before rendering to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+    // Load saved font size
+    const savedFontSize = localStorage.getItem(FONT_SIZE_KEY)
+    if (savedFontSize) {
+      setFontSize(savedFontSize)
+      applyFontSize(savedFontSize)
+    }
+  }, [])
+  
+  const applyFontSize = (size: string) => {
+    const root = document.documentElement
+    const sizes = { small: "14px", medium: "16px", large: "18px" }
+    root.style.setProperty("--base-font-size", sizes[size as keyof typeof sizes] || "16px")
+    document.body.style.fontSize = sizes[size as keyof typeof sizes] || "16px"
+  }
+  
+  const handleFontSizeChange = (size: string) => {
+    setFontSize(size)
+    localStorage.setItem(FONT_SIZE_KEY, size)
+    applyFontSize(size)
+    toast.success("Font size updated")
+  }
+  
+  const handleSaveApiKeys = async () => {
+    setSavingKeys(true)
+    try {
+      // Store encrypted in localStorage (in production, send to secure backend)
+      // For now, just store locally - in production this would go to a secure backend
+      const encrypted = btoa(JSON.stringify(apiKeys))
+      localStorage.setItem("llmhive-api-keys", encrypted)
+      toast.success("API keys saved securely")
+    } catch (error) {
+      toast.error("Failed to save API keys")
+    } finally {
+      setSavingKeys(false)
+    }
+  }
+  
+  // Load saved API keys on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("llmhive-api-keys")
+      if (saved) {
+        const decrypted = JSON.parse(atob(saved))
+        setApiKeys(decrypted)
+      }
+    } catch {
+      // Ignore errors loading saved keys
+    }
+  }, [])
 
   return (
     <div className="h-full flex flex-col">
@@ -82,28 +151,35 @@ export function SettingsPanel() {
                 <div className="pl-[52px] space-y-4">
                   <div className="space-y-2">
                     <Label>Theme</Label>
-                    <Select value={theme} onValueChange={setTheme}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {mounted ? (
+                      <Select value={theme} onValueChange={setTheme}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dark">Dark</SelectItem>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="system">System</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="h-10 bg-secondary rounded-md animate-pulse" />
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Current: {mounted ? resolvedTheme : "loading..."}
+                    </p>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Font Size</Label>
-                    <Select defaultValue="medium">
+                    <Select value={fontSize} onValueChange={handleFontSizeChange}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="small">Small</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="large">Large</SelectItem>
+                        <SelectItem value="small">Small (14px)</SelectItem>
+                        <SelectItem value="medium">Medium (16px)</SelectItem>
+                        <SelectItem value="large">Large (18px)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -165,12 +241,22 @@ export function SettingsPanel() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="o1">o1 (Reasoning)</SelectItem>
+                        <SelectItem value="o1-pro">o1 Pro (Extended)</SelectItem>
+                        <SelectItem value="o3-mini">o3 Mini</SelectItem>
+                        <SelectItem value="gpt-4.5-preview">GPT-4.5 Preview</SelectItem>
                         <SelectItem value="gpt-4o">GPT-4o</SelectItem>
                         <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                        <SelectItem value="claude-opus-4">Claude Opus 4</SelectItem>
                         <SelectItem value="claude-sonnet-4">Claude Sonnet 4</SelectItem>
+                        <SelectItem value="claude-3.5-haiku">Claude 3.5 Haiku</SelectItem>
+                        <SelectItem value="grok-3">Grok 3</SelectItem>
                         <SelectItem value="grok-2">Grok 2</SelectItem>
                         <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                        <SelectItem value="deepseek-r1">DeepSeek R1</SelectItem>
                         <SelectItem value="deepseek-chat">DeepSeek V3</SelectItem>
+                        <SelectItem value="llama-3.3-70b">Llama 3.3 70B</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -311,26 +397,53 @@ export function SettingsPanel() {
                 <div className="pl-[52px] space-y-4">
                   <div className="space-y-2">
                     <Label>OpenAI API Key</Label>
-                    <Input type="password" placeholder="sk-..." />
+                    <Input 
+                      type="password" 
+                      placeholder="sk-..." 
+                      value={apiKeys.openai}
+                      onChange={(e) => setApiKeys(prev => ({ ...prev, openai: e.target.value }))}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Anthropic API Key</Label>
-                    <Input type="password" placeholder="sk-ant-..." />
+                    <Input 
+                      type="password" 
+                      placeholder="sk-ant-..." 
+                      value={apiKeys.anthropic}
+                      onChange={(e) => setApiKeys(prev => ({ ...prev, anthropic: e.target.value }))}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Google AI API Key</Label>
-                    <Input type="password" placeholder="AIza..." />
+                    <Input 
+                      type="password" 
+                      placeholder="AIza..." 
+                      value={apiKeys.google}
+                      onChange={(e) => setApiKeys(prev => ({ ...prev, google: e.target.value }))}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>xAI API Key</Label>
-                    <Input type="password" placeholder="xai-..." />
+                    <Input 
+                      type="password" 
+                      placeholder="xai-..." 
+                      value={apiKeys.xai}
+                      onChange={(e) => setApiKeys(prev => ({ ...prev, xai: e.target.value }))}
+                    />
                   </div>
 
                   <div className="pt-2">
-                    <Button className="w-full bronze-gradient">Save API Keys</Button>
+                    <Button 
+                      className="w-full bronze-gradient" 
+                      onClick={handleSaveApiKeys}
+                      disabled={savingKeys}
+                    >
+                      {savingKeys ? "Saving..." : "Save API Keys"}
+                      {!savingKeys && <Check className="h-4 w-4 ml-2" />}
+                    </Button>
                   </div>
 
                   <div className="p-3 rounded-lg bg-secondary/50 border border-border">

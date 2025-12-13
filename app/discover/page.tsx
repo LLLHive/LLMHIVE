@@ -24,6 +24,7 @@ import {
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
+import { useAuth } from "@/lib/auth-context"
 
 // Card data matching home page template card style
 const discoverCards = [
@@ -73,12 +74,12 @@ type DrawerId = "web-search" | "knowledge-base" | "ai-templates" | null
 
 export default function DiscoverPage() {
   const router = useRouter()
+  const auth = useAuth()
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([])
-  const [user, setUser] = useState<{ name?: string; email?: string; image?: string } | null>(null)
 
   const toggleCategory = (id: string) => {
     setSelectedCategories((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
@@ -119,7 +120,7 @@ export default function DiscoverPage() {
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Desktop User Account Menu - Same as Home page */}
         <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
-          <UserAccountMenu user={user} onSignIn={() => {}} onSignOut={() => setUser(null)} />
+          <UserAccountMenu />
         </div>
 
         {/* Main Content in scrollable container */}

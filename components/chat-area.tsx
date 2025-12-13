@@ -5,14 +5,19 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Paperclip, Mic, X, ImageIcon, FileText, RefreshCw, AlertCircle, Sparkles, Brain, Code, Briefcase } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Send, Paperclip, Mic, MicOff, X, ImageIcon, FileText, RefreshCw, AlertCircle, Sparkles, Brain, Code, Briefcase, Camera, Volume2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
 import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
 import { toast } from "@/lib/toast"
+import { processImageForOCR } from "@/lib/ocr"
+import { voiceRecognition } from "@/lib/voice"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { Skeleton } from "@/components/loading-skeleton"
-import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType } from "@/lib/types"
+import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType, ClarificationQuestion } from "@/lib/types"
+import { shouldAskClarification, formatClarificationMessage, type ClarificationDecision } from "@/lib/answer-quality/clarification-detector"
+import { analyzeQuery } from "@/lib/answer-quality/prompt-optimizer"
 import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
@@ -67,6 +72,11 @@ export function ChatArea({
   const [isLoading, setIsLoading] = useState(false)
   const [retryStatus, setRetryStatus] = useState<RetryStatus | null>(null)
   const [errorState, setErrorState] = useState<ErrorState>({ hasError: false, message: "", canRetry: false })
+  
+  // Clarification questions state
+  const [pendingClarification, setPendingClarification] = useState<ClarificationDecision | null>(null)
+  const [pendingInput, setPendingInput] = useState<string>("")
+  
   const [orchestrationStatus, setOrchestrationStatus] = useState<OrchestrationStatus>({
     isActive: false,
     currentStep: "",
@@ -76,8 +86,127 @@ export function ChatArea({
   const [lastModelsUsed, setLastModelsUsed] = useState<string[]>([])
   const [lastTokensUsed, setLastTokensUsed] = useState<number>(0)
   const [lastLatencyMs, setLastLatencyMs] = useState<number>(0)
+  const [isListening, setIsListening] = useState(false)
+  const [speechSupported, setSpeechSupported] = useState(false)
+  const [audioLevel, setAudioLevel] = useState(0)
+  const [interimTranscript, setInterimTranscript] = useState("")
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const eventIdRef = useRef(0)
+  
+  // Check for speech recognition support
+  useEffect(() => {
+    setSpeechSupported(voiceRecognition.supported)
+  }, [])
+  
+  // Enhanced voice recording with audio level visualization
+  const toggleVoiceRecording = useCallback(() => {
+    if (!voiceRecognition.supported) {
+      toast.error("Voice input not supported. Your browser doesn't support speech recognition.")
+      return
+    }
+    
+    if (isListening) {
+      voiceRecognition.stop()
+      setIsListening(false)
+      setAudioLevel(0)
+      setInterimTranscript("")
+      toast.success("Voice recording stopped")
+    } else {
+      voiceRecognition.start({
+        continuous: true,
+        interimResults: true,
+        onStart: () => {
+          setIsListening(true)
+          toast.info("🎤 Listening... Speak now")
+        },
+        onResult: (transcript, isFinal) => {
+          if (isFinal) {
+            setInput(prev => prev + transcript + ' ')
+            setInterimTranscript("")
+          } else {
+            setInterimTranscript(transcript)
+          }
+        },
+        onError: (error) => {
+          toast.error(error)
+          setIsListening(false)
+          setAudioLevel(0)
+        },
+        onEnd: () => {
+          setIsListening(false)
+          setAudioLevel(0)
+          setInterimTranscript("")
+        },
+        onAudioLevel: (level) => {
+          setAudioLevel(level)
+        },
+      })
+    }
+  }, [isListening])
+  
+  // Enhanced OCR processing for images using our OCR utility
+  const processImageWithOCR = useCallback(async (file: File): Promise<{ dataUrl: string; prompt: string } | null> => {
+    try {
+      setIsProcessingOCR(true)
+      
+      const toastId = toast.loading("Analyzing image...")
+      
+      // Use our enhanced OCR utility
+      const result = await processImageForOCR(file)
+      
+      toast.dismiss(toastId)
+      
+      if (result.analysis.hasText) {
+        toast.success(`Image processed (${result.analysis.width}x${result.analysis.height}px)`)
+      } else {
+        toast.info("Image processed. Note: Limited text detected.")
+      }
+      
+      return {
+        dataUrl: result.processedDataUrl,
+        prompt: result.suggestedPrompt,
+      }
+    } catch (error) {
+      console.error('OCR processing error:', error)
+      toast.error("Failed to process image for OCR")
+      return null
+    } finally {
+      setIsProcessingOCR(false)
+    }
+  }, [])
+  
+  const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    
+    const file = files[0]
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please capture an image")
+      return
+    }
+    
+    // Process with OCR
+    const result = await processImageWithOCR(file)
+    if (result) {
+      // Add the image as an attachment
+      const newAttachment: Attachment = {
+        id: `att-${Date.now()}-${Math.random()}`,
+        name: file.name || "Camera capture",
+        type: file.type,
+        size: file.size,
+        url: result.dataUrl,
+      }
+      setAttachments(prev => [...prev, newAttachment])
+      
+      // Add the suggested OCR prompt if no input yet
+      if (input.trim() === '') {
+        setInput(result.prompt)
+      }
+      toast.success("📷 Image captured and analyzed")
+    }
+  }
 
   // Use models from orchestrator settings - sync with settings
   const selectedModels = orchestratorSettings.selectedModels || ["automatic"]
@@ -218,8 +347,42 @@ export function ChatArea({
     setAttachments(attachments.filter((att) => att.id !== id))
   }
 
-  const handleSend = async () => {
+  const handleSend = async (skipClarification: boolean = false) => {
     if (!input.trim() && attachments.length === 0) return
+
+    // Check if clarification questions are enabled and not skipped
+    if (orchestratorSettings.enableClarificationQuestions && !skipClarification && !pendingClarification) {
+      const clarificationDecision = shouldAskClarification(input)
+      
+      if (clarificationDecision.shouldAskClarification && clarificationDecision.questions.length > 0) {
+        // Store the input and show clarification questions
+        setPendingInput(input)
+        setPendingClarification(clarificationDecision)
+        
+        // Show clarification message from AI
+        const clarificationMessage: Message = {
+          id: `msg-${Date.now()}`,
+          role: "assistant",
+          content: formatClarificationMessage(clarificationDecision),
+          timestamp: new Date(),
+          isClarificationRequest: true,
+        }
+        onSendMessage({ 
+          id: `msg-${Date.now()}-user`,
+          role: "user",
+          content: input,
+          timestamp: new Date(),
+        })
+        onSendMessage(clarificationMessage)
+        setInput("")
+        toast.info("I have a few clarifying questions to better help you.")
+        return
+      }
+    }
+    
+    // Clear any pending clarification
+    setPendingClarification(null)
+    setPendingInput("")
 
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -366,28 +529,28 @@ export function ChatArea({
       if (error instanceof TimeoutError) {
         errorContent = `The request timed out${retryInfo}. The backend may be overloaded. Please try again later.`
         errorDetail = `Request timed out${retryInfo}`
-        toast.timeout()
+        toast.warning("Request timed out")
       } else if (error instanceof NetworkError) {
         errorContent = `Unable to connect to the server${retryInfo}. Please check your connection and try again.`
         errorDetail = `Network error${retryInfo}`
-        toast.networkError()
+        toast.error("Network error")
       } else if (error instanceof ApiError) {
         if (error.retriesExhausted) {
           errorContent = `The server is currently unavailable${retryInfo}. Please try again later.`
           errorDetail = `Server error: ${error.status}${retryInfo}`
-          toast.apiError({ status: error.status, message: error.message })
+          toast.error(`API Error (${error.status}): ${error.message}`)
         } else if (error.status === 401 || error.status === 403) {
           errorContent = `Authentication error: ${error.message}`
           errorDetail = `Auth error: ${error.status}`
           canRetry = false
-          toast.apiError({ status: error.status, message: error.message })
+          toast.error(`API Error (${error.status}): ${error.message}`)
         } else {
           errorContent = `I encountered an error: ${error.message}`
           errorDetail = `API error: ${error.status}`
-          toast.apiError({ status: error.status, message: error.message })
+          toast.error(`API Error (${error.status}): ${error.message}`)
         }
       } else {
-        toast.error("An unexpected error occurred", { description: "Please try again." })
+        toast.error("An unexpected error occurred. Please try again.")
       }
 
       // Store error state for retry button
@@ -529,7 +692,7 @@ export function ChatArea({
                 onClick={() => {
                   setInput(errorState.lastInput || "")
                   setErrorState({ hasError: false, message: "", canRetry: false })
-                  toast.info("Ready to retry", { description: "Click send to try again." })
+                  toast.info("Ready to retry. Click send to try again.")
                 }}
               >
                 <RefreshCw className="h-4 w-4" />
@@ -576,6 +739,27 @@ export function ChatArea({
             </div>
           )}
 
+          {/* Voice interim transcript display */}
+          {isListening && interimTranscript && (
+            <div className="mb-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20 animate-in fade-in-0 slide-in-from-bottom-2">
+              <div className="flex items-center gap-2 text-xs text-red-500">
+                <Volume2 className="h-3 w-3 animate-pulse" />
+                <span className="italic">{interimTranscript}</span>
+              </div>
+            </div>
+          )}
+
+          {/* OCR processing indicator */}
+          {isProcessingOCR && (
+            <div className="mb-2 p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="flex items-center gap-2 text-xs text-blue-500">
+                <ImageIcon className="h-3 w-3 animate-pulse" />
+                <span>Analyzing image...</span>
+                <Progress value={undefined} className="w-20 h-1" />
+              </div>
+            </div>
+          )}
+
           <div className="relative">
             <Textarea
               value={input}
@@ -586,8 +770,13 @@ export function ChatArea({
                   handleSend()
                 }
               }}
-              placeholder="Ask the hive mind anything..."
-              className="min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)] text-sm md:text-base"
+              placeholder={isListening ? "Listening... speak now" : "Ask the hive mind anything..."}
+              className={`min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)] text-sm md:text-base ${
+                isListening ? 'border-red-500/50 ring-1 ring-red-500/20' : ''
+              }`}
+              spellCheck={orchestratorSettings.enableSpellCheck !== false}
+              autoComplete="on"
+              autoCorrect="on"
             />
             <div className="absolute bottom-2 md:bottom-2.5 right-2 md:right-2.5 flex items-center gap-1 md:gap-1.5">
               <input
@@ -598,20 +787,66 @@ export function ChatArea({
                 onChange={handleFileSelect}
                 className="hidden"
               />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCameraCapture}
+                className="hidden"
+              />
               <Button
                 size="icon"
                 variant="ghost"
                 className="h-7 w-7 md:h-8 md:w-8"
                 onClick={() => fileInputRef.current?.click()}
+                title="Attach file"
               >
                 <Paperclip className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7 md:h-8 md:w-8">
-                <Mic className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 md:h-8 md:w-8"
+                onClick={() => cameraInputRef.current?.click()}
+                title="Capture image for OCR"
+              >
+                <Camera className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
+              {/* Voice input button with audio level indicator */}
+              <div className="relative">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className={`h-7 w-7 md:h-8 md:w-8 transition-all duration-200 ${
+                    isListening 
+                      ? 'bg-red-500/20 text-red-500' 
+                      : ''
+                  }`}
+                  onClick={toggleVoiceRecording}
+                  disabled={!speechSupported}
+                  title={isListening ? "Stop listening" : "Voice input"}
+                  style={isListening ? {
+                    boxShadow: `0 0 ${Math.round(audioLevel * 20)}px ${Math.round(audioLevel * 10)}px rgba(239, 68, 68, ${audioLevel * 0.5})`
+                  } : {}}
+                >
+                  {isListening ? (
+                    <Volume2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-pulse" />
+                  ) : (
+                    <Mic className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  )}
+                </Button>
+                {/* Audio level ring indicator */}
+                {isListening && audioLevel > 0.1 && (
+                  <div 
+                    className="absolute inset-0 rounded-md border-2 border-red-500 pointer-events-none animate-ping"
+                    style={{ opacity: audioLevel * 0.6 }}
+                  />
+                )}
+              </div>
               <Button
                 size="icon"
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={(!input.trim() && attachments.length === 0) || isLoading}
                 className="h-7 w-7 md:h-8 md:w-8 bronze-gradient disabled:opacity-50"
               >
@@ -619,8 +854,33 @@ export function ChatArea({
               </Button>
             </div>
           </div>
+          
+          {/* Clarification prompt - proceed anyway button */}
+          {pendingClarification && (
+            <div className="flex items-center justify-center gap-2 mt-2 px-4">
+              <span className="text-xs text-muted-foreground">Have clarifications?</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  // Clear clarification state and proceed with original input
+                  const originalInput = pendingInput
+                  setPendingClarification(null)
+                  setPendingInput("")
+                  setInput(originalInput)
+                  // Trigger send with skip flag after state update
+                  setTimeout(() => handleSend(true), 0)
+                }}
+                className="text-xs h-6 px-2 text-[var(--bronze)] hover:bg-[var(--bronze)]/10"
+              >
+                Skip & proceed with original question
+              </Button>
+            </div>
+          )}
+          
           <p className="text-[9px] md:text-[10px] text-muted-foreground mt-2 text-center opacity-60">
             LLMHive uses multiple AI agents for enhanced accuracy
+            {orchestratorSettings.enableClarificationQuestions && " • Clarification questions enabled"}
           </p>
         </div>
       </div>
@@ -638,9 +898,7 @@ export function ChatAreaWithErrorBoundary(props: ChatAreaProps) {
       onError={(error, errorInfo) => {
         // Log to console (would also log to error reporting service)
         console.error("[ChatArea Error]", error, errorInfo)
-        toast.error("Chat Error", {
-          description: "Something went wrong. Please try refreshing the page.",
-        })
+        toast.error("Chat Error: Something went wrong. Please try refreshing the page.")
       }}
     >
       <ChatArea {...props} />

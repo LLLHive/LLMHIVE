@@ -16,6 +16,54 @@ export const AVAILABLE_MODELS: Model[] = [
   },
   // OpenAI Models
   {
+    id: "o1",
+    name: "o1",
+    provider: "openai",
+    description: "OpenAI's most advanced reasoning model",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "o1-pro",
+    name: "o1 Pro",
+    provider: "openai",
+    description: "o1 with extended thinking for complex problems",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "o3-mini",
+    name: "o3 Mini",
+    provider: "openai",
+    description: "Fast reasoning model with high efficiency",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "gpt-4.5-preview",
+    name: "GPT-4.5 Preview",
+    provider: "openai",
+    description: "Next-gen GPT with enhanced capabilities",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
     id: "gpt-4o",
     name: "GPT-4o",
     provider: "openai",
@@ -41,10 +89,22 @@ export const AVAILABLE_MODELS: Model[] = [
   },
   // Anthropic Claude Models
   {
+    id: "claude-opus-4",
+    name: "Claude Opus 4",
+    provider: "anthropic",
+    description: "Anthropic's most powerful model for complex tasks",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
     id: "claude-sonnet-4",
     name: "Claude Sonnet 4",
     provider: "anthropic",
-    description: "Anthropic's latest and most capable model",
+    description: "Best balance of speed and intelligence",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -65,6 +125,18 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   // xAI Grok Models
+  {
+    id: "grok-3",
+    name: "Grok 3",
+    provider: "xai",
+    description: "xAI's most advanced model with real-time knowledge",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
   {
     id: "grok-2",
     name: "Grok 2",
@@ -104,10 +176,35 @@ export const AVAILABLE_MODELS: Model[] = [
   },
   // DeepSeek Models
   {
+    id: "deepseek-r1",
+    name: "DeepSeek R1",
+    provider: "deepseek",
+    description: "Advanced reasoning model rivaling o1",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
     id: "deepseek-chat",
     name: "DeepSeek V3",
     provider: "deepseek",
     description: "DeepSeek's flagship conversational AI",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  // Meta Llama Models
+  {
+    id: "llama-3.3-70b",
+    name: "Llama 3.3 70B",
+    provider: "meta",
+    description: "Meta's powerful open-source model",
     capabilities: {
       vision: false,
       codeExecution: true,
@@ -124,7 +221,21 @@ export const AVAILABLE_MODELS: Model[] = [
 function normalizeModelId(apiModelName: string): string {
   const name = apiModelName.toLowerCase()
   
-  // OpenAI models
+  // OpenAI reasoning models (o-series)
+  if (name.includes("o1-pro") || name.includes("o1pro")) {
+    return "o1-pro"
+  }
+  if (name.includes("o3-mini") || name.includes("o3mini")) {
+    return "o3-mini"
+  }
+  if (name.includes("o1") && !name.includes("o1-pro")) {
+    return "o1"
+  }
+  
+  // GPT models
+  if (name.includes("gpt-4.5") || name.includes("gpt-4-5")) {
+    return "gpt-4.5-preview"
+  }
   if (name.includes("gpt-4o-mini") || name.includes("gpt-4-mini")) {
     return "gpt-4o-mini"
   }
@@ -133,6 +244,9 @@ function normalizeModelId(apiModelName: string): string {
   }
   
   // Claude models - map full API names to simplified IDs
+  if (name.includes("claude-opus-4") || name.includes("claude-4-opus")) {
+    return "claude-opus-4"
+  }
   if (name.includes("claude-sonnet-4") || name.includes("claude-3-5-sonnet") || name.includes("claude-sonnet")) {
     return "claude-sonnet-4"
   }
@@ -149,13 +263,24 @@ function normalizeModelId(apiModelName: string): string {
   }
   
   // Grok models
+  if (name.includes("grok-3") || name.includes("grok3")) {
+    return "grok-3"
+  }
   if (name.includes("grok-2") || name.includes("grok")) {
     return "grok-2"
   }
   
   // DeepSeek models
+  if (name.includes("deepseek-r1") || name.includes("deepseek-reasoner")) {
+    return "deepseek-r1"
+  }
   if (name.includes("deepseek-chat") || name.includes("deepseek-v3") || name.includes("deepseek")) {
     return "deepseek-chat"
+  }
+  
+  // Llama models
+  if (name.includes("llama-3.3") || name.includes("llama-3-3") || name.includes("llama3.3")) {
+    return "llama-3.3-70b"
   }
   
   // Return original if no mapping found

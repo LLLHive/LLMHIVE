@@ -48,12 +48,15 @@ interface SidebarProps {
   onSelectConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
   onTogglePin: (id: string) => void
-  onRenameConversation: (id: string, newTitle: string) => void
-  onMoveToProject: (conversationId: string, projectId: string) => void
+  onRenameConversation: (id: string) => void
+  onMoveToProject: (conversationId: string) => void
   projects: Project[]
   collapsed: boolean
   onToggleCollapse: () => void
   onGoHome: () => void
+  onCreateProject?: (project: Omit<Project, "id" | "createdAt">) => void
+  onDeleteProject?: (id: string) => void
+  onSelectProject?: (id: string) => void
 }
 
 export function Sidebar({
@@ -69,6 +72,9 @@ export function Sidebar({
   collapsed,
   onToggleCollapse,
   onGoHome,
+  onCreateProject,
+  onDeleteProject,
+  onSelectProject,
 }: SidebarProps) {
   const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
@@ -85,14 +91,12 @@ export function Sidebar({
   const pinnedConversations = filteredConversations.filter((c) => c.pinned)
   const unpinnedConversations = filteredConversations.filter((c) => !c.pinned)
 
-  const handleRename = (id: string, conv: Conversation) => {
-    setSelectedConversation(conv)
-    setActiveTab("chats")
+  const handleRename = (id: string) => {
+    onRenameConversation(id)
   }
 
-  const handleMoveToProject = (id: string, conv: Conversation) => {
-    setSelectedConversation(conv)
-    setActiveTab("chats")
+  const handleMoveToProjectClick = (id: string) => {
+    onMoveToProject(id)
   }
 
   const handleTabChange = (tab: "chats" | "projects" | "discover") => {
@@ -272,8 +276,8 @@ export function Sidebar({
                             onSelect={() => onSelectConversation(conv.id)}
                             onDelete={() => onDeleteConversation(conv.id)}
                             onTogglePin={() => onTogglePin(conv.id)}
-                            onRename={() => handleRename(conv.id, conv)}
-                            onMoveToProject={() => handleMoveToProject(conv.id, conv)}
+                            onRename={() => handleRename(conv.id)}
+                            onMoveToProject={() => handleMoveToProjectClick(conv.id)}
                           />
                         ))}
                       </div>
@@ -300,8 +304,8 @@ export function Sidebar({
                             onSelect={() => onSelectConversation(conv.id)}
                             onDelete={() => onDeleteConversation(conv.id)}
                             onTogglePin={() => onTogglePin(conv.id)}
-                            onRename={() => handleRename(conv.id, conv)}
-                            onMoveToProject={() => handleMoveToProject(conv.id, conv)}
+                            onRename={() => handleRename(conv.id)}
+                            onMoveToProject={() => handleMoveToProjectClick(conv.id)}
                           />
                         ))}
                       </div>
@@ -313,9 +317,9 @@ export function Sidebar({
               {activeTab === "projects" && (
                 <ProjectsPanel
                   projects={projects}
-                  onCreateProject={() => {}}
-                  onDeleteProject={() => {}}
-                  onSelectProject={() => {}}
+                  onCreateProject={onCreateProject ?? (() => {})}
+                  onDeleteProject={onDeleteProject ?? (() => {})}
+                  onSelectProject={onSelectProject ?? (() => {})}
                 />
               )}
 

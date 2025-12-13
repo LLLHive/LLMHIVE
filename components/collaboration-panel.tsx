@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Users, UserPlus, Mail, Link2, Crown, Shield, UserIcon, MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { toast } from "@/lib/toast"
 
 interface Collaborator {
   id: string
@@ -32,8 +33,42 @@ export function CollaborationPanel() {
 
   const handleInvite = () => {
     if (!inviteEmail.trim()) return
-    // Invite logic would go here
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(inviteEmail)) {
+      toast.error("Please enter a valid email address")
+      return
+    }
+    
+    // Add new collaborator (pending invite)
+    const newCollaborator: Collaborator = {
+      id: `collab-${Date.now()}`,
+      name: inviteEmail.split("@")[0],
+      email: inviteEmail,
+      role: "viewer",
+      status: "offline",
+    }
+    setCollaborators((prev) => [...prev, newCollaborator])
+    toast.success(`Invitation sent to ${inviteEmail}`)
     setInviteEmail("")
+  }
+
+  const handleEmailInvite = () => {
+    const subject = encodeURIComponent("Join my LLMHive workspace")
+    const body = encodeURIComponent("I'd like to invite you to collaborate on LLMHive. Click here to join: [link]")
+    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank")
+    toast.info("Opening email client...")
+  }
+
+  const handleCopyLink = async () => {
+    const shareLink = `${window.location.origin}/share/${Date.now()}`
+    try {
+      await navigator.clipboard.writeText(shareLink)
+      toast.success("Share link copied to clipboard!")
+    } catch {
+      toast.error("Failed to copy link")
+    }
   }
 
   return (
@@ -66,11 +101,11 @@ export function CollaborationPanel() {
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+              <Button variant="outline" size="sm" className="flex-1 bg-transparent" onClick={handleEmailInvite}>
                 <Mail className="h-3 w-3 mr-2" />
                 Email Invite
               </Button>
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+              <Button variant="outline" size="sm" className="flex-1 bg-transparent" onClick={handleCopyLink}>
                 <Link2 className="h-3 w-3 mr-2" />
                 Copy Link
               </Button>

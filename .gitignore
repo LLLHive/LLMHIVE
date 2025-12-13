@@ -42,3 +42,5 @@ Thumbs.db
 /blob-report/
 /playwright/.cache/
 test-results/
+.venv/
+__pycache__/

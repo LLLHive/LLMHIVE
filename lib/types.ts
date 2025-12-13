@@ -14,6 +14,8 @@ export interface Message {
   consensus?: ConsensusInfo
   citations?: Citation[]
   isProcessing?: boolean
+  isClarificationRequest?: boolean
+  modelsUsed?: string[]
 }
 
 export interface Attachment {
@@ -161,6 +163,14 @@ export interface StandardLLMSettings {
   presencePenalty: number // 0-2, default 0
 }
 
+export type AnswerFormat = 
+  | "default"
+  | "structured"
+  | "bullet-points"
+  | "step-by-step"
+  | "academic"
+  | "concise"
+
 export interface OrchestratorSettings {
   reasoningMode: ReasoningMode
   domainPack: DomainPack
@@ -190,6 +200,18 @@ export interface OrchestratorSettings {
   enableAnswerRefiner?: boolean // Always-on answer polishing
   // Standard LLM parameters (sent to backend)
   standardValues?: StandardLLMSettings
+  // UI/UX settings
+  enableSpellCheck?: boolean // Enable spell check in chat input
+  answerFormat?: AnswerFormat // Answer structure format preference
+  enableClarificationQuestions?: boolean // Ask clarifying questions before answering
+}
+
+// Clarification question from the AI
+export interface ClarificationQuestion {
+  id: string
+  question: string
+  options?: string[] // Optional pre-defined answer options
+  type: 'text' | 'choice' | 'confirmation'
 }
 
 // Orchestration status event types
