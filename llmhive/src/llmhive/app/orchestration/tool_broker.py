@@ -30,10 +30,12 @@ class ToolType(str, Enum):
     WEB_SEARCH = "web_search"
     CALCULATOR = "calculator"
     CODE_EXECUTION = "code_execution"
-    DATABASE = "database"
-    IMAGE_ANALYSIS = "image_analysis"
-    IMAGE_GENERATION = "image_generation"  # New: text-to-image
-    KNOWLEDGE_BASE = "knowledge_base"  # New: RAG lookup
+    DATABASE = "database"               # Legacy DB access
+    WEB_BROWSER = "web_browser"         # Fetch full page content
+    DOC_QA = "doc_qa"                   # Question answering over provided doc
+    IMAGE_GENERATION = "image_generation"  # text-to-image
+    KNOWLEDGE_BASE = "knowledge_base"  # RAG lookup
+    VISION = "vision"  # general image caption/OCR
 
 
 class ToolPriority(str, Enum):
@@ -86,6 +88,7 @@ class ToolAnalysis:
     tool_requests: List[ToolRequest]
     reasoning: str
     has_dependencies: bool = False  # New: indicates chained execution needed
+    trace: List[str] = field(default_factory=list)  # Tool types suggested
 
 
 # ==============================================================================
@@ -299,7 +302,7 @@ class CodeExecutionTool(BaseTool):
             else:
                 # Basic Python execution in sandbox
                 if language in ["python", "py"]:
-                    exec_result = self._safe_python_exec(query)
+                    exec_result = await self._safe_python_exec(query)
                     return ToolResult(
                         tool_type=self.tool_type,
                         success=exec_result.get("success", False),
@@ -328,46 +331,22 @@ class CodeExecutionTool(BaseTool):
                 status=ToolStatus.FAILED,
             )
     
-    def _safe_python_exec(self, code: str) -> Dict[str, Any]:
-        """Execute Python code in a restricted environment."""
-        result = {
-            "success": True,
-            "output": None,
-            "error": None,
-        }
-        
-        # Syntax check first
+    async def _safe_python_exec(self, code: str) -> Dict[str, Any]:
+        """Execute Python code in a restricted sandbox."""
+        result = {"success": True, "output": None, "error": None}
         try:
-            compile(code, '<string>', 'exec')
-        except SyntaxError as e:
-            result["success"] = False
-            result["error"] = f"Syntax error: {e}"
-            return result
-        
-        # Execute in sandbox
-        try:
-            safe_globals = {
-                "__builtins__": {
-                    "print": lambda *args: None,
-                    "len": len,
-                    "range": range,
-                    "str": str,
-                    "int": int,
-                    "float": float,
-                    "list": list,
-                    "dict": dict,
-                    "sum": sum,
-                    "min": min,
-                    "max": max,
-                }
-            }
-            local_vars = {}
-            exec(code, safe_globals, local_vars)
-            result["output"] = str(local_vars) if local_vars else "Executed successfully"
+            # Use MCP2 sandbox if available
+            from ..mcp2.sandbox import CodeSandbox, SandboxConfig
+            cfg = SandboxConfig(timeout_seconds=5.0, memory_limit_mb=256, allow_network=False)
+            sandbox = CodeSandbox(cfg, session_token="tool_broker")
+            exec_result = await sandbox.execute_python(code)
+            result["output"] = exec_result.get("stdout", "") or exec_result.get("result")
+            if exec_result.get("stderr"):
+                result["error"] = exec_result.get("stderr")
+                result["success"] = False
         except Exception as e:
             result["success"] = False
-            result["error"] = str(e)
-        
+            result["error"] = f"Sandbox error: {e}"
         return result
 
 
@@ -460,17 +439,183 @@ class KnowledgeBaseTool(BaseTool):
                     source="knowledge_base",
                     status=ToolStatus.SUCCESS,
                 )
-            else:
-                return ToolResult(
-                    tool_type=self.tool_type,
-                    success=False,
-                    data=None,
-                    error_message="Knowledge base not configured",
-                    latency_ms=(time.time() - start_time) * 1000,
-                    status=ToolStatus.FAILED,
-                )
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=False,
+                data=None,
+                error_message="Retriever unavailable",
+                latency_ms=(time.time() - start_time) * 1000,
+                status=ToolStatus.FAILED,
+            )
         except Exception as e:
-            logger.error("Knowledge base lookup failed: %s", e)
+            logger.warning("KnowledgeBaseTool failed: %s", e)
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=False,
+                data=None,
+                error_message=str(e),
+                latency_ms=(time.time() - start_time) * 1000,
+                status=ToolStatus.FAILED,
+            )
+
+
+class WebBrowserTool(BaseTool):
+    """Fetch full page content (text-only) for a given URL."""
+    
+    def __init__(self, fetch_fn: Optional[Callable] = None):
+        self._fetch_fn = fetch_fn
+    
+    @property
+    def tool_type(self) -> ToolType:
+        return ToolType.WEB_BROWSER
+    
+    def is_available(self) -> bool:
+        return True
+    
+    async def execute(self, query: str, **kwargs) -> ToolResult:
+        start_time = time.time()
+        url = query.strip()
+        try:
+            if self._fetch_fn:
+                content = await self._fetch_fn(url)
+            else:
+                import requests
+                resp = requests.get(url, timeout=10)
+                text = resp.text
+                content = self._strip_html(text)
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=True,
+                data=content[:5000],  # limit size
+                latency_ms=(time.time() - start_time) * 1000,
+                source="web_browser",
+                status=ToolStatus.SUCCESS,
+            )
+        except Exception as e:
+            logger.warning("WebBrowserTool failed: %s", e)
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=False,
+                data=None,
+                error_message=str(e),
+                latency_ms=(time.time() - start_time) * 1000,
+                status=ToolStatus.FAILED,
+            )
+    
+    def _strip_html(self, html: str) -> str:
+        """Basic tag stripper using regex; avoids extra deps."""
+        import re
+        text = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<style.*?>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = re.sub(r"\s+", " ", text)
+        return text.strip()
+
+
+class DocumentQATool(BaseTool):
+    """Lightweight QA over provided document text."""
+    
+    @property
+    def tool_type(self) -> ToolType:
+        return ToolType.DOC_QA
+    
+    def is_available(self) -> bool:
+        return True
+    
+    async def execute(self, query: str, **kwargs) -> ToolResult:
+        start_time = time.time()
+        doc = kwargs.get("document") or kwargs.get("doc") or ""
+        question = query
+        if not doc:
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=False,
+                data=None,
+                error_message="No document provided",
+                latency_ms=(time.time() - start_time) * 1000,
+                status=ToolStatus.FAILED,
+            )
+        try:
+            answer = self._qa(doc, question)
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=True,
+                data=answer,
+                latency_ms=(time.time() - start_time) * 1000,
+                source="doc_qa",
+                status=ToolStatus.SUCCESS,
+            )
+        except Exception as e:
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=False,
+                data=None,
+                error_message=str(e),
+                latency_ms=(time.time() - start_time) * 1000,
+                status=ToolStatus.FAILED,
+            )
+    
+    def _qa(self, doc: str, question: str) -> str:
+        """Heuristic QA: return top sentences matching keywords."""
+        import re
+        sentences = re.split(r'(?<=[.!?])\s+', doc)
+        q_tokens = set(question.lower().split())
+        scored = []
+        for s in sentences:
+            st = s.strip()
+            if not st:
+                continue
+            s_tokens = set(st.lower().split())
+            score = len(q_tokens & s_tokens)
+            scored.append((score, st))
+        scored.sort(reverse=True, key=lambda x: x[0])
+        top = [s for _, s in scored[:3]]
+        return "\n".join(top) if top else "No relevant content found in document."
+
+
+class DatabaseQueryTool(BaseTool):
+    """Stub/guarded database query tool (read-only)."""
+    
+    def __init__(self, query_fn: Optional[Callable] = None, enabled: bool = False, max_rows: int = 200, timeout_seconds: float = 5.0):
+        self._query_fn = query_fn
+        self._enabled = enabled
+        self._max_rows = max_rows
+        self._timeout = timeout_seconds
+    
+    @property
+    def tool_type(self) -> ToolType:
+        return ToolType.DATABASE
+    
+    def is_available(self) -> bool:
+        return self._enabled and self._query_fn is not None
+    
+    async def execute(self, query: str, **kwargs) -> ToolResult:
+        start_time = time.time()
+        if not self.is_available():
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=False,
+                data=None,
+                error_message="Database tool not configured",
+                latency_ms=(time.time() - start_time) * 1000,
+                status=ToolStatus.FAILED,
+            )
+        try:
+            import asyncio
+            result = await asyncio.wait_for(self._query_fn(query), timeout=self._timeout)
+            # Enforce row limit if result is list-like
+            if isinstance(result, list) and len(result) > self._max_rows:
+                result = result[: self._max_rows]
+            return ToolResult(
+                tool_type=self.tool_type,
+                success=True,
+                data=result,
+                latency_ms=(time.time() - start_time) * 1000,
+                source="database",
+                status=ToolStatus.SUCCESS,
+            )
+        except Exception as e:
+            logger.warning("Database tool failed: %s", e)
             return ToolResult(
                 tool_type=self.tool_type,
                 success=False,
@@ -536,6 +681,7 @@ class ToolBroker:
         "generate image", "create image", "visualize",
         "illustration of", "show me", "create a picture",
     ]
+    VISION_TRIGGERS = [".png", ".jpg", ".jpeg", ".gif", "data:image", "image:"]
     
     def __init__(self):
         """Initialize the Tool Broker."""
@@ -544,6 +690,9 @@ class ToolBroker:
             ToolType.WEB_SEARCH: WebSearchTool(),
             ToolType.CODE_EXECUTION: CodeExecutionTool(),
             ToolType.IMAGE_GENERATION: ImageGenerationTool(),
+            ToolType.WEB_BROWSER: WebBrowserTool(),
+            ToolType.DOC_QA: DocumentQATool(),
+            ToolType.DATABASE: DatabaseQueryTool(enabled=False),
         }
         
         # Track tool failures for fallback decisions
@@ -553,6 +702,9 @@ class ToolBroker:
         """Register a tool implementation."""
         self.tools[tool.tool_type] = tool
         logger.info("Registered tool: %s", tool.tool_type.value)
+
+    def log_failure(self, tool_type: ToolType, error: str, latency_ms: float) -> None:
+        logger.warning("Tool failed: %s error=%s latency_ms=%.1f", tool_type.value, error, latency_ms)
     
     def analyze_tool_needs(
         self, 
@@ -644,6 +796,38 @@ class ToolBroker:
                 priority=ToolPriority.MEDIUM,
             ))
             reasoning_parts.append("Query requests image generation")
+
+        # Check for vision analysis needs (image inputs)
+        if any(trigger in query_lower for trigger in self.VISION_TRIGGERS):
+            tool_requests.append(ToolRequest(
+                tool_type=ToolType.VISION,
+                query=query,
+                purpose="Analyze image (caption/OCR)",
+                priority=ToolPriority.MEDIUM,
+            ))
+            reasoning_parts.append("Image detected; added vision analysis")
+
+        # Check for browser fetch needs (explicit URLs)
+        if "http://" in query_lower or "https://" in query_lower or "open url" in query_lower or "fetch url" in query_lower:
+            url = self._extract_url(query)
+            if url:
+                tool_requests.append(ToolRequest(
+                    tool_type=ToolType.WEB_BROWSER,
+                    query=url,
+                    purpose="Fetch page content for analysis",
+                    priority=ToolPriority.MEDIUM,
+                ))
+                reasoning_parts.append("Detected URL; added web browser fetch")
+
+        # Check for document QA needs
+        if any(k in query_lower for k in ["attached document", "attached file", "pdf", "document below", "doc:"]):
+            tool_requests.append(ToolRequest(
+                tool_type=ToolType.DOC_QA,
+                query=query,
+                purpose="Answer based on provided document",
+                priority=ToolPriority.MEDIUM,
+            ))
+            reasoning_parts.append("Document mentioned; added doc QA")
         
         # Check for fact-verification needs (implicit search)
         fact_patterns = [
@@ -673,6 +857,7 @@ class ToolBroker:
             tool_requests=tool_requests,
             reasoning="; ".join(reasoning_parts) if reasoning_parts else "No tools required",
             has_dependencies=has_dependencies,
+            trace=[tr.tool_type.value for tr in tool_requests],
         )
     
     def _needs_chaining(
@@ -951,9 +1136,10 @@ class ToolBroker:
             return str(data)
         
         if isinstance(data, list):
-            return "\n".join(str(item)[:200] for item in data[:5])
+            # More content for better LLM understanding
+            return "\n".join(str(item)[:500] for item in data[:8])
         
-        return str(data)[:500]
+        return str(data)[:1000]
     
     def _extract_search_query(self, query: str) -> str:
         """Extract the core search query from user input."""
@@ -974,6 +1160,14 @@ class ToolBroker:
                 return query[len(prefix):].strip()
         
         return query
+
+    def _extract_url(self, query: str) -> str:
+        """Extract first URL from query."""
+        import re
+        match = re.search(r'(https?://[^\s]+)', query)
+        if match:
+            return match.group(1)
+        return query.strip()
     
     def _extract_math_expression(self, query: str) -> Optional[str]:
         """Extract mathematical expression from query."""
@@ -1057,6 +1251,12 @@ def configure_tool_broker(
     code_executor_fn: Optional[Callable] = None,
     image_generator_fn: Optional[Callable] = None,
     knowledge_retriever_fn: Optional[Callable] = None,
+    browser_fetch_fn: Optional[Callable] = None,
+    doc_qa_fn: Optional[Callable] = None,
+    db_query_fn: Optional[Callable] = None,
+    enable_db: bool = False,
+    vision_fn: Optional[Callable] = None,
+    image_gen_fn: Optional[Callable] = None,
 ) -> ToolBroker:
     """Configure the global tool broker with custom functions."""
     global _tool_broker
@@ -1068,8 +1268,25 @@ def configure_tool_broker(
         _tool_broker.register_tool(CodeExecutionTool(code_executor_fn))
     if image_generator_fn:
         _tool_broker.register_tool(ImageGenerationTool(image_generator_fn))
+    elif image_gen_fn:
+        _tool_broker.register_tool(ImageGenerationTool(image_gen_fn))
+    else:
+        _tool_broker.register_tool(ImageGenerationTool())
     if knowledge_retriever_fn:
         _tool_broker.register_tool(KnowledgeBaseTool(knowledge_retriever_fn))
+    if browser_fetch_fn:
+        _tool_broker.register_tool(WebBrowserTool(browser_fetch_fn))
+    if doc_qa_fn:
+        _tool_broker.register_tool(DocumentQATool())
+        _tool_broker.tools[ToolType.DOC_QA]._qa = doc_qa_fn  # type: ignore
+    if db_query_fn:
+        _tool_broker.register_tool(DatabaseQueryTool(db_query_fn, enabled=enable_db))
+    # Vision tool registration: use provided fn or placeholder
+    from .vision_tool import VisionTool
+    if vision_fn:
+        _tool_broker.register_tool(VisionTool(vision_fn))
+    else:
+        _tool_broker.register_tool(VisionTool())
     
     return _tool_broker
 

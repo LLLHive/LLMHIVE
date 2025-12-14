@@ -102,9 +102,22 @@ class WebResearchClient:
                 search_depth=search_depth,
                 include_domains=include_domains or [],
                 exclude_domains=exclude_domains or [],
+                include_answer=True,  # Synthesize answer from sources
             )
             
             results = []
+            
+            # Include synthesized answer as first result if available
+            if response.get("answer"):
+                results.append(SearchResult(
+                    title="Synthesized Answer",
+                    url="tavily-answer",
+                    snippet=response["answer"],
+                    content=response["answer"],
+                    score=1.0,
+                ))
+                logger.info("Tavily provided synthesized answer")
+            
             for item in response.get("results", []):
                 results.append(SearchResult(
                     title=item.get("title", ""),
