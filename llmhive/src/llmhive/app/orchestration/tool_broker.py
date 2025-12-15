@@ -744,11 +744,32 @@ class ToolBroker:
             reasoning_parts.append("Query contains date reference indicating current data needed")
         
         if needs_search:
+            # Build metadata for search - add recency filter for temporal queries
+            search_metadata = {
+                "max_results": 10,  # Get more results for list queries
+                "search_depth": "advanced",  # Thorough search
+            }
+            
+            # Detect temporal queries - CRITICAL for current data
+            temporal_patterns = [
+                r'\b(today|now|current|currently|latest|recent|newest)\b',
+                r'\b(this year|this month|this week|2025|2024)\b',
+                r'\b(right now|at the moment|presently|these days)\b',
+                r'\b(top \d+|best \d+|leading)\b',  # Ranking queries need current data
+            ]
+            is_temporal = any(re.search(p, query_lower) for p in temporal_patterns)
+            
+            if is_temporal:
+                search_metadata["days"] = 7  # Last 7 days for temporal queries
+                search_metadata["topic"] = "news"  # Focus on recent news/updates
+                reasoning_parts.append("Temporal query detected - using recency filter (last 7 days)")
+            
             tool_requests.append(ToolRequest(
                 tool_type=ToolType.WEB_SEARCH,
                 query=self._extract_search_query(query),
                 purpose="Retrieve current/real-time information",
                 priority=ToolPriority.HIGH,
+                metadata=search_metadata,  # CRITICAL: Pass recency params
             ))
             reasoning_parts.append("Query contains time-sensitive or factual keywords requiring web search")
         
@@ -759,6 +780,7 @@ class ToolBroker:
                 query=query,
                 purpose="Verify factual information",
                 priority=ToolPriority.MEDIUM,
+                metadata={"max_results": 10, "search_depth": "advanced"},
             ))
             reasoning_parts.append("Factual question task type - web search for verification")
         
@@ -1142,7 +1164,9 @@ class ToolBroker:
         return str(data)[:1000]
     
     def _extract_search_query(self, query: str) -> str:
-        """Extract the core search query from user input."""
+        """Extract the core search query from user input, enhanced for recency."""
+        from datetime import datetime
+        
         # Remove common question prefixes
         prefixes = [
             "what is the latest",
@@ -1155,11 +1179,29 @@ class ToolBroker:
         ]
         
         query_lower = query.lower()
+        clean_query = query
         for prefix in prefixes:
             if query_lower.startswith(prefix):
-                return query[len(prefix):].strip()
+                clean_query = query[len(prefix):].strip()
+                break
         
-        return query
+        # For temporal/ranking queries, add current date for better recency
+        temporal_patterns = [
+            r'\b(today|now|current|latest|recent|top \d+|best)\b',
+            r'\b(this year|this month|2025|2024)\b',
+        ]
+        import re
+        is_temporal = any(re.search(p, query_lower) for p in temporal_patterns)
+        
+        if is_temporal:
+            # Add current month/year to ensure search engines return recent results
+            current_date = datetime.now().strftime("%B %Y")  # e.g., "December 2025"
+            # Only add date if not already present in query
+            if "2025" not in clean_query and "2024" not in clean_query:
+                clean_query = f"{clean_query} {current_date}"
+                logger.info(f"Enhanced search query with date: '{clean_query}'")
+        
+        return clean_query
 
     def _extract_url(self, query: str) -> str:
         """Extract first URL from query."""
