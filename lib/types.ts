@@ -205,6 +205,7 @@ export interface OrchestratorSettings {
   enableSpellCheck?: boolean // Enable spell check in chat input
   answerFormat?: AnswerFormat // Answer structure format preference
   enableClarificationQuestions?: boolean // Ask clarifying questions before answering
+  enableLiveResearch?: boolean // Enable real-time web search for current data
 }
 
 // Clarification question from the AI
