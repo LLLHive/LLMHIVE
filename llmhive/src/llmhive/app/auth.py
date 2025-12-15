@@ -9,17 +9,23 @@ import logging
 import os
 from typing import Optional
 
-from fastapi import Depends, HTTPException, Security, status
-from fastapi.security import APIKeyHeader
+from fastapi import Depends, HTTPException, Request, status
 
 logger = logging.getLogger(__name__)
 
-# Security: API key header name
-API_KEY_NAME = "X-API-Key"
-API_KEY_HEADER = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+# Security: Accept multiple header names for the same API key
+API_KEY_HEADER_NAMES = ["x-api-key", "api-key", "api_key", "API_KEY", "X-API-KEY"]
 
 
-def verify_api_key(provided_key: str = Depends(API_KEY_HEADER)) -> str:
+def _extract_api_key(request: Request) -> Optional[str]:
+    """Extract API key from common header variants."""
+    for name in API_KEY_HEADER_NAMES:
+        if name.lower() in request.headers:
+            return request.headers.get(name)
+    return None
+
+
+def verify_api_key(request: Request) -> str:
     """
     Verify API key from request header.
     
@@ -45,9 +51,11 @@ def verify_api_key(provided_key: str = Depends(API_KEY_HEADER)) -> str:
         logger.debug("No API_KEY configured, allowing request (dev mode)")
         return "unauthenticated-allowed"
     
+    provided_key = _extract_api_key(request)
+    
     # API_KEY is configured, so authentication is required
     if not provided_key:
-        logger.warning("API key required but X-API-Key header not provided")
+        logger.warning("API key required but header not provided")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API Key"
@@ -66,19 +74,20 @@ def verify_api_key(provided_key: str = Depends(API_KEY_HEADER)) -> str:
 
 
 # Optional authentication dependency (doesn't fail if key missing)
-def optional_api_key(provided_key: Optional[str] = Depends(API_KEY_HEADER)) -> str:
+def optional_api_key(request: Request) -> str:
     """Optional API key verification (doesn't fail if key is missing).
     
     Useful for endpoints that work with or without authentication.
     
     Args:
-        provided_key: API key from X-API-Key header (optional)
+        request: FastAPI Request object
         
     Returns:
         "authenticated" if valid key provided, "anonymous" otherwise
     """
     try:
-        return verify_api_key(provided_key) if provided_key else "anonymous"
+        provided_key = _extract_api_key(request)
+        return verify_api_key(request) if provided_key else "anonymous"
     except HTTPException:
         # If auth fails but it's optional, return anonymous
         return "anonymous"
