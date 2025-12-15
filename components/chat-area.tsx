@@ -348,20 +348,13 @@ export function ChatArea({
   }
 
   const handleSend = async (skipClarification: boolean = false) => {
-    console.log("🔍 handleSend called:", { input, skipClarification, enableClarificationQuestions: orchestratorSettings.enableClarificationQuestions })
-    
-    if (!input.trim() && attachments.length === 0) {
-      console.log("⚠️ Empty input, returning early")
-      return
-    }
+    if (!input.trim() && attachments.length === 0) return
 
     // Check if clarification questions are enabled and not skipped
     if (orchestratorSettings.enableClarificationQuestions && !skipClarification && !pendingClarification) {
       const clarificationDecision = shouldAskClarification(input)
-      console.log("🔍 Clarification decision:", clarificationDecision)
       
       if (clarificationDecision.shouldAskClarification && clarificationDecision.questions.length > 0) {
-        console.log("✅ Showing clarification questions!")
         // Store the input and show clarification questions
         setPendingInput(input)
         setPendingClarification(clarificationDecision)
@@ -387,6 +380,32 @@ export function ChatArea({
       }
     }
     
+    // If we have pending clarification, enhance the query with context
+    let enhancedInput = input
+    let enableLiveResearch = false
+    
+    if (pendingInput && pendingClarification) {
+      // User answered clarification questions - combine original question with their preferences
+      const clarificationContext = input.toLowerCase()
+      
+      // Check if user requested real-time data
+      if (clarificationContext.includes('real-time') || 
+          clarificationContext.includes('realtime') || 
+          clarificationContext.includes('current') ||
+          clarificationContext.includes('yes')) {
+        enableLiveResearch = true
+      }
+      
+      // Combine original question with clarification answers
+      enhancedInput = `${pendingInput}\n\n[User preferences: ${input}]`
+      
+      console.log('🔍 Enhanced query with clarification:', { 
+        original: pendingInput, 
+        preferences: input,
+        enableLiveResearch 
+      })
+    }
+    
     // Clear any pending clarification
     setPendingClarification(null)
     setPendingInput("")
@@ -394,9 +413,11 @@ export function ChatArea({
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
       role: "user",
-      content: input,
+      content: enhancedInput,
       timestamp: new Date(),
       attachments: attachments.length > 0 ? attachments : undefined,
+      // Flag for live research based on clarification
+      metadata: enableLiveResearch ? { enableLiveResearch: true } : undefined,
     }
 
     onSendMessage(userMessage)
@@ -450,6 +471,8 @@ export function ChatArea({
           orchestratorSettings: {
             ...orchestratorSettings,
             selectedModels: actualModels,
+            // Enable live research if user requested it via clarification
+            enableLiveResearch: enableLiveResearch || orchestratorSettings.enableLiveResearch,
           },
           chatId: conversation?.id,
         },
