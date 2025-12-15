@@ -27,7 +27,13 @@ from ..models.orchestration import (
     AgentMode,
 )
 from ..orchestrator import Orchestrator
-from ..profiles_firestore import get_profile
+# profiles_firestore requires google-cloud-firestore which may not be available
+try:
+    from ..profiles_firestore import get_profile
+    PROFILES_AVAILABLE = True
+except ImportError:
+    get_profile = lambda x: None  # type: ignore
+    PROFILES_AVAILABLE = False
 from ..audit_log import log_audit_event
 from .model_router import (
     get_models_for_reasoning_method,
