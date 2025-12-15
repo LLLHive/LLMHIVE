@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+import os
 from typing import Dict, Any, List, Optional, Tuple
 
 from ..models.orchestration import (
@@ -26,6 +27,8 @@ from ..models.orchestration import (
     AgentMode,
 )
 from ..orchestrator import Orchestrator
+from ..profiles_firestore import get_profile
+from ..audit_log import log_audit_event
 from .model_router import (
     get_models_for_reasoning_method,
     map_reasoning_mode_to_method,
@@ -205,6 +208,7 @@ async def _augment_with_rag(
     domain: str = "default",
     user_id: Optional[str] = None,
     project_id: Optional[str] = None,
+    org_id: Optional[str] = None,
 ) -> str:
     """Augment prompt with relevant context from knowledge base."""
     kb = _get_knowledge_base()
@@ -220,6 +224,7 @@ async def _augment_with_rag(
             domain=domain,
             user_id=user_id,
             project_id=project_id,
+            org_id=org_id,
             max_context_length=1500,
         )
         if augmented != prompt:
@@ -238,7 +243,9 @@ async def _store_answer_for_learning(
     domain: str,
     user_id: Optional[str] = None,
     project_id: Optional[str] = None,
+    org_id: Optional[str] = None,
     is_partial: bool = False,
+    record_type: Optional[RecordType] = None,
 ) -> None:
     """Store answer in knowledge base for future learning."""
     kb = _get_knowledge_base()
@@ -246,7 +253,7 @@ async def _store_answer_for_learning(
         return
     
     try:
-        record_type = RecordType.PARTIAL_ANSWER if is_partial else RecordType.FINAL_ANSWER
+        record_type = record_type or (RecordType.PARTIAL_ANSWER if is_partial else RecordType.FINAL_ANSWER)
         await kb.store_answer(
             query=query,
             answer=answer,
@@ -256,6 +263,7 @@ async def _store_answer_for_learning(
             domain=domain,
             user_id=user_id,
             project_id=project_id,
+            org_id=org_id,
         )
         logger.debug(f"Stored {'partial' if is_partial else 'final'} answer for learning")
     except Exception as e:
@@ -541,6 +549,30 @@ def _get_display_name(model_id: str) -> str:
     return display_names.get(model_id, model_id)
 
 
+def _auto_select_reasoning_method(prompt: str, domain_pack: str) -> RouterReasoningMethod | None:
+    """Heuristic selection of reasoning strategy when none provided."""
+    plower = prompt.lower()
+    math_signals = any(tok in plower for tok in ["solve", "equation", "integral", "derivative", "sum", "product"]) or any(ch in plower for ch in ["=", "+", "-", "*", "/"])
+    code_signals = any(tok in plower for tok in ["code", "function", "class", "bug", "error", "stack trace", "compile", "python", "javascript", "typescript", "java", "c++"])
+    factual_signals = any(plower.startswith(w) for w in ["who", "what", "when", "where", "which", "name", "list", "give me", "provide", "cite"])
+    planning_signals = any(tok in plower for tok in ["plan", "roadmap", "strategy", "architecture", "design", "options", "tradeoff", "trade-off", "pros and cons", "compare"])
+    ambiguous = len(prompt.split()) < 6
+    try:
+        if code_signals or math_signals:
+            return RouterReasoningMethod.plan_and_solve
+        if planning_signals:
+            return RouterReasoningMethod.hierarchical_decomposition
+        if factual_signals:
+            return RouterReasoningMethod.self_consistency
+        if ambiguous:
+            return RouterReasoningMethod.tree_of_thought
+        if domain_pack == "coding":
+            return RouterReasoningMethod.plan_and_solve
+        return RouterReasoningMethod.chain_of_thought
+    except Exception:
+        return None
+
+
 async def run_orchestration(request: ChatRequest) -> ChatResponse:
     """
     Run orchestration with ChatRequest and return ChatResponse.
@@ -551,12 +583,25 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
     start_time = time.perf_counter()
     
     try:
-        # Determine reasoning method
+        # Profile defaults (format/tone/show_confidence)
+        user_profile = None
+        try:
+            user_profile = get_profile(request.metadata.user_id if request.metadata else None)
+        except Exception:
+            user_profile = None
+
+        # Determine reasoning method (explicit > auto > legacy mode)
         if request.reasoning_method:
             reasoning_method = RouterReasoningMethod(request.reasoning_method.value)
         else:
-            # Infer from reasoning_mode for backward compatibility
-            reasoning_method = map_reasoning_mode_to_method(request.reasoning_mode.value)
+            # Heuristic auto-selection based on query/task
+            reasoning_method = _auto_select_reasoning_method(
+                request.prompt,
+                domain_pack=request.domain_pack.value,
+            )
+            # Fallback to legacy mode mapping
+            if reasoning_method is None:
+                reasoning_method = map_reasoning_mode_to_method(request.reasoning_mode.value)
         
         logger.info(
             "Using reasoning method: %s (from mode: %s)",
@@ -672,6 +717,48 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         enable_rag = getattr(request.orchestration, 'enable_vector_rag', False)
         user_id = metadata_dict.get('user_id')
         project_id = metadata_dict.get('project_id')
+        org_id = metadata_dict.get('org_id')
+        
+        # Fast reuse: return cached high-confidence answer if nearly identical
+        if KNOWLEDGE_BASE_AVAILABLE and os.getenv("ENABLE_FAST_REUSE", "0").lower() in {"1", "true", "yes"}:
+            kb = _get_knowledge_base()
+            if kb:
+                try:
+                    cached = await kb.retrieve_context(
+                        query=request.prompt,
+                        top_k=1,
+                        record_types=[RecordType.FINAL_ANSWER, RecordType.DOMAIN_KNOWLEDGE],
+                        domain=request.domain_pack.value,
+                        user_id=user_id,
+                        project_id=project_id,
+                        org_id=org_id,
+                        min_quality_score=0.9,
+                        rerank=True,
+                    )
+                    if cached and cached[0].score >= 0.92:
+                        meta_models = cached[0].metadata.get("models_used", "")
+                        cached_models = meta_models.split(",") if isinstance(meta_models, str) else []
+                        logger.info(
+                            "Fast reuse hit: returning cached answer (score=%.2f, record=%s)",
+                            cached[0].score,
+                            cached[0].id,
+                        )
+                        return ChatResponse(
+                            message=cached[0].content,
+                            models_used=cached_models or ["knowledge_base_cache"],
+                            reasoning_mode=request.reasoning_mode,
+                            reasoning_method=request.reasoning_method,
+                            domain_pack=request.domain_pack,
+                            agent_mode=request.agent_mode,
+                            used_tuning=request.tuning,
+                            metadata=request.metadata,
+                            tokens_used="cached",
+                            latency_ms=int((time.perf_counter() - start_time) * 1000),
+                            agent_traces=[],
+                            extra={"source": "knowledge_base_cache", "record_id": cached[0].id},
+                        )
+                except Exception as e:
+                    logger.debug("Fast reuse check failed: %s", e)
         
         if enable_rag and KNOWLEDGE_BASE_AVAILABLE:
             try:
@@ -680,6 +767,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     domain=request.domain_pack.value,
                     user_id=user_id,
                     project_id=project_id,
+                    org_id=org_id,
                 )
                 original_prompt = request.prompt
                 # Note: We don't modify request.prompt directly, use augmented_prompt in the pipeline
@@ -851,7 +939,13 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                             "access current information - the data below is current as of today.\n\n"
                             f"{tool_context}\n"
                             "=== END OF REAL-TIME DATA ===\n\n"
-                            "Based on the real-time data above, provide a comprehensive answer."
+                            "CRITICAL INSTRUCTIONS:\n"
+                            "1. Use ONLY the information from the real-time data above - do NOT hallucinate or make up information\n"
+                            "2. If asked for a numbered list (e.g., 'top 10'), provide ALL items requested using the search data\n"
+                            "3. If the search data doesn't have enough items, clearly state how many you found and list them all\n"
+                            "4. Include specific details from the sources (names, versions, capabilities)\n"
+                            "5. Do NOT say 'I cannot access' or 'I don't have real-time data' - you DO have current data above\n"
+                            "Now provide a complete, accurate answer based on the real-time data:"
                         )
                         base_prompt = f"{base_prompt}{tool_instruction}"
                         logger.info("Tool context added to prompt with instructions (%d chars)", len(tool_context))
@@ -943,8 +1037,27 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             elite = _get_elite_orchestrator()
             if elite:
                 try:
+                    # Reuse prior successful orchestration pattern if available
+                    kb_strategy = None
+                    if KNOWLEDGE_BASE_AVAILABLE:
+                        kb = _get_knowledge_base()
+                        if kb:
+                            kb_strategy = await kb.get_best_strategy(
+                                query_type=task_type,
+                                user_id=user_id,
+                            )
+                            if kb_strategy:
+                                logger.info(
+                                    "Using learned strategy from KB: %s (models=%s)",
+                                    kb_strategy[0],
+                                    kb_strategy[1],
+                                )
+                                selected_strategy = kb_strategy[0]
+                                if kb_strategy[1]:
+                                    actual_models = kb_strategy[1]
+                    
                     # Select strategy based on accuracy, task, complexity, and user criteria
-                    strategy = _select_elite_strategy(
+                    strategy = selected_strategy or _select_elite_strategy(
                         accuracy_level=accuracy_level,
                         task_type=task_type,
                         num_models=len(actual_models),
@@ -1010,6 +1123,33 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 except Exception as e:
                     logger.warning("Quality boost failed: %s", e)
         
+        # Distill multi-model/agent outputs into reusable knowledge
+        if KNOWLEDGE_BASE_AVAILABLE:
+            try:
+                kb = _get_knowledge_base()
+                if kb:
+                    used_models = []
+                    if elite_result and getattr(elite_result, "models_used", None):
+                        used_models = elite_result.models_used
+                    elif artifacts and getattr(artifacts, "models_used", None):
+                        used_models = artifacts.models_used
+                    if used_models and len(used_models) > 1:
+                        distilled_content = f"Distilled consensus for: {original_prompt[:200]}\nModels: {', '.join(used_models)}\nAnswer:\n{final_text[:1800]}"
+                await kb.store_answer(
+                            query=original_prompt[:500],
+                            answer=distilled_content,
+                            models_used=used_models,
+                            record_type=RecordType.DOMAIN_KNOWLEDGE,
+                            quality_score=0.6,
+                            domain=request.domain_pack.value,
+                            user_id=user_id,
+                            project_id=project_id,
+                    org_id=org_id,
+                            metadata={"multi_agent_distilled": True},
+                        )
+            except Exception as e:
+                logger.debug("Failed to distill multi-agent output: %s", e)
+        
         # ========================================================================
         # STEP 4: TOOL-BASED VERIFICATION (For code/math/factual tasks)
         # ========================================================================
@@ -1061,10 +1201,14 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # ========================================================================
         if REFINER_AVAILABLE and REFINER_ALWAYS_ON:
             try:
-                # Detect output format from PromptOps analysis
+                # Detect output format from PromptOps analysis, allow user override, then profile default
                 output_format = OutputFormat.PARAGRAPH
+                requested_format = request.format_style or (user_profile.default_format_style if user_profile else None)
                 if prompt_spec and prompt_spec.analysis.output_format:
-                    fmt = prompt_spec.analysis.output_format
+                    requested_format = requested_format or prompt_spec.analysis.output_format
+                
+                if requested_format:
+                    fmt = requested_format
                     # Check for strict format (e.g., "json_strict" means output ONLY JSON)
                     if fmt.endswith("_strict"):
                         is_strict_format = True
@@ -1075,7 +1219,13 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         "markdown": OutputFormat.MARKDOWN,
                         "code": OutputFormat.CODE,
                         "list": OutputFormat.BULLET,
+                        "bullet": OutputFormat.BULLET,
+                        "bullet_points": OutputFormat.BULLET,
                         "table": OutputFormat.TABLE,
+                        "executive_summary": OutputFormat.EXEC_SUMMARY,
+                        "exec_summary": OutputFormat.EXEC_SUMMARY,
+                        "qa": OutputFormat.QA,
+                        "paragraph": OutputFormat.PARAGRAPH,
                     }
                     output_format = format_map.get(fmt, OutputFormat.PARAGRAPH)
                     
@@ -1099,10 +1249,25 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                                 max_words = int(match.group(1))
                                 logger.info(f"Word limit detected: {max_words} words")
                 
+                # Tone override from request or profile
+                tone_style = ToneStyle.PROFESSIONAL
+                tone_requested = request.tone_style or (user_profile.default_tone_style if user_profile else None)
+                if tone_requested:
+                    try:
+                        tone_style = ToneStyle(tone_requested)
+                    except Exception:
+                        logger.warning("Unknown tone_style '%s', using professional", tone_requested)
+                
+                include_conf = accuracy_level >= 4
+                if request.show_confidence is not None:
+                    include_conf = bool(request.show_confidence)
+                elif user_profile and user_profile.show_confidence is not None:
+                    include_conf = bool(user_profile.show_confidence)
+
                 refiner_config = RefinementConfig(
                     output_format=output_format,
-                    tone=ToneStyle.PROFESSIONAL,
-                    include_confidence=accuracy_level >= 4,
+                    tone=tone_style,
+                    include_confidence=include_conf,
                     include_citations=accuracy_level >= 3,
                     preserve_structure=True,
                     max_words=max_words,
@@ -1185,6 +1350,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 "confidence": elite_result.confidence,
                 "responses_generated": elite_result.responses_generated,
                 "primary_model": elite_result.primary_model,
+                "consensus_score": getattr(elite_result, "consensus_score", None),
             }
             extra["performance_notes"] = elite_result.performance_notes
         else:
@@ -1268,6 +1434,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     domain=request.domain_pack.value,
                     user_id=user_id,
                     project_id=project_id,
+                    org_id=org_id,
                     is_partial=False,
                 )
                 
@@ -1305,4 +1472,19 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             agent_traces=[],
             extra={"error": str(exc)},
         )
+    finally:
+        # Audit logging (best-effort)
+        try:
+            log_audit_event(
+                org_id=org_id,
+                user_id=user_id,
+                action="query",
+                details={
+                    "prompt": request.prompt[:200],
+                    "models": actual_models if 'actual_models' in locals() else [],
+                    "latency_ms": int((time.perf_counter() - start_time) * 1000),
+                },
+            )
+        except Exception:
+            pass
 
