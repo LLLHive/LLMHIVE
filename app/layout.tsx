@@ -40,20 +40,21 @@ export default function RootLayout({
         >
           <AuthProvider>
             <AppearanceSettingsLoader />
-            {children}
-            <Toaster 
-              position="bottom-right"
-              closeButton
-              richColors
-              expand={false}
-              toastOptions={{
-                duration: 4000,
-              }}
-            />
-            <AnalyticsWrapper />
+        {children}
+        <Toaster 
+          position="bottom-right"
+          closeButton
+          richColors
+          expand={false}
+          toastOptions={{
+            duration: 4000,
+          }}
+        />
+        <AnalyticsWrapper />
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   )
 }
+// Build trigger: 1765766573
