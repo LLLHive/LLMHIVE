@@ -71,8 +71,8 @@ class WebResearchClient:
     async def search(
         self,
         query: str,
-        max_results: int = 5,
-        search_depth: str = "basic",
+        max_results: int = 10,  # Increased for list queries
+        search_depth: str = "advanced",  # Thorough search for better results
         include_domains: Optional[List[str]] = None,
         exclude_domains: Optional[List[str]] = None,
     ) -> List[SearchResult]:
@@ -80,8 +80,8 @@ class WebResearchClient:
         
         Args:
             query: The search query
-            max_results: Maximum number of results (default: 5)
-            search_depth: "basic" for faster results, "advanced" for more thorough
+            max_results: Maximum number of results (default: 10)
+            search_depth: "basic" for faster results, "advanced" for more thorough (default: advanced)
             include_domains: Only search these domains (optional)
             exclude_domains: Exclude these domains (optional)
             
