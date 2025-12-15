@@ -75,6 +75,8 @@ class WebResearchClient:
         search_depth: str = "advanced",  # Thorough search for better results
         include_domains: Optional[List[str]] = None,
         exclude_domains: Optional[List[str]] = None,
+        days: Optional[int] = None,  # Limit to recent results (days)
+        topic: str = "general",  # "general" or "news"
     ) -> List[SearchResult]:
         """Search the web for information.
         
@@ -84,6 +86,8 @@ class WebResearchClient:
             search_depth: "basic" for faster results, "advanced" for more thorough (default: advanced)
             include_domains: Only search these domains (optional)
             exclude_domains: Exclude these domains (optional)
+            days: Only return results from the last N days (optional, for fresh data)
+            topic: "general" for broad search, "news" for news articles
             
         Returns:
             List of SearchResult objects
@@ -93,17 +97,25 @@ class WebResearchClient:
             return []
         
         try:
-            logger.info(f"Web search: query='{query[:50]}...', max_results={max_results}")
+            logger.info(f"Web search: query='{query[:50]}...', max_results={max_results}, days={days}, topic={topic}")
+            
+            # Build search params
+            search_params = {
+                "query": query,
+                "max_results": max_results,
+                "search_depth": search_depth,
+                "include_domains": include_domains or [],
+                "exclude_domains": exclude_domains or [],
+                "include_answer": True,  # Synthesize answer from sources
+                "topic": topic,
+            }
+            
+            # Add days filter for recency if specified
+            if days:
+                search_params["days"] = days
             
             # Call Tavily API
-            response = self._client.search(
-                query=query,
-                max_results=max_results,
-                search_depth=search_depth,
-                include_domains=include_domains or [],
-                exclude_domains=exclude_domains or [],
-                include_answer=True,  # Synthesize answer from sources
-            )
+            response = self._client.search(**search_params)
             
             results = []
             
@@ -218,36 +230,59 @@ def get_web_research_client() -> WebResearchClient:
     return _web_research_client
 
 
-async def web_search(query: str, max_results: int = 5) -> List[SearchResult]:
+async def web_search(
+    query: str, 
+    max_results: int = 10,
+    days: Optional[int] = None,
+    topic: str = "general",
+    **kwargs,
+) -> List[SearchResult]:
     """Convenience function for web search.
     
     Args:
         query: Search query
         max_results: Maximum results
+        days: Limit to last N days (for current data)
+        topic: "general" or "news"
         
     Returns:
         List of SearchResult objects
     """
     client = get_web_research_client()
-    return await client.search(query, max_results=max_results)
+    return await client.search(query, max_results=max_results, days=days, topic=topic)
 
 
-async def web_search_formatted(query: str, max_results: int = 5) -> str:
+async def web_search_formatted(
+    query: str, 
+    max_results: int = 10,
+    days: Optional[int] = None,
+    topic: str = "general",
+    **kwargs,
+) -> str:
     """Search and return formatted results for LLM consumption.
     
     Args:
         query: Search query
         max_results: Maximum results
+        days: Limit to last N days (for current data)
+        topic: "general" or "news"
         
     Returns:
         Formatted string with search results
     """
-    results = await web_search(query, max_results)
+    results = await web_search(query, max_results, days=days, topic=topic)
     
     if not results:
         return f"No web search results found for: {query}"
     
+    # Add current date context and recency info
+    from datetime import datetime
+    current_date = datetime.now().strftime("%B %d, %Y")
+    
     formatted = f"Web Search Results for: '{query}'\n"
+    formatted += f"Search Date: {current_date}\n"
+    if days:
+        formatted += f"Recency Filter: Last {days} days\n"
     formatted += "=" * 50 + "\n\n"
     
     for i, result in enumerate(results, 1):

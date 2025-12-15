@@ -913,13 +913,26 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 # Force web search if enable_live_research is set
                 if force_web_search and not tool_analysis.requires_tools:
                     logger.info("Forcing web search due to enable_live_research=True")
-                    from ..orchestration.tool_broker import ToolRequest, ToolType as TT
+                    from ..orchestration.tool_broker import ToolRequest, ToolType as TT, ToolPriority
+                    # Enhance query for recency and add recency params
+                    import datetime
+                    current_date = datetime.datetime.now().strftime("%B %Y")  # e.g., "December 2024"
+                    enhanced_query = f"{base_prompt} {current_date} latest"
                     tool_analysis.tool_requests.append(ToolRequest(
                         tool_type=TT.WEB_SEARCH,
-                        query=base_prompt,
-                        priority=1,
+                        query=enhanced_query,
+                        purpose="Real-time web search for current information",
+                        priority=ToolPriority.HIGH,
+                        metadata={"days": 30, "topic": "news"},  # Last 30 days, news topic
                     ))
                     tool_analysis.requires_tools = True
+                
+                # For any temporal query, ensure recency params are set
+                if force_web_search:
+                    for req in tool_analysis.tool_requests:
+                        if req.tool_type.value == "web_search" and not req.metadata.get("days"):
+                            req.metadata["days"] = 30
+                            req.metadata["topic"] = "news"
                 
                 if tool_analysis.requires_tools:
                     logger.info(
