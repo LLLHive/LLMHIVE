@@ -902,10 +902,24 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         tool_context = ""
         tool_results_info: Dict[str, Any] = {"used": False}
         
-        if TOOL_BROKER_AVAILABLE and (prompt_spec is None or prompt_spec.analysis.requires_tools):
+        # Check if live research is explicitly enabled (from frontend temporal detection)
+        force_web_search = getattr(request.orchestration, 'enable_live_research', False)
+        
+        if TOOL_BROKER_AVAILABLE and (prompt_spec is None or prompt_spec.analysis.requires_tools or force_web_search):
             try:
                 broker = get_tool_broker()
                 tool_analysis = broker.analyze_tool_needs(base_prompt)
+                
+                # Force web search if enable_live_research is set
+                if force_web_search and not tool_analysis.requires_tools:
+                    logger.info("Forcing web search due to enable_live_research=True")
+                    from ..orchestration.tool_broker import ToolRequest, ToolType as TT
+                    tool_analysis.tool_requests.append(ToolRequest(
+                        tool_type=TT.WEB_SEARCH,
+                        query=base_prompt,
+                        priority=1,
+                    ))
+                    tool_analysis.requires_tools = True
                 
                 if tool_analysis.requires_tools:
                     logger.info(

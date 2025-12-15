@@ -82,6 +82,7 @@ class ChatMetadata(BaseModel):
     chat_id: Optional[str] = Field(default=None, description="Chat/conversation ID")
     user_id: Optional[str] = Field(default=None, description="User ID")
     project_id: Optional[str] = Field(default=None, description="Project ID")
+    org_id: Optional[str] = Field(default=None, description="Organization ID")
     criteria: Optional[CriteriaSettings] = Field(
         default=None,
         description="Dynamic criteria settings for quality/speed/creativity balance"
@@ -93,6 +94,7 @@ class ChatMetadata(BaseModel):
                 "chat_id": "conv-123",
                 "user_id": "user-456",
                 "project_id": "proj-789",
+            "org_id": "org-001",
                 "criteria": {"accuracy": 70, "speed": 70, "creativity": 50},
             }
         }
@@ -133,6 +135,10 @@ class OrchestrationSettings(BaseModel):
     enable_adaptive_ensemble: bool = Field(
         default=False,
         description="Enable Adaptive Ensemble Logic"
+    )
+    enable_live_research: bool = Field(
+        default=False,
+        description="Enable real-time web research for current data (auto-enabled for temporal queries)"
     )
     # Elite orchestration settings (from frontend)
     elite_strategy: Optional[str] = Field(
@@ -224,6 +230,18 @@ class ChatRequest(BaseModel):
     )
     domain_pack: DomainPack = Field(default=DomainPack.default, description="Domain specialization pack")
     agent_mode: AgentMode = Field(default=AgentMode.team, description="Agent collaboration mode")
+    format_style: Optional[str] = Field(
+        default=None,
+        description="Answer format style (paragraph, bullet_points, markdown, table, json, executive_summary, qa)",
+    )
+    tone_style: Optional[str] = Field(
+        default=None,
+        description="Answer tone/style (formal, casual, technical, simplified, educational, conversational, authoritative)",
+    )
+    show_confidence: Optional[bool] = Field(
+        default=True,
+        description="Whether to append confidence indicator in textual output (ignored for JSON format)",
+    )
     tuning: TuningOptions = Field(default_factory=TuningOptions, description="Tuning options")
     orchestration: OrchestrationSettings = Field(
         default_factory=OrchestrationSettings,
@@ -353,6 +371,10 @@ class AnswerFormat(str, Enum):
     table = "table"
     structured = "structured"
     conversational = "conversational"
+    markdown = "markdown"
+    json = "json"
+    executive_summary = "executive_summary"
+    qa = "qa"
 
 
 class AnswerTone(str, Enum):
@@ -390,6 +412,7 @@ class ClarificationRequest(BaseModel):
     status: ClarificationStatus = Field(..., description="Clarification status")
     original_query: str = Field(..., description="Original user query")
     ambiguity_summary: Optional[str] = Field(default=None, description="Why clarification is needed")
+    clarification_round: int = Field(default=1, description="Current clarification round (1-based)")
     query_questions: List[ClarificationQuestion] = Field(
         default_factory=list,
         description="Questions about the query (up to 3)"
@@ -440,6 +463,7 @@ class ClarificationResponse(BaseModel):
         description="Answers to preference questions"
     )
     skipped: bool = Field(default=False, description="Whether user skipped clarification")
+    proceed_with_assumption: bool = Field(default=False, description="Proceed with best guess if still ambiguous")
 
     model_config = ConfigDict(
         json_schema_extra={
