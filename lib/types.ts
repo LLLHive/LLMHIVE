@@ -16,6 +16,7 @@ export interface Message {
   isProcessing?: boolean
   isClarificationRequest?: boolean
   modelsUsed?: string[]
+  metadata?: Record<string, unknown>
 }
 
 export interface Attachment {
