@@ -304,7 +304,13 @@ export interface ModelComparison {
 }
 
 export function compareModels(models: OpenRouterModel[]): ModelComparison {
-  const dimensions = [
+  type DimensionDef = {
+    dimension: string
+    getValue: (m: OpenRouterModel) => number | boolean | undefined
+    higherBetter: boolean
+  }
+  
+  const dimensions: DimensionDef[] = [
     {
       dimension: 'Context Length',
       getValue: (m: OpenRouterModel) => m.context_length,
@@ -343,7 +349,7 @@ export function compareModels(models: OpenRouterModel[]): ModelComparison {
   ]
   
   const comparison = dimensions.map(({ dimension, getValue, higherBetter }) => {
-    const values = models.map(getValue)
+    const values = models.map(m => getValue(m))
     
     // Find winner
     let winnerIdx: number | undefined
