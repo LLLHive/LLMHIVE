@@ -27,21 +27,25 @@ function mockModel(id: string, name: string, context: number = 128000, promptCos
   }
 }
 
-// Mock rankings data with proper RankedModel format
+// Mock rankings data with proper RankedModel format - updated with latest models
 const MOCK_RANKINGS: Record<string, Array<{ model: ReturnType<typeof mockModel>, rank: number, score: number, metrics: Record<string, number | string> }>> = {
   trending: [
-    { model: mockModel("openai/gpt-4o", "GPT-4o"), rank: 1, score: 95, metrics: { change: 12, usage_count: 125000 } },
-    { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", 200000, 3), rank: 2, score: 92, metrics: { change: 8, usage_count: 98000 } },
-    { model: mockModel("google/gemini-pro-1.5", "Gemini 1.5 Pro", 2000000, 2.5), rank: 3, score: 88, metrics: { change: 5, usage_count: 75000 } },
-    { model: mockModel("meta-llama/llama-3.3-70b", "Llama 3.3 70B", 128000, 0.9), rank: 4, score: 85, metrics: { change: 15, usage_count: 42000 } },
-    { model: mockModel("deepseek/deepseek-chat", "DeepSeek Chat", 64000, 0.14), rank: 5, score: 82, metrics: { change: 20, usage_count: 38000 } },
+    { model: mockModel("openai/gpt-5.2", "GPT-5.2", 128000, 15), rank: 1, score: 99, metrics: { change: 50, usage_count: 180000 } },
+    { model: mockModel("openai/gpt-5.2-pro", "GPT-5.2 Pro", 200000, 30), rank: 2, score: 97, metrics: { change: 45, usage_count: 95000 } },
+    { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", 200000, 3), rank: 3, score: 92, metrics: { change: 8, usage_count: 98000 } },
+    { model: mockModel("openai/gpt-4o", "GPT-4o", 128000, 5), rank: 4, score: 88, metrics: { change: -5, usage_count: 125000 } },
+    { model: mockModel("google/gemini-2.0-flash", "Gemini 2.0 Flash", 1000000, 0.3), rank: 5, score: 85, metrics: { change: 25, usage_count: 75000 } },
+    { model: mockModel("deepseek/deepseek-chat", "DeepSeek Chat", 64000, 0.14), rank: 6, score: 82, metrics: { change: 20, usage_count: 68000 } },
+    { model: mockModel("meta-llama/llama-3.3-70b-instruct", "Llama 3.3 70B Instruct", 128000, 0.9), rank: 7, score: 80, metrics: { change: 15, usage_count: 42000 } },
   ],
   most_used: [
-    { model: mockModel("openai/gpt-4o", "GPT-4o"), rank: 1, score: 100, metrics: { usage_count: 125000 } },
-    { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", 200000, 3), rank: 2, score: 85, metrics: { usage_count: 98000 } },
-    { model: mockModel("openai/gpt-4o-mini", "GPT-4o Mini", 128000, 0.6), rank: 3, score: 75, metrics: { usage_count: 87000 } },
-    { model: mockModel("google/gemini-flash-1.5", "Gemini 1.5 Flash", 1000000, 0.7), rank: 4, score: 60, metrics: { usage_count: 65000 } },
-    { model: mockModel("meta-llama/llama-3.3-70b", "Llama 3.3 70B", 128000, 0.9), rank: 5, score: 45, metrics: { usage_count: 42000 } },
+    { model: mockModel("openai/gpt-5.2", "GPT-5.2", 128000, 15), rank: 1, score: 100, metrics: { usage_count: 180000 } },
+    { model: mockModel("openai/gpt-4o", "GPT-4o", 128000, 5), rank: 2, score: 90, metrics: { usage_count: 125000 } },
+    { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", 200000, 3), rank: 3, score: 85, metrics: { usage_count: 98000 } },
+    { model: mockModel("openai/gpt-4o-mini", "GPT-4o Mini", 128000, 0.6), rank: 4, score: 75, metrics: { usage_count: 87000 } },
+    { model: mockModel("google/gemini-2.0-flash", "Gemini 2.0 Flash", 1000000, 0.3), rank: 5, score: 65, metrics: { usage_count: 75000 } },
+    { model: mockModel("deepseek/deepseek-chat", "DeepSeek Chat", 64000, 0.14), rank: 6, score: 55, metrics: { usage_count: 68000 } },
+    { model: mockModel("meta-llama/llama-3.3-70b-instruct", "Llama 3.3 70B Instruct", 128000, 0.9), rank: 7, score: 45, metrics: { usage_count: 42000 } },
   ],
   best_value: [
     { model: mockModel("deepseek/deepseek-chat", "DeepSeek Chat", 64000, 0.14), rank: 1, score: 98, metrics: { cost_efficiency: 0.02 } },
