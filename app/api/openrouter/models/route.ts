@@ -2,6 +2,15 @@ import { NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-792354158895.us-east1.run.app"
 
+// Fallback empty response when backend not ready
+const EMPTY_RESPONSE = {
+  models: [],
+  total: 0,
+  page: 1,
+  limit: 20,
+  message: "OpenRouter integration initializing. Run sync to populate models."
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -17,28 +26,17 @@ export async function GET(request: Request) {
     })
     
     if (!response.ok) {
-      // If backend doesn't have this route yet, return mock data
-      if (response.status === 404) {
-        return NextResponse.json({
-          models: [],
-          total: 0,
-          page: 1,
-          limit: 20,
-          message: "OpenRouter sync not yet run. Models will appear after first sync."
-        })
-      }
-      const error = await response.text()
-      return NextResponse.json({ error }, { status: response.status })
+      // Return empty response for any backend error (404, 500, table missing, etc.)
+      console.error("OpenRouter backend error:", response.status)
+      return NextResponse.json(EMPTY_RESPONSE)
     }
     
     const data = await response.json()
     return NextResponse.json(data)
   } catch (error) {
     console.error("OpenRouter models API error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch models", models: [], total: 0 },
-      { status: 500 }
-    )
+    // Return empty response instead of error
+    return NextResponse.json(EMPTY_RESPONSE)
   }
 }
 
