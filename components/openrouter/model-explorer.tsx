@@ -403,9 +403,14 @@ export function ModelExplorer({
           ? await searchModels(searchQuery, filters)
           : await listModels(filters)
         
-        setModels(response.data)
-        setTotal(response.total)
+        // Handle both 'models' and 'data' field names
+        const modelsList = response.models || response.data || []
+        setModels(modelsList)
+        setTotal(response.total || 0)
       } catch (e) {
+        console.error("Model fetch error:", e)
+        setModels([])
+        setTotal(0)
         setError(e instanceof Error ? e.message : "Failed to load models")
       } finally {
         setLoading(false)

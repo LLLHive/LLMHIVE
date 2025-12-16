@@ -67,12 +67,14 @@ export interface ModelEndpoint {
 }
 
 export interface ModelListResponse {
-  data: OpenRouterModel[]
+  models: OpenRouterModel[]
+  data?: OpenRouterModel[]  // Alias for compatibility
   total: number
   limit: number
   offset: number
-  data_source: string
+  data_source?: string
   last_sync?: string
+  message?: string
 }
 
 export interface ModelFilters {
