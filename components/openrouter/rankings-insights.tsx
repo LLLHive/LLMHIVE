@@ -192,7 +192,9 @@ function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
         {/* Price */}
         <div className="text-right shrink-0 w-24 hidden lg:block">
           <div className="text-sm font-medium">
-            {formatPrice(model.pricing.per_1m_prompt)}
+            {model.pricing?.per_1m_prompt != null 
+              ? formatPrice(model.pricing.per_1m_prompt)
+              : "N/A"}
           </div>
         </div>
         

@@ -55,7 +55,7 @@ interface ModelCardProps {
 }
 
 function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: ModelCardProps) {
-  const priceTier = getPriceTier(model.pricing.per_1m_prompt)
+  const priceTier = getPriceTier(model.pricing?.per_1m_prompt)
   
   const priceTierColors = {
     free: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
@@ -84,7 +84,7 @@ function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: Mode
             </CardDescription>
           </div>
           <Badge variant="outline" className={cn("text-xs shrink-0", priceTierColors[priceTier])}>
-            {priceTier === 'free' ? 'Free' : formatPrice(model.pricing.per_1m_prompt)}
+            {priceTier === 'free' ? 'Free' : (model.pricing?.per_1m_prompt != null ? formatPrice(model.pricing.per_1m_prompt) : 'N/A')}
           </Badge>
         </div>
       </CardHeader>
