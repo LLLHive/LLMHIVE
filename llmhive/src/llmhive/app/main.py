@@ -125,6 +125,16 @@ async def lifespan(app: FastAPI):
     else:
         logger.info(f"✓ {len([p for p in providers if p != 'stub'])} real provider(s) configured")
     
+    # Initialize OpenRouter database tables
+    try:
+        from .openrouter.migrations import init_openrouter_tables
+        if init_openrouter_tables():
+            logger.info("✓ OpenRouter database tables initialized")
+        else:
+            logger.warning("OpenRouter database tables initialization failed")
+    except Exception as e:
+        logger.warning(f"OpenRouter tables init skipped: {e}")
+    
     # Configure Tool Broker with Tavily web search
     try:
         from .services.web_research import web_search_formatted, get_web_research_client
