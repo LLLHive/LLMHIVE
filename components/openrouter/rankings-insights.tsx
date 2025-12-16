@@ -14,7 +14,10 @@
  */
 
 import * as React from "react"
-import { TrendingUp, BarChart3, DollarSign, MessageSquare, Zap, Image, Clock, Shield, Info, ChevronRight, ExternalLink } from "lucide-react"
+import { 
+  TrendingUp, BarChart3, DollarSign, MessageSquare, Zap, Image, Clock, Shield, Info, ChevronRight, ExternalLink,
+  Code, Users, Megaphone, Search, Cpu, FlaskConical, Languages, Scale, Landmark, Heart, GraduationCap, PieChart, Wrench
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -34,12 +37,32 @@ import { getRankings, listRankingDimensions } from "@/lib/openrouter/api"
 // Constants
 // =============================================================================
 
+// Dimension categories for organizing tabs
+const DIMENSION_CATEGORIES = {
+  core: ['leaderboard', 'market_share', 'trending', 'most_used', 'best_value'],
+  categories: ['programming', 'roleplay', 'marketing', 'seo', 'technology', 'science', 'translation', 'legal', 'finance', 'health', 'academia'],
+  technical: ['long_context', 'tools_agents', 'multimodal', 'images', 'fastest', 'most_reliable', 'lowest_cost'],
+} as const
+
 const DIMENSION_CONFIG: Record<RankingDimension, {
   icon: React.ElementType
   name: string
   description: string
   color: string
 }> = {
+  // Core rankings
+  leaderboard: {
+    icon: BarChart3,
+    name: "Leaderboard",
+    description: "Token usage across all models",
+    color: "text-blue-500",
+  },
+  market_share: {
+    icon: PieChart,
+    name: "Market Share",
+    description: "Usage by model provider",
+    color: "text-indigo-500",
+  },
   trending: {
     icon: TrendingUp,
     name: "Trending",
@@ -58,6 +81,74 @@ const DIMENSION_CONFIG: Record<RankingDimension, {
     description: "Quality/cost ratio",
     color: "text-amber-500",
   },
+  // Use case categories
+  programming: {
+    icon: Code,
+    name: "Programming",
+    description: "Best for coding tasks",
+    color: "text-violet-500",
+  },
+  roleplay: {
+    icon: Users,
+    name: "Roleplay",
+    description: "Creative roleplay & characters",
+    color: "text-pink-500",
+  },
+  marketing: {
+    icon: Megaphone,
+    name: "Marketing",
+    description: "Marketing content creation",
+    color: "text-orange-500",
+  },
+  seo: {
+    icon: Search,
+    name: "SEO",
+    description: "SEO optimization",
+    color: "text-teal-500",
+  },
+  technology: {
+    icon: Cpu,
+    name: "Technology",
+    description: "Tech-related topics",
+    color: "text-slate-500",
+  },
+  science: {
+    icon: FlaskConical,
+    name: "Science",
+    description: "Scientific analysis",
+    color: "text-cyan-500",
+  },
+  translation: {
+    icon: Languages,
+    name: "Translation",
+    description: "Language translation",
+    color: "text-sky-500",
+  },
+  legal: {
+    icon: Scale,
+    name: "Legal",
+    description: "Legal documents & analysis",
+    color: "text-gray-500",
+  },
+  finance: {
+    icon: Landmark,
+    name: "Finance",
+    description: "Financial analysis",
+    color: "text-emerald-500",
+  },
+  health: {
+    icon: Heart,
+    name: "Health",
+    description: "Medical & health topics",
+    color: "text-red-500",
+  },
+  academia: {
+    icon: GraduationCap,
+    name: "Academia",
+    description: "Academic writing & research",
+    color: "text-amber-600",
+  },
+  // Technical rankings
   long_context: {
     icon: MessageSquare,
     name: "Long Context",
@@ -65,9 +156,9 @@ const DIMENSION_CONFIG: Record<RankingDimension, {
     color: "text-purple-500",
   },
   tools_agents: {
-    icon: Zap,
-    name: "Tools & Agents",
-    description: "Best for function calling",
+    icon: Wrench,
+    name: "Tool Calls",
+    description: "Tool usage across models",
     color: "text-orange-500",
   },
   multimodal: {
@@ -75,6 +166,12 @@ const DIMENSION_CONFIG: Record<RankingDimension, {
     name: "Multimodal",
     description: "Image/audio support",
     color: "text-pink-500",
+  },
+  images: {
+    icon: Image,
+    name: "Images",
+    description: "Total images processed",
+    color: "text-fuchsia-500",
   },
   fastest: {
     icon: Clock,

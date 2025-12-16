@@ -97,12 +97,29 @@ export interface ModelFilters {
 // =============================================================================
 
 export type RankingDimension =
+  // Core rankings
+  | 'leaderboard'       // Token usage across all models
+  | 'market_share'      // By model author (Google, OpenAI, etc.)
   | 'trending'
   | 'most_used'
   | 'best_value'
+  // Use case categories (from OpenRouter)
+  | 'programming'       // Best for coding
+  | 'roleplay'          // Creative roleplay
+  | 'marketing'         // Marketing content
+  | 'seo'               // SEO optimization
+  | 'technology'        // Tech topics
+  | 'science'           // Scientific analysis
+  | 'translation'       // Language translation
+  | 'legal'             // Legal documents
+  | 'finance'           // Financial analysis
+  | 'health'            // Medical/health
+  | 'academia'          // Academic writing
+  // Technical rankings
   | 'long_context'
   | 'tools_agents'
   | 'multimodal'
+  | 'images'            // Image processing
   | 'fastest'
   | 'most_reliable'
   | 'lowest_cost'
