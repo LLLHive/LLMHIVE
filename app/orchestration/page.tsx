@@ -2,12 +2,14 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles, Zap, Crown, Target, Shield } from "lucide-react"
+import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles, Zap, Crown, Target, Shield, Plus, ArrowRight } from "lucide-react"
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import { REASONING_METHODS, REASONING_CATEGORIES } from "@/lib/reasoning-methods"
 import { Sidebar } from "@/components/sidebar"
@@ -15,6 +17,7 @@ import { UserAccountMenu } from "@/components/user-account-menu"
 import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settings-storage"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
+import { STORAGE_KEYS, type SelectedModelConfig, type UserTier, TIER_CONFIGS, getTierBadgeColor, getTierDisplayName, getModelRequiredTier } from "@/lib/openrouter/tiers"
 
 // Card data matching home page template card style exactly
 const orchestrationCards = [
@@ -196,6 +199,7 @@ export default function OrchestrationPage() {
 
   // State for all settings
   const [selectedModels, setSelectedModels] = useState<string[]>(["automatic"])
+  const [openRouterModels, setOpenRouterModels] = useState<SelectedModelConfig[]>([])
   const [selectedMethods, setSelectedMethods] = useState<string[]>([])
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [selectedTools, setSelectedTools] = useState<string[]>([])
@@ -216,6 +220,10 @@ export default function OrchestrationPage() {
   const [selectedSpeed, setSelectedSpeed] = useState<string>("standard")
   const [selectedEliteStrategy, setSelectedEliteStrategy] = useState<string>("standard")
   const [selectedQualityOptions, setSelectedQualityOptions] = useState<string[]>(["verification", "consensus"])
+  
+  // TODO: Get from auth context
+  const userTier: UserTier = 'pro'
+  const tierConfig = TIER_CONFIGS[userTier]
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -240,6 +248,20 @@ export default function OrchestrationPage() {
     if (savedSettings.standardValues) {
       setStandardValues(savedSettings.standardValues)
     }
+    
+    // Load OpenRouter models from localStorage
+    try {
+      const storedPrefs = localStorage.getItem(STORAGE_KEYS.USER_MODEL_PREFERENCES)
+      if (storedPrefs) {
+        const prefs = JSON.parse(storedPrefs)
+        if (prefs.selectedModels) {
+          setOpenRouterModels(prefs.selectedModels)
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load OpenRouter preferences:', e)
+    }
+    
     setSettingsLoaded(true)
   }, [])
 
@@ -286,7 +308,9 @@ export default function OrchestrationPage() {
   const getCount = (id: string) => {
     switch (id) {
       case "models":
-        return selectedModels.length
+        // Count both built-in models and OpenRouter models
+        const enabledOpenRouterCount = openRouterModels.filter(m => m.enabled).length
+        return selectedModels.length + enabledOpenRouterCount
       case "reasoning":
         return selectedMethods.length
       case "features":
@@ -396,7 +420,7 @@ export default function OrchestrationPage() {
       <Sheet open={activeDrawer === "models"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
         <SheetContent
           side="right"
-          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+          className="w-[300px] sm:w-[340px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
         >
           <div className="p-5 border-b border-border/50">
             <SheetHeader className="space-y-1">
@@ -406,52 +430,139 @@ export default function OrchestrationPage() {
                 </div>
                 Models
                 <span className="ml-auto text-xs font-normal text-[var(--bronze)] bg-[var(--bronze)]/10 px-2 py-0.5 rounded-full">
-                  {selectedModels.length} selected
+                  {selectedModels.length + openRouterModels.filter(m => m.enabled).length} selected
                 </span>
               </SheetTitle>
               <p className="text-xs text-muted-foreground">Select AI models for orchestration</p>
             </SheetHeader>
           </div>
           <ScrollArea className="h-[calc(100vh-100px)]">
-            <div className="p-4 space-y-1.5">
-              {AVAILABLE_MODELS.map((model) => {
-                const isSelected = selectedModels.includes(model.id)
-                return (
-                  <div
-                    key={model.id}
-                    onClick={() => toggleModel(model.id)}
-                    className={`group p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
-                      isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                          isSelected
-                            ? "border-[var(--bronze)] bg-[var(--bronze)]"
-                            : "border-muted-foreground/30 group-hover:border-muted-foreground/50"
-                        }`}
-                      >
-                        {isSelected && <Check className="h-2.5 w-2.5 text-background" />}
-                      </div>
-                      <div className="w-6 h-6 relative flex-shrink-0 rounded-md overflow-hidden bg-muted/50">
-                        <Image
-                          src={getModelLogo(model.provider) || "/placeholder.svg"}
-                          alt={model.provider}
-                          fill
-                          className="object-contain p-0.5"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${isSelected ? "text-[var(--bronze)]" : ""}`}>
-                          {model.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground capitalize">{model.provider}</p>
+            <div className="p-4 space-y-4">
+              {/* OpenRouter Models Section */}
+              {openRouterModels.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Your OpenRouter Team
+                    </h3>
+                    <Badge variant="outline" className={getTierBadgeColor(userTier)}>
+                      {getTierDisplayName(userTier)}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1.5">
+                    {openRouterModels.map((config) => {
+                      const modelName = config.modelId.split('/').pop() || config.modelId
+                      const requiredTier = getModelRequiredTier(config.modelId)
+                      return (
+                        <div
+                          key={config.modelId}
+                          className={`group p-2.5 rounded-lg transition-all duration-200 ${
+                            config.enabled ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "bg-muted/30"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                                config.enabled
+                                  ? "border-[var(--bronze)] bg-[var(--bronze)]"
+                                  : "border-muted-foreground/30"
+                              }`}
+                            >
+                              {config.enabled && <Check className="h-2.5 w-2.5 text-background" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate ${config.enabled ? "text-[var(--bronze)]" : "text-muted-foreground"}`}>
+                                {modelName}
+                              </p>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-muted-foreground">{config.preferredRole}</span>
+                                <Badge variant="outline" className={`text-[8px] px-1 py-0 ${getTierBadgeColor(requiredTier)}`}>
+                                  {getTierDisplayName(requiredTier)}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <Link href={ROUTES.MODELS}>
+                    <Button variant="outline" size="sm" className="w-full gap-2 mt-2">
+                      <Plus className="h-3.5 w-3.5" />
+                      Manage Team
+                      <ArrowRight className="h-3.5 w-3.5 ml-auto" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              
+              {/* Add OpenRouter Models CTA if none selected */}
+              {openRouterModels.length === 0 && (
+                <div className="p-4 border border-dashed rounded-lg text-center space-y-2">
+                  <p className="text-sm font-medium">Build Your AI Team</p>
+                  <p className="text-xs text-muted-foreground">
+                    Select models from 340+ OpenRouter models to create your orchestration team
+                  </p>
+                  <Link href={ROUTES.MODELS}>
+                    <Button size="sm" className="gap-2 mt-2">
+                      <Plus className="h-3.5 w-3.5" />
+                      Add OpenRouter Models
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              
+              {/* Divider */}
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-[10px] uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Built-in Models</span>
+                </div>
+              </div>
+              
+              {/* Built-in Models */}
+              <div className="space-y-1.5">
+                {AVAILABLE_MODELS.map((model) => {
+                  const isSelected = selectedModels.includes(model.id)
+                  return (
+                    <div
+                      key={model.id}
+                      onClick={() => toggleModel(model.id)}
+                      className={`group p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
+                        isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                            isSelected
+                              ? "border-[var(--bronze)] bg-[var(--bronze)]"
+                              : "border-muted-foreground/30 group-hover:border-muted-foreground/50"
+                          }`}
+                        >
+                          {isSelected && <Check className="h-2.5 w-2.5 text-background" />}
+                        </div>
+                        <div className="w-6 h-6 relative flex-shrink-0 rounded-md overflow-hidden bg-muted/50">
+                          <Image
+                            src={getModelLogo(model.provider) || "/placeholder.svg"}
+                            alt={model.provider}
+                            fill
+                            className="object-contain p-0.5"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                            {model.name}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground capitalize">{model.provider}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           </ScrollArea>
         </SheetContent>
