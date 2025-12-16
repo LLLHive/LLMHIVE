@@ -24,7 +24,8 @@ import type {
   CreateTemplateRequest,
 } from './types'
 
-const API_BASE = process.env.NEXT_PUBLIC_ORCHESTRATOR_API_BASE_URL || ''
+// Use Next.js API routes as proxy to backend
+const API_BASE = '/api'
 
 // =============================================================================
 // Utilities
