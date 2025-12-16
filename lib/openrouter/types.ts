@@ -120,11 +120,14 @@ export interface RankedModel {
 export interface RankingResult {
   dimension: RankingDimension
   time_range: TimeRange
-  count: number
-  models: RankedModel[]
-  generated_at: string
-  data_source: string
-  metric_definitions: Record<string, string>
+  count?: number
+  total?: number
+  models?: RankedModel[]
+  data?: RankedModel[] | unknown[]  // Backend may return 'data' instead of 'models'
+  generated_at?: string
+  last_updated?: string
+  data_source?: string
+  metric_definitions?: Record<string, string>
 }
 
 export interface RankingDimensionInfo {

@@ -353,7 +353,7 @@ export function RankingsInsights({
                       </Card>
                     ))}
                   </div>
-                ) : result?.models.length === 0 ? (
+                ) : (!result?.models || result.models.length === 0) && (!result?.data || (result.data as unknown[]).length === 0) ? (
                   <div className="text-center py-12">
                     <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium">No data available</h3>
@@ -363,9 +363,9 @@ export function RankingsInsights({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {result?.models.map((rankedModel) => (
+                    {(result?.models || (result?.data as RankedModel[]) || []).map((rankedModel) => (
                       <RankedModelRow
-                        key={rankedModel.model.id}
+                        key={rankedModel.model?.id || rankedModel.id}
                         rankedModel={rankedModel}
                         onSelect={onSelectModel}
                       />
