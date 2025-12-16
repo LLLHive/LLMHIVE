@@ -184,6 +184,15 @@ except ImportError:
     DiffusionResult = None  # type: ignore
     logger.warning("Prompt diffusion module not available")
 
+# Optional knowledge base for prompt enrichment
+try:
+    from .knowledge.pinecone_kb import get_knowledge_base, RecordType
+    KNOWLEDGE_BASE_AVAILABLE = True
+except Exception:
+    KNOWLEDGE_BASE_AVAILABLE = False
+    get_knowledge_base = None  # type: ignore
+    RecordType = None  # type: ignore
+
 # Import consensus manager components
 try:
     from .orchestration.consensus_manager import (
@@ -422,10 +431,12 @@ class Orchestrator:
         # Initialize prompt diffusion after providers are ready
         if PROMPT_DIFFUSION_AVAILABLE and PromptDiffusion:
             try:
+                kb = get_knowledge_base() if KNOWLEDGE_BASE_AVAILABLE and get_knowledge_base else None
                 self.prompt_diffusion = PromptDiffusion(
                     providers=self.providers,
-                    max_rounds=3,
-                    convergence_threshold=0.85,
+                    max_rounds=5,
+                    convergence_threshold=0.9,
+                    knowledge_base=kb,
                 )
                 logger.info("Prompt diffusion initialized")
             except Exception as e:
@@ -1541,6 +1552,56 @@ class Orchestrator:
                         if hrm_execution_result.blackboard:
                             scratchpad.write("hrm_blackboard_summary", hrm_execution_result.blackboard.get_summary())
                     
+                    # Store sub-answers for learning reuse
+                    if KNOWLEDGE_BASE_AVAILABLE and get_knowledge_base and RecordType:
+                        try:
+                            kb = get_knowledge_base()
+                            step_map = {s.step_id: s for s in getattr(hierarchical_plan, "steps", [])}
+                            for step_result in hrm_execution_result.step_results:
+                                status_val = getattr(step_result, "status", None)
+                                status_str = getattr(status_val, "value", str(status_val))
+                                if status_str not in {"COMPLETED", "StepStatus.COMPLETED"}:
+                                    continue
+                                if not getattr(step_result, "output", ""):
+                                    continue
+                                step_def = step_map.get(step_result.step_id)
+                                sub_query = (
+                                    step_def.goal
+                                    or step_def.description
+                                    or f"{step_result.role_name} sub-task"
+                                    if step_def
+                                    else f"{step_result.role_name} sub-task"
+                                )
+                                await kb.store_answer(
+                                    query=sub_query[:500],
+                                    answer=step_result.output,
+                                    models_used=[step_result.model_used] if step_result.model_used else [],
+                                    record_type=RecordType.PARTIAL_ANSWER,
+                                    quality_score=getattr(step_result, "confidence", 0.0) or 0.0,
+                                    domain=domain or "default",
+                                    user_id=user_id,
+                                )
+                            
+                            # Distill multi-agent outputs into reusable knowledge
+                            distilled = []
+                            for step_result in hrm_execution_result.step_results:
+                                if getattr(step_result, "output", ""):
+                                    distilled.append(f"{step_result.role_name}: {step_result.output}")
+                            if distilled:
+                                distilled_text = "\n".join(distilled[:6])
+                                await kb.store_answer(
+                                    query=f"Distilled knowledge for {original_prompt[:80]}",
+                                    answer=distilled_text[:2000],
+                                    models_used=[r.model_used for r in hrm_execution_result.step_results if r.model_used],
+                                    record_type=RecordType.DOMAIN_KNOWLEDGE,
+                                    quality_score=0.6,
+                                    domain=domain or "default",
+                                    user_id=user_id,
+                                    metadata={"multi_agent_distilled": True},
+                                )
+                        except Exception as e:
+                            logger.debug("Failed to store HRM sub-answers: %s", e)
+                    
                     logger.info(
                         "Hierarchical execution complete: %d/%d steps, %d tokens, %.1fms",
                         hrm_execution_result.steps_completed,
@@ -1829,11 +1890,29 @@ class Orchestrator:
                 performance_tracker.log_run(
                     models_used=[result.model],
                     success_flag=verification_passed,
-                    latency_ms=None,
+                    latency_ms=getattr(result, "latency_ms", None),
                     domain=domain,
                 )
             except Exception as e:
                 logger.debug("Failed to log performance: %s", e)
+        
+        # Update registry performance for routing (learning loop)
+        try:
+            if MODEL_REGISTRY_AVAILABLE and self.model_registry:
+                latency_ms = getattr(result, "latency_ms", 0.0) or 0.0
+                quality_score = (
+                    getattr(verification_report, "verification_score", None)
+                    if "verification_report" in locals()
+                    else None
+                )
+                self.model_registry.update_performance(
+                    model_id=result.model,
+                    latency_ms=latency_ms,
+                    success=verification_passed,
+                    quality=quality_score,
+                )
+        except Exception as e:
+            logger.debug("Failed to update registry performance: %s", e)
         
         # Store insights to shared memory for cross-session use
         if self.shared_memory and SHARED_MEMORY_AVAILABLE and verification_passed and user_id:

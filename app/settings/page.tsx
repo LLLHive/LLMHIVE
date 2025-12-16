@@ -202,7 +202,7 @@ export default function SettingsPage() {
       // Actually apply appearance settings
       if (id === 'compactMode') {
         document.documentElement.classList.toggle('compact-mode', !prev.includes(id))
-      }
+  }
       if (id === 'animations') {
         document.documentElement.classList.toggle('no-animations', prev.includes(id))
       }
@@ -589,21 +589,21 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Theme</Label>
                 {mounted ? (
-                  <div className="flex gap-2">
+                <div className="flex gap-2">
                     {["light", "dark", "system"].map((themeOption) => (
-                      <button
+                    <button
                         key={themeOption}
                         onClick={() => setTheme(themeOption)}
-                        className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
+                      className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
                           theme === themeOption
-                            ? "border-[var(--bronze)] bg-[var(--bronze)]/10 text-[var(--bronze)]"
-                            : "border-border hover:border-[var(--bronze)]/50"
-                        }`}
-                      >
+                          ? "border-[var(--bronze)] bg-[var(--bronze)]/10 text-[var(--bronze)]"
+                          : "border-border hover:border-[var(--bronze)]/50"
+                      }`}
+                    >
                         {themeOption.charAt(0).toUpperCase() + themeOption.slice(1)}
-                      </button>
-                    ))}
-                  </div>
+                    </button>
+                  ))}
+                </div>
                 ) : (
                   <div className="h-10 bg-secondary/50 animate-pulse rounded-lg" />
                 )}

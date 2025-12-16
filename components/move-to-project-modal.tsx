@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { FolderOpen, Plus, Check } from "lucide-react"
 import type { Project } from "@/lib/types"
@@ -31,6 +31,9 @@ export function MoveToProjectModal({ open, onOpenChange, projects, onMove, onCre
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Move to Project</DialogTitle>
+          <DialogDescription className="sr-only">
+            Select a project to move this conversation into.
+          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-60 mt-4">

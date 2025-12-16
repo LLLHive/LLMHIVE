@@ -46,6 +46,7 @@ function AlertDialogOverlay({
 
 function AlertDialogContent({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
   return (
@@ -58,7 +59,13 @@ function AlertDialogContent({
           className,
         )}
         {...props}
-      />
+      >
+        {/* Default hidden description for accessibility - prevents Radix warning */}
+        <AlertDialogPrimitive.Description className="sr-only">
+          Alert dialog content
+        </AlertDialogPrimitive.Description>
+        {children}
+      </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   )
 }

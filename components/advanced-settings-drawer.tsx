@@ -99,23 +99,23 @@ export function AdvancedSettingsDrawer({
                 >
                   <div
                     className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-                      isEnabled ? "bg-[var(--bronze)]/20 text-[var(--bronze)]" : "bg-muted text-muted-foreground"
-                    }`}
-                  >
+                    isEnabled ? "bg-[var(--bronze)]/20 text-[var(--bronze)]" : "bg-muted text-muted-foreground"
+                  }`}
+                >
                     <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Label htmlFor={option.key} className="text-sm font-medium cursor-pointer">
-                      {option.label}
-                    </Label>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Label htmlFor={option.key} className="text-sm font-medium cursor-pointer">
+                    {option.label}
+                  </Label>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{option.description}</p>
-                  </div>
-                  <Switch
-                    id={option.key}
-                    checked={isEnabled}
-                    onCheckedChange={(checked) => onSettingsChange({ [option.key]: checked })}
-                    className="data-[state=checked]:bg-[var(--bronze)]"
-                  />
+                </div>
+                <Switch
+                  id={option.key}
+                  checked={isEnabled}
+                  onCheckedChange={(checked) => onSettingsChange({ [option.key]: checked })}
+                  className="data-[state=checked]:bg-[var(--bronze)]"
+                />
                 </div>
                 
                 {/* Answer Format Selector - shown when answerStructure is enabled */}
@@ -153,7 +153,7 @@ export function AdvancedSettingsDrawer({
           <p className="text-xs text-[var(--bronze)] font-medium">Settings Active</p>
           <p className="text-[10px] text-muted-foreground mt-1">
             These settings are applied to your current and future chats automatically.
-          </p>
+        </p>
         </div>
       </SheetContent>
     </Sheet>

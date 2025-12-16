@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 interface RenameChatModalProps {
   open: boolean
@@ -31,6 +31,9 @@ export function RenameChatModal({ open, onOpenChange, currentTitle, onRename }: 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Rename Chat</DialogTitle>
+          <DialogDescription className="sr-only">
+            Enter a new title for this conversation.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="mt-4">

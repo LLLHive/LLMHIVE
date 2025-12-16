@@ -8,6 +8,7 @@
 export const ROUTES = {
   HOME: "/",
   DISCOVER: "/discover",
+  MODELS: "/models",
   ORCHESTRATION: "/orchestration",
   SETTINGS: "/settings",
 } as const

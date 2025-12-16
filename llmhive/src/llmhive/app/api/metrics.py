@@ -14,7 +14,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Header, HTTPException, Depends
 from pydantic import BaseModel
 
 from ..startup_checks import get_config_summary
@@ -22,6 +22,14 @@ from ..startup_checks import get_config_summary
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+def _require_metrics_auth(x_api_key: Optional[str] = Header(default=None)) -> None:
+    """Simple header-based guard for metrics endpoints."""
+    expected = os.getenv("METRICS_API_KEY")
+    if expected:
+        if not x_api_key or x_api_key != expected:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    # If no key configured, allow (backward compatible)
+
 
 # In-memory metrics storage (for basic metrics without Prometheus dependency)
 _metrics: Dict[str, Any] = {
@@ -104,7 +112,7 @@ async def readiness_probe() -> Dict[str, Any]:
         )
 
 
-@router.get("/metrics", response_model=MetricsResponse)
+@router.get("/metrics", response_model=MetricsResponse, dependencies=[Depends(_require_metrics_auth)])
 async def get_metrics() -> MetricsResponse:
     """Get application metrics.
     
@@ -130,7 +138,7 @@ async def get_metrics() -> MetricsResponse:
     )
 
 
-@router.get("/metrics/prometheus")
+@router.get("/metrics/prometheus", dependencies=[Depends(_require_metrics_auth)])
 async def prometheus_metrics() -> Response:
     """Prometheus-compatible metrics endpoint.
     

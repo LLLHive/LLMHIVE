@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import re
+import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
@@ -28,6 +29,7 @@ def format_answer(
     *,
     confidence_score: Optional[float] = None,
     confidence_level: Optional[str] = None,
+    show_confidence: bool = True,
 ) -> str:
     """
     Format the final answer according to user preferences.
@@ -37,6 +39,7 @@ def format_answer(
         format_style: Format style - "bullet" or "paragraph" (default: "paragraph")
         confidence_score: Optional confidence score (0.0-1.0) for indicator
         confidence_level: Optional confidence level ("High", "Medium", "Low") for indicator
+        show_confidence: Whether to append confidence indicator (skipped for JSON)
         
     Returns:
         Formatted answer text with optional confidence indicator
@@ -48,17 +51,27 @@ def format_answer(
     formatted = answer_text.strip()
     
     # Apply format style
-    if format_style == "bullet":
+    style = (format_style or "paragraph").lower()
+    if style in ("bullet", "bullets", "bullet_points"):
         formatted = _format_as_bullets(formatted)
-    elif format_style == "paragraph":
+    elif style in ("paragraph", "para"):
         formatted = _format_as_paragraph(formatted)
+    elif style in ("markdown", "md"):
+        formatted = _format_as_markdown(formatted)
+    elif style == "table":
+        formatted = _format_as_table(formatted)
+    elif style == "json":
+        formatted = _format_as_json(formatted)
+    elif style in ("executive_summary", "exec_summary"):
+        formatted = _format_as_executive_summary(formatted)
+    elif style in ("qa", "q&a"):
+        formatted = _format_as_qa(formatted)
     else:
-        # Unknown format style, default to paragraph
         logger.warning("Unknown format_style '%s', defaulting to paragraph", format_style)
         formatted = _format_as_paragraph(formatted)
     
-    # Add confidence indicator if provided
-    if confidence_score is not None or confidence_level is not None:
+    # Add confidence indicator if provided (skip for JSON to avoid breaking syntax)
+    if show_confidence and style != "json" and (confidence_score is not None or confidence_level is not None):
         confidence_indicator = _format_confidence_indicator(confidence_score, confidence_level)
         if confidence_indicator:
             formatted = f"{formatted}\n\n---\n{confidence_indicator}"
@@ -160,6 +173,78 @@ def _format_as_paragraph(text: str) -> str:
     formatted = formatted.strip()
     
     return formatted
+
+
+def _format_as_markdown(text: str) -> str:
+    """
+    Format text as markdown with simple headings if multi-paragraph.
+    """
+    parts = [p.strip() for p in re.split(r'\n{2,}', text) if p.strip()]
+    if len(parts) <= 1:
+        return text
+    lines = []
+    for i, part in enumerate(parts, 1):
+        heading = part.split('.')[0][:60].strip()
+        lines.append(f"### Section {i}: {heading}")
+        lines.append(part)
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _format_as_table(text: str) -> str:
+    """
+    Best-effort conversion to markdown table when lines look like key: value pairs.
+    """
+    rows = []
+    for line in text.splitlines():
+        line = line.strip()
+        if ":" in line:
+            key, val = line.split(":", 1)
+            rows.append((key.strip(), val.strip()))
+    if not rows:
+        return text
+    header = "| Field | Value |\n| --- | --- |"
+    body = "\n".join(f"| {k} | {v} |" for k, v in rows)
+    return f"{header}\n{body}"
+
+
+def _format_as_json(text: str) -> str:
+    """
+    Best-effort JSON formatting. If already JSON, pretty-print; else wrap as string field.
+    """
+    try:
+        parsed = json.loads(text)
+        return json.dumps(parsed, indent=2)
+    except Exception:
+        # Wrap as a simple JSON object
+        return json.dumps({"answer": text}, indent=2)
+
+
+def _format_as_executive_summary(text: str) -> str:
+    """
+    Create an executive summary: brief summary + bullet highlights.
+    """
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    summary = sentences[0] if sentences else text
+    bullets = []
+    for s in sentences[1:5]:
+        s = s.strip()
+        if len(s) > 0:
+            bullets.append(f"- {s}")
+    bullets_text = "\n".join(bullets) if bullets else ""
+    return f"**Executive Summary:** {summary}\n\n{bullets_text}".strip()
+
+
+def _format_as_qa(text: str) -> str:
+    """
+    Present answer in a simple Q&A style.
+    """
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    if not lines:
+        return text
+    if len(lines) == 1:
+        return f"Q: Your question\nA: {lines[0]}"
+    return "Q: Your question\nA:\n" + "\n".join(f"- {l}" for l in lines)
 
 
 def _format_confidence_indicator(

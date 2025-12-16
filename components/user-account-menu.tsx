@@ -46,14 +46,14 @@ export function UserAccountMenu({ user: propUser, onSignIn, onSignOut }: UserAcc
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-2 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg text-[var(--bronze)] hover:bg-secondary hover:border-[var(--bronze)]"
-          >
-            <LogIn className="h-4 w-4" />
-            <span className="hidden sm:inline">Sign In</span>
-          </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="gap-2 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg text-[var(--bronze)] hover:bg-secondary hover:border-[var(--bronze)]"
+      >
+        <LogIn className="h-4 w-4" />
+        <span className="hidden sm:inline">Sign In</span>
+      </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <div className="px-3 py-2">

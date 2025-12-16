@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Plus, FolderOpen, MessageSquare, FileText, Trash2, MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Project } from "@/lib/types"
+import { sendDebugLog } from "@/lib/debug-log"
 
 interface ProjectsPanelProps {
   projects: Project[]
@@ -21,6 +22,20 @@ export function ProjectsPanel({ projects, onCreateProject, onDeleteProject, onSe
   const [isCreating, setIsCreating] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
   const [newProjectDescription, setNewProjectDescription] = useState("")
+
+  // #region agent log
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    sendDebugLog({
+      sessionId: "debug-session",
+      runId: "pre-fix",
+      hypothesisId: "H2",
+      location: "projects-panel.tsx:DialogContent",
+      message: "Projects dialog rendered",
+      data: { isCreating, hasDescription: false },
+    })
+  }, [isCreating])
+  // #endregion
 
   const handleCreate = () => {
     if (!newProjectName.trim()) return
@@ -50,6 +65,9 @@ export function ProjectsPanel({ projects, onCreateProject, onDeleteProject, onSe
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
+              <DialogDescription className="sr-only">
+                Provide a project name and optional description to create it.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">

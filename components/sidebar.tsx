@@ -28,6 +28,7 @@ import {
   FolderInput,
   Workflow,
   Clock,
+  Boxes,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -190,6 +191,21 @@ export function Sidebar({
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Discover
+                </Button>
+              </Link>
+              {/* Models / OpenRouter */}
+              <Link href={ROUTES.MODELS} className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.MODELS) && "bg-secondary text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
+                >
+                  <Boxes className="h-4 w-4 mr-2" />
+                  Models
                 </Button>
               </Link>
               {/* Collaborate - Coming Soon */}
@@ -384,6 +400,23 @@ export function Sidebar({
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">Discover</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {/* Collapsed Models icon */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={ROUTES.MODELS}>
+                    <Button 
+                      variant={isActiveRoute(ROUTES.MODELS) ? "secondary" : "ghost"} 
+                      size="icon" 
+                      className={cn("w-10 h-10", isActiveRoute(ROUTES.MODELS) && "text-[var(--bronze)]")}
+                    >
+                      <Boxes className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Models</TooltipContent>
               </Tooltip>
             </TooltipProvider>
             {/* Collapsed Orchestration icon */}

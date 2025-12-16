@@ -107,3 +107,13 @@ try:
 except Exception as exc:
     logger.warning("Failed to import metrics router: %s", exc)
 
+# OpenRouter integration routes (models, rankings, inference)
+try:
+    from . import openrouter  # type: ignore
+    
+    if hasattr(openrouter, "router"):
+        api_router.include_router(openrouter.router, tags=["openrouter"])
+        logger.info("OpenRouter routes registered at /api/v1/openrouter")
+except Exception as exc:
+    logger.warning("Failed to import OpenRouter router: %s", exc)
+

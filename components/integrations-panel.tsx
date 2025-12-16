@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Github, Cloud, Box, CheckCircle2, XCircle } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import type { Integration } from "@/lib/types"
 
 const availableIntegrations = [
@@ -106,6 +106,9 @@ export function IntegrationsPanel() {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Connect {integration.name}</DialogTitle>
+                        <DialogDescription className="sr-only">
+                          Provide credentials to connect this integration.
+                        </DialogDescription>
                       </DialogHeader>
                       <IntegrationForm integration={integration} onConnect={handleConnect} />
                     </DialogContent>

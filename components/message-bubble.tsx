@@ -254,8 +254,8 @@ export function MessageBubble({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost" className="h-7 w-7" title="Share response">
-                <Share2 className="h-3 w-3" />
-              </Button>
+            <Share2 className="h-3 w-3" />
+          </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-40">
               <DropdownMenuItem onClick={() => handleShare('copy-link')} className="gap-2 cursor-pointer">

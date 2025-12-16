@@ -122,6 +122,14 @@ class AnswerPreferences:
             guidelines.append("Use clear headers and sections to organize content")
         elif self.format == AnswerFormat.CONVERSATIONAL:
             guidelines.append("Use a conversational, approachable style")
+        elif self.format == AnswerFormat.MARKDOWN:
+            guidelines.append("Use markdown with headings and lists for readability")
+        elif self.format == AnswerFormat.JSON:
+            guidelines.append("Provide the answer as valid JSON without extra text")
+        elif self.format == AnswerFormat.EXECUTIVE_SUMMARY:
+            guidelines.append("Provide a brief executive summary followed by key bullets")
+        elif self.format == AnswerFormat.QA:
+            guidelines.append("Present the answer in a simple Q&A style")
         
         # Tone
         if self.tone == AnswerTone.CASUAL:
@@ -219,6 +227,7 @@ class RefinedQueryResult:
     answer_preferences: AnswerPreferences
     clarification_context: str  # Summary of clarifications for LLM context
     was_clarified: bool
+    pending_clarification: bool = False  # If True, caller should trigger another round
 
 
 # ==============================================================================
@@ -397,6 +406,7 @@ class ClarificationManager:
         context: Optional[str] = None,
         history: Optional[List[Dict[str, str]]] = None,
         skip_preferences: bool = False,
+        clarification_round: int = 1,
     ) -> ClarificationRequest:
         """
         Analyze a query and generate clarification questions if needed.
@@ -420,15 +430,30 @@ class ClarificationManager:
         ambiguity_summary = None
         
         if needs_clarification and suggested_questions:
-            query_questions = [
-                ClarificationQuestion(
-                    id=f"q{i+1}",
-                    question=q,
-                    category="query",
-                    required=True,
+            query_questions = []
+            lang = self._detect_language(query)
+            localized_prefaces = {
+                "es": ["", "Rápido chequeo: ", "Para asegurar: ", "Solo para confirmar: "],
+                "fr": ["", "Vérification rapide : ", "Pour être sûr : ", "Juste pour confirmer : "],
+                "de": ["", "Kurze Prüfung: ", "Um sicherzugehen: ", "Nur um zu bestätigen: "],
+            }
+            prefaces = localized_prefaces.get(lang, [
+                "",
+                "Quick check: ",
+                "To be sure: ",
+                "Just to confirm: ",
+            ])
+            for i, q in enumerate(suggested_questions[:self.max_query_questions]):
+                prefix = prefaces[i % len(prefaces)]
+                question_text = f"{prefix}{q}".strip()
+                query_questions.append(
+                    ClarificationQuestion(
+                        id=f"q{i+1}",
+                        question=question_text,
+                        category="query",
+                        required=True,
+                    )
                 )
-                for i, q in enumerate(suggested_questions[:self.max_query_questions])
-            ]
             
             # Create summary of why we're asking
             ambiguity_summary = self._create_ambiguity_summary(issues)
@@ -452,6 +477,7 @@ class ClarificationManager:
             original_query=query,
             status=status,
             ambiguity_summary=ambiguity_summary,
+            clarification_round=clarification_round,
         )
     
     async def process_responses(
@@ -489,6 +515,33 @@ class ClarificationManager:
                 request.query_questions,
                 response.query_answers,
             )
+            # Re-run ambiguity check to see if more clarification is needed
+            try:
+                needs_more, more_issues, _ = await self._detect_ambiguity(
+                    refined_query, context=None, history=None
+                )
+                # If still ambiguous and user allows assumption, proceed with best guess
+                if needs_more and response.proceed_with_assumption:
+                    clarification_context += "\n[Assumed interpretation used due to remaining ambiguity]"
+                    needs_more = False
+                # If still ambiguous and round limit not reached, signal another round
+                if needs_more and request.clarification_round < 2:
+                    # Signal another round needed; caller can re-invoke analyze with round+1
+                    clarification_context += "\n[Pending additional clarification]"
+                    return RefinedQueryResult(
+                        original_query=request.original_query,
+                        refined_query=refined_query,
+                        answer_preferences=AnswerPreferences(),
+                        clarification_context=clarification_context,
+                        was_clarified=False,
+                        pending_clarification=True,
+                    )
+                if needs_more and more_issues:
+                    clarification_context += "\n[Note] Some ambiguity may remain: " + "; ".join(
+                        i.get("description", "") for i in more_issues[:2]
+                    )
+            except Exception as e:
+                logger.debug("Follow-up ambiguity check failed: %s", e)
         
         # Process preference answers
         preferences = self._parse_preference_answers(response.preference_answers)
@@ -550,6 +603,10 @@ class ClarificationManager:
             # Apply threshold
             if ambiguity_score < self.ambiguity_threshold:
                 needs_clarification = False
+            else:
+                # Ensure we at least have one question
+                if not suggested_questions and issues:
+                    suggested_questions = [f"Could you clarify: {issues[0].get('description', '')}?"]
             
             return needs_clarification, issues, suggested_questions
             
@@ -567,6 +624,8 @@ class ClarificationManager:
         query_lower = query.lower()
         issues = []
         questions = []
+        possible_interpretations: List[str] = []
+        language_hint = self._detect_language(query_lower)
         
         # Check for pronouns without clear referents
         pronouns = re.findall(r'\b(it|this|that|these|those|they|them)\b', query_lower)
@@ -588,6 +647,52 @@ class ClarificationManager:
                 if term in ["best", "better"]:
                     questions.append(f"When you say '{term}', what criteria are most important to you?")
                 break
+        
+        # Semantic ambiguity (polysemous terms)
+        polysemous = {
+            "bank": ["financial institution", "river bank"],
+            "python": ["programming language", "the snake"],
+            "java": ["programming language", "coffee"],
+            "mercury": ["planet", "metal", "car brand", "medicine"],
+            "apple": ["company", "fruit"],
+        }
+        for term, senses in polysemous.items():
+            if term in query_lower.split():
+                issues.append({
+                    "type": "semantic_ambiguity",
+                    "description": f"Term '{term}' can mean multiple things",
+                    "options": senses,
+                })
+                possible_interpretations.extend(senses)
+                questions.append(f"Do you mean {', '.join(senses[:-1])} or {senses[-1]}?")
+                break
+        
+        # Temporal ambiguity
+        temporal_patterns = ["next monday", "next tuesday", "next week", "next month", "tomorrow", "yesterday"]
+        for t in temporal_patterns:
+            if t in query_lower:
+                issues.append({
+                    "type": "temporal_ambiguity",
+                    "description": f"'{t}' is time-relative; please specify an exact date/time or timezone",
+                })
+                questions.append("Which exact date/time (with timezone) do you mean?")
+                break
+        
+        # Continuation without context
+        if any(kw in query_lower for kw in ["continue", "next part", "keep going", "resume"]) and not history:
+            issues.append({
+                "type": "missing_context",
+                "description": "Continuation requested but no prior conversation provided",
+            })
+            questions.append("What should I continue from? Please paste the prior content or summary.")
+        
+        # Extremely short / numeric / symbol-only queries
+        if len(query.strip()) <= 3 or re.fullmatch(r"[\\d\\W]+", query.strip()):
+            issues.append({
+                "type": "underspecified",
+                "description": "Very short query may have multiple meanings",
+            })
+            questions.append("Could you add a few words about what you want to know?")
         
         # Check for very broad queries
         broad_indicators = [
@@ -614,13 +719,40 @@ class ClarificationManager:
                     "type": "missing_context",
                     "description": msg,
                 })
+                questions.append("Can you provide the specific name or link for that item?")
+        
+        # Compound/multi-part detection
+        if " and " in query_lower and "?" in query_lower and len(query.split()) > 12:
+            issues.append({
+                "type": "compound_question",
+                "description": "Multiple sub-questions detected; need priority",
+            })
+            questions.append("Which part should I address first, or should I cover all parts?")
+        
+        # If we built possible interpretations, add a guided choice question
+        if possible_interpretations and len(possible_interpretations) >= 2:
+            opts = ", ".join(possible_interpretations[:3])
+            questions.append(f"To confirm, did you mean: {opts}?")
         
         # Determine if clarification is needed
-        needs_clarification = len(issues) >= 2 or (
-            len(issues) >= 1 and len(query.split()) < 10
+        ambiguity_score = min(1.0, 0.2 * len(issues) + (0.1 if possible_interpretations else 0))
+        needs_clarification = ambiguity_score >= self.ambiguity_threshold or (
+            len(issues) >= 2 or (len(issues) >= 1 and len(query.split()) < 10)
         )
         
+        # If we have language hint, prepend a localized nudge (lightweight)
+        if language_hint and language_hint != "en":
+            questions = [q for q in questions]  # placeholder for future localization
+        
         return needs_clarification, issues, questions[:self.max_query_questions]
+
+    def _detect_language(self, text: str) -> str:
+        """Very lightweight language hint (placeholder)."""
+        try:
+            import langdetect
+            return langdetect.detect(text)
+        except Exception:
+            return "en"
     
     def _create_ambiguity_summary(self, issues: List[Dict[str, Any]]) -> str:
         """Create a human-readable summary of ambiguities."""

@@ -59,6 +59,19 @@ const TOPICS_NEEDING_CONTEXT = [
   /\b(my|our|the)\s+(code|app|project|system)\b/i,
 ]
 
+// Patterns that need criteria clarification (top/best without criteria)
+const RANKING_PATTERNS = [
+  /\b(top|best|leading|greatest|most popular)\s+\d*\s*(llm|model|ai|tool|framework|library|software|app|service)/i,
+  /\b(list|rank|compare)\b.*\b(top|best|leading)\b/i,
+  /\bwhich\s+(is|are)\s+(the\s+)?(best|top|leading)/i,
+]
+
+// Patterns that indicate temporal/current data needs
+const TEMPORAL_PATTERNS = [
+  /\b(today|now|current|currently|latest|recent|newest|as of|this year|this month|this week|2024|2025)\b/i,
+  /\b(right now|at the moment|presently|these days)\b/i,
+]
+
 /**
  * Determine if clarification is needed for a query
  */
@@ -159,8 +172,59 @@ function checkForDirectClarificationNeeds(query: string): {
     }
   }
   
+  // Check for ranking/comparison queries that need criteria
+  const isRankingQuery = RANKING_PATTERNS.some(p => p.test(query))
+  
+  // DEBUG: Log pattern matching results
+  console.log('🔍 Clarification patterns:', { 
+    query: query.slice(0, 50),
+    isRankingQuery, 
+    isTemporalQuery: TEMPORAL_PATTERNS.some(p => p.test(query)),
+    wordCount,
+    currentConfidence: confidence,
+    questionsCount: questions.length,
+  })
+  
+  if (isRankingQuery) {
+    confidence -= 0.25
+    if (questions.length < 2) {
+      questions.push({
+        id: 'ranking-criteria',
+        question: 'What criteria matter most to you for ranking?',
+        type: 'recommended',
+        reason: '"Best" or "top" depends on your specific needs and priorities',
+        options: ['Performance/Quality', 'Cost/Pricing', 'Ease of use', 'Specific use case (please specify)'],
+      })
+    }
+  }
+  
+  // Check for temporal queries that need real-time data
+  const isTemporalQuery = TEMPORAL_PATTERNS.some(p => p.test(query))
+  if (isTemporalQuery) {
+    confidence -= 0.15 // Reduce confidence for temporal queries
+    if (questions.length < 3 && isRankingQuery) {
+      questions.push({
+        id: 'temporal-scope',
+        question: 'Would you like me to search for the most current information online?',
+        type: 'optional',
+        reason: 'I can access real-time data to ensure the answer reflects the latest developments',
+        options: ['Yes, use real-time data', 'No, general knowledge is fine'],
+      })
+    }
+  }
+  
+  const needed = questions.length > 0 && confidence < CLARIFICATION_THRESHOLDS.MIN_CONFIDENCE_TO_PROCEED
+  
+  // DEBUG: Final decision
+  console.log('🔍 Clarification final:', { 
+    needed,
+    confidence, 
+    threshold: CLARIFICATION_THRESHOLDS.MIN_CONFIDENCE_TO_PROCEED,
+    questionsCount: questions.length,
+  })
+  
   return {
-    needed: questions.length > 0 && confidence < CLARIFICATION_THRESHOLDS.MIN_CONFIDENCE_TO_PROCEED,
+    needed,
     questions,
     confidence,
   }

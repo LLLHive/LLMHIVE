@@ -201,6 +201,7 @@ class EliteResult:
     responses_generated: int
     synthesis_method: str
     performance_notes: List[str]
+    consensus_score: float = 0.0
 
 
 @dataclass(slots=True)
@@ -563,40 +564,37 @@ class EliteOrchestrator:
         models: List[str],
     ) -> EliteResult:
         """Different models handle different aspects, then synthesize."""
-        # Define expert roles
-        roles = {
-            "analyst": ModelCapability.ANALYSIS,
-            "reasoner": ModelCapability.REASONING,
-            "verifier": ModelCapability.FACTUAL,
-        }
+        # Define expert roles with scoped instructions
+        roles = [
+            ("domain_expert", ModelCapability.ANALYSIS, "You are the Domain Expert. Provide accurate, concise facts and reasoning. Avoid speculation."),
+            ("devils_advocate", ModelCapability.REASONING, "You are the Devil's Advocate. Find flaws, risks, missing assumptions, and edge cases."),
+            ("synthesizer", ModelCapability.QUALITY, "You are the Synthesizer. Combine all perspectives into a balanced final answer."),
+        ]
         
-        # Assign best model to each role
+        # Assign best model per role
         role_models: Dict[str, str] = {}
-        for role, capability in roles.items():
+        for role, capability, _ in roles:
             best = self._select_model_for_capability(capability, models)
             if best:
                 role_models[role] = best
-        
         if not role_models:
-            # Fallback to single best
             return await self._single_best_strategy(prompt, task_type, models, 0.7)
         
-        # Generate role-specific responses
-        role_prompts = {
-            "analyst": f"Analyze this thoroughly: {prompt}",
-            "reasoner": f"Reason step-by-step about this: {prompt}",
-            "verifier": f"What are the key facts and considerations for: {prompt}",
-        }
-        
+        # Round 1: independent role drafts
         tasks = []
-        role_order = []
-        for role, model in role_models.items():
-            tasks.append(self._call_model(model, role_prompts.get(role, prompt)))
+        role_order: List[str] = []
+        for role, _cap, instruction in roles:
+            model = role_models.get(role)
+            if not model:
+                continue
             role_order.append(role)
+            role_prompt = f"""{instruction}
+
+Task: {prompt}
+Respond in a concise, role-appropriate way."""
+            tasks.append(self._call_model(model, role_prompt))
         
         responses = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Collect valid responses
         role_responses: Dict[str, ModelResponse] = {}
         for i, resp in enumerate(responses):
             if isinstance(resp, ModelResponse) and resp.content:
@@ -605,21 +603,99 @@ class EliteOrchestrator:
         if not role_responses:
             raise RuntimeError("All expert panel models failed")
         
-        # Synthesize expert opinions
-        final = await self._synthesize_expert_panel(prompt, role_responses)
+        # Blackboard-style summary of first round
+        board_summary_parts = []
+        for role, resp in role_responses.items():
+            board_summary_parts.append(f"{role}: {resp.content[:500]}")
+        board_summary = "\n".join(board_summary_parts)
+        
+        # Round 2: refinement with shared context
+        refined_responses: Dict[str, ModelResponse] = dict(role_responses)
+        
+        # Allow domain expert to refine using others' notes
+        if "domain_expert" in role_models:
+            model = role_models["domain_expert"]
+            prior = role_responses.get("domain_expert")
+            refine_prompt = f"""You are the Domain Expert refining your answer.
+
+Original task: {prompt}
+Your previous answer: {prior.content if prior else ''}
+Other agents' findings:
+{board_summary}
+
+Improve accuracy and clarity. Keep it concise."""
+            try:
+                refined_responses["domain_expert"] = await self._call_model(model, refine_prompt)
+            except Exception:
+                pass
+        
+        # Devil's advocate adds critique with context
+        if "devils_advocate" in role_models:
+            model = role_models["devils_advocate"]
+            critique_prompt = f"""You are the Devil's Advocate reviewing the group work.
+
+Task: {prompt}
+Peer findings:
+{board_summary}
+
+Provide the top issues, risks, or missing pieces. If none, state 'APPROVED'."""
+            try:
+                refined_responses["devils_advocate"] = await self._call_model(model, critique_prompt)
+            except Exception:
+                pass
+        
+        # Synthesizer creates final consensus
+        synth_prompt = f"""You are the Synthesizer. Create a final, balanced answer.
+
+Task: {prompt}
+Domain Expert contribution:
+{refined_responses.get('domain_expert', role_responses.get('domain_expert')).content if refined_responses.get('domain_expert') or role_responses.get('domain_expert') else ''}
+
+Devil's Advocate critique:
+{refined_responses.get('devils_advocate', role_responses.get('devils_advocate')).content if refined_responses.get('devils_advocate') or role_responses.get('devils_advocate') else ''}
+
+Rules:
+- Integrate strengths from all inputs.
+- Address or acknowledge critiques.
+- Be concise and actionable.
+- Do not invent facts."""
+        synth_model = role_models.get("synthesizer") or list(role_models.values())[0]
+        try:
+            synth_response = await self._call_model(synth_model, synth_prompt)
+        except Exception:
+            synth_response = role_responses.get("domain_expert") or next(iter(role_responses.values()))
+        
+        final_answer = synth_response.content if isinstance(synth_response, ModelResponse) else str(synth_response)
+        
+        # Consensus score based on role outputs
+        consensus_inputs = [
+            final_answer,
+            refined_responses.get("domain_expert", role_responses.get("domain_expert")).content if refined_responses.get("domain_expert") or role_responses.get("domain_expert") else "",
+            refined_responses.get("devils_advocate", role_responses.get("devils_advocate")).content if refined_responses.get("devils_advocate") or role_responses.get("devils_advocate") else "",
+        ]
+        consensus_score = self._consensus_score(consensus_inputs)
+        
+        token_list = [r.tokens_used for r in refined_responses.values() if r]
+        latency_list = [r.latency_ms for r in refined_responses.values() if r]
+        total_tokens = sum(token_list) if token_list else 0
+        total_latency = max(latency_list) if latency_list else 0.0
         
         return EliteResult(
-            final_answer=final,
+            final_answer=final_answer,
             models_used=list(role_models.values()),
-            primary_model=list(role_models.values())[0],
+            primary_model=synth_model,
             strategy_used="expert_panel",
-            total_latency_ms=max(r.latency_ms for r in role_responses.values()),
-            total_tokens=sum(r.tokens_used for r in role_responses.values()),
-            quality_score=0.92,  # Expert panel bonus
+            total_latency_ms=total_latency,
+            total_tokens=total_tokens,
+            quality_score=min(1.0, (synth_response.quality_score if isinstance(synth_response, ModelResponse) else 0.9) + 0.05),
             confidence=0.90,
-            responses_generated=len(role_responses),
-            synthesis_method="expert_synthesis",
-            performance_notes=[f"Experts: {list(role_responses.keys())}"],
+            responses_generated=len(refined_responses),
+            synthesis_method="expert_synthesis_v2",
+            performance_notes=[
+                f"Roles: {list(role_models.keys())}",
+                f"Consensus score: {consensus_score:.2f}",
+            ],
+            consensus_score=consensus_score,
         )
     
     async def _challenge_and_refine_strategy(
@@ -851,6 +927,30 @@ Provide the improved answer:"""
         score += min(0.15, reasoning_count * 0.05)
         
         return min(1.0, score)
+
+    def _consensus_score(self, texts: List[str]) -> float:
+        """Rough consensus score via pairwise Jaccard overlap."""
+        cleaned = [self._normalize_text(t) for t in texts if t]
+        if len(cleaned) < 2:
+            return 1.0 if cleaned else 0.0
+        pairs = 0
+        overlaps = 0.0
+        for i in range(len(cleaned)):
+            for j in range(i + 1, len(cleaned)):
+                pairs += 1
+                overlaps += self._jaccard(cleaned[i], cleaned[j])
+        return overlaps / pairs if pairs else 0.0
+
+    def _normalize_text(self, text: str) -> List[str]:
+        return [w for w in text.lower().split() if w.isalpha()]
+
+    def _jaccard(self, a: List[str], b: List[str]) -> float:
+        if not a or not b:
+            return 0.0
+        sa, sb = set(a), set(b)
+        inter = len(sa & sb)
+        union = len(sa | sb) or 1
+        return inter / union
     
     async def _judge_best_response(
         self,

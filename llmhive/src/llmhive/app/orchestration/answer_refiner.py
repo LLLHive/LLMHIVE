@@ -38,6 +38,8 @@ class OutputFormat(str, Enum):
     CODE = "code"
     TABLE = "table"
     ESSAY = "essay"
+    EXEC_SUMMARY = "executive_summary"
+    QA = "qa"
 
 
 class ToneStyle(str, Enum):
@@ -351,7 +353,7 @@ class AnswerRefiner:
         
         # Step 11: Add confidence indicator
         if confidence_level and config.include_confidence:
-            styled = self._add_confidence_indicator(styled, confidence_score, confidence_level)
+            styled = self._add_confidence_indicator(styled, confidence_score, confidence_level, config.output_format)
             improvements_made.append("Added confidence indicator")
         
         # Step 12: Final formatting check
@@ -611,6 +613,10 @@ Output ONLY the refined text, no commentary."""
             return self._format_as_table(content)
         elif output_format == OutputFormat.ESSAY:
             return self._format_as_essay(content)
+        elif output_format == OutputFormat.EXEC_SUMMARY:
+            return self._format_as_exec_summary(content)
+        elif output_format == OutputFormat.QA:
+            return self._format_as_qa(content)
         else:
             return self._format_as_paragraph(content)
     
@@ -763,6 +769,27 @@ Output ONLY the refined text, no commentary."""
         
         return '\n\n'.join(formatted_paragraphs)
     
+    def _format_as_exec_summary(self, content: str) -> str:
+        """Executive summary: brief lead + bullets."""
+        sentences = re.split(r'(?<=[.!?])\s+', content.strip())
+        summary = sentences[0] if sentences else content
+        bullets = []
+        for s in sentences[1:5]:
+            s = s.strip()
+            if s:
+                bullets.append(f"- {s}")
+        bullet_block = "\n".join(bullets) if bullets else ""
+        return f"**Executive Summary:** {summary}\n\n{bullet_block}".strip()
+    
+    def _format_as_qa(self, content: str) -> str:
+        """Simple Q&A style."""
+        lines = [l.strip() for l in content.splitlines() if l.strip()]
+        if not lines:
+            return content
+        if len(lines) == 1:
+            return f"Q: (original question)\nA: {lines[0]}"
+        return "Q: (original question)\nA:\n" + "\n".join(f"- {l}" for l in lines)
+    
     def _format_as_paragraph(self, content: str) -> str:
         """Format content as clean paragraphs."""
         # Remove excessive whitespace
@@ -914,8 +941,11 @@ Output ONLY the refined text, no commentary."""
         content: str,
         score: Optional[float],
         level: str,
+        output_format: OutputFormat = OutputFormat.PARAGRAPH,
     ) -> str:
-        """Add confidence indicator to content."""
+        """Add confidence indicator to content. Skips JSON to avoid invalid syntax."""
+        if output_format == OutputFormat.JSON:
+            return content
         if score is not None:
             indicator = f"\n\n---\n**Confidence: {level}** ({int(score * 100)}%)"
         else:
@@ -1006,5 +1036,8 @@ def quick_format(
 ) -> str:
     """Quick formatting without LLM."""
     refiner = AnswerRefiner()
-    output_format = OutputFormat(format_style) if format_style else OutputFormat.PARAGRAPH
+    try:
+        output_format = OutputFormat(format_style) if format_style else OutputFormat.PARAGRAPH
+    except ValueError:
+        output_format = OutputFormat.PARAGRAPH
     return refiner._apply_format(content, output_format)

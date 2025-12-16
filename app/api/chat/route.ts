@@ -87,6 +87,17 @@ export async function POST(req: NextRequest) {
       learnFromChat: true,
     }
 
+    // Detect if the query needs real-time data (temporal indicators)
+    const TEMPORAL_PATTERNS = [
+      /\b(today|now|current|currently|latest|recent|newest|as of|this year|this month|this week|2024|2025)\b/i,
+      /\b(right now|at the moment|presently|these days)\b/i,
+    ]
+    const needsRealtimeData = TEMPORAL_PATTERNS.some(p => p.test(prompt))
+    
+    if (needsRealtimeData) {
+      console.log("[Chat API] Temporal query detected, enabling live research:", prompt.slice(0, 50))
+    }
+
     // Build the ChatRequest payload matching FastAPI ChatRequest model
     // Include models selected by the user - these will be used for multi-model orchestration
     // Filter out "automatic" and use default models if needed
@@ -148,6 +159,8 @@ export async function POST(req: NextRequest) {
         enable_verification: settings.enableVerification !== false,
         enable_vector_rag: settings.advancedFeatures?.includes("vector-rag") || false,
         enable_memory: settings.advancedFeatures?.includes("memory-augmentation") || false,
+        // Real-time data: auto-enabled for temporal queries, or manually via settings
+        enable_live_research: needsRealtimeData || settings.enableLiveResearch || false,
       },
       metadata: {
         chat_id: chatId || null,

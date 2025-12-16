@@ -86,6 +86,10 @@ class ProcessClarificationResponse(BaseModel):
         description="Summary of clarifications for context"
     )
     was_clarified: bool = Field(..., description="Whether the query was modified")
+    pending_clarification: bool = Field(
+        default=False,
+        description="If true, another clarification round is recommended"
+    )
 
 
 # ==============================================================================
@@ -256,6 +260,7 @@ async def process_clarification_responses(
                 )
                 for qid in request.clarification_response.query_answers.keys()
             ],
+            clarification_round=1,
         )
         
         # Build internal response
@@ -263,6 +268,7 @@ async def process_clarification_responses(
             query_answers=request.clarification_response.query_answers,
             preference_answers=request.clarification_response.preference_answers,
             skipped=request.clarification_response.skipped,
+            proceed_with_assumption=getattr(request.clarification_response, "proceed_with_assumption", False),
         )
         
         # Process
@@ -296,6 +302,7 @@ async def process_clarification_responses(
             answer_preferences=api_preferences,
             clarification_context=result.clarification_context,
             was_clarified=result.was_clarified,
+            pending_clarification=getattr(result, "pending_clarification", False),
         )
         
     except Exception as exc:

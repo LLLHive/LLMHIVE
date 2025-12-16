@@ -37,13 +37,13 @@ def get_reasoning_prompt_template(
 
 {base_prompt}
 
-Please think through this problem step by step, showing your reasoning at each stage. After working through the problem, provide your final answer clearly marked.""",
+Please think through this problem step by step, showing your reasoning at each stage. Do not skip steps. After reasoning, provide a concise final answer clearly marked as 'Final Answer:'.""",
 
         ReasoningMethod.tree_of_thought: f"""{domain_prefix}Let's explore multiple approaches to solve this problem.
 
 {base_prompt}
 
-First, think of 2-3 different approaches or solution paths. For each approach, evaluate its potential and identify the next steps. Then, choose the most promising path and develop it fully. If that path doesn't work, backtrack and try another approach.""",
+First, think of 3 distinct approaches/solution paths. For each, briefly outline the idea, its promise, and next steps. Then choose the most promising path, develop it fully, and if it fails, backtrack to the next best. End with a clear 'Final Answer:'.""",
 
         ReasoningMethod.react: f"""{domain_prefix}You are an AI agent with access to tools. Use the following format:
 
@@ -55,7 +55,18 @@ Repeat Thought/Action/Observation as needed until you can provide a final answer
 
 Question: {base_prompt}
 
-Begin by thinking about what information or tools you need to answer this question.""",
+Available tools (sample):
+- WEB_SEARCH(query): Search the web for up-to-date info
+- WEB_BROWSER(url): Fetch full page text content
+- KNOWLEDGE_BASE(query): Retrieve stored knowledge snippets
+- CALCULATOR(expr): Evaluate math expressions
+- CODE_EXECUTION(code): Run code in a sandbox (Python)
+- DOC_QA(query, document): Answer based on provided document text
+- VISION(image_url_or_data): Caption/OCR an image
+- IMAGE_GENERATION(prompt): Generate an image from a prompt
+- DATABASE(query): (read-only) run safe DB queries if enabled
+
+Begin by thinking about what information or tools you need to answer this question. Use tools when they improve accuracy (facts, calculations, code, docs, images). When you are ready, provide 'Final Answer:' with no additional tool calls afterwards.""",
 
         ReasoningMethod.plan_and_solve: f"""{domain_prefix}Solve this problem in two phases:
 
@@ -71,13 +82,13 @@ Start with Phase 1.""",
 
 {base_prompt}
 
-Think through this problem from different angles. Consider alternative methods or perspectives. After exploring multiple approaches, identify the most consistent and well-supported answer.""",
+Produce 3 short, independent solution attempts (Approach A, B, C), each reasoned separately. Then compare them and select the most consistent/well-supported result. Present only the final chosen answer labeled 'Final Answer:'.""",
 
         ReasoningMethod.reflexion: f"""{domain_prefix}Solve this problem, then reflect on and refine your solution.
 
 {base_prompt}
 
-First, provide your initial solution with reasoning. Then, critically examine your solution: Are there any errors, gaps, or areas for improvement? If so, revise your solution. Continue refining until you're confident in the answer.""",
+First, provide an initial solution with reasoning. Then critically examine it for errors, gaps, or weaknesses. Revise the solution to fix issues. Output only the improved final solution at the end, labeled 'Final Answer:' (do not include the critique text).""",
 
         # Research methods from "Implementing Advanced Reasoning Methods with Optimal LLMs (2025)"
         
@@ -109,7 +120,7 @@ Provide your solution with reasoning. Then, explicitly state:
 2. Which parts you're most certain about
 3. Which parts you're less certain about
 
-If your confidence is below 70%, note what additional information or verification would increase your confidence.""",
+If your confidence is below 70%, note what additional information or verification would increase your confidence. End with 'Final Answer:' plus confidence.""",
 
         # 4. Dynamic Planning (Test-Time Decision-Making)
         ReasoningMethod.dynamic_planning: f"""{domain_prefix}Solve this problem using adaptive, dynamic planning.
@@ -121,7 +132,7 @@ As you work through this problem, make on-the-fly decisions about the best next 
 - If you need more information, identify what's missing
 - If you encounter an obstacle, adjust your strategy
 
-Document your decision-making process: explain why you chose each step and how you adapted based on what you learned.""",
+Document your decision-making process: explain why you chose each step and how you adapted based on what you learned. Stop when you have a clear 'Final Answer:'.""",
     }
     
     return templates.get(method, base_prompt)

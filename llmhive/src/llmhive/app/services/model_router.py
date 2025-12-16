@@ -33,10 +33,15 @@ class ReasoningMethod(str, Enum):
 
 
 # Model identifiers (as they appear in the orchestrator)
-MODEL_GPT_5_1 = "gpt-5.1"
+# Updated for Dec 2025 availability
+MODEL_GPT_5_1 = "gpt-5.1"  # if/when available
 MODEL_GPT_5_1_INSTANT = "gpt-5.1-instant"
+MODEL_GPT_4_1 = "gpt-4.1"
+MODEL_GPT_4O = "gpt-4o"
 MODEL_CLAUDE_4_5 = "claude-opus-4.5"
+MODEL_CLAUDE_SONNET_4 = "claude-sonnet-4"
 MODEL_GEMINI_3_PRO = "gemini-3-pro"
+MODEL_GEMINI_2_5 = "gemini-2.5-pro"
 MODEL_GROK_4_HEAVY = "grok-4-heavy"
 MODEL_GROK_4 = "grok-4"
 MODEL_GROK_4_1 = "grok-4.1"
@@ -73,57 +78,57 @@ FALLBACK_MIXTRAL = "mixtral-8x7b"
 REASONING_METHOD_ROUTING = {
     # Original methods
     ReasoningMethod.chain_of_thought: (
-        MODEL_GPT_5_1,
-        [MODEL_CLAUDE_4_5, MODEL_GEMINI_3_PRO, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
+        [MODEL_GPT_4_1, MODEL_GPT_4O, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.tree_of_thought: (
         MODEL_CLAUDE_4_5,
-        [MODEL_GPT_5_1, MODEL_GEMINI_3_PRO, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
+        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.react: (
         MODEL_CLAUDE_4_5,
-        [MODEL_GPT_5_1, MODEL_GEMINI_3_PRO, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.plan_and_solve: (
-        MODEL_GPT_5_1,
-        [MODEL_CLAUDE_4_5, MODEL_GEMINI_3_PRO, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
+        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.self_consistency: (
-        MODEL_GPT_5_1,
-        [MODEL_CLAUDE_4_5, MODEL_GEMINI_3_PRO, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
+        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.reflexion: (
         MODEL_CLAUDE_4_5,
-        [MODEL_GPT_5_1, MODEL_GEMINI_3_PRO, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     
     # Research methods from "Implementing Advanced Reasoning Methods with Optimal LLMs (2025)"
     # 1. Hierarchical Task Decomposition (HRM-style)
     # Best: GPT-4.1 (GPT-5.1), Claude 2/3, Gemini Pro/Ultra, PaLM 2, LLaMA-2 70B
     ReasoningMethod.hierarchical_decomposition: (
-        MODEL_GPT_5_1,  # GPT-4.1 equivalent - best for complex planning
-        [MODEL_CLAUDE_4_5, MODEL_GEMINI_3_PRO, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,  # complex planning
+        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     
     # 2. Diffusion-Inspired Iterative Reasoning
     # Best: GPT-4.1, Gemini 2.5 Pro/Ultra, Claude 2, GPT-3.5 Turbo, Open-source
     ReasoningMethod.iterative_refinement: (
-        MODEL_GPT_5_1,  # GPT-4.1 - best for draft & refine
-        [MODEL_GEMINI_3_PRO, MODEL_CLAUDE_4_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
+        [MODEL_GPT_4_1, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     
     # 3. Confidence-Based Filtering (DeepConf)
     # Best: GPT-4, Gemini, Claude 2, GPT-3.5, Open-source with logits
     ReasoningMethod.confidence_filtering: (
-        MODEL_GPT_5_1,  # GPT-4 - best calibration and confidence signals
-        [MODEL_GEMINI_3_PRO, MODEL_CLAUDE_4_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
+        [MODEL_GPT_4_1, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     
     # 4. Dynamic Planning (Test-Time Decision-Making)
     # Best: GPT-4, Gemini, Claude 2, GPT-3.5, Rule-based
     ReasoningMethod.dynamic_planning: (
-        MODEL_GPT_5_1,  # GPT-4 - best for adaptive orchestration
-        [MODEL_GEMINI_3_PRO, MODEL_CLAUDE_4_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
+        [MODEL_GPT_4_1, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
 }
 

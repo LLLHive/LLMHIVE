@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { sendDebugLog } from "@/lib/debug-log"
 
 const STORAGE_KEY = "llmhive-appearance-settings"
 
@@ -11,6 +12,17 @@ const STORAGE_KEY = "llmhive-appearance-settings"
 export function AppearanceSettingsLoader() {
   useEffect(() => {
     try {
+      // #region agent log
+      sendDebugLog({
+        sessionId: "debug-session",
+        runId: "pre-fix",
+        hypothesisId: "H0",
+        location: "appearance-settings-loader.tsx:useEffect",
+        message: "Appearance settings loader mounted",
+        data: { storageKey: STORAGE_KEY },
+      })
+      // #endregion
+
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const settings = JSON.parse(saved) as string[]

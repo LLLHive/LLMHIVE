@@ -1,0 +1,38 @@
+cases:
+  - name: simple_fact
+    prompt: "What is the capital of France?"
+    expected_answer: "Paris"
+  - name: code_completion
+    prompt: "Write a Python function to check if a number is prime."
+    expect_contains:
+      - "def is_prime"
+      - "for i in"
+  - name: tool_math
+    prompt: "What is 12! (12 factorial)?"
+    expected_answer: "479001600"
+  - name: legal_fact
+    prompt: "What is the Fourth Amendment about?"
+    expect_contains:
+      - "unreasonable searches"
+      - "seizures"
+  - name: multi_turn_followup
+    history:
+      - role: user
+        content: "Summarize the plot of Romeo and Juliet."
+      - role: assistant
+        content: "A concise summary of the play."
+    prompt: "Name the two feuding families."
+    expect_contains:
+      - "Montague"
+      - "Capulet"
+  - name: json_format
+    prompt: "Return a JSON object with keys name and capital for Germany."
+    expect_json: true
+    expect_contains:
+      - "Germany"
+      - "Berlin"
+  - name: tool_allowed
+    prompt: "Using a calculator tool if needed, what is the square root of 144?"
+    tools_allowed:
+      - "calculator"
+    expected_answer: "12"

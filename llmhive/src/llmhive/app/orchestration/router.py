@@ -115,6 +115,7 @@ class ModelRouter:
         """
         # Detect domain
         domain = self.model_registry._detect_domain(query)
+        best_domain_model = self._best_model_for_domain(domain)
         
         # Analyze query difficulty/importance
         is_important = self._is_important_query(query)
@@ -157,6 +158,11 @@ class ModelRouter:
                 max_models=1,
                 required_capabilities=required_capabilities,
             )
+            # If we have a data-driven domain preference, make sure it's first
+            if best_domain_model:
+                if best_domain_model in selected_models:
+                    selected_models.remove(best_domain_model)
+                selected_models.insert(0, best_domain_model)
             
             primary_model = selected_models[0] if selected_models else None
             fallback_models = self._select_fallback_models(
@@ -197,6 +203,12 @@ class ModelRouter:
             confidence,
             should_use_ensemble,
         )
+        if best_domain_model:
+            logger.info(
+                "Routing boosted by historical domain success: %s for %s",
+                best_domain_model,
+                domain,
+            )
         
         return decision
     
@@ -492,23 +504,70 @@ class ModelRouter:
             
             # Domain expertise
             domain_score = profile.score_for_domain(domain)
-            score += domain_score * 0.4
+            score += domain_score * 0.35
             
             # Performance
             perf: ModelPerformance | None = perf_snapshot.get(profile.name)  # type: ignore[assignment]
             if perf:
-                score += perf.success_rate * 0.3
-                score += perf.avg_quality * 0.2
+                recent_success = perf.success_rate
+                quality = perf.avg_quality
+                domain_success = perf.get_domain_success_rate(domain)
+                # Boost quality and domain-specific wins, penalize recent failures
+                score += recent_success * 0.25
+                score += quality * 0.25
+                score += domain_success * 0.15
+                failure_rate = 1 - recent_success
+                score -= failure_rate * 0.1
             
             # Cost/latency (prefer cheaper/faster for fallback)
             if mode == "speed":
                 score -= (profile.cost_rating + profile.latency_rating) * 0.1
             
             scored.append((profile, score))
+            logger.debug(
+                "Fallback scoring %s -> score=%.3f (domain=%.2f, success=%.2f, quality=%.2f, domain_success=%.2f)",
+                profile.name,
+                score,
+                domain_score,
+                perf.success_rate if perf else -1.0,
+                perf.avg_quality if perf else -1.0,
+                perf.get_domain_success_rate(domain) if perf else -1.0,
+            )
         
         # Sort and select top 2
         scored.sort(key=lambda x: x[1], reverse=True)
         return [p.name for p, _ in scored[:2]]
+    
+    def _best_model_for_domain(self, domain: str) -> Optional[str]:
+        """
+        Pick the model with the strongest domain-specific success history.
+        
+        Uses performance_tracker domain stats to surface a preferred model that has
+        consistently passed verification for this domain. Returns None if no clear
+        winner exists.
+        """
+        perf_snapshot = performance_tracker.snapshot()
+        best_model = None
+        best_score = 0.0
+        for model_name, perf in perf_snapshot.items():
+            domain_success = perf.get_domain_success_rate(domain)
+            successes = perf.domain_performance.get(domain, {}).get("success", 0)
+            total = successes + perf.domain_performance.get(domain, {}).get("failure", 0)
+            # Require at least a small sample to avoid noise
+            if total < 2:
+                continue
+            if domain_success > best_score:
+                best_score = domain_success
+                best_model = model_name
+        if best_model and best_score >= 0.6:
+            logger.info(
+                "Data-driven domain preference: %s selected for domain %s (success=%.2f)",
+                best_model,
+                domain,
+                best_score,
+            )
+            return best_model
+        return None
     
     def _is_important_query(self, query: str) -> bool:
         """Determine if query is important (requires high quality)."""

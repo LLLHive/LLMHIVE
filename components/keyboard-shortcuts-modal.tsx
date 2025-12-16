@@ -1,8 +1,10 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useEffect } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Keyboard } from "lucide-react"
+import { sendDebugLog } from "@/lib/debug-log"
 
 interface KeyboardShortcutsModalProps {
   open: boolean
@@ -45,6 +47,20 @@ export function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcuts
     return key
   }
 
+  // #region agent log
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    sendDebugLog({
+      sessionId: "debug-session",
+      runId: "pre-fix",
+      hypothesisId: "H1",
+      location: "keyboard-shortcuts-modal.tsx:DialogContent",
+      message: "Keyboard shortcuts dialog rendered",
+      data: { open, hasDescription: false },
+    })
+  }, [open])
+  // #endregion
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -53,6 +69,9 @@ export function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcuts
             <Keyboard className="h-5 w-5 text-[var(--bronze)]" />
             Keyboard Shortcuts
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Reference of available keyboard shortcuts.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

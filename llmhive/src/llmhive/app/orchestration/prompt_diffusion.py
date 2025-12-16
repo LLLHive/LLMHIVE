@@ -36,6 +36,8 @@ class RefinerRole(str, Enum):
     SYNTHESIZER = "synthesizer"  # Combines perspectives
     SPECIALIST = "specialist"    # Domain-specific refinement
     SIMPLIFIER = "simplifier"    # Reduces complexity while maintaining intent
+    CONSISTENCY = "consistency"  # Checks conflicts and preserves facts
+    OBJECTIVE_GUARD = "objective_guard"  # Ensures goal/intent is preserved
 
 
 # Role-specific prompts for refinement
@@ -87,6 +89,20 @@ Focus on: Domain expertise, technical accuracy, best practices.""",
 4. Ensure the prompt is concise yet complete
 
 Focus on: Simplicity, directness, efficiency.""",
+
+    RefinerRole.CONSISTENCY: """You are a Consistency Checker. Your job is to:
+1. Detect and resolve contradictions or conflicts in the prompt
+2. Ensure all constraints, entities, and numbers align with prior context/user details
+3. Preserve the original facts and constraints while improving clarity
+
+Focus on: Conflict detection, fidelity to user-provided facts, alignment with prior context.""",
+
+    RefinerRole.OBJECTIVE_GUARD: """You are an Objective Guard. Your job is to:
+1. Ensure the prompt stays true to the user's stated goal/objective
+2. Re-emphasize the desired output and success criteria
+3. Prevent scope drift—do not change the intent or omit key asks
+
+Focus on: Goal alignment, intent preservation, outcome clarity.""",
 }
 
 
@@ -183,16 +199,22 @@ class PromptDiffusion:
     DEFAULT_ROLES = [
         RefinerRole.CLARIFIER,
         RefinerRole.EXPANDER,
+        RefinerRole.CRITIC,
+        RefinerRole.SPECIALIST,
+        RefinerRole.SIMPLIFIER,
+        RefinerRole.CONSISTENCY,
+        RefinerRole.OBJECTIVE_GUARD,
         RefinerRole.SYNTHESIZER,
     ]
     
     def __init__(
         self,
         providers: Dict[str, Any],
-        max_rounds: int = 3,
-        convergence_threshold: float = 0.85,
-        min_improvement_threshold: float = 0.05,
+        max_rounds: int = 6,
+        convergence_threshold: float = 0.9,
+        min_improvement_threshold: float = 0.02,
         enable_parallel_refinement: bool = True,
+        knowledge_base: Optional[Any] = None,
     ) -> None:
         """
         Initialize the prompt diffusion system.
@@ -209,6 +231,7 @@ class PromptDiffusion:
         self.convergence_threshold = convergence_threshold
         self.min_improvement_threshold = min_improvement_threshold
         self.enable_parallel = enable_parallel_refinement
+        self.knowledge_base = knowledge_base
     
     async def diffuse(
         self,
@@ -220,6 +243,8 @@ class PromptDiffusion:
         subject: Optional[str] = None,
         domain: Optional[str] = None,
         analyze_ambiguity: bool = True,
+        clarity_target: float = 0.93,
+        max_rounds: Optional[int] = None,
     ) -> DiffusionResult:
         """
         Run the multi-agent prompt diffusion process.
@@ -243,6 +268,7 @@ class PromptDiffusion:
             raise ValueError("At least one model is required for prompt diffusion")
         
         roles = roles or self.DEFAULT_ROLES
+        max_rounds = max_rounds or self.max_rounds
         versions: List[PromptVersion] = []
         refinement_steps: List[RefinementStep] = []
         current_prompt = initial_prompt
@@ -250,11 +276,13 @@ class PromptDiffusion:
         # Ambiguity analysis
         ambiguities_resolved: List[str] = []
         clarifications_added: List[str] = []
+        clarity_score: Optional[float] = None
         
         if analyze_ambiguity:
             ambiguity_analysis = await self._analyze_ambiguity(
                 initial_prompt, models[0]
             )
+            clarity_score = ambiguity_analysis.clarity_score
             if ambiguity_analysis.ambiguities:
                 logger.info(
                     "Found %d ambiguities in prompt",
@@ -273,8 +301,9 @@ class PromptDiffusion:
         # Run refinement rounds
         previous_best_score = 0.5
         
-        for round_num in range(1, self.max_rounds + 1):
-            logger.info("Prompt diffusion round %d/%d", round_num, self.max_rounds)
+        stalled_rounds = 0
+        for round_num in range(1, max_rounds + 1):
+            logger.info("Prompt diffusion round %d/%d", round_num, max_rounds)
             
             round_versions: List[PromptVersion] = []
             round_steps: List[RefinementStep] = []
@@ -350,7 +379,7 @@ class PromptDiffusion:
             
             # Check convergence
             improvement = best_version.score - previous_best_score
-            convergence_score = self._calculate_convergence(versions)
+            convergence_score = self._calculate_convergence(versions, clarity_hint=clarity_score if analyze_ambiguity else None)
             
             logger.info(
                 "Round %d: Score %.3f, Improvement %.3f, Convergence %.3f",
@@ -358,20 +387,25 @@ class PromptDiffusion:
             )
             
             # Stop if converged or no improvement
-            if convergence_score >= self.convergence_threshold:
-                logger.info("Prompt diffusion converged at round %d", round_num)
+            if convergence_score >= max(self.convergence_threshold, clarity_target):
+                logger.info("Prompt diffusion converged at round %d (convergence=%.3f)", round_num, convergence_score)
                 break
             
             if improvement < self.min_improvement_threshold and round_num > 1:
-                logger.info("Minimal improvement, stopping refinement")
-                break
+                stalled_rounds += 1
+                logger.info("Minimal improvement (%.3f); stalled rounds=%d", improvement, stalled_rounds)
+                if stalled_rounds >= 2:
+                    logger.info("Stopping due to consecutive stalled rounds")
+                    break
+            else:
+                stalled_rounds = 0
             
             previous_best_score = best_version.score
             current_prompt = best_version.prompt
         
         # Final best version
         final_best = max(versions, key=lambda v: v.score)
-        final_convergence = self._calculate_convergence(versions)
+        final_convergence = self._calculate_convergence(versions, clarity_hint=clarity_score)
         total_duration = (time.time() - start_time) * 1000
         
         return DiffusionResult(
@@ -427,9 +461,21 @@ class PromptDiffusion:
         
         provider = self._select_provider(model)
         
+        # Opportunistic knowledge retrieval for context-hungry roles
+        enriched_context = context
+        if self.knowledge_base and role in {RefinerRole.EXPANDER, RefinerRole.SPECIALIST}:
+            try:
+                kb_results = self._fetch_knowledge(prompt, top_k=3)
+                if kb_results:
+                    snippets = "\n".join(f"- {r}" for r in kb_results)
+                    kb_block = f"Relevant background from knowledge base:\n{snippets}"
+                    enriched_context = f"{context}\n{kb_block}" if context else kb_block
+            except Exception as e:
+                logger.debug("Knowledge fetch skipped: %s", e)
+        
         # Build refinement prompt
         refinement_prompt = self._build_role_prompt(
-            prompt, role, round_num, context, domain
+            prompt, role, round_num, enriched_context, domain
         )
         
         # Get refinement
@@ -723,11 +769,12 @@ NEEDS_USER_INPUT: [YES/NO]"""
 Original: "{original[:500]}"
 Refined: "{refined[:500]}"
 
-Scoring criteria:
+Scoring criteria (0-1 total):
 - Clarity (0.0-0.25): Is the refined prompt clearer?
-- Specificity (0.0-0.25): Is it more specific and actionable?
-- Completeness (0.0-0.25): Does it cover all necessary aspects?
+- Specificity (0.0-0.2): Is it more specific and actionable?
+- Completeness (0.0-0.2): Does it cover all necessary aspects?
 - Intent preservation (0.0-0.25): Does it maintain the original intent?
+- Consistency (0.0-0.1): No conflicts or contradictions introduced?
 
 Respond with ONLY a decimal number between 0.0 and 1.0."""
         
@@ -741,14 +788,17 @@ Respond with ONLY a decimal number between 0.0 and 1.0."""
         except Exception as e:
             logger.warning("Scoring failed: %s", e)
         
-        # Heuristic fallback
+        # Heuristic fallback with intent/consistency checks
+        intent_score = self._intent_preservation_score(original, refined)
         len_improvement = len(refined) / max(len(original), 1)
-        if 0.8 < len_improvement < 2.0:
-            return 0.6 + (len_improvement - 1.0) * 0.1
-        return 0.5
+        structural_bonus = 0.05 if '?' in refined and '?' not in original else 0.0
+        base = 0.55 + structural_bonus
+        if 0.7 < len_improvement < 1.8:
+            base += 0.05
+        return min(1.0, max(0.0, base * intent_score))
     
-    def _calculate_convergence(self, versions: List[PromptVersion]) -> float:
-        """Calculate convergence score based on version history."""
+    def _calculate_convergence(self, versions: List[PromptVersion], clarity_hint: Optional[float] = None) -> float:
+        """Calculate convergence score based on version history and optional clarity."""
         if len(versions) < 2:
             return 0.0
         
@@ -771,8 +821,16 @@ Respond with ONLY a decimal number between 0.0 and 1.0."""
         # Score trend
         score_improvement = max(0.0, last.score - prev.score)
         
+        # Clarity bonus if provided
+        clarity = clarity_hint if clarity_hint is not None else 0.0
+        
         # Weighted convergence
-        convergence = (len_sim * 0.2 + jaccard * 0.5 + last.score * 0.3)
+        convergence = (
+            len_sim * 0.15
+            + jaccard * 0.35
+            + last.score * 0.35
+            + clarity * 0.15
+        )
         
         return min(1.0, convergence)
     
@@ -799,6 +857,48 @@ Respond with ONLY a decimal number between 0.0 and 1.0."""
         if any(marker in refined.lower() for marker in ['example', 'e.g.', 'for instance']):
             if not any(marker in original.lower() for marker in ['example', 'e.g.', 'for instance']):
                 improvements.append("Added examples")
+        
+        # Consistency/intent checks
+        if self._intent_preservation_score(original, refined) < 0.85:
+            improvements.append("Intent risk detected; recommend Objective Guard review")
+        else:
+            improvements.append("Preserved stated intent")
+        
+        return improvements
+
+    def _intent_preservation_score(self, original: str, refined: str) -> float:
+        """Heuristic intent preservation based on key token retention."""
+        # Preserve quoted phrases and numbers
+        import re
+        phrases = re.findall(r'"(.*?)"|\'(.*?)\'', original)
+        flat_phrases = [p for pair in phrases for p in pair if p]
+        numbers = re.findall(r'\d+(?:\.\d+)?', original)
+        
+        score = 1.0
+        for phrase in flat_phrases:
+            if phrase and phrase.lower() not in refined.lower():
+                score -= 0.05
+        for num in numbers:
+            if num not in refined:
+                score -= 0.05
+        
+        return max(0.0, min(1.0, score))
+
+    def _fetch_knowledge(self, prompt: str, top_k: int = 3) -> List[str]:
+        """Fetch relevant snippets from knowledge base if available."""
+        if not self.knowledge_base or not hasattr(self.knowledge_base, "search"):
+            return []
+        try:
+            results = self.knowledge_base.search(prompt, top_k=top_k)
+            snippets = []
+            for r in results or []:
+                content = r.get("content") or r.get("text") or str(r)
+                if content:
+                    snippets.append(content[:300])
+            return snippets
+        except Exception as e:
+            logger.debug("Knowledge search failed: %s", e)
+            return []
         
         return improvements
     

@@ -76,6 +76,7 @@ class ModelInfo:
     avg_latency_ms: float = 0.0
     success_rate: float = 1.0
     total_requests: int = 0
+    avg_quality: float = 0.0
     # Configuration
     default_temperature: float = 0.7
     default_max_tokens: int = 512
@@ -508,6 +509,7 @@ class ModelRegistry:
         model_id: str,
         latency_ms: float,
         success: bool,
+        quality: Optional[float] = None,
     ) -> None:
         """Update model performance metrics."""
         if model_id not in self._models:
@@ -520,6 +522,9 @@ class ModelRegistry:
         info.avg_latency_ms = (info.avg_latency_ms * total + latency_ms) / (total + 1)
         info.success_rate = (info.success_rate * total + (1 if success else 0)) / (total + 1)
         info.total_requests = total + 1
+        if quality is not None:
+            prev_q = getattr(info, "avg_quality", 0.0)
+            info.avg_quality = (prev_q * total + quality) / (total + 1)  # type: ignore
     
     def get_provider(self, model_id: str) -> Any:
         """
@@ -572,6 +577,7 @@ class ModelRegistry:
                 "avg_latency_ms": info.avg_latency_ms,
                 "success_rate": info.success_rate,
                 "total_requests": info.total_requests,
+                "avg_quality": getattr(info, "avg_quality", 0.0),
             }
             for model_id, info in self._models.items()
             if info.model_type in (ModelType.LOCAL, ModelType.FINE_TUNED)
@@ -608,6 +614,7 @@ class ModelRegistry:
                     self._models[model_id].avg_latency_ms = info.get("avg_latency_ms", 0)
                     self._models[model_id].success_rate = info.get("success_rate", 1.0)
                     self._models[model_id].total_requests = info.get("total_requests", 0)
+                    self._models[model_id].avg_quality = info.get("avg_quality", 0.0)
             
             logger.info("Loaded %d models from %s", len(data), path)
             
