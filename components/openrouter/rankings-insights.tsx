@@ -378,9 +378,9 @@ export function RankingsInsights({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(result?.models || (result?.data as RankedModel[]) || []).map((rankedModel) => (
+                    {(result?.models || (result?.data as RankedModel[]) || []).map((rankedModel, index) => (
                       <RankedModelRow
-                        key={rankedModel.model?.id || rankedModel.id}
+                        key={rankedModel.model?.id || (rankedModel as unknown as {id?: string}).id || `model-${index}`}
                         rankedModel={rankedModel}
                         onSelect={onSelectModel}
                       />
