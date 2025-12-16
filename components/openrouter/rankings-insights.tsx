@@ -113,12 +113,20 @@ interface RankedModelRowProps {
 }
 
 function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
-  const { model, rank, score, metrics } = rankedModel
+  // Handle both nested format (model: {...}) and flat format (id, name directly on rankedModel)
+  const model = rankedModel.model || rankedModel as unknown as OpenRouterModel
+  const rank = rankedModel.rank || (rankedModel as unknown as {rank?: number}).rank
+  const score = rankedModel.score
+  const metrics = rankedModel.metrics || {}
   
-  // Defensive: skip rendering if model data is missing
-  if (!model) {
+  // Defensive: skip rendering if essential data is missing
+  if (!model || (!model.id && !(rankedModel as unknown as {id?: string}).id)) {
     return null
   }
+  
+  // Handle flat format - get id/name from rankedModel directly
+  const modelId = model.id || (rankedModel as unknown as {id: string}).id
+  const modelName = model.name || (rankedModel as unknown as {name: string}).name
   
   const getRankBadgeColor = (r: number) => {
     if (r === 1) return "bg-yellow-500 text-yellow-950"
@@ -134,14 +142,14 @@ function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
     >
       <CardContent className="flex items-center gap-4 p-4">
         {/* Rank */}
-        <Badge className={cn("w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0", getRankBadgeColor(rank))}>
-          {rank}
+        <Badge className={cn("w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0", getRankBadgeColor(rank || 0))}>
+          {rank || '-'}
         </Badge>
         
         {/* Model info */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold truncate">{model.name}</h4>
-          <p className="text-sm text-muted-foreground truncate">{model.id}</p>
+          <h4 className="font-semibold truncate">{modelName}</h4>
+          <p className="text-sm text-muted-foreground truncate">{modelId}</p>
         </div>
         
         {/* Score/metrics */}
