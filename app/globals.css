@@ -323,3 +323,45 @@
 .no-animations .animate-ping {
   animation: none !important;
 }
+
+/* ===== BRANDED TITLE STYLING ===== */
+/* Display font for logo and page titles */
+.font-display {
+  font-family: var(--font-display), 'Orbitron', system-ui, sans-serif;
+}
+
+/* Metallic bronze title effect - matches the logo */
+.title-branded {
+  font-family: var(--font-display), 'Orbitron', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: linear-gradient(
+    135deg,
+    oklch(0.55 0.14 40) 0%,
+    oklch(0.65 0.15 45) 25%,
+    oklch(0.75 0.12 65) 50%,
+    oklch(0.65 0.15 45) 75%,
+    oklch(0.55 0.14 40) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 1px 2px rgba(196, 142, 72, 0.3));
+}
+
+/* Sidebar logo text styling */
+.logo-text {
+  font-family: var(--font-display), 'Orbitron', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  background: linear-gradient(
+    to right,
+    oklch(0.65 0.15 45) 0%,
+    oklch(0.75 0.12 70) 50%,
+    oklch(0.65 0.15 45) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

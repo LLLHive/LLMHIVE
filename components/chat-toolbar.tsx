@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type React from "react"
 
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
+import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, Lock } from "lucide-react"
 import type {
   ReasoningMode,
   DomainPack,
@@ -16,12 +17,34 @@ import type {
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import { CriteriaEqualizer } from "./criteria-equalizer"
 import Image from "next/image"
+import { getRankings } from "@/lib/openrouter/api"
+import type { RankingDimension, OpenRouterModel } from "@/lib/openrouter/types"
+import { canAccessModel, type UserTier, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
+import { cn } from "@/lib/utils"
 
 interface ChatToolbarProps {
   settings: OrchestratorSettings
   onSettingsChange: (settings: Partial<OrchestratorSettings>) => void
   onOpenAdvanced: () => void
 }
+
+// Ranking categories from OpenRouter
+const RANKING_CATEGORIES: Array<{
+  id: RankingDimension
+  name: string
+  icon: React.ElementType
+}> = [
+  { id: 'leaderboard', name: 'Leaderboard', icon: BarChart3 },
+  { id: 'market_share', name: 'Market Share', icon: PieChart },
+  { id: 'trending', name: 'Trending', icon: TrendingUp },
+  { id: 'programming', name: 'Programming', icon: Code },
+  { id: 'tools_agents', name: 'Tool Calls', icon: ToolIcon },
+  { id: 'images', name: 'Images', icon: ImageIcon },
+  { id: 'long_context', name: 'Long Context', icon: MessageSquare },
+  { id: 'translation', name: 'Translation', icon: Languages },
+  { id: 'fastest', name: 'Fastest', icon: Zap },
+  { id: 'lowest_cost', name: 'Lowest Cost', icon: DollarSign },
+]
 
 const reasoningModes: { value: ReasoningMode; label: string; icon: React.ElementType }[] = [
   { value: "fast", label: "Fast", icon: Zap },
@@ -65,10 +88,57 @@ const advancedFeatures: { value: AdvancedFeature; label: string; description: st
   { value: "code-interpreter", label: "Code Interpreter", description: "Execute code in sandbox" },
 ]
 
+interface RankedModel {
+  model: OpenRouterModel & { author?: string }
+  rank: number
+  score: number
+}
+
 export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: ChatToolbarProps) {
   const [modelsOpen, setModelsOpen] = useState(false)
   const [reasoningOpen, setReasoningOpen] = useState(false)
   const [featuresOpen, setFeaturesOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<RankingDimension | null>(null)
+  const [rankedModels, setRankedModels] = useState<RankedModel[]>([])
+  const [loadingRankings, setLoadingRankings] = useState(false)
+  const [myTeamModels, setMyTeamModels] = useState<string[]>([])
+  
+  // TODO: Get from auth context
+  const userTier: UserTier = 'pro'
+
+  // Load user's team models from storage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.USER_MODEL_PREFERENCES)
+      if (stored) {
+        const prefs = JSON.parse(stored)
+        if (prefs.selectedModels) {
+          setMyTeamModels(prefs.selectedModels.map((m: SelectedModelConfig) => m.modelId))
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load team models:', e)
+    }
+  }, [])
+
+  // Load rankings when category changes
+  useEffect(() => {
+    if (!activeCategory) return
+    
+    async function loadRankings() {
+      setLoadingRankings(true)
+      try {
+        const result = await getRankings(activeCategory as RankingDimension)
+        setRankedModels((result.models || []).slice(0, 10))
+      } catch (e) {
+        console.error('Failed to load rankings:', e)
+        setRankedModels([])
+      } finally {
+        setLoadingRankings(false)
+      }
+    }
+    loadRankings()
+  }, [activeCategory])
 
   const currentReasoningMode = reasoningModes.find((m) => m.value === settings.reasoningMode) || reasoningModes[1]
   const currentDomainPack = domainPacks.find((d) => d.value === settings.domainPack) || domainPacks[0]
@@ -109,7 +179,11 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <DropdownMenu open={modelsOpen} onOpenChange={setModelsOpen}>
+      {/* Models Dropdown with Ranking Categories */}
+      <DropdownMenu open={modelsOpen} onOpenChange={(open) => {
+        setModelsOpen(open)
+        if (!open) setActiveCategory(null)
+      }}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -122,31 +196,157 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56 max-h-80 overflow-y-auto">
-          {AVAILABLE_MODELS.map((model) => {
-            const isSelected = selectedModels.includes(model.id)
-            return (
-              <DropdownMenuItem
-                key={model.id}
-                onSelect={(e) => {
-                  e.preventDefault() // Prevent dropdown from closing
-                  toggleModel(model.id)
-                }}
-                className="gap-2 cursor-pointer"
-              >
-                <div className="w-5 h-5 relative flex-shrink-0">
-                  <Image
-                    src={getModelLogo(model.provider) || "/placeholder.svg"}
-                    alt={model.provider}
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <span className="flex-1">{model.name}</span>
-                {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-              </DropdownMenuItem>
-            )
-          })}
+        <DropdownMenuContent align="start" className="w-72 max-h-[70vh] overflow-y-auto">
+          {activeCategory ? (
+            // Show top 10 models for selected ranking category
+            <>
+              <div className="flex items-center gap-2 px-2 py-1.5 border-b">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 w-6 p-0"
+                  onClick={() => setActiveCategory(null)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <span className="font-medium text-sm">
+                  Top 10 - {RANKING_CATEGORIES.find(c => c.id === activeCategory)?.name}
+                </span>
+              </div>
+              {loadingRankings ? (
+                <div className="p-4 text-center text-muted-foreground text-sm">Loading...</div>
+              ) : rankedModels.length > 0 ? (
+                rankedModels.map((item, idx) => {
+                  const modelId = item.model?.id || ''
+                  const isSelected = selectedModels.includes(modelId)
+                  const hasAccess = canAccessModel(userTier, modelId)
+                  const requiredTier = getModelRequiredTier(modelId)
+                  
+                  return (
+                    <DropdownMenuItem
+                      key={modelId}
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        if (hasAccess) toggleModel(modelId)
+                      }}
+                      disabled={!hasAccess}
+                      className={cn("gap-2 cursor-pointer", !hasAccess && "opacity-50")}
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
+                        item.rank === 1 ? "bg-amber-500 text-black" :
+                        item.rank === 2 ? "bg-gray-300 text-black" :
+                        item.rank === 3 ? "bg-orange-400 text-black" :
+                        "bg-muted text-muted-foreground"
+                      )}>
+                        {item.rank}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm truncate">{item.model?.name}</span>
+                          {!hasAccess && (
+                            <Badge variant="outline" className={cn("text-[8px] px-1 h-4", getTierBadgeColor(requiredTier))}>
+                              <Lock className="w-2 h-2 mr-0.5" />
+                              {getTierDisplayName(requiredTier)}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">
+                          {item.model?.author || item.model?.id?.split('/')[0]}
+                        </span>
+                      </div>
+                      {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                    </DropdownMenuItem>
+                  )
+                })
+              ) : (
+                <div className="p-4 text-center text-muted-foreground text-sm">No models found</div>
+              )}
+            </>
+          ) : (
+            // Show ranking categories
+            <>
+              {/* My Team Section */}
+              {myTeamModels.length > 0 && (
+                <>
+                  <DropdownMenuLabel className="flex items-center gap-2 text-[var(--bronze)]">
+                    <Crown className="h-3.5 w-3.5" />
+                    My Team ({myTeamModels.length})
+                  </DropdownMenuLabel>
+                  {myTeamModels.slice(0, 5).map((modelId) => {
+                    const isSelected = selectedModels.includes(modelId)
+                    return (
+                      <DropdownMenuItem
+                        key={modelId}
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          toggleModel(modelId)
+                        }}
+                        className="gap-2 cursor-pointer pl-6"
+                      >
+                        <span className="flex-1 text-sm truncate">{modelId.split('/')[1] || modelId}</span>
+                        {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                      </DropdownMenuItem>
+                    )
+                  })}
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              
+              {/* Ranking Categories */}
+              <DropdownMenuLabel className="text-muted-foreground text-xs">
+                Browse by Ranking
+              </DropdownMenuLabel>
+              {RANKING_CATEGORIES.map((cat) => {
+                const Icon = cat.icon
+                return (
+                  <DropdownMenuItem
+                    key={cat.id}
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      setActiveCategory(cat.id)
+                    }}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="flex-1">{cat.name}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </DropdownMenuItem>
+                )
+              })}
+              
+              <DropdownMenuSeparator />
+              
+              {/* Built-in Models */}
+              <DropdownMenuLabel className="text-muted-foreground text-xs">
+                Built-in Models
+              </DropdownMenuLabel>
+              {AVAILABLE_MODELS.map((model) => {
+                const isSelected = selectedModels.includes(model.id)
+                return (
+                  <DropdownMenuItem
+                    key={model.id}
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      toggleModel(model.id)
+                    }}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <div className="w-5 h-5 relative flex-shrink-0">
+                      <Image
+                        src={getModelLogo(model.provider) || "/placeholder.svg"}
+                        alt={model.provider}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <span className="flex-1">{model.name}</span>
+                    {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                  </DropdownMenuItem>
+                )
+              })}
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -174,7 +374,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
               <DropdownMenuItem
                 key={method.value}
                 onSelect={(e) => {
-                  e.preventDefault() // Prevent dropdown from closing
+                  e.preventDefault()
                   toggleReasoningMethod(method.value)
                 }}
                 className="flex flex-col items-start gap-0.5 cursor-pointer"
@@ -212,7 +412,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
               <DropdownMenuItem
                 key={feature.value}
                 onSelect={(e) => {
-                  e.preventDefault() // Prevent dropdown from closing
+                  e.preventDefault()
                   toggleFeature(feature.value)
                 }}
                 className="flex flex-col items-start gap-0.5 cursor-pointer"

@@ -126,7 +126,7 @@ export function Sidebar({
               <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
               </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-orange-500 to-[var(--gold)] bg-clip-text text-transparent">
+              <span className="text-lg logo-text">
                 LLMHive
               </span>
             </button>
