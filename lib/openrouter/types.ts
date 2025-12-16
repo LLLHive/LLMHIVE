@@ -17,6 +17,7 @@ export interface OpenRouterModel {
   name: string
   description?: string
   context_length?: number
+  top_provider_max_tokens?: number
   
   architecture: {
     modality?: string
