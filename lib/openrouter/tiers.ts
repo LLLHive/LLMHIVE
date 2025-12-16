@@ -28,20 +28,27 @@ export interface TierConfig {
   }
 }
 
+// DEVELOPMENT MODE: Increased limits for beta testing
+// TODO: Adjust limits when subscription system is live
+const DEV_MODE_LIMITS = {
+  maxModelsInTeam: 10,  // Allow up to 10 models during dev
+  allFeaturesEnabled: true,
+}
+
 export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   free: {
     name: 'free',
     displayName: 'Free',
     description: 'Basic access to get started',
-    maxModelsInTeam: 2,
-    maxConcurrentRequests: 1,
-    monthlyTokenLimit: 100000,
+    maxModelsInTeam: DEV_MODE_LIMITS.maxModelsInTeam,  // Was: 2
+    maxConcurrentRequests: 5,  // Was: 1
+    monthlyTokenLimit: null,  // Was: 100000
     features: {
-      canUseTeams: false,
-      canUseAdvancedReasoning: false,
-      canUsePremiumModels: false,
-      canUseCustomPrompts: false,
-      canExportConversations: false,
+      canUseTeams: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canUseAdvancedReasoning: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canUsePremiumModels: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canUseCustomPrompts: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canExportConversations: DEV_MODE_LIMITS.allFeaturesEnabled,
       prioritySupport: false,
     },
   },
@@ -49,15 +56,15 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
     name: 'starter',
     displayName: 'Starter',
     description: 'For individuals getting serious',
-    maxModelsInTeam: 3,
-    maxConcurrentRequests: 2,
-    monthlyTokenLimit: 1000000,
+    maxModelsInTeam: DEV_MODE_LIMITS.maxModelsInTeam,
+    maxConcurrentRequests: 5,
+    monthlyTokenLimit: null,
     features: {
-      canUseTeams: true,
-      canUseAdvancedReasoning: false,
-      canUsePremiumModels: false,
-      canUseCustomPrompts: true,
-      canExportConversations: true,
+      canUseTeams: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canUseAdvancedReasoning: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canUsePremiumModels: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canUseCustomPrompts: DEV_MODE_LIMITS.allFeaturesEnabled,
+      canExportConversations: DEV_MODE_LIMITS.allFeaturesEnabled,
       prioritySupport: false,
     },
   },
@@ -65,9 +72,9 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
     name: 'pro',
     displayName: 'Pro',
     description: 'For power users and small teams',
-    maxModelsInTeam: 5,
-    maxConcurrentRequests: 5,
-    monthlyTokenLimit: 10000000,
+    maxModelsInTeam: DEV_MODE_LIMITS.maxModelsInTeam,
+    maxConcurrentRequests: 10,
+    monthlyTokenLimit: null,
     features: {
       canUseTeams: true,
       canUseAdvancedReasoning: true,
@@ -81,8 +88,8 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
     name: 'enterprise',
     displayName: 'Enterprise',
     description: 'For organizations with advanced needs',
-    maxModelsInTeam: 10,
-    maxConcurrentRequests: 20,
+    maxModelsInTeam: 20,
+    maxConcurrentRequests: 50,
     monthlyTokenLimit: null,
     features: {
       canUseTeams: true,
@@ -158,8 +165,20 @@ const ENTERPRISE_TIER_PATTERNS = [
 
 /**
  * Determine the required tier for a model based on its ID
+ * 
+ * NOTE: For now, all OpenRouter models are accessible to all tiers.
+ * The tier system is designed for future monetization, but during 
+ * development/beta, users with OpenRouter API keys can access everything.
  */
 export function getModelRequiredTier(modelId: string): ModelAccessLevel {
+  // DEVELOPMENT MODE: All models accessible
+  // TODO: Re-enable tier restrictions when subscription system is live
+  const BYPASS_TIER_RESTRICTIONS = true
+  
+  if (BYPASS_TIER_RESTRICTIONS) {
+    return 'free'  // All models accessible to everyone
+  }
+  
   const lowerModelId = modelId.toLowerCase()
   
   // Check enterprise tier first (most restrictive)
