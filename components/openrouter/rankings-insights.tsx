@@ -115,6 +115,11 @@ interface RankedModelRowProps {
 function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
   const { model, rank, score, metrics } = rankedModel
   
+  // Defensive: skip rendering if model data is missing
+  if (!model) {
+    return null
+  }
+  
   const getRankBadgeColor = (r: number) => {
     if (r === 1) return "bg-yellow-500 text-yellow-950"
     if (r === 2) return "bg-gray-400 text-gray-950"
@@ -149,7 +154,7 @@ function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
               : score
             }
           </div>
-          {metrics.usage_count && (
+          {metrics?.usage_count && (
             <div className="text-xs text-muted-foreground">
               {(metrics.usage_count as number).toLocaleString()} requests
             </div>
@@ -158,7 +163,7 @@ function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
         
         {/* Capabilities badges */}
         <div className="hidden md:flex gap-1 shrink-0">
-          {model.capabilities.supports_tools && (
+          {model.capabilities?.supports_tools && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
@@ -170,7 +175,7 @@ function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
               </Tooltip>
             </TooltipProvider>
           )}
-          {model.capabilities.multimodal_input && (
+          {model.capabilities?.multimodal_input && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>

@@ -99,7 +99,7 @@ function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: Mode
         
         {/* Capabilities */}
         <div className="flex flex-wrap gap-1.5">
-          {model.capabilities.supports_tools && (
+          {model.capabilities?.supports_tools && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
@@ -115,7 +115,7 @@ function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: Mode
             </TooltipProvider>
           )}
           
-          {model.capabilities.multimodal_input && (
+          {model.capabilities?.multimodal_input && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
@@ -131,7 +131,7 @@ function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: Mode
             </TooltipProvider>
           )}
           
-          {model.capabilities.supports_structured && (
+          {model.capabilities?.supports_structured && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
@@ -167,7 +167,7 @@ function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: Mode
         {/* Stats */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Context: {formatContextLength(model.context_length)}</span>
-          {model.availability_score < 100 && (
+          {model.availability_score != null && model.availability_score < 100 && (
             <span className={cn(
               model.availability_score < 90 ? "text-amber-600" : ""
             )}>
