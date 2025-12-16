@@ -62,7 +62,7 @@ function buildQueryString(params: Record<string, unknown>): string {
 // =============================================================================
 
 export async function listModels(filters: ModelFilters = {}): Promise<ModelListResponse> {
-  const query = buildQueryString(filters)
+  const query = buildQueryString(filters as Record<string, unknown>)
   return fetchJson<ModelListResponse>(
     `${API_BASE}/openrouter/models${query ? `?${query}` : ''}`
   )
