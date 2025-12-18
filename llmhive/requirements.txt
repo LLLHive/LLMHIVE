@@ -1,33 +1,59 @@
+# ============================================
+# CPU-only PyTorch (MUST be installed first!)
+# This saves ~3GB by excluding CUDA libraries
+# ============================================
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+
+# Core API framework
 fastapi>=0.111
 uvicorn[standard]>=0.24
 gunicorn>=21.2.0
 pydantic>=2.6
 pydantic-settings>=2.1
+
+# Database
 sqlalchemy>=2.0
 alembic>=1.12
+psycopg[binary]>=3.1
+
+# Configuration
 python-dotenv>=1.0
+
+# LLM providers
 openai>=1.12.0
+anthropic>=0.39.0
+google-generativeai>=0.8.0
+
+# HTTP & networking
 httpx>=0.26
 tenacity>=8.2
-psycopg[binary]>=3.1
+
+# External services
 stripe>=14.0.0
 google-cloud-firestore>=2.16.0
 pinecone>=5.0.0
+
+# Utilities
 pyspellchecker>=0.8.0
-google-generativeai>=0.8.0
-anthropic>=0.39.0
 sympy>=1.12
-faiss-cpu>=1.7.4
 numpy>=1.24.0
+
+# Vector search
+faiss-cpu>=1.7.4
+
 # Web Search (Tavily)
 tavily-python>=0.3.0
+
 # OpenTelemetry for distributed tracing
 opentelemetry-api>=1.21.0
 opentelemetry-sdk>=1.21.0
 opentelemetry-instrumentation-fastapi>=0.42b0
 opentelemetry-exporter-otlp>=1.21.0
-# Embeddings / vector
+
+# Embeddings / vector (uses CPU torch from above)
 sentence-transformers>=3.3.1
+
 # Performance benchmarking
 pytest-benchmark>=4.0.0
 psutil>=5.9.0
