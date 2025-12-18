@@ -12,6 +12,7 @@ Key Performance Strategies:
 5. ADAPTIVE CHALLENGE THRESHOLD - Adjust verification strictness by confidence
 6. LEARNING FROM HISTORY - Use performance data to improve routing
 7. BEST-OF-N WITH JUDGE - Generate multiple options, select best
+8. DYNAMIC ROUTING - Real-time model selection from OpenRouter rankings
 
 The goal: Ensemble performance > Best individual model performance
 """
@@ -23,7 +24,11 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+    from .openrouter_selector import OpenRouterModelSelector, SelectionResult
 
 logger = logging.getLogger(__name__)
 
@@ -230,6 +235,13 @@ class EliteOrchestrator:
     4. QUALITY_WEIGHTED_FUSION: Combine responses weighted by model quality
     5. EXPERT_PANEL: Different models for different aspects, then synthesize
     6. CHALLENGE_AND_REFINE: Generate, challenge, improve iteratively
+    7. DYNAMIC: Use real-time OpenRouter rankings for model selection
+    
+    Dynamic Mode:
+        When use_openrouter_rankings=True, the orchestrator will:
+        - Fetch real-time rankings from OpenRouter
+        - Select models based on current performance data
+        - Adapt to new models as they become available
     """
     
     def __init__(
@@ -237,6 +249,9 @@ class EliteOrchestrator:
         providers: Dict[str, Any],
         performance_tracker: Optional[Any] = None,
         enable_learning: bool = True,
+        *,
+        use_openrouter_rankings: bool = False,
+        db_session: Optional["Session"] = None,
     ) -> None:
         """Initialize elite orchestrator.
         
@@ -244,13 +259,31 @@ class EliteOrchestrator:
             providers: LLM providers by name
             performance_tracker: Performance tracker for learning
             enable_learning: Whether to use historical performance data
+            use_openrouter_rankings: Enable dynamic model selection from OpenRouter
+            db_session: Database session for OpenRouter rankings
         """
         self.providers = providers
         self.performance_tracker = performance_tracker
         self.enable_learning = enable_learning
+        self.use_openrouter_rankings = use_openrouter_rankings
+        self.db_session = db_session
+        
+        # OpenRouter selector (lazy initialization)
+        self._openrouter_selector: Optional["OpenRouterModelSelector"] = None
         
         # Build model-to-provider mapping
         self.model_providers = self._build_model_provider_map()
+    
+    def _get_openrouter_selector(self) -> Optional["OpenRouterModelSelector"]:
+        """Get or create OpenRouter model selector."""
+        if not self.use_openrouter_rankings:
+            return None
+        
+        if self._openrouter_selector is None:
+            from .openrouter_selector import OpenRouterModelSelector
+            self._openrouter_selector = OpenRouterModelSelector(self.db_session)
+        
+        return self._openrouter_selector
     
     def _build_model_provider_map(self) -> Dict[str, str]:
         """Build mapping of model names to providers."""
@@ -271,6 +304,123 @@ class EliteOrchestrator:
         
         return mapping
     
+    async def _get_dynamic_models(
+        self,
+        task_type: str,
+        count: int = 5,
+        domain: Optional[str] = None,
+    ) -> Optional[List[str]]:
+        """Get dynamically selected models from OpenRouter.
+        
+        Args:
+            task_type: Type of task for model selection
+            count: Number of models to select
+            domain: Optional domain filter
+            
+        Returns:
+            List of model IDs or None if unavailable
+        """
+        selector = self._get_openrouter_selector()
+        if selector is None:
+            return None
+        
+        try:
+            from .openrouter_selector import SelectionStrategy
+            
+            # Map task type to strategy
+            if task_type in ("fast_response", "quick-tasks"):
+                strategy = SelectionStrategy.SPEED
+            elif task_type in ("coding", "research", "analysis"):
+                strategy = SelectionStrategy.QUALITY
+            else:
+                strategy = SelectionStrategy.BALANCED
+            
+            result = await selector.select_models(
+                task_type=task_type,
+                count=count,
+                strategy=strategy,
+                domain=domain,
+            )
+            
+            return result.all_model_ids
+            
+        except Exception as e:
+            logger.warning("Failed to get dynamic models: %s", e)
+            return None
+    
+    async def _register_openrouter_models(self, model_ids: List[str]) -> None:
+        """Register OpenRouter models with their providers.
+        
+        OpenRouter models use the format: provider/model-name
+        This method maps them to the OpenRouter provider.
+        
+        Args:
+            model_ids: List of OpenRouter model IDs
+        """
+        # Check if we have an OpenRouter provider
+        if "openrouter" not in self.providers:
+            # Try to create one
+            try:
+                from ..openrouter.gateway import OpenRouterGateway
+                gateway = OpenRouterGateway()
+                self.providers["openrouter"] = gateway
+            except Exception as e:
+                logger.debug("Could not create OpenRouter gateway: %s", e)
+                return
+        
+        # Register all OpenRouter models
+        for model_id in model_ids:
+            if model_id not in self.model_providers:
+                self.model_providers[model_id] = "openrouter"
+                
+                # Also add capability scores for new models
+                if model_id not in MODEL_CAPABILITIES:
+                    # Use default scores for unknown models
+                    MODEL_CAPABILITIES[model_id] = self._get_default_capabilities(model_id)
+    
+    def _get_default_capabilities(self, model_id: str) -> Dict[ModelCapability, float]:
+        """Get default capability scores for an unknown model.
+        
+        Uses model ID patterns to infer capabilities.
+        """
+        model_lower = model_id.lower()
+        
+        # Default scores
+        caps = {
+            ModelCapability.CODING: 0.7,
+            ModelCapability.REASONING: 0.7,
+            ModelCapability.MATH: 0.7,
+            ModelCapability.CREATIVE: 0.7,
+            ModelCapability.FACTUAL: 0.7,
+            ModelCapability.ANALYSIS: 0.7,
+            ModelCapability.SUMMARIZATION: 0.7,
+            ModelCapability.INSTRUCTION_FOLLOWING: 0.7,
+            ModelCapability.SPEED: 0.7,
+            ModelCapability.QUALITY: 0.7,
+        }
+        
+        # Boost scores based on model name patterns
+        if "gpt-4" in model_lower or "claude" in model_lower:
+            for cap in caps:
+                caps[cap] += 0.15
+        
+        if "code" in model_lower or "coder" in model_lower:
+            caps[ModelCapability.CODING] = 0.9
+        
+        if "mini" in model_lower or "small" in model_lower or "flash" in model_lower:
+            caps[ModelCapability.SPEED] = 0.95
+            caps[ModelCapability.QUALITY] -= 0.1
+        
+        if "pro" in model_lower or "opus" in model_lower or "large" in model_lower:
+            caps[ModelCapability.QUALITY] = 0.9
+            caps[ModelCapability.SPEED] = 0.6
+        
+        # Clamp values
+        for cap in caps:
+            caps[cap] = max(0.0, min(1.0, caps[cap]))
+        
+        return caps
+    
     async def orchestrate(
         self,
         prompt: str,
@@ -281,6 +431,7 @@ class EliteOrchestrator:
         quality_threshold: float = 0.7,
         max_parallel: int = 3,
         timeout_seconds: float = 60.0,
+        domain_filter: Optional[str] = None,
     ) -> EliteResult:
         """
         Orchestrate models to produce the best possible response.
@@ -288,11 +439,12 @@ class EliteOrchestrator:
         Args:
             prompt: User prompt
             task_type: Type of task for capability matching
-            available_models: Models to use (default: all available)
-            strategy: Orchestration strategy (auto|single_best|parallel_race|best_of_n|expert_panel)
+            available_models: Models to use (default: all available or dynamic from OpenRouter)
+            strategy: Orchestration strategy (auto|dynamic|single_best|parallel_race|best_of_n|expert_panel)
             quality_threshold: Minimum acceptable quality
             max_parallel: Maximum parallel model calls
             timeout_seconds: Total timeout
+            domain_filter: Optional domain filter for OpenRouter ranking selection
             
         Returns:
             EliteResult with optimized response
@@ -300,8 +452,26 @@ class EliteOrchestrator:
         start_time = time.time()
         performance_notes: List[str] = []
         
-        # Get available models
-        models = available_models or list(self.model_providers.keys())
+        # Handle dynamic/auto strategy with OpenRouter
+        if strategy in ("auto", "automatic", "dynamic") and self.use_openrouter_rankings:
+            dynamic_models = await self._get_dynamic_models(
+                task_type=task_type,
+                count=max_parallel + 2,
+                domain=domain_filter,
+            )
+            if dynamic_models:
+                models = dynamic_models
+                performance_notes.append(f"Dynamic models from OpenRouter: {len(models)}")
+                # Also update model providers for new models
+                await self._register_openrouter_models(models)
+            else:
+                # Fallback to static
+                models = available_models or list(self.model_providers.keys())
+                performance_notes.append("OpenRouter unavailable, using static models")
+        else:
+            # Get available models from static list
+            models = available_models or list(self.model_providers.keys())
+        
         models = [m for m in models if m in self.model_providers]
         
         if not models:
@@ -310,7 +480,7 @@ class EliteOrchestrator:
         performance_notes.append(f"Available models: {len(models)}")
         
         # Auto-select strategy based on task type
-        if strategy == "auto":
+        if strategy in ("auto", "automatic", "dynamic"):
             strategy = self._select_strategy(task_type, len(models), prompt)
         
         performance_notes.append(f"Strategy: {strategy}")

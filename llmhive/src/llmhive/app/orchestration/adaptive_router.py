@@ -5,14 +5,26 @@ This module implements adaptive routing that selects models based on:
 - Query domain matching
 - Accuracy level requirements
 - Available model capabilities
+- Real-time OpenRouter rankings (when available)
+
+The router can operate in two modes:
+1. Static mode: Uses hardcoded MODEL_PROFILES (default)
+2. Dynamic mode: Fetches real-time rankings from OpenRouter
+
+To enable dynamic mode, initialize with use_openrouter_rankings=True
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from ..performance_tracker import performance_tracker, ModelPerformance
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+    from .openrouter_selector import OpenRouterModelSelector, SelectionResult
 
 logger = logging.getLogger(__name__)
 
@@ -141,12 +153,30 @@ class AdaptiveRoutingResult:
 
 
 class AdaptiveModelRouter:
-    """Routes queries to optimal models based on adaptive scoring."""
+    """Routes queries to optimal models based on adaptive scoring.
+    
+    Supports two modes:
+    1. Static mode (default): Uses hardcoded MODEL_PROFILES
+    2. Dynamic mode: Fetches real-time rankings from OpenRouter
+    
+    Usage:
+        # Static mode (default)
+        router = AdaptiveModelRouter()
+        
+        # Dynamic mode with OpenRouter rankings
+        router = AdaptiveModelRouter(
+            use_openrouter_rankings=True,
+            db_session=session,
+        )
+    """
     
     def __init__(
         self,
         available_providers: Optional[List[str]] = None,
         model_profiles: Optional[Dict[str, Dict[str, Any]]] = None,
+        *,
+        use_openrouter_rankings: bool = False,
+        db_session: Optional["Session"] = None,
     ) -> None:
         """
         Initialize adaptive router.
@@ -154,9 +184,159 @@ class AdaptiveModelRouter:
         Args:
             available_providers: List of available provider names
             model_profiles: Optional custom model profiles
+            use_openrouter_rankings: Enable dynamic selection from OpenRouter
+            db_session: Database session for OpenRouter rankings
         """
         self.available_providers = available_providers or []
         self.profiles = model_profiles or MODEL_PROFILES
+        self.use_openrouter_rankings = use_openrouter_rankings
+        self.db_session = db_session
+        self._openrouter_selector: Optional["OpenRouterModelSelector"] = None
+        
+        # Cache for dynamic profiles
+        self._dynamic_profiles_cache: Optional[Dict[str, Dict[str, Any]]] = None
+        self._cache_timestamp: Optional[float] = None
+        self._cache_ttl_seconds = 300  # 5 minutes
+    
+    def _get_openrouter_selector(self) -> Optional["OpenRouterModelSelector"]:
+        """Get or create OpenRouter selector."""
+        if not self.use_openrouter_rankings:
+            return None
+        
+        if self._openrouter_selector is None:
+            from .openrouter_selector import OpenRouterModelSelector
+            self._openrouter_selector = OpenRouterModelSelector(self.db_session)
+        
+        return self._openrouter_selector
+    
+    async def select_models_dynamic(
+        self,
+        query: str,
+        roles: List[str],
+        accuracy_level: int,
+        *,
+        available_models: Optional[List[str]] = None,
+        max_models: Optional[int] = None,
+        strategy: str = "automatic",
+    ) -> AdaptiveRoutingResult:
+        """
+        Dynamic model selection using OpenRouter rankings.
+        
+        This is the async version that fetches real-time rankings.
+        Falls back to static selection if OpenRouter is unavailable.
+        
+        Args:
+            query: The refined query to process
+            roles: List of role names that need model assignment
+            accuracy_level: Slider value 1-5 (1=fastest, 5=most accurate)
+            available_models: Optional list of available model names
+            max_models: Maximum number of models to select
+            strategy: Selection strategy ("automatic", "quality", "speed", "value")
+            
+        Returns:
+            AdaptiveRoutingResult with model assignments and reasoning
+        """
+        selector = self._get_openrouter_selector()
+        
+        if selector is None:
+            # Fall back to static selection
+            return self.select_models_adaptive(
+                query, roles, accuracy_level,
+                available_models=available_models,
+                max_models=max_models,
+            )
+        
+        try:
+            # Map accuracy level to strategy if automatic
+            if strategy == "automatic":
+                if accuracy_level <= 2:
+                    strategy = "speed"
+                elif accuracy_level >= 4:
+                    strategy = "quality"
+                else:
+                    strategy = "balanced"
+            
+            # Infer task type from query
+            domain = self.infer_domain(query)
+            task_type = self._domain_to_task_type(domain)
+            
+            # Get dynamic selection
+            from .openrouter_selector import SelectionStrategy
+            
+            result = await selector.select_models(
+                task_type=task_type,
+                count=len(roles) + 2,
+                strategy=SelectionStrategy(strategy),
+            )
+            
+            # Build role assignments from selection
+            role_models = await selector.select_for_roles(
+                roles=roles,
+                task_type=task_type,
+                strategy=SelectionStrategy(strategy),
+            )
+            
+            role_assignments = {
+                role: model.model_id
+                for role, model in role_models.items()
+            }
+            
+            # Build model scores for compatibility
+            model_scores = [
+                ModelScore(
+                    model=m.model_id,
+                    total_score=m.score,
+                    domain_score=0.8,
+                    performance_score=m.score,
+                    accuracy_adjustment=0.0,
+                    speed_adjustment=0.0,
+                    reasoning=m.selection_reason,
+                )
+                for m in [result.primary_model] + result.secondary_models
+            ]
+            
+            # Determine ensemble size based on accuracy level
+            if accuracy_level <= 2:
+                ensemble_size = 1
+            elif accuracy_level <= 3:
+                ensemble_size = 2
+            elif accuracy_level <= 4:
+                ensemble_size = 3
+            else:
+                ensemble_size = min(4, len(result.all_model_ids))
+            
+            return AdaptiveRoutingResult(
+                primary_model=result.primary_model.model_id,
+                secondary_models=[m.model_id for m in result.secondary_models],
+                role_assignments=role_assignments,
+                model_scores=model_scores,
+                reasoning=f"Dynamic selection: {result.reasoning}",
+                recommended_ensemble_size=ensemble_size,
+            )
+            
+        except Exception as e:
+            logger.warning(
+                "OpenRouter dynamic selection failed, falling back to static: %s", e
+            )
+            return self.select_models_adaptive(
+                query, roles, accuracy_level,
+                available_models=available_models,
+                max_models=max_models,
+            )
+    
+    def _domain_to_task_type(self, domain: str) -> str:
+        """Map domain to task type for OpenRouter selector."""
+        mapping = {
+            "medical": "research",
+            "legal": "research",
+            "coding": "coding",
+            "research": "research",
+            "math": "math",
+            "finance": "analysis",
+            "writing": "creative",
+            "general": "general",
+        }
+        return mapping.get(domain, "general")
     
     def infer_domain(self, query: str) -> str:
         """Infer the domain of a query based on keywords."""
@@ -480,11 +660,33 @@ class AdaptiveModelRouter:
 _adaptive_router: Optional[AdaptiveModelRouter] = None
 
 
-def get_adaptive_router() -> AdaptiveModelRouter:
-    """Get the global adaptive router instance."""
+def get_adaptive_router(
+    *,
+    use_openrouter_rankings: bool = False,
+    db_session: Optional["Session"] = None,
+) -> AdaptiveModelRouter:
+    """Get the global adaptive router instance.
+    
+    Args:
+        use_openrouter_rankings: Enable dynamic selection from OpenRouter
+        db_session: Database session for OpenRouter rankings
+        
+    Returns:
+        AdaptiveModelRouter instance
+    """
     global _adaptive_router
+    
+    # Recreate if switching to dynamic mode
+    if use_openrouter_rankings and _adaptive_router is not None:
+        if not _adaptive_router.use_openrouter_rankings:
+            _adaptive_router = None
+    
     if _adaptive_router is None:
-        _adaptive_router = AdaptiveModelRouter()
+        _adaptive_router = AdaptiveModelRouter(
+            use_openrouter_rankings=use_openrouter_rankings,
+            db_session=db_session,
+        )
+    
     return _adaptive_router
 
 
@@ -496,7 +698,7 @@ def select_models_adaptive(
     available_models: Optional[List[str]] = None,
 ) -> Dict[str, str]:
     """
-    Convenience function for adaptive model selection.
+    Convenience function for adaptive model selection (static mode).
     
     Args:
         refined_query: The refined query to process
@@ -513,6 +715,47 @@ def select_models_adaptive(
         roles,
         accuracy_level,
         available_models=available_models,
+    )
+    return result.role_assignments
+
+
+async def select_models_dynamic(
+    refined_query: str,
+    roles: List[str],
+    accuracy_level: int,
+    *,
+    available_models: Optional[List[str]] = None,
+    strategy: str = "automatic",
+    db_session: Optional["Session"] = None,
+) -> Dict[str, str]:
+    """
+    Convenience function for dynamic model selection with OpenRouter rankings.
+    
+    This is the async version that fetches real-time rankings from OpenRouter.
+    Use this when you want to leverage the latest model performance data.
+    
+    Args:
+        refined_query: The refined query to process
+        roles: List of role names that need model assignment
+        accuracy_level: Slider value 1-5 (1=fastest, 5=most accurate)
+        available_models: Optional list of available model names
+        strategy: Selection strategy ("automatic", "quality", "speed", "value")
+        db_session: Database session for OpenRouter rankings
+        
+    Returns:
+        Dictionary mapping role names to model names
+    """
+    router = get_adaptive_router(
+        use_openrouter_rankings=True,
+        db_session=db_session,
+    )
+    
+    result = await router.select_models_dynamic(
+        refined_query,
+        roles,
+        accuracy_level,
+        available_models=available_models,
+        strategy=strategy,
     )
     return result.role_assignments
 

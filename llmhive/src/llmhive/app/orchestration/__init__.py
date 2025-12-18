@@ -595,3 +595,47 @@ if CONSENSUS_MANAGER_AVAILABLE:
         "synthesize_responses",
         "calculate_agreement",
     ])
+
+# ==================== OPENROUTER INTEGRATION ====================
+
+# OpenRouter Model Selector (Dynamic Rankings)
+try:
+    from .openrouter_selector import (
+        OpenRouterModelSelector,
+        SelectionStrategy,
+        TaskDomain,
+        SelectedModel,
+        SelectionResult,
+        get_openrouter_selector,
+        select_models_dynamic,
+    )
+    OPENROUTER_SELECTOR_AVAILABLE = True
+except ImportError:
+    OPENROUTER_SELECTOR_AVAILABLE = False
+    OpenRouterModelSelector = None  # type: ignore
+    SelectionStrategy = None  # type: ignore
+    TaskDomain = None  # type: ignore
+
+# Dynamic model selection via adaptive router
+try:
+    from .adaptive_router import select_models_dynamic as adaptive_select_dynamic
+    DYNAMIC_ROUTING_AVAILABLE = True
+except ImportError:
+    DYNAMIC_ROUTING_AVAILABLE = False
+    adaptive_select_dynamic = None  # type: ignore
+
+if OPENROUTER_SELECTOR_AVAILABLE:
+    __all__.extend([
+        "OpenRouterModelSelector",
+        "SelectionStrategy",
+        "TaskDomain",
+        "SelectedModel",
+        "SelectionResult",
+        "get_openrouter_selector",
+        "select_models_dynamic",
+    ])
+
+if DYNAMIC_ROUTING_AVAILABLE:
+    __all__.extend([
+        "adaptive_select_dynamic",
+    ])

@@ -510,3 +510,11 @@ app.include_router(reasoning_config_router.router)
 # Include clarification router (at /v1/clarify)
 from .routers import clarification as clarification_router
 app.include_router(clarification_router.router)
+
+# Include OpenRouter scheduler router (at /api/openrouter/sync)
+try:
+    from .openrouter.scheduler import router as openrouter_scheduler_router
+    app.include_router(openrouter_scheduler_router, prefix="/api")
+    logger.info("OpenRouter scheduler router enabled")
+except ImportError as e:
+    logger.debug("OpenRouter scheduler router not available: %s", e)
