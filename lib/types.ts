@@ -203,6 +203,21 @@ export interface OrchestratorSettings {
   standardValues?: StandardLLMSettings
   // UI/UX settings
   enableSpellCheck?: boolean // Enable spell check in chat input
+  // PR5 & PR6: Budget-aware routing
+  maxCostUsd?: number // Maximum cost per request in USD
+  preferCheaper?: boolean // Prefer cheaper models
+  // PR6: Orchestration overrides
+  modelTeam?: Array<{
+    modelId: string
+    role: 'primary' | 'validator' | 'fallback' | 'specialist'
+    weight?: number
+  }> // Custom model team with roles
+  orchestrationOverrides?: {
+    strategy?: EliteStrategy
+    enableRefinement?: boolean
+    enableVerification?: boolean
+    maxIterations?: number
+  }
   answerFormat?: AnswerFormat // Answer structure format preference
   enableClarificationQuestions?: boolean // Ask clarifying questions before answering
   enableLiveResearch?: boolean // Enable real-time web search for current data

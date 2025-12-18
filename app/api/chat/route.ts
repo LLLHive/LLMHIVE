@@ -125,6 +125,12 @@ export async function POST(req: NextRequest) {
     // Quality options selected by user
     const qualityOptions = settings.qualityOptions || []
     
+    // PR6: Extract orchestration overrides from settings
+    const orchestrationOverrides = settings.orchestrationOverrides || {}
+    const modelTeam = settings.modelTeam || orchestrationOverrides.modelTeam || null
+    const maxCostUsd = settings.maxCostUsd || orchestrationOverrides.maxCostUsd || null
+    const preferCheaper = settings.preferCheaper || orchestrationOverrides.preferCheaper || false
+    
     const payload = {
       prompt,
       models: selectedModels.length > 0 ? selectedModels : null,  // User-selected models for ensemble
@@ -161,6 +167,14 @@ export async function POST(req: NextRequest) {
         enable_memory: settings.advancedFeatures?.includes("memory-augmentation") || false,
         // Real-time data: auto-enabled for temporal queries, or manually via settings
         enable_live_research: needsRealtimeData || settings.enableLiveResearch || false,
+        // PR5 & PR6: Budget-aware routing
+        max_cost_usd: maxCostUsd,
+        prefer_cheaper_models: preferCheaper,
+        // PR6: Model team override
+        model_team: modelTeam,
+        // PR6: Refinement/verification controls
+        enable_refinement: orchestrationOverrides.enableRefinement ?? true,
+        max_iterations: orchestrationOverrides.maxIterations ?? 3,
       },
       metadata: {
         chat_id: chatId || null,

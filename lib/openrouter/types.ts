@@ -321,6 +321,127 @@ export interface PlaygroundState {
 }
 
 // =============================================================================
+// PR6: Orchestration Types
+// =============================================================================
+
+/**
+ * Elite orchestration strategies available in the UI
+ */
+export type EliteStrategy =
+  | 'automatic'
+  | 'single_best'
+  | 'parallel_race'
+  | 'best_of_n'
+  | 'quality_weighted_fusion'
+  | 'expert_panel'
+  | 'challenge_and_refine'
+
+/**
+ * Model role in orchestration
+ */
+export type ModelRole = 'primary' | 'validator' | 'fallback' | 'specialist'
+
+/**
+ * Model team configuration for orchestration
+ */
+export interface ModelTeamMember {
+  modelId: string
+  role: ModelRole
+  weight?: number  // 0-1, for weighted fusion
+  capabilities?: string[]  // e.g., ['coding', 'math', 'research']
+}
+
+export interface ModelTeam {
+  id: string
+  name: string
+  description?: string
+  members: ModelTeamMember[]
+  strategy: EliteStrategy
+  createdAt?: string
+}
+
+/**
+ * Orchestration execution status
+ */
+export type OrchestrationPhase =
+  | 'initializing'
+  | 'analyzing_query'
+  | 'selecting_models'
+  | 'dispatching'
+  | 'awaiting_responses'
+  | 'verifying'
+  | 'refining'
+  | 'synthesizing'
+  | 'completed'
+  | 'failed'
+
+export interface OrchestrationStep {
+  phase: OrchestrationPhase
+  model?: string
+  message: string
+  startTime: number
+  endTime?: number
+  success?: boolean
+  tokens?: number
+  cost?: number
+}
+
+/**
+ * Live orchestration metrics for dashboard
+ */
+export interface OrchestrationMetrics {
+  totalRequests: number
+  successRate: number
+  avgLatencyMs: number
+  avgTokens: number
+  avgCost: number
+  topStrategies: Array<{ strategy: EliteStrategy; count: number; avgQuality: number }>
+  topModels: Array<{ modelId: string; count: number; avgQuality: number }>
+  recentRuns: OrchestrationRunSummary[]
+}
+
+export interface OrchestrationRunSummary {
+  id: string
+  timestamp: string
+  strategy: EliteStrategy
+  modelsUsed: string[]
+  latencyMs: number
+  tokens: number
+  cost: number
+  quality?: number
+  success: boolean
+}
+
+/**
+ * Extended orchestration request with strategy overrides
+ */
+export interface OrchestrationOverrides {
+  strategy?: EliteStrategy
+  modelTeam?: ModelTeamMember[]
+  maxCostUsd?: number
+  preferCheaper?: boolean
+  enableRefinement?: boolean
+  enableVerification?: boolean
+  maxIterations?: number
+}
+
+/**
+ * Extended orchestration response with detailed info
+ */
+export interface OrchestrationResult {
+  strategyUsed: EliteStrategy
+  modelsUsed: string[]
+  steps: OrchestrationStep[]
+  qualityScore?: number
+  verificationPassed?: boolean
+  refinementIterations?: number
+  totalTokens: number
+  totalCost: number
+  latencyMs: number
+  notes?: string[]
+}
+
+// =============================================================================
 // Helper Types
 // =============================================================================
 
