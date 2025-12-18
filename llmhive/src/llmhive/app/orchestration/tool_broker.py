@@ -630,6 +630,25 @@ class DatabaseQueryTool(BaseTool):
 # Tool Broker Implementation
 # ==============================================================================
 
+class RetrievalMode(str, Enum):
+    """PR4: Retrieval mode for RAG operations."""
+    FULL = "full"  # Full retrieval with all context
+    SHORT = "short"  # Quick retrieval for simple queries
+    DEEP = "deep"  # Deep retrieval with multiple passes
+    NONE = "none"  # No retrieval needed
+
+
+@dataclass
+class RAGConfig:
+    """PR4: Configuration for RAG-based retrieval."""
+    mode: RetrievalMode = RetrievalMode.SHORT
+    max_chunks: int = 5
+    min_relevance_score: float = 0.7
+    include_metadata: bool = True
+    rerank: bool = False
+    time_decay_weight: float = 0.1  # Weight for recency
+
+
 class ToolBroker:
     """
     Enhanced Tool Broker for LLMHive Elite Orchestrator.
@@ -640,6 +659,8 @@ class ToolBroker:
     3. Handle tool chaining with dependencies
     4. Integrate tool outputs into orchestration context
     5. Handle tool failures gracefully
+    6. PR4: Decide on RAG retrieval mode (full vs short)
+    7. PR4: Route to appropriate external APIs
     """
     
     # Expanded keywords that trigger tool usage
@@ -697,6 +718,12 @@ class ToolBroker:
         
         # Track tool failures for fallback decisions
         self._failure_counts: Dict[ToolType, int] = {}
+        
+        # PR4: Memory manager for RAG lookups
+        self.memory_manager: Optional[Any] = None
+        
+        # PR4: External API configurations
+        self._api_configs: Dict[str, Dict[str, Any]] = {}
     
     def register_tool(self, tool: BaseTool) -> None:
         """Register a tool implementation."""
@@ -1270,6 +1297,417 @@ class ToolBroker:
                 return query[idx:].strip()
         
         return query
+    
+    # ==========================================================================
+    # PR4: Additional Methods for Tool Integration
+    # ==========================================================================
+    
+    def list_tools(self) -> List[str]:
+        """List all registered tools."""
+        return [t.value for t in self.tools.keys()]
+    
+    def is_tool_request(self, content: str) -> bool:
+        """
+        PR4: Check if model output contains a tool request.
+        
+        Detects patterns like:
+        - [TOOL:web_search] query
+        - <tool>calculator</tool>
+        - ```tool:code_execution
+        """
+        content_lower = content.lower()
+        
+        # Pattern 1: [TOOL:type] or [tool:type]
+        if re.search(r'\[tool:\w+\]', content_lower):
+            return True
+        
+        # Pattern 2: <tool>type</tool>
+        if re.search(r'<tool>\w+</tool>', content_lower):
+            return True
+        
+        # Pattern 3: ```tool:type
+        if re.search(r'```tool:\w+', content_lower):
+            return True
+        
+        # Pattern 4: ACTION: TOOL_NAME
+        if re.search(r'action:\s*(search|calculate|execute|browse)', content_lower):
+            return True
+        
+        return False
+    
+    async def process_model_output_with_tools(
+        self,
+        content: str,
+        *,
+        user_tier: str = "free",
+        max_tool_calls: int = 5,
+    ) -> Tuple[str, List[ToolResult]]:
+        """
+        PR4: Process model output that contains tool calls.
+        
+        Extracts tool calls from the model output, executes them,
+        and replaces the tool call markers with results.
+        
+        Args:
+            content: Model output containing tool calls
+            user_tier: User tier for access control
+            max_tool_calls: Maximum number of tool calls to process
+            
+        Returns:
+            Tuple of (processed_content, list of tool results)
+        """
+        tool_results: List[ToolResult] = []
+        processed_content = content
+        tool_calls_found = 0
+        
+        # Pattern 1: [TOOL:type] query [/TOOL]
+        pattern1 = r'\[TOOL:(\w+)\](.*?)\[/TOOL\]'
+        matches = re.findall(pattern1, content, re.DOTALL | re.IGNORECASE)
+        
+        for tool_type_str, query in matches:
+            if tool_calls_found >= max_tool_calls:
+                break
+            
+            try:
+                tool_type = ToolType(tool_type_str.lower())
+                tool = self.tools.get(tool_type)
+                
+                if tool and tool.is_available():
+                    result = await tool.execute(query.strip())
+                    tool_results.append(result)
+                    
+                    # Replace tool call with result
+                    replacement = self._format_tool_result_inline(result)
+                    processed_content = processed_content.replace(
+                        f'[TOOL:{tool_type_str}]{query}[/TOOL]',
+                        replacement,
+                        1
+                    )
+                    tool_calls_found += 1
+                    
+            except (ValueError, KeyError) as e:
+                logger.warning("Unknown tool type: %s", tool_type_str)
+        
+        # Pattern 2: <tool>type</tool><query>text</query>
+        pattern2 = r'<tool>(\w+)</tool>\s*<query>(.*?)</query>'
+        matches = re.findall(pattern2, content, re.DOTALL | re.IGNORECASE)
+        
+        for tool_type_str, query in matches:
+            if tool_calls_found >= max_tool_calls:
+                break
+            
+            try:
+                tool_type = ToolType(tool_type_str.lower())
+                tool = self.tools.get(tool_type)
+                
+                if tool and tool.is_available():
+                    result = await tool.execute(query.strip())
+                    tool_results.append(result)
+                    
+                    # Replace tool call with result
+                    replacement = self._format_tool_result_inline(result)
+                    original = f'<tool>{tool_type_str}</tool><query>{query}</query>'
+                    processed_content = processed_content.replace(original, replacement, 1)
+                    tool_calls_found += 1
+                    
+            except (ValueError, KeyError) as e:
+                logger.warning("Unknown tool type: %s", tool_type_str)
+        
+        return processed_content, tool_results
+    
+    def _format_tool_result_inline(self, result: ToolResult) -> str:
+        """Format a tool result for inline replacement."""
+        if result.success:
+            data_str = self._format_data(result.data)
+            return f"[Result: {data_str}]"
+        else:
+            return f"[Tool failed: {result.error_message}]"
+    
+    # ==========================================================================
+    # PR4: RAG Routing and Retrieval Mode Decision
+    # ==========================================================================
+    
+    def decide_retrieval_mode(
+        self,
+        query: str,
+        context: Optional[str] = None,
+        accuracy_level: int = 5,
+    ) -> RAGConfig:
+        """
+        PR4: Decide on the appropriate retrieval mode for a query.
+        
+        This implements the logic for full vs short retrieval based on
+        query complexity, accuracy requirements, and context.
+        
+        Args:
+            query: The user's query
+            context: Optional additional context
+            accuracy_level: Required accuracy (1-10)
+            
+        Returns:
+            RAGConfig with the appropriate settings
+        """
+        query_lower = query.lower()
+        
+        # Start with default config
+        config = RAGConfig()
+        
+        # Analyze query complexity
+        word_count = len(query.split())
+        has_multiple_questions = query.count('?') > 1 or ' and ' in query_lower
+        
+        # Check for complexity indicators
+        complex_patterns = [
+            r'\b(compare|contrast|analyze|evaluate|synthesize)\b',
+            r'\b(explain|describe|discuss)\s+\w+\s+\w+',
+            r'\b(how does|why does|what causes)\b',
+            r'\b(relationship between|difference between)\b',
+            r'\b(pros and cons|advantages and disadvantages)\b',
+        ]
+        is_complex = any(re.search(p, query_lower) for p in complex_patterns)
+        
+        # Check for simple patterns
+        simple_patterns = [
+            r'^what is\s+\w+\s*\??$',
+            r'^who is\s+',
+            r'^when did\s+',
+            r'^where is\s+',
+            r'^define\s+',
+        ]
+        is_simple = any(re.search(p, query_lower) for p in simple_patterns)
+        
+        # Decision logic
+        if is_simple and word_count < 10 and accuracy_level <= 5:
+            # Short retrieval for simple queries
+            config.mode = RetrievalMode.SHORT
+            config.max_chunks = 3
+            config.rerank = False
+            
+        elif is_complex or has_multiple_questions or accuracy_level >= 8:
+            # Full retrieval for complex queries
+            config.mode = RetrievalMode.FULL
+            config.max_chunks = 10
+            config.rerank = True
+            
+        elif accuracy_level >= 9 or (is_complex and has_multiple_questions):
+            # Deep retrieval for highest accuracy
+            config.mode = RetrievalMode.DEEP
+            config.max_chunks = 15
+            config.rerank = True
+            config.min_relevance_score = 0.6
+            
+        else:
+            # Default: short retrieval
+            config.mode = RetrievalMode.SHORT
+            config.max_chunks = 5
+        
+        logger.debug(
+            "PR4: Decided retrieval mode=%s for query (complexity=%s, accuracy=%d)",
+            config.mode.value,
+            "complex" if is_complex else "simple",
+            accuracy_level,
+        )
+        
+        return config
+    
+    async def perform_rag_retrieval(
+        self,
+        query: str,
+        config: Optional[RAGConfig] = None,
+        namespace: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        PR4: Perform RAG retrieval based on the configured mode.
+        
+        Args:
+            query: The query to retrieve for
+            config: RAG configuration (uses default if None)
+            namespace: Optional namespace for multi-tenant retrieval
+            
+        Returns:
+            List of retrieved chunks with metadata
+        """
+        config = config or RAGConfig()
+        
+        if config.mode == RetrievalMode.NONE:
+            return []
+        
+        if not self.memory_manager:
+            logger.warning("PR4: Memory manager not available for RAG retrieval")
+            return []
+        
+        try:
+            # Query the knowledge base
+            hits = self.memory_manager.query_memory(
+                query_text=query,
+                top_k=config.max_chunks,
+                filter_verified=True,
+                namespace=namespace,
+            )
+            
+            # Filter by relevance score
+            chunks = []
+            for hit in hits:
+                if getattr(hit, 'score', 1.0) >= config.min_relevance_score:
+                    chunk = {
+                        "text": getattr(hit, 'text', str(hit)),
+                        "score": getattr(hit, 'score', 1.0),
+                        "source": getattr(hit, 'source', None),
+                        "metadata": getattr(hit, 'metadata', {}),
+                    }
+                    chunks.append(chunk)
+            
+            # Optional: rerank if configured
+            if config.rerank and len(chunks) > 1:
+                chunks = self._rerank_chunks(chunks, query)
+            
+            logger.info(
+                "PR4: RAG retrieval returned %d chunks (mode=%s)",
+                len(chunks),
+                config.mode.value,
+            )
+            
+            return chunks
+            
+        except Exception as e:
+            logger.error("PR4: RAG retrieval failed: %s", e)
+            return []
+    
+    def _rerank_chunks(
+        self,
+        chunks: List[Dict[str, Any]],
+        query: str,
+    ) -> List[Dict[str, Any]]:
+        """Simple reranking based on keyword overlap."""
+        query_tokens = set(query.lower().split())
+        
+        def score_chunk(chunk: Dict[str, Any]) -> float:
+            text = chunk.get("text", "").lower()
+            text_tokens = set(text.split())
+            overlap = len(query_tokens & text_tokens)
+            original_score = chunk.get("score", 0.5)
+            return original_score * 0.7 + (overlap / max(len(query_tokens), 1)) * 0.3
+        
+        chunks.sort(key=score_chunk, reverse=True)
+        return chunks
+    
+    # ==========================================================================
+    # PR4: External API Configuration
+    # ==========================================================================
+    
+    def configure_external_apis(
+        self,
+        serpapi_key: Optional[str] = None,
+        tavily_key: Optional[str] = None,
+        browserless_key: Optional[str] = None,
+        wolframalpha_key: Optional[str] = None,
+    ) -> None:
+        """
+        PR4: Configure external API keys for tools.
+        
+        This should be called during initialization with keys from env vars.
+        
+        Args:
+            serpapi_key: SerpAPI key for web search
+            tavily_key: Tavily API key for search
+            browserless_key: Browserless key for web scraping
+            wolframalpha_key: WolframAlpha key for calculations
+        """
+        if serpapi_key:
+            self._api_configs["serpapi"] = {
+                "key": serpapi_key,
+                "base_url": "https://serpapi.com/search",
+            }
+            logger.info("PR4: SerpAPI configured")
+        
+        if tavily_key:
+            self._api_configs["tavily"] = {
+                "key": tavily_key,
+                "base_url": "https://api.tavily.com",
+            }
+            logger.info("PR4: Tavily API configured")
+        
+        if browserless_key:
+            self._api_configs["browserless"] = {
+                "key": browserless_key,
+                "base_url": "https://chrome.browserless.io",
+            }
+            logger.info("PR4: Browserless configured")
+        
+        if wolframalpha_key:
+            self._api_configs["wolframalpha"] = {
+                "key": wolframalpha_key,
+                "base_url": "http://api.wolframalpha.com/v2",
+            }
+            logger.info("PR4: WolframAlpha configured")
+    
+    def get_api_config(self, api_name: str) -> Optional[Dict[str, Any]]:
+        """Get configuration for an external API."""
+        return self._api_configs.get(api_name)
+    
+    async def run_tool(
+        self,
+        tool_type: ToolType,
+        query: str,
+        **kwargs,
+    ) -> ToolResult:
+        """
+        PR4: Convenience method to run a single tool.
+        
+        This is the main entry point for programmatic tool invocation.
+        
+        Args:
+            tool_type: Type of tool to run
+            query: Query/input for the tool
+            **kwargs: Additional arguments for the tool
+            
+        Returns:
+            ToolResult from the tool execution
+        """
+        tool = self.tools.get(tool_type)
+        
+        if not tool:
+            return ToolResult(
+                tool_type=tool_type,
+                success=False,
+                data=None,
+                error_message=f"Tool {tool_type.value} not registered",
+                status=ToolStatus.FAILED,
+            )
+        
+        if not tool.is_available():
+            return ToolResult(
+                tool_type=tool_type,
+                success=False,
+                data=None,
+                error_message=f"Tool {tool_type.value} not available",
+                status=ToolStatus.SKIPPED,
+            )
+        
+        try:
+            timeout = kwargs.pop("timeout", 30.0)
+            result = await asyncio.wait_for(
+                tool.execute(query, **kwargs),
+                timeout=timeout,
+            )
+            return result
+        except asyncio.TimeoutError:
+            return ToolResult(
+                tool_type=tool_type,
+                success=False,
+                data=None,
+                error_message=f"Tool timed out after {timeout}s",
+                status=ToolStatus.TIMEOUT,
+            )
+        except Exception as e:
+            logger.error("PR4: Tool execution failed: %s", e)
+            return ToolResult(
+                tool_type=tool_type,
+                success=False,
+                data=None,
+                error_message=str(e),
+                status=ToolStatus.FAILED,
+            )
 
 
 # ==============================================================================

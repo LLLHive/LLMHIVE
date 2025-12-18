@@ -301,19 +301,31 @@ try:
         ToolBroker,
         ToolType,
         ToolPriority,
+        ToolStatus,
         ToolRequest,
         ToolResult,
         ToolAnalysis,
         WebSearchTool,
         CalculatorTool,
         CodeExecutionTool,
+        KnowledgeBaseTool,
+        WebBrowserTool,
+        DocumentQATool,
+        DatabaseQueryTool,
+        ImageGenerationTool,
         get_tool_broker,
+        configure_tool_broker,
         check_and_execute_tools,
+        # PR4: New exports
+        RAGConfig,
+        RetrievalMode,
     )
     TOOL_BROKER_AVAILABLE = True
 except ImportError:
     TOOL_BROKER_AVAILABLE = False
     ToolBroker = None  # type: ignore
+    RAGConfig = None  # type: ignore
+    RetrievalMode = None  # type: ignore
 
 # Industry Dominance Controller
 try:
@@ -358,14 +370,24 @@ if TOOL_BROKER_AVAILABLE:
         "ToolBroker",
         "ToolType",
         "ToolPriority",
+        "ToolStatus",
         "ToolRequest",
         "ToolResult",
         "ToolAnalysis",
         "WebSearchTool",
         "CalculatorTool",
         "CodeExecutionTool",
+        "KnowledgeBaseTool",
+        "WebBrowserTool",
+        "DocumentQATool",
+        "DatabaseQueryTool",
+        "ImageGenerationTool",
         "get_tool_broker",
+        "configure_tool_broker",
         "check_and_execute_tools",
+        # PR4: New exports
+        "RAGConfig",
+        "RetrievalMode",
     ])
 
 if DOMINANCE_CONTROLLER_AVAILABLE:

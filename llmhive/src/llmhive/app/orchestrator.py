@@ -118,13 +118,24 @@ try:
     from .tool_broker import (
         ToolBroker,
         ToolResult,
+        ToolType,
+        ToolAnalysis,
+        ToolRequest,
+        RAGConfig,
+        RetrievalMode,
         get_tool_broker,
+        configure_tool_broker,
+        check_and_execute_tools,
     )
     TOOL_BROKER_AVAILABLE = True
 except ImportError:
     TOOL_BROKER_AVAILABLE = False
     ToolBroker = None  # type: ignore
     ToolResult = None  # type: ignore
+    ToolType = None  # type: ignore
+    ToolAnalysis = None  # type: ignore
+    RAGConfig = None  # type: ignore
+    RetrievalMode = None  # type: ignore
     logger.warning("Tool broker module not available")
 
 # Import agent executor for autonomous tasks
@@ -408,6 +419,16 @@ class Orchestrator:
                 # Set memory manager for knowledge lookup
                 if self.memory_manager:
                     self.tool_broker.memory_manager = self.memory_manager
+                
+                # PR4: Configure external APIs from environment
+                import os
+                self.tool_broker.configure_external_apis(
+                    serpapi_key=os.getenv("SERPAPI_API_KEY"),
+                    tavily_key=os.getenv("TAVILY_API_KEY"),
+                    browserless_key=os.getenv("BROWSERLESS_API_KEY"),
+                    wolframalpha_key=os.getenv("WOLFRAMALPHA_API_KEY"),
+                )
+                
                 logger.info("Tool broker initialized with %d tools", len(self.tool_broker.list_tools()))
             except Exception as e:
                 logger.warning("Failed to initialize tool broker: %s", e)
@@ -1646,6 +1667,97 @@ Please provide an accurate, well-verified response."""
             except Exception as e:
                 logger.warning("Memory retrieval failed: %s", e)
         
+        # =====================================================================
+        # PR4: Tool Analysis and Early Execution
+        # =====================================================================
+        # Analyze tool needs BEFORE model dispatch to get data for augmentation
+        tool_context = ""
+        early_tool_results: Dict[Any, Any] = {}
+        enable_tools = kwargs.get("enable_tools", True)
+        
+        if enable_tools and self.tool_broker and TOOL_BROKER_AVAILABLE:
+            try:
+                # Analyze what tools the query needs
+                tool_analysis = self.tool_broker.analyze_tool_needs(
+                    query=prompt,
+                    context=memory_context,
+                    task_type=domain,
+                )
+                
+                if tool_analysis.requires_tools:
+                    logger.info(
+                        "PR4: Tool analysis detected %d tool(s) needed: %s",
+                        len(tool_analysis.tool_requests),
+                        tool_analysis.trace,
+                    )
+                    
+                    if scratchpad:
+                        scratchpad.write("tool_analysis", {
+                            "requires_tools": True,
+                            "tools_identified": tool_analysis.trace,
+                            "reasoning": tool_analysis.reasoning,
+                        })
+                    
+                    # Execute tools in parallel (or sequential if dependencies)
+                    early_tool_results = await self.tool_broker.execute_tools(
+                        tool_analysis.tool_requests,
+                        parallel=not tool_analysis.has_dependencies,
+                    )
+                    
+                    # Format tool results for context augmentation
+                    tool_context = self.tool_broker.format_tool_results(
+                        early_tool_results,
+                        include_failures=False,
+                    )
+                    
+                    if tool_context:
+                        logger.info(
+                            "PR4: Tool execution complete. Context: %d chars",
+                            len(tool_context)
+                        )
+                        
+                        if scratchpad:
+                            scratchpad.write("early_tool_execution", {
+                                "tools_executed": list(early_tool_results.keys()),
+                                "success_count": sum(1 for r in early_tool_results.values() if r.success),
+                                "context_length": len(tool_context),
+                            })
+                
+                # PR4: RAG retrieval mode decision
+                rag_config = self.tool_broker.decide_retrieval_mode(
+                    query=prompt,
+                    context=memory_context,
+                    accuracy_level=accuracy_level,
+                )
+                
+                if rag_config.mode != RetrievalMode.NONE and self.tool_broker.memory_manager:
+                    rag_chunks = await self.tool_broker.perform_rag_retrieval(
+                        query=prompt,
+                        config=rag_config,
+                        namespace=user_id,
+                    )
+                    
+                    if rag_chunks:
+                        rag_context = "\n".join([
+                            f"[Knowledge: {c.get('source', 'KB')}] {c['text']}"
+                            for c in rag_chunks[:5]
+                        ])
+                        if tool_context:
+                            tool_context = f"{tool_context}\n\n{rag_context}"
+                        else:
+                            tool_context = rag_context
+                        
+                        logger.info(
+                            "PR4: RAG retrieval (mode=%s) returned %d chunks",
+                            rag_config.mode.value,
+                            len(rag_chunks),
+                        )
+                    
+            except Exception as e:
+                logger.warning("PR4: Tool analysis/execution failed: %s", e)
+                if scratchpad:
+                    scratchpad.write("tool_analysis_error", str(e))
+        
         # Build augmented prompt with all context sources
         context_parts = []
         
@@ -1660,6 +1772,10 @@ Please provide an accurate, well-verified response."""
         # Add memory context (session-specific)
         if memory_context:
             context_parts.append(memory_context)
+        
+        # PR4: Add tool context from early execution
+        if tool_context:
+            context_parts.append(f"[TOOL RESULTS]\n{tool_context}")
         
         # Build final augmented prompt
         augmented_prompt = prompt
