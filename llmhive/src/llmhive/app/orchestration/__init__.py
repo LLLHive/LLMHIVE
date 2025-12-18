@@ -671,3 +671,48 @@ if STRATEGY_MEMORY_AVAILABLE:
         "record_strategy_outcome",
         "recommend_strategy",
     ])
+
+# ==================== REFINEMENT LOOP (PR3) ====================
+
+# Refinement Loop Controller
+try:
+    from .refinement_loop import (
+        RefinementLoopController,
+        RefinementResult,
+        RefinementConfig,
+        RefinementStrategy,
+        RefinementIteration,
+        LoopStatus,
+        IssueType,
+        VerificationIssue,
+        run_refinement_loop,
+        create_refinement_controller,
+        refine_on_failure,
+        RefinementOnFailure,
+    )
+    REFINEMENT_LOOP_AVAILABLE = True
+except ImportError:
+    REFINEMENT_LOOP_AVAILABLE = False
+    RefinementLoopController = None  # type: ignore
+    RefinementResult = None  # type: ignore
+    RefinementConfig = None  # type: ignore
+    RefinementStrategy = None  # type: ignore
+    LoopStatus = None  # type: ignore
+    refine_on_failure = None  # type: ignore
+    RefinementOnFailure = None  # type: ignore
+
+if REFINEMENT_LOOP_AVAILABLE:
+    __all__.extend([
+        "RefinementLoopController",
+        "RefinementResult",
+        "RefinementConfig",
+        "RefinementStrategy",
+        "RefinementIteration",
+        "LoopStatus",
+        "IssueType",
+        "VerificationIssue",
+        "run_refinement_loop",
+        "create_refinement_controller",
+        "refine_on_failure",
+        "RefinementOnFailure",
+    ])

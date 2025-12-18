@@ -782,3 +782,253 @@ def create_refinement_controller(
         config=config,
     )
 
+
+# ==============================================================================
+# PR3: Programmatic Invocation Interface
+# ==============================================================================
+
+async def refine_on_failure(
+    answer: str,
+    prompt: str,
+    *,
+    fact_checker: Optional[Any] = None,
+    providers: Optional[Dict[str, Any]] = None,
+    model: str = "default",
+    context: Optional[str] = None,
+    available_models: Optional[List[str]] = None,
+    max_iterations: int = 3,
+    convergence_threshold: float = 0.85,
+    enable_model_switching: bool = True,
+    enable_web_search: bool = True,
+) -> Tuple[str, bool, RefinementResult]:
+    """
+    PR3: Convenience function for programmatic refinement on verification failure.
+    
+    This function provides a simple interface for external callers who need
+    to trigger the refinement loop when verification fails.
+    
+    Example usage:
+        from llmhive.app.orchestration.refinement_loop import refine_on_failure
+        
+        # After initial verification fails
+        if not verification_passed:
+            refined_answer, passed, result = await refine_on_failure(
+                answer=response.content,
+                prompt=user_query,
+                fact_checker=my_fact_checker,
+                providers=my_providers,
+            )
+            if passed:
+                response.content = refined_answer
+    
+    Args:
+        answer: Initial answer to refine
+        prompt: Original user prompt
+        fact_checker: FactChecker instance (optional but recommended)
+        providers: Dict of LLM providers
+        model: Model that generated the answer
+        context: Additional context for refinement
+        available_models: Models available for switching strategy
+        max_iterations: Maximum refinement iterations
+        convergence_threshold: Score threshold for passing (0.0-1.0)
+        enable_model_switching: Allow switching to different models
+        enable_web_search: Allow web search for fact verification
+        
+    Returns:
+        Tuple of (final_answer, passed: bool, RefinementResult)
+    """
+    # Configure based on parameters
+    priority_strategies = [
+        RefinementStrategy.PROMPT_ENHANCE,
+        RefinementStrategy.DIRECT_CORRECT,
+    ]
+    
+    if enable_web_search:
+        priority_strategies.insert(1, RefinementStrategy.WEB_SEARCH)
+    
+    if enable_model_switching and available_models and len(available_models) > 1:
+        priority_strategies.append(RefinementStrategy.MODEL_SWITCH)
+    
+    config = RefinementConfig(
+        max_iterations=max_iterations,
+        convergence_threshold=convergence_threshold,
+        min_improvement_threshold=0.03,
+        stagnation_tolerance=1,
+        enable_prompt_refinement=True,
+        enable_model_switching=enable_model_switching,
+        priority_strategies=priority_strategies,
+    )
+    
+    controller = RefinementLoopController(
+        fact_checker=fact_checker,
+        providers=providers,
+        config=config,
+    )
+    
+    result = await controller.run_refinement_loop(
+        answer=answer,
+        prompt=prompt,
+        model=model,
+        context=context,
+        available_models=available_models,
+    )
+    
+    passed = (
+        result.final_status == LoopStatus.PASSED or
+        result.final_verification_score >= convergence_threshold
+    )
+    
+    return result.final_answer, passed, result
+
+
+class RefinementOnFailure:
+    """
+    PR3: Context manager / helper class for verification fallback pattern.
+    
+    This provides a clean interface for the common pattern of:
+    1. Generate response
+    2. Verify
+    3. If verification fails, refine
+    4. Return final result
+    
+    Example usage:
+        async with RefinementOnFailure(
+            fact_checker=my_checker,
+            providers=my_providers,
+        ) as refiner:
+            response = await generate_response(prompt)
+            
+            verified, report = await refiner.verify(response)
+            
+            if not verified:
+                response, passed, result = await refiner.refine(
+                    answer=response,
+                    prompt=prompt,
+                )
+    """
+    
+    def __init__(
+        self,
+        fact_checker: Optional[Any] = None,
+        providers: Optional[Dict[str, Any]] = None,
+        max_iterations: int = 3,
+        convergence_threshold: float = 0.85,
+    ):
+        self.fact_checker = fact_checker
+        self.providers = providers
+        self.max_iterations = max_iterations
+        self.convergence_threshold = convergence_threshold
+        self.controller: Optional[RefinementLoopController] = None
+        
+        # Stats
+        self.total_refinements = 0
+        self.successful_refinements = 0
+    
+    async def __aenter__(self) -> "RefinementOnFailure":
+        """Initialize the controller."""
+        config = RefinementConfig(
+            max_iterations=self.max_iterations,
+            convergence_threshold=self.convergence_threshold,
+        )
+        
+        self.controller = RefinementLoopController(
+            fact_checker=self.fact_checker,
+            providers=self.providers,
+            config=config,
+        )
+        
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Cleanup."""
+        self.controller = None
+    
+    async def verify(
+        self,
+        answer: str,
+        prompt: str = "",
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Verify an answer.
+        
+        Returns:
+            Tuple of (passed: bool, verification_result: dict)
+        """
+        if not self.fact_checker:
+            return True, {"score": 1.0, "issues": []}
+        
+        try:
+            report = await self.fact_checker.verify(answer, prompt=prompt)
+            
+            passed = (
+                getattr(report, 'is_valid', True) if hasattr(report, 'is_valid')
+                else getattr(report, 'verification_score', 1.0) >= self.convergence_threshold
+            )
+            
+            return passed, {
+                "score": getattr(report, 'verification_score', 1.0),
+                "is_valid": getattr(report, 'is_valid', True),
+                "items": getattr(report, 'items', []),
+            }
+            
+        except Exception as e:
+            logger.warning("Verification failed: %s", e)
+            return True, {"score": 1.0, "issues": [], "error": str(e)}
+    
+    async def refine(
+        self,
+        answer: str,
+        prompt: str,
+        *,
+        model: str = "default",
+        context: Optional[str] = None,
+        available_models: Optional[List[str]] = None,
+    ) -> Tuple[str, bool, Optional[RefinementResult]]:
+        """
+        Refine an answer that failed verification.
+        
+        Returns:
+            Tuple of (final_answer, passed: bool, RefinementResult or None)
+        """
+        if not self.controller:
+            raise RuntimeError("RefinementOnFailure must be used as async context manager")
+        
+        self.total_refinements += 1
+        
+        try:
+            result = await self.controller.run_refinement_loop(
+                answer=answer,
+                prompt=prompt,
+                model=model,
+                context=context,
+                available_models=available_models,
+            )
+            
+            passed = (
+                result.final_status == LoopStatus.PASSED or
+                result.final_verification_score >= self.convergence_threshold
+            )
+            
+            if passed:
+                self.successful_refinements += 1
+            
+            return result.final_answer, passed, result
+            
+        except Exception as e:
+            logger.error("Refinement failed: %s", e)
+            return answer, False, None
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get refinement statistics."""
+        success_rate = (
+            self.successful_refinements / self.total_refinements
+            if self.total_refinements > 0
+            else 0.0
+        )
+        
+        return {
+            "total_refinements": self.total_refinements,
+            "successful_refinements": self.successful_refinements,
+            "success_rate": success_rate,
+        }
+

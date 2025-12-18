@@ -1029,6 +1029,303 @@ class Orchestrator:
         self.providers["stub"] = MinimalStub()
         logger.warning("Using minimal stub provider (StubProvider import failed)")
     
+    # =========================================================================
+    # PR3: Verification Fallback Logic
+    # =========================================================================
+    
+    # High-accuracy models ordered by preference
+    HIGH_ACCURACY_MODELS = [
+        ("openai", "gpt-4o"),           # Best for general accuracy
+        ("openai", "gpt-4o-2024-11-20"),
+        ("anthropic", "claude-sonnet-4-20250514"),
+        ("anthropic", "claude-3-5-sonnet-20241022"),
+        ("openai", "o1"),                # Reasoning model
+        ("openai", "o1-mini"),
+        ("deepseek", "deepseek-chat"),  # Good for reasoning
+    ]
+    
+    async def retry_with_high_accuracy(
+        self,
+        prompt: str,
+        previous_response: str,
+        verification_report: Optional[Any] = None,
+        *,
+        context: Optional[str] = None,
+        excluded_models: Optional[List[str]] = None,
+        max_retries: int = 2,
+    ) -> Tuple[Any, bool]:
+        """
+        PR3: Retry with a high-accuracy model when verification fails.
+        
+        This method is called when initial verification fails. It:
+        1. Selects a high-accuracy model different from the one that failed
+        2. Constructs an enhanced prompt with verification feedback
+        3. Generates a new response with stricter accuracy instructions
+        4. Re-verifies the new response
+        
+        Args:
+            prompt: Original user prompt
+            previous_response: Response that failed verification
+            verification_report: VerificationReport from the failed attempt
+            context: Additional context to include
+            excluded_models: Models to exclude (e.g., the one that failed)
+            max_retries: Maximum number of retry attempts
+            
+        Returns:
+            Tuple of (LLMResult, verification_passed: bool)
+        """
+        excluded_models = excluded_models or []
+        
+        # Construct enhanced prompt with verification feedback
+        enhanced_prompt = self._build_high_accuracy_prompt(
+            prompt=prompt,
+            previous_response=previous_response,
+            verification_report=verification_report,
+            context=context,
+        )
+        
+        # Find available high-accuracy model
+        selected_model, selected_provider = self._select_high_accuracy_model(
+            excluded_models=excluded_models
+        )
+        
+        if not selected_model or not selected_provider:
+            logger.warning("No high-accuracy model available for retry")
+            # Return original result with failed verification
+            return LLMResult(
+                content=previous_response,
+                model="unknown",
+                tokens=0,
+                metadata={"retry_failed": True, "reason": "no_high_accuracy_model_available"},
+            ), False
+        
+        logger.info(
+            "PR3: Retrying with high-accuracy model %s after verification failure",
+            selected_model
+        )
+        
+        # Retry with high-accuracy model
+        try:
+            result = await selected_provider.generate(
+                enhanced_prompt,
+                model=selected_model,
+            )
+            
+            new_result = LLMResult(
+                content=result.content if hasattr(result, 'content') else result.text,
+                model=selected_model,
+                tokens=getattr(result, 'tokens_used', 0),
+                metadata={
+                    "retry_with_high_accuracy": True,
+                    "original_response_length": len(previous_response),
+                },
+            )
+            
+            # Re-verify the new response
+            new_verification_passed = True
+            
+            if FACT_CHECK_AVAILABLE and self.fact_checker:
+                try:
+                    new_verification_report = await self.fact_checker.verify(
+                        new_result.content,
+                        prompt=prompt,
+                    )
+                    new_verification_passed = (
+                        new_verification_report.is_valid if hasattr(new_verification_report, 'is_valid') 
+                        else new_verification_report.verification_score >= 0.7
+                    )
+                    
+                    logger.info(
+                        "PR3: High-accuracy retry verification: passed=%s, score=%.2f",
+                        new_verification_passed,
+                        new_verification_report.verification_score,
+                    )
+                    
+                    # If still failing and have retries left, use refinement loop
+                    if not new_verification_passed and max_retries > 1:
+                        logger.info("PR3: Triggering refinement loop for further improvement")
+                        
+                        if REFINEMENT_LOOP_AVAILABLE and self.refinement_controller:
+                            refinement_result = await self.refinement_controller.run_refinement_loop(
+                                answer=new_result.content,
+                                prompt=prompt,
+                                model=selected_model,
+                                context=context,
+                                available_models=[m for p, m in self.HIGH_ACCURACY_MODELS 
+                                                  if p in self.providers and m not in excluded_models][:3],
+                            )
+                            
+                            if refinement_result.final_answer != new_result.content:
+                                new_result = LLMResult(
+                                    content=refinement_result.final_answer,
+                                    model=selected_model,
+                                    tokens=getattr(result, 'tokens_used', 0),
+                                    metadata={
+                                        "retry_with_high_accuracy": True,
+                                        "refinement_iterations": len(refinement_result.iterations),
+                                        "final_score": refinement_result.final_verification_score,
+                                    },
+                                )
+                            
+                            new_verification_passed = (
+                                refinement_result.final_status == LoopStatus.PASSED or
+                                refinement_result.final_verification_score >= 0.7
+                            )
+                            
+                except Exception as e:
+                    logger.warning("PR3: Re-verification failed: %s", e)
+            
+            return new_result, new_verification_passed
+            
+        except Exception as e:
+            logger.error("PR3: High-accuracy retry failed: %s", e)
+            return LLMResult(
+                content=previous_response,
+                model="unknown",
+                tokens=0,
+                metadata={"retry_failed": True, "reason": str(e)},
+            ), False
+    
+    def _build_high_accuracy_prompt(
+        self,
+        prompt: str,
+        previous_response: str,
+        verification_report: Optional[Any],
+        context: Optional[str],
+    ) -> str:
+        """Build an enhanced prompt for high-accuracy retry."""
+        
+        # Extract verification issues if available
+        issues_text = ""
+        if verification_report:
+            items = getattr(verification_report, 'items', [])
+            failed_claims = [
+                f"- {item.text[:100]}: {item.evidence[:100] if item.evidence else 'unverified'}"
+                for item in items
+                if not getattr(item, 'verified', True)
+            ][:5]
+            
+            if failed_claims:
+                issues_text = "\n".join(failed_claims)
+        
+        enhanced_prompt = f"""IMPORTANT: A previous response to this query failed fact-checking verification.
+Please provide a highly accurate, well-researched response. Be especially careful about:
+1. Factual accuracy - verify all claims before including them
+2. Avoiding speculation or unverified information
+3. Citing sources or acknowledging uncertainty where appropriate
+4. Correcting any errors from the previous attempt
+
+"""
+        
+        if issues_text:
+            enhanced_prompt += f"""The following specific claims from the previous response could not be verified:
+{issues_text}
+
+"""
+        
+        if context:
+            enhanced_prompt += f"""Context:
+{context}
+
+"""
+        
+        enhanced_prompt += f"""Original question:
+{prompt}
+
+Please provide an accurate, well-verified response."""
+        
+        return enhanced_prompt
+    
+    def _select_high_accuracy_model(
+        self,
+        excluded_models: Optional[List[str]] = None,
+    ) -> Tuple[Optional[str], Optional[Any]]:
+        """Select the best available high-accuracy model."""
+        excluded_models = excluded_models or []
+        
+        for provider_name, model_name in self.HIGH_ACCURACY_MODELS:
+            if model_name in excluded_models:
+                continue
+            
+            provider = self.providers.get(provider_name)
+            if provider:
+                return model_name, provider
+        
+        # Fallback: try any available provider with their default model
+        for provider_name, provider in self.providers.items():
+            if provider_name == "stub":
+                continue
+            
+            # Return with provider's default high-accuracy model
+            if provider_name == "openai":
+                return "gpt-4o", provider
+            elif provider_name == "anthropic":
+                return "claude-3-5-sonnet-20241022", provider
+        
+        return None, None
+    
+    async def invoke_refinement_loop(
+        self,
+        answer: str,
+        prompt: str,
+        *,
+        model: str = "default",
+        context: Optional[str] = None,
+        max_iterations: int = 3,
+        convergence_threshold: float = 0.9,
+    ) -> Tuple[str, bool, Optional[Any]]:
+        """
+        PR3: Programmatically invoke the refinement loop.
+        
+        This is a convenience method for external callers who want to
+        trigger the refinement loop directly (e.g., from the API layer).
+        
+        Args:
+            answer: Initial answer to refine
+            prompt: Original prompt
+            model: Model that generated the answer
+            context: Additional context
+            max_iterations: Maximum refinement iterations
+            convergence_threshold: Score threshold for passing
+            
+        Returns:
+            Tuple of (final_answer, passed, RefinementResult)
+        """
+        if not REFINEMENT_LOOP_AVAILABLE or not self.refinement_controller:
+            logger.warning("PR3: Refinement loop not available")
+            return answer, False, None
+        
+        try:
+            # Update controller config for this call
+            original_max_iters = self.refinement_controller.config.max_iterations
+            original_threshold = self.refinement_controller.config.convergence_threshold
+            
+            self.refinement_controller.config.max_iterations = max_iterations
+            self.refinement_controller.config.convergence_threshold = convergence_threshold
+            
+            # Run the loop
+            refinement_result = await self.refinement_controller.run_refinement_loop(
+                answer=answer,
+                prompt=prompt,
+                model=model,
+                context=context,
+            )
+            
+            # Restore config
+            self.refinement_controller.config.max_iterations = original_max_iters
+            self.refinement_controller.config.convergence_threshold = original_threshold
+            
+            passed = (
+                refinement_result.final_status == LoopStatus.PASSED or
+                refinement_result.final_verification_score >= convergence_threshold
+            )
+            
+            return refinement_result.final_answer, passed, refinement_result
+            
+        except Exception as e:
+            logger.error("PR3: Refinement loop invocation failed: %s", e)
+            return answer, False, None
+    
     async def orchestrate(
         self,
         prompt: str,
@@ -1883,6 +2180,61 @@ class Orchestrator:
                     
             except Exception as e:
                 logger.warning("Fact verification failed: %s", e)
+        
+        # =====================================================================
+        # PR3: Verification Fallback Logic - Retry with high-accuracy model
+        # =====================================================================
+        use_verification_fallback = kwargs.get("use_verification_fallback", True)
+        
+        if not verification_passed and use_verification_fallback:
+            logger.info("PR3: Verification failed, initiating high-accuracy retry")
+            
+            try:
+                # Get the original model that failed
+                failed_model = result.model if result else "unknown"
+                
+                # Attempt high-accuracy retry
+                retry_result, retry_passed = await self.retry_with_high_accuracy(
+                    prompt=prompt,
+                    previous_response=result.content if result else "",
+                    verification_report=verification_report if 'verification_report' in locals() else None,
+                    context=memory_context if 'memory_context' in locals() else None,
+                    excluded_models=[failed_model],
+                    max_retries=2,
+                )
+                
+                if retry_passed:
+                    logger.info(
+                        "PR3: High-accuracy retry succeeded (switched from %s to %s)",
+                        failed_model,
+                        retry_result.model,
+                    )
+                    result = retry_result
+                    verification_passed = True
+                    
+                    # Update scratchpad with retry info
+                    if scratchpad:
+                        scratchpad.write("verification_fallback_used", True)
+                        scratchpad.write("fallback_model", retry_result.model)
+                        scratchpad.write("fallback_success", True)
+                else:
+                    logger.warning(
+                        "PR3: High-accuracy retry did not improve verification"
+                    )
+                    
+                    # Optionally use the retry result if it's longer/better
+                    if len(retry_result.content) > len(result.content) * 0.8:
+                        result = retry_result
+                    
+                    if scratchpad:
+                        scratchpad.write("verification_fallback_used", True)
+                        scratchpad.write("fallback_model", retry_result.model)
+                        scratchpad.write("fallback_success", False)
+                        
+            except Exception as e:
+                logger.warning("PR3: Verification fallback failed: %s", e)
+                if scratchpad:
+                    scratchpad.write("verification_fallback_error", str(e))
         
         # Log performance feedback if available
         # Strategy Memory (PR2): Extended logging with strategy information
