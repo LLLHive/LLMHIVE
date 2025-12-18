@@ -29,7 +29,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# Model profiles with capabilities and size classification
+# PR5: Default budget constraints
+DEFAULT_MAX_COST_USD = 1.0  # Default max cost per request
+DEFAULT_COST_WEIGHT = 0.15  # Weight of cost in scoring (0-1)
+
+
+# Model profiles with capabilities, size classification, and cost per 1M tokens
 MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
     # OpenAI models
     "gpt-4o": {
@@ -38,6 +43,9 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.9,
         "speed_rating": 0.7,
         "cost_rating": 0.8,
+        # PR5: Cost per 1M tokens (USD)
+        "cost_per_1m_input": 2.50,
+        "cost_per_1m_output": 10.00,
     },
     "gpt-4o-mini": {
         "size": "small",
@@ -45,6 +53,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.75,
         "speed_rating": 0.95,
         "cost_rating": 0.95,
+        "cost_per_1m_input": 0.15,
+        "cost_per_1m_output": 0.60,
     },
     # Anthropic models
     "claude-3-opus-20240229": {
@@ -53,6 +63,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.92,
         "speed_rating": 0.6,
         "cost_rating": 0.7,
+        "cost_per_1m_input": 15.00,
+        "cost_per_1m_output": 75.00,
     },
     "claude-3-sonnet-20240229": {
         "size": "medium",
@@ -60,6 +72,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.85,
         "speed_rating": 0.8,
         "cost_rating": 0.85,
+        "cost_per_1m_input": 3.00,
+        "cost_per_1m_output": 15.00,
     },
     "claude-3-haiku-20240307": {
         "size": "small",
@@ -67,6 +81,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.7,
         "speed_rating": 0.95,
         "cost_rating": 0.95,
+        "cost_per_1m_input": 0.25,
+        "cost_per_1m_output": 1.25,
     },
     # Google models
     "gemini-2.5-pro": {
@@ -75,6 +91,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.88,
         "speed_rating": 0.75,
         "cost_rating": 0.75,
+        "cost_per_1m_input": 1.25,
+        "cost_per_1m_output": 5.00,
     },
     "gemini-2.5-flash": {
         "size": "medium",
@@ -82,6 +100,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.78,
         "speed_rating": 0.9,
         "cost_rating": 0.9,
+        "cost_per_1m_input": 0.075,
+        "cost_per_1m_output": 0.30,
     },
     # xAI models
     "grok-beta": {
@@ -90,6 +110,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.82,
         "speed_rating": 0.8,
         "cost_rating": 0.8,
+        "cost_per_1m_input": 5.00,
+        "cost_per_1m_output": 15.00,
     },
     # DeepSeek models
     "deepseek-chat": {
@@ -98,6 +120,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.8,
         "speed_rating": 0.85,
         "cost_rating": 0.95,
+        "cost_per_1m_input": 0.14,
+        "cost_per_1m_output": 0.28,
     },
     "deepseek-reasoner": {
         "size": "large",
@@ -105,6 +129,8 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.87,
         "speed_rating": 0.7,
         "cost_rating": 0.9,
+        "cost_per_1m_input": 0.55,
+        "cost_per_1m_output": 2.19,
     },
     # Default stub
     "stub": {
@@ -113,8 +139,19 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "base_quality": 0.5,
         "speed_rating": 1.0,
         "cost_rating": 1.0,
+        "cost_per_1m_input": 0.0,
+        "cost_per_1m_output": 0.0,
     },
 }
+
+
+@dataclass
+class BudgetConstraints:
+    """PR5: Budget constraints for cost-aware routing."""
+    max_cost_usd: float = DEFAULT_MAX_COST_USD  # Max cost per request
+    cost_weight: float = DEFAULT_COST_WEIGHT  # Weight in scoring (0-1)
+    prefer_cheaper: bool = False  # Strongly prefer cheaper models
+    estimated_tokens: int = 2000  # Estimated tokens for cost calculation
 
 # Domain inference keywords
 DOMAIN_KEYWORDS: Dict[str, List[str]] = {
@@ -138,7 +175,9 @@ class ModelScore:
     performance_score: float
     accuracy_adjustment: float
     speed_adjustment: float
-    reasoning: str
+    cost_adjustment: float = 0.0  # PR5: Cost-based adjustment
+    estimated_cost_usd: float = 0.0  # PR5: Estimated cost for this model
+    reasoning: str = ""
 
 
 @dataclass(slots=True)
@@ -177,6 +216,7 @@ class AdaptiveModelRouter:
         *,
         use_openrouter_rankings: bool = False,
         db_session: Optional["Session"] = None,
+        budget_constraints: Optional[BudgetConstraints] = None,
     ) -> None:
         """
         Initialize adaptive router.
@@ -186,12 +226,16 @@ class AdaptiveModelRouter:
             model_profiles: Optional custom model profiles
             use_openrouter_rankings: Enable dynamic selection from OpenRouter
             db_session: Database session for OpenRouter rankings
+            budget_constraints: PR5 - Budget constraints for cost-aware routing
         """
         self.available_providers = available_providers or []
         self.profiles = model_profiles or MODEL_PROFILES
         self.use_openrouter_rankings = use_openrouter_rankings
         self.db_session = db_session
         self._openrouter_selector: Optional["OpenRouterModelSelector"] = None
+        
+        # PR5: Budget constraints
+        self.budget_constraints = budget_constraints or BudgetConstraints()
         
         # Cache for dynamic profiles
         self._dynamic_profiles_cache: Optional[Dict[str, Dict[str, Any]]] = None
@@ -362,6 +406,8 @@ class AdaptiveModelRouter:
         *,
         available_models: Optional[List[str]] = None,
         max_models: Optional[int] = None,
+        budget_constraints: Optional[BudgetConstraints] = None,
+        max_cost_usd: Optional[float] = None,
     ) -> AdaptiveRoutingResult:
         """
         Adaptive model selection based on query, roles, and accuracy level.
@@ -372,10 +418,22 @@ class AdaptiveModelRouter:
             accuracy_level: Slider value 1-5 (1=fastest, 5=most accurate)
             available_models: Optional list of available model names
             max_models: Maximum number of models to select
+            budget_constraints: PR5 - Budget constraints for cost-aware routing
+            max_cost_usd: PR5 - Convenience param to set max cost (overrides budget_constraints)
             
         Returns:
             AdaptiveRoutingResult with model assignments and reasoning
         """
+        # PR5: Build budget constraints
+        budget = budget_constraints or self.budget_constraints
+        if max_cost_usd is not None:
+            budget = BudgetConstraints(
+                max_cost_usd=max_cost_usd,
+                cost_weight=budget.cost_weight,
+                prefer_cheaper=budget.prefer_cheaper,
+                estimated_tokens=budget.estimated_tokens,
+            )
+        
         # Infer domain
         domain = self.infer_domain(query)
         logger.info("Inferred domain: %s for query", domain)
@@ -392,7 +450,7 @@ class AdaptiveModelRouter:
         if not candidates:
             candidates = ["stub"]
         
-        # Score all models
+        # Score all models with budget awareness
         model_scores: List[ModelScore] = []
         for model in candidates:
             score = self._score_model(
@@ -400,11 +458,20 @@ class AdaptiveModelRouter:
                 domain,
                 accuracy_level,
                 perf_snapshot.get(model),
+                budget=budget,
             )
             model_scores.append(score)
         
         # Sort by total score (descending)
         model_scores.sort(key=lambda s: s.total_score, reverse=True)
+        
+        # PR5: Log budget-aware selection
+        if max_cost_usd is not None or budget_constraints is not None:
+            within_budget = [s for s in model_scores if s.estimated_cost_usd <= budget.max_cost_usd]
+            logger.info(
+                "PR5: Budget-aware selection: %d/%d models within budget ($%.2f)",
+                len(within_budget), len(model_scores), budget.max_cost_usd
+            )
         
         # Determine ensemble size based on accuracy level
         if accuracy_level <= 2:
@@ -454,9 +521,14 @@ class AdaptiveModelRouter:
         domain: str,
         accuracy_level: int,
         perf: Optional[ModelPerformance],
+        budget: Optional[BudgetConstraints] = None,
     ) -> ModelScore:
-        """Score a model for the given domain and accuracy level."""
+        """Score a model for the given domain and accuracy level.
+        
+        PR5: Now includes cost-aware scoring based on budget constraints.
+        """
         profile = self.profiles.get(model, self.profiles.get("stub", {}))
+        budget = budget or self.budget_constraints
         
         # Base domain score
         model_domains = profile.get("domains", ["general"])
@@ -507,12 +579,55 @@ class AdaptiveModelRouter:
             accuracy_adjustment = 0.0
             speed_adjustment = speed_rating * 0.15
         
-        # Calculate total score
+        # =====================================================================
+        # PR5: Cost-aware scoring
+        # =====================================================================
+        cost_per_1m_input = profile.get("cost_per_1m_input", 1.0)
+        cost_per_1m_output = profile.get("cost_per_1m_output", 1.0)
+        
+        # Estimate cost based on expected tokens (assuming 50% input, 50% output)
+        estimated_input_tokens = budget.estimated_tokens // 2
+        estimated_output_tokens = budget.estimated_tokens // 2
+        estimated_cost_usd = (
+            (estimated_input_tokens / 1_000_000) * cost_per_1m_input +
+            (estimated_output_tokens / 1_000_000) * cost_per_1m_output
+        )
+        
+        # Calculate cost adjustment
+        cost_adjustment = 0.0
+        if budget.max_cost_usd > 0:
+            # Penalize models that exceed budget
+            if estimated_cost_usd > budget.max_cost_usd:
+                # Strong penalty for exceeding budget
+                cost_adjustment = -0.5 * (estimated_cost_usd / budget.max_cost_usd)
+                logger.debug(
+                    "PR5: Model %s exceeds budget (%.4f > %.2f), penalty=%.2f",
+                    model, estimated_cost_usd, budget.max_cost_usd, cost_adjustment
+                )
+            else:
+                # Reward cheaper models (normalized 0-1 based on budget utilization)
+                budget_utilization = estimated_cost_usd / budget.max_cost_usd
+                cost_savings_bonus = (1.0 - budget_utilization) * budget.cost_weight
+                cost_adjustment = cost_savings_bonus
+        
+        # Extra bonus for cheap models if prefer_cheaper is set
+        if budget.prefer_cheaper:
+            # Normalize cost relative to the most expensive model profile
+            max_cost = max(
+                p.get("cost_per_1m_input", 0) + p.get("cost_per_1m_output", 0)
+                for p in self.profiles.values()
+            ) or 1.0
+            model_cost = cost_per_1m_input + cost_per_1m_output
+            relative_cheapness = 1.0 - (model_cost / max_cost)
+            cost_adjustment += relative_cheapness * 0.2  # Up to 20% bonus
+        
+        # Calculate total score with cost component
         total_score = (
             domain_score * 0.25
             + performance_score * 0.4
             + accuracy_adjustment
             + speed_adjustment
+            + cost_adjustment
         )
         
         # Clamp to 0-1
@@ -520,7 +635,8 @@ class AdaptiveModelRouter:
         
         reasoning = (
             f"domain={domain_score:.2f}, perf={performance_score:.2f}, "
-            f"acc_adj={accuracy_adjustment:.2f}, speed_adj={speed_adjustment:.2f}"
+            f"acc_adj={accuracy_adjustment:.2f}, speed_adj={speed_adjustment:.2f}, "
+            f"cost_adj={cost_adjustment:.2f}, est_cost=${estimated_cost_usd:.4f}"
         )
         
         return ModelScore(
@@ -530,6 +646,8 @@ class AdaptiveModelRouter:
             performance_score=performance_score,
             accuracy_adjustment=accuracy_adjustment,
             speed_adjustment=speed_adjustment,
+            cost_adjustment=cost_adjustment,
+            estimated_cost_usd=estimated_cost_usd,
             reasoning=reasoning,
         )
     

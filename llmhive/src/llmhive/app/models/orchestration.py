@@ -197,6 +197,16 @@ class OrchestrationSettings(BaseModel):
         default=False,
         description="Enable memory augmentation"
     )
+    # PR5: Budget constraints
+    max_cost_usd: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description="Maximum cost per request in USD (budget-aware routing)"
+    )
+    prefer_cheaper_models: Optional[bool] = Field(
+        default=False,
+        description="Prefer cheaper models when quality is comparable"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={

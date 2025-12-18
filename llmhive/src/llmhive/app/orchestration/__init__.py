@@ -61,7 +61,12 @@ try:
         ModelScore,
         get_adaptive_router,
         select_models_adaptive,
+        select_models_dynamic,
         infer_domain,
+        # PR5: Budget-aware routing
+        BudgetConstraints,
+        DEFAULT_MAX_COST_USD,
+        DEFAULT_COST_WEIGHT,
     )
     ADAPTIVE_ROUTING_AVAILABLE = True
 except ImportError:
@@ -69,6 +74,7 @@ except ImportError:
     AdaptiveModelRouter = None  # type: ignore
     AdaptiveRoutingResult = None  # type: ignore
     ModelScore = None  # type: ignore
+    BudgetConstraints = None  # type: ignore
 
 # Prompt Diffusion
 try:
@@ -175,7 +181,12 @@ if ADAPTIVE_ROUTING_AVAILABLE:
         "ModelScore",
         "get_adaptive_router",
         "select_models_adaptive",
+        "select_models_dynamic",
         "infer_domain",
+        # PR5: Budget-aware routing
+        "BudgetConstraints",
+        "DEFAULT_MAX_COST_USD",
+        "DEFAULT_COST_WEIGHT",
     ])
 
 if PROMPT_DIFFUSION_AVAILABLE:

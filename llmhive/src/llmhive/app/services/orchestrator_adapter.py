@@ -144,6 +144,17 @@ except ImportError:
     TOOL_BROKER_AVAILABLE = False
     get_tool_broker = None
 
+# PR5: Import budget-aware routing
+try:
+    from ..orchestration.adaptive_router import (
+        BudgetConstraints,
+        get_adaptive_router,
+    )
+    BUDGET_ROUTING_AVAILABLE = True
+except ImportError:
+    BUDGET_ROUTING_AVAILABLE = False
+    BudgetConstraints = None
+
 # Import Pinecone Knowledge Base for RAG and learning
 try:
     from ..knowledge.pinecone_kb import (
@@ -687,6 +698,25 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             elif 'criteria' in metadata_dict:
                 criteria_settings = metadata_dict['criteria']
         
+        # =====================================================================
+        # PR5: Extract budget constraints from request
+        # =====================================================================
+        max_cost_usd = getattr(request.orchestration, 'max_cost_usd', None)
+        prefer_cheaper = getattr(request.orchestration, 'prefer_cheaper_models', False)
+        budget_constraints = None
+        
+        if BUDGET_ROUTING_AVAILABLE and (max_cost_usd is not None or prefer_cheaper):
+            budget_constraints = BudgetConstraints(
+                max_cost_usd=max_cost_usd or 1.0,
+                prefer_cheaper=prefer_cheaper,
+                estimated_tokens=getattr(request.orchestration, 'max_tokens', 2000) or 2000,
+            )
+            logger.info(
+                "PR5: Budget constraints active: max_cost=$%.2f, prefer_cheaper=%s",
+                budget_constraints.max_cost_usd,
+                budget_constraints.prefer_cheaper,
+            )
+        
         # Build orchestration_config dict
         orchestration_config: Dict[str, Any] = {
             "reasoning_depth": _map_reasoning_mode(request.reasoning_mode),
@@ -705,6 +735,9 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             "use_prompt_diffusion": request.orchestration.enable_prompt_diffusion,
             "use_deep_consensus": request.orchestration.enable_deep_consensus,
             "use_adaptive_routing": request.orchestration.enable_adaptive_ensemble,
+            # PR5: Budget constraints
+            "max_cost_usd": max_cost_usd,
+            "budget_constraints": budget_constraints,
         }
         
         # Add criteria settings if provided (for dynamic criteria equaliser)
@@ -1423,6 +1456,14 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # Add models used info to extra
         extra["models_requested"] = request.models or []
         extra["models_mapped"] = actual_models
+        
+        # PR5: Add budget info to extra
+        if budget_constraints:
+            extra["budget"] = {
+                "max_cost_usd": budget_constraints.max_cost_usd,
+                "prefer_cheaper": budget_constraints.prefer_cheaper,
+                "estimated_tokens": budget_constraints.estimated_tokens,
+            }
         
         # Build response with models_used
         response = ChatResponse(
