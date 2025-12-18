@@ -1234,16 +1234,50 @@ Output only the final synthesized answer."""
             return role_responses.get("analyst", list(role_responses.values())[0]).content
     
     def _log_performance(self, result: EliteResult, task_type: str) -> None:
-        """Log performance for learning."""
+        """Log performance for learning.
+        
+        Strategy Memory (PR2): Now logs extended strategy information for
+        learning which strategies work best for different query types.
+        """
         if not self.performance_tracker:
             return
         
         try:
+            # Determine model roles if available
+            model_roles = {}
+            if result.primary_model:
+                model_roles[result.primary_model] = "primary"
+            for i, model in enumerate(result.models_used):
+                if model != result.primary_model:
+                    model_roles[model] = f"secondary_{i}"
+            
+            # Determine query complexity from performance notes
+            query_complexity = "medium"
+            for note in result.performance_notes:
+                if "complex" in note.lower():
+                    query_complexity = "complex"
+                    break
+                elif "simple" in note.lower():
+                    query_complexity = "simple"
+                    break
+            
+            # Strategy Memory (PR2): Log extended strategy information
             self.performance_tracker.log_run(
                 models_used=result.models_used,
                 success_flag=result.quality_score >= 0.7,
                 latency_ms=result.total_latency_ms,
                 domain=task_type,
+                # Strategy Memory (PR2) extended fields
+                strategy=result.strategy_used,
+                task_type=task_type,
+                primary_model=result.primary_model,
+                model_roles=model_roles,
+                quality_score=result.quality_score,
+                confidence=result.confidence,
+                total_tokens=result.total_tokens,
+                query_complexity=query_complexity,
+                ensemble_size=result.responses_generated,
+                performance_notes=result.performance_notes,
             )
         except Exception as e:
             logger.debug("Failed to log performance: %s", e)

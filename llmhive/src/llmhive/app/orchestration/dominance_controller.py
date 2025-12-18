@@ -768,16 +768,39 @@ class IndustryDominanceController:
         result: OrchestrationResult,
         plan: ExecutionPlan,
     ) -> None:
-        """Log performance for learning."""
+        """Log performance for learning.
+        
+        Strategy Memory (PR2): Extended logging with strategy and model team info.
+        """
         if not self.performance_tracker:
             return
         
         try:
+            success_flag = result.quality_metrics.overall_confidence >= plan.confidence_target
+            
+            # Determine model roles based on plan phases
+            model_roles = {}
+            for i, model in enumerate(result.models_used):
+                if i == 0:
+                    model_roles[model] = "primary"
+                else:
+                    model_roles[model] = f"phase_{i}"
+            
+            # Strategy Memory (PR2): Extended logging
             self.performance_tracker.log_run(
                 models_used=result.models_used,
-                success_flag=result.quality_metrics.overall_confidence >= plan.confidence_target,
+                success_flag=success_flag,
                 latency_ms=result.total_latency_ms,
                 domain=plan.query_type.value,
+                # Strategy Memory (PR2) extended fields
+                strategy=f"dominance_{plan.complexity.value}" if hasattr(plan, 'complexity') else "dominance_controller",
+                task_type=plan.query_type.value,
+                primary_model=result.models_used[0] if result.models_used else None,
+                model_roles=model_roles,
+                quality_score=result.quality_metrics.overall_confidence,
+                confidence=result.quality_metrics.overall_confidence,
+                total_tokens=result.total_tokens,
+                ensemble_size=len(result.models_used),
             )
         except Exception as e:
             logger.debug("Performance logging failed: %s", e)

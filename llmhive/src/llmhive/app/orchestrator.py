@@ -1885,13 +1885,36 @@ class Orchestrator:
                 logger.warning("Fact verification failed: %s", e)
         
         # Log performance feedback if available
+        # Strategy Memory (PR2): Extended logging with strategy information
         if PERFORMANCE_TRACKER_AVAILABLE and performance_tracker:
             try:
+                # Determine strategy from request mode
+                strategy = "single_best"  # Default for simple orchestration
+                if hasattr(request, "mode"):
+                    mode_to_strategy = {
+                        "simple": "single_best",
+                        "balanced": "quality_weighted_fusion",
+                        "quality": "best_of_n",
+                        "elite": "expert_panel",
+                    }
+                    strategy = mode_to_strategy.get(str(request.mode).lower(), "single_best")
+                
+                # Get quality score if available
+                quality_score = None
+                if "verification_report" in locals() and verification_report:
+                    quality_score = getattr(verification_report, "verification_score", None)
+                
                 performance_tracker.log_run(
                     models_used=[result.model],
                     success_flag=verification_passed,
                     latency_ms=getattr(result, "latency_ms", None),
                     domain=domain,
+                    # Strategy Memory (PR2) extended fields
+                    strategy=strategy,
+                    task_type=domain,  # Use domain as task type for now
+                    primary_model=result.model,
+                    quality_score=quality_score,
+                    total_tokens=getattr(result, "tokens_used", 0),
                 )
             except Exception as e:
                 logger.debug("Failed to log performance: %s", e)

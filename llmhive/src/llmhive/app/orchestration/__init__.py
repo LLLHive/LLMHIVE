@@ -639,3 +639,35 @@ if DYNAMIC_ROUTING_AVAILABLE:
     __all__.extend([
         "adaptive_select_dynamic",
     ])
+
+# ==================== STRATEGY MEMORY (PR2) ====================
+
+# Strategy Memory Module
+try:
+    from .strategy_memory import (
+        StrategyMemory,
+        StrategyProfile,
+        ModelTeamRecord,
+        get_strategy_memory,
+        record_strategy_outcome,
+        recommend_strategy,
+    )
+    STRATEGY_MEMORY_AVAILABLE = True
+except ImportError:
+    STRATEGY_MEMORY_AVAILABLE = False
+    StrategyMemory = None  # type: ignore
+    StrategyProfile = None  # type: ignore
+    ModelTeamRecord = None  # type: ignore
+    get_strategy_memory = None  # type: ignore
+    record_strategy_outcome = None  # type: ignore
+    recommend_strategy = None  # type: ignore
+
+if STRATEGY_MEMORY_AVAILABLE:
+    __all__.extend([
+        "StrategyMemory",
+        "StrategyProfile",
+        "ModelTeamRecord",
+        "get_strategy_memory",
+        "record_strategy_outcome",
+        "recommend_strategy",
+    ])
