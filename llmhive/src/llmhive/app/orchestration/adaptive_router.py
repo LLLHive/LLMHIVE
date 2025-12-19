@@ -6,12 +6,16 @@ This module implements adaptive routing that selects models based on:
 - Accuracy level requirements
 - Available model capabilities
 - Real-time OpenRouter rankings (when available)
+- DYNAMIC MODEL CATALOG from OpenRouter API
 
 The router can operate in two modes:
-1. Static mode: Uses hardcoded MODEL_PROFILES (default)
+1. Static mode (default): Uses minimal bootstrap + dynamic catalog
 2. Dynamic mode: Fetches real-time rankings from OpenRouter
 
 To enable dynamic mode, initialize with use_openrouter_rankings=True
+
+PR9: Updated to use DynamicModelCatalog instead of hardcoded MODEL_PROFILES.
+The catalog is populated from OpenRouter API and stored in database.
 """
 from __future__ import annotations
 
@@ -29,25 +33,59 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# PR5: Default budget constraints
-DEFAULT_MAX_COST_USD = 1.0  # Default max cost per request
-DEFAULT_COST_WEIGHT = 0.15  # Weight of cost in scoring (0-1)
+# =============================================================================
+# DYNAMIC MODEL PROFILES (Lazy-loaded from catalog)
+# =============================================================================
+
+def get_dynamic_model_profiles() -> Dict[str, Dict[str, Any]]:
+    """Get model profiles dynamically from catalog or fallback.
+    
+    This replaces the static MODEL_PROFILES dict with dynamic loading.
+    Priority:
+    1. Dynamic catalog (from DB/API)
+    2. Fallback to minimal bootstrap profiles
+    """
+    try:
+        from ..openrouter.dynamic_catalog import get_dynamic_catalog
+        catalog = get_dynamic_catalog()
+        
+        # If catalog has models, use them
+        if catalog._models:
+            return catalog.get_model_profiles_for_scoring()
+    except ImportError:
+        logger.debug("Dynamic catalog not available, using bootstrap profiles")
+    except Exception as e:
+        logger.warning("Failed to load dynamic catalog: %s", e)
+    
+    # Return bootstrap profiles
+    return BOOTSTRAP_MODEL_PROFILES
 
 
-# Model profiles with capabilities, size classification, and cost per 1M tokens
-MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
-    # OpenAI models
-    "gpt-4o": {
+# Bootstrap profiles - minimal fallback when dynamic catalog unavailable
+BOOTSTRAP_MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
+    "openai/gpt-4o": {
         "size": "large",
-        "domains": ["general", "coding", "research", "legal", "medical"],
+        "domains": ["general", "coding", "research"],
         "base_quality": 0.9,
         "speed_rating": 0.7,
         "cost_rating": 0.8,
-        # PR5: Cost per 1M tokens (USD)
         "cost_per_1m_input": 2.50,
         "cost_per_1m_output": 10.00,
+        "family": "gpt-4o",
+        "author": "openai",
     },
-    "gpt-4o-mini": {
+    "anthropic/claude-sonnet-4": {
+        "size": "large",
+        "domains": ["general", "coding", "research", "analysis"],
+        "base_quality": 0.91,
+        "speed_rating": 0.7,
+        "cost_rating": 0.8,
+        "cost_per_1m_input": 3.00,
+        "cost_per_1m_output": 15.00,
+        "family": "claude-4",
+        "author": "anthropic",
+    },
+    "openai/gpt-4o-mini": {
         "size": "small",
         "domains": ["general", "coding", "quick-tasks"],
         "base_quality": 0.75,
@@ -55,37 +93,10 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "cost_rating": 0.95,
         "cost_per_1m_input": 0.15,
         "cost_per_1m_output": 0.60,
+        "family": "gpt-4o-mini",
+        "author": "openai",
     },
-    # Anthropic models
-    "claude-3-opus-20240229": {
-        "size": "large",
-        "domains": ["research", "analysis", "writing", "legal"],
-        "base_quality": 0.92,
-        "speed_rating": 0.6,
-        "cost_rating": 0.7,
-        "cost_per_1m_input": 15.00,
-        "cost_per_1m_output": 75.00,
-    },
-    "claude-3-sonnet-20240229": {
-        "size": "medium",
-        "domains": ["general", "coding", "analysis"],
-        "base_quality": 0.85,
-        "speed_rating": 0.8,
-        "cost_rating": 0.85,
-        "cost_per_1m_input": 3.00,
-        "cost_per_1m_output": 15.00,
-    },
-    "claude-3-haiku-20240307": {
-        "size": "small",
-        "domains": ["general", "quick-tasks", "summarization"],
-        "base_quality": 0.7,
-        "speed_rating": 0.95,
-        "cost_rating": 0.95,
-        "cost_per_1m_input": 0.25,
-        "cost_per_1m_output": 1.25,
-    },
-    # Google models
-    "gemini-2.5-pro": {
+    "google/gemini-2.5-pro-preview": {
         "size": "large",
         "domains": ["research", "coding", "multimodal", "analysis"],
         "base_quality": 0.88,
@@ -93,28 +104,10 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "cost_rating": 0.75,
         "cost_per_1m_input": 1.25,
         "cost_per_1m_output": 5.00,
+        "family": "gemini-2.5",
+        "author": "google",
     },
-    "gemini-2.5-flash": {
-        "size": "medium",
-        "domains": ["general", "quick-tasks", "coding"],
-        "base_quality": 0.78,
-        "speed_rating": 0.9,
-        "cost_rating": 0.9,
-        "cost_per_1m_input": 0.075,
-        "cost_per_1m_output": 0.30,
-    },
-    # xAI models
-    "grok-beta": {
-        "size": "large",
-        "domains": ["general", "reasoning", "real-time"],
-        "base_quality": 0.82,
-        "speed_rating": 0.8,
-        "cost_rating": 0.8,
-        "cost_per_1m_input": 5.00,
-        "cost_per_1m_output": 15.00,
-    },
-    # DeepSeek models
-    "deepseek-chat": {
+    "deepseek/deepseek-chat": {
         "size": "medium",
         "domains": ["coding", "math", "reasoning"],
         "base_quality": 0.8,
@@ -122,27 +115,39 @@ MODEL_PROFILES: Dict[str, Dict[str, Any]] = {
         "cost_rating": 0.95,
         "cost_per_1m_input": 0.14,
         "cost_per_1m_output": 0.28,
-    },
-    "deepseek-reasoner": {
-        "size": "large",
-        "domains": ["reasoning", "math", "analysis"],
-        "base_quality": 0.87,
-        "speed_rating": 0.7,
-        "cost_rating": 0.9,
-        "cost_per_1m_input": 0.55,
-        "cost_per_1m_output": 2.19,
-    },
-    # Default stub
-    "stub": {
-        "size": "small",
-        "domains": ["general"],
-        "base_quality": 0.5,
-        "speed_rating": 1.0,
-        "cost_rating": 1.0,
-        "cost_per_1m_input": 0.0,
-        "cost_per_1m_output": 0.0,
+        "family": "deepseek-chat",
+        "author": "deepseek",
     },
 }
+
+
+# PR5: Default budget constraints
+DEFAULT_MAX_COST_USD = 1.0  # Default max cost per request
+DEFAULT_COST_WEIGHT = 0.15  # Weight of cost in scoring (0-1)
+
+
+# MODEL_PROFILES is now dynamically loaded via get_dynamic_model_profiles()
+# This allows automatic updates when new models are added to OpenRouter
+# The function returns profiles from the dynamic catalog, or bootstrap fallback
+MODEL_PROFILES: Dict[str, Dict[str, Any]] = {}  # Populated lazily
+
+
+def _get_model_profiles() -> Dict[str, Dict[str, Any]]:
+    """Get model profiles, loading dynamically if needed."""
+    global MODEL_PROFILES
+    
+    if not MODEL_PROFILES:
+        MODEL_PROFILES = get_dynamic_model_profiles()
+    
+    return MODEL_PROFILES
+
+
+def refresh_model_profiles() -> Dict[str, Dict[str, Any]]:
+    """Force refresh of model profiles from dynamic catalog."""
+    global MODEL_PROFILES
+    MODEL_PROFILES = get_dynamic_model_profiles()
+    logger.info("Refreshed MODEL_PROFILES with %d models", len(MODEL_PROFILES))
+    return MODEL_PROFILES
 
 
 @dataclass
@@ -241,6 +246,97 @@ class AdaptiveModelRouter:
         self._dynamic_profiles_cache: Optional[Dict[str, Dict[str, Any]]] = None
         self._cache_timestamp: Optional[float] = None
         self._cache_ttl_seconds = 300  # 5 minutes
+        
+        # Ensure profiles are loaded (dynamic or bootstrap)
+        if not self.profiles:
+            self.profiles = _get_model_profiles()
+    
+    def _get_dynamic_role_preferences(self) -> Dict[str, List[str]]:
+        """Get role preferences dynamically from catalog or use bootstrap.
+        
+        Returns role-to-models mapping based on dynamic catalog capabilities.
+        """
+        try:
+            from ..openrouter.dynamic_catalog import get_dynamic_catalog
+            catalog = get_dynamic_catalog()
+            
+            if catalog._models:
+                # Build role preferences from catalog
+                prefs: Dict[str, List[str]] = {}
+                
+                # Coordinator: needs reasoning capability, tier 1
+                coordinator_models = catalog.get_role_models("coordinator")
+                prefs["coordinator"] = [m.id for m in coordinator_models[:3]]
+                
+                # Executive: needs tools, tier 1
+                executive_models = catalog.get_role_models("primary")
+                prefs["executive"] = [m.id for m in executive_models[:3]]
+                
+                # Quality manager: validator role
+                validator_models = catalog.get_role_models("validator")
+                prefs["quality_manager"] = [m.id for m in validator_models[:2]]
+                
+                # Lead researcher: long context + reasoning
+                prefs["lead_researcher"] = [m.id for m in coordinator_models[:2]]
+                
+                # Fact checker: reliable + cheap
+                fallback_models = catalog.get_role_models("fallback")
+                prefs["fact_checker"] = [m.id for m in fallback_models[:2]]
+                
+                # Synthesizer: reasoning + quality
+                prefs["synthesizer"] = [m.id for m in coordinator_models[:2]]
+                
+                # Assistant: fast + cheap
+                prefs["assistant"] = [m.id for m in fallback_models[:2]]
+                
+                return prefs
+                
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.debug("Failed to get dynamic role preferences: %s", e)
+        
+        # Bootstrap fallback
+        return {
+            "coordinator": ["anthropic/claude-sonnet-4", "openai/gpt-4o"],
+            "executive": ["openai/gpt-4o", "anthropic/claude-sonnet-4"],
+            "quality_manager": ["openai/gpt-4o", "openai/gpt-4o-mini"],
+            "lead_researcher": ["google/gemini-2.5-pro-preview", "anthropic/claude-sonnet-4"],
+            "fact_checker": ["openai/gpt-4o-mini", "deepseek/deepseek-chat"],
+            "synthesizer": ["openai/gpt-4o", "anthropic/claude-sonnet-4"],
+            "assistant": ["openai/gpt-4o-mini", "deepseek/deepseek-chat"],
+        }
+    
+    def _get_dynamic_escalation_target(self, model_id: str) -> Optional[str]:
+        """Get escalation target for a model dynamically.
+        
+        Args:
+            model_id: Current model ID
+            
+        Returns:
+            Model ID to escalate to, or None
+        """
+        try:
+            from ..openrouter.dynamic_catalog import get_dynamic_catalog
+            catalog = get_dynamic_catalog()
+            
+            if catalog._models:
+                return catalog.get_escalation_target(model_id)
+                
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.debug("Failed to get dynamic escalation target: %s", e)
+        
+        # Bootstrap fallback escalation
+        bootstrap_chain = {
+            "openai/gpt-4o-mini": "openai/gpt-4o",
+            "anthropic/claude-haiku-4": "anthropic/claude-sonnet-4",
+            "google/gemini-2.5-flash-preview": "google/gemini-2.5-pro-preview",
+            "deepseek/deepseek-chat": "deepseek/deepseek-reasoner",
+        }
+        
+        return bootstrap_chain.get(model_id)
     
     def _get_openrouter_selector(self) -> Optional["OpenRouterModelSelector"]:
         """Get or create OpenRouter selector."""
@@ -663,16 +759,8 @@ class AdaptiveModelRouter:
         if not model_scores:
             return {role: "stub" for role in roles}
         
-        # Role-to-capability mapping
-        role_preferences: Dict[str, List[str]] = {
-            "coordinator": ["claude-3-opus-20240229", "gpt-4o", "gemini-2.5-pro"],
-            "executive": ["gpt-4o", "claude-3-opus-20240229"],
-            "quality_manager": ["claude-3-sonnet-20240229", "gpt-4o-mini"],
-            "lead_researcher": ["gemini-2.5-pro", "claude-3-sonnet-20240229"],
-            "fact_checker": ["gpt-4o-mini", "deepseek-chat"],
-            "synthesizer": ["gpt-4o", "claude-3-opus-20240229"],
-            "assistant": ["gpt-4o-mini", "claude-3-haiku-20240307"],
-        }
+        # Role-to-capability mapping (DYNAMIC: uses catalog when available)
+        role_preferences = self._get_dynamic_role_preferences()
         
         available_models = [s.model for s in model_scores]
         
@@ -752,15 +840,8 @@ class AdaptiveModelRouter:
                 # Model historically performs well, use it
                 return (initial_model, False)
         
-        # Escalate to larger model
-        escalation_chain = {
-            "gpt-4o-mini": "gpt-4o",
-            "claude-3-haiku-20240307": "claude-3-sonnet-20240229",
-            "gemini-2.5-flash": "gemini-2.5-pro",
-            "deepseek-chat": "deepseek-reasoner",
-        }
-        
-        escalated_model = escalation_chain.get(initial_model)
+        # Escalate to larger model (DYNAMIC: uses catalog when available)
+        escalated_model = self._get_dynamic_escalation_target(initial_model)
         if escalated_model and (available_models is None or escalated_model in available_models):
             logger.info(
                 "Cascading from %s to %s (confidence below %.2f)",

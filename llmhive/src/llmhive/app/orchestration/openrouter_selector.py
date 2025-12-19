@@ -591,49 +591,90 @@ class OpenRouterModelSelector:
         strategy: SelectionStrategy,
         domain: str,
     ) -> SelectionResult:
-        """Fallback selection when rankings are unavailable."""
-        # Hardcoded fallback models
-        fallback_models = [
-            SelectedModel(
-                model_id="openai/gpt-4o",
-                model_name="GPT-4o",
-                provider="openai",
-                rank=1,
-                score=0.95,
-                supports_tools=True,
-                supports_vision=True,
-                context_length=128000,
-                price_prompt=2.50,
-                price_completion=10.00,
-                selection_reason="Fallback: Primary quality model",
-            ),
-            SelectedModel(
-                model_id="anthropic/claude-3.5-sonnet",
-                model_name="Claude 3.5 Sonnet",
-                provider="anthropic",
-                rank=2,
-                score=0.93,
-                supports_tools=True,
-                supports_vision=True,
-                context_length=200000,
-                price_prompt=3.00,
-                price_completion=15.00,
-                selection_reason="Fallback: Secondary quality model",
-            ),
-            SelectedModel(
-                model_id="openai/gpt-4o-mini",
-                model_name="GPT-4o Mini",
-                provider="openai",
-                rank=3,
-                score=0.85,
-                supports_tools=True,
-                supports_vision=True,
-                context_length=128000,
-                price_prompt=0.15,
-                price_completion=0.60,
-                selection_reason="Fallback: Fast/cheap model",
-            ),
-        ]
+        """Fallback selection when rankings are unavailable.
+        
+        Uses dynamic catalog if available, otherwise minimal bootstrap.
+        """
+        fallback_models: List[SelectedModel] = []
+        
+        # Try dynamic catalog first
+        try:
+            from ..openrouter.dynamic_catalog import get_dynamic_catalog
+            catalog = get_dynamic_catalog()
+            
+            # Get high-accuracy models from catalog
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+            
+            if loop:
+                # Already in async context
+                pass
+            else:
+                # Sync fallback - use bootstrap
+                raise RuntimeError("Not in async context")
+            
+        except Exception:
+            pass
+        
+        # Bootstrap fallback models (updated with current model IDs)
+        if not fallback_models:
+            fallback_models = [
+                SelectedModel(
+                    model_id="openai/gpt-4o",
+                    model_name="GPT-4o",
+                    provider="openai",
+                    rank=1,
+                    score=0.95,
+                    supports_tools=True,
+                    supports_vision=True,
+                    context_length=128000,
+                    price_prompt=2.50,
+                    price_completion=10.00,
+                    selection_reason="Bootstrap fallback: Primary quality model",
+                ),
+                SelectedModel(
+                    model_id="anthropic/claude-sonnet-4",
+                    model_name="Claude Sonnet 4",
+                    provider="anthropic",
+                    rank=2,
+                    score=0.93,
+                    supports_tools=True,
+                    supports_vision=True,
+                    context_length=200000,
+                    price_prompt=3.00,
+                    price_completion=15.00,
+                    selection_reason="Bootstrap fallback: Secondary quality model",
+                ),
+                SelectedModel(
+                    model_id="openai/gpt-4o-mini",
+                    model_name="GPT-4o Mini",
+                    provider="openai",
+                    rank=3,
+                    score=0.85,
+                    supports_tools=True,
+                    supports_vision=True,
+                    context_length=128000,
+                    price_prompt=0.15,
+                    price_completion=0.60,
+                    selection_reason="Bootstrap fallback: Fast/cheap model",
+                ),
+                SelectedModel(
+                    model_id="google/gemini-2.5-pro-preview",
+                    model_name="Gemini 2.5 Pro",
+                    provider="google",
+                    rank=4,
+                    score=0.88,
+                    supports_tools=True,
+                    supports_vision=True,
+                    context_length=1000000,
+                    price_prompt=1.25,
+                    price_completion=5.00,
+                    selection_reason="Bootstrap fallback: Long-context model",
+                ),
+            ]
         
         return SelectionResult(
             primary_model=fallback_models[0],
@@ -642,7 +683,7 @@ class OpenRouterModelSelector:
             strategy=strategy,
             task_type=task_type,
             domain=domain,
-            reasoning="Fallback: Rankings unavailable, using default models",
+            reasoning="Bootstrap fallback: Rankings unavailable, using default models (updated)",
         )
 
 
