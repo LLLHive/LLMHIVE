@@ -377,6 +377,154 @@ test.describe('UI Audit - OpenRouter Rankings Correctness', () => {
   })
 })
 
+test.describe('UI Audit - Category Parity', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupOpenRouterMocks(page)
+  })
+
+  test('Categories match between Models page and Chat dropdown', async ({ page }) => {
+    // Step 1: Go to Models page and collect categories
+    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.waitForTimeout(1000)
+    
+    const modelsCategoryElements = page.locator('[role="tab"]')
+    const modelsCategories: string[] = []
+    const modelsCount = await modelsCategoryElements.count()
+    
+    for (let i = 0; i < modelsCount; i++) {
+      const text = await modelsCategoryElements.nth(i).innerText().catch(() => '')
+      if (text.trim()) {
+        modelsCategories.push(text.toLowerCase().trim())
+      }
+    }
+    
+    await takeScreenshot(page, 'parity_models_categories')
+    
+    // Step 2: Go to home and open chat model dropdown
+    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.waitForTimeout(500)
+    
+    // Look for the Models button in toolbar (with Cpu icon)
+    const modelsButton = page.locator('button:has-text("Models"), [data-testid="model-selector"]').first()
+    
+    if (await modelsButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await modelsButton.click()
+      await page.waitForTimeout(500)
+      
+      await takeScreenshot(page, 'parity_chat_dropdown')
+      
+      // Get category items from dropdown
+      const dropdownItems = page.locator('[role="menuitem"], [role="option"]')
+      const chatCategories: string[] = []
+      const chatCount = await dropdownItems.count()
+      
+      for (let i = 0; i < chatCount; i++) {
+        const text = await dropdownItems.nth(i).innerText().catch(() => '')
+        if (text.trim()) {
+          chatCategories.push(text.toLowerCase().trim())
+        }
+      }
+      
+      // Compare categories
+      const missingInChat: string[] = []
+      for (const modelsCat of modelsCategories) {
+        const found = chatCategories.some(c => 
+          c.includes(modelsCat) || modelsCat.includes(c)
+        )
+        if (!found) {
+          missingInChat.push(modelsCat)
+        }
+      }
+      
+      if (missingInChat.length > 0) {
+        auditResult.issues.push({
+          id: 'parity_missing_in_chat',
+          severity: 'P0',
+          type: 'correctness',
+          title: 'Category parity violation',
+          description: `Categories on Models page but missing in Chat dropdown: ${missingInChat.join(', ')}`,
+          route: '/',
+          reproSteps: [
+            'Navigate to /models and note categories',
+            'Navigate to / and open model dropdown',
+            'Compare category lists',
+          ],
+          suspectedFiles: ['components/chat-toolbar.tsx', 'hooks/use-openrouter-categories.ts'],
+          suggestedFix: 'Ensure Chat dropdown uses same listCategories() API as Models page',
+        })
+      }
+    } else {
+      auditResult.issues.push({
+        id: 'parity_no_dropdown',
+        severity: 'P1',
+        type: 'ux',
+        title: 'Cannot find model selector dropdown',
+        description: 'Model selector not visible on home page',
+        route: '/',
+        reproSteps: ['Navigate to /', 'Look for Models button'],
+        suspectedFiles: ['components/chat-toolbar.tsx'],
+        suggestedFix: 'Ensure model selector is rendered',
+      })
+    }
+  })
+
+  test('Top-10 rankings order matches between Models page and API', async ({ page }) => {
+    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.waitForTimeout(1000)
+    
+    // Click programming category
+    const programmingTab = page.locator('[role="tab"]:has-text("Programming")').first()
+    if (await programmingTab.isVisible().catch(() => false)) {
+      await programmingTab.click()
+      await page.waitForTimeout(500)
+    }
+    
+    await takeScreenshot(page, 'parity_rankings_order')
+    
+    // Get displayed model names/IDs
+    const modelCards = page.locator('.cursor-pointer, [class*="card"]')
+    const displayedModels: string[] = []
+    const cardCount = await modelCards.count()
+    
+    for (let i = 0; i < Math.min(cardCount, 10); i++) {
+      const text = await modelCards.nth(i).innerText().catch(() => '')
+      if (text.trim()) {
+        displayedModels.push(text.toLowerCase())
+      }
+    }
+    
+    // Compare with expected order from mock data (use programming category as default)
+    const mockProgramming = MOCK_RANKINGS.programming
+    const expectedOrder = mockProgramming?.entries?.map((e: { model_name: string }) => e.model_name.toLowerCase()) || []
+    
+    let orderMatches = true
+    for (let i = 0; i < Math.min(expectedOrder.length, displayedModels.length); i++) {
+      if (!displayedModels[i].includes(expectedOrder[i].split(' ')[0])) {
+        orderMatches = false
+        break
+      }
+    }
+    
+    if (!orderMatches && displayedModels.length > 0) {
+      auditResult.issues.push({
+        id: 'parity_rankings_order_mismatch',
+        severity: 'P1',
+        type: 'correctness',
+        title: 'Rankings order does not match API',
+        description: 'Displayed model order differs from API ranking order',
+        route: '/models',
+        reproSteps: [
+          'Navigate to /models',
+          'Select Programming category',
+          'Compare displayed order with API response',
+        ],
+        suspectedFiles: ['components/openrouter/rankings-insights.tsx'],
+        suggestedFix: 'Ensure rankings are rendered in exact API order without re-sorting',
+      })
+    }
+  })
+})
+
 test.describe('UI Audit - Chat UI', () => {
   test.beforeEach(async ({ page }) => {
     await setupOpenRouterMocks(page)

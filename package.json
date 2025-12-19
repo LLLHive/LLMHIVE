@@ -14,7 +14,11 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install chromium",
     "test:e2e:all": "playwright test",
-    "test:e2e:update-snapshots": "playwright test --update-snapshots"
+    "test:e2e:update-snapshots": "playwright test --update-snapshots",
+    "ui:audit": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium",
+    "ui:audit:quick": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium -g 'Route loads'",
+    "ui:audit:headed": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium --headed",
+    "ui:audit:report": "cat docs/ui_audit/reports/latest/report.md"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

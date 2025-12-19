@@ -1,0 +1,81 @@
+{
+  "category": {
+    "slug": "programming",
+    "display_name": "Programming",
+    "group": "usecase",
+    "depth": 0
+  },
+  "models": [
+    {
+      "id": "anthropic/claude-sonnet-4-20250514",
+      "name": "Claude Sonnet 4",
+      "tokens": 15234567890,
+      "tokens_display": "15.2B",
+      "share_pct": 18.5
+    },
+    {
+      "id": "openai/gpt-4o",
+      "name": "GPT-4o",
+      "tokens": 12345678901,
+      "tokens_display": "12.3B",
+      "share_pct": 15.2
+    },
+    {
+      "id": "anthropic/claude-3-5-sonnet-20241022",
+      "name": "Claude 3.5 Sonnet",
+      "tokens": 9876543210,
+      "tokens_display": "9.9B",
+      "share_pct": 12.1
+    },
+    {
+      "id": "openai/gpt-4o-mini",
+      "name": "GPT-4o Mini",
+      "tokens": 8765432109,
+      "tokens_display": "8.8B",
+      "share_pct": 10.8
+    },
+    {
+      "id": "deepseek/deepseek-chat",
+      "name": "DeepSeek Chat",
+      "tokens": 6543210987,
+      "tokens_display": "6.5B",
+      "share_pct": 8.0
+    },
+    {
+      "id": "google/gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "tokens": 5432109876,
+      "tokens_display": "5.4B",
+      "share_pct": 6.7
+    },
+    {
+      "id": "openai/o1",
+      "name": "o1",
+      "tokens": 4321098765,
+      "tokens_display": "4.3B",
+      "share_pct": 5.3
+    },
+    {
+      "id": "anthropic/claude-3-opus-20240229",
+      "name": "Claude 3 Opus",
+      "tokens": 3210987654,
+      "tokens_display": "3.2B",
+      "share_pct": 3.9
+    },
+    {
+      "id": "meta/llama-3.3-70b-instruct",
+      "name": "Llama 3.3 70B",
+      "tokens": 2109876543,
+      "tokens_display": "2.1B",
+      "share_pct": 2.6
+    },
+    {
+      "id": "qwen/qwen-2.5-coder-32b-instruct",
+      "name": "Qwen 2.5 Coder 32B",
+      "tokens": 1098765432,
+      "tokens_display": "1.1B",
+      "share_pct": 1.3
+    }
+  ]
+}
+

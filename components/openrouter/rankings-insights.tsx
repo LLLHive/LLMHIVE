@@ -4,19 +4,19 @@
  * Rankings & Insights Component
  * 
  * Interactive rankings display with:
- * - Multiple ranking dimensions (trending, most used, best value, etc.)
+ * - Dynamic categories from OpenRouter (source of truth)
+ * - Multiple ranking dimensions
  * - Time range selection
- * - Filters
  * - Clear data provenance labels
  * 
- * Compliance: Rankings are built from our internal telemetry,
- * NOT scraped from OpenRouter.
+ * Data Source: OpenRouter Rankings (synced to local DB)
+ * Rankings reflect OpenRouter's global usage data, NOT internal telemetry.
  */
 
 import * as React from "react"
 import { 
   TrendingUp, BarChart3, DollarSign, MessageSquare, Zap, Image, Clock, Shield, Info, ChevronRight, ExternalLink,
-  Code, Users, Megaphone, Search, Cpu, FlaskConical, Languages, Scale, Landmark, Heart, GraduationCap, PieChart, Wrench
+  Code, Users, Megaphone, Search, Cpu, FlaskConical, Languages, Scale, Landmark, Heart, GraduationCap, PieChart, Wrench, RefreshCw, CheckCircle, AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -31,37 +31,72 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 
 import type { RankingDimension, TimeRange, RankingResult, RankedModel, OpenRouterModel } from "@/lib/openrouter/types"
 import { formatPrice, formatContextLength, formatLatency } from "@/lib/openrouter/types"
-import { getRankings, listRankingDimensions } from "@/lib/openrouter/api"
+import { 
+  getRankings, 
+  listRankingDimensions,
+  listCategories,
+  getCategoryRankings,
+  getRankingsStatus,
+  triggerRankingsSync,
+  type OpenRouterCategory,
+  type CategoryRankingsResponse,
+  type OpenRouterRankingEntry,
+} from "@/lib/openrouter/api"
 
 // =============================================================================
-// Constants
+// Category Icons Mapping
 // =============================================================================
 
-// Dimension categories for organizing tabs
-const DIMENSION_CATEGORIES = {
-  core: ['leaderboard', 'market_share', 'trending', 'most_used', 'best_value'],
-  categories: ['programming', 'roleplay', 'marketing', 'seo', 'technology', 'science', 'translation', 'legal', 'finance', 'health', 'academia'],
-  technical: ['long_context', 'tools_agents', 'multimodal', 'images', 'fastest', 'most_reliable', 'lowest_cost'],
-} as const
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  'programming': Code,
+  'science': FlaskConical,
+  'health': Heart,
+  'legal': Scale,
+  'marketing': Megaphone,
+  'marketing/seo': Search,
+  'marketing/content': MessageSquare,
+  'marketing/social-media': Users,
+  'technology': Cpu,
+  'finance': Landmark,
+  'academia': GraduationCap,
+  'roleplay': Users,
+  'creative-writing': MessageSquare,
+  'customer-support': Users,
+  'translation': Languages,
+  'data-analysis': BarChart3,
+  'long-context': MessageSquare,
+  'tool-use': Wrench,
+  'vision': Image,
+  'reasoning': FlaskConical,
+}
 
-const DIMENSION_CONFIG: Record<RankingDimension, {
+const CATEGORY_COLORS: Record<string, string> = {
+  'programming': 'text-violet-500',
+  'science': 'text-cyan-500',
+  'health': 'text-red-500',
+  'legal': 'text-gray-500',
+  'marketing': 'text-orange-500',
+  'marketing/seo': 'text-teal-500',
+  'technology': 'text-slate-500',
+  'finance': 'text-emerald-500',
+  'academia': 'text-amber-600',
+  'roleplay': 'text-pink-500',
+  'creative-writing': 'text-purple-500',
+  'translation': 'text-sky-500',
+}
+
+// Fallback for legacy dimension-based tabs (internal telemetry)
+const LEGACY_DIMENSION_CONFIG: Record<string, {
   icon: React.ElementType
   name: string
   description: string
   color: string
 }> = {
-  // Core rankings
   leaderboard: {
     icon: BarChart3,
     name: "Leaderboard",
     description: "Token usage across all models",
     color: "text-blue-500",
-  },
-  market_share: {
-    icon: PieChart,
-    name: "Market Share",
-    description: "Usage by model provider",
-    color: "text-indigo-500",
   },
   trending: {
     icon: TrendingUp,
@@ -69,109 +104,11 @@ const DIMENSION_CONFIG: Record<RankingDimension, {
     description: "Models with growing usage",
     color: "text-green-500",
   },
-  most_used: {
-    icon: BarChart3,
-    name: "Most Used",
-    description: "Highest usage volume",
-    color: "text-blue-500",
-  },
   best_value: {
     icon: DollarSign,
     name: "Best Value",
     description: "Quality/cost ratio",
     color: "text-amber-500",
-  },
-  // Use case categories
-  programming: {
-    icon: Code,
-    name: "Programming",
-    description: "Best for coding tasks",
-    color: "text-violet-500",
-  },
-  roleplay: {
-    icon: Users,
-    name: "Roleplay",
-    description: "Creative roleplay & characters",
-    color: "text-pink-500",
-  },
-  marketing: {
-    icon: Megaphone,
-    name: "Marketing",
-    description: "Marketing content creation",
-    color: "text-orange-500",
-  },
-  seo: {
-    icon: Search,
-    name: "SEO",
-    description: "SEO optimization",
-    color: "text-teal-500",
-  },
-  technology: {
-    icon: Cpu,
-    name: "Technology",
-    description: "Tech-related topics",
-    color: "text-slate-500",
-  },
-  science: {
-    icon: FlaskConical,
-    name: "Science",
-    description: "Scientific analysis",
-    color: "text-cyan-500",
-  },
-  translation: {
-    icon: Languages,
-    name: "Translation",
-    description: "Language translation",
-    color: "text-sky-500",
-  },
-  legal: {
-    icon: Scale,
-    name: "Legal",
-    description: "Legal documents & analysis",
-    color: "text-gray-500",
-  },
-  finance: {
-    icon: Landmark,
-    name: "Finance",
-    description: "Financial analysis",
-    color: "text-emerald-500",
-  },
-  health: {
-    icon: Heart,
-    name: "Health",
-    description: "Medical & health topics",
-    color: "text-red-500",
-  },
-  academia: {
-    icon: GraduationCap,
-    name: "Academia",
-    description: "Academic writing & research",
-    color: "text-amber-600",
-  },
-  // Technical rankings
-  long_context: {
-    icon: MessageSquare,
-    name: "Long Context",
-    description: "Largest context windows",
-    color: "text-purple-500",
-  },
-  tools_agents: {
-    icon: Wrench,
-    name: "Tool Calls",
-    description: "Tool usage across models",
-    color: "text-orange-500",
-  },
-  multimodal: {
-    icon: Image,
-    name: "Multimodal",
-    description: "Image/audio support",
-    color: "text-pink-500",
-  },
-  images: {
-    icon: Image,
-    name: "Images",
-    description: "Total images processed",
-    color: "text-fuchsia-500",
   },
   fastest: {
     icon: Clock,
@@ -179,29 +116,153 @@ const DIMENSION_CONFIG: Record<RankingDimension, {
     description: "Lowest latency",
     color: "text-cyan-500",
   },
-  most_reliable: {
-    icon: Shield,
-    name: "Most Reliable",
-    description: "Highest success rate",
-    color: "text-emerald-500",
-  },
-  lowest_cost: {
-    icon: DollarSign,
-    name: "Lowest Cost",
-    description: "Most affordable",
-    color: "text-lime-500",
-  },
 }
 
-const TIME_RANGE_LABELS: Record<TimeRange, string> = {
-  "24h": "Last 24 Hours",
-  "7d": "Last 7 Days",
-  "30d": "Last 30 Days",
+const VIEW_LABELS: Record<string, string> = {
+  "day": "Today",
+  "week": "This Week",
+  "month": "This Month",
   "all": "All Time",
 }
 
+// Import shared provider logo resolver
+import { resolveProviderLogo, type LogoResult } from "@/lib/provider-logos"
+
+function getProviderLogo(author: string | undefined): LogoResult {
+  return resolveProviderLogo(author || '')
+}
+
 // =============================================================================
-// Ranked Model Row Component
+// OpenRouter Ranking Entry Row Component
+// =============================================================================
+
+interface RankingEntryRowProps {
+  entry: OpenRouterRankingEntry
+  onSelect?: (modelId: string) => void
+}
+
+function RankingEntryRow({ entry, onSelect }: RankingEntryRowProps) {
+  const getRankBadgeColor = (r: number) => {
+    if (r === 1) return "bg-yellow-500 text-yellow-950"
+    if (r === 2) return "bg-gray-400 text-gray-950"
+    if (r === 3) return "bg-amber-700 text-amber-100"
+    return "bg-muted text-muted-foreground"
+  }
+  
+  const logo = getProviderLogo(entry.author)
+  
+  return (
+    <Card
+      className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+      onClick={() => onSelect?.(entry.model_id)}
+    >
+      <CardContent className="flex items-center gap-4 p-4">
+        {/* Rank */}
+        <Badge className={cn("w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0", getRankBadgeColor(entry.rank))}>
+          {entry.rank}
+        </Badge>
+        
+        {/* Provider Logo with Fallback */}
+        <div className="w-8 h-8 shrink-0 flex items-center justify-center">
+          {logo.src ? (
+            <img 
+              src={logo.src} 
+              alt={entry.author || ''} 
+              className="w-6 h-6 object-contain" 
+              onError={(e) => {
+                // Hide the image on error and show fallback
+                (e.target as HTMLImageElement).style.display = 'none'
+              }}
+            />
+          ) : (
+            <div className={cn(
+              "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white",
+              logo.fallbackColor
+            )}>
+              {logo.fallbackInitials}
+            </div>
+          )}
+        </div>
+        
+        {/* Model info */}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold truncate">{entry.model_name}</h4>
+          <p className="text-sm text-muted-foreground truncate">
+            {entry.model_id || entry.author}
+          </p>
+        </div>
+        
+        {/* Usage metrics */}
+        <div className="text-right shrink-0">
+          {entry.share_pct != null && (
+            <div className="font-mono text-sm font-medium">
+              {entry.share_pct.toFixed(1)}%
+            </div>
+          )}
+          {entry.tokens_display && (
+            <div className="text-xs text-muted-foreground">
+              {entry.tokens_display} tokens
+            </div>
+          )}
+          {entry.tokens && !entry.tokens_display && (
+            <div className="text-xs text-muted-foreground">
+              {entry.tokens >= 1_000_000_000 
+                ? `${(entry.tokens / 1_000_000_000).toFixed(1)}B` 
+                : entry.tokens >= 1_000_000
+                ? `${(entry.tokens / 1_000_000).toFixed(1)}M`
+                : entry.tokens.toLocaleString()
+              } tokens
+            </div>
+          )}
+        </div>
+        
+        {/* Capabilities badges */}
+        {entry.model_metadata && (
+          <div className="hidden md:flex gap-1 shrink-0">
+            {entry.model_metadata.supports_tools && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="secondary" className="h-6 w-6 p-0 flex items-center justify-center">
+                      <Zap className="w-3 h-3" />
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>Tool calling</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {entry.model_metadata.multimodal_input && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="secondary" className="h-6 w-6 p-0 flex items-center justify-center">
+                      <Image className="w-3 h-3" />
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>Vision</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        )}
+        
+        {/* Price */}
+        {entry.model_metadata?.pricing?.prompt != null && (
+          <div className="text-right shrink-0 w-24 hidden lg:block">
+            <div className="text-sm font-medium">
+              {formatPrice(entry.model_metadata.pricing.prompt)}
+            </div>
+          </div>
+        )}
+        
+        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+      </CardContent>
+    </Card>
+  )
+}
+
+// =============================================================================
+// Legacy Ranked Model Row Component (for internal telemetry)
 // =============================================================================
 
 interface RankedModelRowProps {
@@ -315,31 +376,72 @@ function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
 
 interface RankingsInsightsProps {
   onSelectModel?: (model: OpenRouterModel) => void
-  defaultDimension?: RankingDimension
+  defaultCategory?: string
   showDataProvenance?: boolean
 }
 
 export function RankingsInsights({
   onSelectModel,
-  defaultDimension = "trending",
+  defaultCategory = "programming",
   showDataProvenance = true,
 }: RankingsInsightsProps) {
-  const [dimension, setDimension] = React.useState<RankingDimension>(defaultDimension)
-  const [timeRange, setTimeRange] = React.useState<TimeRange>("7d")
-  const [result, setResult] = React.useState<RankingResult>()
+  // State
+  const [categories, setCategories] = React.useState<OpenRouterCategory[]>([])
+  const [selectedCategory, setSelectedCategory] = React.useState<string>(defaultCategory)
+  const [view, setView] = React.useState<'week' | 'month' | 'day' | 'all'>('week')
+  const [rankings, setRankings] = React.useState<CategoryRankingsResponse | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [categoriesLoading, setCategoriesLoading] = React.useState(true)
   const [error, setError] = React.useState<string>()
+  const [syncing, setSyncing] = React.useState(false)
   
-  // Fetch rankings
+  // Fetch categories on mount
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      setCategoriesLoading(true)
+      try {
+        const data = await listCategories({ group: 'usecase' })
+        setCategories(data.categories)
+        
+        // Set default category if not in list
+        if (!data.categories.find(c => c.slug === selectedCategory)) {
+          setSelectedCategory(data.categories[0]?.slug || 'programming')
+        }
+      } catch (e) {
+        console.error('Failed to load categories:', e)
+        // Use seed categories as fallback
+        setCategories([
+          { id: 1, slug: 'programming', display_name: 'Programming', group: 'usecase', depth: 0, is_active: true },
+          { id: 2, slug: 'science', display_name: 'Science', group: 'usecase', depth: 0, is_active: true },
+          { id: 3, slug: 'health', display_name: 'Health', group: 'usecase', depth: 0, is_active: true },
+          { id: 4, slug: 'legal', display_name: 'Legal', group: 'usecase', depth: 0, is_active: true },
+          { id: 5, slug: 'marketing', display_name: 'Marketing', group: 'usecase', depth: 0, is_active: true },
+          { id: 6, slug: 'technology', display_name: 'Technology', group: 'usecase', depth: 0, is_active: true },
+          { id: 7, slug: 'finance', display_name: 'Finance', group: 'usecase', depth: 0, is_active: true },
+          { id: 8, slug: 'academia', display_name: 'Academia', group: 'usecase', depth: 0, is_active: true },
+          { id: 9, slug: 'roleplay', display_name: 'Roleplay', group: 'usecase', depth: 0, is_active: true },
+        ])
+      } finally {
+        setCategoriesLoading(false)
+      }
+    }
+    
+    fetchCategories()
+  }, [])
+  
+  // Fetch rankings when category changes
   React.useEffect(() => {
     const fetchRankings = async () => {
+      if (!selectedCategory) return
+      
       setLoading(true)
       setError(undefined)
       
       try {
-        const data = await getRankings(dimension, { timeRange, limit: 20 })
-        setResult(data)
+        const data = await getCategoryRankings(selectedCategory, { view, limit: 10 })
+        setRankings(data)
       } catch (e) {
+        console.error('Failed to load rankings:', e)
         setError(e instanceof Error ? e.message : "Failed to load rankings")
       } finally {
         setLoading(false)
@@ -347,9 +449,26 @@ export function RankingsInsights({
     }
     
     fetchRankings()
-  }, [dimension, timeRange])
+  }, [selectedCategory, view])
   
-  const DimensionIcon = DIMENSION_CONFIG[dimension].icon
+  // Handle sync
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      await triggerRankingsSync({ full: false, categories: [selectedCategory] })
+      // Refresh rankings after sync
+      const data = await getCategoryRankings(selectedCategory, { view, limit: 10 })
+      setRankings(data)
+    } catch (e) {
+      console.error('Sync failed:', e)
+    } finally {
+      setSyncing(false)
+    }
+  }
+  
+  const CategoryIcon = CATEGORY_ICONS[selectedCategory] || BarChart3
+  const categoryColor = CATEGORY_COLORS[selectedCategory] || 'text-blue-500'
+  const currentCategory = categories.find(c => c.slug === selectedCategory)
   
   return (
     <div className="flex flex-col h-full">
@@ -359,94 +478,119 @@ export function RankingsInsights({
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <BarChart3 className="w-6 h-6" />
-              Rankings & Insights
+              OpenRouter Rankings
             </h2>
             <p className="text-muted-foreground mt-1">
-              Discover top models based on real usage data
+              Top models by category from OpenRouter
             </p>
           </div>
           
-          {/* Time range selector */}
-          <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(TIME_RANGE_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            {/* View selector */}
+            <Select value={view} onValueChange={(v) => setView(v as 'week' | 'month' | 'day' | 'all')}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(VIEW_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Sync button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleSync}
+                    disabled={syncing}
+                  >
+                    <RefreshCw className={cn("w-4 h-4", syncing && "animate-spin")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Sync rankings from OpenRouter</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
         
         {/* Data provenance notice */}
         {showDataProvenance && (
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertTitle>Data Source</AlertTitle>
+          <Alert className="bg-blue-500/10 border-blue-500/30">
+            <ExternalLink className="h-4 w-4 text-blue-500" />
+            <AlertTitle className="text-blue-500">OpenRouter Rankings</AlertTitle>
             <AlertDescription>
-              Rankings are derived from our internal usage telemetry through the LLMHive gateway.
-              Last updated: {result?.generated_at 
-                ? new Date(result.generated_at).toLocaleString()
-                : "Loading..."}
+              Rankings synced from OpenRouter. Data reflects global usage patterns.
+              {rankings?.last_synced && (
+                <span className="block text-xs mt-1">
+                  Last synced: {new Date(rankings.last_synced).toLocaleString()}
+                </span>
+              )}
             </AlertDescription>
           </Alert>
         )}
       </div>
       
-      {/* Dimension tabs */}
-      <Tabs value={dimension} onValueChange={(v) => setDimension(v as RankingDimension)} className="flex-1 flex flex-col">
+      {/* Category tabs */}
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col">
         <div className="border-b px-4">
           <ScrollArea className="w-full">
             <TabsList className="inline-flex h-12 w-max p-1">
-              {Object.entries(DIMENSION_CONFIG).map(([key, config]) => {
-                const Icon = config.icon
-                return (
-                  <TabsTrigger
-                    key={key}
-                    value={key}
-                    className="gap-2 data-[state=active]:bg-background"
-                  >
-                    <Icon className={cn("w-4 h-4", config.color)} />
-                    <span className="hidden sm:inline">{config.name}</span>
-                  </TabsTrigger>
-                )
-              })}
+              {categoriesLoading ? (
+                <div className="flex gap-2 p-2">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-24" />
+                  ))}
+                </div>
+              ) : (
+                categories.map((category) => {
+                  const Icon = CATEGORY_ICONS[category.slug] || BarChart3
+                  const color = CATEGORY_COLORS[category.slug] || 'text-blue-500'
+                  return (
+                    <TabsTrigger
+                      key={category.slug}
+                      value={category.slug}
+                      className="gap-2 data-[state=active]:bg-background"
+                    >
+                      <Icon className={cn("w-4 h-4", color)} />
+                      <span className="hidden sm:inline">{category.display_name}</span>
+                    </TabsTrigger>
+                  )
+                })
+              )}
             </TabsList>
           </ScrollArea>
         </div>
         
         {/* Content */}
         <div className="flex-1 overflow-hidden">
-          <TabsContent value={dimension} className="h-full mt-0">
+          <TabsContent value={selectedCategory} className="h-full mt-0">
             <ScrollArea className="h-full">
               <div className="p-4 space-y-4">
-                {/* Dimension header */}
+                {/* Category header */}
                 <div className="flex items-center gap-3">
-                  <DimensionIcon className={cn("w-8 h-8", DIMENSION_CONFIG[dimension].color)} />
+                  <CategoryIcon className={cn("w-8 h-8", categoryColor)} />
                   <div>
-                    <h3 className="text-xl font-semibold">{DIMENSION_CONFIG[dimension].name}</h3>
+                    <h3 className="text-xl font-semibold">
+                      {currentCategory?.display_name || selectedCategory}
+                    </h3>
                     <p className="text-muted-foreground">
-                      {DIMENSION_CONFIG[dimension].description}
+                      Top models for {currentCategory?.display_name?.toLowerCase() || selectedCategory} tasks
                     </p>
                   </div>
                 </div>
                 
-                {/* Metric definitions */}
-                {result?.metric_definitions && Object.keys(result.metric_definitions).length > 0 && (
-                  <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                    <strong>How it's measured:</strong>{" "}
-                    {result.metric_definitions[Object.keys(result.metric_definitions)[0]]}
-                  </div>
-                )}
-                
                 {/* Rankings list */}
                 {error ? (
                   <div className="text-center py-12">
+                    <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-4" />
                     <p className="text-destructive">{error}</p>
-                    <Button variant="outline" className="mt-4" onClick={() => setDimension(dimension)}>
+                    <Button variant="outline" className="mt-4" onClick={() => setSelectedCategory(selectedCategory)}>
                       Retry
                     </Button>
                   </div>
@@ -455,6 +599,7 @@ export function RankingsInsights({
                     {Array.from({ length: 10 }).map((_, i) => (
                       <Card key={i}>
                         <CardContent className="flex items-center gap-4 p-4">
+                          <Skeleton className="w-8 h-8 rounded-full" />
                           <Skeleton className="w-8 h-8 rounded-full" />
                           <div className="flex-1 space-y-2">
                             <Skeleton className="h-5 w-1/3" />
@@ -465,21 +610,48 @@ export function RankingsInsights({
                       </Card>
                     ))}
                   </div>
-                ) : (!result?.models || result.models.length === 0) && (!result?.data || (result.data as unknown[]).length === 0) ? (
+                ) : (!rankings?.entries || rankings.entries.length === 0) ? (
                   <div className="text-center py-12">
                     <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">No data available</h3>
+                    <h3 className="text-lg font-medium">No rankings available</h3>
                     <p className="text-muted-foreground mt-1">
-                      Not enough usage data for this ranking dimension
+                      {rankings?.error || "Run a sync to populate rankings"}
                     </p>
+                    <Button variant="outline" className="mt-4" onClick={handleSync} disabled={syncing}>
+                      <RefreshCw className={cn("w-4 h-4 mr-2", syncing && "animate-spin")} />
+                      Sync Now
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(result?.models || (result?.data as RankedModel[]) || []).map((rankedModel, index) => (
-                      <RankedModelRow
-                        key={rankedModel.model?.id || (rankedModel as unknown as {id?: string}).id || `model-${index}`}
-                        rankedModel={rankedModel}
-                        onSelect={onSelectModel}
+                    {rankings.entries.map((entry, index) => (
+                      <RankingEntryRow
+                        key={entry.model_id || `entry-${index}`}
+                        entry={entry}
+                        onSelect={(modelId) => {
+                          // Create a minimal model object for selection
+                          const model: OpenRouterModel = {
+                            id: modelId,
+                            name: entry.model_name,
+                            context_length: entry.model_metadata?.context_length || 0,
+                            architecture: {},
+                            pricing: {
+                              per_1m_prompt: entry.model_metadata?.pricing?.prompt || 0,
+                              per_1m_completion: entry.model_metadata?.pricing?.completion || 0,
+                            },
+                            capabilities: {
+                              supports_tools: entry.model_metadata?.supports_tools || false,
+                              supports_structured: entry.model_metadata?.supports_structured || false,
+                              supports_streaming: true,
+                              multimodal_input: entry.model_metadata?.multimodal_input || false,
+                              multimodal_output: false,
+                            },
+                            is_free: false,
+                            is_active: true,
+                            availability_score: entry.model_metadata?.availability_score || 0,
+                          }
+                          onSelectModel?.(model)
+                        }}
                       />
                     ))}
                   </div>

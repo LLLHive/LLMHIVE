@@ -1054,16 +1054,26 @@ class Orchestrator:
     # PR3: Verification Fallback Logic
     # =========================================================================
     
-    # High-accuracy models ordered by preference
-    HIGH_ACCURACY_MODELS = [
-        ("openai", "gpt-4o"),           # Best for general accuracy
+    # High-accuracy models ordered by preference.
+    # NOTE: These are fallback defaults only. The orchestrator now dynamically
+    # fetches high-accuracy models from the OpenRouter rankings DB for categories:
+    # science, health, legal, finance, academia.
+    # This list is used only when the dynamic catalog is unavailable.
+    FALLBACK_HIGH_ACCURACY_MODELS = [
+        ("openai", "gpt-4o"),           # General accuracy
         ("openai", "gpt-4o-2024-11-20"),
         ("anthropic", "claude-sonnet-4-20250514"),
         ("anthropic", "claude-3-5-sonnet-20241022"),
         ("openai", "o1"),                # Reasoning model
-        ("openai", "o1-mini"),
-        ("deepseek", "deepseek-chat"),  # Good for reasoning
+        ("openai", "o3"),                # Latest reasoning
+        ("deepseek", "deepseek-chat"),
+        ("google", "gemini-2.5-pro"),
     ]
+    
+    # Cached dynamic high-accuracy models
+    _cached_high_accuracy_models: Optional[List[Tuple[str, str]]] = None
+    _high_accuracy_models_fetched_at: Optional[float] = None
+    HIGH_ACCURACY_CACHE_TTL = 3600  # 1 hour cache
     
     async def retry_with_high_accuracy(
         self,
@@ -1105,8 +1115,8 @@ class Orchestrator:
             context=context,
         )
         
-        # Find available high-accuracy model
-        selected_model, selected_provider = self._select_high_accuracy_model(
+        # Find available high-accuracy model (use async version for fresh data)
+        selected_model, selected_provider = await self._select_high_accuracy_model_async(
             excluded_models=excluded_models
         )
         
@@ -1257,20 +1267,92 @@ Please provide an accurate, well-verified response."""
         
         return enhanced_prompt
     
+    async def _get_high_accuracy_models(self) -> List[Tuple[str, str]]:
+        """Get high-accuracy models from rankings DB or cache.
+        
+        Fetches top models from high-stakes categories:
+        - science, health, legal, finance, academia
+        
+        Returns list of (provider, model_id) tuples ordered by rank.
+        Falls back to FALLBACK_HIGH_ACCURACY_MODELS if DB unavailable.
+        """
+        import time
+        
+        # Check cache
+        now = time.time()
+        if (self._cached_high_accuracy_models is not None and 
+            self._high_accuracy_models_fetched_at is not None and
+            now - self._high_accuracy_models_fetched_at < self.HIGH_ACCURACY_CACHE_TTL):
+            return self._cached_high_accuracy_models
+        
+        try:
+            from .openrouter.dynamic_catalog import get_high_accuracy_models
+            
+            # Fetch from dynamic catalog
+            models = await get_high_accuracy_models(limit=10, categories=["science", "health", "legal", "finance", "academia"])
+            
+            if models:
+                result = []
+                for m in models:
+                    # Extract provider from model_id (e.g., "openai/gpt-4o" -> "openai")
+                    model_id = m.get("id", "")
+                    if "/" in model_id:
+                        provider = model_id.split("/")[0]
+                        result.append((provider, model_id))
+                    else:
+                        # Try to infer provider from family
+                        family = m.get("family", "").lower()
+                        if "gpt" in family or "o1" in family or "o3" in family:
+                            result.append(("openai", model_id))
+                        elif "claude" in family:
+                            result.append(("anthropic", model_id))
+                        elif "gemini" in family:
+                            result.append(("google", model_id))
+                        else:
+                            result.append(("openrouter", model_id))
+                
+                # Cache result
+                self._cached_high_accuracy_models = result
+                self._high_accuracy_models_fetched_at = now
+                logger.debug("Fetched %d high-accuracy models from dynamic catalog", len(result))
+                return result
+        
+        except Exception as e:
+            logger.warning("Failed to fetch high-accuracy models from catalog: %s", e)
+        
+        # Fallback to static list
+        return self.FALLBACK_HIGH_ACCURACY_MODELS
+    
     def _select_high_accuracy_model(
         self,
         excluded_models: Optional[List[str]] = None,
     ) -> Tuple[Optional[str], Optional[Any]]:
-        """Select the best available high-accuracy model."""
+        """Select the best available high-accuracy model (sync version).
+        
+        Note: This method is synchronous for backward compatibility.
+        For async usage, call _get_high_accuracy_models() directly.
+        """
         excluded_models = excluded_models or []
         
-        for provider_name, model_name in self.HIGH_ACCURACY_MODELS:
+        # Use cached models if available, otherwise fallback
+        models_to_try = (
+            self._cached_high_accuracy_models 
+            if self._cached_high_accuracy_models 
+            else self.FALLBACK_HIGH_ACCURACY_MODELS
+        )
+        
+        for provider_name, model_name in models_to_try:
             if model_name in excluded_models:
                 continue
             
             provider = self.providers.get(provider_name)
             if provider:
                 return model_name, provider
+            
+            # Also try openrouter for non-local providers
+            openrouter = self.providers.get("openrouter")
+            if openrouter:
+                return model_name, openrouter
         
         # Fallback: try any available provider with their default model
         for provider_name, provider in self.providers.items():
@@ -1282,8 +1364,26 @@ Please provide an accurate, well-verified response."""
                 return "gpt-4o", provider
             elif provider_name == "anthropic":
                 return "claude-3-5-sonnet-20241022", provider
+            elif provider_name == "google":
+                return "gemini-2.5-pro", provider
+            elif provider_name == "openrouter":
+                return "openai/gpt-4o", provider
         
         return None, None
+    
+    async def _select_high_accuracy_model_async(
+        self,
+        excluded_models: Optional[List[str]] = None,
+    ) -> Tuple[Optional[str], Optional[Any]]:
+        """Async version of _select_high_accuracy_model.
+        
+        Fetches fresh models from the dynamic catalog before selecting.
+        """
+        # Refresh cache
+        await self._get_high_accuracy_models()
+        
+        # Use sync version with fresh cache
+        return self._select_high_accuracy_model(excluded_models)
     
     async def invoke_refinement_loop(
         self,

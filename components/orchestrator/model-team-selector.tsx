@@ -233,11 +233,9 @@ export function ModelTeamSelector({
                     <SelectItem key={model.id} value={model.id} className="text-xs">
                       <div className="flex items-center gap-2">
                         <span>{model.name}</span>
-                        {model.category && (
-                          <Badge variant="outline" className="text-[10px]">
-                            {model.category}
-                          </Badge>
-                        )}
+                        <Badge variant="outline" className="text-[10px]">
+                          {model.provider}
+                        </Badge>
                       </div>
                     </SelectItem>
                   ))

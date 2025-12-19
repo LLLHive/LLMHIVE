@@ -1,6 +1,6 @@
 # LLMHive UI Audit Report
 
-**Generated**: 2025-12-19T19:31:37.368Z
+**Generated**: 2025-12-19T20:46:12.857Z
 
 ## Executive Summary
 
@@ -9,7 +9,7 @@
 | Routes Visited | 0 |
 | Clicks Attempted | 77 |
 | Clicks Skipped (safety) | 13 |
-| Console Errors | 4 |
+| Console Errors | 0 |
 | Network Failures | 0 |
 | P0 Issues (Critical) | 0 |
 | P1 Issues (High) | 0 |
@@ -35,14 +35,7 @@ _No P2 issues found._
 
 ## Console Errors
 
-- **/**: Failed to load models: TypeError: Failed to fetch
-    at fetchJson (http://localhost:3000/_next/stat
-- **/**: Failed to load models: TypeError: Failed to fetch
-    at fetchJson (http://localhost:3000/_next/stat
-- **/settings**: Failed to load models: TypeError: Failed to fetch
-    at fetchJson (http://localhost:3000/_next/stat
-- **/settings**: Failed to load models: TypeError: Failed to fetch
-    at fetchJson (http://localhost:3000/_next/stat
+_No console errors detected._
 
 ## Network Failures
 
@@ -50,7 +43,11 @@ _No network failures detected._
 
 ## Accessibility Violations
 
-_No accessibility violations detected._
+
+### /
+- 2 buttons without accessible name
+- 1 inputs without labels
+
 
 ---
 

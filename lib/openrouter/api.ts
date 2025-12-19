@@ -91,7 +91,7 @@ export async function triggerSync(
 }
 
 // =============================================================================
-// Rankings API
+// Rankings API (Internal Telemetry)
 // =============================================================================
 
 export async function getRankings(
@@ -128,6 +128,168 @@ export async function listRankingDimensions(): Promise<{
   data_source_description: string
 }> {
   return fetchJson(`${API_BASE}/openrouter/rankings`)
+}
+
+// =============================================================================
+// OpenRouter Categories & Rankings (Source of Truth)
+// =============================================================================
+
+export interface OpenRouterCategory {
+  id: number
+  slug: string
+  display_name: string
+  group: string
+  parent_slug?: string
+  full_path?: string
+  depth: number
+  is_active: boolean
+  last_seen_at?: string
+  children?: OpenRouterCategory[]
+}
+
+export interface CategoryListResponse {
+  group: string
+  categories: OpenRouterCategory[]
+  total: number
+  data_source: string
+  description: string
+}
+
+export interface OpenRouterRankingEntry {
+  rank: number
+  model_id: string
+  model_name: string
+  author?: string
+  tokens?: number
+  tokens_display?: string
+  share_pct?: number
+  is_others_bucket: boolean
+  model_metadata?: {
+    context_length?: number
+    pricing?: {
+      prompt?: number
+      completion?: number
+    }
+    supports_tools?: boolean
+    supports_structured?: boolean
+    multimodal_input?: boolean
+    availability_score?: number
+  }
+}
+
+export interface CategoryRankingsResponse {
+  category: OpenRouterCategory
+  view: string
+  entries: OpenRouterRankingEntry[]
+  entry_count: number
+  last_synced?: string
+  parse_version?: string
+  source_url?: string
+  data_source: string
+  description: string
+  error?: string
+}
+
+export interface RankingsStatus {
+  categories: {
+    total: number
+    active: number
+  }
+  snapshots: {
+    total: number
+    successful: number
+  }
+  last_sync?: {
+    sync_type: string
+    status: string
+    started_at: string
+    completed_at?: string
+    items_processed: number
+    duration_seconds?: number
+    error_message?: string
+  }
+  last_snapshot_at?: string
+}
+
+/**
+ * List OpenRouter categories.
+ * These are discovered from OpenRouter rankings and represent real use-case categories.
+ */
+export async function listCategories(
+  options: {
+    group?: 'usecase' | 'language' | 'programming'
+    includeInactive?: boolean
+  } = {}
+): Promise<CategoryListResponse> {
+  const params: Record<string, unknown> = {}
+  if (options.group) params.group = options.group
+  if (options.includeInactive) params.include_inactive = options.includeInactive
+  
+  const query = buildQueryString(params)
+  return fetchJson<CategoryListResponse>(
+    `${API_BASE}/openrouter/categories${query ? `?${query}` : ''}`
+  )
+}
+
+/**
+ * Get rankings for a specific OpenRouter category.
+ * This returns the EXACT rankings from OpenRouter, not internal telemetry.
+ */
+export async function getCategoryRankings(
+  categorySlug: string,
+  options: {
+    view?: 'week' | 'month' | 'day' | 'all'
+    limit?: number
+  } = {}
+): Promise<CategoryRankingsResponse> {
+  const params: Record<string, unknown> = {
+    category: categorySlug,
+    view: options.view || 'week',
+    limit: options.limit || 10,
+  }
+  
+  const query = buildQueryString(params)
+  return fetchJson<CategoryRankingsResponse>(
+    `${API_BASE}/openrouter/category-rankings?${query}`
+  )
+}
+
+/**
+ * Get rankings sync status for monitoring.
+ */
+export async function getRankingsStatus(): Promise<RankingsStatus> {
+  return fetchJson<RankingsStatus>(`${API_BASE}/openrouter/rankings/status`)
+}
+
+/**
+ * Trigger a rankings sync (admin only).
+ */
+export async function triggerRankingsSync(
+  options: {
+    full?: boolean
+    categories?: string[]
+  } = {}
+): Promise<{ status: string; full: boolean; message: string }> {
+  const params: Record<string, unknown> = {}
+  if (options.full) params.full = options.full
+  if (options.categories) params.categories = options.categories.join(',')
+  
+  const query = buildQueryString(params)
+  return fetchJson(
+    `${API_BASE}/openrouter/rankings/sync${query ? `?${query}` : ''}`,
+    { method: 'POST' }
+  )
+}
+
+/**
+ * Validate stored rankings against live OpenRouter data (admin only).
+ */
+export async function validateRankings(): Promise<{
+  passed: boolean
+  errors: string[]
+  checked_at: string
+}> {
+  return fetchJson(`${API_BASE}/openrouter/rankings/validate`, { method: 'POST' })
 }
 
 // =============================================================================

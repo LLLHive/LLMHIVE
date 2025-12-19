@@ -1,0 +1,81 @@
+{
+  "category": {
+    "slug": "science",
+    "display_name": "Science",
+    "group": "usecase",
+    "depth": 0
+  },
+  "models": [
+    {
+      "id": "openai/o1",
+      "name": "o1",
+      "tokens": 8765432109,
+      "tokens_display": "8.8B",
+      "share_pct": 22.5
+    },
+    {
+      "id": "anthropic/claude-sonnet-4-20250514",
+      "name": "Claude Sonnet 4",
+      "tokens": 7654321098,
+      "tokens_display": "7.7B",
+      "share_pct": 19.7
+    },
+    {
+      "id": "openai/gpt-4o",
+      "name": "GPT-4o",
+      "tokens": 6543210987,
+      "tokens_display": "6.5B",
+      "share_pct": 16.8
+    },
+    {
+      "id": "google/gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "tokens": 4321098765,
+      "tokens_display": "4.3B",
+      "share_pct": 11.1
+    },
+    {
+      "id": "anthropic/claude-3-5-sonnet-20241022",
+      "name": "Claude 3.5 Sonnet",
+      "tokens": 3210987654,
+      "tokens_display": "3.2B",
+      "share_pct": 8.2
+    },
+    {
+      "id": "deepseek/deepseek-reasoner",
+      "name": "DeepSeek Reasoner",
+      "tokens": 2109876543,
+      "tokens_display": "2.1B",
+      "share_pct": 5.4
+    },
+    {
+      "id": "openai/o1-mini",
+      "name": "o1 Mini",
+      "tokens": 1987654321,
+      "tokens_display": "2.0B",
+      "share_pct": 5.1
+    },
+    {
+      "id": "anthropic/claude-3-opus-20240229",
+      "name": "Claude 3 Opus",
+      "tokens": 1654321098,
+      "tokens_display": "1.7B",
+      "share_pct": 4.2
+    },
+    {
+      "id": "openai/gpt-4o-mini",
+      "name": "GPT-4o Mini",
+      "tokens": 1321098765,
+      "tokens_display": "1.3B",
+      "share_pct": 3.4
+    },
+    {
+      "id": "meta/llama-3.3-70b-instruct",
+      "name": "Llama 3.3 70B",
+      "tokens": 987654321,
+      "tokens_display": "988M",
+      "share_pct": 2.5
+    }
+  ]
+}
+

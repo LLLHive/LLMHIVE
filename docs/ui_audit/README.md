@@ -113,6 +113,10 @@ test('Models page: Category list is complete')
 // Test rankings order
 test('Models page: Top 10 rankings match API order')
 
+// Test category parity
+test('Categories match between Models page and Chat dropdown')
+test('Top-10 rankings order matches between Models page and API')
+
 // Test chat integration  
 test('Chat page: Model dropdown has categories')
 
@@ -122,7 +126,11 @@ test('Chat page: Clarifying questions flow works')
 
 Run specific tests:
 ```bash
-npm run test:e2e -- tests/e2e/audit/ui-audit.spec.ts -g "category"
+# Run category parity tests
+npm run test:e2e -- tests/e2e/audit/ui-audit.spec.ts -g "parity"
+
+# Run all correctness tests
+npm run test:e2e -- tests/e2e/audit/ui-audit.spec.ts -g "Category|Rankings"
 ```
 
 ## CI Integration
@@ -197,6 +205,40 @@ test.describe('UI Audit - New Feature', () => {
 - Ensure `docs/ui_audit/reports/latest/screenshots/` exists
 - Check file permissions
 
+## Architecture
+
+### Shared Categories/Rankings Client
+
+All UI components use a shared hook for OpenRouter categories and rankings:
+
+```typescript
+// hooks/use-openrouter-categories.ts
+import { useOpenRouterCategories, useCategoryRankings } from '@/hooks/use-openrouter-categories'
+
+// In components:
+const { categories, loading, error } = useOpenRouterCategories()
+const { rankings, loading, error } = useCategoryRankings('programming')
+```
+
+This ensures **parity** between:
+- Models page category tabs
+- Chat dropdown categories
+- Any other category-consuming components
+
+### Provider Logo Resolver
+
+A shared utility for provider logos with fallback support:
+
+```typescript
+// lib/provider-logos.ts
+import { resolveProviderLogo } from '@/lib/provider-logos'
+
+const logo = resolveProviderLogo('openai')
+// logo.src = '/logos/openai.svg'
+// logo.fallbackInitials = 'OA'
+// logo.fallbackColor = 'bg-green-500'
+```
+
 ## Files
 
 ```
@@ -206,6 +248,14 @@ tests/e2e/audit/
 
 scripts/
 ├── ui-audit.ts           # Audit runner script
+
+hooks/
+├── use-openrouter-categories.ts  # Shared categories hook
+
+lib/
+├── provider-logos.ts     # Logo resolver utility
+├── openrouter/
+│   └── api.ts           # OpenRouter API client
 
 docs/ui_audit/
 ├── README.md             # This file

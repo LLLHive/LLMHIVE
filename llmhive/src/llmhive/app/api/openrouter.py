@@ -633,3 +633,305 @@ async def delete_template(
     
     return {"message": "Template deleted"}
 
+
+# =============================================================================
+# OpenRouter Rankings (FROM OPENROUTER - Source of Truth)
+# =============================================================================
+
+@router.get("/categories")
+async def list_categories(
+    group: str = Query("usecase", regex="^(usecase|language|programming)$"),
+    include_inactive: bool = False,
+    db = Depends(get_db),
+) -> Dict[str, Any]:
+    """List all OpenRouter ranking categories.
+    
+    This returns categories synced from OpenRouter rankings.
+    Categories are discovered dynamically from OpenRouter.
+    
+    Data Source: OpenRouter Rankings (synced to local DB)
+    """
+    if not db:
+        raise HTTPException(503, "Database not available")
+    
+    try:
+        from ..openrouter.rankings_models import OpenRouterCategory, CategoryGroup
+        
+        query = db.query(OpenRouterCategory).filter(
+            OpenRouterCategory.group == CategoryGroup(group),
+        )
+        
+        if not include_inactive:
+            query = query.filter(OpenRouterCategory.is_active == True)
+        
+        categories = query.order_by(
+            OpenRouterCategory.depth,
+            OpenRouterCategory.slug,
+        ).all()
+        
+        # Build hierarchy
+        result = []
+        parents = {}
+        
+        for cat in categories:
+            cat_dict = cat.to_dict()
+            
+            if cat.depth == 0:
+                result.append(cat_dict)
+                parents[cat.slug] = cat_dict
+            else:
+                # Nested category
+                if cat.parent_slug in parents:
+                    parent = parents[cat.parent_slug]
+                    if "children" not in parent:
+                        parent["children"] = []
+                    parent["children"].append(cat_dict)
+                else:
+                    result.append(cat_dict)
+        
+        return {
+            "group": group,
+            "categories": result,
+            "total": len(categories),
+            "data_source": "openrouter_rankings",
+            "description": "Categories synced from OpenRouter rankings. Updated weekly.",
+        }
+        
+    except Exception as e:
+        logger.error("Failed to list categories: %s", e)
+        raise HTTPException(500, str(e))
+
+
+@router.get("/category-rankings")
+async def get_category_rankings(
+    category: str = Query(..., description="Category slug (e.g., 'programming', 'marketing/seo')"),
+    view: str = Query("week", regex="^(week|month|day|all)$"),
+    limit: int = Query(10, ge=1, le=50),
+    db = Depends(get_db),
+) -> Dict[str, Any]:
+    """Get top models for a category from OpenRouter rankings.
+    
+    This returns the EXACT ranking from OpenRouter, not internal telemetry.
+    Rankings are synced from OpenRouter and stored locally.
+    
+    Data Source: OpenRouter Rankings (synced to local DB)
+    """
+    if not db:
+        raise HTTPException(503, "Database not available")
+    
+    try:
+        from ..openrouter.rankings_models import (
+            OpenRouterCategory,
+            OpenRouterRankingSnapshot,
+            OpenRouterRankingEntry,
+            SnapshotStatus,
+        )
+        from ..openrouter.models import OpenRouterModel
+        
+        # Get category
+        category_obj = db.query(OpenRouterCategory).filter(
+            OpenRouterCategory.slug == category,
+        ).first()
+        
+        if not category_obj:
+            raise HTTPException(404, f"Category not found: {category}")
+        
+        # Get latest successful snapshot
+        snapshot = db.query(OpenRouterRankingSnapshot).filter(
+            OpenRouterRankingSnapshot.category_slug == category,
+            OpenRouterRankingSnapshot.status == SnapshotStatus.SUCCESS,
+        ).order_by(OpenRouterRankingSnapshot.fetched_at.desc()).first()
+        
+        if not snapshot:
+            return {
+                "category": category_obj.to_dict(),
+                "view": view,
+                "entries": [],
+                "last_synced": None,
+                "error": "No rankings data available. Trigger a sync.",
+            }
+        
+        # Get entries with model metadata
+        entries = sorted(snapshot.entries, key=lambda e: e.rank)[:limit]
+        
+        # Enrich with model metadata
+        enriched_entries = []
+        for entry in entries:
+            entry_dict = entry.to_dict()
+            
+            # Try to get model metadata
+            if entry.model_id:
+                model = db.query(OpenRouterModel).filter(
+                    OpenRouterModel.id == entry.model_id,
+                ).first()
+                
+                if model:
+                    entry_dict["model_metadata"] = {
+                        "context_length": model.context_length,
+                        "pricing": {
+                            "prompt": float(model.price_per_1m_prompt) if model.price_per_1m_prompt else None,
+                            "completion": float(model.price_per_1m_completion) if model.price_per_1m_completion else None,
+                        },
+                        "supports_tools": model.supports_tools,
+                        "supports_structured": model.supports_structured,
+                        "multimodal_input": model.multimodal_input,
+                        "availability_score": model.availability_score,
+                    }
+            
+            enriched_entries.append(entry_dict)
+        
+        return {
+            "category": category_obj.to_dict(),
+            "view": view,
+            "entries": enriched_entries,
+            "entry_count": len(enriched_entries),
+            "last_synced": snapshot.fetched_at.isoformat() if snapshot.fetched_at else None,
+            "parse_version": snapshot.parse_version,
+            "source_url": snapshot.source_url,
+            "data_source": "openrouter_rankings",
+            "description": "Rankings synced from OpenRouter. Order matches OpenRouter exactly.",
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to get category rankings: %s", e, exc_info=True)
+        raise HTTPException(500, str(e))
+
+
+@router.post("/rankings/sync")
+async def trigger_rankings_sync(
+    background_tasks: BackgroundTasks,
+    full: bool = Query(False, description="Run full sync with category discovery"),
+    categories: Optional[str] = Query(None, description="Comma-separated category slugs"),
+    db = Depends(get_db),
+) -> Dict[str, Any]:
+    """Trigger OpenRouter rankings sync.
+    
+    Fetches latest rankings from OpenRouter.
+    
+    Args:
+        full: Run full sync with category discovery
+        categories: Specific categories to sync (comma-separated)
+    """
+    if not db:
+        raise HTTPException(503, "Database not available")
+    
+    import os
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    
+    async def run_sync():
+        try:
+            from ..openrouter.rankings_sync import RankingsSync
+            
+            sync = RankingsSync(db, api_key)
+            
+            if full:
+                report = await sync.run_full_sync()
+            else:
+                cat_list = categories.split(",") if categories else None
+                report = await sync.run_quick_sync(categories=cat_list)
+            
+            logger.info("Rankings sync completed: %s", report.to_dict())
+        except Exception as e:
+            logger.error("Rankings sync failed: %s", e, exc_info=True)
+    
+    background_tasks.add_task(run_sync)
+    
+    return {
+        "status": "sync_started",
+        "full": full,
+        "message": "Rankings sync running in background. Check logs for results.",
+    }
+
+
+@router.post("/rankings/validate")
+async def validate_rankings(
+    db = Depends(get_db),
+) -> Dict[str, Any]:
+    """Validate stored rankings against live OpenRouter data.
+    
+    Compares our stored rankings with current OpenRouter data
+    to detect drift or data issues.
+    """
+    if not db:
+        raise HTTPException(503, "Database not available")
+    
+    import os
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    
+    try:
+        from ..openrouter.rankings_sync import RankingsSync
+        
+        sync = RankingsSync(db, api_key)
+        passed, errors = await sync.validate()
+        
+        return {
+            "passed": passed,
+            "errors": errors,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+        
+    except Exception as e:
+        logger.error("Validation failed: %s", e, exc_info=True)
+        raise HTTPException(500, str(e))
+
+
+@router.get("/rankings/status")
+async def get_rankings_status(
+    db = Depends(get_db),
+) -> Dict[str, Any]:
+    """Get rankings sync status.
+    
+    Returns last sync times and status for monitoring.
+    """
+    if not db:
+        raise HTTPException(503, "Database not available")
+    
+    try:
+        from ..openrouter.rankings_models import (
+            OpenRouterCategory,
+            OpenRouterRankingSnapshot,
+            OpenRouterSyncStatus,
+            SnapshotStatus,
+        )
+        
+        # Get category counts
+        total_categories = db.query(OpenRouterCategory).count()
+        active_categories = db.query(OpenRouterCategory).filter(
+            OpenRouterCategory.is_active == True,
+        ).count()
+        
+        # Get snapshot counts
+        total_snapshots = db.query(OpenRouterRankingSnapshot).count()
+        successful_snapshots = db.query(OpenRouterRankingSnapshot).filter(
+            OpenRouterRankingSnapshot.status == SnapshotStatus.SUCCESS,
+        ).count()
+        
+        # Get last sync
+        last_sync = db.query(OpenRouterSyncStatus).filter(
+            OpenRouterSyncStatus.sync_type.like("rankings%"),
+        ).order_by(OpenRouterSyncStatus.started_at.desc()).first()
+        
+        # Get last successful snapshot
+        last_snapshot = db.query(OpenRouterRankingSnapshot).filter(
+            OpenRouterRankingSnapshot.status == SnapshotStatus.SUCCESS,
+        ).order_by(OpenRouterRankingSnapshot.fetched_at.desc()).first()
+        
+        return {
+            "categories": {
+                "total": total_categories,
+                "active": active_categories,
+            },
+            "snapshots": {
+                "total": total_snapshots,
+                "successful": successful_snapshots,
+            },
+            "last_sync": last_sync.to_dict() if last_sync else None,
+            "last_snapshot_at": last_snapshot.fetched_at.isoformat() if last_snapshot else None,
+        }
+        
+    except Exception as e:
+        logger.error("Failed to get status: %s", e)
+        raise HTTPException(500, str(e))
+
