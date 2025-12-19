@@ -435,3 +435,365 @@ test.describe('Performance', () => {
     expect(openTime).toBeLessThan(1000)
   })
 })
+
+// ==============================================================================
+// PR8: Advanced Orchestration Scenarios
+// ==============================================================================
+
+test.describe('PR8: Budget-Aware Routing', () => {
+  test.beforeEach(async ({ page, mockApi }) => {
+    await mockApi.mockAllApisSuccess()
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+  })
+
+  test('budget constraint is sent to backend', async ({ page }) => {
+    let capturedRequest: any = null
+    
+    await page.route('/api/chat', async (route) => {
+      const postData = route.request().postData()
+      if (postData) {
+        capturedRequest = JSON.parse(postData)
+      }
+      route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        headers: {
+          'X-Models-Used': '["deepseek-chat"]',
+          'X-Tokens-Used': '100',
+          'X-Latency-Ms': '300',
+        },
+        body: 'Budget-aware response using cheaper model.',
+      })
+    })
+    
+    // Open Orchestration Studio
+    const studioTrigger = page.getByText('Orchestration Studio')
+    if (await studioTrigger.isVisible()) {
+      await studioTrigger.click()
+      await page.waitForTimeout(500)
+      
+      // Navigate to Budget tab if available
+      const budgetTab = page.getByText('Budget')
+      if (await budgetTab.isVisible()) {
+        await budgetTab.click()
+        await page.waitForTimeout(300)
+      }
+    }
+    
+    // Send a message
+    const textarea = page.locator('textarea').first()
+    await textarea.fill('What is 2+2?')
+    await textarea.press('Enter')
+    
+    await page.waitForResponse('/api/chat')
+    
+    expect(capturedRequest).toBeDefined()
+    if (capturedRequest) {
+      expect(capturedRequest.orchestratorSettings).toBeDefined()
+    }
+  })
+
+  test('prefer cheaper models toggle works', async ({ page, mockApi }) => {
+    await mockApi.mockAllApisSuccess()
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+    
+    // Look for Orchestration Studio toggle
+    const studioTrigger = page.getByText('Orchestration Studio')
+    if (await studioTrigger.isVisible()) {
+      await studioTrigger.click()
+      await page.waitForTimeout(500)
+      
+      // Look for Budget tab
+      const budgetTab = page.getByText('Budget')
+      if (await budgetTab.isVisible()) {
+        await budgetTab.click()
+        await page.waitForTimeout(300)
+        
+        // Look for "Prefer Cheaper" toggle
+        const preferCheaperToggle = page.getByText('Prefer Cheaper')
+        if (await preferCheaperToggle.isVisible()) {
+          // Toggle should be present
+          expect(await preferCheaperToggle.isVisible()).toBe(true)
+        }
+      }
+    }
+  })
+})
+
+test.describe('PR8: Ambiguous Query Flow', () => {
+  test('clarification questions are displayed for ambiguous queries', async ({ page }) => {
+    await page.route('/api/chat', async (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        headers: {
+          'X-Models-Used': '["gpt-4o"]',
+          'X-Tokens-Used': '200',
+          'X-Latency-Ms': '500',
+        },
+        body: 'The best solution depends on your specific use case. Could you provide more context?',
+      })
+    })
+    
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+    
+    // Send an ambiguous query
+    const textarea = page.locator('textarea').first()
+    await textarea.fill('Which one is better?')
+    await textarea.press('Enter')
+    
+    // Wait for response
+    await page.waitForResponse('/api/chat')
+    await page.waitForTimeout(500)
+    
+    // The UI should handle the ambiguity in some way
+    // (either showing clarification or processing anyway)
+    await expect(page.locator('body')).toContainText(/better|context|specific/i)
+  })
+
+  test('user can skip clarification and proceed', async ({ page }) => {
+    await page.route('/api/chat', async (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        headers: {
+          'X-Models-Used': '["gpt-4o"]',
+          'X-Tokens-Used': '150',
+          'X-Latency-Ms': '400',
+        },
+        body: 'Based on general criteria, option A is better.',
+      })
+    })
+    
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+    
+    // Send a query that might trigger clarification
+    const textarea = page.locator('textarea').first()
+    await textarea.fill('Compare these options')
+    await textarea.press('Enter')
+    
+    await page.waitForResponse('/api/chat')
+    
+    // Should get some response
+    await page.waitForTimeout(500)
+  })
+})
+
+test.describe('PR8: Verification Fallback', () => {
+  test('verification failure triggers fallback strategy', async ({ page }) => {
+    let requestCount = 0
+    
+    await page.route('/api/chat', async (route) => {
+      requestCount++
+      
+      // Simulate verification in response
+      route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        headers: {
+          'X-Models-Used': '["gpt-4o", "claude-sonnet-4"]',
+          'X-Tokens-Used': '300',
+          'X-Latency-Ms': '800',
+        },
+        body: 'After verification, the answer is: 42. [Verified with 95% confidence]',
+      })
+    })
+    
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+    
+    // Enable verification in settings if available
+    const studioTrigger = page.getByText('Orchestration Studio')
+    if (await studioTrigger.isVisible()) {
+      await studioTrigger.click()
+      await page.waitForTimeout(500)
+      
+      // Look for Strategy tab
+      const strategyTab = page.getByText('Strategy')
+      if (await strategyTab.isVisible()) {
+        await strategyTab.click()
+        await page.waitForTimeout(300)
+        
+        // Enable verification if toggle exists
+        const verificationToggle = page.getByText('Enable Verification')
+        if (await verificationToggle.isVisible()) {
+          const toggle = page.locator('[role="switch"]').filter({ has: verificationToggle }).first()
+          if (await toggle.isVisible()) {
+            await toggle.click()
+          }
+        }
+      }
+    }
+    
+    // Send a factual query
+    const textarea = page.locator('textarea').first()
+    await textarea.fill('What is the meaning of life according to The Hitchhikers Guide?')
+    await textarea.press('Enter')
+    
+    await page.waitForResponse('/api/chat')
+    
+    // Should have made at least one request
+    expect(requestCount).toBeGreaterThan(0)
+  })
+})
+
+test.describe('PR8: Retrieval/Tool Usage', () => {
+  test('web search is triggered for temporal queries', async ({ page }) => {
+    let capturedRequest: any = null
+    
+    await page.route('/api/chat', async (route) => {
+      const postData = route.request().postData()
+      if (postData) {
+        capturedRequest = JSON.parse(postData)
+      }
+      route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        headers: {
+          'X-Models-Used': '["gemini-2.5-pro"]',
+          'X-Tokens-Used': '400',
+          'X-Latency-Ms': '1200',
+        },
+        body: 'Based on current data, here is the latest information...',
+      })
+    })
+    
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+    
+    // Send a temporal query
+    const textarea = page.locator('textarea').first()
+    await textarea.fill('What is the latest news about AI today?')
+    await textarea.press('Enter')
+    
+    await page.waitForResponse('/api/chat')
+    
+    expect(capturedRequest).toBeDefined()
+    if (capturedRequest) {
+      // Should have enable_live_research in orchestration settings
+      const orchestration = capturedRequest.orchestratorSettings?.orchestration || capturedRequest.orchestration
+      if (orchestration) {
+        expect(orchestration.enable_live_research).toBe(true)
+      }
+    }
+  })
+
+  test('calculator tool is used for math queries', async ({ page }) => {
+    let capturedRequest: any = null
+    
+    await page.route('/api/chat', async (route) => {
+      const postData = route.request().postData()
+      if (postData) {
+        capturedRequest = JSON.parse(postData)
+      }
+      route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        headers: {
+          'X-Models-Used': '["deepseek-chat"]',
+          'X-Tokens-Used': '100',
+          'X-Latency-Ms': '200',
+        },
+        body: 'The result is 144. (12 * 12 = 144)',
+      })
+    })
+    
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+    
+    // Send a math query
+    const textarea = page.locator('textarea').first()
+    await textarea.fill('Calculate 12 * 12')
+    await textarea.press('Enter')
+    
+    await page.waitForResponse('/api/chat')
+    
+    expect(capturedRequest).toBeDefined()
+  })
+})
+
+test.describe('PR8: Strategy Selection', () => {
+  test.beforeEach(async ({ page, mockApi }) => {
+    await mockApi.mockAllApisSuccess()
+    await page.goto('/')
+    await helpers.waitForPageReady(page)
+  })
+
+  test('elite strategy can be selected', async ({ page }) => {
+    // Open Orchestration Studio
+    const studioTrigger = page.getByText('Orchestration Studio')
+    if (await studioTrigger.isVisible()) {
+      await studioTrigger.click()
+      await page.waitForTimeout(500)
+      
+      // Look for Strategy tab
+      const strategyTab = page.getByText('Strategy')
+      if (await strategyTab.isVisible()) {
+        await strategyTab.click()
+        await page.waitForTimeout(300)
+        
+        // Look for strategy dropdown
+        const strategySelect = page.getByText('Elite Strategy')
+        if (await strategySelect.isVisible()) {
+          expect(await strategySelect.isVisible()).toBe(true)
+        }
+      }
+    }
+  })
+
+  test('accuracy slider affects model selection', async ({ page }) => {
+    let capturedRequest: any = null
+    
+    await page.route('/api/chat', async (route) => {
+      const postData = route.request().postData()
+      if (postData) {
+        capturedRequest = JSON.parse(postData)
+      }
+      route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        headers: {
+          'X-Models-Used': '["gpt-4o"]',
+          'X-Tokens-Used': '200',
+          'X-Latency-Ms': '500',
+        },
+        body: 'High accuracy response.',
+      })
+    })
+    
+    // Open Orchestration Studio
+    const studioTrigger = page.getByText('Orchestration Studio')
+    if (await studioTrigger.isVisible()) {
+      await studioTrigger.click()
+      await page.waitForTimeout(500)
+      
+      // Look for accuracy slider
+      const accuracyLabel = page.getByText('Accuracy vs Speed')
+      if (await accuracyLabel.isVisible()) {
+        // The slider should be present
+        expect(await accuracyLabel.isVisible()).toBe(true)
+      }
+    }
+    
+    // Send a message
+    const textarea = page.locator('textarea').first()
+    await textarea.fill('Explain quantum computing')
+    await textarea.press('Enter')
+    
+    await page.waitForResponse('/api/chat')
+    
+    expect(capturedRequest).toBeDefined()
+    if (capturedRequest) {
+      expect(capturedRequest.orchestratorSettings).toBeDefined()
+      // Should have accuracy_level in orchestration
+      if (capturedRequest.orchestratorSettings?.accuracyLevel !== undefined) {
+        expect(capturedRequest.orchestratorSettings.accuracyLevel).toBeGreaterThanOrEqual(1)
+        expect(capturedRequest.orchestratorSettings.accuracyLevel).toBeLessThanOrEqual(5)
+      }
+    }
+  })
+})

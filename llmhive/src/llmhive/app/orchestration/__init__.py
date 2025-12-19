@@ -541,6 +541,50 @@ if PERFORMANCE_CONTROLLER_AVAILABLE:
         "get_performance_controller",
     ])
 
+# ==================== PR8: TELEMETRY MODULE ====================
+
+# Orchestrator Telemetry
+try:
+    from .telemetry import (
+        OrchestratorTelemetry,
+        OrchestrationEvent,
+        StrategyMetrics,
+        ModelMetrics,
+        ToolMetrics,
+        StrategyType,
+        ModelRole,
+        ToolType as TelemetryToolType,
+        get_telemetry,
+        record_orchestration_event,
+    )
+    TELEMETRY_AVAILABLE = True
+except ImportError:
+    TELEMETRY_AVAILABLE = False
+    OrchestratorTelemetry = None  # type: ignore
+    OrchestrationEvent = None  # type: ignore
+    StrategyMetrics = None  # type: ignore
+    ModelMetrics = None  # type: ignore
+    ToolMetrics = None  # type: ignore
+    StrategyType = None  # type: ignore
+    ModelRole = None  # type: ignore
+    TelemetryToolType = None  # type: ignore
+    get_telemetry = None  # type: ignore
+    record_orchestration_event = None  # type: ignore
+
+if TELEMETRY_AVAILABLE:
+    __all__.extend([
+        "OrchestratorTelemetry",
+        "OrchestrationEvent",
+        "StrategyMetrics",
+        "ModelMetrics",
+        "ToolMetrics",
+        "StrategyType",
+        "ModelRole",
+        "TelemetryToolType",
+        "get_telemetry",
+        "record_orchestration_event",
+    ])
+
 # ==================== NEW ENHANCEMENT MODULES ====================
 
 # Model Config (Data-Driven Model Selection)

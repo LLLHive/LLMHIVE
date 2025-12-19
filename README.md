@@ -97,6 +97,60 @@ LLMHive uses a revolutionary multi-agent architecture:
 ✅ Projects and conversation organization
 ✅ Comprehensive settings panel
 
+## PR1-PR8: Elite Orchestration Features (NEW)
+
+### PR1: OpenRouter Dynamic Rankings Integration
+✅ Live model catalog from OpenRouter (340+ models)
+✅ Dynamic rankings based on internal telemetry
+✅ Model selection based on task type and performance data
+✅ Cloud Scheduler job for regular sync
+
+### PR2: Extended Strategy Memory
+✅ Strategy usage logging with model team info
+✅ Strategy memory storage for learning
+✅ Performance tracking per strategy
+
+### PR3: Verification Fallback & Refinement
+✅ `retry_with_high_accuracy()` for verification failures
+✅ Automatic escalation to stronger models
+✅ Configurable refinement loops (1-5 iterations)
+
+### PR4: Tool/RAG Broker Enhancement
+✅ Web search integration (Tavily)
+✅ Calculator tool for math queries
+✅ RAG retrieval with domain filtering
+✅ Tool decision logic in orchestrator
+
+### PR5: Budget-Aware Routing
+✅ `max_cost_usd` constraint support
+✅ Cost-aware model scoring algorithm
+✅ Model cost profiles (input/output per 1M tokens)
+✅ Budget preference controls (prefer cheaper models)
+
+### PR6: Orchestration Studio UI
+✅ Elite strategy selector (7 strategies)
+✅ Model team configuration
+✅ Budget controls (max cost slider, prefer cheaper toggle)
+✅ Live orchestration dashboard
+✅ Strategy, Budget, and Engines tabs
+
+### PR7: Prompt Suite Update
+✅ MODEL_TEAM_ASSEMBLY_PROMPT for dynamic team composition
+✅ ROUTER_SYSTEM_PROMPT_V2 with budget awareness
+✅ VERIFIER_ENHANCED_PROMPT with 5-phase verification
+✅ SYNTHESIZER_FUSION_PROMPT for multi-model fusion
+✅ Dynamic model context injection
+
+### PR8: Testing & Telemetry Dashboard
+✅ E2E tests for orchestration scenarios
+✅ Budget-aware routing tests
+✅ Ambiguous query flow tests
+✅ Verification fallback tests
+✅ Tool usage tests
+✅ OrchestratorMetricsDashboard component
+✅ Backend telemetry module for strategy tracking
+✅ Aggregated metrics (strategies, models, tools)
+
 ## The LLMHive Difference
 
 Unlike traditional single-model chatbots, LLMHive represents a 10-year evolution:
@@ -107,6 +161,31 @@ Unlike traditional single-model chatbots, LLMHive represents a 10-year evolution
 - **Isolated → Integrated**: Deep integration with developer tools
 - **Individual → Collaborative**: Team workspaces and sharing
 
+## Elite Orchestration Strategies
+
+LLMHive supports 7 elite orchestration strategies:
+
+| Strategy | Description | Best For |
+|----------|-------------|----------|
+| **Automatic** | AI selects optimal strategy | General use |
+| **Single Best** | Use highest-ranked model | Speed-critical tasks |
+| **Parallel Race** | Run models in parallel, take fastest | Time-sensitive queries |
+| **Best of N** | Generate N responses, select best | Quality-focused tasks |
+| **Fusion** | Weighted merge of multiple outputs | Complex synthesis |
+| **Expert Panel** | Domain experts collaborate | Multi-domain queries |
+| **Challenge & Refine** | Iterative critique and improvement | Critical accuracy |
+
+## Model Team Roles
+
+Each orchestration uses a model team with defined roles:
+
+| Role | Purpose |
+|------|---------|
+| **Primary** | Main response generator |
+| **Validator** | Verifies and critiques output |
+| **Fallback** | Backup if primary fails |
+| **Specialist** | Domain-specific expert |
+
 ## Future Roadmap
 
 - [ ] Dev Mode with integrated code editor
@@ -115,6 +194,9 @@ Unlike traditional single-model chatbots, LLMHive represents a 10-year evolution
 - [ ] Enterprise admin dashboard
 - [ ] Mobile app with full feature parity
 - [ ] Public API for programmatic access
+- [ ] Advanced telemetry analytics dashboard
+- [ ] Custom strategy builder
+- [ ] A/B testing for orchestration strategies
 
 ---
 
