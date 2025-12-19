@@ -1,221 +1,327 @@
-# OpenRouter Rankings: Weekly Improvement Plan
+# LLMHive Weekly Improvement System
 
-This document outlines the automated improvement and validation process for keeping OpenRouter rankings current and accurate.
+## Overview
 
-## 1. Weekly Sync Schedule
+The Weekly Improvement System is a fully automated pipeline that keeps LLMHive's model catalog, rankings, and orchestration strategies up-to-date with the latest developments in AI.
 
-### Primary Sync Job
-- **Schedule**: Weekly on Sundays at 2:00 AM UTC
+## Schedule
+
+| Job | Frequency | Time (UTC) | Trigger |
+|-----|-----------|------------|---------|
+| Full Weekly Sync | Weekly | Sunday 3:00 AM | Cloud Scheduler / GitHub Actions |
+| Quick Sync | Every 6 hours | */6 * * * * | Cloud Scheduler |
+| Research Scan | Daily | 2:00 AM | Background task |
+
+## Components
+
+### 1. OpenRouter Data Sync
+
+#### Weekly Full Sync
 - **Endpoint**: `POST /api/openrouter/rankings/sync?full=1`
-- **Cloud Scheduler Job**: `openrouter-rankings-full-sync`
-- **Operations**:
-  1. `discover_categories()` - Find new/removed categories
-  2. `sync_model_metadata()` - Update model catalog
-  3. `sync_rankings()` - Fetch top 10 per category
-  4. `validate_against_openrouter()` - Verify accuracy
+- **Actions**:
+  - Discover all categories (including nested like `marketing/seo`)
+  - Sync top-10 rankings for each category
+  - Mark inactive models
+  - Update pricing and capabilities
 
-### Quick Sync (Every 6 Hours)
-- **Schedule**: Every 6 hours
+#### 6-Hour Quick Sync
 - **Endpoint**: `POST /api/openrouter/sync`
-- **Operations**:
-  - Update model catalog from OpenRouter Models API
-  - Enrich endpoint availability for top models
+- **Actions**:
+  - Refresh model availability
+  - Update pricing
+  - Check endpoint status
 
-## 2. Data Synced
+### 2. Research Agent
 
-### Categories
-- **Source**: OpenRouter rankings pages
-- **Storage**: `openrouter_categories` table
-- **Fields**: slug, display_name, group, parent_slug, depth, is_active
-- **Discovery**: Dynamic discovery including nested categories (e.g., marketing/seo)
+Monitors AI research sources for new developments:
 
-### Rankings
-- **Source**: OpenRouter rankings API/pages
-- **Storage**: `openrouter_ranking_snapshots` + `openrouter_ranking_entries`
-- **Fields per entry**:
-  - rank, model_id, model_name, author
-  - tokens, share_pct
-  - model_metadata (context_length, pricing, capabilities)
+- **Sources**:
+  - arXiv (cs.CL, cs.AI, cs.LG)
+  - HuggingFace model releases
+  - OpenAI, Anthropic, Google AI blogs
+  
+- **Topics of Interest**:
+  - Chain of thought improvements
+  - Multi-agent orchestration
+  - RAG techniques
+  - Model evaluation methods
 
-### Models
-- **Source**: `https://openrouter.ai/api/v1/models`
-- **Storage**: `openrouter_models` table
-- **Update frequency**: Every 6 hours
+- **Output**:
+  - Findings posted to blackboard
+  - Integration proposals for high-impact items
+  - Weekly summary in `research/findings/YYYY-MM-DD.md`
 
-## 3. Validation Step
+### 3. Benchmark Agent
 
-After each sync, we run validation to ensure accuracy:
+Runs automated benchmarks to track performance:
 
-```python
-async def validate_against_openrouter():
-    """
-    Validates synced rankings against live OpenRouter data.
-    
-    Always validates these categories:
-    - programming, science, health, legal, marketing
-    - marketing/seo, technology, finance, academia, roleplay
-    
-    Validation checks:
-    1. Top 3 models match in order
-    2. Model IDs are valid
-    3. Share percentages are within 5% tolerance
-    
-    On mismatch:
-    - Creates snapshot with status='failed_validation'
-    - Logs ERROR severity alert
-    - Returns non-zero exit for manual review
-    """
+- **Categories**:
+  - Coding
+  - Reasoning
+  - Factual accuracy
+  - Math
+  - Multi-hop reasoning
+  - Creative writing
+
+- **Metrics**:
+  - Overall score
+  - Pass rate
+  - Latency (avg, p95)
+  - Category-specific scores
+
+- **Regression Detection**:
+  - 5% drop triggers alert
+  - 15% drop is critical
+  - Comparison against rolling baseline
+
+### 4. Planning Agent
+
+Coordinates improvements based on all inputs:
+
+- **Inputs**:
+  - Model catalog changes
+  - Research proposals
+  - Benchmark regressions
+  - Ranking changes
+
+- **Risk Assessment**:
+  - **LOW**: Catalog updates, new categories
+  - **MEDIUM**: Routing changes, fallback updates
+  - **HIGH**: Prompt changes, strategy changes
+
+- **Outputs**:
+  - Upgrade plan with prioritized tasks
+  - Auto-apply decisions for safe changes
+  - Gated changes for manual review
+
+### 5. Upgrade Agent
+
+Applies safe improvements:
+
+- **Auto-Apply (LOW risk)**:
+  - New models added to catalog
+  - New categories in UI
+  - Pricing updates
+
+- **Gated (MEDIUM/HIGH risk)**:
+  - Model routing changes
+  - Prompt template updates
+  - New reasoning strategies
+
+## Data Flow
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   OpenRouter    │────▶│   DB Tables     │────▶│   UI / API      │
+│   API           │     │   - categories  │     │   - Models page │
+│   - models      │     │   - rankings    │     │   - Chat dropdown│
+│   - rankings    │     │   - models      │     │   - Orchestrator │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                              │
+                              ▼
+┌─────────────────┐     ┌─────────────────┐
+│ Research Agent  │────▶│   Blackboard    │
+│ - arXiv scan    │     │   - findings    │
+│ - model watch   │     │   - proposals   │
+└─────────────────┘     └─────────────────┘
+                              │
+                              ▼
+┌─────────────────┐     ┌─────────────────┐
+│ Planning Agent  │◀────│ Benchmark Agent │
+│ - prioritize    │     │ - run tests     │
+│ - risk assess   │     │ - detect regress│
+└─────────────────┘     └─────────────────┘
+                              │
+                              ▼
+                        ┌─────────────────┐
+                        │   Weekly Report │
+                        │   - SAFE flag   │
+                        │   - changes     │
+                        │   - metrics     │
+                        └─────────────────┘
 ```
 
-## 4. Alerting Policy
+## Weekly Report
 
-### Error Levels
+Generated at: `llmhive/src/llmhive/app/weekly/reports/YYYY-MM-DD.md`
 
-| Level | Condition | Action |
-|-------|-----------|--------|
-| INFO | Sync completed successfully | Log only |
-| WARN | Minor drift detected (<5% share diff) | Log, continue |
-| ERROR | Major drift or validation failure | Log, alert, create failed snapshot |
-| CRITICAL | Sync completely failed | Alert on-call, require manual review |
+### Contents
 
-### Alert Channels
-- **Logs**: All events logged to Cloud Logging
-- **Metrics**: Sync duration, success rate, drift % exposed via `/api/openrouter/rankings/status`
-- **Monitoring**: Set up Cloud Monitoring alerts for:
-  - `sync_duration_seconds > 300`
-  - `validation_errors > 0`
-  - `rankings_age_hours > 168` (stale data)
+1. **Summary**
+   - Models added/removed
+   - Category changes
+   - Research findings count
 
-## 5. Handling OpenRouter Changes
+2. **Top 3 Upgrades**
+   - Most impactful changes this week
 
-### If HTML/JSON Structure Changes
+3. **Model Catalog Changes**
+   - New models with capabilities
+   - Removed/inactive models
 
-1. **Detection**: Validation step will fail
-2. **Action**:
-   - Check OpenRouter rankings pages manually
-   - Update parsing logic in `rankings_client.py`
-   - Bump `PARSE_VERSION` in `rankings_sync.py`
-   - Update test fixtures in `tests/fixtures/openrouter/`
-   - Re-run sync
+4. **Benchmark Results**
+   - Before/after comparison
+   - Regression alerts
 
-### If New Categories Appear
+5. **Research Highlights**
+   - High-impact findings
+   - Integration proposals
 
-- Categories are discovered dynamically via `discover_categories()`
-- New categories automatically added with `is_active=True`
-- No code changes needed for new categories
+6. **Safety Status**
+   - `SAFE=true`: All tests passed, changes deployed
+   - `SAFE=false`: Manual review required
 
-### If Models Enter/Leave Rankings
+## Cloud Scheduler Setup
 
-- Rankings are fetched fresh each sync
-- Models entering top 10 are automatically included
-- Model catalog updated via models API sync
+### GCP Cloud Scheduler
 
-## 6. Measuring Drift & Impact
-
-### Drift Detection
-
-Tracked in `openrouter_ranking_snapshots`:
-- `status`: success/fail/partial
-- `error`: Drift description if failed
-- `raw_payload_hash`: For detecting unchanged data
-
-### Diff Report
-
-Exposed via `GET /api/openrouter/rankings/diff?since=<timestamp>`:
-
-```json
-{
-  "since": "2025-12-12T00:00:00Z",
-  "changes": {
-    "categories_added": ["data-analysis"],
-    "categories_removed": [],
-    "ranking_changes": [
-      {
-        "category": "programming",
-        "model": "openai/gpt-5.2",
-        "old_rank": null,
-        "new_rank": 1,
-        "change_type": "entered"
-      },
-      {
-        "category": "programming",
-        "model": "anthropic/claude-3-opus",
-        "old_rank": 1,
-        "new_rank": 3,
-        "change_type": "dropped"
-      }
-    ]
-  }
-}
-```
-
-### Orchestrator Impact
-
-The orchestrator uses rankings from DB for:
-- High-accuracy model selection (verification fallback)
-- Category-based routing
-- Model team assembly
-
-Performance tracked in `strategy_memory`:
-- Strategy outcomes by category
-- Model team success rates
-- Cost vs. accuracy tradeoffs
-
-## 7. Manual Sync Commands
-
-### Trigger Full Sync
 ```bash
-curl -X POST "https://api.llmhive.ai/api/openrouter/rankings/sync?full=1" \
-  -H "Authorization: Bearer $API_KEY"
+# Weekly full sync (Sunday 3am UTC)
+gcloud scheduler jobs create http openrouter-weekly-research \
+  --location=us-east1 \
+  --schedule="0 3 * * 0" \
+  --uri="https://YOUR_SERVICE/api/weekly/run" \
+  --http-method=POST \
+  --headers="Content-Type=application/json" \
+  --message-body='{"full": true}' \
+  --oidc-service-account-email=YOUR_SERVICE_ACCOUNT
+
+# 6-hour quick sync
+gcloud scheduler jobs create http openrouter-sync \
+  --location=us-east1 \
+  --schedule="0 */6 * * *" \
+  --uri="https://YOUR_SERVICE/api/openrouter/sync" \
+  --http-method=POST \
+  --oidc-service-account-email=YOUR_SERVICE_ACCOUNT
 ```
 
-### Validate Rankings
+### GitHub Actions
+
+The `.github/workflows/weekly-improvement.yml` workflow runs:
+- Every Sunday at 3am UTC (scheduled)
+- On manual trigger (workflow_dispatch)
+
+## Manual Triggers
+
+### CLI
+
 ```bash
-curl -X POST "https://api.llmhive.ai/api/openrouter/rankings/validate" \
-  -H "Authorization: Bearer $API_KEY"
+# Full weekly cycle
+python -m llmhive.app.weekly_improvement --run --verbose
+
+# Dry run (no changes)
+python -m llmhive.app.weekly_improvement --run --dry-run
+
+# Skip benchmarks (faster)
+python -m llmhive.app.weekly_improvement --run --no-benchmarks
+
+# OpenRouter sync only
+python -m llmhive.app.openrouter.scheduler --sync
 ```
 
-### Check Status
+### API
+
 ```bash
-curl "https://api.llmhive.ai/api/openrouter/rankings/status"
+# Trigger weekly cycle
+curl -X POST https://YOUR_SERVICE/api/weekly/run \
+  -H "Content-Type: application/json" \
+  -d '{"full": true}'
+
+# Check status
+curl https://YOUR_SERVICE/api/weekly/status
 ```
 
-## 8. Rollback Procedure
+## Safety Mechanisms
 
-If a sync introduces bad data:
+### Automatic Rollback
+- If post-benchmark shows >5% regression, changes are rolled back
+- SAFE=false flag prevents deployment
 
-1. Query previous successful snapshot:
+### Gating High-Risk Changes
+- Prompt changes require manual review
+- Routing changes create PR for review
+- Strategy changes need A/B testing
+
+### Test Requirements
+- All E2E tests must pass
+- Clarifying questions flow must work
+- No console errors on core pages
+
+## Monitoring
+
+### Logs
+- Weekly cycle logs at INFO level
+- Errors logged with stack traces
+- Summary logged at completion
+
+### Alerts
+- GitHub Issue created on SAFE=false
+- Slack notification (if configured)
+- Email to maintainers (if configured)
+
+### Metrics
+- Total cycle duration
+- Sync duration
+- Benchmark scores over time
+- Upgrade success rate
+
+## Drift Detection
+
+The system detects drift between:
+1. **DB ↔ OpenRouter**: Validates synced data against fresh fetches
+2. **UI ↔ DB**: E2E tests verify UI shows correct data
+3. **Orchestrator ↔ Rankings**: Checks model selection uses current rankings
+
+### Validation Queries
+
 ```sql
-SELECT * FROM openrouter_ranking_snapshots 
-WHERE category_slug = 'programming' 
-  AND status = 'success'
-ORDER BY fetched_at DESC
-LIMIT 2;
+-- Models not seen in 7 days
+SELECT model_id, last_seen_at 
+FROM openrouter_models 
+WHERE last_seen_at < NOW() - INTERVAL '7 days'
+AND is_active = TRUE;
+
+-- Categories without rankings
+SELECT c.slug 
+FROM openrouter_categories c 
+LEFT JOIN openrouter_ranking_snapshots s ON c.id = s.category_id
+WHERE s.id IS NULL AND c.is_active = TRUE;
 ```
 
-2. The UI and orchestrator always use the latest successful snapshot, so bad snapshots with `status='fail'` are automatically excluded.
+## Updating the System
 
-3. To force a fresh sync:
-```bash
-curl -X POST "https://api.llmhive.ai/api/openrouter/rankings/sync?full=1"
-```
+### Adding a New Category
+1. Add to `SEED_CATEGORIES` in `rankings_sync.py`
+2. Run sync: `python -m llmhive.app.openrouter.scheduler --sync`
+3. Verify in UI
 
-## 9. Maintenance Checklist
+### Changing Benchmark Cases
+1. Update `BENCHMARK_CASES` in `benchmark_agent.py`
+2. Run benchmarks to establish new baseline
+3. Monitor for false regressions
 
-### Weekly
-- [ ] Review sync logs for warnings
-- [ ] Check validation results
-- [ ] Verify UI matches OpenRouter
+### Adding New Research Source
+1. Add URL to `RESEARCH_SOURCES` in `research_agent.py`
+2. Add relevant topics to `RELEVANT_TOPICS`
+3. Test with single scan cycle
 
-### Monthly
-- [ ] Review category list vs OpenRouter
-- [ ] Check for deprecated models in rankings
-- [ ] Update parsing logic if needed
-- [ ] Review orchestrator model selection logs
+## Troubleshooting
 
-### Quarterly
-- [ ] Full audit of synced data vs OpenRouter
-- [ ] Review and update seed categories
-- [ ] Performance review of sync job
-- [ ] Update documentation
+### Sync Fails
+- Check OpenRouter API status
+- Verify API key is valid
+- Check network connectivity
 
+### Benchmark Regression
+- Review changed code since last pass
+- Check if model availability changed
+- Compare against historical baselines
+
+### Research Agent Timeout
+- Increase `max_runtime_seconds` in config
+- Check if sources are responding
+- Consider running in background
+
+---
+
+*Last updated: December 2025*

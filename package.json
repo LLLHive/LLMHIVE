@@ -18,7 +18,10 @@
     "ui:audit": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium",
     "ui:audit:quick": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium -g 'Route loads'",
     "ui:audit:headed": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium --headed",
-    "ui:audit:report": "cat docs/ui_audit/reports/latest/report.md"
+    "ui:audit:report": "cat docs/ui_audit/reports/latest/report.md",
+    "weekly:improve": "python scripts/weekly_improve.py",
+    "weekly:improve:dry-run": "python scripts/weekly_improve.py --dry-run --verbose",
+    "weekly:sync": "cd llmhive && python -m llmhive.app.openrouter.scheduler --sync"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
