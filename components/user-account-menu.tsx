@@ -83,7 +83,7 @@ export function UserAccountMenu({ user: propUser, onSignIn, onSignOut }: UserAcc
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" aria-label="Open account menu">
           <Avatar className="h-8 w-8 border border-border">
             <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
             <AvatarFallback className="bg-[var(--bronze)]/20 text-[var(--bronze)] text-xs">

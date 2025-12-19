@@ -1,14 +1,14 @@
 # LLMHive UI Audit Report
 
-**Generated**: 2025-12-19T20:46:12.857Z
+**Generated**: 2025-12-19T21:03:02.154Z
 
 ## Executive Summary
 
 | Metric | Count |
 |--------|-------|
 | Routes Visited | 0 |
-| Clicks Attempted | 77 |
-| Clicks Skipped (safety) | 13 |
+| Clicks Attempted | 0 |
+| Clicks Skipped (safety) | 0 |
 | Console Errors | 0 |
 | Network Failures | 0 |
 | P0 Issues (Critical) | 0 |
@@ -44,8 +44,13 @@ _No network failures detected._
 ## Accessibility Violations
 
 
-### /
-- 2 buttons without accessible name
+### /models
+- 10 buttons without accessible name
+- 1 inputs without labels
+
+
+### /orchestration
+- 1 buttons without accessible name
 - 1 inputs without labels
 
 

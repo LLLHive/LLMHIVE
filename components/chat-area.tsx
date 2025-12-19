@@ -801,6 +801,7 @@ export function ChatArea({
                 }
               }}
               placeholder={isListening ? "Listening... speak now" : "Ask the hive mind anything..."}
+              aria-label="Chat message input"
               className={`min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)] text-sm md:text-base ${
                 isListening ? 'border-red-500/50 ring-1 ring-red-500/20' : ''
               }`}

@@ -291,6 +291,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
               <button 
                 onClick={closeDrawer}
                 className="p-2 rounded-md hover:bg-secondary transition-colors"
+                aria-label="Close drawer"
               >
                 <X className="h-5 w-5" />
               </button>
