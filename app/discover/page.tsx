@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
+import { ForestBackgroundSimple } from "@/components/forest-background"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 
@@ -101,7 +102,12 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+    <div className="flex h-screen overflow-hidden relative">
+      {/* Immersive Forest Background */}
+      <ForestBackgroundSimple />
+      
+      {/* Glassmorphism Sidebar */}
+      <div className="glass-sidebar h-full">
       <Sidebar
         conversations={[]}
         currentConversationId={null}
@@ -116,61 +122,69 @@ export default function DiscoverPage() {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onGoHome={() => router.push(ROUTES.HOME)}
       />
+      </div>
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Desktop User Account Menu - Same as Home page */}
-        <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
+        {/* Desktop User Account Menu - Glassmorphism */}
+        <div className="hidden md:flex items-center justify-end p-3 border-b border-white/5 glass-content">
           <UserAccountMenu />
         </div>
 
         {/* Main Content in scrollable container */}
         <div className="flex-1 h-full overflow-auto">
-          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20">
-            {/* Hero Section - identical structure to home page and orchestration */}
-            <div className="text-center mb-0">
-              {/* Logo Container - Same size as home page */}
-              <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
-                <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
+            {/* Hero Section with 3D Logo */}
+            <div className="text-center mb-6 fade-in">
+              <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 float-subtle">
+                <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] title-branded mb-1">
-                Discover
+              <h1 className="text-3xl md:text-5xl lg:text-6xl title-3d mb-2">
+                LLMHive
               </h1>
-              {/* Subtitle */}
-              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
+              <h2 className="text-xl md:text-2xl lg:text-3xl subtitle-branded mb-2">
+                Discover
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
                 Explore AI-powered search, knowledge resources, and templates
               </p>
             </div>
 
-            {/* Separator Line - Same as Home Page */}
-            <div className="w-16 h-px bg-border my-2" />
-
-            {/* Cards Grid - matching home page template cards */}
-            <div className="w-full max-w-4xl">
-              <p className="text-sm text-muted-foreground text-center mb-2">Select a category to explore</p>
+            {/* Cards Grid - Glassmorphism Style */}
+            <div className="w-full max-w-4xl fade-in" style={{ animationDelay: '0.1s' }}>
+              <p className="text-sm text-muted-foreground text-center mb-3">Select a category to explore</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                {discoverCards.map((card) => {
+                {discoverCards.map((card, index) => {
                   const Icon = card.icon
                   const count = getCount(card.id)
+                  const badgeClasses: Record<string, string> = {
+                    "web-search": "icon-badge-blue",
+                    "knowledge-base": "icon-badge-purple",
+                    "ai-templates": "icon-badge-orange",
+                  }
                   return (
                     <button
                       key={card.id}
                       onClick={() => setActiveDrawer(card.id as DrawerId)}
-                      className="group relative p-4 md:p-5 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-all duration-300 hover:border-[var(--bronze)]/50 hover:shadow-lg hover:shadow-[var(--bronze)]/5 text-left"
+                      className="settings-card group fade-in"
+                      style={{ animationDelay: `${0.15 + index * 0.05}s` }}
                     >
                       {count > 0 && (
-                        <Badge className="absolute top-2 right-2 bronze-gradient text-white text-xs px-1.5 py-0.5">
+                        <Badge className="absolute top-2 right-2 bronze-gradient text-black text-xs px-1.5 py-0.5 font-semibold">
                           {count}
                         </Badge>
                       )}
-                      <div
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
-                      >
+                      {/* Icon Badge */}
+                      <div className={`icon-badge ${badgeClasses[card.id] || 'icon-badge-blue'}`}>
                         <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
                       </div>
-                      <h3 className="font-semibold text-sm md:text-base mb-1 group-hover:text-[var(--bronze)] transition-colors">
-                        {card.title}
-                      </h3>
-                      <p className="text-xs md:text-sm text-muted-foreground">{card.description}</p>
+                      {/* Card Text */}
+                      <div className="space-y-0.5 text-center">
+                        <h3 className="font-semibold text-sm md:text-base text-foreground group-hover:text-[var(--gold)] transition-colors">
+                          {card.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground leading-tight">{card.description}</p>
+                      </div>
                     </button>
                   )
                 })}

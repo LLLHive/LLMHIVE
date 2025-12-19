@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
+import { ForestBackgroundSimple } from "@/components/forest-background"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "@/lib/toast"
@@ -25,49 +26,49 @@ const STORAGE_KEYS = {
   CONNECTIONS: "llmhive-connections",
 }
 
-// Card data matching home page template card style exactly
+// Card data with new icon badge colors
 const settingsCards = [
   {
     id: "account",
     title: "Account",
     description: "Manage your profile and account details",
     icon: User,
-    color: "from-blue-500 to-cyan-500",
+    badgeClass: "icon-badge-blue",
   },
   {
     id: "api-keys",
     title: "API Keys",
     description: "Configure external service API keys",
     icon: Key,
-    color: "from-purple-500 to-indigo-500",
+    badgeClass: "icon-badge-amber",
   },
   {
     id: "connections",
     title: "Connections",
     description: "GitHub, Google, Slack integrations",
     icon: Link2,
-    color: "from-emerald-500 to-teal-500",
+    badgeClass: "icon-badge-teal",
   },
   {
     id: "notifications",
     title: "Notifications",
     description: "Email, push, and update preferences",
     icon: Bell,
-    color: "from-orange-500 to-amber-500",
+    badgeClass: "icon-badge-yellow",
   },
   {
     id: "privacy",
     title: "Privacy",
     description: "Data sharing and usage controls",
     icon: Shield,
-    color: "from-rose-500 to-pink-500",
+    badgeClass: "icon-badge-pink",
   },
   {
     id: "appearance",
     title: "Appearance",
     description: "Theme, display, and accessibility",
     icon: Palette,
-    color: "from-amber-500 to-yellow-500",
+    badgeClass: "icon-badge-orange",
   },
 ]
 
@@ -129,7 +130,6 @@ export default function SettingsPage() {
   useEffect(() => {
     setMounted(true)
     
-    // Load all settings from localStorage
     try {
       const savedAppearance = localStorage.getItem(STORAGE_KEYS.APPEARANCE)
       const savedNotifications = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)
@@ -144,12 +144,10 @@ export default function SettingsPage() {
       setConnectedKeys(savedApiKeys ? JSON.parse(savedApiKeys) : ["openai"])
       setConnectedServices(savedConnections ? JSON.parse(savedConnections) : ["github"])
       
-      // Apply appearance settings on load
       document.documentElement.classList.toggle('compact-mode', parsedAppearance.includes('compactMode'))
       document.documentElement.classList.toggle('no-animations', !parsedAppearance.includes('animations'))
     } catch (e) {
       console.error("Failed to load settings:", e)
-      // Fallback to defaults
       setAppearanceSettings(["animations"])
       setEnabledNotifications(["email", "updates"])
       setPrivacySettings(["shareUsage"])
@@ -199,10 +197,9 @@ export default function SettingsPage() {
       const next = prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
       localStorage.setItem(STORAGE_KEYS.APPEARANCE, JSON.stringify(next))
       
-      // Actually apply appearance settings
       if (id === 'compactMode') {
         document.documentElement.classList.toggle('compact-mode', !prev.includes(id))
-  }
+      }
       if (id === 'animations') {
         document.documentElement.classList.toggle('no-animations', prev.includes(id))
       }
@@ -214,85 +211,98 @@ export default function SettingsPage() {
 
   const getCount = (id: string) => {
     switch (id) {
-      case "api-keys":
-        return connectedKeys.length
-      case "connections":
-        return connectedServices.length
-      case "notifications":
-        return enabledNotifications.length
-      case "privacy":
-        return privacySettings.length
-      case "appearance":
-        return appearanceSettings.length
-      default:
-        return 0
+      case "api-keys": return connectedKeys.length
+      case "connections": return connectedServices.length
+      case "notifications": return enabledNotifications.length
+      case "privacy": return privacySettings.length
+      case "appearance": return appearanceSettings.length
+      default: return 0
     }
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <Sidebar
-        conversations={[]}
-        currentConversationId={null}
-        onNewChat={() => router.push(ROUTES.HOME)}
-        onSelectConversation={() => router.push(ROUTES.HOME)}
-        onDeleteConversation={() => {}}
-        onTogglePin={() => {}}
-        onRenameConversation={() => {}}
-        onMoveToProject={() => {}}
-        projects={[]}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onGoHome={() => router.push(ROUTES.HOME)}
-      />
+    <div className="flex h-screen overflow-hidden relative">
+      {/* Immersive Forest Background */}
+      <ForestBackgroundSimple />
 
+      {/* Glassmorphism Sidebar */}
+      <div className="glass-sidebar h-full">
+        <Sidebar
+          conversations={[]}
+          currentConversationId={null}
+          onNewChat={() => router.push(ROUTES.HOME)}
+          onSelectConversation={() => router.push(ROUTES.HOME)}
+          onDeleteConversation={() => {}}
+          onTogglePin={() => {}}
+          onRenameConversation={() => {}}
+          onMoveToProject={() => {}}
+          projects={[]}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onGoHome={() => router.push(ROUTES.HOME)}
+        />
+      </div>
+
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
+        {/* Top Bar */}
+        <div className="hidden md:flex items-center justify-end p-3 glass-content border-b border-white/5">
           <UserAccountMenu />
         </div>
 
+        {/* Settings Content */}
         <div className="flex-1 h-full overflow-auto">
-          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20">
-            <div className="text-center mb-0">
-              <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
-                <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
+            
+            {/* Logo & Title */}
+            <div className="text-center mb-6 fade-in">
+              <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 float-subtle">
+                <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] title-branded mb-1">
-                Settings
+              <h1 className="text-3xl md:text-5xl lg:text-6xl title-3d mb-2">
+                LLMHive
               </h1>
-              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
+              <h2 className="text-xl md:text-2xl lg:text-3xl subtitle-branded mb-2">
+                Settings
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
                 Configure your account, integrations, and preferences
               </p>
             </div>
 
-            <div className="w-16 h-px bg-border my-2" />
-
-            <div className="w-full max-w-5xl">
-              <p className="text-sm text-muted-foreground text-center mb-2">Select a category to configure</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                {settingsCards.map((card) => {
+            {/* Settings Grid */}
+            <div className="w-full max-w-4xl fade-in" style={{ animationDelay: '0.1s' }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+                {settingsCards.map((card, index) => {
                   const Icon = card.icon
                   const count = getCount(card.id)
                   return (
                     <button
                       key={card.id}
                       onClick={() => setActiveDrawer(card.id as DrawerId)}
-                      className="group relative p-4 md:p-5 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-all duration-300 hover:border-[var(--bronze)]/50 hover:shadow-lg hover:shadow-[var(--bronze)]/5 text-left"
+                      className="settings-card group fade-in"
+                      style={{ animationDelay: `${0.1 + index * 0.05}s` }}
                     >
                       {count > 0 && (
-                        <Badge className="absolute top-2 right-2 bronze-gradient text-white text-xs px-1.5 py-0.5">
+                        <Badge className="absolute top-2 right-2 bronze-gradient text-xs px-1.5 py-0.5 text-black font-semibold">
                           {count}
                         </Badge>
                       )}
-                      <div
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
-                      >
+                      
+                      {/* Icon Badge */}
+                      <div className={`icon-badge ${card.badgeClass}`}>
                         <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
                       </div>
-                      <h3 className="font-semibold text-sm md:text-base mb-1 group-hover:text-[var(--bronze)] transition-colors">
-                        {card.title}
-                      </h3>
-                      <p className="text-xs md:text-sm text-muted-foreground">{card.description}</p>
+                      
+                      {/* Card Text */}
+                      <div className="space-y-0.5">
+                        <h3 className="font-semibold text-sm md:text-base text-foreground group-hover:text-[var(--gold)] transition-colors">
+                          {card.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground leading-tight hidden sm:block">
+                          {card.description}
+                        </p>
+                      </div>
                     </button>
                   )
                 })}
@@ -304,10 +314,10 @@ export default function SettingsPage() {
 
       {/* Account Drawer */}
       <Sheet open={activeDrawer === "account"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
-          <SheetHeader className="p-4 pb-3 border-b border-border">
+        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+              <div className="icon-badge icon-badge-blue">
                 <User className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -318,28 +328,28 @@ export default function SettingsPage() {
           </SheetHeader>
           <ScrollArea className="h-[calc(100vh-100px)]">
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-4 p-3 rounded-lg border border-border">
+              <div className="flex items-center gap-4 p-3 rounded-lg glass-card">
                 <div className="w-14 h-14 rounded-full bg-[var(--bronze)]/20 flex items-center justify-center">
                   <User className="h-7 w-7 text-[var(--bronze)]" />
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="bg-white/5 border-white/10">
                   Change Avatar
                 </Button>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Display Name</Label>
-                <Input placeholder="Your name" defaultValue="User" className="bg-secondary/50 border-border" />
+                <Input placeholder="Your name" defaultValue="User" className="bg-white/5 border-white/10" />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Email</Label>
-                <Input type="email" placeholder="your@email.com" className="bg-secondary/50 border-border" />
+                <Input type="email" placeholder="your@email.com" className="bg-white/5 border-white/10" />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Bio</Label>
-                <Input placeholder="Tell us about yourself" className="bg-secondary/50 border-border" />
+                <Input placeholder="Tell us about yourself" className="bg-white/5 border-white/10" />
               </div>
 
               <Button className="w-full bronze-gradient hover:opacity-90">
@@ -347,7 +357,7 @@ export default function SettingsPage() {
                 Save Changes
               </Button>
 
-              <div className="pt-4 border-t border-border">
+              <div className="pt-4 border-t border-white/10">
                 <p className="text-xs text-destructive mb-2">Danger Zone</p>
                 <Button variant="destructive" size="sm" className="w-full">
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -361,10 +371,10 @@ export default function SettingsPage() {
 
       {/* API Keys Drawer */}
       <Sheet open={activeDrawer === "api-keys"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
-          <SheetHeader className="p-4 pb-3 border-b border-border">
+        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+              <div className="icon-badge icon-badge-amber">
                 <Key className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -383,8 +393,8 @@ export default function SettingsPage() {
                     onClick={() => toggleKey(key.id)}
                     className={`w-full p-3 rounded-lg border transition-all text-left ${
                       isConnected
-                        ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                        : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                        ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                        : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -393,16 +403,16 @@ export default function SettingsPage() {
                           isConnected ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
                         }`}
                       >
-                        {isConnected && <Check className="h-3 w-3 text-white" />}
+                        {isConnected && <Check className="h-3 w-3 text-black" />}
                       </div>
                       <div className="flex-1">
-                        <span className={`text-sm block ${isConnected ? "text-[var(--bronze)]" : ""}`}>
+                        <span className={`text-sm block ${isConnected ? "text-[var(--gold)]" : ""}`}>
                           {key.label}
                         </span>
                         <span className="text-xs text-muted-foreground">{key.placeholder}</span>
                       </div>
                       {isConnected && (
-                        <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-500">
+                        <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
                           Connected
                         </Badge>
                       )}
@@ -417,10 +427,10 @@ export default function SettingsPage() {
 
       {/* Connections Drawer */}
       <Sheet open={activeDrawer === "connections"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
-          <SheetHeader className="p-4 pb-3 border-b border-border">
+        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+              <div className="icon-badge icon-badge-teal">
                 <Link2 className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -440,8 +450,8 @@ export default function SettingsPage() {
                     onClick={() => toggleService(service.id)}
                     className={`w-full p-3 rounded-lg border transition-all text-left ${
                       isConnected
-                        ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                        : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                        ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                        : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -450,11 +460,11 @@ export default function SettingsPage() {
                           isConnected ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
                         }`}
                       >
-                        {isConnected && <Check className="h-3 w-3 text-white" />}
+                        {isConnected && <Check className="h-3 w-3 text-black" />}
                       </div>
                       <Icon className="h-4 w-4 text-muted-foreground" />
                       <div className="flex-1">
-                        <span className={`text-sm block ${isConnected ? "text-[var(--bronze)]" : ""}`}>
+                        <span className={`text-sm block ${isConnected ? "text-[var(--gold)]" : ""}`}>
                           {service.label}
                         </span>
                         <span className="text-xs text-muted-foreground">{service.description}</span>
@@ -470,10 +480,10 @@ export default function SettingsPage() {
 
       {/* Notifications Drawer */}
       <Sheet open={activeDrawer === "notifications"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
-          <SheetHeader className="p-4 pb-3 border-b border-border">
+        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+              <div className="icon-badge icon-badge-yellow">
                 <Bell className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -492,8 +502,8 @@ export default function SettingsPage() {
                     onClick={() => toggleNotification(option.id)}
                     className={`w-full p-3 rounded-lg border transition-all text-left ${
                       isEnabled
-                        ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                        : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                        ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                        : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -502,10 +512,10 @@ export default function SettingsPage() {
                           isEnabled ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
                         }`}
                       >
-                        {isEnabled && <Check className="h-3 w-3 text-white" />}
+                        {isEnabled && <Check className="h-3 w-3 text-black" />}
                       </div>
                       <div>
-                        <span className={`text-sm block ${isEnabled ? "text-[var(--bronze)]" : ""}`}>
+                        <span className={`text-sm block ${isEnabled ? "text-[var(--gold)]" : ""}`}>
                           {option.label}
                         </span>
                         <span className="text-xs text-muted-foreground">{option.description}</span>
@@ -521,10 +531,10 @@ export default function SettingsPage() {
 
       {/* Privacy Drawer */}
       <Sheet open={activeDrawer === "privacy"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
-          <SheetHeader className="p-4 pb-3 border-b border-border">
+        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
+              <div className="icon-badge icon-badge-pink">
                 <Shield className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -543,8 +553,8 @@ export default function SettingsPage() {
                     onClick={() => togglePrivacy(option.id)}
                     className={`w-full p-3 rounded-lg border transition-all text-left ${
                       isEnabled
-                        ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                        : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                        ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                        : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -553,10 +563,10 @@ export default function SettingsPage() {
                           isEnabled ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
                         }`}
                       >
-                        {isEnabled && <Check className="h-3 w-3 text-white" />}
+                        {isEnabled && <Check className="h-3 w-3 text-black" />}
                       </div>
                       <div>
-                        <span className={`text-sm block ${isEnabled ? "text-[var(--bronze)]" : ""}`}>
+                        <span className={`text-sm block ${isEnabled ? "text-[var(--gold)]" : ""}`}>
                           {option.label}
                         </span>
                         <span className="text-xs text-muted-foreground">{option.description}</span>
@@ -572,10 +582,10 @@ export default function SettingsPage() {
 
       {/* Appearance Drawer */}
       <Sheet open={activeDrawer === "appearance"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
-          <SheetHeader className="p-4 pb-3 border-b border-border">
+        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
+              <div className="icon-badge icon-badge-orange">
                 <Palette className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -589,23 +599,23 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Theme</Label>
                 {mounted ? (
-                <div className="flex gap-2">
+                  <div className="flex gap-2">
                     {["light", "dark", "system"].map((themeOption) => (
-                    <button
+                      <button
                         key={themeOption}
                         onClick={() => setTheme(themeOption)}
-                      className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
+                        className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
                           theme === themeOption
-                          ? "border-[var(--bronze)] bg-[var(--bronze)]/10 text-[var(--bronze)]"
-                          : "border-border hover:border-[var(--bronze)]/50"
-                      }`}
-                    >
+                            ? "border-[var(--bronze)] bg-[var(--bronze)]/15 text-[var(--gold)]"
+                            : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5"
+                        }`}
+                      >
                         {themeOption.charAt(0).toUpperCase() + themeOption.slice(1)}
-                    </button>
-                  ))}
-                </div>
+                      </button>
+                    ))}
+                  </div>
                 ) : (
-                  <div className="h-10 bg-secondary/50 animate-pulse rounded-lg" />
+                  <div className="h-10 bg-white/5 animate-pulse rounded-lg" />
                 )}
                 <p className="text-[10px] text-muted-foreground">
                   Currently: {mounted ? resolvedTheme : "loading..."}
@@ -621,8 +631,8 @@ export default function SettingsPage() {
                       onClick={() => toggleAppearance(option.id)}
                       className={`w-full p-3 rounded-lg border transition-all text-left ${
                         isEnabled
-                          ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                          : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                          ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                          : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -631,10 +641,10 @@ export default function SettingsPage() {
                             isEnabled ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
                           }`}
                         >
-                          {isEnabled && <Check className="h-3 w-3 text-white" />}
+                          {isEnabled && <Check className="h-3 w-3 text-black" />}
                         </div>
                         <div>
-                          <span className={`text-sm block ${isEnabled ? "text-[var(--bronze)]" : ""}`}>
+                          <span className={`text-sm block ${isEnabled ? "text-[var(--gold)]" : ""}`}>
                             {option.label}
                           </span>
                           <span className="text-xs text-muted-foreground">{option.description}</span>

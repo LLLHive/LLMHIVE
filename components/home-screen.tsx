@@ -82,7 +82,7 @@ const templates = [
     title: "General Assistant",
     description: "Versatile AI helper for everyday tasks",
     icon: Sparkles,
-    color: "from-orange-500 to-amber-500",
+    badgeClass: "icon-badge-orange",
     preset: {
       reasoningMode: "standard" as const,
       domainPack: "default" as const,
@@ -94,7 +94,7 @@ const templates = [
     title: "Research & Deep Reasoning",
     description: "In-depth analysis with multiple perspectives",
     icon: Brain,
-    color: "from-purple-500 to-indigo-500",
+    badgeClass: "icon-badge-purple",
     preset: {
       reasoningMode: "deep" as const,
       domainPack: "research" as const,
@@ -107,7 +107,7 @@ const templates = [
     title: "Code & Debug",
     description: "Expert coding assistance and debugging",
     icon: Code,
-    color: "from-emerald-500 to-teal-500",
+    badgeClass: "icon-badge-emerald",
     preset: {
       reasoningMode: "standard" as const,
       domainPack: "coding" as const,
@@ -120,7 +120,7 @@ const templates = [
     title: "Industry Packs",
     description: "Legal, Medical, Marketing & more",
     icon: Briefcase,
-    color: "from-blue-500 to-cyan-500",
+    badgeClass: "icon-badge-blue",
     preset: {
       reasoningMode: "deep" as const,
       agentMode: "team" as const,
@@ -205,36 +205,44 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   const currentTemplate = templates.find(t => t.id === activeDrawer)
 
   return (
-    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20 overflow-y-auto relative">
-      {/* Hero Section */}
-      <div className="text-center mb-0">
-        <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
-          <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20 overflow-y-auto relative">
+      {/* Hero Section with 3D Logo */}
+      <div className="text-center mb-6 fade-in">
+        <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 float-subtle">
+          <Image 
+            src="/logo.png" 
+            alt="LLMHive" 
+            fill 
+            className="object-contain drop-shadow-2xl" 
+            priority 
+          />
         </div>
-        <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] font-bold mb-1 bg-gradient-to-r from-[var(--bronze)] via-[var(--gold)] to-[var(--bronze)] bg-clip-text text-transparent">
-          Welcome to LLMHive
+        
+        {/* 3D Metallic Title */}
+        <h1 className="text-3xl md:text-5xl lg:text-6xl title-3d mb-2">
+          LLMHive
         </h1>
-        <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
+        
+        <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-4">
           Multi-agent AI orchestration for enhanced accuracy and deeper insights
         </p>
       </div>
 
-      <div className="w-16 h-px bg-border my-2" />
-
+      {/* Main CTA Button */}
       <Button
         onClick={onNewChat}
         size="lg"
-        className="bronze-gradient mb-4 md:mb-6 h-12 md:h-14 px-8 md:px-10 text-base md:text-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
+        className="bronze-gradient mb-6 md:mb-8 h-12 md:h-14 px-8 md:px-10 text-base md:text-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
       >
         <MessageSquarePlus className="h-5 w-5 md:h-6 md:w-6" />
-        New Chat
+        Start Chatting
       </Button>
 
-      {/* Template Cards */}
-      <div className="w-full max-w-4xl">
-        <p className="text-sm text-muted-foreground text-center mb-2">Or start from a template</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {templates.map((template) => {
+      {/* Template Cards - Glass Cards */}
+      <div className="w-full max-w-4xl fade-in" style={{ animationDelay: '0.1s' }}>
+        <p className="text-sm text-muted-foreground text-center mb-3">Or start from a template</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          {templates.map((template, index) => {
             const Icon = template.icon
             return (
               <button
@@ -245,18 +253,22 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                   e.stopPropagation()
                   openDrawer(template.id)
                 }}
-                className="group flex flex-col items-center gap-2 p-3 md:p-4 rounded-xl border border-border hover:border-[var(--bronze)] bg-card/50 hover:bg-card/80 transition-all duration-300 cursor-pointer text-left"
+                className="settings-card group fade-in"
+                style={{ animationDelay: `${0.15 + index * 0.05}s` }}
               >
-                <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}
-                >
+                {/* Icon Badge */}
+                <div className={`icon-badge ${template.badgeClass}`}>
                   <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 </div>
-                <div className="text-center">
-                  <h3 className="text-sm md:text-base font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors">
+                
+                {/* Card Text */}
+                <div className="space-y-0.5 text-center">
+                  <h3 className="font-semibold text-sm md:text-base text-foreground group-hover:text-[var(--gold)] transition-colors">
                     {template.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+                  <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                    {template.description}
+                  </p>
                 </div>
               </button>
             )
@@ -264,23 +276,23 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </div>
       </div>
 
-      {/* Overlay and Drawer - Direct rendering without Portal */}
+      {/* Overlay and Drawer */}
       {activeDrawer && (
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/50 z-[100] animate-in fade-in-0"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-in fade-in-0"
             onClick={closeDrawer}
           />
           
-          {/* Drawer Panel */}
-          <div className="fixed inset-y-0 right-0 w-[320px] sm:w-[380px] bg-card border-l border-border z-[101] animate-in slide-in-from-right duration-300 flex flex-col">
+          {/* Drawer Panel - Glassmorphism */}
+          <div className="fixed inset-y-0 right-0 w-[320px] sm:w-[380px] glass-card border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col">
             {/* Header */}
-            <div className="p-4 pb-3 border-b border-border flex items-center gap-3">
+            <div className="p-4 pb-3 border-b border-white/10 flex items-center gap-3">
               {currentTemplate && (
                 <>
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${currentTemplate.color} flex items-center justify-center shadow-lg`}>
-                    <currentTemplate.icon className="h-6 w-6 text-white" />
+                  <div className={`icon-badge ${currentTemplate.badgeClass}`}>
+                    <currentTemplate.icon className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold">{currentTemplate.title}</h2>
@@ -290,7 +302,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
               )}
               <button 
                 onClick={closeDrawer}
-                className="p-2 rounded-md hover:bg-secondary transition-colors"
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                 aria-label="Close drawer"
               >
                 <X className="h-5 w-5" />
@@ -314,8 +326,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                           onClick={() => setSelectedMode(mode.id)}
                           className={`w-full p-4 rounded-lg border transition-all text-left ${
                             isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                              : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                           }`}
                         >
                           <div className="flex items-center gap-3">
@@ -324,11 +336,11 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                                 isSelected ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
                               }`}
                             >
-                              {isSelected && <Check className="h-3 w-3 text-white" />}
+                              {isSelected && <Check className="h-3 w-3 text-black" />}
                             </div>
-                            <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
+                            <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--gold)]" : "text-muted-foreground"}`} />
                             <div>
-                              <span className={`text-sm font-medium block ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                              <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
                                 {mode.label}
                               </span>
                               <span className="text-xs text-muted-foreground">{mode.description}</span>
@@ -356,15 +368,15 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                           onClick={() => toggleFeature(feature.id)}
                           className={`w-full p-4 rounded-lg border transition-all text-left ${
                             isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                              : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
+                              <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--gold)]" : "text-muted-foreground"}`} />
                               <div>
-                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
                                   {feature.label}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{feature.description}</span>
@@ -377,7 +389,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     })}
                   </div>
                   {selectedFeatures.length > 0 && (
-                    <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <div className="p-3 rounded-lg glass-card border-purple-500/20">
                       <p className="text-xs text-purple-400">
                         {selectedFeatures.length} feature{selectedFeatures.length > 1 ? 's' : ''} enabled for deeper analysis
                       </p>
@@ -401,15 +413,15 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                           onClick={() => toggleFeature(feature.id)}
                           className={`w-full p-4 rounded-lg border transition-all text-left ${
                             isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                              : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
+                              <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--gold)]" : "text-muted-foreground"}`} />
                               <div>
-                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
                                   {feature.label}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{feature.description}</span>
@@ -422,7 +434,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     })}
                   </div>
                   {selectedFeatures.length > 0 && (
-                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="p-3 rounded-lg glass-card border-emerald-500/20">
                       <p className="text-xs text-emerald-400">
                         {selectedFeatures.length} coding feature{selectedFeatures.length > 1 ? 's' : ''} enabled
                       </p>
@@ -446,27 +458,27 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                           onClick={() => setSelectedIndustry(pack.id)}
                           className={`w-full p-4 rounded-lg border transition-all text-left ${
                             isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
-                              : "border-border hover:border-[var(--bronze)]/50 hover:bg-secondary/50"
+                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <div
                               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
                                 isSelected 
-                                  ? "bg-gradient-to-br from-blue-500 to-cyan-500" 
-                                  : "bg-secondary"
+                                  ? "icon-badge icon-badge-blue" 
+                                  : "bg-white/10"
                               }`}
                             >
                               <Icon className={`h-5 w-5 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
                                   {pack.label}
                                 </span>
                                 {isSelected && (
-                                  <Badge className="bronze-gradient text-white text-xs">Selected</Badge>
+                                  <Badge className="bronze-gradient text-black text-xs font-semibold">Selected</Badge>
                                 )}
                               </div>
                               <span className="text-xs text-muted-foreground">{pack.description}</span>
@@ -477,7 +489,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     })}
                   </div>
                   {selectedIndustry && (
-                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <div className="p-3 rounded-lg glass-card border-blue-500/20">
                       <p className="text-xs text-blue-400">
                         {industryPacks.find(p => p.id === selectedIndustry)?.label} pack selected with specialized prompts and terminology
                       </p>
@@ -488,7 +500,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
             </ScrollArea>
 
             {/* Footer */}
-            <div className="p-4 border-t border-border">
+            <div className="p-4 border-t border-white/10">
               <Button 
                 className="w-full bronze-gradient gap-2" 
                 onClick={handleStartChat}

@@ -632,7 +632,7 @@ export function ChatArea({
         }}
       />
 
-      <header className="border-b border-border p-3 bg-card/50 backdrop-blur-xl sticky top-0 z-40 space-y-3">
+      <header className="border-b border-white/10 p-3 glass-content sticky top-0 z-40 space-y-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Active Mode Badge */}
           <div className="flex items-center gap-2">
@@ -664,7 +664,7 @@ export function ChatArea({
 
       {/* Live Status Panel - Shows during orchestration */}
       {(orchestrationStatus.isActive || orchestrationStatus.events.length > 0) && (
-        <div className="px-4 py-2 border-b border-border bg-card/30">
+        <div className="px-4 py-2 border-b border-white/10 glass-content">
           <div className="max-w-4xl mx-auto">
             <LiveStatusPanel status={orchestrationStatus} />
           </div>
@@ -753,7 +753,7 @@ export function ChatArea({
         />
       )}
 
-      <div className="border-t border-border p-3 md:p-4 bg-card/80 backdrop-blur-xl relative z-10 sticky bottom-0">
+      <div className="border-t border-white/10 p-3 md:p-4 glass-content relative z-10 sticky bottom-0">
         <div className="max-w-4xl mx-auto">
           {attachments.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
@@ -802,7 +802,7 @@ export function ChatArea({
               }}
               placeholder={isListening ? "Listening... speak now" : "Ask the hive mind anything..."}
               aria-label="Chat message input"
-              className={`min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-secondary/50 border-border focus:border-[var(--bronze)] text-sm md:text-base ${
+              className={`min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-white/5 border-white/10 focus:border-[var(--bronze)] text-sm md:text-base ${
                 isListening ? 'border-red-500/50 ring-1 ring-red-500/20' : ''
               }`}
               spellCheck={orchestratorSettings.enableSpellCheck !== false}

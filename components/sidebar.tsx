@@ -112,7 +112,7 @@ export function Sidebar({
     <>
       <aside
         className={cn(
-          "border-r border-border bg-sidebar flex flex-col transition-all duration-300 relative h-full",
+          "glass-sidebar flex flex-col transition-all duration-300 relative h-full",
           collapsed ? "w-16" : "w-52",
         )}
       >

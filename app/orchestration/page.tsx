@@ -14,6 +14,7 @@ import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import { REASONING_METHODS, REASONING_CATEGORIES } from "@/lib/reasoning-methods"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
+import { ForestBackgroundSimple } from "@/components/forest-background"
 import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settings-storage"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
@@ -331,8 +332,12 @@ export default function OrchestrationPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Left Sidebar - Same as Home Page */}
+    <div className="flex h-screen overflow-hidden relative">
+      {/* Immersive Forest Background */}
+      <ForestBackgroundSimple />
+      
+      {/* Glassmorphism Sidebar */}
+      <div className="glass-sidebar h-full">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -347,65 +352,74 @@ export default function OrchestrationPage() {
         projects={[]}
         onGoHome={() => router.push(ROUTES.HOME)}
       />
+      </div>
 
-      {/* Main Content - Matching Home Page Style Exactly */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Desktop User Account Menu - Same as Home page */}
-        <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
+        {/* Desktop User Account Menu - Glassmorphism */}
+        <div className="hidden md:flex items-center justify-end p-3 border-b border-white/5 glass-content">
           <UserAccountMenu />
         </div>
 
         {/* Main Content in scrollable container */}
         <div className="flex-1 h-full overflow-auto">
-          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20">
-            {/* Hero Section - Same as Home Page */}
-            <div className="text-center mb-0">
-              {/* Logo Container - Same size as home page */}
-              <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
-                <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
+            {/* Hero Section with 3D Logo */}
+            <div className="text-center mb-6 fade-in">
+              <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 float-subtle">
+                <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              {/* Title - Same styling as home page but with "Orchestration" */}
-              <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] title-branded mb-1">
-                Orchestration
+              <h1 className="text-3xl md:text-5xl lg:text-6xl title-3d mb-2">
+                LLMHive
               </h1>
-              {/* Subtitle */}
-              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
+              <h2 className="text-xl md:text-2xl lg:text-3xl subtitle-branded mb-2">
+                Orchestration
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
                 Configure your multi-agent AI system with precision
               </p>
             </div>
 
-            {/* Separator Line - Same as Home Page */}
-            <div className="w-16 h-px bg-border my-2" />
-
-            {/* Orchestration Cards - Same Style as Home Template Cards */}
-            <div className="w-full max-w-5xl">
-              <p className="text-sm text-muted-foreground text-center mb-2">Select a category to configure</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                {orchestrationCards.map((card) => {
+            {/* Orchestration Cards - Glassmorphism Style */}
+            <div className="w-full max-w-5xl fade-in" style={{ animationDelay: '0.1s' }}>
+              <p className="text-sm text-muted-foreground text-center mb-3">Select a category to configure</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+                {orchestrationCards.map((card, index) => {
                   const Icon = card.icon
                   const count = getCount(card.id)
+                  const badgeClasses: Record<string, string> = {
+                    "elite": "icon-badge-yellow",
+                    "models": "icon-badge-orange",
+                    "reasoning": "icon-badge-purple",
+                    "tuning": "icon-badge-emerald",
+                    "features": "icon-badge-blue",
+                    "tools": "icon-badge-rose",
+                    "quality": "icon-badge-teal",
+                    "speed": "icon-badge-teal",
+                  }
                   return (
                     <button
                       key={card.id}
                       onClick={() => setActiveDrawer(card.id as DrawerId)}
-                      className="group flex flex-col items-center gap-2 p-3 md:p-4 rounded-xl border border-border hover:border-[var(--bronze)] bg-card/50 hover:bg-card/80 transition-all duration-300 cursor-pointer text-left relative"
+                      className="settings-card group fade-in"
+                      style={{ animationDelay: `${0.15 + index * 0.03}s` }}
                     >
                       {/* Count Badge */}
                       {count > 0 && (
-                        <Badge className="absolute top-2 right-2 bg-[var(--bronze)] text-black text-[10px] px-1.5 py-0.5 min-w-[18px] h-[18px] flex items-center justify-center">
+                        <Badge className="absolute top-2 right-2 bronze-gradient text-black text-xs px-1.5 py-0.5 font-semibold">
                           {count}
                         </Badge>
                       )}
-                      <div
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}
-                      >
+                      {/* Icon Badge */}
+                      <div className={`icon-badge ${badgeClasses[card.id] || 'icon-badge-blue'}`}>
                         <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
                       </div>
-                      <div className="text-center">
-                        <h3 className="text-sm md:text-base font-semibold text-foreground group-hover:text-[var(--bronze)] transition-colors">
+                      {/* Card Text */}
+                      <div className="space-y-0.5 text-center">
+                        <h3 className="font-semibold text-sm md:text-base text-foreground group-hover:text-[var(--gold)] transition-colors">
                           {card.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{card.description}</p>
+                        <p className="text-xs text-muted-foreground leading-tight line-clamp-2 hidden sm:block">{card.description}</p>
                       </div>
                     </button>
                   )

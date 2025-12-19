@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
+import { ForestBackgroundSimple } from "@/components/forest-background"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 import { listModels, getRankings } from "@/lib/openrouter/api"
@@ -315,8 +316,12 @@ export default function ModelsPage() {
   }))
   
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* Sidebar - Same as all other pages */}
+    <div className="flex h-screen overflow-hidden relative">
+      {/* Immersive Forest Background */}
+      <ForestBackgroundSimple />
+      
+      {/* Glassmorphism Sidebar */}
+      <div className="glass-sidebar h-full">
       <Sidebar
         conversations={[]}
         currentConversationId={null}
@@ -331,31 +336,33 @@ export default function ModelsPage() {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onGoHome={() => router.push(ROUTES.HOME)}
       />
+      </div>
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Desktop User Account Menu */}
-        <div className="hidden md:flex items-center justify-end p-3 border-b border-border bg-card/50">
+        {/* Desktop User Account Menu - Glassmorphism */}
+        <div className="hidden md:flex items-center justify-end p-3 border-b border-white/5 glass-content">
           <UserAccountMenu />
         </div>
 
         {/* Main Content */}
         <div className="flex-1 h-full overflow-auto">
-          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-0 pb-20">
-            {/* Hero Section - Logo and Title */}
-            <div className="text-center mb-0">
-              <div className="relative w-40 h-40 md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px] mx-auto mb-0 -mt-4 md:-mt-8 lg:-mt-10">
-                <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+          <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
+            {/* Hero Section with 3D Logo */}
+            <div className="text-center mb-6 fade-in">
+              <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 float-subtle">
+                <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              <h1 className="-mt-6 md:-mt-8 lg:-mt-10 text-[1.75rem] md:text-[2.85rem] lg:text-[3.4rem] title-branded mb-1">
-                Models
+              <h1 className="text-3xl md:text-5xl lg:text-6xl title-3d mb-2">
+                LLMHive
               </h1>
-              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-0">
+              <h2 className="text-xl md:text-2xl lg:text-3xl subtitle-branded mb-2">
+                Models
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
                 Browse {allModels.length}+ models by ranking category
               </p>
             </div>
-
-            {/* Separator */}
-            <div className="w-16 h-px bg-border my-2" />
 
             {/* Selection Status */}
             {selectedModelIds.size > 0 && (
