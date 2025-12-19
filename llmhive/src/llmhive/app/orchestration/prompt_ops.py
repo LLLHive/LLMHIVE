@@ -109,6 +109,9 @@ class QueryAnalysis:
     clarification_action: ClarificationAction = ClarificationAction.PROCEED_WITH_ASSUMPTION
     clarification_questions: List[str] = field(default_factory=list)
     confidence_score: float = 0.9
+    # PR7: Model suggestion and cost estimation
+    suggested_models: List[str] = field(default_factory=list)
+    estimated_tokens: int = 2000
 
 
 @dataclass(slots=True)
@@ -171,10 +174,82 @@ Respond in JSON format with these fields:
     "requires_tools": boolean (true if needs web search, calculator, code execution),
     "tool_hints": list of tools that might help ["web_search", "calculator", "code_execution"],
     "ambiguities": list of unclear/ambiguous parts,
-    "confidence": 0.0 to 1.0
+    "confidence": 0.0 to 1.0,
+    "suggested_models": list of model IDs best suited for this task,
+    "estimated_tokens": approximate token count for response
 }}
 
 Respond ONLY with the JSON, no other text."""
+
+
+# ==============================================================================
+# PR7: Dynamic Model Context Prompts
+# ==============================================================================
+
+MODEL_CONTEXT_TEMPLATE = """## Available Model Profiles
+
+The following models are available for orchestration:
+
+{model_profiles}
+
+## Budget Constraints
+- Maximum cost per request: ${max_cost_usd:.2f}
+- Prefer cheaper models: {prefer_cheaper}
+- Cost weight in scoring: {cost_weight}
+
+## Model Selection Guidelines
+1. Match model strengths to task requirements
+2. Consider cost vs. quality tradeoffs
+3. Use diverse providers for verification
+4. Prefer faster models for simple tasks
+"""
+
+def build_model_context(
+    model_profiles: Optional[Dict[str, Any]] = None,
+    max_cost_usd: float = 1.0,
+    prefer_cheaper: bool = False,
+    cost_weight: float = 0.15,
+) -> str:
+    """Build dynamic model context for prompts (PR7).
+    
+    Args:
+        model_profiles: Dict of model_id -> profile info
+        max_cost_usd: Budget constraint
+        prefer_cheaper: Whether to prioritize cheaper models
+        cost_weight: Weight of cost in scoring
+        
+    Returns:
+        Formatted model context string
+    """
+    if not model_profiles:
+        # Default profiles
+        profiles_str = """
+| Model | Strengths | Cost (input/output per 1M) |
+|-------|-----------|----------------------------|
+| gpt-4o | General reasoning, balanced | $2.50 / $10.00 |
+| gpt-4o-mini | Fast, cost-effective | $0.15 / $0.60 |
+| claude-sonnet-4 | Coding, analysis | $3.00 / $15.00 |
+| claude-haiku-3.5 | Quick tasks, drafts | $0.25 / $1.25 |
+| gemini-2.5-pro | Research, factual, multimodal | $1.25 / $5.00 |
+| gemini-2.5-flash | Fast, efficient | $0.075 / $0.30 |
+| deepseek-chat | Coding, math, reasoning | $0.14 / $0.28 |
+"""
+    else:
+        # Build from provided profiles
+        lines = ["| Model | Strengths | Cost (per 1M) |", "|-------|-----------|---------------|"]
+        for model_id, profile in model_profiles.items():
+            strengths = ", ".join(profile.get("domains", ["general"])[:3])
+            input_cost = profile.get("cost_per_1m_input", 0)
+            output_cost = profile.get("cost_per_1m_output", 0)
+            lines.append(f"| {model_id} | {strengths} | ${input_cost:.2f} / ${output_cost:.2f} |")
+        profiles_str = "\n".join(lines)
+    
+    return MODEL_CONTEXT_TEMPLATE.format(
+        model_profiles=profiles_str,
+        max_cost_usd=max_cost_usd,
+        prefer_cheaper=prefer_cheaper,
+        cost_weight=cost_weight,
+    )
 
 AMBIGUITY_DETECTION_PROMPT = """Analyze this query for ambiguities:
 
@@ -500,6 +575,10 @@ class PromptOps:
             task_type = TaskType(data.get("task_type", "general"))
             complexity = QueryComplexity(data.get("complexity", "moderate"))
             
+            # PR7: Extract model suggestions and token estimate
+            suggested_models = data.get("suggested_models", [])
+            estimated_tokens = data.get("estimated_tokens", 2000)
+            
             return QueryAnalysis(
                 original_query=query,
                 task_type=task_type,
@@ -513,6 +592,8 @@ class PromptOps:
                 tool_hints=data.get("tool_hints", []),
                 requires_hrm=complexity in [QueryComplexity.COMPLEX, QueryComplexity.RESEARCH],
                 confidence_score=data.get("confidence", 0.9),
+                suggested_models=suggested_models,
+                estimated_tokens=estimated_tokens,
             )
         except Exception as e:
             logger.warning("LLM classification failed, using fallback: %s", e)
