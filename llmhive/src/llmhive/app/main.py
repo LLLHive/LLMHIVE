@@ -45,6 +45,16 @@ except ImportError as e:
 try:
     from .db import engine  # type: ignore
     from .models import Base  # type: ignore
+    # IMPORTANT: Import rankings models to register them with Base.metadata
+    # This ensures their tables are created when create_all() is called
+    from .openrouter.rankings_models import (  # noqa: F401
+        OpenRouterCategory,
+        OpenRouterRankingSnapshot,
+        OpenRouterRankingEntry,
+        OpenRouterSyncStatus,
+        OpenRouterModelAlert,
+    )
+    logging.getLogger(__name__).info("Rankings models imported for database initialization")
 except Exception as exc:  # pragma: no cover - defensive logging only
     engine = None  # type: ignore
     Base = None  # type: ignore

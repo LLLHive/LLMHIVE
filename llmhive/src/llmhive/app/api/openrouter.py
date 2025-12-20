@@ -935,3 +935,185 @@ async def get_rankings_status(
         logger.error("Failed to get status: %s", e)
         raise HTTPException(500, str(e))
 
+
+# =============================================================================
+# Admin: Database Initialization
+# =============================================================================
+
+@router.post("/admin/init-db")
+async def init_database(
+    background_tasks: BackgroundTasks,
+    run_sync: bool = Query(True, description="Run initial sync after creating tables"),
+    db = Depends(get_db),
+):
+    """Initialize OpenRouter database tables and optionally run first sync.
+    
+    This endpoint:
+    1. Creates all missing OpenRouter and Rankings tables
+    2. Optionally triggers the first full rankings sync
+    
+    Safe to call multiple times (idempotent).
+    
+    Args:
+        run_sync: If True, trigger full rankings sync after table creation
+        
+    Returns:
+        Status of initialization
+    """
+    from sqlalchemy import inspect
+    from ..db import engine
+    from ..models import Base
+    from ..openrouter.rankings_models import (
+        OpenRouterCategory,
+        OpenRouterRankingSnapshot,
+        OpenRouterRankingEntry,
+        OpenRouterSyncStatus,
+        OpenRouterModelAlert,
+    )
+    
+    result = {
+        "tables_created": [],
+        "tables_existing": [],
+        "sync_triggered": False,
+        "errors": [],
+    }
+    
+    try:
+        # Check existing tables
+        inspector = inspect(engine)
+        existing_tables = set(inspector.get_table_names())
+        
+        target_tables = [
+            "openrouter_models",
+            "openrouter_endpoints",
+            "openrouter_categories",
+            "openrouter_ranking_snapshots",
+            "openrouter_ranking_entries",
+            "openrouter_sync_status",
+            "openrouter_model_alerts",
+        ]
+        
+        # Determine which tables need creation
+        for table in target_tables:
+            if table in existing_tables:
+                result["tables_existing"].append(table)
+            else:
+                result["tables_created"].append(table)
+        
+        # Create all tables
+        if result["tables_created"]:
+            logger.info("Creating tables: %s", result["tables_created"])
+            Base.metadata.create_all(bind=engine)
+            logger.info("Database tables created successfully")
+        else:
+            logger.info("All tables already exist")
+        
+        # Verify creation
+        inspector = inspect(engine)
+        final_tables = set(inspector.get_table_names())
+        
+        for table in target_tables:
+            if table not in final_tables:
+                result["errors"].append(f"Failed to create table: {table}")
+        
+        # Trigger initial sync if requested
+        if run_sync and not result["errors"]:
+            from ..openrouter.rankings_sync import RankingsSync
+            
+            async def run_initial_sync():
+                try:
+                    sync = RankingsSync(db)
+                    report = await sync.run_full_sync(
+                        group="usecase",
+                        view="week",
+                        limit=10,
+                    )
+                    logger.info(
+                        "Initial sync complete: %d categories, %d snapshots",
+                        report.categories_added,
+                        report.snapshots_created,
+                    )
+                except Exception as e:
+                    logger.error("Initial sync failed: %s", e)
+            
+            background_tasks.add_task(run_initial_sync)
+            result["sync_triggered"] = True
+            logger.info("Initial rankings sync triggered in background")
+        
+        return {
+            "status": "success" if not result["errors"] else "partial",
+            "message": "Database initialization complete",
+            **result,
+        }
+        
+    except Exception as e:
+        logger.error("Database initialization failed: %s", e, exc_info=True)
+        raise HTTPException(500, f"Database initialization failed: {e}")
+
+
+@router.post("/admin/run-full-sync")
+async def run_full_sync(
+    background_tasks: BackgroundTasks,
+    group: str = Query("usecase", description="Category group to sync"),
+    view: str = Query("week", description="Ranking time view"),
+    limit: int = Query(10, description="Top N models per category"),
+    blocking: bool = Query(False, description="Wait for sync to complete"),
+    db = Depends(get_db),
+):
+    """Trigger a full rankings sync.
+    
+    Syncs:
+    - All categories for the specified group
+    - Top N rankings for each category
+    - Validates data after sync
+    
+    Args:
+        group: Category group (usecase, language, programming)
+        view: Time range (week, month, day, all)
+        limit: Number of top models per category
+        blocking: If True, wait for completion; otherwise run in background
+        
+    Returns:
+        Sync status or report (if blocking)
+    """
+    from ..openrouter.rankings_sync import RankingsSync
+    
+    try:
+        sync = RankingsSync(db)
+        
+        if blocking:
+            # Run synchronously and return full report
+            report = await sync.run_full_sync(
+                group=group,
+                view=view,
+                limit=limit,
+            )
+            
+            return {
+                "status": report.status,
+                "report": report.to_dict(),
+            }
+        else:
+            # Run in background
+            async def run_sync():
+                try:
+                    report = await sync.run_full_sync(
+                        group=group,
+                        view=view,
+                        limit=limit,
+                    )
+                    logger.info("Background sync complete: %s", report.status)
+                except Exception as e:
+                    logger.error("Background sync failed: %s", e)
+            
+            background_tasks.add_task(run_sync)
+            
+            return {
+                "status": "triggered",
+                "message": f"Full sync started in background for group={group}",
+            }
+            
+    except Exception as e:
+        logger.error("Sync failed: %s", e, exc_info=True)
+        raise HTTPException(500, f"Sync failed: {e}")
+
