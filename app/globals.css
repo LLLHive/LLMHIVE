@@ -737,13 +737,12 @@ html, body {
               border-color 300ms cubic-bezier(0.22,1,0.36,1);
 }
 
-/* Glass variant specifically for the sidebar (darker, no rounded corners on the side) */
+/* Glass variant specifically for the sidebar - transparent with blur */
 .llmhive-glass-sidebar {
-  background: rgba(8, 10, 10, 0.72); /* a bit more opaque than .llmhive-glass */
-  -webkit-backdrop-filter: blur(22px) saturate(170%);
-  backdrop-filter: blur(22px) saturate(170%);
-  border-right: 1px solid rgba(255, 255, 255, 0.10);
-  /* (We rely on the existing border-radius or lack thereof in layout; typically a sidebar might stretch full height so rounded corners aren't needed) */
+  background: rgba(8, 10, 10, 0.35); /* semi-transparent to show background */
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ================================
