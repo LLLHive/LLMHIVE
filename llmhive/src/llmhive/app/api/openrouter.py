@@ -961,8 +961,8 @@ async def init_database(
         Status of initialization
     """
     from sqlalchemy import inspect
-    from ..db import engine
-    from ..models import Base
+    from ..database import get_engine, is_database_available, create_tables
+    from ..openrouter.models import Base
     from ..openrouter.rankings_models import (
         OpenRouterCategory,
         OpenRouterRankingSnapshot,
@@ -979,6 +979,11 @@ async def init_database(
     }
     
     try:
+        # Get engine from database module
+        engine = get_engine()
+        if engine is None:
+            raise HTTPException(500, "Database engine not available. Check DATABASE_URL configuration.")
+        
         # Check existing tables
         inspector = inspect(engine)
         existing_tables = set(inspector.get_table_names())
