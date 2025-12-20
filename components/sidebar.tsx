@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { LogoText } from "@/components/branding"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -126,9 +127,7 @@ export function Sidebar({
               <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
               </div>
-              <span className="text-lg llmhive-title-3d">
-                LLMHive
-              </span>
+              <LogoText height={28} />
             </button>
           )}
           {collapsed && (

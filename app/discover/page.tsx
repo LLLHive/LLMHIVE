@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { LogoText } from "@/components/branding"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -132,12 +133,10 @@ export default function DiscoverPage() {
           <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
             {/* Hero Section with 3D Logo */}
             <div className="text-center mb-6 llmhive-fade-in">
-              <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 llmhive-float">
+              <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto mb-2 llmhive-float">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl llmhive-title-3d mb-2">
-                LLMHive
-              </h1>
+              <LogoText height={64} className="mx-auto mb-2" />
               <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Discover
               </h2>

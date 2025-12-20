@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { LogoText } from "@/components/branding"
 import { Sidebar } from "./sidebar"
 import { ChatArea } from "./chat-area"
 import { HomeScreen } from "./home-screen"
@@ -386,9 +387,7 @@ export function ChatInterface() {
           </SheetContent>
         </Sheet>
 
-        <span className="text-lg font-bold llmhive-title-3d">
-          LLMHive
-        </span>
+        <LogoText height={28} />
 
         <UserAccountMenu />
       </div>

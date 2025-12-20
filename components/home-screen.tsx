@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { LogoText } from "@/components/branding"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -208,7 +209,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
     <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20 overflow-y-auto relative">
       {/* Hero Section with 3D Logo */}
       <div className="text-center mb-6 llmhive-fade-in">
-        <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 llmhive-float">
+        <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto mb-2 llmhive-float">
           <Image 
             src="/logo.png" 
             alt="LLMHive" 
@@ -218,10 +219,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           />
         </div>
         
-        {/* 3D Metallic Title */}
-        <h1 className="text-3xl md:text-5xl lg:text-6xl llmhive-title-3d mb-2">
-          LLMHive
-        </h1>
+        {/* 3D Metallic Title - Using actual rendered image for exact match */}
+        <LogoText height={64} className="mb-2" />
         
         <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-4">
           Multi-agent AI orchestration for enhanced accuracy and deeper insights

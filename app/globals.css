@@ -673,14 +673,20 @@ html, body {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+  /* High-quality image rendering */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
   /* Performance tweak: creates a new composite layer */
   transform: translateZ(0);
+  will-change: transform;
 }
 
 /* Swap to desktop image at 768px and above */
 @media (min-width: 768px) {
   .llmhive-bg-image {
     background-image: url("/llmhive/bg-desktop.png");
+    /* On high-DPI screens, use high-quality rendering */
+    image-rendering: high-quality;
   }
 }
 
