@@ -643,3 +643,168 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(196, 142, 72, 0.5);
 }
+
+/* ================================
+   LLMHive Premium Background System
+   (Unique class names to avoid conflicts)
+   =================================== */
+
+html, body {
+  /* Make sure the default background is transparent, otherwise the image will be hidden behind a solid color. */
+  background: transparent !important;
+}
+
+/* Root fixed background layer covers the entire viewport */
+.llmhive-bg-root {
+  position: fixed;
+  inset: 0;
+  z-index: -50; /* far behind any other content */
+  pointer-events: none; /* does not block clicks/scrolls */
+  overflow: hidden;
+  /* fallback background color if image doesn't load */
+  background-color: #050806;
+}
+
+/* Responsive background image layer */
+.llmhive-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("/llmhive/bg-mobile.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* Performance tweak: creates a new composite layer */
+  transform: translateZ(0);
+}
+
+/* Swap to desktop image at 768px and above */
+@media (min-width: 768px) {
+  .llmhive-bg-image {
+    background-image: url("/llmhive/bg-desktop.png");
+  }
+}
+
+/* Overlay layer: adds warm tint and subtle dark gradient */
+.llmhive-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    /* radial glow at top center (warm orange light) */
+    radial-gradient(1200px 800px at 50% 15%,
+      rgba(255, 166, 77, 0.22), /* orange tint at center */
+      rgba(0, 0, 0, 0) 60% /* fade to transparent */
+    ),
+    /* vertical fade to black at bottom for readability */
+    linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.10) 0%, /* slight dark at top */
+      rgba(0, 0, 0, 0.68) 100% /* heavy dark at bottom */
+    );
+}
+
+/* Vignette layer: darkens the very edges for focus */
+.llmhive-bg-vignette {
+  position: absolute;
+  inset: -20%; /* extend beyond bounds to ensure edges are covered */
+  background: radial-gradient(circle at center,
+    rgba(0, 0, 0, 0) 40%, /* transparent center */
+    rgba(0, 0, 0, 0.55) 100% /* dark at edges */
+  );
+}
+
+/* ================================
+   LLMHive Glass Utilities (blurred panels)
+   =================================== */
+
+.llmhive-glass {
+  background: rgba(8, 10, 10, 0.58); /* semi-transparent dark base */
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.35), /* outer drop shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.08); /* inner highlight line */
+}
+
+/* Hover state for glass panels (optional, gives a subtle glow on hover) */
+.llmhive-glass:hover {
+  border-color: rgba(255, 176, 88, 0.30); /* light bronze border on hover */
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.40), /* stronger shadow */
+    0 0 24px rgba(255, 176, 88, 0.10), /* soft bronze glow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  transition: box-shadow 300ms cubic-bezier(0.22,1,0.36,1),
+              border-color 300ms cubic-bezier(0.22,1,0.36,1);
+}
+
+/* Glass variant specifically for the sidebar (darker, no rounded corners on the side) */
+.llmhive-glass-sidebar {
+  background: rgba(8, 10, 10, 0.72); /* a bit more opaque than .llmhive-glass */
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  /* (We rely on the existing border-radius or lack thereof in layout; typically a sidebar might stretch full height so rounded corners aren't needed) */
+}
+
+/* ================================
+   Branded Title and Subtitle Styles
+   =================================== */
+
+.llmhive-title-3d {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg,
+    #f7eedf 0%, /* light cream at top */
+    #b58a44 48%, /* bronze-gold in middle */
+    #f2d58a 100% /* light gold at bottom */
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent; /* text shows the gradient */
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.llmhive-subtitle {
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  opacity: 0.95;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.40);
+  /* (Color will inherit, usually a lighter shade given text-foreground, or you could add a subtle gradient similar to title if desired) */
+}
+
+/* ================================
+   Animations (subtle float & fade-in)
+   =================================== */
+
+@keyframes llmhive-float {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -3px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.llmhive-float {
+  animation: llmhive-float 4s ease-in-out infinite;
+}
+
+@keyframes llmhive-fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.llmhive-fade-in {
+  animation: llmhive-fade-in 700ms cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Disable animations if user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .llmhive-float,
+  .llmhive-fade-in {
+    animation: none !important;
+  }
+}

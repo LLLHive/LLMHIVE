@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
-import { ForestBackgroundSimple } from "@/components/forest-background"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "@/lib/toast"
@@ -222,11 +221,8 @@ export default function SettingsPage() {
 
   return (
     <div className="flex h-screen overflow-hidden relative">
-      {/* Immersive Forest Background */}
-      <ForestBackgroundSimple />
-
       {/* Glassmorphism Sidebar */}
-      <div className="glass-sidebar h-full">
+      <div className="llmhive-glass-sidebar h-full">
         <Sidebar
           conversations={[]}
           currentConversationId={null}
@@ -246,7 +242,7 @@ export default function SettingsPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Top Bar */}
-        <div className="hidden md:flex items-center justify-end p-3 glass-content border-b border-white/5">
+        <div className="hidden md:flex items-center justify-end p-3 llmhive-glass border-b border-white/5">
           <UserAccountMenu />
         </div>
 
@@ -255,14 +251,14 @@ export default function SettingsPage() {
           <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
             
             {/* Logo & Title */}
-            <div className="text-center mb-6 fade-in">
-              <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 float-subtle">
+            <div className="text-center mb-6 llmhive-fade-in">
+              <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 llmhive-float">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl title-3d mb-2">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl llmhive-title-3d mb-2">
                 LLMHive
               </h1>
-              <h2 className="text-xl md:text-2xl lg:text-3xl subtitle-branded mb-2">
+              <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Settings
               </h2>
               <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
@@ -271,7 +267,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Settings Grid */}
-            <div className="w-full max-w-4xl fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="w-full max-w-4xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
                 {settingsCards.map((card, index) => {
                   const Icon = card.icon
@@ -280,7 +276,7 @@ export default function SettingsPage() {
                     <button
                       key={card.id}
                       onClick={() => setActiveDrawer(card.id as DrawerId)}
-                      className="settings-card group fade-in"
+                      className="settings-card group llmhive-fade-in"
                       style={{ animationDelay: `${0.1 + index * 0.05}s` }}
                     >
                       {count > 0 && (

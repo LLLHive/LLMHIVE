@@ -112,7 +112,7 @@ export function Sidebar({
     <>
       <aside
         className={cn(
-          "glass-sidebar flex flex-col transition-all duration-300 relative h-full",
+          "llmhive-glass-sidebar flex flex-col transition-all duration-300 relative h-full",
           collapsed ? "w-16" : "w-52",
         )}
       >
@@ -126,7 +126,7 @@ export function Sidebar({
               <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
               </div>
-              <span className="text-lg logo-text">
+              <span className="text-lg llmhive-title-3d">
                 LLMHive
               </span>
             </button>

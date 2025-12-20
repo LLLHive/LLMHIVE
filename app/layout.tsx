@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { AppearanceSettingsLoader } from "@/components/appearance-settings-loader"
+import AppBackground from "@/components/branding/AppBackground"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -36,7 +37,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased ${orbitron.variable}`}>
+      <body className={`min-h-screen bg-transparent text-foreground font-sans antialiased ${orbitron.variable}`}>
+        <AppBackground />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

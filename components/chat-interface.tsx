@@ -13,7 +13,6 @@ import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal"
 import { Button } from "@/components/ui/button"
 import { Menu, Keyboard } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { ForestBackgroundSimple } from "./forest-background"
 import type { Conversation, Message, Artifact, Project, OrchestratorSettings } from "@/lib/types"
 import { 
   loadOrchestratorSettings, 
@@ -355,21 +354,18 @@ export function ChatInterface() {
 
   return (
     <div className="flex h-full w-full relative">
-      {/* Immersive Forest Background */}
-      <ForestBackgroundSimple />
-      
       {/* Desktop Sidebar */}
       <div className="hidden md:block h-full">{sidebarContent}</div>
 
       {/* Mobile Header with Hamburger - Glassmorphism */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/10 glass-sidebar flex items-center justify-between px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/10 llmhive-glass-sidebar flex items-center justify-between px-4">
         <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open navigation menu">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72 glass-sidebar border-r-0">
+          <SheetContent side="left" className="p-0 w-72 llmhive-glass-sidebar border-r-0">
             <Sidebar
               conversations={conversations}
               currentConversationId={currentConversationId}
@@ -390,7 +386,7 @@ export function ChatInterface() {
           </SheetContent>
         </Sheet>
 
-        <span className="text-lg font-bold title-3d">
+        <span className="text-lg font-bold llmhive-title-3d">
           LLMHive
         </span>
 
@@ -402,7 +398,7 @@ export function ChatInterface() {
         {!currentConversationId ? (
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Desktop User Account Menu - Glassmorphism */}
-            <div className="hidden md:flex items-center justify-end p-3 border-b border-white/5 glass-content">
+            <div className="hidden md:flex items-center justify-end p-3 border-b border-white/5 llmhive-glass">
               <UserAccountMenu />
             </div>
             <div className="flex-1 h-full overflow-auto">

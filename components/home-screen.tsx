@@ -207,8 +207,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   return (
     <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20 overflow-y-auto relative">
       {/* Hero Section with 3D Logo */}
-      <div className="text-center mb-6 fade-in">
-        <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 float-subtle">
+      <div className="text-center mb-6 llmhive-fade-in">
+        <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 mx-auto mb-2 llmhive-float">
           <Image 
             src="/logo.png" 
             alt="LLMHive" 
@@ -219,7 +219,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </div>
         
         {/* 3D Metallic Title */}
-        <h1 className="text-3xl md:text-5xl lg:text-6xl title-3d mb-2">
+        <h1 className="text-3xl md:text-5xl lg:text-6xl llmhive-title-3d mb-2">
           LLMHive
         </h1>
         
@@ -239,7 +239,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
       </Button>
 
       {/* Template Cards - Glass Cards */}
-      <div className="w-full max-w-4xl fade-in" style={{ animationDelay: '0.1s' }}>
+      <div className="w-full max-w-4xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
         <p className="text-sm text-muted-foreground text-center mb-3">Or start from a template</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {templates.map((template, index) => {
@@ -253,7 +253,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                   e.stopPropagation()
                   openDrawer(template.id)
                 }}
-                className="settings-card group fade-in"
+                className="settings-card group llmhive-fade-in"
                 style={{ animationDelay: `${0.15 + index * 0.05}s` }}
               >
                 {/* Icon Badge */}
@@ -286,7 +286,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           />
           
           {/* Drawer Panel - Glassmorphism */}
-          <div className="fixed inset-y-0 right-0 w-[320px] sm:w-[380px] glass-card border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col">
+          <div className="fixed inset-y-0 right-0 w-[320px] sm:w-[380px] llmhive-glass border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col">
             {/* Header */}
             <div className="p-4 pb-3 border-b border-white/10 flex items-center gap-3">
               {currentTemplate && (
