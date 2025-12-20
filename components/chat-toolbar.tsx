@@ -267,6 +267,25 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
           ) : (
             // Show ranking categories
             <>
+              {/* Automatic Option - Always at top */}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault()
+                  // Set to automatic mode
+                  onSettingsChange({ selectedModels: ["automatic"] })
+                }}
+                className="gap-2 cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center">
+                  <Sparkles className="h-3 w-3 text-white" />
+                </div>
+                <span className="flex-1 font-medium">Automatic</span>
+                <span className="text-[10px] text-muted-foreground">Best model per task</span>
+                {selectedModels.includes("automatic") && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
               {/* My Team Section */}
               {myTeamModels.length > 0 && (
                 <>

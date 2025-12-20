@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles, Zap, Crown, Target, Shield, Plus, ArrowRight } from "lucide-react"
+import { Cpu, Brain, Sliders, Wrench, Hammer, Layers, Check, ExternalLink, Sparkles, Zap, Crown, Target, Shield, Plus, ArrowRight, ArrowLeft, ChevronRight, Code, FlaskConical, Heart, Scale, Megaphone, Search, MessageSquare, Users, Landmark, GraduationCap, BarChart3, Languages, Image as ImageIcon, Wrench as ToolIcon, Loader2 } from "lucide-react"
 import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import { REASONING_METHODS, REASONING_CATEGORIES } from "@/lib/reasoning-methods"
 import { Sidebar } from "@/components/sidebar"
@@ -18,7 +18,13 @@ import { UserAccountMenu } from "@/components/user-account-menu"
 import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settings-storage"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
-import { STORAGE_KEYS, type SelectedModelConfig, type UserTier, TIER_CONFIGS, getTierBadgeColor, getTierDisplayName, getModelRequiredTier } from "@/lib/openrouter/tiers"
+import { STORAGE_KEYS, type SelectedModelConfig, type UserTier, TIER_CONFIGS, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, canAccessModel } from "@/lib/openrouter/tiers"
+import { 
+  useOpenRouterCategories, 
+  useCategoryRankings, 
+  CATEGORY_COLOR_MAP,
+  type CategoryWithIcon,
+} from "@/hooks/use-openrouter-categories"
 
 // Card data matching home page template card style exactly
 const orchestrationCards = [
@@ -225,6 +231,37 @@ export default function OrchestrationPage() {
   // TODO: Get from auth context
   const userTier: UserTier = 'pro'
   const tierConfig = TIER_CONFIGS[userTier]
+  
+  // Category-based model selection state
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  
+  // Use shared hooks for categories and rankings
+  const { categories, loading: categoriesLoading } = useOpenRouterCategories({ group: 'usecase' })
+  const { rankings: rankedEntries, loading: loadingRankings } = useCategoryRankings(activeCategory, { limit: 10 })
+  
+  // Category icons mapping
+  const CATEGORY_ICONS: Record<string, React.ElementType> = {
+    'programming': Code,
+    'science': FlaskConical,
+    'health': Heart,
+    'legal': Scale,
+    'marketing': Megaphone,
+    'marketing/seo': Search,
+    'technology': Cpu,
+    'finance': Landmark,
+    'academia': GraduationCap,
+    'roleplay': Users,
+    'creative-writing': MessageSquare,
+    'translation': Languages,
+    'data-analysis': BarChart3,
+    'tool-use': ToolIcon,
+    'vision': ImageIcon,
+    'reasoning': FlaskConical,
+  }
+  
+  const getCategoryIcon = (slug: string): React.ElementType => {
+    return CATEGORY_ICONS[slug] || BarChart3
+  }
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -447,131 +484,184 @@ export default function OrchestrationPage() {
           </div>
           <ScrollArea className="h-[calc(100vh-100px)]">
             <div className="p-4 space-y-4">
-              {/* OpenRouter Models Section */}
-              {openRouterModels.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Your OpenRouter Team
-                    </h3>
-                    <Badge variant="outline" className={getTierBadgeColor(userTier)}>
-                      {getTierDisplayName(userTier)}
-                    </Badge>
+              {activeCategory ? (
+                // Show top 10 models for selected category
+                <>
+                  <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 w-7 p-0"
+                      onClick={() => setActiveCategory(null)}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="font-medium text-sm">
+                      Top 10 - {categories.find(c => c.slug === activeCategory)?.displayName || activeCategory}
+                    </span>
                   </div>
-                  <div className="space-y-1.5">
-                    {openRouterModels.map((config) => {
-                      const modelName = config.modelId.split('/').pop() || config.modelId
-                      const requiredTier = getModelRequiredTier(config.modelId)
-                      return (
-                        <div
-                          key={config.modelId}
-                          className={`group p-2.5 rounded-lg transition-all duration-200 ${
-                            config.enabled ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "bg-muted/30"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                                config.enabled
-                                  ? "border-[var(--bronze)] bg-[var(--bronze)]"
-                                  : "border-muted-foreground/30"
-                              }`}
-                            >
-                              {config.enabled && <Check className="h-2.5 w-2.5 text-background" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-medium truncate ${config.enabled ? "text-[var(--bronze)]" : "text-muted-foreground"}`}>
-                                {modelName}
-                              </p>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-muted-foreground">{config.preferredRole}</span>
-                                <Badge variant="outline" className={`text-[8px] px-1 py-0 ${getTierBadgeColor(requiredTier)}`}>
-                                  {getTierDisplayName(requiredTier)}
-                                </Badge>
+                  {loadingRankings ? (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
+                      Loading...
+                    </div>
+                  ) : rankedEntries.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {rankedEntries.map((entry) => {
+                        const modelId = entry.model_id || ''
+                        const isSelected = selectedModels.includes(modelId)
+                        const hasAccess = canAccessModel(userTier, modelId)
+                        const requiredTier = getModelRequiredTier(modelId)
+                        
+                        return (
+                          <div
+                            key={modelId}
+                            onClick={() => hasAccess && toggleModel(modelId)}
+                            className={`group p-2.5 rounded-lg transition-all duration-200 ${
+                              !hasAccess ? "opacity-50 cursor-not-allowed" :
+                              isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30 cursor-pointer" : "hover:bg-muted/50 cursor-pointer"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                                entry.rank === 1 ? "bg-amber-500 text-black" :
+                                entry.rank === 2 ? "bg-gray-300 text-black" :
+                                entry.rank === 3 ? "bg-orange-400 text-black" :
+                                "bg-muted text-muted-foreground"
+                              }`}>
+                                {entry.rank}
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium truncate ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                                  {entry.model_name}
+                                </p>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {entry.author || entry.model_id?.split('/')[0]}
+                                  </span>
+                                  {!hasAccess && (
+                                    <Badge variant="outline" className={`text-[8px] px-1 py-0 ${getTierBadgeColor(requiredTier)}`}>
+                                      {getTierDisplayName(requiredTier)}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
                             </div>
                           </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground text-sm">No models found</div>
+                  )}
+                </>
+              ) : (
+                // Show categories list
+                <>
+                  {/* Automatic Option - Always at top */}
+                  <div
+                    onClick={() => setSelectedModels(["automatic"])}
+                    className={`group p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                      selectedModels.includes("automatic") ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center">
+                        <Sparkles className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${selectedModels.includes("automatic") ? "text-[var(--bronze)]" : ""}`}>
+                          Automatic
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">Best model selected per task</p>
+                      </div>
+                      {selectedModels.includes("automatic") && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                    </div>
                   </div>
+                  
+                  {/* Divider */}
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-[10px] uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Browse by Category</span>
+                    </div>
+                  </div>
+                  
+                  {/* Categories */}
+                  {categoriesLoading ? (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
+                      Loading categories...
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {categories.map((cat) => {
+                        const Icon = getCategoryIcon(cat.slug)
+                        return (
+                          <div
+                            key={cat.slug}
+                            onClick={() => setActiveCategory(cat.slug)}
+                            className="group p-2.5 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted/50"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Icon className={`h-4 w-4 ${CATEGORY_COLOR_MAP[cat.slug] || "text-muted-foreground"}`} />
+                              <span className="flex-1 text-sm">{cat.displayName}</span>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* My Team Section */}
+                  {openRouterModels.length > 0 && (
+                    <>
+                      <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-border" />
+                        </div>
+                        <div className="relative flex justify-center text-[10px] uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">Your Team</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        {openRouterModels.map((config) => {
+                          const modelName = config.modelId.split('/').pop() || config.modelId
+                          const isSelected = selectedModels.includes(config.modelId)
+                          return (
+                            <div
+                              key={config.modelId}
+                              onClick={() => toggleModel(config.modelId)}
+                              className={`group p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
+                                isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <Crown className="h-4 w-4 text-[var(--bronze)]" />
+                                <span className="flex-1 text-sm truncate">{modelName}</span>
+                                {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Manage Team Link */}
                   <Link href={ROUTES.MODELS}>
                     <Button variant="outline" size="sm" className="w-full gap-2 mt-2">
                       <Plus className="h-3.5 w-3.5" />
-                      Manage Team
+                      {openRouterModels.length > 0 ? "Manage Team" : "Build Your AI Team"}
                       <ArrowRight className="h-3.5 w-3.5 ml-auto" />
                     </Button>
                   </Link>
-                </div>
+                </>
               )}
-              
-              {/* Add OpenRouter Models CTA if none selected */}
-              {openRouterModels.length === 0 && (
-                <div className="p-4 border border-dashed rounded-lg text-center space-y-2">
-                  <p className="text-sm font-medium">Build Your AI Team</p>
-                  <p className="text-xs text-muted-foreground">
-                    Select models from 340+ OpenRouter models to create your orchestration team
-                  </p>
-                  <Link href={ROUTES.MODELS}>
-                    <Button size="sm" className="gap-2 mt-2">
-                      <Plus className="h-3.5 w-3.5" />
-                      Add OpenRouter Models
-                    </Button>
-                  </Link>
-                </div>
-              )}
-              
-              {/* Divider */}
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Built-in Models</span>
-                </div>
-              </div>
-              
-              {/* Built-in Models */}
-              <div className="space-y-1.5">
-                {AVAILABLE_MODELS.map((model) => {
-                  const isSelected = selectedModels.includes(model.id)
-                  return (
-                    <div
-                      key={model.id}
-                      onClick={() => toggleModel(model.id)}
-                      className={`group p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
-                        isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                            isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]"
-                              : "border-muted-foreground/30 group-hover:border-muted-foreground/50"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-2.5 w-2.5 text-background" />}
-                        </div>
-                        <div className="w-6 h-6 relative flex-shrink-0 rounded-md overflow-hidden bg-muted/50">
-                          <Image
-                            src={getModelLogo(model.provider) || "/placeholder.svg"}
-                            alt={model.provider}
-                            fill
-                            className="object-contain p-0.5"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${isSelected ? "text-[var(--bronze)]" : ""}`}>
-                            {model.name}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground capitalize">{model.provider}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
             </div>
           </ScrollArea>
         </SheetContent>
