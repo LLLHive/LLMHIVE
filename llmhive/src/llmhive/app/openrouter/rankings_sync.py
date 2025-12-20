@@ -377,6 +377,13 @@ class RankingsSync:
             logger.info("Synced %d rankings for: %s", 
                        snapshot.entry_count, category_slug)
             
+            # Also sync to Model Knowledge Store (Pinecone) for orchestrator intelligence
+            await self._sync_rankings_to_knowledge(
+                category_slug=category_slug,
+                rankings=rankings_data["models"][:limit],
+                view=view,
+            )
+            
         except Exception as e:
             logger.error("Failed to sync rankings for %s: %s", category_slug, e)
             report.errors.append(f"{category_slug}: {e}")
@@ -546,3 +553,48 @@ class RankingsSync:
             self.db.commit()
         except Exception as e:
             logger.error("Failed to save sync status: %s", e)
+    
+    async def _sync_rankings_to_knowledge(
+        self,
+        category_slug: str,
+        rankings: List[Dict[str, Any]],
+        view: str = "week",
+    ) -> None:
+        """
+        Sync category rankings to Model Knowledge Store (Pinecone).
+        
+        This populates the orchestrator's intelligence about which models
+        are currently best for each category/use case.
+        """
+        try:
+            from ..knowledge import MODEL_KNOWLEDGE_AVAILABLE, get_model_knowledge_store
+            
+            if not MODEL_KNOWLEDGE_AVAILABLE:
+                return
+            
+            store = get_model_knowledge_store()
+            
+            # Transform rankings to the format expected by the store
+            ranking_entries = []
+            for i, model in enumerate(rankings):
+                ranking_entries.append({
+                    "model_id": model.get("id", ""),
+                    "model_name": model.get("name", "Unknown"),
+                    "rank": i + 1,
+                    "author": self._extract_author(model.get("id")),
+                    "tokens": model.get("tokens"),
+                    "share_pct": model.get("share_pct"),
+                })
+            
+            await store.store_category_ranking(
+                category=category_slug,
+                rankings=ranking_entries,
+                view=view,
+            )
+            
+            logger.debug("Synced %d rankings for '%s' to knowledge store", 
+                        len(ranking_entries), category_slug)
+            
+        except Exception as e:
+            # Non-fatal - log and continue
+            logger.warning("Failed to sync rankings to knowledge store: %s", e)

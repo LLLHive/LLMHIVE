@@ -170,6 +170,10 @@ class ResearchAgent(BaseAgent):
                     ttl_seconds=604800,  # 1 week
                 )
             
+            # Phase 5: Persist to Model Knowledge Store (Pinecone)
+            # This enables long-term learning and cross-session intelligence
+            await self._persist_findings_to_knowledge_store(findings)
+            
             # Update scan time
             self._last_scan = datetime.now()
             
@@ -376,4 +380,62 @@ class ResearchAgent(BaseAgent):
                 )[:5]
             ],
         }
+    
+    async def _persist_findings_to_knowledge_store(
+        self,
+        findings: List[ResearchFinding],
+    ) -> int:
+        """
+        Persist research findings to the Model Knowledge Store (Pinecone).
+        
+        This enables long-term learning about AI developments across sessions.
+        The Planning Agent can later query these findings to make decisions.
+        
+        Args:
+            findings: List of research findings to store
+            
+        Returns:
+            Number of findings stored successfully
+        """
+        try:
+            from ..knowledge import MODEL_KNOWLEDGE_AVAILABLE, get_model_knowledge_store
+            
+            if not MODEL_KNOWLEDGE_AVAILABLE:
+                logger.debug("Model Knowledge Store not available for research findings")
+                return 0
+            
+            store = get_model_knowledge_store()
+            stored_count = 0
+            
+            for finding in findings:
+                try:
+                    # Map finding category to relevance description
+                    relevance = f"Relevant to LLMHive {finding.category}: {finding.summary[:200]}"
+                    
+                    record_id = await store.store_ai_development(
+                        title=finding.title,
+                        summary=finding.summary,
+                        source=finding.source,
+                        impact=finding.potential_impact,
+                        relevance_to_orchestration=relevance,
+                        integration_proposal=finding.integration_proposal,
+                    )
+                    
+                    if record_id:
+                        stored_count += 1
+                        
+                except Exception as e:
+                    logger.warning("Failed to store finding '%s': %s", finding.title[:50], e)
+            
+            if stored_count > 0:
+                logger.info(
+                    "Persisted %d/%d research findings to Model Knowledge Store",
+                    stored_count, len(findings)
+                )
+            
+            return stored_count
+            
+        except Exception as e:
+            logger.warning("Failed to persist findings to knowledge store: %s", e)
+            return 0
 

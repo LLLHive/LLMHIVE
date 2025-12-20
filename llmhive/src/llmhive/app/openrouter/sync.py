@@ -242,6 +242,10 @@ class OpenRouterModelSync:
             if not dry_run:
                 self.db.commit()
                 logger.info("Sync committed to database")
+                
+                # Step 5: Sync to Model Knowledge Store (Pinecone)
+                # This populates the orchestrator's intelligence about models
+                await self._sync_to_knowledge_store(api_models, report)
             else:
                 self.db.rollback()
                 logger.info("Dry run - changes rolled back")
@@ -270,6 +274,37 @@ class OpenRouterModelSync:
         )
         
         return report
+    
+    async def _sync_to_knowledge_store(
+        self,
+        api_models: List[Dict[str, Any]],
+        report: SyncReport,
+    ) -> None:
+        """
+        Sync model data to Model Knowledge Store (Pinecone).
+        
+        This populates the orchestrator's model intelligence with:
+        - Model profiles (capabilities, strengths, weaknesses)
+        - Reasoning model analysis
+        - Best use cases for each model
+        """
+        try:
+            from ..knowledge import MODEL_KNOWLEDGE_AVAILABLE, sync_openrouter_to_knowledge
+            
+            if not MODEL_KNOWLEDGE_AVAILABLE:
+                logger.info("Model knowledge store not available, skipping knowledge sync")
+                return
+            
+            knowledge_report = await sync_openrouter_to_knowledge(models=api_models)
+            
+            logger.info(
+                "Model knowledge sync: %d profiles created, %d reasoning models",
+                knowledge_report.get("models", {}).get("profiles_created", 0),
+                knowledge_report.get("models", {}).get("reasoning_models_identified", 0),
+            )
+            
+        except Exception as e:
+            logger.warning("Model knowledge sync failed (non-fatal): %s", e)
     
     def _update_model(self, existing: OpenRouterModel, new: OpenRouterModel) -> None:
         """Update existing model with new data."""

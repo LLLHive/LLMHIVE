@@ -247,6 +247,10 @@ class AdaptiveModelRouter:
         self._cache_timestamp: Optional[float] = None
         self._cache_ttl_seconds = 300  # 5 minutes
         
+        # Model Knowledge Store for intelligent routing
+        self._knowledge_store = None
+        self._knowledge_store_initialized = False
+        
         # Ensure profiles are loaded (dynamic or bootstrap)
         if not self.profiles:
             self.profiles = _get_model_profiles()
@@ -337,6 +341,128 @@ class AdaptiveModelRouter:
         }
         
         return bootstrap_chain.get(model_id)
+    
+    def _get_knowledge_store(self):
+        """Get or initialize the Model Knowledge Store for intelligent routing."""
+        if self._knowledge_store_initialized:
+            return self._knowledge_store
+        
+        try:
+            from ..knowledge import MODEL_KNOWLEDGE_AVAILABLE, get_model_knowledge_store
+            
+            if MODEL_KNOWLEDGE_AVAILABLE:
+                self._knowledge_store = get_model_knowledge_store()
+                logger.info("Model Knowledge Store initialized for adaptive routing")
+            else:
+                logger.debug("Model Knowledge Store not available")
+                
+        except Exception as e:
+            logger.warning("Failed to initialize Model Knowledge Store: %s", e)
+        
+        self._knowledge_store_initialized = True
+        return self._knowledge_store
+    
+    async def get_best_models_from_knowledge(
+        self,
+        task_description: str,
+        category: Optional[str] = None,
+        require_reasoning: bool = False,
+        require_tools: bool = False,
+        top_k: int = 5,
+    ) -> List[str]:
+        """
+        Get best models for a task from the Model Knowledge Store.
+        
+        This provides intelligence-based model selection using:
+        - Model rankings from OpenRouter
+        - Model capability profiles
+        - Reasoning model analysis
+        
+        Args:
+            task_description: Description of the task
+            category: Optional category (programming, reasoning, etc.)
+            require_reasoning: If True, prefer reasoning models
+            require_tools: If True, require tool support
+            top_k: Number of models to return
+            
+        Returns:
+            List of model IDs ranked by suitability
+        """
+        store = self._get_knowledge_store()
+        if not store:
+            return []
+        
+        try:
+            records = await store.get_best_models_for_task(
+                task_description=task_description,
+                category=category,
+                require_reasoning=require_reasoning,
+                require_tools=require_tools,
+                top_k=top_k,
+            )
+            
+            # Extract model IDs from records
+            model_ids = []
+            for record in records:
+                if record.model_id and record.model_id not in model_ids:
+                    model_ids.append(record.model_id)
+            
+            logger.debug(
+                "Knowledge store suggested %d models for task: %s",
+                len(model_ids), task_description[:50]
+            )
+            
+            return model_ids
+            
+        except Exception as e:
+            logger.warning("Failed to get models from knowledge store: %s", e)
+            return []
+    
+    async def get_reasoning_models_from_knowledge(self, top_k: int = 5) -> List[str]:
+        """
+        Get the best reasoning models from the Knowledge Store.
+        
+        Returns:
+            List of model IDs that are strong at reasoning
+        """
+        store = self._get_knowledge_store()
+        if not store:
+            return []
+        
+        try:
+            records = await store.get_reasoning_models(top_k=top_k)
+            return [r.model_id for r in records if r.model_id]
+            
+        except Exception as e:
+            logger.warning("Failed to get reasoning models: %s", e)
+            return []
+    
+    async def get_category_leaders_from_knowledge(
+        self,
+        category: str,
+        top_k: int = 10,
+    ) -> List[str]:
+        """
+        Get top models for a category from Knowledge Store rankings.
+        
+        Args:
+            category: Category slug (programming, science, etc.)
+            top_k: Number of models to return
+            
+        Returns:
+            List of model IDs ranked by category performance
+        """
+        store = self._get_knowledge_store()
+        if not store:
+            return []
+        
+        try:
+            records = await store.get_category_rankings(category=category, top_k=top_k)
+            return [r.model_id for r in records if r.model_id]
+            
+        except Exception as e:
+            logger.warning("Failed to get category rankings: %s", e)
+            return []
     
     def _get_openrouter_selector(self) -> Optional["OpenRouterModelSelector"]:
         """Get or create OpenRouter selector."""
