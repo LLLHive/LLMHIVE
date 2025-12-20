@@ -684,30 +684,30 @@ html, body {
   }
 }
 
-/* Overlay layer: adds warm tint and subtle dark gradient */
+/* Overlay layer: adds warm tint and very subtle dark gradient */
 .llmhive-bg-overlay {
   position: absolute;
   inset: 0;
   background:
-    /* radial glow at top center (warm orange light) */
-    radial-gradient(1200px 800px at 50% 15%,
-      rgba(255, 166, 77, 0.22), /* orange tint at center */
-      rgba(0, 0, 0, 0) 60% /* fade to transparent */
+    /* radial glow at top center (warm orange light) - enhanced */
+    radial-gradient(1400px 900px at 50% 20%,
+      rgba(255, 180, 90, 0.12), /* subtle warm tint */
+      rgba(0, 0, 0, 0) 70% /* fade to transparent */
     ),
-    /* vertical fade to black at bottom for readability */
+    /* very subtle vertical fade for readability - much lighter */
     linear-gradient(to bottom,
-      rgba(0, 0, 0, 0.10) 0%, /* slight dark at top */
-      rgba(0, 0, 0, 0.68) 100% /* heavy dark at bottom */
+      rgba(0, 0, 0, 0) 0%, /* transparent at top */
+      rgba(0, 0, 0, 0.25) 100% /* light dark at bottom */
     );
 }
 
-/* Vignette layer: darkens the very edges for focus */
+/* Vignette layer: very subtle edge darkening */
 .llmhive-bg-vignette {
   position: absolute;
   inset: -20%; /* extend beyond bounds to ensure edges are covered */
   background: radial-gradient(circle at center,
-    rgba(0, 0, 0, 0) 40%, /* transparent center */
-    rgba(0, 0, 0, 0.55) 100% /* dark at edges */
+    rgba(0, 0, 0, 0) 50%, /* transparent center - larger */
+    rgba(0, 0, 0, 0.25) 100% /* subtle dark at edges */
   );
 }
 
