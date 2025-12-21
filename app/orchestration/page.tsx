@@ -403,12 +403,10 @@ export default function OrchestrationPage() {
               <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto mb-2 llmhive-float">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              {/* LLMHive Branded Title */}
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <LogoText height={48} />
-                <span className="text-white/30 text-3xl font-extralight">|</span>
-                <span className="text-2xl md:text-3xl font-semibold text-white tracking-wide">Orchestration</span>
-              </div>
+              <LogoText height={64} className="mx-auto mb-2" />
+              <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
+                Orchestration
+              </h2>
               <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
                 Configure your multi-agent AI system with precision
               </p>
