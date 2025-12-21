@@ -26,8 +26,8 @@ import { OrchestrationStudio } from "./orchestration-studio"
 import { LiveStatusPanel } from "./live-status-panel"
 import { ModelsUsedDisplay } from "./models-used-display"
 
-// Default models to use when "automatic" is selected
-const DEFAULT_AUTO_MODELS = ["gpt-4o", "claude-sonnet-4", "deepseek-chat"]
+// When "automatic" is selected, we pass an empty array to let the backend
+// intelligently select the best models based on query analysis, domain, and rankings
 
 // Retry status for UI display
 interface RetryStatus {
@@ -211,10 +211,18 @@ export function ChatArea({
   // Use models from orchestrator settings - sync with settings
   const selectedModels = orchestratorSettings.selectedModels || ["automatic"]
   
-  // Get actual models to send to backend (expand "automatic" to real models)
+  // Check if we're in automatic mode (let backend select best models)
+  const isAutomaticMode = selectedModels.includes("automatic") || selectedModels.length === 0
+  
+  // Get actual models to send to backend
   const getActualModels = (): string[] => {
-    if (selectedModels.includes("automatic") || selectedModels.length === 0) {
-      return DEFAULT_AUTO_MODELS
+    if (isAutomaticMode) {
+      // Return empty array - backend will intelligently select based on:
+      // - Query content analysis
+      // - Domain detection
+      // - Task type classification
+      // - Model rankings and capabilities
+      return []
     }
     // Filter out "automatic" if mixed with other models
     return selectedModels.filter(m => m !== "automatic")
@@ -289,22 +297,39 @@ export function ChatArea({
       events.push({ type: "dispatching_model", message: "Assigning hierarchical roles...", delay: 300 })
     }
 
-    // Add model dispatches based on selected models - expand "automatic" to real models
+    // Add model dispatches based on selected models
     let models = settings.selectedModels || ["automatic"]
-    if (models.includes("automatic") || models.length === 0) {
-      models = DEFAULT_AUTO_MODELS
-    } else {
-      models = models.filter(m => m !== "automatic")
-    }
+    const isAutomatic = models.includes("automatic") || models.length === 0
     
-    for (const modelId of models.slice(0, 3)) {
-      const model = getModelById(modelId)
+    if (isAutomatic) {
+      // Automatic mode - show intelligent selection happening
       events.push({
         type: "dispatching_model",
-        message: `Dispatching to ${model?.name || modelId}...`,
-        delay: 200,
-        modelName: model?.name || modelId,
+        message: "Analyzing query requirements...",
+        delay: 250,
       })
+      events.push({
+        type: "dispatching_model",
+        message: "Selecting optimal models based on task type...",
+        delay: 300,
+      })
+      events.push({
+        type: "dispatching_model",
+        message: "Dispatching to best-fit model ensemble...",
+        delay: 200,
+      })
+    } else {
+      // User-selected models
+      models = models.filter(m => m !== "automatic")
+      for (const modelId of models.slice(0, 3)) {
+        const model = getModelById(modelId)
+        events.push({
+          type: "dispatching_model",
+          message: `Dispatching to ${model?.name || modelId}...`,
+          delay: 200,
+          modelName: model?.name || modelId,
+        })
+      }
     }
 
     events.push({ type: "model_responding", message: "Models generating responses...", delay: 500 })

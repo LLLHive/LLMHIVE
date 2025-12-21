@@ -475,6 +475,157 @@ class AdaptiveModelRouter:
         
         return self._openrouter_selector
     
+    # =========================================================================
+    # INTEL UPDATE DEC 2024: Smart Routing Integration
+    # =========================================================================
+    
+    async def select_model_smart(
+        self,
+        query: str,
+        task_type: str = "general",
+        *,
+        use_cascade: bool = True,
+        detect_reasoning: bool = True,
+        max_cost_usd: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Smart model selection combining cascade routing and reasoning detection.
+        
+        This is the recommended entry point for intelligent model selection
+        that balances cost, speed, and capability.
+        
+        Features (from Intel Update Dec 2024):
+        1. Cascade routing - starts cheap, escalates only when needed (30-70% cost savings)
+        2. Reasoning detection - routes complex reasoning to specialized models
+        3. Knowledge-based selection - uses Pinecone model profiles
+        
+        Args:
+            query: User query text
+            task_type: Type of task (general, coding, reasoning)
+            use_cascade: Enable cascade routing for cost optimization
+            detect_reasoning: Enable reasoning model detection
+            max_cost_usd: Maximum budget for this query
+            
+        Returns:
+            Dict with:
+            - model: Selected model ID
+            - strategy: Routing strategy used
+            - reasoning_analysis: ReasoningAnalysis if detect_reasoning=True
+            - cascade_tier: Tier used if cascade routing applied
+            - estimated_cost: Estimated cost tier
+        """
+        result: Dict[str, Any] = {
+            "model": None,
+            "strategy": "adaptive",
+            "reasoning_analysis": None,
+            "cascade_tier": None,
+            "estimated_cost": "standard",
+        }
+        
+        # Step 1: Check for reasoning requirements
+        if detect_reasoning:
+            try:
+                from .reasoning_detector import get_reasoning_detector, ReasoningAnalysis
+                
+                detector = get_reasoning_detector()
+                analysis: ReasoningAnalysis = detector.detect(query)
+                result["reasoning_analysis"] = {
+                    "needs_reasoning": analysis.needs_reasoning_model,
+                    "reasoning_type": analysis.reasoning_type.value,
+                    "confidence": analysis.confidence,
+                    "detected_signals": analysis.detected_signals,
+                    "recommended_effort": analysis.recommended_effort,
+                }
+                
+                # If strong reasoning signals, route to reasoning model
+                if analysis.needs_reasoning_model:
+                    result["model"] = analysis.recommended_models[0] if analysis.recommended_models else "openai/o1"
+                    result["strategy"] = "reasoning_specialized"
+                    result["estimated_cost"] = "premium" if analysis.recommended_effort == "high" else "standard"
+                    logger.info(
+                        "Smart routing: Using reasoning model %s (confidence %.2f, type: %s)",
+                        result["model"], analysis.confidence, analysis.reasoning_type.value
+                    )
+                    return result
+                    
+            except Exception as e:
+                logger.warning("Failed to run reasoning detection: %s", e)
+        
+        # Step 2: Apply cascade routing for cost optimization
+        if use_cascade:
+            try:
+                from .cascade_router import get_cascade_router
+                
+                cascade = get_cascade_router()
+                complexity = cascade.classify_complexity(query)
+                starting_tier = cascade.get_starting_tier(complexity)
+                selected_model = cascade.get_model_for_tier(starting_tier, task_type)
+                
+                result["model"] = selected_model
+                result["strategy"] = "cascade"
+                result["cascade_tier"] = starting_tier
+                result["estimated_cost"] = {1: "budget", 2: "standard", 3: "premium"}.get(starting_tier, "standard")
+                
+                logger.info(
+                    "Smart routing: Cascade tier %d model %s (complexity: %s)",
+                    starting_tier, selected_model, complexity.value
+                )
+                return result
+                
+            except Exception as e:
+                logger.warning("Failed to apply cascade routing: %s", e)
+        
+        # Step 3: Fallback to standard adaptive routing
+        domain = self.infer_domain(query)
+        role_prefs = self._get_dynamic_role_preferences()
+        
+        # Get best model for domain/task
+        if task_type == "coding" and "coding" in domain or domain == "coding":
+            if "executive" in role_prefs:
+                result["model"] = role_prefs["executive"][0]
+        elif task_type == "reasoning" or domain in ["science", "math"]:
+            if "coordinator" in role_prefs:
+                result["model"] = role_prefs["coordinator"][0]
+        else:
+            if "assistant" in role_prefs:
+                result["model"] = role_prefs["assistant"][0]
+        
+        if not result["model"]:
+            result["model"] = "openai/gpt-4o-mini"  # Safe fallback
+        
+        result["strategy"] = "adaptive_fallback"
+        logger.info("Smart routing: Fallback to %s for domain %s", result["model"], domain)
+        
+        return result
+    
+    def get_routing_stats(self) -> Dict[str, Any]:
+        """Get current routing statistics for monitoring."""
+        stats = {
+            "cascade_available": False,
+            "reasoning_detector_available": False,
+            "knowledge_store_available": False,
+        }
+        
+        try:
+            from .cascade_router import get_cascade_router
+            cascade = get_cascade_router()
+            stats["cascade_available"] = True
+            stats["cascade_metrics"] = cascade.get_metrics()
+        except Exception:
+            pass
+        
+        try:
+            from .reasoning_detector import get_reasoning_detector
+            get_reasoning_detector()
+            stats["reasoning_detector_available"] = True
+        except Exception:
+            pass
+        
+        if self._knowledge_store_initialized and self._knowledge_store:
+            stats["knowledge_store_available"] = True
+        
+        return stats
+    
     async def select_models_dynamic(
         self,
         query: str,

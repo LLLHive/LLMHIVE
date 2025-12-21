@@ -793,3 +793,66 @@ if REFINEMENT_LOOP_AVAILABLE:
         "refine_on_failure",
         "RefinementOnFailure",
     ])
+
+# ==================== COST-OPTIMIZED ROUTING (Intel Update Dec 2024) ====================
+
+# Cascade Router - Cost-optimized model routing with automatic escalation
+try:
+    from .cascade_router import (
+        CascadeRouter,
+        CascadeConfig,
+        CascadeResult,
+        TaskComplexity as CascadeTaskComplexity,
+        cascade_route,
+        get_cascade_router,
+    )
+    CASCADE_ROUTER_AVAILABLE = True
+except ImportError:
+    CASCADE_ROUTER_AVAILABLE = False
+    CascadeRouter = None  # type: ignore
+    CascadeConfig = None  # type: ignore
+    CascadeResult = None  # type: ignore
+    cascade_route = None  # type: ignore
+    get_cascade_router = None  # type: ignore
+
+# Reasoning Detector - Intelligent routing to reasoning models
+try:
+    from .reasoning_detector import (
+        ReasoningDetector,
+        ReasoningType,
+        ReasoningAnalysis,
+        ReasoningSignal,
+        needs_reasoning_model,
+        get_reasoning_model_recommendation,
+        get_reasoning_detector,
+    )
+    REASONING_DETECTOR_AVAILABLE = True
+except ImportError:
+    REASONING_DETECTOR_AVAILABLE = False
+    ReasoningDetector = None  # type: ignore
+    ReasoningType = None  # type: ignore
+    ReasoningAnalysis = None  # type: ignore
+    needs_reasoning_model = None  # type: ignore
+    get_reasoning_model_recommendation = None  # type: ignore
+    get_reasoning_detector = None  # type: ignore
+
+if CASCADE_ROUTER_AVAILABLE:
+    __all__.extend([
+        "CascadeRouter",
+        "CascadeConfig",
+        "CascadeResult",
+        "CascadeTaskComplexity",
+        "cascade_route",
+        "get_cascade_router",
+    ])
+
+if REASONING_DETECTOR_AVAILABLE:
+    __all__.extend([
+        "ReasoningDetector",
+        "ReasoningType",
+        "ReasoningAnalysis",
+        "ReasoningSignal",
+        "needs_reasoning_model",
+        "get_reasoning_model_recommendation",
+        "get_reasoning_detector",
+    ])

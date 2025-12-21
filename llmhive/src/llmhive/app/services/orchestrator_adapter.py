@@ -317,19 +317,67 @@ async def _learn_orchestration_pattern(
 
 
 def _detect_task_type(prompt: str) -> str:
-    """Detect task type from prompt for optimal routing."""
+    """Detect task type from prompt for optimal routing.
+    
+    Categories map to model capabilities and rankings for intelligent selection.
+    """
     prompt_lower = prompt.lower()
     
-    if any(kw in prompt_lower for kw in ["code", "function", "implement", "debug", "program"]):
+    # Code/Programming - DeepSeek, Claude Sonnet 4, GPT-4o excel
+    if any(kw in prompt_lower for kw in ["code", "function", "implement", "debug", "program", "script", "api", "backend", "frontend"]):
         return "code_generation"
-    elif any(kw in prompt_lower for kw in ["calculate", "solve", "math", "equation"]):
+    
+    # Math/Quantitative - o1, GPT-4o, Gemini Pro excel
+    elif any(kw in prompt_lower for kw in ["calculate", "solve", "math", "equation", "integral", "derivative", "proof"]):
         return "math_problem"
-    elif any(kw in prompt_lower for kw in ["research", "analyze", "comprehensive", "in-depth"]):
+    
+    # Health/Medical - Claude Opus 4, GPT-5, Med-PaLM 3 excel (requires accuracy)
+    elif any(kw in prompt_lower for kw in [
+        "treatment", "symptom", "diagnosis", "medical", "health", "disease", "medication",
+        "drug", "therapy", "clinical", "patient", "headache", "pain", "condition",
+        "doctor", "hospital", "illness", "chronic", "acute", "prognosis"
+    ]):
+        return "health_medical"
+    
+    # Science/Academic - Claude Opus 4, o1, Gemini Pro excel
+    elif any(kw in prompt_lower for kw in [
+        "scientific", "research", "study", "hypothesis", "experiment", "theory",
+        "peer-reviewed", "journal", "academic", "physics", "chemistry", "biology"
+    ]):
+        return "science_research"
+    
+    # Legal - Claude models, GPT-4o excel (requires precision)
+    elif any(kw in prompt_lower for kw in [
+        "legal", "law", "contract", "liability", "court", "attorney", "lawsuit",
+        "regulation", "compliance", "statute", "precedent", "jurisdiction"
+    ]):
+        return "legal_analysis"
+    
+    # Finance/Business - o1, Gemini Pro, GPT-4o excel
+    elif any(kw in prompt_lower for kw in [
+        "financial", "investment", "stock", "market", "portfolio", "valuation",
+        "revenue", "profit", "budget", "accounting", "tax", "fiscal"
+    ]):
+        return "financial_analysis"
+    
+    # Creative Writing - Claude models excel
+    elif any(kw in prompt_lower for kw in [
+        "write", "story", "creative", "poem", "narrative", "fiction", "character"
+    ]):
+        return "creative_writing"
+    
+    # Research/Analysis - needs multi-model consensus
+    elif any(kw in prompt_lower for kw in ["research", "analyze", "comprehensive", "in-depth", "latest", "developments"]):
         return "research_analysis"
+    
+    # Explanation - needs clarity
     elif any(kw in prompt_lower for kw in ["explain", "what is", "how does", "why"]):
         return "explanation"
-    elif any(kw in prompt_lower for kw in ["compare", "versus", "difference"]):
+    
+    # Comparison - needs multi-perspective
+    elif any(kw in prompt_lower for kw in ["compare", "versus", "difference", "pros and cons"]):
         return "comparison"
+    
     elif any(kw in prompt_lower for kw in ["summarize", "summary", "tldr"]):
         return "summarization"
     elif any(kw in prompt_lower for kw in ["quick", "fast", "brief"]):
@@ -385,6 +433,37 @@ def _select_elite_strategy(
             return "best_of_n"  # Skip challenge loop but still compare
         logger.info("Strategy: Code/math task -> challenge_and_refine")
         return "challenge_and_refine"
+    
+    # Health/Medical ALWAYS needs verification - this is critical
+    if task_type == "health_medical":
+        if num_models >= 3:
+            logger.info("Strategy: Health/medical task, 3+ models -> expert_panel (safety-critical)")
+            return "expert_panel"  # Multiple perspectives for safety
+        logger.info("Strategy: Health/medical task -> challenge_and_refine (safety-critical)")
+        return "challenge_and_refine"
+    
+    # Legal analysis needs high accuracy and verification
+    if task_type == "legal_analysis":
+        if num_models >= 2:
+            logger.info("Strategy: Legal analysis, multi-model -> quality_weighted_fusion")
+            return "quality_weighted_fusion"
+        logger.info("Strategy: Legal analysis -> challenge_and_refine")
+        return "challenge_and_refine"
+    
+    # Financial analysis needs accuracy
+    if task_type == "financial_analysis":
+        if accuracy_priority >= 70:
+            logger.info("Strategy: Financial analysis, high accuracy -> best_of_n")
+            return "best_of_n"
+    
+    # Science/Research needs multiple perspectives
+    if task_type == "science_research":
+        if num_models >= 3:
+            logger.info("Strategy: Science research, 3+ models -> expert_panel")
+            return "expert_panel"
+        elif num_models >= 2:
+            logger.info("Strategy: Science research, 2+ models -> quality_weighted_fusion")
+            return "quality_weighted_fusion"
     
     # Factual questions with high accuracy need verification
     if task_type == "factual_question" and accuracy_priority >= 80:

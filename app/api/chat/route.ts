@@ -100,18 +100,25 @@ export async function POST(req: NextRequest) {
 
     // Build the ChatRequest payload matching FastAPI ChatRequest model
     // Include models selected by the user - these will be used for multi-model orchestration
-    // Filter out "automatic" and use default models if needed
-    const DEFAULT_AUTO_MODELS = ["gpt-4o", "claude-sonnet-4", "deepseek-chat"]
+    // When "automatic" is selected, pass empty/null to let backend do intelligent selection
     let selectedModels = models || settings.selectedModels || []
     
-    // Expand "automatic" to actual models
-    if (selectedModels.includes("automatic") || selectedModels.length === 0) {
-      selectedModels = DEFAULT_AUTO_MODELS
+    // Check if user wants automatic intelligent selection
+    const isAutomaticMode = (
+      selectedModels.length === 0 ||
+      selectedModels.includes("automatic") ||
+      (selectedModels.length === 1 && selectedModels[0] === "automatic")
+    )
+    
+    if (isAutomaticMode) {
+      // Let the backend's intelligent model selection handle this
+      // It will use: task detection, domain analysis, rankings data, reasoning requirements
+      selectedModels = []  // Empty = let backend decide
+      console.log("[Chat API] Automatic mode: Backend will select optimal models for query")
     } else {
+      // User selected specific models - filter out any "automatic" placeholder
       selectedModels = selectedModels.filter((m: string) => m !== "automatic")
-      if (selectedModels.length === 0) {
-        selectedModels = DEFAULT_AUTO_MODELS
-      }
+      console.log("[Chat API] User-selected models:", selectedModels)
     }
 
     // Map advanced reasoning methods to the first non-automatic method selected

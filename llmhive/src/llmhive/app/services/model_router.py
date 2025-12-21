@@ -318,11 +318,22 @@ MODEL_CAPABILITIES = {
     },
 }
 
-# Task type to capability mapping
+# Task type to capability mapping (aligns with domain categories)
 TASK_CAPABILITY_MAP = {
+    # Code/Programming
     "code_generation": "coding",
     "debugging": "coding",
+    # Math/Quantitative
     "math_problem": "math",
+    # Health/Medical (needs accuracy + factual + reasoning)
+    "health_medical": "reasoning",  # Medical needs careful reasoning
+    # Science/Academic
+    "science_research": "analysis",
+    # Legal (needs accuracy + reasoning)
+    "legal_analysis": "reasoning",
+    # Finance (needs analysis + factual)
+    "financial_analysis": "analysis",
+    # Other
     "factual_question": "factual",
     "research_analysis": "analysis",
     "creative_writing": "creative",
@@ -330,6 +341,8 @@ TASK_CAPABILITY_MAP = {
     "comparison": "analysis",
     "planning": "reasoning",
     "summarization": "analysis",
+    "fast_response": "speed",
+    "high_quality": "overall",
     "general": "overall",
 }
 
