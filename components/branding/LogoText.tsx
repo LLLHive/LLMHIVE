@@ -1,33 +1,55 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
+type LogoVariant = "nav" | "title" | "hero";
+
 interface LogoTextProps {
-  /** Height in pixels - controls font size proportionally */
+  /** Height in pixels - controls image height */
   height?: number;
   /** Additional CSS classes */
   className?: string;
+  /** Variant determines which wordmark image to use */
+  variant?: LogoVariant;
 }
 
+// Image paths for each variant
+const WORDMARK_IMAGES: Record<LogoVariant, string> = {
+  nav: "/llmhive/llmhive-wordmark-nav.png",
+  title: "/llmhive/llmhive-wordmark-title.png",
+  hero: "/llmhive/llmhive-wordmark-hero.png",
+};
+
+// Aspect ratios for each image (width/height) - adjust based on actual images
+const ASPECT_RATIOS: Record<LogoVariant, number> = {
+  nav: 3.5,    // Nav wordmark is wider
+  title: 3.5,  // Title wordmark
+  hero: 3.5,   // Hero wordmark
+};
+
 /**
- * LLMHive logo text with 3D metallic gold styling.
- * Designed to match the look and feel of the 3D rendered gold logo.
+ * LLMHive wordmark using image assets with transparent backgrounds.
+ * Uses different image variants optimized for nav, title, and hero contexts.
  */
-export default function LogoText({ height = 48, className = "" }: LogoTextProps) {
-  // Convert height to appropriate font size (roughly 65% of height for visual balance)
-  const fontSize = Math.round(height * 0.65);
+export default function LogoText({ 
+  height = 48, 
+  className = "",
+  variant,
+}: LogoTextProps) {
+  // Auto-detect variant based on height if not specified
+  const resolvedVariant: LogoVariant = variant ?? (height <= 32 ? "nav" : height >= 56 ? "hero" : "title");
   
-  // Use smaller, less dramatic style for compact displays
-  const isSmall = height < 40;
+  const imageSrc = WORDMARK_IMAGES[resolvedVariant];
+  const aspectRatio = ASPECT_RATIOS[resolvedVariant];
+  const width = Math.round(height * aspectRatio);
 
   return (
-    <span
-      className={cn(
-        isSmall ? "llmhive-logo-text-sm" : "llmhive-logo-text",
-        "select-none whitespace-nowrap",
-        className
-      )}
-      style={{ fontSize: `${fontSize}px` }}
-    >
-      LLMHive
-    </span>
+    <Image
+      src={imageSrc}
+      alt="LLMHive"
+      width={width}
+      height={height}
+      className={cn("select-none object-contain", className)}
+      priority={resolvedVariant === "hero"}
+    />
   );
 }
