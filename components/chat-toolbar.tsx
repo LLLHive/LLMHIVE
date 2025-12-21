@@ -141,11 +141,19 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
   const toggleModel = (modelId: string) => {
     const currentModels = settings.selectedModels || []
     if (currentModels.includes(modelId)) {
+      // Removing a model
       if (currentModels.length > 1) {
-        onSettingsChange({ selectedModels: currentModels.filter((id) => id !== modelId) })
+        const newModels = currentModels.filter((id) => id !== modelId)
+        // If only "automatic" remains, keep it; otherwise filter it out too
+        onSettingsChange({ selectedModels: newModels })
+      } else {
+        // If removing the last model, switch back to automatic
+        onSettingsChange({ selectedModels: ["automatic"] })
       }
     } else {
-      onSettingsChange({ selectedModels: [...currentModels, modelId] })
+      // Adding a model - remove "automatic" when adding specific models
+      const modelsWithoutAutomatic = currentModels.filter((id) => id !== "automatic")
+      onSettingsChange({ selectedModels: [...modelsWithoutAutomatic, modelId] })
     }
   }
 
