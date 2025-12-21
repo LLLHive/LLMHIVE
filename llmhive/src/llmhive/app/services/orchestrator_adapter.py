@@ -167,6 +167,18 @@ except ImportError:
     KNOWLEDGE_BASE_AVAILABLE = False
     get_knowledge_base = None
 
+# Import cascade router and reasoning detector for intelligent routing
+try:
+    from ..orchestration.cascade_router import CascadeRouter, QueryComplexity
+    from ..orchestration.reasoning_detector import ReasoningDetector, ReasoningType
+    CASCADE_ROUTING_AVAILABLE = True
+except ImportError:
+    CASCADE_ROUTING_AVAILABLE = False
+    CascadeRouter = None  # type: ignore
+    ReasoningDetector = None  # type: ignore
+    QueryComplexity = None  # type: ignore
+    ReasoningType = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 # Configuration
@@ -209,6 +221,28 @@ def _get_quality_booster() -> Optional[QualityBooster]:
 
 # Knowledge base instance
 _knowledge_base: Optional[PineconeKnowledgeBase] = None
+
+# Cascade router and reasoning detector instances
+_cascade_router: Optional["CascadeRouter"] = None
+_reasoning_detector: Optional["ReasoningDetector"] = None
+
+
+def _get_cascade_router() -> Optional["CascadeRouter"]:
+    """Get or create cascade router for cost-optimized model selection."""
+    global _cascade_router
+    if _cascade_router is None and CASCADE_ROUTING_AVAILABLE:
+        _cascade_router = CascadeRouter()
+        logger.info("Cascade router initialized for cost-optimized routing")
+    return _cascade_router
+
+
+def _get_reasoning_detector() -> Optional["ReasoningDetector"]:
+    """Get or create reasoning detector for complex query detection."""
+    global _reasoning_detector
+    if _reasoning_detector is None and CASCADE_ROUTING_AVAILABLE:
+        _reasoning_detector = ReasoningDetector()
+        logger.info("Reasoning detector initialized")
+    return _reasoning_detector
 
 
 def _get_knowledge_base() -> Optional[PineconeKnowledgeBase]:
@@ -728,11 +762,54 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 actual_models,
             )
         else:
-            # Auto-select models based on reasoning method
+            # Auto-select models with intelligent routing
+            # Step 1: Check if query requires advanced reasoning
+            needs_reasoning_model = False
+            reasoning_type = None
+            reasoning_detector = _get_reasoning_detector()
+            if reasoning_detector:
+                try:
+                    reasoning_signals = reasoning_detector.detect_reasoning_signals(request.prompt)
+                    needs_reasoning_model = reasoning_detector.needs_reasoning_model(reasoning_signals)
+                    if needs_reasoning_model:
+                        reasoning_type = reasoning_signals.primary_type
+                        logger.info(
+                            "Reasoning detection: needs_reasoning=%s, type=%s, confidence=%.2f",
+                            needs_reasoning_model,
+                            reasoning_type.value if reasoning_type else "none",
+                            reasoning_signals.confidence,
+                        )
+                except Exception as e:
+                    logger.debug("Reasoning detection failed: %s", e)
+            
+            # Step 2: Use cascade routing for cost optimization
+            cascade_router = _get_cascade_router()
+            if cascade_router:
+                try:
+                    cascade_result = cascade_router.route_query_cascade(request.prompt)
+                    logger.info(
+                        "Cascade routing: complexity=%s, tier=%s, recommended_models=%s",
+                        cascade_result.complexity.value,
+                        cascade_result.tier.value,
+                        cascade_result.models[:3],
+                    )
+                except Exception as e:
+                    logger.debug("Cascade routing failed: %s", e)
+            
+            # Step 3: Select models based on reasoning method (fallback)
             selected_models = get_models_for_reasoning_method(
                 reasoning_method,
                 available_models=available_providers,
             )
+            
+            # Step 4: If reasoning model needed, prioritize reasoning-capable models
+            if needs_reasoning_model:
+                # Prioritize o1, o3-mini, or other reasoning models
+                reasoning_models = ["gpt-4o", "claude-sonnet-4-20250514"]  # Best reasoning
+                for rm in reasoning_models:
+                    if rm in available_providers and rm not in selected_models:
+                        selected_models.insert(0, rm)
+                logger.info("Prioritized reasoning models: %s", selected_models[:3])
             
             # Map to actual model names
             actual_models = []
