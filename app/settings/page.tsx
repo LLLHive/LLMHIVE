@@ -241,9 +241,9 @@ export default function SettingsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Top Bar */}
-        <div className="hidden md:flex items-center justify-end p-3 llmhive-glass border-b border-white/5">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        {/* Sign In Button - Top Right */}
+        <div className="hidden md:block absolute top-3 right-3 z-50">
           <UserAccountMenu />
         </div>
 

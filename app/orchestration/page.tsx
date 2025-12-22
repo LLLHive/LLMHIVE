@@ -389,9 +389,9 @@ export default function OrchestrationPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Desktop User Account Menu - Glassmorphism */}
-        <div className="hidden md:flex items-center justify-end p-3 border-b border-white/5 llmhive-glass">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        {/* Sign In Button - Top Right */}
+        <div className="hidden md:block absolute top-3 right-3 z-50">
           <UserAccountMenu />
         </div>
 
