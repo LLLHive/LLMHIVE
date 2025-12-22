@@ -109,6 +109,8 @@ async def lifespan(app: FastAPI):
             service_version="1.0.0",
             otlp_endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"),
             use_console_exporter=os.environ.get("OTEL_CONSOLE_EXPORT", "false").lower() == "true",
+            use_gcp_trace=os.environ.get("OTEL_USE_GCP_TRACE", "false").lower() == "true",
+            gcp_project_id=os.environ.get("GCP_PROJECT_ID") or os.environ.get("GOOGLE_CLOUD_PROJECT"),
         )
         if init_tracing(tracing_config):
             logger.info("✓ OpenTelemetry tracing SDK initialized")
@@ -392,6 +394,8 @@ if TRACING_AVAILABLE:
             service_version="1.0.0",
             otlp_endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"),
             use_console_exporter=os.environ.get("OTEL_CONSOLE_EXPORT", "false").lower() == "true",
+            use_gcp_trace=os.environ.get("OTEL_USE_GCP_TRACE", "false").lower() == "true",
+            gcp_project_id=os.environ.get("GCP_PROJECT_ID") or os.environ.get("GOOGLE_CLOUD_PROJECT"),
         )
         setup_fastapi_tracing(app, tracing_config)
         logger.info("OpenTelemetry tracing middleware configured")

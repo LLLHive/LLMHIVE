@@ -39,14 +39,26 @@ try:
         OTLPSpanExporter = None
         OTLP_AVAILABLE = False
     
+    # Google Cloud Trace exporter (optional, for GCP deployments)
+    try:
+        from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+        GCP_TRACE_AVAILABLE = True
+    except ImportError:
+        CloudTraceSpanExporter = None
+        GCP_TRACE_AVAILABLE = False
+    
     OTEL_AVAILABLE = True
 except ImportError:
     OTEL_AVAILABLE = False
+    OTLP_AVAILABLE = False
+    GCP_TRACE_AVAILABLE = False
     trace = None
     TracerProvider = None
     Resource = None
     Span = None
     SpanKind = None
+    CloudTraceSpanExporter = None
+    OTLPSpanExporter = None
     logger.warning(
         "OpenTelemetry not available. Install with: pip install opentelemetry-api opentelemetry-sdk"
     )
@@ -63,6 +75,8 @@ class TracingConfig:
     # Exporter configuration
     otlp_endpoint: Optional[str] = field(default_factory=lambda: os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
     use_console_exporter: bool = field(default_factory=lambda: os.getenv("OTEL_CONSOLE_EXPORT", "false").lower() == "true")
+    use_gcp_trace: bool = field(default_factory=lambda: os.getenv("OTEL_USE_GCP_TRACE", "false").lower() == "true")
+    gcp_project_id: Optional[str] = field(default_factory=lambda: os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT"))
     
     # Sampling configuration
     sample_rate: float = field(default_factory=lambda: float(os.getenv("OTEL_SAMPLE_RATE", "1.0")))
@@ -118,18 +132,33 @@ def init_tracing(config: Optional[TracingConfig] = None) -> bool:
         provider = TracerProvider(resource=resource)
         
         # Add exporters based on config
+        exporter_configured = False
+        
+        # Google Cloud Trace exporter (preferred for GCP deployments)
+        if _config.use_gcp_trace and GCP_TRACE_AVAILABLE:
+            try:
+                gcp_exporter = CloudTraceSpanExporter(project_id=_config.gcp_project_id)
+                provider.add_span_processor(BatchSpanProcessor(gcp_exporter))
+                logger.info(f"Google Cloud Trace exporter configured (project: {_config.gcp_project_id})")
+                exporter_configured = True
+            except Exception as e:
+                logger.warning(f"Failed to configure GCP Trace exporter: {e}")
+        
+        # OTLP exporter (for generic OTLP collectors)
         if _config.otlp_endpoint and OTLP_AVAILABLE:
             otlp_exporter = OTLPSpanExporter(endpoint=_config.otlp_endpoint)
             provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
             logger.info(f"OTLP exporter configured: {_config.otlp_endpoint}")
+            exporter_configured = True
         
         if _config.use_console_exporter:
             console_exporter = ConsoleSpanExporter()
             provider.add_span_processor(BatchSpanProcessor(console_exporter))
             logger.info("Console exporter enabled")
+            exporter_configured = True
         
         # If no exporters configured, add console for development
-        if not _config.otlp_endpoint and not _config.use_console_exporter:
+        if not exporter_configured:
             if _config.environment == "development":
                 console_exporter = ConsoleSpanExporter()
                 provider.add_span_processor(BatchSpanProcessor(console_exporter))

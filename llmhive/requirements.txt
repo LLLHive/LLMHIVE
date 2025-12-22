@@ -50,6 +50,7 @@ opentelemetry-api>=1.21.0
 opentelemetry-sdk>=1.21.0
 opentelemetry-instrumentation-fastapi>=0.42b0
 opentelemetry-exporter-otlp>=1.21.0
+opentelemetry-exporter-gcp-trace>=1.6.0  # Google Cloud Trace exporter
 
 # Embeddings / vector (uses CPU torch from above)
 sentence-transformers>=3.3.1
