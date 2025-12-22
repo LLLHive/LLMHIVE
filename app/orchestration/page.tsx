@@ -370,6 +370,11 @@ export default function OrchestrationPage() {
 
   return (
     <div className="flex h-screen overflow-hidden relative">
+      {/* Sign In Button - Top Right (outside of main content flow) */}
+      <div className="hidden md:block fixed top-3 right-3 z-50">
+        <UserAccountMenu />
+      </div>
+
       {/* Glassmorphism Sidebar */}
       <div className="llmhive-glass-sidebar h-full">
       <Sidebar
@@ -389,12 +394,7 @@ export default function OrchestrationPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-        {/* Sign In Button - Top Right */}
-        <div className="hidden md:block absolute top-3 right-3 z-50">
-          <UserAccountMenu />
-        </div>
-
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Main Content in scrollable container */}
         <div className="flex-1 h-full overflow-auto">
           <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
