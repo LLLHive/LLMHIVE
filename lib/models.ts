@@ -318,15 +318,83 @@ export function getModelDisplayName(apiModelName: string): string {
     .join(' ')
 }
 
-export function getModelLogo(provider: string): string {
-  const logos: Record<string, string> = {
-    orchestrator: "/logo.png",  // LLMHive logo for automatic selection
-    openai: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
-    anthropic: "/claude-logo.png",
-    google: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
-    xai: "/grok-logo.png",
-    deepseek: "/deepseek-logo.svg",
-    meta: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg",
+// Provider logo URLs - high quality, full color
+const PROVIDER_LOGOS: Record<string, string> = {
+  // LLMHive
+  orchestrator: "/logo.png",
+  llmhive: "/logo.png",
+  automatic: "/logo.png",
+  
+  // OpenAI
+  openai: "https://cdn.openai.com/API/images/openai-logo.svg",
+  
+  // Anthropic
+  anthropic: "https://www.anthropic.com/images/icons/apple-touch-icon.png",
+  claude: "https://www.anthropic.com/images/icons/apple-touch-icon.png",
+  
+  // Google
+  google: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
+  gemini: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
+  
+  // xAI / Grok
+  xai: "https://x.ai/favicon.ico",
+  "x-ai": "https://x.ai/favicon.ico",
+  grok: "https://x.ai/favicon.ico",
+  
+  // DeepSeek
+  deepseek: "https://chat.deepseek.com/favicon.ico",
+  
+  // Meta / Llama
+  meta: "https://llama.meta.com/favicon.ico",
+  "meta-llama": "https://llama.meta.com/favicon.ico",
+  llama: "https://llama.meta.com/favicon.ico",
+  
+  // Mistral
+  mistralai: "https://mistral.ai/images/favicon.ico",
+  mistral: "https://mistral.ai/images/favicon.ico",
+  
+  // Cohere
+  cohere: "https://cohere.com/favicon.ico",
+  
+  // Perplexity
+  perplexity: "https://www.perplexity.ai/favicon.ico",
+  
+  // Qwen / Alibaba
+  qwen: "https://qwenlm.github.io/favicon.ico",
+  alibaba: "https://qwenlm.github.io/favicon.ico",
+  
+  // Microsoft
+  microsoft: "https://www.microsoft.com/favicon.ico",
+  
+  // Amazon
+  amazon: "https://www.amazon.com/favicon.ico",
+  
+  // Nvidia
+  nvidia: "https://www.nvidia.com/favicon.ico",
+}
+
+export function getModelLogo(providerOrModelId: string): string {
+  // Normalize to lowercase
+  const normalized = providerOrModelId.toLowerCase()
+  
+  // Direct match
+  if (PROVIDER_LOGOS[normalized]) {
+    return PROVIDER_LOGOS[normalized]
   }
-  return logos[provider] || ""
+  
+  // Extract provider from model ID (e.g., "openai/gpt-4o" -> "openai")
+  const provider = normalized.split('/')[0]
+  if (PROVIDER_LOGOS[provider]) {
+    return PROVIDER_LOGOS[provider]
+  }
+  
+  // Try partial match
+  for (const [key, url] of Object.entries(PROVIDER_LOGOS)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return url
+    }
+  }
+  
+  // Default fallback - generic AI icon
+  return ""
 }

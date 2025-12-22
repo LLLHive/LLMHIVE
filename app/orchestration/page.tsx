@@ -533,6 +533,18 @@ export default function OrchestrationPage() {
                               }`}>
                                 {entry.rank}
                               </div>
+                              {/* Provider Logo */}
+                              {getModelLogo(modelId) && (
+                                <div className="w-4 h-4 relative shrink-0">
+                                  <Image
+                                    src={getModelLogo(modelId)}
+                                    alt=""
+                                    fill
+                                    className="object-contain"
+                                    unoptimized
+                                  />
+                                </div>
+                              )}
                               <div className="flex-1 min-w-0">
                                 <p className={`text-sm font-medium truncate ${isSelected ? "text-[var(--bronze)]" : ""}`}>
                                   {entry.model_name}

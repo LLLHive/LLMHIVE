@@ -33,7 +33,8 @@ export function ModelsUsedDisplay({
         id,
         name: getModelDisplayName(id), // Always get a nice display name
         provider: model?.provider || "unknown",
-        logo: model ? getModelLogo(model.provider) : null,
+        // Use model ID to get logo - works with OpenRouter IDs like "openai/gpt-4o"
+        logo: getModelLogo(model?.provider || id),
       }
     })
   }, [modelIds])

@@ -40,6 +40,7 @@ import {
 } from "@/lib/openrouter/tiers"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { getModelLogo } from "@/lib/models"
 
 // Ranking categories matching OpenRouter
 const RANKING_CATEGORIES: Array<{
@@ -131,6 +132,19 @@ function ModelCard({
               "bg-muted text-muted-foreground"
             )}>
               #{rank}
+            </div>
+          )}
+          
+          {/* Provider Logo */}
+          {getModelLogo(model.id) && (
+            <div className="w-5 h-5 relative shrink-0">
+              <Image
+                src={getModelLogo(model.id)}
+                alt=""
+                fill
+                className="object-contain"
+                unoptimized
+              />
             </div>
           )}
           
