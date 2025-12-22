@@ -209,7 +209,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
     <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20 overflow-y-auto relative">
       {/* Hero Section with 3D Logo */}
       <div className="text-center mb-6 llmhive-fade-in">
-        <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto -mb-4 md:-mb-6 llmhive-float">
+        <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto -mb-8 md:-mb-12 llmhive-float">
           <Image 
             src="/logo.png" 
             alt="LLMHive" 
