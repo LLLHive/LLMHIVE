@@ -10,12 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, CreditCard, Settings, LogOut, LogIn, Github, Chrome } from "lucide-react"
-import { useAuth } from "@/lib/auth-context"
+import { User, CreditCard, Settings, LogOut, LogIn } from "lucide-react"
+import { SignInButton, SignOutButton, useUser, useClerk } from "@clerk/nextjs"
 import { ROUTES } from "@/lib/routes"
 
 interface UserAccountMenuProps {
-  // Props are now optional since we use the auth context
+  // Props are now optional since we use Clerk
   user?: {
     name?: string
     email?: string
@@ -25,82 +25,68 @@ interface UserAccountMenuProps {
   onSignOut?: () => void
 }
 
-export function UserAccountMenu({ user: propUser, onSignIn, onSignOut }: UserAccountMenuProps) {
+export function UserAccountMenu({ onSignOut }: UserAccountMenuProps) {
   const router = useRouter()
-  const auth = useAuth()
-  
-  // Use auth context user if available, fall back to prop user
-  const user = auth.user || propUser
-  const isLoggedIn = !!user
-  
-  const handleSignIn = (provider: 'github' | 'google') => {
-    auth.signIn(provider)
-  }
-  
-  const handleSignOut = () => {
-    auth.signOut()
-    onSignOut?.()
-  }
+  const { user, isLoaded, isSignedIn } = useUser()
+  const { openUserProfile } = useClerk()
 
-  if (!isLoggedIn) {
+  // Show loading state while Clerk loads
+  if (!isLoaded) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
       <Button
         variant="ghost"
         size="sm"
-        className="gap-2 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg text-[var(--bronze)] hover:bg-secondary hover:border-[var(--bronze)]"
+        disabled
+        className="gap-2 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg"
       >
-        <LogIn className="h-4 w-4" />
-        <span className="hidden sm:inline">Sign In</span>
+        <div className="h-4 w-4 animate-pulse bg-muted rounded" />
+        <span className="hidden sm:inline">Loading...</span>
       </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <div className="px-3 py-2">
-            <p className="text-sm font-medium">Sign In</p>
-            <p className="text-xs text-muted-foreground">Choose your preferred method</p>
-          </div>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            className="gap-2 cursor-pointer"
-            onClick={() => handleSignIn('github')}
-          >
-            <Github className="h-4 w-4" />
-            Continue with GitHub
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            className="gap-2 cursor-pointer"
-            onClick={() => handleSignIn('google')}
-          >
-            <Chrome className="h-4 w-4" />
-            Continue with Google
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     )
   }
+
+  // Not signed in - show sign in button
+  if (!isSignedIn || !user) {
+    return (
+      <SignInButton mode="modal">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg text-[var(--bronze)] hover:bg-secondary hover:border-[var(--bronze)]"
+        >
+          <LogIn className="h-4 w-4" />
+          <span className="hidden sm:inline">Sign In</span>
+        </Button>
+      </SignInButton>
+    )
+  }
+
+  // Signed in - show user menu
+  const displayName = user.fullName || user.firstName || user.username || "User"
+  const email = user.primaryEmailAddress?.emailAddress || ""
+  const avatarUrl = user.imageUrl
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" aria-label="Open account menu">
           <Avatar className="h-8 w-8 border border-border">
-            <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
+            <AvatarImage src={avatarUrl} alt={displayName} />
             <AvatarFallback className="bg-[var(--bronze)]/20 text-[var(--bronze)] text-xs">
-              {user.name?.charAt(0)?.toUpperCase() || "U"}
+              {displayName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-3 py-2">
-          <p className="text-sm font-medium truncate">{user.name || "User"}</p>
-          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          <p className="text-sm font-medium truncate">{displayName}</p>
+          <p className="text-xs text-muted-foreground truncate">{email}</p>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           className="gap-2 cursor-pointer"
-          onClick={() => router.push(ROUTES.SETTINGS)}
+          onClick={() => openUserProfile()}
         >
           <User className="h-4 w-4" />
           Account
@@ -120,10 +106,15 @@ export function UserAccountMenu({ user: propUser, onSignIn, onSignOut }: UserAcc
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive">
-          <LogOut className="h-4 w-4" />
-          Sign Out
-        </DropdownMenuItem>
+        <SignOutButton>
+          <DropdownMenuItem 
+            className="gap-2 cursor-pointer text-destructive"
+            onClick={() => onSignOut?.()}
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </DropdownMenuItem>
+        </SignOutButton>
       </DropdownMenuContent>
     </DropdownMenu>
   )
