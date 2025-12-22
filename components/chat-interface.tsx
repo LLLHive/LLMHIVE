@@ -355,6 +355,11 @@ export function ChatInterface() {
 
   return (
     <div className="flex h-full w-full relative">
+      {/* Sign In Button - Desktop Top Right (fixed position) */}
+      <div className="hidden md:block fixed top-3 right-3 z-50">
+        <UserAccountMenu />
+      </div>
+
       {/* Desktop Sidebar */}
       <div className="hidden md:block h-full">{sidebarContent}</div>
 
@@ -396,10 +401,6 @@ export function ChatInterface() {
       <div className="flex flex-1 overflow-hidden md:pt-0 pt-14">
         {!currentConversationId ? (
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {/* Desktop User Account Menu - Glassmorphism */}
-            <div className="hidden md:flex items-center justify-end p-3 border-b border-white/5 llmhive-glass">
-              <UserAccountMenu />
-            </div>
             <div className="flex-1 h-full overflow-auto">
               <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
             </div>
@@ -416,11 +417,6 @@ export function ChatInterface() {
               orchestratorSettings={orchestratorSettings}
               onOrchestratorSettingsChange={updateOrchestratorSettings}
               onOpenAdvancedSettings={() => setShowAdvancedSettings(true)}
-              userAccountMenu={
-                <div className="hidden md:block">
-                  <UserAccountMenu />
-                </div>
-              }
             />
             {showArtifact && currentArtifact && (
               <ArtifactPanel artifact={currentArtifact} onClose={() => setShowArtifact(false)} />
