@@ -133,7 +133,7 @@ export default function DiscoverPage() {
           <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20">
             {/* Hero Section with 3D Logo */}
             <div className="text-center mb-6 llmhive-fade-in">
-              <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto -mb-8 md:-mb-12 llmhive-float">
+              <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto -mb-12 md:-mb-20 llmhive-float">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
               <LogoText height={56} className="md:hidden mb-2 mx-auto" />
