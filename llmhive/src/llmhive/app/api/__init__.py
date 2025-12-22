@@ -117,3 +117,13 @@ try:
 except Exception as exc:
     logger.warning("Failed to import OpenRouter router: %s", exc)
 
+# Pinecone-backed model API (persistent storage, primary source)
+try:
+    from . import pinecone_models  # type: ignore
+    
+    if hasattr(pinecone_models, "router"):
+        api_router.include_router(pinecone_models.router, tags=["models"])
+        logger.info("Pinecone Models routes registered at /api/v1/models")
+except Exception as exc:
+    logger.warning("Failed to import Pinecone models router: %s", exc)
+
