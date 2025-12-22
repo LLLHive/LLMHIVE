@@ -318,64 +318,161 @@ export function getModelDisplayName(apiModelName: string): string {
     .join(' ')
 }
 
-// Provider logo URLs - high quality, full color
+// Provider logo paths - all hosted locally in /public/logos/ for reliability
+// Full color, high quality logos
 const PROVIDER_LOGOS: Record<string, string> = {
-  // LLMHive
-  orchestrator: "/logo.png",
-  llmhive: "/logo.png",
-  automatic: "/logo.png",
+  // LLMHive / Orchestrator
+  orchestrator: "/logos/llmhive.png",
+  llmhive: "/logos/llmhive.png",
+  automatic: "/logos/llmhive.png",
   
   // OpenAI
-  openai: "https://cdn.openai.com/API/images/openai-logo.svg",
+  openai: "/logos/openai.svg",
+  "gpt-4": "/logos/openai.svg",
+  "gpt-4o": "/logos/openai.svg",
+  "gpt-4.5": "/logos/openai.svg",
+  "gpt-5": "/logos/openai.svg",
+  "o1": "/logos/openai.svg",
+  "o3": "/logos/openai.svg",
+  "chatgpt": "/logos/openai.svg",
   
-  // Anthropic
-  anthropic: "https://www.anthropic.com/images/icons/apple-touch-icon.png",
-  claude: "https://www.anthropic.com/images/icons/apple-touch-icon.png",
+  // Anthropic / Claude
+  anthropic: "/logos/anthropic.png",
+  claude: "/logos/anthropic.png",
+  "claude-3": "/logos/anthropic.png",
+  "claude-sonnet": "/logos/anthropic.png",
+  "claude-opus": "/logos/anthropic.png",
+  "claude-haiku": "/logos/anthropic.png",
   
-  // Google
-  google: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
-  gemini: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
+  // Google / Gemini
+  google: "/logos/google.svg",
+  gemini: "/logos/google.svg",
+  "gemini-pro": "/logos/google.svg",
+  "gemini-flash": "/logos/google.svg",
+  "gemini-2": "/logos/google.svg",
+  palm: "/logos/google.svg",
   
   // xAI / Grok
-  xai: "https://x.ai/favicon.ico",
-  "x-ai": "https://x.ai/favicon.ico",
-  grok: "https://x.ai/favicon.ico",
+  xai: "/logos/xai.png",
+  "x-ai": "/logos/xai.png",
+  grok: "/logos/xai.png",
+  "grok-2": "/logos/xai.png",
+  "grok-3": "/logos/xai.png",
   
   // DeepSeek
-  deepseek: "https://chat.deepseek.com/favicon.ico",
+  deepseek: "/logos/deepseek.svg",
+  "deepseek-v3": "/logos/deepseek.svg",
+  "deepseek-r1": "/logos/deepseek.svg",
+  "deepseek-chat": "/logos/deepseek.svg",
+  "deepseek-coder": "/logos/deepseek.svg",
   
   // Meta / Llama
-  meta: "https://llama.meta.com/favicon.ico",
-  "meta-llama": "https://llama.meta.com/favicon.ico",
-  llama: "https://llama.meta.com/favicon.ico",
+  meta: "/logos/meta.svg",
+  "meta-llama": "/logos/meta.svg",
+  llama: "/logos/meta.svg",
+  "llama-3": "/logos/meta.svg",
+  "llama-4": "/logos/meta.svg",
+  "llama3": "/logos/meta.svg",
   
   // Mistral
-  mistralai: "https://mistral.ai/images/favicon.ico",
-  mistral: "https://mistral.ai/images/favicon.ico",
+  mistralai: "/logos/mistral.png",
+  mistral: "/logos/mistral.png",
+  "mistral-large": "/logos/mistral.png",
+  "mistral-medium": "/logos/mistral.png",
+  "mistral-small": "/logos/mistral.png",
+  codestral: "/logos/mistral.png",
+  mixtral: "/logos/mistral.png",
+  pixtral: "/logos/mistral.png",
   
   // Cohere
-  cohere: "https://cohere.com/favicon.ico",
+  cohere: "/logos/cohere.png",
+  command: "/logos/cohere.png",
+  "command-r": "/logos/cohere.png",
+  "command-a": "/logos/cohere.png",
   
   // Perplexity
-  perplexity: "https://www.perplexity.ai/favicon.ico",
+  perplexity: "/logos/perplexity.svg",
+  "pplx": "/logos/perplexity.svg",
+  "sonar": "/logos/perplexity.svg",
   
   // Qwen / Alibaba
-  qwen: "https://qwenlm.github.io/favicon.ico",
-  alibaba: "https://qwenlm.github.io/favicon.ico",
+  qwen: "/logos/alibaba.svg",
+  alibaba: "/logos/alibaba.svg",
+  "qwen-2": "/logos/alibaba.svg",
+  "qwen2": "/logos/alibaba.svg",
+  "qwen-max": "/logos/alibaba.svg",
   
-  // Microsoft
-  microsoft: "https://www.microsoft.com/favicon.ico",
+  // Microsoft / Azure
+  microsoft: "/logos/microsoft.png",
+  azure: "/logos/microsoft.png",
+  phi: "/logos/microsoft.png",
+  "phi-3": "/logos/microsoft.png",
+  "phi-4": "/logos/microsoft.png",
+  orca: "/logos/microsoft.png",
+  wizardlm: "/logos/microsoft.png",
   
   // Amazon
-  amazon: "https://www.amazon.com/favicon.ico",
+  amazon: "/logos/amazon.png",
+  aws: "/logos/amazon.png",
+  titan: "/logos/amazon.png",
+  nova: "/logos/amazon.png",
   
   // Nvidia
-  nvidia: "https://www.nvidia.com/favicon.ico",
+  nvidia: "/logos/nvidia.svg",
+  nemotron: "/logos/nvidia.svg",
+  
+  // Groq (inference platform)
+  groq: "/logos/groq.png",
+  
+  // Together AI
+  together: "/logos/together.png",
+  "togethercomputer": "/logos/together.png",
+  
+  // Replicate
+  replicate: "/logos/replicate.png",
+  
+  // Fireworks
+  fireworks: "/logos/fireworks.png",
+  "fireworks-ai": "/logos/fireworks.png",
+  
+  // AI21 Labs
+  ai21: "/logos/ai21.png",
+  jamba: "/logos/ai21.png",
+  jurassic: "/logos/ai21.png",
+  
+  // Hugging Face
+  huggingface: "/logos/huggingface.svg",
+  "hugging-face": "/logos/huggingface.svg",
+  hf: "/logos/huggingface.svg",
+  
+  // Cerebras
+  cerebras: "/logos/cerebras.png",
+  
+  // Lepton
+  lepton: "/logos/lepton.png",
+  
+  // Anyscale
+  anyscale: "/logos/anyscale.png",
+  
+  // Other common model names
+  yi: "/logos/alibaba.svg",  // Yi models (01.AI)
+  databricks: "/logos/unknown.svg",
+  dbrx: "/logos/unknown.svg",
+  nousresearch: "/logos/unknown.svg",
+  nous: "/logos/unknown.svg",
+  hermes: "/logos/unknown.svg",
+  dolphin: "/logos/unknown.svg",
+  openchat: "/logos/unknown.svg",
+  teknium: "/logos/unknown.svg",
+  "01-ai": "/logos/alibaba.svg",
+  inflection: "/logos/unknown.svg",
 }
 
 export function getModelLogo(providerOrModelId: string): string {
+  if (!providerOrModelId) return "/logos/unknown.svg"
+  
   // Normalize to lowercase
-  const normalized = providerOrModelId.toLowerCase()
+  const normalized = providerOrModelId.toLowerCase().trim()
   
   // Direct match
   if (PROVIDER_LOGOS[normalized]) {
@@ -383,18 +480,30 @@ export function getModelLogo(providerOrModelId: string): string {
   }
   
   // Extract provider from model ID (e.g., "openai/gpt-4o" -> "openai")
-  const provider = normalized.split('/')[0]
+  const parts = normalized.split('/')
+  const provider = parts[0]
   if (PROVIDER_LOGOS[provider]) {
     return PROVIDER_LOGOS[provider]
   }
   
-  // Try partial match
+  // Check model name part (e.g., "openai/gpt-4o" -> "gpt-4o")
+  if (parts.length > 1) {
+    const modelName = parts[1]
+    // Check for known model prefixes
+    for (const [key, url] of Object.entries(PROVIDER_LOGOS)) {
+      if (modelName.startsWith(key) || modelName.includes(key)) {
+        return url
+      }
+    }
+  }
+  
+  // Try partial match on whole string
   for (const [key, url] of Object.entries(PROVIDER_LOGOS)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
+    if (normalized.includes(key)) {
       return url
     }
   }
   
-  // Default fallback - generic AI icon
-  return ""
+  // Return placeholder for unknown providers
+  return "/logos/unknown.svg"
 }
