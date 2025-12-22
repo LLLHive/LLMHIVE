@@ -126,9 +126,9 @@ function ModelCard({
           {rank && rank <= 10 && (
             <div className={cn(
               "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-              rank === 1 ? "bg-amber-500 text-black" :
-              rank === 2 ? "bg-gray-300 text-black" :
-              rank === 3 ? "bg-orange-400 text-black" :
+              rank === 1 ? "bg-yellow-400 text-yellow-900" :  // Gold
+              rank === 2 ? "bg-slate-300 text-slate-700" :    // Silver
+              rank === 3 ? "bg-amber-600 text-amber-100" :    // Bronze
               "bg-muted text-muted-foreground"
             )}>
               #{rank}

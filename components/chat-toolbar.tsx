@@ -243,9 +243,9 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                     >
                       <div className={cn(
                         "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
-                        entry.rank === 1 ? "bg-amber-500 text-black" :
-                        entry.rank === 2 ? "bg-gray-300 text-black" :
-                        entry.rank === 3 ? "bg-orange-400 text-black" :
+                        entry.rank === 1 ? "bg-yellow-400 text-yellow-900" :  // Gold
+                        entry.rank === 2 ? "bg-slate-300 text-slate-700" :    // Silver
+                        entry.rank === 3 ? "bg-amber-600 text-amber-100" :    // Bronze
                         "bg-muted text-muted-foreground"
                       )}>
                         {entry.rank}
