@@ -250,6 +250,16 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                       )}>
                         {entry.rank}
                       </div>
+                      {/* Provider Logo */}
+                      <div className="w-5 h-5 relative shrink-0">
+                        <Image
+                          src={getModelLogo(modelId)}
+                          alt=""
+                          fill
+                          className="object-contain"
+                          unoptimized
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
                           <span className="text-sm truncate">{entry.model_name}</span>
