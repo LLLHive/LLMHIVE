@@ -241,7 +241,6 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
 
       {/* Template Cards - Glass Cards */}
       <div className="w-full max-w-4xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-        <p className="text-sm text-muted-foreground text-center mb-3">Or start from a template</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {templates.map((template, index) => {
             const Icon = template.icon
