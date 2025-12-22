@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { AnalyticsWrapper } from "@/components/analytics"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/lib/auth-context"
 import { AppearanceSettingsLoader } from "@/components/appearance-settings-loader"
 import AppBackground from "@/components/branding/AppBackground"
 
@@ -68,18 +69,20 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange={false}
           >
-            <AppearanceSettingsLoader />
-            {children}
-            <Toaster 
-              position="bottom-right"
-              closeButton
-              richColors
-              expand={false}
-              toastOptions={{
-                duration: 4000,
-              }}
-            />
-            <AnalyticsWrapper />
+            <AuthProvider>
+              <AppearanceSettingsLoader />
+              {children}
+              <Toaster 
+                position="bottom-right"
+                closeButton
+                richColors
+                expand={false}
+                toastOptions={{
+                  duration: 4000,
+                }}
+              />
+              <AnalyticsWrapper />
+            </AuthProvider>
           </ThemeProvider>
         </body>
       </html>
