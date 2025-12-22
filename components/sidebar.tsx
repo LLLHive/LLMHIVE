@@ -122,12 +122,12 @@ export function Sidebar({
           {!collapsed && (
             <button
               onClick={onGoHome}
-              className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-0 cursor-pointer hover:opacity-80 transition-opacity"
             >
               <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
               </div>
-              <LogoText height={35} />
+              <LogoText height={35} className="-ml-1" />
             </button>
           )}
           {collapsed && (
