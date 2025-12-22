@@ -209,7 +209,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
     <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20 overflow-y-auto relative">
       {/* Hero Section with 3D Logo */}
       <div className="text-center mb-6 llmhive-fade-in">
-        <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto mb-2 llmhive-float">
+        <div className="relative w-44 h-44 md:w-72 md:h-72 lg:w-80 lg:h-80 mx-auto -mb-4 md:-mb-6 llmhive-float">
           <Image 
             src="/logo.png" 
             alt="LLMHive" 
@@ -220,7 +220,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </div>
         
         {/* 3D Metallic Title - Using actual rendered image for exact match */}
-        <LogoText height={64} className="mb-2 mx-auto" />
+        <LogoText height={56} className="md:hidden mb-2 mx-auto" />
+        <LogoText height={80} className="hidden md:block lg:hidden mb-2 mx-auto" />
+        <LogoText height={96} className="hidden lg:block mb-2 mx-auto" />
         
         <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-4">
           Multi-agent AI orchestration for enhanced accuracy and deeper insights
