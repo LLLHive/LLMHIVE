@@ -259,20 +259,43 @@ def _get_elite_orchestrator() -> Optional[EliteOrchestrator]:
 
 # Actual OpenRouter model IDs (VERIFIED December 2025)
 # These MUST match exactly what OpenRouter returns from /api/v1/models
-OPENROUTER_GPT_5 = "openai/gpt-5"                        # ✓ Verified
-OPENROUTER_CLAUDE_OPUS_4 = "anthropic/claude-opus-4"    # ✓ Verified (no date suffix)
+OPENROUTER_GPT_5 = "openai/gpt-5"                        # ✓ Verified - EXPENSIVE
+OPENROUTER_CLAUDE_OPUS_4 = "anthropic/claude-opus-4"    # ✓ Verified - EXPENSIVE
 OPENROUTER_GEMINI_2_PRO = "google/gemini-2.5-pro"       # ✓ Verified (2.5, not 2.0)
 OPENROUTER_CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4"  # ✓ Verified (no date suffix)
-OPENROUTER_O3 = "openai/o3"                              # ✓ Verified (o3 is latest reasoning)
-OPENROUTER_O1 = "openai/o1-pro"                          # ✓ Verified (o1-pro available)
+OPENROUTER_O3 = "openai/o3"                              # ✓ Verified - EXPENSIVE
+OPENROUTER_O1 = "openai/o1-pro"                          # ✓ Verified - EXPENSIVE
 OPENROUTER_LLAMA_4 = "meta-llama/llama-4-maverick"       # ✓ Verified (maverick variant)
 OPENROUTER_MISTRAL_LARGE = "mistralai/mistral-large-2512"  # ✓ Verified
-OPENROUTER_GPT_4O = "openai/gpt-4o"                      # ✓ Verified (still available)
-OPENROUTER_DEEPSEEK = "deepseek/deepseek-v3.2"           # ✓ Verified (v3.2 is latest)
-OPENROUTER_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"     # ✓ Verified (reasoning model)
-OPENROUTER_GROK_4 = "x-ai/grok-4"                        # ✓ Verified (grok-4 is latest)
-OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"  # ✓ Verified
+OPENROUTER_GPT_4O = "openai/gpt-4o"                      # ✓ Verified - COST-EFFECTIVE
+OPENROUTER_DEEPSEEK = "deepseek/deepseek-v3.2"           # ✓ Verified - COST-EFFECTIVE
+OPENROUTER_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"     # ✓ Verified - COST-EFFECTIVE
+OPENROUTER_GROK_4 = "x-ai/grok-4"                        # ✓ Verified
+OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"  # ✓ Verified - VERY CHEAP
 OPENROUTER_GEMINI_3_PRO = "google/gemini-3-pro-preview"  # ✓ Verified (newest)
+
+# Budget-aware flag - set to True to use cost-effective models only
+BUDGET_MODE = os.getenv("BUDGET_MODE", "true").lower() == "true"
+
+# Cost-effective models (use when credits are limited)
+COST_EFFECTIVE_MODELS = [
+    OPENROUTER_GPT_4O,           # ~$5/1M tokens - excellent quality
+    OPENROUTER_DEEPSEEK,         # ~$0.14/1M tokens - great for coding
+    OPENROUTER_DEEPSEEK_R1,      # ~$0.55/1M tokens - reasoning specialist
+    OPENROUTER_GEMINI_2_5_FLASH, # ~$0.075/1M tokens - very fast
+    OPENROUTER_GEMINI_2_PRO,     # ~$1.25/1M tokens - good for research
+    OPENROUTER_CLAUDE_SONNET_4,  # ~$3/1M tokens - good balance
+    OPENROUTER_LLAMA_4,          # ~$0.20/1M tokens - open source
+    OPENROUTER_MISTRAL_LARGE,    # ~$2/1M tokens - good for coding
+]
+
+# Premium models (require more credits)
+PREMIUM_MODELS = [
+    OPENROUTER_GPT_5,            # ~$15/1M tokens
+    OPENROUTER_CLAUDE_OPUS_4,    # ~$15/1M tokens
+    OPENROUTER_O3,               # ~$20/1M tokens
+    OPENROUTER_O1,               # ~$15/1M tokens
+]
 
 # Define model strengths for complementary selection (matching ACTUAL OpenRouter models)
 MODEL_STRENGTHS = {
@@ -358,8 +381,63 @@ DOMAIN_REQUIRED_STRENGTHS = {
     "general": ["reasoning", "general"],
 }
 
-# Domain-specific top models (VERIFIED against actual OpenRouter models)
-DOMAIN_TOP_MODELS = {
+# Domain-specific top models - COST-EFFECTIVE versions (for budget mode)
+DOMAIN_TOP_MODELS_BUDGET = {
+    "health_medical": [
+        OPENROUTER_GPT_4O,          # Cost-effective, still excellent
+        OPENROUTER_CLAUDE_SONNET_4, # Good for medical reasoning
+        OPENROUTER_GEMINI_2_PRO,    # Strong for research
+        OPENROUTER_DEEPSEEK,        # Very cheap, decent quality
+    ],
+    "legal_analysis": [
+        OPENROUTER_CLAUDE_SONNET_4, # Good for legal reasoning
+        OPENROUTER_GPT_4O,
+        OPENROUTER_DEEPSEEK_R1,     # Reasoning model
+    ],
+    "financial_analysis": [
+        OPENROUTER_DEEPSEEK_R1,     # Math + reasoning, cheap
+        OPENROUTER_GPT_4O,
+        OPENROUTER_DEEPSEEK,
+    ],
+    "science_research": [
+        OPENROUTER_GEMINI_2_PRO,    # Strong for research
+        OPENROUTER_GPT_4O,
+        OPENROUTER_DEEPSEEK,
+    ],
+    "code_generation": [
+        OPENROUTER_CLAUDE_SONNET_4, # Best for coding
+        OPENROUTER_DEEPSEEK,        # Excellent for coding, very cheap
+        OPENROUTER_GPT_4O,
+    ],
+    "debugging": [
+        OPENROUTER_DEEPSEEK,        # Great for debugging
+        OPENROUTER_CLAUDE_SONNET_4,
+        OPENROUTER_GPT_4O,
+    ],
+    "math_problem": [
+        OPENROUTER_DEEPSEEK_R1,     # Reasoning model, cheap
+        OPENROUTER_GPT_4O,
+        OPENROUTER_GEMINI_2_PRO,
+    ],
+    "creative_writing": [
+        OPENROUTER_CLAUDE_SONNET_4, # Good for creative
+        OPENROUTER_GPT_4O,
+        OPENROUTER_GEMINI_2_PRO,
+    ],
+    "factual_question": [
+        OPENROUTER_GPT_4O,
+        OPENROUTER_GEMINI_2_5_FLASH, # Very fast and cheap
+        OPENROUTER_DEEPSEEK,
+    ],
+    "general": [
+        OPENROUTER_GPT_4O,
+        OPENROUTER_CLAUDE_SONNET_4,
+        OPENROUTER_DEEPSEEK,
+    ],
+}
+
+# Domain-specific top models - PREMIUM versions (for when credits available)
+DOMAIN_TOP_MODELS_PREMIUM = {
     "health_medical": [
         OPENROUTER_GPT_5,           # #1 overall
         OPENROUTER_CLAUDE_OPUS_4,   # #2 - excellent for medical reasoning
@@ -416,6 +494,9 @@ DOMAIN_TOP_MODELS = {
         OPENROUTER_GEMINI_2_PRO,
     ],
 }
+
+# Select domain models based on budget mode
+DOMAIN_TOP_MODELS = DOMAIN_TOP_MODELS_BUDGET if BUDGET_MODE else DOMAIN_TOP_MODELS_PREMIUM
 
 # Models with tool/function calling support (VERIFIED against OpenRouter)
 TOOL_CAPABLE_MODELS = {
