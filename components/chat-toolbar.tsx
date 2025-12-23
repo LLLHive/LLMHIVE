@@ -439,38 +439,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
       </DropdownMenu>
 
       {/* Features dropdown removed from chat page - available in Orchestration page */}
-
-      {/* Speed */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
-          >
-            <ReasoningIcon className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Speed</span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-40">
-          {reasoningModes.map((mode) => {
-            const Icon = mode.icon
-            return (
-              <DropdownMenuItem
-                key={mode.value}
-                onClick={() => onSettingsChange({ reasoningMode: mode.value })}
-                className="gap-2"
-              >
-                <Icon className="h-4 w-4" />
-                <span>{mode.label}</span>
-                {settings.reasoningMode === mode.value && <span className="ml-auto text-[var(--bronze)]">•</span>}
-              </DropdownMenuItem>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
+      {/* Speed dropdown removed from chat page - available in Orchestration page */}
       {/* Domain Pack moved to lit-up badge in chat-area.tsx */}
 
       {/* Response Format */}
