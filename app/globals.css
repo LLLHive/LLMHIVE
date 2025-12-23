@@ -776,50 +776,40 @@ html, body {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.40);
 }
 
-/* 3D Gold-Bronze Metallic Subtitle - Matches LLMHive logo style */
+/* 3D Gold Metallic Subtitle - Readable with metallic shine */
 .llmhive-subtitle-3d {
   font-family: var(--font-display), 'Orbitron', system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.10em;
   
-  /* Multi-layer polished bronze metallic gradient */
+  /* Bright gold metallic gradient - high readability */
   background: linear-gradient(
     180deg,
-    #ffedc2 0%,      /* bright gold highlight at top */
-    #e8a838 12%,     /* warm gold */
-    #cd7f32 30%,     /* bronze */
-    #b8860b 50%,     /* dark goldenrod - center shadow */
-    #cd7f32 70%,     /* bronze */
-    #e8a838 88%,     /* warm gold */
-    #ffedc2 100%     /* bright gold at bottom */
+    #fff8e0 0%,      /* very light gold highlight */
+    #ffd54f 20%,     /* bright gold */
+    #ffb74d 50%,     /* warm amber center */
+    #ffd54f 80%,     /* bright gold */
+    #fff8e0 100%     /* very light gold */
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   
-  /* Beveled embossed 3D effect with reflective highlights */
+  /* Subtle 3D depth - readable */
   text-shadow:
-    /* Warm ambient glow */
-    0 0 25px rgba(255, 180, 80, 0.5),
-    0 0 50px rgba(255, 150, 50, 0.25),
-    /* Deep drop shadow for depth */
-    0 2px 4px rgba(0, 0, 0, 0.6),
-    0 4px 8px rgba(0, 0, 0, 0.35),
-    /* 3D extrusion - beveled edge effect */
-    1px 1px 0 rgba(139, 90, 43, 0.9),
-    2px 2px 0 rgba(120, 75, 35, 0.7),
-    3px 3px 1px rgba(100, 60, 25, 0.5),
-    /* Subtle inner highlight for polish */
-    0 -1px 1px rgba(255, 230, 180, 0.3);
+    /* Soft ambient glow */
+    0 0 20px rgba(255, 200, 100, 0.4),
+    /* Light drop shadow */
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    /* Subtle extrusion */
+    1px 1px 0 rgba(180, 130, 50, 0.4);
   
-  /* Metallic sheen filter */
-  filter: 
-    drop-shadow(0 1px 2px rgba(255, 200, 100, 0.4))
-    contrast(1.05);
+  /* Metallic sheen */
+  filter: drop-shadow(0 1px 1px rgba(255, 220, 120, 0.3));
   
   /* Smooth rendering */
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /* 3D Metallic Gold Logo Text - Matches the rendered gold logo image */
