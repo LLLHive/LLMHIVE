@@ -776,37 +776,29 @@ html, body {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.40);
 }
 
-/* 3D Gold Metallic Subtitle - Readable with metallic shine */
+/* Aluminum Metallic Subtitle - Clean and readable */
 .llmhive-subtitle-3d {
   font-family: var(--font-display), 'Orbitron', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.10em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   
-  /* Bright gold metallic gradient - high readability */
+  /* Light aluminum/silver gradient */
   background: linear-gradient(
     180deg,
-    #fff8e0 0%,      /* very light gold highlight */
-    #ffd54f 20%,     /* bright gold */
-    #ffb74d 50%,     /* warm amber center */
-    #ffd54f 80%,     /* bright gold */
-    #fff8e0 100%     /* very light gold */
+    #ffffff 0%,      /* bright white highlight */
+    #e8e8e8 25%,     /* light silver */
+    #d0d0d0 50%,     /* aluminum gray */
+    #e8e8e8 75%,     /* light silver */
+    #ffffff 100%     /* bright white */
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   
-  /* Subtle 3D depth - readable */
+  /* Soft glow for readability */
   text-shadow:
-    /* Soft ambient glow */
-    0 0 20px rgba(255, 200, 100, 0.4),
-    /* Light drop shadow */
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.15),
-    /* Subtle extrusion */
-    1px 1px 0 rgba(180, 130, 50, 0.4);
-  
-  /* Metallic sheen */
-  filter: drop-shadow(0 1px 1px rgba(255, 220, 120, 0.3));
+    0 0 15px rgba(255, 255, 255, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
   
   /* Smooth rendering */
   -webkit-font-smoothing: antialiased;
