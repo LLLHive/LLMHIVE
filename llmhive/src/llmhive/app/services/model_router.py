@@ -51,41 +51,44 @@ MODEL_QWEN3 = "qwen3"
 MODEL_MISTRAL_LARGE_2 = "mistral-large-2"
 MODEL_MIXTRAL_8X22B = "mixtral-8x22b"
 
-# Fallback models (CURRENT OpenRouter rankings - December 2025)
-# These MUST match actual OpenRouter model IDs
+# Fallback models (VERIFIED December 2025 - from OpenRouter /api/v1/models)
+# These MUST match actual OpenRouter model IDs exactly
 
 # OpenAI - Top tier
-FALLBACK_GPT_5 = "openai/gpt-5"  # #1 in Health rankings
-FALLBACK_O1 = "openai/o1"  # #5 in Health rankings - reasoning specialist
-FALLBACK_GPT_4O = "openai/gpt-4o"  # Still available as fallback
-FALLBACK_GPT_4O_MINI = "openai/gpt-4o-mini"
+FALLBACK_GPT_5 = "openai/gpt-5"                    # ✓ Verified
+FALLBACK_O3 = "openai/o3"                          # ✓ Verified - latest reasoning
+FALLBACK_O1 = "openai/o1-pro"                      # ✓ Verified - reasoning specialist
+FALLBACK_GPT_4O = "openai/gpt-4o"                  # ✓ Verified - still available
+FALLBACK_GPT_4O_MINI = "openai/gpt-4o-mini"        # ✓ Verified
 
 # Anthropic - Top tier
-FALLBACK_CLAUDE_OPUS_4 = "anthropic/claude-opus-4-20250514"  # #2 in Health rankings
-FALLBACK_CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4-20250514"  # #4 in Health rankings
-FALLBACK_CLAUDE_3_5 = "anthropic/claude-3-5-sonnet-20241022"
-FALLBACK_CLAUDE_3_HAIKU = "anthropic/claude-3-5-haiku-20241022"
+FALLBACK_CLAUDE_OPUS_4 = "anthropic/claude-opus-4"       # ✓ Verified (no date suffix!)
+FALLBACK_CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4"   # ✓ Verified (no date suffix!)
+FALLBACK_CLAUDE_3_5 = "anthropic/claude-3-5-sonnet-20241022"  # Legacy, still works
+FALLBACK_CLAUDE_3_HAIKU = "anthropic/claude-3-5-haiku-20241022"  # Legacy
 
 # Google - Top tier
-FALLBACK_GEMINI_2_PRO = "google/gemini-2.0-pro"  # #3 in Health rankings
-FALLBACK_MED_PALM_3 = "google/med-palm-3"  # #6 in Health rankings - medical specialist
-FALLBACK_GEMINI_2_5 = "google/gemini-2.5-pro"
-FALLBACK_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"
+FALLBACK_GEMINI_3_PRO = "google/gemini-3-pro-preview"    # ✓ Verified - newest
+FALLBACK_GEMINI_2_5 = "google/gemini-2.5-pro"            # ✓ Verified
+FALLBACK_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"    # ✓ Verified
 
 # Meta - Llama 4
-FALLBACK_LLAMA_4_70B = "meta-llama/llama-4-70b"  # #7 in Health rankings
+FALLBACK_LLAMA_4 = "meta-llama/llama-4-maverick"         # ✓ Verified (maverick variant)
 
 # Mistral AI
-FALLBACK_MISTRAL_LARGE_2 = "mistralai/mistral-large-2"  # #8 in Health rankings
-FALLBACK_MISTRAL = "mistralai/mistral-large"
-FALLBACK_MIXTRAL = "mistralai/mixtral-8x7b"
+FALLBACK_MISTRAL_LARGE = "mistralai/mistral-large-2512"  # ✓ Verified
+FALLBACK_MISTRAL = "mistralai/mistral-medium-3"          # ✓ Verified
+FALLBACK_MIXTRAL = "mistralai/mixtral-8x7b"              # Legacy
 
 # xAI: Grok
-FALLBACK_GROK_2 = "x-ai/grok-2"
-FALLBACK_GROK_BETA = "x-ai/grok-beta"  # Legacy
+FALLBACK_GROK_4 = "x-ai/grok-4"                          # ✓ Verified - latest
+FALLBACK_GROK_BETA = "x-ai/grok-3-beta"                  # Legacy
+
+# DeepSeek
+FALLBACK_DEEPSEEK = "deepseek/deepseek-v3.2"             # ✓ Verified - latest
+FALLBACK_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"       # ✓ Verified - reasoning
 
 # Other providers
-FALLBACK_DEEPSEEK = "deepseek/deepseek-chat"
 FALLBACK_QWEN = "qwen/qwen2.5"
 
 
@@ -313,15 +316,15 @@ MODEL_CAPABILITIES = {
         "speed": 95,
         "overall": 82,
     },
-    FALLBACK_GROK_2: {
-        "coding": 85,
-        "math": 80,
-        "reasoning": 85,
-        "creative": 85,
-        "factual": 92,  # Excellent for real-time
-        "analysis": 85,
+    FALLBACK_GROK_4: {
+        "coding": 88,
+        "math": 85,
+        "reasoning": 90,
+        "creative": 88,
+        "factual": 95,  # Excellent for real-time
+        "analysis": 88,
         "speed": 85,
-        "overall": 86,
+        "overall": 90,
     },
     FALLBACK_DEEPSEEK: {
         "coding": 95,  # Exceptional at coding
@@ -461,13 +464,15 @@ def get_diverse_ensemble(
     Returns:
         Diverse list of models
     """
-    # Define provider groups
+    # Define provider groups (VERIFIED December 2025)
     provider_groups = {
-        "openai": [FALLBACK_GPT_4O, FALLBACK_GPT_4O_MINI],
-        "anthropic": [FALLBACK_CLAUDE_SONNET_4, FALLBACK_CLAUDE_3_5, FALLBACK_CLAUDE_3_HAIKU],
-        "google": [FALLBACK_GEMINI_2_5, FALLBACK_GEMINI_2_5_FLASH],
-        "xai": [FALLBACK_GROK_2],
-        "deepseek": [FALLBACK_DEEPSEEK],
+        "openai": [FALLBACK_GPT_5, FALLBACK_GPT_4O, FALLBACK_O3],
+        "anthropic": [FALLBACK_CLAUDE_OPUS_4, FALLBACK_CLAUDE_SONNET_4, FALLBACK_CLAUDE_3_5],
+        "google": [FALLBACK_GEMINI_3_PRO, FALLBACK_GEMINI_2_5, FALLBACK_GEMINI_2_5_FLASH],
+        "xai": [FALLBACK_GROK_4],
+        "deepseek": [FALLBACK_DEEPSEEK, FALLBACK_DEEPSEEK_R1],
+        "meta": [FALLBACK_LLAMA_4],
+        "mistral": [FALLBACK_MISTRAL_LARGE],
     }
     
     # Get best models for task

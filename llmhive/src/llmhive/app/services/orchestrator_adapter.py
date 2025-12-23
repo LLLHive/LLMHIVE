@@ -39,16 +39,24 @@ from .model_router import (
     get_models_for_reasoning_method,
     map_reasoning_mode_to_method,
     ReasoningMethod as RouterReasoningMethod,
+    FALLBACK_GPT_5,
     FALLBACK_GPT_4O,
     FALLBACK_GPT_4O_MINI,
+    FALLBACK_O3,
+    FALLBACK_O1,
+    FALLBACK_CLAUDE_OPUS_4,
     FALLBACK_CLAUDE_SONNET_4,
     FALLBACK_CLAUDE_3_5,
     FALLBACK_CLAUDE_3_HAIKU,
+    FALLBACK_GEMINI_3_PRO,
     FALLBACK_GEMINI_2_5,
     FALLBACK_GEMINI_2_5_FLASH,
-    FALLBACK_GROK_2,
+    FALLBACK_GROK_4,
     FALLBACK_GROK_BETA,
     FALLBACK_DEEPSEEK,
+    FALLBACK_DEEPSEEK_R1,
+    FALLBACK_LLAMA_4,
+    FALLBACK_MISTRAL_LARGE,
     # Automatic model selection functions
     get_best_models_for_task,
     get_diverse_ensemble,
@@ -1164,71 +1172,105 @@ def _map_reasoning_mode(mode: ReasoningMode) -> int:
 
 
 def _map_model_to_provider(model_id: str, available_providers: list) -> str:
-    """Map a user-selected model ID to an actual provider/model name.
+    """Map a selected model ID to actual OpenRouter model ID.
     
-    Latest models (December 2025):
-    - OpenAI: GPT-4o, GPT-4o-mini, o1, o1-mini
-    - Anthropic: Claude Sonnet 4, Claude 3.5 Sonnet, Claude 3.5 Haiku
-    - Google: Gemini 2.5 Pro, Gemini 2.5 Flash
-    - xAI: Grok-2, Grok-2-mini
+    IMPORTANT: This function should preserve the exact model ID when it's
+    already a valid OpenRouter model ID (e.g., "openai/gpt-5").
+    
+    Latest models (VERIFIED December 2025 from OpenRouter):
+    - OpenAI: gpt-5, gpt-4o, o3, o1-pro
+    - Anthropic: claude-opus-4, claude-sonnet-4
+    - Google: gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash
+    - xAI: grok-4
+    - DeepSeek: deepseek-v3.2, deepseek-r1-0528
     """
+    # If it's already a full OpenRouter model ID (contains "/"), return as-is
+    if "/" in model_id:
+        return model_id
+    
     model_lower = model_id.lower()
     
     # OpenAI models
-    if "gpt-5" in model_lower or "gpt-4" in model_lower or "o1" in model_lower:
-        if "mini" in model_lower:
-            return FALLBACK_GPT_4O_MINI
-        return FALLBACK_GPT_4O
+    if "gpt-5" in model_lower:
+        return OPENROUTER_GPT_5  # openai/gpt-5
+    elif "o3" in model_lower:
+        return OPENROUTER_O3  # openai/o3
+    elif "o1" in model_lower:
+        return OPENROUTER_O1  # openai/o1-pro
+    elif "gpt-4o-mini" in model_lower:
+        return FALLBACK_GPT_4O_MINI
+    elif "gpt-4" in model_lower:
+        return OPENROUTER_GPT_4O  # openai/gpt-4o
     
     # Anthropic Claude models
     elif "claude" in model_lower:
-        if "haiku" in model_lower:
-            return FALLBACK_CLAUDE_3_HAIKU  # claude-3-5-haiku-20241022
-        elif "sonnet-4" in model_lower or "4.5" in model_lower or "opus" in model_lower:
-            return FALLBACK_CLAUDE_SONNET_4  # claude-sonnet-4-20250514
-        return FALLBACK_CLAUDE_3_5  # claude-3-5-sonnet-20241022
+        if "opus" in model_lower:
+            return OPENROUTER_CLAUDE_OPUS_4  # anthropic/claude-opus-4
+        elif "sonnet-4" in model_lower or "sonnet" in model_lower:
+            return OPENROUTER_CLAUDE_SONNET_4  # anthropic/claude-sonnet-4
+        elif "haiku" in model_lower:
+            return FALLBACK_CLAUDE_3_HAIKU
+        return OPENROUTER_CLAUDE_SONNET_4  # default to Sonnet 4
     
     # Google Gemini models
     elif "gemini" in model_lower:
-        if "flash" in model_lower:
-            return FALLBACK_GEMINI_2_5_FLASH  # gemini-2.5-flash
-        return FALLBACK_GEMINI_2_5  # gemini-2.5-pro
+        if "3" in model_lower and "pro" in model_lower:
+            return OPENROUTER_GEMINI_3_PRO  # google/gemini-3-pro-preview
+        elif "flash" in model_lower:
+            return OPENROUTER_GEMINI_2_5_FLASH
+        return OPENROUTER_GEMINI_2_PRO  # google/gemini-2.5-pro
     
-    # xAI Grok models - Use Grok-2 (latest)
+    # xAI Grok models
     elif "grok" in model_lower:
-        return FALLBACK_GROK_2  # grok-2
+        return OPENROUTER_GROK_4  # x-ai/grok-4
     
     # DeepSeek models
     elif "deepseek" in model_lower:
-        return FALLBACK_DEEPSEEK  # deepseek-chat
+        if "r1" in model_lower:
+            return OPENROUTER_DEEPSEEK_R1  # deepseek/deepseek-r1-0528
+        return OPENROUTER_DEEPSEEK  # deepseek/deepseek-v3.2
     
-    # Llama (local)
+    # Meta Llama models
     elif "llama" in model_lower:
         if "local" in available_providers:
             return "local"
-        return "stub"
+        return OPENROUTER_LLAMA_4  # meta-llama/llama-4-maverick
+    
+    # Mistral models
+    elif "mistral" in model_lower:
+        return OPENROUTER_MISTRAL_LARGE  # mistralai/mistral-large-2512
     
     # Direct model name match
     elif model_id in available_providers:
         return model_id
     
     else:
-        # Default to first available
-        return available_providers[0] if available_providers else "stub"
+        # Default to GPT-5 (best overall)
+        return OPENROUTER_GPT_5
 
 
 def _get_display_name(model_id: str) -> str:
     """Get a user-friendly display name for a model."""
     display_names = {
-        FALLBACK_GPT_4O: "GPT-4o",
+        # Latest models (December 2025)
+        OPENROUTER_GPT_5: "GPT-5",
+        OPENROUTER_CLAUDE_OPUS_4: "Claude Opus 4",
+        OPENROUTER_CLAUDE_SONNET_4: "Claude Sonnet 4",
+        OPENROUTER_GEMINI_3_PRO: "Gemini 3 Pro",
+        OPENROUTER_GEMINI_2_PRO: "Gemini 2.5 Pro",
+        OPENROUTER_O3: "o3",
+        OPENROUTER_O1: "o1 Pro",
+        OPENROUTER_GROK_4: "Grok-4",
+        OPENROUTER_DEEPSEEK: "DeepSeek V3.2",
+        OPENROUTER_DEEPSEEK_R1: "DeepSeek R1",
+        OPENROUTER_LLAMA_4: "Llama 4 Maverick",
+        OPENROUTER_MISTRAL_LARGE: "Mistral Large",
+        OPENROUTER_GEMINI_2_5_FLASH: "Gemini 2.5 Flash",
+        # Legacy fallbacks
+        OPENROUTER_GPT_4O: "GPT-4o",
         FALLBACK_GPT_4O_MINI: "GPT-4o Mini",
-        FALLBACK_CLAUDE_SONNET_4: "Claude Sonnet 4",
         FALLBACK_CLAUDE_3_5: "Claude 3.5 Sonnet",
         FALLBACK_CLAUDE_3_HAIKU: "Claude 3.5 Haiku",
-        FALLBACK_GEMINI_2_5: "Gemini 2.5 Pro",
-        FALLBACK_GEMINI_2_5_FLASH: "Gemini 2.5 Flash",
-        FALLBACK_GROK_2: "Grok-2",
-        FALLBACK_DEEPSEEK: "DeepSeek V3",
     }
     return display_names.get(model_id, model_id)
 
