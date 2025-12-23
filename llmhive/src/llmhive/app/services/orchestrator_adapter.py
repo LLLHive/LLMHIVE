@@ -1805,6 +1805,21 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # ===========================================================================
         # Apply reasoning hacks for non-reasoning models to unlock deeper thinking
         # ===========================================================================
+        reasoning_hack_applied = False
+        reasoning_hack_level = None
+        
+        # Import reasoning hacker for advanced prompt transformation
+        try:
+            from ..orchestration.reasoning_hacker import (
+                get_hack_prompt,
+                get_recommended_hack_level,
+                ReasoningHackLevel,
+                REASONING_HACK_PROMPTS,
+            )
+            REASONING_HACKER_AVAILABLE = True
+        except ImportError:
+            REASONING_HACKER_AVAILABLE = False
+        
         if MODEL_INTELLIGENCE_AVAILABLE and actual_models:
             primary_model = actual_models[0]
             profile = get_model_profile(primary_model)
@@ -1817,22 +1832,54 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     # Model can benefit from reasoning hacks
                     accuracy_lvl = orchestration_config.get("accuracy_level", 3)
                     
-                    if accuracy_lvl >= 4:  # High accuracy requested
-                        # Apply reasoning hack for traditional models
-                        reasoning_hack = get_reasoning_hack(primary_model, detected_task_type)
-                        if reasoning_hack and "{question}" in reasoning_hack:
-                            # Wrap the prompt with reasoning structure
-                            enhanced_prompt = reasoning_hack.replace("{question}", enhanced_prompt)
-                            logger.info(
-                                "Applied reasoning hack for %s (reasoning_score=%d, task=%s)",
-                                profile.display_name, profile.reasoning_score, detected_task_type
-                            )
+                    # Use reasoning hacker module if available
+                    if REASONING_HACKER_AVAILABLE:
+                        # Determine hack level based on task and accuracy
+                        if accuracy_lvl >= 4:
+                            reasoning_hack_level = ReasoningHackLevel.HEAVY
+                        elif accuracy_lvl >= 3:
+                            reasoning_hack_level = ReasoningHackLevel.MEDIUM
+                        else:
+                            reasoning_hack_level = ReasoningHackLevel.LIGHT
+                        
+                        # High-stakes domains get maximum hacking
+                        high_stakes = ["health_medical", "legal_analysis", "financial_analysis"]
+                        if detected_task_type in high_stakes and accuracy_lvl >= 3:
+                            reasoning_hack_level = ReasoningHackLevel.MAXIMUM
+                        
+                        # Apply the hack prompt
+                        enhanced_prompt = get_hack_prompt(
+                            level=reasoning_hack_level,
+                            question=enhanced_prompt,
+                            task_type=detected_task_type,
+                        )
+                        reasoning_hack_applied = True
+                        
+                        logger.info(
+                            "Applied reasoning hack level=%s for %s (reasoning_score=%d, task=%s)",
+                            reasoning_hack_level.value,
+                            profile.display_name,
+                            profile.reasoning_score,
+                            detected_task_type,
+                        )
+                    else:
+                        # Fallback to basic hack
+                        if accuracy_lvl >= 4:
+                            reasoning_hack = get_reasoning_hack(primary_model, detected_task_type)
+                            if reasoning_hack and "{question}" in reasoning_hack:
+                                enhanced_prompt = reasoning_hack.replace("{question}", enhanced_prompt)
+                                reasoning_hack_applied = True
+                                logger.info(
+                                    "Applied fallback reasoning hack for %s",
+                                    profile.display_name,
+                                )
                     
-                    # Log model's hack method for debugging
-                    if profile.reasoning_hack_method:
+                    # Log model's native hack capability
+                    if profile.reasoning_hack_method and not reasoning_hack_applied:
                         logger.debug(
-                            "Model %s can be hacked to reason via: %s",
-                            profile.display_name, profile.reasoning_hack_method[:100]
+                            "Model %s supports reasoning via: %s",
+                            profile.display_name,
+                            profile.reasoning_hack_method[:100],
                         )
         
         logger.info(
