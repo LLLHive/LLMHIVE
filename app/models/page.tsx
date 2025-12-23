@@ -364,9 +364,9 @@ export default function ModelsPage() {
               <div className="relative w-52 h-52 md:w-[340px] md:h-[340px] lg:w-[378px] lg:h-[378px] mx-auto -mb-14 md:-mb-24 llmhive-float">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" priority />
               </div>
-              <LogoText height={56} className="md:hidden mb-2 mx-auto" />
-              <LogoText height={80} className="hidden md:block lg:hidden mb-2 mx-auto" />
-              <LogoText height={96} className="hidden lg:block mb-2 mx-auto" />
+              <LogoText height={64} className="md:hidden mb-2 mx-auto" />
+              <LogoText height={92} className="hidden md:block lg:hidden mb-2 mx-auto" />
+              <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
               <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Models
               </h2>

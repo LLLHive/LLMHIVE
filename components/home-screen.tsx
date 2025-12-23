@@ -220,9 +220,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </div>
         
         {/* 3D Metallic Title - Using actual rendered image for exact match */}
-        <LogoText height={56} className="md:hidden mb-2 mx-auto" />
-        <LogoText height={80} className="hidden md:block lg:hidden mb-2 mx-auto" />
-        <LogoText height={96} className="hidden lg:block mb-2 mx-auto" />
+        <LogoText height={64} className="md:hidden mb-2 mx-auto" />
+        <LogoText height={92} className="hidden md:block lg:hidden mb-2 mx-auto" />
+        <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
         
         <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-4">
           Multi-agent AI orchestration for enhanced accuracy and deeper insights
