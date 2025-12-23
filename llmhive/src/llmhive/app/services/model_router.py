@@ -51,25 +51,42 @@ MODEL_QWEN3 = "qwen3"
 MODEL_MISTRAL_LARGE_2 = "mistral-large-2"
 MODEL_MIXTRAL_8X22B = "mixtral-8x22b"
 
-# Fallback models (current available models - December 2025)
-# OpenAI: GPT-4o is the flagship, o1 for reasoning
-FALLBACK_GPT_4O = "gpt-4o"
-FALLBACK_GPT_4O_MINI = "gpt-4o-mini"
-# Anthropic: Claude Sonnet 4 is latest, Claude 3.5 Haiku for speed
-FALLBACK_CLAUDE_SONNET_4 = "claude-sonnet-4-20250514"
-FALLBACK_CLAUDE_3_5 = "claude-3-5-sonnet-20241022"
-FALLBACK_CLAUDE_3_HAIKU = "claude-3-5-haiku-20241022"
-# Google: Gemini 2.5 Pro is flagship
-FALLBACK_GEMINI_2_5 = "gemini-2.5-pro"
-FALLBACK_GEMINI_2_5_FLASH = "gemini-2.5-flash"
-# xAI: Grok-2 is latest (replaces grok-beta)
-FALLBACK_GROK_2 = "grok-2"
-FALLBACK_GROK_BETA = "grok-beta"  # Legacy
+# Fallback models (CURRENT OpenRouter rankings - December 2025)
+# These MUST match actual OpenRouter model IDs
+
+# OpenAI - Top tier
+FALLBACK_GPT_5 = "openai/gpt-5"  # #1 in Health rankings
+FALLBACK_O1 = "openai/o1"  # #5 in Health rankings - reasoning specialist
+FALLBACK_GPT_4O = "openai/gpt-4o"  # Still available as fallback
+FALLBACK_GPT_4O_MINI = "openai/gpt-4o-mini"
+
+# Anthropic - Top tier
+FALLBACK_CLAUDE_OPUS_4 = "anthropic/claude-opus-4-20250514"  # #2 in Health rankings
+FALLBACK_CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4-20250514"  # #4 in Health rankings
+FALLBACK_CLAUDE_3_5 = "anthropic/claude-3-5-sonnet-20241022"
+FALLBACK_CLAUDE_3_HAIKU = "anthropic/claude-3-5-haiku-20241022"
+
+# Google - Top tier
+FALLBACK_GEMINI_2_PRO = "google/gemini-2.0-pro"  # #3 in Health rankings
+FALLBACK_MED_PALM_3 = "google/med-palm-3"  # #6 in Health rankings - medical specialist
+FALLBACK_GEMINI_2_5 = "google/gemini-2.5-pro"
+FALLBACK_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"
+
+# Meta - Llama 4
+FALLBACK_LLAMA_4_70B = "meta-llama/llama-4-70b"  # #7 in Health rankings
+
+# Mistral AI
+FALLBACK_MISTRAL_LARGE_2 = "mistralai/mistral-large-2"  # #8 in Health rankings
+FALLBACK_MISTRAL = "mistralai/mistral-large"
+FALLBACK_MIXTRAL = "mistralai/mixtral-8x7b"
+
+# xAI: Grok
+FALLBACK_GROK_2 = "x-ai/grok-2"
+FALLBACK_GROK_BETA = "x-ai/grok-beta"  # Legacy
+
 # Other providers
-FALLBACK_DEEPSEEK = "deepseek-chat"
-FALLBACK_QWEN = "qwen2.5"
-FALLBACK_MISTRAL = "mistral-large"
-FALLBACK_MIXTRAL = "mixtral-8x7b"
+FALLBACK_DEEPSEEK = "deepseek/deepseek-chat"
+FALLBACK_QWEN = "qwen/qwen2.5"
 
 
 # Model routing configuration for each reasoning method

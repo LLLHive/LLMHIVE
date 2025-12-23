@@ -223,47 +223,152 @@ def _get_elite_orchestrator() -> Optional[EliteOrchestrator]:
 # INTELLIGENT PINECONE-BACKED MODEL SELECTION
 # ==============================================================================
 
-# Define model strengths for complementary selection
+# Actual OpenRouter model IDs (from live rankings - December 2025)
+# These MUST match exactly what OpenRouter returns
+OPENROUTER_GPT_5 = "openai/gpt-5"
+OPENROUTER_CLAUDE_OPUS_4 = "anthropic/claude-opus-4-20250514"
+OPENROUTER_GEMINI_2_PRO = "google/gemini-2.0-pro"
+OPENROUTER_CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4-20250514"
+OPENROUTER_O1 = "openai/o1"
+OPENROUTER_MED_PALM_3 = "google/med-palm-3"
+OPENROUTER_LLAMA_4_70B = "meta-llama/llama-4-70b"
+OPENROUTER_MISTRAL_LARGE_2 = "mistralai/mistral-large-2"
+OPENROUTER_GPT_4O = "openai/gpt-4o"
+OPENROUTER_DEEPSEEK = "deepseek/deepseek-chat"
+OPENROUTER_GROK_2 = "x-ai/grok-2"
+OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"
+
+# Define model strengths for complementary selection (matching OpenRouter rankings)
 MODEL_STRENGTHS = {
-    # General flagship models - broad capabilities
-    FALLBACK_GPT_4O: {"strengths": ["reasoning", "coding", "analysis", "general"], "provider": "openai", "tier": "flagship"},
-    FALLBACK_CLAUDE_SONNET_4: {"strengths": ["reasoning", "creative", "analysis", "coding"], "provider": "anthropic", "tier": "flagship"},
-    FALLBACK_GEMINI_2_5: {"strengths": ["reasoning", "factual", "analysis", "multimodal"], "provider": "google", "tier": "flagship"},
+    # ===== TOP TIER (from OpenRouter Health rankings) =====
+    OPENROUTER_GPT_5: {
+        "strengths": ["reasoning", "coding", "analysis", "general", "factual"],
+        "provider": "openai", "tier": "flagship", "rank": 1
+    },
+    OPENROUTER_CLAUDE_OPUS_4: {
+        "strengths": ["reasoning", "creative", "analysis", "medical", "legal"],
+        "provider": "anthropic", "tier": "flagship", "rank": 2
+    },
+    OPENROUTER_GEMINI_2_PRO: {
+        "strengths": ["reasoning", "factual", "analysis", "multimodal", "research"],
+        "provider": "google", "tier": "flagship", "rank": 3
+    },
+    OPENROUTER_CLAUDE_SONNET_4: {
+        "strengths": ["reasoning", "creative", "coding", "analysis"],
+        "provider": "anthropic", "tier": "flagship", "rank": 4
+    },
+    OPENROUTER_O1: {
+        "strengths": ["reasoning", "math", "coding", "logic", "analysis"],
+        "provider": "openai", "tier": "reasoning", "rank": 5
+    },
     
-    # Specialized models - specific capabilities
-    FALLBACK_DEEPSEEK: {"strengths": ["coding", "math", "reasoning"], "provider": "deepseek", "tier": "specialized"},
-    FALLBACK_GROK_2: {"strengths": ["factual", "realtime", "creative"], "provider": "xai", "tier": "specialized"},
+    # ===== SPECIALIZED MODELS =====
+    OPENROUTER_MED_PALM_3: {
+        "strengths": ["medical", "health", "factual", "reasoning"],
+        "provider": "google", "tier": "specialized", "rank": 6
+    },
+    OPENROUTER_LLAMA_4_70B: {
+        "strengths": ["reasoning", "coding", "general", "open-source"],
+        "provider": "meta", "tier": "flagship", "rank": 7
+    },
+    OPENROUTER_MISTRAL_LARGE_2: {
+        "strengths": ["reasoning", "coding", "multilingual", "analysis"],
+        "provider": "mistral", "tier": "flagship", "rank": 8
+    },
     
-    # Fast models - speed-optimized
-    FALLBACK_GPT_4O_MINI: {"strengths": ["speed", "general"], "provider": "openai", "tier": "fast"},
-    FALLBACK_CLAUDE_3_HAIKU: {"strengths": ["speed", "creative"], "provider": "anthropic", "tier": "fast"},
-    FALLBACK_GEMINI_2_5_FLASH: {"strengths": ["speed", "factual"], "provider": "google", "tier": "fast"},
+    # ===== STILL AVAILABLE (legacy/fallback) =====
+    OPENROUTER_GPT_4O: {
+        "strengths": ["reasoning", "coding", "analysis", "general"],
+        "provider": "openai", "tier": "flagship", "rank": 10
+    },
+    OPENROUTER_DEEPSEEK: {
+        "strengths": ["coding", "math", "reasoning"],
+        "provider": "deepseek", "tier": "specialized", "rank": 11
+    },
+    OPENROUTER_GROK_2: {
+        "strengths": ["factual", "realtime", "creative"],
+        "provider": "xai", "tier": "specialized", "rank": 12
+    },
+    
+    # ===== FAST MODELS =====
+    OPENROUTER_GEMINI_2_5_FLASH: {
+        "strengths": ["speed", "factual", "general"],
+        "provider": "google", "tier": "fast", "rank": 20
+    },
 }
 
 # Map domains to required strengths
 DOMAIN_REQUIRED_STRENGTHS = {
-    "health_medical": ["reasoning", "factual", "analysis"],
-    "legal_analysis": ["reasoning", "analysis", "factual"],
+    "health_medical": ["medical", "reasoning", "factual", "analysis"],
+    "legal_analysis": ["reasoning", "analysis", "factual", "legal"],
     "financial_analysis": ["math", "analysis", "reasoning"],
-    "science_research": ["analysis", "factual", "reasoning"],
+    "science_research": ["analysis", "factual", "reasoning", "research"],
     "code_generation": ["coding", "reasoning"],
     "debugging": ["coding", "analysis"],
-    "math_problem": ["math", "reasoning"],
+    "math_problem": ["math", "reasoning", "logic"],
     "creative_writing": ["creative", "reasoning"],
     "factual_question": ["factual", "reasoning"],
-    "research_analysis": ["analysis", "reasoning", "factual"],
+    "research_analysis": ["analysis", "reasoning", "factual", "research"],
     "general": ["reasoning", "general"],
 }
 
-# Models with tool/function calling support
+# Domain-specific top models (from OpenRouter rankings)
+DOMAIN_TOP_MODELS = {
+    "health_medical": [
+        OPENROUTER_GPT_5,           # #1
+        OPENROUTER_CLAUDE_OPUS_4,   # #2
+        OPENROUTER_GEMINI_2_PRO,    # #3
+        OPENROUTER_MED_PALM_3,      # #6 - specialized for medical
+    ],
+    "legal_analysis": [
+        OPENROUTER_CLAUDE_OPUS_4,   # Best for legal reasoning
+        OPENROUTER_GPT_5,
+        OPENROUTER_O1,              # Strong reasoning
+    ],
+    "financial_analysis": [
+        OPENROUTER_O1,              # Math + reasoning
+        OPENROUTER_GPT_5,
+        OPENROUTER_CLAUDE_OPUS_4,
+    ],
+    "science_research": [
+        OPENROUTER_GEMINI_2_PRO,    # Strong for research
+        OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_GPT_5,
+    ],
+    "code_generation": [
+        OPENROUTER_CLAUDE_SONNET_4, # Best for coding
+        OPENROUTER_GPT_5,
+        OPENROUTER_DEEPSEEK,        # Specialized for coding
+    ],
+    "math_problem": [
+        OPENROUTER_O1,              # Reasoning specialist
+        OPENROUTER_GPT_5,
+        OPENROUTER_GEMINI_2_PRO,
+    ],
+    "creative_writing": [
+        OPENROUTER_CLAUDE_OPUS_4,   # Best for creative
+        OPENROUTER_CLAUDE_SONNET_4,
+        OPENROUTER_GPT_5,
+    ],
+    "general": [
+        OPENROUTER_GPT_5,
+        OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_GEMINI_2_PRO,
+    ],
+}
+
+# Models with tool/function calling support (actual OpenRouter IDs)
 TOOL_CAPABLE_MODELS = {
-    FALLBACK_GPT_4O,
-    FALLBACK_GPT_4O_MINI,
-    FALLBACK_CLAUDE_SONNET_4,
-    FALLBACK_CLAUDE_3_5,
-    FALLBACK_GEMINI_2_5,
-    FALLBACK_GEMINI_2_5_FLASH,
-    FALLBACK_GROK_2,
+    OPENROUTER_GPT_5,
+    OPENROUTER_GPT_4O,
+    OPENROUTER_O1,
+    OPENROUTER_CLAUDE_OPUS_4,
+    OPENROUTER_CLAUDE_SONNET_4,
+    OPENROUTER_GEMINI_2_PRO,
+    OPENROUTER_GEMINI_2_5_FLASH,
+    OPENROUTER_LLAMA_4_70B,
+    OPENROUTER_MISTRAL_LARGE_2,
+    OPENROUTER_GROK_2,
 }
 
 
@@ -276,9 +381,10 @@ async def get_intelligent_models(
 ) -> List[str]:
     """
     Intelligent model selection using:
-    1. Pinecone category rankings (if available)
-    2. Complementary model strengths (different providers/capabilities)
-    3. Tool support filtering (for web search, function calling)
+    1. Domain-specific top models (from OpenRouter rankings)
+    2. Pinecone category rankings (if available)
+    3. Complementary model strengths (different providers/capabilities)
+    4. Tool support filtering (for web search, function calling)
     
     Args:
         task_type: The detected task type (from PromptOps)
@@ -293,8 +399,32 @@ async def get_intelligent_models(
     selected = []
     used_providers = set()
     
-    # Step 1: Try Pinecone category rankings first
-    if MODEL_KNOWLEDGE_AVAILABLE and get_model_knowledge_store is not None:
+    # Step 0: Use domain-specific top models FIRST (from actual OpenRouter rankings)
+    domain_top = DOMAIN_TOP_MODELS.get(task_type, DOMAIN_TOP_MODELS.get("general", []))
+    for model_id in domain_top:
+        if len(selected) >= num_models:
+            break
+        if require_tools and model_id not in TOOL_CAPABLE_MODELS:
+            continue
+        if available_models is not None and model_id not in available_models:
+            continue
+        
+        model_info = MODEL_STRENGTHS.get(model_id, {})
+        provider = model_info.get("provider", "unknown")
+        
+        # Ensure provider diversity
+        if provider not in used_providers or len(selected) < 2:
+            selected.append(model_id)
+            used_providers.add(provider)
+    
+    if selected:
+        logger.info(
+            "Domain-specific models for %s: %s (from OpenRouter rankings)",
+            task_type, selected
+        )
+    
+    # Step 1: Supplement with Pinecone category rankings if needed
+    if len(selected) < num_models and MODEL_KNOWLEDGE_AVAILABLE and get_model_knowledge_store is not None:
         try:
             store = get_model_knowledge_store()
             # Get category-specific rankings
@@ -308,7 +438,7 @@ async def get_intelligent_models(
             if rankings:
                 for record in rankings:
                     model_id = record.model_id
-                    if model_id and len(selected) < num_models:
+                    if model_id and model_id not in selected and len(selected) < num_models:
                         # Check if available
                         if available_models is None or model_id in available_models:
                             # Ensure provider diversity
@@ -319,10 +449,10 @@ async def get_intelligent_models(
                                 selected.append(model_id)
                                 used_providers.add(provider)
                 
-                if selected:
+                if len(selected) > len(domain_top):
                     logger.info(
-                        "Pinecone rankings selected %d models for %s: %s",
-                        len(selected), task_type, selected
+                        "Pinecone added %d more models for %s",
+                        len(selected) - len(domain_top), task_type
                     )
         except Exception as e:
             logger.warning("Pinecone model selection failed, using fallback: %s", e)
@@ -367,14 +497,18 @@ async def get_intelligent_models(
         selected.append(model_id)
         used_providers.add(provider)
     
-    # Step 3: Fallback to basic selection if still not enough
+    # Step 3: Fallback to OpenRouter top-ranked models (matching actual rankings)
     if len(selected) < num_models:
+        # Use actual OpenRouter ranking order (from Health category as baseline)
         fallback_order = [
-            FALLBACK_GPT_4O,
-            FALLBACK_CLAUDE_SONNET_4,
-            FALLBACK_GEMINI_2_5,
-            FALLBACK_DEEPSEEK,
-            FALLBACK_GROK_2,
+            OPENROUTER_GPT_5,           # #1
+            OPENROUTER_CLAUDE_OPUS_4,   # #2
+            OPENROUTER_GEMINI_2_PRO,    # #3
+            OPENROUTER_CLAUDE_SONNET_4, # #4
+            OPENROUTER_O1,              # #5
+            OPENROUTER_LLAMA_4_70B,     # #7
+            OPENROUTER_MISTRAL_LARGE_2, # #8
+            OPENROUTER_GPT_4O,          # fallback
         ]
         for model_id in fallback_order:
             if model_id not in selected and len(selected) < num_models:
@@ -433,47 +567,77 @@ def _get_intelligent_models_local(
 ) -> List[str]:
     """
     Local (non-Pinecone) intelligent model selection.
-    Uses MODEL_STRENGTHS and domain mappings.
+    Uses DOMAIN_TOP_MODELS first, then MODEL_STRENGTHS for supplementary selection.
     """
     selected = []
     used_providers = set()
     
-    required_strengths = DOMAIN_REQUIRED_STRENGTHS.get(task_type, ["reasoning", "general"])
-    
-    # Score all models
-    candidates = []
-    for model_id, info in MODEL_STRENGTHS.items():
-        if available_models is not None and model_id not in available_models:
-            continue
-        if require_tools and model_id not in TOOL_CAPABLE_MODELS:
-            continue
-        
-        model_strengths = set(info.get("strengths", []))
-        match_score = len(model_strengths & set(required_strengths))
-        
-        provider = info.get("provider", "unknown")
-        diversity_bonus = 2 if provider not in used_providers else 0
-        
-        tier = info.get("tier", "fast")
-        if accuracy_priority:
-            tier_bonus = {"flagship": 3, "specialized": 2, "fast": 0}.get(tier, 0)
-        else:
-            tier_bonus = {"flagship": 1, "specialized": 1, "fast": 3}.get(tier, 0)
-        
-        total_score = match_score + diversity_bonus + tier_bonus
-        candidates.append((model_id, total_score, provider))
-    
-    candidates.sort(key=lambda x: x[1], reverse=True)
-    
-    for model_id, score, provider in candidates:
+    # Step 0: Use domain-specific top models FIRST (from OpenRouter rankings)
+    domain_top = DOMAIN_TOP_MODELS.get(task_type, DOMAIN_TOP_MODELS.get("general", []))
+    for model_id in domain_top:
         if len(selected) >= num_models:
             break
-        selected.append(model_id)
-        used_providers.add(provider)
+        if require_tools and model_id not in TOOL_CAPABLE_MODELS:
+            continue
+        if available_models is not None and model_id not in available_models:
+            continue
+        
+        model_info = MODEL_STRENGTHS.get(model_id, {})
+        provider = model_info.get("provider", "unknown")
+        
+        if provider not in used_providers or len(selected) < 2:
+            selected.append(model_id)
+            used_providers.add(provider)
     
-    # Fallback
+    # If we need more, score remaining models by strength match
     if len(selected) < num_models:
-        fallback_order = [FALLBACK_GPT_4O, FALLBACK_CLAUDE_SONNET_4, FALLBACK_GEMINI_2_5]
+        required_strengths = DOMAIN_REQUIRED_STRENGTHS.get(task_type, ["reasoning", "general"])
+        
+        candidates = []
+        for model_id, info in MODEL_STRENGTHS.items():
+            if model_id in selected:
+                continue
+            if available_models is not None and model_id not in available_models:
+                continue
+            if require_tools and model_id not in TOOL_CAPABLE_MODELS:
+                continue
+            
+            model_strengths = set(info.get("strengths", []))
+            match_score = len(model_strengths & set(required_strengths))
+            
+            provider = info.get("provider", "unknown")
+            diversity_bonus = 2 if provider not in used_providers else 0
+            
+            # Use rank if available (lower is better)
+            rank = info.get("rank", 99)
+            rank_bonus = max(0, 10 - rank)  # Higher bonus for lower rank
+            
+            tier = info.get("tier", "fast")
+            if accuracy_priority:
+                tier_bonus = {"flagship": 3, "reasoning": 4, "specialized": 2, "fast": 0}.get(tier, 0)
+            else:
+                tier_bonus = {"flagship": 1, "reasoning": 1, "specialized": 1, "fast": 3}.get(tier, 0)
+            
+            total_score = match_score + diversity_bonus + tier_bonus + rank_bonus
+            candidates.append((model_id, total_score, provider))
+        
+        candidates.sort(key=lambda x: x[1], reverse=True)
+        
+        for model_id, score, provider in candidates:
+            if len(selected) >= num_models:
+                break
+            selected.append(model_id)
+            used_providers.add(provider)
+    
+    # Fallback - use actual OpenRouter top-ranked models
+    if len(selected) < num_models:
+        fallback_order = [
+            OPENROUTER_GPT_5,
+            OPENROUTER_CLAUDE_OPUS_4,
+            OPENROUTER_GEMINI_2_PRO,
+            OPENROUTER_CLAUDE_SONNET_4,
+            OPENROUTER_O1,
+        ]
         for model_id in fallback_order:
             if model_id not in selected and len(selected) < num_models:
                 if available_models is None or model_id in available_models:
