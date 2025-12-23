@@ -67,6 +67,18 @@ except ImportError:
     CLARIFICATION_AVAILABLE = False
     ClarificationManager = None
 
+# Import ModelKnowledgeStore for Pinecone-backed intelligent model selection
+try:
+    from ..knowledge.model_knowledge_store import (
+        ModelKnowledgeStore,
+        get_model_knowledge_store,
+    )
+    MODEL_KNOWLEDGE_AVAILABLE = True
+except ImportError:
+    MODEL_KNOWLEDGE_AVAILABLE = False
+    ModelKnowledgeStore = None
+    get_model_knowledge_store = None
+
 # Import Elite Orchestrator and Quality Booster
 try:
     from ..orchestration.elite_orchestrator import (
@@ -205,6 +217,269 @@ def _get_elite_orchestrator() -> Optional[EliteOrchestrator]:
         )
         logger.info("Elite orchestrator initialized")
     return _elite_orchestrator
+
+
+# ==============================================================================
+# INTELLIGENT PINECONE-BACKED MODEL SELECTION
+# ==============================================================================
+
+# Define model strengths for complementary selection
+MODEL_STRENGTHS = {
+    # General flagship models - broad capabilities
+    FALLBACK_GPT_4O: {"strengths": ["reasoning", "coding", "analysis", "general"], "provider": "openai", "tier": "flagship"},
+    FALLBACK_CLAUDE_SONNET_4: {"strengths": ["reasoning", "creative", "analysis", "coding"], "provider": "anthropic", "tier": "flagship"},
+    FALLBACK_GEMINI_2_5: {"strengths": ["reasoning", "factual", "analysis", "multimodal"], "provider": "google", "tier": "flagship"},
+    
+    # Specialized models - specific capabilities
+    FALLBACK_DEEPSEEK: {"strengths": ["coding", "math", "reasoning"], "provider": "deepseek", "tier": "specialized"},
+    FALLBACK_GROK_2: {"strengths": ["factual", "realtime", "creative"], "provider": "xai", "tier": "specialized"},
+    
+    # Fast models - speed-optimized
+    FALLBACK_GPT_4O_MINI: {"strengths": ["speed", "general"], "provider": "openai", "tier": "fast"},
+    FALLBACK_CLAUDE_3_HAIKU: {"strengths": ["speed", "creative"], "provider": "anthropic", "tier": "fast"},
+    FALLBACK_GEMINI_2_5_FLASH: {"strengths": ["speed", "factual"], "provider": "google", "tier": "fast"},
+}
+
+# Map domains to required strengths
+DOMAIN_REQUIRED_STRENGTHS = {
+    "health_medical": ["reasoning", "factual", "analysis"],
+    "legal_analysis": ["reasoning", "analysis", "factual"],
+    "financial_analysis": ["math", "analysis", "reasoning"],
+    "science_research": ["analysis", "factual", "reasoning"],
+    "code_generation": ["coding", "reasoning"],
+    "debugging": ["coding", "analysis"],
+    "math_problem": ["math", "reasoning"],
+    "creative_writing": ["creative", "reasoning"],
+    "factual_question": ["factual", "reasoning"],
+    "research_analysis": ["analysis", "reasoning", "factual"],
+    "general": ["reasoning", "general"],
+}
+
+# Models with tool/function calling support
+TOOL_CAPABLE_MODELS = {
+    FALLBACK_GPT_4O,
+    FALLBACK_GPT_4O_MINI,
+    FALLBACK_CLAUDE_SONNET_4,
+    FALLBACK_CLAUDE_3_5,
+    FALLBACK_GEMINI_2_5,
+    FALLBACK_GEMINI_2_5_FLASH,
+    FALLBACK_GROK_2,
+}
+
+
+async def get_intelligent_models(
+    task_type: str,
+    num_models: int = 3,
+    require_tools: bool = False,
+    available_models: Optional[List[str]] = None,
+    accuracy_priority: bool = True,
+) -> List[str]:
+    """
+    Intelligent model selection using:
+    1. Pinecone category rankings (if available)
+    2. Complementary model strengths (different providers/capabilities)
+    3. Tool support filtering (for web search, function calling)
+    
+    Args:
+        task_type: The detected task type (from PromptOps)
+        num_models: Number of models to select
+        require_tools: If True, only select models with tool support
+        available_models: Limit selection to these models
+        accuracy_priority: If True, prioritize accuracy over speed
+        
+    Returns:
+        List of model IDs optimized for the task
+    """
+    selected = []
+    used_providers = set()
+    
+    # Step 1: Try Pinecone category rankings first
+    if MODEL_KNOWLEDGE_AVAILABLE and get_model_knowledge_store is not None:
+        try:
+            store = get_model_knowledge_store()
+            # Get category-specific rankings
+            rankings = await store.get_best_models_for_task(
+                task_description=task_type,
+                category=task_type,
+                top_k=num_models * 2,  # Get extra for filtering
+                require_tools=require_tools,
+            )
+            
+            if rankings:
+                for record in rankings:
+                    model_id = record.model_id
+                    if model_id and len(selected) < num_models:
+                        # Check if available
+                        if available_models is None or model_id in available_models:
+                            # Ensure provider diversity
+                            model_info = MODEL_STRENGTHS.get(model_id, {})
+                            provider = model_info.get("provider", "unknown")
+                            
+                            if provider not in used_providers or len(used_providers) >= 3:
+                                selected.append(model_id)
+                                used_providers.add(provider)
+                
+                if selected:
+                    logger.info(
+                        "Pinecone rankings selected %d models for %s: %s",
+                        len(selected), task_type, selected
+                    )
+        except Exception as e:
+            logger.warning("Pinecone model selection failed, using fallback: %s", e)
+    
+    # Step 2: Add complementary models based on required strengths
+    required_strengths = DOMAIN_REQUIRED_STRENGTHS.get(task_type, ["reasoning", "general"])
+    
+    # Score remaining models by strength match + diversity
+    candidates = []
+    for model_id, info in MODEL_STRENGTHS.items():
+        if model_id in selected:
+            continue
+        if available_models is not None and model_id not in available_models:
+            continue
+        if require_tools and model_id not in TOOL_CAPABLE_MODELS:
+            continue
+            
+        # Calculate strength match score
+        model_strengths = set(info.get("strengths", []))
+        match_score = len(model_strengths & set(required_strengths))
+        
+        # Bonus for provider diversity
+        provider = info.get("provider", "unknown")
+        diversity_bonus = 2 if provider not in used_providers else 0
+        
+        # Tier bonus (flagship > specialized > fast for accuracy)
+        tier = info.get("tier", "fast")
+        if accuracy_priority:
+            tier_bonus = {"flagship": 3, "specialized": 2, "fast": 0}.get(tier, 0)
+        else:
+            tier_bonus = {"flagship": 1, "specialized": 1, "fast": 3}.get(tier, 0)
+        
+        total_score = match_score + diversity_bonus + tier_bonus
+        candidates.append((model_id, total_score, provider))
+    
+    # Sort by score and add to selection
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    
+    for model_id, score, provider in candidates:
+        if len(selected) >= num_models:
+            break
+        selected.append(model_id)
+        used_providers.add(provider)
+    
+    # Step 3: Fallback to basic selection if still not enough
+    if len(selected) < num_models:
+        fallback_order = [
+            FALLBACK_GPT_4O,
+            FALLBACK_CLAUDE_SONNET_4,
+            FALLBACK_GEMINI_2_5,
+            FALLBACK_DEEPSEEK,
+            FALLBACK_GROK_2,
+        ]
+        for model_id in fallback_order:
+            if model_id not in selected and len(selected) < num_models:
+                if available_models is None or model_id in available_models:
+                    if not require_tools or model_id in TOOL_CAPABLE_MODELS:
+                        selected.append(model_id)
+    
+    logger.info(
+        "Intelligent model selection for '%s': %d models, require_tools=%s -> %s",
+        task_type, num_models, require_tools, selected
+    )
+    
+    return selected[:num_models]
+
+
+def get_intelligent_models_sync(
+    task_type: str,
+    num_models: int = 3,
+    require_tools: bool = False,
+    available_models: Optional[List[str]] = None,
+    accuracy_priority: bool = True,
+) -> List[str]:
+    """
+    Synchronous wrapper for intelligent model selection.
+    Uses local knowledge when Pinecone is not available.
+    """
+    import asyncio
+    
+    # Try async version first
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Already in async context - use sync fallback
+            return _get_intelligent_models_local(
+                task_type, num_models, require_tools, available_models, accuracy_priority
+            )
+        else:
+            return loop.run_until_complete(
+                get_intelligent_models(
+                    task_type, num_models, require_tools, available_models, accuracy_priority
+                )
+            )
+    except RuntimeError:
+        # No event loop - use sync fallback
+        return _get_intelligent_models_local(
+            task_type, num_models, require_tools, available_models, accuracy_priority
+        )
+
+
+def _get_intelligent_models_local(
+    task_type: str,
+    num_models: int = 3,
+    require_tools: bool = False,
+    available_models: Optional[List[str]] = None,
+    accuracy_priority: bool = True,
+) -> List[str]:
+    """
+    Local (non-Pinecone) intelligent model selection.
+    Uses MODEL_STRENGTHS and domain mappings.
+    """
+    selected = []
+    used_providers = set()
+    
+    required_strengths = DOMAIN_REQUIRED_STRENGTHS.get(task_type, ["reasoning", "general"])
+    
+    # Score all models
+    candidates = []
+    for model_id, info in MODEL_STRENGTHS.items():
+        if available_models is not None and model_id not in available_models:
+            continue
+        if require_tools and model_id not in TOOL_CAPABLE_MODELS:
+            continue
+        
+        model_strengths = set(info.get("strengths", []))
+        match_score = len(model_strengths & set(required_strengths))
+        
+        provider = info.get("provider", "unknown")
+        diversity_bonus = 2 if provider not in used_providers else 0
+        
+        tier = info.get("tier", "fast")
+        if accuracy_priority:
+            tier_bonus = {"flagship": 3, "specialized": 2, "fast": 0}.get(tier, 0)
+        else:
+            tier_bonus = {"flagship": 1, "specialized": 1, "fast": 3}.get(tier, 0)
+        
+        total_score = match_score + diversity_bonus + tier_bonus
+        candidates.append((model_id, total_score, provider))
+    
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    
+    for model_id, score, provider in candidates:
+        if len(selected) >= num_models:
+            break
+        selected.append(model_id)
+        used_providers.add(provider)
+    
+    # Fallback
+    if len(selected) < num_models:
+        fallback_order = [FALLBACK_GPT_4O, FALLBACK_CLAUDE_SONNET_4, FALLBACK_GEMINI_2_5]
+        for model_id in fallback_order:
+            if model_id not in selected and len(selected) < num_models:
+                if available_models is None or model_id in available_models:
+                    selected.append(model_id)
+    
+    return selected[:num_models]
 
 
 def _get_quality_booster() -> Optional[QualityBooster]:
@@ -1185,10 +1460,14 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 agent_mode, detected_task_type
             )
             
+            # Determine if tools are needed (web search was used or could be needed)
+            tools_needed = bool(tool_context)  # Web search was executed
+            
             if is_team_mode:
                 # TEAM MODE: Select multiple diverse models for ensemble orchestration
-                # The orchestrator will analyze the prompt and select the best team
+                # Uses Pinecone rankings + complementary strengths + tool support
                 accuracy_lvl = orchestration_config.get("accuracy_level", 3)
+                accuracy_priority = accuracy_lvl >= 3
                 
                 # Determine number of models based on accuracy level
                 if accuracy_lvl >= 4:
@@ -1198,38 +1477,51 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 else:
                     num_team_models = min(2, len(available_providers))  # Fast: 2 models
                 
-                # Get diverse ensemble optimized for the task
-                auto_selected = get_diverse_ensemble(
-                    detected_task_type,
-                    available_models=available_providers,
+                # Use intelligent Pinecone-backed selection
+                # This gets: top-ranked models for category + complementary models + tool-capable models
+                auto_selected = get_intelligent_models_sync(
+                    task_type=detected_task_type,
                     num_models=num_team_models,
+                    require_tools=tools_needed,
+                    available_models=available_providers,
+                    accuracy_priority=accuracy_priority,
                 )
                 
-                # Fallback if diverse ensemble didn't return enough
+                # Fallback to basic diverse ensemble if intelligent selection failed
                 if len(auto_selected) < num_team_models:
-                    auto_selected = get_best_models_for_task(
+                    auto_selected = get_diverse_ensemble(
                         detected_task_type,
                         available_models=available_providers,
                         num_models=num_team_models,
+                    )
+                
+                logger.info(
+                    "TEAM mode: Selected %d models for ensemble (tools=%s): %s",
+                    len(auto_selected), tools_needed, auto_selected
+                )
+            else:
+                # SINGLE MODE: Select just the ONE best model for the task
+                # Still uses intelligent selection for optimal single-model choice
+                auto_selected = get_intelligent_models_sync(
+                    task_type=detected_task_type,
+                    num_models=1,
+                    require_tools=tools_needed,
+                    available_models=available_providers,
+                    accuracy_priority=True,
+                )
+                
+                # Fallback
+                if not auto_selected:
+                    auto_selected = get_best_models_for_task(
+                        detected_task_type,
+                        available_models=available_providers,
+                        num_models=1,
                         criteria=criteria_settings,
                     )
                 
                 logger.info(
-                    "TEAM mode: Selected %d models for ensemble: %s",
-                    len(auto_selected), auto_selected
-                )
-            else:
-                # SINGLE MODE: Select just the ONE best model for the task
-                auto_selected = get_best_models_for_task(
-                    detected_task_type,
-                    available_models=available_providers,
-                    num_models=1,  # Only 1 model for single mode
-                    criteria=criteria_settings,
-                )
-                
-                logger.info(
-                    "SINGLE mode: Selected best model: %s",
-                    auto_selected[0] if auto_selected else "default"
+                    "SINGLE mode: Selected best model (tools=%s): %s",
+                    tools_needed, auto_selected[0] if auto_selected else "default"
                 )
             
             # Map selected models to actual provider names
