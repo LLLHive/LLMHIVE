@@ -457,7 +457,6 @@ export default function OrchestrationPage() {
 
             {/* Orchestration Cards - Glassmorphism Style */}
             <div className="w-full max-w-5xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-              <p className="text-sm text-muted-foreground text-center mb-3">Select a category to configure</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
                 {orchestrationCards.map((card, index) => {
                   const Icon = card.icon
