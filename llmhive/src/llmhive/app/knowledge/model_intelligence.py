@@ -14,7 +14,7 @@ This module contains detailed knowledge about each model including:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 
 class ModelTier(str, Enum):
