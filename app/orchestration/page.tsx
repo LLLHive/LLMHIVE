@@ -450,7 +450,7 @@ export default function OrchestrationPage() {
               <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Orchestration
               </h2>
-              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+              <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto whitespace-nowrap">
                 Configure your multi-agent AI system with precision
               </p>
             </div>
