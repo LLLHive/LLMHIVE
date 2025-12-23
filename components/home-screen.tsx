@@ -224,7 +224,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         <LogoText height={92} className="hidden md:block lg:hidden mb-2 mx-auto" />
         <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
         
-        <p className="llmhive-subtitle text-sm md:text-base mx-auto mb-4 whitespace-nowrap font-display text-[var(--bronze)]">
+        <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto mb-4 whitespace-nowrap">
           Multi-agent AI orchestration for enhanced accuracy and deeper insights
         </p>
       </div>
