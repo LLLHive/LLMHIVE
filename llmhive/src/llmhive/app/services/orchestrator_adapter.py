@@ -1175,8 +1175,12 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 logger.warning("Tool Broker failed: %s", e)
         
         # ========================================================================
-        # STEP 2: AUTOMATIC MODEL SELECTION (When user selected "automatic")
+        # STEP 2: INTELLIGENT MODEL SELECTION (Based on agent_mode and task)
         # ========================================================================
+        # Check agent_mode: "team" = multi-model ensemble, "single" = best single model
+        agent_mode = orchestration_config.get("agent_mode", "team")
+        is_team_mode = agent_mode == "team"
+        
         # Check if we should use automatic model selection
         is_automatic_mode = (
             not request.models or  # No models provided
@@ -1184,23 +1188,57 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             (len(request.models) == 1 and request.models[0].lower() in ["automatic", "auto"])
         )
         
-        if is_automatic_mode and detected_task_type != "general":
-            logger.info("Automatic mode: Re-selecting models based on task type '%s'", detected_task_type)
-            
-            # Get best models for the detected task type
-            auto_selected = get_best_models_for_task(
-                detected_task_type,
-                available_models=available_providers,
-                num_models=3,
-                criteria=criteria_settings,
+        if is_automatic_mode:
+            logger.info(
+                "Intelligent model selection: agent_mode=%s, task_type='%s'",
+                agent_mode, detected_task_type
             )
             
-            # For ensemble, ensure diversity
-            if orchestration_config.get("accuracy_level", 3) >= 3:
+            if is_team_mode:
+                # TEAM MODE: Select multiple diverse models for ensemble orchestration
+                # The orchestrator will analyze the prompt and select the best team
+                accuracy_lvl = orchestration_config.get("accuracy_level", 3)
+                
+                # Determine number of models based on accuracy level
+                if accuracy_lvl >= 4:
+                    num_team_models = min(4, len(available_providers))  # High accuracy: 4 models
+                elif accuracy_lvl >= 3:
+                    num_team_models = min(3, len(available_providers))  # Standard: 3 models
+                else:
+                    num_team_models = min(2, len(available_providers))  # Fast: 2 models
+                
+                # Get diverse ensemble optimized for the task
                 auto_selected = get_diverse_ensemble(
                     detected_task_type,
                     available_models=available_providers,
-                    num_models=min(3, len(available_providers)),
+                    num_models=num_team_models,
+                )
+                
+                # Fallback if diverse ensemble didn't return enough
+                if len(auto_selected) < num_team_models:
+                    auto_selected = get_best_models_for_task(
+                        detected_task_type,
+                        available_models=available_providers,
+                        num_models=num_team_models,
+                        criteria=criteria_settings,
+                    )
+                
+                logger.info(
+                    "TEAM mode: Selected %d models for ensemble: %s",
+                    len(auto_selected), auto_selected
+                )
+            else:
+                # SINGLE MODE: Select just the ONE best model for the task
+                auto_selected = get_best_models_for_task(
+                    detected_task_type,
+                    available_models=available_providers,
+                    num_models=1,  # Only 1 model for single mode
+                    criteria=criteria_settings,
+                )
+                
+                logger.info(
+                    "SINGLE mode: Selected best model: %s",
+                    auto_selected[0] if auto_selected else "default"
                 )
             
             # Map selected models to actual provider names
@@ -1213,9 +1251,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     user_model_names.append(_get_display_name(model_id))
             
             logger.info(
-                "Automatic model selection: task=%s -> models=%s",
-                detected_task_type,
-                actual_models,
+                "Intelligent model selection: agent_mode=%s, task=%s -> models=%s",
+                agent_mode, detected_task_type, actual_models,
             )
         
         # Enhance prompt with reasoning method template
@@ -1242,8 +1279,10 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         accuracy_level = orchestration_config.get("accuracy_level", 3)
         
         # Determine if we should use elite orchestration
+        # Elite orchestration requires TEAM mode with multiple models
         use_elite = (
             ELITE_AVAILABLE and 
+            is_team_mode and  # Only use elite in TEAM mode
             accuracy_level >= 3 and 
             len(actual_models) >= 2
         )
