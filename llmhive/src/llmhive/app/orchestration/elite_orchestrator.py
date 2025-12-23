@@ -158,7 +158,93 @@ MODEL_CAPABILITIES: Dict[str, Dict[ModelCapability, float]] = {
         ModelCapability.SPEED: 0.78,
         ModelCapability.QUALITY: 0.85,
     },
+    # DeepSeek V3.2: Latest version
+    "deepseek-v3.2": {
+        ModelCapability.CODING: 0.95,
+        ModelCapability.REASONING: 0.93,
+        ModelCapability.MATH: 0.94,
+        ModelCapability.CREATIVE: 0.78,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.90,
+        ModelCapability.SUMMARIZATION: 0.85,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.82,
+        ModelCapability.QUALITY: 0.92,
+    },
+    # DeepSeek R1: Reasoning specialist
+    "deepseek-r1-0528": {
+        ModelCapability.CODING: 0.92,
+        ModelCapability.REASONING: 0.96,
+        ModelCapability.MATH: 0.95,
+        ModelCapability.CREATIVE: 0.72,
+        ModelCapability.FACTUAL: 0.85,
+        ModelCapability.ANALYSIS: 0.92,
+        ModelCapability.SUMMARIZATION: 0.80,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.85,
+        ModelCapability.SPEED: 0.70,
+        ModelCapability.QUALITY: 0.94,
+    },
+    # Claude Sonnet 4 (without date suffix)
+    "claude-sonnet-4": {
+        ModelCapability.CODING: 0.96,
+        ModelCapability.REASONING: 0.94,
+        ModelCapability.MATH: 0.88,
+        ModelCapability.CREATIVE: 0.90,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.93,
+        ModelCapability.SUMMARIZATION: 0.90,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.94,
+        ModelCapability.SPEED: 0.65,
+        ModelCapability.QUALITY: 0.94,
+    },
+    # Claude Opus 4: Best for complex reasoning
+    "claude-opus-4": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.97,
+        ModelCapability.MATH: 0.92,
+        ModelCapability.CREATIVE: 0.95,
+        ModelCapability.FACTUAL: 0.92,
+        ModelCapability.ANALYSIS: 0.96,
+        ModelCapability.SUMMARIZATION: 0.92,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.95,
+        ModelCapability.SPEED: 0.55,
+        ModelCapability.QUALITY: 0.97,
+    },
+    # Grok 4: Latest
+    "grok-4": {
+        ModelCapability.CODING: 0.88,
+        ModelCapability.REASONING: 0.92,
+        ModelCapability.MATH: 0.88,
+        ModelCapability.CREATIVE: 0.85,
+        ModelCapability.FACTUAL: 0.90,
+        ModelCapability.ANALYSIS: 0.88,
+        ModelCapability.SUMMARIZATION: 0.85,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.80,
+        ModelCapability.QUALITY: 0.90,
+    },
 }
+
+# Create aliases for full OpenRouter IDs (maps to same capabilities)
+_MODEL_ALIASES = {
+    "openai/gpt-4o": "gpt-4o",
+    "openai/gpt-4o-mini": "gpt-4o-mini",
+    "anthropic/claude-sonnet-4": "claude-sonnet-4",
+    "anthropic/claude-opus-4": "claude-opus-4",
+    "anthropic/claude-3-5-sonnet-20241022": "claude-sonnet-4",  # Map old to new
+    "google/gemini-2.5-pro": "gemini-2.5-pro",
+    "google/gemini-2.5-flash": "gemini-2.5-flash",
+    "deepseek/deepseek-v3.2": "deepseek-v3.2",
+    "deepseek/deepseek-chat": "deepseek-chat",
+    "deepseek/deepseek-r1-0528": "deepseek-r1-0528",
+    "x-ai/grok-4": "grok-4",
+    "x-ai/grok-2": "grok-2",
+}
+
+# Add aliases to MODEL_CAPABILITIES
+for alias, base in _MODEL_ALIASES.items():
+    if base in MODEL_CAPABILITIES:
+        MODEL_CAPABILITIES[alias] = MODEL_CAPABILITIES[base]
 
 # Task type to required capabilities mapping
 # Aligned with _detect_task_type() in orchestrator_adapter.py
@@ -301,15 +387,41 @@ class EliteOrchestrator:
         return self._openrouter_selector
     
     def _build_model_provider_map(self) -> Dict[str, str]:
-        """Build mapping of model names to providers."""
+        """Build mapping of model names to providers.
+        
+        Handles both formats:
+        - Short names: "gpt-4o" -> "openai"
+        - Full OpenRouter IDs: "openai/gpt-4o" -> "openai"
+        """
         mapping = {}
         
+        # Map of provider -> (short names, full OpenRouter IDs)
         provider_models = {
-            "openai": ["gpt-4o", "gpt-4o-mini"],
-            "anthropic": ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
-            "gemini": ["gemini-2.5-pro", "gemini-2.5-flash"],
-            "deepseek": ["deepseek-chat"],
-            "grok": ["grok-2"],
+            "openai": [
+                "gpt-4o", "gpt-4o-mini", "gpt-5", "o1", "o1-pro", "o3",
+                "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-5", 
+                "openai/o1-pro", "openai/o3",
+            ],
+            "anthropic": [
+                "claude-sonnet-4", "claude-opus-4", "claude-3-5-sonnet-20241022", 
+                "claude-3-5-haiku-20241022", "claude-sonnet-4-20250514",
+                "anthropic/claude-sonnet-4", "anthropic/claude-opus-4",
+                "anthropic/claude-3-5-sonnet-20241022",
+            ],
+            "gemini": [
+                "gemini-2.5-pro", "gemini-2.5-flash", "gemini-3-pro-preview",
+                "google/gemini-2.5-pro", "google/gemini-2.5-flash",
+                "google/gemini-3-pro-preview",
+            ],
+            "deepseek": [
+                "deepseek-chat", "deepseek-v3.2", "deepseek-r1-0528",
+                "deepseek/deepseek-chat", "deepseek/deepseek-v3.2",
+                "deepseek/deepseek-r1-0528",
+            ],
+            "grok": [
+                "grok-2", "grok-4",
+                "x-ai/grok-2", "x-ai/grok-4",
+            ],
         }
         
         for provider, models in provider_models.items():
@@ -1051,9 +1163,13 @@ Provide the improved answer:"""
         
         provider = self.providers[provider_name]
         
+        # Convert full OpenRouter ID to short model name for API call
+        # e.g., "openai/gpt-4o" -> "gpt-4o"
+        api_model = model.split("/")[-1] if "/" in model else model
+        
         start = time.time()
         try:
-            result = await provider.complete(prompt, model=model)
+            result = await provider.complete(prompt, model=api_model)
             latency = (time.time() - start) * 1000
             
             content = getattr(result, 'content', '') or getattr(result, 'text', '')
