@@ -1542,3 +1542,555 @@ def get_reasoning_hack(model_id: str, task_type: str) -> Optional[str]:
     else:
         return REASONING_HACKS["xml_thinking_tags"]["template"]
 
+
+# =============================================================================
+# EMERGING ARCHITECTURES & DEVELOPMENTS (Beyond Current Transformers)
+# =============================================================================
+# These are next-generation developments that may disrupt current LLM landscape
+
+@dataclass
+class EmergingArchitecture:
+    """Profile for emerging AI architectures that may outperform transformers."""
+    
+    name: str
+    category: str  # "sub_quadratic", "diffusion", "recurrent", "hybrid", "reasoning"
+    description: str
+    
+    # Technical characteristics
+    complexity: str  # O(n), O(n log n), O(n²)
+    key_innovation: str
+    advantages: List[str]
+    disadvantages: List[str]
+    
+    # Availability
+    available_models: List[str]
+    production_ready: bool
+    estimated_adoption: str  # "2024", "2025", "2026+"
+    
+    # Strategic implications
+    when_to_use: List[str]
+    competitive_threat: str  # "high", "medium", "low"
+
+
+EMERGING_ARCHITECTURES: Dict[str, EmergingArchitecture] = {
+    
+    # =========================================================================
+    # SUB-QUADRATIC ARCHITECTURES (Better than O(n²) attention)
+    # =========================================================================
+    
+    "mamba": EmergingArchitecture(
+        name="Mamba (State Space Models)",
+        category="sub_quadratic",
+        description="""Selective State Space Model that achieves linear time complexity O(n) 
+        vs quadratic O(n²) of transformers. Uses selective scan instead of attention.
+        Inspired by control theory and signal processing.""",
+        
+        complexity="O(n) - LINEAR time and memory",
+        key_innovation="""Selective state space with input-dependent parameters. 
+        Unlike fixed RNNs, selection mechanism allows content-aware processing.
+        Hardware-aware algorithm optimizes memory access patterns.""",
+        
+        advantages=[
+            "5x faster inference than transformers on long sequences",
+            "Linear memory scaling - can process million+ token contexts",
+            "No attention computation bottleneck",
+            "Better at modeling long-range dependencies in some tasks",
+            "Efficient for streaming/real-time applications",
+            "Lower energy consumption per token",
+        ],
+        disadvantages=[
+            "Slightly lower quality on some benchmarks vs top transformers",
+            "Less mature tooling and infrastructure",
+            "Harder to parallelize training (sequential nature)",
+            "May miss some fine-grained attention patterns",
+            "Fewer pretrained checkpoints available",
+        ],
+        
+        available_models=["mamba-7b", "mamba-2.8b", "jamba (Mamba+Transformer hybrid)"],
+        production_ready=True,
+        estimated_adoption="2024-2025",
+        
+        when_to_use=[
+            "Very long context processing (100K+ tokens)",
+            "Real-time/streaming applications",
+            "Resource-constrained deployments",
+            "When inference speed is critical",
+        ],
+        competitive_threat="high",
+    ),
+    
+    "rwkv": EmergingArchitecture(
+        name="RWKV (Receptance Weighted Key Value)",
+        category="sub_quadratic",
+        description="""Combines transformer expressiveness with RNN efficiency.
+        Linear attention mechanism with O(n) complexity. Open-source and community-driven.
+        'The Best of Both Worlds' - transformer quality with RNN efficiency.""",
+        
+        complexity="O(n) - LINEAR",
+        key_innovation="""WKV (Weighted Key Value) mechanism replaces quadratic attention.
+        Time-mixing and channel-mixing blocks. Can run like RNN at inference
+        but train like transformer.""",
+        
+        advantages=[
+            "Constant memory usage during inference (like RNN)",
+            "Can be trained at scale like transformers",
+            "Open source with active community (RWKV-7 latest)",
+            "Good performance on language modeling benchmarks",
+            "Efficient for edge deployment",
+            "Supports infinite context length theoretically",
+        ],
+        disadvantages=[
+            "Still catching up to top transformer performance",
+            "Smaller ecosystem than transformer-based models",
+            "Less battle-tested in production",
+            "Fewer fine-tuning resources available",
+        ],
+        
+        available_models=["RWKV-7-World", "RWKV-6-14B", "RWKV-5-7B"],
+        production_ready=True,
+        estimated_adoption="2024-2025",
+        
+        when_to_use=[
+            "Edge/mobile deployment",
+            "Infinite context streaming",
+            "When open-source is required",
+            "Resource-constrained environments",
+        ],
+        competitive_threat="medium",
+    ),
+    
+    "linear_attention": EmergingArchitecture(
+        name="Linear Attention Variants",
+        category="sub_quadratic",
+        description="""Various approaches to linearize attention: Performer, Linear Transformer,
+        FNet, Hyena, Based. Replace O(n²) softmax attention with O(n) alternatives.""",
+        
+        complexity="O(n) or O(n log n)",
+        key_innovation="""Different approaches:
+        - Performer: Random feature approximation of softmax
+        - FNet: Replace attention with Fourier transform
+        - Hyena: Learned convolutions instead of attention
+        - Based: Combination of linear attention + sliding window""",
+        
+        advantages=[
+            "Significant speedup on long sequences",
+            "Can be retrofitted to existing architectures",
+            "Active research area with rapid improvements",
+            "Some variants maintain transformer compatibility",
+        ],
+        disadvantages=[
+            "Quality gap vs full attention on many tasks",
+            "Each variant has different tradeoffs",
+            "Less mature than standard attention",
+            "May require retraining from scratch",
+        ],
+        
+        available_models=["Hyena-7B", "Based models", "RetNet variants"],
+        production_ready=False,
+        estimated_adoption="2025-2026",
+        
+        when_to_use=[
+            "Research and experimentation",
+            "Specific long-context applications",
+            "When willing to trade quality for speed",
+        ],
+        competitive_threat="medium",
+    ),
+    
+    # =========================================================================
+    # DIFFUSION-BASED LANGUAGE MODELS
+    # =========================================================================
+    
+    "diffusion_lm": EmergingArchitecture(
+        name="Diffusion Language Models",
+        category="diffusion",
+        description="""Apply diffusion process to text generation. Instead of autoregressive
+        left-to-right generation, denoise entire sequence iteratively. Models like MDLM,
+        Mercury, and Plaid show promising results.""",
+        
+        complexity="O(n × steps) - depends on diffusion steps",
+        key_innovation="""Non-autoregressive generation via iterative denoising.
+        Can edit/refine entire sequences, better for controllable generation.
+        Parallel decoding possible. Better handling of bidirectional context.""",
+        
+        advantages=[
+            "Parallel generation (not sequential token-by-token)",
+            "Better at global coherence and planning",
+            "Natural for editing and infilling tasks",
+            "Controllable generation via guidance",
+            "May be better for structured outputs",
+            "Can leverage bidirectional context naturally",
+        ],
+        disadvantages=[
+            "Multiple forward passes needed (slower per sequence)",
+            "Discrete text diffusion is harder than continuous (images)",
+            "Quality still behind top autoregressive models",
+            "Sampling can be slow without optimization",
+            "Less intuitive to control than autoregressive",
+        ],
+        
+        available_models=["MDLM", "Mercury", "Plaid", "SSD-LM"],
+        production_ready=False,
+        estimated_adoption="2025-2026",
+        
+        when_to_use=[
+            "Document editing and revision",
+            "Controllable generation with constraints",
+            "When global coherence matters more than speed",
+            "Structured output generation",
+        ],
+        competitive_threat="medium",
+    ),
+    
+    # =========================================================================
+    # CONTINUOUS REASONING ARCHITECTURES
+    # =========================================================================
+    
+    "continuous_thought_machine": EmergingArchitecture(
+        name="Continuous Thought Machine (CTM)",
+        category="reasoning",
+        description="""Neural architecture where thinking happens in continuous latent space
+        over time, not discrete tokens. Allows 'thinking' to take variable time based on
+        problem difficulty. Developed by Sakana AI and others.""",
+        
+        complexity="O(n × thinking_time)",
+        key_innovation="""Latent reasoning that isn't bound to token-by-token generation.
+        Internal representation evolves continuously until ready to output.
+        Thinking time scales with problem difficulty automatically.
+        More brain-like than discrete token reasoning.""",
+        
+        advantages=[
+            "Reasoning time adapts to problem complexity",
+            "Not constrained to human-readable thinking chains",
+            "More efficient than verbose chain-of-thought",
+            "Can develop internal representations not expressible in text",
+            "Potentially better for abstract reasoning",
+        ],
+        disadvantages=[
+            "Hard to interpret internal reasoning",
+            "Less controllable than explicit CoT",
+            "Still experimental/research stage",
+            "Training is challenging",
+            "Harder to verify correctness of reasoning",
+        ],
+        
+        available_models=["Research prototypes only"],
+        production_ready=False,
+        estimated_adoption="2026+",
+        
+        when_to_use=[
+            "Complex reasoning where explicit CoT is wasteful",
+            "Problems requiring deep abstract thinking",
+            "When interpretability is less important than correctness",
+        ],
+        competitive_threat="high (long-term)",
+    ),
+    
+    "test_time_compute": EmergingArchitecture(
+        name="Test-Time Compute Scaling (o1/o3 paradigm)",
+        category="reasoning",
+        description="""Instead of just scaling model size, scale compute at inference time.
+        Models like o1 and o3 use internal reasoning tokens to 'think longer' on hard problems.
+        Represents paradigm shift from 'bigger models' to 'smarter inference'.""",
+        
+        complexity="O(n × reasoning_budget)",
+        key_innovation="""Inference-time scaling: spend more compute on harder problems.
+        Internal chain-of-thought that may not be shown to user.
+        Verification and self-correction during generation.
+        Quality improves with thinking time budget.""",
+        
+        advantages=[
+            "Same model handles easy AND hard problems efficiently",
+            "Can achieve expert-level reasoning on complex tasks",
+            "More cost-effective than always using largest model",
+            "Self-verification reduces errors",
+            "Matches human 'thinking harder' on difficult problems",
+        ],
+        disadvantages=[
+            "Unpredictable latency (depends on problem)",
+            "Hidden reasoning tokens increase costs",
+            "Can overthink simple problems",
+            "Streaming not possible during reasoning phase",
+            "Hard to estimate costs upfront",
+        ],
+        
+        available_models=["openai/o1", "openai/o3", "deepseek/deepseek-r1"],
+        production_ready=True,
+        estimated_adoption="2024 (now)",
+        
+        when_to_use=[
+            "Math and logic problems",
+            "Complex coding challenges",
+            "Scientific reasoning",
+            "When accuracy matters more than speed",
+        ],
+        competitive_threat="high (already impacting)",
+    ),
+    
+    # =========================================================================
+    # HYBRID AND NEURO-SYMBOLIC
+    # =========================================================================
+    
+    "neuro_symbolic": EmergingArchitecture(
+        name="Neuro-Symbolic AI",
+        category="hybrid",
+        description="""Combines neural networks with symbolic reasoning systems.
+        Neural handles perception/pattern matching, symbolic handles logic/planning.
+        Addresses hallucination and reasoning failures of pure neural approaches.""",
+        
+        complexity="Varies by implementation",
+        key_innovation="""Symbolic reasoning layer over neural foundation.
+        Can enforce logical constraints and rules.
+        Verifiable reasoning chains.
+        Examples: Amazon's Vulcan, Wolfram integration with LLMs.""",
+        
+        advantages=[
+            "Reduced hallucinations through symbolic verification",
+            "Explainable reasoning with logical traces",
+            "Can enforce domain constraints (legal, medical)",
+            "Better at math and formal reasoning",
+            "Combines flexibility of neural with rigor of symbolic",
+        ],
+        disadvantages=[
+            "Complex to implement and maintain",
+            "May be slower due to symbolic reasoning overhead",
+            "Requires domain-specific rule engineering",
+            "Not end-to-end learnable",
+            "Integration challenges between neural and symbolic",
+        ],
+        
+        available_models=["Wolfram Alpha + GPT", "Amazon Vulcan (internal)", "Various research systems"],
+        production_ready=True,  # In limited forms
+        estimated_adoption="2024-2025",
+        
+        when_to_use=[
+            "High-stakes domains requiring verification",
+            "Math and scientific computation",
+            "When explainability is required",
+            "Compliance-heavy applications",
+        ],
+        competitive_threat="high",
+    ),
+    
+    "memory_augmented": EmergingArchitecture(
+        name="Memory-Augmented / Retrieval Systems",
+        category="hybrid",
+        description="""Systems with explicit memory components beyond context window.
+        Includes RAG, but also newer approaches with surprise-based memory,
+        continuous learning, and structured knowledge stores.""",
+        
+        complexity="O(n + retrieval)",
+        key_innovation="""External memory that persists and updates over time.
+        Surprise-based learning: store unexpected information.
+        Continuous/online learning without retraining.
+        Structured memory (graphs) vs unstructured (vectors).""",
+        
+        advantages=[
+            "Effectively infinite knowledge",
+            "Can be updated without retraining",
+            "Factual grounding reduces hallucination",
+            "Personalization through memory",
+            "Lower training costs (knowledge in memory, not weights)",
+        ],
+        disadvantages=[
+            "Retrieval latency and accuracy challenges",
+            "Memory management complexity",
+            "Potential for stale or conflicting information",
+            "Security/privacy of memory contents",
+        ],
+        
+        available_models=["All models via RAG", "MemGPT", "Infinite Memory Transformer"],
+        production_ready=True,
+        estimated_adoption="2024 (now)",
+        
+        when_to_use=[
+            "Knowledge-intensive applications",
+            "Personalized assistants",
+            "Domain-specific expertise",
+            "When information changes frequently",
+        ],
+        competitive_threat="high (essential for production)",
+    ),
+}
+
+
+# =============================================================================
+# ADVANCED REASONING DEVELOPMENTS (Beyond Basic CoT)
+# =============================================================================
+
+ADVANCED_REASONING_DEVELOPMENTS = {
+    
+    "chain_of_reasoning": {
+        "name": "Chain-of-Reasoning (CoR) - Microsoft",
+        "description": """Unifies natural language, code, and symbolic reasoning in one chain.
+        Model chooses optimal representation for each step.""",
+        "key_insight": "Don't force all reasoning into natural language",
+        "implementation": """Let model switch between:
+        - Natural language for conceptual steps
+        - Code for computation
+        - Symbolic logic for formal reasoning
+        Then synthesize at the end.""",
+        "effectiveness_gain": "20-40% improvement on math problems",
+    },
+    
+    "self_reflection_loops": {
+        "name": "Self-Reflection and Critique Loops",
+        "description": """Model critiques its own output and iteratively improves.
+        Multiple passes with self-assessment.""",
+        "key_insight": "One-shot generation is often suboptimal",
+        "implementation": """
+        1. Generate initial response
+        2. Critique: 'What's wrong with this?'
+        3. Improve based on critique
+        4. Repeat until confident or budget exhausted""",
+        "effectiveness_gain": "10-25% quality improvement",
+    },
+    
+    "multi_agent_debate": {
+        "name": "Multi-Agent Debate/Verification",
+        "description": """Multiple model instances debate and verify each other's answers.
+        Consensus or synthesis emerges from disagreement.""",
+        "key_insight": "Diverse perspectives catch more errors",
+        "implementation": """
+        - Agent A generates answer
+        - Agent B critiques A's answer
+        - Agent C synthesizes or arbitrates
+        - Or: Agents argue until consensus""",
+        "effectiveness_gain": "15-35% error reduction",
+    },
+    
+    "process_reward_models": {
+        "name": "Process Reward Models (PRM)",
+        "description": """Reward each step of reasoning, not just final answer.
+        Enables better credit assignment and error localization.""",
+        "key_insight": "Intermediate steps matter as much as final answer",
+        "implementation": """
+        - Train verifier on step-level correctness
+        - Use during inference to select better reasoning paths
+        - Backtrack when step verifier detects error""",
+        "effectiveness_gain": "Major improvement on multi-step problems",
+    },
+    
+    "latent_space_reasoning": {
+        "name": "Latent Space Reasoning (non-verbal thinking)",
+        "description": """Reasoning happens in continuous representation space,
+        not forced into discrete tokens. Think without 'speaking'.""",
+        "key_insight": "Human-readable chains may not be optimal for machines",
+        "implementation": """
+        - Allow model to iterate in latent space
+        - Only decode to text when ready
+        - Thinking time proportional to difficulty""",
+        "effectiveness_gain": "Potentially 50%+ on abstract reasoning",
+    },
+}
+
+
+# =============================================================================
+# STRATEGIC IMPLICATIONS FOR ORCHESTRATION
+# =============================================================================
+
+STRATEGIC_IMPLICATIONS = {
+    
+    "model_selection": {
+        "current": "Select based on transformer capabilities and benchmarks",
+        "emerging": """
+        - Consider sub-quadratic models (Mamba, RWKV) for long-context tasks
+        - Use test-time compute (o1/o3) for complex reasoning
+        - Add neuro-symbolic verification for high-stakes domains
+        - Evaluate diffusion models for editing/revision tasks""",
+    },
+    
+    "reasoning_strategy": {
+        "current": "Prompt-based CoT, multi-model synthesis",
+        "emerging": """
+        - Chain-of-Reasoning (code + math + language)
+        - Self-reflection loops with critique
+        - Multi-agent debate for verification
+        - Test-time compute scaling (thinking budgets)
+        - Latent reasoning for efficiency""",
+    },
+    
+    "architecture_diversity": {
+        "current": "All transformers, different sizes/training",
+        "emerging": """
+        - Mix transformer + Mamba for speed/quality tradeoff
+        - Use RNN-like (RWKV) for streaming
+        - Diffusion for editing workflows
+        - Neuro-symbolic for verification
+        - Ensemble different architectures""",
+    },
+    
+    "competitive_threats": [
+        "Test-time compute scaling (o1/o3) making brute-force model scaling obsolete",
+        "Sub-quadratic models enabling longer contexts at lower cost",
+        "Open-source catching up (DeepSeek-R1, RWKV, Mamba)",
+        "Neuro-symbolic reducing hallucination gap",
+        "Diffusion models enabling new workflows",
+    ],
+    
+    "opportunities": [
+        "Orchestrate across architecture types (transformer + Mamba + symbolic)",
+        "Dynamic compute allocation based on problem difficulty",
+        "Memory-augmented systems for personalization",
+        "Multi-agent debate for verification",
+        "Hybrid reasoning (code + language + symbolic)",
+    ],
+}
+
+
+def get_architecture_for_task(task_type: str, constraints: Dict[str, Any] = None) -> List[str]:
+    """
+    Recommend architectures based on task and constraints.
+    
+    Args:
+        task_type: Type of task
+        constraints: Dict with keys like 'max_latency_ms', 'max_context', 'require_verification'
+        
+    Returns:
+        List of recommended architecture names
+    """
+    constraints = constraints or {}
+    recommendations = []
+    
+    max_context = constraints.get("max_context", 8000)
+    require_verification = constraints.get("require_verification", False)
+    latency_critical = constraints.get("max_latency_ms", 10000) < 1000
+    
+    # Long context needs sub-quadratic
+    if max_context > 100000:
+        recommendations.extend(["mamba", "rwkv", "memory_augmented"])
+    
+    # Verification needs neuro-symbolic
+    if require_verification or any(x in task_type.lower() for x in ["medical", "legal", "financial"]):
+        recommendations.append("neuro_symbolic")
+    
+    # Complex reasoning needs test-time compute
+    if any(x in task_type.lower() for x in ["math", "logic", "proof", "complex"]):
+        recommendations.append("test_time_compute")
+    
+    # Latency critical needs fast architectures
+    if latency_critical:
+        recommendations.extend(["mamba", "rwkv"])
+    
+    # Editing/revision tasks suit diffusion
+    if any(x in task_type.lower() for x in ["edit", "revise", "improve", "rewrite"]):
+        recommendations.append("diffusion_lm")
+    
+    return list(set(recommendations)) if recommendations else ["test_time_compute"]
+
+
+def get_reasoning_development(task_type: str) -> Optional[Dict]:
+    """Get the most applicable advanced reasoning development for a task."""
+    task_lower = task_type.lower()
+    
+    if any(x in task_lower for x in ["math", "code", "compute"]):
+        return ADVANCED_REASONING_DEVELOPMENTS["chain_of_reasoning"]
+    elif any(x in task_lower for x in ["verify", "check", "accurate"]):
+        return ADVANCED_REASONING_DEVELOPMENTS["multi_agent_debate"]
+    elif any(x in task_lower for x in ["creative", "write", "improve"]):
+        return ADVANCED_REASONING_DEVELOPMENTS["self_reflection_loops"]
+    elif any(x in task_lower for x in ["complex", "multi-step", "hard"]):
+        return ADVANCED_REASONING_DEVELOPMENTS["process_reward_models"]
+    else:
+        return ADVANCED_REASONING_DEVELOPMENTS["self_reflection_loops"]
+
