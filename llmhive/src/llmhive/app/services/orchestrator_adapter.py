@@ -456,7 +456,7 @@ def _select_elite_strategy(
     creativity_priority = criteria.get("creativity", 50)
     
     # ========================================================================
-    # PHASE 1: HARD RULES (Task-specific requirements)
+    # PHASE 1: HARD RULES - ALL ACCURACY-CRITICAL DOMAINS GET EXPERT TREATMENT
     # ========================================================================
     
     # Code and math ALWAYS need verification (non-negotiable)
@@ -468,39 +468,30 @@ def _select_elite_strategy(
         logger.info("Strategy: Code/math task -> challenge_and_refine")
         return "challenge_and_refine"
     
-    # Health/Medical ALWAYS needs verification - this is critical
-    if task_type == "health_medical":
+    # ALL ACCURACY-CRITICAL DOMAINS: Health, Legal, Finance, Science
+    # These require expert_panel (3+ models) or challenge_and_refine (fewer models)
+    accuracy_critical_domains = [
+        "health_medical",      # Lives at stake
+        "legal_analysis",      # Legal liability
+        "financial_analysis",  # Money at stake
+        "science_research",    # Factual accuracy
+    ]
+    
+    if task_type in accuracy_critical_domains:
         if num_models >= 3:
-            logger.info("Strategy: Health/medical task, 3+ models -> expert_panel (safety-critical)")
-            return "expert_panel"  # Multiple perspectives for safety
-        logger.info("Strategy: Health/medical task -> challenge_and_refine (safety-critical)")
-        return "challenge_and_refine"
-    
-    # Legal analysis needs high accuracy and verification
-    if task_type == "legal_analysis":
-        if num_models >= 2:
-            logger.info("Strategy: Legal analysis, multi-model -> quality_weighted_fusion")
-            return "quality_weighted_fusion"
-        logger.info("Strategy: Legal analysis -> challenge_and_refine")
-        return "challenge_and_refine"
-    
-    # Financial analysis needs accuracy
-    if task_type == "financial_analysis":
-        if accuracy_priority >= 70:
-            logger.info("Strategy: Financial analysis, high accuracy -> best_of_n")
-            return "best_of_n"
-    
-    # Science/Research needs multiple perspectives
-    if task_type == "science_research":
-        if num_models >= 3:
-            logger.info("Strategy: Science research, 3+ models -> expert_panel")
-            return "expert_panel"
+            logger.info("Strategy: %s task, 3+ models -> expert_panel (accuracy-critical)", task_type)
+            return "expert_panel"  # Multiple perspectives for critical domains
         elif num_models >= 2:
-            logger.info("Strategy: Science research, 2+ models -> quality_weighted_fusion")
+            logger.info("Strategy: %s task, 2 models -> quality_weighted_fusion (accuracy-critical)", task_type)
             return "quality_weighted_fusion"
+        logger.info("Strategy: %s task -> challenge_and_refine (accuracy-critical)", task_type)
+        return "challenge_and_refine"
     
     # Factual questions with high accuracy need verification
     if task_type == "factual_question" and accuracy_priority >= 80:
+        if num_models >= 3:
+            logger.info("Strategy: Factual question, 3+ models, high accuracy -> expert_panel")
+            return "expert_panel"
         logger.info("Strategy: Factual question with high accuracy -> challenge_and_refine")
         return "challenge_and_refine"
     
