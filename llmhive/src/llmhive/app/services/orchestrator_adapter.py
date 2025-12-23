@@ -79,6 +79,32 @@ except ImportError:
     ModelKnowledgeStore = None
     get_model_knowledge_store = None
 
+# Import comprehensive model intelligence for deep orchestration decisions
+try:
+    from ..knowledge.model_intelligence import (
+        MODEL_PROFILES,
+        REASONING_METHODS,
+        REASONING_HACKS,
+        TEAM_STRATEGIES,
+        get_model_profile,
+        get_best_models_for_task as get_intelligent_best_models,
+        get_team_for_task,
+        get_reasoning_hack,
+        ModelTier,
+    )
+    MODEL_INTELLIGENCE_AVAILABLE = True
+except ImportError:
+    MODEL_INTELLIGENCE_AVAILABLE = False
+    MODEL_PROFILES = {}
+    REASONING_METHODS = {}
+    REASONING_HACKS = {}
+    TEAM_STRATEGIES = {}
+    get_model_profile = lambda x: None
+    get_intelligent_best_models = lambda *a, **k: []
+    get_team_for_task = lambda x: None
+    get_reasoning_hack = lambda *a: None
+    ModelTier = None
+
 # Import Elite Orchestrator and Quality Booster
 try:
     from ..orchestration.elite_orchestrator import (
@@ -380,11 +406,13 @@ async def get_intelligent_models(
     accuracy_priority: bool = True,
 ) -> List[str]:
     """
-    Intelligent model selection using:
-    1. Domain-specific top models (from OpenRouter rankings)
-    2. Pinecone category rankings (if available)
-    3. Complementary model strengths (different providers/capabilities)
-    4. Tool support filtering (for web search, function calling)
+    Intelligent model selection using COMPREHENSIVE MODEL INTELLIGENCE:
+    1. Deep model profiles (strengths, weaknesses, costs, latency)
+    2. Team composition strategies
+    3. Domain-specific top models (from OpenRouter rankings)
+    4. Pinecone category rankings
+    5. Complementary model strengths (provider diversity)
+    6. Tool support filtering
     
     Args:
         task_type: The detected task type (from PromptOps)
@@ -399,7 +427,72 @@ async def get_intelligent_models(
     selected = []
     used_providers = set()
     
-    # Step 0: Use domain-specific top models FIRST (from actual OpenRouter rankings)
+    # ===========================================================================
+    # STEP 0: Use comprehensive MODEL_INTELLIGENCE if available
+    # ===========================================================================
+    if MODEL_INTELLIGENCE_AVAILABLE and MODEL_PROFILES:
+        # Try to get a team strategy first
+        team_strategy = get_team_for_task(task_type)
+        if team_strategy and accuracy_priority:
+            logger.info(
+                "Using team strategy '%s' for %s: %s",
+                team_strategy.name, task_type, team_strategy.models
+            )
+            for model_id in team_strategy.models:
+                if len(selected) >= num_models:
+                    break
+                if require_tools:
+                    profile = get_model_profile(model_id)
+                    if profile and not profile.supports_tools:
+                        continue
+                if available_models is not None and model_id not in available_models:
+                    continue
+                
+                profile = get_model_profile(model_id)
+                if profile:
+                    provider = profile.provider.lower()
+                    if provider not in used_providers or len(selected) < 2:
+                        selected.append(model_id)
+                        used_providers.add(provider)
+            
+            if selected:
+                logger.info(
+                    "Team strategy selected for %s: %s (roles: %s)",
+                    task_type, selected, 
+                    {m: team_strategy.roles.get(m, "member") for m in selected}
+                )
+                return selected[:num_models]
+        
+        # Fall back to intelligent best models from profiles
+        if not selected:
+            max_tier = ModelTier.FLAGSHIP if accuracy_priority else ModelTier.BALANCED
+            profile_selected = get_intelligent_best_models(
+                task_type,
+                num_models=num_models,
+                max_cost_tier=max_tier,
+                require_tools=require_tools,
+            )
+            if profile_selected:
+                for model_id in profile_selected:
+                    if available_models is not None and model_id not in available_models:
+                        continue
+                    profile = get_model_profile(model_id)
+                    if profile:
+                        provider = profile.provider.lower()
+                        if provider not in used_providers or len(selected) < 2:
+                            selected.append(model_id)
+                            used_providers.add(provider)
+                
+                if selected:
+                    logger.info(
+                        "MODEL_PROFILES selected for %s: %s",
+                        task_type, selected
+                    )
+                    return selected[:num_models]
+    
+    # ===========================================================================
+    # STEP 1: Use domain-specific top models (fallback from OpenRouter rankings)
+    # ===========================================================================
     domain_top = DOMAIN_TOP_MODELS.get(task_type, DOMAIN_TOP_MODELS.get("general", []))
     for model_id in domain_top:
         if len(selected) >= num_models:
@@ -1708,6 +1801,39 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             base_prompt,
             domain_pack=request.domain_pack.value,
         )
+        
+        # ===========================================================================
+        # Apply reasoning hacks for non-reasoning models to unlock deeper thinking
+        # ===========================================================================
+        if MODEL_INTELLIGENCE_AVAILABLE and actual_models:
+            primary_model = actual_models[0]
+            profile = get_model_profile(primary_model)
+            
+            if profile:
+                # Check if model needs reasoning hacks (not native reasoning like o1)
+                from ..knowledge.model_intelligence import ReasoningCapability
+                
+                if ReasoningCapability.NATIVE_COT not in profile.reasoning_capabilities:
+                    # Model can benefit from reasoning hacks
+                    accuracy_lvl = orchestration_config.get("accuracy_level", 3)
+                    
+                    if accuracy_lvl >= 4:  # High accuracy requested
+                        # Apply reasoning hack for traditional models
+                        reasoning_hack = get_reasoning_hack(primary_model, detected_task_type)
+                        if reasoning_hack and "{question}" in reasoning_hack:
+                            # Wrap the prompt with reasoning structure
+                            enhanced_prompt = reasoning_hack.replace("{question}", enhanced_prompt)
+                            logger.info(
+                                "Applied reasoning hack for %s (reasoning_score=%d, task=%s)",
+                                profile.display_name, profile.reasoning_score, detected_task_type
+                            )
+                    
+                    # Log model's hack method for debugging
+                    if profile.reasoning_hack_method:
+                        logger.debug(
+                            "Model %s can be hacked to reason via: %s",
+                            profile.display_name, profile.reasoning_hack_method[:100]
+                        )
         
         logger.info(
             "Running orchestration: method=%s, domain=%s, agent_mode=%s, models=%s, "
