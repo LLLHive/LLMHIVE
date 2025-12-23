@@ -8,6 +8,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { Send, Paperclip, Mic, MicOff, X, ImageIcon, FileText, RefreshCw, AlertCircle, Sparkles, Brain, Code, Briefcase, Camera, Volume2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ChevronDown, Check, Scale, Stethoscope, Megaphone, GraduationCap, Landmark, Building2 } from "lucide-react"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
 import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
 import { toast } from "@/lib/toast"
@@ -44,6 +46,17 @@ interface ErrorState {
   canRetry: boolean
   lastInput?: string
 }
+
+// Domain pack options with icons
+const domainPacks = [
+  { value: "default", label: "General Assistant", icon: Sparkles },
+  { value: "medical", label: "Medical Pack", icon: Stethoscope },
+  { value: "legal", label: "Legal Pack", icon: Scale },
+  { value: "marketing", label: "Marketing Pack", icon: Megaphone },
+  { value: "coding", label: "Coding Pack", icon: Code },
+  { value: "research", label: "Research Mode", icon: Brain },
+  { value: "finance", label: "Finance Pack", icon: Landmark },
+]
 
 interface ChatAreaProps {
   conversation?: Conversation
@@ -659,16 +672,34 @@ export function ChatArea({
 
       <header className="border-b border-white/10 p-3 glass-content sticky top-0 z-40 space-y-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Active Mode Badge */}
-          <div className="flex items-center gap-2">
-            <Badge 
-              variant="outline" 
-              className={`gap-1.5 px-2.5 py-1 border-0 bg-gradient-to-r ${activeModeInfo.color} text-white font-medium`}
-            >
-              <activeModeInfo.icon className="h-3.5 w-3.5" />
-              {activeModeInfo.label}
-            </Badge>
-          </div>
+          {/* Domain Pack Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-0 bg-gradient-to-r ${activeModeInfo.color} text-white font-medium text-sm cursor-pointer hover:opacity-90 transition-opacity`}>
+                <activeModeInfo.icon className="h-3.5 w-3.5" />
+                {activeModeInfo.label}
+                <ChevronDown className="h-3 w-3 opacity-70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              {domainPacks.map((pack) => {
+                const Icon = pack.icon
+                const isSelected = orchestratorSettings.domainPack === pack.value || 
+                  (pack.value === "default" && !orchestratorSettings.domainPack)
+                return (
+                  <DropdownMenuItem
+                    key={pack.value}
+                    onClick={() => onOrchestratorSettingsChange({ domainPack: pack.value as any })}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="flex-1">{pack.label}</span>
+                    {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                  </DropdownMenuItem>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex items-center gap-4 flex-wrap flex-1 justify-center">
             <ChatToolbar
               settings={orchestratorSettings}

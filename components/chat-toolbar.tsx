@@ -471,31 +471,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Domain Pack */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
-          >
-            <span>Domain</span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-40">
-          {domainPacks.map((pack) => (
-            <DropdownMenuItem
-              key={pack.value}
-              onClick={() => onSettingsChange({ domainPack: pack.value })}
-              className="gap-2"
-            >
-              <span>{pack.label}</span>
-              {settings.domainPack === pack.value && <span className="ml-auto text-[var(--bronze)]">•</span>}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Domain Pack moved to lit-up badge in chat-area.tsx */}
 
       {/* Response Format */}
       <DropdownMenu>
