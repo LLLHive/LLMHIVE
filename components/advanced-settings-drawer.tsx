@@ -1,9 +1,7 @@
 "use client"
-import { useState } from "react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Lightbulb, CheckCircle, ListTree, Database, GraduationCap, SpellCheck, Type } from "lucide-react"
 import type { OrchestratorSettings } from "@/lib/types"
 
@@ -13,16 +11,6 @@ interface AdvancedSettingsDrawerProps {
   settings: OrchestratorSettings
   onSettingsChange: (settings: Partial<OrchestratorSettings>) => void
 }
-
-// Answer structure formats
-const answerFormats = [
-  { value: "default", label: "Default", description: "Natural conversational format" },
-  { value: "structured", label: "Structured", description: "With headers and sections" },
-  { value: "bullet-points", label: "Bullet Points", description: "Concise bullet list format" },
-  { value: "step-by-step", label: "Step by Step", description: "Numbered instructions" },
-  { value: "academic", label: "Academic", description: "Formal with citations" },
-  { value: "concise", label: "Concise", description: "Brief, to-the-point answers" },
-]
 
 const toggleOptions = [
   {
@@ -42,7 +30,6 @@ const toggleOptions = [
     label: "Answer Structure",
     description: "Format responses with clear sections and examples",
     icon: ListTree,
-    hasSubOption: true,
   },
   {
     key: "sharedMemory" as const,
@@ -76,9 +63,6 @@ export function AdvancedSettingsDrawer({
   settings,
   onSettingsChange,
 }: AdvancedSettingsDrawerProps) {
-  // Get answer format from settings, with type assertion
-  const answerFormat = (settings as any).answerFormat || "default"
-  
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[300px] sm:w-[340px] bg-card border-l border-border overflow-y-auto">
@@ -90,7 +74,6 @@ export function AdvancedSettingsDrawer({
           {toggleOptions.map((option) => {
             const Icon = option.icon
             const isEnabled = (settings as any)[option.key]
-            const hasSubOption = (option as any).hasSubOption
 
             return (
               <div key={option.key}>
@@ -117,33 +100,6 @@ export function AdvancedSettingsDrawer({
                   className="data-[state=checked]:bg-[var(--bronze)]"
                 />
                 </div>
-                
-                {/* Answer Format Selector - shown when answerStructure is enabled */}
-                {hasSubOption && option.key === "answerStructure" && isEnabled && (
-                  <div className="ml-12 mt-2 p-3 rounded-lg bg-secondary/20 border border-border/50">
-                    <Label className="text-xs font-medium text-muted-foreground mb-2 block">
-                      Response Format
-                    </Label>
-                    <Select 
-                      value={answerFormat} 
-                      onValueChange={(value) => onSettingsChange({ answerFormat: value } as any)}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select format" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {answerFormats.map((format) => (
-                          <SelectItem key={format.value} value={format.value} className="text-xs">
-                            <div>
-                              <span className="font-medium">{format.label}</span>
-                              <span className="text-muted-foreground ml-2">- {format.description}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
             )
           })}

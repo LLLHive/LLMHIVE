@@ -6,7 +6,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, Lock, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2 } from "lucide-react"
+import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, Lock, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2, ListTree } from "lucide-react"
 import type {
   ReasoningMode,
   DomainPack,
@@ -77,6 +77,16 @@ const domainPacks: { value: DomainPack; label: string }[] = [
   { value: "coding", label: "Coding" },
   { value: "research", label: "Research" },
   { value: "finance", label: "Finance" },
+]
+
+// Response format options
+const responseFormats = [
+  { value: "default", label: "Default", description: "Natural conversational" },
+  { value: "structured", label: "Structured", description: "Headers and sections" },
+  { value: "bullet-points", label: "Bullets", description: "Concise bullet list" },
+  { value: "step-by-step", label: "Steps", description: "Numbered instructions" },
+  { value: "academic", label: "Academic", description: "Formal with citations" },
+  { value: "concise", label: "Concise", description: "Brief answers" },
 ]
 
 const advancedReasoningMethods: { value: AdvancedReasoningMethod; label: string; description: string }[] = [
@@ -482,6 +492,36 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             >
               <span>{pack.label}</span>
               {settings.domainPack === pack.value && <span className="ml-auto text-[var(--bronze)]">•</span>}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Response Format */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
+          >
+            <ListTree className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Format</span>
+            <ChevronDown className="h-3 w-3 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48">
+          {responseFormats.map((format) => (
+            <DropdownMenuItem
+              key={format.value}
+              onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
+              className="flex flex-col items-start gap-0.5 cursor-pointer"
+            >
+              <div className="flex items-center w-full gap-2">
+                <span className="flex-1 font-medium">{format.label}</span>
+                {(settings as any).answerFormat === format.value && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+              </div>
+              <span className="text-[10px] text-muted-foreground">{format.description}</span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>

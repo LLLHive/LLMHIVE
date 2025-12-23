@@ -37,6 +37,16 @@ const domainPacks = [
   { value: "finance", label: "Finance", description: "Financial analysis, compliance" },
 ]
 
+// Response format options (same as chat toolbar)
+const responseFormats = [
+  { value: "default", label: "Default", description: "Natural conversational format" },
+  { value: "structured", label: "Structured", description: "With headers and sections" },
+  { value: "bullet-points", label: "Bullet Points", description: "Concise bullet list format" },
+  { value: "step-by-step", label: "Step by Step", description: "Numbered instructions" },
+  { value: "academic", label: "Academic", description: "Formal with citations" },
+  { value: "concise", label: "Concise", description: "Brief, to-the-point answers" },
+]
+
 // Card data matching home page template card style exactly
 const orchestrationCards = [
   {
@@ -60,6 +70,13 @@ const orchestrationCards = [
     description: "Select AI models for multi-agent orchestration",
     icon: Cpu,
     color: "from-orange-500 to-amber-500",
+  },
+  {
+    id: "format",
+    title: "Format",
+    description: "Response structure and formatting options",
+    icon: Layers,
+    color: "from-violet-500 to-purple-600",
   },
   {
     id: "reasoning",
@@ -213,7 +230,7 @@ const speedOptions = [
   { id: "deep", label: "Deep", description: "Thorough analysis with extended processing" },
 ]
 
-type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | "elite" | "quality" | "domain" | null
+type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | "elite" | "quality" | "domain" | "format" | null
 
 export default function OrchestrationPage() {
   const router = useRouter()
@@ -246,6 +263,7 @@ export default function OrchestrationPage() {
   const [selectedEliteStrategy, setSelectedEliteStrategy] = useState<string>("standard")
   const [selectedQualityOptions, setSelectedQualityOptions] = useState<string[]>(["verification", "consensus"])
   const [selectedDomain, setSelectedDomain] = useState<string>("default")
+  const [selectedFormat, setSelectedFormat] = useState<string>("default")
   
   // TODO: Get from auth context
   const userTier: UserTier = 'pro'
@@ -384,6 +402,8 @@ export default function OrchestrationPage() {
         return selectedQualityOptions.length
       case "domain":
         return 1 // Always show the selected domain
+      case "format":
+        return 1 // Always show the selected format
       default:
         return 0
     }
@@ -446,6 +466,7 @@ export default function OrchestrationPage() {
                     "elite": "icon-badge-yellow",
                     "domain": "icon-badge-teal",
                     "models": "icon-badge-orange",
+                    "format": "icon-badge-purple",
                     "reasoning": "icon-badge-purple",
                     "tuning": "icon-badge-emerald",
                     "features": "icon-badge-blue",
@@ -1163,6 +1184,59 @@ export default function OrchestrationPage() {
                         {pack.label}
                       </p>
                       <p className="text-[10px] text-muted-foreground leading-tight">{pack.description}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Response Format Drawer */}
+      <Sheet open={activeDrawer === "format"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent
+          side="right"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+        >
+          <div className="p-5 border-b border-border/50">
+            <SheetHeader className="space-y-1">
+              <SheetTitle className="text-base font-medium flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
+                  <Layers className="h-4 w-4 text-violet-400" />
+                </div>
+                Format
+                <span className="ml-auto text-xs font-normal text-[var(--bronze)] bg-[var(--bronze)]/10 px-2 py-0.5 rounded-full">
+                  {responseFormats.find(f => f.value === selectedFormat)?.label || "Default"}
+                </span>
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground">Response structure and formatting</p>
+            </SheetHeader>
+          </div>
+          <ScrollArea className="h-[calc(100vh-120px)]">
+            <div className="p-4 space-y-1.5">
+              {responseFormats.map((format) => {
+                const isSelected = selectedFormat === format.value
+                return (
+                  <button
+                    key={format.value}
+                    onClick={() => setSelectedFormat(format.value)}
+                    className={`w-full flex items-center gap-2.5 p-3 rounded-lg transition-all duration-200 text-left ${
+                      isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50 border border-border"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected ? "bg-[var(--bronze)] border-[var(--bronze)]" : "border-muted-foreground/30"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-2.5 w-2.5 text-black" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                        {format.label}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{format.description}</p>
                     </div>
                   </button>
                 )
