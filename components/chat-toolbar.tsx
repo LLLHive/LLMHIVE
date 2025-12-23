@@ -108,7 +108,6 @@ const advancedFeatures: { value: AdvancedFeature; label: string; description: st
 export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: ChatToolbarProps) {
   const [modelsOpen, setModelsOpen] = useState(false)
   const [reasoningOpen, setReasoningOpen] = useState(false)
-  const [featuresOpen, setFeaturesOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [myTeamModels, setMyTeamModels] = useState<string[]>([])
   
@@ -166,18 +165,8 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
     }
   }
 
-  const toggleFeature = (feature: AdvancedFeature) => {
-    const currentFeatures = settings.advancedFeatures || []
-    if (currentFeatures.includes(feature)) {
-      onSettingsChange({ advancedFeatures: currentFeatures.filter((f) => f !== feature) })
-    } else {
-      onSettingsChange({ advancedFeatures: [...currentFeatures, feature] })
-    }
-  }
-
   const selectedModels = settings.selectedModels || ["automatic"]
   const selectedReasoningMethods = settings.advancedReasoningMethods || []
-  const selectedFeatures = settings.advancedFeatures || []
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -439,43 +428,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DropdownMenu open={featuresOpen} onOpenChange={setFeaturesOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
-          >
-            <Wrench className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">
-              Features {selectedFeatures.length > 0 ? `(${selectedFeatures.length})` : ""}
-            </span>
-            <span className="sm:hidden">{selectedFeatures.length > 0 ? selectedFeatures.length : "F"}</span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56 max-h-80 overflow-y-auto">
-          {advancedFeatures.map((feature) => {
-            const isSelected = selectedFeatures.includes(feature.value)
-            return (
-              <DropdownMenuItem
-                key={feature.value}
-                onSelect={(e) => {
-                  e.preventDefault()
-                  toggleFeature(feature.value)
-                }}
-                className="flex flex-col items-start gap-0.5 cursor-pointer"
-              >
-                <div className="flex items-center w-full gap-2">
-                  <span className="flex-1 font-medium">{feature.label}</span>
-                  {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                </div>
-                <span className="text-[10px] text-muted-foreground">{feature.description}</span>
-              </DropdownMenuItem>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Features dropdown removed from chat page - available in Orchestration page */}
 
       {/* Reasoning Mode */}
       <DropdownMenu>
