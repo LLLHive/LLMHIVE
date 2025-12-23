@@ -529,10 +529,111 @@ class Orchestrator:
         logger.info(f"Orchestrator initialized with {len(self.providers)} provider(s)")
     
     def _initialize_providers(self) -> None:
-        """Initialize LLM providers based on available API keys."""
+        """Initialize LLM providers based on available API keys.
+        
+        Provider Priority (Dec 2025):
+        1. OpenRouter (PRIMARY) - Access to 400+ models with single API key
+        2. Direct providers (FALLBACK) - OpenAI, Anthropic, etc. as backup
+        """
         import os
         
-        # Initialize OpenAI provider
+        # =================================================================
+        # 1. OPENROUTER PROVIDER (PRIMARY - Access to ALL 400+ models)
+        # =================================================================
+        if os.getenv("OPENROUTER_API_KEY"):
+            try:
+                from .openrouter.client import OpenRouterClient, OpenRouterConfig
+                
+                openrouter_config = OpenRouterConfig.from_env()
+                openrouter_client = OpenRouterClient(openrouter_config)
+                
+                class OpenRouterProvider:
+                    """OpenRouter provider - PRIMARY provider for all model inference.
+                    
+                    Routes requests to 400+ models through OpenRouter's unified API.
+                    """
+                    
+                    ORCHESTRATION_KWARGS = {
+                        'use_hrm', 'use_adaptive_routing', 'use_deep_consensus', 
+                        'use_prompt_diffusion', 'use_memory', 'accuracy_level',
+                        'session_id', 'user_id', 'user_tier', 'enable_tools',
+                        'knowledge_snippets', 'context', 'plan', 'db_session',
+                    }
+                    
+                    def __init__(self, client: OpenRouterClient):
+                        self.name = 'openrouter'
+                        self.client = client
+                        self._initialized = False
+                    
+                    async def _ensure_client(self):
+                        if not self._initialized:
+                            await self.client._ensure_client()
+                            self._initialized = True
+                    
+                    async def generate(self, prompt: str, model: str = "openai/gpt-4o", **kwargs):
+                        """Generate response using OpenRouter API."""
+                        try:
+                            await self._ensure_client()
+                            
+                            api_kwargs = {
+                                k: v for k, v in kwargs.items() 
+                                if k not in self.ORCHESTRATION_KWARGS
+                            }
+                            
+                            messages = [{"role": "user", "content": prompt}]
+                            
+                            response = await self.client.chat_completion(
+                                model=model,
+                                messages=messages,
+                                **api_kwargs
+                            )
+                            
+                            class Result:
+                                def __init__(self, text, model_name, tokens):
+                                    self.content = text
+                                    self.text = text
+                                    self.model = model_name
+                                    self.tokens_used = tokens
+                            
+                            content = ""
+                            if response.get("choices") and len(response["choices"]) > 0:
+                                choice = response["choices"][0]
+                                if choice.get("message"):
+                                    content = choice["message"].get("content", "")
+                            
+                            usage = response.get("usage", {})
+                            total_tokens = usage.get("total_tokens", 0)
+                            if not total_tokens:
+                                total_tokens = usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
+                            
+                            return Result(
+                                text=content,
+                                model_name=response.get("model", model),
+                                tokens=total_tokens
+                            )
+                            
+                        except Exception as e:
+                            logger.error(f"OpenRouter API error for model {model}: {e}")
+                            raise
+                    
+                    async def complete(self, prompt: str, model: str = "openai/gpt-4o", **kwargs):
+                        return await self.generate(prompt, model=model, **kwargs)
+                    
+                    def supports_model(self, model_id: str) -> bool:
+                        return "/" in model_id
+                
+                self.providers["openrouter"] = OpenRouterProvider(openrouter_client)
+                logger.info("✓ OpenRouter provider initialized (PRIMARY - 400+ models)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize OpenRouter provider: {e}")
+        else:
+            logger.warning("⚠️ OPENROUTER_API_KEY not set - using direct providers only")
+        
+        # =================================================================
+        # 2. DIRECT PROVIDERS (FALLBACK)
+        # =================================================================
+        
+        # Initialize OpenAI provider (FALLBACK)
         if os.getenv("OPENAI_API_KEY"):
             try:
                 from openai import OpenAI
@@ -2005,23 +2106,38 @@ Please provide an accurate, well-verified response."""
         models_to_use = selected_models
         
         # Map model names to provider names
-        # e.g., "gpt-4o-mini" -> "openai", "claude-3-haiku" -> "anthropic"
+        # PRIORITY: OpenRouter FIRST (400+ models), direct APIs as FALLBACK
         model_to_provider = {}
+        openrouter_available = "openrouter" in self.providers
+        
         for model in models_to_use:
             model_lower = model.lower()
-            if "gpt" in model_lower or "openai" in model_lower:
-                model_to_provider[model] = "openai"
-            elif "claude" in model_lower or "anthropic" in model_lower:
-                model_to_provider[model] = "anthropic"
-            elif "grok" in model_lower:
-                model_to_provider[model] = "grok"
-            elif "gemini" in model_lower:
-                model_to_provider[model] = "gemini"
-            elif "deepseek" in model_lower:
-                model_to_provider[model] = "deepseek"
+            
+            # Use OpenRouter for ALL models if available (PRIMARY)
+            if openrouter_available:
+                if "/" in model:
+                    # Already in OpenRouter format (e.g., "openai/gpt-4o")
+                    model_to_provider[model] = "openrouter"
+                else:
+                    # Route through OpenRouter regardless of model type
+                    model_to_provider[model] = "openrouter"
             else:
-                # Try direct match first
-                model_to_provider[model] = model
+                # FALLBACK: Direct providers only when OpenRouter unavailable
+                if "gpt" in model_lower or "openai" in model_lower:
+                    model_to_provider[model] = "openai"
+                elif "claude" in model_lower or "anthropic" in model_lower:
+                    model_to_provider[model] = "anthropic"
+                elif "grok" in model_lower:
+                    model_to_provider[model] = "grok"
+                elif "gemini" in model_lower:
+                    model_to_provider[model] = "gemini"
+                elif "deepseek" in model_lower:
+                    model_to_provider[model] = "deepseek"
+                else:
+                    model_to_provider[model] = model
+        
+        if openrouter_available:
+            logger.info("Using OpenRouter as PRIMARY provider for %d models", len(models_to_use))
         
         # Consensus result tracking
         consensus_result: Optional[Any] = None

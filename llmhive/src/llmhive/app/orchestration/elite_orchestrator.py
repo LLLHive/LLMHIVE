@@ -389,45 +389,63 @@ class EliteOrchestrator:
     def _build_model_provider_map(self) -> Dict[str, str]:
         """Build mapping of model names to providers.
         
-        Handles both formats:
-        - Short names: "gpt-4o" -> "openai"
-        - Full OpenRouter IDs: "openai/gpt-4o" -> "openai"
+        PRIORITY: OpenRouter FIRST (400+ models), direct APIs as FALLBACK.
         """
         mapping = {}
+        openrouter_available = "openrouter" in self.providers
         
-        # Map of provider -> (short names, full OpenRouter IDs)
-        provider_models = {
-            "openai": [
-                "gpt-4o", "gpt-4o-mini", "gpt-5", "o1", "o1-pro", "o3",
-                "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-5", 
-                "openai/o1-pro", "openai/o3",
-            ],
-            "anthropic": [
-                "claude-sonnet-4", "claude-opus-4", "claude-3-5-sonnet-20241022", 
-                "claude-3-5-haiku-20241022", "claude-sonnet-4-20250514",
-                "anthropic/claude-sonnet-4", "anthropic/claude-opus-4",
-                "anthropic/claude-3-5-sonnet-20241022",
-            ],
-            "gemini": [
-                "gemini-2.5-pro", "gemini-2.5-flash", "gemini-3-pro-preview",
-                "google/gemini-2.5-pro", "google/gemini-2.5-flash",
-                "google/gemini-3-pro-preview",
-            ],
-            "deepseek": [
-                "deepseek-chat", "deepseek-v3.2", "deepseek-r1-0528",
-                "deepseek/deepseek-chat", "deepseek/deepseek-v3.2",
-                "deepseek/deepseek-r1-0528",
-            ],
-            "grok": [
-                "grok-2", "grok-4",
-                "x-ai/grok-2", "x-ai/grok-4",
-            ],
-        }
+        # All supported models
+        all_models = [
+            # OpenAI
+            "gpt-4o", "gpt-4o-mini", "gpt-5", "o1", "o1-pro", "o3",
+            "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-5", 
+            "openai/o1-pro", "openai/o3",
+            # Anthropic
+            "claude-sonnet-4", "claude-opus-4", "claude-3-5-sonnet-20241022", 
+            "claude-3-5-haiku-20241022", "claude-sonnet-4-20250514",
+            "anthropic/claude-sonnet-4", "anthropic/claude-opus-4",
+            "anthropic/claude-3-5-sonnet-20241022",
+            # Google
+            "gemini-2.5-pro", "gemini-2.5-flash", "gemini-3-pro-preview",
+            "google/gemini-2.5-pro", "google/gemini-2.5-flash",
+            "google/gemini-3-pro-preview",
+            # DeepSeek
+            "deepseek-chat", "deepseek-v3.2", "deepseek-r1-0528",
+            "deepseek/deepseek-chat", "deepseek/deepseek-v3.2",
+            "deepseek/deepseek-r1-0528",
+            # Grok
+            "grok-2", "grok-4", "x-ai/grok-2", "x-ai/grok-4",
+            # OpenRouter-only models
+            "meta-llama/llama-4-maverick", "mistralai/mistral-large-2512",
+        ]
         
-        for provider, models in provider_models.items():
-            if provider in self.providers:
-                for model in models:
-                    mapping[model] = provider
+        if openrouter_available:
+            # Route ALL models through OpenRouter (PRIMARY)
+            for model in all_models:
+                mapping[model] = "openrouter"
+            logger.info("OpenRouter is PRIMARY - routing all models through it")
+        else:
+            # FALLBACK to direct providers
+            provider_models = {
+                "openai": ["gpt-4o", "gpt-4o-mini", "gpt-5", "o1", "o1-pro", "o3",
+                          "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-5", 
+                          "openai/o1-pro", "openai/o3"],
+                "anthropic": ["claude-sonnet-4", "claude-opus-4", "claude-3-5-sonnet-20241022", 
+                             "claude-3-5-haiku-20241022", "claude-sonnet-4-20250514",
+                             "anthropic/claude-sonnet-4", "anthropic/claude-opus-4",
+                             "anthropic/claude-3-5-sonnet-20241022"],
+                "gemini": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-3-pro-preview",
+                          "google/gemini-2.5-pro", "google/gemini-2.5-flash",
+                          "google/gemini-3-pro-preview"],
+                "deepseek": ["deepseek-chat", "deepseek-v3.2", "deepseek-r1-0528",
+                            "deepseek/deepseek-chat", "deepseek/deepseek-v3.2",
+                            "deepseek/deepseek-r1-0528"],
+                "grok": ["grok-2", "grok-4", "x-ai/grok-2", "x-ai/grok-4"],
+            }
+            for provider, models in provider_models.items():
+                if provider in self.providers:
+                    for model in models:
+                        mapping[model] = provider
         
         return mapping
     
@@ -1163,9 +1181,12 @@ Provide the improved answer:"""
         
         provider = self.providers[provider_name]
         
-        # Convert full OpenRouter ID to short model name for API call
-        # e.g., "openai/gpt-4o" -> "gpt-4o"
-        api_model = model.split("/")[-1] if "/" in model else model
+        # OpenRouter needs FULL model ID (e.g., "openai/gpt-4o")
+        # Direct providers need SHORT model name (e.g., "gpt-4o")
+        if provider_name == "openrouter":
+            api_model = model  # Keep full ID for OpenRouter
+        else:
+            api_model = model.split("/")[-1] if "/" in model else model
         
         start = time.time()
         try:
