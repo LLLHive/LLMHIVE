@@ -142,7 +142,7 @@ export default function DiscoverPage() {
               <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Discover
               </h2>
-              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+              <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto whitespace-nowrap">
                 Explore AI-powered search, knowledge resources, and templates
               </p>
             </div>
