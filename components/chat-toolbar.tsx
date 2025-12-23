@@ -472,24 +472,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Agent Mode Toggle */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() =>
-          onSettingsChange({
-            agentMode: settings.agentMode === "single" ? "team" : "single",
-          })
-        }
-        className={`gap-1.5 h-8 px-3 text-xs border rounded-lg transition-colors ${
-          settings.agentMode === "team"
-            ? "bg-[var(--bronze)]/20 border-[var(--bronze)] text-[var(--bronze)]"
-            : "bg-secondary/50 border-border hover:bg-secondary hover:border-[var(--bronze)]"
-        }`}
-      >
-        {settings.agentMode === "team" ? <Users className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
-        <span className="hidden sm:inline">{settings.agentMode === "team" ? "Team" : "Single"}</span>
-      </Button>
+      {/* Agent Mode Toggle removed from chat page - available in Orchestration page */}
 
       {/* Criteria Equalizer */}
       <CriteriaEqualizer
