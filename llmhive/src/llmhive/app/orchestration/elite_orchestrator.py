@@ -735,10 +735,11 @@ class EliteOrchestrator:
     ) -> EliteResult:
         """Different models handle different aspects, then synthesize."""
         # Define expert roles with scoped instructions
+        # CRITICAL: Each role must answer directly without asking clarifying questions
         roles = [
-            ("domain_expert", ModelCapability.ANALYSIS, "You are the Domain Expert. Provide accurate, concise facts and reasoning. Avoid speculation."),
-            ("devils_advocate", ModelCapability.REASONING, "You are the Devil's Advocate. Find flaws, risks, missing assumptions, and edge cases."),
-            ("synthesizer", ModelCapability.QUALITY, "You are the Synthesizer. Combine all perspectives into a balanced final answer."),
+            ("domain_expert", ModelCapability.ANALYSIS, "You are the Domain Expert. Provide accurate, concise facts and reasoning. Avoid speculation. Answer directly - do NOT ask clarifying questions."),
+            ("devils_advocate", ModelCapability.REASONING, "You are the Devil's Advocate. Find flaws, risks, missing assumptions, and edge cases. Provide your critique directly - do NOT ask clarifying questions."),
+            ("synthesizer", ModelCapability.QUALITY, "You are the Synthesizer. Combine all perspectives into a balanced final answer. Provide the answer directly - do NOT ask clarifying questions."),
         ]
         
         # Assign best model per role
@@ -817,6 +818,8 @@ Provide the top issues, risks, or missing pieces. If none, state 'APPROVED'."""
         # Synthesizer creates final consensus
         synth_prompt = f"""You are the Synthesizer. Create a final, balanced answer.
 
+CRITICAL: Answer the question directly. Do NOT ask clarifying questions. Do NOT suggest alternative criteria. Just provide the answer.
+
 Task: {prompt}
 Domain Expert contribution:
 {refined_responses.get('domain_expert', role_responses.get('domain_expert')).content if refined_responses.get('domain_expert') or role_responses.get('domain_expert') else ''}
@@ -828,7 +831,8 @@ Rules:
 - Integrate strengths from all inputs.
 - Address or acknowledge critiques.
 - Be concise and actionable.
-- Do not invent facts."""
+- Do not invent facts.
+- Do NOT ask questions - provide the answer."""
         synth_model = role_models.get("synthesizer") or list(role_models.values())[0]
         try:
             synth_response = await self._call_model(synth_model, synth_prompt)
@@ -1187,6 +1191,8 @@ Reply with ONLY the number of the best response (e.g., "1" or "2")."""
                 # Synthesize
                 synth_prompt = f"""Combine the best elements of these two responses:
 
+CRITICAL: Provide the combined answer directly. Do NOT ask clarifying questions.
+
 Question: {prompt}
 
 Response A (primary):
@@ -1195,7 +1201,7 @@ Response A (primary):
 Response B (secondary):
 {secondary.content[:1500]}
 
-Create a combined response that takes the best from both. Output only the final response."""
+Create a combined response that takes the best from both. Output only the final response. Do NOT ask questions."""
 
                 synth_model = self._select_best_model("synthesis", list(self.model_providers.keys()))
                 
@@ -1215,6 +1221,8 @@ Create a combined response that takes the best from both. Output only the final 
         """Synthesize expert panel responses."""
         synth_prompt = f"""Synthesize these expert perspectives into one comprehensive answer:
 
+CRITICAL: Provide the answer directly. Do NOT ask clarifying questions.
+
 Question: {prompt}
 
 """
@@ -1222,7 +1230,7 @@ Question: {prompt}
             synth_prompt += f"{role.upper()} perspective:\n{resp.content[:1000]}\n\n"
         
         synth_prompt += """Create a unified, comprehensive answer that integrates all perspectives. 
-Output only the final synthesized answer."""
+Output only the final synthesized answer. Do NOT ask questions."""
 
         synth_model = self._select_best_model("synthesis", list(self.model_providers.keys()))
         

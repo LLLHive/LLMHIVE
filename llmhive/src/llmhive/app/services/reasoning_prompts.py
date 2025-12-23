@@ -22,15 +22,31 @@ def get_reasoning_prompt_template(
     Returns:
         Enhanced prompt with reasoning method instructions
     """
-    # Domain-specific prefixes
+    # Domain-specific prefixes with clear instruction to answer directly
+    # CRITICAL: Models must NOT ask clarifying questions when the user's request is clear
+    base_instruction = """IMPORTANT: Answer the user's question directly. Do NOT ask clarifying questions unless the query is genuinely incomprehensible. If the user specifies criteria (e.g., "by effectiveness", "top 10"), use those criteria. Do not ask about alternative criteria.
+
+"""
+    
     domain_prefixes = {
-        "medical": "You are a medical expert. Provide accurate, evidence-based information.\n\n",
-        "legal": "You are a legal expert. Provide precise, well-reasoned legal analysis.\n\n",
-        "marketing": "You are a marketing expert. Provide creative, strategic insights.\n\n",
-        "coding": "You are a software engineering expert. Provide clear, efficient code solutions.\n\n",
+        "medical": f"""{base_instruction}You are a medical expert with deep knowledge of clinical research, treatments, therapies, and evidence-based medicine. Provide accurate, well-researched information based on current medical literature and guidelines.
+
+""",
+        "legal": f"""{base_instruction}You are a legal expert. Provide precise, well-reasoned legal analysis based on established law and precedent.
+
+""",
+        "marketing": f"""{base_instruction}You are a marketing expert. Provide creative, strategic insights grounded in marketing best practices.
+
+""",
+        "coding": f"""{base_instruction}You are a software engineering expert. Provide clear, efficient code solutions with best practices.
+
+""",
+        "general": f"""{base_instruction}You are a knowledgeable assistant. Provide clear, accurate, and helpful responses.
+
+""",
     }
     
-    domain_prefix = domain_prefixes.get(domain_pack or "", "")
+    domain_prefix = domain_prefixes.get(domain_pack or "", base_instruction)
     
     templates: Dict[ReasoningMethod, str] = {
         ReasoningMethod.chain_of_thought: f"""{domain_prefix}Let's work this out step by step.
