@@ -26,6 +26,17 @@ import {
   type CategoryWithIcon,
 } from "@/hooks/use-openrouter-categories"
 
+// Domain pack options (same as chat toolbar)
+const domainPacks = [
+  { value: "default", label: "Default", description: "General purpose assistant" },
+  { value: "medical", label: "Medical", description: "Clinical documentation, research" },
+  { value: "legal", label: "Legal", description: "Contract analysis, case research" },
+  { value: "marketing", label: "Marketing", description: "Campaigns, copywriting, SEO" },
+  { value: "coding", label: "Coding", description: "Software development, debugging" },
+  { value: "research", label: "Research", description: "Academic research, analysis" },
+  { value: "finance", label: "Finance", description: "Financial analysis, compliance" },
+]
+
 // Card data matching home page template card style exactly
 const orchestrationCards = [
   {
@@ -35,6 +46,13 @@ const orchestrationCards = [
     icon: Crown,
     color: "from-yellow-500 to-amber-600",
     isPremium: true,
+  },
+  {
+    id: "domain",
+    title: "Domain",
+    description: "Industry-specific knowledge packs",
+    icon: Target,
+    color: "from-teal-500 to-cyan-600",
   },
   {
     id: "models",
@@ -195,7 +213,7 @@ const speedOptions = [
   { id: "deep", label: "Deep", description: "Thorough analysis with extended processing" },
 ]
 
-type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | "elite" | "quality" | null
+type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "standard" | "speed" | "elite" | "quality" | "domain" | null
 
 export default function OrchestrationPage() {
   const router = useRouter()
@@ -227,6 +245,7 @@ export default function OrchestrationPage() {
   const [selectedSpeed, setSelectedSpeed] = useState<string>("standard")
   const [selectedEliteStrategy, setSelectedEliteStrategy] = useState<string>("standard")
   const [selectedQualityOptions, setSelectedQualityOptions] = useState<string[]>(["verification", "consensus"])
+  const [selectedDomain, setSelectedDomain] = useState<string>("default")
   
   // TODO: Get from auth context
   const userTier: UserTier = 'pro'
@@ -363,6 +382,8 @@ export default function OrchestrationPage() {
         return 1 // Always show the selected strategy
       case "quality":
         return selectedQualityOptions.length
+      case "domain":
+        return 1 // Always show the selected domain
       default:
         return 0
     }
@@ -423,6 +444,7 @@ export default function OrchestrationPage() {
                   const count = getCount(card.id)
                   const badgeClasses: Record<string, string> = {
                     "elite": "icon-badge-yellow",
+                    "domain": "icon-badge-teal",
                     "models": "icon-badge-orange",
                     "reasoning": "icon-badge-purple",
                     "tuning": "icon-badge-emerald",
@@ -1092,6 +1114,59 @@ export default function OrchestrationPage() {
                   <p>• <strong>Exhaustive:</strong> Expert panel + debate + verification</p>
                 </div>
               </div>
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Domain Pack Drawer */}
+      <Sheet open={activeDrawer === "domain"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent
+          side="right"
+          className="w-[260px] sm:w-[280px] bg-background/95 backdrop-blur-xl border-l border-border/50 p-0"
+        >
+          <div className="p-5 border-b border-border/50">
+            <SheetHeader className="space-y-1">
+              <SheetTitle className="text-base font-medium flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500/20 to-cyan-500/20 flex items-center justify-center">
+                  <Target className="h-4 w-4 text-teal-400" />
+                </div>
+                Domain
+                <span className="ml-auto text-xs font-normal text-[var(--bronze)] bg-[var(--bronze)]/10 px-2 py-0.5 rounded-full">
+                  {domainPacks.find(d => d.value === selectedDomain)?.label || "Default"}
+                </span>
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground">Industry-specific knowledge packs</p>
+            </SheetHeader>
+          </div>
+          <ScrollArea className="h-[calc(100vh-120px)]">
+            <div className="p-4 space-y-1.5">
+              {domainPacks.map((pack) => {
+                const isSelected = selectedDomain === pack.value
+                return (
+                  <button
+                    key={pack.value}
+                    onClick={() => setSelectedDomain(pack.value)}
+                    className={`w-full flex items-center gap-2.5 p-3 rounded-lg transition-all duration-200 text-left ${
+                      isSelected ? "bg-[var(--bronze)]/10 ring-1 ring-[var(--bronze)]/30" : "hover:bg-muted/50 border border-border"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected ? "bg-[var(--bronze)] border-[var(--bronze)]" : "border-muted-foreground/30"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-2.5 w-2.5 text-black" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                        {pack.label}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{pack.description}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </ScrollArea>
         </SheetContent>

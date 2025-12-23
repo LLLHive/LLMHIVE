@@ -469,8 +469,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             size="sm"
             className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
           >
-            <span className="hidden sm:inline">{currentDomainPack.label}</span>
-            <span className="sm:hidden">Domain</span>
+            <span>Domain</span>
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
