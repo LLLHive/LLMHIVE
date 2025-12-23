@@ -440,7 +440,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
 
       {/* Features dropdown removed from chat page - available in Orchestration page */}
 
-      {/* Reasoning Mode */}
+      {/* Speed */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -449,7 +449,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
           >
             <ReasoningIcon className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{currentReasoningMode.label}</span>
+            <span className="hidden sm:inline">Speed</span>
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
