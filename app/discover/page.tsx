@@ -149,7 +149,6 @@ export default function DiscoverPage() {
 
             {/* Cards Grid - Glassmorphism Style */}
             <div className="w-full max-w-4xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-              <p className="text-sm text-muted-foreground text-center mb-3">Select a category to explore</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                 {discoverCards.map((card, index) => {
                   const Icon = card.icon
