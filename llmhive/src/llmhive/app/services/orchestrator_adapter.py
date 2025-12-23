@@ -249,24 +249,26 @@ def _get_elite_orchestrator() -> Optional[EliteOrchestrator]:
 # INTELLIGENT PINECONE-BACKED MODEL SELECTION
 # ==============================================================================
 
-# Actual OpenRouter model IDs (from live rankings - December 2025)
-# These MUST match exactly what OpenRouter returns
-OPENROUTER_GPT_5 = "openai/gpt-5"
-OPENROUTER_CLAUDE_OPUS_4 = "anthropic/claude-opus-4-20250514"
-OPENROUTER_GEMINI_2_PRO = "google/gemini-2.0-pro"
-OPENROUTER_CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4-20250514"
-OPENROUTER_O1 = "openai/o1"
-OPENROUTER_MED_PALM_3 = "google/med-palm-3"
-OPENROUTER_LLAMA_4_70B = "meta-llama/llama-4-70b"
-OPENROUTER_MISTRAL_LARGE_2 = "mistralai/mistral-large-2"
-OPENROUTER_GPT_4O = "openai/gpt-4o"
-OPENROUTER_DEEPSEEK = "deepseek/deepseek-chat"
-OPENROUTER_GROK_2 = "x-ai/grok-2"
-OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"
+# Actual OpenRouter model IDs (VERIFIED December 2025)
+# These MUST match exactly what OpenRouter returns from /api/v1/models
+OPENROUTER_GPT_5 = "openai/gpt-5"                        # ✓ Verified
+OPENROUTER_CLAUDE_OPUS_4 = "anthropic/claude-opus-4"    # ✓ Verified (no date suffix)
+OPENROUTER_GEMINI_2_PRO = "google/gemini-2.5-pro"       # ✓ Verified (2.5, not 2.0)
+OPENROUTER_CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4"  # ✓ Verified (no date suffix)
+OPENROUTER_O3 = "openai/o3"                              # ✓ Verified (o3 is latest reasoning)
+OPENROUTER_O1 = "openai/o1-pro"                          # ✓ Verified (o1-pro available)
+OPENROUTER_LLAMA_4 = "meta-llama/llama-4-maverick"       # ✓ Verified (maverick variant)
+OPENROUTER_MISTRAL_LARGE = "mistralai/mistral-large-2512"  # ✓ Verified
+OPENROUTER_GPT_4O = "openai/gpt-4o"                      # ✓ Verified (still available)
+OPENROUTER_DEEPSEEK = "deepseek/deepseek-v3.2"           # ✓ Verified (v3.2 is latest)
+OPENROUTER_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"     # ✓ Verified (reasoning model)
+OPENROUTER_GROK_4 = "x-ai/grok-4"                        # ✓ Verified (grok-4 is latest)
+OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"  # ✓ Verified
+OPENROUTER_GEMINI_3_PRO = "google/gemini-3-pro-preview"  # ✓ Verified (newest)
 
-# Define model strengths for complementary selection (matching OpenRouter rankings)
+# Define model strengths for complementary selection (matching ACTUAL OpenRouter models)
 MODEL_STRENGTHS = {
-    # ===== TOP TIER (from OpenRouter Health rankings) =====
+    # ===== TOP TIER (verified December 2025) =====
     OPENROUTER_GPT_5: {
         "strengths": ["reasoning", "coding", "analysis", "general", "factual"],
         "provider": "openai", "tier": "flagship", "rank": 1
@@ -279,41 +281,51 @@ MODEL_STRENGTHS = {
         "strengths": ["reasoning", "factual", "analysis", "multimodal", "research"],
         "provider": "google", "tier": "flagship", "rank": 3
     },
+    OPENROUTER_GEMINI_3_PRO: {
+        "strengths": ["reasoning", "factual", "analysis", "multimodal", "research", "medical"],
+        "provider": "google", "tier": "flagship", "rank": 4
+    },
     OPENROUTER_CLAUDE_SONNET_4: {
         "strengths": ["reasoning", "creative", "coding", "analysis"],
-        "provider": "anthropic", "tier": "flagship", "rank": 4
+        "provider": "anthropic", "tier": "flagship", "rank": 5
+    },
+    
+    # ===== REASONING SPECIALISTS =====
+    OPENROUTER_O3: {
+        "strengths": ["reasoning", "math", "coding", "logic", "analysis", "research"],
+        "provider": "openai", "tier": "reasoning", "rank": 6
     },
     OPENROUTER_O1: {
         "strengths": ["reasoning", "math", "coding", "logic", "analysis"],
-        "provider": "openai", "tier": "reasoning", "rank": 5
+        "provider": "openai", "tier": "reasoning", "rank": 7
+    },
+    OPENROUTER_DEEPSEEK_R1: {
+        "strengths": ["reasoning", "math", "coding", "logic"],
+        "provider": "deepseek", "tier": "reasoning", "rank": 8
     },
     
-    # ===== SPECIALIZED MODELS =====
-    OPENROUTER_MED_PALM_3: {
-        "strengths": ["medical", "health", "factual", "reasoning"],
-        "provider": "google", "tier": "specialized", "rank": 6
-    },
-    OPENROUTER_LLAMA_4_70B: {
+    # ===== OTHER TOP MODELS =====
+    OPENROUTER_LLAMA_4: {
         "strengths": ["reasoning", "coding", "general", "open-source"],
-        "provider": "meta", "tier": "flagship", "rank": 7
+        "provider": "meta", "tier": "flagship", "rank": 9
     },
-    OPENROUTER_MISTRAL_LARGE_2: {
+    OPENROUTER_MISTRAL_LARGE: {
         "strengths": ["reasoning", "coding", "multilingual", "analysis"],
-        "provider": "mistral", "tier": "flagship", "rank": 8
+        "provider": "mistral", "tier": "flagship", "rank": 10
     },
     
     # ===== STILL AVAILABLE (legacy/fallback) =====
     OPENROUTER_GPT_4O: {
         "strengths": ["reasoning", "coding", "analysis", "general"],
-        "provider": "openai", "tier": "flagship", "rank": 10
+        "provider": "openai", "tier": "flagship", "rank": 11
     },
     OPENROUTER_DEEPSEEK: {
         "strengths": ["coding", "math", "reasoning"],
-        "provider": "deepseek", "tier": "specialized", "rank": 11
+        "provider": "deepseek", "tier": "specialized", "rank": 12
     },
-    OPENROUTER_GROK_2: {
-        "strengths": ["factual", "realtime", "creative"],
-        "provider": "xai", "tier": "specialized", "rank": 12
+    OPENROUTER_GROK_4: {
+        "strengths": ["factual", "realtime", "creative", "reasoning"],
+        "provider": "xai", "tier": "flagship", "rank": 13
     },
     
     # ===== FAST MODELS =====
@@ -338,25 +350,27 @@ DOMAIN_REQUIRED_STRENGTHS = {
     "general": ["reasoning", "general"],
 }
 
-# Domain-specific top models (from OpenRouter rankings)
+# Domain-specific top models (VERIFIED against actual OpenRouter models)
 DOMAIN_TOP_MODELS = {
     "health_medical": [
-        OPENROUTER_GPT_5,           # #1
-        OPENROUTER_CLAUDE_OPUS_4,   # #2
-        OPENROUTER_GEMINI_2_PRO,    # #3
-        OPENROUTER_MED_PALM_3,      # #6 - specialized for medical
+        OPENROUTER_GPT_5,           # #1 overall
+        OPENROUTER_CLAUDE_OPUS_4,   # #2 - excellent for medical reasoning
+        OPENROUTER_GEMINI_3_PRO,    # #3 - newest Google model
+        OPENROUTER_GEMINI_2_PRO,    # #4 - strong for factual/research
     ],
     "legal_analysis": [
         OPENROUTER_CLAUDE_OPUS_4,   # Best for legal reasoning
         OPENROUTER_GPT_5,
-        OPENROUTER_O1,              # Strong reasoning
+        OPENROUTER_O3,              # Strong reasoning model
     ],
     "financial_analysis": [
-        OPENROUTER_O1,              # Math + reasoning
+        OPENROUTER_O3,              # Math + reasoning specialist
         OPENROUTER_GPT_5,
         OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_DEEPSEEK_R1,     # Good at math
     ],
     "science_research": [
+        OPENROUTER_GEMINI_3_PRO,    # Newest, strong for research
         OPENROUTER_GEMINI_2_PRO,    # Strong for research
         OPENROUTER_CLAUDE_OPUS_4,
         OPENROUTER_GPT_5,
@@ -365,9 +379,16 @@ DOMAIN_TOP_MODELS = {
         OPENROUTER_CLAUDE_SONNET_4, # Best for coding
         OPENROUTER_GPT_5,
         OPENROUTER_DEEPSEEK,        # Specialized for coding
+        OPENROUTER_DEEPSEEK_R1,     # Reasoning + coding
+    ],
+    "debugging": [
+        OPENROUTER_CLAUDE_SONNET_4,
+        OPENROUTER_DEEPSEEK,
+        OPENROUTER_GPT_5,
     ],
     "math_problem": [
-        OPENROUTER_O1,              # Reasoning specialist
+        OPENROUTER_O3,              # Best reasoning specialist
+        OPENROUTER_DEEPSEEK_R1,     # Reasoning model
         OPENROUTER_GPT_5,
         OPENROUTER_GEMINI_2_PRO,
     ],
@@ -376,6 +397,11 @@ DOMAIN_TOP_MODELS = {
         OPENROUTER_CLAUDE_SONNET_4,
         OPENROUTER_GPT_5,
     ],
+    "factual_question": [
+        OPENROUTER_GPT_5,
+        OPENROUTER_GEMINI_3_PRO,
+        OPENROUTER_GROK_4,          # Real-time knowledge
+    ],
     "general": [
         OPENROUTER_GPT_5,
         OPENROUTER_CLAUDE_OPUS_4,
@@ -383,18 +409,21 @@ DOMAIN_TOP_MODELS = {
     ],
 }
 
-# Models with tool/function calling support (actual OpenRouter IDs)
+# Models with tool/function calling support (VERIFIED against OpenRouter)
 TOOL_CAPABLE_MODELS = {
     OPENROUTER_GPT_5,
     OPENROUTER_GPT_4O,
+    OPENROUTER_O3,
     OPENROUTER_O1,
     OPENROUTER_CLAUDE_OPUS_4,
     OPENROUTER_CLAUDE_SONNET_4,
+    OPENROUTER_GEMINI_3_PRO,
     OPENROUTER_GEMINI_2_PRO,
     OPENROUTER_GEMINI_2_5_FLASH,
-    OPENROUTER_LLAMA_4_70B,
-    OPENROUTER_MISTRAL_LARGE_2,
-    OPENROUTER_GROK_2,
+    OPENROUTER_LLAMA_4,
+    OPENROUTER_MISTRAL_LARGE,
+    OPENROUTER_GROK_4,
+    OPENROUTER_DEEPSEEK,
 }
 
 
@@ -590,17 +619,19 @@ async def get_intelligent_models(
         selected.append(model_id)
         used_providers.add(provider)
     
-    # Step 3: Fallback to OpenRouter top-ranked models (matching actual rankings)
+    # Step 3: Fallback to OpenRouter top-ranked models (VERIFIED December 2025)
     if len(selected) < num_models:
-        # Use actual OpenRouter ranking order (from Health category as baseline)
+        # Use actual OpenRouter ranking order (verified against /api/v1/models)
         fallback_order = [
             OPENROUTER_GPT_5,           # #1
             OPENROUTER_CLAUDE_OPUS_4,   # #2
-            OPENROUTER_GEMINI_2_PRO,    # #3
-            OPENROUTER_CLAUDE_SONNET_4, # #4
-            OPENROUTER_O1,              # #5
-            OPENROUTER_LLAMA_4_70B,     # #7
-            OPENROUTER_MISTRAL_LARGE_2, # #8
+            OPENROUTER_GEMINI_3_PRO,    # #3 newest
+            OPENROUTER_GEMINI_2_PRO,    # #4
+            OPENROUTER_CLAUDE_SONNET_4, # #5
+            OPENROUTER_O3,              # #6 reasoning
+            OPENROUTER_LLAMA_4,         # #7
+            OPENROUTER_MISTRAL_LARGE,   # #8
+            OPENROUTER_GROK_4,          # #9
             OPENROUTER_GPT_4O,          # fallback
         ]
         for model_id in fallback_order:
