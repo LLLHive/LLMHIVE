@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Any
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -170,7 +170,7 @@ class CritiqueAndImproveProtocol(BaseProtocol):
         ]
         
         # Quality assessments (simplified - could be enhanced)
-        quality_assessments: Dict[str, any] = {}
+        quality_assessments: Dict[str, Any] = {}
         for result in draft_results:
             quality_assessments[result.model] = {
                 "score": 0.7,  # Default score

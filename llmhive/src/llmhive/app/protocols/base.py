@@ -5,7 +5,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import asyncio
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Any
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -28,8 +28,8 @@ class ProtocolResult:
     consensus_notes: List[str]
     step_outputs: Dict[str, List["LLMResult"]]
     supporting_notes: List[str]
-    quality_assessments: Dict[str, any]  # ResponseAssessment objects
-    suggestions: List[any] = None  # Proactive suggestions from dialogue system
+    quality_assessments: Dict[str, Any]  # ResponseAssessment objects
+    suggestions: List[Any] = None  # Proactive suggestions from dialogue system
     evaluation: Optional["LLMResult"] = None
     refinement_rounds: int = 1
     accepted_after_refinement: bool = True
@@ -114,7 +114,7 @@ class BaseProtocol(ABC):
     
     async def _gather_with_handling(
         self,
-        coroutines: Sequence[any],
+        coroutines: Sequence[Any],
     ) -> List["LLMResult"]:
         """
         Gather async results with error handling.

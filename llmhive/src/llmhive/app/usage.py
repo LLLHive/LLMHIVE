@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from threading import Lock
 
 from sqlalchemy import func, select
@@ -195,7 +195,7 @@ def check_usage_limit(
     user_id: str,
     requested_tokens: int = 0,
     requested_requests: int = 1,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Usage tracking: Check if user's usage is within tier limits.
     
     Compares current usage + requested usage against tier limits.
@@ -318,7 +318,7 @@ def prepare_stripe_usage_record(
     session: Session,
     user_id: str,
     tokens_used: int,
-) -> Optional[Dict[str, any]]:
+) -> Optional[Dict[str, Any]]:
     """Usage tracking: Prepare usage record for Stripe metered billing.
     
     This function prepares usage data that can be sent to Stripe's Reporting API
