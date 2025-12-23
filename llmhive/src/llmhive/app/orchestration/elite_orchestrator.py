@@ -161,12 +161,26 @@ MODEL_CAPABILITIES: Dict[str, Dict[ModelCapability, float]] = {
 }
 
 # Task type to required capabilities mapping
+# Aligned with _detect_task_type() in orchestrator_adapter.py
 TASK_CAPABILITIES: Dict[str, List[ModelCapability]] = {
+    # Code/Programming
     "code_generation": [ModelCapability.CODING, ModelCapability.INSTRUCTION_FOLLOWING],
     "debugging": [ModelCapability.CODING, ModelCapability.REASONING],
+    # Math/Quantitative
     "math_problem": [ModelCapability.MATH, ModelCapability.REASONING],
+    # Health/Medical - CRITICAL: Requires accuracy, factual, and reasoning
+    "health_medical": [ModelCapability.FACTUAL, ModelCapability.REASONING, ModelCapability.QUALITY],
+    # Science/Academic
+    "science_research": [ModelCapability.ANALYSIS, ModelCapability.FACTUAL, ModelCapability.REASONING],
+    # Legal
+    "legal_analysis": [ModelCapability.REASONING, ModelCapability.FACTUAL, ModelCapability.ANALYSIS],
+    # Finance/Business
+    "financial_analysis": [ModelCapability.ANALYSIS, ModelCapability.MATH, ModelCapability.REASONING],
+    # Research/Analysis
     "research_analysis": [ModelCapability.ANALYSIS, ModelCapability.FACTUAL, ModelCapability.REASONING],
+    # Creative
     "creative_writing": [ModelCapability.CREATIVE, ModelCapability.QUALITY],
+    # General
     "explanation": [ModelCapability.REASONING, ModelCapability.INSTRUCTION_FOLLOWING],
     "summarization": [ModelCapability.SUMMARIZATION, ModelCapability.FACTUAL],
     "factual_question": [ModelCapability.FACTUAL, ModelCapability.REASONING],
@@ -174,6 +188,7 @@ TASK_CAPABILITIES: Dict[str, List[ModelCapability]] = {
     "comparison": [ModelCapability.ANALYSIS, ModelCapability.REASONING],
     "fast_response": [ModelCapability.SPEED],
     "high_quality": [ModelCapability.QUALITY, ModelCapability.REASONING],
+    "general": [ModelCapability.QUALITY, ModelCapability.REASONING],
 }
 
 
