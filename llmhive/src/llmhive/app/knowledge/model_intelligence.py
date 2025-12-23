@@ -2094,3 +2094,523 @@ def get_reasoning_development(task_type: str) -> Optional[Dict]:
     else:
         return ADVANCED_REASONING_DEVELOPMENTS["self_reflection_loops"]
 
+
+# =============================================================================
+# CUTTING-EDGE DEVELOPMENTS (18-Month Horizon - Late 2024 to Mid 2026)
+# =============================================================================
+# These are the specific breakthroughs that will reshape the AI landscape
+
+CUTTING_EDGE_DEVELOPMENTS = {
+    
+    # =========================================================================
+    # BRAIN-INSPIRED ARCHITECTURES (Beyond Traditional Neural Networks)
+    # =========================================================================
+    
+    "dragon_hatchling": {
+        "name": "Dragon Hatchling (Pathway AI)",
+        "category": "brain_inspired",
+        "published": "November 2024",
+        "source": "Pathway AI startup",
+        
+        "key_innovation": """Dynamic neural plasticity - updates internal connections 
+        in real-time like human brain. Not just learning weights, but learning 
+        the STRUCTURE of connections.""",
+        
+        "how_it_works": """
+        1. Graph-based neural architecture (not fixed layers)
+        2. Connections dynamically created/pruned during inference
+        3. "Developmental" approach - starts simple, grows complex
+        4. Continuous learning without catastrophic forgetting
+        5. Processes data as graph flows, not sequential tokens""",
+        
+        "advantages": [
+            "Continuous learning and adaptation (no retraining)",
+            "Generalizes better with less data",
+            "Moves toward AGI-like flexibility",
+            "Can process sequential AND parallel data",
+            "More sample-efficient than transformers",
+        ],
+        
+        "current_limitations": [
+            "Still early - comparable to GPT-2 level",
+            "Not yet production-ready",
+            "Training infrastructure still developing",
+            "Unclear scaling properties",
+        ],
+        
+        "competitive_implication": """If this scales, it could make static pretrained 
+        models obsolete. Models that continuously learn and adapt from interaction 
+        would have massive advantage. Watch closely for 2025-2026 developments.""",
+        
+        "threat_level": "HIGH (long-term)",
+    },
+    
+    "hierarchical_reasoning_model": {
+        "name": "Hierarchical Reasoning Model (HRM) - Sapient",
+        "category": "brain_inspired",
+        "published": "August 2024",
+        "source": "Sapient AI",
+        
+        "key_innovation": """Two-level recurrent design mimicking brain's hierarchical 
+        processing. Only 27 MILLION parameters outperforming billion-parameter LLMs 
+        on reasoning tasks.""",
+        
+        "how_it_works": """
+        1. Fast loop: rapid pattern matching (like brain's fast intuition)
+        2. Slow loop: deliberate reasoning (like System 2 thinking)
+        3. Multi-timescale processing
+        4. Information flows hierarchically like cortical columns
+        5. Recurrent connections enable iterative refinement""",
+        
+        "benchmark_results": {
+            "ARC-AGI-1": "Outperformed GPT-4",
+            "Sudoku-Extreme": "Solved puzzles larger LLMs couldn't",
+            "parameters": "27M (vs billions in LLMs)",
+        },
+        
+        "advantages": [
+            "Massively more efficient (1000x fewer parameters)",
+            "Better reasoning on abstract tasks",
+            "Doesn't rely on memorization",
+            "More interpretable reasoning process",
+        ],
+        
+        "competitive_implication": """Proves that architecture matters MORE than 
+        scale for reasoning. Our orchestrator should prioritize reasoning-optimized 
+        architectures over just 'biggest model'.""",
+        
+        "threat_level": "HIGH",
+    },
+    
+    # =========================================================================
+    # HYBRID ARCHITECTURES (Best of Multiple Worlds)
+    # =========================================================================
+    
+    "sambay_hybrid": {
+        "name": "SambaY Hybrid Architecture (Microsoft Phi-4-mini-flash)",
+        "category": "hybrid",
+        "published": "July 2025",
+        "source": "Microsoft Research",
+        
+        "key_innovation": """Combines Mamba (state space) with transformer attention. 
+        10x higher throughput, 2-3x lower latency, same reasoning quality.""",
+        
+        "how_it_works": """
+        1. Mamba layers for efficient sequence processing (O(n))
+        2. Sparse attention layers for critical reasoning steps
+        3. Dynamic switching based on input complexity
+        4. Optimized for edge/mobile deployment""",
+        
+        "performance": {
+            "throughput": "10x higher than pure transformer",
+            "latency": "2-3x lower average",
+            "quality": "Matches pure transformer reasoning",
+        },
+        
+        "advantages": [
+            "Production-ready hybrid architecture",
+            "Works on resource-constrained devices",
+            "Proves hybrid approach is viable",
+            "Maintained by Microsoft (enterprise support)",
+        ],
+        
+        "competitive_implication": """We should explore hybrid model selection - 
+        use Mamba-based for speed-critical paths, transformers for reasoning.""",
+        
+        "threat_level": "MEDIUM-HIGH",
+    },
+    
+    "jamba_hybrid": {
+        "name": "Jamba (AI21 Labs)",
+        "category": "hybrid",
+        "published": "March 2024",
+        "source": "AI21 Labs",
+        
+        "key_innovation": """Production hybrid: Mamba + Transformer layers interleaved.
+        256K context window with linear memory scaling.""",
+        
+        "how_it_works": """
+        1. Alternates Mamba and Transformer blocks
+        2. Mamba handles long-range dependencies efficiently
+        3. Transformer attention for local precision
+        4. MoE (Mixture of Experts) for efficiency""",
+        
+        "advantages": [
+            "256K context with manageable memory",
+            "First production hybrid model",
+            "Open weights available",
+            "Competitive with pure transformer quality",
+        ],
+        
+        "competitive_implication": """Proves hybrid is production-ready NOW, 
+        not just research. Consider for long-context tasks.""",
+        
+        "threat_level": "MEDIUM",
+    },
+    
+    # =========================================================================
+    # REASONING BREAKTHROUGHS
+    # =========================================================================
+    
+    "deepseek_r1": {
+        "name": "DeepSeek-R1",
+        "category": "reasoning",
+        "published": "January 2025",
+        "source": "DeepSeek (China)",
+        
+        "key_innovation": """Open-weight reasoning model matching OpenAI o1 at 
+        fraction of the cost. 671B parameters, open weights.""",
+        
+        "how_it_works": """
+        1. Reinforcement learning for reasoning (like o1)
+        2. Internal chain-of-thought before answering
+        3. Self-verification and correction
+        4. Open weights allow fine-tuning and study""",
+        
+        "cost_comparison": {
+            "vs_o1": "~90% cheaper to operate",
+            "inference": "$0.14/M input, $2.19/M output",
+            "training": "Published methodology",
+        },
+        
+        "competitive_implication": """The 'reasoning premium' is collapsing. 
+        Open-source matching proprietary. Cost advantage disappearing. 
+        Must differentiate on orchestration, not just model access.""",
+        
+        "threat_level": "VERY HIGH",
+    },
+    
+    "gpt5_dynamic_router": {
+        "name": "GPT-5 Dynamic Routing",
+        "category": "reasoning",
+        "published": "August 2025",
+        "source": "OpenAI",
+        
+        "key_innovation": """Single model with internal router - decides when to 
+        think deeply vs respond quickly. Adaptive compute allocation.""",
+        
+        "how_it_works": """
+        1. Classifier determines query complexity
+        2. Simple queries: fast path (minimal compute)
+        3. Complex queries: deep reasoning path (more compute)
+        4. Seamless switching - user doesn't see difference""",
+        
+        "advantages": [
+            "One model handles all complexity levels",
+            "Cost-efficient (only uses compute when needed)",
+            "PhD-level performance when reasoning engaged",
+            "Fast for simple tasks",
+        ],
+        
+        "competitive_implication": """Our orchestrator already does this externally. 
+        But internal routing may be more efficient. Consider hybrid approach.""",
+        
+        "threat_level": "HIGH",
+    },
+    
+    # =========================================================================
+    # MATHEMATICAL AI BREAKTHROUGHS
+    # =========================================================================
+    
+    "alphageometry2": {
+        "name": "AlphaGeometry 2 (DeepMind)",
+        "category": "math",
+        "published": "February 2025",
+        "source": "DeepMind",
+        
+        "key_innovation": """Solved 25/30 IMO geometry problems - gold medalist level.
+        Combines LLM intuition with symbolic geometry engine.""",
+        
+        "how_it_works": """
+        1. LLM generates proof strategies (intuition)
+        2. Symbolic engine verifies each step (rigor)
+        3. Iterative refinement until proof complete
+        4. Can construct auxiliary points (creative geometry)""",
+        
+        "implications": [
+            "AI can match humans on creative math",
+            "Hybrid neuro-symbolic is key for math",
+            "Verification is tractable with symbolic methods",
+        ],
+        
+        "competitive_implication": """For math-heavy domains, pure LLM is not enough. 
+        Need symbolic verification layer. Consider adding Wolfram-style integration.""",
+        
+        "threat_level": "MEDIUM (specialized)",
+    },
+    
+    "proof2hybrid": {
+        "name": "Proof2Hybrid Benchmark Framework",
+        "category": "evaluation",
+        "published": "August 2025",
+        "source": "Research community",
+        
+        "key_innovation": """Automatically generates proof-centric math benchmarks 
+        from natural language papers. Scalable evaluation of math reasoning.""",
+        
+        "how_it_works": """
+        1. Parse mathematical papers
+        2. Extract theorems and proofs
+        3. Generate question-answer pairs
+        4. Create verifiable benchmark problems""",
+        
+        "implications": [
+            "Can evaluate math ability at scale",
+            "Catches memorization vs true reasoning",
+            "Continuously updated from new papers",
+        ],
+        
+        "competitive_implication": """Use for internal evaluation of our models' 
+        actual math reasoning vs pattern matching.""",
+        
+        "threat_level": "LOW (tool, not threat)",
+    },
+    
+    # =========================================================================
+    # CONTINUOUS LEARNING & MEMORY
+    # =========================================================================
+    
+    "surprise_memory": {
+        "name": "Surprise-Based Memory Systems",
+        "category": "memory",
+        "published": "2024-2025 (various)",
+        "source": "Multiple research groups",
+        
+        "key_innovation": """Store information based on novelty/surprise, not just 
+        everything. Like human memory - remember unexpected things better.""",
+        
+        "how_it_works": """
+        1. Measure 'surprise' of new information (prediction error)
+        2. High surprise → store in long-term memory
+        3. Low surprise → may already know, skip storage
+        4. Enables efficient memory management
+        5. Prioritizes learning novel information""",
+        
+        "advantages": [
+            "More efficient than storing everything",
+            "Focuses learning on what matters",
+            "Mimics human memory consolidation",
+            "Enables continuous learning",
+        ],
+        
+        "competitive_implication": """For RAG systems - don't just retrieve by similarity. 
+        Weight by surprise/novelty of information. Prioritize unexpected facts.""",
+        
+        "threat_level": "MEDIUM",
+    },
+    
+    "coherent_internal_map": {
+        "name": "Coherent Internal World Models",
+        "category": "memory",
+        "published": "2024-2025",
+        "source": "Various (DeepMind, OpenAI, academia)",
+        
+        "key_innovation": """Models that maintain consistent internal representation 
+        of the world/conversation. Self-reflected confidence values.""",
+        
+        "how_it_works": """
+        1. Build internal 'world model' during conversation
+        2. Check new information against internal model
+        3. Detect and flag inconsistencies
+        4. Confidence calibration for each belief
+        5. Update model as new facts arrive""",
+        
+        "advantages": [
+            "Reduces hallucination (detects inconsistency)",
+            "Better multi-turn coherence",
+            "Knows what it knows (calibrated confidence)",
+            "Can say 'I'm not sure' appropriately",
+        ],
+        
+        "competitive_implication": """Essential for reliability. Models should 
+        track confidence and internal consistency. Add confidence checking to 
+        verification pipeline.""",
+        
+        "threat_level": "HIGH (essential capability)",
+    },
+    
+    # =========================================================================
+    # LATENT/PRIVATE REASONING
+    # =========================================================================
+    
+    "private_thought": {
+        "name": "Private Chain-of-Thought / Latent Reasoning",
+        "category": "reasoning",
+        "published": "2024 (o1) onwards",
+        "source": "OpenAI, DeepSeek, others",
+        
+        "key_innovation": """Reasoning happens in internal representation, NOT 
+        forced into human-readable tokens. 'Think without speaking.'""",
+        
+        "why_it_matters": """
+        Traditional CoT: Forces model to verbalize every step (inefficient)
+        Private thought: Model reasons in latent space, only outputs conclusion
+        
+        Human analogy: You don't verbalize every thought when solving a puzzle.
+        The internal process is often non-verbal, non-sequential.""",
+        
+        "advantages": [
+            "More efficient (fewer tokens generated)",
+            "Can explore non-verbal reasoning patterns",
+            "Not constrained to human-readable chains",
+            "May unlock more abstract reasoning",
+        ],
+        
+        "challenges": [
+            "Harder to interpret/debug",
+            "Training is more complex",
+            "Can't 'show work' for verification",
+        ],
+        
+        "competitive_implication": """For complex reasoning, private thought may be 
+        superior. But for explainability, explicit CoT still needed. 
+        Orchestrator should choose based on requirement.""",
+        
+        "threat_level": "HIGH",
+    },
+    
+    # =========================================================================
+    # REAL-TIME UPDATEABLE SYSTEMS
+    # =========================================================================
+    
+    "realtime_rag": {
+        "name": "Real-Time Updateable RAG",
+        "category": "memory",
+        "published": "2024-2025",
+        "source": "Various implementations",
+        
+        "key_innovation": """RAG systems that update their knowledge base in 
+        real-time, not just at indexing time. Live learning from interactions.""",
+        
+        "how_it_works": """
+        1. Separate 'training data' from 'live data'
+        2. Live data updated continuously
+        3. Model learns from corrections/interactions
+        4. Temporal weighting (recent = more relevant)
+        5. User-specific memory layers""",
+        
+        "examples": [
+            "Perplexity's live search integration",
+            "Grok's X/Twitter real-time data",
+            "Memory-augmented assistants (MemGPT)",
+        ],
+        
+        "competitive_implication": """Our RAG should have tiered memory:
+        1. Static knowledge (pretrained)
+        2. Session knowledge (conversation)
+        3. User knowledge (personalization)
+        4. Live knowledge (real-time search)""",
+        
+        "threat_level": "HIGH (competitive necessity)",
+    },
+}
+
+
+# =============================================================================
+# TRANSFORMER VS LLM - THE DISTINCTION
+# =============================================================================
+
+TRANSFORMER_VS_LLM = {
+    "key_insight": """'Transformer' is the architecture. 'LLM' is the application.
+    The transformer architecture will likely outlive the current LLM paradigm.""",
+    
+    "why_transformers_persist": [
+        "Attention mechanism is mathematically powerful",
+        "Highly parallelizable for training",
+        "Flexible architecture (vision, audio, text, everything)",
+        "Massive infrastructure investment (GPUs, frameworks)",
+        "Well-understood training dynamics",
+    ],
+    
+    "why_llms_may_evolve": [
+        "Autoregressive generation may not be optimal",
+        "Token-by-token is slow and error-prone",
+        "Forcing all knowledge into weights is inefficient",
+        "Context window limitations are fundamental",
+        "Hallucination from pure pattern matching",
+    ],
+    
+    "likely_future": """
+    Transformers will remain important but:
+    1. Hybrid with state-space (Mamba) for efficiency
+    2. Augmented with external memory (not just weights)
+    3. Combined with symbolic reasoning (neuro-symbolic)
+    4. Dynamic compute allocation (think more on hard problems)
+    5. Continuous learning (not frozen after training)
+    
+    The 'pure LLM' (just predict next token) will be seen as primitive.""",
+    
+    "strategic_implication": """
+    Don't bet everything on transformer LLMs. 
+    Build architecture-agnostic orchestration.
+    Be ready to integrate non-transformer models (Mamba, RWKV, hybrids).
+    The future is hybrid, memory-augmented, and continuously learning.""",
+}
+
+
+# =============================================================================
+# COMPETITIVE THREAT ASSESSMENT
+# =============================================================================
+
+COMPETITIVE_LANDSCAPE = {
+    "immediate_threats": [
+        {
+            "threat": "DeepSeek-R1 matching o1 at 90% lower cost",
+            "timeline": "NOW",
+            "response": "Can't compete on cost. Must differentiate on orchestration quality.",
+        },
+        {
+            "threat": "Open-source catching up (Llama, OLMo, RWKV)",
+            "timeline": "NOW",
+            "response": "Use open models where appropriate. Add value through integration.",
+        },
+        {
+            "threat": "GPT-5 dynamic routing doing what orchestrators do",
+            "timeline": "August 2025",
+            "response": "Multi-model orchestration still better than single-model routing.",
+        },
+    ],
+    
+    "medium_term_threats": [
+        {
+            "threat": "Hybrid architectures (SambaY) becoming standard",
+            "timeline": "2025-2026",
+            "response": "Integrate hybrid models. Don't assume transformer-only.",
+        },
+        {
+            "threat": "HRM-style efficient reasoning (27M beats billions)",
+            "timeline": "2025-2026",
+            "response": "Quality over size. Prioritize reasoning-optimized models.",
+        },
+    ],
+    
+    "long_term_threats": [
+        {
+            "threat": "Continuous learning systems (Dragon Hatchling)",
+            "timeline": "2026+",
+            "response": "Monitor closely. Prepare for paradigm shift from static to adaptive.",
+        },
+        {
+            "threat": "Fully integrated neuro-symbolic systems",
+            "timeline": "2026+",
+            "response": "Build symbolic verification into pipeline NOW.",
+        },
+    ],
+    
+    "our_advantages": [
+        "Multi-model orchestration (no single point of failure)",
+        "Reasoning method selection (CoT, ToT, Reflexion, etc.)",
+        "Team composition strategies",
+        "Real-time model selection based on task",
+        "Architecture-agnostic (can integrate new models)",
+    ],
+    
+    "areas_to_strengthen": [
+        "Symbolic verification layer (like AlphaGeometry)",
+        "Continuous learning / memory updates",
+        "Confidence calibration and uncertainty quantification",
+        "Hybrid model integration (Mamba, RWKV)",
+        "Latent/private reasoning for efficiency",
+    ],
+}
+
