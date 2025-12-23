@@ -554,13 +554,16 @@ class Orchestrator:
                     async def generate(self, prompt, model="gpt-4o-mini", **kwargs):
                         """Generate response using OpenAI API."""
                         try:
+                            # Strip provider prefix (e.g., "openai/gpt-4o" -> "gpt-4o")
+                            api_model = model.split("/")[-1] if "/" in model else model
+                            
                             # Filter out orchestration-specific kwargs
                             api_kwargs = {
                                 k: v for k, v in kwargs.items() 
                                 if k not in self.ORCHESTRATION_KWARGS
                             }
                             response = self.client.chat.completions.create(
-                                model=model,
+                                model=api_model,
                                 messages=[{"role": "user", "content": prompt}],
                                 **api_kwargs
                             )
@@ -612,6 +615,9 @@ class Orchestrator:
                     async def generate(self, prompt, model="grok-2", **kwargs):
                         """Generate response using Grok (xAI) API."""
                         try:
+                            # Strip provider prefix (e.g., "x-ai/grok-4" -> "grok-4")
+                            api_model = model.split("/")[-1] if "/" in model else model
+                            
                             # Filter out orchestration-specific kwargs
                             api_kwargs = {
                                 k: v for k, v in kwargs.items() 
@@ -625,7 +631,7 @@ class Orchestrator:
                                         "Content-Type": "application/json"
                                     },
                                     json={
-                                        "model": model,
+                                        "model": api_model,
                                         "messages": [{"role": "user", "content": prompt}],
                                         **api_kwargs
                                     },
@@ -680,10 +686,17 @@ class Orchestrator:
                 class AnthropicProvider:
                     """Anthropic provider using httpx for reliable async connections."""
                     
-                    # Model mapping for Claude models
+                    # Model mapping for Claude models (handles all formats)
                     MODEL_MAPPING = {
+                        # Full OpenRouter IDs
+                        "anthropic/claude-sonnet-4": "claude-sonnet-4-20250514",
+                        "anthropic/claude-opus-4": "claude-opus-4-20250514",
+                        "anthropic/claude-3-5-sonnet-20241022": "claude-3-5-sonnet-20241022",
+                        "anthropic/claude-3-5-haiku-20241022": "claude-3-5-haiku-20241022",
+                        # Short names
                         "claude-sonnet-4.5": "claude-sonnet-4-20250514",
                         "claude-sonnet-4": "claude-sonnet-4-20250514",
+                        "claude-opus-4": "claude-opus-4-20250514",
                         "claude-haiku-4": "claude-3-5-haiku-20241022",
                         "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
                         "claude-3-5-haiku": "claude-3-5-haiku-20241022",
@@ -773,12 +786,19 @@ class Orchestrator:
                 class DeepSeekProvider:
                     """DeepSeek provider using httpx (OpenAI-compatible API)."""
                     
-                    # Model mapping
+                    # Model mapping (handles all formats)
                     MODEL_MAPPING = {
+                        # Full OpenRouter IDs
+                        "deepseek/deepseek-v3.2": "deepseek-chat",
+                        "deepseek/deepseek-chat": "deepseek-chat",
+                        "deepseek/deepseek-r1-0528": "deepseek-reasoner",
+                        # Short names
+                        "deepseek-v3.2": "deepseek-chat",
                         "deepseek-v3": "deepseek-chat",
                         "deepseek-chat": "deepseek-chat",
                         "deepseek-coder": "deepseek-coder",
                         "deepseek-reasoner": "deepseek-reasoner",
+                        "deepseek-r1-0528": "deepseek-reasoner",
                     }
                     
                     # Kwargs to filter out
