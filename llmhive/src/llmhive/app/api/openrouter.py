@@ -561,9 +561,15 @@ async def chat_completion(
     except Exception as e:
         await gateway.close()
         error_msg = str(e)
-        # If it's a database error, fall back to direct client
-        if "OperationalError" in error_msg or "no such table" in error_msg:
-            logger.warning("Database error, falling back to direct OpenRouter client")
+        # If it's a database error OR model not found in catalog, fall back to direct client
+        fallback_triggers = [
+            "OperationalError",
+            "no such table",
+            "not found in catalog",
+            "not found",
+        ]
+        if any(trigger in error_msg for trigger in fallback_triggers):
+            logger.warning("Gateway error '%s', falling back to direct OpenRouter client", error_msg[:100])
             return await _direct_openrouter_chat(request, user_id)
         logger.error("Chat completion failed: %s", e, exc_info=True)
         raise HTTPException(500, str(e))
