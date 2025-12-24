@@ -33,6 +33,71 @@ router = APIRouter(prefix="/openrouter", tags=["openrouter"])
 
 
 # =============================================================================
+# Direct API Fallback Helpers
+# =============================================================================
+
+async def _direct_list_models(
+    limit: int = 50,
+    offset: int = 0,
+    search: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Fetch models directly from OpenRouter API when database is unavailable."""
+    try:
+        client = OpenRouterClient()
+        models_raw = await client.list_models(use_cache=True)
+        await client.close()
+        
+        # Apply basic filtering
+        if search:
+            search_lower = search.lower()
+            models_raw = [
+                m for m in models_raw
+                if search_lower in m.get("id", "").lower() 
+                or search_lower in m.get("name", "").lower()
+                or search_lower in (m.get("description") or "").lower()
+            ]
+        
+        # Apply pagination
+        total = len(models_raw)
+        models_page = models_raw[offset:offset + limit]
+        
+        # Format response
+        data = []
+        for m in models_page:
+            pricing = m.get("pricing", {})
+            prompt_price = float(pricing.get("prompt") or 0)
+            completion_price = float(pricing.get("completion") or 0)
+            
+            data.append({
+                "id": m.get("id"),
+                "name": m.get("name", m.get("id")),
+                "description": m.get("description"),
+                "context_length": m.get("context_length"),
+                "pricing": {
+                    "prompt": prompt_price,
+                    "completion": completion_price,
+                    "per_1m_prompt": prompt_price * 1_000_000 if prompt_price else None,
+                    "per_1m_completion": completion_price * 1_000_000 if completion_price else None,
+                },
+                "is_free": prompt_price == 0 and completion_price == 0,
+                "data_source": "openrouter_api_direct",
+            })
+        
+        return {
+            "data": data,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "data_source": "openrouter_api_direct",
+            "note": "Fetched directly from OpenRouter API (database catalog unavailable)",
+        }
+        
+    except Exception as e:
+        logger.error("Direct models list failed: %s", e)
+        raise HTTPException(500, f"Failed to fetch models from OpenRouter: {str(e)}")
+
+
+# =============================================================================
 # Request/Response Models
 # =============================================================================
 
@@ -119,11 +184,33 @@ async def list_models(
     """List models from catalog with filtering.
     
     Data Source: OpenRouter official API via sync pipeline.
+    Falls back to direct API call if database is unavailable.
     """
+    # Try database first, fall back to direct API
     if not db:
-        raise HTTPException(503, "Database not available")
+        return await _direct_list_models(limit, offset, search)
     
-    query = db.query(OpenRouterModel).filter(OpenRouterModel.is_active == True)
+    try:
+        query = db.query(OpenRouterModel).filter(OpenRouterModel.is_active == True)
+    except Exception as e:
+        error_msg = str(e)
+        if "OperationalError" in error_msg or "no such table" in error_msg:
+            logger.warning("Database error, falling back to direct OpenRouter API")
+            return await _direct_list_models(limit, offset, search)
+        raise
+    
+    # Check if we got any results - if table exists but empty, fall back to API
+    try:
+        count = query.count()
+        if count == 0:
+            logger.info("Model catalog empty, fetching from OpenRouter API")
+            return await _direct_list_models(limit, offset, search)
+    except Exception as e:
+        error_msg = str(e)
+        if "OperationalError" in error_msg or "no such table" in error_msg:
+            logger.warning("Database query failed, falling back to direct OpenRouter API")
+            return await _direct_list_models(limit, offset, search)
+        raise
     
     # Apply filters
     if search:
@@ -394,12 +481,17 @@ async def chat_completion(
     - Tool/function calling
     - Structured output (JSON mode)
     
-    The model must exist in our synced catalog.
+    Falls back to direct OpenRouter API call if database is unavailable.
     """
+    # If database is not available or has issues, use direct OpenRouter client
     if not db:
-        raise HTTPException(503, "Database not available")
+        return await _direct_openrouter_chat(request, user_id)
     
-    gateway = OpenRouterInferenceGateway(db)
+    try:
+        gateway = OpenRouterInferenceGateway(db)
+    except Exception as e:
+        logger.warning(f"Gateway init failed, using direct client: {e}")
+        return await _direct_openrouter_chat(request, user_id)
     
     # Build constraints
     constraints = GatewayConstraints(
@@ -468,8 +560,54 @@ async def chat_completion(
         
     except Exception as e:
         await gateway.close()
+        error_msg = str(e)
+        # If it's a database error, fall back to direct client
+        if "OperationalError" in error_msg or "no such table" in error_msg:
+            logger.warning("Database error, falling back to direct OpenRouter client")
+            return await _direct_openrouter_chat(request, user_id)
         logger.error("Chat completion failed: %s", e, exc_info=True)
         raise HTTPException(500, str(e))
+
+
+async def _direct_openrouter_chat(request: ChatCompletionRequest, user_id: Optional[str] = None) -> Dict[str, Any]:
+    """Direct OpenRouter chat completion without database dependency.
+    
+    Fallback when database is not available or has issues.
+    """
+    try:
+        client = OpenRouterClient()
+        
+        # Build params
+        params = {}
+        if request.temperature is not None:
+            params["temperature"] = request.temperature
+        if request.max_tokens is not None:
+            params["max_tokens"] = request.max_tokens
+        if request.top_p is not None:
+            params["top_p"] = request.top_p
+        if request.frequency_penalty is not None:
+            params["frequency_penalty"] = request.frequency_penalty
+        if request.presence_penalty is not None:
+            params["presence_penalty"] = request.presence_penalty
+        if request.stop:
+            params["stop"] = request.stop
+        
+        # Call OpenRouter directly
+        response = await client.chat_completion(
+            model=request.model,
+            messages=request.messages,
+            tools=request.tools,
+            response_format=request.response_format,
+            stream=False,  # Direct mode doesn't support streaming for now
+            **params,
+        )
+        
+        await client.close()
+        return response
+        
+    except Exception as e:
+        logger.error("Direct OpenRouter chat failed: %s", e, exc_info=True)
+        raise HTTPException(500, f"OpenRouter API error: {str(e)}")
 
 
 # =============================================================================

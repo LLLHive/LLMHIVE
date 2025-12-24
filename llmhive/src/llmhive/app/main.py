@@ -137,13 +137,19 @@ async def lifespan(app: FastAPI):
     else:
         logger.info(f"✓ {len([p for p in providers if p != 'stub'])} real provider(s) configured")
     
-    # Initialize OpenRouter database tables
+    # Initialize OpenRouter database tables using the SAME engine as database.py
     try:
         from .openrouter.migrations import init_openrouter_tables
-        if init_openrouter_tables():
-            logger.info("✓ OpenRouter database tables initialized")
+        from .database import get_engine, is_database_available
+        
+        if is_database_available():
+            engine = get_engine()
+            if init_openrouter_tables(engine=engine):
+                logger.info("✓ OpenRouter database tables initialized")
+            else:
+                logger.warning("OpenRouter database tables initialization failed")
         else:
-            logger.warning("OpenRouter database tables initialization failed")
+            logger.warning("⚠️ Database not available, OpenRouter tables not created")
     except Exception as e:
         logger.warning(f"OpenRouter tables init skipped: {e}")
     
