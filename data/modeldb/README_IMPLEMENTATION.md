@@ -12,57 +12,332 @@ This pipeline maintains the LLMHive model catalog:
 4. **Firestore** → Queryable document store for runtime lookups
 5. **Pinecone** → Semantic embeddings for intelligent model routing
 
-## Quick Start (Local Development)
+## How to Run & Example Usage
 
-### Step 1: Set Up Python Environment
+This section provides complete, verified instructions for running the ModelDB pipeline.
+
+> **⚠️ Important**: Close Excel before running the pipeline to avoid "file locked" errors on macOS/Windows.
+
+---
+
+### 1. One-Time Environment Setup
+
+#### macOS / Linux
 
 ```bash
-# From the repo root
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Navigate to repo root
+cd /path/to/LLMHIVE
+
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Upgrade pip
+python -m pip install --upgrade pip
 
 # Install dependencies
-pip install -r data/modeldb/requirements.txt
-```
+python -m pip install -r data/modeldb/requirements.txt
 
-### Step 2: Configure Environment
-
-```bash
-# Copy the example config
+# Copy environment template
 cp data/modeldb/.env.example data/modeldb/.env
 
-# Edit with your API keys
-# Required: GOOGLE_APPLICATION_CREDENTIALS, PINECONE_API_KEY
-# Optional but recommended: OPENROUTER_API_KEY
-nano data/modeldb/.env  # or use your editor
+# Edit .env with your API keys
+nano data/modeldb/.env
+# OR: code data/modeldb/.env
 ```
 
-### Step 3: Run Doctor to Verify Setup
+#### Windows PowerShell
+
+```powershell
+# Navigate to repo root
+cd C:\path\to\LLMHIVE
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+.\.venv\Scripts\Activate.ps1
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install dependencies
+python -m pip install -r data\modeldb\requirements.txt
+
+# Copy environment template
+Copy-Item data\modeldb\.env.example data\modeldb\.env
+
+# Edit .env with your API keys
+notepad data\modeldb\.env
+```
+
+---
+
+### 2. Doctor Check (Verify Setup)
 
 ```bash
 python data/modeldb/run_modeldb_refresh.py --doctor
 ```
 
-Expected output when healthy:
+**Expected output when healthy:**
+
 ```
+======================================================================
+LLMHive ModelDB Pipeline - Doctor Mode
+======================================================================
+
+🐍 Python Environment
+   Executable: /path/to/.venv/bin/python3
+   Virtual Env: ✅ Active
+
+📦 Dependencies
+   ✅ pandas: installed
+   ✅ openpyxl: installed
+   ✅ requests: installed
+   ✅ tenacity: installed
+   ✅ dotenv: installed
+   ✅ google.cloud.firestore: installed
+   ✅ pinecone: installed
+
+📁 Files
+   ✅ Canonical Excel: LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx
+      Rows: 353, Columns: 170
+   ✅ Archive Dir: exists (1 Excel, 1 logs)
+      Writable: ✅
+
+🔐 Environment Configuration
+   ✅ .env file: exists
+
+   Environment Variables:
+   ✅ GOOGLE_APPLICATION_CREDENTIALS: SET ✓ file exists
+   ✅ PINECONE_API_KEY: SET
+   ✅ OPENROUTER_API_KEY: SET
+   ...
+
+======================================================================
 ✅ ALL CHECKS PASSED - Ready to run!
 ```
 
-### Step 4: Dry Run (Validate Without Changes)
+If issues are found, the doctor will exit with code 2 and print actionable fixes.
+
+---
+
+### 3. Dry Run (Validate Without Changes)
 
 ```bash
 python data/modeldb/run_modeldb_refresh.py --dry-run
 ```
 
-### Step 5: Full Run
+**Guarantee**: Dry run does NOT modify:
+- The canonical Excel file
+- The archives folder
+- Firestore
+- Pinecone
+
+**Verified behavior** (SHA256 hash unchanged):
+```
+[DRY RUN] Would archive ...
+[DRY RUN] Would save to ...
+[DRY RUN] Would validate updated file
+[DRY RUN] Would write run log
+✅ Refresh completed successfully!
+```
+
+---
+
+### 4. Full Run (Standard Enrichment, No Evals/Telemetry)
+
+For most use cases, skip expensive API calls:
 
 ```bash
-# Full run with all enrichments
-python data/modeldb/run_modeldb_refresh.py
-
-# Skip expensive evals and telemetry (faster, no API costs)
 python data/modeldb/run_modeldb_refresh.py --evals-enabled false --telemetry-enabled false
 ```
+
+**Expected log sequence:**
+
+```
+======================================================================
+ModelDB Refresh Runner
+======================================================================
+Excel: .../LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx
+Archive Dir: .../archives
+Dry Run: False
+Skip Update: False
+Skip Enrichment: False
+Skip Pipeline: False
+Evals Enabled: False
+Telemetry Enabled: False
+======================================================================
+Existing file has 353 rows, 170 columns
+Archived: LLMHive_..._20251226T040000Z.xlsx
+Running: llmhive_modeldb_update.py ...
+Update step completed
+Running: llmhive_modeldb_enrich.py ...
+Enrichment step completed
+✅ Validation passed: 353 rows, 175 columns
+   Added 5 new columns
+Running: llmhive_modeldb_pipeline.py ...
+Pipeline step completed
+======================================================================
+✅ Refresh completed successfully!
+======================================================================
+```
+
+---
+
+### 5. Full Run with Evals & Telemetry (Costs API Credits)
+
+```bash
+# Limit to 10 models each to control costs
+python data/modeldb/run_modeldb_refresh.py \
+  --evals-enabled true --evals-max-models 10 \
+  --telemetry-enabled true --telemetry-max-models 10 --telemetry-trials 3
+```
+
+---
+
+### 6. Other Flags & Examples
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Validate without writing anything |
+| `--skip-update` | Skip OpenRouter catalog fetch |
+| `--skip-enrichment` | Skip rankings/benchmarks/evals layer |
+| `--skip-pipeline` | Skip Firestore/Pinecone sync |
+| `--evals-enabled false` | Disable eval harness (saves cost) |
+| `--telemetry-enabled false` | Disable telemetry probes (saves cost) |
+| `--evals-max-models N` | Limit evals to N models |
+| `--telemetry-max-models N` | Limit telemetry to N models |
+| `--telemetry-trials N` | Number of probes per model (default: 3) |
+| `--skip-expensive` | Skip expensive models in evals |
+| `--allow-row-decrease` | Allow row count to decrease (safety override) |
+| `-v, --verbose` | Enable debug logging |
+
+**Combining flags:**
+
+```bash
+# Only update Excel from OpenRouter (no enrichment, no Firestore/Pinecone)
+python data/modeldb/run_modeldb_refresh.py --skip-enrichment --skip-pipeline
+
+# Only sync existing Excel to Firestore/Pinecone (no updates)
+python data/modeldb/run_modeldb_refresh.py --skip-update --skip-enrichment
+
+# Full run with limited eval cost
+python data/modeldb/run_modeldb_refresh.py --evals-enabled true --evals-max-models 20 --skip-expensive
+```
+
+---
+
+### 7. Post-Run Inspection: Verify the Excel
+
+After a run, inspect the Excel to confirm enrichment worked:
+
+**Key columns to look for:**
+- `openrouter_slug` - Model identifier (should exist for all rows)
+- `openrouter_rank_context_length` - Rank by context window
+- `openrouter_rank_price_input` - Rank by input cost
+- `rank_context_length_desc` - Derived rank (1 = largest context)
+- `rank_cost_input_asc` - Derived rank (1 = cheapest)
+- `openrouter_rankings_source_name` - Should say "OpenRouter API"
+- `modalities` - text, vision, audio, etc.
+- `derived_rank_formula_notes` - Explains derivation logic
+
+---
+
+### 8. Verify with Python Snippet
+
+Run this to confirm the Excel is valid:
+
+```python
+import os
+import hashlib
+from pathlib import Path
+import pandas as pd
+
+excel_path = Path("data/modeldb/LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx")
+
+# Basic info
+print(f"=== Excel Verification ===")
+print(f"Path: {excel_path.resolve()}")
+print(f"Size: {excel_path.stat().st_size:,} bytes")
+
+# Compute SHA256
+with open(excel_path, "rb") as f:
+    sha256 = hashlib.sha256(f.read()).hexdigest()
+print(f"SHA256: {sha256[:16]}...")
+
+# Load and inspect
+xl = pd.ExcelFile(excel_path)
+print(f"\nSheets: {xl.sheet_names}")
+
+df = pd.read_excel(excel_path)
+print(f"Rows: {len(df)}")
+print(f"Columns: {len(df.columns)}")
+
+# Check key columns
+key_cols = [
+    "openrouter_slug", "model_name", "provider_name",
+    "max_context_tokens", "price_input_usd_per_1m",
+    "openrouter_rank_context_length", "rank_context_length_desc",
+    "modalities", "derived_rank_formula_notes"
+]
+print(f"\nKey columns present:")
+for col in key_cols:
+    status = "✅" if col in df.columns else "❌"
+    print(f"  {status} {col}")
+```
+
+Expected output:
+```
+=== Excel Verification ===
+Path: /path/to/data/modeldb/LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx
+Size: 245,294 bytes
+SHA256: 6fd695717bc04ac1...
+
+Sheets: ['Sheet1']
+Rows: 353
+Columns: 170
+
+Key columns present:
+  ✅ openrouter_slug
+  ✅ model_name
+  ✅ provider_name
+  ✅ max_context_tokens
+  ✅ price_input_usd_per_1m
+  ✅ openrouter_rank_context_length
+  ✅ rank_context_length_desc
+  ✅ modalities
+  ✅ derived_rank_formula_notes
+```
+
+---
+
+### 9. Schema Baseline
+
+The file `schema_baseline_columns.json` defines the minimum required columns. This prevents accidental schema shrinkage.
+
+**To regenerate baseline** (only when intentionally adding/removing columns):
+
+```python
+import pandas as pd
+import json
+from datetime import datetime, timezone
+
+df = pd.read_excel("data/modeldb/LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx")
+baseline = {
+    "version": "X.X.X",
+    "created_at": datetime.now(timezone.utc).isoformat(),
+    "columns": sorted(list(df.columns)),
+    "min_row_count": len(df),
+    "notes": "Your note here"
+}
+with open("data/modeldb/schema_baseline_columns.json", "w") as f:
+    json.dump(baseline, f, indent=2)
+```
+
+**Warning**: Never regenerate baseline to a smaller column set than the canonical Excel. This would allow schema shrinkage and data loss.
 
 ## Commands Reference
 

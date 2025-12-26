@@ -133,15 +133,9 @@ class EnrichmentOrchestrator:
         original_columns = set(df.columns)
         original_row_count = len(df)
         
-        # Load baseline for validation
-        baseline = load_schema_baseline(self.baseline_path)
-        baseline_columns = set(baseline.get("columns", []))
-        
-        # Validate baseline columns present
-        if baseline_columns:
-            missing = validate_columns_superset(df, baseline_columns, "baseline")
-            if missing:
-                raise ValueError(f"Input Excel missing baseline columns: {missing}")
+        # Note: We do NOT validate baseline columns here.
+        # Enrichment ADDS columns, it doesn't require them.
+        # The runner script validates column superset on output.
         
         # Import and run enrichers
         enrichers_run = []
