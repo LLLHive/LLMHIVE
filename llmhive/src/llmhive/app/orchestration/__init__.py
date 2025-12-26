@@ -856,3 +856,47 @@ if REASONING_DETECTOR_AVAILABLE:
         "get_reasoning_model_recommendation",
         "get_reasoning_detector",
     ])
+
+# ==================== REASONING STRATEGIES CONTROLLER (Q4 2025) ====================
+
+# Reasoning Strategies Controller - Meta-policy and fallback management
+try:
+    from .reasoning_strategies_controller import (
+        ReasoningStrategiesController,
+        ReasoningMethod,
+        ImplementationCategory,
+        MetaPolicy,
+        FallbackChain,
+        TraceLogTags,
+        REASONING_METHODS_DB,
+        get_strategy_controller,
+        select_reasoning_strategy,
+        get_fallback_strategy,
+    )
+    REASONING_STRATEGIES_CONTROLLER_AVAILABLE = True
+except ImportError:
+    REASONING_STRATEGIES_CONTROLLER_AVAILABLE = False
+    ReasoningStrategiesController = None  # type: ignore
+    ReasoningMethod = None  # type: ignore
+    ImplementationCategory = None  # type: ignore
+    MetaPolicy = None  # type: ignore
+    FallbackChain = None  # type: ignore
+    TraceLogTags = None  # type: ignore
+    REASONING_METHODS_DB = None  # type: ignore
+    get_strategy_controller = None  # type: ignore
+    select_reasoning_strategy = None  # type: ignore
+    get_fallback_strategy = None  # type: ignore
+
+if REASONING_STRATEGIES_CONTROLLER_AVAILABLE:
+    __all__.extend([
+        "ReasoningStrategiesController",
+        "ReasoningMethod",
+        "ImplementationCategory",
+        "MetaPolicy",
+        "FallbackChain",
+        "TraceLogTags",
+        "REASONING_METHODS_DB",
+        "get_strategy_controller",
+        "select_reasoning_strategy",
+        "get_fallback_strategy",
+    ])
