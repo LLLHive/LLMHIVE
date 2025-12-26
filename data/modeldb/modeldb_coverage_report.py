@@ -5,6 +5,10 @@ LLMHive ModelDB Coverage Report Generator
 Generates comprehensive coverage reports analyzing data population across
 different sources (OpenRouter, LMSYS Arena, HF Leaderboard, Evals, Telemetry).
 
+Key distinction:
+- ATTEMPT COVERAGE: % of rows where match was attempted (metadata columns populated)
+- METRIC COVERAGE: % of rows where actual benchmark/metric data was retrieved
+
 Outputs:
 - JSON report: Machine-readable coverage statistics
 - Markdown report: Human-readable summary with unmatched lists
@@ -34,42 +38,124 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 DEFAULT_EXCEL = SCRIPT_DIR / "LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx"
 DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "archives"
 
-# Source group definitions - column prefix patterns
+# Source group definitions with separate metadata vs metric columns
 SOURCE_GROUPS = {
     "openrouter_rankings": {
         "description": "OpenRouter API rankings and scores",
         "prefixes": ["openrouter_rank_", "openrouter_score_", "openrouter_rankings_"],
-        "key_columns": ["openrouter_rank_context_length", "openrouter_rank_price_input"],
+        # Metadata columns (indicate attempt was made)
+        "metadata_columns": [
+            "openrouter_rankings_source_name",
+            "openrouter_rankings_retrieved_at",
+        ],
+        # Metric columns (actual benchmark data)
+        "metric_columns": [
+            "openrouter_rank_context_length",
+            "openrouter_rank_price_input",
+            "openrouter_rank_price_output",
+        ],
     },
     "lmsys_arena": {
         "description": "LMSYS Chatbot Arena Elo ratings and rankings",
         "prefixes": ["arena_"],
-        "key_columns": ["arena_elo_overall", "arena_rank_overall", "arena_match_status"],
+        # Metadata columns (match status, provenance)
+        "metadata_columns": [
+            "arena_match_status",
+            "arena_match_score",
+            "arena_asof_date",
+            "arena_source_name",
+            "arena_retrieved_at",
+        ],
+        # Metric columns (actual Arena data)
+        "metric_columns": [
+            "arena_rank",
+            "arena_score",
+            "arena_votes",
+            "arena_95ci",
+            "arena_organization",
+            "arena_license",
+        ],
     },
     "hf_leaderboard": {
         "description": "HuggingFace Open LLM Leaderboard benchmarks",
         "prefixes": ["hf_ollb_", "hf_match_"],
-        "key_columns": ["hf_ollb_mmlu", "hf_ollb_avg", "hf_ollb_match_status"],
+        # Metadata columns
+        "metadata_columns": [
+            "hf_ollb_match_status",
+            "hf_ollb_source_name",
+            "hf_ollb_retrieved_at",
+        ],
+        # Metric columns
+        "metric_columns": [
+            "hf_ollb_mmlu",
+            "hf_ollb_avg",
+            "hf_ollb_arc",
+            "hf_ollb_hellaswag",
+            "hf_ollb_truthfulqa",
+            "hf_ollb_winogrande",
+            "hf_ollb_gsm8k",
+        ],
     },
     "eval_harness": {
         "description": "Eval harness scores from prompt-based testing",
         "prefixes": ["eval_"],
-        "key_columns": ["eval_programming_languages_score", "eval_languages_score", "eval_tool_use_score"],
+        # Metadata columns
+        "metadata_columns": [
+            "eval_source_name",
+            "eval_retrieved_at",
+        ],
+        # Metric columns
+        "metric_columns": [
+            "eval_programming_languages_score",
+            "eval_languages_score",
+            "eval_tool_use_score",
+        ],
     },
     "telemetry": {
         "description": "Live telemetry measurements (latency, TPS, errors)",
         "prefixes": ["telemetry_"],
-        "key_columns": ["telemetry_latency_p50_ms", "telemetry_tps_p50", "telemetry_error_rate"],
+        # Metadata columns
+        "metadata_columns": [
+            "telemetry_source_name",
+            "telemetry_retrieved_at",
+        ],
+        # Metric columns
+        "metric_columns": [
+            "telemetry_latency_p50_ms",
+            "telemetry_latency_p95_ms",
+            "telemetry_tps_p50",
+            "telemetry_error_rate",
+        ],
     },
     "provider_docs": {
         "description": "Data enriched from provider documentation",
         "prefixes": ["provider_docs_"],
-        "key_columns": ["modalities", "supports_function_calling", "supports_vision"],
+        # Metadata columns
+        "metadata_columns": [
+            "provider_docs_source_url",
+            "provider_docs_verified_at",
+        ],
+        # Metric columns (actual capability data)
+        "metric_columns": [
+            "modalities",
+            "supports_function_calling",
+            "supports_vision",
+        ],
     },
     "derived_rankings": {
         "description": "Rankings computed from existing data",
         "prefixes": ["rank_", "derived_rank_"],
-        "key_columns": ["rank_context_length_desc", "rank_cost_input_asc"],
+        # Metadata columns
+        "metadata_columns": [
+            "derived_rank_source_name",
+            "derived_rank_retrieved_at",
+        ],
+        # Metric columns
+        "metric_columns": [
+            "rank_context_length_desc",
+            "rank_cost_input_asc",
+            "rank_cost_output_asc",
+        ],
     },
 }
 
@@ -101,45 +187,79 @@ def find_columns_for_group(
     return sorted(matches)
 
 
-def compute_group_coverage(
+def compute_dual_coverage(
     df: pd.DataFrame,
-    group_columns: List[str],
+    all_group_columns: List[str],
+    metadata_columns: List[str],
+    metric_columns: List[str],
 ) -> Dict[str, Any]:
-    """Compute coverage statistics for a column group."""
-    if not group_columns:
+    """
+    Compute both attempt coverage and metric coverage for a column group.
+    
+    - attempt_coverage: % of rows where ANY metadata column is non-null
+    - metric_coverage: % of rows where ANY metric column is non-null
+    """
+    total_models = len(df)
+    
+    if not all_group_columns:
         return {
-            "total_models": len(df),
-            "models_with_any_data": 0,
-            "coverage_percent": 0.0,
+            "total_models": total_models,
+            "attempt_coverage_percent": 0.0,
+            "attempt_models": 0,
+            "metric_coverage_percent": 0.0,
+            "metric_models": 0,
             "columns_found": 0,
-            "columns_with_data": 0,
+            "metadata_columns_found": 0,
+            "metric_columns_found": 0,
             "column_coverage": {},
         }
     
-    total_models = len(df)
+    # Filter to columns that actually exist in the DataFrame
+    existing_metadata = [c for c in metadata_columns if c in df.columns]
+    existing_metrics = [c for c in metric_columns if c in df.columns]
     
-    # Check which models have at least one non-null value in the group
-    group_data = df[group_columns]
-    models_with_any = (group_data.notna().any(axis=1)).sum()
+    # Also include any prefix-matched columns as metrics if not in metadata
+    for col in all_group_columns:
+        if col not in existing_metadata and col not in existing_metrics:
+            existing_metrics.append(col)
     
-    # Compute per-column coverage
+    # Compute attempt coverage (any metadata populated)
+    if existing_metadata:
+        metadata_data = df[existing_metadata]
+        models_with_attempt = (metadata_data.notna().any(axis=1)).sum()
+    else:
+        # If no specific metadata columns, use all columns for attempt
+        all_data = df[[c for c in all_group_columns if c in df.columns]]
+        models_with_attempt = (all_data.notna().any(axis=1)).sum() if len(all_data.columns) > 0 else 0
+    
+    # Compute metric coverage (any metric populated)
+    if existing_metrics:
+        metric_data = df[existing_metrics]
+        models_with_metrics = (metric_data.notna().any(axis=1)).sum()
+    else:
+        models_with_metrics = 0
+    
+    # Per-column coverage
     column_coverage = {}
-    for col in group_columns:
-        non_null_count = df[col].notna().sum()
-        column_coverage[col] = {
-            "non_null_count": int(non_null_count),
-            "coverage_percent": round(100.0 * non_null_count / total_models, 1) if total_models > 0 else 0.0,
-        }
-    
-    # Count columns with any data
-    columns_with_data = sum(1 for c in column_coverage.values() if c["non_null_count"] > 0)
+    for col in all_group_columns:
+        if col in df.columns:
+            non_null_count = df[col].notna().sum()
+            is_metadata = col in existing_metadata
+            column_coverage[col] = {
+                "non_null_count": int(non_null_count),
+                "coverage_percent": round(100.0 * non_null_count / total_models, 1) if total_models > 0 else 0.0,
+                "column_type": "metadata" if is_metadata else "metric",
+            }
     
     return {
         "total_models": total_models,
-        "models_with_any_data": int(models_with_any),
-        "coverage_percent": round(100.0 * models_with_any / total_models, 1) if total_models > 0 else 0.0,
-        "columns_found": len(group_columns),
-        "columns_with_data": columns_with_data,
+        "attempt_coverage_percent": round(100.0 * models_with_attempt / total_models, 1) if total_models > 0 else 0.0,
+        "attempt_models": int(models_with_attempt),
+        "metric_coverage_percent": round(100.0 * models_with_metrics / total_models, 1) if total_models > 0 else 0.0,
+        "metric_models": int(models_with_metrics),
+        "columns_found": len(all_group_columns),
+        "metadata_columns_found": len(existing_metadata),
+        "metric_columns_found": len(existing_metrics),
         "column_coverage": column_coverage,
     }
 
@@ -151,28 +271,29 @@ def find_unmatched_models(
     top_n: int = 20,
 ) -> List[Dict[str, Any]]:
     """
-    Find top N models that are unmatched for a given source.
+    Find top N models that have no METRIC data for a given source.
     
-    Returns list of dicts with slug and reason.
+    Uses metric coverage (not attempt coverage) to determine unmatched status.
     """
     if "openrouter_slug" not in df.columns:
         return []
     
     prefixes = source_config.get("prefixes", [])
-    group_columns = find_columns_for_group(list(df.columns), prefixes)
+    all_group_columns = find_columns_for_group(list(df.columns), prefixes)
+    metric_columns = source_config.get("metric_columns", [])
     
-    if not group_columns:
-        # No columns exist for this group at all
+    # Filter to existing metric columns
+    existing_metrics = [c for c in metric_columns if c in df.columns]
+    
+    # If no specified metric columns, use all non-metadata columns
+    if not existing_metrics:
+        metadata_columns = source_config.get("metadata_columns", [])
+        existing_metrics = [c for c in all_group_columns if c not in metadata_columns]
+    
+    if not existing_metrics:
         return []
     
     unmatched = []
-    
-    # Check for match_status column
-    match_status_col = None
-    for col in group_columns:
-        if "match_status" in col.lower():
-            match_status_col = col
-            break
     
     for idx, row in df.iterrows():
         slug = row.get("openrouter_slug")
@@ -180,26 +301,30 @@ def find_unmatched_models(
             continue
         
         slug = str(slug).strip()
-        is_unmatched = False
-        reason = ""
         
-        if match_status_col and match_status_col in df.columns:
-            status = row.get(match_status_col)
-            if status == "unmatched" or pd.isna(status):
-                is_unmatched = True
-                reason = f"{match_status_col}=unmatched" if status == "unmatched" else "match_status is null"
-        else:
-            # Check if all group columns are null
-            all_null = True
-            for col in group_columns:
-                if pd.notna(row.get(col)):
-                    all_null = False
+        # Check if all metric columns are null
+        all_metrics_null = True
+        for col in existing_metrics:
+            if col in df.columns and pd.notna(row.get(col)):
+                all_metrics_null = False
+                break
+        
+        if all_metrics_null:
+            # Determine reason
+            match_status_col = None
+            for col in source_config.get("metadata_columns", []):
+                if "match_status" in col.lower() and col in df.columns:
+                    match_status_col = col
                     break
-            if all_null:
-                is_unmatched = True
-                reason = "all columns null"
-        
-        if is_unmatched:
+            
+            reason = "no metric data"
+            if match_status_col:
+                status = row.get(match_status_col)
+                if status == "unmatched":
+                    reason = "match_status=unmatched"
+                elif pd.isna(status):
+                    reason = "match not attempted"
+            
             unmatched.append({
                 "slug": slug,
                 "reason": reason,
@@ -214,7 +339,7 @@ def generate_coverage_report(
     df: pd.DataFrame,
     excel_path: str,
 ) -> Dict[str, Any]:
-    """Generate complete coverage report."""
+    """Generate complete coverage report with dual coverage semantics."""
     now = datetime.now(timezone.utc)
     all_columns = list(df.columns)
     
@@ -231,7 +356,13 @@ def generate_coverage_report(
     # Analyze each source group
     for group_name, config in SOURCE_GROUPS.items():
         group_columns = find_columns_for_group(all_columns, config["prefixes"])
-        coverage = compute_group_coverage(df, group_columns)
+        
+        coverage = compute_dual_coverage(
+            df,
+            group_columns,
+            config.get("metadata_columns", []),
+            config.get("metric_columns", []),
+        )
         
         # Add representative columns (top 10 by coverage)
         sorted_cols = sorted(
@@ -243,32 +374,38 @@ def generate_coverage_report(
         
         report["source_groups"][group_name] = {
             "description": config["description"],
-            "key_columns": config["key_columns"],
+            "configured_metadata_columns": config.get("metadata_columns", []),
+            "configured_metric_columns": config.get("metric_columns", []),
             **coverage,
         }
         
-        # Find unmatched models
+        # Find unmatched models (based on metric coverage)
         unmatched = find_unmatched_models(df, group_name, config, top_n=20)
         report["unmatched_lists"][group_name] = unmatched
     
     # Generate summary
     total_groups = len(SOURCE_GROUPS)
-    groups_with_data = sum(
+    groups_with_metrics = sum(
         1 for g in report["source_groups"].values()
-        if g["coverage_percent"] > 0
+        if g["metric_coverage_percent"] > 0
+    )
+    groups_with_attempts = sum(
+        1 for g in report["source_groups"].values()
+        if g["attempt_coverage_percent"] > 0
     )
     
     report["summary"] = {
         "total_source_groups": total_groups,
-        "groups_with_any_data": groups_with_data,
-        "groups_fully_empty": total_groups - groups_with_data,
-        "best_coverage_group": max(
+        "groups_with_metric_data": groups_with_metrics,
+        "groups_with_attempt_data": groups_with_attempts,
+        "groups_fully_empty": total_groups - max(groups_with_metrics, groups_with_attempts),
+        "best_metric_coverage_group": max(
             report["source_groups"].items(),
-            key=lambda x: x[1]["coverage_percent"],
+            key=lambda x: x[1]["metric_coverage_percent"],
         )[0] if report["source_groups"] else None,
-        "worst_coverage_group": min(
+        "worst_metric_coverage_group": min(
             report["source_groups"].items(),
-            key=lambda x: x[1]["coverage_percent"],
+            key=lambda x: x[1]["metric_coverage_percent"],
         )[0] if report["source_groups"] else None,
     }
     
@@ -276,7 +413,7 @@ def generate_coverage_report(
 
 
 def format_report_markdown(report: Dict[str, Any]) -> str:
-    """Format coverage report as Markdown."""
+    """Format coverage report as Markdown with dual coverage."""
     lines = []
     
     lines.append("# ModelDB Coverage Report")
@@ -287,36 +424,44 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
     lines.append(f"**Total Columns:** {report['total_columns']}")
     lines.append("")
     
+    # Coverage semantics explanation
+    lines.append("## Coverage Semantics")
+    lines.append("")
+    lines.append("- **Attempt Coverage**: % of models where enrichment was attempted (metadata populated)")
+    lines.append("- **Metric Coverage**: % of models where actual benchmark/rating data was retrieved")
+    lines.append("")
+    
     # Summary
     lines.append("## Summary")
     lines.append("")
     summary = report["summary"]
     lines.append(f"- **Source Groups Analyzed:** {summary['total_source_groups']}")
-    lines.append(f"- **Groups with Data:** {summary['groups_with_any_data']}")
+    lines.append(f"- **Groups with Metric Data:** {summary['groups_with_metric_data']}")
+    lines.append(f"- **Groups with Attempt Data:** {summary['groups_with_attempt_data']}")
     lines.append(f"- **Groups Fully Empty:** {summary['groups_fully_empty']}")
-    if summary.get("best_coverage_group"):
-        best = summary["best_coverage_group"]
-        best_pct = report["source_groups"][best]["coverage_percent"]
-        lines.append(f"- **Best Coverage:** {best} ({best_pct}%)")
-    if summary.get("worst_coverage_group"):
-        worst = summary["worst_coverage_group"]
-        worst_pct = report["source_groups"][worst]["coverage_percent"]
-        lines.append(f"- **Worst Coverage:** {worst} ({worst_pct}%)")
+    if summary.get("best_metric_coverage_group"):
+        best = summary["best_metric_coverage_group"]
+        best_pct = report["source_groups"][best]["metric_coverage_percent"]
+        lines.append(f"- **Best Metric Coverage:** {best} ({best_pct}%)")
+    if summary.get("worst_metric_coverage_group"):
+        worst = summary["worst_metric_coverage_group"]
+        worst_pct = report["source_groups"][worst]["metric_coverage_percent"]
+        lines.append(f"- **Worst Metric Coverage:** {worst} ({worst_pct}%)")
     lines.append("")
     
     # Coverage by Source Group
     lines.append("## Coverage by Source Group")
     lines.append("")
     
-    # Table header
-    lines.append("| Source Group | Description | Models with Data | Coverage % | Columns |")
-    lines.append("|--------------|-------------|------------------|------------|---------|")
+    # Table header with both coverages
+    lines.append("| Source Group | Description | Metric % | Attempt % | Models w/ Metrics |")
+    lines.append("|--------------|-------------|----------|-----------|-------------------|")
     
-    for group_name, data in sorted(report["source_groups"].items(), key=lambda x: -x[1]["coverage_percent"]):
-        desc = data["description"][:40] + "..." if len(data["description"]) > 40 else data["description"]
+    for group_name, data in sorted(report["source_groups"].items(), key=lambda x: -x[1]["metric_coverage_percent"]):
+        desc = data["description"][:30] + "..." if len(data["description"]) > 30 else data["description"]
         lines.append(
-            f"| {group_name} | {desc} | {data['models_with_any_data']} | "
-            f"{data['coverage_percent']}% | {data['columns_found']} |"
+            f"| {group_name} | {desc} | {data['metric_coverage_percent']}% | "
+            f"{data['attempt_coverage_percent']}% | {data['metric_models']}/{data['total_models']} |"
         )
     lines.append("")
     
@@ -329,8 +474,9 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
         lines.append("")
         lines.append(f"_{data['description']}_")
         lines.append("")
-        lines.append(f"- **Coverage:** {data['coverage_percent']}% ({data['models_with_any_data']}/{data['total_models']} models)")
-        lines.append(f"- **Columns Found:** {data['columns_found']} ({data['columns_with_data']} with data)")
+        lines.append(f"- **Metric Coverage:** {data['metric_coverage_percent']}% ({data['metric_models']}/{data['total_models']} models)")
+        lines.append(f"- **Attempt Coverage:** {data['attempt_coverage_percent']}% ({data['attempt_models']}/{data['total_models']} models)")
+        lines.append(f"- **Columns Found:** {data['columns_found']} (metadata: {data['metadata_columns_found']}, metrics: {data['metric_columns_found']})")
         lines.append("")
         
         if data.get("representative_columns"):
@@ -340,13 +486,14 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
                 col_data = data["column_coverage"].get(col, {})
                 pct = col_data.get("coverage_percent", 0)
                 cnt = col_data.get("non_null_count", 0)
-                lines.append(f"- `{col}`: {pct}% ({cnt} values)")
+                col_type = col_data.get("column_type", "metric")
+                lines.append(f"- `{col}` [{col_type}]: {pct}% ({cnt} values)")
             lines.append("")
     
     # Unmatched Lists
     lines.append("## Unmatched Models (Top 20 per Source)")
     lines.append("")
-    lines.append("These models could not be matched to external data sources.")
+    lines.append("Models without metric data from each source.")
     lines.append("")
     
     for group_name, unmatched in report["unmatched_lists"].items():
@@ -354,9 +501,9 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
         lines.append("")
         
         if not unmatched:
-            lines.append("_No unmatched models detected (or no match_status column)._")
+            lines.append("_No unmatched models (or all models have metric data)._")
         else:
-            lines.append(f"**{len(unmatched)} models unmatched:**")
+            lines.append(f"**{len(unmatched)} models without metric data:**")
             lines.append("")
             for item in unmatched[:20]:
                 lines.append(f"- `{item['slug']}`: {item['reason']}")
@@ -446,31 +593,44 @@ def main():
     
     # Print summary if requested
     if args.print_summary or args.dry_run:
-        print("\n" + "=" * 70)
+        print("\n" + "=" * 80)
         print("COVERAGE REPORT SUMMARY")
-        print("=" * 70)
+        print("=" * 80)
         print(f"Total Models: {report['total_models']}")
         print(f"Total Columns: {report['total_columns']}")
         print("")
-        print("Source Group Coverage:")
+        print("Source Group Coverage (Metric % / Attempt %):")
         for group_name, data in sorted(
             report["source_groups"].items(),
-            key=lambda x: -x[1]["coverage_percent"],
+            key=lambda x: -x[1]["metric_coverage_percent"],
         ):
-            status = "✅" if data["coverage_percent"] > 0 else "❌"
-            print(f"  {status} {group_name}: {data['coverage_percent']}% ({data['models_with_any_data']}/{data['total_models']})")
+            metric_status = "✅" if data["metric_coverage_percent"] > 0 else "❌"
+            print(
+                f"  {metric_status} {group_name:25} Metric: {data['metric_coverage_percent']:5.1f}% "
+                f"| Attempt: {data['attempt_coverage_percent']:5.1f}% "
+                f"| Models: {data['metric_models']}/{data['total_models']}"
+            )
         print("")
         
         # Show groups needing attention
+        low_metric_groups = [
+            g for g, d in report["source_groups"].items()
+            if d["metric_coverage_percent"] == 0 and d["attempt_coverage_percent"] > 0
+        ]
+        if low_metric_groups:
+            print("⚠️  Groups with attempts but no metrics (enricher may need fixing):")
+            for g in low_metric_groups:
+                print(f"   - {g}")
+        
         empty_groups = [
             g for g, d in report["source_groups"].items()
-            if d["coverage_percent"] == 0
+            if d["attempt_coverage_percent"] == 0
         ]
         if empty_groups:
-            print("⚠️  Groups with 0% coverage:")
+            print("ℹ️  Groups not yet run:")
             for g in empty_groups:
                 print(f"   - {g}")
-        print("=" * 70)
+        print("=" * 80)
     
     # Write output files
     if not args.dry_run:
@@ -503,4 +663,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -23,3 +23,6 @@ datasets>=2.14.0
 
 # Optional: OpenAI for embeddings if not using Pinecone integrated
 openai>=1.0.0
+
+# Fuzzy matching for Arena enricher
+rapidfuzz>=3.0.0
