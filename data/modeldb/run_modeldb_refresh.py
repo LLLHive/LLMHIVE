@@ -193,22 +193,23 @@ def run_doctor() -> int:
     # Check dependencies
     print("📦 Dependencies")
     deps_to_check = [
-        ("pandas", "Data manipulation"),
-        ("openpyxl", "Excel read/write"),
-        ("requests", "HTTP client"),
-        ("tenacity", "Retry logic"),
-        ("dotenv", "Environment loading"),
-        ("google.cloud.firestore", "Firestore client"),
-        ("pinecone", "Pinecone vector DB"),
+        ("pandas", "Data manipulation", "pandas"),
+        ("openpyxl", "Excel read/write", "openpyxl"),
+        ("requests", "HTTP client", "requests"),
+        ("tenacity", "Retry logic", "tenacity"),
+        ("dotenv", "Environment loading", "dotenv"),
+        ("google.cloud.firestore", "Firestore client", "google.cloud.firestore"),
+        ("pinecone", "Pinecone vector DB", "pinecone"),
     ]
     
-    for module_name, desc in deps_to_check:
+    import importlib
+    for display_name, desc, import_path in deps_to_check:
         try:
-            __import__(module_name.replace(".", "_") if "." in module_name else module_name)
-            print(f"   ✅ {module_name}: installed")
+            importlib.import_module(import_path)
+            print(f"   ✅ {display_name}: installed")
         except ImportError:
-            print(f"   ❌ {module_name}: NOT INSTALLED ({desc})")
-            issues.append(f"Missing dependency: {module_name}")
+            print(f"   ❌ {display_name}: NOT INSTALLED ({desc})")
+            issues.append(f"Missing dependency: {display_name}")
     print()
     
     # Check files

@@ -50,3 +50,6 @@ Thumbs.db
 test-results/
 .venv/
 __pycache__/
+
+# ModelDB secrets (never commit)
+data/modeldb/secrets/
