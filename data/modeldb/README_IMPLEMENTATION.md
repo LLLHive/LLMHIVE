@@ -355,6 +355,174 @@ with open("data/modeldb/schema_baseline_columns.json", "w") as f:
 | `python data/modeldb/run_modeldb_refresh.py --telemetry-max-models 10` | Limit telemetry to 10 models |
 | `python data/modeldb/run_modeldb_refresh.py -v` | Verbose logging |
 
+---
+
+## World-Class Run Modes
+
+This section explains the recommended run modes for maintaining world-class coverage.
+
+### Daily Free Run (No Evals/Telemetry)
+
+Run this daily to keep the model catalog up-to-date with free data sources:
+
+```bash
+python data/modeldb/run_modeldb_refresh.py \
+  --evals-enabled false \
+  --telemetry-enabled false
+```
+
+**What it does:**
+- ✅ Fetches latest models from OpenRouter API
+- ✅ Updates OpenRouter rankings (free)
+- ✅ Fetches LMSYS Arena Elo ratings (free, from HuggingFace)
+- ✅ Fetches HuggingFace Open LLM Leaderboard scores (free)
+- ✅ Applies derived rankings and provider docs
+- ✅ Pushes to Firestore + Pinecone
+- ✅ Generates coverage report
+- ❌ No API costs (skips evals and telemetry)
+
+**Expected runtime:** ~2-5 minutes
+
+### Weekly World-Class Run (Limited Evals + Telemetry)
+
+Run this weekly to add eval scores and telemetry for top models:
+
+```bash
+python data/modeldb/run_modeldb_refresh.py \
+  --evals-enabled true --evals-max-models 50 \
+  --telemetry-enabled true --telemetry-max-models 50 --telemetry-trials 3
+```
+
+**What it does:**
+- Everything in the daily run, PLUS:
+- ✅ Runs eval harness on top 50 models (programming, language, tool use)
+- ✅ Probes top 50 models for latency/TPS telemetry
+- ✅ Records per-model eval scores and telemetry
+
+**Expected runtime:** ~30-60 minutes
+**Expected cost:** ~$1-5 (depending on models selected)
+
+### Full World-Class Run (Complete Coverage)
+
+For comprehensive coverage of all models (not recommended for every run):
+
+```bash
+python data/modeldb/run_modeldb_refresh.py \
+  --evals-enabled true \
+  --telemetry-enabled true --telemetry-trials 5
+```
+
+**Expected runtime:** ~2-4 hours
+**Expected cost:** ~$10-50 (full model coverage)
+
+---
+
+## Coverage Report
+
+After each non-dry-run, a coverage report is automatically generated in `archives/`:
+
+### Output Files
+
+- `coverage_report_<timestamp>.json` - Machine-readable full report
+- `coverage_report_<timestamp>.md` - Human-readable summary
+
+### Coverage Groups Analyzed
+
+| Source Group | Description | Key Columns |
+|--------------|-------------|-------------|
+| `openrouter_rankings` | OpenRouter API rankings | `openrouter_rank_context_length`, `openrouter_rank_price_input` |
+| `lmsys_arena` | LMSYS Chatbot Arena | `arena_elo_overall`, `arena_rank_overall`, `arena_match_status` |
+| `hf_leaderboard` | HuggingFace Open LLM Leaderboard | `hf_ollb_mmlu`, `hf_ollb_avg`, `hf_ollb_match_status` |
+| `eval_harness` | Eval harness scores | `eval_programming_languages_score`, `eval_tool_use_score` |
+| `telemetry` | Live telemetry | `telemetry_latency_p50_ms`, `telemetry_tps_p50` |
+| `provider_docs` | Provider documentation | `modalities`, `supports_function_calling` |
+| `derived_rankings` | Computed rankings | `rank_context_length_desc`, `rank_cost_input_asc` |
+
+### Understanding Coverage Report
+
+```
+Source Group Coverage:
+  ✅ openrouter_rankings: 95.2% (336/353)
+  ✅ derived_rankings: 85.1% (300/353)
+  ⚠️  lmsys_arena: 42.5% (150/353)
+  ⚠️  hf_leaderboard: 35.7% (126/353)
+  ❌ eval_harness: 0.0% (0/353)
+  ❌ telemetry: 0.0% (0/353)
+```
+
+- **✅ Good coverage (>50%)**: Most models have data
+- **⚠️  Partial coverage (10-50%)**: Only some models matched
+- **❌ No coverage (0%)**: Enricher not run or no matches
+
+### Top 20 Unmatched Lists
+
+Each report includes the top 20 models that couldn't be matched for each source:
+
+```
+### lmsys_arena
+**20 models unmatched:**
+- `anthropic/claude-3.5-sonnet-20241022`: match_status=unmatched
+- `google/gemini-2.0-flash-thinking-exp`: all columns null
+...
+```
+
+Use these lists to improve matching logic or identify new models.
+
+---
+
+## Run Log Files
+
+After each run, logs are saved to `archives/`:
+
+| File Pattern | Description |
+|--------------|-------------|
+| `refresh_runlog_<timestamp>.json` | Full run summary with step statuses |
+| `modeldb_runlog_<timestamp>.json` | Pipeline (Firestore/Pinecone) log |
+| `enrich_runlog_<timestamp>.json` | Enrichment layer log |
+| `coverage_report_<timestamp>.json` | Coverage statistics |
+| `coverage_report_<timestamp>.md` | Human-readable coverage |
+
+### Finding the Latest Log
+
+```python
+from pathlib import Path
+
+archives = Path("data/modeldb/archives")
+latest_log = sorted(archives.glob("refresh_runlog_*.json"), reverse=True)[0]
+print(f"Latest run log: {latest_log}")
+```
+
+---
+
+## Repository Safety
+
+### ⚠️ Do NOT Use `git clean -xfd`
+
+The command `git clean -xfd` will delete ALL untracked files, including:
+- Service account keys in `data/modeldb/secrets/`
+- Environment files (`.env`)
+- Archives and run logs
+- Virtual environments
+
+**Instead, use the safe clean script:**
+
+```bash
+# Dry run (see what would be deleted)
+./scripts/safe_clean.sh
+
+# Actually clean (preserves secrets, .env, archives)
+./scripts/safe_clean.sh --force
+```
+
+### CI Secret Scanning
+
+The repository includes CI workflows that:
+1. Scan for accidentally committed secrets
+2. Block PRs that contain service account keys
+3. Verify `data/modeldb/secrets/` is never tracked
+
+If you see a CI failure about secrets, remove the file and rotate the credential immediately.
+
 ## Enrichment Layer
 
 The enrichment layer adds data from multiple sources:

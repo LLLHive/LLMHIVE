@@ -212,12 +212,34 @@ def build_embedding_text(row: Dict[str, Any]) -> str:
 
 
 class FirestoreModelCatalog:
-    """Manages model catalog in Firestore with overflow handling."""
+    """
+    Manages model catalog in Firestore with overflow handling.
     
+    ISOLATION GUARANTEE:
+    This class ONLY accesses the following Firestore collections:
+    - model_catalog: Main model documents
+    - model_catalog_payloads: Overflow storage for large payloads
+    
+    It does NOT and MUST NOT access:
+    - accounts, users, auth, or any other application collections
+    - Any collection outside of model_catalog and model_catalog_payloads
+    
+    This isolation ensures ModelDB operations never affect application data.
+    """
+    
+    # CRITICAL: These are the ONLY collections ModelDB is allowed to access
     COLLECTION = "model_catalog"
     OVERFLOW_COLLECTION = "model_catalog_payloads"
     
+    # Collections that ModelDB must NEVER access (safety assertion)
+    FORBIDDEN_COLLECTIONS = frozenset([
+        "accounts", "users", "auth", "sessions", "tokens",
+        "organizations", "teams", "projects", "settings",
+    ])
+    
     def __init__(self, project_id: Optional[str] = None, dry_run: bool = False):
+        # Verify collection names are safe (defensive assertion)
+        self._verify_collection_isolation()
         self.project_id = project_id or os.getenv(
             "GOOGLE_CLOUD_PROJECT", 
             os.getenv("GCP_PROJECT", "llmhive-orchestrator")
@@ -225,6 +247,41 @@ class FirestoreModelCatalog:
         self.dry_run = dry_run
         self.db = None
         self._initialize()
+    
+    def _verify_collection_isolation(self) -> None:
+        """
+        Verify that ModelDB only accesses allowed collections.
+        
+        This is a defensive check to prevent accidental access to
+        application collections like accounts, users, auth, etc.
+        """
+        # Check that our collection names are not in forbidden list
+        if self.COLLECTION in self.FORBIDDEN_COLLECTIONS:
+            raise ValueError(
+                f"SAFETY VIOLATION: COLLECTION '{self.COLLECTION}' is forbidden. "
+                f"ModelDB must only access model_catalog and model_catalog_payloads."
+            )
+        
+        if self.OVERFLOW_COLLECTION in self.FORBIDDEN_COLLECTIONS:
+            raise ValueError(
+                f"SAFETY VIOLATION: OVERFLOW_COLLECTION '{self.OVERFLOW_COLLECTION}' is forbidden. "
+                f"ModelDB must only access model_catalog and model_catalog_payloads."
+            )
+        
+        # Verify expected values (fail if someone changes the constants)
+        if self.COLLECTION != "model_catalog":
+            raise ValueError(
+                f"SAFETY VIOLATION: COLLECTION changed from 'model_catalog' to '{self.COLLECTION}'. "
+                f"This is not allowed. ModelDB must remain isolated."
+            )
+        
+        if self.OVERFLOW_COLLECTION != "model_catalog_payloads":
+            raise ValueError(
+                f"SAFETY VIOLATION: OVERFLOW_COLLECTION changed from 'model_catalog_payloads' to "
+                f"'{self.OVERFLOW_COLLECTION}'. This is not allowed. ModelDB must remain isolated."
+            )
+        
+        logger.debug("Firestore isolation verified: using only model_catalog collections")
     
     def _initialize(self) -> None:
         """Initialize Firestore client."""

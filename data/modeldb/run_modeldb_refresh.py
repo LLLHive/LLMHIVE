@@ -200,6 +200,7 @@ def run_doctor() -> int:
         ("dotenv", "Environment loading", "dotenv"),
         ("google.cloud.firestore", "Firestore client", "google.cloud.firestore"),
         ("pinecone", "Pinecone vector DB", "pinecone"),
+        ("datasets", "HuggingFace datasets (for leaderboards)", "datasets"),
     ]
     
     import importlib
@@ -543,6 +544,9 @@ class ModelDBRefreshRunner:
                 logger.info("[SKIP] Pipeline step skipped")
                 self.run_log["steps"].append({"step": "pipeline", "status": "skipped"})
             
+            # Step 7: Generate coverage report
+            self._step_coverage_report()
+            
             self.run_log["success"] = True
             logger.info("=" * 70)
             logger.info("✅ Refresh completed successfully!")
@@ -807,6 +811,58 @@ class ModelDBRefreshRunner:
         step["status"] = "success"
         self.run_log["steps"].append(step)
         logger.info("Pipeline step completed")
+    
+    def _step_coverage_report(self) -> None:
+        """Generate coverage report after successful pipeline run."""
+        step: Dict[str, Any] = {"step": "coverage_report", "status": "pending"}
+        
+        coverage_script = SCRIPT_DIR / "modeldb_coverage_report.py"
+        
+        if not coverage_script.exists():
+            step["status"] = "skipped"
+            step["reason"] = "Coverage report script not found"
+            self.run_log["steps"].append(step)
+            logger.info("[SKIP] Coverage report script not found")
+            return
+        
+        if self.dry_run:
+            # In dry-run mode, run with --dry-run flag to show what would be reported
+            logger.info("[DRY RUN] Would generate coverage report")
+            step["status"] = "skipped"
+            step["reason"] = "dry run"
+            self.run_log["steps"].append(step)
+            return
+        
+        try:
+            args = [
+                "--excel", str(self.excel_path),
+                "--output-dir", str(self.archive_dir),
+                "--print-summary",
+            ]
+            
+            returncode, stdout, stderr = run_script(coverage_script, args)
+            
+            step["returncode"] = returncode
+            if stdout:
+                step["stdout_tail"] = stdout[-2000:]
+                # Print summary to console
+                print("\n" + stdout)
+            
+            if returncode != 0:
+                step["status"] = "warning"
+                step["warning"] = "Coverage report generation had issues"
+                logger.warning("Coverage report had issues but continuing")
+            else:
+                step["status"] = "success"
+                logger.info("Coverage report generated successfully")
+            
+        except Exception as e:
+            step["status"] = "warning"
+            step["error"] = str(e)
+            logger.warning("Coverage report failed: %s", e)
+            # Don't fail the entire run for coverage report issues
+        
+        self.run_log["steps"].append(step)
     
     def _write_run_log(self) -> None:
         """Write the run log to archive directory."""
