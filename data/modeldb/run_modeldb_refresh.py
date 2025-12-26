@@ -4,21 +4,25 @@ LLMHive ModelDB Refresh Runner - One-command pipeline execution.
 
 This script orchestrates the complete ModelDB refresh workflow:
 1. Archive the current Excel (timestamped backup)
-2. Run update/enrichment from OpenRouter
-3. Run pipeline to Firestore + Pinecone
-4. Validate no data loss
-5. Rollback if errors detected
+2. Run update from OpenRouter API
+3. Run enrichment layer (rankings, benchmarks, evals, telemetry)
+4. Validate no data loss (row + column name superset)
+5. Run pipeline to Firestore + Pinecone
+6. Rollback if errors detected
 
 Usage:
     python run_modeldb_refresh.py
     python run_modeldb_refresh.py --doctor          # Check environment
     python run_modeldb_refresh.py --dry-run         # Validate without changes
-    python run_modeldb_refresh.py --skip-update     # Only run pipeline
+    python run_modeldb_refresh.py --skip-update     # Only run enrichment + pipeline
+    python run_modeldb_refresh.py --skip-enrichment # Skip rankings/benchmarks/evals
     python run_modeldb_refresh.py --skip-pipeline   # Only update Excel
+    python run_modeldb_refresh.py --evals-enabled false    # Skip eval harness
+    python run_modeldb_refresh.py --telemetry-enabled false  # Skip telemetry
 
 Guardrails:
 - If row count decreases: FAIL and restore archive
-- If required columns missing: FAIL
+- If column names not superset: FAIL and restore archive
 - If duplicate slugs detected: FAIL
 - If .env missing for real runs: FAIL with helpful message
 """
@@ -45,9 +49,22 @@ DEFAULT_ARCHIVE_DIR = SCRIPT_DIR / "archives"
 DEFAULT_CACHE_DIR = Path(".cache/llmhive_modeldb")
 ENV_FILE = SCRIPT_DIR / ".env"
 ENV_EXAMPLE_FILE = SCRIPT_DIR / ".env.example"
+SCHEMA_BASELINE_FILE = SCRIPT_DIR / "schema_baseline_columns.json"
 
 # Required columns for validation
 REQUIRED_COLUMNS = ["openrouter_slug"]
+
+
+def load_schema_baseline() -> Dict[str, Any]:
+    """Load schema baseline for column name superset validation."""
+    if not SCHEMA_BASELINE_FILE.exists():
+        return {}
+    
+    try:
+        with open(SCHEMA_BASELINE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 # Environment variables and their requirements
 ENV_REQUIREMENTS = {
@@ -353,8 +370,16 @@ def restore_from_archive(archive_path: Path, target: Path) -> bool:
     return True
 
 
-def validate_excel(path: Path, min_rows: int = 0, min_columns: int = 0) -> Tuple[bool, List[str]]:
-    """Validate an Excel file meets requirements."""
+def validate_excel(
+    path: Path, 
+    min_rows: int = 0, 
+    required_column_names: Optional[set] = None,
+) -> Tuple[bool, List[str]]:
+    """
+    Validate an Excel file meets requirements.
+    
+    Uses column NAME superset validation (not just count).
+    """
     import pandas as pd
     
     errors = []
@@ -378,9 +403,14 @@ def validate_excel(path: Path, min_rows: int = 0, min_columns: int = 0) -> Tuple
     if len(df) < min_rows:
         errors.append(f"Row count decreased: {len(df)} < {min_rows}")
     
-    # Check column count
-    if len(df.columns) < min_columns:
-        errors.append(f"Column count decreased: {len(df.columns)} < {min_columns}")
+    # Check column NAME superset (not just count)
+    if required_column_names:
+        current_columns = set(df.columns)
+        missing_columns = required_column_names - current_columns
+        if missing_columns:
+            errors.append(
+                f"Missing {len(missing_columns)} columns: {sorted(list(missing_columns))[:5]}..."
+            )
     
     # Check for duplicate slugs
     if "openrouter_slug" in df.columns:
@@ -423,20 +453,34 @@ class ModelDBRefreshRunner:
         cache_dir: Optional[Path] = None,
         dry_run: bool = False,
         skip_update: bool = False,
+        skip_enrichment: bool = False,
         skip_pipeline: bool = False,
         allow_row_decrease: bool = False,
+        evals_enabled: bool = True,
+        telemetry_enabled: bool = True,
+        evals_max_models: int = 0,
+        telemetry_max_models: int = 0,
+        telemetry_trials: int = 3,
+        skip_expensive: bool = False,
     ):
         self.excel_path = excel_path or DEFAULT_EXCEL
         self.archive_dir = archive_dir or DEFAULT_ARCHIVE_DIR
         self.cache_dir = cache_dir or DEFAULT_CACHE_DIR
         self.dry_run = dry_run
         self.skip_update = skip_update
+        self.skip_enrichment = skip_enrichment
         self.skip_pipeline = skip_pipeline
         self.allow_row_decrease = allow_row_decrease
+        self.evals_enabled = evals_enabled
+        self.telemetry_enabled = telemetry_enabled
+        self.evals_max_models = evals_max_models
+        self.telemetry_max_models = telemetry_max_models
+        self.telemetry_trials = telemetry_trials
+        self.skip_expensive = skip_expensive
         
         self.archive_path: Optional[Path] = None
         self.original_row_count = 0
-        self.original_column_count = 0
+        self.original_column_names: set = set()
         
         self.run_log: Dict[str, Any] = {
             "started_at": None,
@@ -461,7 +505,10 @@ class ModelDBRefreshRunner:
         logger.info("Archive Dir: %s", self.archive_dir)
         logger.info("Dry Run: %s", self.dry_run)
         logger.info("Skip Update: %s", self.skip_update)
+        logger.info("Skip Enrichment: %s", self.skip_enrichment)
         logger.info("Skip Pipeline: %s", self.skip_pipeline)
+        logger.info("Evals Enabled: %s", self.evals_enabled)
+        logger.info("Telemetry Enabled: %s", self.telemetry_enabled)
         logger.info("=" * 70)
         
         try:
@@ -471,17 +518,24 @@ class ModelDBRefreshRunner:
             # Step 2: Archive
             self._step_archive()
             
-            # Step 3: Run update script (fetch OpenRouter, enrich)
+            # Step 3: Run update script (fetch OpenRouter)
             if not self.skip_update:
                 self._step_update()
             else:
                 logger.info("[SKIP] Update step skipped")
                 self.run_log["steps"].append({"step": "update", "status": "skipped"})
             
-            # Step 4: Validate updated file
+            # Step 4: Run enrichment layer (rankings, benchmarks, evals, telemetry)
+            if not self.skip_enrichment:
+                self._step_enrichment()
+            else:
+                logger.info("[SKIP] Enrichment step skipped")
+                self.run_log["steps"].append({"step": "enrichment", "status": "skipped"})
+            
+            # Step 5: Validate updated file
             self._step_validate_updated()
             
-            # Step 5: Run pipeline (Firestore + Pinecone)
+            # Step 6: Run pipeline (Firestore + Pinecone)
             if not self.skip_pipeline:
                 self._step_pipeline()
             else:
@@ -513,7 +567,7 @@ class ModelDBRefreshRunner:
         return self.run_log
     
     def _step_validate_existing(self) -> None:
-        """Validate existing Excel file."""
+        """Validate existing Excel file and capture column names."""
         import pandas as pd
         
         step: Dict[str, Any] = {"step": "validate_existing", "status": "pending"}
@@ -528,13 +582,21 @@ class ModelDBRefreshRunner:
         try:
             df = pd.read_excel(self.excel_path)
             self.original_row_count = len(df)
-            self.original_column_count = len(df.columns)
+            self.original_column_names = set(df.columns)
+            
+            # Also load baseline columns
+            baseline = load_schema_baseline()
+            baseline_cols = set(baseline.get("columns", []))
+            if baseline_cols:
+                self.original_column_names = self.original_column_names | baseline_cols
+            
             logger.info("Existing file has %d rows, %d columns", 
-                       self.original_row_count, self.original_column_count)
+                       self.original_row_count, len(self.original_column_names))
             
             step["status"] = "success"
             step["row_count"] = self.original_row_count
-            step["column_count"] = self.original_column_count
+            step["column_count"] = len(self.original_column_names)
+            step["column_names"] = sorted(list(self.original_column_names))
             
         except Exception as e:
             step["status"] = "error"
@@ -612,8 +674,60 @@ class ModelDBRefreshRunner:
         self.run_log["steps"].append(step)
         logger.info("Update step completed")
     
+    def _step_enrichment(self) -> None:
+        """Run the enrichment layer."""
+        step: Dict[str, Any] = {"step": "enrichment", "status": "pending"}
+        
+        enrich_script = SCRIPT_DIR / "llmhive_modeldb_enrich.py"
+        
+        if not enrich_script.exists():
+            step["status"] = "error"
+            step["error"] = f"Enrichment script not found: {enrich_script}"
+            self.run_log["steps"].append(step)
+            raise FileNotFoundError(f"Enrichment script not found: {enrich_script}")
+        
+        args = [
+            "--excel", str(self.excel_path),
+            "--output", str(self.excel_path),
+            "--evals-enabled", "true" if self.evals_enabled else "false",
+            "--telemetry-enabled", "true" if self.telemetry_enabled else "false",
+        ]
+        
+        if self.evals_max_models > 0:
+            args.extend(["--evals-max-models", str(self.evals_max_models)])
+        
+        if self.telemetry_max_models > 0:
+            args.extend(["--telemetry-max-models", str(self.telemetry_max_models)])
+        
+        if self.telemetry_trials:
+            args.extend(["--telemetry-trials", str(self.telemetry_trials)])
+        
+        if self.skip_expensive:
+            args.append("--skip-expensive")
+        
+        if self.dry_run:
+            args.append("--dry-run")
+        
+        returncode, stdout, stderr = run_script(enrich_script, args)
+        
+        step["returncode"] = returncode
+        if stdout:
+            step["stdout_tail"] = stdout[-1000:]
+        if stderr:
+            step["stderr_tail"] = stderr[-1000:]
+        
+        if returncode != 0:
+            step["status"] = "error"
+            logger.error("Enrichment script failed:\n%s", stderr or stdout)
+            self.run_log["steps"].append(step)
+            raise RuntimeError(f"Enrichment script failed with code {returncode}")
+        
+        step["status"] = "success"
+        self.run_log["steps"].append(step)
+        logger.info("Enrichment step completed")
+    
     def _step_validate_updated(self) -> None:
-        """Validate the updated file."""
+        """Validate the updated file using column NAME superset."""
         import pandas as pd
         
         step: Dict[str, Any] = {"step": "validate_updated", "status": "pending"}
@@ -626,9 +740,13 @@ class ModelDBRefreshRunner:
             return
         
         min_rows = 0 if self.allow_row_decrease else self.original_row_count
-        min_cols = self.original_column_count  # Never allow column decrease
+        required_cols = self.original_column_names if self.original_column_names else None
         
-        is_valid, errors = validate_excel(self.excel_path, min_rows=min_rows, min_columns=min_cols)
+        is_valid, errors = validate_excel(
+            self.excel_path, 
+            min_rows=min_rows, 
+            required_column_names=required_cols,
+        )
         
         step["is_valid"] = is_valid
         step["validation_errors"] = errors
@@ -638,7 +756,10 @@ class ModelDBRefreshRunner:
             df = pd.read_excel(self.excel_path)
             step["row_count"] = len(df)
             step["column_count"] = len(df.columns)
+            step["new_columns"] = sorted(list(set(df.columns) - self.original_column_names))
             logger.info("✅ Validation passed: %d rows, %d columns", len(df), len(df.columns))
+            if step["new_columns"]:
+                logger.info("   Added %d new columns", len(step["new_columns"]))
         else:
             step["status"] = "error"
             for err in errors:
@@ -720,6 +841,9 @@ Examples:
     python run_modeldb_refresh.py --dry-run   # Validate without changes
     python run_modeldb_refresh.py             # Full run
     python run_modeldb_refresh.py --skip-update
+    python run_modeldb_refresh.py --skip-enrichment
+    python run_modeldb_refresh.py --evals-enabled false
+    python run_modeldb_refresh.py --telemetry-enabled false
     python run_modeldb_refresh.py --excel custom/path/models.xlsx
         """,
     )
@@ -752,12 +876,54 @@ Examples:
     parser.add_argument(
         "--skip-update",
         action="store_true",
-        help="Skip OpenRouter update step (only run pipeline)",
+        help="Skip OpenRouter update step",
+    )
+    parser.add_argument(
+        "--skip-enrichment",
+        action="store_true",
+        help="Skip enrichment layer (rankings, benchmarks, evals, telemetry)",
     )
     parser.add_argument(
         "--skip-pipeline",
         action="store_true",
-        help="Skip Firestore/Pinecone pipeline step (only run update)",
+        help="Skip Firestore/Pinecone pipeline step",
+    )
+    parser.add_argument(
+        "--evals-enabled",
+        type=str,
+        default="true",
+        choices=["true", "false"],
+        help="Enable eval harness (costs API credits, default: true)",
+    )
+    parser.add_argument(
+        "--telemetry-enabled",
+        type=str,
+        default="true",
+        choices=["true", "false"],
+        help="Enable telemetry probes (costs API credits, default: true)",
+    )
+    parser.add_argument(
+        "--evals-max-models",
+        type=int,
+        default=0,
+        help="Limit number of models for evals (0 = no limit)",
+    )
+    parser.add_argument(
+        "--telemetry-max-models",
+        type=int,
+        default=0,
+        help="Limit number of models for telemetry (0 = no limit)",
+    )
+    parser.add_argument(
+        "--telemetry-trials",
+        type=int,
+        default=3,
+        help="Number of telemetry trials per model (default: 3)",
+    )
+    parser.add_argument(
+        "--skip-expensive",
+        action="store_true",
+        help="Skip expensive models in evals",
     )
     parser.add_argument(
         "--allow-row-decrease",
@@ -832,8 +998,15 @@ Examples:
         cache_dir=args.cache_dir,
         dry_run=args.dry_run,
         skip_update=args.skip_update,
+        skip_enrichment=args.skip_enrichment,
         skip_pipeline=args.skip_pipeline,
         allow_row_decrease=args.allow_row_decrease,
+        evals_enabled=args.evals_enabled.lower() == "true",
+        telemetry_enabled=args.telemetry_enabled.lower() == "true",
+        evals_max_models=args.evals_max_models,
+        telemetry_max_models=args.telemetry_max_models,
+        telemetry_trials=args.telemetry_trials,
+        skip_expensive=args.skip_expensive,
     )
     
     result = runner.run()

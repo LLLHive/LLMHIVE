@@ -18,9 +18,8 @@ tenacity>=8.2.0
 # Environment config
 python-dotenv>=1.0.0
 
-# Hashing utilities (stdlib, but explicit)
-# hashlib - standard library
+# HuggingFace datasets (for leaderboard data)
+datasets>=2.14.0
 
 # Optional: OpenAI for embeddings if not using Pinecone integrated
 openai>=1.0.0
-

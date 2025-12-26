@@ -2,8 +2,10 @@ name: ModelDB Refresh
 
 on:
   schedule:
-    # Run daily at 02:15 UTC
+    # Run daily at 02:15 UTC (rankings, benchmarks - no API costs)
     - cron: '15 2 * * *'
+    # Run weekly on Sundays at 06:00 UTC for full enrichment with evals
+    - cron: '0 6 * * 0'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -12,12 +14,27 @@ on:
         default: 'false'
         type: boolean
       skip_update:
-        description: 'Skip OpenRouter update (only run import)'
+        description: 'Skip OpenRouter update'
+        required: false
+        default: 'false'
+        type: boolean
+      skip_enrichment:
+        description: 'Skip enrichment layer (rankings, benchmarks, evals)'
         required: false
         default: 'false'
         type: boolean
       skip_pipeline:
         description: 'Skip Firestore/Pinecone (only update Excel)'
+        required: false
+        default: 'false'
+        type: boolean
+      evals_enabled:
+        description: 'Enable eval harness (costs API credits)'
+        required: false
+        default: 'false'
+        type: boolean
+      telemetry_enabled:
+        description: 'Enable telemetry probes (costs API credits)'
         required: false
         default: 'false'
         type: boolean
@@ -57,6 +74,20 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
         continue-on-error: true
       
+      - name: Determine run mode
+        id: run-mode
+        run: |
+          # Check if this is the weekly Sunday run for full enrichment
+          if [ "${{ github.event.schedule }}" == "0 6 * * 0" ]; then
+            echo "mode=weekly" >> $GITHUB_OUTPUT
+            echo "evals=true" >> $GITHUB_OUTPUT
+            echo "telemetry=true" >> $GITHUB_OUTPUT
+          else
+            echo "mode=daily" >> $GITHUB_OUTPUT
+            echo "evals=${{ inputs.evals_enabled || 'false' }}" >> $GITHUB_OUTPUT
+            echo "telemetry=${{ inputs.telemetry_enabled || 'false' }}" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Run ModelDB Refresh
         env:
           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
@@ -74,8 +105,23 @@ jobs:
           if [ "${{ inputs.skip_update }}" == "true" ]; then
             ARGS="$ARGS --skip-update"
           fi
+          if [ "${{ inputs.skip_enrichment }}" == "true" ]; then
+            ARGS="$ARGS --skip-enrichment"
+          fi
           if [ "${{ inputs.skip_pipeline }}" == "true" ]; then
             ARGS="$ARGS --skip-pipeline"
+          fi
+          
+          # Evals and telemetry flags
+          ARGS="$ARGS --evals-enabled ${{ steps.run-mode.outputs.evals }}"
+          ARGS="$ARGS --telemetry-enabled ${{ steps.run-mode.outputs.telemetry }}"
+          
+          # Limit evals/telemetry to control costs
+          if [ "${{ steps.run-mode.outputs.evals }}" == "true" ]; then
+            ARGS="$ARGS --evals-max-models 50"
+          fi
+          if [ "${{ steps.run-mode.outputs.telemetry }}" == "true" ]; then
+            ARGS="$ARGS --telemetry-max-models 50 --telemetry-trials 3"
           fi
           
           # If GCP auth failed, skip pipeline (Firestore/Pinecone)
@@ -84,6 +130,7 @@ jobs:
             ARGS="$ARGS --skip-pipeline"
           fi
           
+          echo "Running: python run_modeldb_refresh.py $ARGS --verbose"
           python run_modeldb_refresh.py $ARGS --verbose
       
       - name: Upload run logs
@@ -94,6 +141,7 @@ jobs:
           path: |
             data/modeldb/archives/refresh_runlog_*.json
             data/modeldb/archives/modeldb_runlog_*.json
+            data/modeldb/archives/enrich_runlog_*.json
           retention-days: 30
           if-no-files-found: ignore
       
