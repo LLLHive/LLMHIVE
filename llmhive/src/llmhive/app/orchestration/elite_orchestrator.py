@@ -29,8 +29,23 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TYPE_CHECKIN
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
     from .openrouter_selector import OpenRouterModelSelector, SelectionResult
+    from .reasoning_strategies_controller import ReasoningStrategiesController
 
 logger = logging.getLogger(__name__)
+
+# Try to import reasoning strategies controller for enhanced selection
+try:
+    from .reasoning_strategies_controller import (
+        get_strategy_controller,
+        TraceLogTags,
+        REASONING_METHODS_DB,
+    )
+    REASONING_STRATEGIES_AVAILABLE = True
+except ImportError:
+    REASONING_STRATEGIES_AVAILABLE = False
+    get_strategy_controller = None  # type: ignore
+    TraceLogTags = None  # type: ignore
+    REASONING_METHODS_DB = None  # type: ignore
 
 
 # ==============================================================================
@@ -353,6 +368,7 @@ class EliteOrchestrator:
         *,
         use_openrouter_rankings: bool = False,
         db_session: Optional["Session"] = None,
+        use_reasoning_strategies: bool = True,
     ) -> None:
         """Initialize elite orchestrator.
         
@@ -362,12 +378,21 @@ class EliteOrchestrator:
             enable_learning: Whether to use historical performance data
             use_openrouter_rankings: Enable dynamic model selection from OpenRouter
             db_session: Database session for OpenRouter rankings
+            use_reasoning_strategies: Enable Q4 2025 reasoning strategies controller
+                for enhanced strategy selection, fallback handling, and trace logging
         """
         self.providers = providers
         self.performance_tracker = performance_tracker
         self.enable_learning = enable_learning
         self.use_openrouter_rankings = use_openrouter_rankings
         self.db_session = db_session
+        
+        # Q4 2025: Reasoning strategies controller integration
+        self.use_reasoning_strategies = use_reasoning_strategies and REASONING_STRATEGIES_AVAILABLE
+        self._reasoning_controller: Optional["ReasoningStrategiesController"] = None
+        if self.use_reasoning_strategies:
+            self._reasoning_controller = get_strategy_controller()
+            logger.info("Elite orchestrator initialized with reasoning strategies controller")
         
         # OpenRouter selector (lazy initialization)
         self._openrouter_selector: Optional["OpenRouterModelSelector"] = None
@@ -626,9 +651,18 @@ class EliteOrchestrator:
         
         # Auto-select strategy based on task type
         if strategy in ("auto", "automatic", "dynamic"):
-            strategy = self._select_strategy(task_type, len(models), prompt)
+            strategy = self._select_strategy(task_type, len(models), prompt, models)
         
         performance_notes.append(f"Strategy: {strategy}")
+        
+        # Q4 2025: Add trace logging tags if reasoning strategies controller is active
+        if self.use_reasoning_strategies and self._reasoning_controller and TraceLogTags:
+            trace_tags = TraceLogTags.format_tags(
+                reasoning_method=strategy,
+                strategy_source="elite_orchestrator",
+                models_used=models[:3],  # Log first 3 models
+            )
+            performance_notes.append(f"Trace: {trace_tags.get('reasoning_method')}")
         
         # Execute strategy
         if strategy == "single_best":
@@ -677,8 +711,52 @@ class EliteOrchestrator:
         task_type: str,
         num_models: int,
         prompt: str,
+        available_models: Optional[List[str]] = None,
     ) -> str:
-        """Auto-select the best strategy for the task."""
+        """Auto-select the best strategy for the task.
+        
+        Uses the Q4 2025 reasoning strategies controller if available,
+        falling back to heuristic selection otherwise.
+        """
+        # Q4 2025: Use reasoning strategies controller for enhanced selection
+        if self.use_reasoning_strategies and self._reasoning_controller:
+            try:
+                # Determine complexity
+                prompt_lower = prompt.lower()
+                complexity = "simple"
+                if len(prompt) > 500 or prompt.count("?") > 1:
+                    complexity = "complex"
+                elif any(word in prompt_lower for word in ["explain", "analyze", "compare"]):
+                    complexity = "medium"
+                
+                # Get strategy recommendation
+                recommendation = self._reasoning_controller.select_strategy(
+                    query=prompt,
+                    task_type=task_type,
+                    complexity=complexity,
+                    available_models=available_models,
+                    prefer_speed=any(w in prompt_lower for w in ["quick", "fast", "brief"]),
+                    prefer_quality=any(w in prompt_lower for w in ["thorough", "detailed", "comprehensive"]),
+                )
+                
+                # Map reasoning method to orchestration strategy
+                method = recommendation.get("strategy", "chain_of_thought")
+                orchestration_strategy = self._map_reasoning_to_orchestration(method, num_models)
+                
+                logger.debug(
+                    "Reasoning controller selected %s -> %s (source: %s)",
+                    method,
+                    orchestration_strategy,
+                    recommendation.get("source"),
+                )
+                
+                return orchestration_strategy
+                
+            except Exception as e:
+                logger.warning("Reasoning controller failed, using fallback: %s", e)
+                # Fall through to heuristic selection
+        
+        # Legacy heuristic selection
         prompt_lower = prompt.lower()
         
         # Fast response needed
@@ -704,6 +782,46 @@ class EliteOrchestrator:
             return "quality_weighted_fusion"
         
         return "single_best"
+    
+    def _map_reasoning_to_orchestration(
+        self,
+        reasoning_method: str,
+        num_models: int,
+    ) -> str:
+        """Map a reasoning method to an orchestration strategy.
+        
+        The reasoning strategies controller suggests methods like 'self_consistency',
+        'tree_of_thoughts', etc. This maps them to the orchestration strategies
+        that the EliteOrchestrator can execute.
+        """
+        # Direct mappings for orchestration strategies
+        orchestration_mappings = {
+            # Self-consistency → best_of_n (generate multiple, vote)
+            "self_consistency": "best_of_n",
+            # Debate → expert_panel (multiple models, synthesis)
+            "debate": "expert_panel" if num_models >= 2 else "challenge_and_refine",
+            # Mixture → expert_panel (combine strategies)
+            "mixture": "expert_panel" if num_models >= 3 else "quality_weighted_fusion",
+            # Tree of thoughts → challenge_and_refine (explore, evaluate)
+            "tree_of_thoughts": "challenge_and_refine",
+            # Reflection → challenge_and_refine (generate, critique)
+            "reflection": "challenge_and_refine",
+            # Step verification → challenge_and_refine (verify each step)
+            "step_verification": "challenge_and_refine",
+            # Best of N → best_of_n
+            "best_of_n": "best_of_n",
+            # Progressive → quality_weighted_fusion (adaptive)
+            "progressive_deepening": "quality_weighted_fusion",
+            # Simple methods → single_best
+            "chain_of_thought": "single_best",
+            "rag": "single_best",  # RAG is handled at a different layer
+            "react": "single_best",  # ReAct is handled at tool layer
+            "pal": "single_best",  # PAL is handled at code layer
+            "deepconf": "expert_panel" if num_models >= 2 else "challenge_and_refine",
+            "self_refine": "challenge_and_refine",
+        }
+        
+        return orchestration_mappings.get(reasoning_method, "quality_weighted_fusion")
     
     async def _single_best_strategy(
         self,
