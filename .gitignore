@@ -18,6 +18,12 @@ pnpm-debug.log*
 # Local env files
 .env*.local
 .env
+!.env.example
+
+# ModelDB specific env files
+data/modeldb/.env
+data/modeldb/.env.*
+!data/modeldb/.env.example
 
 # Vercel
 .vercel

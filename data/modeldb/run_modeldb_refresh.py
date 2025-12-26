@@ -11,14 +11,16 @@ This script orchestrates the complete ModelDB refresh workflow:
 
 Usage:
     python run_modeldb_refresh.py
-    python run_modeldb_refresh.py --excel path/to/models.xlsx
-    python run_modeldb_refresh.py --dry-run
-    python run_modeldb_refresh.py --skip-update  # Only run pipeline, skip OpenRouter fetch
+    python run_modeldb_refresh.py --doctor          # Check environment
+    python run_modeldb_refresh.py --dry-run         # Validate without changes
+    python run_modeldb_refresh.py --skip-update     # Only run pipeline
+    python run_modeldb_refresh.py --skip-pipeline   # Only update Excel
 
 Guardrails:
 - If row count decreases: FAIL and restore archive
 - If required columns missing: FAIL
 - If duplicate slugs detected: FAIL
+- If .env missing for real runs: FAIL with helpful message
 """
 from __future__ import annotations
 
@@ -31,30 +33,290 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
-
-import pandas as pd
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger("modeldb_refresh")
+from typing import Optional, Tuple, List, Dict, Any
 
 # =============================================================================
 # Constants
 # =============================================================================
 
-# Default paths (relative to this script's directory)
 SCRIPT_DIR = Path(__file__).parent.resolve()
 DEFAULT_EXCEL = SCRIPT_DIR / "LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx"
 DEFAULT_ARCHIVE_DIR = SCRIPT_DIR / "archives"
 DEFAULT_CACHE_DIR = Path(".cache/llmhive_modeldb")
+ENV_FILE = SCRIPT_DIR / ".env"
+ENV_EXAMPLE_FILE = SCRIPT_DIR / ".env.example"
 
 # Required columns for validation
 REQUIRED_COLUMNS = ["openrouter_slug"]
+
+# Environment variables and their requirements
+ENV_REQUIREMENTS = {
+    "GOOGLE_APPLICATION_CREDENTIALS": {
+        "required_for": ["pipeline"],
+        "description": "Path to GCP service account JSON",
+        "is_file": True,
+    },
+    "PINECONE_API_KEY": {
+        "required_for": ["pipeline"],
+        "description": "Pinecone API key",
+        "is_file": False,
+    },
+    "OPENROUTER_API_KEY": {
+        "required_for": ["update"],
+        "description": "OpenRouter API key (optional but recommended)",
+        "is_file": False,
+    },
+    "GOOGLE_CLOUD_PROJECT": {
+        "required_for": [],
+        "description": "GCP project ID (default: llmhive-orchestrator)",
+        "is_file": False,
+    },
+    "PINECONE_INDEX_NAME": {
+        "required_for": [],
+        "description": "Pinecone index name (default: modeldb-embeddings)",
+        "is_file": False,
+    },
+    "MODELDB_EMBEDDINGS_ENABLED": {
+        "required_for": [],
+        "description": "Enable Pinecone embeddings (default: true)",
+        "is_file": False,
+    },
+}
+
+
+# =============================================================================
+# Environment Loading
+# =============================================================================
+
+
+def load_dotenv_safely() -> Tuple[bool, str]:
+    """
+    Load .env file if present.
+    
+    Returns:
+        (success, message) tuple
+    """
+    try:
+        from dotenv import load_dotenv
+        
+        if ENV_FILE.exists():
+            load_dotenv(ENV_FILE)
+            return True, f"Loaded environment from {ENV_FILE}"
+        else:
+            return False, f".env file not found at {ENV_FILE}"
+    except ImportError:
+        return False, "python-dotenv not installed. Run: pip install python-dotenv"
+
+
+def check_required_env_vars(skip_update: bool, skip_pipeline: bool, dry_run: bool) -> Tuple[bool, List[str]]:
+    """
+    Check if required environment variables are set.
+    
+    Returns:
+        (all_ok, list_of_issues) tuple
+    """
+    issues = []
+    
+    if dry_run:
+        # Dry run doesn't need secrets
+        return True, []
+    
+    for var_name, config in ENV_REQUIREMENTS.items():
+        required_for = config["required_for"]
+        
+        # Check if this var is needed based on what we're running
+        needed = False
+        if "update" in required_for and not skip_update:
+            needed = True
+        if "pipeline" in required_for and not skip_pipeline:
+            needed = True
+        
+        # Skip optional vars
+        if not required_for:
+            continue
+        
+        if needed:
+            value = os.getenv(var_name)
+            if not value:
+                issues.append(f"  {var_name}: MISSING ({config['description']})")
+            elif config.get("is_file") and not Path(value).exists():
+                issues.append(f"  {var_name}: FILE NOT FOUND at {value}")
+    
+    return len(issues) == 0, issues
+
+
+# =============================================================================
+# Doctor Mode
+# =============================================================================
+
+
+def run_doctor() -> int:
+    """
+    Run diagnostics and print environment status.
+    
+    Returns exit code: 0 if healthy, 2 if issues found.
+    """
+    print("=" * 70)
+    print("LLMHive ModelDB Pipeline - Doctor Mode")
+    print("=" * 70)
+    print()
+    
+    issues = []
+    
+    # Python info
+    print("🐍 Python Environment")
+    print(f"   Executable: {sys.executable}")
+    
+    # Check if in venv
+    in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+    venv_status = "✅ Active" if in_venv else "⚠️  Not in virtual environment"
+    print(f"   Virtual Env: {venv_status}")
+    print()
+    
+    # Check dependencies
+    print("📦 Dependencies")
+    deps_to_check = [
+        ("pandas", "Data manipulation"),
+        ("openpyxl", "Excel read/write"),
+        ("requests", "HTTP client"),
+        ("tenacity", "Retry logic"),
+        ("dotenv", "Environment loading"),
+        ("google.cloud.firestore", "Firestore client"),
+        ("pinecone", "Pinecone vector DB"),
+    ]
+    
+    for module_name, desc in deps_to_check:
+        try:
+            __import__(module_name.replace(".", "_") if "." in module_name else module_name)
+            print(f"   ✅ {module_name}: installed")
+        except ImportError:
+            print(f"   ❌ {module_name}: NOT INSTALLED ({desc})")
+            issues.append(f"Missing dependency: {module_name}")
+    print()
+    
+    # Check files
+    print("📁 Files")
+    
+    # Canonical Excel
+    if DEFAULT_EXCEL.exists():
+        import pandas as pd
+        try:
+            df = pd.read_excel(DEFAULT_EXCEL)
+            print(f"   ✅ Canonical Excel: {DEFAULT_EXCEL.name}")
+            print(f"      Rows: {len(df)}, Columns: {len(df.columns)}")
+        except Exception as e:
+            print(f"   ⚠️  Canonical Excel exists but unreadable: {e}")
+            issues.append(f"Excel file unreadable: {e}")
+    else:
+        print(f"   ⚠️  Canonical Excel: NOT FOUND")
+        print(f"      Expected: {DEFAULT_EXCEL}")
+        issues.append("Canonical Excel file missing")
+    
+    # Archive dir
+    if DEFAULT_ARCHIVE_DIR.exists():
+        archive_count = len(list(DEFAULT_ARCHIVE_DIR.glob("*.xlsx")))
+        log_count = len(list(DEFAULT_ARCHIVE_DIR.glob("*.json")))
+        print(f"   ✅ Archive Dir: exists ({archive_count} Excel, {log_count} logs)")
+        
+        # Check writable
+        test_file = DEFAULT_ARCHIVE_DIR / ".write_test"
+        try:
+            test_file.touch()
+            test_file.unlink()
+            print(f"      Writable: ✅")
+        except Exception:
+            print(f"      Writable: ❌")
+            issues.append("Archive directory not writable")
+    else:
+        print(f"   ⚠️  Archive Dir: will be created at {DEFAULT_ARCHIVE_DIR}")
+    print()
+    
+    # Environment
+    print("🔐 Environment Configuration")
+    
+    # .env file
+    if ENV_FILE.exists():
+        print(f"   ✅ .env file: exists at {ENV_FILE}")
+    else:
+        print(f"   ❌ .env file: NOT FOUND")
+        if ENV_EXAMPLE_FILE.exists():
+            print(f"      To fix, run:")
+            print(f"      cp {ENV_EXAMPLE_FILE} {ENV_FILE}")
+        else:
+            print(f"      Create from template and fill in secrets")
+        issues.append(".env file missing")
+    
+    # Load .env and check vars
+    load_dotenv_safely()
+    print()
+    print("   Environment Variables:")
+    
+    for var_name, config in ENV_REQUIREMENTS.items():
+        value = os.getenv(var_name)
+        required_for = config["required_for"]
+        
+        if value:
+            # Don't print secrets
+            if "KEY" in var_name or "CREDENTIALS" in var_name:
+                display = f"SET ({len(value)} chars)"
+            else:
+                display = f"SET = {value}"
+            
+            # Check if file exists for file-type vars
+            if config.get("is_file"):
+                if Path(value).exists():
+                    display += " ✓ file exists"
+                else:
+                    display += " ✗ FILE NOT FOUND"
+                    issues.append(f"{var_name} points to missing file")
+            
+            status = "✅"
+        else:
+            if required_for:
+                status = "⚠️ "
+                display = f"MISSING (needed for: {', '.join(required_for)})"
+            else:
+                status = "ℹ️ "
+                display = "not set (optional)"
+        
+        print(f"   {status} {var_name}: {display}")
+    print()
+    
+    # Summary
+    print("=" * 70)
+    if issues:
+        print("❌ ISSUES FOUND:")
+        for issue in issues:
+            print(f"   • {issue}")
+        print()
+        print("Fix the issues above and run --doctor again.")
+        return 2
+    else:
+        print("✅ ALL CHECKS PASSED - Ready to run!")
+        print()
+        print("Next steps:")
+        print("  python run_modeldb_refresh.py --dry-run   # Test without changes")
+        print("  python run_modeldb_refresh.py             # Full run")
+        return 0
+
+
+# =============================================================================
+# Logging Setup
+# =============================================================================
+
+
+def setup_logging(verbose: bool = False) -> logging.Logger:
+    """Configure and return logger."""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )
+    return logging.getLogger("modeldb_refresh")
+
+
+logger = logging.getLogger("modeldb_refresh")
 
 
 # =============================================================================
@@ -63,11 +325,7 @@ REQUIRED_COLUMNS = ["openrouter_slug"]
 
 
 def archive_file(source: Path, archive_dir: Path) -> Optional[Path]:
-    """
-    Create a timestamped archive copy of a file.
-    
-    Returns the archive path, or None if source doesn't exist.
-    """
+    """Create a timestamped archive copy of a file."""
     if not source.exists():
         logger.warning("Source file not found, skipping archive: %s", source)
         return None
@@ -95,12 +353,10 @@ def restore_from_archive(archive_path: Path, target: Path) -> bool:
     return True
 
 
-def validate_excel(path: Path, min_rows: int = 0) -> tuple[bool, list[str]]:
-    """
-    Validate an Excel file meets requirements.
+def validate_excel(path: Path, min_rows: int = 0, min_columns: int = 0) -> Tuple[bool, List[str]]:
+    """Validate an Excel file meets requirements."""
+    import pandas as pd
     
-    Returns (is_valid, list_of_errors)
-    """
     errors = []
     
     if not path.exists():
@@ -122,6 +378,10 @@ def validate_excel(path: Path, min_rows: int = 0) -> tuple[bool, list[str]]:
     if len(df) < min_rows:
         errors.append(f"Row count decreased: {len(df)} < {min_rows}")
     
+    # Check column count
+    if len(df.columns) < min_columns:
+        errors.append(f"Column count decreased: {len(df.columns)} < {min_columns}")
+    
     # Check for duplicate slugs
     if "openrouter_slug" in df.columns:
         duplicates = df["openrouter_slug"].dropna().duplicated()
@@ -133,12 +393,8 @@ def validate_excel(path: Path, min_rows: int = 0) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
-def run_script(script_path: Path, args: list[str], cwd: Optional[Path] = None) -> tuple[int, str, str]:
-    """
-    Run a Python script as subprocess.
-    
-    Returns (return_code, stdout, stderr)
-    """
+def run_script(script_path: Path, args: List[str], cwd: Optional[Path] = None) -> Tuple[int, str, str]:
+    """Run a Python script as subprocess."""
     cmd = [sys.executable, str(script_path)] + args
     logger.info("Running: %s", " ".join(cmd))
     
@@ -180,8 +436,9 @@ class ModelDBRefreshRunner:
         
         self.archive_path: Optional[Path] = None
         self.original_row_count = 0
+        self.original_column_count = 0
         
-        self.run_log = {
+        self.run_log: Dict[str, Any] = {
             "started_at": None,
             "completed_at": None,
             "excel_path": str(self.excel_path),
@@ -191,8 +448,10 @@ class ModelDBRefreshRunner:
             "errors": [],
         }
     
-    def run(self) -> dict:
+    def run(self) -> Dict[str, Any]:
         """Execute the full refresh workflow."""
+        import pandas as pd
+        
         self.run_log["started_at"] = datetime.now(timezone.utc).isoformat()
         
         logger.info("=" * 70)
@@ -255,7 +514,9 @@ class ModelDBRefreshRunner:
     
     def _step_validate_existing(self) -> None:
         """Validate existing Excel file."""
-        step = {"step": "validate_existing", "status": "pending"}
+        import pandas as pd
+        
+        step: Dict[str, Any] = {"step": "validate_existing", "status": "pending"}
         
         if not self.excel_path.exists():
             logger.info("No existing Excel file, will create new")
@@ -267,23 +528,24 @@ class ModelDBRefreshRunner:
         try:
             df = pd.read_excel(self.excel_path)
             self.original_row_count = len(df)
-            logger.info("Existing file has %d rows", self.original_row_count)
+            self.original_column_count = len(df.columns)
+            logger.info("Existing file has %d rows, %d columns", 
+                       self.original_row_count, self.original_column_count)
             
             step["status"] = "success"
             step["row_count"] = self.original_row_count
-            step["column_count"] = len(df.columns)
+            step["column_count"] = self.original_column_count
             
         except Exception as e:
             step["status"] = "error"
             step["error"] = str(e)
-            # Don't fail here, file might be corrupted and we want to replace it
             logger.warning("Could not read existing file: %s", e)
         
         self.run_log["steps"].append(step)
     
     def _step_archive(self) -> None:
         """Archive existing file."""
-        step = {"step": "archive", "status": "pending"}
+        step: Dict[str, Any] = {"step": "archive", "status": "pending"}
         
         if self.dry_run:
             logger.info("[DRY RUN] Would archive %s", self.excel_path)
@@ -309,7 +571,7 @@ class ModelDBRefreshRunner:
     
     def _step_update(self) -> None:
         """Run the update script."""
-        step = {"step": "update", "status": "pending"}
+        step: Dict[str, Any] = {"step": "update", "status": "pending"}
         
         update_script = SCRIPT_DIR / "llmhive_modeldb_update.py"
         
@@ -352,7 +614,9 @@ class ModelDBRefreshRunner:
     
     def _step_validate_updated(self) -> None:
         """Validate the updated file."""
-        step = {"step": "validate_updated", "status": "pending"}
+        import pandas as pd
+        
+        step: Dict[str, Any] = {"step": "validate_updated", "status": "pending"}
         
         if self.dry_run:
             logger.info("[DRY RUN] Would validate updated file")
@@ -362,7 +626,9 @@ class ModelDBRefreshRunner:
             return
         
         min_rows = 0 if self.allow_row_decrease else self.original_row_count
-        is_valid, errors = validate_excel(self.excel_path, min_rows=min_rows)
+        min_cols = self.original_column_count  # Never allow column decrease
+        
+        is_valid, errors = validate_excel(self.excel_path, min_rows=min_rows, min_columns=min_cols)
         
         step["is_valid"] = is_valid
         step["validation_errors"] = errors
@@ -372,7 +638,7 @@ class ModelDBRefreshRunner:
             df = pd.read_excel(self.excel_path)
             step["row_count"] = len(df)
             step["column_count"] = len(df.columns)
-            logger.info("Validation passed: %d rows, %d columns", len(df), len(df.columns))
+            logger.info("✅ Validation passed: %d rows, %d columns", len(df), len(df.columns))
         else:
             step["status"] = "error"
             for err in errors:
@@ -384,7 +650,7 @@ class ModelDBRefreshRunner:
     
     def _step_pipeline(self) -> None:
         """Run the pipeline script."""
-        step = {"step": "pipeline", "status": "pending"}
+        step: Dict[str, Any] = {"step": "pipeline", "status": "pending"}
         
         pipeline_script = SCRIPT_DIR / "llmhive_modeldb_pipeline.py"
         
@@ -450,13 +716,19 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    python run_modeldb_refresh.py
-    python run_modeldb_refresh.py --dry-run
+    python run_modeldb_refresh.py --doctor    # Check environment first
+    python run_modeldb_refresh.py --dry-run   # Validate without changes
+    python run_modeldb_refresh.py             # Full run
     python run_modeldb_refresh.py --skip-update
     python run_modeldb_refresh.py --excel custom/path/models.xlsx
         """,
     )
     
+    parser.add_argument(
+        "--doctor",
+        action="store_true",
+        help="Run diagnostics and check environment (then exit)",
+    )
     parser.add_argument(
         "--excel",
         type=Path,
@@ -500,18 +772,58 @@ Examples:
     
     args = parser.parse_args()
     
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    # Setup logging
+    setup_logging(args.verbose)
     
-    # Load .env if present
-    try:
-        from dotenv import load_dotenv
-        env_path = SCRIPT_DIR / ".env"
-        if env_path.exists():
-            load_dotenv(env_path)
-            logger.info("Loaded environment from %s", env_path)
-    except ImportError:
-        pass
+    # Doctor mode - run diagnostics and exit
+    if args.doctor:
+        sys.exit(run_doctor())
+    
+    # Load .env automatically
+    env_loaded, env_message = load_dotenv_safely()
+    if env_loaded:
+        logger.info(env_message)
+    else:
+        if not args.dry_run:
+            # For real runs, .env is required
+            logger.warning(env_message)
+    
+    # Check required environment variables for non-dry runs
+    if not args.dry_run:
+        env_ok, env_issues = check_required_env_vars(
+            skip_update=args.skip_update,
+            skip_pipeline=args.skip_pipeline,
+            dry_run=args.dry_run,
+        )
+        
+        if not env_ok and not ENV_FILE.exists():
+            logger.error("")
+            logger.error("=" * 70)
+            logger.error("❌ MISSING CONFIGURATION")
+            logger.error("=" * 70)
+            logger.error("")
+            logger.error("The .env file is required for real runs.")
+            logger.error("")
+            logger.error("To fix, run:")
+            if ENV_EXAMPLE_FILE.exists():
+                logger.error(f"  cp {ENV_EXAMPLE_FILE} {ENV_FILE}")
+            else:
+                logger.error(f"  Create {ENV_FILE} with required secrets")
+            logger.error("")
+            logger.error("Then edit the file and fill in your API keys.")
+            logger.error("")
+            logger.error("Alternatively, run with --dry-run to validate without secrets:")
+            logger.error("  python run_modeldb_refresh.py --dry-run")
+            logger.error("")
+            sys.exit(1)
+        
+        if not env_ok:
+            logger.warning("")
+            logger.warning("Missing environment variables:")
+            for issue in env_issues:
+                logger.warning(issue)
+            logger.warning("")
+            logger.warning("Some features may not work. Run --doctor for full diagnostics.")
     
     # Run
     runner = ModelDBRefreshRunner(
@@ -532,4 +844,3 @@ Examples:
 
 if __name__ == "__main__":
     main()
-

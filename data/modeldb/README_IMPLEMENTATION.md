@@ -10,104 +10,64 @@ This pipeline maintains the LLMHive model catalog:
 2. **Firestore** → Queryable document store for runtime lookups
 3. **Pinecone** → Semantic embeddings for intelligent model routing
 
-## Quick Start
+## Quick Start (Local Development)
 
-### Prerequisites
-
-1. Python 3.10+
-2. Google Cloud credentials (Firestore access)
-3. Pinecone API key
-4. (Optional) OpenRouter API key for model enrichment
-
-### Setup
+### Step 1: Set Up Python Environment
 
 ```bash
-# Navigate to modeldb directory
-cd data/modeldb
-
-# Create virtual environment
+# From the repo root
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys
+pip install -r data/modeldb/requirements.txt
 ```
 
-### Run the Pipeline
-
-**One command does it all:**
+### Step 2: Configure Environment
 
 ```bash
-python run_modeldb_refresh.py
+# Copy the example config
+cp data/modeldb/.env.example data/modeldb/.env
+
+# Edit with your API keys
+# Required: GOOGLE_APPLICATION_CREDENTIALS, PINECONE_API_KEY
+# Optional: OPENROUTER_API_KEY
+nano data/modeldb/.env  # or use your editor
 ```
 
-This will:
-1. ✅ Archive the current Excel (timestamped backup)
-2. ✅ Fetch latest models from OpenRouter
-3. ✅ Validate no data loss (rows/columns preserved)
-4. ✅ Upsert to Firestore (`model_catalog` collection)
-5. ✅ Upsert to Pinecone (semantic embeddings)
-6. ✅ Write run log to `archives/`
-
-**Options:**
+### Step 3: Run Doctor to Verify Setup
 
 ```bash
-# Dry run (validate without writing)
-python run_modeldb_refresh.py --dry-run
-
-# Skip OpenRouter update (only run Firestore/Pinecone import)
-python run_modeldb_refresh.py --skip-update
-
-# Skip Firestore/Pinecone (only update Excel)
-python run_modeldb_refresh.py --skip-pipeline
-
-# Custom Excel path
-python run_modeldb_refresh.py --excel /path/to/models.xlsx
-
-# Verbose logging
-python run_modeldb_refresh.py -v
+python data/modeldb/run_modeldb_refresh.py --doctor
 ```
 
-## Individual Scripts
+Expected output when healthy:
+```
+✅ ALL CHECKS PASSED - Ready to run!
+```
 
-### 1. Update Script (`llmhive_modeldb_update.py`)
-
-Enriches Excel with OpenRouter data:
+### Step 4: Dry Run (Validate Without Changes)
 
 ```bash
-# Update existing Excel
-python llmhive_modeldb_update.py --previous models.xlsx --output models_updated.xlsx
-
-# Create new from OpenRouter
-python llmhive_modeldb_update.py --from-openrouter --output models_new.xlsx
+python data/modeldb/run_modeldb_refresh.py --dry-run
 ```
 
-### 2. Pipeline Script (`llmhive_modeldb_pipeline.py`)
-
-Imports Excel to Firestore + Pinecone:
+### Step 5: Full Run
 
 ```bash
-# Full import
-python llmhive_modeldb_pipeline.py --excel models.xlsx
-
-# Firestore only (skip Pinecone)
-python llmhive_modeldb_pipeline.py --excel models.xlsx --firestore-only
-
-# Dry run
-python llmhive_modeldb_pipeline.py --excel models.xlsx --dry-run
+python data/modeldb/run_modeldb_refresh.py
 ```
 
-### 3. Import Script (`llmhive_modeldb_import.py`)
+## Commands Reference
 
-Alias for pipeline script (backwards compatibility):
-
-```bash
-python llmhive_modeldb_import.py --excel models.xlsx
-```
+| Command | Description |
+|---------|-------------|
+| `python data/modeldb/run_modeldb_refresh.py --doctor` | Check environment and dependencies |
+| `python data/modeldb/run_modeldb_refresh.py --dry-run` | Validate without making changes |
+| `python data/modeldb/run_modeldb_refresh.py` | Full refresh: OpenRouter → Excel → Firestore + Pinecone |
+| `python data/modeldb/run_modeldb_refresh.py --skip-update` | Skip OpenRouter fetch, only sync to Firestore/Pinecone |
+| `python data/modeldb/run_modeldb_refresh.py --skip-pipeline` | Only update Excel, skip Firestore/Pinecone |
+| `python data/modeldb/run_modeldb_refresh.py -v` | Verbose logging |
 
 ## Environment Variables
 
@@ -120,32 +80,67 @@ python llmhive_modeldb_import.py --excel models.xlsx
 | `OPENROUTER_API_KEY` | No | For model enrichment |
 | `MODELDB_EMBEDDINGS_ENABLED` | No | Set to `false` to skip embeddings |
 
-\* Not required if running in Cloud Run with default service account
+\* Not required in Cloud Run with default service account
 
-## Data Guarantees
+## NO DATA LOSS Guarantees
 
-### NO DATA LOSS
+The pipeline enforces strict data integrity:
 
-- ✅ All rows preserved across updates
-- ✅ All columns preserved across updates
-- ✅ New columns added with provenance tracking
-- ✅ Values never overwritten with nulls
-- ✅ Duplicate slugs detected and rejected
-- ✅ Row count decrease = hard failure + rollback
+| Guarantee | Enforcement |
+|-----------|-------------|
+| ✅ All rows preserved | Row count cannot decrease (hard fail + rollback) |
+| ✅ All columns preserved | Column count cannot decrease (hard fail + rollback) |
+| ✅ No null overwrites | Existing non-null values never replaced with null |
+| ✅ Duplicate detection | Duplicate slugs cause hard failure |
+| ✅ Automatic rollback | On any failure, archived Excel is restored |
 
 ### Provenance Tracking
 
-Enriched fields include:
+Enriched fields include provenance metadata:
 - `*_source_name` - Where the data came from
 - `*_source_url` - API endpoint or URL
-- `*_retrieved_at` - ISO timestamp
+- `*_retrieved_at` - ISO timestamp of retrieval
 - `*_confidence` - Confidence score (if applicable)
 
-### Idempotent Operations
+## How Rollback Works
 
-- Safe to run repeatedly
-- Uses deterministic document IDs
-- Upsert semantics (merge, not replace)
+1. **Before any modification**: The Excel file is archived with timestamp
+   - Example: `archives/LLMHive_..._20251225T120000Z.xlsx`
+
+2. **On failure**: The pipeline automatically restores the archived version
+   - You'll see: `Rollback successful`
+
+3. **Manual rollback**:
+   ```bash
+   # List archives
+   ls -la data/modeldb/archives/*.xlsx
+   
+   # Restore specific archive
+   cp data/modeldb/archives/LLMHive_*_YYYYMMDDTHHMMSSZ.xlsx \
+      data/modeldb/LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx
+   ```
+
+## Verifying Results
+
+### Check Firestore
+
+```python
+from google.cloud import firestore
+db = firestore.Client(project="llmhive-orchestrator")
+docs = db.collection("model_catalog").limit(5).stream()
+for doc in docs:
+    print(f"{doc.id}: {doc.to_dict().get('openrouter_slug')}")
+```
+
+### Check Pinecone
+
+```python
+from pinecone import Pinecone
+pc = Pinecone(api_key="YOUR_KEY")
+index = pc.Index("modeldb-embeddings")
+stats = index.describe_index_stats()
+print(f"Total vectors: {stats.total_vector_count}")
+```
 
 ## Firestore Schema
 
@@ -173,18 +168,7 @@ Enriched fields include:
 }
 ```
 
-**Collection: `model_catalog_payloads`** (overflow)
-
-If payload exceeds Firestore document limit (~1MB), the full payload is stored separately:
-
-```json
-{
-  "model_id": "abc123...",
-  "payload": { /* full data */ },
-  "payload_sha256": "abc123...",
-  "stored_at": "2025-12-25T00:00:00Z"
-}
-```
+**Collection: `model_catalog_payloads`** (overflow for large docs)
 
 ## Pinecone Schema
 
@@ -193,81 +177,58 @@ If payload exceeds Firestore document limit (~1MB), the full payload is stored s
 - Uses integrated embeddings (`llama-text-embed-v2`)
 - Namespace: `model_catalog`
 
-**Record format:**
-```json
-{
-  "_id": "abc123...",
-  "content": "Model: gpt-4o\nProvider: openai\n...",
-  "model_id": "abc123...",
-  "openrouter_slug": "openai/gpt-4o",
-  "provider_name": "openai",
-  "max_context_tokens": 128000,
-  "price_input_usd_per_1m": 2.5,
-  "price_output_usd_per_1m": 10.0
-}
-```
-
-## Rollback
-
-If the pipeline fails:
-1. Errors are logged
-2. Archive copy is automatically restored
-3. Run log captures failure details
-
-Manual rollback:
-```bash
-# List archives
-ls -la archives/
-
-# Restore specific archive
-cp archives/models_20251225T120000Z.xlsx LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx
-```
-
 ## Scheduled Execution
-
-The pipeline integrates with the weekly improvement workflow:
 
 **GitHub Actions:** `.github/workflows/modeldb_refresh.yml`
 
-Runs daily at 02:15 UTC to:
-1. Update model catalog from OpenRouter
-2. Sync to Firestore + Pinecone
-3. Commit changes (if any)
+- Runs daily at 02:15 UTC
+- Auto-commits updated Excel on success
+- Uploads run logs as artifacts
 
 ## Troubleshooting
 
-### "Firestore not available"
-- Check `GOOGLE_APPLICATION_CREDENTIALS` is set
-- Verify service account has Firestore access
+### "Missing data/modeldb/.env"
 
-### "Pinecone index not found"
-- The pipeline auto-creates the index
-- Check `PINECONE_API_KEY` is valid
+```bash
+cp data/modeldb/.env.example data/modeldb/.env
+# Then edit and fill in your API keys
+```
+
+### "GOOGLE_APPLICATION_CREDENTIALS: FILE NOT FOUND"
+
+The path in your `.env` points to a non-existent file. Get a service account key from GCP Console.
+
+### "Firestore not available"
+
+1. Check `GOOGLE_APPLICATION_CREDENTIALS` is set to valid file
+2. Verify service account has Firestore read/write permissions
 
 ### "Row count decreased"
-- This is a safety check to prevent data loss
-- Use `--allow-row-decrease` to override (not recommended)
+
+This safety check prevents data loss. If intentional:
+```bash
+python data/modeldb/run_modeldb_refresh.py --allow-row-decrease
+```
 
 ### "Duplicate slugs detected"
-- Excel has duplicate `openrouter_slug` values
-- Clean up duplicates before running
+
+The Excel has duplicate `openrouter_slug` values. Clean them up manually before running.
 
 ## File Structure
 
 ```
 data/modeldb/
 ├── LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2025-12-25.xlsx  # Master file
+├── run_modeldb_refresh.py        # One-command runner with doctor mode
 ├── llmhive_modeldb_pipeline.py   # Firestore + Pinecone import
 ├── llmhive_modeldb_update.py     # OpenRouter enrichment
 ├── llmhive_modeldb_import.py     # Import alias
-├── run_modeldb_refresh.py        # One-command runner
 ├── requirements.txt              # Python dependencies
-├── .env.example                  # Environment template
+├── .env.example                  # Environment template (committed)
 ├── .env                          # Your config (gitignored)
 ├── README_IMPLEMENTATION.md      # This file
 └── archives/                     # Backups and run logs
-    ├── models_20251225T120000Z.xlsx
+    ├── LLMHive_*_20251225T120000Z.xlsx
     ├── modeldb_runlog_2025-12-25T120000Z.json
     └── refresh_runlog_2025-12-25T120000Z.json
 ```
-

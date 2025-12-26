@@ -355,8 +355,10 @@ class ModelDBUpdater:
         
         self.stats = {
             "previous_rows": 0,
+            "previous_columns": 0,
             "openrouter_models": 0,
             "output_rows": 0,
+            "output_columns": 0,
             "new_rows": 0,
             "new_columns": 0,
         }
@@ -376,7 +378,10 @@ class ModelDBUpdater:
         if self.previous_path and self.previous_path.exists():
             existing_df = read_excel_safe(self.previous_path)
             self.stats["previous_rows"] = len(existing_df)
+            self.stats["previous_columns"] = len(existing_df.columns)
             existing_columns = set(existing_df.columns)
+            logger.info("Previous file has %d rows, %d columns", 
+                       len(existing_df), len(existing_df.columns))
         else:
             existing_df = pd.DataFrame()
             existing_columns = set()
@@ -422,14 +427,21 @@ class ModelDBUpdater:
             )
         
         self.stats["output_rows"] = len(result_df)
+        self.stats["output_columns"] = len(result_df.columns)
         self.stats["new_rows"] = len(result_df) - self.stats["previous_rows"]
         self.stats["new_columns"] = len(set(result_df.columns) - existing_columns)
         
         # 5. Validate no data loss
         if self.stats["previous_rows"] > 0 and len(result_df) < self.stats["previous_rows"]:
             raise ValueError(
-                f"DATA LOSS DETECTED: Output has {len(result_df)} rows, "
+                f"ROW DATA LOSS DETECTED: Output has {len(result_df)} rows, "
                 f"previous had {self.stats['previous_rows']}"
+            )
+        
+        if self.stats["previous_columns"] > 0 and len(result_df.columns) < self.stats["previous_columns"]:
+            raise ValueError(
+                f"COLUMN DATA LOSS DETECTED: Output has {len(result_df.columns)} columns, "
+                f"previous had {self.stats['previous_columns']}"
             )
         
         # 6. Write output
@@ -441,11 +453,14 @@ class ModelDBUpdater:
         # Summary
         logger.info("=" * 60)
         logger.info("Update Complete")
-        logger.info("Previous rows: %d", self.stats["previous_rows"])
+        logger.info("Previous: %d rows, %d columns", 
+                   self.stats["previous_rows"], self.stats["previous_columns"])
         logger.info("OpenRouter models fetched: %d", self.stats["openrouter_models"])
-        logger.info("Output rows: %d", self.stats["output_rows"])
+        logger.info("Output: %d rows, %d columns", 
+                   self.stats["output_rows"], self.stats["output_columns"])
         logger.info("New rows added: %d", self.stats["new_rows"])
         logger.info("New columns added: %d", self.stats["new_columns"])
+        logger.info("✅ NO DATA LOSS: Rows preserved, columns preserved")
         logger.info("=" * 60)
         
         return self.stats
