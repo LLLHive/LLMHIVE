@@ -82,13 +82,25 @@ SOURCE_GROUPS = {
         # Metadata columns
         "metadata_columns": [
             "hf_ollb_match_status",
+            "hf_ollb_match_method",
+            "hf_ollb_match_score",
             "hf_ollb_source_name",
+            "hf_ollb_source_dataset",
             "hf_ollb_retrieved_at",
+            "hf_ollb_repo_id",
         ],
-        # Metric columns
+        # Metric columns (v2 leaderboard benchmarks)
         "metric_columns": [
-            "hf_ollb_mmlu",
+            # V2 benchmarks
+            "hf_ollb_mmlu_pro",
+            "hf_ollb_ifeval",
+            "hf_ollb_bbh",
+            "hf_ollb_math",
+            "hf_ollb_gpqa",
+            "hf_ollb_musr",
             "hf_ollb_avg",
+            # Legacy v1 (may still be present)
+            "hf_ollb_mmlu",
             "hf_ollb_arc",
             "hf_ollb_hellaswag",
             "hf_ollb_truthfulqa",

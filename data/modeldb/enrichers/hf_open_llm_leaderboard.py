@@ -1,18 +1,20 @@
 """
 HuggingFace Open LLM Leaderboard Enricher
 
-Fetches benchmark results from the HuggingFace Open LLM Leaderboard.
+Fetches benchmark results from the HuggingFace Open LLM Leaderboard v2.
 Uses HuggingFace datasets with local caching for reliability.
+
+Key improvement: Uses explicit hugging_face_id from OpenRouter when available,
+with robust normalization and fuzzy matching fallback.
 """
 from __future__ import annotations
 
-import difflib
 import json
 import logging
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 import requests
@@ -23,63 +25,69 @@ from .base import BaseEnricher, EnricherResult
 logger = logging.getLogger(__name__)
 
 # HuggingFace Open LLM Leaderboard data sources
-# Note: The leaderboard has migrated to v2 with new evaluation framework
-HF_LEADERBOARD_DATASET = "open-llm-leaderboard/contents"  # New v2 leaderboard
-HF_LEADERBOARD_DATASET_V1 = "open-llm-leaderboard/results"  # Legacy v1
+# v2 is the current active leaderboard
+HF_LEADERBOARD_DATASET_V2 = "open-llm-leaderboard/contents"
 HF_LEADERBOARD_URL = "https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard"
-
-# Fallback: Direct API endpoint
-HF_LEADERBOARD_API = "https://huggingface.co/api/spaces/open-llm-leaderboard/open_llm_leaderboard"
 
 # Cache settings
 DEFAULT_CACHE_DIR = Path(".cache/llmhive_modeldb/hf_ollb")
-CACHE_TTL_HOURS = 24  # Cache validity period
+CACHE_TTL_HOURS = 24
+
+# Matching thresholds
+MATCH_THRESHOLD_EXACT = 1.0
+MATCH_THRESHOLD_FUZZY = 0.90  # Higher threshold to avoid false positives like qwen-plus -> qwenmplus
+MATCH_THRESHOLD_CONFLICT = 0.02  # If top-2 are within this, mark as conflict
 
 
 class HFLeaderboardEnricher(BaseEnricher):
     """
     Enricher that fetches HuggingFace Open LLM Leaderboard metrics.
     
-    Adds columns for standard benchmarks:
-    - hf_ollb_mmlu
-    - hf_ollb_arc_challenge
-    - hf_ollb_hellaswag
-    - hf_ollb_truthfulqa
-    - hf_ollb_winogrande
-    - hf_ollb_gsm8k
-    - hf_ollb_avg
-    - hf_ollb_rank_overall
-    - hf_ollb_match_status
-    - hf_ollb_matched_name
-    - hf_ollb_match_score
+    Columns added:
+    - hf_ollb_mmlu_pro (MMLU-PRO score from v2)
+    - hf_ollb_ifeval (IFEval score)
+    - hf_ollb_bbh (BBH score)
+    - hf_ollb_math (MATH Lvl 5 score)
+    - hf_ollb_gpqa (GPQA score)
+    - hf_ollb_musr (MUSR score)
+    - hf_ollb_avg (Average score)
+    - hf_ollb_match_status (matched/unmatched/conflict/low_confidence)
+    - hf_ollb_match_method (hf_id_exact/slug_exact/fuzzy)
+    - hf_ollb_match_score (0.0-1.0)
+    - hf_ollb_matched_name (original HF repo name)
+    - hf_ollb_repo_id (canonical HF repo ID)
+    - hf_ollb_source_dataset
+    - hf_ollb_asof_date
     - hf_ollb_retrieved_at
-    - hf_ollb_source_url
     """
     
     name = "hf_open_llm_leaderboard"
-    source_name = "HuggingFace Open LLM Leaderboard"
+    source_name = "HuggingFace Open LLM Leaderboard v2"
     source_url = HF_LEADERBOARD_URL
     
-    # Known benchmark columns and their mappings
-    BENCHMARK_MAPPINGS = {
-        # V2 leaderboard column names
-        "mmlu": "hf_ollb_mmlu",
-        "mmlu_pro": "hf_ollb_mmlu_pro",
-        "arc_challenge": "hf_ollb_arc_challenge",
-        "arc": "hf_ollb_arc_challenge",
-        "hellaswag": "hf_ollb_hellaswag",
-        "truthfulqa": "hf_ollb_truthfulqa",
-        "truthfulqa_mc2": "hf_ollb_truthfulqa",
-        "winogrande": "hf_ollb_winogrande",
-        "gsm8k": "hf_ollb_gsm8k",
-        "math": "hf_ollb_math",
-        "gpqa": "hf_ollb_gpqa",
-        "musr": "hf_ollb_musr",
-        "bbh": "hf_ollb_bbh",
-        "ifeval": "hf_ollb_ifeval",
-        "average": "hf_ollb_avg",
-        "avg": "hf_ollb_avg",
-        "mean": "hf_ollb_avg",
+    # V2 benchmark column mappings (dataset column -> our column)
+    BENCHMARK_COLUMNS_V2 = {
+        "MMLU-PRO": "hf_ollb_mmlu_pro",
+        "MMLU-PRO Raw": "hf_ollb_mmlu_pro_raw",
+        "IFEval": "hf_ollb_ifeval",
+        "IFEval Raw": "hf_ollb_ifeval_raw",
+        "BBH": "hf_ollb_bbh",
+        "BBH Raw": "hf_ollb_bbh_raw",
+        "MATH Lvl 5": "hf_ollb_math",
+        "MATH Lvl 5 Raw": "hf_ollb_math_raw",
+        "GPQA": "hf_ollb_gpqa",
+        "GPQA Raw": "hf_ollb_gpqa_raw",
+        "MUSR": "hf_ollb_musr",
+        "MUSR Raw": "hf_ollb_musr_raw",
+        "Average ⬆️": "hf_ollb_avg",
+    }
+    
+    # Metadata columns from v2
+    METADATA_COLUMNS_V2 = {
+        "#Params (B)": "hf_ollb_params_b",
+        "Architecture": "hf_ollb_architecture",
+        "Type": "hf_ollb_type",
+        "Hub License": "hf_ollb_license",
     }
     
     def __init__(
@@ -90,17 +98,22 @@ class HFLeaderboardEnricher(BaseEnricher):
         super().__init__(dry_run=dry_run, cache_dir=cache_dir)
         self._cache_dir = Path(cache_dir) if cache_dir else DEFAULT_CACHE_DIR
         self._leaderboard_data: Optional[pd.DataFrame] = None
+        self._fuzzy_available = False
+        
+        # Try to import rapidfuzz
+        try:
+            from rapidfuzz import fuzz
+            self._fuzzy_available = True
+        except ImportError:
+            logger.info("rapidfuzz not available, using difflib for matching")
     
     def _get_cache_path(self) -> Path:
-        """Get the path for cached leaderboard data."""
-        return self._cache_dir / "hf_leaderboard.parquet"
+        return self._cache_dir / "hf_leaderboard_v2.parquet"
     
     def _get_cache_metadata_path(self) -> Path:
-        """Get the path for cache metadata."""
         return self._cache_dir / "hf_cache_metadata.json"
     
     def _is_cache_valid(self) -> bool:
-        """Check if cache exists and is still valid."""
         cache_path = self._get_cache_path()
         meta_path = self._get_cache_metadata_path()
         
@@ -127,277 +140,318 @@ class HFLeaderboardEnricher(BaseEnricher):
             return False
     
     def _load_from_cache(self) -> Optional[pd.DataFrame]:
-        """Load leaderboard data from cache."""
         try:
-            cache_path = self._get_cache_path()
-            return pd.read_parquet(cache_path)
+            return pd.read_parquet(self._get_cache_path())
         except Exception as e:
             self.logger.warning("Failed to load cache: %s", e)
             return None
     
-    def _save_to_cache(self, df: pd.DataFrame) -> None:
-        """Save leaderboard data to cache."""
+    def _save_to_cache(self, df: pd.DataFrame, source: str) -> None:
         try:
             self._cache_dir.mkdir(parents=True, exist_ok=True)
+            df.to_parquet(self._get_cache_path(), index=False)
             
-            # Save data
-            cache_path = self._get_cache_path()
-            df.to_parquet(cache_path, index=False)
-            
-            # Save metadata
-            meta_path = self._get_cache_metadata_path()
             meta = {
                 "cached_at": datetime.now(timezone.utc).isoformat(),
-                "source": self.source_url,
+                "source": source,
                 "row_count": len(df),
                 "columns": list(df.columns),
             }
-            with open(meta_path, "w", encoding="utf-8") as f:
+            with open(self._get_cache_metadata_path(), "w", encoding="utf-8") as f:
                 json.dump(meta, f, indent=2)
             
             self.logger.info("Cached HF leaderboard data: %d rows", len(df))
-            
         except Exception as e:
-            self.logger.warning("Failed to cache HF leaderboard data: %s", e)
+            self.logger.warning("Failed to cache: %s", e)
     
-    def _fetch_from_hf_datasets_v2(self) -> Optional[pd.DataFrame]:
-        """Try to fetch leaderboard data from v2 dataset."""
+    def _fetch_leaderboard_v2(self) -> Optional[pd.DataFrame]:
+        """Fetch v2 leaderboard from HuggingFace datasets."""
         try:
             from datasets import load_dataset
             
-            self.logger.info("Loading HF Leaderboard (v2) from datasets...")
-            ds = load_dataset(HF_LEADERBOARD_DATASET, split="train")
+            self.logger.info("Loading HF Leaderboard v2 from datasets...")
+            ds = load_dataset(HF_LEADERBOARD_DATASET_V2, split="train")
             df = ds.to_pandas()
             self.logger.info("Loaded %d models from HF Leaderboard v2", len(df))
             return df
-            
+        except ImportError:
+            self.logger.warning("datasets library not installed")
+            return None
         except Exception as e:
-            self.logger.debug("HF datasets v2 fetch failed: %s", e)
+            self.logger.warning("HF v2 fetch failed: %s", e)
             return None
     
-    def _fetch_from_hf_datasets_v1(self) -> Optional[pd.DataFrame]:
-        """Fallback to v1 dataset."""
-        try:
-            from datasets import load_dataset
-            
-            self.logger.info("Loading HF Leaderboard (v1) from datasets...")
-            ds = load_dataset(HF_LEADERBOARD_DATASET_V1, split="train")
-            df = ds.to_pandas()
-            self.logger.info("Loaded %d models from HF Leaderboard v1", len(df))
-            return df
-            
-        except Exception as e:
-            self.logger.debug("HF datasets v1 fetch failed: %s", e)
-            return None
-    
-    @retry(
-        stop=stop_after_attempt(2),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
-    )
-    def _fetch_from_api(self) -> Optional[pd.DataFrame]:
-        """Try to fetch from HuggingFace Spaces API."""
-        try:
-            # This is a fallback - HF Spaces API structure may vary
-            self.logger.info("Trying HF Leaderboard API fallback...")
-            
-            # Note: This may need adjustment based on actual API structure
-            response = requests.get(
-                HF_LEADERBOARD_API,
-                headers={"Accept": "application/json"},
-                timeout=30,
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    df = pd.DataFrame(data)
-                    self.logger.info("Loaded %d models from HF API", len(df))
-                    return df
-            
-            return None
-            
-        except Exception as e:
-            self.logger.debug("HF API fallback failed: %s", e)
-            return None
-    
-    def _fetch_leaderboard_data(self) -> pd.DataFrame:
-        """
-        Fetch leaderboard data with caching.
-        
-        Tries multiple sources in order of preference.
-        """
-        # Check cache first
+    def _fetch_leaderboard_data(self) -> Tuple[pd.DataFrame, str]:
+        """Fetch leaderboard data with caching."""
         if self._is_cache_valid():
             cached = self._load_from_cache()
             if cached is not None:
-                return cached
+                return cached, "cache"
         
-        # Check if datasets library is available
-        datasets_available = True
-        try:
-            import datasets
-        except ImportError:
-            datasets_available = False
-            self.logger.warning("datasets library not installed - HF leaderboard enrichment limited")
-        
-        df = None
-        
-        if datasets_available:
-            # Try v2 dataset first
-            df = self._fetch_from_hf_datasets_v2()
-            
-            # Fallback to v1
-            if df is None:
-                df = self._fetch_from_hf_datasets_v1()
-        
-        # Final fallback: API
-        if df is None:
-            df = self._fetch_from_api()
+        df = self._fetch_leaderboard_v2()
+        source = HF_LEADERBOARD_DATASET_V2
         
         if df is None or len(df) == 0:
-            raise RuntimeError("Failed to fetch HF Leaderboard data from all sources")
+            raise RuntimeError("Failed to fetch HF Leaderboard data")
         
-        # Cache the result
-        self._save_to_cache(df)
-        
-        return df
+        self._save_to_cache(df, source)
+        return df, source
     
-    def _normalize_name(self, name: str) -> str:
+    def _normalize_repo_id(self, repo_id: str) -> str:
         """
-        Normalize a model name for matching.
+        Normalize a HuggingFace repo ID for matching.
         
-        Deterministic normalization for fuzzy matching.
+        Handles:
+        - Case normalization
+        - :free and other OpenRouter suffixes
+        - Whitespace/punctuation
+        """
+        if not repo_id:
+            return ""
+        
+        repo_id = str(repo_id).lower().strip()
+        
+        # Remove OpenRouter suffixes like :free, :extended
+        if ":" in repo_id:
+            repo_id = repo_id.split(":")[0]
+        
+        # Remove leading/trailing whitespace and quotes
+        repo_id = repo_id.strip().strip('"').strip("'")
+        
+        # Normalize separators (keep / for org/model format)
+        repo_id = repo_id.replace(" ", "-").replace("_", "-")
+        
+        # Collapse multiple hyphens
+        repo_id = re.sub(r"-+", "-", repo_id).strip("-")
+        
+        return repo_id
+    
+    def _normalize_for_fuzzy(self, name: str) -> str:
+        """
+        Normalize a name for fuzzy matching (more aggressive).
         """
         if not name:
             return ""
         
-        name = str(name).lower().strip()
+        name = self._normalize_repo_id(name)
         
-        # Remove org/provider prefix
+        # Remove org prefix for fuzzy matching
         if "/" in name:
             name = name.split("/", 1)[1]
         
-        # Normalize separators
-        name = name.replace("_", "-").replace(" ", "-")
-        
-        # Remove punctuation except hyphens
-        name = re.sub(r"[^\w\-]", "", name)
-        
-        # Remove common suffixes
+        # Remove common suffixes that differ between sources
         suffixes = [
-            r"-?chat$",
-            r"-?instruct$",
-            r"-?hf$",
-            r"-?gguf$",
-            r"-?gptq$",
-            r"-?awq$",
-            r"-?fp16$",
-            r"-?bf16$",
-            r"-?base$",
+            r"-instruct$", r"-chat$", r"-it$", r"-base$",
+            r"-hf$", r"-gguf$", r"-gptq$", r"-awq$",
+            r"-fp16$", r"-bf16$", r"-4bit$", r"-8bit$",
         ]
         for suffix in suffixes:
             name = re.sub(suffix, "", name, flags=re.IGNORECASE)
         
-        # Normalize multiple hyphens
-        name = re.sub(r"-+", "-", name).strip("-")
-        
         return name
     
-    def _fuzzy_score(self, s1: str, s2: str) -> float:
-        """
-        Compute fuzzy matching score between two strings.
+    def _extract_size_markers(self, text: str) -> Set[str]:
+        """Extract model size markers for conflict detection."""
+        markers = set()
+        text_lower = text.lower()
         
-        Uses difflib.SequenceMatcher for pure Python fuzzy matching.
-        """
+        # Size patterns like 7b, 70b, 1.5b
+        for match in re.findall(r'(\d+(?:\.\d+)?)[bB]', text_lower):
+            markers.add(f"size-{match}b")
+        
+        # Version patterns like v1, v2, v0.1
+        for match in re.findall(r'v(\d+(?:\.\d+)?)', text_lower):
+            markers.add(f"ver-{match}")
+        
+        return markers
+    
+    def _has_size_conflict(self, s1: str, s2: str) -> bool:
+        """Check if two strings have conflicting size markers."""
+        m1 = self._extract_size_markers(s1)
+        m2 = self._extract_size_markers(s2)
+        
+        # Get size markers only
+        sizes1 = {m for m in m1 if m.startswith("size-")}
+        sizes2 = {m for m in m2 if m.startswith("size-")}
+        
+        # If both have size markers and they differ, conflict
+        if sizes1 and sizes2 and sizes1 != sizes2:
+            return True
+        
+        return False
+    
+    def _fuzzy_score(self, s1: str, s2: str) -> float:
+        """Compute fuzzy matching score."""
         if not s1 or not s2:
             return 0.0
+        
+        if self._fuzzy_available:
+            try:
+                from rapidfuzz import fuzz
+                ratio = fuzz.ratio(s1, s2) / 100.0
+                token_ratio = fuzz.token_set_ratio(s1, s2) / 100.0
+                return max(ratio, token_ratio)
+            except Exception:
+                pass
+        
+        import difflib
         return difflib.SequenceMatcher(None, s1, s2).ratio()
+    
+    def _build_hf_index(self, hf_df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+        """
+        Build index from HF leaderboard data.
+        
+        Key: normalized repo_id (fullname column)
+        Value: dict with benchmarks and metadata
+        """
+        index: Dict[str, Dict[str, Any]] = {}
+        
+        # Identify the fullname column
+        fullname_col = None
+        for candidate in ["fullname", "Model", "model", "model_id", "repo_id"]:
+            if candidate in hf_df.columns:
+                fullname_col = candidate
+                break
+        
+        if fullname_col is None:
+            self.logger.warning("Could not identify model name column in HF data")
+            return index
+        
+        self.logger.info("Using '%s' as model identifier column", fullname_col)
+        
+        for idx, row in hf_df.iterrows():
+            # Get and clean the fullname
+            fullname = row.get(fullname_col)
+            if pd.isna(fullname) or not fullname:
+                continue
+            
+            fullname = str(fullname).strip()
+            
+            # Handle HTML links in Model column
+            if "<a " in fullname:
+                # Extract the repo ID from the link
+                match = re.search(r'huggingface\.co/([^">\s]+)', fullname)
+                if match:
+                    fullname = match.group(1)
+            
+            normalized = self._normalize_repo_id(fullname)
+            if not normalized:
+                continue
+            
+            entry = {
+                "original_name": fullname,
+                "normalized": normalized,
+            }
+            
+            # Extract benchmark scores
+            for hf_col, our_col in self.BENCHMARK_COLUMNS_V2.items():
+                val = row.get(hf_col)
+                if pd.notna(val):
+                    try:
+                        entry[our_col] = float(val)
+                    except (ValueError, TypeError):
+                        pass
+            
+            # Extract metadata
+            for hf_col, our_col in self.METADATA_COLUMNS_V2.items():
+                val = row.get(hf_col)
+                if pd.notna(val):
+                    entry[our_col] = val
+            
+            # Store in index (prefer first occurrence if duplicates)
+            if normalized not in index:
+                index[normalized] = entry
+        
+        return index
     
     def _match_model(
         self,
-        slug: str,
-        hf_lookup: Dict[str, Dict[str, Any]],
-    ) -> Tuple[str, str, float, Optional[str]]:
+        row: pd.Series,
+        hf_index: Dict[str, Dict[str, Any]],
+    ) -> Tuple[str, str, float, Optional[Dict[str, Any]]]:
         """
-        Match a catalog slug to HF leaderboard models.
+        Match a model to HF leaderboard.
         
-        Returns:
-            (match_key, match_status, match_score, original_hf_name)
+        Returns: (match_status, match_method, match_score, hf_info)
         """
-        if not slug:
-            return "", "unmatched", 0.0, None
+        # Priority 1: Use explicit hugging_face_id if available
+        hf_id = row.get("hugging_face_id")
+        if pd.notna(hf_id) and hf_id:
+            hf_id_norm = self._normalize_repo_id(str(hf_id))
+            if hf_id_norm in hf_index:
+                return "matched", "hf_id_exact", 1.0, hf_index[hf_id_norm]
         
-        slug_normalized = self._normalize_name(slug)
-        
-        # Try exact match
-        if slug_normalized in hf_lookup:
-            return slug_normalized, "exact", 1.0, hf_lookup[slug_normalized].get("original_name")
-        
-        # Try with full slug (including provider)
-        if "/" in slug:
-            full_normalized = self._normalize_name(slug.replace("/", "-"))
-            if full_normalized in hf_lookup:
-                return full_normalized, "exact", 1.0, hf_lookup[full_normalized].get("original_name")
-        
-        # Heuristic matching
-        best_match = ""
-        best_score = 0.0
-        best_name = None
-        
-        for hf_key, hf_info in hf_lookup.items():
-            # Calculate fuzzy score
-            score = self._fuzzy_score(slug_normalized, hf_key)
+        # Priority 2: Try OpenRouter slug as repo ID
+        slug = row.get("openrouter_slug")
+        if pd.notna(slug) and slug:
+            slug = str(slug).strip()
             
-            # Boost score for containment
-            if len(slug_normalized) >= 4 and len(hf_key) >= 4:
-                if slug_normalized in hf_key or hf_key in slug_normalized:
-                    containment_score = min(len(slug_normalized), len(hf_key)) / max(len(slug_normalized), len(hf_key))
-                    score = max(score, containment_score * 0.9)
+            # Remove provider prefix if present (e.g., "meta-llama/llama-3" -> "meta-llama/llama-3")
+            # But keep the format since HF uses org/model
+            slug_norm = self._normalize_repo_id(slug)
             
-            if score > best_score:
-                best_score = score
-                best_match = hf_key
-                best_name = hf_info.get("original_name")
-        
-        if best_score >= 0.7:
-            return best_match, "heuristic", round(best_score, 3), best_name
-        
-        return "", "unmatched", 0.0, None
-    
-    def _identify_columns(self, hf_df: pd.DataFrame) -> Dict[str, Any]:
-        """Identify key columns in the HF leaderboard DataFrame."""
-        columns = {
-            "model_name": None,
-            "benchmarks": {},
-            "rank": None,
-        }
-        
-        for col in hf_df.columns:
-            col_lower = col.lower()
+            if slug_norm in hf_index:
+                return "matched", "slug_exact", 1.0, hf_index[slug_norm]
             
-            # Model name column
-            if columns["model_name"] is None:
-                if col_lower in ["model", "model_name", "name", "fullname"]:
-                    columns["model_name"] = col
-                elif "model" in col_lower:
-                    columns["model_name"] = col
-            
-            # Rank column
-            if columns["rank"] is None:
-                if col_lower in ["rank", "ranking", "position", "#"]:
-                    columns["rank"] = col
-            
-            # Map benchmark columns
-            for benchmark_key, our_col in self.BENCHMARK_MAPPINGS.items():
-                if benchmark_key in col_lower.replace(" ", "_").replace("-", "_"):
-                    if our_col not in columns["benchmarks"]:
-                        columns["benchmarks"][col] = our_col
+            # Try without the provider prefix (e.g., "openai/gpt-4" -> check just "gpt-4")
+            if "/" in slug:
+                # For OpenRouter, first part is provider, not org
+                # Try the model part against all HF repos
+                model_part = slug.split("/", 1)[1]
+                model_part_norm = self._normalize_repo_id(model_part)
+                
+                # Check if model_part matches the model portion of any HF repo
+                for hf_key, hf_info in hf_index.items():
+                    if "/" in hf_key:
+                        hf_model_part = hf_key.split("/", 1)[1]
+                        if model_part_norm == hf_model_part:
+                            return "matched", "model_part_exact", 0.95, hf_info
         
-        # Default to first column for model name
-        if columns["model_name"] is None and len(hf_df.columns) > 0:
-            columns["model_name"] = hf_df.columns[0]
+        # Priority 3: Fuzzy matching as fallback
+        model_name = row.get("model_name")
+        candidates = []
         
-        return columns
+        if pd.notna(hf_id) and hf_id:
+            candidates.append(self._normalize_for_fuzzy(str(hf_id)))
+        if pd.notna(slug) and slug:
+            candidates.append(self._normalize_for_fuzzy(str(slug)))
+        if pd.notna(model_name) and model_name:
+            candidates.append(self._normalize_for_fuzzy(str(model_name)))
+        
+        if not candidates:
+            return "unmatched", "none", 0.0, None
+        
+        best_matches: List[Tuple[float, str, Dict[str, Any]]] = []
+        
+        for hf_key, hf_info in hf_index.items():
+            hf_fuzzy = self._normalize_for_fuzzy(hf_key)
+            
+            for candidate in candidates:
+                # Check for size conflicts
+                if self._has_size_conflict(candidate, hf_key):
+                    continue
+                
+                score = self._fuzzy_score(candidate, hf_fuzzy)
+                
+                if score >= MATCH_THRESHOLD_FUZZY:
+                    best_matches.append((score, hf_key, hf_info))
+        
+        if not best_matches:
+            return "unmatched", "fuzzy", 0.0, None
+        
+        # Sort by score descending
+        best_matches.sort(key=lambda x: x[0], reverse=True)
+        
+        # Check for conflict (top-2 too close)
+        if len(best_matches) >= 2:
+            if best_matches[0][0] - best_matches[1][0] < MATCH_THRESHOLD_CONFLICT:
+                return "conflict", "fuzzy", best_matches[0][0], None
+        
+        top_match = best_matches[0]
+        if top_match[0] < MATCH_THRESHOLD_FUZZY:
+            return "low_confidence", "fuzzy", top_match[0], None
+        
+        return "matched", "fuzzy", round(top_match[0], 3), top_match[2]
     
     def _do_enrich(self, df: pd.DataFrame, result: EnricherResult) -> pd.DataFrame:
         """Fetch HF Leaderboard data and enrich the catalog."""
@@ -408,146 +462,139 @@ class HFLeaderboardEnricher(BaseEnricher):
             return df
         
         try:
-            hf_df = self._fetch_leaderboard_data()
+            hf_df, source = self._fetch_leaderboard_data()
         except Exception as e:
             result.warnings.append(f"Failed to fetch HF Leaderboard data: {e}")
             self.logger.warning("HF Leaderboard fetch failed: %s", e)
-            # Continue without HF data - don't fail the enricher
             return df
         
-        # Initialize new columns
         now_iso = datetime.now(timezone.utc).isoformat()
+        today = now_iso[:10]
         
-        base_columns = [
-            "hf_ollb_mmlu",
-            "hf_ollb_arc_challenge",
-            "hf_ollb_hellaswag",
-            "hf_ollb_truthfulqa",
-            "hf_ollb_winogrande",
-            "hf_ollb_gsm8k",
+        # Initialize new columns with appropriate dtypes
+        # Numeric columns (benchmarks)
+        numeric_columns = [
+            "hf_ollb_mmlu_pro",
+            "hf_ollb_ifeval",
+            "hf_ollb_bbh",
+            "hf_ollb_math",
+            "hf_ollb_gpqa",
+            "hf_ollb_musr",
             "hf_ollb_avg",
-            "hf_ollb_rank_overall",
-            "hf_ollb_match_status",
-            "hf_ollb_matched_name",
             "hf_ollb_match_score",
+        ]
+        
+        # String columns (metadata, provenance)
+        string_columns = [
+            "hf_ollb_match_status",
+            "hf_ollb_match_method",
+            "hf_ollb_matched_name",
+            "hf_ollb_repo_id",
+            "hf_ollb_source_dataset",
             "hf_ollb_asof_date",
             "hf_ollb_source_name",
             "hf_ollb_source_url",
             "hf_ollb_retrieved_at",
         ]
         
-        for col in base_columns:
+        for col in numeric_columns:
+            if col not in df.columns:
+                df[col] = pd.NA
+        
+        for col in string_columns:
             if col not in df.columns:
                 df[col] = None
+            # Ensure object dtype for string columns
+            if df[col].dtype != object:
+                df[col] = df[col].astype(object)
         
-        # Identify HF columns
-        hf_cols = self._identify_columns(hf_df)
-        name_col = hf_cols["model_name"]
-        rank_col = hf_cols["rank"]
-        benchmark_cols = hf_cols["benchmarks"]
-        
-        self.logger.info(
-            "HF Leaderboard columns: name=%s, rank=%s, benchmarks=%d",
-            name_col, rank_col, len(benchmark_cols)
-        )
-        
-        # Build HF lookup by normalized name
-        hf_lookup: Dict[str, Dict[str, Any]] = {}
-        
-        for idx, row in hf_df.iterrows():
-            original_name = str(row.get(name_col, "")) if name_col else ""
-            if not original_name or original_name == "nan":
-                continue
-            
-            normalized = self._normalize_name(original_name)
-            if not normalized:
-                continue
-            
-            entry = {
-                "original_name": original_name,
-                "rank": idx + 1 if rank_col is None else row.get(rank_col),
-            }
-            
-            # Map benchmark values
-            for hf_col, our_col in benchmark_cols.items():
-                val = row.get(hf_col)
-                if pd.notna(val):
-                    entry[our_col] = val
-            
-            # Calculate average if not present
-            if "hf_ollb_avg" not in entry:
-                benchmark_values = [
-                    v for k, v in entry.items()
-                    if k.startswith("hf_ollb_") and k != "hf_ollb_avg" and isinstance(v, (int, float))
-                ]
-                if benchmark_values:
-                    entry["hf_ollb_avg"] = sum(benchmark_values) / len(benchmark_values)
-            
-            hf_lookup[normalized] = entry
-        
-        self.logger.info("Built HF lookup with %d unique models", len(hf_lookup))
+        # Build HF index
+        hf_index = self._build_hf_index(hf_df)
+        self.logger.info("Built HF index with %d models", len(hf_index))
         
         # Match and enrich
-        enriched_count = 0
-        gap_count = 0
+        matched_count = 0
+        unmatched_count = 0
+        match_methods: Dict[str, int] = {}
+        unmatched_details: List[Dict[str, Any]] = []
         
         for idx, row in df.iterrows():
             slug = row.get("openrouter_slug")
             if pd.isna(slug) or not slug:
                 continue
             
-            slug = str(slug).strip()
-            
-            # Match to HF leaderboard
-            match_key, match_status, match_score, matched_name = self._match_model(
-                slug, hf_lookup
+            # Perform matching
+            match_status, match_method, match_score, hf_info = self._match_model(
+                row, hf_index
             )
             
-            # Update match status regardless
+            # Always record match status (for attempt coverage)
             df.at[idx, "hf_ollb_match_status"] = match_status
-            df.at[idx, "hf_ollb_match_score"] = match_score if match_status != "unmatched" else None
+            df.at[idx, "hf_ollb_match_method"] = match_method
+            df.at[idx, "hf_ollb_match_score"] = match_score if match_score > 0 else None
             
-            if match_status != "unmatched":
-                hf_info = hf_lookup.get(match_key, {})
-                
+            if match_status == "matched" and hf_info:
                 # Copy benchmark scores
-                for our_col in set(self.BENCHMARK_MAPPINGS.values()):
+                for our_col in self.BENCHMARK_COLUMNS_V2.values():
                     if our_col in hf_info:
                         if our_col not in df.columns:
                             df[our_col] = None
                         df.at[idx, our_col] = hf_info[our_col]
                 
-                # Set rank
-                rank_val = hf_info.get("rank")
-                if pd.notna(rank_val):
-                    df.at[idx, "hf_ollb_rank_overall"] = rank_val
+                # Copy metadata
+                for our_col in self.METADATA_COLUMNS_V2.values():
+                    if our_col in hf_info:
+                        if our_col not in df.columns:
+                            df[our_col] = None
+                        df.at[idx, our_col] = hf_info[our_col]
                 
-                df.at[idx, "hf_ollb_matched_name"] = matched_name
+                df.at[idx, "hf_ollb_matched_name"] = hf_info.get("original_name")
+                df.at[idx, "hf_ollb_repo_id"] = hf_info.get("normalized")
+                df.at[idx, "hf_ollb_source_dataset"] = source
                 df.at[idx, "hf_ollb_source_name"] = self.source_name
                 df.at[idx, "hf_ollb_source_url"] = self.source_url
                 df.at[idx, "hf_ollb_retrieved_at"] = now_iso
-                df.at[idx, "hf_ollb_asof_date"] = now_iso[:10]
+                df.at[idx, "hf_ollb_asof_date"] = today
                 
-                enriched_count += 1
+                matched_count += 1
+                match_methods[match_method] = match_methods.get(match_method, 0) + 1
             else:
-                gap_count += 1
+                unmatched_count += 1
+                unmatched_details.append({
+                    "slug": str(slug),
+                    "hf_id": str(row.get("hugging_face_id", "")),
+                    "status": match_status,
+                    "score": match_score,
+                })
                 result.data_gaps.append({
-                    "slug": slug,
+                    "slug": str(slug),
                     "source": "hf_open_llm_leaderboard",
-                    "field": "hf_ollb_mmlu",
-                    "reason": "unmatched",
-                    "note": f"No matching model found in HF Leaderboard for '{slug}'",
+                    "field": "hf_ollb_avg",
+                    "reason": match_status,
+                    "hf_id": str(row.get("hugging_face_id", "")),
+                    "best_score": match_score,
                     "retrieved_at": now_iso,
                 })
         
-        result.rows_enriched = enriched_count
-        result.rows_with_gaps = gap_count
+        result.rows_enriched = matched_count
+        result.rows_with_gaps = unmatched_count
         
+        # Log summary
         self.logger.info(
-            "HF Leaderboard enrichment complete: matched %d models (%.1f%%), %d unmatched",
-            enriched_count,
-            100.0 * enriched_count / len(df) if len(df) > 0 else 0,
-            gap_count,
+            "HF Leaderboard enrichment: matched %d (%.1f%%), unmatched %d",
+            matched_count,
+            100.0 * matched_count / (matched_count + unmatched_count) if (matched_count + unmatched_count) > 0 else 0,
+            unmatched_count,
         )
+        self.logger.info("Match methods breakdown: %s", match_methods)
+        
+        # Log top unmatched for debugging
+        if unmatched_details:
+            unmatched_with_hf_id = [u for u in unmatched_details if u["hf_id"] and u["hf_id"] != "nan"]
+            if unmatched_with_hf_id:
+                self.logger.info("Top unmatched WITH hugging_face_id (should investigate):")
+                for item in unmatched_with_hf_id[:10]:
+                    self.logger.info("  %s | hf_id=%s | status=%s", 
+                                   item["slug"], item["hf_id"], item["status"])
         
         return df
