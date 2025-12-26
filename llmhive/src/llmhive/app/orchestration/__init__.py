@@ -415,6 +415,51 @@ if DOMINANCE_CONTROLLER_AVAILABLE:
         "create_dominance_controller",
     ])
 
+# ==================== REASONING STRATEGIES CONTROLLER (Q4 2025) ====================
+# NOTE: Must be imported BEFORE advanced_reasoning to avoid circular import issues
+
+# Reasoning Strategies Controller - Meta-policy and fallback management
+try:
+    from .reasoning_strategies_controller import (
+        ReasoningStrategiesController,
+        ReasoningMethod,
+        ImplementationCategory,
+        MetaPolicy,
+        FallbackChain,
+        TraceLogTags,
+        REASONING_METHODS_DB,
+        get_strategy_controller,
+        select_reasoning_strategy,
+        get_fallback_strategy,
+    )
+    REASONING_STRATEGIES_CONTROLLER_AVAILABLE = True
+except ImportError:
+    REASONING_STRATEGIES_CONTROLLER_AVAILABLE = False
+    ReasoningStrategiesController = None  # type: ignore
+    ReasoningMethod = None  # type: ignore
+    ImplementationCategory = None  # type: ignore
+    MetaPolicy = None  # type: ignore
+    FallbackChain = None  # type: ignore
+    TraceLogTags = None  # type: ignore
+    REASONING_METHODS_DB = None  # type: ignore
+    get_strategy_controller = None  # type: ignore
+    select_reasoning_strategy = None  # type: ignore
+    get_fallback_strategy = None  # type: ignore
+
+if REASONING_STRATEGIES_CONTROLLER_AVAILABLE:
+    __all__.extend([
+        "ReasoningStrategiesController",
+        "ReasoningMethod",
+        "ImplementationCategory",
+        "MetaPolicy",
+        "FallbackChain",
+        "TraceLogTags",
+        "REASONING_METHODS_DB",
+        "get_strategy_controller",
+        "select_reasoning_strategy",
+        "get_fallback_strategy",
+    ])
+
 # ==================== PERFORMANCE OPTIMIZATION MODULES ====================
 
 # Advanced Reasoning Engine
@@ -855,48 +900,4 @@ if REASONING_DETECTOR_AVAILABLE:
         "needs_reasoning_model",
         "get_reasoning_model_recommendation",
         "get_reasoning_detector",
-    ])
-
-# ==================== REASONING STRATEGIES CONTROLLER (Q4 2025) ====================
-
-# Reasoning Strategies Controller - Meta-policy and fallback management
-try:
-    from .reasoning_strategies_controller import (
-        ReasoningStrategiesController,
-        ReasoningMethod,
-        ImplementationCategory,
-        MetaPolicy,
-        FallbackChain,
-        TraceLogTags,
-        REASONING_METHODS_DB,
-        get_strategy_controller,
-        select_reasoning_strategy,
-        get_fallback_strategy,
-    )
-    REASONING_STRATEGIES_CONTROLLER_AVAILABLE = True
-except ImportError:
-    REASONING_STRATEGIES_CONTROLLER_AVAILABLE = False
-    ReasoningStrategiesController = None  # type: ignore
-    ReasoningMethod = None  # type: ignore
-    ImplementationCategory = None  # type: ignore
-    MetaPolicy = None  # type: ignore
-    FallbackChain = None  # type: ignore
-    TraceLogTags = None  # type: ignore
-    REASONING_METHODS_DB = None  # type: ignore
-    get_strategy_controller = None  # type: ignore
-    select_reasoning_strategy = None  # type: ignore
-    get_fallback_strategy = None  # type: ignore
-
-if REASONING_STRATEGIES_CONTROLLER_AVAILABLE:
-    __all__.extend([
-        "ReasoningStrategiesController",
-        "ReasoningMethod",
-        "ImplementationCategory",
-        "MetaPolicy",
-        "FallbackChain",
-        "TraceLogTags",
-        "REASONING_METHODS_DB",
-        "get_strategy_controller",
-        "select_reasoning_strategy",
-        "get_fallback_strategy",
     ])

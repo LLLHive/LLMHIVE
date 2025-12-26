@@ -35,12 +35,22 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum, auto
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
-from .advanced_reasoning import ReasoningStrategy, ReasoningResult
+if TYPE_CHECKING:
+    from .advanced_reasoning import ReasoningStrategy as ReasoningStrategyType
+    from .advanced_reasoning import ReasoningResult as ReasoningResultType
+
+# Lazy import for strategy_memory (doesn't cause circular import)
 from .strategy_memory import get_strategy_memory, StrategyProfile
 
 logger = logging.getLogger(__name__)
+
+
+def _get_reasoning_strategy_enum():
+    """Lazy import of ReasoningStrategy enum to avoid circular import."""
+    from .advanced_reasoning import ReasoningStrategy
+    return ReasoningStrategy
 
 
 # =============================================================================
@@ -64,7 +74,7 @@ class ReasoningMethod:
     """Definition of a reasoning method with metadata."""
     name: str
     description: str
-    strategy_enum: Optional[ReasoningStrategy]
+    strategy_enum_name: Optional[str]  # Name of ReasoningStrategy enum value (lazy resolved)
     category: ImplementationCategory
     strengths: List[str] = field(default_factory=list)
     weaknesses: List[str] = field(default_factory=list)
@@ -76,15 +86,26 @@ class ReasoningMethod:
     latency_multiplier: float = 1.0
     status: str = "production-eligible"
     compatibility_assessment: str = ""
+    
+    def get_strategy_enum(self) -> Optional["ReasoningStrategyType"]:
+        """Get the ReasoningStrategy enum value (lazy import to avoid circular dependency)."""
+        if self.strategy_enum_name is None:
+            return None
+        try:
+            ReasoningStrategy = _get_reasoning_strategy_enum()
+            return getattr(ReasoningStrategy, self.strategy_enum_name, None)
+        except ImportError:
+            return None
 
 
 # Built-in reasoning methods database (Q4 2025)
+# Uses string names for strategy_enum to avoid circular import with advanced_reasoning
 REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     # Core methods (always available)
     "chain_of_thought": ReasoningMethod(
         name="Chain-of-Thought (CoT)",
         description="Step-by-step reasoning prompting for better accuracy",
-        strategy_enum=ReasoningStrategy.CHAIN_OF_THOUGHT,
+        strategy_enum_name="CHAIN_OF_THOUGHT",
         category=ImplementationCategory.CORE,
         strengths=["Improves accuracy 10-15%", "Good interpretability", "Low overhead"],
         weaknesses=["May be verbose", "Can propagate errors"],
@@ -98,7 +119,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "self_consistency": ReasoningMethod(
         name="Self-Consistency",
         description="Sample N reasoning paths and vote on the final answer",
-        strategy_enum=ReasoningStrategy.SELF_CONSISTENCY,
+        strategy_enum_name="SELF_CONSISTENCY",
         category=ImplementationCategory.CORE,
         strengths=["15-20% accuracy improvement", "Catches random errors", "Statistical robustness"],
         weaknesses=["Higher cost (N samples)", "Slower latency"],
@@ -112,7 +133,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "tree_of_thoughts": ReasoningMethod(
         name="Tree-of-Thoughts (ToT)",
         description="Explore multiple reasoning branches and select best path",
-        strategy_enum=ReasoningStrategy.TREE_OF_THOUGHTS,
+        strategy_enum_name="TREE_OF_THOUGHTS",
         category=ImplementationCategory.CORE,
         strengths=["20-30% improvement on complex problems", "Explores alternatives"],
         weaknesses=["High compute cost", "Complex orchestration"],
@@ -126,7 +147,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "reflection": ReasoningMethod(
         name="Reflection / Self-Critique",
         description="Generate answer, then critique and improve",
-        strategy_enum=ReasoningStrategy.REFLECTION,
+        strategy_enum_name="REFLECTION",
         category=ImplementationCategory.CORE,
         strengths=["Catches 40% of errors", "Self-improvement", "Quality assurance"],
         weaknesses=["Additional latency", "May over-correct"],
@@ -140,7 +161,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "debate": ReasoningMethod(
         name="Multi-Agent Debate",
         description="Multiple models argue positions and reach consensus",
-        strategy_enum=ReasoningStrategy.DEBATE,
+        strategy_enum_name="DEBATE",
         category=ImplementationCategory.SUPPORTED,
         strengths=["Surfaces best arguments", "Reduces bias", "Fact-checking"],
         weaknesses=["Requires multiple models", "Complex coordination"],
@@ -154,7 +175,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "step_verification": ReasoningMethod(
         name="Step-by-Step Verification",
         description="Verify each reasoning step before proceeding",
-        strategy_enum=ReasoningStrategy.STEP_VERIFY,
+        strategy_enum_name="STEP_VERIFY",
         category=ImplementationCategory.CORE,
         strengths=["Critical for math", "Prevents error propagation"],
         weaknesses=["High overhead", "Slower"],
@@ -168,7 +189,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "progressive_deepening": ReasoningMethod(
         name="Progressive Deepening",
         description="Start simple, escalate complexity as needed",
-        strategy_enum=ReasoningStrategy.PROGRESSIVE,
+        strategy_enum_name="PROGRESSIVE",
         category=ImplementationCategory.CORE,
         strengths=["Cost efficient", "Adaptive", "Fast for simple queries"],
         weaknesses=["May miss nuances on first pass"],
@@ -182,7 +203,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "best_of_n": ReasoningMethod(
         name="Best-of-N",
         description="Generate N solutions, judge selects best",
-        strategy_enum=ReasoningStrategy.BEST_OF_N,
+        strategy_enum_name="BEST_OF_N",
         category=ImplementationCategory.CORE,
         strengths=["Quality selection", "Good for code", "Testable outputs"],
         weaknesses=["N-fold cost", "Needs judge"],
@@ -196,7 +217,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "mixture": ReasoningMethod(
         name="Mixture Strategy",
         description="Combine multiple strategies for maximum accuracy",
-        strategy_enum=ReasoningStrategy.MIXTURE,
+        strategy_enum_name="MIXTURE",
         category=ImplementationCategory.SUPPORTED,
         strengths=["Highest quality", "Redundancy", "Comprehensive"],
         weaknesses=["Highest cost", "Complex"],
@@ -211,7 +232,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "rag": ReasoningMethod(
         name="Retrieval-Augmented Generation (RAG)",
         description="Retrieve relevant context before generating",
-        strategy_enum=None,  # Handled separately in RAG layer
+        strategy_enum_name=None,  # Handled separately in RAG layer
         category=ImplementationCategory.SUPPORTED,
         strengths=["Grounding in facts", "Reduces hallucination", "Up-to-date info"],
         weaknesses=["Retrieval quality critical", "Context limits"],
@@ -225,7 +246,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "react": ReasoningMethod(
         name="ReAct (Reasoning + Acting)",
         description="Interleave reasoning with tool use",
-        strategy_enum=None,  # Integrated with tool broker
+        strategy_enum_name=None,  # Integrated with tool broker
         category=ImplementationCategory.SUPPORTED,
         strengths=["Tool integration", "Grounded actions", "Verifiable"],
         weaknesses=["Requires tool setup", "Error handling"],
@@ -239,7 +260,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "pal": ReasoningMethod(
         name="PAL (Program-Aided Language)",
         description="Generate code to solve problems programmatically",
-        strategy_enum=None,  # Integrated with code execution
+        strategy_enum_name=None,  # Integrated with code execution
         category=ImplementationCategory.SUPPORTED,
         strengths=["Precise math", "Verifiable outputs", "Complex calculations"],
         weaknesses=["Requires code sandbox", "Limited domains"],
@@ -253,7 +274,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "deepconf": ReasoningMethod(
         name="DeepConf (Deep Consensus Framework)",
         description="Multi-round debate with confidence-based pruning",
-        strategy_enum=None,  # Separate DeepConf module
+        strategy_enum_name=None,  # Separate DeepConf module
         category=ImplementationCategory.SUPPORTED,
         strengths=["Confidence filtering", "Consensus building", "Error reduction"],
         weaknesses=["Multiple rounds", "Complex setup"],
@@ -267,7 +288,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "self_refine": ReasoningMethod(
         name="Self-Refine",
         description="Iteratively improve output through self-feedback",
-        strategy_enum=None,  # Integrated in refinement_loop
+        strategy_enum_name=None,  # Integrated in refinement_loop
         category=ImplementationCategory.SUPPORTED,
         strengths=["Quality improvement", "Error correction", "Adaptive"],
         weaknesses=["Multiple iterations", "Convergence time"],
@@ -282,7 +303,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "game_of_thought": ReasoningMethod(
         name="Game-of-Thought (GoT)",
         description="Game-theoretic approach to multi-agent reasoning",
-        strategy_enum=None,
+        strategy_enum_name=None,
         category=ImplementationCategory.RESEARCH,
         strengths=["Strategic reasoning", "Nash equilibrium", "Adversarial robustness"],
         weaknesses=["Complex implementation", "Research stage"],
@@ -297,7 +318,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "hierarchical_planning": ReasoningMethod(
         name="Hierarchical Planning",
         description="Decompose complex tasks into subtask hierarchy",
-        strategy_enum=None,  # Partially in hrm_planner
+        strategy_enum_name=None,  # Partially in hrm_planner
         category=ImplementationCategory.EXPERIMENTAL,
         strengths=["Handles complexity", "Structured approach"],
         weaknesses=["Overhead for simple tasks", "Planning errors"],
@@ -312,7 +333,7 @@ REASONING_METHODS_DB: Dict[str, ReasoningMethod] = {
     "dynamic_planning": ReasoningMethod(
         name="Dynamic Planning",
         description="Adaptive planning that adjusts based on intermediate results",
-        strategy_enum=None,
+        strategy_enum_name=None,
         category=ImplementationCategory.DEV_NEEDED,
         strengths=["Adaptive", "Handles uncertainty"],
         weaknesses=["Complex state management", "Unpredictable cost"],
@@ -495,7 +516,7 @@ class ReasoningStrategiesController:
         """Initialize strategies from the methods database."""
         for method_name, method in REASONING_METHODS_DB.items():
             # Assess compatibility
-            if method.strategy_enum is not None:
+            if method.strategy_enum_name is not None:
                 compatibility = f"{method.name}: Compatible with current orchestrator (built-in)"
                 method.compatibility_assessment = compatibility
             else:
@@ -688,7 +709,7 @@ class ReasoningStrategiesController:
     
     def handle_low_confidence(
         self,
-        current_result: ReasoningResult,
+        current_result: "ReasoningResultType",
         threshold: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
