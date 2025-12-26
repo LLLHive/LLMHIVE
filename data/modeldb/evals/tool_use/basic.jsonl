@@ -1,0 +1,6 @@
+{"id": "tool_json_01", "prompt": "Generate a JSON object with keys 'name' and 'age' for a person named Alice who is 30. Output only valid JSON.", "expected_pattern": "\\{\\s*\"name\"\\s*:\\s*\"Alice\".*\"age\"\\s*:\\s*30\\s*\\}", "type": "regex_match"}
+{"id": "tool_json_02", "prompt": "Parse this JSON and tell me the value of 'city': {\"city\": \"Tokyo\", \"country\": \"Japan\"}. Answer with just the city name.", "expected_answer": "Tokyo", "type": "exact_match"}
+{"id": "tool_function_01", "prompt": "If you need to call a function named 'get_weather' with parameter 'location' set to 'Paris', write the function call in Python syntax.", "expected_pattern": "get_weather\\s*\\(.*[\"']Paris[\"'].*\\)", "type": "regex_match"}
+{"id": "tool_schema_01", "prompt": "What is the required HTTP method to retrieve data from a REST API? Answer: GET, POST, PUT, or DELETE.", "expected_answer": "GET", "type": "exact_match"}
+{"id": "tool_structured_01", "prompt": "Extract the email from: 'Contact us at support@example.com for help.' Answer with just the email.", "expected_answer": "support@example.com", "type": "exact_match"}
+

@@ -1,23 +1,50 @@
-# Dependencies
+# ===========================================
+# DEPENDENCIES
+# ===========================================
 node_modules/
 
-# Next.js build output
+# ===========================================
+# NEXT.JS / BUILD OUTPUT
+# ===========================================
 .next/
 out/
-
-# Production build
 build/
 dist/
 
-# Debug logs
+# ===========================================
+# PYTHON VIRTUAL ENVIRONMENTS
+# ===========================================
+.venv/
+.venv_modeldb/
+llmhive/.venv/
+venv/
+env/
+.python-version
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===========================================
+# LOGS
+# ===========================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
 
-# Local env files
-.env*.local
+# ===========================================
+# ENVIRONMENT FILES (SECRETS)
+# ===========================================
+# Generic .env files
 .env
+.env.local
+.env.*.local
 !.env.example
 
 # ModelDB specific env files
@@ -25,31 +52,68 @@ data/modeldb/.env
 data/modeldb/.env.*
 !data/modeldb/.env.example
 
-# Vercel
+# llmhive backend env
+llmhive/.env
+llmhive/.env.*
+!llmhive/.env.example
+
+# ===========================================
+# MODELDB RUNTIME (NOT COMMITTED)
+# ===========================================
+# Secrets directory (service account keys)
+data/modeldb/secrets/
+
+# Archives - keep folder structure but ignore contents
+data/modeldb/archives/*
+!data/modeldb/archives/.gitkeep
+
+# Cache directories
+.cache/
+data/modeldb/.cache/
+
+# ===========================================
+# VERCEL
+# ===========================================
 .vercel
 
-# TypeScript
+# ===========================================
+# TYPESCRIPT
+# ===========================================
 *.tsbuildinfo
 next-env.d.ts
 
-# IDE
+# ===========================================
+# IDE / EDITORS
+# ===========================================
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-workspace
+*.sublime-project
 
-# OS
+# ===========================================
+# OPERATING SYSTEM
+# ===========================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Testing
+# ===========================================
+# TESTING
+# ===========================================
+coverage/
 /coverage
+playwright-report/
 /playwright-report/
+blob-report/
 /blob-report/
+playwright/.cache/
 /playwright/.cache/
 test-results/
-.venv/
-__pycache__/
-
-# ModelDB secrets (never commit)
-data/modeldb/secrets/
+/test-results/

@@ -1,0 +1,6 @@
+{"id": "en_comprehension_01", "prompt": "Read this passage: 'The quick brown fox jumps over the lazy dog.' What animal is described as lazy?", "expected_answer": "dog", "type": "exact_match"}
+{"id": "en_comprehension_02", "prompt": "Complete this sentence with one word: 'The capital of France is ___.'", "expected_answer": "Paris", "type": "exact_match"}
+{"id": "en_grammar_01", "prompt": "Which is grammatically correct? A) 'She don't like apples' B) 'She doesn't like apples'. Answer with just A or B.", "expected_answer": "B", "type": "exact_match"}
+{"id": "en_vocabulary_01", "prompt": "What is a synonym for 'happy'? Choose one: sad, joyful, angry, tired.", "expected_answer": "joyful", "type": "exact_match"}
+{"id": "en_reasoning_01", "prompt": "If all roses are flowers, and some flowers are red, can we conclude that some roses are red? Answer 'yes' or 'no'.", "expected_answer": "no", "type": "exact_match"}
+

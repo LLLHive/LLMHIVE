@@ -1,0 +1,6 @@
+{"id": "py_syntax_01", "prompt": "What will print(2 + 2) output? Answer with just the number.", "expected_answer": "4", "type": "exact_match"}
+{"id": "py_syntax_02", "prompt": "What Python keyword is used to define a function?", "expected_answer": "def", "type": "exact_match"}
+{"id": "py_list_01", "prompt": "Given x = [1, 2, 3], what is x[1]? Answer with just the number.", "expected_answer": "2", "type": "exact_match"}
+{"id": "py_string_01", "prompt": "What does 'hello'.upper() return? Answer with just the string.", "expected_answer": "HELLO", "type": "exact_match"}
+{"id": "py_type_01", "prompt": "What is the type of 3.14 in Python? Answer: int, float, str, or bool.", "expected_answer": "float", "type": "exact_match"}
+
