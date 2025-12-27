@@ -73,9 +73,11 @@
     "hf_ollb_asof_date",
     "hf_ollb_attempted_methods",
     "hf_ollb_avg",
+    "hf_ollb_base_model_hf_id",
     "hf_ollb_bbh",
     "hf_ollb_bbh_raw",
     "hf_ollb_candidate_hf_id",
+    "hf_ollb_candidate_set",
     "hf_ollb_conflict_candidates",
     "hf_ollb_eligible",
     "hf_ollb_gpqa",
@@ -85,6 +87,8 @@
     "hf_ollb_ifeval",
     "hf_ollb_ifeval_raw",
     "hf_ollb_ineligible_reason",
+    "hf_ollb_inferred_hf_id",
+    "hf_ollb_inferred_hf_id_source",
     "hf_ollb_license",
     "hf_ollb_match_method",
     "hf_ollb_match_outcome",
@@ -98,6 +102,8 @@
     "hf_ollb_mmlu_pro_raw",
     "hf_ollb_musr",
     "hf_ollb_musr_raw",
+    "hf_ollb_not_listed_on_leaderboard",
+    "hf_ollb_not_listed_reason",
     "hf_ollb_params_b",
     "hf_ollb_rank_overall",
     "hf_ollb_repo_id",
@@ -256,5 +262,5 @@
     "weaknesses"
   ],
   "min_row_count": 353,
-  "notes": "Baseline schema generated from canonical Excel. Updated 2025-12-27 with HF debug columns (attempted_methods, match_outcome, conflict_candidates)."
+  "notes": "Generated from canonical Excel with 353 rows and 260 columns after HF OLLB base-model resolution + inferred HF IDs + not-listed semantics upgrade."
 }

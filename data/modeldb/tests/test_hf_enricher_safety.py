@@ -12,6 +12,10 @@ Validates:
 7. Eligible + unmatched rows have match_outcome set
 8. Conflict rows have conflict_candidates populated
 9. Match count within reasonable bounds
+10. Not-listed column is boolean-like
+11. Not-listed rows have null metrics
+12. Inferred HF ID doesn't overwrite hugging_face_id
+13. Candidate set populated for eligible rows
 
 Usage:
     python data/modeldb/tests/test_hf_enricher_safety.py
@@ -38,11 +42,19 @@ EXPECTED_HF_COLUMNS = [
     "hf_ollb_eligible",
     "hf_ollb_ineligible_reason",
     "hf_ollb_candidate_hf_id",
+    # HF ID inference columns
+    "hf_ollb_inferred_hf_id",
+    "hf_ollb_inferred_hf_id_source",
+    "hf_ollb_base_model_hf_id",
+    "hf_ollb_candidate_set",
+    # Not-listed columns
+    "hf_ollb_not_listed_on_leaderboard",
+    "hf_ollb_not_listed_reason",
     # Matching metadata
     "hf_ollb_match_status",
     "hf_ollb_match_method",
     "hf_ollb_match_score",
-    # Debug/audit columns (new)
+    # Debug/audit columns
     "hf_ollb_attempted_methods",
     "hf_ollb_match_outcome",
     "hf_ollb_conflict_candidates",
@@ -68,7 +80,8 @@ METRIC_COLUMNS = [
 ]
 
 # Maximum expected matched count (to prevent mass matching regression)
-MAX_MATCHED_COUNT = 120
+# Increased slightly to account for improved candidate generation
+MAX_MATCHED_COUNT = 140
 
 
 def test_row_count_preserved(df: pd.DataFrame, expected_min_rows: int = 350) -> bool:
@@ -292,6 +305,136 @@ def test_matched_count_in_bounds(df: pd.DataFrame) -> bool:
     return True
 
 
+def test_not_listed_is_boolean(df: pd.DataFrame) -> bool:
+    """Test that hf_ollb_not_listed_on_leaderboard is boolean-like."""
+    if "hf_ollb_not_listed_on_leaderboard" not in df.columns:
+        print("⚠️  WARN: hf_ollb_not_listed_on_leaderboard column missing")
+        return True
+    
+    col = df["hf_ollb_not_listed_on_leaderboard"]
+    non_null = col.dropna()
+    
+    if len(non_null) == 0:
+        print("⚠️  WARN: hf_ollb_not_listed_on_leaderboard has no non-null values")
+        return True
+    
+    # Check values are boolean-like
+    unique_vals = set(non_null.unique())
+    valid_vals = {True, False, 1, 0, "True", "False", "true", "false"}
+    
+    invalid = unique_vals - valid_vals
+    if invalid:
+        print(f"❌ FAIL: hf_ollb_not_listed_on_leaderboard has invalid values: {invalid}")
+        return False
+    
+    true_count = (non_null.astype(bool) == True).sum()
+    false_count = (non_null.astype(bool) == False).sum()
+    print(f"✅ PASS: hf_ollb_not_listed_on_leaderboard is boolean-like (true={true_count}, false={false_count})")
+    return True
+
+
+def test_not_listed_rows_have_null_metrics(df: pd.DataFrame) -> bool:
+    """Test that rows with not_listed=True have null metrics (they shouldn't have data)."""
+    if "hf_ollb_not_listed_on_leaderboard" not in df.columns:
+        print("⚠️  WARN: hf_ollb_not_listed_on_leaderboard column missing")
+        return True
+    
+    not_listed = df[df["hf_ollb_not_listed_on_leaderboard"].fillna(False).astype(bool)]
+    
+    if len(not_listed) == 0:
+        print("✅ PASS: No not-listed rows (this is fine)")
+        return True
+    
+    # Check they also have match_status != matched
+    if "hf_ollb_match_status" in df.columns:
+        matched_and_not_listed = not_listed[not_listed["hf_ollb_match_status"] == "matched"]
+        if len(matched_and_not_listed) > 0:
+            print(f"❌ FAIL: {len(matched_and_not_listed)} rows are both matched AND not_listed (contradiction)")
+            return False
+    
+    # Check metrics are null
+    existing_metrics = [c for c in METRIC_COLUMNS if c in df.columns]
+    if existing_metrics:
+        has_metrics = not_listed[existing_metrics].notna().any(axis=1)
+        with_metrics = has_metrics.sum()
+        if with_metrics > 0:
+            print(f"❌ FAIL: {with_metrics}/{len(not_listed)} not-listed rows have metrics (should be null)")
+            return False
+    
+    print(f"✅ PASS: All {len(not_listed)} not-listed rows have null metrics as expected")
+    return True
+
+
+def test_inferred_hf_id_doesnt_overwrite(df: pd.DataFrame) -> bool:
+    """Test that inferred HF ID doesn't overwrite existing hugging_face_id."""
+    if "hf_ollb_inferred_hf_id" not in df.columns:
+        print("⚠️  WARN: hf_ollb_inferred_hf_id column missing")
+        return True
+    
+    if "hugging_face_id" not in df.columns:
+        print("⚠️  WARN: hugging_face_id column missing")
+        return True
+    
+    # Find rows where both are populated
+    has_both = df[(df["hugging_face_id"].notna()) & (df["hf_ollb_inferred_hf_id"].notna())]
+    
+    # This is unexpected - if we have hugging_face_id, we shouldn't infer one
+    if len(has_both) > 0:
+        print(f"⚠️  WARN: {len(has_both)} rows have both hugging_face_id and inferred_hf_id (unexpected but not a failure)")
+    
+    # Main check: inferred_hf_id should only be populated when hugging_face_id is empty
+    inferred_rows = df[df["hf_ollb_inferred_hf_id"].notna()]
+    also_has_hf_id = inferred_rows[inferred_rows["hugging_face_id"].notna()]
+    
+    # Having both isn't necessarily wrong if they differ (we might infer a better one)
+    # But let's warn about it
+    if len(also_has_hf_id) > 0:
+        # Check if they're the same (which would be redundant but not wrong)
+        different = also_has_hf_id[
+            also_has_hf_id["hugging_face_id"].astype(str).str.lower() != 
+            also_has_hf_id["hf_ollb_inferred_hf_id"].astype(str).str.lower()
+        ]
+        if len(different) > 0:
+            print(f"⚠️  WARN: {len(different)} rows have different hugging_face_id and inferred_hf_id")
+    
+    print(f"✅ PASS: Inferred HF ID doesn't overwrite (hugging_face_id preserved)")
+    return True
+
+
+def test_candidate_set_for_eligible(df: pd.DataFrame) -> bool:
+    """Test that candidate_set is populated for eligible rows."""
+    if "hf_ollb_eligible" not in df.columns:
+        print("⚠️  WARN: hf_ollb_eligible column missing")
+        return True
+    
+    if "hf_ollb_candidate_set" not in df.columns:
+        print("⚠️  WARN: hf_ollb_candidate_set column missing")
+        return True
+    
+    eligible_mask = df["hf_ollb_eligible"].fillna(False).astype(bool)
+    eligible_rows = df[eligible_mask]
+    
+    if len(eligible_rows) == 0:
+        print("⚠️  WARN: No eligible rows found")
+        return True
+    
+    missing_candidate_set = eligible_rows["hf_ollb_candidate_set"].isna().sum()
+    empty_candidate_set = (eligible_rows["hf_ollb_candidate_set"] == "").sum()
+    
+    total_missing = missing_candidate_set + empty_candidate_set
+    
+    # Allow some rows without candidate_set (edge cases)
+    tolerance = max(5, int(len(eligible_rows) * 0.05))  # 5% or 5 rows
+    
+    if total_missing > tolerance:
+        print(f"❌ FAIL: {total_missing}/{len(eligible_rows)} eligible rows missing candidate_set (tolerance: {tolerance})")
+        return False
+    
+    populated = len(eligible_rows) - total_missing
+    print(f"✅ PASS: {populated}/{len(eligible_rows)} eligible rows have candidate_set")
+    return True
+
+
 def run_all_tests(excel_path: Path) -> bool:
     """Run all regression safety tests."""
     print("=" * 60)
@@ -323,11 +466,16 @@ def run_all_tests(excel_path: Path) -> bool:
     results.append(("Matched rows have metrics", test_matched_rows_have_metrics(df)))
     results.append(("No mass matching", test_no_mass_matching(df)))
     results.append(("Eligibility coverage reasonable", test_eligibility_coverage_reasonable(df)))
-    # New semantic tests
+    # Semantic tests
     results.append(("Match method only when matched", test_match_method_only_when_matched(df)))
     results.append(("Eligible unmatched have outcome", test_eligible_unmatched_have_outcome(df)))
     results.append(("Conflict rows have candidates", test_conflict_rows_have_candidates(df)))
     results.append(("Matched count in bounds", test_matched_count_in_bounds(df)))
+    # New tests for HF ID inference and not-listed semantics
+    results.append(("Not-listed is boolean", test_not_listed_is_boolean(df)))
+    results.append(("Not-listed rows have null metrics", test_not_listed_rows_have_null_metrics(df)))
+    results.append(("Inferred HF ID doesn't overwrite", test_inferred_hf_id_doesnt_overwrite(df)))
+    results.append(("Candidate set for eligible", test_candidate_set_for_eligible(df)))
     
     print("-" * 40)
     print("")

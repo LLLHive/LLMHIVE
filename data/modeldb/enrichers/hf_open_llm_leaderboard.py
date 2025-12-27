@@ -7,25 +7,33 @@ Uses HuggingFace datasets with local caching for reliability.
 Key Features:
 - Eligibility tracking: Only open-weight models with HF repos are expected to match
 - Multi-tier matching: exact -> prefix_unique -> fuzzy (with conflict detection)
+- HF ID inference from provider docs and metadata columns
+- Base model resolution via de-quantization transforms and optional HF Hub lookup
+- "Not listed on leaderboard" semantics for models absent from dataset
 - Clear debug semantics: attempted_methods, match_outcome, conflict_candidates
-- Size mismatch prevention and conservative fuzzy thresholds
 
 Coverage Semantics:
 - Attempt Coverage: All rows where enrichment was attempted
 - Eligible Coverage: Models expected to be on HF OLLB (open-weight with HF repos)
 - Metric Coverage (Eligible): % of eligible models that matched with benchmark data
+- Not-Listed Count: Eligible models where candidate(s) don't exist in leaderboard
 
 Matching Tiers (priority order):
-1. hf_id_exact: Exact match on hugging_face_id
-2. hf_id_prefix_unique: Unique prefix match on hugging_face_id (e.g., "org/model" matches "org/model-instruct")
+1. hf_id_exact: Exact match on hugging_face_id (or inferred)
+2. hf_id_prefix_unique: Unique prefix match on hugging_face_id
 3. slug_exact: Exact match on openrouter_slug
 4. slug_prefix_unique: Unique prefix match on slug
-5. fuzzy: Fuzzy matching with conservative threshold (>= 0.90)
+5. base_model variants: De-quantized/wrapper-stripped candidates
+6. fuzzy: Fuzzy matching with conservative threshold (>= 0.90)
+
+Environment Variables:
+- HF_OLLB_RESOLVE_BASE_MODEL: true/false (default false) - Enable HF Hub base_model lookup
 """
 from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,6 +44,9 @@ import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .base import BaseEnricher, EnricherResult
+
+# Environment toggle for HF Hub base model resolution
+HF_OLLB_RESOLVE_BASE_MODEL = os.environ.get("HF_OLLB_RESOLVE_BASE_MODEL", "false").lower() == "true"
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +99,19 @@ OUTCOME_NO_UNIQUE_PREFIX = "no_unique_prefix"
 OUTCOME_FUZZY_BELOW_THRESHOLD = "fuzzy_below_threshold"
 OUTCOME_CONFLICT = "conflict"
 OUTCOME_SIZE_MISMATCH = "size_mismatch"
+OUTCOME_NOT_LISTED = "not_listed_on_leaderboard"
+OUTCOME_NO_CANDIDATES = "no_candidates"
+
+# De-quantization / wrapper suffixes to strip when deriving base model candidates
+DEQUANT_SUFFIXES = [
+    "-gguf", "-gptq", "-awq", "-exl2", "-bnb-4bit", "-bnb-8bit",
+    "-4bit", "-8bit", "-int4", "-int8",
+    "-fp16", "-bf16", "-fp8",
+    "-hf",  # Sometimes added by wrappers
+]
+
+# HF model info cache directory
+HF_MODEL_INFO_CACHE_DIR = Path(".cache/llmhive_modeldb/hf_model_info")
 
 
 class HFLeaderboardEnricher(BaseEnricher):
@@ -99,7 +123,17 @@ class HFLeaderboardEnricher(BaseEnricher):
     Eligibility:
     - hf_ollb_eligible (boolean: True if model expected on HF OLLB)
     - hf_ollb_ineligible_reason (closed_model/missing_hf_id/non_hf_provider/unknown)
-    - hf_ollb_candidate_hf_id (the repo ID we attempted to match)
+    - hf_ollb_candidate_hf_id (the candidate that produced match, or last tried)
+    
+    HF ID Inference:
+    - hf_ollb_inferred_hf_id (string: inferred HF repo ID from metadata/docs)
+    - hf_ollb_inferred_hf_id_source (string: which column/source produced the inference)
+    - hf_ollb_base_model_hf_id (string: base model derived via transforms or HF Hub)
+    - hf_ollb_candidate_set (string: brief list of candidates tried, deduped)
+    
+    Not-Listed Semantics:
+    - hf_ollb_not_listed_on_leaderboard (boolean: True if candidates not in dataset)
+    - hf_ollb_not_listed_reason (string: why not listed - candidate_repo_absent, etc.)
     
     Benchmark Scores (v2):
     - hf_ollb_mmlu_pro (MMLU-PRO score from v2)
@@ -112,15 +146,15 @@ class HFLeaderboardEnricher(BaseEnricher):
     
     Matching Metadata:
     - hf_ollb_match_status (matched/unmatched/conflict)
-    - hf_ollb_match_method (ONLY set when matched: hf_id_exact/hf_id_prefix_unique/slug_exact/slug_prefix_unique/fuzzy)
+    - hf_ollb_match_method (ONLY set when matched)
     - hf_ollb_match_score (0.0-1.0)
     - hf_ollb_matched_name (original HF repo name)
     - hf_ollb_repo_id (canonical HF repo ID)
     
-    Debug/Audit (new):
-    - hf_ollb_attempted_methods (ordered methods tried, e.g., "hf_id_exact>hf_id_prefix_unique>fuzzy")
-    - hf_ollb_match_outcome (for non-matched: hf_id_not_found/no_unique_prefix/fuzzy_below_threshold/conflict)
-    - hf_ollb_conflict_candidates (top-2 candidates when conflict, e.g., "org/a (0.91); org/b (0.90)")
+    Debug/Audit:
+    - hf_ollb_attempted_methods (ordered methods tried)
+    - hf_ollb_match_outcome (reason for non-match)
+    - hf_ollb_conflict_candidates (top-2 candidates when conflict)
     
     Provenance:
     - hf_ollb_source_dataset
@@ -504,6 +538,236 @@ class HFLeaderboardEnricher(BaseEnricher):
         import difflib
         return difflib.SequenceMatcher(None, s1, s2).ratio()
     
+    def _extract_hf_repo_ids_from_text(self, text: str) -> List[str]:
+        """
+        Extract HuggingFace repo IDs from text.
+        
+        Finds patterns like:
+        - https://huggingface.co/org/name
+        - huggingface.co/org/name
+        - org/name (only with HF context nearby)
+        
+        Returns unique list in stable order.
+        """
+        if not text or not isinstance(text, str):
+            return []
+        
+        found: List[str] = []
+        seen: Set[str] = set()
+        
+        # Pattern 1: Full HF URLs
+        url_pattern = r"(?:https?://)?huggingface\.co/([a-zA-Z0-9_-]+/[a-zA-Z0-9._-]+)"
+        for match in re.finditer(url_pattern, text, re.IGNORECASE):
+            repo_id = self._normalize_hf_repo_id(match.group(1))
+            if repo_id and repo_id not in seen and self._looks_like_hf_repo_id(repo_id):
+                found.append(repo_id)
+                seen.add(repo_id)
+        
+        # Pattern 2: org/name near "hugging" or "hf" context
+        # Only if we find context words within 100 chars
+        context_pattern = r"\b(hugging\s*face|hf\s+model|hf\s+repo)\b"
+        if re.search(context_pattern, text, re.IGNORECASE):
+            # Look for org/name patterns
+            repo_pattern = r"\b([a-zA-Z0-9_-]+/[a-zA-Z0-9._-]+)\b"
+            for match in re.finditer(repo_pattern, text):
+                candidate = match.group(1)
+                # Skip obvious non-HF patterns
+                if any(x in candidate.lower() for x in ["http", ".com", ".org", "github"]):
+                    continue
+                repo_id = self._normalize_hf_repo_id(candidate)
+                if repo_id and repo_id not in seen and self._looks_like_hf_repo_id(repo_id):
+                    found.append(repo_id)
+                    seen.add(repo_id)
+        
+        return found
+    
+    def _derive_base_model_candidates(self, repo_id: str) -> List[str]:
+        """
+        Derive base model candidates by stripping quantization/wrapper suffixes.
+        
+        E.g., "TheBloke/llama-2-7b-chat-GGUF" -> ["thebloke/llama-2-7b-chat"]
+        
+        Returns additional candidates (does NOT replace original).
+        """
+        if not repo_id:
+            return []
+        
+        candidates: List[str] = []
+        seen: Set[str] = set()
+        
+        repo_lower = repo_id.lower()
+        
+        for suffix in DEQUANT_SUFFIXES:
+            if repo_lower.endswith(suffix):
+                base = repo_lower[:-len(suffix)]
+                if base and base not in seen and self._looks_like_hf_repo_id(base):
+                    candidates.append(base)
+                    seen.add(base)
+        
+        # Also try removing trailing version/quantization patterns
+        # e.g., "-q4_k_m", "-q5_0"
+        quant_pattern = r"-q\d+[a-z_]*$"
+        stripped = re.sub(quant_pattern, "", repo_lower)
+        if stripped != repo_lower and stripped not in seen and self._looks_like_hf_repo_id(stripped):
+            candidates.append(stripped)
+            seen.add(stripped)
+        
+        return candidates
+    
+    def _get_hf_hub_base_model(self, repo_id: str) -> Optional[str]:
+        """
+        Fetch base_model from HF Hub model info (cached).
+        
+        Only called if HF_OLLB_RESOLVE_BASE_MODEL=true.
+        Returns normalized base model repo ID or None.
+        """
+        if not HF_OLLB_RESOLVE_BASE_MODEL:
+            return None
+        
+        if not repo_id:
+            return None
+        
+        # Check cache first
+        cache_key = repo_id.replace("/", "__")
+        cache_path = HF_MODEL_INFO_CACHE_DIR / f"{cache_key}.json"
+        
+        if cache_path.exists():
+            try:
+                with open(cache_path, "r", encoding="utf-8") as f:
+                    cached = json.load(f)
+                if "base_model" in cached:
+                    return cached.get("base_model")
+                return None
+            except Exception:
+                pass
+        
+        # Fetch from HF Hub
+        try:
+            from huggingface_hub import model_info
+            
+            info = model_info(repo_id)
+            base_model = None
+            
+            # Check cardData for base_model
+            if hasattr(info, "cardData") and info.cardData:
+                card = info.cardData
+                base = card.get("base_model") or card.get("base_models")
+                if base:
+                    if isinstance(base, list):
+                        base = base[0] if base else None
+                    if base:
+                        base_model = self._normalize_hf_repo_id(str(base))
+            
+            # Cache the result
+            HF_MODEL_INFO_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump({"base_model": base_model, "fetched_at": datetime.now(timezone.utc).isoformat()}, f)
+            
+            return base_model
+            
+        except Exception as e:
+            self.logger.debug("HF Hub lookup failed for %s: %s", repo_id, e)
+            # Cache the failure to avoid repeated attempts
+            try:
+                HF_MODEL_INFO_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                with open(cache_path, "w", encoding="utf-8") as f:
+                    json.dump({"base_model": None, "error": str(e), "fetched_at": datetime.now(timezone.utc).isoformat()}, f)
+            except Exception:
+                pass
+            return None
+    
+    def _infer_hf_id_from_row(self, row: pd.Series) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Infer HF repo ID from metadata columns for rows missing hugging_face_id.
+        
+        Returns: (inferred_hf_id, source_column)
+        """
+        # Columns to scan for HF repo IDs (in priority order)
+        candidate_columns = [
+            "provider_docs_source_url",
+            "model_source_url",
+            "benchmark_source_url",
+            "description",
+            "training_notes",
+            "notes",
+        ]
+        
+        for col in candidate_columns:
+            if col not in row.index:
+                continue
+            val = row.get(col)
+            if pd.isna(val) or not val:
+                continue
+            
+            repo_ids = self._extract_hf_repo_ids_from_text(str(val))
+            if repo_ids:
+                return repo_ids[0], col
+        
+        return None, None
+    
+    def _generate_hf_candidates(
+        self, 
+        row: pd.Series,
+        inferred_hf_id: Optional[str] = None,
+    ) -> Tuple[List[str], Optional[str]]:
+        """
+        Generate all HF repo ID candidates for a row, in priority order.
+        
+        Returns: (candidates_list, base_model_hf_id if derived)
+        
+        Candidates include:
+        1. hugging_face_id (if present)
+        2. inferred_hf_id (if provided)
+        3. openrouter_slug (if looks like org/name)
+        4. De-quantization variants of above
+        5. HF Hub base_model (if enabled and available)
+        """
+        candidates: List[str] = []
+        seen: Set[str] = set()
+        base_model_hf_id: Optional[str] = None
+        
+        def add_candidate(c: str) -> None:
+            if c and c not in seen:
+                candidates.append(c)
+                seen.add(c)
+        
+        # Priority 1: Explicit hugging_face_id
+        hf_id = row.get("hugging_face_id")
+        if pd.notna(hf_id) and hf_id:
+            norm = self._normalize_hf_repo_id(str(hf_id))
+            if norm and self._looks_like_hf_repo_id(norm):
+                add_candidate(norm)
+        
+        # Priority 2: Inferred HF ID
+        if inferred_hf_id:
+            add_candidate(inferred_hf_id)
+        
+        # Priority 3: OpenRouter slug (if looks like org/name)
+        slug = row.get("openrouter_slug")
+        if pd.notna(slug) and slug:
+            norm = self._normalize_hf_repo_id(str(slug))
+            if norm and self._looks_like_hf_repo_id(norm):
+                add_candidate(norm)
+        
+        # Now add de-quantization variants for each candidate so far
+        current_candidates = list(candidates)  # Copy to avoid mutation during iteration
+        for cand in current_candidates:
+            for derived in self._derive_base_model_candidates(cand):
+                if derived not in seen:
+                    add_candidate(derived)
+                    if not base_model_hf_id:
+                        base_model_hf_id = derived
+        
+        # Priority 4: HF Hub base_model lookup (if enabled)
+        # Only for the primary candidate
+        if HF_OLLB_RESOLVE_BASE_MODEL and candidates:
+            hub_base = self._get_hf_hub_base_model(candidates[0])
+            if hub_base and hub_base not in seen:
+                add_candidate(hub_base)
+                base_model_hf_id = hub_base
+        
+        return candidates, base_model_hf_id
+    
     def _build_hf_index(self, hf_df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
         """
         Build index from HF leaderboard data.
@@ -595,119 +859,90 @@ class HFLeaderboardEnricher(BaseEnricher):
         
         return matches
     
-    def _match_model(
+    def _match_model_with_candidates(
         self,
-        row: pd.Series,
+        candidates: List[str],
         hf_index: Dict[str, Dict[str, Any]],
-    ) -> Tuple[str, Optional[str], float, Optional[Dict[str, Any]], str, Optional[str], Optional[str]]:
+        model_name: Optional[str] = None,
+    ) -> Tuple[str, Optional[str], float, Optional[Dict[str, Any]], str, Optional[str], Optional[str], Optional[str], bool]:
         """
-        Match a model to HF leaderboard using multi-tier matching.
+        Match a model to HF leaderboard using provided candidates.
         
         Returns: (match_status, match_method, match_score, hf_info, 
-                  attempted_methods, match_outcome, conflict_candidates)
+                  attempted_methods, match_outcome, conflict_candidates,
+                  matched_candidate, all_candidates_absent)
         
-        Match tiers (priority order):
-        1. hf_id_exact: Exact match on hugging_face_id
-        2. hf_id_prefix_unique: Unique prefix match on hugging_face_id
-        3. slug_exact: Exact match on openrouter_slug
-        4. slug_prefix_unique: Unique prefix match on slug
-        5. fuzzy: Fuzzy matching with conservative threshold
+        Match tiers (priority order) applied to each candidate:
+        1. exact: Exact match
+        2. prefix_unique: Unique prefix match
+        After all candidates, try fuzzy.
         """
         attempted_methods: List[str] = []
         match_outcome: Optional[str] = None
         conflict_candidates: Optional[str] = None
-        
-        # Get normalized candidates
-        hf_id = row.get("hugging_face_id")
-        slug = row.get("openrouter_slug")
-        
-        hf_id_norm = None
-        slug_norm = None
-        
-        if pd.notna(hf_id) and hf_id:
-            hf_id_norm = self._normalize_hf_repo_id(str(hf_id))
-        
-        if pd.notna(slug) and slug:
-            slug_norm = self._normalize_hf_repo_id(str(slug))
-        
-        # ============================================
-        # TIER 1: hf_id_exact
-        # ============================================
-        if hf_id_norm:
-            attempted_methods.append("hf_id_exact")
-            if hf_id_norm in hf_index:
-                return (
-                    "matched", "hf_id_exact", 1.0, hf_index[hf_id_norm],
-                    ">".join(attempted_methods), None, None
-                )
-        
-        # ============================================
-        # TIER 2: hf_id_prefix_unique
-        # ============================================
-        if hf_id_norm:
-            attempted_methods.append("hf_id_prefix_unique")
-            prefix_matches = self._find_prefix_matches(hf_id_norm, hf_index)
-            
-            if len(prefix_matches) == 1:
-                # Unique prefix match
-                hf_key, hf_info = prefix_matches[0]
-                return (
-                    "matched", "hf_id_prefix_unique", 1.0, hf_info,
-                    ">".join(attempted_methods), None, None
-                )
-            elif len(prefix_matches) > 1:
-                # Multiple prefix matches - record but continue to next tier
-                conflict_candidates = "; ".join([f"{k} (1.0)" for k, _ in prefix_matches[:2]])
-        
-        # ============================================
-        # TIER 3: slug_exact
-        # ============================================
-        if slug_norm:
-            attempted_methods.append("slug_exact")
-            if slug_norm in hf_index:
-                return (
-                    "matched", "slug_exact", 1.0, hf_index[slug_norm],
-                    ">".join(attempted_methods), None, None
-                )
-        
-        # ============================================
-        # TIER 4: slug_prefix_unique
-        # ============================================
-        if slug_norm:
-            attempted_methods.append("slug_prefix_unique")
-            prefix_matches = self._find_prefix_matches(slug_norm, hf_index)
-            
-            if len(prefix_matches) == 1:
-                # Unique prefix match
-                hf_key, hf_info = prefix_matches[0]
-                return (
-                    "matched", "slug_prefix_unique", 1.0, hf_info,
-                    ">".join(attempted_methods), None, None
-                )
-            elif len(prefix_matches) > 1:
-                # Multiple prefix matches - record if not already set
-                if not conflict_candidates:
-                    conflict_candidates = "; ".join([f"{k} (1.0)" for k, _ in prefix_matches[:2]])
-        
-        # ============================================
-        # TIER 5: Fuzzy matching
-        # ============================================
-        attempted_methods.append("fuzzy")
-        
-        model_name = row.get("model_name")
-        candidates = []
-        
-        if hf_id_norm:
-            candidates.append(self._normalize_for_fuzzy(hf_id_norm))
-        if slug_norm:
-            candidates.append(self._normalize_for_fuzzy(slug_norm))
-        if pd.notna(model_name) and model_name:
-            candidates.append(self._normalize_for_fuzzy(str(model_name)))
+        all_candidates_absent = True  # Track if all candidates are absent from leaderboard
         
         if not candidates:
             return (
                 "unmatched", None, 0.0, None,
-                ">".join(attempted_methods), OUTCOME_HF_ID_NOT_FOUND, None
+                "no_candidates", OUTCOME_NO_CANDIDATES, None, None, True
+            )
+        
+        # ============================================
+        # TIER 1-4: Try each candidate with exact + prefix_unique
+        # ============================================
+        for cand in candidates:
+            if not cand:
+                continue
+            
+            # Exact match
+            method_name = f"exact({cand[:20]})"
+            attempted_methods.append("exact")
+            if cand in hf_index:
+                all_candidates_absent = False
+                return (
+                    "matched", "candidate_exact", 1.0, hf_index[cand],
+                    ">".join(attempted_methods), None, None, cand, False
+                )
+            
+            # Prefix unique match
+            attempted_methods.append("prefix_unique")
+            prefix_matches = self._find_prefix_matches(cand, hf_index)
+            
+            if len(prefix_matches) == 1:
+                all_candidates_absent = False
+                hf_key, hf_info = prefix_matches[0]
+                return (
+                    "matched", "candidate_prefix_unique", 1.0, hf_info,
+                    ">".join(attempted_methods), None, None, cand, False
+                )
+            elif len(prefix_matches) > 1:
+                all_candidates_absent = False
+                if not conflict_candidates:
+                    conflict_candidates = "; ".join([f"{k} (1.0)" for k, _ in prefix_matches[:2]])
+            
+            # Check if candidate exists anywhere in index (partial name match)
+            # This helps us determine if the model is on the leaderboard at all
+            if not all_candidates_absent:
+                continue
+            for hf_key in hf_index.keys():
+                if cand in hf_key or hf_key in cand:
+                    all_candidates_absent = False
+                    break
+        
+        # ============================================
+        # TIER 5: Fuzzy matching across all candidates
+        # ============================================
+        attempted_methods.append("fuzzy")
+        
+        fuzzy_candidates = [self._normalize_for_fuzzy(c) for c in candidates if c]
+        if model_name:
+            fuzzy_candidates.append(self._normalize_for_fuzzy(str(model_name)))
+        
+        if not fuzzy_candidates:
+            return (
+                "unmatched", None, 0.0, None,
+                ">".join(attempted_methods), OUTCOME_HF_ID_NOT_FOUND, None, None, all_candidates_absent
             )
         
         best_matches: List[Tuple[float, str, Dict[str, Any]]] = []
@@ -715,7 +950,7 @@ class HFLeaderboardEnricher(BaseEnricher):
         for hf_key, hf_info in hf_index.items():
             hf_fuzzy = self._normalize_for_fuzzy(hf_key)
             
-            for candidate in candidates:
+            for candidate in fuzzy_candidates:
                 # Check for size conflicts
                 if self._has_size_conflict(candidate, hf_key):
                     continue
@@ -724,12 +959,14 @@ class HFLeaderboardEnricher(BaseEnricher):
                 
                 if score >= MATCH_THRESHOLD_FUZZY:
                     best_matches.append((score, hf_key, hf_info))
+                    all_candidates_absent = False
         
         if not best_matches:
             # No fuzzy matches above threshold
+            outcome = OUTCOME_NOT_LISTED if all_candidates_absent else OUTCOME_FUZZY_BELOW_THRESHOLD
             return (
                 "unmatched", None, 0.0, None,
-                ">".join(attempted_methods), OUTCOME_FUZZY_BELOW_THRESHOLD, conflict_candidates
+                ">".join(attempted_methods), outcome, conflict_candidates, None, all_candidates_absent
             )
         
         # Sort by score descending
@@ -738,18 +975,41 @@ class HFLeaderboardEnricher(BaseEnricher):
         # Check for conflict (top-2 too close)
         if len(best_matches) >= 2:
             if best_matches[0][0] - best_matches[1][0] < MATCH_THRESHOLD_CONFLICT:
-                # Conflict detected
                 conflict_candidates = f"{best_matches[0][1]} ({best_matches[0][0]:.3f}); {best_matches[1][1]} ({best_matches[1][0]:.3f})"
                 return (
                     "conflict", None, best_matches[0][0], None,
-                    ">".join(attempted_methods), OUTCOME_CONFLICT, conflict_candidates
+                    ">".join(attempted_methods), OUTCOME_CONFLICT, conflict_candidates, None, False
                 )
         
         top_match = best_matches[0]
         return (
             "matched", "fuzzy", round(top_match[0], 3), top_match[2],
-            ">".join(attempted_methods), None, None
+            ">".join(attempted_methods), None, None, candidates[0] if candidates else None, False
         )
+    
+    def _match_model(
+        self,
+        row: pd.Series,
+        hf_index: Dict[str, Dict[str, Any]],
+        candidates: Optional[List[str]] = None,
+    ) -> Tuple[str, Optional[str], float, Optional[Dict[str, Any]], str, Optional[str], Optional[str]]:
+        """
+        Match a model to HF leaderboard using multi-tier matching.
+        
+        Legacy wrapper that generates candidates if not provided.
+        
+        Returns: (match_status, match_method, match_score, hf_info, 
+                  attempted_methods, match_outcome, conflict_candidates)
+        """
+        # Generate candidates if not provided
+        if candidates is None:
+            candidates, _ = self._generate_hf_candidates(row)
+        
+        model_name = row.get("model_name") if pd.notna(row.get("model_name")) else None
+        
+        result = self._match_model_with_candidates(candidates, hf_index, model_name)
+        # Return without the extra fields (matched_candidate, all_candidates_absent)
+        return result[:7]
     
     def _do_enrich(self, df: pd.DataFrame, result: EnricherResult) -> pd.DataFrame:
         """Fetch HF Leaderboard data and enrich the catalog."""
@@ -785,6 +1045,7 @@ class HFLeaderboardEnricher(BaseEnricher):
         # Boolean columns (eligibility)
         boolean_columns = [
             "hf_ollb_eligible",
+            "hf_ollb_not_listed_on_leaderboard",
         ]
         
         # String columns (metadata, provenance, eligibility, debug)
@@ -801,7 +1062,14 @@ class HFLeaderboardEnricher(BaseEnricher):
             # Eligibility columns
             "hf_ollb_ineligible_reason",
             "hf_ollb_candidate_hf_id",
-            # Debug/audit columns (new)
+            # HF ID inference columns (new)
+            "hf_ollb_inferred_hf_id",
+            "hf_ollb_inferred_hf_id_source",
+            "hf_ollb_base_model_hf_id",
+            "hf_ollb_candidate_set",
+            # Not-listed columns (new)
+            "hf_ollb_not_listed_reason",
+            # Debug/audit columns
             "hf_ollb_attempted_methods",
             "hf_ollb_match_outcome",
             "hf_ollb_conflict_candidates",
@@ -830,10 +1098,13 @@ class HFLeaderboardEnricher(BaseEnricher):
         matched_count = 0
         unmatched_count = 0
         conflict_count = 0
+        not_listed_count = 0
         eligible_count = 0
         eligible_matched_count = 0
         eligible_conflict_count = 0
+        eligible_not_listed_count = 0
         ineligible_count = 0
+        inferred_hf_id_count = 0
         match_methods: Dict[str, int] = {}
         match_outcomes: Dict[str, int] = {}
         ineligible_reasons: Dict[str, int] = {}
@@ -850,7 +1121,6 @@ class HFLeaderboardEnricher(BaseEnricher):
             # Record eligibility info
             df.at[idx, "hf_ollb_eligible"] = eligible
             df.at[idx, "hf_ollb_ineligible_reason"] = ineligible_reason
-            df.at[idx, "hf_ollb_candidate_hf_id"] = candidate_hf_id
             
             if eligible:
                 eligible_count += 1
@@ -858,10 +1128,40 @@ class HFLeaderboardEnricher(BaseEnricher):
                 ineligible_count += 1
                 ineligible_reasons[ineligible_reason or "unknown"] = ineligible_reasons.get(ineligible_reason or "unknown", 0) + 1
             
-            # Step 2: Perform matching with multi-tier approach
+            # Step 2: Infer HF ID if missing
+            inferred_hf_id = None
+            inferred_source = None
+            hf_id = row.get("hugging_face_id")
+            
+            if eligible and (pd.isna(hf_id) or not hf_id):
+                inferred_hf_id, inferred_source = self._infer_hf_id_from_row(row)
+                if inferred_hf_id:
+                    df.at[idx, "hf_ollb_inferred_hf_id"] = inferred_hf_id
+                    df.at[idx, "hf_ollb_inferred_hf_id_source"] = inferred_source
+                    inferred_hf_id_count += 1
+            
+            # Step 3: Generate all candidates
+            candidates, base_model_hf_id = self._generate_hf_candidates(row, inferred_hf_id)
+            
+            # Record candidate set (first 5, truncated)
+            if candidates:
+                candidate_set_str = "; ".join(candidates[:5])
+                if len(candidates) > 5:
+                    candidate_set_str += f"; (+{len(candidates) - 5} more)"
+                df.at[idx, "hf_ollb_candidate_set"] = candidate_set_str
+                df.at[idx, "hf_ollb_candidate_hf_id"] = candidates[0]  # Primary candidate
+            else:
+                df.at[idx, "hf_ollb_candidate_hf_id"] = candidate_hf_id  # Fallback
+            
+            if base_model_hf_id:
+                df.at[idx, "hf_ollb_base_model_hf_id"] = base_model_hf_id
+            
+            # Step 4: Perform matching with candidate set
+            model_name = row.get("model_name") if pd.notna(row.get("model_name")) else None
             (match_status, match_method, match_score, hf_info,
-             attempted_methods, match_outcome, conflict_candidates) = self._match_model(
-                row, hf_index
+             attempted_methods, match_outcome, conflict_candidates,
+             matched_candidate, all_candidates_absent) = self._match_model_with_candidates(
+                candidates, hf_index, model_name
             )
             
             # Record match status
@@ -873,12 +1173,30 @@ class HFLeaderboardEnricher(BaseEnricher):
             if match_status == "matched":
                 df.at[idx, "hf_ollb_match_method"] = match_method
                 df.at[idx, "hf_ollb_match_outcome"] = None  # No outcome for matched
+                if matched_candidate:
+                    df.at[idx, "hf_ollb_candidate_hf_id"] = matched_candidate
             else:
                 df.at[idx, "hf_ollb_match_method"] = None  # Clear method for non-matched
                 df.at[idx, "hf_ollb_match_outcome"] = match_outcome
             
             # Conflict candidates for conflict or prefix ambiguity
             df.at[idx, "hf_ollb_conflict_candidates"] = conflict_candidates
+            
+            # Step 5: Not-listed semantics
+            if eligible and match_status != "matched" and match_status != "conflict":
+                if all_candidates_absent and candidates:
+                    df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = True
+                    df.at[idx, "hf_ollb_not_listed_reason"] = "candidate_repo_absent"
+                    df.at[idx, "hf_ollb_match_outcome"] = OUTCOME_NOT_LISTED
+                    not_listed_count += 1
+                    eligible_not_listed_count += 1
+                elif not candidates:
+                    df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = False
+                    df.at[idx, "hf_ollb_not_listed_reason"] = "no_candidates"
+                else:
+                    df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = False
+            else:
+                df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = False
             
             if match_status == "matched" and hf_info:
                 # Copy benchmark scores
@@ -954,6 +1272,9 @@ class HFLeaderboardEnricher(BaseEnricher):
         result.rows_enriched = matched_count
         result.rows_with_gaps = unmatched_count + conflict_count
         
+        # Compute true gaps (eligible - matched - conflict - not_listed)
+        true_gaps = eligible_count - eligible_matched_count - eligible_conflict_count - eligible_not_listed_count
+        
         # Log comprehensive summary
         total_attempted = eligible_count + ineligible_count
         eligible_metric_pct = 100.0 * eligible_matched_count / eligible_count if eligible_count > 0 else 0
@@ -975,8 +1296,12 @@ class HFLeaderboardEnricher(BaseEnricher):
                         100.0 * matched_count / total_attempted if total_attempted > 0 else 0)
         self.logger.info("  Matched (eligible only): %d / %d (%.1f%%) <- Metric(Eligible)", 
                         eligible_matched_count, eligible_count, eligible_metric_pct)
-        self.logger.info("  Conflicts (all): %d", conflict_count)
         self.logger.info("  Conflicts (eligible): %d", eligible_conflict_count)
+        self.logger.info("  Not-listed (eligible): %d", eligible_not_listed_count)
+        self.logger.info("  True gaps (eligible): %d", true_gaps)
+        self.logger.info("")
+        self.logger.info("  Inferred HF IDs: %d", inferred_hf_id_count)
+        self.logger.info("  HF Hub base_model resolution: %s", "enabled" if HF_OLLB_RESOLVE_BASE_MODEL else "disabled")
         self.logger.info("")
         self.logger.info("  Match methods (matched rows only): %s", match_methods)
         self.logger.info("  Match outcomes (non-matched): %s", match_outcomes)
@@ -991,6 +1316,9 @@ class HFLeaderboardEnricher(BaseEnricher):
         print(f"  Matched count:         {matched_count}")
         print(f"  Metric(Eligible):      {eligible_matched_count}/{eligible_count} ({eligible_metric_pct:.1f}%)")
         print(f"  Conflicts (eligible):  {eligible_conflict_count}")
+        print(f"  Not-listed (eligible): {eligible_not_listed_count}")
+        print(f"  True gaps:             {true_gaps}")
+        print(f"  Inferred HF IDs:       {inferred_hf_id_count}")
         print(f"  Match methods:         {match_methods}")
         print("=" * 60)
         print("")
