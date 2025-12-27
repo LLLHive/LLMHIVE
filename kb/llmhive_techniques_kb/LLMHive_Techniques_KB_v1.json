@@ -1,18 +1,626 @@
 {
+  "readme": "kb_name,description,version,last_updated\nLLMHive Techniques Knowledge Base,Comprehensive KB of AI team orchestration strategies, prompt techniques, and quality methods,v1.0,2025-12-26\n",
+  "techniques": [
+    {
+      "technique_id": "TECH_0001",
+      "name": "Chain-of-Thought Prompting",
+      "architecture_pattern": "Single-Agent LLM",
+      "coordination_mechanism": "N/A",
+      "agent_roles": "Single agent",
+      "reasoning_type": "stepwise-deductive",
+      "rag_dependency": "no",
+      "implementation_steps": "Model generates a series of intermediate reasoning steps before final answer (improves complex QA and math performance)",
+      "canonical_sources": "SRC_0001"
+    },
+    {
+      "technique_id": "TECH_0002",
+      "name": "Self-Consistency Decoding",
+      "architecture_pattern": "Single-Agent LLM",
+      "coordination_mechanism": "N/A",
+      "agent_roles": "Single agent",
+      "reasoning_type": "multi-path voting",
+      "rag_dependency": "no",
+      "implementation_steps": "Model samples multiple reasoning chains and selects the most consistent answer by majority boosting reasoning accuracy by large margins",
+      "canonical_sources": "SRC_0002"
+    },
+    {
+      "technique_id": "TECH_0003",
+      "name": "Tree-of-Thought (ToT)",
+      "architecture_pattern": "Single-Agent LLM",
+      "coordination_mechanism": "N/A",
+      "agent_roles": "Single agent",
+      "reasoning_type": "search-based reasoning",
+      "rag_dependency": "no",
+      "implementation_steps": "Model explores a branching tree of possible thought steps with backtracking and lookahead enabling deliberate planning (e.g. GPT-4 success on a puzzle rose from 4% to 74% using ToT)",
+      "canonical_sources": "SRC_0004"
+    },
+    {
+      "technique_id": "TECH_0004",
+      "name": "ReAct (Reason+Act)",
+      "architecture_pattern": "Single-Agent with Tools",
+      "coordination_mechanism": "interleaved reasoning & tool-use",
+      "agent_roles": "Single agent",
+      "reasoning_type": "tool-augmented",
+      "rag_dependency": "yes",
+      "implementation_steps": "Model alternates between thought steps and actions (API calls) to gather information and update plans which reduces hallucinations and improves task success",
+      "canonical_sources": "SRC_0003"
+    },
+    {
+      "technique_id": "TECH_0005",
+      "name": "Self-Refine Prompting",
+      "architecture_pattern": "Single-Agent LLM",
+      "coordination_mechanism": "iterative self-feedback",
+      "agent_roles": "Single agent",
+      "reasoning_type": "self-critique",
+      "rag_dependency": "no",
+      "implementation_steps": "Model generates an initial draft then critiques and revises its own output iteratively without extra training yielding ~20% quality improvements across tasks",
+      "canonical_sources": "SRC_0005"
+    },
+    {
+      "technique_id": "TECH_0006",
+      "name": "Retrieval-Augmented Generation (RAG)",
+      "architecture_pattern": "Single-Agent with Tools",
+      "coordination_mechanism": "retrieve-then-read",
+      "agent_roles": "Single agent",
+      "reasoning_type": "knowledge-augmented",
+      "rag_dependency": "yes",
+      "implementation_steps": "Model retrieves relevant documents from an external corpus and incorporates them into the prompt before answering enabling use of up-to-date/domain-specific info and reducing hallucination",
+      "canonical_sources": "SRC_0012"
+    },
+    {
+      "technique_id": "TECH_0007",
+      "name": "Multi-Agent Debate (MAD)",
+      "architecture_pattern": "Multi-Agent Peer",
+      "coordination_mechanism": "turn-based debate",
+      "agent_roles": "Multiple peer agents",
+      "reasoning_type": "dialectical",
+      "rag_dependency": "no",
+      "implementation_steps": "Multiple agents argue and critique each others answers in a structured sequence moderated by a judge model aiming to refine reasoning and correct errors; diversity of viewpoints is key to success",
+      "canonical_sources": "SRC_0006"
+    },
+    {
+      "technique_id": "TECH_0008",
+      "name": "Expert Panel (Ensemble)",
+      "architecture_pattern": "Multi-Agent Parallel",
+      "coordination_mechanism": "independent contributions",
+      "agent_roles": "Multiple specialists",
+      "reasoning_type": "ensemble reasoning",
+      "rag_dependency": "optional",
+      "implementation_steps": "Multiple expert agents (e.g. Analyst Reasoner Verifier) address a query in parallel and their outputs are synthesized into a final answer leveraging diverse expertise for comprehensive responses",
+      "canonical_sources": "SRC_0007"
+    },
+    {
+      "technique_id": "TECH_0009",
+      "name": "Challenge & Refine Loop",
+      "architecture_pattern": "Multi-Agent Iterative",
+      "coordination_mechanism": "critique-refinement loop",
+      "agent_roles": "Challenger + Responder",
+      "reasoning_type": "adversarial refinement",
+      "rag_dependency": "no",
+      "implementation_steps": "One agent (or sub-model) generates a draft and a secondary agent identifies flaws and suggests fixes; the first agent revises the answer. Iterate until no issues remain or max loops producing more correct answers",
+      "canonical_sources": "SRC_0007"
+    },
+    {
+      "technique_id": "TECH_0010",
+      "name": "ChatDev Multi-Stage",
+      "architecture_pattern": "Multi-Agent Sequential",
+      "coordination_mechanism": "phase-wise handoff",
+      "agent_roles": "Roles: Designer & Programmer & Tester & Doc",
+      "reasoning_type": "workflow reasoning",
+      "rag_dependency": "no",
+      "implementation_steps": "Simulated software team: agents take on roles (design coding testing etc.) and communicate in a waterfall chat chain completing an entire software project in minutes with minimal human input (e.g. a gomoku game in 7 minutes <$1)",
+      "canonical_sources": "SRC_0008"
+    },
+    {
+      "technique_id": "TECH_0011",
+      "name": "MacNet DAG Orchestration",
+      "architecture_pattern": "Multi-Agent Hierarchical",
+      "coordination_mechanism": "topological order DAG",
+      "agent_roles": "Many specialized nodes",
+      "reasoning_type": "distributed reasoning",
+      "rag_dependency": "no",
+      "implementation_steps": "Large-scale multi-agent network organized as a directed acyclic graph with instructor and assistant roles along each edge; agents pass refined solutions through the network. Enables coordination of 1000+ agents and shows emergent quality gains with small-world topologies",
+      "canonical_sources": "SRC_0009"
+    },
+    {
+      "technique_id": "TECH_0012",
+      "name": "HuggingGPT Orchestrator",
+      "architecture_pattern": "Multi-Model Hierarchical",
+      "coordination_mechanism": "centralized controller",
+      "agent_roles": "Controller + tool-experts",
+      "reasoning_type": "plan-and-execute",
+      "rag_dependency": "yes",
+      "implementation_steps": "A large LLM (controller) parses the user request into tasks selects appropriate expert models for each (via HuggingFace hub) runs subtasks (vision speech etc.) then integrates the results into a final answer – effectively using an LLM to manage a team of specialized AI models",
+      "canonical_sources": "SRC_0010"
+    }
+  ],
+  "architectures": [
+    {
+      "architecture_id": "ARCH_0001",
+      "pattern_name": "Single-Agent Monolithic",
+      "description": "A single LLM handles the query end-to-end without specialized divisions (baseline architecture for prompts)"
+    },
+    {
+      "architecture_id": "ARCH_0002",
+      "pattern_name": "Single-Agent + Tools",
+      "description": "A single LLM augmented with tool use (APIs search etc.) to fetch external information or execute actions"
+    },
+    {
+      "architecture_id": "ARCH_0003",
+      "pattern_name": "Multi-Agent Parallel",
+      "description": "Multiple LLM agents work independently on the problem (often with different specializations) and their outputs are later combined"
+    },
+    {
+      "architecture_id": "ARCH_0004",
+      "pattern_name": "Multi-Agent Sequential",
+      "description": "Multiple LLM agents arranged in a pipeline of stages passing context and results from one role to the next (workflow chain)"
+    },
+    {
+      "architecture_id": "ARCH_0005",
+      "pattern_name": "Multi-Agent Hierarchical",
+      "description": "An orchestrator (lead agent) coordinates subordinate agents (or models) in a tree or DAG structure assigning tasks and integrating results"
+    },
+    {
+      "architecture_id": "ARCH_0006",
+      "pattern_name": "Multi-Agent Adversarial",
+      "description": "Agents engage in a debate or critique format either against each other or with a designated critic/judge to refine the answer through conflict and resolution"
+    },
+    {
+      "architecture_id": "ARCH_0007",
+      "pattern_name": "Iterative Self-Improvement",
+      "description": "A single LLM (or team) iteratively refines its output by self-critiquing and updating the response in multiple rounds within one session"
+    }
+  ],
+  "benchmarks": [
+    {
+      "benchmark_id": "BM_0001",
+      "name": "GSM8K",
+      "category": "Math Word Problems",
+      "description": "Grade-school math word problem benchmark (solve arithmetic/logic word questions)",
+      "source_id": "SRC_0001"
+    },
+    {
+      "benchmark_id": "BM_0002",
+      "name": "MMLU",
+      "category": "Knowledge QA",
+      "description": "Massive Multitask Language Understanding test across 57 subjects (culture science etc.)",
+      "source_id": "SRC_0011"
+    },
+    {
+      "benchmark_id": "BM_0003",
+      "name": "HumanEval",
+      "category": "Code Generation",
+      "description": "OpenAI coding challenge: generate correct solutions for programming problems",
+      "source_id": "SRC_0011"
+    },
+    {
+      "benchmark_id": "BM_0004",
+      "name": "BBH",
+      "category": "Reasoning QA",
+      "description": "BIG-Bench Hard: a set of challenging held-out reasoning tasks for LLMs",
+      "source_id": "SRC_0011"
+    },
+    {
+      "benchmark_id": "BM_0005",
+      "name": "HotpotQA",
+      "category": "Multi-hop QA",
+      "description": "Wikipedia-based multi-hop question answering (requires combining facts)",
+      "source_id": "SRC_0003"
+    },
+    {
+      "benchmark_id": "BM_0006",
+      "name": "ALFWorld",
+      "category": "Interactive Decision",
+      "description": "Text-based virtual environment for ALFRED tasks (interactive agent planning)",
+      "source_id": "SRC_0003"
+    },
+    {
+      "benchmark_id": "BM_0007",
+      "name": "WebShop",
+      "category": "Interactive Decision",
+      "description": "Virtual shopping environment requiring multi-step planning (web navigation task)",
+      "source_id": "SRC_0003"
+    },
+    {
+      "benchmark_id": "BM_0008",
+      "name": "IncidentResponseSim",
+      "category": "Operational QA",
+      "description": "Simulated incident response scenario requiring diagnostic reasoning and remedial planning",
+      "source_id": "SRC_0007"
+    },
+    {
+      "benchmark_id": "BM_0009",
+      "name": "GameOf24",
+      "category": "Puzzle",
+      "description": "Math puzzle (make 24 from four numbers) requiring strategic search",
+      "source_id": "SRC_0004"
+    },
+    {
+      "benchmark_id": "BM_0010",
+      "name": "SoftwareDevSim",
+      "category": "Code Generation",
+      "description": "End-to-end software development simulation (design implement test a project via AI agents)",
+      "source_id": "SRC_0008"
+    }
+  ],
+  "benchmark_results": [
+    {
+      "result_id": "RES_0001",
+      "technique_id": "TECH_0001",
+      "benchmark_id": "BM_0001",
+      "model_or_system": "PaLM 540B",
+      "conditions": "CoT vs no-CoT exemplars",
+      "date_reported": "2022-01-28",
+      "source_id": "SRC_0001",
+      "outcome": "Chain-of-thought prompting achieved SOTA 74% on GSM8K math (vs 17% without CoT)"
+    },
+    {
+      "result_id": "RES_0002",
+      "technique_id": "TECH_0002",
+      "benchmark_id": "BM_0001",
+      "model_or_system": "GPT-3 175B",
+      "conditions": "with Self-Consistency",
+      "date_reported": "2023-02-01",
+      "source_id": "SRC_0002",
+      "outcome": "Self-Consistency decoding improved GSM8K accuracy by +17.9% (from 55.7% to 73.6%)"
+    },
+    {
+      "result_id": "RES_0003",
+      "technique_id": "TECH_0003",
+      "benchmark_id": "BM_0009",
+      "model_or_system": "GPT-4",
+      "conditions": "CoT vs ToT",
+      "date_reported": "2023-12-03",
+      "source_id": "SRC_0004",
+      "outcome": "Tree-of-Thought solved 74% of Game-of-24 puzzles (GPT-4 with CoT baseline only 4% solved)"
+    },
+    {
+      "result_id": "RES_0004",
+      "technique_id": "TECH_0004",
+      "benchmark_id": "BM_0005",
+      "model_or_system": "GPT-3.5 + Tools",
+      "conditions": "ReAct vs standard CoT",
+      "date_reported": "2023-10-06",
+      "source_id": "SRC_0003",
+      "outcome": "ReAct eliminated hallucinated answers on HotpotQA and improved factual accuracy by using Wikipedia lookup"
+    },
+    {
+      "result_id": "RES_0005",
+      "technique_id": "TECH_0004",
+      "benchmark_id": "BM_0006",
+      "model_or_system": "GPT-3 (few-shot)",
+      "conditions": "ReAct vs RL agent",
+      "date_reported": "2023-10-06",
+      "source_id": "SRC_0003",
+      "outcome": "On ALFWorld interactive tasks ReAct achieved 34% higher success rate than a trained RL policy"
+    },
+    {
+      "result_id": "RES_0006",
+      "technique_id": "TECH_0008",
+      "benchmark_id": "BM_0008",
+      "model_or_system": "Multi-agent (3 models)",
+      "conditions": "Expert panel vs single",
+      "date_reported": "2025-11-19",
+      "source_id": "SRC_0007",
+      "outcome": "Multi-agent orchestration produced 100% actionable incident reports with zero variance vs 1.7% for single-LLM (deterministic quality gain)"
+    },
+    {
+      "result_id": "RES_0007",
+      "technique_id": "TECH_0010",
+      "benchmark_id": "BM_0010",
+      "model_or_system": "ChatDev agents (GPT-4)",
+      "conditions": "full automation",
+      "date_reported": "2023-07-18",
+      "source_id": "SRC_0008",
+      "outcome": "ChatDev multi-agent completed 70+ software tasks with average 409s runtime and $0.30 cost while fixing ~13 bugs per project autonomously"
+    },
+    {
+      "result_id": "RES_0008",
+      "technique_id": "TECH_0012",
+      "benchmark_id": "BM_0002",
+      "model_or_system": "ChatGPT+HF tools",
+      "conditions": "Heterogeneous orchestration",
+      "date_reported": "2023-03-30",
+      "source_id": "SRC_0010",
+      "outcome": "HuggingGPT successfully handled complex multi-modal user requests by delegating subtasks to expert models (language vision etc.) demonstrating broad task generality"
+    }
+  ],
+  "evaluation_rubric": [
+    {
+      "rubric_id": "RUB_0001",
+      "name": "Decision Quality (DQ)",
+      "criteria": "Validity & Specificity & Correctness",
+      "notes": "Multi-dimensional metric for actionable correctness: an answer must be factually valid specifically actionable and correct to score high"
+    },
+    {
+      "rubric_id": "RUB_0002",
+      "name": "Human Preference (HHH)",
+      "criteria": "Helpfulness & Honesty & Harmlessness",
+      "notes": "Measures answer quality via human feedback along usefulness to user truthfulness and avoidance of toxic or unsafe content (used in RLHF tuning)"
+    }
+  ],
+  "rankings": [
+    {
+      "ranking_id": "RANK_0001",
+      "benchmark_id": "BM_0002",
+      "rank_position": "1",
+      "model_or_system": "ARC Reactor Mk1",
+      "score_or_accuracy": "92.9%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0002",
+      "benchmark_id": "BM_0002",
+      "rank_position": "2",
+      "model_or_system": "OpenAI GPT-4 Omni",
+      "score_or_accuracy": "88.7%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0003",
+      "benchmark_id": "BM_0002",
+      "rank_position": "3",
+      "model_or_system": "Anthropic Claude Opus",
+      "score_or_accuracy": "86.8%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0004",
+      "benchmark_id": "BM_0002",
+      "rank_position": "4",
+      "model_or_system": "Meta Llama 3",
+      "score_or_accuracy": "86.1%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0005",
+      "benchmark_id": "BM_0003",
+      "rank_position": "1",
+      "model_or_system": "ARC Reactor Mk1",
+      "score_or_accuracy": "91.0%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0006",
+      "benchmark_id": "BM_0003",
+      "rank_position": "2",
+      "model_or_system": "OpenAI GPT-4 Omni",
+      "score_or_accuracy": "90.2%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0007",
+      "benchmark_id": "BM_0003",
+      "rank_position": "3",
+      "model_or_system": "Anthropic Claude Opus",
+      "score_or_accuracy": "84.9%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0008",
+      "benchmark_id": "BM_0004",
+      "rank_position": "1",
+      "model_or_system": "ARC Reactor Mk1",
+      "score_or_accuracy": "88.0%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0009",
+      "benchmark_id": "BM_0004",
+      "rank_position": "2",
+      "model_or_system": "Google Gemini",
+      "score_or_accuracy": "83.6%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    },
+    {
+      "ranking_id": "RANK_0010",
+      "benchmark_id": "BM_0004",
+      "rank_position": "3",
+      "model_or_system": "OpenAI GPT-4 Omni",
+      "score_or_accuracy": "83.1%",
+      "source_id": "SRC_0011",
+      "date_reported": "2024-06-20"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "SRC_0001",
+      "title_or_reference": "Wei et al. 2022 - Chain-of-Thought Prompting",
+      "publication_type": "Conference Paper (NeurIPS'22)",
+      "credibility_tier": "Tier 1 (peer-reviewed)",
+      "url": "https://arxiv.org/abs/2201.11903"
+    },
+    {
+      "source_id": "SRC_0002",
+      "title_or_reference": "Wang et al. 2022 - Self-Consistency CoT",
+      "publication_type": "Conference Paper (ICLR'23)",
+      "credibility_tier": "Tier 1 (peer-reviewed)",
+      "url": "https://openreview.net/forum?id=1PL1NIMMrw"
+    },
+    {
+      "source_id": "SRC_0003",
+      "title_or_reference": "Yao et al. 2022 - ReAct (ICLR'23)",
+      "publication_type": "Conference Paper (ICLR'23)",
+      "credibility_tier": "Tier 1 (peer-reviewed)",
+      "url": "https://arxiv.org/abs/2210.03629"
+    },
+    {
+      "source_id": "SRC_0004",
+      "title_or_reference": "Yao et al. 2023 - Tree-of-Thought (NeurIPS'23)",
+      "publication_type": "Conference Paper (NeurIPS'23)",
+      "credibility_tier": "Tier 1 (peer-reviewed)",
+      "url": "https://arxiv.org/abs/2305.10601"
+    },
+    {
+      "source_id": "SRC_0005",
+      "title_or_reference": "Madaan et al. 2023 - Self-Refine",
+      "publication_type": "Conference Paper (NeurIPS'23)",
+      "credibility_tier": "Tier 1 (peer-reviewed)",
+      "url": "https://openreview.net/forum?id=S37hOerQLB"
+    },
+    {
+      "source_id": "SRC_0006",
+      "title_or_reference": "Wu et al. 2025 - Can LLM Agents Debate?",
+      "publication_type": "Preprint (arXiv Nov 2025)",
+      "credibility_tier": "Tier 2 (preprint)",
+      "url": "https://arxiv.org/abs/2511.07784"
+    },
+    {
+      "source_id": "SRC_0007",
+      "title_or_reference": "Drammeh 2025 - Multi-Agent Orchestration for IR",
+      "publication_type": "Preprint (arXiv Nov 2025)",
+      "credibility_tier": "Tier 2 (preprint)",
+      "url": "https://arxiv.org/abs/2511.15755"
+    },
+    {
+      "source_id": "SRC_0008",
+      "title_or_reference": "Qian et al. 2023 - ChatDev AI SDLC",
+      "publication_type": "Preprint (arXiv Jul 2023)",
+      "credibility_tier": "Tier 2 (preprint)",
+      "url": "https://arxiv.org/abs/2307.07924"
+    },
+    {
+      "source_id": "SRC_0009",
+      "title_or_reference": "Qian et al. 2024 - MacNet (Scaling LLM Agents)",
+      "publication_type": "Preprint (arXiv Jun 2024)",
+      "credibility_tier": "Tier 2 (preprint)",
+      "url": "https://arxiv.org/abs/2406.07155"
+    },
+    {
+      "source_id": "SRC_0010",
+      "title_or_reference": "Shen et al. 2023 - HuggingGPT",
+      "publication_type": "Preprint (arXiv Dec 2023)",
+      "credibility_tier": "Tier 2 (preprint)",
+      "url": "https://arxiv.org/abs/2303.17580"
+    },
+    {
+      "source_id": "SRC_0011",
+      "title_or_reference": "Dunham & Syahputra 2024 - Reactor Mk1 Report",
+      "publication_type": "Preprint/Tech Report (arXiv Jun 2024)",
+      "credibility_tier": "Tier 2 (preprint)",
+      "url": "https://arxiv.org/abs/2406.10515"
+    },
+    {
+      "source_id": "SRC_0012",
+      "title_or_reference": "Wikipedia 2025 - Retrieval-Augmented Generation",
+      "publication_type": "Tertiary Reference (Wiki article)",
+      "credibility_tier": "Tier 3 (community)",
+      "url": "https://en.wikipedia.org/wiki/Retrieval-augmented_generation"
+    }
+  ],
+  "technique_source_map": [
+    {
+      "map_id": "TSM_0001",
+      "technique_id": "TECH_0001",
+      "source_id": "SRC_0001",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0002",
+      "technique_id": "TECH_0002",
+      "source_id": "SRC_0002",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0003",
+      "technique_id": "TECH_0003",
+      "source_id": "SRC_0004",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0004",
+      "technique_id": "TECH_0004",
+      "source_id": "SRC_0003",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0005",
+      "technique_id": "TECH_0005",
+      "source_id": "SRC_0005",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0006",
+      "technique_id": "TECH_0006",
+      "source_id": "SRC_0012",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0007",
+      "technique_id": "TECH_0007",
+      "source_id": "SRC_0006",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0008",
+      "technique_id": "TECH_0008",
+      "source_id": "SRC_0007",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0009",
+      "technique_id": "TECH_0009",
+      "source_id": "SRC_0007",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0010",
+      "technique_id": "TECH_0010",
+      "source_id": "SRC_0008",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0011",
+      "technique_id": "TECH_0011",
+      "source_id": "SRC_0009",
+      "claim_supported": "canonical"
+    },
+    {
+      "map_id": "TSM_0012",
+      "technique_id": "TECH_0012",
+      "source_id": "SRC_0010",
+      "claim_supported": "canonical"
+    }
+  ],
+  "README": "",
   "metadata": {
     "version": "1.0.0",
-    "created_at": "2025-12-27T15:33:33.191216+00:00",
-    "status": "empty",
-    "error": "Seed file not found",
-    "seed_file_path": "/Users/camilodiaz/LLMHIVE/kb/llmhive_techniques_kb/seed/LLMHive_Techniques_KB_v1_seed.txt"
-  },
-  "README": "Seed file not found. Please add the KB seed file.",
-  "techniques": [],
-  "architectures": [],
-  "benchmarks": [],
-  "benchmark_results": [],
-  "evaluation_rubric": [],
-  "rankings": [],
-  "sources": [],
-  "technique_source_map": []
+    "created_at": "2025-12-27T17:34:22.968474+00:00",
+    "status": "imported",
+    "seed_file": "LLMHive_Techniques_KB_v1_seed.txt",
+    "sections": [
+      "readme",
+      "techniques",
+      "architectures",
+      "benchmarks",
+      "benchmark_results",
+      "evaluation_rubric",
+      "rankings",
+      "sources",
+      "technique_source_map",
+      "README"
+    ],
+    "row_counts": {
+      "readme": 1,
+      "techniques": 12,
+      "architectures": 7,
+      "benchmarks": 10,
+      "benchmark_results": 8,
+      "evaluation_rubric": 2,
+      "rankings": 10,
+      "sources": 12,
+      "technique_source_map": 12,
+      "README": 1
+    },
+    "placeholder_fixes": 0
+  }
 }

@@ -50,15 +50,22 @@ REQUIRED_SECTIONS = [
     "sources",
 ]
 
-# Section schemas (required columns)
+# Section schemas (required columns) - flexible to match actual data
 SECTION_SCHEMAS = {
-    "techniques": ["technique_id", "name", "category"],
-    "architectures": ["architecture_id", "name"],
+    "techniques": ["technique_id", "name"],  # category is optional
+    "architectures": ["architecture_id", "pattern_name"],  # or "name"
     "benchmarks": ["benchmark_id", "name"],
     "benchmark_results": ["result_id", "benchmark_id", "technique_id"],
-    "evaluation_rubric": ["criterion_id", "name"],
-    "rankings": ["ranking_id", "category"],
-    "sources": ["source_id", "title"],
+    "evaluation_rubric": ["rubric_id", "name"],  # rubric_id not criterion_id
+    "rankings": ["ranking_id", "benchmark_id"],  # benchmark_id not category
+    "sources": ["source_id", "title_or_reference"],  # title_or_reference not title
+}
+
+# Column name aliases (map expected -> actual)
+COLUMN_ALIASES = {
+    "name": ["name", "pattern_name", "title_or_reference"],
+    "category": ["category", "benchmark_id"],
+    "criterion_id": ["criterion_id", "rubric_id"],
 }
 
 # Logging
