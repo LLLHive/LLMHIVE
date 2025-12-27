@@ -460,7 +460,7 @@ class TraceLogTags:
         latency_ms: float = 0.0,
     ) -> Dict[str, Any]:
         """Format trace log tags as a dictionary."""
-        return {
+        trace_tags = {
             "reasoning_method": reasoning_method,
             "execution_mode": execution_mode,
             "confidence": confidence,
@@ -471,6 +471,30 @@ class TraceLogTags:
             "tokens_used": tokens_used,
             "latency_ms": latency_ms,
         }
+        
+        # --- JSONL trace emission (dashboard telemetry) ---
+        from .trace_writer import emit_trace  # lazy import avoids circular deps
+
+        event_name = "fallback_used" if (fallback or strategy_source == "fallback") else "strategy_selected"
+
+        payload = {
+            "event": event_name,
+            "reasoning_method": reasoning_method,
+            "strategy_source": strategy_source,
+            "fallback": fallback,
+        }
+
+        # Include confidence if the trace-tags dict already has it.
+        try:
+            if isinstance(trace_tags, dict) and "confidence" in trace_tags:
+                payload["confidence"] = trace_tags["confidence"]
+        except Exception:
+            pass
+
+        emit_trace(payload)
+        # --- end trace emission ---
+        
+        return trace_tags
 
 
 # =============================================================================
