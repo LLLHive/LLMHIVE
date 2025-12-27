@@ -3,6 +3,12 @@ Eval Harness Enricher
 
 Runs deterministic evaluations on models via OpenRouter API.
 Measures language and programming language capabilities.
+
+Key Features:
+- Incremental evaluation with TTL-based cohort selection
+- Sticky metrics: previous values preserved for non-selected models
+- Deterministic cohort: same seed = same selection
+- Per-row provenance: attempted, asof_date, run_id, outcome, error
 """
 from __future__ import annotations
 
@@ -20,6 +26,7 @@ import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .base import BaseEnricher, EnricherResult
+from .cohort_selector import select_cohort, generate_run_id, get_iso_week_seed
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +35,13 @@ EVALS_DIR = Path(__file__).parent.parent / "evals"
 
 # OpenRouter API
 OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# Eval outcome values
+OUTCOME_SUCCESS = "success"
+OUTCOME_ERROR = "error"
+OUTCOME_SKIPPED_TTL = "skipped_ttl"
+OUTCOME_SKIPPED_BUDGET = "skipped_budget"
+OUTCOME_DISABLED = "disabled"
 
 
 class EvalHarnessEnricher(BaseEnricher):
@@ -40,11 +54,35 @@ class EvalHarnessEnricher(BaseEnricher):
     - Tool use / structured output
     
     All evaluations use fixed prompts with verifiable answers.
+    
+    Provenance Columns:
+    - eval_attempted (boolean): True if evaluation was attempted
+    - eval_asof_date (string): ISO8601 timestamp of last evaluation
+    - eval_run_id (string): Batch run identifier
+    - eval_outcome (string): success/error/skipped_ttl/skipped_budget/disabled
+    - eval_error (string): Last error message if any
+    
+    Metric Columns:
+    - eval_{category}_score: Score 0-1 for each category
+    - eval_{category}_trials: Number of prompts evaluated
     """
     
     name = "eval_harness"
     source_name = "LLMHive Eval Harness"
     source_url = ""
+    
+    # Provenance columns (always initialized)
+    PROVENANCE_COLUMNS = [
+        "eval_attempted",
+        "eval_asof_date",
+        "eval_run_id",
+        "eval_outcome",
+        "eval_error",
+        "eval_source_name",
+    ]
+    
+    # Metric columns (depend on categories loaded)
+    METRIC_COLUMN_SUFFIXES = ["_score", "_trials"]
     
     def __init__(
         self,
@@ -55,6 +93,9 @@ class EvalHarnessEnricher(BaseEnricher):
         skip_expensive: bool = False,
         timeout_seconds: int = 30,
         max_cost_usd: float = 0.0,  # 0 = no limit
+        ttl_days: int = 30,
+        seed_key: Optional[str] = None,
+        always_include_top: int = 10,
     ):
         super().__init__(dry_run=dry_run, cache_dir=cache_dir)
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
@@ -62,8 +103,19 @@ class EvalHarnessEnricher(BaseEnricher):
         self.skip_expensive = skip_expensive
         self.timeout_seconds = timeout_seconds
         self.max_cost_usd = max_cost_usd
+        self.ttl_days = ttl_days
+        self.seed_key = seed_key
+        self.always_include_top = always_include_top
         self._eval_prompts: Dict[str, List[Dict[str, Any]]] = {}
         self._load_eval_prompts()
+    
+    def _get_metric_columns(self) -> List[str]:
+        """Get list of metric columns based on loaded categories."""
+        columns = []
+        for category in self._eval_prompts:
+            columns.append(f"eval_{category}_score")
+            columns.append(f"eval_{category}_trials")
+        return columns
     
     def _load_eval_prompts(self) -> None:
         """Load evaluation prompts from files."""
@@ -286,12 +338,48 @@ class EvalHarnessEnricher(BaseEnricher):
         # Default: non-empty response is partial success
         return 0.5, "Response received"
     
+    def _initialize_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Initialize provenance and metric columns if not present."""
+        # Provenance columns
+        for col in self.PROVENANCE_COLUMNS:
+            if col not in df.columns:
+                df[col] = None
+        
+        # Metric columns for each category
+        for category in self._eval_prompts:
+            for suffix in self.METRIC_COLUMN_SUFFIXES:
+                col = f"eval_{category}{suffix}"
+                if col not in df.columns:
+                    df[col] = None
+        
+        return df
+    
     def _do_enrich(self, df: pd.DataFrame, result: EnricherResult) -> pd.DataFrame:
-        """Run evaluations on models."""
+        """Run evaluations on models with incremental/sticky behavior."""
+        
+        # Always initialize columns (but don't wipe existing values)
+        df = self._initialize_columns(df)
         
         if self.dry_run:
-            self.logger.info("[DRY RUN] Would run evaluations")
-            result.warnings.append("Dry run - no evaluations run")
+            # Log what would happen
+            seed = self.seed_key or get_iso_week_seed()
+            cohort, metadata = select_cohort(
+                df,
+                max_models=self.max_models,
+                ttl_days=self.ttl_days,
+                seed_key=seed,
+                always_include_top=self.always_include_top,
+                slug_column="openrouter_slug",
+                asof_column="eval_asof_date",
+                metric_columns=self._get_metric_columns(),
+                rank_column="derived_rank_overall",
+                eligibility_filter="in_openrouter",
+            )
+            
+            self.logger.info("[DRY RUN] Would evaluate %d models", len(cohort))
+            self.logger.info("[DRY RUN] Cohort metadata: %s", metadata)
+            self.logger.info("[DRY RUN] Sample cohort (first 10): %s", cohort[:10])
+            result.warnings.append(f"Dry run - would evaluate {len(cohort)} models")
             return df
         
         if not self.api_key:
@@ -303,46 +391,50 @@ class EvalHarnessEnricher(BaseEnricher):
             return df
         
         now_iso = datetime.now(timezone.utc).isoformat()
+        run_id = generate_run_id()
         
-        # Initialize columns for each category
-        eval_columns = [
-            "eval_retrieved_at",
-            "eval_source_name",
-            "eval_confidence",
-            "eval_error_count",
-            "eval_last_error",
-        ]
+        # Select cohort using TTL-based selection
+        cohort, metadata = select_cohort(
+            df,
+            max_models=self.max_models,
+            ttl_days=self.ttl_days,
+            seed_key=self.seed_key,
+            always_include_top=self.always_include_top,
+            slug_column="openrouter_slug",
+            asof_column="eval_asof_date",
+            metric_columns=self._get_metric_columns(),
+            rank_column="derived_rank_overall",
+            eligibility_filter="in_openrouter",
+        )
         
-        # Add score columns for each category
-        for category in self._eval_prompts:
-            eval_columns.append(f"eval_{category}_score")
-            eval_columns.append(f"eval_{category}_trials")
+        self.logger.info("Eval cohort selected: %d models (seed=%s, ttl=%d days)",
+                        len(cohort), metadata.get("seed_key"), self.ttl_days)
         
-        for col in eval_columns:
-            if col not in df.columns:
-                df[col] = None
+        # Mark non-cohort eligible models with skipped_budget outcome (only if no prior outcome)
+        eligible_mask = df["in_openrouter"] == True
+        for idx, row in df[eligible_mask].iterrows():
+            slug = row.get("openrouter_slug")
+            if pd.isna(slug) or slug in cohort:
+                continue
+            
+            # Only set skipped outcome if not already set
+            current_outcome = row.get("eval_outcome")
+            if pd.isna(current_outcome) or current_outcome == "":
+                df.at[idx, "eval_outcome"] = OUTCOME_SKIPPED_BUDGET
         
-        # Filter models to evaluate
-        models_to_eval = df[df["in_openrouter"] == True]["openrouter_slug"].dropna().tolist()
-        
-        if self.max_models > 0:
-            models_to_eval = models_to_eval[:self.max_models]
-        
-        if self.skip_expensive:
-            # Skip models with high input costs
-            expensive_threshold = 10.0  # $10 per 1M tokens
-            models_to_eval = [
-                m for m in models_to_eval
-                if float(df[df["openrouter_slug"] == m]["price_input_usd_per_1m"].iloc[0] or 0) < expensive_threshold
-            ]
-        
-        self.logger.info("Evaluating %d models", len(models_to_eval))
+        if len(cohort) == 0:
+            self.logger.info("No models need evaluation (all within TTL)")
+            return df
         
         enriched_count = 0
         error_count = 0
         
-        for slug in models_to_eval:
-            idx = df[df["openrouter_slug"] == slug].index[0]
+        for slug in cohort:
+            matches = df[df["openrouter_slug"] == slug]
+            if len(matches) == 0:
+                continue
+            
+            idx = matches.index[0]
             
             model_scores: Dict[str, List[float]] = {}
             model_errors: List[str] = []
@@ -351,17 +443,20 @@ class EvalHarnessEnricher(BaseEnricher):
                 category_scores = []
                 
                 for prompt_spec in prompts[:3]:  # Limit prompts per category for cost control
-                    response, latency, error = self._call_model(
-                        slug,
-                        prompt_spec["prompt"],
-                    )
-                    
-                    if error:
-                        model_errors.append(f"{category}: {error}")
-                        continue
-                    
-                    score, note = self._evaluate_response(response, prompt_spec)
-                    category_scores.append(score)
+                    try:
+                        response, latency, error = self._call_model(
+                            slug,
+                            prompt_spec["prompt"],
+                        )
+                        
+                        if error:
+                            model_errors.append(f"{category}: {error}")
+                            continue
+                        
+                        score, note = self._evaluate_response(response, prompt_spec)
+                        category_scores.append(score)
+                    except Exception as e:
+                        model_errors.append(f"{category}: {str(e)[:100]}")
                 
                 if category_scores:
                     avg_score = sum(category_scores) / len(category_scores)
@@ -369,18 +464,22 @@ class EvalHarnessEnricher(BaseEnricher):
                     df.at[idx, f"eval_{category}_trials"] = len(category_scores)
                     model_scores[category] = category_scores
             
-            # Record errors
-            df.at[idx, "eval_error_count"] = len(model_errors)
+            # Record provenance
+            df.at[idx, "eval_attempted"] = True
+            df.at[idx, "eval_asof_date"] = now_iso
+            df.at[idx, "eval_run_id"] = run_id
+            df.at[idx, "eval_source_name"] = self.source_name
+            
             if model_errors:
-                df.at[idx, "eval_last_error"] = model_errors[-1][:200]
+                df.at[idx, "eval_error"] = model_errors[-1][:200]
                 error_count += 1
+                df.at[idx, "eval_outcome"] = OUTCOME_ERROR if not model_scores else OUTCOME_SUCCESS
+            else:
+                df.at[idx, "eval_error"] = None
+                df.at[idx, "eval_outcome"] = OUTCOME_SUCCESS
             
             if model_scores:
                 enriched_count += 1
-            
-            df.at[idx, "eval_retrieved_at"] = now_iso
-            df.at[idx, "eval_source_name"] = self.source_name
-            df.at[idx, "eval_confidence"] = "high" if not model_errors else "medium"
             
             # Rate limiting
             time.sleep(0.5)
@@ -389,9 +488,8 @@ class EvalHarnessEnricher(BaseEnricher):
         result.rows_with_gaps = error_count
         
         self.logger.info(
-            "Eval harness completed: %d models evaluated, %d with errors",
-            enriched_count, error_count
+            "Eval harness completed: %d/%d models evaluated successfully, %d with errors",
+            enriched_count, len(cohort), error_count
         )
         
         return df
-

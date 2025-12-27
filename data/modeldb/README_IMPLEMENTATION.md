@@ -357,6 +357,105 @@ with open("data/modeldb/schema_baseline_columns.json", "w") as f:
 
 ---
 
+## World-Class Orchestration Signals
+
+This section explains how evals and telemetry provide signals for intelligent model routing.
+
+### Understanding "Attempt vs Metric" for Evals/Telemetry
+
+The coverage report distinguishes between:
+
+| Metric | Meaning |
+|--------|---------|
+| **Attempt Coverage** | % of models where evaluation was *attempted* (even if it failed) |
+| **Metric Coverage** | % of models with *actual metric values* (non-null scores) |
+| **Eligible Coverage** | All `in_openrouter=True` models are eligible for evals/telemetry |
+
+**Why it's not 100% by default:** Evals and telemetry cost API credits. We use incremental, TTL-based refresh to gradually build coverage over multiple runs while controlling costs.
+
+### Incremental Eval/Telemetry with TTL
+
+The enrichers now support **sticky metrics** and **TTL-based cohort selection**:
+
+| Feature | Description |
+|---------|-------------|
+| **Sticky Metrics** | Previous values are preserved for models not in the current batch |
+| **TTL (Time-to-Live)** | Models are only refreshed if metrics are older than TTL or missing |
+| **Deterministic Cohort** | Same seed + same data = same cohort selection |
+| **Top Models Bucket** | Top-ranked models are always included in the cohort |
+| **Per-Row Provenance** | Each model tracks `*_attempted`, `*_asof_date`, `*_run_id`, `*_outcome` |
+
+### New Eval/Telemetry CLI Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--evals-ttl-days` | 30 | Time-to-live for eval metrics |
+| `--evals-seed` | ISO week | Seed for deterministic cohort selection |
+| `--evals-always-include-top` | 10 | Always include top N ranked models |
+| `--telemetry-ttl-days` | 14 | Time-to-live for telemetry metrics |
+| `--telemetry-seed` | ISO week | Seed for deterministic cohort selection |
+| `--telemetry-always-include-top` | 10 | Always include top N ranked models |
+
+### Example: Weekly Incremental Update
+
+```bash
+# Week 1: Evaluate top 20 models
+python data/modeldb/run_modeldb_refresh.py \
+  --evals-enabled true --evals-max-models 20 --evals-ttl-days 30 \
+  --telemetry-enabled true --telemetry-max-models 20 --telemetry-ttl-days 14
+
+# Week 2: Same command, different cohort (because ISO week changed)
+# Models from week 1 are still fresh (within TTL), so new models selected
+python data/modeldb/run_modeldb_refresh.py \
+  --evals-enabled true --evals-max-models 20 --evals-ttl-days 30 \
+  --telemetry-enabled true --telemetry-max-models 20 --telemetry-ttl-days 14
+
+# After 4-5 weeks: Full coverage achieved incrementally!
+```
+
+### Provenance Columns
+
+The enrichers now populate these provenance columns:
+
+**Eval Harness:**
+- `eval_attempted` (boolean) - True if evaluation was attempted
+- `eval_asof_date` (ISO8601) - When the evaluation was run
+- `eval_run_id` (string) - Batch run identifier
+- `eval_outcome` (string) - success/error/skipped_budget/skipped_ttl
+- `eval_error` (string) - Error message if applicable
+
+**Telemetry:**
+- `telemetry_attempted` (boolean) - True if probe was attempted
+- `telemetry_asof_date` (ISO8601) - When the probe was run
+- `telemetry_run_id` (string) - Batch run identifier
+- `telemetry_outcome` (string) - success/error/skipped_budget/skipped_ttl
+- `telemetry_error` (string) - Error message if applicable
+
+### Coverage Report Output
+
+The coverage report now shows detailed breakdown:
+
+```
+📊 Eval Harness Coverage Breakdown:
+   Eligible models: 353 (in_openrouter=True)
+   Attempted: 50/353 (14.2%)
+   With metrics: 48/353 (13.6%)
+   Outcome breakdown:
+     success: 48
+     skipped_budget: 300
+     error: 2
+
+📊 Telemetry Coverage Breakdown:
+   Eligible models: 353 (in_openrouter=True)
+   Attempted: 50/353 (14.2%)
+   With metrics: 50/353 (14.2%)
+   Outcome breakdown:
+     success: 50
+     skipped_budget: 303
+```
+
+---
+
 ## World-Class Run Modes
 
 This section explains the recommended run modes for maintaining world-class coverage.
@@ -389,15 +488,17 @@ Run this weekly to add eval scores and telemetry for top models:
 
 ```bash
 python data/modeldb/run_modeldb_refresh.py \
-  --evals-enabled true --evals-max-models 50 \
-  --telemetry-enabled true --telemetry-max-models 50 --telemetry-trials 3
+  --evals-enabled true --evals-max-models 50 --evals-ttl-days 30 \
+  --telemetry-enabled true --telemetry-max-models 50 --telemetry-trials 3 --telemetry-ttl-days 14
 ```
 
 **What it does:**
 - Everything in the daily run, PLUS:
-- ✅ Runs eval harness on top 50 models (programming, language, tool use)
-- ✅ Probes top 50 models for latency/TPS telemetry
+- ✅ Runs eval harness on top 50 models needing refresh (programming, language, tool use)
+- ✅ Probes top 50 models needing refresh for latency/TPS telemetry
 - ✅ Records per-model eval scores and telemetry
+- ✅ **Sticky metrics**: Previous values preserved for models not in this batch
+- ✅ **TTL-based cohort**: Only refreshes models older than TTL or missing data
 
 **Expected runtime:** ~30-60 minutes
 **Expected cost:** ~$1-5 (depending on models selected)

@@ -127,25 +127,41 @@ SOURCE_GROUPS = {
     "eval_harness": {
         "description": "Eval harness scores from prompt-based testing",
         "prefixes": ["eval_"],
-        # Metadata columns
+        # Metadata / provenance columns (indicate attempt was made)
         "metadata_columns": [
             "eval_source_name",
             "eval_retrieved_at",
+            "eval_attempted",
+            "eval_asof_date",
+            "eval_run_id",
+            "eval_outcome",
+            "eval_error",
         ],
-        # Metric columns
+        # Metric columns (actual eval scores)
         "metric_columns": [
             "eval_programming_languages_score",
             "eval_languages_score",
             "eval_tool_use_score",
         ],
+        # Attempt is determined by eval_attempted column (preferred over asof)
+        "attempt_column": "eval_attempted",
+        # Eligibility: all in_openrouter models are eligible
+        "eligibility_column": "in_openrouter",
+        # Outcome column for breakdown
+        "outcome_column": "eval_outcome",
     },
     "telemetry": {
         "description": "Live telemetry measurements (latency, TPS, errors)",
         "prefixes": ["telemetry_"],
-        # Metadata columns
+        # Metadata / provenance columns
         "metadata_columns": [
             "telemetry_source_name",
             "telemetry_retrieved_at",
+            "telemetry_attempted",
+            "telemetry_asof_date",
+            "telemetry_run_id",
+            "telemetry_outcome",
+            "telemetry_error",
         ],
         # Metric columns
         "metric_columns": [
@@ -154,6 +170,12 @@ SOURCE_GROUPS = {
             "telemetry_tps_p50",
             "telemetry_error_rate",
         ],
+        # Attempt is determined by telemetry_attempted column (preferred over asof)
+        "attempt_column": "telemetry_attempted",
+        # Eligibility: all in_openrouter models are eligible
+        "eligibility_column": "in_openrouter",
+        # Outcome column for breakdown
+        "outcome_column": "telemetry_outcome",
     },
     "provider_docs": {
         "description": "Data enriched from provider documentation",
@@ -221,14 +243,17 @@ def compute_dual_coverage(
     metadata_columns: List[str],
     metric_columns: List[str],
     eligibility_column: Optional[str] = None,
+    attempt_column: Optional[str] = None,
+    outcome_column: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Compute attempt, metric, and (optionally) eligible coverage for a column group.
     
-    - attempt_coverage: % of rows where ANY metadata column is non-null
+    - attempt_coverage: % of rows where attempt_column is True (preferred) OR any metadata column is non-null
     - metric_coverage: % of rows where ANY metric column is non-null
     - eligible_count: number of rows where eligibility_column is True (if provided)
     - eligible_metric_coverage: % of eligible rows with metric data (the key KPI)
+    - outcome_breakdown: distribution of outcome values (if outcome_column provided)
     """
     total_models = len(df)
     
@@ -242,7 +267,10 @@ def compute_dual_coverage(
             "eligible_count": 0,
             "eligible_metric_models": 0,
             "eligible_metric_coverage_percent": 0.0,
+            "eligible_attempt_models": 0,
+            "eligible_attempt_coverage_percent": 0.0,
             "ineligible_count": 0,
+            "outcome_breakdown": {},
             "columns_found": 0,
             "metadata_columns_found": 0,
             "metric_columns_found": 0,
@@ -258,14 +286,20 @@ def compute_dual_coverage(
         if col not in existing_metadata and col not in existing_metrics:
             existing_metrics.append(col)
     
-    # Compute attempt coverage (any metadata populated)
-    if existing_metadata:
+    # Compute attempt coverage
+    # Prefer explicit attempt_column if specified, else fallback to any metadata populated
+    if attempt_column and attempt_column in df.columns:
+        attempt_mask = df[attempt_column].fillna(False).astype(bool)
+        models_with_attempt = attempt_mask.sum()
+    elif existing_metadata:
         metadata_data = df[existing_metadata]
-        models_with_attempt = (metadata_data.notna().any(axis=1)).sum()
+        attempt_mask = metadata_data.notna().any(axis=1)
+        models_with_attempt = attempt_mask.sum()
     else:
         # If no specific metadata columns, use all columns for attempt
         all_data = df[[c for c in all_group_columns if c in df.columns]]
-        models_with_attempt = (all_data.notna().any(axis=1)).sum() if len(all_data.columns) > 0 else 0
+        attempt_mask = all_data.notna().any(axis=1) if len(all_data.columns) > 0 else pd.Series([False] * len(df), index=df.index)
+        models_with_attempt = attempt_mask.sum() if len(all_data.columns) > 0 else 0
     
     # Compute metric coverage (any metric populated)
     has_metrics_mask = pd.Series([False] * len(df), index=df.index)
@@ -278,6 +312,8 @@ def compute_dual_coverage(
     eligible_count = 0
     eligible_metric_models = 0
     eligible_metric_coverage_percent = 0.0
+    eligible_attempt_models = 0
+    eligible_attempt_coverage_percent = 0.0
     ineligible_count = 0
     
     if eligibility_column and eligibility_column in df.columns:
@@ -291,6 +327,17 @@ def compute_dual_coverage(
             eligible_with_metrics = (eligible_mask & has_metrics_mask).sum()
             eligible_metric_models = int(eligible_with_metrics)
             eligible_metric_coverage_percent = round(100.0 * eligible_with_metrics / eligible_count, 1)
+            
+            # Compute attempt coverage among eligible models
+            eligible_with_attempt = (eligible_mask & attempt_mask).sum()
+            eligible_attempt_models = int(eligible_with_attempt)
+            eligible_attempt_coverage_percent = round(100.0 * eligible_with_attempt / eligible_count, 1)
+    
+    # Compute outcome breakdown if column provided
+    outcome_breakdown = {}
+    if outcome_column and outcome_column in df.columns:
+        outcomes = df[outcome_column].dropna()
+        outcome_breakdown = outcomes.value_counts().to_dict()
     
     # Per-column coverage
     column_coverage = {}
@@ -310,11 +357,15 @@ def compute_dual_coverage(
         "attempt_models": int(models_with_attempt),
         "metric_coverage_percent": round(100.0 * models_with_metrics / total_models, 1) if total_models > 0 else 0.0,
         "metric_models": int(models_with_metrics),
-        # Eligibility stats (new)
+        # Eligibility stats
         "eligible_count": int(eligible_count),
         "eligible_metric_models": int(eligible_metric_models),
         "eligible_metric_coverage_percent": eligible_metric_coverage_percent,
+        "eligible_attempt_models": int(eligible_attempt_models),
+        "eligible_attempt_coverage_percent": eligible_attempt_coverage_percent,
         "ineligible_count": int(ineligible_count),
+        # Outcome breakdown
+        "outcome_breakdown": outcome_breakdown,
         "columns_found": len(all_group_columns),
         "metadata_columns_found": len(existing_metadata),
         "metric_columns_found": len(existing_metrics),
@@ -566,6 +617,8 @@ def generate_coverage_report(
             config.get("metadata_columns", []),
             config.get("metric_columns", []),
             eligibility_column=config.get("eligibility_column"),
+            attempt_column=config.get("attempt_column"),
+            outcome_column=config.get("outcome_column"),
         )
         
         # Add representative columns (top 10 by coverage)
@@ -956,6 +1009,34 @@ def main():
                 if len(unmatched_without_hf) > 3:
                     print(f"     ... and {len(unmatched_without_hf) - 3} more")
                 print("")
+        
+        # Show eval_harness detailed breakdown if available
+        eval_data = report["source_groups"].get("eval_harness", {})
+        if eval_data.get("eligible_count", 0) > 0:
+            print("📊 Eval Harness Coverage Breakdown:")
+            print(f"   Eligible models: {eval_data['eligible_count']} (in_openrouter=True)")
+            print(f"   Attempted: {eval_data.get('eligible_attempt_models', 0)}/{eval_data['eligible_count']} ({eval_data.get('eligible_attempt_coverage_percent', 0):.1f}%)")
+            print(f"   With metrics: {eval_data['eligible_metric_models']}/{eval_data['eligible_count']} ({eval_data['eligible_metric_coverage_percent']:.1f}%)")
+            outcome_breakdown = eval_data.get("outcome_breakdown", {})
+            if outcome_breakdown:
+                print("   Outcome breakdown:")
+                for outcome, count in sorted(outcome_breakdown.items(), key=lambda x: -x[1]):
+                    print(f"     {outcome}: {count}")
+            print("")
+        
+        # Show telemetry detailed breakdown if available
+        telemetry_data = report["source_groups"].get("telemetry", {})
+        if telemetry_data.get("eligible_count", 0) > 0:
+            print("📊 Telemetry Coverage Breakdown:")
+            print(f"   Eligible models: {telemetry_data['eligible_count']} (in_openrouter=True)")
+            print(f"   Attempted: {telemetry_data.get('eligible_attempt_models', 0)}/{telemetry_data['eligible_count']} ({telemetry_data.get('eligible_attempt_coverage_percent', 0):.1f}%)")
+            print(f"   With metrics: {telemetry_data['eligible_metric_models']}/{telemetry_data['eligible_count']} ({telemetry_data['eligible_metric_coverage_percent']:.1f}%)")
+            outcome_breakdown = telemetry_data.get("outcome_breakdown", {})
+            if outcome_breakdown:
+                print("   Outcome breakdown:")
+                for outcome, count in sorted(outcome_breakdown.items(), key=lambda x: -x[1]):
+                    print(f"     {outcome}: {count}")
+            print("")
         
         # Show groups needing attention
         low_metric_groups = [
