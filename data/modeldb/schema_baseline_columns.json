@@ -90,6 +90,8 @@
     "hf_ollb_inferred_hf_id",
     "hf_ollb_inferred_hf_id_source",
     "hf_ollb_license",
+    "hf_ollb_listed_but_missing_metrics",
+    "hf_ollb_listed_in_dataset",
     "hf_ollb_match_method",
     "hf_ollb_match_outcome",
     "hf_ollb_match_score",
@@ -262,5 +264,5 @@
     "weaknesses"
   ],
   "min_row_count": 353,
-  "notes": "Generated from canonical Excel with 353 rows and 260 columns after HF OLLB base-model resolution + inferred HF IDs + not-listed semantics upgrade."
+  "notes": "Generated from canonical Excel with 353 rows and 262 columns after HF OLLB true-gap elimination + listed-but-missing-metrics semantics."
 }

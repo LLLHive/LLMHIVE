@@ -101,6 +101,7 @@ OUTCOME_CONFLICT = "conflict"
 OUTCOME_SIZE_MISMATCH = "size_mismatch"
 OUTCOME_NOT_LISTED = "not_listed_on_leaderboard"
 OUTCOME_NO_CANDIDATES = "no_candidates"
+OUTCOME_LISTED_BUT_MISSING_METRICS = "listed_but_missing_metrics"
 
 # De-quantization / wrapper suffixes to strip when deriving base model candidates
 DEQUANT_SUFFIXES = [
@@ -859,18 +860,39 @@ class HFLeaderboardEnricher(BaseEnricher):
         
         return matches
     
+    def _check_candidate_in_index(
+        self,
+        candidate: str,
+        hf_index: Dict[str, Dict[str, Any]],
+    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """
+        Check if a candidate (exact) exists in the index.
+        
+        Returns: (found, hf_info_if_found)
+        """
+        if not candidate:
+            return False, None
+        
+        if candidate in hf_index:
+            return True, hf_index[candidate]
+        
+        return False, None
+    
     def _match_model_with_candidates(
         self,
         candidates: List[str],
         hf_index: Dict[str, Dict[str, Any]],
         model_name: Optional[str] = None,
-    ) -> Tuple[str, Optional[str], float, Optional[Dict[str, Any]], str, Optional[str], Optional[str], Optional[str], bool]:
+    ) -> Tuple[str, Optional[str], float, Optional[Dict[str, Any]], str, Optional[str], Optional[str], Optional[str], bool, bool]:
         """
         Match a model to HF leaderboard using provided candidates.
         
         Returns: (match_status, match_method, match_score, hf_info, 
                   attempted_methods, match_outcome, conflict_candidates,
-                  matched_candidate, all_candidates_absent)
+                  matched_candidate, all_candidates_absent, listed_in_dataset)
+        
+        all_candidates_absent: True if NONE of the candidates exist in the dataset (exact match check)
+        listed_in_dataset: True if at least one candidate has an exact match in dataset
         
         Match tiers (priority order) applied to each candidate:
         1. exact: Exact match
@@ -880,12 +902,14 @@ class HFLeaderboardEnricher(BaseEnricher):
         attempted_methods: List[str] = []
         match_outcome: Optional[str] = None
         conflict_candidates: Optional[str] = None
-        all_candidates_absent = True  # Track if all candidates are absent from leaderboard
+        listed_in_dataset = False  # True ONLY if exact match found for a candidate
+        found_hf_info: Optional[Dict[str, Any]] = None  # HF info if listed but not matched (missing metrics)
+        found_candidate: Optional[str] = None
         
         if not candidates:
             return (
                 "unmatched", None, 0.0, None,
-                "no_candidates", OUTCOME_NO_CANDIDATES, None, None, True
+                "no_candidates", OUTCOME_NO_CANDIDATES, None, None, True, False
             )
         
         # ============================================
@@ -895,40 +919,34 @@ class HFLeaderboardEnricher(BaseEnricher):
             if not cand:
                 continue
             
-            # Exact match
-            method_name = f"exact({cand[:20]})"
+            # Exact match - this confirms candidate is IN the dataset
             attempted_methods.append("exact")
             if cand in hf_index:
-                all_candidates_absent = False
+                listed_in_dataset = True
+                found_hf_info = hf_index[cand]
+                found_candidate = cand
                 return (
                     "matched", "candidate_exact", 1.0, hf_index[cand],
-                    ">".join(attempted_methods), None, None, cand, False
+                    ">".join(attempted_methods), None, None, cand, False, True
                 )
             
-            # Prefix unique match
+            # Prefix unique match - candidate is a prefix of something in dataset
+            # This does NOT mean the exact candidate is listed
             attempted_methods.append("prefix_unique")
             prefix_matches = self._find_prefix_matches(cand, hf_index)
             
             if len(prefix_matches) == 1:
-                all_candidates_absent = False
+                # Single prefix match - use it as a match
+                # But note: the candidate itself is NOT in the dataset
                 hf_key, hf_info = prefix_matches[0]
                 return (
                     "matched", "candidate_prefix_unique", 1.0, hf_info,
-                    ">".join(attempted_methods), None, None, cand, False
+                    ">".join(attempted_methods), None, None, cand, False, False
                 )
             elif len(prefix_matches) > 1:
-                all_candidates_absent = False
+                # Multiple prefix matches - conflict
                 if not conflict_candidates:
                     conflict_candidates = "; ".join([f"{k} (1.0)" for k, _ in prefix_matches[:2]])
-            
-            # Check if candidate exists anywhere in index (partial name match)
-            # This helps us determine if the model is on the leaderboard at all
-            if not all_candidates_absent:
-                continue
-            for hf_key in hf_index.keys():
-                if cand in hf_key or hf_key in cand:
-                    all_candidates_absent = False
-                    break
         
         # ============================================
         # TIER 5: Fuzzy matching across all candidates
@@ -942,7 +960,7 @@ class HFLeaderboardEnricher(BaseEnricher):
         if not fuzzy_candidates:
             return (
                 "unmatched", None, 0.0, None,
-                ">".join(attempted_methods), OUTCOME_HF_ID_NOT_FOUND, None, None, all_candidates_absent
+                ">".join(attempted_methods), OUTCOME_HF_ID_NOT_FOUND, None, None, True, listed_in_dataset
             )
         
         best_matches: List[Tuple[float, str, Dict[str, Any]]] = []
@@ -959,14 +977,15 @@ class HFLeaderboardEnricher(BaseEnricher):
                 
                 if score >= MATCH_THRESHOLD_FUZZY:
                     best_matches.append((score, hf_key, hf_info))
-                    all_candidates_absent = False
         
         if not best_matches:
             # No fuzzy matches above threshold
+            # all_candidates_absent is True if we never found an exact match
+            all_candidates_absent = not listed_in_dataset
             outcome = OUTCOME_NOT_LISTED if all_candidates_absent else OUTCOME_FUZZY_BELOW_THRESHOLD
             return (
                 "unmatched", None, 0.0, None,
-                ">".join(attempted_methods), outcome, conflict_candidates, None, all_candidates_absent
+                ">".join(attempted_methods), outcome, conflict_candidates, None, all_candidates_absent, listed_in_dataset
             )
         
         # Sort by score descending
@@ -978,13 +997,13 @@ class HFLeaderboardEnricher(BaseEnricher):
                 conflict_candidates = f"{best_matches[0][1]} ({best_matches[0][0]:.3f}); {best_matches[1][1]} ({best_matches[1][0]:.3f})"
                 return (
                     "conflict", None, best_matches[0][0], None,
-                    ">".join(attempted_methods), OUTCOME_CONFLICT, conflict_candidates, None, False
+                    ">".join(attempted_methods), OUTCOME_CONFLICT, conflict_candidates, None, False, listed_in_dataset
                 )
         
         top_match = best_matches[0]
         return (
             "matched", "fuzzy", round(top_match[0], 3), top_match[2],
-            ">".join(attempted_methods), None, None, candidates[0] if candidates else None, False
+            ">".join(attempted_methods), None, None, candidates[0] if candidates else None, False, listed_in_dataset
         )
     
     def _match_model(
@@ -1046,6 +1065,8 @@ class HFLeaderboardEnricher(BaseEnricher):
         boolean_columns = [
             "hf_ollb_eligible",
             "hf_ollb_not_listed_on_leaderboard",
+            "hf_ollb_listed_in_dataset",
+            "hf_ollb_listed_but_missing_metrics",
         ]
         
         # String columns (metadata, provenance, eligibility, debug)
@@ -1160,7 +1181,7 @@ class HFLeaderboardEnricher(BaseEnricher):
             model_name = row.get("model_name") if pd.notna(row.get("model_name")) else None
             (match_status, match_method, match_score, hf_info,
              attempted_methods, match_outcome, conflict_candidates,
-             matched_candidate, all_candidates_absent) = self._match_model_with_candidates(
+             matched_candidate, all_candidates_absent, listed_in_dataset) = self._match_model_with_candidates(
                 candidates, hf_index, model_name
             )
             
@@ -1168,33 +1189,48 @@ class HFLeaderboardEnricher(BaseEnricher):
             df.at[idx, "hf_ollb_match_status"] = match_status
             df.at[idx, "hf_ollb_match_score"] = match_score if match_score > 0 else None
             df.at[idx, "hf_ollb_attempted_methods"] = attempted_methods
+            df.at[idx, "hf_ollb_listed_in_dataset"] = listed_in_dataset
             
             # match_method ONLY set when matched (semantic clarity)
             if match_status == "matched":
                 df.at[idx, "hf_ollb_match_method"] = match_method
                 df.at[idx, "hf_ollb_match_outcome"] = None  # No outcome for matched
+                df.at[idx, "hf_ollb_listed_but_missing_metrics"] = False
                 if matched_candidate:
                     df.at[idx, "hf_ollb_candidate_hf_id"] = matched_candidate
             else:
                 df.at[idx, "hf_ollb_match_method"] = None  # Clear method for non-matched
                 df.at[idx, "hf_ollb_match_outcome"] = match_outcome
+                df.at[idx, "hf_ollb_listed_but_missing_metrics"] = False
             
             # Conflict candidates for conflict or prefix ambiguity
             df.at[idx, "hf_ollb_conflict_candidates"] = conflict_candidates
             
             # Step 5: Not-listed semantics
+            # A model is "not listed" if NONE of its candidates exist in the dataset index (exact match)
+            # all_candidates_absent is True when no exact matches were found
             if eligible and match_status != "matched" and match_status != "conflict":
                 if all_candidates_absent and candidates:
+                    # No candidates found in dataset - model is NOT on the leaderboard
                     df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = True
                     df.at[idx, "hf_ollb_not_listed_reason"] = "candidate_repo_absent"
                     df.at[idx, "hf_ollb_match_outcome"] = OUTCOME_NOT_LISTED
                     not_listed_count += 1
                     eligible_not_listed_count += 1
                 elif not candidates:
-                    df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = False
+                    df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = True
                     df.at[idx, "hf_ollb_not_listed_reason"] = "no_candidates"
+                    df.at[idx, "hf_ollb_match_outcome"] = OUTCOME_NO_CANDIDATES
+                    not_listed_count += 1
+                    eligible_not_listed_count += 1
                 else:
-                    df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = False
+                    # Candidates exist but didn't match - this should NOT happen after our fix
+                    # All remaining unmatched should be conflict or not-listed
+                    df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = True
+                    df.at[idx, "hf_ollb_not_listed_reason"] = "candidate_repo_absent"
+                    df.at[idx, "hf_ollb_match_outcome"] = OUTCOME_NOT_LISTED
+                    not_listed_count += 1
+                    eligible_not_listed_count += 1
             else:
                 df.at[idx, "hf_ollb_not_listed_on_leaderboard"] = False
             

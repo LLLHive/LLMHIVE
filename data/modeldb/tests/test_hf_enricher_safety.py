@@ -47,7 +47,9 @@ EXPECTED_HF_COLUMNS = [
     "hf_ollb_inferred_hf_id_source",
     "hf_ollb_base_model_hf_id",
     "hf_ollb_candidate_set",
-    # Not-listed columns
+    # Listed/Not-listed columns
+    "hf_ollb_listed_in_dataset",
+    "hf_ollb_listed_but_missing_metrics",
     "hf_ollb_not_listed_on_leaderboard",
     "hf_ollb_not_listed_reason",
     # Matching metadata
@@ -435,6 +437,63 @@ def test_candidate_set_for_eligible(df: pd.DataFrame) -> bool:
     return True
 
 
+def test_true_gaps_zero(df: pd.DataFrame) -> bool:
+    """
+    Test that true gaps count is 0.
+    
+    True gaps = eligible AND match_status != matched AND match_status != conflict AND not_listed != True
+    """
+    required = ["hf_ollb_eligible", "hf_ollb_match_status", "hf_ollb_not_listed_on_leaderboard"]
+    if not all(c in df.columns for c in required):
+        print("⚠️  WARN: Required columns missing for true gaps test")
+        return True
+    
+    eligible_mask = df["hf_ollb_eligible"].fillna(False).astype(bool)
+    not_matched_mask = df["hf_ollb_match_status"] != "matched"
+    not_conflict_mask = df["hf_ollb_match_status"] != "conflict"
+    not_listed_mask = df["hf_ollb_not_listed_on_leaderboard"].fillna(False).astype(bool)
+    
+    # True gaps: eligible AND not matched AND not conflict AND not not-listed
+    true_gaps_mask = eligible_mask & not_matched_mask & not_conflict_mask & ~not_listed_mask
+    true_gaps_count = true_gaps_mask.sum()
+    
+    if true_gaps_count > 0:
+        print(f"❌ FAIL: {true_gaps_count} true gaps remain (should be 0)")
+        # Show first few for debugging
+        true_gaps = df[true_gaps_mask]
+        for idx, row in true_gaps.head(3).iterrows():
+            print(f"   - {row.get('openrouter_slug')}: outcome={row.get('hf_ollb_match_outcome')}")
+        return False
+    
+    print(f"✅ PASS: True gaps count is 0")
+    return True
+
+
+def test_listed_in_dataset_consistency(df: pd.DataFrame) -> bool:
+    """Test that listed_in_dataset and not_listed are consistent."""
+    if "hf_ollb_listed_in_dataset" not in df.columns:
+        print("⚠️  WARN: hf_ollb_listed_in_dataset column missing")
+        return True
+    
+    if "hf_ollb_not_listed_on_leaderboard" not in df.columns:
+        print("⚠️  WARN: hf_ollb_not_listed_on_leaderboard column missing")
+        return True
+    
+    # Rows with listed_in_dataset=True should have not_listed=False
+    listed_mask = df["hf_ollb_listed_in_dataset"].fillna(False).astype(bool)
+    not_listed_mask = df["hf_ollb_not_listed_on_leaderboard"].fillna(False).astype(bool)
+    
+    # Check for contradiction: listed_in_dataset=True AND not_listed=True
+    contradiction = (listed_mask & not_listed_mask).sum()
+    
+    if contradiction > 0:
+        print(f"❌ FAIL: {contradiction} rows have both listed_in_dataset=True AND not_listed=True (contradiction)")
+        return False
+    
+    print(f"✅ PASS: listed_in_dataset and not_listed are consistent")
+    return True
+
+
 def run_all_tests(excel_path: Path) -> bool:
     """Run all regression safety tests."""
     print("=" * 60)
@@ -471,11 +530,14 @@ def run_all_tests(excel_path: Path) -> bool:
     results.append(("Eligible unmatched have outcome", test_eligible_unmatched_have_outcome(df)))
     results.append(("Conflict rows have candidates", test_conflict_rows_have_candidates(df)))
     results.append(("Matched count in bounds", test_matched_count_in_bounds(df)))
-    # New tests for HF ID inference and not-listed semantics
+    # HF ID inference and not-listed semantics
     results.append(("Not-listed is boolean", test_not_listed_is_boolean(df)))
     results.append(("Not-listed rows have null metrics", test_not_listed_rows_have_null_metrics(df)))
     results.append(("Inferred HF ID doesn't overwrite", test_inferred_hf_id_doesnt_overwrite(df)))
     results.append(("Candidate set for eligible", test_candidate_set_for_eligible(df)))
+    # True gaps and listed_in_dataset tests
+    results.append(("True gaps is zero", test_true_gaps_zero(df)))
+    results.append(("Listed in dataset consistency", test_listed_in_dataset_consistency(df)))
     
     print("-" * 40)
     print("")

@@ -97,7 +97,9 @@ SOURCE_GROUPS = {
             "hf_ollb_inferred_hf_id_source",
             "hf_ollb_base_model_hf_id",
             "hf_ollb_candidate_set",
-            # Not-listed columns
+            # Listed/Not-listed columns
+            "hf_ollb_listed_in_dataset",
+            "hf_ollb_listed_but_missing_metrics",
             "hf_ollb_not_listed_on_leaderboard",
             "hf_ollb_not_listed_reason",
             # Debug/audit columns
