@@ -117,3 +117,4 @@ playwright/.cache/
 /playwright/.cache/
 test-results/
 /test-results/
+tools/reasoning_usage.png
