@@ -4,10 +4,14 @@ HF Leaderboard Enricher Regression Safety Tests
 
 Validates:
 1. Row count preserved after enrichment
-2. HF columns exist with correct types
+2. HF columns exist with correct types (including new debug columns)
 3. Eligibility column is boolean-like
 4. Matched rows have at least one metric
 5. No mass accidental matching (conflict detection works)
+6. match_method only set when match_status == "matched"
+7. Eligible + unmatched rows have match_outcome set
+8. Conflict rows have conflict_candidates populated
+9. Match count within reasonable bounds
 
 Usage:
     python data/modeldb/tests/test_hf_enricher_safety.py
@@ -30,7 +34,7 @@ DEFAULT_EXCEL = MODELDB_DIR / "LLMHive_OpenRouter_SingleSheet_ModelDB_Enriched_2
 
 # Expected HF columns
 EXPECTED_HF_COLUMNS = [
-    # Eligibility (new)
+    # Eligibility
     "hf_ollb_eligible",
     "hf_ollb_ineligible_reason",
     "hf_ollb_candidate_hf_id",
@@ -38,6 +42,10 @@ EXPECTED_HF_COLUMNS = [
     "hf_ollb_match_status",
     "hf_ollb_match_method",
     "hf_ollb_match_score",
+    # Debug/audit columns (new)
+    "hf_ollb_attempted_methods",
+    "hf_ollb_match_outcome",
+    "hf_ollb_conflict_candidates",
     # Benchmark scores
     "hf_ollb_avg",
     "hf_ollb_mmlu_pro",
@@ -58,6 +66,9 @@ METRIC_COLUMNS = [
     "hf_ollb_gpqa",
     "hf_ollb_musr",
 ]
+
+# Maximum expected matched count (to prevent mass matching regression)
+MAX_MATCHED_COUNT = 120
 
 
 def test_row_count_preserved(df: pd.DataFrame, expected_min_rows: int = 350) -> bool:
@@ -189,6 +200,98 @@ def test_eligibility_coverage_reasonable(df: pd.DataFrame) -> bool:
     return True  # Don't fail on this, just warn
 
 
+def test_match_method_only_when_matched(df: pd.DataFrame) -> bool:
+    """Test that hf_ollb_match_method is only set when match_status == 'matched'."""
+    if "hf_ollb_match_status" not in df.columns or "hf_ollb_match_method" not in df.columns:
+        print("⚠️  WARN: Required columns missing for this test")
+        return True
+    
+    # Check non-matched rows don't have match_method set
+    non_matched = df[df["hf_ollb_match_status"] != "matched"]
+    non_matched_with_method = non_matched["hf_ollb_match_method"].notna().sum()
+    
+    if non_matched_with_method > 0:
+        print(f"❌ FAIL: {non_matched_with_method} non-matched rows have match_method set (should be null)")
+        return False
+    
+    # Check matched rows have match_method set
+    matched = df[df["hf_ollb_match_status"] == "matched"]
+    matched_without_method = matched["hf_ollb_match_method"].isna().sum()
+    
+    if len(matched) > 0 and matched_without_method > 0:
+        print(f"⚠️  WARN: {matched_without_method}/{len(matched)} matched rows missing match_method")
+    
+    print(f"✅ PASS: match_method correctly only set for matched rows")
+    return True
+
+
+def test_eligible_unmatched_have_outcome(df: pd.DataFrame) -> bool:
+    """Test that eligible + unmatched rows have hf_ollb_match_outcome set."""
+    required_cols = ["hf_ollb_eligible", "hf_ollb_match_status", "hf_ollb_match_outcome"]
+    if not all(c in df.columns for c in required_cols):
+        print("⚠️  WARN: Required columns missing for this test")
+        return True
+    
+    eligible_mask = df["hf_ollb_eligible"].fillna(False).astype(bool)
+    unmatched_mask = df["hf_ollb_match_status"] != "matched"
+    eligible_unmatched = df[eligible_mask & unmatched_mask]
+    
+    if len(eligible_unmatched) == 0:
+        print("✅ PASS: No eligible unmatched rows (all eligible matched)")
+        return True
+    
+    missing_outcome = eligible_unmatched["hf_ollb_match_outcome"].isna().sum()
+    
+    if missing_outcome > 0:
+        print(f"❌ FAIL: {missing_outcome}/{len(eligible_unmatched)} eligible unmatched rows missing match_outcome")
+        return False
+    
+    print(f"✅ PASS: All {len(eligible_unmatched)} eligible unmatched rows have match_outcome")
+    return True
+
+
+def test_conflict_rows_have_candidates(df: pd.DataFrame) -> bool:
+    """Test that conflict rows have hf_ollb_conflict_candidates populated."""
+    if "hf_ollb_match_status" not in df.columns:
+        print("⚠️  WARN: hf_ollb_match_status column missing")
+        return True
+    
+    conflict_rows = df[df["hf_ollb_match_status"] == "conflict"]
+    
+    if len(conflict_rows) == 0:
+        print("✅ PASS: No conflict rows (this is fine)")
+        return True
+    
+    if "hf_ollb_conflict_candidates" not in df.columns:
+        print(f"❌ FAIL: hf_ollb_conflict_candidates column missing but {len(conflict_rows)} conflicts exist")
+        return False
+    
+    missing_candidates = conflict_rows["hf_ollb_conflict_candidates"].isna().sum()
+    
+    if missing_candidates > 0:
+        print(f"❌ FAIL: {missing_candidates}/{len(conflict_rows)} conflict rows missing conflict_candidates")
+        return False
+    
+    print(f"✅ PASS: All {len(conflict_rows)} conflict rows have conflict_candidates")
+    return True
+
+
+def test_matched_count_in_bounds(df: pd.DataFrame) -> bool:
+    """Test that matched count is within reasonable bounds (no mass matching regression)."""
+    if "hf_ollb_match_status" not in df.columns:
+        print("⚠️  WARN: hf_ollb_match_status column missing")
+        return True
+    
+    matched_count = (df["hf_ollb_match_status"] == "matched").sum()
+    
+    if matched_count > MAX_MATCHED_COUNT:
+        print(f"❌ FAIL: Matched count {matched_count} exceeds maximum {MAX_MATCHED_COUNT} (possible mass matching)")
+        return False
+    
+    print(f"✅ PASS: Matched count {matched_count} within bounds (<= {MAX_MATCHED_COUNT})")
+    return True
+
+
 def run_all_tests(excel_path: Path) -> bool:
     """Run all regression safety tests."""
     print("=" * 60)
@@ -220,6 +323,11 @@ def run_all_tests(excel_path: Path) -> bool:
     results.append(("Matched rows have metrics", test_matched_rows_have_metrics(df)))
     results.append(("No mass matching", test_no_mass_matching(df)))
     results.append(("Eligibility coverage reasonable", test_eligibility_coverage_reasonable(df)))
+    # New semantic tests
+    results.append(("Match method only when matched", test_match_method_only_when_matched(df)))
+    results.append(("Eligible unmatched have outcome", test_eligible_unmatched_have_outcome(df)))
+    results.append(("Conflict rows have candidates", test_conflict_rows_have_candidates(df)))
+    results.append(("Matched count in bounds", test_matched_count_in_bounds(df)))
     
     print("-" * 40)
     print("")

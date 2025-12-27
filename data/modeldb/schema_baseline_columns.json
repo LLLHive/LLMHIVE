@@ -71,10 +71,12 @@
     "hf_ollb_arc_challenge",
     "hf_ollb_architecture",
     "hf_ollb_asof_date",
+    "hf_ollb_attempted_methods",
     "hf_ollb_avg",
     "hf_ollb_bbh",
     "hf_ollb_bbh_raw",
     "hf_ollb_candidate_hf_id",
+    "hf_ollb_conflict_candidates",
     "hf_ollb_eligible",
     "hf_ollb_gpqa",
     "hf_ollb_gpqa_raw",
@@ -85,6 +87,7 @@
     "hf_ollb_ineligible_reason",
     "hf_ollb_license",
     "hf_ollb_match_method",
+    "hf_ollb_match_outcome",
     "hf_ollb_match_score",
     "hf_ollb_match_status",
     "hf_ollb_matched_name",
@@ -253,5 +256,5 @@
     "weaknesses"
   ],
   "min_row_count": 353,
-  "notes": "Baseline schema generated from canonical Excel; future runs must preserve all columns by name. Updated 2025-12-27 to add HF eligibility columns."
+  "notes": "Baseline schema generated from canonical Excel. Updated 2025-12-27 with HF debug columns (attempted_methods, match_outcome, conflict_candidates)."
 }

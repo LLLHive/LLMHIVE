@@ -88,14 +88,18 @@ SOURCE_GROUPS = {
             "hf_ollb_source_dataset",
             "hf_ollb_retrieved_at",
             "hf_ollb_repo_id",
-            # Eligibility columns (new)
+            # Eligibility columns
             "hf_ollb_eligible",
             "hf_ollb_ineligible_reason",
             "hf_ollb_candidate_hf_id",
+            # Debug/audit columns
+            "hf_ollb_attempted_methods",
+            "hf_ollb_match_outcome",
+            "hf_ollb_conflict_candidates",
         ],
-        # Metric columns (v2 leaderboard benchmarks)
+        # Metric columns (v2 leaderboard benchmarks ONLY - hf_ollb_mmlu is legacy/deprecated)
         "metric_columns": [
-            # V2 benchmarks
+            # V2 benchmarks (current)
             "hf_ollb_mmlu_pro",
             "hf_ollb_ifeval",
             "hf_ollb_bbh",
@@ -103,13 +107,7 @@ SOURCE_GROUPS = {
             "hf_ollb_gpqa",
             "hf_ollb_musr",
             "hf_ollb_avg",
-            # Legacy v1 (may still be present)
-            "hf_ollb_mmlu",
-            "hf_ollb_arc",
-            "hf_ollb_hellaswag",
-            "hf_ollb_truthfulqa",
-            "hf_ollb_winogrande",
-            "hf_ollb_gsm8k",
+            # Note: hf_ollb_mmlu is legacy v1 and NOT included in v2 metric coverage
         ],
         # Eligibility column for computing eligible coverage
         "eligibility_column": "hf_ollb_eligible",
@@ -407,6 +405,78 @@ def find_unmatched_models(
     return unmatched[:top_n]
 
 
+def compute_hf_extended_stats(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Compute HF-specific extended statistics:
+    - Conflict count (all and eligible)
+    - Match method breakdown (matched rows only)
+    - Unmatched split by has_hf_id
+    """
+    stats = {
+        "conflict_count_all": 0,
+        "conflict_count_eligible": 0,
+        "match_method_breakdown": {},
+        "unmatched_with_hf_id": [],
+        "unmatched_without_hf_id": [],
+    }
+    
+    if "hf_ollb_match_status" not in df.columns:
+        return stats
+    
+    # Count conflicts
+    conflict_mask = df["hf_ollb_match_status"] == "conflict"
+    stats["conflict_count_all"] = int(conflict_mask.sum())
+    
+    if "hf_ollb_eligible" in df.columns:
+        eligible_mask = df["hf_ollb_eligible"].fillna(False).astype(bool)
+        stats["conflict_count_eligible"] = int((conflict_mask & eligible_mask).sum())
+    
+    # Match method breakdown (matched rows only)
+    if "hf_ollb_match_method" in df.columns:
+        matched_mask = df["hf_ollb_match_status"] == "matched"
+        matched_methods = df.loc[matched_mask, "hf_ollb_match_method"].dropna()
+        stats["match_method_breakdown"] = matched_methods.value_counts().to_dict()
+    
+    # Split unmatched eligible by has_hf_id
+    if "hf_ollb_eligible" in df.columns and "openrouter_slug" in df.columns:
+        eligible_mask = df["hf_ollb_eligible"].fillna(False).astype(bool)
+        matched_mask = df["hf_ollb_match_status"] == "matched"
+        unmatched_eligible_mask = eligible_mask & ~matched_mask
+        
+        has_hf_id_col = "hugging_face_id" in df.columns
+        
+        for idx, row in df[unmatched_eligible_mask].iterrows():
+            slug = row.get("openrouter_slug")
+            if pd.isna(slug) or not slug:
+                continue
+            
+            entry = {
+                "slug": str(slug).strip(),
+                "match_status": row.get("hf_ollb_match_status"),
+                "match_outcome": row.get("hf_ollb_match_outcome") if "hf_ollb_match_outcome" in df.columns else None,
+                "candidate_hf_id": str(row.get("hf_ollb_candidate_hf_id", "")) if pd.notna(row.get("hf_ollb_candidate_hf_id")) else "",
+                "conflict_candidates": str(row.get("hf_ollb_conflict_candidates", "")) if pd.notna(row.get("hf_ollb_conflict_candidates")) else "",
+            }
+            
+            has_hf_id = False
+            if has_hf_id_col:
+                hf_id = row.get("hugging_face_id")
+                if pd.notna(hf_id) and hf_id:
+                    has_hf_id = True
+                    entry["hugging_face_id"] = str(hf_id).strip()
+            
+            if has_hf_id:
+                stats["unmatched_with_hf_id"].append(entry)
+            else:
+                stats["unmatched_without_hf_id"].append(entry)
+        
+        # Sort by slug
+        stats["unmatched_with_hf_id"].sort(key=lambda x: x["slug"])
+        stats["unmatched_without_hf_id"].sort(key=lambda x: x["slug"])
+    
+    return stats
+
+
 def generate_coverage_report(
     df: pd.DataFrame,
     excel_path: str,
@@ -422,6 +492,7 @@ def generate_coverage_report(
         "total_columns": len(all_columns),
         "source_groups": {},
         "unmatched_lists": {},
+        "hf_extended_stats": {},
         "summary": {},
     }
     
@@ -460,6 +531,9 @@ def generate_coverage_report(
             eligible_only=has_eligibility
         )
         report["unmatched_lists"][group_name] = unmatched
+    
+    # Compute HF-specific extended stats
+    report["hf_extended_stats"] = compute_hf_extended_stats(df)
     
     # Generate summary
     total_groups = len(SOURCE_GROUPS)
@@ -564,6 +638,20 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
             lines.append(f"- **Eligible Models:** {data['eligible_count']} ({100.0 * data['eligible_count'] / data['total_models']:.1f}% of total)")
             lines.append(f"- **Ineligible Models:** {data['ineligible_count']} (closed/proprietary)")
             lines.append(f"- **Metric Coverage (Eligible):** {data['eligible_metric_coverage_percent']}% ({data['eligible_metric_models']}/{data['eligible_count']} eligible models)")
+            
+            # Add HF extended stats if this is HF leaderboard
+            if group_name == "hf_leaderboard":
+                hf_ext = report.get("hf_extended_stats", {})
+                if hf_ext.get("conflict_count_eligible", 0) > 0:
+                    lines.append(f"- **Conflicts (Eligible):** {hf_ext['conflict_count_eligible']}")
+                
+                method_breakdown = hf_ext.get("match_method_breakdown", {})
+                if method_breakdown:
+                    lines.append("")
+                    lines.append("**Match Method Breakdown (matched rows):**")
+                    lines.append("")
+                    for method, count in sorted(method_breakdown.items(), key=lambda x: -x[1]):
+                        lines.append(f"- `{method}`: {count}")
         
         lines.append(f"- **Columns Found:** {data['columns_found']} (metadata: {data['metadata_columns_found']}, metrics: {data['metric_columns_found']})")
         lines.append("")
@@ -729,12 +817,43 @@ def main():
         
         # Show HF-specific summary if eligibility is present
         hf_data = report["source_groups"].get("hf_leaderboard", {})
+        hf_ext = report.get("hf_extended_stats", {})
         if hf_data.get("eligible_count", 0) > 0:
             print("📊 HF Leaderboard Eligibility Breakdown:")
             print(f"   Eligible models: {hf_data['eligible_count']} ({100.0 * hf_data['eligible_count'] / hf_data['total_models']:.1f}%)")
             print(f"   Ineligible models: {hf_data['ineligible_count']} (closed/proprietary)")
             print(f"   Eligible with metrics: {hf_data['eligible_metric_models']}/{hf_data['eligible_count']} ({hf_data['eligible_metric_coverage_percent']:.1f}%)")
+            if hf_ext.get("conflict_count_eligible", 0) > 0:
+                print(f"   Conflicts (eligible): {hf_ext['conflict_count_eligible']}")
             print("")
+            
+            # Show match method breakdown if available
+            method_breakdown = hf_ext.get("match_method_breakdown", {})
+            if method_breakdown:
+                print("   Match method breakdown (matched rows):")
+                for method, count in sorted(method_breakdown.items(), key=lambda x: -x[1]):
+                    print(f"     {method}: {count}")
+                print("")
+            
+            # Show unmatched split
+            unmatched_with_hf = hf_ext.get("unmatched_with_hf_id", [])
+            unmatched_without_hf = hf_ext.get("unmatched_without_hf_id", [])
+            if unmatched_with_hf:
+                print(f"   Unmatched WITH hugging_face_id ({len(unmatched_with_hf)} - highest priority):")
+                for item in unmatched_with_hf[:5]:
+                    outcome = item.get("match_outcome") or item.get("match_status", "?")
+                    print(f"     - {item['slug']}: {outcome}")
+                if len(unmatched_with_hf) > 5:
+                    print(f"     ... and {len(unmatched_with_hf) - 5} more")
+                print("")
+            if unmatched_without_hf:
+                print(f"   Unmatched WITHOUT hugging_face_id ({len(unmatched_without_hf)} - need provider docs):")
+                for item in unmatched_without_hf[:3]:
+                    outcome = item.get("match_outcome") or item.get("match_status", "?")
+                    print(f"     - {item['slug']}: {outcome}")
+                if len(unmatched_without_hf) > 3:
+                    print(f"     ... and {len(unmatched_without_hf) - 3} more")
+                print("")
         
         # Show groups needing attention
         low_metric_groups = [
