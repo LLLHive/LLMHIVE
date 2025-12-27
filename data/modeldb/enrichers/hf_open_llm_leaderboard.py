@@ -4,8 +4,16 @@ HuggingFace Open LLM Leaderboard Enricher
 Fetches benchmark results from the HuggingFace Open LLM Leaderboard v2.
 Uses HuggingFace datasets with local caching for reliability.
 
-Key improvement: Uses explicit hugging_face_id from OpenRouter when available,
-with robust normalization and fuzzy matching fallback.
+Key Features:
+- Eligibility tracking: Only open-weight models with HF repos are expected to match
+- Explicit hugging_face_id matching with robust normalization
+- Fuzzy matching fallback with conflict detection and size mismatch prevention
+- Clear classification of why models don't match (closed_model, missing_hf_id, etc.)
+
+Coverage Semantics:
+- Attempt Coverage: All rows where enrichment was attempted
+- Eligible Coverage: Models expected to be on HF OLLB (open-weight with HF repos)
+- Metric Coverage (Eligible): % of eligible models that matched with benchmark data
 """
 from __future__ import annotations
 
@@ -38,12 +46,45 @@ MATCH_THRESHOLD_EXACT = 1.0
 MATCH_THRESHOLD_FUZZY = 0.90  # Higher threshold to avoid false positives like qwen-plus -> qwenmplus
 MATCH_THRESHOLD_CONFLICT = 0.02  # If top-2 are within this, mark as conflict
 
+# Known closed model providers (not expected to be on HF OLLB)
+CLOSED_MODEL_PROVIDERS = {
+    "openai", "anthropic", "google", "cohere", "ai21",
+    "inflection", "perplexity", "x-ai", "amazon",
+}
+
+# Known closed model name patterns
+CLOSED_MODEL_PATTERNS = [
+    r"^gpt-",           # OpenAI GPT models
+    r"^o1-",            # OpenAI o1 reasoning models
+    r"^claude-",        # Anthropic Claude
+    r"^gemini-",        # Google Gemini
+    r"^palm-",          # Google PaLM
+    r"^bard",           # Google Bard
+    r"^command-",       # Cohere Command
+    r"^jurassic-",      # AI21 Jurassic
+    r"^grok-",          # xAI Grok (closed API)
+    r"^nova-",          # Amazon Nova
+]
+
+# Ineligibility reasons
+INELIGIBLE_CLOSED_MODEL = "closed_model"
+INELIGIBLE_MISSING_HF_ID = "missing_hf_id"
+INELIGIBLE_NON_HF_PROVIDER = "non_hf_provider"
+INELIGIBLE_UNKNOWN = "unknown"
+
 
 class HFLeaderboardEnricher(BaseEnricher):
     """
     Enricher that fetches HuggingFace Open LLM Leaderboard metrics.
     
     Columns added:
+    
+    Eligibility (new):
+    - hf_ollb_eligible (boolean: True if model expected on HF OLLB)
+    - hf_ollb_ineligible_reason (closed_model/missing_hf_id/non_hf_provider/unknown)
+    - hf_ollb_candidate_hf_id (the repo ID we attempted to match)
+    
+    Benchmark Scores:
     - hf_ollb_mmlu_pro (MMLU-PRO score from v2)
     - hf_ollb_ifeval (IFEval score)
     - hf_ollb_bbh (BBH score)
@@ -51,11 +92,15 @@ class HFLeaderboardEnricher(BaseEnricher):
     - hf_ollb_gpqa (GPQA score)
     - hf_ollb_musr (MUSR score)
     - hf_ollb_avg (Average score)
+    
+    Matching Metadata:
     - hf_ollb_match_status (matched/unmatched/conflict/low_confidence)
-    - hf_ollb_match_method (hf_id_exact/slug_exact/fuzzy)
+    - hf_ollb_match_method (hf_id_exact/slug_exact/fuzzy/none)
     - hf_ollb_match_score (0.0-1.0)
     - hf_ollb_matched_name (original HF repo name)
     - hf_ollb_repo_id (canonical HF repo ID)
+    
+    Provenance:
     - hf_ollb_source_dataset
     - hf_ollb_asof_date
     - hf_ollb_retrieved_at
@@ -280,6 +325,109 @@ class HFLeaderboardEnricher(BaseEnricher):
         
         return False
     
+    def _is_closed_model(self, row: pd.Series) -> bool:
+        """
+        Determine if a model is from a closed provider (not expected on HF OLLB).
+        
+        Conservative: Only returns True if we're confident it's closed.
+        """
+        slug = row.get("openrouter_slug")
+        model_name = row.get("model_name", "")
+        
+        if pd.isna(slug) or not slug:
+            return False
+        
+        slug = str(slug).lower().strip()
+        model_name = str(model_name).lower() if pd.notna(model_name) else ""
+        
+        # Check provider prefix in slug (e.g., "openai/gpt-4o")
+        if "/" in slug:
+            provider = slug.split("/")[0]
+            if provider in CLOSED_MODEL_PROVIDERS:
+                return True
+        
+        # Check known closed model name patterns
+        for pattern in CLOSED_MODEL_PATTERNS:
+            if re.match(pattern, slug.split("/")[-1] if "/" in slug else slug):
+                return True
+            if model_name and re.match(pattern, model_name):
+                return True
+        
+        return False
+    
+    def _looks_like_hf_repo_id(self, value: str) -> bool:
+        """Check if a string looks like a HuggingFace org/model repo ID."""
+        if not value:
+            return False
+        
+        value = str(value).strip()
+        
+        # Must contain exactly one slash
+        if value.count("/") != 1:
+            return False
+        
+        parts = value.split("/")
+        # Both parts must be non-empty and look like valid identifiers
+        if not parts[0] or not parts[1]:
+            return False
+        
+        # Basic sanity: org and model should have reasonable lengths
+        if len(parts[0]) < 2 or len(parts[1]) < 2:
+            return False
+        
+        # Should not contain obvious non-HF patterns
+        if any(p in value.lower() for p in [":free", ":extended", "http", ".com"]):
+            return False
+        
+        return True
+    
+    def _determine_eligibility(
+        self, 
+        row: pd.Series,
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        Determine if a model is eligible for HF OLLB matching.
+        
+        Returns: (eligible, ineligible_reason, candidate_hf_id)
+        
+        Eligibility criteria:
+        1. Has explicit hugging_face_id that looks like org/name -> eligible
+        2. Slug looks like org/name and model appears open-weight -> eligible
+        3. Model is from known closed provider -> ineligible (closed_model)
+        4. No HF ID and slug doesn't look like repo -> ineligible (missing_hf_id)
+        """
+        hf_id = row.get("hugging_face_id")
+        slug = row.get("openrouter_slug")
+        
+        # Priority 1: Explicit HF ID
+        if pd.notna(hf_id) and hf_id:
+            hf_id_str = str(hf_id).strip()
+            if self._looks_like_hf_repo_id(hf_id_str):
+                normalized = self._normalize_repo_id(hf_id_str)
+                return True, None, normalized
+        
+        # Check if closed model
+        if self._is_closed_model(row):
+            # Still record what we would have tried
+            candidate = None
+            if pd.notna(slug) and slug:
+                candidate = self._normalize_repo_id(str(slug))
+            return False, INELIGIBLE_CLOSED_MODEL, candidate
+        
+        # Priority 2: Slug looks like HF repo ID
+        if pd.notna(slug) and slug:
+            slug_str = str(slug).strip()
+            normalized = self._normalize_repo_id(slug_str)
+            
+            if self._looks_like_hf_repo_id(normalized):
+                return True, None, normalized
+            
+            # Slug doesn't look like a HF repo
+            return False, INELIGIBLE_MISSING_HF_ID, normalized
+        
+        # No slug at all
+        return False, INELIGIBLE_UNKNOWN, None
+    
     def _fuzzy_score(self, s1: str, s2: str) -> float:
         """Compute fuzzy matching score."""
         if not s1 or not s2:
@@ -484,7 +632,12 @@ class HFLeaderboardEnricher(BaseEnricher):
             "hf_ollb_match_score",
         ]
         
-        # String columns (metadata, provenance)
+        # Boolean columns (eligibility)
+        boolean_columns = [
+            "hf_ollb_eligible",
+        ]
+        
+        # String columns (metadata, provenance, eligibility)
         string_columns = [
             "hf_ollb_match_status",
             "hf_ollb_match_method",
@@ -495,11 +648,18 @@ class HFLeaderboardEnricher(BaseEnricher):
             "hf_ollb_source_name",
             "hf_ollb_source_url",
             "hf_ollb_retrieved_at",
+            # New eligibility columns
+            "hf_ollb_ineligible_reason",
+            "hf_ollb_candidate_hf_id",
         ]
         
         for col in numeric_columns:
             if col not in df.columns:
                 df[col] = pd.NA
+        
+        for col in boolean_columns:
+            if col not in df.columns:
+                df[col] = None
         
         for col in string_columns:
             if col not in df.columns:
@@ -512,18 +672,36 @@ class HFLeaderboardEnricher(BaseEnricher):
         hf_index = self._build_hf_index(hf_df)
         self.logger.info("Built HF index with %d models", len(hf_index))
         
-        # Match and enrich
+        # Match and enrich with eligibility tracking
         matched_count = 0
         unmatched_count = 0
+        eligible_count = 0
+        eligible_matched_count = 0
+        ineligible_count = 0
         match_methods: Dict[str, int] = {}
-        unmatched_details: List[Dict[str, Any]] = []
+        ineligible_reasons: Dict[str, int] = {}
+        unmatched_eligible_details: List[Dict[str, Any]] = []
         
         for idx, row in df.iterrows():
             slug = row.get("openrouter_slug")
             if pd.isna(slug) or not slug:
                 continue
             
-            # Perform matching
+            # Step 1: Determine eligibility
+            eligible, ineligible_reason, candidate_hf_id = self._determine_eligibility(row)
+            
+            # Record eligibility info
+            df.at[idx, "hf_ollb_eligible"] = eligible
+            df.at[idx, "hf_ollb_ineligible_reason"] = ineligible_reason
+            df.at[idx, "hf_ollb_candidate_hf_id"] = candidate_hf_id
+            
+            if eligible:
+                eligible_count += 1
+            else:
+                ineligible_count += 1
+                ineligible_reasons[ineligible_reason or "unknown"] = ineligible_reasons.get(ineligible_reason or "unknown", 0) + 1
+            
+            # Step 2: Perform matching (for all models, but expected success varies by eligibility)
             match_status, match_method, match_score, hf_info = self._match_model(
                 row, hf_index
             )
@@ -558,43 +736,64 @@ class HFLeaderboardEnricher(BaseEnricher):
                 
                 matched_count += 1
                 match_methods[match_method] = match_methods.get(match_method, 0) + 1
+                
+                if eligible:
+                    eligible_matched_count += 1
             else:
                 unmatched_count += 1
-                unmatched_details.append({
-                    "slug": str(slug),
-                    "hf_id": str(row.get("hugging_face_id", "")),
-                    "status": match_status,
-                    "score": match_score,
-                })
-                result.data_gaps.append({
-                    "slug": str(slug),
-                    "source": "hf_open_llm_leaderboard",
-                    "field": "hf_ollb_avg",
-                    "reason": match_status,
-                    "hf_id": str(row.get("hugging_face_id", "")),
-                    "best_score": match_score,
-                    "retrieved_at": now_iso,
-                })
+                
+                # Only track unmatched ELIGIBLE models for debugging
+                if eligible:
+                    unmatched_eligible_details.append({
+                        "slug": str(slug),
+                        "hf_id": str(row.get("hugging_face_id", "")),
+                        "candidate_hf_id": candidate_hf_id or "",
+                        "status": match_status,
+                        "score": match_score,
+                    })
+                    result.data_gaps.append({
+                        "slug": str(slug),
+                        "source": "hf_open_llm_leaderboard",
+                        "field": "hf_ollb_avg",
+                        "reason": match_status,
+                        "hf_id": str(row.get("hugging_face_id", "")),
+                        "candidate_hf_id": candidate_hf_id or "",
+                        "best_score": match_score,
+                        "eligible": True,
+                        "retrieved_at": now_iso,
+                    })
         
         result.rows_enriched = matched_count
         result.rows_with_gaps = unmatched_count
         
-        # Log summary
-        self.logger.info(
-            "HF Leaderboard enrichment: matched %d (%.1f%%), unmatched %d",
-            matched_count,
-            100.0 * matched_count / (matched_count + unmatched_count) if (matched_count + unmatched_count) > 0 else 0,
-            unmatched_count,
-        )
-        self.logger.info("Match methods breakdown: %s", match_methods)
+        # Log comprehensive summary
+        total_attempted = eligible_count + ineligible_count
+        self.logger.info("=" * 60)
+        self.logger.info("HF Leaderboard Enrichment Summary:")
+        self.logger.info("  Total models attempted: %d", total_attempted)
+        self.logger.info("  Eligible models: %d (%.1f%%)", 
+                        eligible_count, 
+                        100.0 * eligible_count / total_attempted if total_attempted > 0 else 0)
+        self.logger.info("  Ineligible models: %d (%.1f%%)", 
+                        ineligible_count,
+                        100.0 * ineligible_count / total_attempted if total_attempted > 0 else 0)
+        self.logger.info("  Ineligibility breakdown: %s", ineligible_reasons)
+        self.logger.info("")
+        self.logger.info("  Matched (all): %d (%.1f%%)", 
+                        matched_count,
+                        100.0 * matched_count / total_attempted if total_attempted > 0 else 0)
+        self.logger.info("  Matched (eligible only): %d / %d (%.1f%%)", 
+                        eligible_matched_count, eligible_count,
+                        100.0 * eligible_matched_count / eligible_count if eligible_count > 0 else 0)
+        self.logger.info("  Match methods: %s", match_methods)
+        self.logger.info("=" * 60)
         
-        # Log top unmatched for debugging
-        if unmatched_details:
-            unmatched_with_hf_id = [u for u in unmatched_details if u["hf_id"] and u["hf_id"] != "nan"]
-            if unmatched_with_hf_id:
-                self.logger.info("Top unmatched WITH hugging_face_id (should investigate):")
-                for item in unmatched_with_hf_id[:10]:
-                    self.logger.info("  %s | hf_id=%s | status=%s", 
-                                   item["slug"], item["hf_id"], item["status"])
+        # Log top unmatched ELIGIBLE models (these are the ones that matter)
+        if unmatched_eligible_details:
+            self.logger.info("Top unmatched ELIGIBLE models (should investigate):")
+            for item in unmatched_eligible_details[:15]:
+                self.logger.info("  %s | candidate=%s | status=%s | score=%.2f", 
+                               item["slug"], item["candidate_hf_id"], 
+                               item["status"], item["score"] or 0)
         
         return df

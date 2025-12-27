@@ -88,6 +88,10 @@ SOURCE_GROUPS = {
             "hf_ollb_source_dataset",
             "hf_ollb_retrieved_at",
             "hf_ollb_repo_id",
+            # Eligibility columns (new)
+            "hf_ollb_eligible",
+            "hf_ollb_ineligible_reason",
+            "hf_ollb_candidate_hf_id",
         ],
         # Metric columns (v2 leaderboard benchmarks)
         "metric_columns": [
@@ -107,6 +111,8 @@ SOURCE_GROUPS = {
             "hf_ollb_winogrande",
             "hf_ollb_gsm8k",
         ],
+        # Eligibility column for computing eligible coverage
+        "eligibility_column": "hf_ollb_eligible",
     },
     "eval_harness": {
         "description": "Eval harness scores from prompt-based testing",
@@ -204,12 +210,15 @@ def compute_dual_coverage(
     all_group_columns: List[str],
     metadata_columns: List[str],
     metric_columns: List[str],
+    eligibility_column: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Compute both attempt coverage and metric coverage for a column group.
+    Compute attempt, metric, and (optionally) eligible coverage for a column group.
     
     - attempt_coverage: % of rows where ANY metadata column is non-null
     - metric_coverage: % of rows where ANY metric column is non-null
+    - eligible_count: number of rows where eligibility_column is True (if provided)
+    - eligible_metric_coverage: % of eligible rows with metric data (the key KPI)
     """
     total_models = len(df)
     
@@ -220,6 +229,10 @@ def compute_dual_coverage(
             "attempt_models": 0,
             "metric_coverage_percent": 0.0,
             "metric_models": 0,
+            "eligible_count": 0,
+            "eligible_metric_models": 0,
+            "eligible_metric_coverage_percent": 0.0,
+            "ineligible_count": 0,
             "columns_found": 0,
             "metadata_columns_found": 0,
             "metric_columns_found": 0,
@@ -245,11 +258,29 @@ def compute_dual_coverage(
         models_with_attempt = (all_data.notna().any(axis=1)).sum() if len(all_data.columns) > 0 else 0
     
     # Compute metric coverage (any metric populated)
+    has_metrics_mask = pd.Series([False] * len(df), index=df.index)
     if existing_metrics:
         metric_data = df[existing_metrics]
-        models_with_metrics = (metric_data.notna().any(axis=1)).sum()
-    else:
-        models_with_metrics = 0
+        has_metrics_mask = metric_data.notna().any(axis=1)
+    models_with_metrics = has_metrics_mask.sum()
+    
+    # Compute eligibility-based coverage if column provided
+    eligible_count = 0
+    eligible_metric_models = 0
+    eligible_metric_coverage_percent = 0.0
+    ineligible_count = 0
+    
+    if eligibility_column and eligibility_column in df.columns:
+        # Eligibility column should be boolean-like (True/False or 1/0)
+        eligible_mask = df[eligibility_column].fillna(False).astype(bool)
+        eligible_count = eligible_mask.sum()
+        ineligible_count = (~eligible_mask).sum()
+        
+        # Compute metric coverage among eligible models only
+        if eligible_count > 0:
+            eligible_with_metrics = (eligible_mask & has_metrics_mask).sum()
+            eligible_metric_models = int(eligible_with_metrics)
+            eligible_metric_coverage_percent = round(100.0 * eligible_with_metrics / eligible_count, 1)
     
     # Per-column coverage
     column_coverage = {}
@@ -269,6 +300,11 @@ def compute_dual_coverage(
         "attempt_models": int(models_with_attempt),
         "metric_coverage_percent": round(100.0 * models_with_metrics / total_models, 1) if total_models > 0 else 0.0,
         "metric_models": int(models_with_metrics),
+        # Eligibility stats (new)
+        "eligible_count": int(eligible_count),
+        "eligible_metric_models": int(eligible_metric_models),
+        "eligible_metric_coverage_percent": eligible_metric_coverage_percent,
+        "ineligible_count": int(ineligible_count),
         "columns_found": len(all_group_columns),
         "metadata_columns_found": len(existing_metadata),
         "metric_columns_found": len(existing_metrics),
@@ -281,11 +317,15 @@ def find_unmatched_models(
     group_name: str,
     source_config: Dict[str, Any],
     top_n: int = 20,
+    eligible_only: bool = False,
 ) -> List[Dict[str, Any]]:
     """
     Find top N models that have no METRIC data for a given source.
     
     Uses metric coverage (not attempt coverage) to determine unmatched status.
+    
+    If eligible_only=True and an eligibility_column is configured, only returns
+    unmatched models that are marked as eligible (the ones that matter).
     """
     if "openrouter_slug" not in df.columns:
         return []
@@ -293,6 +333,7 @@ def find_unmatched_models(
     prefixes = source_config.get("prefixes", [])
     all_group_columns = find_columns_for_group(list(df.columns), prefixes)
     metric_columns = source_config.get("metric_columns", [])
+    eligibility_column = source_config.get("eligibility_column")
     
     # Filter to existing metric columns
     existing_metrics = [c for c in metric_columns if c in df.columns]
@@ -314,6 +355,12 @@ def find_unmatched_models(
         
         slug = str(slug).strip()
         
+        # Filter by eligibility if requested
+        if eligible_only and eligibility_column and eligibility_column in df.columns:
+            is_eligible = row.get(eligibility_column)
+            if pd.isna(is_eligible) or not is_eligible:
+                continue
+        
         # Check if all metric columns are null
         all_metrics_null = True
         for col in existing_metrics:
@@ -334,12 +381,25 @@ def find_unmatched_models(
                 status = row.get(match_status_col)
                 if status == "unmatched":
                     reason = "match_status=unmatched"
+                elif status == "conflict":
+                    reason = "match_status=conflict"
+                elif status == "low_confidence":
+                    reason = "match_status=low_confidence"
                 elif pd.isna(status):
                     reason = "match not attempted"
+            
+            # Add candidate HF ID if available (for debugging)
+            candidate_col = "hf_ollb_candidate_hf_id"
+            candidate_id = ""
+            if candidate_col in df.columns:
+                cand = row.get(candidate_col)
+                if pd.notna(cand):
+                    candidate_id = str(cand)
             
             unmatched.append({
                 "slug": slug,
                 "reason": reason,
+                "candidate_hf_id": candidate_id,
             })
     
     # Sort by slug and return top N
@@ -374,6 +434,7 @@ def generate_coverage_report(
             group_columns,
             config.get("metadata_columns", []),
             config.get("metric_columns", []),
+            eligibility_column=config.get("eligibility_column"),
         )
         
         # Add representative columns (top 10 by coverage)
@@ -392,7 +453,12 @@ def generate_coverage_report(
         }
         
         # Find unmatched models (based on metric coverage)
-        unmatched = find_unmatched_models(df, group_name, config, top_n=20)
+        # For groups with eligibility tracking, only show eligible unmatched (the ones that matter)
+        has_eligibility = config.get("eligibility_column") is not None
+        unmatched = find_unmatched_models(
+            df, group_name, config, top_n=20, 
+            eligible_only=has_eligibility
+        )
         report["unmatched_lists"][group_name] = unmatched
     
     # Generate summary
@@ -441,6 +507,8 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
     lines.append("")
     lines.append("- **Attempt Coverage**: % of models where enrichment was attempted (metadata populated)")
     lines.append("- **Metric Coverage**: % of models where actual benchmark/rating data was retrieved")
+    lines.append("- **Eligible Coverage** (HF only): % of open-weight models expected to be on the leaderboard")
+    lines.append("- **Metric(Eligible)** (HF only): % of eligible models with benchmark data — the key KPI")
     lines.append("")
     
     # Summary
@@ -465,15 +533,17 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
     lines.append("## Coverage by Source Group")
     lines.append("")
     
-    # Table header with both coverages
-    lines.append("| Source Group | Description | Metric % | Attempt % | Models w/ Metrics |")
-    lines.append("|--------------|-------------|----------|-----------|-------------------|")
+    # Table header with both coverages + eligibility
+    lines.append("| Source Group | Metric % | Attempt % | Eligible | Metric(Eligible) |")
+    lines.append("|--------------|----------|-----------|----------|------------------|")
     
     for group_name, data in sorted(report["source_groups"].items(), key=lambda x: -x[1]["metric_coverage_percent"]):
-        desc = data["description"][:30] + "..." if len(data["description"]) > 30 else data["description"]
+        eligible_str = str(data.get("eligible_count", "-")) if data.get("eligible_count", 0) > 0 else "-"
+        eligible_metric_str = f"{data['eligible_metric_coverage_percent']}%" if data.get("eligible_count", 0) > 0 else "-"
+        
         lines.append(
-            f"| {group_name} | {desc} | {data['metric_coverage_percent']}% | "
-            f"{data['attempt_coverage_percent']}% | {data['metric_models']}/{data['total_models']} |"
+            f"| {group_name} | {data['metric_coverage_percent']}% | "
+            f"{data['attempt_coverage_percent']}% | {eligible_str} | {eligible_metric_str} |"
         )
     lines.append("")
     
@@ -488,6 +558,13 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
         lines.append("")
         lines.append(f"- **Metric Coverage:** {data['metric_coverage_percent']}% ({data['metric_models']}/{data['total_models']} models)")
         lines.append(f"- **Attempt Coverage:** {data['attempt_coverage_percent']}% ({data['attempt_models']}/{data['total_models']} models)")
+        
+        # Add eligibility info if available
+        if data.get("eligible_count", 0) > 0:
+            lines.append(f"- **Eligible Models:** {data['eligible_count']} ({100.0 * data['eligible_count'] / data['total_models']:.1f}% of total)")
+            lines.append(f"- **Ineligible Models:** {data['ineligible_count']} (closed/proprietary)")
+            lines.append(f"- **Metric Coverage (Eligible):** {data['eligible_metric_coverage_percent']}% ({data['eligible_metric_models']}/{data['eligible_count']} eligible models)")
+        
         lines.append(f"- **Columns Found:** {data['columns_found']} (metadata: {data['metadata_columns_found']}, metrics: {data['metric_columns_found']})")
         lines.append("")
         
@@ -506,19 +583,30 @@ def format_report_markdown(report: Dict[str, Any]) -> str:
     lines.append("## Unmatched Models (Top 20 per Source)")
     lines.append("")
     lines.append("Models without metric data from each source.")
+    lines.append("For sources with eligibility tracking (e.g., HF Leaderboard), only eligible models are shown.")
     lines.append("")
     
     for group_name, unmatched in report["unmatched_lists"].items():
+        # Check if this group has eligibility
+        group_data = report["source_groups"].get(group_name, {})
+        has_eligibility = group_data.get("eligible_count", 0) > 0
+        
         lines.append(f"### {group_name}")
+        if has_eligibility:
+            lines.append("_(Showing eligible models only)_")
         lines.append("")
         
         if not unmatched:
-            lines.append("_No unmatched models (or all models have metric data)._")
+            if has_eligibility:
+                lines.append("_All eligible models have metric data, or no unmatched eligible models._")
+            else:
+                lines.append("_No unmatched models (or all models have metric data)._")
         else:
             lines.append(f"**{len(unmatched)} models without metric data:**")
             lines.append("")
             for item in unmatched[:20]:
-                lines.append(f"- `{item['slug']}`: {item['reason']}")
+                candidate_info = f" (tried: `{item['candidate_hf_id']}`)" if item.get("candidate_hf_id") else ""
+                lines.append(f"- `{item['slug']}`: {item['reason']}{candidate_info}")
         lines.append("")
     
     return "\n".join(lines)
@@ -611,23 +699,48 @@ def main():
         print(f"Total Models: {report['total_models']}")
         print(f"Total Columns: {report['total_columns']}")
         print("")
-        print("Source Group Coverage (Metric % / Attempt %):")
+        print("Source Group Coverage:")
+        print("")
         for group_name, data in sorted(
             report["source_groups"].items(),
             key=lambda x: -x[1]["metric_coverage_percent"],
         ):
             metric_status = "✅" if data["metric_coverage_percent"] > 0 else "❌"
-            print(
-                f"  {metric_status} {group_name:25} Metric: {data['metric_coverage_percent']:5.1f}% "
-                f"| Attempt: {data['attempt_coverage_percent']:5.1f}% "
-                f"| Models: {data['metric_models']}/{data['total_models']}"
-            )
+            
+            # Check if this group has eligibility tracking
+            has_eligibility = data.get("eligible_count", 0) > 0
+            
+            if has_eligibility:
+                # Show eligibility-aware format for HF leaderboard
+                print(
+                    f"  {metric_status} {group_name:25} Metric: {data['metric_coverage_percent']:5.1f}% "
+                    f"| Attempt: {data['attempt_coverage_percent']:5.1f}% "
+                    f"| Eligible: {data['eligible_count']} "
+                    f"| Metric(Eligible): {data['eligible_metric_coverage_percent']:.1f}%"
+                )
+            else:
+                # Standard format for other groups
+                print(
+                    f"  {metric_status} {group_name:25} Metric: {data['metric_coverage_percent']:5.1f}% "
+                    f"| Attempt: {data['attempt_coverage_percent']:5.1f}% "
+                    f"| Models: {data['metric_models']}/{data['total_models']}"
+                )
         print("")
+        
+        # Show HF-specific summary if eligibility is present
+        hf_data = report["source_groups"].get("hf_leaderboard", {})
+        if hf_data.get("eligible_count", 0) > 0:
+            print("📊 HF Leaderboard Eligibility Breakdown:")
+            print(f"   Eligible models: {hf_data['eligible_count']} ({100.0 * hf_data['eligible_count'] / hf_data['total_models']:.1f}%)")
+            print(f"   Ineligible models: {hf_data['ineligible_count']} (closed/proprietary)")
+            print(f"   Eligible with metrics: {hf_data['eligible_metric_models']}/{hf_data['eligible_count']} ({hf_data['eligible_metric_coverage_percent']:.1f}%)")
+            print("")
         
         # Show groups needing attention
         low_metric_groups = [
             g for g, d in report["source_groups"].items()
             if d["metric_coverage_percent"] == 0 and d["attempt_coverage_percent"] > 0
+            and d.get("eligible_count", 0) == 0  # Exclude if eligibility tracking present
         ]
         if low_metric_groups:
             print("⚠️  Groups with attempts but no metrics (enricher may need fixing):")

@@ -74,12 +74,15 @@
     "hf_ollb_avg",
     "hf_ollb_bbh",
     "hf_ollb_bbh_raw",
+    "hf_ollb_candidate_hf_id",
+    "hf_ollb_eligible",
     "hf_ollb_gpqa",
     "hf_ollb_gpqa_raw",
     "hf_ollb_gsm8k",
     "hf_ollb_hellaswag",
     "hf_ollb_ifeval",
     "hf_ollb_ifeval_raw",
+    "hf_ollb_ineligible_reason",
     "hf_ollb_license",
     "hf_ollb_match_method",
     "hf_ollb_match_score",
@@ -250,5 +253,5 @@
     "weaknesses"
   ],
   "min_row_count": 353,
-  "notes": "Baseline schema generated from canonical Excel; future runs must preserve all columns by name."
+  "notes": "Baseline schema generated from canonical Excel; future runs must preserve all columns by name. Updated 2025-12-27 to add HF eligibility columns."
 }
