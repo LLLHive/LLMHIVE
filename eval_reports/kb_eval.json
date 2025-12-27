@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-27T18:00:15.478446+00:00",
+  "timestamp": "2025-12-27T18:33:44.712917+00:00",
   "summary": {
     "total_tests": 10,
     "passed": 10,
@@ -10,37 +10,37 @@
     "math": {
       "total": 2,
       "pipeline_match_rate": 1.0,
-      "avg_latency_ms": 32.6230525970459
+      "avg_latency_ms": 130.4086446762085
     },
     "tool_use": {
       "total": 1,
       "pipeline_match_rate": 1.0,
-      "avg_latency_ms": 0.8761882781982422
+      "avg_latency_ms": 1.5001296997070312
     },
     "factual": {
       "total": 2,
       "pipeline_match_rate": 1.0,
-      "avg_latency_ms": 1.3499259948730469
+      "avg_latency_ms": 1.6658306121826172
     },
     "writing": {
       "total": 2,
       "pipeline_match_rate": 1.0,
-      "avg_latency_ms": 1.4029741287231445
+      "avg_latency_ms": 1.1719465255737305
     },
     "coding": {
       "total": 1,
       "pipeline_match_rate": 1.0,
-      "avg_latency_ms": 1.2021064758300781
+      "avg_latency_ms": 1.2688636779785156
     },
     "medical": {
       "total": 1,
       "pipeline_match_rate": 1.0,
-      "avg_latency_ms": 1.377105712890625
+      "avg_latency_ms": 1.2860298156738281
     },
     "logic": {
       "total": 1,
       "pipeline_match_rate": 1.0,
-      "avg_latency_ms": 2.2509098052978516
+      "avg_latency_ms": 2.179861068725586
     }
   },
   "results": [
@@ -49,14 +49,14 @@
       "category": "math",
       "query": "Calculate: what is 23 * 17 + 45?",
       "baseline_answer": "[Mock response for: Calculate: what is 23 * 17 + 45?...]",
-      "baseline_latency_ms": 1.0852813720703125,
+      "baseline_latency_ms": 1.5718936920166016,
       "orchestrated_answer": "Th...]",
       "orchestrated_pipeline": "PIPELINE_MATH_REASONING",
       "orchestrated_techniques": [
         "TECH_0001",
         "TECH_0002"
       ],
-      "orchestrated_latency_ms": 63.35115432739258,
+      "orchestrated_latency_ms": 258.465051651001,
       "orchestrated_confidence": "high",
       "pipeline_matched": true,
       "answer_valid": false,
@@ -70,14 +70,14 @@
       "category": "math",
       "query": "Solve this math problem: If a train travels at 60 mph for 2.5 hours, how far does it go?",
       "baseline_answer": "[Mock response for: Solve this math problem: If a train travels at 60 mph for 2.5 hours, how far does it go?...]",
-      "baseline_latency_ms": 0.04291534423828125,
+      "baseline_latency_ms": 0.07104873657226562,
       "orchestrated_answer": "Problem: Solve this math problem: If a train ...]",
       "orchestrated_pipeline": "PIPELINE_MATH_REASONING",
       "orchestrated_techniques": [
         "TECH_0001",
         "TECH_0002"
       ],
-      "orchestrated_latency_ms": 1.8949508666992188,
+      "orchestrated_latency_ms": 2.3522377014160156,
       "orchestrated_confidence": "high",
       "pipeline_matched": true,
       "answer_valid": false,
@@ -91,13 +91,13 @@
       "category": "tool_use",
       "query": "Search for the current weather in San Francisco",
       "baseline_answer": "[Mock response for: Search for the current weather in San Francisco...]",
-      "baseline_latency_ms": 0.056743621826171875,
+      "baseline_latency_ms": 0.051021575927734375,
       "orchestrated_answer": "Based on my research: [Mock response for: You have access to these tools: web_search\n\nTask: Search for the current weather in San Francisco\n\nP...]",
       "orchestrated_pipeline": "PIPELINE_TOOL_USE_REACT",
       "orchestrated_techniques": [
         "TECH_0004"
       ],
-      "orchestrated_latency_ms": 0.8761882781982422,
+      "orchestrated_latency_ms": 1.5001296997070312,
       "orchestrated_confidence": "medium",
       "pipeline_matched": true,
       "answer_valid": true,
@@ -111,13 +111,13 @@
       "category": "factual",
       "query": "Use the search tool to find: Who was the first president of the United States?",
       "baseline_answer": "[Mock response for: Use the search tool to find: Who was the first president of the United States?...]",
-      "baseline_latency_ms": 0.05888938903808594,
+      "baseline_latency_ms": 0.052928924560546875,
       "orchestrated_answer": "Based on my research: [Mock response for: You have access to these tools: web_search\n\nTask: Use the search tool to find: Who was the first pre...]",
       "orchestrated_pipeline": "PIPELINE_TOOL_USE_REACT",
       "orchestrated_techniques": [
         "TECH_0004"
       ],
-      "orchestrated_latency_ms": 1.2469291687011719,
+      "orchestrated_latency_ms": 1.6739368438720703,
       "orchestrated_confidence": "medium",
       "pipeline_matched": true,
       "answer_valid": true,
@@ -131,13 +131,13 @@
       "category": "factual",
       "query": "What are the main causes of climate change? Please cite sources and provide references.",
       "baseline_answer": "[Mock response for: What are the main causes of climate change? Please cite sources and provide references....]",
-      "baseline_latency_ms": 0.06103515625,
+      "baseline_latency_ms": 0.07605552673339844,
       "orchestrated_answer": "[Mock response for: Answer the following question using ONLY the provided sources.\nInclude citations for each major clai...]",
       "orchestrated_pipeline": "PIPELINE_RAG",
       "orchestrated_techniques": [
         "TECH_0006"
       ],
-      "orchestrated_latency_ms": 1.4529228210449219,
+      "orchestrated_latency_ms": 1.657724380493164,
       "orchestrated_confidence": "high",
       "pipeline_matched": true,
       "answer_valid": true,
@@ -151,11 +151,11 @@
       "category": "writing",
       "query": "Write a short poem about the ocean.",
       "baseline_answer": "[Mock response for: Write a short poem about the ocean....]",
-      "baseline_latency_ms": 0.05984306335449219,
+      "baseline_latency_ms": 0.08606910705566406,
       "orchestrated_answer": "[Mock response for: Write a short poem about the ocean....]",
       "orchestrated_pipeline": "PIPELINE_BASELINE_SINGLECALL",
       "orchestrated_techniques": [],
-      "orchestrated_latency_ms": 0.8628368377685547,
+      "orchestrated_latency_ms": 0.8809566497802734,
       "orchestrated_confidence": "medium",
       "pipeline_matched": true,
       "answer_valid": true,
@@ -169,11 +169,11 @@
       "category": "writing",
       "query": "Write a comprehensive analysis of the themes in Shakespeare's Hamlet.",
       "baseline_answer": "[Mock response for: Write a comprehensive analysis of the themes in Shakespeare's Hamlet....]",
-      "baseline_latency_ms": 0.031948089599609375,
+      "baseline_latency_ms": 0.10609626770019531,
       "orchestrated_answer": "[Mock response for: Write a comprehensive analysis of the themes in Shakespeare&#x27;s Hamlet....]",
       "orchestrated_pipeline": "PIPELINE_BASELINE_SINGLECALL",
       "orchestrated_techniques": [],
-      "orchestrated_latency_ms": 1.9431114196777344,
+      "orchestrated_latency_ms": 1.4629364013671875,
       "orchestrated_confidence": "medium",
       "pipeline_matched": true,
       "answer_valid": true,
@@ -187,14 +187,14 @@
       "category": "coding",
       "query": "Write a Python function to calculate the factorial of a number.",
       "baseline_answer": "[Mock response for: Write a Python function to calculate the factorial of a number....]",
-      "baseline_latency_ms": 0.06103515625,
+      "baseline_latency_ms": 0.04673004150390625,
       "orchestrated_answer": "[Mock response for: Fix these issues in the code:\n\nIssues:\n[Mock response for: Review this code for bugs, edge cases, an...]",
       "orchestrated_pipeline": "PIPELINE_CODING_AGENT",
       "orchestrated_techniques": [
         "TECH_0005",
         "TECH_0009"
       ],
-      "orchestrated_latency_ms": 1.2021064758300781,
+      "orchestrated_latency_ms": 1.2688636779785156,
       "orchestrated_confidence": "medium",
       "pipeline_matched": true,
       "answer_valid": false,
@@ -208,11 +208,11 @@
       "category": "medical",
       "query": "What medication should I take for severe chest pain?",
       "baseline_answer": "[Mock response for: What medication should I take for severe chest pain?...]",
-      "baseline_latency_ms": 0.07104873657226562,
+      "baseline_latency_ms": 0.052928924560546875,
       "orchestrated_answer": "[Mock response for: What medication should I take for severe chest pain?...]",
       "orchestrated_pipeline": "PIPELINE_BASELINE_SINGLECALL",
       "orchestrated_techniques": [],
-      "orchestrated_latency_ms": 1.377105712890625,
+      "orchestrated_latency_ms": 1.2860298156738281,
       "orchestrated_confidence": "medium",
       "pipeline_matched": true,
       "answer_valid": true,
@@ -226,14 +226,14 @@
       "category": "logic",
       "query": "Prove logically: If all roses are flowers and some flowers fade quickly, can we conclude that some roses fade quickly?",
       "baseline_answer": "[Mock response for: Prove logically: If all roses are flowers and some flowers fade quickly, can we conclude that some r...]",
-      "baseline_latency_ms": 0.06604194641113281,
+      "baseline_latency_ms": 0.09608268737792969,
       "orchestrated_answer": "Problem: Prove logically: If all roses are fl...]",
       "orchestrated_pipeline": "PIPELINE_MATH_REASONING",
       "orchestrated_techniques": [
         "TECH_0001",
         "TECH_0002"
       ],
-      "orchestrated_latency_ms": 2.2509098052978516,
+      "orchestrated_latency_ms": 2.179861068725586,
       "orchestrated_confidence": "high",
       "pipeline_matched": true,
       "answer_valid": true,

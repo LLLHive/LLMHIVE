@@ -33,6 +33,34 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# KB Pipeline Integration (lazy loaded to avoid circular imports)
+_kb_bridge_loaded = False
+_process_with_kb_pipeline = None
+_kb_available = False
+
+
+def _load_kb_bridge():
+    """Lazy load KB pipeline bridge."""
+    global _kb_bridge_loaded, _process_with_kb_pipeline, _kb_available
+    
+    if _kb_bridge_loaded:
+        return _kb_available
+    
+    try:
+        from llmhive.pipelines.kb_orchestrator_bridge import (
+            process_with_kb_pipeline,
+            create_kb_orchestrator_handler,
+        )
+        _process_with_kb_pipeline = process_with_kb_pipeline
+        _kb_available = True
+        logger.info("KB pipeline bridge loaded successfully")
+    except ImportError as e:
+        logger.debug("KB pipeline bridge not available: %s", e)
+        _kb_available = False
+    
+    _kb_bridge_loaded = True
+    return _kb_available
+
 # Try to import reasoning strategies controller for enhanced selection
 try:
     from .reasoning_strategies_controller import (
@@ -369,6 +397,7 @@ class EliteOrchestrator:
         use_openrouter_rankings: bool = False,
         db_session: Optional["Session"] = None,
         use_reasoning_strategies: bool = True,
+        use_kb_pipelines: bool = True,
     ) -> None:
         """Initialize elite orchestrator.
         
@@ -380,6 +409,8 @@ class EliteOrchestrator:
             db_session: Database session for OpenRouter rankings
             use_reasoning_strategies: Enable Q4 2025 reasoning strategies controller
                 for enhanced strategy selection, fallback handling, and trace logging
+            use_kb_pipelines: Enable KB-aligned pipeline selection (Q4 2025)
+                Uses Techniques Knowledge Base for optimal pipeline routing
         """
         self.providers = providers
         self.performance_tracker = performance_tracker
@@ -393,6 +424,16 @@ class EliteOrchestrator:
         if self.use_reasoning_strategies:
             self._reasoning_controller = get_strategy_controller()
             logger.info("Elite orchestrator initialized with reasoning strategies controller")
+        
+        # Q4 2025: KB Pipeline integration
+        self.use_kb_pipelines = use_kb_pipelines
+        if self.use_kb_pipelines:
+            kb_available = _load_kb_bridge()
+            if kb_available:
+                logger.info("Elite orchestrator initialized with KB pipeline support")
+            else:
+                logger.debug("KB pipelines requested but not available, using built-in strategies")
+                self.use_kb_pipelines = False
         
         # OpenRouter selector (lazy initialization)
         self._openrouter_selector: Optional["OpenRouterModelSelector"] = None
@@ -602,6 +643,11 @@ class EliteOrchestrator:
         max_parallel: int = 3,
         timeout_seconds: float = 60.0,
         domain_filter: Optional[str] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        tools_available: Optional[List[str]] = None,
+        cost_budget: str = "medium",
+        force_kb_pipeline: Optional[str] = None,
     ) -> EliteResult:
         """
         Orchestrate models to produce the best possible response.
@@ -610,17 +656,62 @@ class EliteOrchestrator:
             prompt: User prompt
             task_type: Type of task for capability matching
             available_models: Models to use (default: all available or dynamic from OpenRouter)
-            strategy: Orchestration strategy (auto|dynamic|single_best|parallel_race|best_of_n|expert_panel)
+            strategy: Orchestration strategy (auto|dynamic|kb|single_best|parallel_race|best_of_n|expert_panel)
+                - "kb": Use KB-aligned pipelines (recommended)
+                - "auto": Auto-select between KB and built-in strategies
             quality_threshold: Minimum acceptable quality
             max_parallel: Maximum parallel model calls
             timeout_seconds: Total timeout
             domain_filter: Optional domain filter for OpenRouter ranking selection
+            user_id: Optional user ID for KB pipeline context
+            session_id: Optional session ID for KB pipeline context  
+            tools_available: Optional list of available tools for KB pipelines
+            cost_budget: Cost budget for KB pipelines ("low", "medium", "high")
+            force_kb_pipeline: Force a specific KB pipeline (for testing)
             
         Returns:
             EliteResult with optimized response
         """
         start_time = time.time()
         performance_notes: List[str] = []
+        
+        # Q4 2025: KB Pipeline routing
+        # Route to KB pipelines when explicitly requested or when auto mode with KB available
+        use_kb = (
+            self.use_kb_pipelines 
+            and _kb_available 
+            and (strategy == "kb" or force_kb_pipeline is not None)
+        )
+        
+        # Auto mode: prefer KB pipelines for complex reasoning tasks
+        if (
+            strategy in ("auto", "automatic") 
+            and self.use_kb_pipelines 
+            and _kb_available
+        ):
+            # Use KB for tasks that benefit from technique-aligned pipelines
+            kb_preferred_tasks = {
+                "math_problem", "reasoning", "code_generation", "debugging",
+                "research_analysis", "factual_question", "health_medical",
+                "legal_analysis", "planning",
+            }
+            if task_type in kb_preferred_tasks:
+                use_kb = True
+                performance_notes.append("Auto-selected KB pipeline for task type")
+        
+        if use_kb:
+            return await self._orchestrate_with_kb_pipeline(
+                prompt=prompt,
+                task_type=task_type,
+                start_time=start_time,
+                performance_notes=performance_notes,
+                available_models=available_models,
+                user_id=user_id,
+                session_id=session_id,
+                tools_available=tools_available,
+                cost_budget=cost_budget,
+                force_pipeline=force_kb_pipeline,
+            )
         
         # Handle dynamic/auto strategy with OpenRouter
         if strategy in ("auto", "automatic", "dynamic") and self.use_openrouter_rankings:
@@ -705,6 +796,90 @@ class EliteOrchestrator:
             self._log_performance(result, task_type)
         
         return result
+    
+    async def _orchestrate_with_kb_pipeline(
+        self,
+        prompt: str,
+        task_type: str,
+        start_time: float,
+        performance_notes: List[str],
+        *,
+        available_models: Optional[List[str]] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        tools_available: Optional[List[str]] = None,
+        cost_budget: str = "medium",
+        force_pipeline: Optional[str] = None,
+    ) -> EliteResult:
+        """
+        Route orchestration through KB-aligned pipelines.
+        
+        This method uses the Techniques Knowledge Base to select and execute
+        the optimal pipeline for the given query.
+        """
+        performance_notes.append("Using KB pipeline integration")
+        
+        try:
+            # Call KB bridge
+            result = await _process_with_kb_pipeline(
+                query=prompt,
+                user_id=user_id,
+                session_id=session_id,
+                tools_available=tools_available,
+                models_available=available_models,
+                cost_budget=cost_budget,
+                force_pipeline=force_pipeline,
+                enable_tracing=True,
+            )
+            
+            total_latency = (time.time() - start_time) * 1000
+            
+            # Map KB result to EliteResult
+            return EliteResult(
+                final_answer=result.final_answer,
+                models_used=list(available_models or self.model_providers.keys())[:3],
+                primary_model=available_models[0] if available_models else "kb_pipeline",
+                strategy_used=f"kb:{result.pipeline_name}",
+                total_latency_ms=total_latency,
+                total_tokens=result.metrics.get("total_tokens", 0),
+                quality_score=0.9 if result.confidence == "high" else (
+                    0.75 if result.confidence == "medium" else 0.6
+                ),
+                confidence=0.9 if result.confidence == "high" else (
+                    0.75 if result.confidence == "medium" else 0.6
+                ),
+                responses_generated=1,
+                synthesis_method=f"kb_pipeline_{result.pipeline_name}",
+                performance_notes=performance_notes + [
+                    f"KB pipeline: {result.pipeline_name}",
+                    f"Techniques: {result.technique_ids}",
+                    f"Confidence: {result.confidence}",
+                    f"Fallback used: {result.fallback_used}",
+                ],
+                consensus_score=1.0 if not result.fallback_used else 0.7,
+            )
+            
+        except Exception as e:
+            logger.warning("KB pipeline failed, falling back to built-in: %s", e)
+            performance_notes.append(f"KB pipeline error: {str(e)[:50]}")
+            
+            # Fallback to built-in single_best strategy
+            models = available_models or list(self.model_providers.keys())
+            models = [m for m in models if m in self.model_providers]
+            
+            if not models:
+                raise ValueError("No available models for fallback orchestration")
+            
+            result = await self._single_best_strategy(
+                prompt, task_type, models, 0.7
+            )
+            
+            total_latency = (time.time() - start_time) * 1000
+            result.total_latency_ms = total_latency
+            result.strategy_used = "kb_fallback:single_best"
+            result.performance_notes = performance_notes
+            
+            return result
     
     def _select_strategy(
         self,
@@ -1591,4 +1766,46 @@ def get_best_model_for_task(task_type: str, available_models: List[str]) -> str:
             best = model
     
     return best or available_models[0] if available_models else "gpt-4o"
+
+
+async def kb_orchestrate(
+    prompt: str,
+    providers: Dict[str, Any],
+    *,
+    task_type: str = "general",
+    tools_available: Optional[List[str]] = None,
+    cost_budget: str = "medium",
+    force_pipeline: Optional[str] = None,
+) -> EliteResult:
+    """
+    Convenience function for KB-aligned orchestration.
+    
+    Uses the Techniques Knowledge Base to select the optimal pipeline.
+    
+    Args:
+        prompt: User prompt
+        providers: LLM providers by name
+        task_type: Type of task for capability matching
+        tools_available: Available tools for the pipeline
+        cost_budget: Cost budget ("low", "medium", "high")
+        force_pipeline: Force a specific pipeline (for testing)
+        
+    Returns:
+        EliteResult with optimized response
+    """
+    orchestrator = EliteOrchestrator(providers, use_kb_pipelines=True)
+    return await orchestrator.orchestrate(
+        prompt,
+        task_type,
+        strategy="kb",
+        tools_available=tools_available,
+        cost_budget=cost_budget,
+        force_kb_pipeline=force_pipeline,
+    )
+
+
+def is_kb_available() -> bool:
+    """Check if KB pipeline integration is available."""
+    _load_kb_bridge()
+    return _kb_available
 

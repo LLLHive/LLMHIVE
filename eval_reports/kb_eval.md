@@ -1,6 +1,6 @@
 # LLMHive KB Orchestrator Evaluation Report
 
-**Date**: 2025-12-27 18:00:15 UTC
+**Date**: 2025-12-27 18:33:44 UTC
 
 ## Summary
 
@@ -14,17 +14,17 @@
 ### Math
 - Tests: 2
 - Pipeline Match Rate: 100%
-- Avg Latency: 33ms
+- Avg Latency: 130ms
 
 ### Tool_Use
 - Tests: 1
 - Pipeline Match Rate: 100%
-- Avg Latency: 1ms
+- Avg Latency: 2ms
 
 ### Factual
 - Tests: 2
 - Pipeline Match Rate: 100%
-- Avg Latency: 1ms
+- Avg Latency: 2ms
 
 ### Writing
 - Tests: 2
