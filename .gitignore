@@ -118,4 +118,12 @@ playwright/.cache/
 /playwright/.cache/
 test-results/
 /test-results/
-tools/reasoning_usage.png
+
+# ===========================================
+# GENERATED ARTIFACTS
+# ===========================================
+# Evaluation reports (regenerated on demand)
+eval_reports/
+
+# Generated charts and images
+tools/*.png
