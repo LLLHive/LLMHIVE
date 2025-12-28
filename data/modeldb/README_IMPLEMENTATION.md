@@ -680,6 +680,99 @@ The enrichment layer adds data from multiple sources:
 \* Not required in Cloud Run with default service account
 \** Required for evals and telemetry; optional for basic enrichment
 
+---
+
+## Secrets in Production (Secret Manager Injection)
+
+Production deployments use **Google Secret Manager** for API keys instead of `.env` files. This approach:
+- ✅ Never stores secrets in files or version control
+- ✅ Supports automatic rotation
+- ✅ Works across Cloud Run, Vercel, and local development
+- ✅ Platform-injected secrets take precedence over `.env`
+
+### Secret Mapping
+
+| Environment Variable | Secret Manager Name | Description |
+|---------------------|---------------------|-------------|
+| `PINECONE_API_KEY` | `pinecone-api-key` | Pinecone vector database |
+| `OPENROUTER_API_KEY` | `open-router-key` | OpenRouter LLM API |
+
+### For Local Development / CI
+
+Use the Secret Manager injection script to pull secrets into your shell:
+
+```bash
+# One-time: authenticate with GCP
+gcloud auth login
+gcloud config set project llmhive-orchestrator
+
+# Before each session: inject secrets
+source scripts/gcp_secret_inject.sh
+
+# Now run the pipeline
+python data/modeldb/run_modeldb_refresh.py
+
+# Or run the full perf eval
+bash scripts/prod_perf_eval.sh
+```
+
+### For Production (Cloud Run)
+
+Secrets are automatically injected as environment variables. Configure in Cloud Run:
+
+1. Go to Cloud Run → Service → Edit & Deploy New Revision
+2. Under "Variables & Secrets" → "Reference a secret"
+3. Add:
+   - `PINECONE_API_KEY` → `pinecone-api-key:latest`
+   - `OPENROUTER_API_KEY` → `open-router-key:latest`
+
+### Required IAM Permission
+
+The service account or user must have:
+
+```
+roles/secretmanager.secretAccessor
+```
+
+Or specifically:
+
+```
+secretmanager.versions.access
+```
+
+on the secrets `pinecone-api-key` and `open-router-key`.
+
+### Script Reference: `scripts/gcp_secret_inject.sh`
+
+```bash
+# Check which secrets are set (without showing values)
+source scripts/gcp_secret_inject.sh --check
+
+# Inject secrets to current shell
+source scripts/gcp_secret_inject.sh
+
+# Run a command with injected secrets
+bash scripts/gcp_secret_inject.sh --exec "python my_script.py"
+
+# Override project ID
+GCP_PROJECT=my-project source scripts/gcp_secret_inject.sh
+
+# Override secret names
+PINECONE_SECRET_NAME=my-pinecone-key source scripts/gcp_secret_inject.sh
+```
+
+### Dry-Run Mode (No Secrets Required)
+
+For validation without secrets:
+
+```bash
+# ModelDB dry-run
+python data/modeldb/run_modeldb_refresh.py --dry-run
+
+# Prod perf eval dry-run
+DRY_RUN_ONLY=1 bash scripts/prod_perf_eval.sh
+```
+
 ## NO DATA LOSS Guarantees
 
 The pipeline enforces strict data integrity:
