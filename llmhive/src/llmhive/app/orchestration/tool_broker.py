@@ -8,6 +8,8 @@ Implements ReAct-style tool integration with advanced capabilities:
 - Image generation (text-to-image)
 - Tool chaining (sequential execution with dependencies)
 
+Enhancement-1: Thread-safe operations for concurrent access to shared state.
+
 The Tool Broker decides when tools are needed and seamlessly
 integrates their outputs into the orchestration pipeline.
 """
@@ -20,6 +22,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
+from threading import Lock  # Enhancement-1: use threading lock for sync sections
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -722,6 +725,8 @@ class ToolBroker:
         
         # Track tool failures for fallback decisions
         self._failure_counts: Dict[ToolType, int] = {}
+        # Enhancement-1: lock to guard shared state
+        self._lock = Lock()
         
         # PR4: Memory manager for RAG lookups
         self.memory_manager: Optional[Any] = None
@@ -1144,8 +1149,17 @@ class ToolBroker:
             )
     
     def _record_failure(self, tool_type: ToolType) -> None:
-        """Record a tool failure for tracking."""
-        self._failure_counts[tool_type] = self._failure_counts.get(tool_type, 0) + 1
+        """Record a tool failure for tracking (thread-safe)."""
+        # Enhancement-1: ensure thread-safe failure count update
+        with self._lock:
+            self._failure_counts[tool_type] = self._failure_counts.get(tool_type, 0) + 1
+        
+        # Enhancement-2: Update tool usage metric for failures
+        try:
+            from ..api.orchestrator_metrics import TOOL_USAGE
+            TOOL_USAGE.labels(tool_type=tool_type.value, status="failure").inc()
+        except Exception:
+            pass  # Metrics not available
     
     def format_tool_results(
         self, 
@@ -1728,15 +1742,19 @@ class ToolBroker:
 # Convenience Functions
 # ==============================================================================
 
-# Global tool broker instance
+# Global tool broker instance with thread-safe access (Enhancement-1)
 _tool_broker: Optional[ToolBroker] = None
+_tool_broker_lock = Lock()  # Enhancement-1: lock to prevent race on instantiation
 
 
 def get_tool_broker() -> ToolBroker:
-    """Get or create the global tool broker instance."""
+    """Get or create the global tool broker instance (thread-safe)."""
     global _tool_broker
+    # Enhancement-1: Double-checked locking pattern for thread-safe singleton
     if _tool_broker is None:
-        _tool_broker = ToolBroker()
+        with _tool_broker_lock:
+            if _tool_broker is None:
+                _tool_broker = ToolBroker()
     return _tool_broker
 
 

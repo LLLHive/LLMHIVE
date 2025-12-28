@@ -136,15 +136,19 @@ class ResponseCache:
             }
 
 
-# Global cache instance
+# Global cache instance with thread-safe access (Enhancement-1)
 _cache: Optional[ResponseCache] = None
+_cache_lock = threading.Lock()  # Enhancement-1: lock to prevent race on instantiation
 
 
 def get_response_cache() -> ResponseCache:
-    """Get the global response cache."""
+    """Get the global response cache (thread-safe)."""
     global _cache
+    # Enhancement-1: Double-checked locking pattern for thread-safe singleton
     if _cache is None:
-        _cache = ResponseCache()
+        with _cache_lock:
+            if _cache is None:
+                _cache = ResponseCache()
     return _cache
 
 
@@ -156,3 +160,5 @@ def cached_response(model_id: str, prompt: str) -> Tuple[bool, Optional[Any]]:
 def cache_response(model_id: str, prompt: str, value: Any):
     """Cache a response."""
     get_response_cache().set(model_id, prompt, value)
+
+

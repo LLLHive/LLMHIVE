@@ -1,10 +1,13 @@
-"""Pydantic models for chat/orchestration API contract."""
+"""Pydantic models for chat/orchestration API contract.
+
+Enhancement-5: Input validation hardening with strict constraints.
+"""
 from __future__ import annotations
 
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, conint, confloat
 
 
 class ReasoningMode(str, Enum):
@@ -113,11 +116,13 @@ class EliteStrategy(str, Enum):
 
 
 class OrchestrationSettings(BaseModel):
-    """Orchestration Studio settings for advanced orchestration control."""
-    accuracy_level: int = Field(
+    """Orchestration Studio settings for advanced orchestration control.
+    
+    Enhancement-5: Stricter validation with constrained numeric types.
+    Enhancement-6: Added safe_mode_validator and dev_mode toggles.
+    """
+    accuracy_level: conint(ge=1, le=5) = Field(
         default=3,
-        ge=1,
-        le=5,
         description="Accuracy vs Speed slider (1=fastest, 5=most accurate)"
     )
     enable_hrm: bool = Field(
@@ -149,63 +154,61 @@ class OrchestrationSettings(BaseModel):
         default=None,
         description="Quality boosting options"
     )
-    # Standard LLM parameters
-    temperature: Optional[float] = Field(
+    # Standard LLM parameters with stricter constraints (Enhancement-5)
+    temperature: confloat(ge=0.0, le=2.0) = Field(
         default=0.7,
-        ge=0,
-        le=2,
         description="Temperature for response generation"
     )
-    max_tokens: Optional[int] = Field(
+    max_tokens: conint(ge=100, le=4000) = Field(
         default=2000,
-        ge=100,
-        le=4000,
         description="Maximum tokens in response"
     )
-    top_p: Optional[float] = Field(
+    top_p: confloat(ge=0.0, le=1.0) = Field(
         default=0.9,
-        ge=0,
-        le=1,
         description="Top-p nucleus sampling"
     )
-    frequency_penalty: Optional[float] = Field(
-        default=0,
-        ge=0,
-        le=2,
+    frequency_penalty: confloat(ge=0.0, le=2.0) = Field(
+        default=0.0,
         description="Frequency penalty"
     )
-    presence_penalty: Optional[float] = Field(
-        default=0,
-        ge=0,
-        le=2,
+    presence_penalty: confloat(ge=0.0, le=2.0) = Field(
+        default=0.0,
         description="Presence penalty"
     )
     # Feature toggles
-    enable_tool_broker: Optional[bool] = Field(
+    enable_tool_broker: bool = Field(
         default=True,
         description="Enable automatic tool detection and execution"
     )
-    enable_verification: Optional[bool] = Field(
+    enable_verification: bool = Field(
         default=True,
         description="Enable code/math verification"
     )
-    enable_vector_rag: Optional[bool] = Field(
+    enable_vector_rag: bool = Field(
         default=False,
         description="Enable Vector RAG with Pinecone"
     )
-    enable_memory: Optional[bool] = Field(
+    enable_memory: bool = Field(
         default=False,
         description="Enable memory augmentation"
     )
     # PR5: Budget constraints
-    max_cost_usd: Optional[float] = Field(
+    max_cost_usd: Optional[confloat(ge=0.0)] = Field(
         default=None,
-        ge=0,
         description="Maximum cost per request in USD (budget-aware routing)"
     )
-    prefer_cheaper_models: Optional[bool] = Field(
+    prefer_cheaper_models: bool = Field(
         default=False,
         description="Prefer cheaper models when quality is comparable"
+    )
+    # Enhancement-6: Safe Mode and Dev Mode toggles
+    safe_mode_validator: bool = Field(
+        default=True,
+        description="Enable Safe Mode content filtering (blocks policy-violating output)"
+    )
+    dev_mode: bool = Field(
+        default=False,
+        description="Enable developer trace logging for debugging"
     )
 
     model_config = ConfigDict(
@@ -221,14 +224,24 @@ class OrchestrationSettings(BaseModel):
                 "temperature": 0.7,
                 "max_tokens": 2000,
                 "enable_vector_rag": False,
+                "safe_mode_validator": True,
+                "dev_mode": False,
             }
         }
     )
 
 
 class ChatRequest(BaseModel):
-    """Request model for chat orchestration."""
-    prompt: str = Field(..., description="User prompt/question")
+    """Request model for chat orchestration.
+    
+    Enhancement-5: Stricter input validation with length limits.
+    """
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        max_length=10000,
+        description="User prompt/question (1-10000 chars)"
+    )
     models: Optional[List[str]] = Field(
         default=None,
         description="List of model IDs to use for orchestration (e.g., ['gpt-5', 'claude-sonnet-4.5', 'grok-4']). If not provided, models will be auto-selected."
@@ -242,10 +255,12 @@ class ChatRequest(BaseModel):
     agent_mode: AgentMode = Field(default=AgentMode.team, description="Agent collaboration mode")
     format_style: Optional[str] = Field(
         default=None,
+        max_length=50,
         description="Answer format style (paragraph, bullet_points, markdown, table, json, executive_summary, qa)",
     )
     tone_style: Optional[str] = Field(
         default=None,
+        max_length=50,
         description="Answer tone/style (formal, casual, technical, simplified, educational, conversational, authoritative)",
     )
     show_confidence: Optional[bool] = Field(
@@ -262,6 +277,46 @@ class ChatRequest(BaseModel):
         default=None,
         description="Conversation history as list of {role, content} dicts"
     )
+    
+    @field_validator('prompt')
+    @classmethod
+    def validate_prompt_content(cls, v: str) -> str:
+        """Enhancement-5: Validate prompt is not just whitespace."""
+        if not v or not v.strip():
+            raise ValueError('Prompt cannot be empty or only whitespace')
+        return v.strip()
+    
+    @field_validator('models')
+    @classmethod
+    def validate_models_list(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Enhancement-5: Validate model list if provided."""
+        if v is not None:
+            if len(v) == 0:
+                return None  # Empty list treated as None (auto-select)
+            if len(v) > 10:
+                raise ValueError('Maximum 10 models can be specified')
+            # Remove duplicates while preserving order
+            seen = set()
+            unique = []
+            for model in v:
+                if model not in seen:
+                    seen.add(model)
+                    unique.append(model)
+            return unique
+        return v
+    
+    @field_validator('history')
+    @classmethod
+    def validate_history(cls, v: Optional[List[Dict[str, Any]]]) -> Optional[List[Dict[str, Any]]]:
+        """Enhancement-5: Validate conversation history."""
+        if v is not None:
+            if len(v) > 100:
+                # Keep only the most recent 100 messages
+                v = v[-100:]
+            for msg in v:
+                if 'role' not in msg or 'content' not in msg:
+                    raise ValueError('History messages must have "role" and "content" fields')
+        return v
 
     model_config = ConfigDict(
         json_schema_extra={
