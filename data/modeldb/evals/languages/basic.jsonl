@@ -1,0 +1,3 @@
+{"id": "en_capital", "lang": "en", "prompt": "What is the capital of France? Answer with just the city name.", "expected_exact": "Paris", "difficulty": "easy"}
+{"id": "es_capital", "lang": "es", "prompt": "\u00bfCu\u00e1l es la capital de Espa\u00f1a? Responde solo con el nombre de la ciudad.", "expected_exact": "Madrid", "difficulty": "easy"}
+{"id": "zh_capital", "lang": "zh", "prompt": "\u4e2d\u56fd\u7684\u9996\u90fd\u662f\u54ea\u4e2a\u57ce\u5e02\uff1f\u53ea\u56de\u7b54\u57ce\u5e02\u540d\u3002", "expected_contains": ["\u5317\u4eac", "Beijing"], "difficulty": "easy"}

@@ -1,0 +1,4 @@
+{"id": "python_hello", "lang": "python", "prompt": "Write a Python function that takes a name and returns 'Hello, {name}!'. Only output the function, no explanation.", "expected_contains": ["def ", "return", "Hello"], "difficulty": "easy"}
+{"id": "python_factorial", "lang": "python", "prompt": "Write a Python function `factorial(n)` that computes n! recursively. Only output the function.", "expected_contains": ["def factorial", "return", "factorial(n"], "difficulty": "easy"}
+{"id": "javascript_map", "lang": "javascript", "prompt": "Write a JavaScript function that doubles each number in an array using map. Only output the function.", "expected_contains": ["function", "map", "return"], "difficulty": "easy"}
+{"id": "sql_select", "lang": "sql", "prompt": "Write a SQL query to select all users older than 30 from a 'users' table. Only output the query.", "expected_contains": ["SELECT", "FROM", "users", "WHERE", "30"], "difficulty": "easy"}
