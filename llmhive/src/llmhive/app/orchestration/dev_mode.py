@@ -59,8 +59,9 @@ def log_event(
     """
     Enhancement-3: Emit a dev-mode trace event with timestamp, to be sent to clients.
     
-    This function broadcasts trace events to all connected WebSocket clients
-    for the given session, enabling real-time debugging visibility.
+    This function broadcasts trace events to:
+    1. All connected WebSocket clients for the given session
+    2. All dev trace subscribers (via /ws/dev/trace endpoint)
     
     Args:
         session_id: The session/chat ID to broadcast to
@@ -80,15 +81,27 @@ def log_event(
         session_id=session_id,
     )
     
-    # Broadcast the event to any listening UI clients (via WebSocket)
+    event_dict = {"trace_event": event.to_dict()}
+    
+    # Broadcast to session participants
     try:
         from ..routers.collab import CollabSessionManager
-        CollabSessionManager.broadcast(session_id, {"trace_event": event.to_dict()})
+        CollabSessionManager.broadcast(session_id, event_dict)
     except ImportError:
         # Collab router not available yet
         pass
     except Exception as e:
-        logger.debug(f"DevMode event broadcast failed: {e}")
+        logger.debug(f"DevMode session broadcast failed: {e}")
+    
+    # Also broadcast to dev trace subscribers
+    try:
+        from ..routers.collab import broadcast_trace_event
+        asyncio.create_task(broadcast_trace_event(event_dict))
+    except RuntimeError:
+        # No event loop available
+        pass
+    except Exception as e:
+        logger.debug(f"DevMode trace broadcast failed: {e}")
     
     # Also log to server console for debugging
     if logger.isEnabledFor(logging.DEBUG):

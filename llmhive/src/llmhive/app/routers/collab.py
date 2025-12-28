@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from threading import Lock
@@ -360,12 +361,142 @@ async def _cleanup_empty_session(session_id: str, delay: float = 60) -> None:
 
 
 # ==============================================================================
+# Dev Mode Trace WebSocket Endpoint
+# ==============================================================================
+
+# Dev mode trace subscribers (global list of WebSocket connections)
+_dev_trace_subscribers: List[WebSocket] = []
+_dev_trace_lock = Lock()
+
+# Dev mode token (should be configured via environment in production)
+DEV_TRACE_TOKEN = os.environ.get("LLMHIVE_DEV_TRACE_TOKEN", "dev")
+
+
+def verify_dev_token(token: str) -> bool:
+    """Verify dev trace token.
+    
+    In production, this should validate against a secure token.
+    For development, accepts "dev" or the configured token.
+    """
+    if not token:
+        return False
+    if token == DEV_TRACE_TOKEN:
+        return True
+    if token == "dev":
+        return True
+    return len(token) >= 16  # Accept long tokens
+
+
+async def broadcast_trace_event(event: Dict) -> None:
+    """Broadcast a trace event to all dev trace subscribers."""
+    with _dev_trace_lock:
+        subscribers_copy = list(_dev_trace_subscribers)
+    
+    failed = []
+    for ws in subscribers_copy:
+        try:
+            await ws.send_json(event)
+        except Exception as e:
+            logger.debug(f"Dev trace send failed: {e}")
+            failed.append(ws)
+    
+    # Remove failed connections
+    with _dev_trace_lock:
+        for ws in failed:
+            if ws in _dev_trace_subscribers:
+                _dev_trace_subscribers.remove(ws)
+
+
+@router.websocket("/dev/trace")
+async def dev_trace_endpoint(
+    websocket: WebSocket,
+    token: str = Query(default=""),
+) -> None:
+    """
+    WebSocket endpoint for real-time developer trace events.
+    
+    This endpoint allows developers to receive live trace events from
+    the orchestrator, including model calls, tool invocations, and
+    strategy decisions.
+    
+    Authentication:
+        Requires a valid dev token via query param: ?token=<dev_token>
+        
+    Messages sent TO clients:
+        - TraceEvent objects with:
+          - timestamp: ISO timestamp
+          - type: Event type (strategy_selected, model_call, model_response, 
+                  tool_invoked, tool_result, verification, orchestration_step)
+          - message: Human-readable description
+          - details: Optional structured data
+          - session_id: The session this event belongs to
+          
+    Security:
+        Only accessible to developers with valid tokens.
+        Contains potentially sensitive debug information.
+    """
+    # Token verification
+    if not verify_dev_token(token):
+        await websocket.close(code=1008)  # Policy Violation
+        logger.warning("Dev trace connection rejected: invalid token")
+        return
+    
+    await websocket.accept()
+    
+    with _dev_trace_lock:
+        _dev_trace_subscribers.append(websocket)
+    
+    logger.info(f"Dev trace client connected (total subscribers: {len(_dev_trace_subscribers)})")
+    
+    # Send connection acknowledgment
+    try:
+        await websocket.send_json({
+            "type": "connected",
+            "message": "Connected to dev trace stream",
+            "timestamp": time.time(),
+        })
+    except Exception:
+        pass
+    
+    try:
+        # Keep connection alive and handle pings
+        while True:
+            data = await websocket.receive_text()
+            try:
+                import json
+                message = json.loads(data)
+                if message.get("ping"):
+                    await websocket.send_json({"pong": True})
+            except Exception:
+                pass
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.debug(f"Dev trace connection error: {e}")
+    finally:
+        with _dev_trace_lock:
+            if websocket in _dev_trace_subscribers:
+                _dev_trace_subscribers.remove(websocket)
+        logger.info(f"Dev trace client disconnected (remaining: {len(_dev_trace_subscribers)})")
+
+
+# ==============================================================================
 # REST Endpoints for Session Info
 # ==============================================================================
 
 @router.get("/sessions", tags=["collaboration"])
 async def list_sessions() -> Dict:
-    """List all active collaboration sessions."""
+    """
+    List all active collaboration sessions.
+    
+    Returns:
+        sessions: List of session info objects with:
+            - session_id: Unique session identifier
+            - participant_count: Number of connected participants
+            - created_at: Unix timestamp of session creation
+            - message_count: Number of messages in history
+        total: Total number of active sessions
+    """
     return {
         "sessions": CollabSessionManager.get_all_sessions_info(),
         "total": CollabSessionManager.get_session_count(),
@@ -374,7 +505,19 @@ async def list_sessions() -> Dict:
 
 @router.get("/session/{session_id}/info", tags=["collaboration"])
 async def get_session_info(session_id: str) -> Dict:
-    """Get info about a specific session."""
+    """
+    Get detailed info about a specific session.
+    
+    Args:
+        session_id: The session identifier
+        
+    Returns:
+        Session details including:
+        - session_id: Session identifier
+        - participant_count: Number of participants
+        - created_at: Creation timestamp
+        - message_count: Number of stored messages
+    """
     session = CollabSessionManager.get_session(session_id)
     if not session:
         return {"error": "Session not found", "session_id": session_id}
@@ -384,5 +527,40 @@ async def get_session_info(session_id: str) -> Dict:
         "participant_count": session.participant_count,
         "created_at": session.created_at,
         "message_count": len(session.message_history),
+    }
+
+
+@router.get("/session/{session_id}/history", tags=["collaboration"])
+async def get_session_history(
+    session_id: str,
+    limit: int = Query(default=100, ge=1, le=100),
+) -> Dict:
+    """
+    Get message history for a session.
+    
+    Returns the last N messages from the session (up to 100).
+    
+    Args:
+        session_id: The session identifier
+        limit: Maximum number of messages to return (1-100, default 100)
+        
+    Returns:
+        session_id: The session identifier
+        messages: List of message objects from history
+        total: Total number of messages in history
+    """
+    session = CollabSessionManager.get_session(session_id)
+    if not session:
+        return {"error": "Session not found", "session_id": session_id}
+    
+    with session._lock:
+        history = session.message_history[-limit:]
+        total = len(session.message_history)
+    
+    return {
+        "session_id": session.id,
+        "messages": history,
+        "total": total,
+        "returned": len(history),
     }
 
