@@ -35,10 +35,18 @@ set -euo pipefail
 PINECONE_SECRET_NAME="${PINECONE_SECRET_NAME:-pinecone-api-key}"
 OPENROUTER_SECRET_NAME="${OPENROUTER_SECRET_NAME:-open-router-key}"
 
-# Track if we're being sourced or executed
+# Track if we're being sourced or executed (compatible with bash and zsh)
 _GCP_INJECT_SOURCED=false
-if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-  _GCP_INJECT_SOURCED=true
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  # Bash
+  if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+    _GCP_INJECT_SOURCED=true
+  fi
+elif [[ -n "${ZSH_VERSION:-}" ]]; then
+  # Zsh - check if script name matches $0
+  if [[ "${(%):-%x}" != "${0}" ]] 2>/dev/null || [[ "${funcstack[-1]:-}" == "source" ]] 2>/dev/null; then
+    _GCP_INJECT_SOURCED=true
+  fi
 fi
 
 # -----------------------------------------------------------------------------
