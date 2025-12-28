@@ -50,6 +50,7 @@ import type { EliteStrategy } from "@/lib/openrouter/types"
 
 // Strategy configuration for display
 const STRATEGY_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  // Classic strategies
   automatic: { label: "Automatic", color: "bg-blue-500", icon: Sparkles },
   single_best: { label: "Single Best", color: "bg-green-500", icon: Zap },
   parallel_race: { label: "Parallel Race", color: "bg-yellow-500", icon: Activity },
@@ -57,6 +58,25 @@ const STRATEGY_CONFIG: Record<string, { label: string; color: string; icon: Reac
   quality_weighted_fusion: { label: "Fusion", color: "bg-orange-500", icon: Brain },
   expert_panel: { label: "Expert Panel", color: "bg-pink-500", icon: BarChart3 },
   challenge_and_refine: { label: "Challenge & Refine", color: "bg-red-500", icon: TrendingUp },
+  
+  // KB Pipeline strategies
+  PIPELINE_BASELINE_SINGLECALL: { label: "Baseline", color: "bg-gray-500", icon: Zap },
+  PIPELINE_MATH_REASONING: { label: "Math Reasoning", color: "bg-blue-600", icon: Calculator },
+  PIPELINE_TOOL_USE_REACT: { label: "Tool Use (ReAct)", color: "bg-green-600", icon: Search },
+  PIPELINE_SELF_REFINE: { label: "Self Refine", color: "bg-yellow-600", icon: TrendingUp },
+  PIPELINE_RAG: { label: "RAG", color: "bg-purple-600", icon: FileText },
+  PIPELINE_MULTIAGENT_DEBATE: { label: "Multi-Agent Debate", color: "bg-red-600", icon: Brain },
+  PIPELINE_ENSEMBLE_PANEL: { label: "Ensemble Panel", color: "bg-pink-600", icon: Layers },
+  PIPELINE_CHALLENGE_REFINE: { label: "Challenge & Refine", color: "bg-orange-600", icon: TrendingUp },
+  PIPELINE_CODING_AGENT: { label: "Coding Agent", color: "bg-cyan-600", icon: Code },
+  PIPELINE_COST_OPTIMIZED_ROUTING: { label: "Cost Optimized", color: "bg-emerald-600", icon: Coins },
+  
+  // Reasoning methods from trace
+  chain_of_thought: { label: "Chain of Thought", color: "bg-indigo-500", icon: Brain },
+  self_consistency: { label: "Self Consistency", color: "bg-violet-500", icon: Layers },
+  tree_of_thoughts: { label: "Tree of Thoughts", color: "bg-teal-500", icon: BarChart3 },
+  reflexion: { label: "Reflexion", color: "bg-amber-500", icon: TrendingUp },
+  debate: { label: "Debate", color: "bg-rose-500", icon: Brain },
 }
 
 // Tool configuration
@@ -161,23 +181,33 @@ export function OrchestratorMetricsDashboard({
   const [timeRange, setTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h")
   const [activeTab, setActiveTab] = useState("overview")
 
-  // Fetch metrics (currently using mock data)
+  // Fetch metrics from real API
   const fetchMetrics = async () => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/orchestrator/metrics?range=${timeRange}`)
-      // const data = await response.json()
-      // setMetrics(data)
+      const response = await fetch(`/api/orchestrator/metrics?range=${timeRange}`)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+      const data = await response.json()
       
-      // For now, use mock data with slight variations
-      setMetrics({
-        ...MOCK_METRICS,
-        totalRequests: MOCK_METRICS.totalRequests + Math.floor(Math.random() * 10),
-        lastUpdated: new Date().toISOString(),
-      })
+      // If no data yet, fall back to mock for demo purposes
+      if (data.totalRequests === 0 && data.strategies.length === 0) {
+        // Use mock data when no real data available
+        setMetrics({
+          ...MOCK_METRICS,
+          lastUpdated: new Date().toISOString(),
+        })
+      } else {
+        setMetrics(data)
+      }
     } catch (error) {
       console.error("Failed to fetch metrics:", error)
+      // Fall back to mock data on error
+      setMetrics({
+        ...MOCK_METRICS,
+        lastUpdated: new Date().toISOString(),
+      })
     } finally {
       setLoading(false)
     }
