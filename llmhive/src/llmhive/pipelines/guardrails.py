@@ -420,7 +420,7 @@ def validate_agent_output(agent_name: str, content: str) -> tuple[bool, str]:
             sanitized = re.sub(pattern, "[REDACTED]", sanitized, flags=re.IGNORECASE)
     
     # Remove any chain-of-thought that leaked
-    sanitized = strip_cot(sanitized)
+    sanitized = enforce_no_cot(sanitized)
     if sanitized != content:
         logger.info("Stripped CoT from agent %s output", agent_name)
     
