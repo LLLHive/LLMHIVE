@@ -890,9 +890,55 @@ class EliteOrchestrator:
     ) -> str:
         """Auto-select the best strategy for the task.
         
-        Uses the Q4 2025 reasoning strategies controller if available,
-        falling back to heuristic selection otherwise.
+        Uses the Q4 2025 Meta-Learning Strategy Optimizer when available,
+        falling back to reasoning strategies controller, then heuristic selection.
+        
+        Strategy Selection Priority (Q4 2025):
+        1. Meta-Learning Strategy Optimizer (if trained with enough data)
+        2. Reasoning Strategies Controller (pattern-based)
+        3. Legacy heuristic rules
         """
+        # Determine complexity early (used by all selectors)
+        prompt_lower = prompt.lower()
+        complexity = "simple"
+        if len(prompt) > 500 or prompt.count("?") > 1:
+            complexity = "complex"
+        elif any(word in prompt_lower for word in ["explain", "analyze", "compare"]):
+            complexity = "medium"
+        
+        # Q4 2025: Try Meta-Learning Strategy Optimizer first
+        try:
+            from .strategy_optimizer import get_strategy_optimizer, optimize_strategy_selection
+            
+            query_analysis = {
+                "task_type": task_type,
+                "domain": self._infer_domain(prompt_lower),
+                "complexity": complexity,
+                "tokens_estimate": len(prompt.split()),
+                "prefer_speed": any(w in prompt_lower for w in ["quick", "fast", "brief"]),
+                "prefer_quality": any(w in prompt_lower for w in ["thorough", "detailed", "comprehensive"]),
+                "available_models": available_models or [],
+            }
+            
+            strategy, metadata = optimize_strategy_selection(
+                query_analysis=query_analysis,
+                current_strategy="automatic",
+            )
+            
+            # Only use ML recommendation if confident (method=="ml" and enough data)
+            if metadata.get("method") == "ml":
+                logger.debug(
+                    "Strategy optimizer (ML) selected %s (confidence: %.0f%%)",
+                    strategy,
+                    metadata.get("confidence", 0) * 100,
+                )
+                return strategy
+                
+        except ImportError:
+            pass  # Optimizer not available
+        except Exception as e:
+            logger.debug("Strategy optimizer failed, trying fallback: %s", e)
+        
         # Q4 2025: Use reasoning strategies controller for enhanced selection
         if self.use_reasoning_strategies and self._reasoning_controller:
             try:
@@ -997,6 +1043,48 @@ class EliteOrchestrator:
         }
         
         return orchestration_mappings.get(reasoning_method, "quality_weighted_fusion")
+    
+    def _infer_domain(self, prompt_lower: str) -> str:
+        """Infer the domain from prompt content.
+        
+        Used by the Strategy Optimizer to get domain-specific recommendations.
+        
+        Args:
+            prompt_lower: Lowercase prompt text
+            
+        Returns:
+            Domain classification string
+        """
+        # Coding/technical
+        if any(word in prompt_lower for word in [
+            "code", "python", "javascript", "function", "class", "debug", "error",
+            "api", "database", "sql", "algorithm", "programming"
+        ]):
+            return "coding"
+        
+        # Technical but not coding
+        if any(word in prompt_lower for word in [
+            "technical", "architecture", "system", "deploy", "cloud", "docker",
+            "kubernetes", "infrastructure"
+        ]):
+            return "technical"
+        
+        # Creative
+        if any(word in prompt_lower for word in [
+            "creative", "story", "poem", "write", "fiction", "narrative",
+            "imagine", "fantasy"
+        ]):
+            return "creative"
+        
+        # Business
+        if any(word in prompt_lower for word in [
+            "business", "market", "strategy", "revenue", "customer", "sales",
+            "finance", "investment", "startup"
+        ]):
+            return "business"
+        
+        # General/default
+        return "general"
     
     async def _single_best_strategy(
         self,
@@ -1732,6 +1820,27 @@ Output only the final synthesized answer. Do NOT ask questions."""
                 ensemble_size=result.responses_generated,
                 performance_notes=result.performance_notes,
             )
+            
+            # Q4 2025 Meta-Learning: Also record to Strategy Optimizer for ML training
+            try:
+                from .strategy_optimizer import record_orchestration_outcome
+                record_orchestration_outcome(
+                    query_analysis={
+                        "task_type": task_type,
+                        "domain": task_type,  # Use task_type as domain approximation
+                        "complexity": query_complexity,
+                        "available_models": result.models_used,
+                    },
+                    strategy=result.strategy_used,
+                    success=result.quality_score >= 0.7,
+                    quality_score=result.quality_score,
+                    latency_ms=result.total_latency_ms,
+                )
+            except ImportError:
+                pass  # Optimizer not available
+            except Exception as opt_e:
+                logger.debug("Strategy optimizer recording failed: %s", opt_e)
+                
         except Exception as e:
             logger.debug("Failed to log performance: %s", e)
 

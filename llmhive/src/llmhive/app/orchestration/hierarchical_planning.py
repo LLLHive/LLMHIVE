@@ -49,7 +49,11 @@ ROLE_MODEL_PREFERENCES: Dict[PlanRole, List[str]] = {
 
 @dataclass
 class PlanStep:
-    """A single step in the execution plan."""
+    """A single step in the execution plan.
+    
+    Enhanced Q4 2025: Now supports nested sub-plans for complex steps.
+    If a step is too high-level, it can contain a sub_plan with its own steps.
+    """
     step_id: str
     description: str
     role: PlanRole
@@ -61,6 +65,10 @@ class PlanStep:
     assigned_model: Optional[str] = None
     result: Optional[str] = None
     completed: bool = False
+    # Q4 2025: Nested sub-plans for complex steps
+    is_complex: bool = False  # Flag indicating this step needs decomposition
+    sub_plan: Optional[List["PlanStep"]] = None  # Nested steps for complex tasks
+    sub_plan_synthesis: Optional[str] = None  # How to combine sub-plan results
 
 
 @dataclass
@@ -85,7 +93,7 @@ class PlanResult:
     synthesis_notes: List[str]
 
 
-# LLM prompt for plan generation
+# LLM prompt for plan generation (Q4 2025: Enhanced with nested sub-plan support)
 PLANNING_PROMPT = '''You are a strategic planner that breaks down complex queries into executable steps.
 
 Query: "{query}"
@@ -95,6 +103,7 @@ Analyze this query and create a structured execution plan. Each step should have
 - A specific goal
 - Dependencies on previous steps (if any)
 - Whether it can run in parallel with other steps
+- For very complex steps, you can include a nested "sub_plan" with sub-steps
 
 Respond in JSON format:
 {{
@@ -108,13 +117,51 @@ Respond in JSON format:
             "inputs": ["What information this step needs"],
             "expected_output": "What this step will produce",
             "depends_on": ["step_ids this depends on, empty for first steps"],
-            "parallelizable": true/false
+            "parallelizable": true/false,
+            "is_complex": false,
+            "sub_plan": null
+        }},
+        {{
+            "step_id": "step_2",
+            "role": "analyst",
+            "description": "A complex step that needs sub-decomposition",
+            "goal": "Complete a multi-part analysis",
+            "inputs": ["Results from step_1"],
+            "expected_output": "Comprehensive analysis",
+            "depends_on": ["step_1"],
+            "parallelizable": false,
+            "is_complex": true,
+            "sub_plan": [
+                {{
+                    "step_id": "step_2.1",
+                    "role": "researcher",
+                    "description": "First part of analysis",
+                    "goal": "Research component",
+                    "inputs": [],
+                    "expected_output": "Research findings",
+                    "depends_on": [],
+                    "parallelizable": true
+                }},
+                {{
+                    "step_id": "step_2.2",
+                    "role": "analyst",
+                    "description": "Second part of analysis",
+                    "goal": "Analysis component",
+                    "inputs": [],
+                    "expected_output": "Analysis results",
+                    "depends_on": [],
+                    "parallelizable": true
+                }}
+            ],
+            "sub_plan_synthesis": "Merge research and analysis into unified output"
         }}
     ],
     "synthesis_approach": "How to combine step results into final answer"
 }}
 
-For simple queries, just return a single step. For complex queries, break into logical sub-tasks.
+For simple queries, just return a single step with is_complex=false and sub_plan=null.
+For complex queries, break into logical sub-tasks.
+For very complex individual steps, use nested sub_plan to decompose further.
 Only output valid JSON, no other text.'''
 
 
@@ -197,29 +244,53 @@ class HierarchicalPlanner:
         return json.loads(content.strip())
     
     def _parse_plan_steps(self, plan_data: Dict[str, Any]) -> List[PlanStep]:
-        """Parse plan data into PlanStep objects."""
+        """Parse plan data into PlanStep objects.
+        
+        Q4 2025: Enhanced to support nested sub-plans for complex steps.
+        """
         steps = []
         
         for step_data in plan_data.get("steps", []):
-            try:
-                role_str = step_data.get("role", "analyst").lower()
-                role = PlanRole(role_str)
-            except ValueError:
-                role = PlanRole.ANALYST
-            
-            step = PlanStep(
-                step_id=step_data.get("step_id", f"step_{len(steps)+1}"),
-                description=step_data.get("description", ""),
-                role=role,
-                goal=step_data.get("goal", ""),
-                inputs=step_data.get("inputs", []),
-                expected_output=step_data.get("expected_output", ""),
-                depends_on=step_data.get("depends_on", []),
-                parallelizable=step_data.get("parallelizable", False),
-            )
+            step = self._parse_single_step(step_data, len(steps) + 1)
             steps.append(step)
         
         return steps
+    
+    def _parse_single_step(self, step_data: Dict[str, Any], index: int) -> PlanStep:
+        """Parse a single step, including any nested sub-plan.
+        
+        Q4 2025: Recursively parses nested sub-plans for complex steps.
+        """
+        try:
+            role_str = step_data.get("role", "analyst").lower()
+            role = PlanRole(role_str)
+        except ValueError:
+            role = PlanRole.ANALYST
+        
+        # Parse nested sub-plan if present
+        sub_plan = None
+        sub_plan_data = step_data.get("sub_plan")
+        if sub_plan_data and isinstance(sub_plan_data, list):
+            sub_plan = []
+            for i, sub_step_data in enumerate(sub_plan_data):
+                sub_step = self._parse_single_step(sub_step_data, i + 1)
+                sub_plan.append(sub_step)
+        
+        step = PlanStep(
+            step_id=step_data.get("step_id", f"step_{index}"),
+            description=step_data.get("description", ""),
+            role=role,
+            goal=step_data.get("goal", ""),
+            inputs=step_data.get("inputs", []),
+            expected_output=step_data.get("expected_output", ""),
+            depends_on=step_data.get("depends_on", []),
+            parallelizable=step_data.get("parallelizable", False),
+            is_complex=step_data.get("is_complex", False),
+            sub_plan=sub_plan,
+            sub_plan_synthesis=step_data.get("sub_plan_synthesis"),
+        )
+        
+        return step
     
     def _identify_parallel_groups(self, steps: List[PlanStep]) -> List[List[str]]:
         """Identify groups of steps that can run in parallel."""
@@ -379,7 +450,16 @@ class HierarchicalPlanExecutor:
         query: str,
         context: Optional[str],
     ) -> str:
-        """Execute a single step with context from previous steps."""
+        """Execute a single step with context from previous steps.
+        
+        Q4 2025: Enhanced with recursive sub-plan execution for complex steps.
+        If a step has a sub_plan, it executes the sub-steps (potentially in parallel)
+        and synthesizes their results before returning.
+        """
+        # Q4 2025: Check if this step has a nested sub-plan
+        if step.sub_plan and len(step.sub_plan) > 0:
+            return await self._execute_sub_plan(step, previous_results, query, context)
+        
         # Build step context from dependencies
         step_context = f"Original query: {query}\n"
         
@@ -414,6 +494,147 @@ Please complete this step and provide your output."""
         except Exception as e:
             logger.error("Step execution failed: %s", e)
             return f"Error executing step: {e}"
+    
+    async def _execute_sub_plan(
+        self,
+        parent_step: PlanStep,
+        previous_results: Dict[str, str],
+        query: str,
+        context: Optional[str],
+    ) -> str:
+        """Execute a nested sub-plan (DFS execution with parallel groups).
+        
+        Q4 2025: Implements hierarchical "team-of-teams" execution where
+        a complex step spawns its own sub-team to solve parts of the problem.
+        
+        Args:
+            parent_step: The parent step containing the sub-plan
+            previous_results: Results from previous top-level steps
+            query: Original query
+            context: Additional context
+            
+        Returns:
+            Synthesized result from all sub-steps
+        """
+        sub_plan = parent_step.sub_plan
+        if not sub_plan:
+            return "Error: No sub-plan defined"
+        
+        logger.info("Executing sub-plan for step %s with %d sub-steps",
+                   parent_step.step_id, len(sub_plan))
+        
+        sub_results: Dict[str, str] = {}
+        
+        # Build enhanced context including parent dependencies
+        enhanced_context = f"Parent step: {parent_step.description}\nGoal: {parent_step.goal}\n"
+        if context:
+            enhanced_context += f"{context}\n"
+        
+        # Add previous results from parent level
+        for dep_id in parent_step.depends_on:
+            if dep_id in previous_results:
+                enhanced_context += f"Previous result ({dep_id}): {previous_results[dep_id][:300]}\n"
+        
+        # Identify parallel groups within sub-plan
+        parallel_groups = self._identify_sub_plan_parallel_groups(sub_plan)
+        
+        # Execute sub-steps by parallel groups
+        for group in parallel_groups:
+            group_steps = [s for s in sub_plan if s.step_id in group]
+            
+            if len(group_steps) == 1:
+                # Single sub-step
+                sub_step = group_steps[0]
+                result = await self._execute_step(
+                    sub_step, sub_results, query, enhanced_context
+                )
+                sub_results[sub_step.step_id] = result
+                sub_step.result = result
+                sub_step.completed = True
+            else:
+                # Parallel execution of independent sub-steps
+                tasks = [
+                    self._execute_step(sub_step, sub_results, query, enhanced_context)
+                    for sub_step in group_steps
+                ]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                for sub_step, result in zip(group_steps, results):
+                    if isinstance(result, Exception):
+                        sub_results[sub_step.step_id] = f"Error: {result}"
+                    else:
+                        sub_results[sub_step.step_id] = result
+                        sub_step.result = result
+                        sub_step.completed = True
+        
+        # Synthesize sub-plan results
+        return await self._synthesize_sub_plan_results(
+            parent_step, sub_results, query
+        )
+    
+    def _identify_sub_plan_parallel_groups(
+        self,
+        sub_plan: List[PlanStep],
+    ) -> List[List[str]]:
+        """Identify parallel execution groups within a sub-plan."""
+        groups = []
+        remaining = set(step.step_id for step in sub_plan)
+        completed = set()
+        
+        while remaining:
+            current_group = []
+            for step in sub_plan:
+                if step.step_id in remaining:
+                    if all(dep in completed for dep in step.depends_on):
+                        current_group.append(step.step_id)
+            
+            if not current_group:
+                current_group = list(remaining)
+            
+            groups.append(current_group)
+            completed.update(current_group)
+            remaining -= set(current_group)
+        
+        return groups
+    
+    async def _synthesize_sub_plan_results(
+        self,
+        parent_step: PlanStep,
+        sub_results: Dict[str, str],
+        query: str,
+    ) -> str:
+        """Synthesize results from sub-plan execution."""
+        if len(sub_results) == 1:
+            return list(sub_results.values())[0]
+        
+        # Build synthesis prompt
+        synthesis_approach = parent_step.sub_plan_synthesis or "Combine all results coherently"
+        
+        synthesis_prompt = f"""Synthesize these sub-step results for the parent task.
+
+Parent Task: {parent_step.description}
+Parent Goal: {parent_step.goal}
+Synthesis Approach: {synthesis_approach}
+
+Sub-Step Results:
+"""
+        for step_id, result in sub_results.items():
+            synthesis_prompt += f"\n--- {step_id} ---\n{result[:800]}\n"
+        
+        synthesis_prompt += f"""
+Combine the above results into a single coherent output that fulfills the parent goal.
+Focus on: {parent_step.expected_output}
+
+Synthesized Output:"""
+
+        provider = self.providers.get("openai") or next(iter(self.providers.values()))
+        
+        try:
+            result = await provider.complete(synthesis_prompt, model="gpt-4o")
+            return getattr(result, 'content', '') or getattr(result, 'text', '')
+        except Exception as e:
+            logger.error("Sub-plan synthesis failed: %s", e)
+            return "\n\n".join(sub_results.values())
     
     async def _execute_single_step(
         self,

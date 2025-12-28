@@ -36,6 +36,7 @@ class ToolType(str, Enum):
     IMAGE_GENERATION = "image_generation"  # text-to-image
     KNOWLEDGE_BASE = "knowledge_base"  # RAG lookup
     VISION = "vision"  # general image caption/OCR
+    AUDIO = "audio"  # Q4 2025: speech-to-text transcription
 
 
 class ToolPriority(str, Enum):
@@ -702,7 +703,10 @@ class ToolBroker:
         "generate image", "create image", "visualize",
         "illustration of", "show me", "create a picture",
     ]
-    VISION_TRIGGERS = [".png", ".jpg", ".jpeg", ".gif", "data:image", "image:"]
+    VISION_TRIGGERS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", "data:image", "image:", "[image]", "attached image", "this image", "the image"]
+    
+    # Q4 2025: Audio input triggers
+    AUDIO_TRIGGERS = [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", "audio:", "[audio]", "attached audio", "voice message", "audio file", "recording", "transcribe"]
     
     def __init__(self):
         """Initialize the Tool Broker."""
@@ -855,6 +859,16 @@ class ToolBroker:
                 priority=ToolPriority.MEDIUM,
             ))
             reasoning_parts.append("Image detected; added vision analysis")
+        
+        # Q4 2025: Check for audio analysis needs (audio inputs)
+        if any(trigger in query_lower for trigger in self.AUDIO_TRIGGERS):
+            tool_requests.append(ToolRequest(
+                tool_type=ToolType.AUDIO,
+                query=query,
+                purpose="Transcribe audio (speech-to-text)",
+                priority=ToolPriority.MEDIUM,
+            ))
+            reasoning_parts.append("Audio detected; added audio transcription")
 
         # Check for browser fetch needs (explicit URLs)
         if "http://" in query_lower or "https://" in query_lower or "open url" in query_lower or "fetch url" in query_lower:
