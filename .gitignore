@@ -32,7 +32,6 @@ __pycache__/
 # ===========================================
 # LOGS
 # ===========================================
-logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -118,12 +117,4 @@ playwright/.cache/
 /playwright/.cache/
 test-results/
 /test-results/
-
-# ===========================================
-# GENERATED ARTIFACTS
-# ===========================================
-# Evaluation reports (regenerated on demand)
-eval_reports/
-
-# Generated charts and images
-tools/*.png
+.env*.local
