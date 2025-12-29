@@ -56,17 +56,28 @@ def valid_api_key():
 class TestVerifyApiKey:
     """Test verify_api_key function."""
     
+    def _mock_request(self, api_key: str = None) -> Mock:
+        """Create a mock request with headers."""
+        request = Mock()
+        headers = {}
+        if api_key:
+            headers["x-api-key"] = api_key
+        request.headers = headers
+        return request
+    
     def test_valid_api_key_returns_authenticated(self, valid_api_key):
         """Test authentication with valid API key."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
-            result = verify_api_key(provided_key=valid_api_key)
+            request = self._mock_request(valid_api_key)
+            result = verify_api_key(request)
             assert result == "authenticated"
     
     def test_invalid_api_key_raises_401(self, valid_api_key):
         """Test authentication with invalid API key raises 401."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
+            request = self._mock_request("wrong-key")
             with pytest.raises(HTTPException) as exc_info:
-                verify_api_key(provided_key="wrong-key")
+                verify_api_key(request)
             
             assert exc_info.value.status_code == 401
             assert "Invalid API Key" in exc_info.value.detail
@@ -74,8 +85,9 @@ class TestVerifyApiKey:
     def test_missing_api_key_raises_401(self, valid_api_key):
         """Test authentication without API key raises 401."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
+            request = self._mock_request(None)
             with pytest.raises(HTTPException) as exc_info:
-                verify_api_key(provided_key=None)
+                verify_api_key(request)
             
             assert exc_info.value.status_code == 401
     
@@ -84,7 +96,8 @@ class TestVerifyApiKey:
         # Remove API_KEY from environment
         env_without_key = {k: v for k, v in os.environ.items() if k != "API_KEY"}
         with patch.dict(os.environ, env_without_key, clear=True):
-            result = verify_api_key(provided_key=None)
+            request = self._mock_request(None)
+            result = verify_api_key(request)
             assert result == "unauthenticated-allowed"
     
     def test_no_api_key_configured_with_key_provided(self, valid_api_key):
@@ -92,14 +105,16 @@ class TestVerifyApiKey:
         env_without_key = {k: v for k, v in os.environ.items() if k != "API_KEY"}
         with patch.dict(os.environ, env_without_key, clear=True):
             # Should still allow since no API_KEY is required
-            result = verify_api_key(provided_key=valid_api_key)
+            request = self._mock_request(valid_api_key)
+            result = verify_api_key(request)
             assert result == "unauthenticated-allowed"
     
     def test_empty_api_key_header(self, valid_api_key):
         """Test authentication with empty API key header."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
+            request = self._mock_request("")
             with pytest.raises(HTTPException) as exc_info:
-                verify_api_key(provided_key="")
+                verify_api_key(request)
             
             # Empty string is falsy, should be treated as missing
             assert exc_info.value.status_code == 401
@@ -112,23 +127,35 @@ class TestVerifyApiKey:
 class TestOptionalApiKey:
     """Test optional_api_key function."""
     
+    def _mock_request(self, api_key: str = None) -> Mock:
+        """Create a mock request with headers."""
+        request = Mock()
+        headers = {}
+        if api_key:
+            headers["x-api-key"] = api_key
+        request.headers = headers
+        return request
+    
     def test_valid_key_returns_authenticated(self, valid_api_key):
         """Test optional auth with valid key."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
-            result = optional_api_key(provided_key=valid_api_key)
+            request = self._mock_request(valid_api_key)
+            result = optional_api_key(request)
             assert result == "authenticated"
     
     def test_missing_key_returns_anonymous(self, valid_api_key):
         """Test optional auth without key returns anonymous."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
-            result = optional_api_key(provided_key=None)
+            request = self._mock_request(None)
+            result = optional_api_key(request)
             assert result == "anonymous"
     
     def test_invalid_key_returns_anonymous(self, valid_api_key):
         """Test optional auth with invalid key returns anonymous."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
             # Invalid key should fall back to anonymous (not raise)
-            result = optional_api_key(provided_key="wrong-key")
+            request = self._mock_request("wrong-key")
+            result = optional_api_key(request)
             assert result == "anonymous"
     
     def test_no_api_key_configured(self):
@@ -136,7 +163,8 @@ class TestOptionalApiKey:
         env_without_key = {k: v for k, v in os.environ.items() if k != "API_KEY"}
         with patch.dict(os.environ, env_without_key, clear=True):
             # Should return something (either anonymous or unauthenticated-allowed)
-            result = optional_api_key(provided_key=None)
+            request = self._mock_request(None)
+            result = optional_api_key(request)
             assert result in ("anonymous", "unauthenticated-allowed")
 
 
@@ -181,11 +209,21 @@ class TestRoleBasedAccess:
 class TestAuthErrorHandling:
     """Test error handling in authentication."""
     
+    def _mock_request(self, api_key: str = None) -> Mock:
+        """Create a mock request with headers."""
+        request = Mock()
+        headers = {}
+        if api_key:
+            headers["x-api-key"] = api_key
+        request.headers = headers
+        return request
+    
     def test_clear_error_messages(self, valid_api_key):
         """Test error messages are clear and user-friendly."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
+            request = self._mock_request("invalid")
             with pytest.raises(HTTPException) as exc_info:
-                verify_api_key(provided_key="invalid")
+                verify_api_key(request)
             
             error_detail = exc_info.value.detail
             # Should be concise
@@ -196,8 +234,9 @@ class TestAuthErrorHandling:
     def test_no_sensitive_info_in_error(self, valid_api_key):
         """Test no sensitive information is exposed in errors."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
+            request = self._mock_request("wrong-key")
             with pytest.raises(HTTPException) as exc_info:
-                verify_api_key(provided_key="wrong-key")
+                verify_api_key(request)
             
             error_detail = exc_info.value.detail.lower()
             # Should not contain the actual API key
@@ -212,39 +251,53 @@ class TestAuthErrorHandling:
 class TestAuthEdgeCases:
     """Test edge cases in authentication."""
     
+    def _mock_request(self, api_key: str = None) -> Mock:
+        """Create a mock request with headers."""
+        request = Mock()
+        headers = {}
+        if api_key:
+            headers["x-api-key"] = api_key
+        request.headers = headers
+        return request
+    
     def test_whitespace_only_key(self, valid_api_key):
         """Test handling of whitespace-only API key."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
+            request = self._mock_request("   ")
             with pytest.raises(HTTPException):
-                verify_api_key(provided_key="   ")
+                verify_api_key(request)
     
     def test_key_with_special_characters(self):
         """Test API key with special characters."""
         special_key = "key-with-special_chars!@#$%"
         with patch.dict(os.environ, {"API_KEY": special_key}):
-            result = verify_api_key(provided_key=special_key)
+            request = self._mock_request(special_key)
+            result = verify_api_key(request)
             assert result == "authenticated"
     
     def test_very_long_key(self):
         """Test very long API key."""
         long_key = "k" * 1000
         with patch.dict(os.environ, {"API_KEY": long_key}):
-            result = verify_api_key(provided_key=long_key)
+            request = self._mock_request(long_key)
+            result = verify_api_key(request)
             assert result == "authenticated"
     
     def test_unicode_key(self):
         """Test API key with unicode characters."""
         unicode_key = "test-key-🔐-secret"
         with patch.dict(os.environ, {"API_KEY": unicode_key}):
-            result = verify_api_key(provided_key=unicode_key)
+            request = self._mock_request(unicode_key)
+            result = verify_api_key(request)
             assert result == "authenticated"
     
     def test_case_sensitive_comparison(self, valid_api_key):
         """Test that key comparison is case-sensitive."""
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
             # Uppercase version should fail
+            request = self._mock_request(valid_api_key.upper())
             with pytest.raises(HTTPException):
-                verify_api_key(provided_key=valid_api_key.upper())
+                verify_api_key(request)
 
 
 # ==============================================================================
@@ -253,6 +306,15 @@ class TestAuthEdgeCases:
 
 class TestAuthSecurity:
     """Test security aspects of authentication."""
+    
+    def _mock_request(self, api_key: str = None) -> Mock:
+        """Create a mock request with headers."""
+        request = Mock()
+        headers = {}
+        if api_key:
+            headers["x-api-key"] = api_key
+        request.headers = headers
+        return request
     
     @pytest.mark.skip(reason="Timing tests are inherently flaky and not reliable in CI")
     def test_timing_attack_resistance(self, valid_api_key):
@@ -267,7 +329,8 @@ class TestAuthSecurity:
             # Measure time for valid key
             start = time.perf_counter()
             try:
-                verify_api_key(provided_key=valid_api_key)
+                request = self._mock_request(valid_api_key)
+                verify_api_key(request)
             except HTTPException:
                 pass
             valid_time = time.perf_counter() - start
@@ -276,7 +339,8 @@ class TestAuthSecurity:
             wrong_key = "x" * len(valid_api_key)
             start = time.perf_counter()
             try:
-                verify_api_key(provided_key=wrong_key)
+                request = self._mock_request(wrong_key)
+                verify_api_key(request)
             except HTTPException:
                 pass
             invalid_time = time.perf_counter() - start
@@ -289,13 +353,15 @@ class TestAuthSecurity:
         with patch.dict(os.environ, {"API_KEY": valid_api_key}):
             # Missing key error
             try:
-                verify_api_key(provided_key=None)
+                request = self._mock_request(None)
+                verify_api_key(request)
             except HTTPException as e:
                 missing_error = e.detail
             
             # Wrong key error
             try:
-                verify_api_key(provided_key="wrong")
+                request = self._mock_request("wrong")
+                verify_api_key(request)
             except HTTPException as e:
                 wrong_error = e.detail
             
