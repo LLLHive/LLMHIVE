@@ -539,6 +539,14 @@ try:
 except ImportError as e:
     logger.debug("OpenRouter scheduler router not available: %s", e)
 
+# Include SSE Events router for real-time orchestration streaming
+try:
+    from .routers import sse_events as sse_events_router
+    app.include_router(sse_events_router.router, prefix="/api/v1/events")
+    logger.info("SSE Events router enabled at /api/v1/events")
+except ImportError as e:
+    logger.debug("SSE Events router not available: %s", e)
+
 # Enhancement-2: Include orchestrator metrics router (at /api/v1/metrics)
 try:
     from .api.orchestrator_metrics import router as orchestrator_metrics_router
