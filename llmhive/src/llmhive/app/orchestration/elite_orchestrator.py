@@ -29,8 +29,51 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TYPE_CHECKIN
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
     from .openrouter_selector import OpenRouterModelSelector, SelectionResult
+    from .reasoning_strategies_controller import ReasoningStrategiesController
 
 logger = logging.getLogger(__name__)
+
+# KB Pipeline Integration (lazy loaded to avoid circular imports)
+_kb_bridge_loaded = False
+_process_with_kb_pipeline = None
+_kb_available = False
+
+
+def _load_kb_bridge():
+    """Lazy load KB pipeline bridge."""
+    global _kb_bridge_loaded, _process_with_kb_pipeline, _kb_available
+    
+    if _kb_bridge_loaded:
+        return _kb_available
+    
+    try:
+        from llmhive.pipelines.kb_orchestrator_bridge import (
+            process_with_kb_pipeline,
+            create_kb_orchestrator_handler,
+        )
+        _process_with_kb_pipeline = process_with_kb_pipeline
+        _kb_available = True
+        logger.info("KB pipeline bridge loaded successfully")
+    except ImportError as e:
+        logger.debug("KB pipeline bridge not available: %s", e)
+        _kb_available = False
+    
+    _kb_bridge_loaded = True
+    return _kb_available
+
+# Try to import reasoning strategies controller for enhanced selection
+try:
+    from .reasoning_strategies_controller import (
+        get_strategy_controller,
+        TraceLogTags,
+        REASONING_METHODS_DB,
+    )
+    REASONING_STRATEGIES_AVAILABLE = True
+except ImportError:
+    REASONING_STRATEGIES_AVAILABLE = False
+    get_strategy_controller = None  # type: ignore
+    TraceLogTags = None  # type: ignore
+    REASONING_METHODS_DB = None  # type: ignore
 
 
 # ==============================================================================
@@ -353,6 +396,8 @@ class EliteOrchestrator:
         *,
         use_openrouter_rankings: bool = False,
         db_session: Optional["Session"] = None,
+        use_reasoning_strategies: bool = True,
+        use_kb_pipelines: bool = True,
     ) -> None:
         """Initialize elite orchestrator.
         
@@ -362,12 +407,33 @@ class EliteOrchestrator:
             enable_learning: Whether to use historical performance data
             use_openrouter_rankings: Enable dynamic model selection from OpenRouter
             db_session: Database session for OpenRouter rankings
+            use_reasoning_strategies: Enable Q4 2025 reasoning strategies controller
+                for enhanced strategy selection, fallback handling, and trace logging
+            use_kb_pipelines: Enable KB-aligned pipeline selection (Q4 2025)
+                Uses Techniques Knowledge Base for optimal pipeline routing
         """
         self.providers = providers
         self.performance_tracker = performance_tracker
         self.enable_learning = enable_learning
         self.use_openrouter_rankings = use_openrouter_rankings
         self.db_session = db_session
+        
+        # Q4 2025: Reasoning strategies controller integration
+        self.use_reasoning_strategies = use_reasoning_strategies and REASONING_STRATEGIES_AVAILABLE
+        self._reasoning_controller: Optional["ReasoningStrategiesController"] = None
+        if self.use_reasoning_strategies:
+            self._reasoning_controller = get_strategy_controller()
+            logger.info("Elite orchestrator initialized with reasoning strategies controller")
+        
+        # Q4 2025: KB Pipeline integration
+        self.use_kb_pipelines = use_kb_pipelines
+        if self.use_kb_pipelines:
+            kb_available = _load_kb_bridge()
+            if kb_available:
+                logger.info("Elite orchestrator initialized with KB pipeline support")
+            else:
+                logger.debug("KB pipelines requested but not available, using built-in strategies")
+                self.use_kb_pipelines = False
         
         # OpenRouter selector (lazy initialization)
         self._openrouter_selector: Optional["OpenRouterModelSelector"] = None
@@ -577,6 +643,11 @@ class EliteOrchestrator:
         max_parallel: int = 3,
         timeout_seconds: float = 60.0,
         domain_filter: Optional[str] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        tools_available: Optional[List[str]] = None,
+        cost_budget: str = "medium",
+        force_kb_pipeline: Optional[str] = None,
     ) -> EliteResult:
         """
         Orchestrate models to produce the best possible response.
@@ -585,17 +656,62 @@ class EliteOrchestrator:
             prompt: User prompt
             task_type: Type of task for capability matching
             available_models: Models to use (default: all available or dynamic from OpenRouter)
-            strategy: Orchestration strategy (auto|dynamic|single_best|parallel_race|best_of_n|expert_panel)
+            strategy: Orchestration strategy (auto|dynamic|kb|single_best|parallel_race|best_of_n|expert_panel)
+                - "kb": Use KB-aligned pipelines (recommended)
+                - "auto": Auto-select between KB and built-in strategies
             quality_threshold: Minimum acceptable quality
             max_parallel: Maximum parallel model calls
             timeout_seconds: Total timeout
             domain_filter: Optional domain filter for OpenRouter ranking selection
+            user_id: Optional user ID for KB pipeline context
+            session_id: Optional session ID for KB pipeline context  
+            tools_available: Optional list of available tools for KB pipelines
+            cost_budget: Cost budget for KB pipelines ("low", "medium", "high")
+            force_kb_pipeline: Force a specific KB pipeline (for testing)
             
         Returns:
             EliteResult with optimized response
         """
         start_time = time.time()
         performance_notes: List[str] = []
+        
+        # Q4 2025: KB Pipeline routing
+        # Route to KB pipelines when explicitly requested or when auto mode with KB available
+        use_kb = (
+            self.use_kb_pipelines 
+            and _kb_available 
+            and (strategy == "kb" or force_kb_pipeline is not None)
+        )
+        
+        # Auto mode: prefer KB pipelines for complex reasoning tasks
+        if (
+            strategy in ("auto", "automatic") 
+            and self.use_kb_pipelines 
+            and _kb_available
+        ):
+            # Use KB for tasks that benefit from technique-aligned pipelines
+            kb_preferred_tasks = {
+                "math_problem", "reasoning", "code_generation", "debugging",
+                "research_analysis", "factual_question", "health_medical",
+                "legal_analysis", "planning",
+            }
+            if task_type in kb_preferred_tasks:
+                use_kb = True
+                performance_notes.append("Auto-selected KB pipeline for task type")
+        
+        if use_kb:
+            return await self._orchestrate_with_kb_pipeline(
+                prompt=prompt,
+                task_type=task_type,
+                start_time=start_time,
+                performance_notes=performance_notes,
+                available_models=available_models,
+                user_id=user_id,
+                session_id=session_id,
+                tools_available=tools_available,
+                cost_budget=cost_budget,
+                force_pipeline=force_kb_pipeline,
+            )
         
         # Handle dynamic/auto strategy with OpenRouter
         if strategy in ("auto", "automatic", "dynamic") and self.use_openrouter_rankings:
@@ -626,9 +742,18 @@ class EliteOrchestrator:
         
         # Auto-select strategy based on task type
         if strategy in ("auto", "automatic", "dynamic"):
-            strategy = self._select_strategy(task_type, len(models), prompt)
+            strategy = self._select_strategy(task_type, len(models), prompt, models)
         
         performance_notes.append(f"Strategy: {strategy}")
+        
+        # Q4 2025: Add trace logging tags if reasoning strategies controller is active
+        if self.use_reasoning_strategies and self._reasoning_controller and TraceLogTags:
+            trace_tags = TraceLogTags.format_tags(
+                reasoning_method=strategy,
+                strategy_source="elite_orchestrator",
+                models_used=models[:3],  # Log first 3 models
+            )
+            performance_notes.append(f"Trace: {trace_tags.get('reasoning_method')}")
         
         # Execute strategy
         if strategy == "single_best":
@@ -672,13 +797,187 @@ class EliteOrchestrator:
         
         return result
     
+    async def _orchestrate_with_kb_pipeline(
+        self,
+        prompt: str,
+        task_type: str,
+        start_time: float,
+        performance_notes: List[str],
+        *,
+        available_models: Optional[List[str]] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        tools_available: Optional[List[str]] = None,
+        cost_budget: str = "medium",
+        force_pipeline: Optional[str] = None,
+    ) -> EliteResult:
+        """
+        Route orchestration through KB-aligned pipelines.
+        
+        This method uses the Techniques Knowledge Base to select and execute
+        the optimal pipeline for the given query.
+        """
+        performance_notes.append("Using KB pipeline integration")
+        
+        try:
+            # Call KB bridge
+            result = await _process_with_kb_pipeline(
+                query=prompt,
+                user_id=user_id,
+                session_id=session_id,
+                tools_available=tools_available,
+                models_available=available_models,
+                cost_budget=cost_budget,
+                force_pipeline=force_pipeline,
+                enable_tracing=True,
+            )
+            
+            total_latency = (time.time() - start_time) * 1000
+            
+            # Map KB result to EliteResult
+            return EliteResult(
+                final_answer=result.final_answer,
+                models_used=list(available_models or self.model_providers.keys())[:3],
+                primary_model=available_models[0] if available_models else "kb_pipeline",
+                strategy_used=f"kb:{result.pipeline_name}",
+                total_latency_ms=total_latency,
+                total_tokens=result.metrics.get("total_tokens", 0),
+                quality_score=0.9 if result.confidence == "high" else (
+                    0.75 if result.confidence == "medium" else 0.6
+                ),
+                confidence=0.9 if result.confidence == "high" else (
+                    0.75 if result.confidence == "medium" else 0.6
+                ),
+                responses_generated=1,
+                synthesis_method=f"kb_pipeline_{result.pipeline_name}",
+                performance_notes=performance_notes + [
+                    f"KB pipeline: {result.pipeline_name}",
+                    f"Techniques: {result.technique_ids}",
+                    f"Confidence: {result.confidence}",
+                    f"Fallback used: {result.fallback_used}",
+                ],
+                consensus_score=1.0 if not result.fallback_used else 0.7,
+            )
+            
+        except Exception as e:
+            logger.warning("KB pipeline failed, falling back to built-in: %s", e)
+            performance_notes.append(f"KB pipeline error: {str(e)[:50]}")
+            
+            # Fallback to built-in single_best strategy
+            models = available_models or list(self.model_providers.keys())
+            models = [m for m in models if m in self.model_providers]
+            
+            if not models:
+                raise ValueError("No available models for fallback orchestration")
+            
+            result = await self._single_best_strategy(
+                prompt, task_type, models, 0.7
+            )
+            
+            total_latency = (time.time() - start_time) * 1000
+            result.total_latency_ms = total_latency
+            result.strategy_used = "kb_fallback:single_best"
+            result.performance_notes = performance_notes
+            
+            return result
+    
     def _select_strategy(
         self,
         task_type: str,
         num_models: int,
         prompt: str,
+        available_models: Optional[List[str]] = None,
     ) -> str:
-        """Auto-select the best strategy for the task."""
+        """Auto-select the best strategy for the task.
+        
+        Uses the Q4 2025 Meta-Learning Strategy Optimizer when available,
+        falling back to reasoning strategies controller, then heuristic selection.
+        
+        Strategy Selection Priority (Q4 2025):
+        1. Meta-Learning Strategy Optimizer (if trained with enough data)
+        2. Reasoning Strategies Controller (pattern-based)
+        3. Legacy heuristic rules
+        """
+        # Determine complexity early (used by all selectors)
+        prompt_lower = prompt.lower()
+        complexity = "simple"
+        if len(prompt) > 500 or prompt.count("?") > 1:
+            complexity = "complex"
+        elif any(word in prompt_lower for word in ["explain", "analyze", "compare"]):
+            complexity = "medium"
+        
+        # Q4 2025: Try Meta-Learning Strategy Optimizer first
+        try:
+            from .strategy_optimizer import get_strategy_optimizer, optimize_strategy_selection
+            
+            query_analysis = {
+                "task_type": task_type,
+                "domain": self._infer_domain(prompt_lower),
+                "complexity": complexity,
+                "tokens_estimate": len(prompt.split()),
+                "prefer_speed": any(w in prompt_lower for w in ["quick", "fast", "brief"]),
+                "prefer_quality": any(w in prompt_lower for w in ["thorough", "detailed", "comprehensive"]),
+                "available_models": available_models or [],
+            }
+            
+            strategy, metadata = optimize_strategy_selection(
+                query_analysis=query_analysis,
+                current_strategy="automatic",
+            )
+            
+            # Only use ML recommendation if confident (method=="ml" and enough data)
+            if metadata.get("method") == "ml":
+                logger.debug(
+                    "Strategy optimizer (ML) selected %s (confidence: %.0f%%)",
+                    strategy,
+                    metadata.get("confidence", 0) * 100,
+                )
+                return strategy
+                
+        except ImportError:
+            pass  # Optimizer not available
+        except Exception as e:
+            logger.debug("Strategy optimizer failed, trying fallback: %s", e)
+        
+        # Q4 2025: Use reasoning strategies controller for enhanced selection
+        if self.use_reasoning_strategies and self._reasoning_controller:
+            try:
+                # Determine complexity
+                prompt_lower = prompt.lower()
+                complexity = "simple"
+                if len(prompt) > 500 or prompt.count("?") > 1:
+                    complexity = "complex"
+                elif any(word in prompt_lower for word in ["explain", "analyze", "compare"]):
+                    complexity = "medium"
+                
+                # Get strategy recommendation
+                recommendation = self._reasoning_controller.select_strategy(
+                    query=prompt,
+                    task_type=task_type,
+                    complexity=complexity,
+                    available_models=available_models,
+                    prefer_speed=any(w in prompt_lower for w in ["quick", "fast", "brief"]),
+                    prefer_quality=any(w in prompt_lower for w in ["thorough", "detailed", "comprehensive"]),
+                )
+                
+                # Map reasoning method to orchestration strategy
+                method = recommendation.get("strategy", "chain_of_thought")
+                orchestration_strategy = self._map_reasoning_to_orchestration(method, num_models)
+                
+                logger.debug(
+                    "Reasoning controller selected %s -> %s (source: %s)",
+                    method,
+                    orchestration_strategy,
+                    recommendation.get("source"),
+                )
+                
+                return orchestration_strategy
+                
+            except Exception as e:
+                logger.warning("Reasoning controller failed, using fallback: %s", e)
+                # Fall through to heuristic selection
+        
+        # Legacy heuristic selection
         prompt_lower = prompt.lower()
         
         # Fast response needed
@@ -704,6 +1003,88 @@ class EliteOrchestrator:
             return "quality_weighted_fusion"
         
         return "single_best"
+    
+    def _map_reasoning_to_orchestration(
+        self,
+        reasoning_method: str,
+        num_models: int,
+    ) -> str:
+        """Map a reasoning method to an orchestration strategy.
+        
+        The reasoning strategies controller suggests methods like 'self_consistency',
+        'tree_of_thoughts', etc. This maps them to the orchestration strategies
+        that the EliteOrchestrator can execute.
+        """
+        # Direct mappings for orchestration strategies
+        orchestration_mappings = {
+            # Self-consistency → best_of_n (generate multiple, vote)
+            "self_consistency": "best_of_n",
+            # Debate → expert_panel (multiple models, synthesis)
+            "debate": "expert_panel" if num_models >= 2 else "challenge_and_refine",
+            # Mixture → expert_panel (combine strategies)
+            "mixture": "expert_panel" if num_models >= 3 else "quality_weighted_fusion",
+            # Tree of thoughts → challenge_and_refine (explore, evaluate)
+            "tree_of_thoughts": "challenge_and_refine",
+            # Reflection → challenge_and_refine (generate, critique)
+            "reflection": "challenge_and_refine",
+            # Step verification → challenge_and_refine (verify each step)
+            "step_verification": "challenge_and_refine",
+            # Best of N → best_of_n
+            "best_of_n": "best_of_n",
+            # Progressive → quality_weighted_fusion (adaptive)
+            "progressive_deepening": "quality_weighted_fusion",
+            # Simple methods → single_best
+            "chain_of_thought": "single_best",
+            "rag": "single_best",  # RAG is handled at a different layer
+            "react": "single_best",  # ReAct is handled at tool layer
+            "pal": "single_best",  # PAL is handled at code layer
+            "deepconf": "expert_panel" if num_models >= 2 else "challenge_and_refine",
+            "self_refine": "challenge_and_refine",
+        }
+        
+        return orchestration_mappings.get(reasoning_method, "quality_weighted_fusion")
+    
+    def _infer_domain(self, prompt_lower: str) -> str:
+        """Infer the domain from prompt content.
+        
+        Used by the Strategy Optimizer to get domain-specific recommendations.
+        
+        Args:
+            prompt_lower: Lowercase prompt text
+            
+        Returns:
+            Domain classification string
+        """
+        # Coding/technical
+        if any(word in prompt_lower for word in [
+            "code", "python", "javascript", "function", "class", "debug", "error",
+            "api", "database", "sql", "algorithm", "programming"
+        ]):
+            return "coding"
+        
+        # Technical but not coding
+        if any(word in prompt_lower for word in [
+            "technical", "architecture", "system", "deploy", "cloud", "docker",
+            "kubernetes", "infrastructure"
+        ]):
+            return "technical"
+        
+        # Creative
+        if any(word in prompt_lower for word in [
+            "creative", "story", "poem", "write", "fiction", "narrative",
+            "imagine", "fantasy"
+        ]):
+            return "creative"
+        
+        # Business
+        if any(word in prompt_lower for word in [
+            "business", "market", "strategy", "revenue", "customer", "sales",
+            "finance", "investment", "startup"
+        ]):
+            return "business"
+        
+        # General/default
+        return "general"
     
     async def _single_best_strategy(
         self,
@@ -1439,6 +1820,27 @@ Output only the final synthesized answer. Do NOT ask questions."""
                 ensemble_size=result.responses_generated,
                 performance_notes=result.performance_notes,
             )
+            
+            # Q4 2025 Meta-Learning: Also record to Strategy Optimizer for ML training
+            try:
+                from .strategy_optimizer import record_orchestration_outcome
+                record_orchestration_outcome(
+                    query_analysis={
+                        "task_type": task_type,
+                        "domain": task_type,  # Use task_type as domain approximation
+                        "complexity": query_complexity,
+                        "available_models": result.models_used,
+                    },
+                    strategy=result.strategy_used,
+                    success=result.quality_score >= 0.7,
+                    quality_score=result.quality_score,
+                    latency_ms=result.total_latency_ms,
+                )
+            except ImportError:
+                pass  # Optimizer not available
+            except Exception as opt_e:
+                logger.debug("Strategy optimizer recording failed: %s", opt_e)
+                
         except Exception as e:
             logger.debug("Failed to log performance: %s", e)
 
@@ -1473,4 +1875,46 @@ def get_best_model_for_task(task_type: str, available_models: List[str]) -> str:
             best = model
     
     return best or available_models[0] if available_models else "gpt-4o"
+
+
+async def kb_orchestrate(
+    prompt: str,
+    providers: Dict[str, Any],
+    *,
+    task_type: str = "general",
+    tools_available: Optional[List[str]] = None,
+    cost_budget: str = "medium",
+    force_pipeline: Optional[str] = None,
+) -> EliteResult:
+    """
+    Convenience function for KB-aligned orchestration.
+    
+    Uses the Techniques Knowledge Base to select the optimal pipeline.
+    
+    Args:
+        prompt: User prompt
+        providers: LLM providers by name
+        task_type: Type of task for capability matching
+        tools_available: Available tools for the pipeline
+        cost_budget: Cost budget ("low", "medium", "high")
+        force_pipeline: Force a specific pipeline (for testing)
+        
+    Returns:
+        EliteResult with optimized response
+    """
+    orchestrator = EliteOrchestrator(providers, use_kb_pipelines=True)
+    return await orchestrator.orchestrate(
+        prompt,
+        task_type,
+        strategy="kb",
+        tools_available=tools_available,
+        cost_budget=cost_budget,
+        force_kb_pipeline=force_pipeline,
+    )
+
+
+def is_kb_available() -> bool:
+    """Check if KB pipeline integration is available."""
+    _load_kb_bridge()
+    return _kb_available
 

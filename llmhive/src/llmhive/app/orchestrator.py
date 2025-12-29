@@ -599,7 +599,9 @@ class Orchestrator:
                             if response.get("choices") and len(response["choices"]) > 0:
                                 choice = response["choices"][0]
                                 if choice.get("message"):
-                                    content = choice["message"].get("content", "")
+                                    # Handle both missing key and null value
+                                    raw_content = choice["message"].get("content")
+                                    content = raw_content if raw_content is not None else ""
                             
                             usage = response.get("usage", {})
                             total_tokens = usage.get("total_tokens", 0)

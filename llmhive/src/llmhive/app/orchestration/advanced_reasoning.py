@@ -21,11 +21,22 @@ import asyncio
 import logging
 import random
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable, TYPE_CHECKING
 from collections import Counter
 from enum import Enum, auto
 
+if TYPE_CHECKING:
+    from .reasoning_strategies_controller import ReasoningStrategiesController
+
 logger = logging.getLogger(__name__)
+
+# Try to import reasoning strategies controller for enhanced selection
+try:
+    from .reasoning_strategies_controller import get_strategy_controller
+    REASONING_CONTROLLER_AVAILABLE = True
+except ImportError:
+    REASONING_CONTROLLER_AVAILABLE = False
+    get_strategy_controller = None  # type: ignore
 
 
 class ReasoningStrategy(Enum):
@@ -78,6 +89,7 @@ class AdvancedReasoningEngine:
         default_samples: int = 5,
         max_depth: int = 3,
         confidence_threshold: float = 0.8,
+        use_reasoning_controller: bool = True,
     ):
         """Initialize the reasoning engine.
         
@@ -86,13 +98,22 @@ class AdvancedReasoningEngine:
             default_samples: Default number of samples for consistency
             max_depth: Max depth for tree search
             confidence_threshold: Minimum confidence to accept
+            use_reasoning_controller: Use Q4 2025 reasoning strategies controller
+                for enhanced strategy selection with meta-policy and fallbacks
         """
         self.model_caller = model_caller
         self.default_samples = default_samples
         self.max_depth = max_depth
         self.confidence_threshold = confidence_threshold
         
-        # Strategy selection based on task type
+        # Q4 2025: Reasoning strategies controller integration
+        self.use_reasoning_controller = use_reasoning_controller and REASONING_CONTROLLER_AVAILABLE
+        self._reasoning_controller: Optional["ReasoningStrategiesController"] = None
+        if self.use_reasoning_controller:
+            self._reasoning_controller = get_strategy_controller()
+            logger.info("AdvancedReasoningEngine initialized with reasoning strategies controller")
+        
+        # Strategy selection based on task type (legacy fallback)
         self._strategy_map = {
             "math": ReasoningStrategy.STEP_VERIFY,
             "code": ReasoningStrategy.BEST_OF_N,
@@ -101,6 +122,19 @@ class AdvancedReasoningEngine:
             "creative": ReasoningStrategy.DIRECT,
             "complex": ReasoningStrategy.TREE_OF_THOUGHTS,
             "default": ReasoningStrategy.CHAIN_OF_THOUGHT,
+        }
+        
+        # Mapping from controller method names to ReasoningStrategy enum
+        self._controller_to_strategy = {
+            "chain_of_thought": ReasoningStrategy.CHAIN_OF_THOUGHT,
+            "self_consistency": ReasoningStrategy.SELF_CONSISTENCY,
+            "tree_of_thoughts": ReasoningStrategy.TREE_OF_THOUGHTS,
+            "reflection": ReasoningStrategy.REFLECTION,
+            "debate": ReasoningStrategy.DEBATE,
+            "step_verification": ReasoningStrategy.STEP_VERIFY,
+            "progressive_deepening": ReasoningStrategy.PROGRESSIVE,
+            "best_of_n": ReasoningStrategy.BEST_OF_N,
+            "mixture": ReasoningStrategy.MIXTURE,
         }
         
         logger.info("AdvancedReasoningEngine initialized")
@@ -156,7 +190,45 @@ class AdvancedReasoningEngine:
             return await self._chain_of_thought(query, models, context)
     
     def _select_strategy(self, query: str, task_type: str) -> ReasoningStrategy:
-        """Intelligently select the best strategy for this query."""
+        """Intelligently select the best strategy for this query.
+        
+        Uses Q4 2025 reasoning strategies controller if available,
+        with fallback to heuristic selection.
+        """
+        # Q4 2025: Use reasoning strategies controller for meta-policy based selection
+        if self.use_reasoning_controller and self._reasoning_controller:
+            try:
+                query_lower = query.lower()
+                
+                # Determine complexity
+                complexity = "simple"
+                if len(query) > 500 or query.count("?") > 2:
+                    complexity = "complex"
+                elif any(kw in query_lower for kw in ["explain", "analyze", "compare"]):
+                    complexity = "medium"
+                
+                recommendation = self._reasoning_controller.select_strategy(
+                    query=query,
+                    task_type=task_type,
+                    complexity=complexity,
+                )
+                
+                method_name = recommendation.get("strategy", "chain_of_thought")
+                
+                # Map to ReasoningStrategy enum
+                if method_name in self._controller_to_strategy:
+                    strategy = self._controller_to_strategy[method_name]
+                    logger.debug(
+                        "Reasoning controller selected: %s (source: %s)",
+                        strategy.name,
+                        recommendation.get("source"),
+                    )
+                    return strategy
+                    
+            except Exception as e:
+                logger.warning("Reasoning controller failed, using fallback: %s", e)
+        
+        # Legacy heuristic selection (fallback)
         # Use task type mapping
         if task_type in self._strategy_map:
             return self._strategy_map[task_type]

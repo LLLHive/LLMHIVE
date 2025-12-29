@@ -88,8 +88,14 @@ class EnrichmentOrchestrator:
         evals_enabled: bool = True,
         telemetry_enabled: bool = True,
         evals_max_models: int = 0,
+        evals_ttl_days: int = 30,
+        evals_seed: Optional[str] = None,
+        evals_always_include_top: int = 10,
         telemetry_trials: int = 3,
         telemetry_max_models: int = 0,
+        telemetry_ttl_days: int = 14,
+        telemetry_seed: Optional[str] = None,
+        telemetry_always_include_top: int = 10,
         skip_expensive: bool = False,
     ):
         self.excel_path = excel_path
@@ -98,8 +104,14 @@ class EnrichmentOrchestrator:
         self.evals_enabled = evals_enabled
         self.telemetry_enabled = telemetry_enabled
         self.evals_max_models = evals_max_models
+        self.evals_ttl_days = evals_ttl_days
+        self.evals_seed = evals_seed
+        self.evals_always_include_top = evals_always_include_top
         self.telemetry_trials = telemetry_trials
         self.telemetry_max_models = telemetry_max_models
+        self.telemetry_ttl_days = telemetry_ttl_days
+        self.telemetry_seed = telemetry_seed
+        self.telemetry_always_include_top = telemetry_always_include_top
         self.skip_expensive = skip_expensive
         
         self.baseline_path = SCRIPT_DIR / "schema_baseline_columns.json"
@@ -203,6 +215,9 @@ class EnrichmentOrchestrator:
                     dry_run=self.dry_run,
                     max_models=self.evals_max_models,
                     skip_expensive=self.skip_expensive,
+                    ttl_days=self.evals_ttl_days,
+                    seed_key=self.evals_seed,
+                    always_include_top=self.evals_always_include_top,
                 )
                 df, result = enricher.enrich(df)
                 self._results.append(result.to_dict())
@@ -221,6 +236,9 @@ class EnrichmentOrchestrator:
                     dry_run=self.dry_run,
                     trials=self.telemetry_trials,
                     max_models=self.telemetry_max_models,
+                    ttl_days=self.telemetry_ttl_days,
+                    seed_key=self.telemetry_seed,
+                    always_include_top=self.telemetry_always_include_top,
                 )
                 df, result = enricher.enrich(df)
                 self._results.append(result.to_dict())
@@ -290,8 +308,14 @@ class EnrichmentOrchestrator:
                 "evals_enabled": self.evals_enabled,
                 "telemetry_enabled": self.telemetry_enabled,
                 "evals_max_models": self.evals_max_models,
+                "evals_ttl_days": self.evals_ttl_days,
+                "evals_seed": self.evals_seed,
+                "evals_always_include_top": self.evals_always_include_top,
                 "telemetry_trials": self.telemetry_trials,
                 "telemetry_max_models": self.telemetry_max_models,
+                "telemetry_ttl_days": self.telemetry_ttl_days,
+                "telemetry_seed": self.telemetry_seed,
+                "telemetry_always_include_top": self.telemetry_always_include_top,
                 "skip_expensive": self.skip_expensive,
             },
         }
@@ -354,6 +378,24 @@ def main():
         help="Limit number of models to evaluate (0 = no limit)",
     )
     parser.add_argument(
+        "--evals-ttl-days",
+        type=int,
+        default=30,
+        help="Time-to-live in days for eval metrics (default: 30)",
+    )
+    parser.add_argument(
+        "--evals-seed",
+        type=str,
+        default=None,
+        help="Seed for deterministic cohort selection (default: ISO week)",
+    )
+    parser.add_argument(
+        "--evals-always-include-top",
+        type=int,
+        default=10,
+        help="Always include top N ranked models in eval cohort (default: 10)",
+    )
+    parser.add_argument(
         "--telemetry-trials",
         type=int,
         default=3,
@@ -364,6 +406,24 @@ def main():
         type=int,
         default=0,
         help="Limit number of models to probe (0 = no limit)",
+    )
+    parser.add_argument(
+        "--telemetry-ttl-days",
+        type=int,
+        default=14,
+        help="Time-to-live in days for telemetry metrics (default: 14)",
+    )
+    parser.add_argument(
+        "--telemetry-seed",
+        type=str,
+        default=None,
+        help="Seed for deterministic cohort selection (default: ISO week)",
+    )
+    parser.add_argument(
+        "--telemetry-always-include-top",
+        type=int,
+        default=10,
+        help="Always include top N ranked models in telemetry cohort (default: 10)",
     )
     parser.add_argument(
         "--skip-expensive",
@@ -395,8 +455,14 @@ def main():
         evals_enabled=args.evals_enabled.lower() == "true",
         telemetry_enabled=args.telemetry_enabled.lower() == "true",
         evals_max_models=args.evals_max_models,
+        evals_ttl_days=args.evals_ttl_days,
+        evals_seed=args.evals_seed,
+        evals_always_include_top=args.evals_always_include_top,
         telemetry_trials=args.telemetry_trials,
         telemetry_max_models=args.telemetry_max_models,
+        telemetry_ttl_days=args.telemetry_ttl_days,
+        telemetry_seed=args.telemetry_seed,
+        telemetry_always_include_top=args.telemetry_always_include_top,
         skip_expensive=args.skip_expensive,
     )
     

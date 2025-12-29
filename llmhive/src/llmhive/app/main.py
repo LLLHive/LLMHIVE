@@ -539,10 +539,26 @@ try:
 except ImportError as e:
     logger.debug("OpenRouter scheduler router not available: %s", e)
 
-# Include Collaboration router for multi-user shared sessions
+# Include Collaboration router for multi-user shared sessions (REST API)
 try:
     from .routers import collaborate as collaborate_router
     app.include_router(collaborate_router.router, prefix="/api/v1")
     logger.info("Collaboration router enabled at /api/v1/collaborate")
 except ImportError as e:
     logger.debug("Collaboration router not available: %s", e)
+
+# Enhancement-2: Include orchestrator metrics router (at /api/v1/metrics)
+try:
+    from .api.orchestrator_metrics import router as orchestrator_metrics_router
+    app.include_router(orchestrator_metrics_router, prefix="/api/v1")
+    logger.info("✓ Orchestrator metrics routes registered at /api/v1/metrics/")
+except ImportError as e:
+    logger.debug("Orchestrator metrics router not available: %s", e)
+
+# Enhancement-4: Include WebSocket collaboration router (at /ws)
+try:
+    from .routers.collab import router as collab_router
+    app.include_router(collab_router, prefix="/ws")
+    logger.info("✓ WebSocket collaboration routes registered at /ws/")
+except ImportError as e:
+    logger.debug("WebSocket collaboration router not available: %s", e)
