@@ -268,34 +268,33 @@ Be CONSERVATIVE - only suggest questions for genuinely incomprehensible queries.
 Respond ONLY with JSON."""
 
 
-CLARIFICATION_QUESTIONS_PROMPT = """Generate clarifying questions for this query.
+CLARIFICATION_QUESTIONS_PROMPT = """Generate clarifying questions for this query - BUT ONLY if truly necessary.
 
 Query: "{query}"
-Detected Issues: {issues}
 
-Generate up to 3 focused, specific questions that will help us:
-1. Understand exactly what the user is asking for
-2. Narrow down the scope if too broad
-3. Resolve any ambiguities in terminology or reference
+CRITICAL RULES:
+1. Questions MUST be directly about the SPECIFIC TOPIC in the query
+2. Questions MUST make sense in the context of what's being asked
+3. Do NOT generate generic questions like "what criteria?" or "what do you mean by X?"
+4. If the query is reasonably clear, return EMPTY questions list
 
-Rules:
-- Each question should address a distinct aspect
-- Questions should be concise and specific
-- Offer example answers when helpful
-- Avoid yes/no questions when possible
+WRONG examples (do NOT do this):
+- Query: "list 10 fastest cars" -> Question: "What criteria for fastest?" (WRONG - clearly means top speed)
+- Query: "best programming languages" -> Question: "Best for what purpose?" (WRONG - just provide general ranking)
+- Query: "explain this code" -> Question: "What aspect?" (WRONG - just explain the code)
+
+RIGHT examples (only if genuinely needed):
+- Query: "fix it" with no context -> Question: "What would you like me to fix?"
+- Query: "compare A" with no B -> Question: "What would you like to compare A with?"
+
+If the query can be reasonably answered with common sense, return empty questions.
 
 Respond in JSON format:
 {{
-    "questions": [
-        {{
-            "id": "q1",
-            "question": "The clarifying question",
-            "why": "Why this clarification helps",
-            "example_answers": ["Example answer 1", "Example answer 2"]
-        }}
-    ]
+    "questions": []
 }}
 
+Only add questions if the query is TRULY incomprehensible. 99% of queries need NO questions.
 Respond ONLY with JSON."""
 
 
@@ -665,13 +664,16 @@ class ClarificationManager:
         language_hint = self._detect_language(query_lower)
         
         # Check for pronouns without clear referents
+        # NOTE: We only flag issues here, NOT generate questions
+        # Questions should come from LLM which can understand context better
         pronouns = re.findall(r'\b(it|this|that|these|those|they|them)\b', query_lower)
-        if pronouns and not history:  # Pronouns without history context
+        # Only flag if the query is VERY short (< 5 words) and has pronouns
+        if pronouns and not history and len(query.split()) < 5:
             issues.append({
                 "type": "ambiguous_term",
                 "description": f"Pronoun '{pronouns[0]}' without clear referent",
             })
-            questions.append(f"What does '{pronouns[0]}' refer to in your question?")
+            # DO NOT add templated question - it often doesn't make sense in context
         
         # Check for vague terms - BUT only if the query is genuinely ambiguous
         # "best 10 cities" is NOT vague - it's a clear request for a ranked list
@@ -684,7 +686,8 @@ class ClarificationManager:
                 })
                 break
         
-        # Semantic ambiguity (polysemous terms)
+        # Semantic ambiguity (polysemous terms) - but be smart about context
+        # "python programming" clearly means the language, not the snake
         polysemous = {
             "bank": ["financial institution", "river bank"],
             "python": ["programming language", "the snake"],
@@ -693,34 +696,36 @@ class ClarificationManager:
             "apple": ["company", "fruit"],
         }
         for term, senses in polysemous.items():
+            # Only flag if the term appears AND there's no disambiguating context
             if term in query_lower.split():
-                issues.append({
-                    "type": "semantic_ambiguity",
-                    "description": f"Term '{term}' can mean multiple things",
-                    "options": senses,
-                })
-                possible_interpretations.extend(senses)
-                questions.append(f"Do you mean {', '.join(senses[:-1])} or {senses[-1]}?")
+                # Check for disambiguating context
+                disambiguators = {
+                    "python": ["code", "program", "script", "library", "pip", "import"],
+                    "java": ["code", "program", "class", "jdk", "spring"],
+                    "apple": ["iphone", "mac", "ios", "app", "store"],
+                }
+                has_context = any(d in query_lower for d in disambiguators.get(term, []))
+                if not has_context and len(query.split()) < 6:
+                    issues.append({
+                        "type": "semantic_ambiguity",
+                        "description": f"Term '{term}' can mean multiple things",
+                        "options": senses,
+                    })
+                    possible_interpretations.extend(senses)
+                    # DO NOT add templated question - often obvious from context
                 break
         
-        # Temporal ambiguity
-        temporal_patterns = ["next monday", "next tuesday", "next week", "next month", "tomorrow", "yesterday"]
-        for t in temporal_patterns:
-            if t in query_lower:
-                issues.append({
-                    "type": "temporal_ambiguity",
-                    "description": f"'{t}' is time-relative; please specify an exact date/time or timezone",
-                })
-                questions.append("Which exact date/time (with timezone) do you mean?")
-                break
+        # Temporal ambiguity - REMOVED
+        # Asking "which exact date?" for "what happened yesterday" is pedantic and unhelpful
+        # The AI can work with relative dates just fine
         
-        # Continuation without context
+        # Continuation without context - only flag, don't ask templated question
         if any(kw in query_lower for kw in ["continue", "next part", "keep going", "resume"]) and not history:
             issues.append({
                 "type": "missing_context",
                 "description": "Continuation requested but no prior conversation provided",
             })
-            questions.append("What should I continue from? Please paste the prior content or summary.")
+            # Don't add templated question - the issue description is enough
         
         # Extremely short / numeric / symbol-only queries
         if len(query.strip()) <= 3 or re.fullmatch(r"[\\d\\W]+", query.strip()):
@@ -728,7 +733,7 @@ class ClarificationManager:
                 "type": "underspecified",
                 "description": "Very short query may have multiple meanings",
             })
-            questions.append("Could you add a few words about what you want to know?")
+            # Don't add templated question
         
         # Check for very broad queries - but be very conservative
         # "What are the top 10 cities" is NOT too broad - it has clear scope
@@ -743,34 +748,18 @@ class ClarificationManager:
                     "type": "vague_scope",
                     "description": "Query may be too broad",
                 })
-                questions.append("Could you be more specific about what aspect you're most interested in?")
+                # Don't add templated question - it's often annoying
                 break
         
-        # Check for missing context
-        context_needed_patterns = [
-            (r'\b(my|our)\s+\w+', "Specific context about 'your' item may be needed"),
-            (r'\bthe\s+\w+\s+(project|system|app|code)', "Which specific project/system?"),
-        ]
-        for pattern, msg in context_needed_patterns:
-            if re.search(pattern, query_lower):
-                issues.append({
-                    "type": "missing_context",
-                    "description": msg,
-                })
-                questions.append("Can you provide the specific name or link for that item?")
+        # Check for missing context - REMOVED
+        # "my project" or "the app" are usually clear enough from context
+        # Asking "which project?" is often annoying and unhelpful
         
-        # Compound/multi-part detection
-        if " and " in query_lower and "?" in query_lower and len(query.split()) > 12:
-            issues.append({
-                "type": "compound_question",
-                "description": "Multiple sub-questions detected; need priority",
-            })
-            questions.append("Which part should I address first, or should I cover all parts?")
+        # Compound/multi-part detection - REMOVED
+        # Just answer all parts of the question, no need to ask
         
-        # If we built possible interpretations, add a guided choice question
-        if possible_interpretations and len(possible_interpretations) >= 2:
-            opts = ", ".join(possible_interpretations[:3])
-            questions.append(f"To confirm, did you mean: {opts}?")
+        # Possible interpretations - REMOVED
+        # Usually context makes the meaning clear, no need to ask
         
         # Determine if clarification is needed - be CONSERVATIVE
         # Only ask for clarification if there are MULTIPLE significant issues
