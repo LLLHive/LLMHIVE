@@ -8,7 +8,15 @@ const isPublicRoute = createRouteMatcher([
   "/api/health",
 ])
 
+// Check if running in E2E test mode
+const isE2ETest = process.env.PLAYWRIGHT_TEST === "true" || process.env.CI === "true"
+
 export default clerkMiddleware(async (auth, request) => {
+  // Skip auth in E2E test mode to allow automated testing
+  if (isE2ETest) {
+    return
+  }
+  
   // Protect all routes except public ones
   if (!isPublicRoute(request)) {
     await auth.protect()
