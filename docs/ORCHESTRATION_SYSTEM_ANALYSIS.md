@@ -155,6 +155,7 @@ For a complex query, the orchestrator creates:
 - Added full hierarchy support (use_full_hierarchy flag)
 - Enhanced role-to-model mapping
 - Added fact-checking specialist role
+- **Auto-Activation for Complex Queries**: HRM is now automatically enabled when PromptOps classifies a query as "complex" or "research" level (`requires_hrm=True`). This allows the orchestrator to decompose complex tasks into sub-steps without requiring manual `enable_hrm` flag in the request. When HRM is auto-enabled, it takes precedence over elite orchestration strategies (e.g., `parallel_race`, `best_of_n`).
 
 ### 3.3 DeepConf Module (`deepconf.py`)
 

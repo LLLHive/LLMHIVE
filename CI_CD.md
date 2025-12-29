@@ -57,48 +57,35 @@ The CD pipeline runs **only** when:
 
 To enable the CI/CD pipeline, you must configure the following secrets in your GitHub repository:
 
-### Required Secrets
+### Recommended: Workload Identity Federation (No Keys Needed)
+
+**Workload Identity Federation is the recommended approach** - it eliminates the need for long-lived service account keys.
+
+1. **`WIF_PROVIDER`**
+   - Description: Full resource name of the Workload Identity Provider
+   - Example: `projects/123456789/locations/global/workloadIdentityPools/github-pool/providers/github-provider`
+   
+2. **`WIF_SERVICE_ACCOUNT`**
+   - Description: Service account email that GitHub Actions will impersonate
+   - Example: `github-actions@llmhive-orchestrator.iam.gserviceaccount.com`
+
+**📚 See [docs/WORKLOAD_IDENTITY_FEDERATION.md](docs/WORKLOAD_IDENTITY_FEDERATION.md) for complete setup instructions.**
+
+### Alternative: Service Account Key (Legacy)
+
+> ⚠️ **Not recommended** - Use Workload Identity Federation instead.
+> Service account keys are long-lived credentials that pose security risks if leaked.
+
+If you cannot use WIF, you can still use a service account key:
 
 1. **`GCP_PROJECT_ID`**
    - Description: Your Google Cloud Project ID
-   - Example: `llmhive-production-12345`
-   - How to get: From Google Cloud Console → Project Settings
+   - Example: `llmhive-orchestrator`
 
 2. **`GCP_SA_KEY`**
-   - Description: Service account JSON key with Cloud Run deployment permissions
-   - How to create:
-     ```bash
-     # Create a service account
-     gcloud iam service-accounts create github-actions \
-       --display-name="GitHub Actions CI/CD"
-     
-     # Grant necessary permissions
-     gcloud projects add-iam-policy-binding PROJECT_ID \
-       --member="serviceAccount:github-actions@PROJECT_ID.iam.gserviceaccount.com" \
-       --role="roles/run.admin"
-     
-     gcloud projects add-iam-policy-binding PROJECT_ID \
-       --member="serviceAccount:github-actions@PROJECT_ID.iam.gserviceaccount.com" \
-       --role="roles/storage.admin"
-     
-     gcloud projects add-iam-policy-binding PROJECT_ID \
-       --member="serviceAccount:github-actions@PROJECT_ID.iam.gserviceaccount.com" \
-       --role="roles/iam.serviceAccountUser"
-     
-     # Create and download the key
-     gcloud iam service-accounts keys create key.json \
-       --iam-account=github-actions@PROJECT_ID.iam.gserviceaccount.com
-     ```
-   - How to add: Copy the entire JSON content and paste it as the secret value
-
-### Optional: Workload Identity Federation (Recommended for Production)
-
-For better security, use Workload Identity Federation instead of service account keys:
-
-1. **`WIF_PROVIDER`** - Workload Identity Pool Provider
-2. **`WIF_SERVICE_ACCOUNT`** - Service account email for WIF
-
-See [Google Cloud documentation](https://cloud.google.com/iam/docs/workload-identity-federation) for setup instructions.
+   - Description: Service account JSON key (the entire JSON file contents)
+   - ⚠️ Rotate this key every 90 days
+   - ⚠️ Delete after migrating to WIF
 
 ## Secret Manager Configuration
 
@@ -289,11 +276,12 @@ curl https://SERVICE_URL/healthz
 
 ## Security Considerations
 
-- **Service Account Keys**: Rotate keys regularly
-- **Workload Identity**: Prefer Workload Identity Federation over keys
-- **Secret Manager**: Use Secret Manager for all sensitive data
-- **Least Privilege**: Grant only necessary permissions to service accounts
+- **Workload Identity Federation**: Use WIF instead of service account keys (see [setup guide](docs/WORKLOAD_IDENTITY_FEDERATION.md))
+- **No Key Files Needed**: Cloud Run and GitHub Actions can authenticate without downloading JSON keys
+- **Secret Manager**: Use Secret Manager for all API keys and sensitive data
+- **Least Privilege**: Grant only necessary IAM roles to service accounts
 - **Audit Logs**: Monitor Cloud Run and GitHub Actions audit logs
+- **Key Rotation**: If using legacy keys, rotate every 90 days and delete old keys
 
 ## Additional Resources
 

@@ -1,5 +1,13 @@
 """Tests for AdversarialAgent."""
+import sys
+from pathlib import Path
 import pytest
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 from llmhive.app.agents.adversarial_agent import (
     AdversarialAgent,
     AdversarialTestResult,

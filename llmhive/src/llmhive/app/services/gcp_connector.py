@@ -60,7 +60,13 @@ class GCPConnector:
     - Retrieve Cloud Logging entries
     - List Cloud Storage buckets (proof of concept)
     
-    Authentication uses Application Default Credentials (ADC) or service account JSON.
+    Authentication:
+    - Uses Application Default Credentials (ADC) - the recommended approach
+    - On Cloud Run: Automatically uses the attached service account
+    - Locally: Uses `gcloud auth application-default login`
+    - Fallback: GOOGLE_APPLICATION_CREDENTIALS env var (not recommended)
+    
+    No service account key file is required!
     """
 
     def __init__(
@@ -72,7 +78,8 @@ class GCPConnector:
         
         Args:
             project_id: GCP project ID. If None, loads from GCP_PROJECT_ID env var.
-            credentials_path: Path to service account JSON file. If None, uses ADC.
+            credentials_path: Optional path to service account JSON (not recommended).
+                             Prefer ADC via gcloud auth or Cloud Run's built-in auth.
         """
         self.project_id = project_id or os.getenv("GCP_PROJECT_ID")
         self.credentials_path = credentials_path or os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
