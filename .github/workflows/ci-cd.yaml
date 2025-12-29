@@ -126,12 +126,14 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           echo "Deploying $IMAGE to Cloud Run service ${{ env.SERVICE_NAME }} in region ${{ env.REGION }} ..."
+          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           gcloud run deploy "${{ env.SERVICE_NAME }}" \
             --image "$IMAGE" \
             --region "${{ env.REGION }}" \
             --platform managed \
             --allow-unauthenticated \
             --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest \
+            --set-env-vars=BUILD_COMMIT=${{ github.sha }},BUILD_TIME=$BUILD_TIME,ENVIRONMENT=production \
             --timeout=300 \
             --port=8080 \
             --memory=2Gi \

@@ -504,6 +504,26 @@ async def liveness_check() -> dict[str, str]:
     """Simple liveness check (just confirms the process is running)."""
     return {"status": "alive"}
 
+
+@app.get("/build-info", summary="Build information")
+async def build_info() -> dict:
+    """Return build information for deployment verification.
+    
+    This endpoint returns:
+    - commit: Git commit SHA (from BUILD_COMMIT env var or 'unknown')
+    - build_time: Build timestamp (from BUILD_TIME env var or current time)
+    - environment: Deployment environment (from ENVIRONMENT env var)
+    - version: Application version
+    """
+    return {
+        "commit": os.getenv("BUILD_COMMIT", os.getenv("GIT_SHA", "unknown")),
+        "build_time": os.getenv("BUILD_TIME", datetime.now(timezone.utc).isoformat()),
+        "environment": os.getenv("ENVIRONMENT", os.getenv("ENV", "development")),
+        "version": "1.0.0",
+        "service": "llmhive-orchestrator",
+    }
+
+
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")
 
