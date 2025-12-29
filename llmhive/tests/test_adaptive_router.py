@@ -90,11 +90,11 @@ class TestAdaptiveModelSelection:
             query="Quick question: what is 2+2?",
             roles=["executor"],
             accuracy_level=1,
-            available_models=["gpt-4o-mini", "gpt-4o", "claude-3-haiku-20240307"],
+            available_models=["openai/gpt-4o-mini", "openai/gpt-4o", "anthropic/claude-haiku-4"],
         )
         
         # Should prefer small/fast models
-        assert result.primary_model in ["gpt-4o-mini", "claude-3-haiku-20240307"]
+        assert result.primary_model in ["openai/gpt-4o-mini", "anthropic/claude-haiku-4"]
         assert result.recommended_ensemble_size == 1
     
     def test_select_models_accuracy_level_5(self):
@@ -103,11 +103,11 @@ class TestAdaptiveModelSelection:
             query="Complex research: analyze AI ethics comprehensively.",
             roles=["coordinator", "specialist", "quality_manager"],
             accuracy_level=5,
-            available_models=["gpt-4o-mini", "gpt-4o", "claude-3-opus-20240229"],
+            available_models=["openai/gpt-4o-mini", "openai/gpt-4o", "anthropic/claude-opus-4"],
         )
         
         # Should prefer large models
-        assert result.primary_model in ["gpt-4o", "claude-3-opus-20240229"]
+        assert result.primary_model in ["openai/gpt-4o", "anthropic/claude-opus-4"]
         # Should recommend ensemble
         assert result.recommended_ensemble_size >= 3
         # Should assign multiple models to roles
@@ -119,7 +119,7 @@ class TestAdaptiveModelSelection:
             query="Explain machine learning basics.",
             roles=["executor"],
             accuracy_level=3,
-            available_models=["gpt-4o-mini", "gpt-4o", "claude-3-sonnet-20240229"],
+            available_models=["openai/gpt-4o-mini", "openai/gpt-4o", "anthropic/claude-sonnet-4"],
         )
         
         # Should recommend moderate ensemble
@@ -133,7 +133,7 @@ class TestAdaptiveModelSelection:
             query="Research AI applications.",
             roles=roles,
             accuracy_level=4,
-            available_models=["gpt-4o", "claude-3-sonnet-20240229", "gpt-4o-mini"],
+            available_models=["openai/gpt-4o", "anthropic/claude-sonnet-4", "openai/gpt-4o-mini"],
         )
         
         for role in roles:
@@ -145,7 +145,7 @@ class TestAdaptiveModelSelection:
             query="Critical medical question.",
             roles=["executive", "quality_manager"],
             accuracy_level=5,
-            available_models=["gpt-4o", "claude-3-opus-20240229", "gpt-4o-mini"],
+            available_models=["openai/gpt-4o", "anthropic/claude-opus-4", "openai/gpt-4o-mini"],
         )
         
         # Check for secondary assignments
@@ -261,8 +261,8 @@ class TestCascadeSelection:
         """Test that cascade escalates when confidence is low."""
         # Mock low quality history
         mock_snapshot = {
-            "gpt-4o-mini": ModelPerformance(
-                model="gpt-4o-mini",
+            "openai/gpt-4o-mini": ModelPerformance(
+                model="openai/gpt-4o-mini",
                 quality_scores=[0.4, 0.5, 0.3],  # Low quality
             )
         }
@@ -270,21 +270,21 @@ class TestCascadeSelection:
         
         model, escalated = self.router.cascade_selection(
             query="Complex analysis needed.",
-            initial_model="gpt-4o-mini",
+            initial_model="openai/gpt-4o-mini",
             confidence_threshold=0.7,
-            available_models=["gpt-4o-mini", "gpt-4o"],
+            available_models=["openai/gpt-4o-mini", "openai/gpt-4o"],
         )
         
         assert escalated is True
-        assert model == "gpt-4o"
+        assert model == "openai/gpt-4o"
     
     @patch('llmhive.app.orchestration.adaptive_router.performance_tracker')
     def test_cascade_stays_on_high_confidence(self, mock_tracker):
         """Test that cascade doesn't escalate when confidence is high."""
         # Mock high quality history
         mock_snapshot = {
-            "gpt-4o-mini": ModelPerformance(
-                model="gpt-4o-mini",
+            "openai/gpt-4o-mini": ModelPerformance(
+                model="openai/gpt-4o-mini",
                 quality_scores=[0.9, 0.85, 0.88],  # High quality
             )
         }
@@ -292,13 +292,13 @@ class TestCascadeSelection:
         
         model, escalated = self.router.cascade_selection(
             query="Simple question.",
-            initial_model="gpt-4o-mini",
+            initial_model="openai/gpt-4o-mini",
             confidence_threshold=0.7,
-            available_models=["gpt-4o-mini", "gpt-4o"],
+            available_models=["openai/gpt-4o-mini", "openai/gpt-4o"],
         )
         
         assert escalated is False
-        assert model == "gpt-4o-mini"
+        assert model == "openai/gpt-4o-mini"
 
 
 class TestConvenienceFunctions:
@@ -316,7 +316,7 @@ class TestConvenienceFunctions:
             refined_query="Test query.",
             roles=["executor"],
             accuracy_level=3,
-            available_models=["gpt-4o-mini", "gpt-4o"],
+            available_models=["openai/gpt-4o-mini", "openai/gpt-4o"],
         )
         
         assert isinstance(result, dict)
