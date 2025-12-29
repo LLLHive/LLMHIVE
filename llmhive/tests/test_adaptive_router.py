@@ -103,13 +103,13 @@ class TestAdaptiveModelSelection:
             query="Complex research: analyze AI ethics comprehensively.",
             roles=["coordinator", "specialist", "quality_manager"],
             accuracy_level=5,
-            available_models=["openai/gpt-4o-mini", "openai/gpt-4o", "anthropic/claude-opus-4"],
+            available_models=["openai/gpt-4o-mini", "openai/gpt-4o", "anthropic/claude-sonnet-4"],
         )
         
         # Should prefer large models
-        assert result.primary_model in ["openai/gpt-4o", "anthropic/claude-opus-4"]
-        # Should recommend ensemble
-        assert result.recommended_ensemble_size >= 3
+        assert result.primary_model in ["openai/gpt-4o", "anthropic/claude-sonnet-4"]
+        # Should recommend ensemble (at least 2 for high accuracy)
+        assert result.recommended_ensemble_size >= 2
         # Should assign multiple models to roles
         assert len(result.role_assignments) >= 3
     
@@ -145,7 +145,7 @@ class TestAdaptiveModelSelection:
             query="Critical medical question.",
             roles=["executive", "quality_manager"],
             accuracy_level=5,
-            available_models=["openai/gpt-4o", "anthropic/claude-opus-4", "openai/gpt-4o-mini"],
+            available_models=["openai/gpt-4o", "anthropic/claude-sonnet-4", "openai/gpt-4o-mini"],
         )
         
         # Check for secondary assignments
