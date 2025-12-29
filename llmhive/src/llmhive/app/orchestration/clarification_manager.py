@@ -268,33 +268,45 @@ Be CONSERVATIVE - only suggest questions for genuinely incomprehensible queries.
 Respond ONLY with JSON."""
 
 
-CLARIFICATION_QUESTIONS_PROMPT = """Generate clarifying questions for this query - BUT ONLY if truly necessary.
+CLARIFICATION_QUESTIONS_PROMPT = """Analyze this query and generate clarifying questions ONLY if genuinely needed.
 
 Query: "{query}"
+Detected Issues: {issues}
 
-CRITICAL RULES:
-1. Questions MUST be directly about the SPECIFIC TOPIC in the query
-2. Questions MUST make sense in the context of what's being asked
-3. Do NOT generate generic questions like "what criteria?" or "what do you mean by X?"
-4. If the query is reasonably clear, return EMPTY questions list
+DECISION FRAMEWORK:
+1. Can this query be answered with reasonable assumptions? → NO questions needed
+2. Is there critical missing information that makes answering IMPOSSIBLE? → Ask SPECIFIC question
 
-WRONG examples (do NOT do this):
-- Query: "list 10 fastest cars" -> Question: "What criteria for fastest?" (WRONG - clearly means top speed)
-- Query: "best programming languages" -> Question: "Best for what purpose?" (WRONG - just provide general ranking)
-- Query: "explain this code" -> Question: "What aspect?" (WRONG - just explain the code)
+CLEAR QUERIES (NO questions needed):
+- "list 10 fastest cars" → Answer directly (fastest = top speed is obvious)
+- "best programming languages" → Provide a reasonable ranking
+- "explain photosynthesis" → Just explain it
+- "how to make pasta" → Provide the recipe
 
-RIGHT examples (only if genuinely needed):
-- Query: "fix it" with no context -> Question: "What would you like me to fix?"
-- Query: "compare A" with no B -> Question: "What would you like to compare A with?"
+GENUINELY AMBIGUOUS (questions ARE needed):
+- "fix it" with no context → "What would you like me to fix? Please share the content."
+- "compare Python" with no target → "What would you like to compare Python with?"
+- "continue" with no history → "What would you like me to continue? Please share the context."
+- "help" alone → "What do you need help with? Please describe your situation."
 
-If the query can be reasonably answered with common sense, return empty questions.
+RULES FOR QUESTIONS:
+1. Questions MUST be specific to the query content
+2. Questions MUST help us answer - not just be pedantic
+3. Include helpful guidance in the question (e.g., "Please share..." or "For example...")
+4. Maximum 2 questions - focus on the most critical missing information
 
 Respond in JSON format:
 {{
-    "questions": []
+    "questions": [
+        {{
+            "id": "q1",
+            "question": "Specific, helpful question that references the query",
+            "why": "Brief explanation of why this is needed"
+        }}
+    ]
 }}
 
-Only add questions if the query is TRULY incomprehensible. 99% of queries need NO questions.
+Most queries are clear - return empty questions list unless clarification is ESSENTIAL.
 Respond ONLY with JSON."""
 
 
@@ -656,126 +668,167 @@ class ClarificationManager:
         context: Optional[str],
         history: Optional[List[Dict[str, str]]],
     ) -> Tuple[bool, List[Dict[str, Any]], List[str]]:
-        """Rule-based ambiguity detection (fallback)."""
-        query_lower = query.lower()
+        """
+        Intelligent rule-based ambiguity detection.
+        
+        Key principle: Only ask clarifying questions when the query is GENUINELY
+        ambiguous - meaning we truly cannot answer without more information.
+        
+        When questions ARE needed, they must be RELEVANT and SPECIFIC to the query.
+        """
+        query_lower = query.lower().strip()
+        query_words = query.split()
+        word_count = len(query_words)
         issues = []
         questions = []
         possible_interpretations: List[str] = []
-        language_hint = self._detect_language(query_lower)
         
-        # Check for pronouns without clear referents
-        # NOTE: We only flag issues here, NOT generate questions
-        # Questions should come from LLM which can understand context better
-        pronouns = re.findall(r'\b(it|this|that|these|those|they|them)\b', query_lower)
-        # Only flag if the query is VERY short (< 5 words) and has pronouns
-        if pronouns and not history and len(query.split()) < 5:
+        # =====================================================================
+        # STEP 1: Check if query is CLEARLY unambiguous (fast path - no questions)
+        # =====================================================================
+        
+        # Queries with specific numbers are almost always clear
+        has_numbers = bool(re.search(r'\b\d+\b', query))
+        
+        # Standard factual question patterns that are clear
+        # NOTE: These patterns should NOT match pronoun-based queries like "explain that"
+        pronouns = {'it', 'this', 'that', 'these', 'those', 'they', 'them'}
+        
+        clear_patterns = [
+            r'^list\s+(?:the\s+)?(?:top\s+)?\d+',  # "list 10 X"
+            r'^(?:what|who|when|where|which)\s+(?:is|are|was|were)\s+\w+',  # "what is X"
+            r'^how\s+(?:many|much|to|do|does|can|should)',  # "how many X"
+            r'^(?:name|give me|provide|show me)\s+',  # "give me X"
+        ]
+        
+        for pattern in clear_patterns:
+            if re.match(pattern, query_lower):
+                return False, [], []  # Clear query, no questions needed
+        
+        # Special handling for "explain/describe/define X" - clear ONLY if X is not a pronoun
+        explain_match = re.match(r'^(?:explain|describe|define)\s+(\w+)', query_lower)
+        if explain_match:
+            target_word = explain_match.group(1)
+            if target_word not in pronouns and len(target_word) >= 3:
+                return False, [], []  # "explain photosynthesis" is clear
+        
+        # Sufficiently detailed queries (7+ words) are usually clear
+        if word_count >= 7 and not self._has_critical_ambiguity(query_lower, history):
+            return False, [], []
+        
+        # =====================================================================
+        # STEP 2: Detect GENUINE ambiguities that require clarification
+        # =====================================================================
+        
+        # Pattern 1: Action verbs with pronouns but NO context
+        # "fix it", "explain this", "continue that", "describe it" - GENUINELY need clarification
+        action_pronoun_pattern = r'^(fix|explain|describe|define|continue|analyze|review|check|update|change|modify|delete|remove|debug|test|run|execute)\s+(it|this|that)$'
+        match = re.match(action_pronoun_pattern, query_lower)
+        if match and not history and not context:
+            action, pronoun = match.groups()
             issues.append({
-                "type": "ambiguous_term",
-                "description": f"Pronoun '{pronouns[0]}' without clear referent",
+                "type": "missing_referent",
+                "description": f"'{pronoun}' has no referent - cannot determine what to {action}",
             })
-            # DO NOT add templated question - it often doesn't make sense in context
+            # Generate a RELEVANT question specific to this query
+            questions.append(f"What would you like me to {action}? Please provide the content or describe what you're referring to.")
         
-        # Check for vague terms - BUT only if the query is genuinely ambiguous
-        # "best 10 cities" is NOT vague - it's a clear request for a ranked list
-        vague_terms = ["thing", "stuff"]  # Reduced list - "best/better" are usually clear in context
-        for term in vague_terms:
-            if term in query_lower.split() and len(query.split()) < 5:  # Only flag in very short queries
+        # Pattern 2: "Compare X" without a comparison target
+        compare_match = re.match(r'^compare\s+(.+?)(?:\s+and\s+|\s+vs\.?\s+|\s+versus\s+|\s+with\s+|\s+to\s+)?$', query_lower)
+        if compare_match and 'and' not in query_lower and 'vs' not in query_lower and 'with' not in query_lower and 'to' not in query_lower:
+            subject = compare_match.group(1).strip()
+            if subject and not re.search(r'\s+(and|vs|versus|with|to)\s+', query_lower):
                 issues.append({
-                    "type": "vague_scope",
-                    "description": f"Vague term '{term}' needs context",
+                    "type": "incomplete_comparison",
+                    "description": f"Comparison requested for '{subject}' but no comparison target specified",
                 })
-                break
+                questions.append(f"What would you like to compare {subject} with?")
         
-        # Semantic ambiguity (polysemous terms) - but be smart about context
-        # "python programming" clearly means the language, not the snake
-        polysemous = {
-            "bank": ["financial institution", "river bank"],
-            "python": ["programming language", "the snake"],
-            "java": ["programming language", "coffee"],
-            "mercury": ["planet", "metal", "car brand", "medicine"],
-            "apple": ["company", "fruit"],
-        }
-        for term, senses in polysemous.items():
-            # Only flag if the term appears AND there's no disambiguating context
-            if term in query_lower.split():
-                # Check for disambiguating context
-                disambiguators = {
-                    "python": ["code", "program", "script", "library", "pip", "import"],
-                    "java": ["code", "program", "class", "jdk", "spring"],
-                    "apple": ["iphone", "mac", "ios", "app", "store"],
-                }
-                has_context = any(d in query_lower for d in disambiguators.get(term, []))
-                if not has_context and len(query.split()) < 6:
-                    issues.append({
-                        "type": "semantic_ambiguity",
-                        "description": f"Term '{term}' can mean multiple things",
-                        "options": senses,
-                    })
-                    possible_interpretations.extend(senses)
-                    # DO NOT add templated question - often obvious from context
-                break
-        
-        # Temporal ambiguity - REMOVED
-        # Asking "which exact date?" for "what happened yesterday" is pedantic and unhelpful
-        # The AI can work with relative dates just fine
-        
-        # Continuation without context - only flag, don't ask templated question
-        if any(kw in query_lower for kw in ["continue", "next part", "keep going", "resume"]) and not history:
-            issues.append({
-                "type": "missing_context",
-                "description": "Continuation requested but no prior conversation provided",
-            })
-            # Don't add templated question - the issue description is enough
-        
-        # Extremely short / numeric / symbol-only queries
-        if len(query.strip()) <= 3 or re.fullmatch(r"[\\d\\W]+", query.strip()):
+        # Pattern 3: Very short queries with only vague words
+        # "help", "problem", "question" alone are genuinely ambiguous
+        single_word_vague = ["help", "problem", "question", "issue", "error", "bug", "stuck"]
+        if word_count == 1 and query_lower in single_word_vague:
             issues.append({
                 "type": "underspecified",
-                "description": "Very short query may have multiple meanings",
+                "description": "Single vague word - need more context",
             })
-            # Don't add templated question
+            questions.append(f"Could you describe your {query_lower} in more detail? What specifically do you need help with?")
         
-        # Check for very broad queries - but be very conservative
-        # "What are the top 10 cities" is NOT too broad - it has clear scope
-        # Only flag truly vague queries like "tell me about history"
-        broad_indicators = ["tell me about", "explain"]  # Reduced list
-        for indicator in broad_indicators:
-            # Only flag if query is VERY short (< 4 words) and has no specifics
-            if (query_lower.startswith(indicator) and 
-                len(query.split()) < 4 and 
-                not re.search(r'\d+', query)):  # No numbers = no specific scope
+        # Pattern 4: "the X" or "my X" with action verb but no history/context
+        # "fix the bug", "update my code" - need to know WHICH bug/code
+        if word_count <= 4 and not history and not context:
+            possessive_action = re.match(r'^(fix|update|change|modify|review|check|debug)\s+(the|my|our)\s+(\w+)$', query_lower)
+            if possessive_action:
+                action, possessive, item = possessive_action.groups()
                 issues.append({
-                    "type": "vague_scope",
-                    "description": "Query may be too broad",
+                    "type": "missing_context",
+                    "description": f"Need to know which specific {item} to {action}",
                 })
-                # Don't add templated question - it's often annoying
-                break
+                questions.append(f"Could you share the {item} you'd like me to {action}? Please paste the content or provide more details.")
         
-        # Check for missing context - REMOVED
-        # "my project" or "the app" are usually clear enough from context
-        # Asking "which project?" is often annoying and unhelpful
+        # Pattern 5: Genuinely polysemous terms in SHORT queries only
+        polysemous = {
+            "bank": (["financial institution", "river bank"], ["money", "account", "loan", "river", "water", "shore"]),
+            "python": (["programming language", "snake"], ["code", "program", "script", "pip", "snake", "reptile"]),
+            "java": (["programming language", "coffee", "island"], ["code", "program", "jdk", "coffee", "beans"]),
+            "mercury": (["planet", "chemical element", "car brand"], ["planet", "space", "metal", "thermometer", "car"]),
+        }
         
-        # Compound/multi-part detection - REMOVED
-        # Just answer all parts of the question, no need to ask
+        if word_count <= 3:  # Only for very short queries
+            for term, (senses, disambiguators) in polysemous.items():
+                if term in query_lower.split():
+                    has_disambiguator = any(d in query_lower for d in disambiguators)
+                    if not has_disambiguator:
+                        issues.append({
+                            "type": "semantic_ambiguity",
+                            "description": f"'{term}' has multiple meanings",
+                            "options": senses,
+                        })
+                        options_text = " or ".join(senses)
+                        questions.append(f"When you say '{term}', do you mean {options_text}?")
+                        possible_interpretations.extend(senses)
+                    break
         
-        # Possible interpretations - REMOVED
-        # Usually context makes the meaning clear, no need to ask
+        # Pattern 6: Continuation requests with no history
+        if any(kw in query_lower for kw in ["continue", "go on", "keep going", "next part", "resume"]) and not history:
+            issues.append({
+                "type": "missing_context",
+                "description": "Continuation requested but no prior conversation",
+            })
+            questions.append("I don't have context from a previous conversation. What would you like me to continue? Please share the previous content or context.")
         
-        # Determine if clarification is needed - be CONSERVATIVE
-        # Only ask for clarification if there are MULTIPLE significant issues
-        ambiguity_score = min(1.0, 0.15 * len(issues) + (0.1 if possible_interpretations else 0))
+        # =====================================================================
+        # STEP 3: Determine if clarification is TRULY needed
+        # =====================================================================
         
-        # Much stricter condition: need high score AND multiple issues
-        needs_clarification = (
-            ambiguity_score >= self.ambiguity_threshold and 
-            len(issues) >= 3  # Need at least 3 issues
-        )
+        # We need clarification if we generated RELEVANT questions
+        # Each question above was only added for genuine ambiguity cases
+        needs_clarification = len(questions) > 0
         
-        # If we have language hint, prepend a localized nudge (lightweight)
-        if language_hint and language_hint != "en":
-            questions = [q for q in questions]  # placeholder for future localization
+        # Log for debugging
+        if needs_clarification:
+            logger.debug(
+                "Clarification needed for query '%s': %d issues, %d questions",
+                query[:50], len(issues), len(questions)
+            )
         
         return needs_clarification, issues, questions[:self.max_query_questions]
+    
+    def _has_critical_ambiguity(self, query_lower: str, history: Optional[List[Dict[str, str]]]) -> bool:
+        """
+        Check if query has critical ambiguity that requires clarification.
+        
+        Used as a secondary check for longer queries that might still be ambiguous.
+        """
+        # Critical: pronouns at the start with action verbs
+        if re.match(r'^(fix|explain|continue|analyze)\s+(it|this|that)\b', query_lower):
+            return not history  # Ambiguous only if no history
+        
+        # Critical: "compare X" without "with/to/and/vs"
+        if query_lower.startswith("compare ") and not re.search(r'\b(with|to|and|vs|versus)\b', query_lower):
+            return True
+        
+        return False
 
     def _detect_language(self, text: str) -> str:
         """Very lightweight language hint (placeholder)."""
