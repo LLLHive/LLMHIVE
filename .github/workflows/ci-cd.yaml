@@ -131,7 +131,7 @@ jobs:
             --region "${{ env.REGION }}" \
             --platform managed \
             --allow-unauthenticated \
-            --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,MANUS_API_KEY=manus-api-key:latest \
+            --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest \
             --timeout=300 \
             --port=8080 \
             --memory=2Gi \
