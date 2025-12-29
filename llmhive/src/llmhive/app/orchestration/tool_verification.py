@@ -666,7 +666,7 @@ class ToolVerifier:
             expr = expr.replace('^', '**')
             result = eval(expr, {"__builtins__": {}}, {})
             return float(result)
-        except:
+        except Exception:
             return None
     
     def _extract_code_blocks(self, text: str) -> List[Tuple[str, str]]:

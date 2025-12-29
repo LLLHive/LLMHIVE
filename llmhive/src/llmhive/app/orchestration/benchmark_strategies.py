@@ -481,7 +481,7 @@ class BenchmarkRunner:
                 ans_num = float(re.sub(r'[^\d.-]', '', answer_clean))
                 exp_num = float(re.sub(r'[^\d.-]', '', expected_clean))
                 return abs(ans_num - exp_num) < 0.01
-            except:
+            except (ValueError, TypeError):
                 pass
         
         # Default: string match
