@@ -10,6 +10,7 @@ Key Features:
 - Model team success tracking
 - Domain and task-type specific learning
 - Time-decay for recency weighting
+- Enhancement-1: Thread-safe operations for concurrent access
 
 Usage:
     from llmhive.app.orchestration.strategy_memory import StrategyMemory, get_strategy_memory
@@ -39,6 +40,7 @@ import logging
 import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
+from threading import Lock  # Enhancement-1: add lock for thread safety
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..performance_tracker import (
@@ -183,6 +185,9 @@ class StrategyMemory:
     - Time-decay weighted recommendations
     - Strategy-model compatibility
     
+    Enhancement-1: All state modifications are protected by a threading lock
+    to ensure thread-safe concurrent access.
+    
     Usage:
         memory = StrategyMemory()
         
@@ -209,6 +214,8 @@ class StrategyMemory:
     
     def __init__(self) -> None:
         """Initialize strategy memory."""
+        # Enhancement-1: Initialize lock for concurrent access
+        self._lock = Lock()
         self._tracker = performance_tracker
         self._model_teams: Dict[str, ModelTeamRecord] = {}
         self._load_model_teams()
@@ -283,7 +290,10 @@ class StrategyMemory:
         refinement_iterations: int = 0,
         performance_notes: Optional[List[str]] = None,
     ) -> None:
-        """Record a strategy outcome.
+        """Record a strategy outcome (thread-safe).
+        
+        Enhancement-1: Uses threading lock to prevent race conditions.
+        Enhancement-2: Updates telemetry metrics for strategy usage.
         
         This wraps performance_tracker.log_run with strategy-specific handling.
         
@@ -305,48 +315,57 @@ class StrategyMemory:
             refinement_iterations: Number of refinement iterations
             performance_notes: Performance notes
         """
-        # Log to performance tracker
-        self._tracker.log_run(
-            models_used=models_used,
-            success_flag=success,
-            latency_ms=latency_ms,
-            domain=domain,
-            strategy=strategy,
-            task_type=task_type,
-            primary_model=primary_model or (models_used[0] if models_used else None),
-            model_roles=model_roles,
-            quality_score=quality_score,
-            confidence=confidence,
-            total_tokens=total_tokens,
-            query_hash=query_hash,
-            query_complexity=query_complexity,
-            ensemble_size=ensemble_size or len(models_used),
-            refinement_iterations=refinement_iterations,
-            performance_notes=performance_notes,
-        )
+        # Enhancement-1: lock to prevent race conditions
+        with self._lock:
+            # Log to performance tracker
+            self._tracker.log_run(
+                models_used=models_used,
+                success_flag=success,
+                latency_ms=latency_ms,
+                domain=domain,
+                strategy=strategy,
+                task_type=task_type,
+                primary_model=primary_model or (models_used[0] if models_used else None),
+                model_roles=model_roles,
+                quality_score=quality_score,
+                confidence=confidence,
+                total_tokens=total_tokens,
+                query_hash=query_hash,
+                query_complexity=query_complexity,
+                ensemble_size=ensemble_size or len(models_used),
+                refinement_iterations=refinement_iterations,
+                performance_notes=performance_notes,
+            )
+            
+            # Also update local model team tracking
+            outcome = StrategyOutcome(
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                query_hash=query_hash or "",
+                strategy=strategy,
+                task_type=task_type,
+                domain=domain,
+                primary_model=primary_model or (models_used[0] if models_used else ""),
+                secondary_models=models_used[1:] if len(models_used) > 1 else [],
+                all_models_used=models_used,
+                model_roles=model_roles or {},
+                success=success,
+                quality_score=quality_score,
+                confidence=confidence,
+                latency_ms=latency_ms,
+                total_tokens=total_tokens,
+                query_complexity=query_complexity,
+                ensemble_size=ensemble_size or len(models_used),
+                refinement_iterations=refinement_iterations,
+                performance_notes=performance_notes or [],
+            )
+            self._update_model_team(outcome)
         
-        # Also update local model team tracking
-        outcome = StrategyOutcome(
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            query_hash=query_hash or "",
-            strategy=strategy,
-            task_type=task_type,
-            domain=domain,
-            primary_model=primary_model or (models_used[0] if models_used else ""),
-            secondary_models=models_used[1:] if len(models_used) > 1 else [],
-            all_models_used=models_used,
-            model_roles=model_roles or {},
-            success=success,
-            quality_score=quality_score,
-            confidence=confidence,
-            latency_ms=latency_ms,
-            total_tokens=total_tokens,
-            query_complexity=query_complexity,
-            ensemble_size=ensemble_size or len(models_used),
-            refinement_iterations=refinement_iterations,
-            performance_notes=performance_notes or [],
-        )
-        self._update_model_team(outcome)
+        # Enhancement-2: update telemetry metrics for strategy usage (outside lock)
+        try:
+            from ..api.orchestrator_metrics import STRATEGY_TIME
+            STRATEGY_TIME.labels(strategy=strategy).observe(latency_ms / 1000.0)
+        except Exception as e:
+            logger.debug(f"Metrics update skipped: {e}")
     
     def recommend_strategy(
         self,
@@ -547,15 +566,19 @@ class StrategyMemory:
         )
 
 
-# Global singleton
+# Global singleton with thread-safe access (Enhancement-1)
 _strategy_memory: Optional[StrategyMemory] = None
+_strategy_memory_lock = Lock()  # Enhancement-1: lock to prevent race on instantiation
 
 
 def get_strategy_memory() -> StrategyMemory:
-    """Get the global strategy memory instance."""
+    """Get the global strategy memory instance (thread-safe)."""
     global _strategy_memory
+    # Enhancement-1: Double-checked locking pattern for thread-safe singleton
     if _strategy_memory is None:
-        _strategy_memory = StrategyMemory()
+        with _strategy_memory_lock:
+            if _strategy_memory is None:
+                _strategy_memory = StrategyMemory()
     return _strategy_memory
 
 

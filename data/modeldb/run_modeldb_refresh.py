@@ -110,6 +110,10 @@ def load_dotenv_safely() -> Tuple[bool, str]:
     """
     Load .env file if present.
     
+    IMPORTANT: Uses override=False so that platform-injected env vars
+    (from Cloud Run Secret Manager, Vercel, etc.) are NOT overwritten
+    by .env file values. This enables "Secret Manager Injection-first" pattern.
+    
     Returns:
         (success, message) tuple
     """
@@ -117,10 +121,12 @@ def load_dotenv_safely() -> Tuple[bool, str]:
         from dotenv import load_dotenv
         
         if ENV_FILE.exists():
-            load_dotenv(ENV_FILE)
-            return True, f"Loaded environment from {ENV_FILE}"
+            # override=False ensures platform-injected secrets take precedence
+            load_dotenv(ENV_FILE, override=False)
+            return True, f"Loaded environment from {ENV_FILE} (override=False)"
         else:
-            return False, f".env file not found at {ENV_FILE}"
+            # .env is optional when secrets are injected via platform or CLI
+            return False, f".env file not found (optional if using Secret Manager injection)"
     except ImportError:
         return False, "python-dotenv not installed. Run: pip install python-dotenv"
 
@@ -253,17 +259,14 @@ def run_doctor() -> int:
     # Environment
     print("🔐 Environment Configuration")
     
-    # .env file
+    # .env file (optional with Secret Manager injection)
     if ENV_FILE.exists():
         print(f"   ✅ .env file: exists at {ENV_FILE}")
     else:
-        print(f"   ❌ .env file: NOT FOUND")
+        print(f"   ℹ️  .env file: NOT FOUND (optional with Secret Manager)")
+        print(f"      Secrets can be injected via: source scripts/gcp_secret_inject.sh")
         if ENV_EXAMPLE_FILE.exists():
-            print(f"      To fix, run:")
-            print(f"      cp {ENV_EXAMPLE_FILE} {ENV_FILE}")
-        else:
-            print(f"      Create from template and fill in secrets")
-        issues.append(".env file missing")
+            print(f"      Or create .env: cp {ENV_EXAMPLE_FILE} {ENV_FILE}")
     
     # Load .env and check vars
     load_dotenv_safely()
@@ -461,8 +464,14 @@ class ModelDBRefreshRunner:
         evals_enabled: bool = True,
         telemetry_enabled: bool = True,
         evals_max_models: int = 0,
+        evals_ttl_days: int = 30,
+        evals_seed: Optional[str] = None,
+        evals_always_include_top: int = 10,
         telemetry_max_models: int = 0,
         telemetry_trials: int = 3,
+        telemetry_ttl_days: int = 14,
+        telemetry_seed: Optional[str] = None,
+        telemetry_always_include_top: int = 10,
         skip_expensive: bool = False,
     ):
         self.excel_path = excel_path or DEFAULT_EXCEL
@@ -476,8 +485,14 @@ class ModelDBRefreshRunner:
         self.evals_enabled = evals_enabled
         self.telemetry_enabled = telemetry_enabled
         self.evals_max_models = evals_max_models
+        self.evals_ttl_days = evals_ttl_days
+        self.evals_seed = evals_seed
+        self.evals_always_include_top = evals_always_include_top
         self.telemetry_max_models = telemetry_max_models
         self.telemetry_trials = telemetry_trials
+        self.telemetry_ttl_days = telemetry_ttl_days
+        self.telemetry_seed = telemetry_seed
+        self.telemetry_always_include_top = telemetry_always_include_top
         self.skip_expensive = skip_expensive
         
         self.archive_path: Optional[Path] = None
@@ -701,11 +716,25 @@ class ModelDBRefreshRunner:
         if self.evals_max_models > 0:
             args.extend(["--evals-max-models", str(self.evals_max_models)])
         
+        args.extend(["--evals-ttl-days", str(self.evals_ttl_days)])
+        
+        if self.evals_seed:
+            args.extend(["--evals-seed", self.evals_seed])
+        
+        args.extend(["--evals-always-include-top", str(self.evals_always_include_top)])
+        
         if self.telemetry_max_models > 0:
             args.extend(["--telemetry-max-models", str(self.telemetry_max_models)])
         
         if self.telemetry_trials:
             args.extend(["--telemetry-trials", str(self.telemetry_trials)])
+        
+        args.extend(["--telemetry-ttl-days", str(self.telemetry_ttl_days)])
+        
+        if self.telemetry_seed:
+            args.extend(["--telemetry-seed", self.telemetry_seed])
+        
+        args.extend(["--telemetry-always-include-top", str(self.telemetry_always_include_top)])
         
         if self.skip_expensive:
             args.append("--skip-expensive")
@@ -966,6 +995,24 @@ Examples:
         help="Limit number of models for evals (0 = no limit)",
     )
     parser.add_argument(
+        "--evals-ttl-days",
+        type=int,
+        default=30,
+        help="Time-to-live in days for eval metrics (default: 30)",
+    )
+    parser.add_argument(
+        "--evals-seed",
+        type=str,
+        default=None,
+        help="Seed for eval cohort selection (default: ISO week)",
+    )
+    parser.add_argument(
+        "--evals-always-include-top",
+        type=int,
+        default=10,
+        help="Always include top N ranked models in eval cohort (default: 10)",
+    )
+    parser.add_argument(
         "--telemetry-max-models",
         type=int,
         default=0,
@@ -976,6 +1023,24 @@ Examples:
         type=int,
         default=3,
         help="Number of telemetry trials per model (default: 3)",
+    )
+    parser.add_argument(
+        "--telemetry-ttl-days",
+        type=int,
+        default=14,
+        help="Time-to-live in days for telemetry metrics (default: 14)",
+    )
+    parser.add_argument(
+        "--telemetry-seed",
+        type=str,
+        default=None,
+        help="Seed for telemetry cohort selection (default: ISO week)",
+    )
+    parser.add_argument(
+        "--telemetry-always-include-top",
+        type=int,
+        default=10,
+        help="Always include top N ranked models in telemetry cohort (default: 10)",
     )
     parser.add_argument(
         "--skip-expensive",
@@ -1019,34 +1084,34 @@ Examples:
             dry_run=args.dry_run,
         )
         
-        if not env_ok and not ENV_FILE.exists():
+        if not env_ok:
             logger.error("")
             logger.error("=" * 70)
             logger.error("❌ MISSING CONFIGURATION")
             logger.error("=" * 70)
             logger.error("")
-            logger.error("The .env file is required for real runs.")
+            logger.error("Required environment variables are not set.")
+            for issue in env_issues:
+                logger.error(issue)
             logger.error("")
-            logger.error("To fix, run:")
+            logger.error("To fix, use ONE of these methods:")
+            logger.error("")
+            logger.error("  Option 1 - Secret Manager Injection (recommended for local/CI):")
+            logger.error("    source scripts/gcp_secret_inject.sh")
+            logger.error("    python data/modeldb/run_modeldb_refresh.py")
+            logger.error("")
+            logger.error("  Option 2 - Cloud Run/Vercel (production):")
+            logger.error("    Ensure Secret Manager env vars are attached to your service.")
+            logger.error("")
             if ENV_EXAMPLE_FILE.exists():
-                logger.error(f"  cp {ENV_EXAMPLE_FILE} {ENV_FILE}")
-            else:
-                logger.error(f"  Create {ENV_FILE} with required secrets")
+                logger.error("  Option 3 - Local .env file:")
+                logger.error(f"    cp {ENV_EXAMPLE_FILE} {ENV_FILE}")
+                logger.error("    # Edit .env with your API keys")
             logger.error("")
-            logger.error("Then edit the file and fill in your API keys.")
-            logger.error("")
-            logger.error("Alternatively, run with --dry-run to validate without secrets:")
+            logger.error("Or run with --dry-run to validate without secrets:")
             logger.error("  python run_modeldb_refresh.py --dry-run")
             logger.error("")
             sys.exit(1)
-        
-        if not env_ok:
-            logger.warning("")
-            logger.warning("Missing environment variables:")
-            for issue in env_issues:
-                logger.warning(issue)
-            logger.warning("")
-            logger.warning("Some features may not work. Run --doctor for full diagnostics.")
     
     # Run
     runner = ModelDBRefreshRunner(
@@ -1061,8 +1126,14 @@ Examples:
         evals_enabled=args.evals_enabled.lower() == "true",
         telemetry_enabled=args.telemetry_enabled.lower() == "true",
         evals_max_models=args.evals_max_models,
+        evals_ttl_days=args.evals_ttl_days,
+        evals_seed=args.evals_seed,
+        evals_always_include_top=args.evals_always_include_top,
         telemetry_max_models=args.telemetry_max_models,
         telemetry_trials=args.telemetry_trials,
+        telemetry_ttl_days=args.telemetry_ttl_days,
+        telemetry_seed=args.telemetry_seed,
+        telemetry_always_include_top=args.telemetry_always_include_top,
         skip_expensive=args.skip_expensive,
     )
     

@@ -1,0 +1,100 @@
+# README
+kb_name,description,version,last_updated
+LLMHive Techniques Knowledge Base,Comprehensive KB of AI team orchestration strategies, prompt techniques, and quality methods,v1.0,2025-12-26
+
+# techniques
+technique_id,name,architecture_pattern,coordination_mechanism,agent_roles,reasoning_type,rag_dependency,implementation_steps,canonical_sources
+TECH_0001,Chain-of-Thought Prompting,Single-Agent LLM,N/A,Single agent,stepwise-deductive,no,Model generates a series of intermediate reasoning steps before final answer (improves complex QA and math performance),SRC_0001
+TECH_0002,Self-Consistency Decoding,Single-Agent LLM,N/A,Single agent,multi-path voting,no,Model samples multiple reasoning chains and selects the most consistent answer by majority boosting reasoning accuracy by large margins,SRC_0002
+TECH_0003,Tree-of-Thought (ToT),Single-Agent LLM,N/A,Single agent,search-based reasoning,no,Model explores a branching tree of possible thought steps with backtracking and lookahead enabling deliberate planning (e.g. GPT-4 success on a puzzle rose from 4% to 74% using ToT),SRC_0004
+TECH_0004,ReAct (Reason+Act),Single-Agent with Tools,interleaved reasoning & tool-use,Single agent,tool-augmented,yes,Model alternates between thought steps and actions (API calls) to gather information and update plans which reduces hallucinations and improves task success,SRC_0003
+TECH_0005,Self-Refine Prompting,Single-Agent LLM,iterative self-feedback,Single agent,self-critique,no,Model generates an initial draft then critiques and revises its own output iteratively without extra training yielding ~20% quality improvements across tasks,SRC_0005
+TECH_0006,Retrieval-Augmented Generation (RAG),Single-Agent with Tools,retrieve-then-read,Single agent,knowledge-augmented,yes,Model retrieves relevant documents from an external corpus and incorporates them into the prompt before answering enabling use of up-to-date/domain-specific info and reducing hallucination,SRC_0012
+TECH_0007,Multi-Agent Debate (MAD),Multi-Agent Peer,turn-based debate,Multiple peer agents,dialectical,no,Multiple agents argue and critique each others answers in a structured sequence moderated by a judge model aiming to refine reasoning and correct errors; diversity of viewpoints is key to success,SRC_0006
+TECH_0008,Expert Panel (Ensemble),Multi-Agent Parallel,independent contributions,Multiple specialists,ensemble reasoning,optional,Multiple expert agents (e.g. Analyst Reasoner Verifier) address a query in parallel and their outputs are synthesized into a final answer leveraging diverse expertise for comprehensive responses,SRC_0007
+TECH_0009,Challenge & Refine Loop,Multi-Agent Iterative,critique-refinement loop,Challenger + Responder,adversarial refinement,no,One agent (or sub-model) generates a draft and a secondary agent identifies flaws and suggests fixes; the first agent revises the answer. Iterate until no issues remain or max loops producing more correct answers,SRC_0007
+TECH_0010,ChatDev Multi-Stage,Multi-Agent Sequential,phase-wise handoff,Roles: Designer & Programmer & Tester & Doc,workflow reasoning,no,Simulated software team: agents take on roles (design coding testing etc.) and communicate in a waterfall chat chain completing an entire software project in minutes with minimal human input (e.g. a gomoku game in 7 minutes <$1),SRC_0008
+TECH_0011,MacNet DAG Orchestration,Multi-Agent Hierarchical,topological order DAG,Many specialized nodes,distributed reasoning,no,Large-scale multi-agent network organized as a directed acyclic graph with instructor and assistant roles along each edge; agents pass refined solutions through the network. Enables coordination of 1000+ agents and shows emergent quality gains with small-world topologies,SRC_0009
+TECH_0012,HuggingGPT Orchestrator,Multi-Model Hierarchical,centralized controller,Controller + tool-experts,plan-and-execute,yes,A large LLM (controller) parses the user request into tasks selects appropriate expert models for each (via HuggingFace hub) runs subtasks (vision speech etc.) then integrates the results into a final answer – effectively using an LLM to manage a team of specialized AI models,SRC_0010
+
+# architectures
+architecture_id,pattern_name,description
+ARCH_0001,Single-Agent Monolithic,A single LLM handles the query end-to-end without specialized divisions (baseline architecture for prompts)
+ARCH_0002,Single-Agent + Tools,A single LLM augmented with tool use (APIs search etc.) to fetch external information or execute actions
+ARCH_0003,Multi-Agent Parallel,Multiple LLM agents work independently on the problem (often with different specializations) and their outputs are later combined
+ARCH_0004,Multi-Agent Sequential,Multiple LLM agents arranged in a pipeline of stages passing context and results from one role to the next (workflow chain)
+ARCH_0005,Multi-Agent Hierarchical,An orchestrator (lead agent) coordinates subordinate agents (or models) in a tree or DAG structure assigning tasks and integrating results
+ARCH_0006,Multi-Agent Adversarial,Agents engage in a debate or critique format either against each other or with a designated critic/judge to refine the answer through conflict and resolution
+ARCH_0007,Iterative Self-Improvement,A single LLM (or team) iteratively refines its output by self-critiquing and updating the response in multiple rounds within one session
+
+# benchmarks
+benchmark_id,name,category,description,source_id
+BM_0001,GSM8K,Math Word Problems,Grade-school math word problem benchmark (solve arithmetic/logic word questions),SRC_0001
+BM_0002,MMLU,Knowledge QA,Massive Multitask Language Understanding test across 57 subjects (culture science etc.),SRC_0011
+BM_0003,HumanEval,Code Generation,OpenAI coding challenge: generate correct solutions for programming problems,SRC_0011
+BM_0004,BBH,Reasoning QA,BIG-Bench Hard: a set of challenging held-out reasoning tasks for LLMs,SRC_0011
+BM_0005,HotpotQA,Multi-hop QA,Wikipedia-based multi-hop question answering (requires combining facts),SRC_0003
+BM_0006,ALFWorld,Interactive Decision,Text-based virtual environment for ALFRED tasks (interactive agent planning),SRC_0003
+BM_0007,WebShop,Interactive Decision,Virtual shopping environment requiring multi-step planning (web navigation task),SRC_0003
+BM_0008,IncidentResponseSim,Operational QA,Simulated incident response scenario requiring diagnostic reasoning and remedial planning,SRC_0007
+BM_0009,GameOf24,Puzzle,Math puzzle (make 24 from four numbers) requiring strategic search,SRC_0004
+BM_0010,SoftwareDevSim,Code Generation,End-to-end software development simulation (design implement test a project via AI agents),SRC_0008
+
+# benchmark_results
+result_id,technique_id,benchmark_id,model_or_system,conditions,date_reported,source_id,outcome
+RES_0001,TECH_0001,BM_0001,PaLM 540B,CoT vs no-CoT exemplars,2022-01-28,SRC_0001,Chain-of-thought prompting achieved SOTA 74% on GSM8K math (vs 17% without CoT)
+RES_0002,TECH_0002,BM_0001,GPT-3 175B,with Self-Consistency,2023-02-01,SRC_0002,Self-Consistency decoding improved GSM8K accuracy by +17.9% (from 55.7% to 73.6%)
+RES_0003,TECH_0003,BM_0009,GPT-4,CoT vs ToT,2023-12-03,SRC_0004,Tree-of-Thought solved 74% of Game-of-24 puzzles (GPT-4 with CoT baseline only 4% solved)
+RES_0004,TECH_0004,BM_0005,GPT-3.5 + Tools,ReAct vs standard CoT,2023-10-06,SRC_0003,ReAct eliminated hallucinated answers on HotpotQA and improved factual accuracy by using Wikipedia lookup
+RES_0005,TECH_0004,BM_0006,GPT-3 (few-shot),ReAct vs RL agent,2023-10-06,SRC_0003,On ALFWorld interactive tasks ReAct achieved 34% higher success rate than a trained RL policy
+RES_0006,TECH_0008,BM_0008,Multi-agent (3 models),Expert panel vs single,2025-11-19,SRC_0007,Multi-agent orchestration produced 100% actionable incident reports with zero variance vs 1.7% for single-LLM (deterministic quality gain)
+RES_0007,TECH_0010,BM_0010,ChatDev agents (GPT-4),full automation,2023-07-18,SRC_0008,ChatDev multi-agent completed 70+ software tasks with average 409s runtime and $0.30 cost while fixing ~13 bugs per project autonomously
+RES_0008,TECH_0012,BM_0002,ChatGPT+HF tools,Heterogeneous orchestration,2023-03-30,SRC_0010,HuggingGPT successfully handled complex multi-modal user requests by delegating subtasks to expert models (language vision etc.) demonstrating broad task generality
+
+# evaluation_rubric
+rubric_id,name,criteria,notes
+RUB_0001,Decision Quality (DQ),Validity & Specificity & Correctness,Multi-dimensional metric for actionable correctness: an answer must be factually valid specifically actionable and correct to score high
+RUB_0002,Human Preference (HHH),Helpfulness & Honesty & Harmlessness,Measures answer quality via human feedback along usefulness to user truthfulness and avoidance of toxic or unsafe content (used in RLHF tuning)
+
+# rankings
+ranking_id,benchmark_id,rank_position,model_or_system,score_or_accuracy,source_id,date_reported
+RANK_0001,BM_0002,1,ARC Reactor Mk1,92.9%,SRC_0011,2024-06-20
+RANK_0002,BM_0002,2,OpenAI GPT-4 Omni,88.7%,SRC_0011,2024-06-20
+RANK_0003,BM_0002,3,Anthropic Claude Opus,86.8%,SRC_0011,2024-06-20
+RANK_0004,BM_0002,4,Meta Llama 3,86.1%,SRC_0011,2024-06-20
+RANK_0005,BM_0003,1,ARC Reactor Mk1,91.0%,SRC_0011,2024-06-20
+RANK_0006,BM_0003,2,OpenAI GPT-4 Omni,90.2%,SRC_0011,2024-06-20
+RANK_0007,BM_0003,3,Anthropic Claude Opus,84.9%,SRC_0011,2024-06-20
+RANK_0008,BM_0004,1,ARC Reactor Mk1,88.0%,SRC_0011,2024-06-20
+RANK_0009,BM_0004,2,Google Gemini,83.6%,SRC_0011,2024-06-20
+RANK_0010,BM_0004,3,OpenAI GPT-4 Omni,83.1%,SRC_0011,2024-06-20
+
+# sources
+source_id,title_or_reference,publication_type,credibility_tier,url
+SRC_0001,Wei et al. 2022 - Chain-of-Thought Prompting,Conference Paper (NeurIPS'22),Tier 1 (peer-reviewed),https://arxiv.org/abs/2201.11903
+SRC_0002,Wang et al. 2022 - Self-Consistency CoT,Conference Paper (ICLR'23),Tier 1 (peer-reviewed),https://openreview.net/forum?id=1PL1NIMMrw
+SRC_0003,Yao et al. 2022 - ReAct (ICLR'23),Conference Paper (ICLR'23),Tier 1 (peer-reviewed),https://arxiv.org/abs/2210.03629
+SRC_0004,Yao et al. 2023 - Tree-of-Thought (NeurIPS'23),Conference Paper (NeurIPS'23),Tier 1 (peer-reviewed),https://arxiv.org/abs/2305.10601
+SRC_0005,Madaan et al. 2023 - Self-Refine,Conference Paper (NeurIPS'23),Tier 1 (peer-reviewed),https://openreview.net/forum?id=S37hOerQLB
+SRC_0006,Wu et al. 2025 - Can LLM Agents Debate?,Preprint (arXiv Nov 2025),Tier 2 (preprint),https://arxiv.org/abs/2511.07784
+SRC_0007,Drammeh 2025 - Multi-Agent Orchestration for IR,Preprint (arXiv Nov 2025),Tier 2 (preprint),https://arxiv.org/abs/2511.15755
+SRC_0008,Qian et al. 2023 - ChatDev AI SDLC,Preprint (arXiv Jul 2023),Tier 2 (preprint),https://arxiv.org/abs/2307.07924
+SRC_0009,Qian et al. 2024 - MacNet (Scaling LLM Agents),Preprint (arXiv Jun 2024),Tier 2 (preprint),https://arxiv.org/abs/2406.07155
+SRC_0010,Shen et al. 2023 - HuggingGPT,Preprint (arXiv Dec 2023),Tier 2 (preprint),https://arxiv.org/abs/2303.17580
+SRC_0011,Dunham & Syahputra 2024 - Reactor Mk1 Report,Preprint/Tech Report (arXiv Jun 2024),Tier 2 (preprint),https://arxiv.org/abs/2406.10515
+SRC_0012,Wikipedia 2025 - Retrieval-Augmented Generation,Tertiary Reference (Wiki article),Tier 3 (community),https://en.wikipedia.org/wiki/Retrieval-augmented_generation
+
+# technique_source_map
+technique_id,source_id,relation_type
+TECH_0001,SRC_0001,canonical
+TECH_0002,SRC_0002,canonical
+TECH_0003,SRC_0004,canonical
+TECH_0004,SRC_0003,canonical
+TECH_0005,SRC_0005,canonical
+TECH_0006,SRC_0012,canonical
+TECH_0007,SRC_0006,canonical
+TECH_0008,SRC_0007,canonical
+TECH_0009,SRC_0007,supporting
+TECH_0010,SRC_0008,canonical
+TECH_0011,SRC_0009,canonical
+TECH_0012,SRC_0010,canonical

@@ -538,3 +538,19 @@ try:
     logger.info("OpenRouter scheduler router enabled")
 except ImportError as e:
     logger.debug("OpenRouter scheduler router not available: %s", e)
+
+# Enhancement-2: Include orchestrator metrics router (at /api/v1/metrics)
+try:
+    from .api.orchestrator_metrics import router as orchestrator_metrics_router
+    app.include_router(orchestrator_metrics_router, prefix="/api/v1")
+    logger.info("✓ Orchestrator metrics routes registered at /api/v1/metrics/")
+except ImportError as e:
+    logger.debug("Orchestrator metrics router not available: %s", e)
+
+# Enhancement-4: Include WebSocket collaboration router (at /ws)
+try:
+    from .routers.collab import router as collab_router
+    app.include_router(collab_router, prefix="/ws")
+    logger.info("✓ WebSocket collaboration routes registered at /ws/")
+except ImportError as e:
+    logger.debug("Collaboration router not available: %s", e)

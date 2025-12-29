@@ -118,6 +118,18 @@ Comprehensive prompt templates for all roles:
 - **Synthesizer**: Multi-model response fusion
 - **Meta Controller**: Overall orchestration coordination
 
+### 8.1 Automatic HRM Activation for Complex Queries ✅
+
+**File:** `llmhive/src/llmhive/app/services/orchestrator_adapter.py`
+
+HRM (Hierarchical Role Management) is now **automatically enabled** for complex queries:
+
+- When PromptOps classifies a query as "complex" or "research" level (`requires_hrm=True`), the orchestrator automatically sets `use_hrm=True`
+- This allows complex multi-part queries to be decomposed into sub-steps without requiring the manual `enable_hrm` flag
+- When HRM is auto-enabled, it takes precedence over elite orchestration strategies (e.g., `parallel_race`, `best_of_n`)
+- User's explicit choice is respected: if `enable_hrm` was already `True`, it stays enabled
+- Simple/moderate queries continue to use the standard single-model or ensemble paths
+
 ### 8. Frontend-Backend Alignment ✅
 
 **Files:**

@@ -8,6 +8,8 @@ Implements ReAct-style tool integration with advanced capabilities:
 - Image generation (text-to-image)
 - Tool chaining (sequential execution with dependencies)
 
+Enhancement-1: Thread-safe operations for concurrent access to shared state.
+
 The Tool Broker decides when tools are needed and seamlessly
 integrates their outputs into the orchestration pipeline.
 """
@@ -20,6 +22,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
+from threading import Lock  # Enhancement-1: use threading lock for sync sections
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -36,6 +39,7 @@ class ToolType(str, Enum):
     IMAGE_GENERATION = "image_generation"  # text-to-image
     KNOWLEDGE_BASE = "knowledge_base"  # RAG lookup
     VISION = "vision"  # general image caption/OCR
+    AUDIO = "audio"  # Q4 2025: speech-to-text transcription
 
 
 class ToolPriority(str, Enum):
@@ -702,7 +706,10 @@ class ToolBroker:
         "generate image", "create image", "visualize",
         "illustration of", "show me", "create a picture",
     ]
-    VISION_TRIGGERS = [".png", ".jpg", ".jpeg", ".gif", "data:image", "image:"]
+    VISION_TRIGGERS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", "data:image", "image:", "[image]", "attached image", "this image", "the image"]
+    
+    # Q4 2025: Audio input triggers
+    AUDIO_TRIGGERS = [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", "audio:", "[audio]", "attached audio", "voice message", "audio file", "recording", "transcribe"]
     
     def __init__(self):
         """Initialize the Tool Broker."""
@@ -718,6 +725,8 @@ class ToolBroker:
         
         # Track tool failures for fallback decisions
         self._failure_counts: Dict[ToolType, int] = {}
+        # Enhancement-1: lock to guard shared state
+        self._lock = Lock()
         
         # PR4: Memory manager for RAG lookups
         self.memory_manager: Optional[Any] = None
@@ -855,6 +864,16 @@ class ToolBroker:
                 priority=ToolPriority.MEDIUM,
             ))
             reasoning_parts.append("Image detected; added vision analysis")
+        
+        # Q4 2025: Check for audio analysis needs (audio inputs)
+        if any(trigger in query_lower for trigger in self.AUDIO_TRIGGERS):
+            tool_requests.append(ToolRequest(
+                tool_type=ToolType.AUDIO,
+                query=query,
+                purpose="Transcribe audio (speech-to-text)",
+                priority=ToolPriority.MEDIUM,
+            ))
+            reasoning_parts.append("Audio detected; added audio transcription")
 
         # Check for browser fetch needs (explicit URLs)
         if "http://" in query_lower or "https://" in query_lower or "open url" in query_lower or "fetch url" in query_lower:
@@ -1130,8 +1149,17 @@ class ToolBroker:
             )
     
     def _record_failure(self, tool_type: ToolType) -> None:
-        """Record a tool failure for tracking."""
-        self._failure_counts[tool_type] = self._failure_counts.get(tool_type, 0) + 1
+        """Record a tool failure for tracking (thread-safe)."""
+        # Enhancement-1: ensure thread-safe failure count update
+        with self._lock:
+            self._failure_counts[tool_type] = self._failure_counts.get(tool_type, 0) + 1
+        
+        # Enhancement-2: Update tool usage metric for failures
+        try:
+            from ..api.orchestrator_metrics import TOOL_USAGE
+            TOOL_USAGE.labels(tool_type=tool_type.value, status="failure").inc()
+        except Exception:
+            pass  # Metrics not available
     
     def format_tool_results(
         self, 
@@ -1714,15 +1742,19 @@ class ToolBroker:
 # Convenience Functions
 # ==============================================================================
 
-# Global tool broker instance
+# Global tool broker instance with thread-safe access (Enhancement-1)
 _tool_broker: Optional[ToolBroker] = None
+_tool_broker_lock = Lock()  # Enhancement-1: lock to prevent race on instantiation
 
 
 def get_tool_broker() -> ToolBroker:
-    """Get or create the global tool broker instance."""
+    """Get or create the global tool broker instance (thread-safe)."""
     global _tool_broker
+    # Enhancement-1: Double-checked locking pattern for thread-safe singleton
     if _tool_broker is None:
-        _tool_broker = ToolBroker()
+        with _tool_broker_lock:
+            if _tool_broker is None:
+                _tool_broker = ToolBroker()
     return _tool_broker
 
 
