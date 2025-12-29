@@ -13,7 +13,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Fixtures path
-FIXTURES_DIR = Path(__file__).parent.parent.parent.parent / "tests" / "fixtures" / "openrouter"
+FIXTURES_DIR = Path(__file__).parent.parent.parent / "tests" / "fixtures" / "openrouter"
 
 
 class TestCategoryDiscovery:
