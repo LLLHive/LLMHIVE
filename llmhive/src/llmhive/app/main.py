@@ -538,3 +538,11 @@ try:
     logger.info("OpenRouter scheduler router enabled")
 except ImportError as e:
     logger.debug("OpenRouter scheduler router not available: %s", e)
+
+# Include Collaboration router for multi-user shared sessions
+try:
+    from .routers import collaborate as collaborate_router
+    app.include_router(collaborate_router.router, prefix="/api/v1")
+    logger.info("Collaboration router enabled at /api/v1/collaborate")
+except ImportError as e:
+    logger.debug("Collaboration router not available: %s", e)
