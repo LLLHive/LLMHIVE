@@ -109,21 +109,22 @@ class VirtualFileSystem:
         Raises:
             PermissionError: If path escapes the sandbox
         """
-        # Normalize path
-        normalized = Path(path).resolve()
+        # Check if path is absolute BEFORE resolving
+        path_obj = Path(path)
         
-        # If absolute, check it's within root
-        if normalized.is_absolute():
+        if path_obj.is_absolute():
+            # If absolute, check it's within root
+            resolved = path_obj.resolve()
             try:
-                normalized.relative_to(self.root_path.resolve())
+                resolved.relative_to(self.root_path.resolve())
             except ValueError:
                 raise PermissionError(f"Path outside sandbox: {path}")
-            return normalized
+            return resolved
         
-        # Resolve relative to root
-        resolved = (self.root_path / normalized).resolve()
+        # Relative path: resolve relative to root
+        resolved = (self.root_path / path_obj).resolve()
         
-        # Ensure it's within root
+        # Ensure it's within root (protect against path traversal like "../..")
         try:
             resolved.relative_to(self.root_path.resolve())
         except ValueError:
