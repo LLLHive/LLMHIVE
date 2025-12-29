@@ -273,7 +273,8 @@ async def web_search_formatted(
     results = await web_search(query, max_results, days=days, topic=topic)
     
     if not results:
-        return f"No web search results found for: {query}"
+        # Return empty string when no results - orchestrator will handle fallback
+        return ""
     
     # Add current date context and recency info
     from datetime import datetime

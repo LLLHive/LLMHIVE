@@ -710,7 +710,8 @@ class ToolBroker:
             results = await self.web_research.search(query)
             
             if not results:
-                return "No results found."
+                # Return empty string - orchestrator will fall back to model knowledge
+                return ""
             
             # Format results
             output_parts = []

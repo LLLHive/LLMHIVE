@@ -1856,23 +1856,50 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     
                     # Append tool context to the prompt with explicit instructions
                     if tool_context:
-                        tool_instruction = (
-                            "\n\n=== IMPORTANT: REAL-TIME DATA BELOW ===\n"
-                            "The following information was retrieved from current web searches. "
-                            "You MUST use this data to answer the question. Do NOT claim you cannot "
-                            "access current information - the data below is current as of today.\n\n"
-                            f"{tool_context}\n"
-                            "=== END OF REAL-TIME DATA ===\n\n"
-                            "CRITICAL INSTRUCTIONS:\n"
-                            "1. Use ONLY the information from the real-time data above - do NOT hallucinate or make up information\n"
-                            "2. If asked for a numbered list (e.g., 'top 10'), provide ALL items requested using the search data\n"
-                            "3. If the search data doesn't have enough items, clearly state how many you found and list them all\n"
-                            "4. Include specific details from the sources (names, versions, capabilities)\n"
-                            "5. Do NOT say 'I cannot access' or 'I don't have real-time data' - you DO have current data above\n"
-                            "Now provide a complete, accurate answer based on the real-time data:"
+                        # Check if web search actually returned useful results
+                        no_results_indicators = [
+                            "no results found",
+                            "no web search results",
+                            "search returned no",
+                            "couldn't find",
+                            "no relevant results",
+                        ]
+                        search_failed = any(
+                            indicator in tool_context.lower() 
+                            for indicator in no_results_indicators
                         )
+                        
+                        if search_failed:
+                            # Web search failed - instruct model to use its training knowledge
+                            tool_instruction = (
+                                "\n\n=== NOTE: WEB SEARCH RETURNED NO RESULTS ===\n"
+                                "A web search was attempted but returned no results. "
+                                "This is fine - please answer using your training knowledge.\n\n"
+                                "IMPORTANT: You have extensive knowledge about this topic from your training. "
+                                "Do NOT say you cannot answer or that you lack information. "
+                                "Provide a complete, accurate answer based on your knowledge:\n"
+                            )
+                            logger.warning("Web search returned no results, falling back to model knowledge")
+                        else:
+                            # Web search succeeded - use the real-time data
+                            tool_instruction = (
+                                "\n\n=== IMPORTANT: REAL-TIME DATA BELOW ===\n"
+                                "The following information was retrieved from current web searches. "
+                                "You MUST use this data to answer the question. Do NOT claim you cannot "
+                                "access current information - the data below is current as of today.\n\n"
+                                f"{tool_context}\n"
+                                "=== END OF REAL-TIME DATA ===\n\n"
+                                "CRITICAL INSTRUCTIONS:\n"
+                                "1. Use the real-time data above as your PRIMARY source, but supplement with your knowledge if needed\n"
+                                "2. If asked for a numbered list (e.g., 'top 10'), provide ALL items requested using the search data\n"
+                                "3. If the search data doesn't have enough items, supplement with your training knowledge\n"
+                                "4. Include specific details from the sources (names, versions, capabilities)\n"
+                                "5. Do NOT say 'I cannot access' or 'I don't have real-time data' - you DO have current data above\n"
+                                "Now provide a complete, accurate answer based on the real-time data:"
+                            )
+                            logger.info("Tool context added to prompt with instructions (%d chars)", len(tool_context))
+                        
                         base_prompt = f"{base_prompt}{tool_instruction}"
-                        logger.info("Tool context added to prompt with instructions (%d chars)", len(tool_context))
             except Exception as e:
                 logger.warning("Tool Broker failed: %s", e)
         
