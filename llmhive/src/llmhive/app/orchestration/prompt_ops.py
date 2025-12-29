@@ -344,7 +344,11 @@ class PromptOps:
     
     # Complexity indicators
     COMPLEXITY_INDICATORS = {
-        "simple": ["quick", "simple", "just", "only", "brief", "short", "basic"],
+        "simple": [
+            "quick", "simple", "just", "only", "brief", "short", "basic",
+            "list", "name", "what is", "who is", "when", "where", "define",
+            "give me", "tell me", "how many", "how much", "translate",
+        ],
         "complex": [
             "comprehensive", "detailed", "in-depth", "thorough",
             "extensive", "complete", "all aspects", "step by step",
@@ -853,12 +857,12 @@ Output ONLY the clarified query, nothing else."""
         if complex_score >= 2:
             return QueryComplexity.COMPLEX
         
-        # Check for simple indicators
+        # Check for simple indicators (any 1 match is enough for factual/list queries)
         simple_score = sum(
             1 for term in self.COMPLEXITY_INDICATORS["simple"]
             if term in query_lower
         )
-        if simple_score >= 2 or len(query_lower.split()) < 8:
+        if simple_score >= 1 or len(query_lower.split()) < 10:
             return QueryComplexity.SIMPLE
         
         # Word count factor

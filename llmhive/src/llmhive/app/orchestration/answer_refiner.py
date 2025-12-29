@@ -175,14 +175,49 @@ class AnswerRefiner:
         self.default_config = default_config or RefinementConfig()
     
     def _strip_meta_commentary(self, content: str) -> str:
-        """Strip meta-commentary that may have leaked from orchestration.
+        """Strip meta-commentary and reasoning scaffold that may have leaked from orchestration.
         
         This removes patterns like:
         - "Here is the improved answer..."
         - "I have addressed the feedback..."
         - Self-critique sections
         - "Confidence Level: X/10" internal notes
+        - Reasoning scaffold sections (=== PROBLEM ===, === UNDERSTANDING ===, etc.)
         """
+        # FIRST: If content has "=== FINAL ANSWER ===" section, extract ONLY that
+        if "=== FINAL ANSWER ===" in content:
+            final_part = content.split("=== FINAL ANSWER ===")[-1].strip()
+            # Remove any trailing scaffold if present
+            for scaffold in ["=== ", "---", "***"]:
+                if scaffold in final_part:
+                    final_part = final_part.split(scaffold)[0].strip()
+            if final_part and len(final_part) > 20:
+                logger.info("Extracted final answer from reasoning scaffold")
+                return final_part
+        
+        # Reasoning scaffold sections to remove entirely (with content up to next section)
+        scaffold_sections = [
+            r"===\s*PROBLEM\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*UNDERSTANDING\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*APPROACH\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*STEP-BY-STEP\s+SOLUTION\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*VERIFICATION\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*CONFIDENCE\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*SYNTHESIS\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*PERSPECTIVE\s+\d+.*?===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*PROPOSER\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*CRITIC\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*DEFENDER\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*ATTEMPT\s+\d+\s*===.*?(?====\s*\w+\s*===|$)",
+        ]
+        
+        cleaned = content
+        for pattern in scaffold_sections:
+            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.DOTALL)
+        
+        # Also strip any remaining "=== SOMETHING ===" headers
+        cleaned = re.sub(r"===\s*[A-Z][A-Z\s]+===\s*\n?", "", cleaned, flags=re.IGNORECASE)
+        
         # Patterns that indicate meta-commentary (case-insensitive)
         meta_patterns = [
             r"^```\w*\s*\n",  # Code fence at start with language tag
@@ -195,15 +230,27 @@ class AnswerRefiner:
             r"\d+\.\s*\*\*(Completeness|Errors|Clarity|Missing Information)\*\*:.*?(?=\d+\.\s*\*\*|\Z)",
             r"\*\*Confidence Level\*\*:\s*\d+/\d+.*?$",
             r"Ultimately,\s*this response strives to.*?$",
+            r"What is being asked:.*?$",
+            r"Key constraints:.*?$",
+            r"Type of problem:.*?$",
+            r"Strategy:.*?(?=\n|$)",
+            r"Why this approach:.*?(?=\n|$)",
+            r"Step \d+:.*?(?=Step \d+:|===|$)",
+            r"Check \d+:.*?(?=Check \d+:|===|$)",
+            r"Confidence level:\s*\d+%.*?$",
+            r"Most uncertain about:.*?$",
         ]
         
-        cleaned = content
         for pattern in meta_patterns:
             cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
         
         # Remove orphaned closing code fences if we removed opening ones
         if not re.search(r"```\w*\s*\n", cleaned) and cleaned.strip().endswith("```"):
             cleaned = cleaned.rsplit("```", 1)[0]
+        
+        # Clean up excessive whitespace/newlines left by removals
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+        cleaned = re.sub(r"^\s*•\s*$", "", cleaned, flags=re.MULTILINE)  # Remove empty bullet points
         
         # Remove leading/trailing whitespace
         cleaned = cleaned.strip()
@@ -249,10 +296,11 @@ class AnswerRefiner:
         improvements_made: List[str] = []
         refinement_notes: List[str] = []
         
-        # Strip meta-commentary that may have leaked from orchestration
+        # Strip meta-commentary and reasoning scaffold that may have leaked from orchestration
+        original_content = content
         content = self._strip_meta_commentary(content)
-        if content != content:
-            improvements_made.append("Removed meta-commentary from response")
+        if content != original_content:
+            improvements_made.append("Removed meta-commentary and reasoning scaffold from response")
         
         # Apply domain-based tone if not explicitly set
         if config.domain != "general" and config.tone == ToneStyle.PROFESSIONAL:

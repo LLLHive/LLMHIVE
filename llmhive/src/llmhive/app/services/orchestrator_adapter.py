@@ -1932,8 +1932,13 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 accuracy_lvl = orchestration_config.get("accuracy_level", 3)
                 accuracy_priority = accuracy_lvl >= 3
                 
-                # Determine number of models based on accuracy level
-                if accuracy_lvl >= 4:
+                # Determine number of models based on accuracy level AND complexity
+                # Simple queries should use fewer models for speed
+                if detected_complexity == "simple":
+                    # Simple factual queries: use only 1 model for speed
+                    num_team_models = 1
+                    logger.info("Simple query detected: using single model for fast response")
+                elif accuracy_lvl >= 4:
                     num_team_models = min(4, len(available_providers))  # High accuracy: 4 models
                 elif accuracy_lvl >= 3:
                     num_team_models = min(3, len(available_providers))  # Standard: 3 models
