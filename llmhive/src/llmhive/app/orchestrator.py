@@ -570,6 +570,18 @@ class Orchestrator:
                             await self.client._ensure_client()
                             self._initialized = True
                     
+                    # System prompt to prevent models from asking clarifying questions
+                    SYSTEM_PROMPT = """You are a helpful assistant that answers questions directly and completely.
+
+CRITICAL RULES:
+1. NEVER ask clarifying questions. Answer directly with your best interpretation.
+2. If the user asks for a list/ranking (e.g., "top 10 fastest"), provide that list immediately.
+3. Do NOT ask about criteria, preferences, or alternatives. Just answer.
+4. "Fastest" means top speed. "Best" means a reasonable ranking. "Top 10" means provide 10 items.
+5. If you're unsure about interpretation, pick the most reasonable one and answer.
+
+The user wants an answer, not questions. Provide helpful, direct responses."""
+
                     async def generate(self, prompt: str, model: str = "openai/gpt-4o", **kwargs):
                         """Generate response using OpenRouter API."""
                         try:
@@ -580,7 +592,11 @@ class Orchestrator:
                                 if k not in self.ORCHESTRATION_KWARGS
                             }
                             
-                            messages = [{"role": "user", "content": prompt}]
+                            # Include system prompt to prevent clarifying questions
+                            messages = [
+                                {"role": "system", "content": self.SYSTEM_PROMPT},
+                                {"role": "user", "content": prompt}
+                            ]
                             
                             response = await self.client.chat_completion(
                                 model=model,
@@ -650,6 +666,18 @@ class Orchestrator:
                         'knowledge_snippets', 'context', 'plan', 'db_session',
                     }
                     
+                    # System prompt to prevent models from asking clarifying questions
+                    SYSTEM_PROMPT = """You are a helpful assistant that answers questions directly and completely.
+
+CRITICAL RULES:
+1. NEVER ask clarifying questions. Answer directly with your best interpretation.
+2. If the user asks for a list/ranking (e.g., "top 10 fastest"), provide that list immediately.
+3. Do NOT ask about criteria, preferences, or alternatives. Just answer.
+4. "Fastest" means top speed. "Best" means a reasonable ranking. "Top 10" means provide 10 items.
+5. If you're unsure about interpretation, pick the most reasonable one and answer.
+
+The user wants an answer, not questions. Provide helpful, direct responses."""
+                    
                     def __init__(self, client):
                         self.name = 'openai'
                         self.client = client
@@ -667,7 +695,10 @@ class Orchestrator:
                             }
                             response = self.client.chat.completions.create(
                                 model=api_model,
-                                messages=[{"role": "user", "content": prompt}],
+                                messages=[
+                                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                                    {"role": "user", "content": prompt}
+                                ],
                                 **api_kwargs
                             )
                             class Result:
@@ -710,6 +741,18 @@ class Orchestrator:
                         'knowledge_snippets', 'context', 'plan', 'db_session',
                     }
                     
+                    # System prompt to prevent models from asking clarifying questions
+                    SYSTEM_PROMPT = """You are a helpful assistant that answers questions directly and completely.
+
+CRITICAL RULES:
+1. NEVER ask clarifying questions. Answer directly with your best interpretation.
+2. If the user asks for a list/ranking (e.g., "top 10 fastest"), provide that list immediately.
+3. Do NOT ask about criteria, preferences, or alternatives. Just answer.
+4. "Fastest" means top speed. "Best" means a reasonable ranking. "Top 10" means provide 10 items.
+5. If you're unsure about interpretation, pick the most reasonable one and answer.
+
+The user wants an answer, not questions. Provide helpful, direct responses."""
+                    
                     def __init__(self, api_key):
                         self.name = 'grok'
                         self.api_key = api_key
@@ -735,7 +778,10 @@ class Orchestrator:
                                     },
                                     json={
                                         "model": api_model,
-                                        "messages": [{"role": "user", "content": prompt}],
+                                        "messages": [
+                                            {"role": "system", "content": self.SYSTEM_PROMPT},
+                                            {"role": "user", "content": prompt}
+                                        ],
                                         **api_kwargs
                                     },
                                     timeout=30.0
@@ -817,6 +863,18 @@ class Orchestrator:
                         'knowledge_snippets', 'context', 'plan', 'db_session',
                     }
                     
+                    # System prompt to prevent models from asking clarifying questions
+                    SYSTEM_PROMPT = """You are a helpful assistant that answers questions directly and completely.
+
+CRITICAL RULES:
+1. NEVER ask clarifying questions. Answer directly with your best interpretation.
+2. If the user asks for a list/ranking (e.g., "top 10 fastest"), provide that list immediately.
+3. Do NOT ask about criteria, preferences, or alternatives. Just answer.
+4. "Fastest" means top speed. "Best" means a reasonable ranking. "Top 10" means provide 10 items.
+5. If you're unsure about interpretation, pick the most reasonable one and answer.
+
+The user wants an answer, not questions. Provide helpful, direct responses."""
+                    
                     def __init__(self, api_key):
                         self.name = 'anthropic'
                         self.api_key = api_key
@@ -847,6 +905,7 @@ class Orchestrator:
                                     json={
                                         "model": actual_model,
                                         "max_tokens": api_kwargs.get('max_tokens', 2048),
+                                        "system": self.SYSTEM_PROMPT,  # Anthropic uses 'system' field
                                         "messages": [{"role": "user", "content": prompt}]
                                     }
                                 )
@@ -912,6 +971,18 @@ class Orchestrator:
                         'knowledge_snippets', 'context', 'plan', 'db_session',
                     }
                     
+                    # System prompt to prevent models from asking clarifying questions
+                    SYSTEM_PROMPT = """You are a helpful assistant that answers questions directly and completely.
+
+CRITICAL RULES:
+1. NEVER ask clarifying questions. Answer directly with your best interpretation.
+2. If the user asks for a list/ranking (e.g., "top 10 fastest"), provide that list immediately.
+3. Do NOT ask about criteria, preferences, or alternatives. Just answer.
+4. "Fastest" means top speed. "Best" means a reasonable ranking. "Top 10" means provide 10 items.
+5. If you're unsure about interpretation, pick the most reasonable one and answer.
+
+The user wants an answer, not questions. Provide helpful, direct responses."""
+                    
                     def __init__(self, api_key):
                         self.name = 'deepseek'
                         self.api_key = api_key
@@ -940,7 +1011,10 @@ class Orchestrator:
                                     },
                                     json={
                                         "model": actual_model,
-                                        "messages": [{"role": "user", "content": prompt}],
+                                        "messages": [
+                                            {"role": "system", "content": self.SYSTEM_PROMPT},
+                                            {"role": "user", "content": prompt}
+                                        ],
                                         "max_tokens": api_kwargs.get('max_tokens', 2048),
                                     }
                                 )
