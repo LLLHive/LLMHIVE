@@ -31,6 +31,12 @@ export default function SignUpPage() {
             elements: {
               rootBox: "mx-auto",
               card: "bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl",
+              // Fix Apple logo visibility - make it white on dark background
+              socialButtonsIconButton: "hover:bg-white/10",
+              socialButtonsBlockButton__apple: "[&_svg]:text-white [&_svg]:fill-white",
+              // Fix OTP input visibility - add visible border
+              otpCodeFieldInput: "border-2 border-gray-700 bg-background/50 text-white",
+              formFieldInput: "border border-gray-600 bg-background/50",
             }
           }}
           routing="path"
