@@ -696,17 +696,36 @@ Output ONLY the refined text, no commentary."""
         return '\n'.join(bullets) if bullets else f"• {content}"
     
     def _format_as_numbered(self, content: str) -> str:
-        """Format content as numbered list."""
-        # First, check if content has inline numbered items (e.g., "1. Item 2. Item 3. Item")
-        # This handles cases where the model outputs everything on one line
-        inline_pattern = r'(\d+)\.\s*([^0-9]+?)(?=\s*\d+\.|$)'
-        inline_matches = re.findall(inline_pattern, content)
+        """Format content as numbered list, extracting embedded inline lists."""
+        # Pattern to find inline numbered items (e.g., "1. Item 2. Item 3. Item")
+        # Matches: number + dot + content until next number or end
+        inline_pattern = r'(?:^|[\s:])(\d{1,2})\.\s*([A-Z][^0-9\n]*?)(?=\s+\d{1,2}\.|$)'
+        inline_matches = re.findall(inline_pattern, content, re.MULTILINE)
         
-        if len(inline_matches) >= 3:  # If we found at least 3 inline numbered items
+        # If we found inline numbered items, extract and format them
+        if len(inline_matches) >= 3:
             numbered = []
-            for i, (_, item) in enumerate(inline_matches, 1):
-                item = item.strip().rstrip('.,;')
-                if item and len(item) > 3:
+            seen_items = set()
+            for i, (orig_num, item) in enumerate(inline_matches, 1):
+                item = item.strip().rstrip('.,;:')
+                # Skip duplicate items and too-short items
+                if item and len(item) > 3 and item.lower() not in seen_items:
+                    seen_items.add(item.lower())
+                    numbered.append(f"{i}. {item}")
+            if numbered:
+                return '\n'.join(numbered)
+        
+        # Try alternative pattern for items like "1) Item" or "• Item"
+        alt_pattern = r'(?:^\d+[.)]\s*|^[-*•]\s*)([A-Z][^\n]+)'
+        alt_matches = re.findall(alt_pattern, content, re.MULTILINE)
+        
+        if len(alt_matches) >= 3:
+            numbered = []
+            seen_items = set()
+            for i, item in enumerate(alt_matches, 1):
+                item = item.strip().rstrip('.,;:')
+                if item and len(item) > 3 and item.lower() not in seen_items:
+                    seen_items.add(item.lower())
                     numbered.append(f"{i}. {item}")
             if numbered:
                 return '\n'.join(numbered)
@@ -721,10 +740,11 @@ Output ONLY the refined text, no commentary."""
             if not line:
                 continue
             
-            # Remove existing bullets/numbers
+            # Remove existing bullets/numbers at the start of lines
             line = re.sub(r'^[-*•]\s+', '', line)
             line = re.sub(r'^\d+[.)]\s+', '', line)
             
+            # Only include substantial lines (likely list items)
             if len(line) > 10:
                 numbered.append(f"{num}. {line}")
                 num += 1

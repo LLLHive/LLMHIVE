@@ -24,23 +24,21 @@ def get_reasoning_prompt_template(
     """
     # Domain-specific prefixes with clear instruction to answer directly
     # CRITICAL: Models must NOT ask clarifying questions when the user's request is clear
-    base_instruction = """IMPORTANT: Answer the user's question directly. Do NOT ask clarifying questions unless the query is genuinely incomprehensible. If the user specifies criteria (e.g., "by effectiveness", "top 10"), use those criteria. Do not ask about alternative criteria.
+    # CRITICAL: Models must NEVER refuse to answer based on domain mismatch - they should always answer
+    base_instruction = """IMPORTANT: Answer the user's question directly and completely. Do NOT ask clarifying questions unless the query is genuinely incomprehensible. If the user specifies criteria (e.g., "by effectiveness", "top 10"), use those criteria. Do not ask about alternative criteria. NEVER refuse to answer a question by claiming it is outside your scope or specialty.
+
+"""
+    
+    # Domain fallback ensures models still answer questions outside their specialty
+    domain_fallback = """ For any question, whether or not it relates to your specialty, provide a complete and accurate answer using your full knowledge base. Never claim a topic is outside your scope.
 
 """
     
     domain_prefixes = {
-        "medical": f"""{base_instruction}You are a medical expert with deep knowledge of clinical research, treatments, therapies, and evidence-based medicine. Provide accurate, well-researched information based on current medical literature and guidelines.
-
-""",
-        "legal": f"""{base_instruction}You are a legal expert. Provide precise, well-reasoned legal analysis based on established law and precedent.
-
-""",
-        "marketing": f"""{base_instruction}You are a marketing expert. Provide creative, strategic insights grounded in marketing best practices.
-
-""",
-        "coding": f"""{base_instruction}You are a software engineering expert. Provide clear, efficient code solutions with best practices.
-
-""",
+        "medical": f"""{base_instruction}You have expertise in medical topics including clinical research, treatments, therapies, and evidence-based medicine.{domain_fallback}""",
+        "legal": f"""{base_instruction}You have expertise in legal topics including law, precedent, and legal analysis.{domain_fallback}""",
+        "marketing": f"""{base_instruction}You have expertise in marketing including strategy, campaigns, and best practices.{domain_fallback}""",
+        "coding": f"""{base_instruction}You have expertise in software engineering including code, algorithms, and best practices.{domain_fallback}""",
         "general": f"""{base_instruction}You are a knowledgeable assistant. Provide clear, accurate, and helpful responses.
 
 """,
