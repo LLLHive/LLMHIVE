@@ -347,8 +347,16 @@ class RefinementLoopController:
             )
             iterations.append(iter_result)
             
-            current_answer = refined_answer
-            current_model = new_model
+            # CRITICAL: Only update current_answer if refinement produced valid content
+            # This prevents empty refinement results from wiping out good answers
+            if refined_answer and refined_answer.strip():
+                current_answer = refined_answer
+                current_model = new_model
+            else:
+                logger.warning(
+                    "Refinement iteration %d produced empty result, keeping previous answer",
+                    iteration
+                )
         
         # Max iterations reached
         final_verification = await self._verify_answer(
@@ -562,7 +570,9 @@ Please ensure your answer addresses these concerns and provides accurate informa
                 full_prompt = f"Context: {context}\n\n{prompt}"
             
             result = await provider.complete(full_prompt, model=model)
-            return result.content.strip()
+            # Safely extract content - handle None or missing attribute
+            content = getattr(result, 'content', None) or getattr(result, 'text', None) or ''
+            return content.strip() if content else ""
         except Exception as e:
             logger.warning("Failed to regenerate answer: %s", e)
             return ""
@@ -631,7 +641,11 @@ Please provide a corrected version that addresses all the issues above. Output O
         
         try:
             result = await provider.complete(correction_prompt, model=model)
-            return result.content.strip()
+            # Safely extract content - handle None or missing attribute
+            content = getattr(result, 'content', None) or getattr(result, 'text', None) or ''
+            corrected = content.strip() if content else ""
+            # Return original if correction produced nothing
+            return corrected if corrected else answer
         except Exception as e:
             logger.warning("Direct correction failed: %s", e)
             return answer

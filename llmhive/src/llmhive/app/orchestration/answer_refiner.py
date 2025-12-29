@@ -529,11 +529,12 @@ Output ONLY the refined text, no commentary."""
         
         try:
             result = await provider.complete(prompt, model="gpt-4o-mini")
-            refined = getattr(result, 'content', '') or getattr(result, 'text', '')
-            refined = refined.strip()
+            # Safely extract content - handle None values
+            raw = getattr(result, 'content', None) or getattr(result, 'text', None)
+            refined = raw.strip() if raw else ""
             
-            # Sanity check - should be similar length
-            if 0.5 < len(refined) / len(content) < 2.0 and len(refined) > 50:
+            # Sanity check - should be similar length and not empty
+            if refined and 0.5 < len(refined) / len(content) < 2.0 and len(refined) > 50:
                 return refined
         except Exception as e:
             logger.debug("Style LLM failed: %s", e)

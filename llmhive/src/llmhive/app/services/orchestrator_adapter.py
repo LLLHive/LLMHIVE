@@ -2434,6 +2434,20 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 "estimated_tokens": budget_constraints.estimated_tokens,
             }
         
+        # CRITICAL SAFEGUARD: Never return empty message
+        # If final_text is empty after all processing, provide a fallback
+        if not final_text or not final_text.strip():
+            logger.error(
+                "CRITICAL: final_text is empty after orchestration! "
+                "Prompt: %s, Models: %s",
+                request.prompt[:100],
+                actual_models,
+            )
+            final_text = (
+                "I apologize, but I was unable to generate a response to your query. "
+                "Please try again or rephrase your question."
+            )
+        
         # Build response with models_used
         response = ChatResponse(
             message=final_text,
