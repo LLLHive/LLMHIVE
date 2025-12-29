@@ -1693,6 +1693,31 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 logger.warning("PromptOps failed, using raw prompt: %s", e)
         
         # ========================================================================
+        # STEP 1.1: AUTO-ENABLE HRM FOR COMPLEX QUERIES
+        # ========================================================================
+        # Auto-activate Hierarchical Role Management (HRM) when PromptOps determines
+        # the query is complex or research-level (requires_hrm=True).
+        #
+        # This allows complex queries to be automatically decomposed into sub-steps
+        # without requiring manual enable_hrm flag in the request.
+        #
+        # NOTE: When HRM is auto-enabled, the orchestrator will execute the hierarchical
+        # plan INSTEAD of the standard multi-model ensemble strategies. This is intentional
+        # for complex queries that benefit from step-by-step decomposition.
+        #
+        # Edge case: If a query is labeled complex but could be handled by a single model,
+        # HRM may still decompose it. We trust PromptOps for now; monitor for over-triggering.
+        if prompt_spec and hasattr(prompt_spec, 'requires_hrm') and prompt_spec.requires_hrm:
+            if not orchestration_config.get("use_hrm", False):
+                # Auto-enable HRM for complex/research queries
+                orchestration_config["use_hrm"] = True
+                logger.info(
+                    "Auto-enabled HRM for complex query (complexity=%s, task=%s)",
+                    detected_complexity,
+                    detected_task_type,
+                )
+        
+        # ========================================================================
         # STEP 1.25: CLARIFICATION CHECK (Optional - adds questions to extra)
         # ========================================================================
         clarification_questions = []
@@ -2054,11 +2079,22 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         # Determine if we should use elite orchestration
         # Elite orchestration requires TEAM mode with multiple models
+        #
+        # NOTE: When HRM (Hierarchical Role Management) is enabled for complex queries,
+        # the HRM pathway takes precedence over elite orchestration. HRM decomposes
+        # complex queries into sub-steps and executes them sequentially, which is more
+        # appropriate for research-level or multi-part questions than parallel ensemble
+        # strategies like "parallel_race" or "best_of_n".
+        #
+        # If use_hrm=True (either explicitly set or auto-enabled for complex queries),
+        # we skip elite orchestration and let the standard orchestrator run with HRM.
+        use_hrm = orchestration_config.get("use_hrm", False)
         use_elite = (
             ELITE_AVAILABLE and 
             is_team_mode and  # Only use elite in TEAM mode
             accuracy_level >= 3 and 
-            len(actual_models) >= 2
+            len(actual_models) >= 2 and
+            not use_hrm  # HRM takes precedence over elite orchestration
         )
         
         elite_result = None
