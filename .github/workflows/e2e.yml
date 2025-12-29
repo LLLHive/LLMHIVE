@@ -44,6 +44,15 @@ jobs:
           restore-keys: |
             playwright-${{ runner.os }}-
 
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          # Skip type errors during build for E2E
+          NEXT_TELEMETRY_DISABLED: 1
+
       - name: Run Playwright tests
         run: npm run test:e2e
         env:

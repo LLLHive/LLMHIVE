@@ -65,11 +65,17 @@ export default defineConfig({
 
   // Run local dev server before starting the tests
   webServer: {
-    command: 'npm run dev',
+    // In CI, use 'npm start' (production server after build), locally use 'npm run dev'
+    command: process.env.CI ? 'npm start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000, // 3 minutes for CI
     stdout: 'pipe',
     stderr: 'pipe',
+    // Pass environment variables to the server
+    env: {
+      ...process.env,
+      PLAYWRIGHT_TEST: 'true',
+    },
   },
 })
