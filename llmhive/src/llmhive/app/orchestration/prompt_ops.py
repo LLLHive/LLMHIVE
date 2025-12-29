@@ -251,33 +251,32 @@ def build_model_context(
         cost_weight=cost_weight,
     )
 
-AMBIGUITY_DETECTION_PROMPT = """Analyze this query for ambiguities:
+AMBIGUITY_DETECTION_PROMPT = """Analyze this query for GENUINE ambiguities that make it impossible to answer.
 
 Query: "{query}"
 
-Identify any:
-1. Unclear pronoun references (e.g., "it", "this")
-2. Vague comparatives without reference (e.g., "better" without saying than what)
-3. Temporal ambiguity (e.g., "recently" without timeframe)
-4. Scope ambiguity (e.g., unclear what exactly is being asked)
-5. Missing context (e.g., needs prior information)
+IMPORTANT: Most queries are clear enough to answer directly. Be VERY conservative.
+- Simple factual questions, rankings, lists are almost NEVER ambiguous.
+- "list 10 X", "top 10 X", "best X" queries are clear - just provide the list/ranking.
+- Only flag ambiguities that would lead to COMPLETELY DIFFERENT answers.
+
+Do NOT flag as ambiguous:
+- Words like "best", "top", "most", "fastest" - these are clear in context
+- Questions that have an obvious reasonable interpretation
+- Queries with any numbers or specific criteria
+
+Only flag if the query is genuinely incomprehensible or self-contradictory.
 
 Respond in JSON format:
 {{
-    "has_ambiguity": boolean,
-    "ambiguities": [
-        {{
-            "type": "pronoun_reference|vague_comparative|temporal|scope|missing_context",
-            "term": the ambiguous term/phrase,
-            "description": why it's ambiguous,
-            "suggested_clarification": how to clarify or rephrase
-        }}
-    ],
-    "clarified_query": the query with ambiguities resolved (best guess),
-    "needs_user_input": boolean (true if clarification requires user input),
-    "clarification_questions": list of questions to ask user
+    "has_ambiguity": false,
+    "ambiguities": [],
+    "clarified_query": "{query}",
+    "needs_user_input": false,
+    "clarification_questions": []
 }}
 
+For 99% of queries, return has_ambiguity: false.
 Respond ONLY with the JSON."""
 
 
@@ -360,24 +359,25 @@ class PromptOps:
         ]
     }
     
-    # Enhanced ambiguity patterns
+    # Enhanced ambiguity patterns - CONSERVATIVE
+    # Only flag patterns that are genuinely ambiguous without context
+    # Words like "best", "most", "faster" are usually clear in context (e.g., "10 fastest cars")
     AMBIGUITY_PATTERNS = {
         AmbiguityType.PRONOUN_REFERENCE: [
-            r'\bit\b', r'\bthis\b', r'\bthat\b', r'\bthese\b', r'\bthose\b',
-            r'\bhe\b', r'\bshe\b', r'\bthey\b', r'\bthe one\b'
+            # Only flag isolated pronouns that start sentences and lack context
+            r'^it\s',  # "It should..." with no prior context
+            r'^this\s+(?!is\s+how)',  # "This should..." but allow "This is how..."
         ],
         AmbiguityType.VAGUE_COMPARATIVE: [
-            r'\bbetter\b(?!\s+than)', r'\bworse\b(?!\s+than)',
-            r'\bmore\b(?!\s+than)', r'\bless\b(?!\s+than)',
-            r'\bfaster\b(?!\s+than)', r'\bsmarter\b(?!\s+than)'
+            # REMOVED: "better", "faster", "more" are NOT ambiguous in most queries
+            # e.g., "10 fastest cars" is completely clear
         ],
         AmbiguityType.TEMPORAL_AMBIGUITY: [
-            r'\brecently\b', r'\bsoon\b', r'\blater\b', r'\bearlier\b',
-            r'\btoday\b(?!\s+\d)', r'\bnow\b'
+            # REMOVED: "recently", "now", "today" - usually acceptable without exact dates
         ],
         AmbiguityType.SCOPE_AMBIGUITY: [
-            r'\bsome\b', r'\bfew\b', r'\bmany\b', r'\bseveral\b',
-            r'\bmost\b', r'\ball\b'
+            # REMOVED: "some", "few", "many", "most", "all" are NOT ambiguous
+            # e.g., "most popular cities" is clear - provide the most popular ones
         ],
     }
     
@@ -643,11 +643,13 @@ class PromptOps:
                 query, ambiguity_details, context, history
             )
         
-        # Determine action
+        # Determine action - be VERY conservative about asking questions
         action = ClarificationAction.PROCEED_WITH_ASSUMPTION
         questions = []
         
-        if len(ambiguity_details) >= 3:  # Many ambiguities
+        # Only ask user if there are MANY ambiguities AND the query is very short
+        # For most queries, just proceed with reasonable assumptions
+        if len(ambiguity_details) >= 5 and len(query.split()) < 5:  # Raised threshold
             action = ClarificationAction.ASK_USER
             questions = self._generate_clarification_questions(ambiguity_details)
         elif ambiguity_details and refined_query != query:

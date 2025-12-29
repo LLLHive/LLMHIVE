@@ -234,36 +234,37 @@ class RefinedQueryResult:
 # LLM Prompts for Clarification Generation
 # ==============================================================================
 
-CLARIFICATION_DETECTION_PROMPT = """Analyze this user query to determine if clarification is needed.
+CLARIFICATION_DETECTION_PROMPT = """Analyze this user query to determine if clarification is TRULY needed.
 
 Query: "{query}"
 
-Identify issues that make the query unclear:
-1. Ambiguous terms or pronouns (e.g., "it", "this", "they")
-2. Vague scope (e.g., "tell me about X" without specifics)
-3. Missing context (e.g., which version, time period, platform)
-4. Unclear intent (e.g., could be answered multiple ways)
-5. Implicit assumptions that need confirmation
+IMPORTANT GUIDELINES:
+- Most queries are clear enough to answer directly. Default to NOT needing clarification.
+- Simple factual questions (lists, rankings, "what is", "who is", etc.) almost NEVER need clarification.
+- Only flag genuine ambiguity that would lead to completely different answers.
+- "list 10 X" or "top 10 X" queries are clear - just provide the list.
+- Do NOT ask about criteria unless the query is genuinely ambiguous about what's being asked.
+
+Only flag these as TRUE ambiguities requiring clarification:
+1. Pronouns without ANY clear referent ("fix it" with no context)
+2. Query is genuinely incomprehensible or self-contradictory
+3. Critical missing information that makes answering impossible
+
+Do NOT flag as ambiguous:
+- Simple ranking/list requests (even if "best" or "top" is used)
+- Factual questions with clear scope
+- Questions where a reasonable default interpretation exists
+- Questions where the answer format is obvious from context
 
 Respond in JSON format:
 {{
-    "needs_clarification": boolean,
-    "ambiguity_score": 0.0 to 1.0 (higher = more ambiguous),
-    "issues": [
-        {{
-            "type": "ambiguous_term|vague_scope|missing_context|unclear_intent|implicit_assumption",
-            "description": "what is unclear",
-            "example_interpretations": ["interpretation 1", "interpretation 2"]
-        }}
-    ],
-    "suggested_questions": [
-        "Question 1 to resolve ambiguity?",
-        "Question 2 to clarify scope?",
-        "Question 3 to confirm intent?"
-    ]
+    "needs_clarification": boolean (should be false for most queries),
+    "ambiguity_score": 0.0 to 1.0 (keep below 0.5 for clear queries),
+    "issues": [],
+    "suggested_questions": []
 }}
 
-Only suggest questions for significant ambiguities. Limit to 3 most important questions.
+Be CONSERVATIVE - only suggest questions for genuinely incomprehensible queries.
 Respond ONLY with JSON."""
 
 
@@ -375,12 +376,22 @@ class ClarificationManager:
         ),
     ]
     
+    # Patterns that indicate the query is clear and should NOT trigger clarification
+    CLEAR_QUERY_PATTERNS = [
+        r'^list\s+(?:the\s+)?(?:top\s+)?\d+',  # "list 10 X", "list the top 10 X"
+        r'^(?:what|who|when|where|which)\s+(?:is|are|was|were)',  # "what is X"
+        r'^(?:name|give me|provide|tell me)\s+(?:the\s+)?\d+',  # "name 10 X"
+        r'^how\s+(?:many|much|often|long)',  # "how many X"
+        r'^(?:top|best|biggest|largest|smallest|fastest|slowest)\s+\d+',  # "top 10 X"
+        r'^\d+\s+(?:best|top|biggest|largest)',  # "10 best X"
+    ]
+    
     def __init__(
         self,
         providers: Optional[Dict[str, Any]] = None,
-        ambiguity_threshold: float = 0.4,
+        ambiguity_threshold: float = 0.7,  # Raised from 0.4 to be more conservative
         max_query_questions: int = 3,
-        always_ask_preferences: bool = True,
+        always_ask_preferences: bool = False,  # Changed: don't always ask preferences
         enable_llm_detection: bool = True,
     ) -> None:
         """
@@ -554,6 +565,27 @@ class ClarificationManager:
             was_clarified=bool(response.query_answers),
         )
     
+    def _is_clear_query(self, query: str) -> bool:
+        """Check if the query matches patterns that are clearly unambiguous."""
+        query_lower = query.lower().strip()
+        
+        # Check against clear query patterns
+        for pattern in self.CLEAR_QUERY_PATTERNS:
+            if re.match(pattern, query_lower):
+                return True
+        
+        # Simple factual patterns that don't need clarification
+        if query_lower.startswith(('list ', 'name ', 'what are the ', 'who are the ')):
+            return True
+        
+        # Numbered requests are always clear
+        if re.search(r'\b\d+\s+(?:best|top|biggest|largest|fastest|slowest|most|least)\b', query_lower):
+            return True
+        if re.search(r'\b(?:top|best|biggest)\s+\d+\b', query_lower):
+            return True
+        
+        return False
+    
     async def _detect_ambiguity(
         self,
         query: str,
@@ -561,6 +593,11 @@ class ClarificationManager:
         history: Optional[List[Dict[str, str]]],
     ) -> Tuple[bool, List[Dict[str, Any]], List[str]]:
         """Detect if the query is ambiguous and needs clarification."""
+        
+        # FAST PATH: Check if query is clearly unambiguous
+        if self._is_clear_query(query):
+            logger.debug("Query matches clear pattern, skipping clarification: %s", query[:50])
+            return False, [], []
         
         # Try LLM-based detection first
         if self.enable_llm_detection and self.providers:
@@ -636,16 +673,15 @@ class ClarificationManager:
             })
             questions.append(f"What does '{pronouns[0]}' refer to in your question?")
         
-        # Check for vague terms
-        vague_terms = ["best", "good", "better", "improve", "optimize", "thing", "stuff"]
+        # Check for vague terms - BUT only if the query is genuinely ambiguous
+        # "best 10 cities" is NOT vague - it's a clear request for a ranked list
+        vague_terms = ["thing", "stuff"]  # Reduced list - "best/better" are usually clear in context
         for term in vague_terms:
-            if term in query_lower.split():
+            if term in query_lower.split() and len(query.split()) < 5:  # Only flag in very short queries
                 issues.append({
                     "type": "vague_scope",
                     "description": f"Vague term '{term}' needs context",
                 })
-                if term in ["best", "better"]:
-                    questions.append(f"When you say '{term}', what criteria are most important to you?")
                 break
         
         # Semantic ambiguity (polysemous terms)
@@ -694,13 +730,15 @@ class ClarificationManager:
             })
             questions.append("Could you add a few words about what you want to know?")
         
-        # Check for very broad queries
-        broad_indicators = [
-            "tell me about", "what is", "explain", "describe", 
-            "how does", "what are"
-        ]
+        # Check for very broad queries - but be very conservative
+        # "What are the top 10 cities" is NOT too broad - it has clear scope
+        # Only flag truly vague queries like "tell me about history"
+        broad_indicators = ["tell me about", "explain"]  # Reduced list
         for indicator in broad_indicators:
-            if query_lower.startswith(indicator) and len(query.split()) < 8:
+            # Only flag if query is VERY short (< 4 words) and has no specifics
+            if (query_lower.startswith(indicator) and 
+                len(query.split()) < 4 and 
+                not re.search(r'\d+', query)):  # No numbers = no specific scope
                 issues.append({
                     "type": "vague_scope",
                     "description": "Query may be too broad",
@@ -734,10 +772,14 @@ class ClarificationManager:
             opts = ", ".join(possible_interpretations[:3])
             questions.append(f"To confirm, did you mean: {opts}?")
         
-        # Determine if clarification is needed
-        ambiguity_score = min(1.0, 0.2 * len(issues) + (0.1 if possible_interpretations else 0))
-        needs_clarification = ambiguity_score >= self.ambiguity_threshold or (
-            len(issues) >= 2 or (len(issues) >= 1 and len(query.split()) < 10)
+        # Determine if clarification is needed - be CONSERVATIVE
+        # Only ask for clarification if there are MULTIPLE significant issues
+        ambiguity_score = min(1.0, 0.15 * len(issues) + (0.1 if possible_interpretations else 0))
+        
+        # Much stricter condition: need high score AND multiple issues
+        needs_clarification = (
+            ambiguity_score >= self.ambiguity_threshold and 
+            len(issues) >= 3  # Need at least 3 issues
         )
         
         # If we have language hint, prepend a localized nudge (lightweight)
