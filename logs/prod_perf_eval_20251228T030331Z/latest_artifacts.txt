@@ -1,0 +1,3 @@
+Latest refresh runlog: data/modeldb/archives/refresh_runlog_2025-12-27T053922Z.json
+Latest coverage report md: data/modeldb/archives/coverage_report_20251228T030356Z.md
+Latest coverage report json: data/modeldb/archives/coverage_report_20251228T030356Z.json

@@ -2321,7 +2321,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                         "json": OutputFormat.JSON,
                         "markdown": OutputFormat.MARKDOWN,
                         "code": OutputFormat.CODE,
-                        "list": OutputFormat.BULLET,
+                        "list": OutputFormat.NUMBERED,  # "list" should be numbered (1, 2, 3...)
+                        "numbered": OutputFormat.NUMBERED,
                         "bullet": OutputFormat.BULLET,
                         "bullet_points": OutputFormat.BULLET,
                         "table": OutputFormat.TABLE,

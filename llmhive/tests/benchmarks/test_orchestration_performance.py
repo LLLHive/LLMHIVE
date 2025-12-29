@@ -701,7 +701,7 @@ class TestBenchmarkRegression:
             return await fast_providers["openai"].complete(simple_request.prompt)
         
         def sync_wrapper():
-            return asyncio.get_event_loop().run_until_complete(run_query())
+            return asyncio.run(run_query())
         
         result = benchmark(sync_wrapper)
         assert result is not None
@@ -716,7 +716,7 @@ class TestBenchmarkRegression:
             return await asyncio.gather(*tasks)
         
         def sync_wrapper():
-            return asyncio.get_event_loop().run_until_complete(run_team_query())
+            return asyncio.run(run_team_query())
         
         result = benchmark(sync_wrapper)
         assert result is not None
