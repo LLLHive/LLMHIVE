@@ -68,11 +68,11 @@ jobs:
         run: |
           pip install -r data/modeldb/requirements.txt
       
-      # Prefer Workload Identity Federation (no key needed)
-      # Falls back to service account key if WIF not configured
+      # Authenticate to Google Cloud
+      # Tries Workload Identity Federation first (recommended, keyless)
+      # Falls back to service account key if WIF secrets not configured
       - name: Authenticate to Google Cloud (WIF)
         id: gcp-auth-wif
-        if: ${{ secrets.WIF_PROVIDER != '' }}
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
@@ -81,7 +81,7 @@ jobs:
       
       - name: Authenticate to Google Cloud (Key fallback)
         id: gcp-auth-key
-        if: ${{ steps.gcp-auth-wif.outcome != 'success' && secrets.GCP_SA_KEY != '' }}
+        if: steps.gcp-auth-wif.outcome != 'success'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -93,12 +93,15 @@ jobs:
           if [ "${{ steps.gcp-auth-wif.outcome }}" == "success" ]; then
             echo "outcome=success" >> $GITHUB_OUTPUT
             echo "method=wif" >> $GITHUB_OUTPUT
+            echo "✅ Authenticated via Workload Identity Federation"
           elif [ "${{ steps.gcp-auth-key.outcome }}" == "success" ]; then
             echo "outcome=success" >> $GITHUB_OUTPUT
             echo "method=key" >> $GITHUB_OUTPUT
+            echo "⚠️ Authenticated via service account key (consider migrating to WIF)"
           else
             echo "outcome=failure" >> $GITHUB_OUTPUT
             echo "method=none" >> $GITHUB_OUTPUT
+            echo "::warning::GCP authentication not available"
           fi
       
       - name: Determine run mode
