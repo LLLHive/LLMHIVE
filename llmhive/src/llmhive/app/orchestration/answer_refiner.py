@@ -697,6 +697,21 @@ Output ONLY the refined text, no commentary."""
     
     def _format_as_numbered(self, content: str) -> str:
         """Format content as numbered list."""
+        # First, check if content has inline numbered items (e.g., "1. Item 2. Item 3. Item")
+        # This handles cases where the model outputs everything on one line
+        inline_pattern = r'(\d+)\.\s*([^0-9]+?)(?=\s*\d+\.|$)'
+        inline_matches = re.findall(inline_pattern, content)
+        
+        if len(inline_matches) >= 3:  # If we found at least 3 inline numbered items
+            numbered = []
+            for i, (_, item) in enumerate(inline_matches, 1):
+                item = item.strip().rstrip('.,;')
+                if item and len(item) > 3:
+                    numbered.append(f"{i}. {item}")
+            if numbered:
+                return '\n'.join(numbered)
+        
+        # Fall back to line-by-line processing
         lines = content.split('\n')
         numbered = []
         num = 1
