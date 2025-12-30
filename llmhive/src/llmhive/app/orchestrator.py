@@ -14,6 +14,15 @@ from typing import Dict, List, Optional, Any, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Import feature flags for controlling partial implementations
+try:
+    from .feature_flags import is_feature_enabled, FeatureFlags
+    FEATURE_FLAGS_AVAILABLE = True
+except ImportError:
+    FEATURE_FLAGS_AVAILABLE = False
+    def is_feature_enabled(flag): return False  # type: ignore
+    logger.warning("Feature flags module not available, all flags disabled")
+
 # Import orchestration components
 try:
     from .orchestration.hierarchical_planning import (
@@ -195,14 +204,20 @@ except ImportError:
     DiffusionResult = None  # type: ignore
     logger.warning("Prompt diffusion module not available")
 
-# Optional knowledge base for prompt enrichment
-try:
-    from .knowledge.pinecone_kb import get_knowledge_base, RecordType
-    KNOWLEDGE_BASE_AVAILABLE = True
-except Exception:
-    KNOWLEDGE_BASE_AVAILABLE = False
-    get_knowledge_base = None  # type: ignore
-    RecordType = None  # type: ignore
+# Optional knowledge base for prompt enrichment (gated by feature flag)
+KNOWLEDGE_BASE_AVAILABLE = False
+get_knowledge_base = None  # type: ignore
+RecordType = None  # type: ignore
+
+if FEATURE_FLAGS_AVAILABLE and is_feature_enabled(FeatureFlags.VECTOR_MEMORY):
+    try:
+        from .knowledge.pinecone_kb import get_knowledge_base, RecordType
+        KNOWLEDGE_BASE_AVAILABLE = True
+        logger.info("Pinecone knowledge base enabled via feature flag")
+    except Exception as e:
+        logger.warning("Knowledge base import failed: %s", e)
+else:
+    logger.debug("Vector memory feature disabled or feature flags unavailable")
 
 # Import consensus manager components
 try:
