@@ -19,6 +19,7 @@ import {
   FolderOpen,
   Users,
   Pin,
+  PinOff,
   Trash2,
   MoreHorizontal,
   Globe,
@@ -30,6 +31,9 @@ import {
   Workflow,
   Clock,
   Boxes,
+  Share,
+  Archive,
+  UserPlus,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -52,6 +56,8 @@ interface SidebarProps {
   onTogglePin: (id: string) => void
   onRenameConversation: (id: string) => void
   onMoveToProject: (conversationId: string) => void
+  onShareConversation?: (id: string) => void
+  onArchiveConversation?: (id: string) => void
   projects: Project[]
   collapsed: boolean
   onToggleCollapse: () => void
@@ -70,6 +76,8 @@ export function Sidebar({
   onTogglePin,
   onRenameConversation,
   onMoveToProject,
+  onShareConversation,
+  onArchiveConversation,
   projects,
   collapsed,
   onToggleCollapse,
@@ -293,6 +301,8 @@ export function Sidebar({
                             onTogglePin={() => onTogglePin(conv.id)}
                             onRename={() => handleRename(conv.id)}
                             onMoveToProject={() => handleMoveToProjectClick(conv.id)}
+                            onShare={() => onShareConversation?.(conv.id)}
+                            onArchive={() => onArchiveConversation?.(conv.id)}
                           />
                         ))}
                       </div>
@@ -321,6 +331,8 @@ export function Sidebar({
                             onTogglePin={() => onTogglePin(conv.id)}
                             onRename={() => handleRename(conv.id)}
                             onMoveToProject={() => handleMoveToProjectClick(conv.id)}
+                            onShare={() => onShareConversation?.(conv.id)}
+                            onArchive={() => onArchiveConversation?.(conv.id)}
                           />
                         ))}
                       </div>
@@ -476,6 +488,9 @@ function ConversationItem({
   onTogglePin,
   onRename,
   onMoveToProject,
+  onShare,
+  onArchive,
+  onStartGroupChat,
 }: {
   conversation: Conversation
   isActive: boolean
@@ -484,59 +499,145 @@ function ConversationItem({
   onTogglePin: () => void
   onRename: () => void
   onMoveToProject: () => void
+  onShare?: () => void
+  onArchive?: () => void
+  onStartGroupChat?: () => void
 }) {
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-colors",
-        isActive && "bg-secondary",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200",
+        isActive && "bg-secondary ring-1 ring-[var(--bronze)]/30",
       )}
       onClick={onSelect}
     >
-      <MessageSquare className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+      <MessageSquare className={cn(
+        "h-4 w-4 flex-shrink-0 transition-colors",
+        isActive ? "text-[var(--bronze)]" : "text-muted-foreground"
+      )} />
       <span className="text-sm truncate flex-1">{conversation.title}</span>
+      
+      {/* Pin indicator */}
+      {conversation.pinned && (
+        <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
+      )}
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-            <MoreHorizontal className="h-3 w-3" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "h-6 w-6 rounded-md transition-all duration-200",
+              "opacity-0 group-hover:opacity-100",
+              "hover:bg-secondary-foreground/10",
+              "focus:opacity-100 focus:ring-1 focus:ring-[var(--bronze)]/50"
+            )}
+            aria-label="Chat options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent 
+          align="end" 
+          side="right"
+          sideOffset={8}
+          className="w-48 p-1"
+        >
+          {/* Share option */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onShare?.()
+            }}
+            className="cursor-pointer rounded-sm"
+          >
+            <Share className="h-4 w-4 mr-2" />
+            Share
+          </DropdownMenuItem>
+          
+          {/* Start a group chat - Coming soon */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onStartGroupChat?.()
+            }}
+            className="cursor-pointer rounded-sm"
+            disabled
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Start a group chat
+            <span className="ml-auto text-xs text-muted-foreground">Soon</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* Rename */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
               onRename()
             }}
+            className="cursor-pointer rounded-sm"
           >
             <Pencil className="h-4 w-4 mr-2" />
             Rename
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation()
-              onTogglePin()
-            }}
-          >
-            <Pin className="h-4 w-4 mr-2" />
-            {conversation.pinned ? "Unpin" : "Pin"}
-          </DropdownMenuItem>
+          
+          {/* Move to Project */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
               onMoveToProject()
             }}
+            className="cursor-pointer rounded-sm"
           >
             <FolderInput className="h-4 w-4 mr-2" />
-            Move to Project...
+            Move to project
           </DropdownMenuItem>
+          
+          {/* Pin/Unpin */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onTogglePin()
+            }}
+            className="cursor-pointer rounded-sm"
+          >
+            {conversation.pinned ? (
+              <>
+                <PinOff className="h-4 w-4 mr-2" />
+                Unpin chat
+              </>
+            ) : (
+              <>
+                <Pin className="h-4 w-4 mr-2" />
+                Pin chat
+              </>
+            )}
+          </DropdownMenuItem>
+          
+          {/* Archive */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onArchive?.()
+            }}
+            className="cursor-pointer rounded-sm"
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            Archive
+          </DropdownMenuItem>
+          
           <DropdownMenuSeparator />
+          
+          {/* Delete - with destructive styling */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
               onDelete()
             }}
-            className="text-destructive"
+            className="cursor-pointer rounded-sm text-destructive focus:text-destructive focus:bg-destructive/10"
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete

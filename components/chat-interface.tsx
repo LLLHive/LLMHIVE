@@ -11,6 +11,7 @@ import { AdvancedSettingsDrawer } from "./advanced-settings-drawer"
 import { RenameChatModal } from "./rename-chat-modal"
 import { MoveToProjectModal } from "./move-to-project-modal"
 import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal"
+import { DeleteConfirmationDialog } from "./delete-confirmation-dialog"
 import { Button } from "@/components/ui/button"
 import { Menu, Keyboard } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -50,6 +51,10 @@ export function ChatInterface() {
   
   // Keyboard shortcuts modal state
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
+  
+  // Delete confirmation dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   
   // Load settings and data from localStorage on mount
   useEffect(() => {
@@ -246,6 +251,11 @@ export function ChatInterface() {
     }
   }
 
+  const handleOpenDeleteDialog = (id: string) => {
+    setDeleteConversationId(id)
+    setShowDeleteDialog(true)
+  }
+
   const handleDeleteConversation = (id: string) => {
     setConversations((prev) => prev.filter((c) => c.id !== id))
     if (currentConversationId === id) {
@@ -253,6 +263,27 @@ export function ChatInterface() {
       setShowArtifact(false)
       setCurrentArtifact(null)
     }
+    toast.info("Chat deleted")
+    setShowDeleteDialog(false)
+    setDeleteConversationId(null)
+  }
+
+  const handleShareConversation = (id: string) => {
+    // TODO: Implement share functionality
+    const conv = conversations.find((c) => c.id === id)
+    if (conv) {
+      // For now, copy a shareable link to clipboard
+      navigator.clipboard.writeText(`${window.location.origin}/chat/${id}`)
+      toast.success("Share link copied to clipboard")
+    }
+  }
+
+  const handleArchiveConversation = (id: string) => {
+    // Mark conversation as archived
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
+    )
+    toast.info("Chat archived")
   }
 
   const handleTogglePin = (id: string) => {
@@ -335,14 +366,16 @@ export function ChatInterface() {
 
   const sidebarContent = (
     <Sidebar
-      conversations={conversations}
+      conversations={conversations.filter((c) => !c.archived)}
       currentConversationId={currentConversationId}
       onNewChat={handleNewChat}
       onSelectConversation={handleSelectConversation}
-      onDeleteConversation={handleDeleteConversation}
+      onDeleteConversation={handleOpenDeleteDialog}
       onTogglePin={handleTogglePin}
       onRenameConversation={handleOpenRenameModal}
       onMoveToProject={handleOpenMoveModal}
+      onShareConversation={handleShareConversation}
+      onArchiveConversation={handleArchiveConversation}
       projects={projects}
       collapsed={sidebarCollapsed}
       onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -373,14 +406,16 @@ export function ChatInterface() {
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-72 llmhive-glass-sidebar border-r-0">
             <Sidebar
-              conversations={conversations}
+              conversations={conversations.filter((c) => !c.archived)}
               currentConversationId={currentConversationId}
               onNewChat={handleNewChat}
               onSelectConversation={handleSelectConversation}
-              onDeleteConversation={handleDeleteConversation}
+              onDeleteConversation={handleOpenDeleteDialog}
               onTogglePin={handleTogglePin}
               onRenameConversation={handleOpenRenameModal}
               onMoveToProject={handleOpenMoveModal}
+              onShareConversation={handleShareConversation}
+              onArchiveConversation={handleArchiveConversation}
               projects={projects}
               collapsed={false}
               onToggleCollapse={() => {}}
@@ -474,6 +509,19 @@ export function ChatInterface() {
       <KeyboardShortcutsModal
         open={showShortcutsModal}
         onOpenChange={setShowShortcutsModal}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete chat?"
+        description={`This will permanently delete "${conversations.find((c) => c.id === deleteConversationId)?.title ?? "this chat"}". This action cannot be undone.`}
+        onConfirm={() => {
+          if (deleteConversationId) {
+            handleDeleteConversation(deleteConversationId)
+          }
+        }}
       />
     </div>
   )

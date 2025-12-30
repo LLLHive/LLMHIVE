@@ -43,6 +43,7 @@ export interface Conversation {
   updatedAt: Date
   model: string
   pinned?: boolean
+  archived?: boolean
 }
 
 export interface Project {
