@@ -529,7 +529,7 @@ function ConversationItem({
             size="icon" 
             className={cn(
               "h-6 w-6 rounded-md transition-all duration-200",
-              "opacity-0 group-hover:opacity-100",
+              "opacity-40 hover:opacity-100 group-hover:opacity-100",
               "hover:bg-secondary-foreground/10",
               "focus:opacity-100 focus:ring-1 focus:ring-[var(--bronze)]/50"
             )}
