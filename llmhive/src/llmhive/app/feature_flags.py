@@ -44,19 +44,24 @@ class FeatureFlags(str, Enum):
 
 
 # Default feature states (can be overridden by env vars)
+# Updated for Launch: All validated features are now ENABLED
 DEFAULT_FEATURE_STATES: Dict[FeatureFlags, bool] = {
-    # Disabled by default (not fully implemented or tested)
-    FeatureFlags.SMS_OTP: False,
-    FeatureFlags.GROUP_CHAT: False,
-    FeatureFlags.GROUP_PROJECTS: False,
-    FeatureFlags.VECTOR_MEMORY: False,
-    FeatureFlags.CROSS_SESSION_REUSE: False,
-    FeatureFlags.WEEKLY_OPTIMIZATION: False,
+    # NOT IMPLEMENTED - kept disabled
+    FeatureFlags.SMS_OTP: False,  # Requires Twilio integration - deferred
     
-    # Enabled by default (stable features)
-    FeatureFlags.ADAPTIVE_ROUTING: True,
-    FeatureFlags.DEEP_CONSENSUS: True,
-    FeatureFlags.PROMPT_DIFFUSION: False,
+    # VALIDATED & ENABLED for Launch
+    FeatureFlags.GROUP_CHAT: True,  # Full multi-user collaboration - VALIDATED
+    FeatureFlags.GROUP_PROJECTS: False,  # Limited support via Group Chat - partial
+    FeatureFlags.VECTOR_MEMORY: True,  # Complete Pinecone integration - VALIDATED
+    FeatureFlags.CROSS_SESSION_REUSE: True,  # Enabled by Vector Memory - VALIDATED
+    FeatureFlags.WEEKLY_OPTIMIZATION: True,  # Full automation system - VALIDATED
+    
+    # Already enabled (stable features) - VALIDATED
+    FeatureFlags.ADAPTIVE_ROUTING: True,  # Performance-based routing - VALIDATED
+    FeatureFlags.DEEP_CONSENSUS: True,  # Multi-model synthesis - VALIDATED
+    
+    # Advanced feature - kept disabled for launch
+    FeatureFlags.PROMPT_DIFFUSION: False,  # Advanced prompt optimization - not critical
 }
 
 
