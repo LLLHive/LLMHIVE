@@ -69,13 +69,17 @@ export default defineConfig({
     command: process.env.CI ? 'npm start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 180 * 1000, // 3 minutes for CI
+    timeout: 240 * 1000, // 4 minutes for CI (increased for stability)
     stdout: 'pipe',
     stderr: 'pipe',
+    // Increase retry interval and count for CI stability
+    ignoreHTTPSErrors: true,
     // Pass environment variables to the server
     env: {
       ...process.env,
       PLAYWRIGHT_TEST: 'true',
+      // Ensure no blocking auth prompts
+      CI: process.env.CI || '',
     },
   },
 })

@@ -389,12 +389,30 @@ class ClarificationManager:
     
     # Patterns that indicate the query is clear and should NOT trigger clarification
     CLEAR_QUERY_PATTERNS = [
+        # List/rank patterns with numbers
         r'^list\s+(?:the\s+)?(?:top\s+)?\d+',  # "list 10 X", "list the top 10 X"
-        r'^(?:what|who|when|where|which)\s+(?:is|are|was|were)',  # "what is X"
-        r'^(?:name|give me|provide|tell me)\s+(?:the\s+)?\d+',  # "name 10 X"
-        r'^how\s+(?:many|much|often|long)',  # "how many X"
         r'^(?:top|best|biggest|largest|smallest|fastest|slowest)\s+\d+',  # "top 10 X"
         r'^\d+\s+(?:best|top|biggest|largest)',  # "10 best X"
+        r'^(?:name|give me|provide|tell me)\s+(?:the\s+)?\d+',  # "name 10 X"
+        
+        # Question words (what, who, when, where, which, how, why)
+        r'^(?:what|who|when|where|which)\s+(?:is|are|was|were|do|does|did|wrote|invented)',
+        r'^how\s+(?:many|much|often|long|do|does|can|to)',  # "how to X", "how does X work"
+        r'^why\s+(?:is|are|do|does|did|was|were)',  # "why is X"
+        
+        # Imperative commands
+        r'^(?:explain|describe|define|compare|calculate|write|create|build|implement|show|give)',
+        r'^(?:rank|sort|order)\s+(?:the\s+)?(?:best|top|most)',  # "rank the best X"
+        
+        # Specific factual queries
+        r'^(?:who|what)\s+(?:is|are|was|were)\s+(?:the|a)\s+\w+',  # "what is the capital"
+        r'(?:capital|population|president|leader|inventor)\s+of\s+\w+',  # "capital of X"
+        
+        # Code/programming requests
+        r'^(?:write|create|code|implement|build)\s+(?:a|an|the)\s+\w+',
+        
+        # "Tell me about" followed by specific subject
+        r'^tell\s+me\s+(?:about|how\s+to)\s+\w{4,}',  # "tell me about X" (4+ char subject)
     ]
     
     def __init__(
