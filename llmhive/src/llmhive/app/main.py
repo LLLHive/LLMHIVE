@@ -16,6 +16,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from .api import api_router
 from .startup_checks import validate_startup_config
+from .feature_flags import log_feature_states
 
 # Import error handling modules
 try:
@@ -99,6 +100,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Application starting on port {port}")
     logger.info("LLMHive Orchestrator API is ready")
     validate_startup_config()
+    log_feature_states()  # Log which features are enabled/disabled
     
     # Initialize OpenTelemetry tracing (SDK only, not middleware)
     # NOTE: Middleware cannot be added during lifespan in newer FastAPI versions
@@ -568,12 +570,17 @@ except ImportError as e:
     logger.debug("SSE Events router not available: %s", e)
 
 # Include Collaboration router for multi-user shared sessions (REST API)
-try:
-    from .routers import collaborate as collaborate_router
-    app.include_router(collaborate_router.router, prefix="/api/v1")
-    logger.info("Collaboration router enabled at /api/v1/collaborate")
-except ImportError as e:
-    logger.debug("Collaboration router not available: %s", e)
+# Gated by feature flag - disabled by default (partial implementation)
+from .feature_flags import is_feature_enabled, FeatureFlags
+if is_feature_enabled(FeatureFlags.GROUP_CHAT):
+    try:
+        from .routers import collaborate as collaborate_router
+        app.include_router(collaborate_router.router, prefix="/api/v1")
+        logger.info("Collaboration router enabled at /api/v1/collaborate")
+    except ImportError as e:
+        logger.debug("Collaboration router not available: %s", e)
+else:
+    logger.info("Collaboration router disabled by feature flag (GROUP_CHAT)")
 
 # Enhancement-2: Include orchestrator metrics router (at /api/v1/metrics)
 try:
@@ -584,9 +591,13 @@ except ImportError as e:
     logger.debug("Orchestrator metrics router not available: %s", e)
 
 # Enhancement-4: Include WebSocket collaboration router (at /ws)
-try:
-    from .routers.collab import router as collab_router
-    app.include_router(collab_router, prefix="/ws")
-    logger.info("✓ WebSocket collaboration routes registered at /ws/")
-except ImportError as e:
-    logger.debug("WebSocket collaboration router not available: %s", e)
+# Gated by feature flag - disabled by default (partial implementation)
+if is_feature_enabled(FeatureFlags.GROUP_CHAT):
+    try:
+        from .routers.collab import router as collab_router
+        app.include_router(collab_router, prefix="/ws")
+        logger.info("✓ WebSocket collaboration routes registered at /ws/")
+    except ImportError as e:
+        logger.debug("WebSocket collaboration router not available: %s", e)
+else:
+    logger.info("WebSocket collaboration disabled by feature flag (GROUP_CHAT)")
