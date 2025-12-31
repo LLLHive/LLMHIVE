@@ -49,7 +49,7 @@ export function useConversations(): UseConversationsReturn {
 
       try {
         // Try to load from API first (if authenticated)
-        if (auth?.isSignedIn && auth?.userId) {
+        if (auth?.isAuthenticated && auth?.user?.id) {
           try {
             const [convRes, projRes] = await Promise.all([
               fetch("/api/conversations"),
@@ -131,7 +131,7 @@ export function useConversations(): UseConversationsReturn {
     }
 
     loadData()
-  }, [auth?.isSignedIn, auth?.userId])
+  }, [auth?.isAuthenticated, auth?.user?.id])
 
   // Save to localStorage when data changes
   useEffect(() => {
@@ -156,7 +156,7 @@ export function useConversations(): UseConversationsReturn {
 
   // Sync to API when data changes (debounced)
   useEffect(() => {
-    if (!isInitialized || !auth?.isSignedIn) return
+    if (!isInitialized || !auth?.isAuthenticated) return
 
     const syncToApi = async () => {
       try {
@@ -181,7 +181,7 @@ export function useConversations(): UseConversationsReturn {
     // Debounce sync to avoid too many requests
     const timeoutId = setTimeout(syncToApi, 1000)
     return () => clearTimeout(timeoutId)
-  }, [conversations, projects, isInitialized, auth?.isSignedIn])
+  }, [conversations, projects, isInitialized, auth?.isAuthenticated])
 
   // Conversation actions
   const createConversation = useCallback(async (conv: Conversation) => {
@@ -246,7 +246,7 @@ export function useConversations(): UseConversationsReturn {
   }, [])
 
   const syncNow = useCallback(async () => {
-    if (!auth?.isSignedIn) return
+    if (!auth?.isAuthenticated) return
     
     try {
       await Promise.all([
@@ -266,7 +266,7 @@ export function useConversations(): UseConversationsReturn {
       console.error("[useConversations] Manual sync failed:", e)
       throw e
     }
-  }, [auth?.isSignedIn, conversations, projects])
+  }, [auth?.isAuthenticated, conversations, projects])
 
   return {
     conversations,

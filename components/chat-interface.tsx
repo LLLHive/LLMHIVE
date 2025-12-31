@@ -119,7 +119,7 @@ export function ChatInterface() {
       setOrchestratorSettings(savedSettings)
       
       // Try to load from API first (if authenticated)
-      if (auth?.isSignedIn) {
+      if (auth?.isAuthenticated) {
         const apiData = await loadFromApi()
         if (apiData && (apiData.conversations.length > 0 || apiData.projects.length > 0)) {
           setConversations(apiData.conversations)
@@ -171,7 +171,7 @@ export function ChatInterface() {
     }
     
     loadData()
-  }, [auth?.isSignedIn])
+  }, [auth?.isAuthenticated])
   
   // Persist conversations when they change
   useEffect(() => {
@@ -185,13 +185,13 @@ export function ChatInterface() {
     }
     
     // Also sync to API if authenticated (debounced)
-    if (auth?.isSignedIn && conversations.length > 0) {
+    if (auth?.isAuthenticated && conversations.length > 0) {
       const timeoutId = setTimeout(() => {
         syncToApi(conversations, projects)
       }, 2000) // Debounce by 2 seconds
       return () => clearTimeout(timeoutId)
     }
-  }, [conversations, settingsLoaded, auth?.isSignedIn])
+  }, [conversations, settingsLoaded, auth?.isAuthenticated])
   
   // Persist projects when they change
   useEffect(() => {
@@ -205,13 +205,13 @@ export function ChatInterface() {
     }
     
     // Also sync to API if authenticated (debounced)
-    if (auth?.isSignedIn) {
+    if (auth?.isAuthenticated) {
       const timeoutId = setTimeout(() => {
         syncToApi(conversations, projects)
       }, 2000) // Debounce by 2 seconds
       return () => clearTimeout(timeoutId)
     }
-  }, [projects, settingsLoaded, auth?.isSignedIn])
+  }, [projects, settingsLoaded, auth?.isAuthenticated])
 
   // Global keyboard shortcuts
   useEffect(() => {
