@@ -28,6 +28,62 @@ import { toast } from "@/lib/toast"
 const CONVERSATIONS_KEY = "llmhive-conversations"
 const PROJECTS_KEY = "llmhive-projects"
 
+// Helper to sync to API (for authenticated users)
+async function syncToApi(conversations: Conversation[], projects: Project[]) {
+  try {
+    await Promise.all([
+      fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync", conversations }),
+      }),
+      fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync", projects }),
+      }),
+    ])
+    console.log("[ChatInterface] Synced to API")
+  } catch (e) {
+    console.error("[ChatInterface] API sync failed:", e)
+  }
+}
+
+// Helper to load from API
+async function loadFromApi(): Promise<{ conversations: Conversation[], projects: Project[] } | null> {
+  try {
+    const [convRes, projRes] = await Promise.all([
+      fetch("/api/conversations"),
+      fetch("/api/projects"),
+    ])
+
+    if (convRes.ok && projRes.ok) {
+      const convData = await convRes.json()
+      const projData = await projRes.json()
+      
+      const conversations = (convData.conversations || []).map((c: any) => ({
+        ...c,
+        createdAt: new Date(c.createdAt),
+        updatedAt: new Date(c.updatedAt),
+        messages: (c.messages || []).map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        })),
+      }))
+      
+      const projects = (projData.projects || []).map((p: any) => ({
+        ...p,
+        createdAt: new Date(p.createdAt),
+      }))
+
+      return { conversations, projects }
+    }
+  } catch (e) {
+    console.warn("[ChatInterface] API load failed:", e)
+  }
+  return null
+}
+
 export function ChatInterface() {
   const auth = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -56,71 +112,106 @@ export function ChatInterface() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   
-  // Load settings and data from localStorage on mount
+  // Load settings and data on mount
   useEffect(() => {
-    const savedSettings = loadOrchestratorSettings()
-    setOrchestratorSettings(savedSettings)
-    
-    // Load conversations
-    try {
-      const savedConversations = localStorage.getItem(CONVERSATIONS_KEY)
-      if (savedConversations) {
-        const parsed = JSON.parse(savedConversations)
-        // Restore Date objects
-        const restored = parsed.map((c: any) => ({
-          ...c,
-          createdAt: new Date(c.createdAt),
-          updatedAt: new Date(c.updatedAt),
-          messages: c.messages.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          })),
-        }))
-        setConversations(restored)
+    const loadData = async () => {
+      const savedSettings = loadOrchestratorSettings()
+      setOrchestratorSettings(savedSettings)
+      
+      // Try to load from API first (if authenticated)
+      if (auth?.isSignedIn) {
+        const apiData = await loadFromApi()
+        if (apiData && (apiData.conversations.length > 0 || apiData.projects.length > 0)) {
+          setConversations(apiData.conversations)
+          setProjects(apiData.projects)
+          // Cache to localStorage
+          localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(apiData.conversations))
+          localStorage.setItem(PROJECTS_KEY, JSON.stringify(apiData.projects))
+          console.log(`[ChatInterface] Loaded from API: ${apiData.conversations.length} conversations, ${apiData.projects.length} projects`)
+          setSettingsLoaded(true)
+          return
+        }
       }
-    } catch (e) {
-      console.error("Failed to load conversations:", e)
+      
+      // Fallback to localStorage
+      try {
+        const savedConversations = localStorage.getItem(CONVERSATIONS_KEY)
+        if (savedConversations) {
+          const parsed = JSON.parse(savedConversations)
+          const restored = parsed.map((c: any) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+            messages: (c.messages || []).map((m: any) => ({
+              ...m,
+              timestamp: new Date(m.timestamp),
+            })),
+          }))
+          setConversations(restored)
+        }
+      } catch (e) {
+        console.error("Failed to load conversations:", e)
+      }
+      
+      try {
+        const savedProjects = localStorage.getItem(PROJECTS_KEY)
+        if (savedProjects) {
+          const parsed = JSON.parse(savedProjects)
+          const restored = parsed.map((p: any) => ({
+            ...p,
+            createdAt: new Date(p.createdAt),
+          }))
+          setProjects(restored)
+        }
+      } catch (e) {
+        console.error("Failed to load projects:", e)
+      }
+      
+      setSettingsLoaded(true)
     }
     
-    // Load projects
-    try {
-      const savedProjects = localStorage.getItem(PROJECTS_KEY)
-      if (savedProjects) {
-        const parsed = JSON.parse(savedProjects)
-        const restored = parsed.map((p: any) => ({
-          ...p,
-          createdAt: new Date(p.createdAt),
-        }))
-        setProjects(restored)
-      }
-    } catch (e) {
-      console.error("Failed to load projects:", e)
-    }
-    
-    setSettingsLoaded(true)
-  }, [])
+    loadData()
+  }, [auth?.isSignedIn])
   
   // Persist conversations when they change
   useEffect(() => {
-    if (settingsLoaded && conversations.length > 0) {
-      try {
-        localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations))
-      } catch (e) {
-        console.error("Failed to save conversations:", e)
-      }
+    if (!settingsLoaded) return
+    
+    // Always save to localStorage
+    try {
+      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations))
+    } catch (e) {
+      console.error("Failed to save conversations:", e)
     }
-  }, [conversations, settingsLoaded])
+    
+    // Also sync to API if authenticated (debounced)
+    if (auth?.isSignedIn && conversations.length > 0) {
+      const timeoutId = setTimeout(() => {
+        syncToApi(conversations, projects)
+      }, 2000) // Debounce by 2 seconds
+      return () => clearTimeout(timeoutId)
+    }
+  }, [conversations, settingsLoaded, auth?.isSignedIn])
   
   // Persist projects when they change
   useEffect(() => {
-    if (settingsLoaded) {
-      try {
-        localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects))
-      } catch (e) {
-        console.error("Failed to save projects:", e)
-      }
+    if (!settingsLoaded) return
+    
+    // Always save to localStorage
+    try {
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects))
+    } catch (e) {
+      console.error("Failed to save projects:", e)
     }
-  }, [projects, settingsLoaded])
+    
+    // Also sync to API if authenticated (debounced)
+    if (auth?.isSignedIn) {
+      const timeoutId = setTimeout(() => {
+        syncToApi(conversations, projects)
+      }, 2000) // Debounce by 2 seconds
+      return () => clearTimeout(timeoutId)
+    }
+  }, [projects, settingsLoaded, auth?.isSignedIn])
 
   // Global keyboard shortcuts
   useEffect(() => {
