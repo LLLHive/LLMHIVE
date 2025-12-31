@@ -42,7 +42,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { getModelLogo } from "@/lib/models"
 
-// Ranking categories matching OpenRouter
+// Ranking categories matching OpenRouter - includes all categories from dropdown menu
 const RANKING_CATEGORIES: Array<{
   id: RankingDimension
   name: string
@@ -59,6 +59,9 @@ const RANKING_CATEGORIES: Array<{
   { id: 'translation', name: 'Translation', icon: Languages, color: 'from-sky-500 to-blue-500' },
   { id: 'legal', name: 'Legal', icon: Scale, color: 'from-gray-500 to-slate-500' },
   { id: 'finance', name: 'Finance', icon: Landmark, color: 'from-emerald-500 to-green-500' },
+  { id: 'health', name: 'Health', icon: Heart, color: 'from-red-500 to-rose-500' },
+  { id: 'technology', name: 'Technology', icon: Cpu, color: 'from-slate-500 to-gray-500' },
+  { id: 'academia', name: 'Academia', icon: GraduationCap, color: 'from-amber-500 to-yellow-500' },
   { id: 'tools_agents', name: 'Tool Calls', icon: Wrench, color: 'from-orange-500 to-red-500' },
   { id: 'images', name: 'Images', icon: ImageIcon, color: 'from-fuchsia-500 to-pink-500' },
   { id: 'long_context', name: 'Long Context', icon: MessageSquare, color: 'from-purple-500 to-violet-500' },

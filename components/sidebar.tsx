@@ -97,6 +97,7 @@ export function Sidebar({
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
   const [showAllProjects, setShowAllProjects] = useState(false)
   const [showAllChats, setShowAllChats] = useState(false)
+  const [chatsExpanded, setChatsExpanded] = useState(true)
 
   // Helper to check if a route is active
   const isActiveRoute = (route: string) => pathname === route
@@ -408,46 +409,56 @@ export function Sidebar({
                 )}
               </div>
               
-              {/* Your Chats Section */}
+              {/* Chats Section */}
               <div className="py-2 border-t border-border/50">
-                <div className="px-2 py-1 text-sm font-medium text-muted-foreground">
-                  Your chats
-                </div>
-                
-                <div className="mt-1 space-y-0.5">
-                  {visibleStandaloneChats.length === 0 ? (
-                    <div className="py-4 text-center text-sm text-muted-foreground">
-                      No chats yet. Start a new chat!
-                    </div>
+                <button
+                  onClick={() => setChatsExpanded(!chatsExpanded)}
+                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span className="font-medium">Chats</span>
+                  {chatsExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
                   ) : (
-                    <>
-                      {visibleStandaloneChats.map((conv) => (
-                        <ConversationItem
-                          key={conv.id}
-                          conversation={conv}
-                          isActive={conv.id === currentConversationId}
-                          onSelect={() => onSelectConversation(conv.id)}
-                          onDelete={() => onDeleteConversation(conv.id)}
-                          onTogglePin={() => onTogglePin(conv.id)}
-                          onRename={() => handleRename(conv.id)}
-                          onMoveToProject={() => handleMoveToProjectClick(conv.id)}
-                          onShare={() => onShareConversation?.(conv.id)}
-                          onArchive={() => onArchiveConversation?.(conv.id)}
-                        />
-                      ))}
-                      
-                      {/* See All link */}
-                      {standaloneChats.length > 5 && (
-                        <button
-                          onClick={() => setShowAllChats(!showAllChats)}
-                          className="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {showAllChats ? "Show less" : "See All"}
-                        </button>
-                      )}
-                    </>
+                    <ChevronDown className="h-4 w-4" />
                   )}
-                </div>
+                </button>
+                
+                {chatsExpanded && (
+                  <div className="mt-1 space-y-0.5">
+                    {visibleStandaloneChats.length === 0 ? (
+                      <div className="py-4 text-center text-sm text-muted-foreground">
+                        No chats yet. Start a new chat!
+                      </div>
+                    ) : (
+                      <>
+                        {visibleStandaloneChats.map((conv) => (
+                          <ConversationItem
+                            key={conv.id}
+                            conversation={conv}
+                            isActive={conv.id === currentConversationId}
+                            onSelect={() => onSelectConversation(conv.id)}
+                            onDelete={() => onDeleteConversation(conv.id)}
+                            onTogglePin={() => onTogglePin(conv.id)}
+                            onRename={() => handleRename(conv.id)}
+                            onMoveToProject={() => handleMoveToProjectClick(conv.id)}
+                            onShare={() => onShareConversation?.(conv.id)}
+                            onArchive={() => onArchiveConversation?.(conv.id)}
+                          />
+                        ))}
+                        
+                        {/* See All link */}
+                        {standaloneChats.length > 5 && (
+                          <button
+                            onClick={() => setShowAllChats(!showAllChats)}
+                            className="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showAllChats ? "Show less" : "See All"}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {activeTab === "discover" && (
