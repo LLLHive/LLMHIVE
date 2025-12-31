@@ -587,13 +587,7 @@ export function PromptPlayground({
                 </TabsTrigger>
               </TabsList>
               
-              {/* Cost estimate */}
-              {selectedModel && (
-                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Est. cost: ${estimatedCost.toFixed(4)}
-                </div>
-              )}
+              {/* Cost estimate hidden from customer view */}
             </div>
             
             <ScrollArea className="flex-1">
@@ -752,12 +746,7 @@ export function PromptPlayground({
                             {state.responseMetadata.promptTokens} → {state.responseMetadata.completionTokens} tokens
                           </Badge>
                         )}
-                        {state.responseMetadata.costUsd !== undefined && (
-                          <Badge variant="secondary" className="gap-1">
-                            <DollarSign className="w-3 h-3" />
-                            ${state.responseMetadata.costUsd.toFixed(4)}
-                          </Badge>
-                        )}
+                        {/* Cost hidden from customer view */}
                       </div>
                     )}
                   </div>

@@ -163,15 +163,7 @@ function ModelCard({
             </div>
             <p className="text-[10px] text-muted-foreground truncate">{model.author || model.id.split('/')[0]}</p>
             
-            {/* Cost - OTel metrics format */}
-            <div className="flex items-center gap-2 mt-1 text-[10px]">
-              <span className="text-muted-foreground">
-                In: ${promptCost < 0.01 ? promptCost.toFixed(4) : promptCost.toFixed(2)}/1M
-              </span>
-              <span className="text-muted-foreground">
-                Out: ${completionCost < 0.01 ? completionCost.toFixed(4) : completionCost.toFixed(2)}/1M
-              </span>
-            </div>
+            {/* Cost info hidden from customer view - available in admin/orchestrator */}
             
             {/* Metrics from ranking */}
             {metrics && Object.keys(metrics).length > 0 && (
@@ -498,23 +490,7 @@ export default function ModelsPage() {
                   <p className="text-sm mt-2">{showDetails.description || 'No description available'}</p>
                 </div>
                 
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Pricing (per 1M tokens)</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="p-2 bg-muted rounded">
-                      <span className="text-muted-foreground">Input:</span>
-                      <span className="ml-2 font-mono">
-                        ${(showDetails.pricing?.per_1m_prompt || 0).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="p-2 bg-muted rounded">
-                      <span className="text-muted-foreground">Output:</span>
-                      <span className="ml-2 font-mono">
-                        ${(showDetails.pricing?.per_1m_completion || 0).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                {/* Pricing info hidden from customer view */}
                 
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Capabilities</h4>

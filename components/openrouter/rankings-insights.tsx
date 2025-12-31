@@ -246,14 +246,7 @@ function RankingEntryRow({ entry, onSelect }: RankingEntryRowProps) {
           </div>
         )}
         
-        {/* Price */}
-        {entry.model_metadata?.pricing?.prompt != null && (
-          <div className="text-right shrink-0 w-24 hidden lg:block">
-            <div className="text-sm font-medium">
-              {formatPrice(entry.model_metadata.pricing.prompt)}
-            </div>
-          </div>
-        )}
+        {/* Price hidden from customer view */}
         
         <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
       </CardContent>
@@ -355,14 +348,7 @@ function RankedModelRow({ rankedModel, onSelect }: RankedModelRowProps) {
           )}
         </div>
         
-        {/* Price */}
-        <div className="text-right shrink-0 w-24 hidden lg:block">
-          <div className="text-sm font-medium">
-            {model.pricing?.per_1m_prompt != null 
-              ? formatPrice(model.pricing.per_1m_prompt)
-              : "N/A"}
-          </div>
-        </div>
+        {/* Price hidden from customer view */}
         
         <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
       </CardContent>

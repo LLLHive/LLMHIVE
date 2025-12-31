@@ -55,15 +55,6 @@ interface ModelCardProps {
 }
 
 function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: ModelCardProps) {
-  const priceTier = getPriceTier(model.pricing?.per_1m_prompt)
-  
-  const priceTierColors = {
-    free: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-    budget: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-    standard: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-    premium: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-  }
-  
   return (
     <Card
       className={cn(
@@ -83,9 +74,7 @@ function ModelCard({ model, onSelect, isSelected, onCompare, isComparing }: Mode
               {model.id}
             </CardDescription>
           </div>
-          <Badge variant="outline" className={cn("text-xs shrink-0", priceTierColors[priceTier])}>
-            {priceTier === 'free' ? 'Free' : (model.pricing?.per_1m_prompt != null ? formatPrice(model.pricing.per_1m_prompt) : 'N/A')}
-          </Badge>
+          {/* Pricing badge hidden from customer view */}
         </div>
       </CardHeader>
       
@@ -230,36 +219,7 @@ function FilterPanel({ filters, onChange }: FilterPanelProps) {
   
   return (
     <div className="space-y-6 p-4">
-      {/* Price Range */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">Price Range</Label>
-        <p className="text-xs text-muted-foreground">
-          Maximum cost per million input tokens
-        </p>
-        <div className="space-y-4">
-          <Slider
-            value={[filters.max_price_per_1m || 100]}
-            onValueChange={([val]) => updateFilter('max_price_per_1m', val)}
-            max={100}
-            min={0}
-            step={1}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Free</span>
-            <span>${filters.max_price_per_1m || 100}/M</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is_free"
-              checked={filters.is_free || false}
-              onCheckedChange={(checked) => updateFilter('is_free', checked ? true : undefined)}
-            />
-            <Label htmlFor="is_free" className="text-sm">
-              Free models only
-            </Label>
-          </div>
-        </div>
-      </div>
+      {/* Price Range filter hidden from customer view */}
       
       {/* Context Length */}
       <div className="space-y-3">
