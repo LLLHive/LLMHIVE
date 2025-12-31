@@ -861,7 +861,7 @@ export function ChatArea({
               className={`min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-white/5 border-white/10 focus:border-[var(--bronze)] text-sm md:text-base ${
                 isListening ? 'border-red-500/50 ring-1 ring-red-500/20' : ''
               }`}
-              spellCheck={orchestratorSettings.enableSpellCheck !== false}
+              spellCheck={orchestratorSettings.enableSpellCheck ?? true}
               autoComplete="on"
               autoCorrect="on"
             />
