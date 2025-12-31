@@ -30,9 +30,21 @@ export function DeleteConfirmationDialog({
   confirmText = "Delete",
   cancelText = "Cancel",
 }: DeleteConfirmationDialogProps) {
+  const handleConfirm = () => {
+    // Close dialog first, then delete
+    onOpenChange(false)
+    // Use requestAnimationFrame to ensure dialog is closed before state change
+    requestAnimationFrame(() => {
+      onConfirm()
+    })
+  }
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-[425px]">
+      <AlertDialogContent 
+        className="sm:max-w-[425px]"
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description && (
@@ -42,7 +54,7 @@ export function DeleteConfirmationDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelText}</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {confirmText}

@@ -650,7 +650,13 @@ function ProjectItem({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-52 p-1">
+        <DropdownMenuContent 
+          align="end" 
+          side="right" 
+          sideOffset={8} 
+          className="w-52 p-1"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
@@ -810,6 +816,7 @@ function ConversationItem({
           side="right"
           sideOffset={8}
           className="w-48 p-1"
+          onCloseAutoFocus={(e) => e.preventDefault()}
         >
           {/* Share option */}
           <DropdownMenuItem

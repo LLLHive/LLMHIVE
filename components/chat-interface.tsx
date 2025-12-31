@@ -348,15 +348,19 @@ export function ChatInterface() {
   }
 
   const handleDeleteConversation = (id: string) => {
+    // Clear the delete dialog state first
+    setDeleteConversationId(null)
+    
+    // Then update the conversations
     setConversations((prev) => prev.filter((c) => c.id !== id))
+    
     if (currentConversationId === id) {
       setCurrentConversationId(null)
       setShowArtifact(false)
       setCurrentArtifact(null)
     }
+    
     toast.info("Chat deleted")
-    setShowDeleteDialog(false)
-    setDeleteConversationId(null)
   }
 
   const handleShareConversation = (id: string) => {
