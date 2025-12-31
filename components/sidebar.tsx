@@ -175,7 +175,7 @@ export function Sidebar({
               <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
               </div>
-              <LogoText height={35} className="-ml-1" />
+              <LogoText height={40} className="-ml-2" />
             </button>
           )}
           {collapsed && (
