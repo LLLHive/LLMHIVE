@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { LogoText } from "@/components/branding"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -30,6 +31,7 @@ import {
   Users,
   Target,
   X,
+  Compass,
 } from "lucide-react"
 import type { OrchestratorSettings, DomainPack } from "@/lib/types"
 
@@ -129,9 +131,23 @@ const templates = [
       answerStructure: true,
     },
   },
+  {
+    id: "discover",
+    title: "Discover",
+    description: "Explore AI prompts, guides & templates",
+    icon: Compass,
+    badgeClass: "icon-badge-cyan",
+    preset: {
+      reasoningMode: "standard" as const,
+      domainPack: "default" as const,
+      agentMode: "single" as const,
+    },
+    isLink: true,
+    href: "/discover",
+  },
 ]
 
-type DrawerId = "general" | "research" | "code" | "industry" | null
+type DrawerId = "general" | "research" | "code" | "industry" | "discover" | null
 
 export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
@@ -241,21 +257,11 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
 
       {/* Template Cards - Glass Cards */}
       <div className="w-full max-w-4xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
           {templates.map((template, index) => {
             const Icon = template.icon
-            return (
-              <button
-                key={template.id}
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  openDrawer(template.id)
-                }}
-                className="settings-card group llmhive-fade-in"
-                style={{ animationDelay: `${0.15 + index * 0.05}s` }}
-              >
+            const cardContent = (
+              <>
                 {/* Icon Badge */}
                 <div className={`icon-badge ${template.badgeClass}`}>
                   <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
@@ -270,6 +276,37 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     {template.description}
                   </p>
                 </div>
+              </>
+            )
+            
+            // If template has a link, render as Link
+            if (template.isLink && template.href) {
+              return (
+                <Link
+                  key={template.id}
+                  href={template.href}
+                  className="settings-card group llmhive-fade-in"
+                  style={{ animationDelay: `${0.15 + index * 0.05}s` }}
+                >
+                  {cardContent}
+                </Link>
+              )
+            }
+            
+            // Otherwise render as button that opens drawer
+            return (
+              <button
+                key={template.id}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  openDrawer(template.id)
+                }}
+                className="settings-card group llmhive-fade-in"
+                style={{ animationDelay: `${0.15 + index * 0.05}s` }}
+              >
+                {cardContent}
               </button>
             )
           })}

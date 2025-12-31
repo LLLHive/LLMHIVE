@@ -198,48 +198,8 @@ export function Sidebar({
               </Button>
             </div>
 
-            {/* Tabs */}
+            {/* Navigation Links */}
             <div className="px-3 pb-2 space-y-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleTabChange("chats")}
-                className={cn(
-                  "w-full justify-start text-sm transition-all",
-                  activeTab === "chats" && "bg-secondary",
-                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                )}
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Chats
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleTabChange("projects")}
-                className={cn(
-                  "w-full justify-start text-sm transition-all",
-                  activeTab === "projects" && "bg-secondary",
-                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                )}
-              >
-                <FolderOpen className="h-4 w-4 mr-2" />
-                Projects
-              </Button>
-              <Link href={ROUTES.DISCOVER} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.DISCOVER) && "bg-secondary text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Discover
-                </Button>
-              </Link>
               {/* Models / OpenRouter */}
               <Link href={ROUTES.MODELS} className="w-full">
                 <Button
@@ -722,13 +682,13 @@ function ConversationItem({
             size="icon" 
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "bg-[var(--bronze)]/20 hover:bg-[var(--bronze)]/40",
-              "text-[var(--bronze)]",
-              "focus:ring-1 focus:ring-[var(--bronze)]/50"
+              "opacity-0 group-hover:opacity-100",
+              "hover:bg-secondary-foreground/10",
+              "focus:opacity-100"
             )}
             aria-label="Chat options"
           >
-            <MoreHorizontal className="h-4 w-4 text-current" />
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
