@@ -140,8 +140,17 @@ export async function GET(request: Request) {
     
     if (response.ok) {
       const data = await response.json()
-      if (data.models && data.models.length > 0) {
-        return NextResponse.json(data)
+      // Backend returns 'data' array, normalize to 'models'
+      const models = data.models || data.data || []
+      if (models.length > 0) {
+        return NextResponse.json({
+          models: models.map(transformModel),
+          total: data.total || models.length,
+          limit: data.limit || limit,
+          offset: data.offset || offset,
+          data_source: data.data_source || "Backend SQLite",
+          last_sync: data.last_sync || new Date().toISOString(),
+        })
       }
     }
   } catch {
