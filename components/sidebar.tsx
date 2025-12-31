@@ -529,13 +529,13 @@ function ConversationItem({
             size="icon" 
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "opacity-60 hover:opacity-100 group-hover:opacity-100",
-              "hover:bg-secondary-foreground/10",
-              "focus:opacity-100 focus:ring-1 focus:ring-[var(--bronze)]/50"
+              "bg-[var(--bronze)]/20 hover:bg-[var(--bronze)]/40",
+              "text-[var(--bronze)]",
+              "focus:ring-1 focus:ring-[var(--bronze)]/50"
             )}
             aria-label="Chat options"
           >
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal className="h-4 w-4 text-current" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
