@@ -43,7 +43,7 @@ async function syncToApi(conversations: Conversation[], projects: Project[]) {
         body: JSON.stringify({ action: "sync", projects }),
       }),
     ])
-    console.log("[ChatInterface] Synced to API")
+    // Successfully synced to API
   } catch (e) {
     console.error("[ChatInterface] API sync failed:", e)
   }
@@ -127,7 +127,7 @@ export function ChatInterface() {
           // Cache to localStorage
           localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(apiData.conversations))
           localStorage.setItem(PROJECTS_KEY, JSON.stringify(apiData.projects))
-          console.log(`[ChatInterface] Loaded from API: ${apiData.conversations.length} conversations, ${apiData.projects.length} projects`)
+          // Loaded from API successfully
           setSettingsLoaded(true)
           return
         }
