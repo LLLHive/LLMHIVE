@@ -17,6 +17,8 @@ import {
   Settings,
   Sparkles,
   FolderOpen,
+  Folder,
+  FolderPlus,
   Users,
   Pin,
   PinOff,
@@ -26,6 +28,8 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Pencil,
   FolderInput,
   Workflow,
@@ -90,6 +94,9 @@ export function Sidebar({
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"chats" | "projects" | "discover" | null>("chats")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
+  const [showAllProjects, setShowAllProjects] = useState(false)
+  const [showAllChats, setShowAllChats] = useState(false)
 
   // Helper to check if a route is active
   const isActiveRoute = (route: string) => pathname === route
@@ -100,6 +107,38 @@ export function Sidebar({
 
   const pinnedConversations = filteredConversations.filter((c) => c.pinned)
   const unpinnedConversations = filteredConversations.filter((c) => !c.pinned)
+  
+  // Get conversations that are in a project
+  const projectConversationIds = new Set(projects.flatMap(p => p.conversations))
+  
+  // Standalone chats (not in any project)
+  const standaloneChats = filteredConversations.filter(c => !projectConversationIds.has(c.id))
+  
+  // Get conversations for a specific project
+  const getProjectConversations = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId)
+    if (!project) return []
+    return conversations.filter(c => project.conversations.includes(c.id))
+  }
+  
+  // Toggle project expansion
+  const toggleProjectExpand = (projectId: string) => {
+    setExpandedProjects(prev => {
+      const next = new Set(prev)
+      if (next.has(projectId)) {
+        next.delete(projectId)
+      } else {
+        next.add(projectId)
+      }
+      return next
+    })
+  }
+  
+  // Visible projects (limited unless "See more" is clicked)
+  const visibleProjects = showAllProjects ? projects : projects.slice(0, 5)
+  
+  // Visible standalone chats (limited unless "See All" is clicked)
+  const visibleStandaloneChats = showAllChats ? standaloneChats : standaloneChats.slice(0, 5)
 
   const handleRename = (id: string) => {
     onRenameConversation(id)
@@ -283,72 +322,133 @@ export function Sidebar({
               </div>
             )}
 
-            {/* Content */}
-            <ScrollArea className="px-3 h-[180px]">
-              {activeTab === "chats" && (
-                <div className="space-y-4">
-                  {pinnedConversations.length > 0 && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-2 px-2">Pinned</div>
-                      <div className="space-y-1">
-                        {pinnedConversations.map((conv) => (
-                          <ConversationItem
-                            key={conv.id}
-                            conversation={conv}
-                            isActive={conv.id === currentConversationId}
-                            onSelect={() => onSelectConversation(conv.id)}
-                            onDelete={() => onDeleteConversation(conv.id)}
-                            onTogglePin={() => onTogglePin(conv.id)}
-                            onRename={() => handleRename(conv.id)}
-                            onMoveToProject={() => handleMoveToProjectClick(conv.id)}
-                            onShare={() => onShareConversation?.(conv.id)}
-                            onArchive={() => onArchiveConversation?.(conv.id)}
-                          />
-                        ))}
-                      </div>
-                    </div>
+            {/* Content - ChatGPT Style Layout */}
+            <ScrollArea className="flex-1 px-3">
+              {/* Projects Section */}
+              <div className="py-2">
+                <button
+                  onClick={() => setActiveTab(activeTab === "projects" ? null : "projects")}
+                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span className="font-medium">Projects</span>
+                  {activeTab === "projects" ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
                   )}
-
-                  {unpinnedConversations.length === 0 && pinnedConversations.length === 0 ? (
-                    <div className="py-8 text-center text-sm text-muted-foreground">
-                      No conversations yet
-                      <br />
-                      Start a new chat to begin
+                </button>
+                
+                {activeTab === "projects" && (
+                  <div className="mt-1 space-y-0.5">
+                    {/* New Project Button */}
+                    <button
+                      onClick={() => onCreateProject?.({
+                        name: "New Project",
+                        description: "",
+                        conversations: [],
+                        files: [],
+                      })}
+                      className="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+                    >
+                      <FolderPlus className="h-4 w-4" />
+                      New project
+                    </button>
+                    
+                    {/* Project List */}
+                    {visibleProjects.map((project) => (
+                      <div key={project.id}>
+                        <ProjectItem
+                          project={project}
+                          isExpanded={expandedProjects.has(project.id)}
+                          onToggleExpand={() => toggleProjectExpand(project.id)}
+                          onSelect={() => onSelectProject?.(project.id)}
+                          onDelete={() => onDeleteProject?.(project.id)}
+                          hasActiveChat={getProjectConversations(project.id).some(c => c.id === currentConversationId)}
+                        />
+                        
+                        {/* Nested Chats */}
+                        {expandedProjects.has(project.id) && (
+                          <div className="ml-4 border-l border-border/50 pl-2 space-y-0.5">
+                            {getProjectConversations(project.id).map((conv) => (
+                              <ConversationItem
+                                key={conv.id}
+                                conversation={conv}
+                                isActive={conv.id === currentConversationId}
+                                onSelect={() => onSelectConversation(conv.id)}
+                                onDelete={() => onDeleteConversation(conv.id)}
+                                onTogglePin={() => onTogglePin(conv.id)}
+                                onRename={() => handleRename(conv.id)}
+                                onMoveToProject={() => handleMoveToProjectClick(conv.id)}
+                                onShare={() => onShareConversation?.(conv.id)}
+                                onArchive={() => onArchiveConversation?.(conv.id)}
+                                isNested
+                              />
+                            ))}
+                            {getProjectConversations(project.id).length === 0 && (
+                              <div className="text-xs text-muted-foreground py-2 px-2">
+                                No chats in this project
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {/* See more link */}
+                    {projects.length > 5 && (
+                      <button
+                        onClick={() => setShowAllProjects(!showAllProjects)}
+                        className="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                        {showAllProjects ? "Show less" : "See more"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* Your Chats Section */}
+              <div className="py-2 border-t border-border/50">
+                <div className="px-2 py-1 text-sm font-medium text-muted-foreground">
+                  Your chats
+                </div>
+                
+                <div className="mt-1 space-y-0.5">
+                  {visibleStandaloneChats.length === 0 ? (
+                    <div className="py-4 text-center text-sm text-muted-foreground">
+                      No chats yet. Start a new chat!
                     </div>
                   ) : (
-                    <div>
-                      {pinnedConversations.length > 0 && (
-                        <div className="text-xs font-medium text-muted-foreground mb-2 px-2">Recent</div>
+                    <>
+                      {visibleStandaloneChats.map((conv) => (
+                        <ConversationItem
+                          key={conv.id}
+                          conversation={conv}
+                          isActive={conv.id === currentConversationId}
+                          onSelect={() => onSelectConversation(conv.id)}
+                          onDelete={() => onDeleteConversation(conv.id)}
+                          onTogglePin={() => onTogglePin(conv.id)}
+                          onRename={() => handleRename(conv.id)}
+                          onMoveToProject={() => handleMoveToProjectClick(conv.id)}
+                          onShare={() => onShareConversation?.(conv.id)}
+                          onArchive={() => onArchiveConversation?.(conv.id)}
+                        />
+                      ))}
+                      
+                      {/* See All link */}
+                      {standaloneChats.length > 5 && (
+                        <button
+                          onClick={() => setShowAllChats(!showAllChats)}
+                          className="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showAllChats ? "Show less" : "See All"}
+                        </button>
                       )}
-                      <div className="space-y-1">
-                        {unpinnedConversations.map((conv) => (
-                          <ConversationItem
-                            key={conv.id}
-                            conversation={conv}
-                            isActive={conv.id === currentConversationId}
-                            onSelect={() => onSelectConversation(conv.id)}
-                            onDelete={() => onDeleteConversation(conv.id)}
-                            onTogglePin={() => onTogglePin(conv.id)}
-                            onRename={() => handleRename(conv.id)}
-                            onMoveToProject={() => handleMoveToProjectClick(conv.id)}
-                            onShare={() => onShareConversation?.(conv.id)}
-                            onArchive={() => onArchiveConversation?.(conv.id)}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
-              )}
-
-              {activeTab === "projects" && (
-                <ProjectsPanel
-                  projects={projects}
-                  onCreateProject={onCreateProject ?? (() => {})}
-                  onDeleteProject={onDeleteProject ?? (() => {})}
-                  onSelectProject={onSelectProject ?? (() => {})}
-                />
-              )}
+              </div>
 
               {activeTab === "discover" && (
                 <div className="space-y-3 py-4">
@@ -480,6 +580,80 @@ export function Sidebar({
   )
 }
 
+function ProjectItem({
+  project,
+  isExpanded,
+  onToggleExpand,
+  onSelect,
+  onDelete,
+  hasActiveChat,
+}: {
+  project: Project
+  isExpanded: boolean
+  onToggleExpand: () => void
+  onSelect: () => void
+  onDelete: () => void
+  hasActiveChat?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
+        (isExpanded || hasActiveChat) && "bg-secondary/50",
+      )}
+      onClick={onToggleExpand}
+    >
+      {isExpanded ? (
+        <FolderOpen className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+      ) : (
+        <Folder className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+      )}
+      <span className="text-sm truncate flex-1 min-w-0">{project.name}</span>
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
+              "opacity-0 group-hover:opacity-100",
+              "hover:bg-secondary-foreground/10",
+              "focus:opacity-100"
+            )}
+            aria-label="Project options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-48 p-1">
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelect()
+            }}
+            className="cursor-pointer rounded-sm"
+          >
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Open project
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            className="text-destructive cursor-pointer rounded-sm"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete project
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
 function ConversationItem({
   conversation,
   isActive,
@@ -491,6 +665,7 @@ function ConversationItem({
   onShare,
   onArchive,
   onStartGroupChat,
+  isNested = false,
 }: {
   conversation: Conversation
   isActive: boolean
@@ -502,23 +677,30 @@ function ConversationItem({
   onShare?: () => void
   onArchive?: () => void
   onStartGroupChat?: () => void
+  isNested?: boolean
 }) {
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
         isActive && "bg-secondary ring-1 ring-[var(--bronze)]/30",
+        isNested && "py-1 text-[13px]",
       )}
       onClick={onSelect}
     >
-      <MessageSquare className={cn(
-        "h-4 w-4 flex-shrink-0 transition-colors",
-        isActive ? "text-[var(--bronze)]" : "text-muted-foreground"
-      )} />
-      <span className="text-sm truncate flex-1 min-w-0">{conversation.title}</span>
+      {!isNested && (
+        <MessageSquare className={cn(
+          "h-4 w-4 flex-shrink-0 transition-colors",
+          isActive ? "text-[var(--bronze)]" : "text-muted-foreground"
+        )} />
+      )}
+      <span className={cn(
+        "truncate flex-1 min-w-0",
+        isNested ? "text-[13px]" : "text-sm"
+      )}>{conversation.title}</span>
       
       {/* Pin indicator */}
-      {conversation.pinned && (
+      {conversation.pinned && !isNested && (
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
 
