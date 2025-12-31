@@ -69,6 +69,9 @@ interface SidebarProps {
   onCreateProject?: (project: Omit<Project, "id" | "createdAt">) => void
   onDeleteProject?: (id: string) => void
   onSelectProject?: (id: string) => void
+  onRenameProject?: (id: string) => void
+  onTogglePinProject?: (id: string) => void
+  onArchiveProject?: (id: string) => void
 }
 
 export function Sidebar({
@@ -89,6 +92,9 @@ export function Sidebar({
   onCreateProject,
   onDeleteProject,
   onSelectProject,
+  onRenameProject,
+  onTogglePinProject,
+  onArchiveProject,
 }: SidebarProps) {
   const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
@@ -215,26 +221,6 @@ export function Sidebar({
                   Models
                 </Button>
               </Link>
-              {/* Collaborate - Coming Soon */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled
-                      className="w-full justify-start text-sm opacity-50 cursor-not-allowed"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Collaborate
-                      <Clock className="h-3 w-3 ml-auto text-muted-foreground" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <p>Coming Soon</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
               {/* Orchestration link */}
               <Link href={ROUTES.ORCHESTRATION} className="w-full">
                 <Button
@@ -250,20 +236,6 @@ export function Sidebar({
                 >
                   <Workflow className="h-4 w-4 mr-2" />
                   Orchestration
-                </Button>
-              </Link>
-              <Link href={ROUTES.SETTINGS} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.SETTINGS) && "bg-secondary text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
                 </Button>
               </Link>
             </div>
@@ -285,8 +257,31 @@ export function Sidebar({
 
             {/* Content - ChatGPT Style Layout */}
             <ScrollArea className="flex-1 px-3">
-              {/* Projects Section */}
+              {/* Collaborate - Coming Soon (above Projects) */}
               <div className="py-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled
+                        className="w-full justify-start text-sm opacity-50 cursor-not-allowed"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Collaborate
+                        <Clock className="h-3 w-3 ml-auto text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>Coming Soon</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              
+              {/* Projects Section */}
+              <div className="py-2 border-t border-border/50">
                 <button
                   onClick={() => setActiveTab(activeTab === "projects" ? null : "projects")}
                   className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -324,6 +319,9 @@ export function Sidebar({
                           onToggleExpand={() => toggleProjectExpand(project.id)}
                           onSelect={() => onSelectProject?.(project.id)}
                           onDelete={() => onDeleteProject?.(project.id)}
+                          onRename={() => onRenameProject?.(project.id)}
+                          onTogglePin={() => onTogglePinProject?.(project.id)}
+                          onArchive={() => onArchiveProject?.(project.id)}
                           hasActiveChat={getProjectConversations(project.id).some(c => c.id === currentConversationId)}
                         />
                         
@@ -444,96 +442,140 @@ export function Sidebar({
                 </div>
               )}
             </ScrollArea>
+            
+            {/* Settings at the bottom */}
+            <div className="px-3 py-3 border-t border-border/50 mt-auto">
+              <Link href={ROUTES.SETTINGS} className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.SETTINGS) && "bg-secondary text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
+            </div>
           </>
         )}
 
         {collapsed && (
-          <div className="flex-1 flex flex-col items-center gap-4 py-4">
-            <Button variant="ghost" size="icon" onClick={onNewChat} className="w-10 h-10">
-              <Plus className="h-5 w-5" />
-            </Button>
-            <Button
-              variant={activeTab === "chats" ? "secondary" : "ghost"}
-              size="icon"
-              onClick={() => handleTabChange("chats")}
-              className="w-10 h-10"
-            >
-              <MessageSquare className="h-5 w-5" />
-            </Button>
-            <Button
-              variant={activeTab === "projects" ? "secondary" : "ghost"}
-              size="icon"
-              onClick={() => handleTabChange("projects")}
-              className="w-10 h-10"
-            >
-              <FolderOpen className="h-5 w-5" />
-            </Button>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href={ROUTES.DISCOVER}>
+          <div className="flex-1 flex flex-col items-center py-4">
+            {/* Top section icons */}
+            <div className="flex flex-col items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={onNewChat} className="w-10 h-10">
+                <Plus className="h-5 w-5" />
+              </Button>
+              <Button
+                variant={activeTab === "chats" ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => handleTabChange("chats")}
+                className="w-10 h-10"
+              >
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+              {/* Collapsed Collaborate (disabled) */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button 
-                      variant={isActiveRoute(ROUTES.DISCOVER) ? "secondary" : "ghost"} 
+                      variant="ghost" 
                       size="icon" 
-                      className={cn("w-10 h-10", isActiveRoute(ROUTES.DISCOVER) && "text-[var(--bronze)]")}
+                      disabled
+                      className="w-10 h-10 opacity-50 cursor-not-allowed"
                     >
-                      <Sparkles className="h-5 w-5" />
+                      <Users className="h-5 w-5" />
                     </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">Discover</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {/* Collapsed Models icon */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href={ROUTES.MODELS}>
-                    <Button 
-                      variant={isActiveRoute(ROUTES.MODELS) ? "secondary" : "ghost"} 
-                      size="icon" 
-                      className={cn("w-10 h-10", isActiveRoute(ROUTES.MODELS) && "text-[var(--bronze)]")}
-                    >
-                      <Boxes className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">Models</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {/* Collapsed Orchestration icon */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href={ROUTES.ORCHESTRATION}>
-                    <Button 
-                      variant={isActiveRoute(ROUTES.ORCHESTRATION) ? "secondary" : "ghost"} 
-                      size="icon" 
-                      className={cn("w-10 h-10 text-[var(--bronze)]")}
-                    >
-                      <Workflow className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">Orchestration</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href={ROUTES.SETTINGS}>
-                    <Button 
-                      variant={isActiveRoute(ROUTES.SETTINGS) ? "secondary" : "ghost"} 
-                      size="icon" 
-                      className={cn("w-10 h-10", isActiveRoute(ROUTES.SETTINGS) && "text-[var(--bronze)]")}
-                    >
-                      <Settings className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">Settings</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Collaborate (Coming Soon)</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Button
+                variant={activeTab === "projects" ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => handleTabChange("projects")}
+                className="w-10 h-10"
+              >
+                <FolderOpen className="h-5 w-5" />
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={ROUTES.DISCOVER}>
+                      <Button 
+                        variant={isActiveRoute(ROUTES.DISCOVER) ? "secondary" : "ghost"} 
+                        size="icon" 
+                        className={cn("w-10 h-10", isActiveRoute(ROUTES.DISCOVER) && "text-[var(--bronze)]")}
+                      >
+                        <Sparkles className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Discover</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {/* Collapsed Models icon */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={ROUTES.MODELS}>
+                      <Button 
+                        variant={isActiveRoute(ROUTES.MODELS) ? "secondary" : "ghost"} 
+                        size="icon" 
+                        className={cn("w-10 h-10", isActiveRoute(ROUTES.MODELS) && "text-[var(--bronze)]")}
+                      >
+                        <Boxes className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Models</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {/* Collapsed Orchestration icon */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={ROUTES.ORCHESTRATION}>
+                      <Button 
+                        variant={isActiveRoute(ROUTES.ORCHESTRATION) ? "secondary" : "ghost"} 
+                        size="icon" 
+                        className={cn("w-10 h-10 text-[var(--bronze)]")}
+                      >
+                        <Workflow className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Orchestration</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            
+            {/* Spacer to push Settings to bottom */}
+            <div className="flex-1" />
+            
+            {/* Settings at bottom */}
+            <div className="border-t border-border/50 pt-4">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={ROUTES.SETTINGS}>
+                      <Button 
+                        variant={isActiveRoute(ROUTES.SETTINGS) ? "secondary" : "ghost"} 
+                        size="icon" 
+                        className={cn("w-10 h-10", isActiveRoute(ROUTES.SETTINGS) && "text-[var(--bronze)]")}
+                      >
+                        <Settings className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Settings</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         )}
 
@@ -557,6 +599,9 @@ function ProjectItem({
   onToggleExpand,
   onSelect,
   onDelete,
+  onRename,
+  onTogglePin,
+  onArchive,
   hasActiveChat,
 }: {
   project: Project
@@ -564,6 +609,9 @@ function ProjectItem({
   onToggleExpand: () => void
   onSelect: () => void
   onDelete: () => void
+  onRename?: () => void
+  onTogglePin?: () => void
+  onArchive?: () => void
   hasActiveChat?: boolean
 }) {
   return (
@@ -581,6 +629,11 @@ function ProjectItem({
       )}
       <span className="text-sm truncate flex-1 min-w-0">{project.name}</span>
       
+      {/* Pin indicator */}
+      {(project as any).pinned && (
+        <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
+      )}
+      
       <DropdownMenu>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button 
@@ -597,7 +650,7 @@ function ProjectItem({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-48 p-1">
+        <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-52 p-1">
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
@@ -608,7 +661,68 @@ function ProjectItem({
             <FolderOpen className="h-4 w-4 mr-2" />
             Open project
           </DropdownMenuItem>
+          
           <DropdownMenuSeparator />
+          
+          {/* Rename */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onRename?.()
+            }}
+            className="cursor-pointer rounded-sm"
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Rename
+          </DropdownMenuItem>
+          
+          {/* Move to Collaboration - Coming Soon */}
+          <DropdownMenuItem
+            onClick={(e) => e.stopPropagation()}
+            className="cursor-pointer rounded-sm"
+            disabled
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Move to Collaboration
+            <span className="ml-auto text-xs text-muted-foreground">Soon</span>
+          </DropdownMenuItem>
+          
+          {/* Pin/Unpin Project */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onTogglePin?.()
+            }}
+            className="cursor-pointer rounded-sm"
+          >
+            {(project as any).pinned ? (
+              <>
+                <PinOff className="h-4 w-4 mr-2" />
+                Unpin project
+              </>
+            ) : (
+              <>
+                <Pin className="h-4 w-4 mr-2" />
+                Pin project
+              </>
+            )}
+          </DropdownMenuItem>
+          
+          {/* Archive */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              onArchive?.()
+            }}
+            className="cursor-pointer rounded-sm"
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            Archive
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* Delete */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
