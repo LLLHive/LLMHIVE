@@ -506,7 +506,7 @@ function ConversationItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
         isActive && "bg-secondary ring-1 ring-[var(--bronze)]/30",
       )}
       onClick={onSelect}
@@ -515,7 +515,7 @@ function ConversationItem({
         "h-4 w-4 flex-shrink-0 transition-colors",
         isActive ? "text-[var(--bronze)]" : "text-muted-foreground"
       )} />
-      <span className="text-sm truncate flex-1">{conversation.title}</span>
+      <span className="text-sm truncate flex-1 min-w-0">{conversation.title}</span>
       
       {/* Pin indicator */}
       {conversation.pinned && (
