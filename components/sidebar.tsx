@@ -104,6 +104,7 @@ export function Sidebar({
   const [showAllProjects, setShowAllProjects] = useState(false)
   const [showAllChats, setShowAllChats] = useState(false)
   const [chatsExpanded, setChatsExpanded] = useState(true)
+  const [collaborateExpanded, setCollaborateExpanded] = useState(false)
 
   // Helper to check if a route is active
   const isActiveRoute = (route: string) => pathname === route
@@ -257,27 +258,35 @@ export function Sidebar({
 
             {/* Content - ChatGPT Style Layout */}
             <ScrollArea className="flex-1 px-3">
-              {/* Collaborate - Coming Soon (above Projects) */}
+              {/* Collaborate Section - Coming Soon */}
               <div className="py-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled
-                        className="w-full justify-start text-sm opacity-50 cursor-not-allowed"
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Collaborate
-                        <Clock className="h-3 w-3 ml-auto text-muted-foreground" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>Coming Soon</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <button
+                  onClick={() => setCollaborateExpanded(!collaborateExpanded)}
+                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span className="font-medium flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Collaborate
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    {collaborateExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </div>
+                </button>
+                
+                {collaborateExpanded && (
+                  <div className="mt-1 px-2 py-4 text-center">
+                    <div className="text-sm text-muted-foreground">
+                      <Sparkles className="h-5 w-5 mx-auto mb-2 text-[var(--bronze)]" />
+                      <p className="font-medium">Coming Soon</p>
+                      <p className="text-xs mt-1">Real-time collaboration with your team</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Projects Section */}
