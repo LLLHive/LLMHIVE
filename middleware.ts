@@ -6,6 +6,8 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks(.*)",
   "/api/health",
+  "/api/openrouter(.*)",  // OpenRouter API routes should be public for model catalog
+  "/api/settings(.*)",    // Settings API for loading user preferences
 ])
 
 // Check if running in E2E test mode
