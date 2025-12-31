@@ -601,3 +601,14 @@ if is_feature_enabled(FeatureFlags.GROUP_CHAT):
         logger.debug("WebSocket collaboration router not available: %s", e)
 else:
     logger.info("WebSocket collaboration disabled by feature flag (GROUP_CHAT)")
+
+# Include memory router for conversation storage and RAG
+if is_feature_enabled(FeatureFlags.VECTOR_MEMORY):
+    try:
+        from .routers import memory as memory_router
+        app.include_router(memory_router.router)
+        logger.info("✓ Memory router enabled at /v1/memory/")
+    except ImportError as e:
+        logger.debug("Memory router not available: %s", e)
+else:
+    logger.info("Memory router disabled by feature flag (VECTOR_MEMORY)")
