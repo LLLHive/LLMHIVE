@@ -2,14 +2,13 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 
 interface DeleteConfirmationDialogProps {
   open: boolean
@@ -30,13 +29,17 @@ export function DeleteConfirmationDialog({
   confirmText = "Delete",
   cancelText = "Cancel",
 }: DeleteConfirmationDialogProps) {
-  const handleConfirm = () => {
-    // Close dialog first, then delete
+  const handleCancel = () => {
     onOpenChange(false)
-    // Use requestAnimationFrame to ensure dialog is closed before state change
-    requestAnimationFrame(() => {
+  }
+
+  const handleConfirm = () => {
+    // Close dialog first
+    onOpenChange(false)
+    // Use setTimeout to ensure dialog is fully closed before state change
+    setTimeout(() => {
       onConfirm()
-    })
+    }, 50)
   }
 
   return (
@@ -44,6 +47,7 @@ export function DeleteConfirmationDialog({
       <AlertDialogContent 
         className="sm:max-w-[425px]"
         onCloseAutoFocus={(e) => e.preventDefault()}
+        onEscapeKeyDown={handleCancel}
       >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -52,13 +56,15 @@ export function DeleteConfirmationDialog({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{cancelText}</AlertDialogCancel>
-          <AlertDialogAction
+          <Button variant="outline" onClick={handleCancel}>
+            {cancelText}
+          </Button>
+          <Button 
+            variant="destructive" 
             onClick={handleConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {confirmText}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

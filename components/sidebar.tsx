@@ -730,9 +730,10 @@ function ProjectItem({
           
           {/* Delete */}
           <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete()
+            onSelect={(e) => {
+              e.preventDefault()
+              // Small delay to let menu close first
+              setTimeout(() => onDelete(), 10)
             }}
             className="text-destructive cursor-pointer rounded-sm"
           >
@@ -907,9 +908,10 @@ function ConversationItem({
           
           {/* Delete - with destructive styling */}
           <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete()
+            onSelect={(e) => {
+              e.preventDefault()
+              // Small delay to let menu close first
+              setTimeout(() => onDelete(), 10)
             }}
             className="cursor-pointer rounded-sm text-destructive focus:text-destructive focus:bg-destructive/10"
           >
