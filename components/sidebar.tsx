@@ -614,6 +614,16 @@ function ProjectItem({
   onArchive?: () => void
   hasActiveChat?: boolean
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  
+  const handleDelete = () => {
+    setMenuOpen(false) // Close menu first
+    // Wait for menu to close, then trigger delete
+    setTimeout(() => {
+      onDelete()
+    }, 100)
+  }
+
   return (
     <div
       className={cn(
@@ -634,7 +644,7 @@ function ProjectItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
       
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button 
             variant="ghost" 
@@ -732,8 +742,7 @@ function ProjectItem({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
-              // Small delay to let menu close first
-              setTimeout(() => onDelete(), 10)
+              handleDelete()
             }}
             className="text-destructive cursor-pointer rounded-sm"
           >
@@ -771,6 +780,16 @@ function ConversationItem({
   onStartGroupChat?: () => void
   isNested?: boolean
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  
+  const handleDelete = () => {
+    setMenuOpen(false) // Close menu first
+    // Wait for menu to close, then trigger delete
+    setTimeout(() => {
+      onDelete()
+    }, 100)
+  }
+
   return (
     <div
       className={cn(
@@ -796,7 +815,7 @@ function ConversationItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
 
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button 
             variant="ghost" 
@@ -910,8 +929,7 @@ function ConversationItem({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
-              // Small delay to let menu close first
-              setTimeout(() => onDelete(), 10)
+              handleDelete()
             }}
             className="cursor-pointer rounded-sm text-destructive focus:text-destructive focus:bg-destructive/10"
           >

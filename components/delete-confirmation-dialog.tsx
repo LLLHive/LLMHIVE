@@ -37,9 +37,13 @@ export function DeleteConfirmationDialog({
     // Close dialog first
     onOpenChange(false)
     // Use setTimeout to ensure dialog is fully closed before state change
+    // Also blur any focused element to prevent focus trap
     setTimeout(() => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
       onConfirm()
-    }, 50)
+    }, 150)
   }
 
   return (
