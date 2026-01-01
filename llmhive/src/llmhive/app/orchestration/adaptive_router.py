@@ -42,9 +42,26 @@ def get_dynamic_model_profiles() -> Dict[str, Dict[str, Any]]:
     
     This replaces the static MODEL_PROFILES dict with dynamic loading.
     Priority:
-    1. Dynamic catalog (from DB/API)
-    2. Fallback to minimal bootstrap profiles
+    1. Firestore model_catalog (353+ models with 262+ enriched columns)
+    2. Dynamic catalog (from DB/API)
+    3. Fallback to minimal bootstrap profiles
     """
+    # Priority 1: Firestore model_catalog (the richest data source)
+    try:
+        from ..services.firestore_models import get_firestore_model_catalog
+        fs_catalog = get_firestore_model_catalog()
+        
+        if fs_catalog.is_available():
+            profiles = fs_catalog.get_model_profiles_for_orchestrator()
+            if profiles and len(profiles) > 50:  # Expect at least 50 models
+                logger.info("Loaded %d model profiles from Firestore", len(profiles))
+                return profiles
+    except ImportError:
+        logger.debug("Firestore model catalog not available")
+    except Exception as e:
+        logger.warning("Failed to load Firestore model catalog: %s", e)
+    
+    # Priority 2: Dynamic catalog from OpenRouter API/SQLite
     try:
         from ..openrouter.dynamic_catalog import get_dynamic_catalog
         catalog = get_dynamic_catalog()
@@ -57,7 +74,8 @@ def get_dynamic_model_profiles() -> Dict[str, Dict[str, Any]]:
     except Exception as e:
         logger.warning("Failed to load dynamic catalog: %s", e)
     
-    # Return bootstrap profiles
+    # Priority 3: Bootstrap fallback profiles
+    logger.warning("Using bootstrap fallback profiles (%d models)", len(BOOTSTRAP_MODEL_PROFILES))
     return BOOTSTRAP_MODEL_PROFILES
 
 

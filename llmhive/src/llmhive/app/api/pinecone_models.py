@@ -1,10 +1,11 @@
-"""Pinecone-backed Model API Routes.
+"""Model API Routes with Firestore + Pinecone backends.
 
-These routes serve model data directly from Pinecone ModelKnowledgeStore,
-bypassing the ephemeral SQLite database. This ensures data persists across
-Cloud Run cold starts.
+These routes serve model data with the following priority:
+1. Firestore model_catalog (353+ models with 262 enriched columns)
+2. Pinecone ModelKnowledgeStore (semantic search)
+3. Fallback to OpenRouter API
 
-Use these as primary data source; SQLite routes as fallback during transitions.
+This ensures data persists across Cloud Run cold starts.
 """
 from __future__ import annotations
 
@@ -17,10 +18,11 @@ from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/models", tags=["pinecone-models"])
+router = APIRouter(prefix="/models", tags=["model-catalog"])
 
-# Initialize ModelKnowledgeStore lazily
+# Initialize stores lazily
 _knowledge_store = None
+_firestore_catalog = None
 
 
 def get_knowledge_store():
@@ -37,6 +39,20 @@ def get_knowledge_store():
     return _knowledge_store
 
 
+def get_firestore_catalog():
+    """Get or create the Firestore model catalog service."""
+    global _firestore_catalog
+    if _firestore_catalog is None:
+        try:
+            from ..services.firestore_models import get_firestore_model_catalog
+            _firestore_catalog = get_firestore_model_catalog()
+            logger.info("Initialized Firestore model catalog for API")
+        except Exception as e:
+            logger.error(f"Failed to initialize Firestore catalog: {e}")
+            return None
+    return _firestore_catalog
+
+
 @router.get("/profiles")
 async def list_model_profiles(
     search: Optional[str] = None,
@@ -46,12 +62,77 @@ async def list_model_profiles(
     is_reasoning: Optional[bool] = None,
     limit: int = Query(50, ge=1, le=500),
 ) -> Dict[str, Any]:
-    """List model profiles from Pinecone knowledge store.
+    """List model profiles with enriched research data.
     
-    Data Source: Pinecone ModelKnowledgeStore (persistent)
+    Data Sources (in priority order):
+    1. Firestore model_catalog (353+ models with full enriched data)
+    2. Pinecone ModelKnowledgeStore (semantic search fallback)
     
-    Returns model profiles with capabilities, scores, and metadata.
+    Returns model profiles with capabilities, benchmarks, rankings, and metadata.
     """
+    # Priority 1: Firestore model_catalog (the richest data source)
+    fs_catalog = get_firestore_catalog()
+    if fs_catalog and fs_catalog.is_available():
+        try:
+            if provider:
+                models_raw = fs_catalog.get_models_by_provider(provider)
+            else:
+                models_raw = fs_catalog.get_all_models()
+            
+            if models_raw and len(models_raw) > 0:
+                # Transform to API format
+                models = []
+                for model in models_raw:
+                    # Apply filters
+                    if search:
+                        search_lower = search.lower()
+                        name = (model.get("model_name") or "").lower()
+                        slug = (model.get("openrouter_slug") or "").lower()
+                        if search_lower not in name and search_lower not in slug:
+                            continue
+                    
+                    if supports_tools is not None:
+                        if model.get("supports_function_calling") != supports_tools:
+                            continue
+                    
+                    if supports_vision is not None:
+                        if model.get("supports_vision") != supports_vision:
+                            continue
+                    
+                    models.append({
+                        "id": model.get("openrouter_slug") or model.get("model_id", ""),
+                        "name": model.get("model_name", ""),
+                        "provider": model.get("provider_name", ""),
+                        "capabilities": {
+                            "arena_score": model.get("arena_score"),
+                            "arena_rank": model.get("arena_rank"),
+                            "hf_ollb_avg": model.get("hf_ollb_avg"),
+                            "hf_ollb_mmlu": model.get("hf_ollb_mmlu"),
+                        },
+                        "features": {
+                            "context_length": model.get("max_context_tokens", 8192),
+                            "supports_tools": model.get("supports_function_calling", False),
+                            "supports_vision": model.get("supports_vision", False),
+                            "modalities": model.get("modalities", "text"),
+                        },
+                        "strengths": (model.get("strengths") or "").split(",") if model.get("strengths") else [],
+                        "weaknesses": (model.get("weaknesses") or "").split(",") if model.get("weaknesses") else [],
+                        "best_for": (model.get("best_use_cases") or "").split(",") if model.get("best_use_cases") else [],
+                        "source": "firestore_model_catalog",
+                    })
+                
+                return {
+                    "models": models[:limit],
+                    "total": len(models),
+                    "limit": limit,
+                    "data_source": "firestore_model_catalog",
+                    "description": "353+ models with 262 enriched columns from ModelDB",
+                    "last_updated": datetime.now(timezone.utc).isoformat(),
+                }
+        except Exception as e:
+            logger.warning(f"Firestore catalog failed, falling back to Pinecone: {e}")
+    
+    # Priority 2: Pinecone ModelKnowledgeStore
     store = get_knowledge_store()
     if not store:
         raise HTTPException(503, "Model knowledge store not available")

@@ -1,5 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 
+// =============================================================================
+// Route Configuration
+// =============================================================================
+
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
@@ -12,6 +16,10 @@ const isPublicRoute = createRouteMatcher([
 
 // Check if running in E2E test mode
 const isE2ETest = process.env.PLAYWRIGHT_TEST === "true" || process.env.CI === "true"
+
+// =============================================================================
+// Clerk Auth Middleware
+// =============================================================================
 
 export default clerkMiddleware(async (auth, request) => {
   // Skip auth in E2E test mode to allow automated testing
@@ -34,4 +42,3 @@ export const config = {
     "/(api|trpc)(.*)",
   ],
 }
-

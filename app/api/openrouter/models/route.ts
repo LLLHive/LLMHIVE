@@ -45,16 +45,23 @@ function transformModel(model: Record<string, unknown>) {
   }
 }
 
-// Transform Pinecone model profile to our format
+// Transform model profile from Firestore/Pinecone to our format
 function transformPineconeModel(model: Record<string, unknown>) {
+  // Handle both Firestore and Pinecone formats
   const capabilities = model.capabilities as Record<string, number> | undefined
   const features = model.features as Record<string, boolean | number> | undefined
+  const source = model.source as string || "persistent_store"
+  
+  // Get best for from either format
+  const bestFor = (model.best_for as string[]) || 
+    ((model.strengths as string[])?.slice(0, 3)) || 
+    ["general use"]
   
   return {
     id: model.id,
     name: model.name || model.id,
-    description: `${model.provider} model. Best for: ${(model.best_for as string[])?.join(", ") || "general use"}`,
-    context_length: features?.context_length || 8192,
+    description: `${model.provider} model. Best for: ${bestFor.join(", ")}`,
+    context_length: features?.context_length || model.context_length || 8192,
     architecture: {
       modality: features?.supports_vision ? "text+image->text" : "text->text",
       tokenizer: "unknown",
@@ -72,6 +79,10 @@ function transformPineconeModel(model: Record<string, unknown>) {
       supports_streaming: true,
       multimodal_input: features?.supports_vision || false,
       multimodal_output: false,
+      // Enriched benchmarks from Firestore
+      arena_score: capabilities?.arena_score,
+      arena_rank: capabilities?.arena_rank,
+      hf_ollb_avg: capabilities?.hf_ollb_avg,
       reasoning_score: capabilities?.reasoning_score || 50,
       coding_score: capabilities?.coding_score || 50,
       creative_score: capabilities?.creative_score || 50,
@@ -83,8 +94,8 @@ function transformPineconeModel(model: Record<string, unknown>) {
     provider: model.provider,
     strengths: model.strengths || [],
     weaknesses: model.weaknesses || [],
-    best_for: model.best_for || [],
-    data_source: model.source || "pinecone",
+    best_for: bestFor,
+    data_source: source,
   }
 }
 
