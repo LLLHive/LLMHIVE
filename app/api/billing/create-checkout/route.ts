@@ -3,9 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server"
 import Stripe from "stripe"
 
 // Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-12-18.acacia",
-})
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "")
 
 // Price ID mapping
 const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
