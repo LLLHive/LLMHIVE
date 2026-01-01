@@ -34,8 +34,9 @@ export default function SignUpPage() {
               // Fix Apple logo visibility - make it white on dark background
               socialButtonsIconButton: "hover:bg-white/10",
               socialButtonsBlockButton__apple: "[&_svg]:text-white [&_svg]:fill-white",
-              // Fix OTP input visibility - add visible border
-              otpCodeFieldInput: "border-2 border-gray-700 bg-background/50 text-white",
+              // Fix OTP input visibility - add visible orange border
+              otpCodeFieldInput: "!border-2 !border-[#cd7f32] !bg-[#1a1a1a] !text-white",
+              otpCodeField: "gap-2",
               formFieldInput: "border border-gray-600 bg-background/50",
             }
           }}

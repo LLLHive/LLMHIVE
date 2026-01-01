@@ -59,6 +59,9 @@ export default function RootLayout({
           formFieldLabel: "text-zinc-300",
           formFieldInput: "bg-[#1a1a1a] border-white/10 text-white",
           footerActionLink: "text-[#cd7f32] hover:text-[#b8860b]",
+          // OTP code input boxes with visible orange border
+          otpCodeFieldInput: "!border-2 !border-[#cd7f32] !bg-[#1a1a1a] !text-white",
+          otpCodeField: "gap-2",
         },
       }}
     >
