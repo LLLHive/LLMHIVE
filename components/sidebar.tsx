@@ -28,6 +28,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
   ChevronDown,
   ChevronUp,
   Pencil,
@@ -452,8 +453,22 @@ export function Sidebar({
               )}
             </ScrollArea>
             
-            {/* Settings at the bottom */}
-            <div className="px-3 py-3 border-t border-border/50 mt-auto">
+            {/* Billing & Settings at the bottom */}
+            <div className="px-3 py-3 border-t border-border/50 mt-auto space-y-1">
+              <Link href="/billing" className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    pathname === "/billing" && "bg-secondary text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Billing
+                </Button>
+              </Link>
               <Link href={ROUTES.SETTINGS} className="w-full">
                 <Button
                   variant="ghost"
@@ -566,8 +581,24 @@ export function Sidebar({
             {/* Spacer to push Settings to bottom */}
             <div className="flex-1" />
             
-            {/* Settings at bottom */}
-            <div className="border-t border-border/50 pt-4">
+            {/* Billing & Settings at bottom */}
+            <div className="border-t border-border/50 pt-4 flex flex-col gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/billing">
+                      <Button 
+                        variant={pathname === "/billing" ? "secondary" : "ghost"} 
+                        size="icon" 
+                        className={cn("w-10 h-10", pathname === "/billing" && "text-[var(--bronze)]")}
+                      >
+                        <CreditCard className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Billing</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
