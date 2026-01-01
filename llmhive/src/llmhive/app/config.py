@@ -76,6 +76,16 @@ class Settings:
     stripe_webhook_secret: str | None = os.getenv("STRIPE_WEBHOOK_SECRET")
     stripe_publishable_key: str | None = os.getenv("STRIPE_PUBLISHABLE_KEY")
     
+    # Stripe Price IDs (create these in Stripe Dashboard)
+    stripe_price_id_pro_monthly: str | None = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")
+    stripe_price_id_pro_annual: str | None = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")
+    stripe_price_id_enterprise_monthly: str | None = os.getenv("STRIPE_PRICE_ID_ENTERPRISE_MONTHLY")
+    stripe_price_id_enterprise_annual: str | None = os.getenv("STRIPE_PRICE_ID_ENTERPRISE_ANNUAL")
+    
+    # Stripe Redirect URLs
+    stripe_success_url: str = os.getenv("STRIPE_SUCCESS_URL", "https://llmhive.ai/billing/success")
+    stripe_cancel_url: str = os.getenv("STRIPE_CANCEL_URL", "https://llmhive.ai/billing")
+    
     # Google Cloud Configuration
     google_cloud_project: str | None = os.getenv("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT"))
     
