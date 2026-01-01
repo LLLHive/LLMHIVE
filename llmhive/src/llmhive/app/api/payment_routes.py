@@ -25,7 +25,7 @@ router = APIRouter()
 class CreateCheckoutRequest(BaseModel):
     """Request to create a Stripe checkout session."""
     
-    tier: str = Field(..., description="Pricing tier name (free, pro, enterprise)")
+    tier: str = Field(..., description="Pricing tier name (free, basic, pro, enterprise)")
     billing_cycle: str = Field(default="monthly", description="Billing cycle: 'monthly' or 'annual'")
     user_email: Optional[str] = Field(default=None, description="User email for Stripe customer")
     user_id: str = Field(..., description="Internal user ID to link subscription")
@@ -91,6 +91,11 @@ def create_checkout_session(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Free tier does not require payment. Use subscription creation endpoint instead.",
             )
+        elif request.tier.lower() == "basic":
+            if request.billing_cycle == "monthly":
+                price_id = settings.stripe_price_id_basic_monthly
+            else:
+                price_id = settings.stripe_price_id_basic_annual
         elif request.tier.lower() == "pro":
             if request.billing_cycle == "monthly":
                 price_id = settings.stripe_price_id_pro_monthly

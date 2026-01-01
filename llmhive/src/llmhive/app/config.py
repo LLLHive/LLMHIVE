@@ -77,6 +77,8 @@ class Settings:
     stripe_publishable_key: str | None = os.getenv("STRIPE_PUBLISHABLE_KEY")
     
     # Stripe Price IDs (create these in Stripe Dashboard)
+    stripe_price_id_basic_monthly: str | None = os.getenv("STRIPE_PRICE_ID_BASIC_MONTHLY")
+    stripe_price_id_basic_annual: str | None = os.getenv("STRIPE_PRICE_ID_BASIC_ANNUAL")
     stripe_price_id_pro_monthly: str | None = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")
     stripe_price_id_pro_annual: str | None = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")
     stripe_price_id_enterprise_monthly: str | None = os.getenv("STRIPE_PRICE_ID_ENTERPRISE_MONTHLY")

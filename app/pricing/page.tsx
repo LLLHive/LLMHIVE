@@ -24,7 +24,7 @@ interface PricingTier {
   }
   popular?: boolean
   cta: string
-  tier: "free" | "pro" | "enterprise"
+  tier: "free" | "basic" | "pro" | "enterprise"
 }
 
 const pricingTiers: PricingTier[] = [
@@ -35,18 +35,43 @@ const pricingTiers: PricingTier[] = [
     annualPrice: 0,
     tier: "free",
     features: [
-      "Basic AI orchestration",
-      "Memory & knowledge base",
-      "2 models per request",
+      "50 messages/month",
+      "Budget models only",
+      "2 projects",
+      "7 days chat history",
+      "1 Industry Pack",
       "Community support",
     ],
     limits: {
-      requests: "100/month",
-      tokens: "100K/month",
-      models: "2 per request",
-      storage: "100 MB",
+      requests: "50/month",
+      tokens: "50K/month",
+      models: "Budget only",
+      storage: "50 MB",
     },
     cta: "Get Started Free",
+  },
+  {
+    name: "LLMHive",
+    description: "Essential AI access for individuals",
+    monthlyPrice: 15,
+    annualPrice: 155.99,
+    tier: "basic",
+    features: [
+      "500 messages/month",
+      "Budget + Standard models",
+      "10 projects",
+      "90 days chat history",
+      "5 Industry Packs",
+      "Vision & image support",
+      "Email support (48hr)",
+    ],
+    limits: {
+      requests: "500/month",
+      tokens: "500K/month",
+      models: "Standard",
+      storage: "1 GB",
+    },
+    cta: "Subscribe",
   },
   {
     name: "Pro",
@@ -56,18 +81,21 @@ const pricingTiers: PricingTier[] = [
     tier: "pro",
     popular: true,
     features: [
-      "Everything in Free, plus:",
-      "Advanced orchestration (HRM, DeepConf)",
-      "Prompt diffusion & adaptive ensemble",
-      "Web research & fact checking",
-      "API access",
+      "3,000 messages/month",
+      "All models including Premium",
+      "Unlimited projects",
+      "Unlimited chat history",
+      "All Industry Packs",
+      "Code interpreter",
+      "API access (1,000 calls/mo)",
       "5 team members",
-      "Priority email support",
+      "Priority queue",
+      "Priority email support (24hr)",
     ],
     limits: {
-      requests: "10,000/month",
-      tokens: "10M/month",
-      models: "5 per request",
+      requests: "3,000/month",
+      tokens: "3M/month",
+      models: "All models",
       storage: "10 GB",
     },
     cta: "Upgrade to Pro",
@@ -79,19 +107,21 @@ const pricingTiers: PricingTier[] = [
     annualPrice: 1999.99,
     tier: "enterprise",
     features: [
-      "Everything in Pro, plus:",
-      "Unlimited requests & tokens",
-      "Custom integrations",
+      "Unlimited messages",
+      "All models + Priority access",
+      "Unlimited everything",
+      "Custom orchestration rules",
       "SSO / SAML authentication",
-      "Audit logs & compliance",
-      "Dedicated account manager",
-      "SLA guarantee",
       "Unlimited team members",
+      "Admin controls & audit logs",
+      "API access (unlimited)",
+      "Webhooks",
+      "Dedicated support (4hr SLA)",
     ],
     limits: {
       requests: "Unlimited",
       tokens: "Unlimited",
-      models: "10 per request",
+      models: "All + Priority",
       storage: "Unlimited",
     },
     cta: "Contact Sales",
@@ -196,7 +226,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {pricingTiers.map((tier) => {
             const price = isAnnual ? tier.annualPrice : tier.monthlyPrice
             const period = isAnnual ? "/year" : "/month"
@@ -221,6 +251,7 @@ export default function PricingPage() {
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-2 mb-2">
                     {tier.tier === "free" && <Sparkles className="h-5 w-5 text-muted-foreground" />}
+                    {tier.tier === "basic" && <Zap className="h-5 w-5 text-blue-500" />}
                     {tier.tier === "pro" && <Zap className="h-5 w-5 text-[var(--bronze)]" />}
                     {tier.tier === "enterprise" && <Building2 className="h-5 w-5 text-purple-500" />}
                     <CardTitle className="text-xl">{tier.name}</CardTitle>
