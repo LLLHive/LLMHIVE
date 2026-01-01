@@ -15,6 +15,7 @@ export async function GET() {
     }
 
     // Call backend to get subscription status
+    // Try the new endpoint first, fall back to the old one
     const response = await fetch(`${BACKEND_URL}/api/v1/billing/subscription/${userId}`, {
       headers: {
         "X-API-Key": process.env.LLMHIVE_API_KEY || "",

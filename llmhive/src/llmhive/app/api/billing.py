@@ -583,3 +583,173 @@ def estimate_cost(
             detail="Failed to estimate cost",
         ) from exc
 
+
+class PortalRequest(BaseModel):
+    """Request to create a Stripe Customer Portal session."""
+    user_id: str = Field(..., description="User ID")
+    return_url: str = Field(default="https://llmhive.ai/billing", description="URL to return to after portal")
+
+
+@router.post("/portal", status_code=status.HTTP_200_OK)
+def create_billing_portal(
+    request: PortalRequest,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Create a Stripe Customer Portal session for subscription management.
+    
+    Final path: /api/v1/billing/portal
+    """
+    if not STRIPE_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stripe integration not available",
+        )
+    
+    processor = get_payment_processor()
+    if processor is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment processor not configured",
+        )
+    
+    try:
+        import stripe
+        
+        # Get user's Stripe customer ID from subscription
+        service = SubscriptionService(db)
+        subscription = service.get_user_subscription(request.user_id)
+        
+        if subscription is None or subscription.stripe_customer_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No billing information found for user. Subscribe to a plan first.",
+            )
+        
+        # Create billing portal session
+        session = stripe.billing_portal.Session.create(
+            customer=subscription.stripe_customer_id,
+            return_url=request.return_url,
+        )
+        
+        logger.info(
+            "Created billing portal session for user %s",
+            request.user_id
+        )
+        
+        return {
+            "url": session.url,
+            "message": "Redirect user to the URL to manage billing",
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to create billing portal session: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create billing portal session",
+        ) from exc
+
+
+@router.get("/subscription/{user_id}", status_code=status.HTTP_200_OK)
+def get_subscription_by_user_id(
+    user_id: str,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Get subscription details for a user by user_id.
+    
+    Final path: /api/v1/billing/subscription/{user_id}
+    """
+    try:
+        service = SubscriptionService(db)
+        subscription = service.get_user_subscription(user_id)
+        
+        if subscription is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No subscription found for user",
+            )
+        
+        return {
+            "user_id": user_id,
+            "tier_name": subscription.tier_name,
+            "tier": subscription.tier_name,
+            "status": subscription.status.value,
+            "billing_cycle": subscription.billing_cycle,
+            "current_period_start": subscription.current_period_start.isoformat() if subscription.current_period_start else None,
+            "current_period_end": subscription.current_period_end.isoformat() if subscription.current_period_end else None,
+            "cancel_at_period_end": subscription.cancel_at_period_end,
+            "stripe_customer_id": subscription.stripe_customer_id,
+            "stripe_subscription_id": subscription.stripe_subscription_id,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to get subscription: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get subscription",
+        ) from exc
+
+
+@router.post("/subscription/{user_id}/cancel", status_code=status.HTTP_200_OK)
+def cancel_subscription_by_user_id(
+    user_id: str,
+    request: CancelSubscriptionRequest,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Cancel a subscription by user_id.
+    
+    Final path: /api/v1/billing/subscription/{user_id}/cancel
+    """
+    try:
+        service = SubscriptionService(db)
+        subscription = service.get_user_subscription(user_id)
+        
+        if subscription is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No subscription found for user",
+            )
+        
+        # Cancel the subscription
+        updated_subscription = service.cancel_subscription(
+            subscription.id,
+            cancel_immediately=request.cancel_immediately,
+        )
+        db.commit()
+        
+        # Also cancel in Stripe if available
+        if STRIPE_AVAILABLE and subscription.stripe_subscription_id:
+            try:
+                import stripe
+                if request.cancel_immediately:
+                    stripe.Subscription.delete(subscription.stripe_subscription_id)
+                else:
+                    stripe.Subscription.modify(
+                        subscription.stripe_subscription_id,
+                        cancel_at_period_end=True,
+                    )
+                logger.info("Cancelled Stripe subscription %s for user %s", 
+                           subscription.stripe_subscription_id, user_id)
+            except Exception as e:
+                logger.warning("Failed to cancel Stripe subscription: %s", e)
+        
+        return {
+            "success": True,
+            "message": "Subscription cancelled" if request.cancel_immediately else "Subscription will be cancelled at end of billing period",
+            "cancel_at_period_end": updated_subscription.cancel_at_period_end,
+            "current_period_end": updated_subscription.current_period_end.isoformat() if updated_subscription.current_period_end else None,
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Failed to cancel subscription: %s", exc)
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to cancel subscription",
+        ) from exc
+
