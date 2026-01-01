@@ -354,6 +354,7 @@
 .icon-badge-rose { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); }
 .icon-badge-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 .icon-badge-cyan { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+.icon-badge-green { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
 
 /* Mobile-optimized icon badges */
 @media (max-width: 640px) {

@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save } from "lucide-react"
+import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
@@ -34,6 +34,13 @@ const settingsCards = [
     description: "Manage your profile and account details",
     icon: User,
     badgeClass: "icon-badge-blue",
+  },
+  {
+    id: "billing",
+    title: "Billing",
+    description: "Subscription and payment settings",
+    icon: CreditCard,
+    badgeClass: "icon-badge-green",
   },
   {
     id: "api-keys",
@@ -109,7 +116,7 @@ const appearanceOptions = [
   { id: "soundEffects", label: "Sound Effects", description: "Play sounds for notifications" },
 ]
 
-type DrawerId = "account" | "api-keys" | "connections" | "notifications" | "privacy" | "appearance" | null
+type DrawerId = "account" | "billing" | "api-keys" | "connections" | "notifications" | "privacy" | "appearance" | null
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -360,6 +367,80 @@ export default function SettingsPage() {
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Account
                 </Button>
+              </div>
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Billing Drawer */}
+      <Sheet open={activeDrawer === "billing"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="icon-badge icon-badge-green">
+                <CreditCard className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <SheetTitle className="text-base font-semibold">Billing</SheetTitle>
+                <p className="text-xs text-muted-foreground">Manage your subscription</p>
+              </div>
+            </div>
+          </SheetHeader>
+          <ScrollArea className="h-[calc(100vh-100px)]">
+            <div className="p-4 space-y-4">
+              {/* Current Plan */}
+              <div className="p-4 rounded-lg glass-card border border-[var(--bronze)]/30">
+                <p className="text-xs text-muted-foreground mb-1">Current Plan</p>
+                <p className="text-lg font-semibold text-[var(--gold)]">Free</p>
+                <p className="text-xs text-muted-foreground">50 messages/month</p>
+              </div>
+
+              {/* Upgrade Button */}
+              <Button 
+                className="w-full bronze-gradient hover:opacity-90"
+                onClick={() => {
+                  setActiveDrawer(null)
+                  router.push("/pricing")
+                }}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Upgrade Plan
+              </Button>
+
+              {/* Manage Billing */}
+              <Button 
+                variant="outline" 
+                className="w-full bg-white/5 border-white/10"
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/billing/portal", { method: "POST" })
+                    const data = await response.json()
+                    if (data.url) {
+                      window.location.href = data.url
+                    }
+                  } catch (error) {
+                    console.error("Error opening billing portal:", error)
+                  }
+                }}
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Manage Billing & Invoices
+              </Button>
+
+              {/* Usage Info */}
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-xs text-muted-foreground mb-3">This Period</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Messages</span>
+                    <span>0 / 50</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tokens</span>
+                    <span>0 / 50K</span>
+                  </div>
+                </div>
               </div>
             </div>
           </ScrollArea>
