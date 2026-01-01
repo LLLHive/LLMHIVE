@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Zap, Building2, Sparkles, ArrowRight } from "lucide-react"
+import { useUser, useClerk } from "@clerk/nextjs"
+import { Check, Zap, Building2, Sparkles, ArrowRight, Loader2, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -129,12 +130,20 @@ const pricingTiers: PricingTier[] = [
 ]
 
 export default function PricingPage() {
+  const { isSignedIn, isLoaded } = useUser()
+  const { openSignIn } = useClerk()
   const [isAnnual, setIsAnnual] = useState(false)
+  const [loadingTier, setLoadingTier] = useState<string | null>(null)
 
   const handleSubscribe = async (tier: PricingTier) => {
     if (tier.tier === "free") {
-      // Redirect to sign up
-      window.location.href = "/sign-up"
+      if (isSignedIn) {
+        // Already signed in, go to app
+        window.location.href = "/"
+      } else {
+        // Redirect to sign up
+        window.location.href = "/sign-up"
+      }
       return
     }
 
@@ -144,7 +153,16 @@ export default function PricingPage() {
       return
     }
 
-    // Create checkout session for Pro tier
+    // If not signed in, prompt sign in first
+    if (!isSignedIn) {
+      openSignIn({
+        redirectUrl: `/pricing?subscribe=${tier.tier}&cycle=${isAnnual ? "annual" : "monthly"}`,
+      })
+      return
+    }
+
+    // Create checkout session
+    setLoadingTier(tier.tier)
     try {
       const response = await fetch("/api/billing/create-checkout", {
         method: "POST",
@@ -161,9 +179,13 @@ export default function PricingPage() {
         window.location.href = data.url
       } else {
         console.error("Failed to create checkout session:", data.error)
+        alert("Failed to create checkout. Please try again.")
       }
     } catch (error) {
       console.error("Error creating checkout session:", error)
+      alert("An error occurred. Please try again.")
+    } finally {
+      setLoadingTier(null)
     }
   }
 
@@ -177,14 +199,27 @@ export default function PricingPage() {
             <span className="font-display text-xl font-bold text-[var(--bronze)]">LLMHive</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/sign-in">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
-                Get Started
-              </Button>
-            </Link>
+            {!isLoaded ? (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            ) : isSignedIn ? (
+              <Link href="/">
+                <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
+                  <Home className="h-4 w-4 mr-2" />
+                  Go to App
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/sign-in">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -317,9 +352,19 @@ export default function PricingPage() {
                         : "bg-secondary hover:bg-secondary/80"
                     )}
                     onClick={() => handleSubscribe(tier)}
+                    disabled={loadingTier === tier.tier}
                   >
-                    {tier.cta}
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    {loadingTier === tier.tier ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        {tier.tier === "free" && isSignedIn ? "Current Plan" : tier.cta}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 </CardFooter>
               </Card>
