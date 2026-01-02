@@ -910,3 +910,21 @@ html, body {
     animation: none !important;
   }
 }
+
+/* Force Clerk Apple icon to be white on dark background */
+.cl-socialButtonsIconButton__apple svg,
+.cl-socialButtonsIconButton__apple svg path,
+.cl-socialButtonsBlockButton__apple svg,
+.cl-socialButtonsBlockButton__apple svg path,
+.cl-socialButtonsProviderIcon__apple,
+.cl-socialButtonsProviderIcon__apple path {
+  fill: white !important;
+  color: white !important;
+}
+
+/* Ensure Apple button icon is visible */
+[data-provider="apple"] svg,
+[data-provider="apple"] svg path {
+  fill: white !important;
+  color: white !important;
+}
