@@ -911,6 +911,26 @@ html, body {
   }
 }
 
+/* Force Clerk social buttons to be in a horizontal row */
+.cl-socialButtons,
+.cl-socialButtonsBlockButtonList,
+.cl-socialButtonsIconList {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+}
+
+.cl-socialButtonsBlockButton,
+.cl-socialButtonsIconButton {
+  flex: 0 0 auto !important;
+}
+
+/* Hide "Continue with" text to make buttons icon-only */
+.cl-socialButtonsBlockButtonText {
+  display: none !important;
+}
+
 /* Force Clerk Apple icon to be white on dark background */
 .cl-socialButtonsIconButton__apple svg,
 .cl-socialButtonsIconButton__apple svg path,
