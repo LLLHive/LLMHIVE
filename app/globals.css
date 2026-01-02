@@ -911,56 +911,9 @@ html, body {
   }
 }
 
-/* Force Clerk social buttons to be in a horizontal row */
-.cl-socialButtons,
-.cl-socialButtonsBlockButtonList,
-.cl-socialButtonsIconList {
-  display: flex !important;
-  flex-direction: row !important;
-  justify-content: center !important;
-  gap: 1rem !important;
-}
-
-.cl-socialButtonsBlockButton,
-.cl-socialButtonsIconButton {
-  flex: 0 0 auto !important;
-}
-
-/* Hide "Continue with" text to make buttons icon-only */
-.cl-socialButtonsBlockButtonText {
-  display: none !important;
-}
-
-/* Force Clerk Apple icon to be white on dark background */
-.cl-socialButtonsIconButton__apple svg,
-.cl-socialButtonsIconButton__apple svg path,
-.cl-socialButtonsBlockButton__apple svg,
-.cl-socialButtonsBlockButton__apple svg path,
-.cl-socialButtonsProviderIcon__apple,
-.cl-socialButtonsProviderIcon__apple path {
-  fill: white !important;
-  color: white !important;
-}
-
-/* Ensure Apple button icon is visible - using filter for maximum compatibility */
-[data-provider="apple"] svg,
-[data-provider="apple"] svg path,
-.cl-providerIcon__apple,
-.cl-providerIcon__apple svg,
-.cl-providerIcon__apple svg path {
-  fill: white !important;
-  color: white !important;
-  filter: invert(1) !important;
-}
-
-/* Target Apple icon by checking for apple in parent classes */
-[class*="apple"] svg,
-[class*="apple"] svg path,
-[class*="Apple"] svg,
-[class*="Apple"] svg path {
-  fill: white !important;
-  color: white !important;
-  filter: invert(1) !important;
+/* Clerk social buttons - simple styling */
+.cl-socialButtonsBlockButton__apple svg {
+  filter: brightness(0) invert(1) !important;
 }
 
 /* Force password visibility toggle (eyeball icon) to be white */
