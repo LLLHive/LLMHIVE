@@ -935,14 +935,32 @@ html, body {
 .cl-socialButtonsIconButton__apple svg,
 .cl-socialButtonsIconButton__apple svg path,
 .cl-socialButtonsBlockButton__apple svg,
-.cl-socialButtonsBlockButton__apple svg path {
-  filter: brightness(0) invert(1) !important;
+.cl-socialButtonsBlockButton__apple svg path,
+.cl-socialButtonsProviderIcon__apple,
+.cl-socialButtonsProviderIcon__apple path {
+  fill: white !important;
+  color: white !important;
 }
 
-/* Alternative selector for Apple provider icon */
-[data-provider="apple"] .cl-providerIcon svg,
-.cl-providerIcon__apple svg {
-  filter: brightness(0) invert(1) !important;
+/* Ensure Apple button icon is visible - using filter for maximum compatibility */
+[data-provider="apple"] svg,
+[data-provider="apple"] svg path,
+.cl-providerIcon__apple,
+.cl-providerIcon__apple svg,
+.cl-providerIcon__apple svg path {
+  fill: white !important;
+  color: white !important;
+  filter: invert(1) !important;
+}
+
+/* Target Apple icon by checking for apple in parent classes */
+[class*="apple"] svg,
+[class*="apple"] svg path,
+[class*="Apple"] svg,
+[class*="Apple"] svg path {
+  fill: white !important;
+  color: white !important;
+  filter: invert(1) !important;
 }
 
 /* Force password visibility toggle (eyeball icon) to be white */

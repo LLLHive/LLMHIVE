@@ -272,9 +272,9 @@ export function Sidebar({
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-muted-foreground" />
                     {collaborateExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-white" />
+                      <ChevronUp className="h-4 w-4" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-white" />
+                      <ChevronDown className="h-4 w-4" />
                     )}
                   </div>
                 </button>
@@ -298,9 +298,9 @@ export function Sidebar({
                 >
                   <span className="font-medium">Projects</span>
                   {activeTab === "projects" ? (
-                    <ChevronUp className="h-4 w-4 text-white" />
+                    <ChevronUp className="h-4 w-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-white" />
+                    <ChevronDown className="h-4 w-4" />
                   )}
                 </button>
                 
@@ -369,7 +369,7 @@ export function Sidebar({
                         onClick={() => setShowAllProjects(!showAllProjects)}
                         className="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <MoreHorizontal className="h-4 w-4 text-white" />
+                        <MoreHorizontal className="h-4 w-4" />
                         {showAllProjects ? "Show less" : "See more"}
                       </button>
                     )}
@@ -385,9 +385,9 @@ export function Sidebar({
                 >
                   <span className="font-medium">Chats</span>
                   {chatsExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-white" />
+                    <ChevronUp className="h-4 w-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-white" />
+                    <ChevronDown className="h-4 w-4" />
                   )}
                 </button>
                 
@@ -637,7 +637,7 @@ function ProjectItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
         (isExpanded || hasActiveChat) && "bg-secondary/50",
       )}
       onClick={onToggleExpand}
@@ -659,10 +659,15 @@ function ProjectItem({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-6 w-6 min-w-6 flex-shrink-0 rounded-md hover:bg-white/10"
+            className={cn(
+              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
+              "opacity-0 group-hover:opacity-100",
+              "hover:bg-secondary-foreground/10",
+              "focus:opacity-100"
+            )}
             aria-label="Project options"
           >
-            <MoreHorizontal className="h-4 w-4 text-white" />
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
@@ -798,7 +803,7 @@ function ConversationItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
         isActive && "bg-secondary ring-1 ring-[var(--bronze)]/30",
         isNested && "py-1 text-[13px]",
       )}
@@ -825,10 +830,15 @@ function ConversationItem({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-6 w-6 min-w-6 flex-shrink-0 rounded-md hover:bg-white/10"
+            className={cn(
+              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
+              "opacity-0 group-hover:opacity-100",
+              "hover:bg-secondary-foreground/10",
+              "focus:opacity-100"
+            )}
             aria-label="Chat options"
           >
-            <MoreHorizontal className="h-4 w-4 text-white" />
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
