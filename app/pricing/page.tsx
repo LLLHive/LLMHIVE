@@ -261,113 +261,116 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto items-stretch">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {pricingTiers.map((tier) => {
             const price = isAnnual ? tier.annualPrice : tier.monthlyPrice
             const period = isAnnual ? "/year" : "/month"
 
             return (
-              <Card
-                key={tier.name}
-                className={cn(
-                  "relative flex flex-col bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-300 hover:border-[var(--bronze)]/30 min-h-[680px]",
-                  tier.popular && "border-[var(--bronze)] ring-2 ring-[var(--bronze)]/20 scale-[1.02] z-10"
-                )}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-[var(--bronze)] text-white border-0 px-4 py-1">
-                      <Zap className="h-3 w-3 mr-1" />
-                      Most Popular
-                    </Badge>
-                  </div>
-                )}
+              <div key={tier.name} className="flex flex-col">
+                <Card
+                  className={cn(
+                    "relative flex flex-col bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-300 hover:border-[var(--bronze)]/30 flex-1",
+                    tier.popular && "border-[var(--bronze)] ring-2 ring-[var(--bronze)]/20"
+                  )}
+                >
+                  {tier.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-[var(--bronze)] text-white border-0 px-4 py-1">
+                        <Zap className="h-3 w-3 mr-1" />
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
 
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    {tier.tier === "free" && <Sparkles className="h-5 w-5 text-muted-foreground" />}
-                    {tier.tier === "basic" && <Zap className="h-5 w-5 text-blue-500" />}
-                    {tier.tier === "pro" && <Zap className="h-5 w-5 text-[var(--bronze)]" />}
-                    {tier.tier === "enterprise" && <Building2 className="h-5 w-5 text-purple-500" />}
-                    <CardTitle className="text-xl">{tier.name}</CardTitle>
-                  </div>
-                  <CardDescription>{tier.description}</CardDescription>
-                </CardHeader>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      {tier.tier === "free" && <Sparkles className="h-5 w-5 text-muted-foreground" />}
+                      {tier.tier === "basic" && <Zap className="h-5 w-5 text-blue-500" />}
+                      {tier.tier === "pro" && <Zap className="h-5 w-5 text-[var(--bronze)]" />}
+                      {tier.tier === "enterprise" && <Building2 className="h-5 w-5 text-purple-500" />}
+                      <CardTitle className="text-xl">{tier.name}</CardTitle>
+                    </div>
+                    <CardDescription>{tier.description}</CardDescription>
+                  </CardHeader>
 
-                <CardContent className="flex-1">
-                  {/* Price */}
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">
-                        {price === 0 ? "Free" : `$${price.toFixed(2)}`}
-                      </span>
-                      {price > 0 && (
-                        <span className="text-muted-foreground">{period}</span>
+                  <CardContent className="flex-1 flex flex-col">
+                    {/* Price */}
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold">
+                          {price === 0 ? "Free" : `$${price.toFixed(2)}`}
+                        </span>
+                        {price > 0 && (
+                          <span className="text-muted-foreground">{period}</span>
+                        )}
+                      </div>
+                      {isAnnual && price > 0 && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          ${(tier.monthlyPrice).toFixed(2)}/month billed annually
+                        </p>
                       )}
                     </div>
-                    {isAnnual && price > 0 && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        ${(tier.monthlyPrice).toFixed(2)}/month billed annually
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Limits */}
-                  <div className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-lg bg-muted/30">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Requests</p>
-                      <p className="font-medium text-sm">{tier.limits.requests}</p>
+                    {/* Limits */}
+                    <div className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-lg bg-muted/30">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Requests</p>
+                        <p className="font-medium text-sm">{tier.limits.requests}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Tokens</p>
+                        <p className="font-medium text-sm">{tier.limits.tokens}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Models</p>
+                        <p className="font-medium text-sm">{tier.limits.models}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Storage</p>
+                        <p className="font-medium text-sm">{tier.limits.storage}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Tokens</p>
-                      <p className="font-medium text-sm">{tier.limits.tokens}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Models</p>
-                      <p className="font-medium text-sm">{tier.limits.models}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Storage</p>
-                      <p className="font-medium text-sm">{tier.limits.storage}</p>
-                    </div>
-                  </div>
 
-                  {/* Features */}
-                  <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-                    {tier.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
+                    {/* Features - scrollable area */}
+                    <div className="flex-1 min-h-0">
+                      <ul className="space-y-2 h-[180px] overflow-y-auto pr-1">
+                        {tier.features.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
 
-                <CardFooter className="mt-auto pt-6">
-                  <Button
-                    className={cn(
-                      "w-full",
-                      tier.popular
-                        ? "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
-                        : "bg-secondary hover:bg-secondary/80"
-                    )}
-                    onClick={() => handleSubscribe(tier)}
-                    disabled={loadingTier === tier.tier}
-                  >
-                    {loadingTier === tier.tier ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        {tier.tier === "free" && isSignedIn ? "Current Plan" : tier.cta}
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
+                  <CardFooter className="pt-4 pb-6">
+                    <Button
+                      className={cn(
+                        "w-full",
+                        tier.popular
+                          ? "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
+                          : "bg-secondary hover:bg-secondary/80"
+                      )}
+                      onClick={() => handleSubscribe(tier)}
+                      disabled={loadingTier === tier.tier}
+                    >
+                      {loadingTier === tier.tier ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          {tier.tier === "free" && isSignedIn ? "Current Plan" : tier.cta}
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
             )
           })}
         </div>
