@@ -928,3 +928,21 @@ html, body {
   fill: white !important;
   color: white !important;
 }
+
+/* Force password visibility toggle (eyeball icon) to be white */
+.cl-formFieldInputShowPasswordButton,
+.cl-formFieldInputShowPasswordButton svg,
+.cl-formFieldInputShowPasswordButton svg path,
+.cl-formFieldAction__password,
+.cl-formFieldAction__password svg,
+.cl-formFieldAction__password svg path,
+button[aria-label*="password"] svg,
+button[aria-label*="password"] svg path,
+button[aria-label*="Show"] svg,
+button[aria-label*="Show"] svg path,
+button[aria-label*="Hide"] svg,
+button[aria-label*="Hide"] svg path {
+  fill: white !important;
+  color: white !important;
+  stroke: white !important;
+}
