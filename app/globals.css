@@ -911,9 +911,36 @@ html, body {
   }
 }
 
-/* Clerk social buttons - Apple logo white on dark background */
+/* Clerk social buttons - horizontal row layout */
+.cl-socialButtonsBlockButtonList,
+.cl-socialButtonsIconList {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+}
+
+.cl-socialButtonsBlockButton {
+  flex: 0 0 auto !important;
+  max-width: 60px !important;
+}
+
+/* Hide "Continue with" text */
+.cl-socialButtonsBlockButtonText {
+  display: none !important;
+}
+
+/* Apple logo white on dark background */
 .cl-socialButtonsBlockButton__apple svg,
-.cl-socialButtonsIconButton__apple svg {
+.cl-socialButtonsBlockButton__apple svg path,
+.cl-socialButtonsIconButton__apple svg,
+.cl-socialButtonsIconButton__apple svg path,
+[data-provider="apple"] svg,
+[data-provider="apple"] svg path,
+button[aria-label*="Apple" i] svg,
+button[aria-label*="Apple" i] svg path {
+  fill: white !important;
+  color: white !important;
   filter: brightness(0) invert(1) !important;
 }
 
