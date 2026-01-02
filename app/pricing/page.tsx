@@ -125,7 +125,7 @@ const pricingTiers: PricingTier[] = [
       models: "All + Priority",
       storage: "Unlimited",
     },
-    cta: "Contact Sales",
+    cta: "Upgrade to Enterprise",
   },
 ]
 
@@ -144,12 +144,6 @@ export default function PricingPage() {
         // Redirect to sign up
         window.location.href = "/sign-up"
       }
-      return
-    }
-
-    if (tier.tier === "enterprise") {
-      // Open contact form or email
-      window.location.href = "mailto:sales@llmhive.ai?subject=Enterprise%20Inquiry"
       return
     }
 
