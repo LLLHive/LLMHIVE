@@ -31,9 +31,13 @@ export default function SignInPage() {
             elements: {
               rootBox: "mx-auto",
               card: "bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl",
+              // Social buttons in a row
+              socialButtonsBlockButton: "flex-1",
+              socialButtonsProviderIcon__apple: "!text-white !fill-white [&_path]:!fill-white",
+              socialButtonsBlockButtonText__apple: "!text-white",
               // Fix Apple logo visibility - make it white on dark background
-              socialButtonsIconButton: "hover:bg-white/10",
-              socialButtonsBlockButton__apple: "[&_svg]:text-white [&_svg]:fill-white",
+              socialButtonsIconButton: "hover:bg-white/10 [&_svg]:text-white",
+              socialButtonsIconButton__apple: "[&_svg]:!text-white [&_svg]:!fill-white [&_path]:!fill-white",
               // Fix OTP input visibility - add visible orange border
               otpCodeFieldInput: "!border-2 !border-[#cd7f32] !bg-[#1a1a1a] !text-white",
               otpCodeField: "gap-2",
