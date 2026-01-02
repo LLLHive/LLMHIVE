@@ -272,9 +272,9 @@ export function Sidebar({
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-muted-foreground" />
                     {collaborateExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-foreground" />
+                      <ChevronUp className="h-4 w-4 text-white" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-foreground" />
+                      <ChevronDown className="h-4 w-4 text-white" />
                     )}
                   </div>
                 </button>
@@ -298,9 +298,9 @@ export function Sidebar({
                 >
                   <span className="font-medium">Projects</span>
                   {activeTab === "projects" ? (
-                    <ChevronUp className="h-4 w-4 text-foreground" />
+                    <ChevronUp className="h-4 w-4 text-white" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-foreground" />
+                    <ChevronDown className="h-4 w-4 text-white" />
                   )}
                 </button>
                 
@@ -385,9 +385,9 @@ export function Sidebar({
                 >
                   <span className="font-medium">Chats</span>
                   {chatsExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-foreground" />
+                    <ChevronUp className="h-4 w-4 text-white" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-foreground" />
+                    <ChevronDown className="h-4 w-4 text-white" />
                   )}
                 </button>
                 
@@ -661,13 +661,13 @@ function ProjectItem({
             size="icon" 
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "opacity-0 group-hover:opacity-100 text-foreground",
-              "hover:bg-secondary-foreground/10",
+              "opacity-0 group-hover:opacity-100",
+              "hover:bg-white/10",
               "focus:opacity-100"
             )}
             aria-label="Project options"
           >
-            <MoreHorizontal className="h-4 w-4 text-foreground" />
+            <MoreHorizontal className="h-4 w-4 text-white" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
@@ -832,13 +832,13 @@ function ConversationItem({
             size="icon" 
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "opacity-0 group-hover:opacity-100 text-foreground",
-              "hover:bg-secondary-foreground/10",
+              "opacity-0 group-hover:opacity-100",
+              "hover:bg-white/10",
               "focus:opacity-100"
             )}
             aria-label="Chat options"
           >
-            <MoreHorizontal className="h-4 w-4 text-foreground" />
+            <MoreHorizontal className="h-4 w-4 text-white" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
