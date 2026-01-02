@@ -264,9 +264,9 @@ export default function PricingPage() {
               <Card
                 key={tier.name}
                 className={cn(
-                  "relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300",
+                  "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300",
                   "h-[620px]", // Fixed height for all cards
-                  "border-[var(--bronze)] border-2" // All cards have orange border
+                  "border-2 border-[var(--bronze)]/50 hover:border-[var(--bronze)]" // Dimmed border, bright on hover
                 )}
               >
                 {tier.popular && (
@@ -337,7 +337,7 @@ export default function PricingPage() {
 
                 <CardFooter className="pt-3 pb-4 flex-shrink-0">
                   <Button
-                    className="w-full font-semibold bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
+                    className="w-full font-semibold bg-[var(--bronze)]/50 group-hover:bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white transition-all duration-300"
                     onClick={() => handleSubscribe(tier)}
                     disabled={loadingTier === tier.tier}
                   >
