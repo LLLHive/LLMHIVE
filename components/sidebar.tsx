@@ -637,7 +637,7 @@ function ProjectItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200",
         (isExpanded || hasActiveChat) && "bg-secondary/50",
       )}
       onClick={onToggleExpand}
@@ -798,7 +798,7 @@ function ConversationItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200",
         isActive && "bg-secondary ring-1 ring-[var(--bronze)]/30",
         isNested && "py-1 text-[13px]",
       )}
