@@ -344,10 +344,10 @@ export default function PricingPage() {
                 <CardFooter className="pt-3 pb-4 flex-shrink-0">
                   <Button
                     className={cn(
-                      "w-full",
+                      "w-full font-semibold",
                       tier.popular
                         ? "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
-                        : "bg-secondary hover:bg-secondary/80"
+                        : "bg-white/10 hover:bg-white/20 text-white border border-white/30"
                     )}
                     onClick={() => handleSubscribe(tier)}
                     disabled={loadingTier === tier.tier}
