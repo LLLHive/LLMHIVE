@@ -369,7 +369,7 @@ export function Sidebar({
                         onClick={() => setShowAllProjects(!showAllProjects)}
                         className="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <MoreHorizontal className="h-4 w-4" />
+                        <MoreHorizontal className="h-4 w-4 text-white" />
                         {showAllProjects ? "Show less" : "See more"}
                       </button>
                     )}
@@ -659,12 +659,7 @@ function ProjectItem({
           <Button 
             variant="ghost" 
             size="icon" 
-            className={cn(
-              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "opacity-0 group-hover:opacity-100",
-              "hover:bg-white/10",
-              "focus:opacity-100"
-            )}
+            className="h-6 w-6 min-w-6 flex-shrink-0 rounded-md hover:bg-white/10"
             aria-label="Project options"
           >
             <MoreHorizontal className="h-4 w-4 text-white" />
@@ -830,12 +825,7 @@ function ConversationItem({
           <Button 
             variant="ghost" 
             size="icon" 
-            className={cn(
-              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "opacity-0 group-hover:opacity-100",
-              "hover:bg-white/10",
-              "focus:opacity-100"
-            )}
+            className="h-6 w-6 min-w-6 flex-shrink-0 rounded-md hover:bg-white/10"
             aria-label="Chat options"
           >
             <MoreHorizontal className="h-4 w-4 text-white" />
