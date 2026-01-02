@@ -179,11 +179,11 @@ export default function PricingPage() {
         window.location.href = data.url
       } else {
         console.error("Failed to create checkout session:", data.error)
-        alert("Failed to create checkout. Please try again.")
+        alert(`Failed to create checkout: ${data.error || "Unknown error"}`)
       }
     } catch (error) {
       console.error("Error creating checkout session:", error)
-      alert("An error occurred. Please try again.")
+      alert(`An error occurred: ${error instanceof Error ? error.message : "Unknown error"}`)
     } finally {
       setLoadingTier(null)
     }
@@ -343,7 +343,7 @@ export default function PricingPage() {
                   </ul>
                 </CardContent>
 
-                <CardFooter>
+                <CardFooter className="mt-auto pt-6">
                   <Button
                     className={cn(
                       "w-full",
