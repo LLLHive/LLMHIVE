@@ -911,34 +911,40 @@ html, body {
   }
 }
 
-/* Hide "Last used" label and text completely */
-.cl-socialButtonsBlockButtonListItem__lastUsed::before,
-.cl-socialButtonsBlockButtonListItem__lastUsed .cl-socialButtonsBlockButtonText,
-[class*="lastUsed"]::before,
-[class*="LastUsed"]::before,
-.cl-socialButtonsBlockButtonArrow,
-.cl-socialButtonsBlockButtonList > span,
-.cl-socialButtonsBlockButtonList > div > span,
-.cl-socialButtonsBlockButtonList__lastUsed,
-.cl-socialButtonsProviderIcon + span,
-span[class*="lastUsed"],
-span[class*="LastUsed"],
-div[class*="lastUsed"],
-div[class*="LastUsed"] {
+/* Hide "Last used" label completely - target the label element */
+.cl-socialButtonsBlockButtonList p,
+.cl-socialButtonsBlockButtonList span:not(.cl-socialButtonsProviderIcon):not([class*="Icon"]),
+.cl-socialButtonsBlockButtonList > div > p,
+.cl-socialButtonsBlockButtonList label,
+.cl-socialButtonsBlockButtonListItem__lastUsed > p,
+.cl-socialButtonsBlockButtonListItem__lastUsed > span,
+.cl-socialButtonsBlockButtonListItem__lastUsed > div > p,
+.cl-socialButtonsBlockButtonListItem__lastUsed > div > span,
+[class*="lastUsed"] > p,
+[class*="lastUsed"] > span,
+[class*="LastUsed"] > p,
+[class*="LastUsed"] > span,
+.cl-socialButtonsBlockButtonArrow {
   display: none !important;
   visibility: hidden !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
   height: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
-/* Force all social button items to be inline, no special treatment for last used */
+/* Force all social button items to be inline in same row */
 .cl-socialButtonsBlockButtonListItem,
 .cl-socialButtonsBlockButtonListItem__lastUsed,
 [class*="socialButtonsBlockButtonListItem"] {
   display: inline-flex !important;
   flex: 0 0 auto !important;
   order: unset !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Clerk social buttons - horizontal row layout, centered */
