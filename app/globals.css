@@ -920,20 +920,35 @@ html, body {
   gap: 1rem !important;
 }
 
-.cl-socialButtonsBlockButton {
+.cl-socialButtonsBlockButton,
+.cl-socialButtonsIconButton,
+.cl-socialButtonsBlockButton__google,
+.cl-socialButtonsBlockButton__facebook,
+.cl-socialButtonsBlockButton__apple,
+.cl-socialButtonsIconButton__google,
+.cl-socialButtonsIconButton__facebook,
+.cl-socialButtonsIconButton__apple {
   flex: 0 0 auto !important;
   max-width: 60px !important;
+  min-width: 50px !important;
+  min-height: 40px !important;
   border-radius: 8px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
   background-color: transparent !important;
   transition: background-color 0.2s ease, border-color 0.2s ease !important;
 }
 
 /* Hover effect for all social buttons (Apple, Facebook, Google) */
 .cl-socialButtonsBlockButton:hover,
-.cl-socialButtonsIconButton:hover {
+.cl-socialButtonsIconButton:hover,
+.cl-socialButtonsBlockButton__google:hover,
+.cl-socialButtonsBlockButton__facebook:hover,
+.cl-socialButtonsBlockButton__apple:hover,
+.cl-socialButtonsIconButton__google:hover,
+.cl-socialButtonsIconButton__facebook:hover,
+.cl-socialButtonsIconButton__apple:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Hide "Continue with" text */
