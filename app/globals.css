@@ -931,6 +931,19 @@ html, body {
   align-items: center !important;
   gap: 1rem !important;
   width: 100% !important;
+  margin: 0 auto !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Center the social buttons container */
+.cl-socialButtons,
+.cl-socialButtonsRoot {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* Remove any special styling for last used button */
