@@ -930,17 +930,21 @@ html, body {
   display: none !important;
 }
 
-/* Apple logo white on dark background */
-.cl-socialButtonsBlockButton__apple svg,
-.cl-socialButtonsBlockButton__apple svg path,
-.cl-socialButtonsIconButton__apple svg,
-.cl-socialButtonsIconButton__apple svg path,
-[data-provider="apple"] svg,
-[data-provider="apple"] svg path,
-button[aria-label*="Apple" i] svg,
-button[aria-label*="Apple" i] svg path {
-  fill: white !important;
-  color: white !important;
+/* Apple logo white on dark background - force invert */
+.cl-socialButtonsBlockButton__apple,
+.cl-socialButtonsBlockButton__apple *,
+.cl-socialButtonsIconButton__apple,
+.cl-socialButtonsIconButton__apple *,
+[class*="apple" i] svg,
+[class*="apple" i] svg * {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Also target the provider icon specifically */
+.cl-socialButtonsProviderIcon__apple,
+.cl-socialButtonsProviderIcon__apple svg,
+.cl-socialButtonsProviderIcon__apple svg path,
+.cl-socialButtonsProviderIcon__apple img {
   filter: brightness(0) invert(1) !important;
 }
 
