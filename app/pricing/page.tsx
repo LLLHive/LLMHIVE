@@ -270,8 +270,8 @@ export default function PricingPage() {
               <Card
                 key={tier.name}
                 className={cn(
-                  "relative flex flex-col bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-300 hover:border-[var(--bronze)]/30 h-full",
-                  tier.popular && "border-[var(--bronze)] ring-2 ring-[var(--bronze)]/20 scale-105"
+                  "relative flex flex-col bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-300 hover:border-[var(--bronze)]/30 min-h-[680px]",
+                  tier.popular && "border-[var(--bronze)] ring-2 ring-[var(--bronze)]/20 scale-[1.02] z-10"
                 )}
               >
                 {tier.popular && (
@@ -333,7 +333,7 @@ export default function PricingPage() {
                   </div>
 
                   {/* Features */}
-                  <ul className="space-y-3 max-h-[280px] overflow-y-auto">
+                  <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                     {tier.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
