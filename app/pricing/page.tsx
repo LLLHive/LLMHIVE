@@ -261,7 +261,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto items-stretch">
           {pricingTiers.map((tier) => {
             const price = isAnnual ? tier.annualPrice : tier.monthlyPrice
             const period = isAnnual ? "/year" : "/month"
@@ -270,7 +270,7 @@ export default function PricingPage() {
               <Card
                 key={tier.name}
                 className={cn(
-                  "relative flex flex-col bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-300 hover:border-[var(--bronze)]/30",
+                  "relative flex flex-col bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-300 hover:border-[var(--bronze)]/30 h-full",
                   tier.popular && "border-[var(--bronze)] ring-2 ring-[var(--bronze)]/20 scale-105"
                 )}
               >
@@ -333,7 +333,7 @@ export default function PricingPage() {
                   </div>
 
                   {/* Features */}
-                  <ul className="space-y-3">
+                  <ul className="space-y-3 max-h-[280px] overflow-y-auto">
                     {tier.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
