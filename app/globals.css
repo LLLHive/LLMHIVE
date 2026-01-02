@@ -911,8 +911,9 @@ html, body {
   }
 }
 
-/* Clerk social buttons - simple styling */
-.cl-socialButtonsBlockButton__apple svg {
+/* Clerk social buttons - Apple logo white on dark background */
+.cl-socialButtonsBlockButton__apple svg,
+.cl-socialButtonsIconButton__apple svg {
   filter: brightness(0) invert(1) !important;
 }
 
