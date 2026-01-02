@@ -911,13 +911,33 @@ html, body {
   }
 }
 
-/* Clerk social buttons - horizontal row layout */
+/* Hide "Last used" label */
+.cl-socialButtonsBlockButtonListItem__lastUsed::before,
+.cl-socialButtonsBlockButtonListItem__lastUsed .cl-socialButtonsBlockButtonText,
+[class*="lastUsed"]::before,
+.cl-socialButtonsBlockButtonArrow,
+.cl-socialButtonsBlockButtonList > span,
+.cl-socialButtonsBlockButtonList > div > span {
+  display: none !important;
+}
+
+/* Clerk social buttons - horizontal row layout, centered */
 .cl-socialButtonsBlockButtonList,
 .cl-socialButtonsIconList {
   display: flex !important;
   flex-direction: row !important;
+  flex-wrap: nowrap !important;
   justify-content: center !important;
+  align-items: center !important;
   gap: 1rem !important;
+  width: 100% !important;
+}
+
+/* Remove any special styling for last used button */
+.cl-socialButtonsBlockButtonListItem,
+.cl-socialButtonsBlockButtonListItem__lastUsed {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
 }
 
 .cl-socialButtonsBlockButton,
