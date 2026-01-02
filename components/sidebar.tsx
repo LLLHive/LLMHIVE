@@ -251,7 +251,7 @@ export function Sidebar({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search chats..."
-                    className="pl-9 bg-secondary border-border"
+                    className="pl-9 bg-transparent border-transparent hover:bg-secondary hover:border-border focus:bg-secondary focus:border-border transition-all duration-200"
                   />
                 </div>
               </div>
