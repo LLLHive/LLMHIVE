@@ -18,10 +18,11 @@ const isPublicRoute = createRouteMatcher([
 const isE2ETest = process.env.PLAYWRIGHT_TEST === "true" || process.env.CI === "true"
 
 // =============================================================================
-// Clerk Auth Middleware
+// Clerk Auth Proxy (renamed from middleware for Next.js 16+)
 // =============================================================================
 
-export default clerkMiddleware(async (auth, request) => {
+// Named export "proxy" for Next.js 16+ (replaces default export "middleware")
+export const proxy = clerkMiddleware(async (auth, request) => {
   // Skip auth in E2E test mode to allow automated testing
   if (isE2ETest) {
     return
