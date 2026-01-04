@@ -321,6 +321,42 @@ except ImportError:
     get_dialogue_manager = None  # type: ignore
     logger.warning("Dialogue system module not available")
 
+# Import Stage 3 upgrades
+try:
+    from .orchestration.stage3_upgrades import (
+        PronounResolver,
+        CompoundQueryHandler,
+        AdaptiveRetryHandler,
+        EnhancedInjectionDetector,
+        Stage3Logger,
+        MultiModalGate,
+        create_pronoun_resolver,
+        create_compound_handler,
+        create_injection_detector,
+        create_adaptive_retry_handler,
+        create_stage3_logger,
+        create_multimodal_gate,
+    )
+    STAGE3_AVAILABLE = True
+except ImportError:
+    STAGE3_AVAILABLE = False
+    PronounResolver = None  # type: ignore
+    CompoundQueryHandler = None  # type: ignore
+    AdaptiveRetryHandler = None  # type: ignore
+    EnhancedInjectionDetector = None  # type: ignore
+    Stage3Logger = None  # type: ignore
+    MultiModalGate = None  # type: ignore
+    logger.warning("Stage 3 upgrades module not available")
+
+# Import prompt injection defense
+try:
+    from .security.hardening import check_prompt_injection
+    INJECTION_DEFENSE_AVAILABLE = True
+except ImportError:
+    INJECTION_DEFENSE_AVAILABLE = False
+    check_prompt_injection = None  # type: ignore
+    logger.warning("Prompt injection defense not available")
+
 # Import provider types
 try:
     from .providers.gemini import GeminiProvider
@@ -540,6 +576,41 @@ class Orchestrator:
                 logger.info("Dialogue manager initialized")
             except Exception as e:
                 logger.warning("Failed to initialize dialogue manager: %s", e)
+        
+        # Initialize Stage 3 components
+        self.pronoun_resolver: Optional[Any] = None
+        self.compound_handler: Optional[Any] = None
+        self.injection_detector: Optional[Any] = None
+        self.adaptive_retry: Optional[Any] = None
+        self.stage3_logger: Optional[Any] = None
+        self.multimodal_gate: Optional[Any] = None
+        
+        if STAGE3_AVAILABLE:
+            try:
+                # Pronoun resolver with shared memory
+                self.pronoun_resolver = create_pronoun_resolver(self.shared_memory)
+                
+                # Compound query handler for multi-fact retrieval
+                self.compound_handler = create_compound_handler()
+                
+                # Enhanced injection detector
+                self.injection_detector = create_injection_detector(block_threshold="medium")
+                
+                # Adaptive retry handler with consensus manager
+                self.adaptive_retry = create_adaptive_retry_handler(
+                    providers=self.providers,
+                    consensus_manager=self.consensus_manager,
+                )
+                
+                # Stage 3 logger for instrumentation
+                self.stage3_logger = create_stage3_logger()
+                
+                # Multimodal gate for tier-based feature access
+                self.multimodal_gate = create_multimodal_gate(self.stage3_logger)
+                
+                logger.info("Stage 3 production upgrades initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize Stage 3 components: %s", e)
         
         logger.info(f"Orchestrator initialized with {len(self.providers)} provider(s)")
     
@@ -1699,6 +1770,67 @@ Please provide an accurate, well-verified response."""
         # Initialize scratchpad for this query
         scratchpad = Scratchpad() if MEMORY_AVAILABLE and Scratchpad else None
         
+        # Stage 3: Enhanced Prompt Injection Defense (Phase -1.5)
+        if self.injection_detector and STAGE3_AVAILABLE:
+            try:
+                injection_check = self.injection_detector.check(prompt)
+                if injection_check.should_block:
+                    logger.warning(
+                        "Prompt injection BLOCKED: threat=%s",
+                        injection_check.threat_level
+                    )
+                    if self.stage3_logger:
+                        self.stage3_logger.log_injection_attempt(
+                            injection_check.threat_level, blocked=True
+                        )
+                    
+                    if LLMResult is None:
+                        class LLMResult:
+                            def __init__(self, content, model, tokens=0):
+                                self.content = content
+                                self.model = model
+                                self.tokens_used = tokens
+                    return LLMResult(
+                        content=self.injection_detector.get_safe_refusal(),
+                        model="security_filter",
+                        tokens=0,
+                    )
+                elif injection_check.is_injection:
+                    # Log but don't block lower-threat injections
+                    if self.stage3_logger:
+                        self.stage3_logger.log_injection_attempt(
+                            injection_check.threat_level, blocked=False
+                        )
+            except Exception as e:
+                logger.warning("Injection detection failed: %s", e)
+        
+        # Stage 3: Pronoun Resolution (Phase -1.3)
+        pronoun_resolutions = []
+        if self.pronoun_resolver and STAGE3_AVAILABLE and user_id:
+            try:
+                history = kwargs.get("history", [])
+                resolved_prompt, resolutions = await self.pronoun_resolver.resolve(
+                    query=prompt,
+                    user_id=user_id,
+                    session_id=session_id,
+                    history=history,
+                )
+                if resolutions:
+                    pronoun_resolutions = resolutions
+                    prompt = resolved_prompt
+                    logger.info("Resolved %d pronouns: %s", len(resolutions), resolutions)
+                    if scratchpad:
+                        scratchpad.write("pronoun_resolutions", resolutions)
+                    if self.stage3_logger:
+                        for res in resolutions:
+                            parts = res.split(" → ")
+                            if len(parts) == 2:
+                                self.stage3_logger.log_pronoun_resolution(
+                                    parts[0].strip("'"), parts[1].strip("'"), True
+                                )
+            except Exception as e:
+                logger.warning("Pronoun resolution failed: %s", e)
+        
         # Phase -1: Security - Input validation and tier checks
         use_guardrails = kwargs.get("use_guardrails", True)
         is_external_model = kwargs.get("is_external_model", True)
@@ -2744,6 +2876,26 @@ Please provide an accurate, well-verified response."""
                     tags=[domain] if domain else None,
                 )
                 logger.debug("Stored verified insight to shared memory")
+                
+                # Stage 3: Save factual responses for pronoun resolution
+                # Only save if this looks like a factual Q&A (not creative writing etc.)
+                factual_domains = {"general", "science", "history", "factual_question", "research"}
+                if domain in factual_domains or domain is None:
+                    try:
+                        # Extract and save the key fact from the answer
+                        fact_content = result.content[:500]  # First 500 chars as fact
+                        await self.shared_memory.save_fact(
+                            user_id=user_id,
+                            fact=fact_content,
+                            session_id=session_id,
+                            verified=True,
+                        )
+                        logger.debug("Saved factual response for pronoun resolution")
+                        if self.stage3_logger:
+                            self.stage3_logger.log_memory_operation("save", "fact", True)
+                    except Exception as e:
+                        logger.debug("Failed to save fact: %s", e)
+                        
             except Exception as e:
                 logger.debug("Failed to store shared memory insight: %s", e)
         

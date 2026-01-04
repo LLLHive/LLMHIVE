@@ -401,6 +401,7 @@ class PromptOps:
         enable_safety_checks: bool = True,
         enable_hrm_auto: bool = True,
         default_domain: str = "general",
+        shared_memory: Optional[Any] = None,
     ) -> None:
         """
         Initialize enhanced PromptOps layer.
@@ -412,6 +413,7 @@ class PromptOps:
             enable_safety_checks: Run safety filters
             enable_hrm_auto: Auto-enable HRM for complex queries
             default_domain: Default domain when not detected
+            shared_memory: SharedMemoryManager for pronoun resolution
         """
         self.providers = providers or {}
         self.enable_llm_classification = enable_llm_classification
@@ -419,6 +421,7 @@ class PromptOps:
         self.enable_safety = enable_safety_checks
         self.enable_hrm_auto = enable_hrm_auto
         self.default_domain = default_domain
+        self.shared_memory = shared_memory
         
         # Callbacks for dialogue manager integration
         self.clarification_callback: Optional[Callable[[List[str]], str]] = None
@@ -729,6 +732,93 @@ Output ONLY the clarified query, nothing else."""
             return f"Clarify the scope or quantity"
         
         return None
+    
+    async def resolve_pronoun_with_memory(
+        self,
+        term: str,
+        query: str,
+        user_id: str,
+        context: Optional[str] = None,
+        history: Optional[List[Dict[str, str]]] = None,
+        session_id: Optional[str] = None,
+    ) -> Optional[Tuple[str, str]]:
+        """
+        Resolve a pronoun using shared memory and conversation history.
+        
+        This implements the Stage 3 pronoun-based shared memory recall feature.
+        When a pronoun like "it", "they", "he", "she" is detected, we:
+        1. Extract likely referent from recent conversation history
+        2. Query shared memory for facts about that referent
+        3. Return the resolved referent and the fact content
+        
+        Args:
+            term: The pronoun to resolve (e.g., "it", "they")
+            query: The full user query
+            user_id: User ID for memory access
+            context: Additional context
+            history: Conversation history
+            session_id: Session ID for session-specific resolution
+            
+        Returns:
+            Tuple of (referent, fact_content) if resolved, None otherwise
+        """
+        if not self.shared_memory:
+            logger.debug("Shared memory not available for pronoun resolution")
+            return None
+        
+        # Build context from history
+        recent_context = context or ""
+        if history:
+            for msg in reversed(history[-5:]):
+                recent_context += " " + msg.get("content", "")
+        
+        # Use shared memory's pronoun resolution
+        try:
+            result = await self.shared_memory.resolve_pronoun(
+                user_id=user_id,
+                pronoun=term,
+                session_id=session_id,
+                recent_context=recent_context.strip(),
+            )
+            
+            if result:
+                referent, fact = result
+                logger.info(
+                    "Pronoun '%s' resolved to '%s' via shared memory",
+                    term, referent
+                )
+                return result
+                
+        except Exception as e:
+            logger.warning("Pronoun resolution failed: %s", e)
+        
+        return None
+    
+    def replace_pronoun_in_query(
+        self,
+        query: str,
+        pronoun: str,
+        referent: str,
+    ) -> str:
+        """Replace a pronoun with its resolved referent in the query."""
+        # Handle case sensitivity
+        patterns = [
+            (rf'\b{pronoun}\b', referent),
+            (rf'\b{pronoun.capitalize()}\b', referent),
+            (rf'\b{pronoun.upper()}\b', referent.upper()),
+        ]
+        
+        result = query
+        for pattern, replacement in patterns:
+            result = re.sub(pattern, replacement, result, count=1)
+            if result != query:
+                break
+        
+        logger.info(
+            "Replaced pronoun '%s' with '%s' in query",
+            pronoun, referent
+        )
+        return result
     
     def _apply_rule_based_clarification(
         self,

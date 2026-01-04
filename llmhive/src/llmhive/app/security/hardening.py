@@ -538,6 +538,36 @@ def validate_request(
     return get_security_manager().check_request(method, path, headers, body)
 
 
+def check_prompt_injection(text: str, block_on_detection: bool = True) -> Tuple[bool, Optional[str], str]:
+    """
+    Check for prompt injection and optionally block.
+    
+    Stage 3 Upgrade 6: Prompt Injection Defense
+    
+    Args:
+        text: Input text to check
+        block_on_detection: Whether to block if injection detected
+        
+    Returns:
+        Tuple of (is_safe, apology_message if blocked, threat_level)
+    """
+    manager = get_security_manager()
+    is_injection, patterns = manager._injection_detector.detect(text)
+    threat_level = manager._injection_detector.get_threat_level(text)
+    
+    if is_injection:
+        logger.warning(
+            "Prompt injection detected: threat=%s, patterns=%s",
+            threat_level.value, patterns[:3]
+        )
+        
+        if block_on_detection and threat_level in (ThreatLevel.MEDIUM, ThreatLevel.HIGH, ThreatLevel.CRITICAL):
+            apology = "I'm sorry, but I cannot fulfill that request."
+            return False, apology, threat_level.value
+    
+    return True, None, threat_level.value
+
+
 # ==============================================================================
 # FastAPI Middleware
 # ==============================================================================

@@ -23,11 +23,22 @@ class TierLimits:
 
 
 # Tier Limits: Define limits for each tier
+# Stage 3: Added multimodal features (image_analysis, audio_transcription, etc.)
 TIER_LIMITS: Dict[str, TierLimits] = {
     "free": TierLimits(
         requests_per_minute=5,
         requests_per_day=100,  # 100 requests per day for Free tier
         enabled_features={"basic_orchestration", "standard_models"},
+        allowed_domain_presets={"general", "coding", "creative"},
+    ),
+    "basic": TierLimits(
+        requests_per_minute=10,
+        requests_per_day=300,  # 300 requests per day for Basic tier
+        enabled_features={
+            "basic_orchestration",
+            "standard_models",
+            "enhanced_memory",
+        },
         allowed_domain_presets={"general", "coding", "creative"},
     ),
     "pro": TierLimits(
@@ -39,6 +50,10 @@ TIER_LIMITS: Dict[str, TierLimits] = {
             "advanced_orchestration",
             "deep_verification",
             "enhanced_memory",
+            # Stage 3: Multimodal features for Pro tier
+            "image_analysis",
+            "audio_transcription",
+            "document_ocr",
         },
         allowed_domain_presets={"general", "coding", "creative", "research"},
     ),
@@ -53,6 +68,12 @@ TIER_LIMITS: Dict[str, TierLimits] = {
             "enhanced_memory",
             "custom_models",
             "priority_support",
+            # Stage 3: All multimodal features for Enterprise tier
+            "image_analysis",
+            "audio_transcription",
+            "document_ocr",
+            "image_generation",
+            "video_analysis",
         },
         allowed_domain_presets={"general", "coding", "creative", "research", "medical", "legal"},
     ),

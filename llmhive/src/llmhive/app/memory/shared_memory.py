@@ -704,6 +704,185 @@ class SharedMemoryManager:
         
         return preferences
     
+    async def save_fact(
+        self,
+        user_id: str,
+        fact: str,
+        *,
+        session_id: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        verified: bool = True,
+    ) -> str:
+        """
+        Save a factual response for future recall (e.g., pronoun resolution).
+        
+        Args:
+            user_id: User ID
+            fact: The factual content to store (e.g., "Jupiter has the most moons")
+            session_id: Optional session ID
+            tags: Optional tags for retrieval (e.g., ["Jupiter", "moons", "planet"])
+            verified: Whether this fact has been verified
+            
+        Returns:
+            Entry ID
+        """
+        # Auto-extract entities/tags from the fact if not provided
+        if not tags:
+            tags = self._extract_entities(fact)
+        
+        entry_id = await self.store_memory(
+            content=fact,
+            owner_id=user_id,
+            session_id=session_id,
+            category=MemoryCategory.FACT,
+            access_level=AccessLevel.USER,
+            tags=tags,
+            metadata={"verified": verified, "type": "factual_response"},
+            ttl_hours=24 * 30,  # 30 days
+        )
+        
+        logger.info(
+            "Saved fact to memory: user=%s, tags=%s, fact='%s...'",
+            user_id, tags[:3] if tags else [], fact[:50]
+        )
+        
+        return entry_id
+    
+    def _extract_entities(self, text: str) -> List[str]:
+        """Extract potential entity tags from text (simple heuristic)."""
+        import re
+        
+        # Find capitalized words (likely proper nouns/entities)
+        entities = re.findall(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b', text)
+        
+        # Also extract key nouns that might be referenced by pronouns
+        # Common subject indicators
+        key_patterns = [
+            r'\b(\w+)\s+(?:is|are|was|were|has|have|had)\b',
+            r'\bthe\s+(\w+)\b',
+        ]
+        
+        for pattern in key_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            entities.extend(matches)
+        
+        # Deduplicate and clean
+        seen = set()
+        clean_entities = []
+        for e in entities:
+            e_lower = e.lower()
+            if e_lower not in seen and len(e) > 2:
+                seen.add(e_lower)
+                clean_entities.append(e)
+        
+        return clean_entities[:10]  # Limit tags
+    
+    async def resolve_pronoun(
+        self,
+        user_id: str,
+        pronoun: str,
+        *,
+        session_id: Optional[str] = None,
+        recent_context: Optional[str] = None,
+        max_age_hours: int = 24,
+    ) -> Optional[Tuple[str, str]]:
+        """
+        Resolve a pronoun reference using stored facts and context.
+        
+        Args:
+            user_id: User ID
+            pronoun: The pronoun to resolve (e.g., "it", "they")
+            session_id: Optional session ID for session-specific resolution
+            recent_context: Recent conversation context to help identify referent
+            max_age_hours: Maximum age of facts to consider
+            
+        Returns:
+            Tuple of (referent, fact_content) if resolved, None otherwise
+        """
+        logger.info(
+            "Attempting to resolve pronoun '%s' for user %s",
+            pronoun, user_id
+        )
+        
+        # First, try to identify likely referent from recent context
+        referent = None
+        if recent_context:
+            referent = self._guess_referent_from_context(recent_context, pronoun)
+        
+        # Query shared memory for relevant facts
+        query_params = {
+            "user_id": user_id,
+            "categories": [MemoryCategory.FACT, MemoryCategory.KNOWLEDGE],
+            "include_public": False,
+            "max_age_hours": max_age_hours,
+            "limit": 5,
+        }
+        
+        if session_id:
+            query_params["session_id"] = session_id
+        
+        if referent:
+            query_params["tags"] = [referent]
+        
+        result = await self.query_memory(**query_params)
+        
+        if result.entries:
+            # Return the most recent matching fact
+            entry = result.entries[0]
+            resolved_referent = referent or self._extract_subject_from_fact(entry.content)
+            
+            logger.info(
+                "Pronoun '%s' resolved to '%s' from memory (fact: '%s...')",
+                pronoun, resolved_referent, entry.content[:50]
+            )
+            
+            return (resolved_referent, entry.content)
+        
+        logger.info(
+            "Pronoun '%s' could not be resolved from context/memory",
+            pronoun
+        )
+        return None
+    
+    def _guess_referent_from_context(self, context: str, pronoun: str) -> Optional[str]:
+        """Guess what a pronoun refers to based on recent context."""
+        import re
+        
+        # Find the last mentioned capitalized noun/entity
+        entities = re.findall(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b', context)
+        
+        # Filter out common non-entity capitalized words
+        non_entities = {"I", "The", "A", "An", "It", "They", "He", "She", "We", "You"}
+        entities = [e for e in entities if e not in non_entities]
+        
+        if entities:
+            # Return the most recently mentioned entity
+            return entities[-1]
+        
+        return None
+    
+    def _extract_subject_from_fact(self, fact: str) -> Optional[str]:
+        """Extract the main subject from a factual statement."""
+        import re
+        
+        # Common patterns: "X is/are/has/have Y"
+        patterns = [
+            r'^([A-Z][a-zA-Z\s]+?)\s+(?:is|are|was|were|has|have|had)\b',
+            r'^The\s+([A-Za-z\s]+?)\s+(?:is|are|was|were|has|have|had)\b',
+        ]
+        
+        for pattern in patterns:
+            match = re.match(pattern, fact)
+            if match:
+                return match.group(1).strip()
+        
+        # Fallback: first capitalized word
+        match = re.match(r'^([A-Z][a-z]+)', fact)
+        if match:
+            return match.group(1)
+        
+        return None
+
     async def build_context_string(
         self,
         user_id: str,

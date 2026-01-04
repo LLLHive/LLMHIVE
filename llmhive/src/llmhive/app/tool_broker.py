@@ -1061,3 +1061,93 @@ def reset_tool_broker() -> None:
     """Reset global tool broker instance."""
     global _tool_broker
     _tool_broker = None
+
+
+# ==============================================================================
+# Stage 3 Upgrade 3: Compound Query Detection
+# ==============================================================================
+
+class CompoundQueryDetector:
+    """Detect and split compound queries for parallel fact retrieval.
+    
+    Stage 3 Upgrade 3: Multi-Fact Retrieval and Answer Merging
+    """
+    
+    # Patterns indicating compound queries
+    COMPOUND_PATTERNS = [
+        r'\?\s+(?:and\s+)?(?:what|where|when|who|how|why)',  # Multiple questions
+        r'\band\s+(?:what|where|when|who|how|why)\b',  # "and what/where/etc"
+        r'\balso\s+(?:what|where|when|who|how|why)\b',  # "also what/where/etc"
+    ]
+    
+    @classmethod
+    def is_compound(cls, query: str) -> bool:
+        """Check if query is a compound query."""
+        # Multiple question marks
+        if query.count('?') > 1:
+            return True
+        
+        # Check patterns
+        for pattern in cls.COMPOUND_PATTERNS:
+            if re.search(pattern, query, re.IGNORECASE):
+                return True
+        
+        return False
+    
+    @classmethod
+    def split_query(cls, query: str) -> List[str]:
+        """Split compound query into sub-queries."""
+        if not cls.is_compound(query):
+            return [query]
+        
+        sub_queries = []
+        
+        # Split on multiple question marks
+        if query.count('?') > 1:
+            parts = re.split(r'\?\s*', query)
+            for part in parts:
+                part = part.strip()
+                if part and len(part) > 5:  # Minimum meaningful length
+                    if not part.endswith('?'):
+                        part += '?'
+                    sub_queries.append(part)
+        else:
+            # Split on "and what/where/etc"
+            match = re.search(
+                r'(.+?)\s+and\s+((?:what|where|when|who|how|why).+)',
+                query,
+                re.IGNORECASE
+            )
+            if match:
+                sub_queries = [match.group(1).strip(), match.group(2).strip()]
+            else:
+                sub_queries = [query]
+        
+        logger.info("Split compound query into %d sub-queries", len(sub_queries))
+        return sub_queries if sub_queries else [query]
+    
+    @classmethod
+    def merge_results(
+        cls,
+        results: List[Dict[str, Any]],
+        original_query: str,
+    ) -> str:
+        """Merge results from multiple sub-queries with citations."""
+        if not results:
+            return "I couldn't find information for your query."
+        
+        if len(results) == 1:
+            return results[0].get("content", "")
+        
+        merged_parts = []
+        for i, result in enumerate(results, 1):
+            content = result.get("content", "")
+            source = result.get("source", "")
+            
+            if content:
+                if source:
+                    merged_parts.append(f"{content}【{i}†】")
+                else:
+                    merged_parts.append(content)
+        
+        return " Additionally, ".join(merged_parts)
