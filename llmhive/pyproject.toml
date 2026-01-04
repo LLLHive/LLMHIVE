@@ -1,0 +1,135 @@
+[project]
+name = "llmhive"
+version = "0.4.0"
+description = "Production-grade AI Research Platform"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.ruff]
+# Ruff configuration for LLMHive
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+# Enable rules
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "S",   # flake8-bandit (security)
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "T20", # flake8-print
+    "RUF", # Ruff-specific
+]
+
+# Ignore rules
+ignore = [
+    "E501",    # line too long (handled by formatter)
+    "S101",    # assert used (ok in tests)
+    "S105",    # hardcoded password (false positives)
+    "S106",    # hardcoded password (false positives)
+    "B008",    # function call in default argument (FastAPI Depends)
+    "UP007",   # use X | Y instead of Union (need 3.10 compat)
+]
+
+# Files to exclude
+exclude = [
+    ".git",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".venv",
+    "venv",
+    "node_modules",
+    "build",
+    "dist",
+    "*.egg-info",
+    "alembic/versions",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow prints in scripts
+"scripts/*.py" = ["T20"]
+# Allow asserts in tests
+"tests/**/*.py" = ["S101", "S105", "S106"]
+# Allow unused imports in __init__.py
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+# Use double quotes
+quote-style = "double"
+# Indent with spaces
+indent-style = "space"
+# Unix line endings
+line-ending = "lf"
+
+[tool.mypy]
+# Mypy configuration for LLMHive
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = false  # Gradual adoption
+ignore_missing_imports = true
+exclude = [
+    "tests/",
+    "alembic/",
+]
+
+# Per-module overrides for Stage 4 (stricter)
+[[tool.mypy.overrides]]
+module = "llmhive.app.orchestration.stage4*"
+disallow_untyped_defs = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "llmhive.app.payments.*"
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+# Pytest configuration
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "-ra",
+]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+# Coverage configuration
+source = ["src/llmhive"]
+omit = [
+    "tests/*",
+    "alembic/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+fail_under = 50  # Start with reasonable threshold
+
+[tool.bandit]
+# Bandit security scanner configuration
+exclude_dirs = ["tests", "alembic"]
+skips = [
+    "B101",  # assert_used (ok in production code for invariants)
+]
+
+[tool.bandit.assert_used]
+skips = ["tests/*"]
+

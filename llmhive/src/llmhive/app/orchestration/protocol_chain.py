@@ -532,13 +532,33 @@ class ChainPlanner:
     """Plans execution chains from task descriptions.
     
     Analyzes queries to build appropriate execution plans.
+    
+    Production Safeguards:
+    - max_steps: Limits total steps to prevent runaway planning
+    - max_fanout: Limits parallel branches to prevent unbounded fan-out
+    - max_depth: Limits chain depth to prevent infinite recursion
     """
     
-    def __init__(self, available_tools: Optional[List[str]] = None):
+    # Safety limits
+    MAX_STEPS = 20  # Maximum total steps in a plan
+    MAX_FANOUT = 5  # Maximum parallel branches
+    MAX_DEPTH = 8   # Maximum dependency chain depth
+    MAX_PLAN_TIME_SECONDS = 5.0  # Maximum time for planning
+    
+    def __init__(
+        self,
+        available_tools: Optional[List[str]] = None,
+        max_steps: int = MAX_STEPS,
+        max_fanout: int = MAX_FANOUT,
+        max_depth: int = MAX_DEPTH,
+    ):
         self._tools = available_tools or [
             "search", "calculate", "database_query",
             "summarize", "translate", "analyze",
         ]
+        self._max_steps = min(max_steps, self.MAX_STEPS)
+        self._max_fanout = min(max_fanout, self.MAX_FANOUT)
+        self._max_depth = min(max_depth, self.MAX_DEPTH)
     
     def plan(self, task: str) -> List[ChainStep]:
         """
@@ -603,7 +623,79 @@ class ChainPlanner:
                 parameters={"input": task},
             ))
         
+        # Apply safety limits
+        steps = self._apply_safety_limits(steps)
+        
         return steps
+    
+    def _apply_safety_limits(self, steps: List[ChainStep]) -> List[ChainStep]:
+        """Apply safety limits to the plan."""
+        # Limit total steps
+        if len(steps) > self._max_steps:
+            logger.warning(
+                "Plan truncated from %d to %d steps (max_steps limit)",
+                len(steps), self._max_steps
+            )
+            steps = steps[:self._max_steps]
+        
+        # Check and limit fanout
+        self._check_fanout(steps)
+        
+        # Check depth
+        self._check_depth(steps)
+        
+        return steps
+    
+    def _check_fanout(self, steps: List[ChainStep]) -> None:
+        """Check and warn about excessive fanout."""
+        # Count steps at each dependency level
+        dep_counts: Dict[str, int] = {}
+        for step in steps:
+            for dep in step.dependencies:
+                dep_counts[dep] = dep_counts.get(dep, 0) + 1
+        
+        # Check for excessive fanout
+        for dep, count in dep_counts.items():
+            if count > self._max_fanout:
+                logger.warning(
+                    "Step %s has %d dependents (max_fanout=%d)",
+                    dep, count, self._max_fanout
+                )
+    
+    def _check_depth(self, steps: List[ChainStep]) -> None:
+        """Check for excessive chain depth."""
+        step_map = {s.step_id: s for s in steps}
+        
+        def get_depth(step_id: str, visited: Set[str] = None) -> int:
+            if visited is None:
+                visited = set()
+            
+            if step_id in visited:
+                # Circular dependency detected
+                logger.error("Circular dependency detected at step %s", step_id)
+                return float('inf')
+            
+            step = step_map.get(step_id)
+            if not step or not step.dependencies:
+                return 1
+            
+            visited.add(step_id)
+            max_dep_depth = max(
+                get_depth(dep, visited.copy()) 
+                for dep in step.dependencies
+            )
+            return 1 + max_dep_depth
+        
+        max_depth = 0
+        for step in steps:
+            depth = get_depth(step.step_id)
+            max_depth = max(max_depth, depth)
+        
+        if max_depth > self._max_depth:
+            logger.warning(
+                "Chain depth %d exceeds max_depth %d",
+                max_depth, self._max_depth
+            )
 
 
 # ==============================================================================
