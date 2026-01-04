@@ -486,13 +486,26 @@ Provide an improved response that addresses the critique:"""
         """Estimate confidence from critique text."""
         critique_lower = critique.lower()
         
+        # Low confidence - check first to avoid "correct" matching in "incorrect"
+        if any(phrase in critique_lower for phrase in [
+            "incorrect",
+            "wrong",
+            "missing",
+            "error",
+            "inaccurate",
+            "not correct",
+            "needs improvement",
+        ]):
+            return 0.5
+        
         # High confidence indicators
         if any(phrase in critique_lower for phrase in [
             "accurate and complete",
             "looks good",
             "no issues",
             "well answered",
-            "correct",
+            "is correct",
+            "correct and",
         ]):
             return 0.9
         
@@ -503,16 +516,6 @@ Provide an improved response that addresses the critique:"""
             "slightly",
         ]):
             return 0.75
-        
-        # Low confidence
-        if any(phrase in critique_lower for phrase in [
-            "incorrect",
-            "wrong",
-            "missing",
-            "error",
-            "inaccurate",
-        ]):
-            return 0.5
         
         return 0.7  # Default
 

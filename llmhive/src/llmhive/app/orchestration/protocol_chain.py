@@ -446,14 +446,14 @@ class DAGVisualizer:
             visited.update(current_level)
             
             next_level = []
-            for step_id in steps:
-                s = step_map.get(step_id)
-                if s and step_id not in visited:
-                    if all(d in visited for d in s.dependencies):
+            for step in steps:
+                step_id = step.step_id
+                if step_id not in visited:
+                    if all(d in visited for d in step.dependencies):
                         next_level.append(step_id)
             
             # Deduplicate
-            current_level = [s for s in next_level if s not in visited]
+            current_level = [sid for sid in next_level if sid not in visited]
         
         # Render levels
         for i, level in enumerate(levels):
