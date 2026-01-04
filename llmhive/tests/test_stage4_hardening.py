@@ -11,12 +11,19 @@ Tests cover:
 """
 import asyncio
 import os
+import sys
 import tempfile
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+# Add src to path for imports
+_src_path = Path(__file__).parent.parent / "src"
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
 
 
 # ==============================================================================

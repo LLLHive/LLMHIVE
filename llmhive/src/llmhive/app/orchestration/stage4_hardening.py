@@ -99,14 +99,39 @@ _config: Optional[Stage4Config] = None
 _config_lock = threading.Lock()
 
 
-def get_config() -> Stage4Config:
-    """Get the Stage 4 configuration singleton."""
+def get_config(force_reload: bool = False) -> Stage4Config:
+    """Get the Stage 4 configuration singleton.
+    
+    Args:
+        force_reload: If True, reload config from environment (useful for tests)
+    """
     global _config
-    if _config is None:
+    if force_reload or _config is None:
         with _config_lock:
-            if _config is None:
+            if force_reload or _config is None:
                 _config = Stage4Config.from_env()
     return _config
+
+
+def reset_stage4_config() -> None:
+    """Reset the config singleton (for testing).
+    
+    Call this in test teardown to ensure fresh config for each test.
+    """
+    global _config
+    with _config_lock:
+        _config = None
+
+
+def set_stage4_config(config: Stage4Config) -> None:
+    """Inject a specific config (for testing).
+    
+    Args:
+        config: The config to use
+    """
+    global _config
+    with _config_lock:
+        _config = config
 
 
 # ==============================================================================
@@ -147,6 +172,8 @@ class CircuitBreaker:
                     time.time() - self._last_failure_time > self.recovery_timeout):
                     self._state = CircuitState.HALF_OPEN
                     self._half_open_calls = 0
+                    # Reset success count for fresh half-open trial
+                    self._success_count = 0
                     logger.info("Circuit %s transitioning to HALF_OPEN", self.name)
             return self._state
     
@@ -171,9 +198,13 @@ class CircuitBreaker:
             
             if self._state == CircuitState.HALF_OPEN:
                 self._state = CircuitState.OPEN
+                # Reset success count - trial failed, need fresh start next time
+                self._success_count = 0
                 logger.warning("Circuit %s re-OPENED from HALF_OPEN", self.name)
             elif self._failure_count >= self.failure_threshold:
                 self._state = CircuitState.OPEN
+                # Also reset success count when opening from closed
+                self._success_count = 0
                 logger.warning("Circuit %s OPENED after %d failures", 
                              self.name, self._failure_count)
     
@@ -331,6 +362,7 @@ class RequestBudget:
     _tokens_used: int = field(default=0, init=False)
     _start_time: float = field(default_factory=time.time, init=False)
     _exhausted_reason: Optional[str] = field(default=None, init=False)
+    _lock: threading.Lock = field(default_factory=threading.Lock, init=False)
     
     @property
     def is_exhausted(self) -> bool:
@@ -357,39 +389,43 @@ class RequestBudget:
         """
         Check budget and consume resources if available.
         
+        Thread-safe: Uses internal lock to prevent race conditions
+        when multiple parallel tasks consume budget simultaneously.
+        
         Returns:
             True if budget was available and consumed, False if exhausted
         """
-        if self._exhausted_reason:
-            return False
-        
-        # Check wall clock first
-        elapsed = time.time() - self._start_time
-        if elapsed >= self.max_wall_clock:
-            self._exhausted_reason = f"Wall clock exceeded ({elapsed:.1f}s)"
-            return False
-        
-        # Check iterations
-        if self._iterations + iterations > self.max_iterations:
-            self._exhausted_reason = f"Max iterations exceeded ({self._iterations})"
-            return False
-        
-        # Check tool calls
-        if self._tool_calls + tool_calls > self.max_tool_calls:
-            self._exhausted_reason = f"Max tool calls exceeded ({self._tool_calls})"
-            return False
-        
-        # Check tokens
-        if self._tokens_used + tokens > self.max_tokens:
-            self._exhausted_reason = f"Max tokens exceeded ({self._tokens_used})"
-            return False
-        
-        # Consume
-        self._iterations += iterations
-        self._tool_calls += tool_calls
-        self._tokens_used += tokens
-        
-        return True
+        with self._lock:
+            if self._exhausted_reason:
+                return False
+            
+            # Check wall clock first
+            elapsed = time.time() - self._start_time
+            if elapsed >= self.max_wall_clock:
+                self._exhausted_reason = f"Wall clock exceeded ({elapsed:.1f}s)"
+                return False
+            
+            # Check iterations
+            if self._iterations + iterations > self.max_iterations:
+                self._exhausted_reason = f"Max iterations exceeded ({self._iterations})"
+                return False
+            
+            # Check tool calls
+            if self._tool_calls + tool_calls > self.max_tool_calls:
+                self._exhausted_reason = f"Max tool calls exceeded ({self._tool_calls})"
+                return False
+            
+            # Check tokens
+            if self._tokens_used + tokens > self.max_tokens:
+                self._exhausted_reason = f"Max tokens exceeded ({self._tokens_used})"
+                return False
+            
+            # Consume
+            self._iterations += iterations
+            self._tool_calls += tool_calls
+            self._tokens_used += tokens
+            
+            return True
     
     def get_usage_summary(self) -> Dict[str, Any]:
         """Get current usage summary."""
@@ -424,18 +460,44 @@ def create_request_budget(request_id: str, config: Optional[Stage4Config] = None
 class PersistentTrialCounter:
     """Persistent trial counter that survives server restarts.
     
-    Uses file-based persistence for simplicity. In production,
-    use Redis or a database.
+    Uses file-based persistence with atomic writes. In production,
+    use Redis or a database for distributed deployments.
+    
+    Features:
+    - Atomic file writes (write to temp, then rename)
+    - Thread-safe operations
+    - Optional Redis backend (via USE_REDIS_TRIAL_COUNTER env var)
     """
     
-    def __init__(self, persistence_path: Optional[str] = None):
+    def __init__(self, persistence_path: Optional[str] = None, use_redis: bool = False):
         self._path = persistence_path or os.getenv(
             "S4_TRIAL_COUNTER_PATH",
             "/tmp/llmhive_trial_counters.json"
         )
         self._counters: Dict[str, Dict[str, int]] = {}
         self._lock = threading.Lock()
-        self._load()
+        self._use_redis = use_redis or os.getenv("USE_REDIS_TRIAL_COUNTER", "0") == "1"
+        self._redis_client = None
+        
+        if self._use_redis:
+            self._init_redis()
+        else:
+            self._load()
+    
+    def _init_redis(self):
+        """Initialize Redis connection if available."""
+        try:
+            import redis
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            self._redis_client = redis.from_url(redis_url)
+            # Test connection
+            self._redis_client.ping()
+            logger.info("Trial counter using Redis backend")
+        except Exception as e:
+            logger.warning("Redis not available for trial counter, falling back to file: %s", e)
+            self._use_redis = False
+            self._redis_client = None
+            self._load()
     
     def _load(self):
         """Load counters from disk."""
@@ -444,28 +506,73 @@ class PersistentTrialCounter:
                 import json
                 with open(self._path, 'r') as f:
                     self._counters = json.load(f)
-                logger.info("Loaded %d trial counters", len(self._counters))
+                logger.info("Loaded %d trial counters from file", len(self._counters))
         except Exception as e:
             logger.warning("Failed to load trial counters: %s", e)
             self._counters = {}
     
     def _save(self):
-        """Save counters to disk."""
+        """Save counters to disk with atomic write."""
+        if self._use_redis:
+            return  # No file save needed when using Redis
+        
         try:
             import json
-            with open(self._path, 'w') as f:
+            import tempfile
+            
+            # Write to temp file first, then rename for atomicity
+            dir_name = os.path.dirname(self._path) or "."
+            with tempfile.NamedTemporaryFile(
+                mode='w',
+                dir=dir_name,
+                delete=False,
+                suffix='.tmp'
+            ) as f:
                 json.dump(self._counters, f)
+                temp_path = f.name
+            
+            # Atomic rename
+            os.replace(temp_path, self._path)
+            
         except Exception as e:
             logger.warning("Failed to save trial counters: %s", e)
+            # Clean up temp file if it exists
+            try:
+                if 'temp_path' in locals():
+                    os.unlink(temp_path)
+            except Exception:
+                pass
+    
+    def _redis_key(self, user_id: str, feature: str) -> str:
+        """Generate Redis key for a user+feature."""
+        prefix = os.getenv("RATE_LIMIT_REDIS_PREFIX", "llmhive:")
+        return f"{prefix}trials:{user_id}:{feature}"
     
     def get_usage(self, user_id: str, feature: str) -> int:
         """Get current usage count for a user+feature."""
+        if self._use_redis and self._redis_client:
+            try:
+                value = self._redis_client.get(self._redis_key(user_id, feature))
+                return int(value) if value else 0
+            except Exception as e:
+                logger.warning("Redis get failed, falling back to memory: %s", e)
+        
         with self._lock:
             user_counters = self._counters.get(user_id, {})
             return user_counters.get(feature, 0)
     
     def increment(self, user_id: str, feature: str) -> int:
         """Increment usage count and return new value."""
+        if self._use_redis and self._redis_client:
+            try:
+                key = self._redis_key(user_id, feature)
+                new_value = self._redis_client.incr(key)
+                # Set TTL of 30 days for trial counters
+                self._redis_client.expire(key, 30 * 24 * 3600)
+                return new_value
+            except Exception as e:
+                logger.warning("Redis incr failed, falling back to file: %s", e)
+        
         with self._lock:
             if user_id not in self._counters:
                 self._counters[user_id] = {}
@@ -485,9 +592,27 @@ class PersistentTrialCounter:
         """
         Check if trial is available and consume if so.
         
+        Atomic operation: checks and increments in one step.
+        
         Returns:
             Tuple of (allowed, remaining_trials)
         """
+        if self._use_redis and self._redis_client:
+            try:
+                key = self._redis_key(user_id, feature)
+                # Use INCR which is atomic, then check if we exceeded
+                current = self._redis_client.incr(key)
+                self._redis_client.expire(key, 30 * 24 * 3600)
+                
+                if current > max_trials:
+                    # Already over limit, decrement back
+                    self._redis_client.decr(key)
+                    return False, 0
+                
+                return True, max_trials - current
+            except Exception as e:
+                logger.warning("Redis check_and_consume failed: %s", e)
+        
         with self._lock:
             if user_id not in self._counters:
                 self._counters[user_id] = {}
@@ -502,6 +627,16 @@ class PersistentTrialCounter:
             self._save()
             
             return True, remaining - 1
+    
+    def clear(self):
+        """Clear all counters (for testing)."""
+        with self._lock:
+            self._counters = {}
+            if self._use_redis and self._redis_client:
+                # Note: This clears ALL trial keys, use with caution
+                logger.warning("Clearing all trial counters in Redis")
+            else:
+                self._save()
 
 
 # Singleton
@@ -517,6 +652,27 @@ def get_trial_counter() -> PersistentTrialCounter:
             if _trial_counter is None:
                 _trial_counter = PersistentTrialCounter()
     return _trial_counter
+
+
+def reset_trial_counter() -> None:
+    """Reset the trial counter singleton (for testing).
+    
+    Call this in test teardown to ensure fresh state for each test.
+    """
+    global _trial_counter
+    with _trial_counter_lock:
+        _trial_counter = None
+
+
+def set_trial_counter(counter: PersistentTrialCounter) -> None:
+    """Inject a specific trial counter (for testing).
+    
+    Args:
+        counter: The counter instance to use
+    """
+    global _trial_counter
+    with _trial_counter_lock:
+        _trial_counter = counter
 
 
 # ==============================================================================
@@ -551,6 +707,7 @@ async def safe_external_call(
     class CallContext:
         def __init__(self):
             self.success = False
+            self._failure_recorded = False
             self.start_time = time.time()
         
         def record_success(self):
@@ -563,6 +720,10 @@ async def safe_external_call(
             )
         
         def record_failure(self, error: str):
+            # Prevent double-counting failures
+            if self._failure_recorded:
+                return
+            self._failure_recorded = True
             breaker.record_failure()
             logger.warning(
                 "External call to %s failed: %s",
@@ -579,9 +740,8 @@ async def safe_external_call(
     except Exception as e:
         ctx.record_failure(str(e))
         raise
-    finally:
-        if not ctx.success:
-            breaker.record_failure()
+    # Note: Removed the finally block that called breaker.record_failure()
+    # because the except blocks already handle failure recording via ctx.record_failure()
 
 
 # ==============================================================================

@@ -629,7 +629,13 @@ class ChainPlanner:
         return steps
     
     def _apply_safety_limits(self, steps: List[ChainStep]) -> List[ChainStep]:
-        """Apply safety limits to the plan."""
+        """Apply safety limits to the plan.
+        
+        This method actively enforces limits by trimming overly complex plans:
+        - Total steps: Truncates excess steps
+        - Fan-out: Serializes excess parallel branches
+        - Depth: Removes steps beyond the maximum depth
+        """
         # Limit total steps
         if len(steps) > self._max_steps:
             logger.warning(
@@ -638,16 +644,125 @@ class ChainPlanner:
             )
             steps = steps[:self._max_steps]
         
-        # Check and limit fanout
-        self._check_fanout(steps)
+        # Enforce fanout limits (may remove or serialize steps)
+        steps = self._enforce_fanout_limit(steps)
         
-        # Check depth
-        self._check_depth(steps)
+        # Enforce depth limits (may remove steps)
+        steps = self._enforce_depth_limit(steps)
+        
+        return steps
+    
+    def _enforce_fanout_limit(self, steps: List[ChainStep]) -> List[ChainStep]:
+        """Enforce maximum fanout by serializing excess parallel branches.
+        
+        When a step has more than max_fanout dependents, the excess steps
+        are chained sequentially rather than running in parallel.
+        """
+        # Build a map of step_id -> steps that depend on it
+        dependents: Dict[str, List[ChainStep]] = {}
+        for step in steps:
+            for dep in step.dependencies:
+                if dep not in dependents:
+                    dependents[dep] = []
+                dependents[dep].append(step)
+        
+        modified = False
+        
+        # Check each step's fanout
+        for parent_id, child_steps in dependents.items():
+            if len(child_steps) > self._max_fanout:
+                # Keep first max_fanout as parallel, serialize the rest
+                parallel_steps = child_steps[:self._max_fanout]
+                overflow_steps = child_steps[self._max_fanout:]
+                
+                logger.warning(
+                    "Step %s has %d dependents (max_fanout=%d), "
+                    "serializing %d overflow steps",
+                    parent_id, len(child_steps), self._max_fanout, len(overflow_steps)
+                )
+                
+                # Chain the overflow steps sequentially
+                # First overflow depends on the last parallel step
+                previous_step = parallel_steps[-1]
+                for overflow_step in overflow_steps:
+                    # Remove the original parent dependency
+                    new_deps = [d for d in overflow_step.dependencies if d != parent_id]
+                    # Add dependency on previous step in the chain
+                    new_deps.append(previous_step.step_id)
+                    overflow_step.dependencies = new_deps
+                    previous_step = overflow_step
+                
+                modified = True
+        
+        if modified:
+            logger.info("Fan-out limits enforced, plan dependencies restructured")
+        
+        return steps
+    
+    def _enforce_depth_limit(self, steps: List[ChainStep]) -> List[ChainStep]:
+        """Enforce maximum depth by removing steps beyond the limit.
+        
+        Steps that would result in a chain deeper than max_depth are removed.
+        """
+        step_map = {s.step_id: s for s in steps}
+        depth_cache: Dict[str, int] = {}
+        
+        def get_depth(step_id: str, visited: Set[str] = None) -> int:
+            if visited is None:
+                visited = set()
+            
+            if step_id in visited:
+                # Circular dependency detected
+                logger.error("Circular dependency detected at step %s", step_id)
+                return 999  # Use large number instead of float('inf')
+            
+            if step_id in depth_cache:
+                return depth_cache[step_id]
+            
+            step = step_map.get(step_id)
+            if not step or not step.dependencies:
+                depth_cache[step_id] = 1
+                return 1
+            
+            visited.add(step_id)
+            max_dep_depth = max(
+                get_depth(dep, visited.copy()) 
+                for dep in step.dependencies
+            )
+            depth = 1 + max_dep_depth
+            depth_cache[step_id] = depth
+            return depth
+        
+        # Calculate depth for each step
+        step_depths = {}
+        for step in steps:
+            step_depths[step.step_id] = get_depth(step.step_id)
+        
+        # Identify steps that exceed max_depth
+        steps_to_remove = set()
+        for step_id, depth in step_depths.items():
+            if depth > self._max_depth:
+                steps_to_remove.add(step_id)
+        
+        if steps_to_remove:
+            logger.warning(
+                "Removing %d steps that exceed max_depth=%d: %s",
+                len(steps_to_remove), self._max_depth, list(steps_to_remove)
+            )
+            
+            # Remove the steps
+            steps = [s for s in steps if s.step_id not in steps_to_remove]
+            
+            # Also clean up any dependencies referencing removed steps
+            for step in steps:
+                step.dependencies = [
+                    d for d in step.dependencies if d not in steps_to_remove
+                ]
         
         return steps
     
     def _check_fanout(self, steps: List[ChainStep]) -> None:
-        """Check and warn about excessive fanout."""
+        """Check and warn about excessive fanout (legacy, kept for compatibility)."""
         # Count steps at each dependency level
         dep_counts: Dict[str, int] = {}
         for step in steps:
@@ -663,7 +778,7 @@ class ChainPlanner:
                 )
     
     def _check_depth(self, steps: List[ChainStep]) -> None:
-        """Check for excessive chain depth."""
+        """Check for excessive chain depth (legacy, kept for compatibility)."""
         step_map = {s.step_id: s for s in steps}
         
         def get_depth(step_id: str, visited: Set[str] = None) -> int:
@@ -673,7 +788,7 @@ class ChainPlanner:
             if step_id in visited:
                 # Circular dependency detected
                 logger.error("Circular dependency detected at step %s", step_id)
-                return float('inf')
+                return 999  # Use large number instead of float('inf')
             
             step = step_map.get(step_id)
             if not step or not step.dependencies:

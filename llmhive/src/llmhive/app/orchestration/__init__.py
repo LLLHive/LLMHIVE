@@ -189,6 +189,7 @@ from .stage4_integration import (
     Stage4Response,
     Stage4Orchestrator,
     create_stage4_orchestrator,
+    get_orchestrator,
 )
 
 __all__ = [
@@ -266,6 +267,7 @@ __all__ = [
     "Stage4Orchestrator",
     # Factory Functions
     "create_stage4_orchestrator",
+    "get_orchestrator",
     "create_transformer_resolver",
     "create_memory_pruner",
     "create_iterative_refiner",

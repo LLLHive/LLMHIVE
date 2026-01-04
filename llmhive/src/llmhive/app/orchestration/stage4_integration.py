@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -623,4 +624,43 @@ def create_stage4_orchestrator(
         redis_url=redis_url,
         persistence_dir=persistence_dir,
     )
+
+
+def get_orchestrator(
+    llm_provider: Optional[Any] = None,
+    redis_url: Optional[str] = None,
+    persistence_dir: Optional[str] = None,
+    force_stage4: Optional[bool] = None,
+) -> Any:
+    """Get the appropriate orchestrator based on feature flags.
+    
+    Feature flag: USE_STAGE4_ORCHESTRATOR environment variable
+    - "1" or "true": Use Stage4Orchestrator with full hardening
+    - "0" or "false" (default): Use EliteOrchestrator (current production)
+    
+    Args:
+        llm_provider: LLM provider instance
+        redis_url: Redis URL for distributed features
+        persistence_dir: Directory for file-based persistence
+        force_stage4: Override environment variable
+        
+    Returns:
+        Orchestrator instance (Stage4Orchestrator or EliteOrchestrator)
+    """
+    if force_stage4 is None:
+        use_stage4 = os.getenv("USE_STAGE4_ORCHESTRATOR", "0").lower() in ("1", "true")
+    else:
+        use_stage4 = force_stage4
+    
+    if use_stage4:
+        logger.info("Using Stage4Orchestrator (feature flag enabled)")
+        return create_stage4_orchestrator(
+            llm_provider=llm_provider,
+            redis_url=redis_url or os.getenv("REDIS_URL"),
+            persistence_dir=persistence_dir or os.getenv("PERSISTENCE_DIR", "/tmp/llmhive"),
+        )
+    else:
+        logger.info("Using EliteOrchestrator (default)")
+        from llmhive.app.orchestration.elite_orchestrator import EliteOrchestrator
+        return EliteOrchestrator(llm_provider=llm_provider)
 

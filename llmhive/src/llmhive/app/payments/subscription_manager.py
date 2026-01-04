@@ -23,6 +23,8 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
+from llmhive.app.orchestration.stage4_hardening import get_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,23 +35,73 @@ logger = logging.getLogger(__name__)
 class WebhookIdempotencyStore:
     """Tracks processed webhook event IDs to prevent duplicate processing.
     
-    In production, use Redis or database for distributed deduplication.
+    Features:
+    - Atomic consume_if_new operation (prevents race conditions)
+    - Optional Redis backend for distributed deployments
+    - TTL-based expiration for old events
+    - In-memory fallback when Redis is unavailable
     """
     
-    def __init__(self, max_events: int = 10000, ttl_hours: int = 24):
+    def __init__(
+        self,
+        max_events: int = 10000,
+        ttl_hours: int = 24,
+        use_redis: bool = False,
+    ):
         self._processed: Dict[str, datetime] = {}
         self._max_events = max_events
         self._ttl = timedelta(hours=ttl_hours)
+        self._ttl_seconds = ttl_hours * 3600
         self._lock = threading.Lock()
+        self._use_redis = use_redis or os.getenv("USE_REDIS_IDEMPOTENCY", "0") == "1"
+        self._redis_client = None
+        
+        if self._use_redis:
+            self._init_redis()
+    
+    def _init_redis(self):
+        """Initialize Redis connection if available."""
+        try:
+            import redis
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            self._redis_client = redis.from_url(redis_url)
+            self._redis_client.ping()
+            logger.info("Idempotency store using Redis backend")
+        except Exception as e:
+            logger.warning("Redis not available for idempotency store: %s", e)
+            self._use_redis = False
+            self._redis_client = None
+    
+    def _redis_key(self, event_id: str) -> str:
+        """Generate Redis key for an event ID."""
+        prefix = os.getenv("RATE_LIMIT_REDIS_PREFIX", "llmhive:")
+        return f"{prefix}webhook:processed:{event_id}"
     
     def is_processed(self, event_id: str) -> bool:
         """Check if event was already processed."""
+        if self._use_redis and self._redis_client:
+            try:
+                return self._redis_client.exists(self._redis_key(event_id)) > 0
+            except Exception as e:
+                logger.warning("Redis is_processed check failed: %s", e)
+        
         with self._lock:
             self._cleanup_expired()
             return event_id in self._processed
     
     def mark_processed(self, event_id: str) -> None:
         """Mark an event as processed."""
+        if self._use_redis and self._redis_client:
+            try:
+                self._redis_client.setex(
+                    self._redis_key(event_id),
+                    self._ttl_seconds,
+                    "1"
+                )
+                return
+            except Exception as e:
+                logger.warning("Redis mark_processed failed: %s", e)
+        
         with self._lock:
             self._processed[event_id] = datetime.now(timezone.utc)
             
@@ -57,6 +109,42 @@ class WebhookIdempotencyStore:
             if len(self._processed) > self._max_events:
                 oldest = min(self._processed.keys(), key=lambda k: self._processed[k])
                 del self._processed[oldest]
+    
+    def consume_if_new(self, event_id: str) -> bool:
+        """
+        Atomically check if event is new and mark it as processed.
+        
+        This is the preferred method for idempotency checking as it
+        prevents race conditions where two threads could both see
+        an event as unprocessed.
+        
+        Returns:
+            True if the event was new and is now marked as processed.
+            False if the event was already processed.
+        """
+        if self._use_redis and self._redis_client:
+            try:
+                # SETNX (set if not exists) is atomic
+                key = self._redis_key(event_id)
+                result = self._redis_client.set(key, "1", nx=True, ex=self._ttl_seconds)
+                return result is True
+            except Exception as e:
+                logger.warning("Redis consume_if_new failed: %s", e)
+        
+        # Fall back to in-memory with lock
+        with self._lock:
+            self._cleanup_expired()
+            if event_id in self._processed:
+                return False
+            
+            self._processed[event_id] = datetime.now(timezone.utc)
+            
+            # Evict oldest if over limit
+            if len(self._processed) > self._max_events:
+                oldest = min(self._processed.keys(), key=lambda k: self._processed[k])
+                del self._processed[oldest]
+            
+            return True
     
     def _cleanup_expired(self) -> None:
         """Remove expired entries."""
@@ -67,6 +155,11 @@ class WebhookIdempotencyStore:
         ]
         for k in expired:
             del self._processed[k]
+    
+    def clear(self) -> None:
+        """Clear all entries (for testing)."""
+        with self._lock:
+            self._processed = {}
 
 
 # Singleton instance
@@ -82,6 +175,27 @@ def get_idempotency_store() -> WebhookIdempotencyStore:
             if _idempotency_store is None:
                 _idempotency_store = WebhookIdempotencyStore()
     return _idempotency_store
+
+
+def reset_idempotency_store() -> None:
+    """Reset the idempotency store singleton (for testing).
+    
+    Call this in test teardown to ensure fresh state for each test.
+    """
+    global _idempotency_store
+    with _idempotency_lock:
+        _idempotency_store = None
+
+
+def set_idempotency_store(store: WebhookIdempotencyStore) -> None:
+    """Inject a specific idempotency store (for testing).
+    
+    Args:
+        store: The store instance to use
+    """
+    global _idempotency_store
+    with _idempotency_lock:
+        _idempotency_store = store
 
 
 # ==============================================================================
@@ -367,6 +481,228 @@ class StripeClient:
             logger.error("Failed to get subscription: %s", e)
             return None
     
+    async def list_subscriptions(
+        self,
+        status_filter: Optional[List[str]] = None,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """List subscriptions with optional status filter.
+        
+        Args:
+            status_filter: List of statuses to include (e.g., ["active", "trialing"])
+            limit: Maximum subscriptions to return
+        
+        Returns:
+            List of subscription data dictionaries
+        """
+        if not self._stripe:
+            return []
+        
+        try:
+            all_subscriptions = []
+            
+            if status_filter:
+                for status in status_filter:
+                    subs = self._stripe.Subscription.list(status=status, limit=limit)
+                    all_subscriptions.extend(subs.data)
+            else:
+                subs = self._stripe.Subscription.list(limit=limit)
+                all_subscriptions.extend(subs.data)
+            
+            return [
+                {
+                    "id": sub.id,
+                    "customer": sub.customer,
+                    "status": sub.status,
+                    "current_period_end": sub.current_period_end,
+                    "items": {"data": [{"price": {"id": item.price.id}} for item in sub.items.data]},
+                }
+                for sub in all_subscriptions
+            ]
+            
+        except Exception as e:
+            logger.error("Failed to list subscriptions: %s", e)
+            return []
+    
+    async def get_customer(
+        self,
+        customer_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Get customer details including metadata.
+        
+        Args:
+            customer_id: Stripe customer ID
+            
+        Returns:
+            Customer data dictionary with metadata
+        """
+        if not self._stripe:
+            return None
+        
+        try:
+            customer = self._stripe.Customer.retrieve(customer_id)
+            
+            return {
+                "id": customer.id,
+                "email": customer.email,
+                "name": customer.name,
+                "metadata": dict(customer.metadata) if customer.metadata else {},
+            }
+            
+        except Exception as e:
+            logger.error("Failed to get customer: %s", e)
+            return None
+    
+    async def load_active_subscriptions_from_stripe(self) -> int:
+        """Reload active subscriptions from Stripe on startup.
+        
+        Fetches all non-canceled subscriptions from Stripe and reconstructs
+        the in-memory subscription state. Uses customer metadata (user_id)
+        to map subscriptions back to users.
+        
+        Returns:
+            Number of subscriptions loaded
+        
+        Note:
+            This should be called during service initialization to restore
+            subscription state after restarts, ensuring paying users retain
+            access without waiting for webhook events.
+        """
+        if not self._stripe:
+            logger.warning("Stripe not initialized, cannot load subscriptions")
+            return 0
+        
+        loaded_count = 0
+        
+        try:
+            # Fetch active, trialing, and past_due subscriptions
+            statuses_to_load = ["active", "trialing", "past_due"]
+            subscriptions = await self.list_subscriptions(
+                status_filter=statuses_to_load,
+                limit=100,
+            )
+            
+            logger.info(
+                "Loading %d subscriptions from Stripe (statuses: %s)",
+                len(subscriptions),
+                statuses_to_load,
+            )
+            
+            for sub_data in subscriptions:
+                try:
+                    customer_id = sub_data.get("customer")
+                    if not customer_id:
+                        continue
+                    
+                    # Get customer to retrieve user_id from metadata
+                    customer = await self.get_customer(customer_id)
+                    if not customer:
+                        logger.warning(
+                            "Could not retrieve customer %s for subscription %s",
+                            customer_id,
+                            sub_data.get("id"),
+                        )
+                        continue
+                    
+                    user_id = customer.get("metadata", {}).get("user_id")
+                    if not user_id:
+                        logger.warning(
+                            "Customer %s has no user_id in metadata, skipping",
+                            customer_id,
+                        )
+                        continue
+                    
+                    # Map Stripe status to our status enum
+                    stripe_status = sub_data.get("status", "").lower()
+                    status_map = {
+                        "active": SubscriptionStatus.ACTIVE,
+                        "trialing": SubscriptionStatus.TRIALING,
+                        "past_due": SubscriptionStatus.PAST_DUE,
+                        "canceled": SubscriptionStatus.CANCELED,
+                        "unpaid": SubscriptionStatus.CANCELED,
+                    }
+                    status = status_map.get(stripe_status, SubscriptionStatus.FREE)
+                    
+                    # Determine tier from price ID
+                    tier = SubscriptionTier.FREE
+                    items = sub_data.get("items", {}).get("data", [])
+                    if items:
+                        price_id = items[0].get("price", {}).get("id", "")
+                        tier = self._get_tier_from_price_id(price_id)
+                    
+                    # Create or update user subscription
+                    user_sub = UserSubscription(
+                        user_id=user_id,
+                        tier=tier,
+                        status=status,
+                        stripe_customer_id=customer_id,
+                        stripe_subscription_id=sub_data.get("id"),
+                        current_period_end=datetime.fromtimestamp(
+                            sub_data.get("current_period_end", 0),
+                            tz=timezone.utc,
+                        ),
+                    )
+                    
+                    self._subscriptions[user_id] = user_sub
+                    loaded_count += 1
+                    
+                    logger.debug(
+                        "Loaded subscription for user %s: tier=%s, status=%s",
+                        user_id,
+                        tier.value,
+                        status.value,
+                    )
+                    
+                except Exception as e:
+                    logger.error(
+                        "Error loading subscription %s: %s",
+                        sub_data.get("id"),
+                        e,
+                    )
+                    continue
+            
+            logger.info(
+                "Successfully loaded %d subscriptions from Stripe",
+                loaded_count,
+            )
+            return loaded_count
+            
+        except Exception as e:
+            logger.error("Failed to load subscriptions from Stripe: %s", e)
+            return loaded_count
+    
+    def _get_tier_from_price_id(self, price_id: str) -> SubscriptionTier:
+        """Map a Stripe price ID to a subscription tier.
+        
+        Args:
+            price_id: Stripe price ID
+            
+        Returns:
+            Corresponding subscription tier
+        """
+        # Check against known price IDs from config
+        config = get_config()
+        price_to_tier = config.get("price_to_tier", {})
+        
+        if price_id in price_to_tier:
+            tier_name = price_to_tier[price_id]
+            try:
+                return SubscriptionTier(tier_name)
+            except ValueError:
+                pass
+        
+        # Fallback: infer from price ID naming convention
+        price_lower = price_id.lower()
+        if "enterprise" in price_lower:
+            return SubscriptionTier.ENTERPRISE
+        elif "pro" in price_lower:
+            return SubscriptionTier.PRO
+        elif "basic" in price_lower or "starter" in price_lower:
+            return SubscriptionTier.BASIC
+        
+        logger.warning("Unknown price ID %s, defaulting to BASIC tier", price_id)
+        return SubscriptionTier.BASIC
+    
     def verify_webhook(
         self,
         payload: bytes,
@@ -444,11 +780,100 @@ class SubscriptionManager:
         self,
         stripe_client: Optional[StripeClient] = None,
         user_store: Optional[Any] = None,
+        auto_reload_from_stripe: bool = False,
     ):
         self._stripe = stripe_client or StripeClient()
         self._user_store = user_store
         self._subscriptions: Dict[str, UserSubscription] = {}
         self._payment_logs: List[PaymentLog] = []
+        
+        # Optionally reload subscriptions from Stripe on init
+        if auto_reload_from_stripe:
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self.load_subscriptions_from_stripe())
+            except RuntimeError:
+                # No running loop, skip async reload
+                logger.info("Skipping async Stripe reload - no event loop")
+    
+    async def load_subscriptions_from_stripe(self) -> int:
+        """
+        Reload active subscriptions from Stripe.
+        
+        Call this on server startup to restore subscription state.
+        Uses Stripe Customer metadata (user_id) to map back to users.
+        
+        Returns:
+            Number of subscriptions loaded
+        """
+        if not self._stripe.is_configured:
+            logger.warning("Cannot reload from Stripe - not configured")
+            return 0
+        
+        loaded = 0
+        try:
+            # Get all active/trialing/past_due subscriptions
+            subscriptions = await self._stripe.list_subscriptions(
+                status_filter=["active", "trialing", "past_due"]
+            )
+            
+            for sub_data in subscriptions:
+                try:
+                    customer_id = sub_data.get("customer")
+                    subscription_id = sub_data.get("id")
+                    status_str = sub_data.get("status", "active")
+                    
+                    # Get customer to find user_id
+                    customer = await self._stripe.get_customer(customer_id)
+                    if not customer:
+                        continue
+                    
+                    user_id = customer.get("metadata", {}).get("user_id")
+                    if not user_id:
+                        logger.debug("Customer %s has no user_id metadata", customer_id)
+                        continue
+                    
+                    # Determine tier from price ID
+                    items = sub_data.get("items", {}).get("data", [])
+                    tier = "free"
+                    if items:
+                        price_id = items[0].get("price", {}).get("id")
+                        tier = self._price_id_to_tier(price_id)
+                    
+                    # Parse status
+                    status = self._parse_stripe_status(status_str)
+                    
+                    # Create or update subscription
+                    self._subscriptions[user_id] = UserSubscription(
+                        user_id=user_id,
+                        stripe_customer_id=customer_id,
+                        stripe_subscription_id=subscription_id,
+                        tier=tier,
+                        status=status,
+                        current_period_end=datetime.fromtimestamp(
+                            sub_data.get("current_period_end", 0), tz=timezone.utc
+                        ),
+                    )
+                    loaded += 1
+                    
+                except Exception as e:
+                    logger.warning("Failed to load subscription: %s", e)
+                    continue
+            
+            logger.info("Loaded %d subscriptions from Stripe", loaded)
+            
+        except Exception as e:
+            logger.error("Failed to reload subscriptions from Stripe: %s", e)
+        
+        return loaded
+    
+    def _price_id_to_tier(self, price_id: str) -> str:
+        """Map Stripe price ID to tier name."""
+        for tier, pid in self.TIER_PRICES.items():
+            if pid == price_id:
+                return tier
+        return "free"
     
     async def get_or_create_customer(
         self,
@@ -624,15 +1049,17 @@ class SubscriptionManager:
         event_type = event["type"]
         data = event["data"]
         
-        # Idempotency check - prevent double processing
+        # Atomic idempotency check - prevent race conditions in duplicate processing
         idempotency_store = get_idempotency_store()
-        if idempotency_store.is_processed(event_id):
+        if not idempotency_store.consume_if_new(event_id):
             logger.info("Webhook %s already processed, skipping", event_id)
             return {"success": True, "message": "Already processed", "idempotent": True}
         
         logger.info("Processing webhook: type=%s, id=%s", event_type, event_id)
         
         # Handle different event types
+        # Note: consume_if_new already marked the event as "in progress"
+        # This prevents duplicate processing even if handler fails
         try:
             if event_type == "invoice.paid":
                 result = await self._handle_invoice_paid(data, event_id)
@@ -646,16 +1073,42 @@ class SubscriptionManager:
                 logger.info("Unhandled webhook type: %s", event_type)
                 result = {"success": True, "handled": False}
             
-            # Mark as processed only on success
-            if result.get("success"):
-                idempotency_store.mark_processed(event_id)
-            
+            # Event already marked by consume_if_new, no need to mark again
             return result
             
         except Exception as e:
-            logger.error("Webhook handler failed: %s", type(e).__name__)
-            # Don't mark as processed so it can be retried
+            logger.error("Webhook handler failed for event %s: %s", event_id, type(e).__name__)
+            # Event is already marked to prevent duplicate processing
+            # Log error for manual investigation - Stripe may retry
             return {"success": False, "error": "Handler failed"}
+    
+    def _validate_and_transition(
+        self,
+        sub: UserSubscription,
+        new_status: SubscriptionStatus,
+        user_id: str,
+    ) -> bool:
+        """Validate and apply a subscription status transition.
+        
+        Logs a warning if the transition violates the state machine rules,
+        but still applies it (to not ignore valid Stripe events).
+        
+        Returns:
+            True if transition was valid, False if it violated rules
+        """
+        old_status = sub.status
+        
+        if not old_status.can_transition_to(new_status):
+            logger.warning(
+                "Unexpected subscription transition for user %s: %s -> %s",
+                user_id, old_status.value, new_status.value
+            )
+            # Still apply the change to stay in sync with Stripe
+            sub.status = new_status
+            return False
+        
+        sub.status = new_status
+        return True
     
     async def _handle_invoice_paid(
         self,
@@ -674,7 +1127,8 @@ class SubscriptionManager:
         
         sub = self._subscriptions.get(user_id)
         if sub:
-            sub.status = SubscriptionStatus.ACTIVE
+            # Validate state transition
+            self._validate_and_transition(sub, SubscriptionStatus.ACTIVE, user_id)
             sub.grace_period_end = None
             sub.updated_at = datetime.now(timezone.utc)
         
@@ -702,10 +1156,10 @@ class SubscriptionManager:
         
         sub = self._subscriptions.get(user_id)
         if sub:
-            sub.status = SubscriptionStatus.PAST_DUE
+            # Validate state transition
+            self._validate_and_transition(sub, SubscriptionStatus.PAST_DUE, user_id)
             
             # Set grace period
-            from datetime import timedelta
             sub.grace_period_end = datetime.now(timezone.utc) + timedelta(
                 days=self.GRACE_PERIOD_DAYS
             )
@@ -722,6 +1176,23 @@ class SubscriptionManager:
         logger.warning("Payment failed for user %s", user_id)
         return {"success": True, "user_notification_required": True}
     
+    def _parse_stripe_status(self, stripe_status: str) -> SubscriptionStatus:
+        """Parse Stripe subscription status to our enum.
+        
+        Handles mapping between Stripe's status values and our enum.
+        """
+        status_map = {
+            "active": SubscriptionStatus.ACTIVE,
+            "past_due": SubscriptionStatus.PAST_DUE,
+            "canceled": SubscriptionStatus.CANCELED,
+            "trialing": SubscriptionStatus.TRIALING,
+            "unpaid": SubscriptionStatus.UNPAID,
+            "incomplete": SubscriptionStatus.INCOMPLETE,
+            "incomplete_expired": SubscriptionStatus.CANCELED,
+            "paused": SubscriptionStatus.PAUSED,
+        }
+        return status_map.get(stripe_status, SubscriptionStatus.ACTIVE)
+    
     async def _handle_subscription_updated(
         self,
         subscription: Dict[str, Any],
@@ -729,7 +1200,7 @@ class SubscriptionManager:
     ) -> Dict[str, Any]:
         """Handle subscription update."""
         subscription_id = subscription.get("id")
-        status = subscription.get("status")
+        stripe_status = subscription.get("status")
         
         user_id = self._find_user_by_subscription(subscription_id)
         if not user_id:
@@ -737,7 +1208,9 @@ class SubscriptionManager:
         
         sub = self._subscriptions.get(user_id)
         if sub:
-            sub.status = SubscriptionStatus(status)
+            new_status = self._parse_stripe_status(stripe_status)
+            # Validate state transition
+            self._validate_and_transition(sub, new_status, user_id)
             sub.current_period_end = datetime.fromtimestamp(
                 subscription.get("current_period_end", 0), tz=timezone.utc
             )
@@ -747,7 +1220,7 @@ class SubscriptionManager:
             user_id=user_id,
             event_type=PaymentEvent.SUBSCRIPTION_UPDATED,
             stripe_event_id=event_id,
-            metadata={"status": status},
+            metadata={"status": stripe_status},
         )
         
         return {"success": True}
@@ -766,7 +1239,8 @@ class SubscriptionManager:
         
         sub = self._subscriptions.get(user_id)
         if sub:
-            sub.status = SubscriptionStatus.CANCELED
+            # Validate state transition
+            self._validate_and_transition(sub, SubscriptionStatus.CANCELED, user_id)
             sub.tier = "free"
             sub.stripe_subscription_id = None
             sub.updated_at = datetime.now(timezone.utc)

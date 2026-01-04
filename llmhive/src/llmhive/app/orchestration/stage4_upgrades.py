@@ -24,6 +24,7 @@ import hashlib
 import json
 import logging
 import re
+import threading
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -548,18 +549,22 @@ class LearnedWeightManager:
     """Manages learned weights for model ensemble.
     
     Implements Stage 4 Upgrade 3: Dynamic learned model weights.
+    
+    Features:
+    - Thread-safe operations
+    - Atomic file writes (write to temp, then rename)
     """
     
     def __init__(self, persistence_path: Optional[str] = None):
         self._weights: Dict[str, ModelWeight] = {}
         self._persistence_path = persistence_path
+        self._lock = threading.Lock()
         self._load_weights()
     
     def _load_weights(self):
         """Load weights from persistence."""
         if self._persistence_path:
             try:
-                import json
                 with open(self._persistence_path, 'r') as f:
                     data = json.load(f)
                     for model_id, w in data.items():
@@ -575,10 +580,12 @@ class LearnedWeightManager:
                 pass
     
     def _save_weights(self):
-        """Save weights to persistence."""
+        """Save weights to persistence with atomic write."""
         if self._persistence_path:
             try:
-                import json
+                import os
+                import tempfile
+                
                 data = {
                     m: {
                         'weight': w.weight,
@@ -588,29 +595,56 @@ class LearnedWeightManager:
                     }
                     for m, w in self._weights.items()
                 }
-                with open(self._persistence_path, 'w') as f:
+                
+                # Write to temp file first, then rename for atomicity
+                dir_name = os.path.dirname(self._persistence_path) or "."
+                with tempfile.NamedTemporaryFile(
+                    mode='w',
+                    dir=dir_name,
+                    delete=False,
+                    suffix='.tmp'
+                ) as f:
                     json.dump(data, f)
+                    temp_path = f.name
+                
+                # Atomic rename
+                os.replace(temp_path, self._persistence_path)
+                
             except Exception as e:
                 logger.warning("Failed to save weights: %s", e)
+                # Clean up temp file if it exists
+                try:
+                    if 'temp_path' in locals():
+                        os.unlink(temp_path)
+                except Exception:
+                    pass
     
     def get_weight(self, model_id: str) -> float:
-        """Get current weight for a model."""
-        if model_id not in self._weights:
-            self._weights[model_id] = ModelWeight(model_id=model_id)
-        return self._weights[model_id].weight
+        """Get current weight for a model.
+        
+        Thread-safe: Uses internal lock for weight access.
+        """
+        with self._lock:
+            if model_id not in self._weights:
+                self._weights[model_id] = ModelWeight(model_id=model_id)
+            return self._weights[model_id].weight
     
     def update_weight(self, model_id: str, success: bool):
-        """Update model weight based on outcome."""
-        if model_id not in self._weights:
-            self._weights[model_id] = ModelWeight(model_id=model_id)
+        """Update model weight based on outcome.
         
-        self._weights[model_id].update(success)
-        self._save_weights()
-        
-        logger.info(
-            "Updated weight for %s: %.2f (success=%s)",
-            model_id, self._weights[model_id].weight, success
-        )
+        Thread-safe: Uses internal lock for weight updates.
+        """
+        with self._lock:
+            if model_id not in self._weights:
+                self._weights[model_id] = ModelWeight(model_id=model_id)
+            
+            self._weights[model_id].update(success)
+            self._save_weights()
+            
+            logger.info(
+                "Updated weight for %s: %.2f (success=%s)",
+                model_id, self._weights[model_id].weight, success
+            )
     
     def get_weighted_vote(
         self,
@@ -1014,6 +1048,9 @@ class SlidingWindowRateLimiter:
     """Adaptive sliding window rate limiter.
     
     Implements Stage 4 Upgrade 8: More flexible rate limiting.
+    
+    Thread-safe: Uses internal lock to protect request tracking data
+    structure from concurrent access in multi-threaded environments.
     """
     
     def __init__(
@@ -1026,10 +1063,13 @@ class SlidingWindowRateLimiter:
         self.window_size = window_size_seconds
         self.burst_allowance = burst_allowance
         self._requests: Dict[str, List[float]] = defaultdict(list)
+        self._lock = threading.Lock()
     
     def check(self, user_id: str) -> Tuple[bool, float]:
         """
         Check if request is allowed.
+        
+        Thread-safe: Acquires lock before modifying request tracking.
         
         Args:
             user_id: User identifier
@@ -1040,30 +1080,35 @@ class SlidingWindowRateLimiter:
         now = time.time()
         window_start = now - self.window_size
         
-        # Clean old requests
-        self._requests[user_id] = [
-            t for t in self._requests[user_id] if t > window_start
-        ]
-        
-        current_count = len(self._requests[user_id])
-        max_allowed = int(self.rpm * self.burst_allowance)
-        
-        if current_count < max_allowed:
-            self._requests[user_id].append(now)
-            return True, 0.0
-        
-        # Calculate wait time
-        oldest = min(self._requests[user_id]) if self._requests[user_id] else now
-        wait_time = oldest + self.window_size - now
-        
-        return False, max(0, wait_time)
+        with self._lock:
+            # Clean old requests
+            self._requests[user_id] = [
+                t for t in self._requests[user_id] if t > window_start
+            ]
+            
+            current_count = len(self._requests[user_id])
+            max_allowed = int(self.rpm * self.burst_allowance)
+            
+            if current_count < max_allowed:
+                self._requests[user_id].append(now)
+                return True, 0.0
+            
+            # Calculate wait time
+            oldest = min(self._requests[user_id]) if self._requests[user_id] else now
+            wait_time = oldest + self.window_size - now
+            
+            return False, max(0, wait_time)
     
     def get_usage(self, user_id: str) -> Dict[str, Any]:
-        """Get usage statistics for a user."""
+        """Get usage statistics for a user.
+        
+        Thread-safe: Acquires lock before reading request data.
+        """
         now = time.time()
         window_start = now - self.window_size
         
-        recent = [t for t in self._requests[user_id] if t > window_start]
+        with self._lock:
+            recent = [t for t in self._requests[user_id] if t > window_start]
         
         return {
             "requests_in_window": len(recent),
