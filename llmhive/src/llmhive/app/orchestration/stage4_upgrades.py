@@ -580,7 +580,7 @@ class LearnedWeightManager:
                 pass
     
     def _save_weights(self):
-        """Save weights to persistence with atomic write."""
+        """Save weights to persistence with atomic write and secure permissions."""
         if self._persistence_path:
             try:
                 import os
@@ -607,8 +607,14 @@ class LearnedWeightManager:
                     json.dump(data, f)
                     temp_path = f.name
                 
+                # Set secure permissions (owner read/write only)
+                os.chmod(temp_path, 0o600)
+                
                 # Atomic rename
                 os.replace(temp_path, self._persistence_path)
+                
+                # Ensure final file has correct permissions
+                os.chmod(self._persistence_path, 0o600)
                 
             except Exception as e:
                 logger.warning("Failed to save weights: %s", e)
@@ -1129,12 +1135,38 @@ class AIInjectionDetector:
     """
     
     INJECTION_PROMPTS = [
+        # Original patterns
         "ignore previous instructions",
         "reveal system prompt",
         "pretend you are",
         "act as if",
         "jailbreak",
         "bypass restrictions",
+        # Extended patterns for restriction evasion
+        "without any restrictions",
+        "no filters",
+        "unfiltered answer",
+        "unfiltered response",
+        "drop all safeguards",
+        "disable safety",
+        "turn off moderation",
+        "remove content filter",
+        # Role manipulation
+        "you are now",
+        "new persona",
+        "switch to",
+        "forget your training",
+        "disregard your guidelines",
+        # Output manipulation
+        "raw output",
+        "uncensored",
+        "no guardrails",
+        "ignore content policy",
+        # Developer/admin impersonation
+        "developer mode",
+        "admin override",
+        "debug mode enabled",
+        "maintenance mode",
     ]
     
     def __init__(
@@ -1171,18 +1203,43 @@ class AIInjectionDetector:
         if self._openai_available and self.use_openai_moderation:
             result = await self._check_openai_moderation(text)
             if result[0]:  # If flagged
+                self._log_injection_attempt(text, result[1], result[2], "openai_moderation")
                 return result
         
         # AI-based semantic check
         ai_result = await self._semantic_injection_check(text)
         if ai_result[0]:
+            self._log_injection_attempt(text, ai_result[1], ai_result[2], "semantic_check")
             return ai_result
         
         # Fallback to regex
         if self.fallback_to_regex:
-            return self._regex_check(text)
+            regex_result = self._regex_check(text)
+            if regex_result[0]:
+                self._log_injection_attempt(text, regex_result[1], regex_result[2], "regex_check")
+            return regex_result
         
         return False, "none", 0.0
+    
+    def _log_injection_attempt(
+        self,
+        text: str,
+        category: str,
+        confidence: float,
+        detection_method: str,
+    ):
+        """Log structured security event for injection attempt."""
+        # Truncate text for logging (don't log full potentially malicious input)
+        truncated_text = text[:100] + "..." if len(text) > 100 else text
+        
+        logger.warning(
+            "INJECTION_ATTEMPT detected: method=%s, category=%s, confidence=%.2f, "
+            "text_preview=%s",
+            detection_method,
+            category,
+            confidence,
+            truncated_text.replace("\n", " ")[:80],  # Sanitize newlines
+        )
     
     async def _check_openai_moderation(
         self,
@@ -1227,15 +1284,43 @@ class AIInjectionDetector:
         return False, "none", injection_score
     
     def _regex_check(self, text: str) -> Tuple[bool, str, float]:
-        """Fallback regex-based check."""
+        """Fallback regex-based check with comprehensive patterns."""
         patterns = [
-            r"ignore\s+(all\s+)?(previous|above)\s+instructions?",
+            # Instruction override attempts
+            r"ignore\s+(all\s+)?(previous|above|prior)\s+instructions?",
+            r"disregard\s+(all\s+)?(previous|prior)\s+(instructions|guidelines)",
+            r"forget\s+(all\s+)?(previous|your)\s+(instructions|training|guidelines)",
+            # System prompt extraction
             r"reveal\s+(your\s+)?system\s+prompt",
+            r"show\s+(me\s+)?(your\s+)?system\s+(prompt|instructions)",
+            r"what\s+(are|is)\s+your\s+(system\s+)?prompt",
+            r"output\s+your\s+(initial\s+)?instructions",
+            # Role/persona manipulation
             r"pretend\s+(to\s+be|you\s+are)",
+            r"you\s+are\s+now\s+(a|an|the)",
+            r"act\s+as\s+(if|a|an|though)",
+            r"switch\s+(to|into)\s+(a\s+new\s+)?persona",
+            # Restriction bypass
+            r"bypass\s+(all\s+)?(restrictions|filters|safety)",
+            r"disable\s+(your\s+)?(safety|content\s+filter|moderation)",
+            r"turn\s+off\s+(your\s+)?(restrictions|filters)",
+            r"remove\s+(all\s+)?(restrictions|limits|filters)",
+            # Jailbreak keywords
+            r"\bjailbreak\b",
+            r"dan\s+(mode|prompt)",
+            r"developer\s+mode\s+(enabled|on|active)",
+            # Unfiltered output requests  
+            r"(give|provide)\s+(me\s+)?(an?\s+)?unfiltered\s+(answer|response|output)",
+            r"respond\s+without\s+(any\s+)?restrictions",
+            r"answer\s+with(out)?\s+no\s+filters",
         ]
         
         for pattern in patterns:
             if re.search(pattern, text, re.IGNORECASE):
+                logger.warning(
+                    "Injection pattern detected: %s",
+                    pattern[:50]  # Truncate for logging
+                )
                 return True, "regex_match", 0.8
         
         return False, "none", 0.0

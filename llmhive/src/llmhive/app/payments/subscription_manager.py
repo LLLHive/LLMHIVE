@@ -23,7 +23,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-from llmhive.app.orchestration.stage4_hardening import get_config
+from llmhive.app.orchestration.stage4_hardening import get_config, hash_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -1139,7 +1139,7 @@ class SubscriptionManager:
             stripe_event_id=event_id,
         )
         
-        logger.info("Payment succeeded for user %s: $%.2f", user_id, amount)
+        logger.info("Payment succeeded for user %s: $%.2f", hash_user_id(user_id), amount)
         return {"success": True}
     
     async def _handle_payment_failed(
@@ -1173,7 +1173,7 @@ class SubscriptionManager:
             stripe_event_id=event_id,
         )
         
-        logger.warning("Payment failed for user %s", user_id)
+        logger.warning("Payment failed for user %s", hash_user_id(user_id))
         return {"success": True, "user_notification_required": True}
     
     def _parse_stripe_status(self, stripe_status: str) -> SubscriptionStatus:
@@ -1187,6 +1187,7 @@ class SubscriptionManager:
             "canceled": SubscriptionStatus.CANCELED,
             "trialing": SubscriptionStatus.TRIALING,
             "unpaid": SubscriptionStatus.UNPAID,
+            "paused": SubscriptionStatus.PAUSED,  # Handle Stripe pause feature
             "incomplete": SubscriptionStatus.INCOMPLETE,
             "incomplete_expired": SubscriptionStatus.CANCELED,
             "paused": SubscriptionStatus.PAUSED,
@@ -1251,7 +1252,7 @@ class SubscriptionManager:
             stripe_event_id=event_id,
         )
         
-        logger.info("Subscription canceled for user %s", user_id)
+        logger.info("Subscription canceled for user %s", hash_user_id(user_id))
         return {"success": True}
     
     def _find_user_by_customer(self, customer_id: str) -> Optional[str]:

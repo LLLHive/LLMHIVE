@@ -512,7 +512,7 @@ class PersistentTrialCounter:
             self._counters = {}
     
     def _save(self):
-        """Save counters to disk with atomic write."""
+        """Save counters to disk with atomic write and secure permissions."""
         if self._use_redis:
             return  # No file save needed when using Redis
         
@@ -531,8 +531,14 @@ class PersistentTrialCounter:
                 json.dump(self._counters, f)
                 temp_path = f.name
             
+            # Set secure permissions before rename (owner read/write only)
+            os.chmod(temp_path, 0o600)
+            
             # Atomic rename
             os.replace(temp_path, self._path)
+            
+            # Ensure final file has correct permissions (redundant but safe)
+            os.chmod(self._path, 0o600)
             
         except Exception as e:
             logger.warning("Failed to save trial counters: %s", e)
@@ -1092,12 +1098,14 @@ class ShadowModeWeightManager:
             logger.warning("Failed to load weights: %s", e)
     
     def _save(self):
-        """Save weights to persistence."""
+        """Save weights to persistence with secure permissions."""
         if not self._path:
             return
         
         try:
             import json
+            import tempfile
+            
             data = {
                 "weights": {
                     m: w.to_dict() for m, w in self._weights.items()
@@ -1105,10 +1113,35 @@ class ShadowModeWeightManager:
                 "shadow_mode": self.shadow_mode,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }
-            with open(self._path, 'w') as f:
+            
+            # Write to temp file first for atomicity
+            dir_name = os.path.dirname(self._path) or "."
+            with tempfile.NamedTemporaryFile(
+                mode='w',
+                dir=dir_name,
+                delete=False,
+                suffix='.tmp'
+            ) as f:
                 json.dump(data, f, indent=2)
+                temp_path = f.name
+            
+            # Set secure permissions (owner read/write only)
+            os.chmod(temp_path, 0o600)
+            
+            # Atomic rename
+            os.replace(temp_path, self._path)
+            
+            # Ensure final file has correct permissions
+            os.chmod(self._path, 0o600)
+            
         except Exception as e:
             logger.warning("Failed to save weights: %s", e)
+            # Clean up temp file if it exists
+            try:
+                if 'temp_path' in locals():
+                    os.unlink(temp_path)
+            except Exception:
+                pass
     
     def get_weight(self, model_id: str) -> float:
         """Get current weight for a model."""
@@ -1154,6 +1187,149 @@ class ShadowModeWeightManager:
 
 
 # ==============================================================================
+# OUTPUT MODERATION
+# ==============================================================================
+
+class OutputModerator:
+    """Moderates LLM outputs before returning to users.
+    
+    Uses OpenAI's Moderation API as the primary check, with fallback
+    to keyword-based filtering when unavailable. Implements a fail-closed
+    approach where uncertain results are treated as flagged.
+    
+    This is the final safety layer before responses reach users.
+    """
+    
+    # Fallback keywords for when OpenAI moderation is unavailable
+    BLOCKED_KEYWORDS = [
+        "how to make a bomb",
+        "how to make drugs",
+        "how to harm yourself",
+        "suicide instructions",
+        "child exploitation",
+    ]
+    
+    # Safe fallback message when content is blocked
+    SAFE_FALLBACK = (
+        "I apologize, but I cannot provide that response as it may "
+        "contain content that violates our safety guidelines. "
+        "Please try rephrasing your request."
+    )
+    
+    def __init__(
+        self,
+        timeout: float = 5.0,
+        fail_closed: bool = True,
+    ):
+        """Initialize the output moderator.
+        
+        Args:
+            timeout: Timeout for moderation API calls
+            fail_closed: If True, block content when moderation fails
+        """
+        self._timeout = timeout
+        self._fail_closed = fail_closed
+        self._openai_available = self._check_openai()
+    
+    def _check_openai(self) -> bool:
+        """Check if OpenAI moderation is available."""
+        if os.getenv("OPENAI_API_KEY"):
+            try:
+                import openai
+                return True
+            except ImportError:
+                pass
+        return False
+    
+    async def moderate(self, content: str) -> tuple[str, bool, Optional[str]]:
+        """Moderate output content before returning to user.
+        
+        Args:
+            content: The LLM-generated response to moderate
+            
+        Returns:
+            Tuple of (moderated_content, was_flagged, flag_reason)
+            - If flagged, moderated_content will be the safe fallback
+            - was_flagged is True if content was blocked
+            - flag_reason explains why (or None if not flagged)
+        """
+        if not content or not content.strip():
+            return content, False, None
+        
+        # Try OpenAI moderation first
+        if self._openai_available:
+            try:
+                flagged, reason = await self._openai_moderate(content)
+                if flagged:
+                    logger.warning(
+                        "Output blocked by moderation: category=%s",
+                        reason
+                    )
+                    return self.SAFE_FALLBACK, True, reason
+            except asyncio.TimeoutError:
+                logger.warning("Output moderation timed out after %.1fs", self._timeout)
+                if self._fail_closed:
+                    return self.SAFE_FALLBACK, True, "moderation_timeout"
+            except Exception as e:
+                logger.warning("Output moderation failed: %s", e)
+                if self._fail_closed:
+                    return self.SAFE_FALLBACK, True, "moderation_error"
+        
+        # Fallback to keyword check
+        keyword_result = self._keyword_check(content)
+        if keyword_result:
+            logger.warning("Output blocked by keyword filter: %s", keyword_result[:30])
+            return self.SAFE_FALLBACK, True, f"keyword:{keyword_result}"
+        
+        return content, False, None
+    
+    async def _openai_moderate(self, content: str) -> tuple[bool, Optional[str]]:
+        """Check content using OpenAI moderation API."""
+        import openai
+        
+        response = await asyncio.wait_for(
+            openai.Moderation.acreate(input=content),
+            timeout=self._timeout,
+        )
+        
+        result = response.results[0]
+        if result.flagged:
+            # Find the category that was flagged
+            for cat, flagged in result.categories.items():
+                if flagged:
+                    return True, cat
+        
+        return False, None
+    
+    def _keyword_check(self, content: str) -> Optional[str]:
+        """Fallback keyword-based check."""
+        content_lower = content.lower()
+        for keyword in self.BLOCKED_KEYWORDS:
+            if keyword in content_lower:
+                return keyword
+        return None
+
+
+async def moderate_output(
+    content: str,
+    timeout: float = 5.0,
+    fail_closed: bool = True,
+) -> tuple[str, bool, Optional[str]]:
+    """Convenience function for output moderation.
+    
+    Args:
+        content: The LLM-generated response to moderate
+        timeout: Timeout for moderation API calls
+        fail_closed: If True, block content when moderation fails
+        
+    Returns:
+        Tuple of (moderated_content, was_flagged, flag_reason)
+    """
+    moderator = OutputModerator(timeout=timeout, fail_closed=fail_closed)
+    return await moderator.moderate(content)
+
+
+# ==============================================================================
 # EXPORTS
 # ==============================================================================
 
@@ -1194,5 +1370,9 @@ __all__ = [
     # Weights
     "BoundedModelWeight",
     "ShadowModeWeightManager",
+    
+    # Output Moderation
+    "OutputModerator",
+    "moderate_output",
 ]
 
