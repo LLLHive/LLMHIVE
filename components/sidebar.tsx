@@ -263,18 +263,20 @@ export function Sidebar({
               <div className="py-2">
                 <button
                   onClick={() => setCollaborateExpanded(!collaborateExpanded)}
-                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg"
+                  aria-expanded={collaborateExpanded}
+                  aria-label={collaborateExpanded ? "Collapse collaborate section" : "Expand collaborate section"}
                 >
                   <span className="font-medium flex items-center gap-2">
-                    <Users className="h-4 w-4" />
+                    <Users className="h-4 w-4 flex-shrink-0" />
                     Collaborate
                   </span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <Clock className="h-3 w-3 text-muted-foreground" />
                     {collaborateExpanded ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
                 </button>
@@ -294,13 +296,15 @@ export function Sidebar({
               <div className="py-2 border-t border-border/50">
                 <button
                   onClick={() => setActiveTab(activeTab === "projects" ? null : "projects")}
-                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg"
+                  aria-expanded={activeTab === "projects"}
+                  aria-label={activeTab === "projects" ? "Collapse projects section" : "Expand projects section"}
                 >
                   <span className="font-medium">Projects</span>
                   {activeTab === "projects" ? (
-                    <ChevronUp className="h-4 w-4" />
+                    <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                   )}
                 </button>
                 
@@ -381,13 +385,15 @@ export function Sidebar({
               <div className="py-2 border-t border-border/50">
                 <button
                   onClick={() => setChatsExpanded(!chatsExpanded)}
-                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center justify-between w-full px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg"
+                  aria-expanded={chatsExpanded}
+                  aria-label={chatsExpanded ? "Collapse chats section" : "Expand chats section"}
                 >
                   <span className="font-medium">Chats</span>
                   {chatsExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
+                    <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                   )}
                 </button>
                 
@@ -637,7 +643,7 @@ function ProjectItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200",
         (isExpanded || hasActiveChat) && "bg-secondary/50",
       )}
       onClick={onToggleExpand}
@@ -660,10 +666,10 @@ function ProjectItem({
             variant="ghost" 
             size="icon" 
             className={cn(
-              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "opacity-0 group-hover:opacity-100",
+              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
+              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
               "hover:bg-secondary-foreground/10",
-              "focus:opacity-100"
+              "focus:opacity-100 focus-visible:opacity-100"
             )}
             aria-label="Project options"
           >
@@ -803,7 +809,7 @@ function ConversationItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200 overflow-hidden",
+        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200",
         isActive && "bg-secondary ring-1 ring-[var(--bronze)]/30",
         isNested && "py-1 text-[13px]",
       )}
@@ -831,10 +837,10 @@ function ConversationItem({
             variant="ghost" 
             size="icon" 
             className={cn(
-              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-all duration-200",
-              "opacity-0 group-hover:opacity-100",
+              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
+              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
               "hover:bg-secondary-foreground/10",
-              "focus:opacity-100"
+              "focus:opacity-100 focus-visible:opacity-100"
             )}
             aria-label="Chat options"
           >

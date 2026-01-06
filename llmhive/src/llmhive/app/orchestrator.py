@@ -1770,6 +1770,62 @@ Please provide an accurate, well-verified response."""
         # Initialize scratchpad for this query
         scratchpad = Scratchpad() if MEMORY_AVAILABLE and Scratchpad else None
         
+        # Import/define ProtocolResult and LLMResult early for use in early returns
+        # These need to be available before any early return statements
+        try:
+            from .protocols.base import ProtocolResult as _ProtocolResult
+            ProtocolResult = _ProtocolResult
+        except ImportError:
+            ProtocolResult = None
+        
+        try:
+            from ..services.base import LLMResult as _LLMResult
+            LLMResult = _LLMResult
+        except ImportError:
+            try:
+                from .services.base import LLMResult as _LLMResult
+                LLMResult = _LLMResult
+            except ImportError:
+                LLMResult = None
+        
+        # Fallback: create minimal structures if imports fail
+        if LLMResult is None:
+            class LLMResult:
+                def __init__(self, content: str, model: str, tokens: int = 0):
+                    self.content = content
+                    self.model = model
+                    self.tokens_used = tokens
+        
+        if ProtocolResult is None:
+            class ProtocolResult:
+                def __init__(self, final_response, initial_responses=None, critiques=None, 
+                           improvements=None, consensus_notes=None, step_outputs=None,
+                           supporting_notes=None, quality_assessments=None, suggestions=None):
+                    self.final_response = final_response
+                    self.initial_responses = initial_responses or []
+                    self.critiques = critiques or []
+                    self.improvements = improvements or []
+                    self.consensus_notes = consensus_notes or []
+                    self.step_outputs = step_outputs or {}
+                    self.supporting_notes = supporting_notes or []
+                    self.quality_assessments = quality_assessments or {}
+                    self.suggestions = suggestions or []
+        
+        # Helper function to wrap early returns in ProtocolResult
+        def _make_early_return(result: Any, notes: List[str] = None) -> Any:
+            """Wrap an LLMResult in a ProtocolResult for consistent return structure."""
+            return ProtocolResult(
+                final_response=result,
+                initial_responses=[result],
+                critiques=[],
+                improvements=[],
+                consensus_notes=notes or [],
+                step_outputs={"answer": [result]},
+                supporting_notes=[],
+                suggestions=[],
+                quality_assessments={},
+            )
+        
         # Stage 3: Enhanced Prompt Injection Defense (Phase -1.5)
         if self.injection_detector and STAGE3_AVAILABLE:
             try:
@@ -1784,17 +1840,12 @@ Please provide an accurate, well-verified response."""
                             injection_check.threat_level, blocked=True
                         )
                     
-                    if LLMResult is None:
-                        class LLMResult:
-                            def __init__(self, content, model, tokens=0):
-                                self.content = content
-                                self.model = model
-                                self.tokens_used = tokens
-                    return LLMResult(
+                    early_result = LLMResult(
                         content=self.injection_detector.get_safe_refusal(),
                         model="security_filter",
                         tokens=0,
                     )
+                    return _make_early_return(early_result, ["Prompt injection blocked"])
                 elif injection_check.is_injection:
                     # Log but don't block lower-threat injections
                     if self.stage3_logger:
@@ -1846,17 +1897,12 @@ Please provide an accurate, well-verified response."""
                     if not tier_allowed:
                         logger.warning("Tier restriction: %s", tier_reason)
                         # Return early with tier restriction message
-                        if LLMResult is None:
-                            class LLMResult:
-                                def __init__(self, content, model, tokens=0):
-                                    self.content = content
-                                    self.model = model
-                                    self.tokens_used = tokens
-                        return LLMResult(
+                        early_result = LLMResult(
                             content=tier_reason or "This query is not available for your tier.",
                             model="guardrails",
                             tokens=0,
                         )
+                        return _make_early_return(early_result, ["Tier restriction applied"])
                 
                 # Validate input and sanitize
                 sanitized_query, is_allowed, rejection_reason = self.safety_validator.validate_input(
@@ -1865,17 +1911,12 @@ Please provide an accurate, well-verified response."""
                 
                 if not is_allowed:
                     logger.warning("Query blocked by guardrails: %s", rejection_reason)
-                    if LLMResult is None:
-                        class LLMResult:
-                            def __init__(self, content, model, tokens=0):
-                                self.content = content
-                                self.model = model
-                                self.tokens_used = tokens
-                    return LLMResult(
+                    early_result = LLMResult(
                         content=rejection_reason or "I cannot process this request due to safety policies.",
                         model="guardrails",
                         tokens=0,
                     )
+                    return _make_early_return(early_result, ["Query blocked by guardrails"])
                 
                 # Use sanitized query if external model
                 if is_external_model and sanitized_query != prompt:
@@ -1923,19 +1964,13 @@ Please provide an accurate, well-verified response."""
                         )
                         
                         # Return billing error response
-                        if LLMResult is None:
-                            class LLMResult:
-                                def __init__(self, content, model, tokens=0):
-                                    self.content = content
-                                    self.model = model
-                                    self.tokens_used = tokens
-                        
                         error_message = enforcement_result.upgrade_message or enforcement_result.reason
-                        return LLMResult(
+                        early_result = LLMResult(
                             content=f"⚠️ {error_message}\n\nTo continue using LLMHive, please upgrade your subscription.",
                             model="billing_enforcement",
                             tokens=0,
                         )
+                        return _make_early_return(early_result, ["Billing enforcement: subscription limit reached"])
                     
                     # Update user tier from subscription
                     user_tier = enforcement_result.tier_name
@@ -1970,36 +2005,24 @@ Please provide an accurate, well-verified response."""
                     logger.info("Schedule request detected: %s", pre_result.schedule_info.get("message"))
                     
                     # Return schedule confirmation directly
-                    if LLMResult is None:
-                        class LLMResult:
-                            def __init__(self, content, model, tokens=0):
-                                self.content = content
-                                self.model = model
-                                self.tokens_used = tokens
-                    
-                    return LLMResult(
+                    early_result = LLMResult(
                         content=pre_result.schedule_info.get("confirmation", "Reminder scheduled."),
                         model="dialogue_scheduler",
                         tokens=0,
                     )
+                    return _make_early_return(early_result, ["Schedule request processed"])
                 
                 # Handle clarification requests
                 if not pre_result.should_proceed and pre_result.needs_clarification:
                     logger.info("Clarification needed for query")
                     
                     # Return clarification question to user
-                    if LLMResult is None:
-                        class LLMResult:
-                            def __init__(self, content, model, tokens=0):
-                                self.content = content
-                                self.model = model
-                                self.tokens_used = tokens
-                    
-                    return LLMResult(
+                    early_result = LLMResult(
                         content=pre_result.clarification_question or "Could you please clarify your question?",
                         model="dialogue_clarification",
                         tokens=0,
                     )
+                    return _make_early_return(early_result, ["Clarification requested"])
                 
                 # Use modified query if clarification was resolved
                 if pre_result.context_added:
@@ -2227,45 +2250,8 @@ Please provide an accurate, well-verified response."""
             context_str = "\n".join(context_parts)
             augmented_prompt = f"{context_str}\nUser Query: {prompt}"
         
-        # Import ProtocolResult structure (with fallbacks)
-        ProtocolResult = None
-        LLMResult = None
-        
-        try:
-            from .protocols.base import ProtocolResult
-        except ImportError:
-            pass
-        
-        try:
-            from ..services.base import LLMResult
-        except ImportError:
-            try:
-                from .services.base import LLMResult
-            except ImportError:
-                pass
-        
-        # Fallback: create minimal structure if imports fail
-        if LLMResult is None:
-            class LLMResult:
-                def __init__(self, content: str, model: str, tokens: int = 0):
-                    self.content = content
-                    self.model = model
-                    self.tokens_used = tokens
-        
-        if ProtocolResult is None:
-            class ProtocolResult:
-                def __init__(self, final_response, initial_responses=None, critiques=None, 
-                           improvements=None, consensus_notes=None, step_outputs=None,
-                           supporting_notes=None, quality_assessments=None, suggestions=None):
-                    self.final_response = final_response
-                    self.initial_responses = initial_responses or []
-                    self.critiques = critiques or []
-                    self.improvements = improvements or []
-                    self.consensus_notes = consensus_notes or []
-                    self.step_outputs = step_outputs or {}
-                    self.supporting_notes = supporting_notes or []
-                    self.quality_assessments = quality_assessments or {}
-                    self.suggestions = suggestions or []  # Proactive suggestions
+        # NOTE: ProtocolResult and LLMResult are defined at the start of this method
+        # to ensure they're available for all early returns
         
         # Phase 1: Hierarchical Planning (if HRM enabled)
         hierarchical_plan = None

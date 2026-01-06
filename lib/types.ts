@@ -1,3 +1,21 @@
+/** Quality metadata for AI response tracking and debugging */
+export interface QualityMetadata {
+  traceId?: string
+  confidence?: number
+  confidenceLabel?: string
+  modelsUsed?: string[]
+  strategyUsed?: string
+  verificationStatus?: string
+  verificationScore?: number
+  toolsUsed?: string[]
+  ragUsed?: boolean
+  memoryUsed?: boolean
+  sources?: Array<{ title: string; url?: string }>
+  isStub?: boolean
+  selfGraded?: boolean
+  improvementApplied?: boolean
+}
+
 export interface Message {
   id: string
   role: "user" | "assistant" | "system"
@@ -17,6 +35,8 @@ export interface Message {
   isClarificationRequest?: boolean
   modelsUsed?: string[]
   metadata?: Record<string, unknown>
+  /** Quality metadata for "Why this answer?" drawer */
+  qualityMetadata?: QualityMetadata
 }
 
 export interface Attachment {

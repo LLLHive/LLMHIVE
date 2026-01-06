@@ -106,8 +106,14 @@ jobs:
           check_name: "Smoke Test Results"
           comment_mode: "off"
 
+      # Slack notifications are OPTIONAL - only run if webhook is configured
+      # This step will be skipped (not failed) if SLACK_WEBHOOK_URL secret is not set
       - name: Send Slack notification on failure
-        if: failure() && github.event_name != 'workflow_dispatch'
+        if: |
+          failure() && 
+          github.event_name != 'workflow_dispatch' &&
+          github.repository_owner == 'LLMHive' &&
+          secrets.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |
@@ -131,6 +137,15 @@ jobs:
                     {
                       "type": "mrkdwn",
                       "text": "*Triggered by:*\n${{ github.event_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>"
                     }
                   ]
                 }

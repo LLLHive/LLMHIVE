@@ -1,0 +1,246 @@
+name: Quality Regression Tests
+
+on:
+  # Run daily at 7 AM UTC (after smoke tests)
+  schedule:
+    - cron: '0 7 * * *'
+  
+  # Run on push to main
+  push:
+    branches:
+      - main
+    paths:
+      - 'llmhive/**'
+      - 'tests/quality_eval/**'
+      - '.github/workflows/quality-regression.yml'
+  
+  # Run on PRs
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'llmhive/**'
+      - 'tests/quality_eval/**'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      run_live_audit:
+        description: 'Run live audit against staging'
+        required: false
+        default: false
+        type: boolean
+      max_prompts:
+        description: 'Max prompts for live audit'
+        required: false
+        default: '20'
+        type: string
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  unit-quality-tests:
+    name: Unit Quality Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pyyaml requests aiohttp
+
+      - name: Run quality evaluation tests
+        run: |
+          pytest tests/quality_eval -v --tb=short -x \
+            --junit-xml=quality-test-results.xml \
+            2>&1 | tee quality-test-output.txt
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-test-results
+          path: |
+            quality-test-results.xml
+            quality-test-output.txt
+          retention-days: 30
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: quality-test-results.xml
+          check_name: "Quality Test Results"
+          comment_mode: "off"
+
+  live-audit:
+    name: Live Prompt Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: unit-quality-tests
+    
+    # Only run if:
+    # - Manually triggered with run_live_audit=true, OR
+    # - Scheduled run AND secrets are available
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.run_live_audit == 'true') ||
+      (github.event_name == 'schedule' && github.repository_owner == 'LLMHive')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pyyaml requests aiohttp
+
+      - name: Check if secrets are available
+        id: check_secrets
+        run: |
+          if [ -n "${{ secrets.LLMHIVE_STAGING_URL }}" ] && [ -n "${{ secrets.LLMHIVE_API_KEY }}" ]; then
+            echo "secrets_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "secrets_available=false" >> $GITHUB_OUTPUT
+            echo "::notice::Skipping live audit - LLMHIVE_STAGING_URL or LLMHIVE_API_KEY not configured"
+          fi
+
+      - name: Run live audit (staging)
+        if: steps.check_secrets.outputs.secrets_available == 'true'
+        env:
+          LLMHIVE_STAGING_URL: ${{ secrets.LLMHIVE_STAGING_URL }}
+          LLMHIVE_API_KEY: ${{ secrets.LLMHIVE_API_KEY }}
+        run: |
+          max_prompts="${{ github.event.inputs.max_prompts || '50' }}"
+          
+          python tests/quality_eval/live_prompt_audit.py \
+            --mode=staging \
+            --max-prompts="$max_prompts" \
+            --output=artifacts/quality/live_audit_report.json \
+            2>&1 | tee live-audit-output.txt
+          
+          exit_code=${PIPESTATUS[0]}
+          echo "audit_exit_code=$exit_code" >> $GITHUB_OUTPUT
+          exit $exit_code
+
+      - name: Run live audit (local mode - fallback)
+        if: steps.check_secrets.outputs.secrets_available != 'true'
+        run: |
+          echo "Running in local mode (no staging secrets available)"
+          
+          python tests/quality_eval/live_prompt_audit.py \
+            --mode=local \
+            --max-prompts=10 \
+            --output=artifacts/quality/live_audit_report.json \
+            --critical-only \
+            2>&1 | tee live-audit-output.txt || true
+          
+          echo "::warning::Live audit ran in local mode with limited prompts"
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-audit-results
+          path: |
+            artifacts/quality/
+            live-audit-output.txt
+          retention-days: 30
+
+      - name: Check for stub provider usage
+        if: always()
+        run: |
+          if [ -f "artifacts/quality/live_audit_report.json" ]; then
+            if grep -q '"stub"' artifacts/quality/live_audit_report.json; then
+              echo "::error::Stub provider detected in audit results - this indicates provider drift!"
+              exit 1
+            fi
+          fi
+
+  summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [unit-quality-tests, live-audit]
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Quality Regression Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Unit tests
+          if [ "${{ needs.unit-quality-tests.result }}" == "success" ]; then
+            echo "✅ Unit Quality Tests: **Passed**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Unit Quality Tests: **Failed**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Live audit
+          if [ "${{ needs.live-audit.result }}" == "success" ]; then
+            echo "✅ Live Prompt Audit: **Passed**" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.live-audit.result }}" == "skipped" ]; then
+            echo "⏭️ Live Prompt Audit: **Skipped** (secrets not available or conditions not met)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Live Prompt Audit: **Failed**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Optional Slack notification
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [unit-quality-tests, live-audit]
+    if: |
+      failure() && 
+      github.event_name == 'schedule' &&
+      github.repository_owner == 'LLMHive' &&
+      secrets.SLACK_WEBHOOK_URL != ''
+    
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "Quality Regression Tests Failed!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Quality Regression Tests Failed*\n\nAnswer quality may have regressed. Please investigate."
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        continue-on-error: true
+

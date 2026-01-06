@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Maximize2, Code, Share2, Eye, EyeOff, Twitter, Link, MessageSquare } from "lucide-react"
+import { Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Maximize2, Code, Share2, Eye, EyeOff, Twitter, Link, MessageSquare, Info } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import {
 import type { Message, Artifact } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { toast } from "@/lib/toast"
+import { AnswerQualityDrawer, useDevMode, type QualityMetadata } from "@/components/answer-quality-drawer"
 
 interface MessageBubbleProps {
   message: Message
@@ -34,6 +35,25 @@ export function MessageBubble({
   const [liked, setLiked] = useState(false)
   const [disliked, setDisliked] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const isDevMode = useDevMode()
+  
+  // Extract quality metadata from message if available
+  const qualityMetadata: QualityMetadata | undefined = message.qualityMetadata ? {
+    traceId: message.qualityMetadata.traceId,
+    confidence: message.qualityMetadata.confidence,
+    confidenceLabel: message.qualityMetadata.confidenceLabel,
+    modelsUsed: message.qualityMetadata.modelsUsed,
+    strategyUsed: message.qualityMetadata.strategyUsed,
+    verificationStatus: message.qualityMetadata.verificationStatus,
+    verificationScore: message.qualityMetadata.verificationScore,
+    toolsUsed: message.qualityMetadata.toolsUsed,
+    ragUsed: message.qualityMetadata.ragUsed,
+    memoryUsed: message.qualityMetadata.memoryUsed,
+    sources: message.qualityMetadata.sources,
+    isStub: message.qualityMetadata.isStub,
+    selfGraded: message.qualityMetadata.selfGraded,
+    improvementApplied: message.qualityMetadata.improvementApplied,
+  } : undefined
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content)
@@ -210,6 +230,14 @@ export function MessageBubble({
             </div>
           )}
         </div>
+        
+        {/* Why this answer? drawer - shows quality metadata */}
+        {qualityMetadata && (
+          <AnswerQualityDrawer 
+            metadata={qualityMetadata} 
+            isDevMode={isDevMode}
+          />
+        )}
 
         <div className="flex items-center gap-1 mt-2">
           <Button 
