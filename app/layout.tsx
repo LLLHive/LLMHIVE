@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { AppearanceSettingsLoader } from "@/components/appearance-settings-loader"
 import AppBackground from "@/components/branding/AppBackground"
+import { ForestBackgroundWrapper } from "@/components/forest-background-wrapper"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -67,8 +68,28 @@ export default function RootLayout({
       }}
     >
       <html lang="en" suppressHydrationWarning>
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  try {
+                    var theme = localStorage.getItem('theme');
+                    var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    var useDark =
+                      theme === 'dark' ||
+                      (theme === 'system' && systemDark) ||
+                      (!theme && systemDark);
+                    document.documentElement.classList.toggle('dark', !!useDark);
+                  } catch (e) {}
+                })();
+              `,
+            }}
+          />
+        </head>
         <body className={`min-h-screen bg-transparent text-foreground font-sans antialiased ${orbitron.variable}`}>
           <AppBackground />
+          <ForestBackgroundWrapper />
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"

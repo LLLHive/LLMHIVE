@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-
 /**
  * ForestBackground - Immersive forest scene with warm amber lighting
  * 
@@ -10,16 +8,11 @@ import { useEffect, useState } from "react"
  * - Animated fog/mist
  * - Light rays through trees
  * - Responsive and performant
+ * 
+ * Note: This component is dynamically imported with ssr: false to avoid
+ * hydration mismatches from Math.random() calls.
  */
 export function ForestBackground() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return null
-
   return (
     <div className="forest-bg" aria-hidden="true">
       {/* Tree silhouettes layer */}

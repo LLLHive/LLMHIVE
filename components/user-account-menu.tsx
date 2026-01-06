@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,9 +30,14 @@ export function UserAccountMenu({ onSignOut }: UserAccountMenuProps) {
   const router = useRouter()
   const { user, isLoaded, isSignedIn } = useUser()
   const { openUserProfile } = useClerk()
+  const [hasHydrated, setHasHydrated] = useState(false)
 
-  // Show loading state while Clerk loads
-  if (!isLoaded) {
+  useEffect(() => {
+    setHasHydrated(true)
+  }, [])
+
+  // Show loading state while hydrating or Clerk loads
+  if (!hasHydrated || !isLoaded) {
     return (
       <Button
         variant="ghost"
