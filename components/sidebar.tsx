@@ -700,6 +700,7 @@ function ProjectItem({
           side="bottom" 
           sideOffset={4} 
           className="w-52 p-1 z-[200]"
+          portal={false}
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <DropdownMenuItem
@@ -876,6 +877,7 @@ function ConversationItem({
           side="bottom"
           sideOffset={4}
           className="w-48 p-1 z-[200]"
+          portal={false}
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           {/* Share option */}
