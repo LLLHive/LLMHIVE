@@ -9,6 +9,7 @@ import { ArtifactPanel } from "./artifact-panel"
 import { UserAccountMenu } from "./user-account-menu"
 import { AdvancedSettingsDrawer } from "./advanced-settings-drawer"
 import { RenameChatModal } from "./rename-chat-modal"
+import { RenameProjectModal } from "./rename-project-modal"
 import { MoveToProjectModal } from "./move-to-project-modal"
 import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal"
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog"
@@ -35,6 +36,7 @@ export function ChatInterface() {
     updateConversation,
     deleteConversation,
     createProject,
+    updateProject,
     deleteProject,
     addConversationToProject,
     removeConversationFromProject,
@@ -48,9 +50,13 @@ export function ChatInterface() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   
-  // Rename modal state
+  // Rename chat modal state
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [renameConversationId, setRenameConversationId] = useState<string | null>(null)
+  
+  // Rename project modal state
+  const [showRenameProjectModal, setShowRenameProjectModal] = useState(false)
+  const [renameProjectId, setRenameProjectId] = useState<string | null>(null)
   
   // Move to project modal state
   const [showMoveModal, setShowMoveModal] = useState(false)
@@ -270,6 +276,16 @@ export function ChatInterface() {
     setShowRenameModal(true)
   }
 
+  const handleOpenRenameProjectModal = (projectId: string) => {
+    setRenameProjectId(projectId)
+    setShowRenameProjectModal(true)
+  }
+
+  const handleRenameProject = async (projectId: string, newName: string) => {
+    await updateProject(projectId, { name: newName })
+    toast.success("Project renamed")
+  }
+
   const handleCreateProject = async (project: Omit<Project, "id" | "createdAt">) => {
     const newProject: Project = {
       ...project,
@@ -329,6 +345,7 @@ export function ChatInterface() {
       onCreateProject={handleCreateProject}
       onDeleteProject={handleDeleteProject}
       onSelectProject={handleSelectProject}
+      onRenameProject={handleOpenRenameProjectModal}
     />
   )
 
@@ -369,6 +386,7 @@ export function ChatInterface() {
               onCreateProject={handleCreateProject}
               onDeleteProject={handleDeleteProject}
               onSelectProject={handleSelectProject}
+              onRenameProject={handleOpenRenameProjectModal}
             />
           </SheetContent>
         </Sheet>
@@ -426,6 +444,20 @@ export function ChatInterface() {
           }
           setShowRenameModal(false)
           setRenameConversationId(null)
+        }}
+      />
+
+      {/* Rename Project Modal */}
+      <RenameProjectModal
+        open={showRenameProjectModal}
+        onOpenChange={setShowRenameProjectModal}
+        currentName={projects.find((p) => p.id === renameProjectId)?.name ?? ""}
+        onRename={(newName) => {
+          if (renameProjectId) {
+            handleRenameProject(renameProjectId, newName)
+          }
+          setShowRenameProjectModal(false)
+          setRenameProjectId(null)
         }}
       />
 
