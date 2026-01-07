@@ -6,15 +6,21 @@ This module provides:
 - Tier-based access control
 - Safe expression evaluation
 - Integration hooks for orchestrator
+- Semantic tool filtering with FAISS
+- Automated retry and fallback
+- Async parallel tool dispatch
 """
 from __future__ import annotations
 
+import asyncio
 import ast
+import hashlib
 import json
 import logging
 import math
 import operator
 import re
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -37,7 +43,7 @@ class ToolCategory(str, Enum):
 
 @dataclass(slots=True)
 class ToolDefinition:
-    """Definition of a tool."""
+    """Definition of a tool with enhanced metadata for smart selection."""
     name: str
     description: str
     category: ToolCategory
@@ -46,6 +52,13 @@ class ToolDefinition:
     allowed_tiers: Set[str] = field(default_factory=lambda: {"free", "pro", "enterprise"})
     parameters: Dict[str, Any] = field(default_factory=dict)
     requires_sandbox: bool = False
+    # Enhanced metadata fields for smart tool selection
+    retryable: bool = True  # Whether tool can be retried on failure
+    max_retries: int = 1  # Maximum retry attempts
+    latency_score: float = 0.5  # Expected latency (0=fast, 1=slow)
+    failure_policy: str = "fallback"  # "fallback", "retry", "abort"
+    keywords: List[str] = field(default_factory=list)  # Keywords for semantic matching
+    embedding: Optional[List[float]] = None  # Pre-computed description embedding
 
 
 @dataclass(slots=True)
@@ -66,6 +79,10 @@ class ToolResult:
     error: Optional[str] = None
     execution_time_ms: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # Enhanced tracking
+    retry_count: int = 0
+    fallback_used: bool = False
+    fallback_reason: Optional[str] = None
 
 
 # ==============================================================================
@@ -212,6 +229,138 @@ class SafeCalculator:
 
 
 # ==============================================================================
+# Semantic Tool Filter
+# ==============================================================================
+
+class SemanticToolFilter:
+    """Filter tools using semantic similarity for smart selection.
+    
+    Uses embedding similarity to select the most relevant tools for a query,
+    avoiding token waste on irrelevant tool descriptions.
+    """
+    
+    def __init__(self, embedding_fn: Optional[Callable] = None):
+        """Initialize semantic filter.
+        
+        Args:
+            embedding_fn: Function to embed text (text -> List[float])
+        """
+        self.embedding_fn = embedding_fn
+        self.tool_embeddings: Dict[str, List[float]] = {}
+        self._faiss_index = None
+        self._tool_names: List[str] = []
+        self._initialized = False
+    
+    def index_tools(self, tool_definitions: Dict[str, ToolDefinition]) -> None:
+        """Build FAISS index for tool descriptions.
+        
+        Args:
+            tool_definitions: Map of tool name to definition
+        """
+        if not self.embedding_fn:
+            return
+        
+        try:
+            import numpy as np
+            
+            # Generate embeddings for tool descriptions
+            embeddings = []
+            self._tool_names = []
+            
+            for name, defn in tool_definitions.items():
+                # Combine description with keywords for richer representation
+                text = f"{defn.description} {' '.join(defn.keywords)}"
+                
+                if defn.embedding:
+                    embedding = defn.embedding
+                else:
+                    embedding = self.embedding_fn(text)
+                    defn.embedding = embedding
+                
+                self.tool_embeddings[name] = embedding
+                embeddings.append(embedding)
+                self._tool_names.append(name)
+            
+            if not embeddings:
+                return
+            
+            # Try to use FAISS for fast similarity search
+            try:
+                import faiss
+                
+                embeddings_array = np.array(embeddings).astype('float32')
+                dim = embeddings_array.shape[1]
+                
+                self._faiss_index = faiss.IndexFlatIP(dim)  # Inner product (cosine sim)
+                faiss.normalize_L2(embeddings_array)
+                self._faiss_index.add(embeddings_array)
+                
+                self._initialized = True
+                logger.info("FAISS index built for %d tools", len(embeddings))
+                
+            except ImportError:
+                logger.debug("FAISS not available, using numpy fallback")
+                self._initialized = True
+                
+        except Exception as e:
+            logger.warning("Failed to index tools: %s", e)
+    
+    def filter_tools(
+        self,
+        query: str,
+        tool_definitions: Dict[str, ToolDefinition],
+        top_k: int = 3,
+    ) -> List[str]:
+        """Filter tools based on semantic similarity to query.
+        
+        Args:
+            query: User query
+            tool_definitions: All available tools
+            top_k: Number of top tools to return
+            
+        Returns:
+            List of most relevant tool names
+        """
+        if not self._initialized or not self.embedding_fn:
+            # Fall back to returning all tools
+            return list(tool_definitions.keys())[:top_k]
+        
+        try:
+            import numpy as np
+            
+            # Embed the query
+            query_embedding = np.array([self.embedding_fn(query)]).astype('float32')
+            
+            # FAISS search
+            if self._faiss_index is not None:
+                import faiss
+                faiss.normalize_L2(query_embedding)
+                
+                k = min(top_k, len(self._tool_names))
+                distances, indices = self._faiss_index.search(query_embedding, k)
+                
+                relevant_tools = [self._tool_names[i] for i in indices[0] if i < len(self._tool_names)]
+                return relevant_tools
+            
+            # Numpy fallback: cosine similarity
+            else:
+                similarities = []
+                for name, embedding in self.tool_embeddings.items():
+                    emb_array = np.array(embedding)
+                    query_norm = query_embedding / np.linalg.norm(query_embedding)
+                    emb_norm = emb_array / np.linalg.norm(emb_array)
+                    sim = np.dot(query_norm.flatten(), emb_norm)
+                    similarities.append((name, sim))
+                
+                similarities.sort(key=lambda x: x[1], reverse=True)
+                return [name for name, _ in similarities[:top_k]]
+                
+        except Exception as e:
+            logger.warning("Semantic filtering failed: %s", e)
+            return list(tool_definitions.keys())[:top_k]
+
+
+# ==============================================================================
 # Tool Broker
 # ==============================================================================
 
@@ -236,6 +385,8 @@ class ToolBroker:
         web_research: Optional[Any] = None,
         enable_sandbox: bool = True,
         memory_manager: Optional[Any] = None,
+        embedding_fn: Optional[Callable] = None,
+        max_visible_tools: int = 3,
     ) -> None:
         """
         Initialize the ToolBroker.
@@ -244,10 +395,13 @@ class ToolBroker:
             web_research: Optional WebResearchClient instance
             enable_sandbox: Whether to enable sandbox for code execution
             memory_manager: Optional memory manager for knowledge lookups
+            embedding_fn: Function for semantic tool filtering
+            max_visible_tools: Max tools to show per query (default 3)
         """
         self.web_research = web_research
         self.memory_manager = memory_manager
         self.calculator = SafeCalculator()
+        self.max_visible_tools = max_visible_tools
         
         # Initialize sandbox
         self.sandbox: Optional[Any] = None
@@ -270,6 +424,9 @@ class ToolBroker:
         self.tool_definitions: Dict[str, ToolDefinition] = {}
         self.tools: Dict[str, Callable[..., Any]] = {}
         
+        # Semantic tool filter
+        self.semantic_filter = SemanticToolFilter(embedding_fn)
+        
         # Register built-in tools
         self._register_builtin_tools()
         
@@ -281,9 +438,12 @@ class ToolBroker:
             "enterprise": {"calculator", "web_search", "spell_check", "datetime", "convert",
                           "knowledge_lookup", "python_exec", "api_call", "advanced_search"},
         }
+        
+        # Execution metrics
+        self._execution_stats: Dict[str, Dict[str, Any]] = {}
     
     def _register_builtin_tools(self) -> None:
-        """Register built-in tools."""
+        """Register built-in tools with enhanced metadata."""
         # Calculator
         self.register_tool(
             ToolDefinition(
@@ -293,6 +453,9 @@ class ToolBroker:
                 handler=self._tool_calculator,
                 is_async=False,
                 parameters={"expression": "Math expression to evaluate"},
+                retryable=True,
+                latency_score=0.1,  # Very fast
+                keywords=["math", "calculate", "compute", "arithmetic", "sum", "multiply", "divide", "percentage"],
             )
         )
         
@@ -300,11 +463,15 @@ class ToolBroker:
         self.register_tool(
             ToolDefinition(
                 name="web_search",
-                description="Search the web for information",
+                description="Search the web for current information and news",
                 category=ToolCategory.SEARCH,
                 handler=self._tool_web_search,
                 is_async=True,
                 parameters={"query": "Search query"},
+                retryable=True,
+                latency_score=0.7,  # Slower due to network
+                failure_policy="fallback",
+                keywords=["search", "find", "lookup", "google", "current", "news", "recent", "latest", "today"],
             )
         )
         
@@ -319,6 +486,10 @@ class ToolBroker:
                 requires_sandbox=True,
                 allowed_tiers={"pro", "enterprise"},
                 parameters={"code": "Python code to execute"},
+                retryable=True,
+                max_retries=2,
+                latency_score=0.5,
+                keywords=["code", "python", "script", "program", "execute", "run", "compute"],
             )
         )
         
@@ -332,6 +503,9 @@ class ToolBroker:
                 is_async=False,
                 allowed_tiers={"pro", "enterprise"},
                 parameters={"query": "Query to search in knowledge base"},
+                retryable=False,
+                latency_score=0.4,
+                keywords=["knowledge", "database", "lookup", "retrieve", "find", "information"],
             )
         )
         
@@ -344,6 +518,9 @@ class ToolBroker:
                 handler=self._tool_datetime,
                 is_async=False,
                 parameters={"format": "Optional datetime format string"},
+                retryable=True,
+                latency_score=0.05,  # Very fast
+                keywords=["time", "date", "today", "now", "current", "datetime", "clock"],
             )
         )
         
@@ -351,7 +528,7 @@ class ToolBroker:
         self.register_tool(
             ToolDefinition(
                 name="convert",
-                description="Convert between units",
+                description="Convert between units (length, weight, temperature)",
                 category=ToolCategory.COMPUTE,
                 handler=self._tool_unit_convert,
                 is_async=False,
@@ -360,6 +537,9 @@ class ToolBroker:
                     "from_unit": "Source unit",
                     "to_unit": "Target unit",
                 },
+                retryable=True,
+                latency_score=0.1,
+                keywords=["convert", "unit", "measurement", "temperature", "length", "weight", "distance"],
             )
         )
         
@@ -375,8 +555,14 @@ class ToolBroker:
                     "text": "Text to check for spelling errors",
                     "mode": "Optional: 'suggest', 'auto_correct', or 'highlight'",
                 },
+                retryable=False,
+                latency_score=0.2,
+                keywords=["spell", "spelling", "grammar", "check", "correct", "typo"],
             )
         )
+        
+        # Index tools for semantic filtering
+        self.semantic_filter.index_tools(self.tool_definitions)
     
     def register_tool(self, definition: ToolDefinition) -> None:
         """Register a new tool."""
@@ -1040,6 +1226,298 @@ class ToolBroker:
         results.reverse()
         
         return processed_output, results
+
+
+    # ==========================================================================
+    # Semantic Tool Filtering
+    # ==========================================================================
+    
+    def get_relevant_tools(
+        self,
+        query: str,
+        user_tier: str = "free",
+        max_tools: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get semantically relevant tools for a query.
+        
+        Uses semantic similarity to filter tools, showing only the most
+        relevant ones to reduce token usage and improve selection accuracy.
+        
+        Args:
+            query: User query
+            user_tier: User's account tier
+            max_tools: Maximum tools to return (default: self.max_visible_tools)
+            
+        Returns:
+            List of relevant tool info dictionaries
+        """
+        max_tools = max_tools or self.max_visible_tools
+        tier = user_tier.lower()
+        allowed = self.tier_tools.get(tier, self.tier_tools["free"])
+        
+        # Filter to allowed tools first
+        allowed_defns = {
+            name: defn for name, defn in self.tool_definitions.items()
+            if name in allowed or tier in defn.allowed_tiers
+        }
+        
+        # Apply semantic filtering
+        relevant_names = self.semantic_filter.filter_tools(
+            query, allowed_defns, top_k=max_tools
+        )
+        
+        # Build result list
+        result = []
+        for name in relevant_names:
+            defn = self.tool_definitions.get(name)
+            if defn:
+                result.append({
+                    "name": name,
+                    "description": defn.description,
+                    "category": defn.category.value,
+                    "parameters": defn.parameters,
+                    "latency": "fast" if defn.latency_score < 0.3 else "medium" if defn.latency_score < 0.7 else "slow",
+                })
+        
+        return result
+    
+    # ==========================================================================
+    # Retry and Fallback Logic
+    # ==========================================================================
+    
+    async def handle_tool_request_with_retry(
+        self,
+        request: Union[str, ToolRequest],
+        user_tier: str = "free",
+    ) -> ToolResult:
+        """
+        Handle a tool request with automatic retry and fallback.
+        
+        If a tool fails and is marked as retryable, attempts retry.
+        On final failure, falls back to model-only mode.
+        
+        Args:
+            request: Tool request
+            user_tier: User's account tier
+            
+        Returns:
+            ToolResult with retry/fallback info
+        """
+        start_time = time.time()
+        
+        # Parse request
+        if isinstance(request, str):
+            parsed = self.parse_tool_request(request)
+            if parsed is None:
+                return ToolResult(
+                    tool_name="unknown",
+                    success=False,
+                    result=None,
+                    error="Invalid tool request format.",
+                    fallback_used=True,
+                    fallback_reason="parse_error",
+                )
+            request = parsed
+        
+        tool_name = request.tool_name
+        defn = self.tool_definitions.get(tool_name)
+        
+        if not defn:
+            return ToolResult(
+                tool_name=tool_name,
+                success=False,
+                result=None,
+                error=f"Unknown tool: {tool_name}",
+                fallback_used=True,
+                fallback_reason="unknown_tool",
+            )
+        
+        # Attempt execution with retry
+        max_attempts = defn.max_retries + 1 if defn.retryable else 1
+        last_error = None
+        retry_count = 0
+        
+        for attempt in range(max_attempts):
+            try:
+                result = await self.handle_tool_request_async(request, user_tier)
+                
+                if result.success:
+                    result.retry_count = attempt
+                    return result
+                
+                last_error = result.error
+                retry_count = attempt + 1
+                
+                if attempt < max_attempts - 1:
+                    logger.info("Tool %s failed, retrying (%d/%d)", tool_name, attempt + 1, max_attempts)
+                    await asyncio.sleep(0.1 * (attempt + 1))  # Backoff
+                    
+            except Exception as e:
+                last_error = str(e)
+                retry_count = attempt + 1
+        
+        # All attempts failed - apply failure policy
+        execution_time = (time.time() - start_time) * 1000
+        
+        if defn.failure_policy == "fallback":
+            logger.info("Tool %s failed after %d attempts, falling back to model-only", tool_name, retry_count)
+            return ToolResult(
+                tool_name=tool_name,
+                success=False,
+                result=None,
+                error=last_error,
+                execution_time_ms=execution_time,
+                retry_count=retry_count,
+                fallback_used=True,
+                fallback_reason="max_retries_exceeded",
+            )
+        elif defn.failure_policy == "abort":
+            return ToolResult(
+                tool_name=tool_name,
+                success=False,
+                result=None,
+                error=f"Tool failed permanently: {last_error}",
+                execution_time_ms=execution_time,
+                retry_count=retry_count,
+            )
+        else:
+            # Default fallback
+            return ToolResult(
+                tool_name=tool_name,
+                success=False,
+                result=None,
+                error=last_error,
+                execution_time_ms=execution_time,
+                retry_count=retry_count,
+                fallback_used=True,
+                fallback_reason="execution_failed",
+            )
+    
+    # ==========================================================================
+    # Async Parallel Tool Dispatch
+    # ==========================================================================
+    
+    async def execute_tools_parallel(
+        self,
+        requests: List[Union[str, ToolRequest]],
+        user_tier: str = "free",
+        max_concurrent: int = 5,
+    ) -> List[ToolResult]:
+        """
+        Execute multiple tool requests in parallel.
+        
+        Independent tools are executed concurrently to reduce latency.
+        
+        Args:
+            requests: List of tool requests
+            user_tier: User's account tier
+            max_concurrent: Maximum concurrent executions
+            
+        Returns:
+            List of results in same order as requests
+        """
+        if not requests:
+            return []
+        
+        # Create semaphore for concurrency limit
+        semaphore = asyncio.Semaphore(max_concurrent)
+        
+        async def execute_with_semaphore(req: Union[str, ToolRequest]) -> ToolResult:
+            async with semaphore:
+                return await self.handle_tool_request_with_retry(req, user_tier)
+        
+        # Execute all tools in parallel
+        tasks = [execute_with_semaphore(req) for req in requests]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Convert exceptions to ToolResults
+        final_results = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                # Get tool name from request
+                req = requests[i]
+                if isinstance(req, ToolRequest):
+                    tool_name = req.tool_name
+                else:
+                    parsed = self.parse_tool_request(req)
+                    tool_name = parsed.tool_name if parsed else "unknown"
+                
+                final_results.append(ToolResult(
+                    tool_name=tool_name,
+                    success=False,
+                    result=None,
+                    error=str(result),
+                    fallback_used=True,
+                    fallback_reason="execution_exception",
+                ))
+            else:
+                final_results.append(result)
+        
+        return final_results
+    
+    async def execute_tool_chain(
+        self,
+        requests: List[Union[str, ToolRequest]],
+        user_tier: str = "free",
+        stop_on_failure: bool = False,
+    ) -> Tuple[List[ToolResult], bool]:
+        """
+        Execute a chain of tools, some in parallel if independent.
+        
+        Analyzes dependencies and executes independent tools in parallel.
+        
+        Args:
+            requests: List of tool requests in order
+            user_tier: User's account tier
+            stop_on_failure: Whether to stop chain on first failure
+            
+        Returns:
+            Tuple of (results, all_successful)
+        """
+        # Group independent tools for parallel execution
+        # For now, assume all tools are independent (can be enhanced with dep analysis)
+        results = await self.execute_tools_parallel(requests, user_tier)
+        
+        all_successful = all(r.success for r in results)
+        
+        # If stop_on_failure and we have failures, truncate results
+        if stop_on_failure and not all_successful:
+            for i, r in enumerate(results):
+                if not r.success:
+                    results = results[:i+1]
+                    break
+        
+        return results, all_successful
+    
+    # ==========================================================================
+    # Execution Statistics
+    # ==========================================================================
+    
+    def record_execution(self, tool_name: str, success: bool, latency_ms: float) -> None:
+        """Record tool execution statistics."""
+        if tool_name not in self._execution_stats:
+            self._execution_stats[tool_name] = {
+                "total_calls": 0,
+                "successful": 0,
+                "failed": 0,
+                "avg_latency_ms": 0.0,
+                "total_latency_ms": 0.0,
+            }
+        
+        stats = self._execution_stats[tool_name]
+        stats["total_calls"] += 1
+        stats["total_latency_ms"] += latency_ms
+        stats["avg_latency_ms"] = stats["total_latency_ms"] / stats["total_calls"]
+        
+        if success:
+            stats["successful"] += 1
+        else:
+            stats["failed"] += 1
+    
+    def get_execution_stats(self) -> Dict[str, Dict[str, Any]]:
+        """Get execution statistics for all tools."""
+        return self._execution_stats.copy()
 
 
 # ==============================================================================

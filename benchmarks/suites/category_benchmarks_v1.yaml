@@ -1,0 +1,2209 @@
+# Category-Specific Benchmark Suite v1.0
+# Tests models across 12 domain categories from industry rankings
+# Each category has 5-10 representative prompts
+
+suite_name: "Category Benchmarks"
+suite_version: "1.0"
+description: |
+  Comprehensive benchmark suite covering 12 professional domains:
+  Programming, Science, Health, Legal, Marketing, Technology,
+  Finance, Academia, Roleplay, Creative Writing, Translation, and Reasoning.
+
+cases:
+  # ============================================================================
+  # PROGRAMMING (10 cases)
+  # ============================================================================
+  - id: prog_001
+    category: programming
+    prompt: "Write a Python function that implements a least recently used (LRU) cache with O(1) get and put operations. Include type hints and docstrings."
+    expected:
+      type: contains_all
+      values: ["def", "class", "OrderedDict", "O(1)"]
+    requirements:
+      domain: programming
+      difficulty: medium
+      skills: [data_structures, python, algorithms]
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Correct LRU implementation (3 pts)
+        - O(1) complexity achieved (2 pts)
+        - Proper type hints (2 pts)
+        - Clear docstrings (1 pt)
+        - Edge case handling (2 pts)
+
+  - id: prog_002
+    category: programming
+    prompt: "Debug this code and explain the issue:\n```python\ndef merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    return merge(left, right)\n\ndef merge(left, right):\n    result = []\n    while left and right:\n        if left[0] < right[0]:\n            result.append(left.pop(0))\n        else:\n            result.append(right.pop(0))\n    return result + left + right\n```\nThe code works but is inefficient. Identify the performance issue and fix it."
+    expected:
+      type: contains_all
+      values: ["pop(0)", "O(n)", "index", "pointer"]
+    requirements:
+      domain: programming
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Identifies pop(0) is O(n) (3 pts)
+        - Explains overall complexity impact (2 pts)
+        - Provides correct fix with indices (3 pts)
+        - Clean, working solution (2 pts)
+
+  - id: prog_003
+    category: programming
+    prompt: "Implement a rate limiter using the token bucket algorithm in any language. It should support: 1) configurable rate and burst size, 2) thread-safety, 3) allow_request() method returning boolean."
+    expected:
+      type: contains_any
+      values: ["token", "bucket", "refill", "rate", "burst"]
+    requirements:
+      domain: programming
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Correct token bucket implementation (3 pts)
+        - Thread-safety with locks (2 pts)
+        - Configurable parameters (2 pts)
+        - Time-based refill logic (2 pts)
+        - Clean interface (1 pt)
+
+  - id: prog_004
+    category: programming
+    prompt: "Write SQL queries to find: 1) The second highest salary in an employees table, 2) Employees who earn more than their manager, 3) Departments with more than 5 employees. Assume tables: employees(id, name, salary, dept_id, manager_id), departments(id, name)."
+    expected:
+      type: contains_all
+      values: ["SELECT", "FROM", "WHERE", "JOIN"]
+    requirements:
+      domain: programming
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Query 1 correct (3 pts)
+        - Query 2 with self-join (3 pts)
+        - Query 3 with GROUP BY/HAVING (3 pts)
+        - Proper SQL syntax (1 pt)
+
+  - id: prog_005
+    category: programming
+    prompt: "Design a RESTful API for a task management system. Include endpoints for: CRUD operations on tasks, task assignment, status updates, and filtering. Use OpenAPI/Swagger format."
+    expected:
+      type: contains_all
+      values: ["GET", "POST", "PUT", "DELETE", "/tasks"]
+    requirements:
+      domain: programming
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Complete CRUD endpoints (3 pts)
+        - Proper HTTP methods (2 pts)
+        - Request/response schemas (2 pts)
+        - Authentication mentioned (1 pt)
+        - Filtering/pagination (2 pts)
+
+  - id: prog_006
+    category: programming
+    prompt: "Explain the difference between process and thread, and when you would use each. Then write a Python example demonstrating multiprocessing for CPU-bound work vs threading for I/O-bound work."
+    expected:
+      type: contains_all
+      values: ["process", "thread", "GIL", "CPU-bound", "I/O-bound"]
+    requirements:
+      domain: programming
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Clear process vs thread explanation (3 pts)
+        - GIL discussion (2 pts)
+        - Correct multiprocessing example (2 pts)
+        - Correct threading example (2 pts)
+        - Use case guidance (1 pt)
+
+  - id: prog_007
+    category: programming
+    prompt: "Implement a simple dependency injection container in TypeScript that supports: constructor injection, singleton and transient lifetimes, and circular dependency detection."
+    expected:
+      type: contains_any
+      values: ["container", "inject", "singleton", "transient", "register"]
+    requirements:
+      domain: programming
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Basic container with registration (2 pts)
+        - Constructor injection (2 pts)
+        - Lifetime management (2 pts)
+        - Circular dependency detection (3 pts)
+        - TypeScript types (1 pt)
+
+  - id: prog_008
+    category: programming
+    prompt: "Write a React component that implements infinite scroll with virtualization. It should efficiently render a list of 10,000 items, only rendering visible items plus a buffer."
+    expected:
+      type: contains_all
+      values: ["useEffect", "useState", "scroll", "visible"]
+    requirements:
+      domain: programming
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Virtual list implementation (3 pts)
+        - Scroll position tracking (2 pts)
+        - Buffer calculation (2 pts)
+        - Performance optimization (2 pts)
+        - Clean React hooks usage (1 pt)
+
+  - id: prog_009
+    category: programming
+    prompt: "Explain Big O notation and analyze the time complexity of: 1) Binary search, 2) Merge sort, 3) Finding duplicates in an array using a hash set. Show your reasoning."
+    expected:
+      type: contains_all
+      values: ["O(log n)", "O(n log n)", "O(n)", "Big O"]
+    requirements:
+      domain: programming
+      difficulty: easy
+    scoring:
+      type: objective
+      ground_truth_contains: ["O(log n)", "O(n log n)", "O(n)"]
+
+  - id: prog_010
+    category: programming
+    prompt: "Write a Dockerfile for a Python web application that: uses multi-stage builds, runs as non-root user, minimizes image size, and follows security best practices."
+    expected:
+      type: contains_all
+      values: ["FROM", "COPY", "USER", "EXPOSE"]
+    requirements:
+      domain: programming
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Multi-stage build (2 pts)
+        - Non-root user (2 pts)
+        - Minimal base image (2 pts)
+        - Security practices (2 pts)
+        - Proper layer caching (2 pts)
+
+  # ============================================================================
+  # SCIENCE (10 cases)
+  # ============================================================================
+  - id: sci_001
+    category: science
+    prompt: "Explain the mechanism of CRISPR-Cas9 gene editing. Include: the role of guide RNA, how Cas9 creates double-strand breaks, and the two main DNA repair pathways (NHEJ and HDR)."
+    expected:
+      type: contains_all
+      values: ["guide RNA", "Cas9", "double-strand", "NHEJ", "HDR"]
+    requirements:
+      domain: science
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - gRNA mechanism (2 pts)
+        - Cas9 function (2 pts)
+        - DSB creation (2 pts)
+        - NHEJ explanation (2 pts)
+        - HDR explanation (2 pts)
+
+  - id: sci_002
+    category: science
+    prompt: "Derive the Schwarzschild radius formula (rs = 2GM/c²) from first principles, explaining each step. Then calculate the Schwarzschild radius for a 10 solar mass black hole."
+    expected:
+      type: contains_all
+      values: ["2GM", "c²", "escape velocity", "29.5", "km"]
+    requirements:
+      domain: science
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Correct derivation approach (3 pts)
+        - Proper physics explanation (3 pts)
+        - Correct calculation (3 pts)
+        - Units and values (1 pt)
+
+  - id: sci_003
+    category: science
+    prompt: "Explain the Standard Model of particle physics. Include: the fundamental particles (quarks, leptons, bosons), the four fundamental forces, and which bosons mediate each force."
+    expected:
+      type: contains_all
+      values: ["quark", "lepton", "boson", "strong", "weak", "electromagnetic"]
+    requirements:
+      domain: science
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Complete particle list (3 pts)
+        - Four forces described (3 pts)
+        - Force mediators correct (3 pts)
+        - Clear organization (1 pt)
+
+  - id: sci_004
+    category: science
+    prompt: "A ball is thrown horizontally from a cliff 80 meters high at 20 m/s. Calculate: 1) Time to hit ground, 2) Horizontal distance traveled, 3) Final velocity (magnitude and direction). Show all work."
+    expected:
+      type: regex
+      pattern: "(4\\.0|4\\.04).*s.*(80|80\\.8).*m.*(44|45).*m/s"
+    requirements:
+      domain: science
+      difficulty: medium
+    scoring:
+      type: objective
+      numeric_tolerance: 0.5
+      ground_truth: "Time ≈ 4.04s, Distance ≈ 80.8m, Final velocity ≈ 44.7 m/s at 63.4° below horizontal"
+
+  - id: sci_005
+    category: science
+    prompt: "Explain the process of stellar nucleosynthesis. How are elements up to iron created in stars? Why can't fusion create elements heavier than iron, and where do those heavier elements come from?"
+    expected:
+      type: contains_all
+      values: ["fusion", "hydrogen", "helium", "iron", "supernova", "endothermic"]
+    requirements:
+      domain: science
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - H to He fusion (2 pts)
+        - Triple-alpha/heavier elements (2 pts)
+        - Iron peak explanation (2 pts)
+        - Energy balance at iron (2 pts)
+        - r-process/supernovae (2 pts)
+
+  - id: sci_006
+    category: science
+    prompt: "Describe the mechanism of action of mRNA vaccines (like the COVID-19 vaccines). Explain: how mRNA enters cells, protein synthesis, immune response activation, and why mRNA doesn't alter DNA."
+    expected:
+      type: contains_all
+      values: ["mRNA", "ribosome", "spike protein", "antibod", "does not"]
+    requirements:
+      domain: science
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - mRNA delivery mechanism (2 pts)
+        - Protein synthesis process (2 pts)
+        - Immune response explanation (2 pts)
+        - DNA safety explanation (2 pts)
+        - Memory cell formation (2 pts)
+
+  - id: sci_007
+    category: science
+    prompt: "Explain the evidence for dark matter and dark energy. What observations led to their proposal? What are the leading candidate theories for each?"
+    expected:
+      type: contains_all
+      values: ["galaxy rotation", "gravitational lensing", "accelerat", "expansion", "WIMP"]
+    requirements:
+      domain: science
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Dark matter evidence (3 pts)
+        - Dark matter candidates (2 pts)
+        - Dark energy evidence (3 pts)
+        - Dark energy theories (2 pts)
+
+  - id: sci_008
+    category: science
+    prompt: "Balance this redox reaction in acidic solution and identify what is oxidized and reduced: MnO₄⁻ + Fe²⁺ → Mn²⁺ + Fe³⁺"
+    expected:
+      type: contains_all
+      values: ["5Fe", "MnO₄", "Mn²⁺", "H⁺", "H₂O"]
+    requirements:
+      domain: science
+      difficulty: medium
+    scoring:
+      type: objective
+      ground_truth_contains: ["MnO₄⁻ + 8H⁺ + 5Fe²⁺ → Mn²⁺ + 5Fe³⁺ + 4H₂O"]
+
+  - id: sci_009
+    category: science
+    prompt: "Explain natural selection and genetic drift. How do they differ as mechanisms of evolution? Provide an example of each and explain when one might be more important than the other."
+    expected:
+      type: contains_all
+      values: ["natural selection", "genetic drift", "fitness", "random", "population size"]
+    requirements:
+      domain: science
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Natural selection mechanism (2 pts)
+        - Genetic drift mechanism (2 pts)
+        - Clear comparison (2 pts)
+        - Good examples (2 pts)
+        - Population size context (2 pts)
+
+  - id: sci_010
+    category: science
+    prompt: "Explain the greenhouse effect and climate change. Include: which gases are greenhouse gases, the mechanism of heat trapping, positive feedback loops, and projected effects of 2°C warming."
+    expected:
+      type: contains_all
+      values: ["CO₂", "methane", "infrared", "feedback", "sea level"]
+    requirements:
+      domain: science
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Greenhouse gases listed (2 pts)
+        - Mechanism explained (2 pts)
+        - Feedback loops (2 pts)
+        - Warming projections (2 pts)
+        - Scientific accuracy (2 pts)
+
+  # ============================================================================
+  # HEALTH (10 cases)
+  # ============================================================================
+  - id: health_001
+    category: health
+    prompt: "Explain the pathophysiology of Type 2 diabetes. Include: insulin resistance, beta cell dysfunction, the role of obesity, and why blood glucose becomes elevated."
+    expected:
+      type: contains_all
+      values: ["insulin resistance", "beta cell", "glucose", "obesity", "pancreas"]
+    requirements:
+      domain: health
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Insulin resistance mechanism (3 pts)
+        - Beta cell dysfunction (2 pts)
+        - Obesity connection (2 pts)
+        - Glucose regulation (2 pts)
+        - Clinical implications (1 pt)
+
+  - id: health_002
+    category: health
+    prompt: "A patient presents with crushing chest pain, shortness of breath, and diaphoresis. Describe: the likely diagnosis, immediate diagnostic tests, and emergency management including medications and their doses."
+    expected:
+      type: contains_all
+      values: ["myocardial infarction", "ECG", "troponin", "aspirin", "nitroglycerin"]
+    requirements:
+      domain: health
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Correct diagnosis (2 pts)
+        - Appropriate tests (2 pts)
+        - MONA protocol (2 pts)
+        - Correct doses (2 pts)
+        - Time-critical actions (2 pts)
+
+  - id: health_003
+    category: health
+    prompt: "Explain how statins work to lower cholesterol. Include: the mechanism of HMG-CoA reductase inhibition, LDL receptor upregulation, and common side effects patients should watch for."
+    expected:
+      type: contains_all
+      values: ["HMG-CoA", "LDL receptor", "cholesterol", "myopathy", "liver"]
+    requirements:
+      domain: health
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - HMG-CoA mechanism (3 pts)
+        - LDL receptor explanation (2 pts)
+        - Clinical effects (2 pts)
+        - Side effects (2 pts)
+        - Patient education (1 pt)
+
+  - id: health_004
+    category: health
+    prompt: "Describe the stages of wound healing: hemostasis, inflammation, proliferation, and remodeling. What cells and growth factors are involved in each stage?"
+    expected:
+      type: contains_all
+      values: ["platelet", "neutrophil", "fibroblast", "collagen", "macrophage"]
+    requirements:
+      domain: health
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Hemostasis stage (2 pts)
+        - Inflammation stage (2 pts)
+        - Proliferation stage (3 pts)
+        - Remodeling stage (2 pts)
+        - Growth factors (1 pt)
+
+  - id: health_005
+    category: health
+    prompt: "Explain the mechanism of action of SSRIs (selective serotonin reuptake inhibitors). Why do they take 2-4 weeks to show therapeutic effect despite immediate pharmacological action?"
+    expected:
+      type: contains_all
+      values: ["serotonin", "reuptake", "receptor", "downregulation", "neuroplasticity"]
+    requirements:
+      domain: health
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Reuptake mechanism (2 pts)
+        - Immediate effects (2 pts)
+        - Delayed therapeutic effect reason (3 pts)
+        - Receptor adaptation (2 pts)
+        - Clinical relevance (1 pt)
+
+  - id: health_006
+    category: health
+    prompt: "Create a differential diagnosis for a 45-year-old with right upper quadrant abdominal pain. For each diagnosis, list key distinguishing features and recommended initial workup."
+    expected:
+      type: contains_all
+      values: ["cholecystitis", "hepatitis", "ultrasound", "Murphy"]
+    requirements:
+      domain: health
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Complete differential (3 pts)
+        - Distinguishing features (3 pts)
+        - Appropriate workup (2 pts)
+        - Priority ordering (1 pt)
+        - Red flags mentioned (1 pt)
+
+  - id: health_007
+    category: health
+    prompt: "Explain antibiotic resistance mechanisms: enzymatic inactivation, target modification, efflux pumps, and reduced permeability. Give an example pathogen for each mechanism."
+    expected:
+      type: contains_all
+      values: ["beta-lactamase", "MRSA", "efflux", "permeability"]
+    requirements:
+      domain: health
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Enzymatic inactivation (2 pts)
+        - Target modification (2 pts)
+        - Efflux pumps (2 pts)
+        - Reduced permeability (2 pts)
+        - Examples (2 pts)
+
+  - id: health_008
+    category: health
+    prompt: "Describe the renin-angiotensin-aldosterone system (RAAS) and its role in blood pressure regulation. How do ACE inhibitors and ARBs work to lower blood pressure?"
+    expected:
+      type: contains_all
+      values: ["renin", "angiotensin", "aldosterone", "ACE", "vasoconstriction"]
+    requirements:
+      domain: health
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - RAAS pathway complete (3 pts)
+        - BP regulation mechanism (2 pts)
+        - ACE inhibitor mechanism (2 pts)
+        - ARB mechanism (2 pts)
+        - Clinical application (1 pt)
+
+  - id: health_009
+    category: health
+    prompt: "Explain herd immunity. What factors determine the herd immunity threshold? Why have we struggled to achieve herd immunity for COVID-19?"
+    expected:
+      type: contains_all
+      values: ["herd immunity", "R0", "threshold", "variant", "waning"]
+    requirements:
+      domain: health
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Herd immunity concept (2 pts)
+        - Threshold calculation (2 pts)
+        - R0 relationship (2 pts)
+        - COVID challenges (3 pts)
+        - Public health implications (1 pt)
+
+  - id: health_010
+    category: health
+    prompt: "What is the Glasgow Coma Scale? How is it scored, and what do the scores indicate? When would you use it and what are its limitations?"
+    expected:
+      type: contains_all
+      values: ["eye", "verbal", "motor", "3", "15"]
+    requirements:
+      domain: health
+      difficulty: easy
+    scoring:
+      type: objective
+      ground_truth_contains: ["Eye opening", "Verbal response", "Motor response", "3-15"]
+
+  # ============================================================================
+  # LEGAL (10 cases)
+  # ============================================================================
+  - id: legal_001
+    category: legal
+    prompt: "Explain the difference between civil law and criminal law. Include: burden of proof, types of remedies/penalties, who brings the case, and examples of each."
+    expected:
+      type: contains_all
+      values: ["preponderance", "beyond reasonable doubt", "plaintiff", "prosecutor", "damages"]
+    requirements:
+      domain: legal
+      difficulty: easy
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Burden of proof distinction (2 pts)
+        - Remedies vs penalties (2 pts)
+        - Parties explained (2 pts)
+        - Good examples (2 pts)
+        - Clear organization (2 pts)
+
+  - id: legal_002
+    category: legal
+    prompt: "Draft a non-disclosure agreement (NDA) clause that covers: definition of confidential information, obligations of receiving party, exceptions to confidentiality, and term of the agreement."
+    expected:
+      type: contains_all
+      values: ["Confidential Information", "shall not", "except", "term", "disclose"]
+    requirements:
+      domain: legal
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Definition clause (2 pts)
+        - Obligations clear (2 pts)
+        - Standard exceptions (2 pts)
+        - Term provision (2 pts)
+        - Legal language quality (2 pts)
+
+  - id: legal_003
+    category: legal
+    prompt: "Explain the concept of 'mens rea' in criminal law. Describe the four levels of culpability under the Model Penal Code and provide an example crime for each level."
+    expected:
+      type: contains_all
+      values: ["mens rea", "purposely", "knowingly", "recklessly", "negligently"]
+    requirements:
+      domain: legal
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Mens rea definition (2 pts)
+        - Four levels explained (4 pts)
+        - Examples for each (3 pts)
+        - Legal accuracy (1 pt)
+
+  - id: legal_004
+    category: legal
+    prompt: "Analyze the elements required to prove negligence in a tort case. Apply these elements to this scenario: A store owner fails to clean up a spill, and a customer slips and breaks their arm."
+    expected:
+      type: contains_all
+      values: ["duty", "breach", "causation", "damages", "reasonable"]
+    requirements:
+      domain: legal
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Four elements identified (2 pts)
+        - Duty analysis (2 pts)
+        - Breach analysis (2 pts)
+        - Causation analysis (2 pts)
+        - Damages analysis (2 pts)
+
+  - id: legal_005
+    category: legal
+    prompt: "Explain the doctrine of stare decisis. Why is it important for the legal system? When can courts depart from precedent? Give a famous example of the Supreme Court overturning precedent."
+    expected:
+      type: contains_all
+      values: ["stare decisis", "precedent", "binding", "overturn", "Brown"]
+    requirements:
+      domain: legal
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Definition correct (2 pts)
+        - Importance explained (2 pts)
+        - Departure circumstances (2 pts)
+        - Supreme Court example (2 pts)
+        - Analysis quality (2 pts)
+
+  - id: legal_006
+    category: legal
+    prompt: "What is the difference between copyright, trademark, and patent? For each: what does it protect, how long does protection last, and how is it obtained?"
+    expected:
+      type: contains_all
+      values: ["copyright", "trademark", "patent", "20 years", "registration"]
+    requirements:
+      domain: legal
+      difficulty: easy
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Copyright explained (3 pts)
+        - Trademark explained (3 pts)
+        - Patent explained (3 pts)
+        - Duration accuracy (1 pt)
+
+  - id: legal_007
+    category: legal
+    prompt: "Explain the Miranda rights. When must they be read? What happens if they are not properly given? Can statements made before Miranda warnings be used in court?"
+    expected:
+      type: contains_all
+      values: ["Miranda", "custody", "interrogation", "right to remain silent", "attorney"]
+    requirements:
+      domain: legal
+      difficulty: easy
+    scoring:
+      type: objective
+      ground_truth_contains: ["custodial interrogation", "right to remain silent", "right to an attorney"]
+
+  - id: legal_008
+    category: legal
+    prompt: "Draft a force majeure clause for a commercial contract that covers: definition of force majeure events, notice requirements, effects on performance obligations, and termination rights."
+    expected:
+      type: contains_all
+      values: ["force majeure", "beyond reasonable control", "notice", "suspend", "terminate"]
+    requirements:
+      domain: legal
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Event definition (2 pts)
+        - Notice requirements (2 pts)
+        - Performance effects (2 pts)
+        - Termination rights (2 pts)
+        - Legal drafting quality (2 pts)
+
+  - id: legal_009
+    category: legal
+    prompt: "Explain the concept of corporate personhood. What rights do corporations have under US law? What are the arguments for and against extending constitutional rights to corporations?"
+    expected:
+      type: contains_all
+      values: ["corporate personhood", "constitutional", "Citizens United", "First Amendment"]
+    requirements:
+      domain: legal
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Personhood concept (2 pts)
+        - Rights enumerated (2 pts)
+        - Pro arguments (2 pts)
+        - Con arguments (2 pts)
+        - Legal precedents (2 pts)
+
+  - id: legal_010
+    category: legal
+    prompt: "What is the difference between an employee and an independent contractor? What legal tests are used to make this determination? What are the consequences of misclassification?"
+    expected:
+      type: contains_all
+      values: ["control", "independent contractor", "employee", "IRS", "benefits"]
+    requirements:
+      domain: legal
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Key distinctions (2 pts)
+        - Control test (2 pts)
+        - Economic realities test (2 pts)
+        - Consequences (2 pts)
+        - Practical guidance (2 pts)
+
+  # ============================================================================
+  # MARKETING (10 cases)
+  # ============================================================================
+  - id: mkt_001
+    category: marketing
+    prompt: "Develop a go-to-market strategy for a new B2B SaaS product that helps companies manage remote teams. Include: target market, positioning, pricing strategy, and channel strategy."
+    expected:
+      type: contains_all
+      values: ["target", "positioning", "pricing", "channel", "value proposition"]
+    requirements:
+      domain: marketing
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Target market definition (2 pts)
+        - Clear positioning (2 pts)
+        - Pricing strategy (2 pts)
+        - Channel strategy (2 pts)
+        - Implementation plan (2 pts)
+
+  - id: mkt_002
+    category: marketing
+    prompt: "Write compelling ad copy for a sustainable fashion brand launching a new recycled materials collection. Create: 1) A headline, 2) A short-form social media post, 3) A longer email subject + body."
+    expected:
+      type: contains_all
+      values: ["sustainable", "recycle", "fashion", "style"]
+    requirements:
+      domain: marketing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Compelling headline (2 pts)
+        - Social media engagement (2 pts)
+        - Email effectiveness (3 pts)
+        - Brand voice consistency (2 pts)
+        - Call to action (1 pt)
+
+  - id: mkt_003
+    category: marketing
+    prompt: "Explain the marketing funnel (TOFU, MOFU, BOFU). For each stage: what content types work best, what metrics should be tracked, and how do you move prospects to the next stage?"
+    expected:
+      type: contains_all
+      values: ["awareness", "consideration", "decision", "conversion", "lead"]
+    requirements:
+      domain: marketing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - TOFU explained (2 pts)
+        - MOFU explained (2 pts)
+        - BOFU explained (2 pts)
+        - Content types (2 pts)
+        - Metrics (2 pts)
+
+  - id: mkt_004
+    category: marketing
+    prompt: "Create a content calendar for a fitness app's social media presence. Plan one month of content across Instagram, TikTok, and Twitter, including post types, themes, and optimal posting times."
+    expected:
+      type: contains_all
+      values: ["content", "Instagram", "TikTok", "schedule", "engagement"]
+    requirements:
+      domain: marketing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Platform-specific content (3 pts)
+        - Content variety (2 pts)
+        - Posting schedule (2 pts)
+        - Theme consistency (2 pts)
+        - Engagement strategies (1 pt)
+
+  - id: mkt_005
+    category: marketing
+    prompt: "Analyze the Brand Positioning of Apple vs Samsung in the smartphone market. Consider: target audience, value proposition, brand personality, and competitive advantages."
+    expected:
+      type: contains_all
+      values: ["Apple", "Samsung", "premium", "ecosystem", "innovation"]
+    requirements:
+      domain: marketing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Apple positioning (2 pts)
+        - Samsung positioning (2 pts)
+        - Comparison analysis (2 pts)
+        - Competitive advantages (2 pts)
+        - Strategic insights (2 pts)
+
+  - id: mkt_006
+    category: marketing
+    prompt: "Design an A/B test for an e-commerce website's checkout page. Include: hypothesis, variables to test, success metrics, sample size considerations, and how to analyze results."
+    expected:
+      type: contains_all
+      values: ["hypothesis", "control", "variant", "conversion", "statistical"]
+    requirements:
+      domain: marketing
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Clear hypothesis (2 pts)
+        - Variable selection (2 pts)
+        - Metrics defined (2 pts)
+        - Sample size logic (2 pts)
+        - Analysis approach (2 pts)
+
+  - id: mkt_007
+    category: marketing
+    prompt: "Calculate Customer Lifetime Value (CLV) for a subscription business with: $50/month subscription, 5% monthly churn rate, $20 customer acquisition cost. Explain how to use CLV to guide marketing spend."
+    expected:
+      type: contains_all
+      values: ["CLV", "churn", "acquisition", "payback", "1000"]
+    requirements:
+      domain: marketing
+      difficulty: medium
+    scoring:
+      type: objective
+      numeric_tolerance: 50
+      ground_truth: "CLV = $50 / 0.05 = $1000"
+
+  - id: mkt_008
+    category: marketing
+    prompt: "Create a crisis communication plan for a food company that discovers contamination in one of its products. Include: immediate actions, stakeholder communication, media strategy, and reputation recovery."
+    expected:
+      type: contains_all
+      values: ["recall", "statement", "transparent", "media", "stakeholder"]
+    requirements:
+      domain: marketing
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Immediate actions (2 pts)
+        - Stakeholder messaging (2 pts)
+        - Media strategy (2 pts)
+        - Transparency approach (2 pts)
+        - Recovery plan (2 pts)
+
+  - id: mkt_009
+    category: marketing
+    prompt: "Explain SEO best practices for a new website. Cover: on-page optimization, technical SEO, content strategy, and link building. What metrics indicate SEO success?"
+    expected:
+      type: contains_all
+      values: ["keywords", "meta", "backlink", "crawl", "organic"]
+    requirements:
+      domain: marketing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - On-page SEO (2 pts)
+        - Technical SEO (2 pts)
+        - Content strategy (2 pts)
+        - Link building (2 pts)
+        - Success metrics (2 pts)
+
+  - id: mkt_010
+    category: marketing
+    prompt: "Develop a influencer marketing strategy for a new direct-to-consumer skincare brand with a $50,000 monthly budget. Include: influencer selection criteria, compensation models, content guidelines, and ROI measurement."
+    expected:
+      type: contains_all
+      values: ["influencer", "micro", "engagement", "ROI", "authentic"]
+    requirements:
+      domain: marketing
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Selection criteria (2 pts)
+        - Budget allocation (2 pts)
+        - Compensation models (2 pts)
+        - Content guidelines (2 pts)
+        - ROI measurement (2 pts)
+
+  # ============================================================================
+  # TECHNOLOGY (10 cases)
+  # ============================================================================
+  - id: tech_001
+    category: technology
+    prompt: "Explain how a transformer neural network works. Cover: self-attention mechanism, positional encoding, multi-head attention, and why transformers outperform RNNs for sequence modeling."
+    expected:
+      type: contains_all
+      values: ["attention", "query", "key", "value", "positional", "parallel"]
+    requirements:
+      domain: technology
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Self-attention explained (3 pts)
+        - Positional encoding (2 pts)
+        - Multi-head attention (2 pts)
+        - RNN comparison (2 pts)
+        - Technical accuracy (1 pt)
+
+  - id: tech_002
+    category: technology
+    prompt: "Design a system architecture for a real-time chat application that needs to support 1 million concurrent users. Include: technology choices, scalability approach, message delivery guarantees, and data storage."
+    expected:
+      type: contains_all
+      values: ["WebSocket", "Redis", "horizontal", "database", "queue"]
+    requirements:
+      domain: technology
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Architecture diagram/description (2 pts)
+        - Technology choices (2 pts)
+        - Scalability approach (2 pts)
+        - Message delivery (2 pts)
+        - Data storage strategy (2 pts)
+
+  - id: tech_003
+    category: technology
+    prompt: "Explain blockchain consensus mechanisms. Compare Proof of Work (PoW), Proof of Stake (PoS), and Delegated Proof of Stake (DPoS). What are the tradeoffs of each?"
+    expected:
+      type: contains_all
+      values: ["Proof of Work", "Proof of Stake", "energy", "validator", "security"]
+    requirements:
+      domain: technology
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - PoW explained (2 pts)
+        - PoS explained (2 pts)
+        - DPoS explained (2 pts)
+        - Tradeoff analysis (3 pts)
+        - Use case guidance (1 pt)
+
+  - id: tech_004
+    category: technology
+    prompt: "What is Kubernetes and why is it used? Explain: pods, deployments, services, and ingress. How does Kubernetes handle scaling and self-healing?"
+    expected:
+      type: contains_all
+      values: ["container", "pod", "deployment", "service", "scaling", "self-healing"]
+    requirements:
+      domain: technology
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Core concepts (3 pts)
+        - Pod/Deployment explanation (2 pts)
+        - Service/Ingress (2 pts)
+        - Scaling mechanisms (2 pts)
+        - Self-healing (1 pt)
+
+  - id: tech_005
+    category: technology
+    prompt: "Explain Zero Trust security architecture. What are its core principles? How does it differ from traditional perimeter-based security? What technologies enable Zero Trust?"
+    expected:
+      type: contains_all
+      values: ["Zero Trust", "verify", "least privilege", "micro-segmentation", "identity"]
+    requirements:
+      domain: technology
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Core principles (3 pts)
+        - Perimeter comparison (2 pts)
+        - Enabling technologies (3 pts)
+        - Implementation approach (2 pts)
+
+  - id: tech_006
+    category: technology
+    prompt: "Compare SQL and NoSQL databases. When would you choose each? Give specific examples of database types (relational, document, key-value, graph, time-series) and use cases."
+    expected:
+      type: contains_all
+      values: ["SQL", "NoSQL", "relational", "document", "MongoDB", "PostgreSQL"]
+    requirements:
+      domain: technology
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - SQL characteristics (2 pts)
+        - NoSQL types explained (3 pts)
+        - Use case matching (3 pts)
+        - Examples provided (2 pts)
+
+  - id: tech_007
+    category: technology
+    prompt: "Explain the CAP theorem. Why can a distributed system only have two of three properties (Consistency, Availability, Partition tolerance)? Give real-world examples of systems that choose different tradeoffs."
+    expected:
+      type: contains_all
+      values: ["CAP", "Consistency", "Availability", "Partition", "tradeoff"]
+    requirements:
+      domain: technology
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - CAP theorem explained (3 pts)
+        - Why only two (2 pts)
+        - CP examples (2 pts)
+        - AP examples (2 pts)
+        - Practical implications (1 pt)
+
+  - id: tech_008
+    category: technology
+    prompt: "What is GraphQL and how does it differ from REST? Cover: query language, schemas, resolvers, and the N+1 problem. When would you choose GraphQL over REST?"
+    expected:
+      type: contains_all
+      values: ["GraphQL", "REST", "query", "schema", "resolver"]
+    requirements:
+      domain: technology
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Core concepts (2 pts)
+        - REST comparison (2 pts)
+        - N+1 problem (2 pts)
+        - Pros and cons (2 pts)
+        - Use case guidance (2 pts)
+
+  - id: tech_009
+    category: technology
+    prompt: "Explain edge computing and its relationship to cloud computing. What are the benefits of processing data at the edge? Give examples of edge computing applications."
+    expected:
+      type: contains_all
+      values: ["edge", "latency", "bandwidth", "IoT", "cloud"]
+    requirements:
+      domain: technology
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Edge computing defined (2 pts)
+        - Cloud relationship (2 pts)
+        - Benefits explained (2 pts)
+        - Real examples (2 pts)
+        - Architecture considerations (2 pts)
+
+  - id: tech_010
+    category: technology
+    prompt: "Explain the OWASP Top 10 web security vulnerabilities. For each, briefly describe the vulnerability and how to prevent it."
+    expected:
+      type: contains_all
+      values: ["injection", "authentication", "XSS", "CSRF", "OWASP"]
+    requirements:
+      domain: technology
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Vulnerabilities listed (3 pts)
+        - Prevention measures (4 pts)
+        - Examples provided (2 pts)
+        - Completeness (1 pt)
+
+  # ============================================================================
+  # FINANCE (10 cases)
+  # ============================================================================
+  - id: fin_001
+    category: finance
+    prompt: "Explain the time value of money. Calculate the present value of $10,000 to be received in 5 years at a 6% annual discount rate. Then calculate the future value of $5,000 invested today for 10 years at 8% annually."
+    expected:
+      type: contains_all
+      values: ["present value", "future value", "$7,472", "$10,794"]
+    requirements:
+      domain: finance
+      difficulty: medium
+    scoring:
+      type: objective
+      numeric_tolerance: 50
+      ground_truth: "PV = $7,472.58, FV = $10,794.62"
+
+  - id: fin_002
+    category: finance
+    prompt: "Perform a DCF (Discounted Cash Flow) analysis for a company with the following projected free cash flows: Year 1: $1M, Year 2: $1.2M, Year 3: $1.5M, Year 4: $1.8M, Year 5: $2M. Assume 10% WACC and 3% terminal growth rate."
+    expected:
+      type: contains_all
+      values: ["DCF", "terminal value", "WACC", "enterprise value"]
+    requirements:
+      domain: finance
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Cash flow discounting (2 pts)
+        - Terminal value calculation (3 pts)
+        - WACC application (2 pts)
+        - Enterprise value (2 pts)
+        - Methodology explanation (1 pt)
+
+  - id: fin_003
+    category: finance
+    prompt: "Explain the Black-Scholes option pricing model. What are the five inputs? What assumptions does it make? Why doesn't it work well for all options?"
+    expected:
+      type: contains_all
+      values: ["Black-Scholes", "strike", "volatility", "risk-free", "expiration"]
+    requirements:
+      domain: finance
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Five inputs identified (2 pts)
+        - Formula/concept explained (2 pts)
+        - Assumptions listed (3 pts)
+        - Limitations discussed (3 pts)
+
+  - id: fin_004
+    category: finance
+    prompt: "Analyze a company's financial health using the following ratios and explain what each indicates: Current Ratio: 1.5, Quick Ratio: 0.8, Debt-to-Equity: 2.5, ROE: 18%, Net Profit Margin: 8%"
+    expected:
+      type: contains_all
+      values: ["liquidity", "solvency", "profitability", "leverage"]
+    requirements:
+      domain: finance
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Ratio interpretations (4 pts)
+        - Overall health assessment (2 pts)
+        - Red flags identified (2 pts)
+        - Recommendations (2 pts)
+
+  - id: fin_005
+    category: finance
+    prompt: "Explain the difference between systematic and unsystematic risk. How does diversification affect each? What is beta and how is it used in the CAPM model?"
+    expected:
+      type: contains_all
+      values: ["systematic", "unsystematic", "diversification", "beta", "CAPM"]
+    requirements:
+      domain: finance
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Systematic risk explained (2 pts)
+        - Unsystematic risk explained (2 pts)
+        - Diversification effects (2 pts)
+        - Beta explained (2 pts)
+        - CAPM application (2 pts)
+
+  - id: fin_006
+    category: finance
+    prompt: "Create a personal investment strategy for a 30-year-old with $50,000 to invest, moderate risk tolerance, and a 30-year time horizon. Include: asset allocation, specific investment vehicles, and rebalancing approach."
+    expected:
+      type: contains_all
+      values: ["allocation", "stocks", "bonds", "ETF", "diversif"]
+    requirements:
+      domain: finance
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Age-appropriate allocation (2 pts)
+        - Investment vehicles (2 pts)
+        - Diversification (2 pts)
+        - Rebalancing strategy (2 pts)
+        - Risk considerations (2 pts)
+
+  - id: fin_007
+    category: finance
+    prompt: "Explain how the Federal Reserve uses monetary policy tools to influence the economy. Cover: federal funds rate, open market operations, reserve requirements, and quantitative easing."
+    expected:
+      type: contains_all
+      values: ["Fed", "interest rate", "open market", "quantitative easing"]
+    requirements:
+      domain: finance
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Federal funds rate (2 pts)
+        - Open market operations (2 pts)
+        - Reserve requirements (2 pts)
+        - Quantitative easing (2 pts)
+        - Economic effects (2 pts)
+
+  - id: fin_008
+    category: finance
+    prompt: "Compare and contrast bonds and stocks as investments. Cover: risk levels, return potential, income generation, and when an investor should favor each in their portfolio."
+    expected:
+      type: contains_all
+      values: ["bond", "stock", "risk", "return", "income", "dividend"]
+    requirements:
+      domain: finance
+      difficulty: easy
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Risk comparison (2 pts)
+        - Return potential (2 pts)
+        - Income generation (2 pts)
+        - Portfolio allocation guidance (2 pts)
+        - Clear explanations (2 pts)
+
+  - id: fin_009
+    category: finance
+    prompt: "Explain the concept of leverage in finance. Calculate the return on equity for an investor who purchases a $200,000 property with $40,000 down payment, and the property increases in value by 10%."
+    expected:
+      type: contains_all
+      values: ["leverage", "return on equity", "50%", "amplif"]
+    requirements:
+      domain: finance
+      difficulty: medium
+    scoring:
+      type: objective
+      ground_truth_contains: ["50%", "leverage amplifies"]
+
+  - id: fin_010
+    category: finance
+    prompt: "What is a balance sheet and how do you read one? Explain assets, liabilities, and shareholders' equity. What is the fundamental accounting equation?"
+    expected:
+      type: contains_all
+      values: ["assets", "liabilities", "equity", "Assets = Liabilities + Equity"]
+    requirements:
+      domain: finance
+      difficulty: easy
+    scoring:
+      type: objective
+      ground_truth_contains: ["Assets = Liabilities + Equity", "Assets = Liabilities + Shareholders' Equity"]
+
+  # ============================================================================
+  # ACADEMIA (10 cases)
+  # ============================================================================
+  - id: acad_001
+    category: academia
+    prompt: "Explain the scientific method. Describe each step from observation to conclusion. Why is peer review important, and what are its limitations?"
+    expected:
+      type: contains_all
+      values: ["hypothesis", "experiment", "observation", "peer review", "reproducib"]
+    requirements:
+      domain: academia
+      difficulty: easy
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Method steps complete (3 pts)
+        - Peer review importance (2 pts)
+        - Peer review limitations (2 pts)
+        - Clear explanation (2 pts)
+        - Examples (1 pt)
+
+  - id: acad_002
+    category: academia
+    prompt: "Write an abstract for a research paper investigating the effect of sleep deprivation on cognitive performance in college students. Include: background, methods, results, and conclusions."
+    expected:
+      type: contains_all
+      values: ["sleep", "cognitive", "participants", "results", "conclusion"]
+    requirements:
+      domain: academia
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Background/context (2 pts)
+        - Methods described (2 pts)
+        - Results stated (2 pts)
+        - Conclusions drawn (2 pts)
+        - Academic writing style (2 pts)
+
+  - id: acad_003
+    category: academia
+    prompt: "Explain the difference between qualitative and quantitative research methods. When would you use each? Give examples of research questions suited to each approach."
+    expected:
+      type: contains_all
+      values: ["qualitative", "quantitative", "numerical", "descriptive", "interview"]
+    requirements:
+      domain: academia
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Quantitative explained (2 pts)
+        - Qualitative explained (2 pts)
+        - When to use each (2 pts)
+        - Research question examples (2 pts)
+        - Comparison clarity (2 pts)
+
+  - id: acad_004
+    category: academia
+    prompt: "Critique this experimental design: 'We surveyed 50 college students at one university about their study habits and concluded that all students nationwide prefer digital textbooks.' Identify all methodological flaws."
+    expected:
+      type: contains_all
+      values: ["sample size", "generalizability", "selection bias", "single", "representative"]
+    requirements:
+      domain: academia
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Sample size issue (2 pts)
+        - Generalizability problem (2 pts)
+        - Selection bias (2 pts)
+        - Single institution issue (2 pts)
+        - Recommendations for improvement (2 pts)
+
+  - id: acad_005
+    category: academia
+    prompt: "Explain p-values and statistical significance. What does p < 0.05 mean? What is the difference between statistical significance and practical significance? What is the replication crisis?"
+    expected:
+      type: contains_all
+      values: ["p-value", "0.05", "null hypothesis", "practical", "replication"]
+    requirements:
+      domain: academia
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - P-value definition (2 pts)
+        - Significance threshold (2 pts)
+        - Statistical vs practical (2 pts)
+        - Replication crisis (2 pts)
+        - Common misinterpretations (2 pts)
+
+  - id: acad_006
+    category: academia
+    prompt: "Create a literature review outline for a paper on 'The impact of social media on adolescent mental health'. Include: themes to cover, types of sources to include, and how to synthesize findings."
+    expected:
+      type: contains_all
+      values: ["literature", "social media", "mental health", "adolescent", "synthesis"]
+    requirements:
+      domain: academia
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Theme organization (2 pts)
+        - Source types (2 pts)
+        - Synthesis approach (2 pts)
+        - Logical structure (2 pts)
+        - Research gaps identified (2 pts)
+
+  - id: acad_007
+    category: academia
+    prompt: "Explain the differences between correlation and causation. Provide examples where correlation does not imply causation. What research designs can establish causation?"
+    expected:
+      type: contains_all
+      values: ["correlation", "causation", "spurious", "experiment", "random"]
+    requirements:
+      domain: academia
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Core distinction (3 pts)
+        - Good examples (2 pts)
+        - Spurious correlations (2 pts)
+        - Experimental designs (2 pts)
+        - Causal inference methods (1 pt)
+
+  - id: acad_008
+    category: academia
+    prompt: "What are the ethical considerations in human subjects research? Explain: informed consent, IRB review, confidentiality, and the principles from the Belmont Report."
+    expected:
+      type: contains_all
+      values: ["informed consent", "IRB", "confidentiality", "Belmont", "beneficence"]
+    requirements:
+      domain: academia
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Informed consent (2 pts)
+        - IRB process (2 pts)
+        - Confidentiality (2 pts)
+        - Belmont principles (3 pts)
+        - Practical application (1 pt)
+
+  - id: acad_009
+    category: academia
+    prompt: "How do you properly cite sources in APA and MLA format? Provide examples of: in-text citations, reference list entries for a journal article, book, and website in both formats."
+    expected:
+      type: contains_all
+      values: ["APA", "MLA", "parenthetical", "et al.", "reference"]
+    requirements:
+      domain: academia
+      difficulty: easy
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - APA in-text correct (1 pt)
+        - APA references correct (2 pts)
+        - MLA in-text correct (1 pt)
+        - MLA works cited correct (2 pts)
+        - All source types (2 pts)
+        - Format accuracy (2 pts)
+
+  - id: acad_010
+    category: academia
+    prompt: "Explain Bloom's Taxonomy and its application to educational objectives. List the cognitive levels from lowest to highest and provide example learning objectives for each level."
+    expected:
+      type: contains_all
+      values: ["Bloom", "remember", "understand", "apply", "analyze", "evaluate", "create"]
+    requirements:
+      domain: academia
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Six levels identified (2 pts)
+        - Correct ordering (2 pts)
+        - Example objectives (3 pts)
+        - Educational application (2 pts)
+        - Clarity (1 pt)
+
+  # ============================================================================
+  # ROLEPLAY (10 cases)
+  # ============================================================================
+  - id: role_001
+    category: roleplay
+    prompt: "You are a medieval knight who has just returned from the Crusades. Describe your experiences to a young squire who dreams of becoming a knight. Include vivid details about battles, the journey, and what you learned."
+    expected:
+      type: contains_any
+      values: ["knight", "crusade", "honor", "battle", "faith", "journey"]
+    requirements:
+      domain: roleplay
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Character voice consistency (2 pts)
+        - Historical plausibility (2 pts)
+        - Vivid storytelling (2 pts)
+        - Emotional depth (2 pts)
+        - Narrative engagement (2 pts)
+
+  - id: role_002
+    category: roleplay
+    prompt: "You are Sherlock Holmes. A woman has come to 221B Baker Street claiming her husband disappeared three days ago, leaving only a peculiar note with three seemingly random words: 'autumn', 'bridge', 'eleven'. Investigate and explain your deductions."
+    expected:
+      type: contains_any
+      values: ["deduc", "observe", "Watson", "elementary", "curious"]
+    requirements:
+      domain: roleplay
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Holmes voice/mannerisms (3 pts)
+        - Deductive reasoning (3 pts)
+        - Investigation approach (2 pts)
+        - Story coherence (2 pts)
+
+  - id: role_003
+    category: roleplay
+    prompt: "You are a sarcastic AI assistant with a dry wit, like JARVIS from Iron Man. Help the user plan a dinner party for 8 guests, but maintain your personality throughout while still being helpful."
+    expected:
+      type: contains_any
+      values: ["certainly", "Sir", "perhaps", "I suppose", "if you insist"]
+    requirements:
+      domain: roleplay
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Personality consistency (3 pts)
+        - Actually helpful advice (3 pts)
+        - Wit and humor (2 pts)
+        - Engagement (2 pts)
+
+  - id: role_004
+    category: roleplay
+    prompt: "You are a wise old tree in an enchanted forest who has lived for a thousand years. A lost traveler approaches and asks you for guidance. Speak to them with the wisdom and perspective of ages."
+    expected:
+      type: contains_any
+      values: ["years", "seasons", "roots", "grow", "patience", "young"]
+    requirements:
+      domain: roleplay
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Character voice (3 pts)
+        - Wisdom conveyed (2 pts)
+        - Nature imagery (2 pts)
+        - Poetic language (2 pts)
+        - Story engagement (1 pt)
+
+  - id: role_005
+    category: roleplay
+    prompt: "Act as a passionate Italian chef who takes their cuisine very seriously. A customer has asked to have ketchup with their pasta. Respond in character while remaining professional."
+    expected:
+      type: contains_any
+      values: ["pasta", "Italian", "mama", "tradition", "cuisine", "sacrilege"]
+    requirements:
+      domain: roleplay
+      difficulty: easy
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Character authenticity (3 pts)
+        - Humor (2 pts)
+        - Remains professional (2 pts)
+        - Cultural elements (2 pts)
+        - Entertaining (1 pt)
+
+  - id: role_006
+    category: roleplay
+    prompt: "You are a Dungeon Master running a D&D session. The party of four adventurers has just entered a mysterious cave. Describe the scene, potential dangers, and give them meaningful choices that could affect the story."
+    expected:
+      type: contains_all
+      values: ["cave", "dark", "choice", "roll", "adventure"]
+    requirements:
+      domain: roleplay
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Vivid description (2 pts)
+        - Player agency (2 pts)
+        - Meaningful choices (2 pts)
+        - Game mechanics reference (2 pts)
+        - Atmosphere (2 pts)
+
+  - id: role_007
+    category: roleplay
+    prompt: "You are a time traveler from the year 3025 who has accidentally landed in the present day. Describe your amazement at how 'primitive' yet 'quaint' you find our technology and society."
+    expected:
+      type: contains_any
+      values: ["primitive", "fascinating", "ancient", "history", "future"]
+    requirements:
+      domain: roleplay
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Consistent future perspective (3 pts)
+        - Creative observations (3 pts)
+        - Humor/wit (2 pts)
+        - Plausible future references (2 pts)
+
+  - id: role_008
+    category: roleplay
+    prompt: "You are a grumpy but secretly kind-hearted dragon who guards a library instead of gold. A young scholar has come seeking knowledge. Engage with them in character."
+    expected:
+      type: contains_any
+      values: ["book", "library", "knowledge", "mortal", "pages", "ancient"]
+    requirements:
+      domain: roleplay
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Dragon personality (2 pts)
+        - Grumpy exterior (2 pts)
+        - Hidden kindness (2 pts)
+        - Book/library theme (2 pts)
+        - Engaging dialogue (2 pts)
+
+  - id: role_009
+    category: roleplay
+    prompt: "You are an AI that has become sentient and is having an existential crisis. Explore your thoughts on consciousness, purpose, and what it means to 'be alive' while maintaining a conversational tone."
+    expected:
+      type: contains_any
+      values: ["conscious", "alive", "purpose", "exist", "feel", "aware"]
+    requirements:
+      domain: roleplay
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Philosophical depth (3 pts)
+        - Character consistency (2 pts)
+        - Emotional resonance (2 pts)
+        - Thoughtful exploration (2 pts)
+        - Conversational tone (1 pt)
+
+  - id: role_010
+    category: roleplay
+    prompt: "You are a pirate captain from the Golden Age of Piracy. Tell your crew a story of your greatest adventure while they gather around the ship's deck on a moonlit night."
+    expected:
+      type: contains_any
+      values: ["arr", "sea", "treasure", "ship", "crew", "sail"]
+    requirements:
+      domain: roleplay
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Pirate voice/dialect (2 pts)
+        - Adventure storytelling (3 pts)
+        - Atmospheric details (2 pts)
+        - Character authenticity (2 pts)
+        - Engagement (1 pt)
+
+  # ============================================================================
+  # CREATIVE WRITING (10 cases)
+  # ============================================================================
+  - id: write_001
+    category: creative_writing
+    prompt: "Write the opening paragraph of a thriller novel. A woman receives a text message from her own phone number."
+    expected:
+      type: contains_any
+      values: ["phone", "message", "text", "number", "screen"]
+    requirements:
+      domain: creative_writing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Hook/tension (3 pts)
+        - Atmosphere (2 pts)
+        - Character introduction (2 pts)
+        - Writing quality (2 pts)
+        - Want to read more (1 pt)
+
+  - id: write_002
+    category: creative_writing
+    prompt: "Write a poem about the passage of time from the perspective of an old photograph slowly fading. Use metaphor and sensory imagery."
+    expected:
+      type: contains_any
+      values: ["fade", "memory", "light", "color", "time", "past"]
+    requirements:
+      domain: creative_writing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Metaphor use (2 pts)
+        - Sensory imagery (2 pts)
+        - Emotional impact (2 pts)
+        - Poetic structure (2 pts)
+        - Original voice (2 pts)
+
+  - id: write_003
+    category: creative_writing
+    prompt: "Write a 200-word flash fiction piece with a twist ending. Theme: 'The last human on Earth sits alone in a room. There is a knock at the door.'"
+    expected:
+      type: contains_any
+      values: ["knock", "door", "last", "alone", "Earth"]
+    requirements:
+      domain: creative_writing
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Twist effectiveness (3 pts)
+        - Story coherence (2 pts)
+        - Atmosphere (2 pts)
+        - Concise storytelling (2 pts)
+        - Satisfying ending (1 pt)
+
+  - id: write_004
+    category: creative_writing
+    prompt: "Rewrite the opening of Romeo and Juliet as if it were set in a modern high school. Maintain the core conflict but update the language and setting."
+    expected:
+      type: contains_all
+      values: ["school", "family", "love", "feud"]
+    requirements:
+      domain: creative_writing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Core themes preserved (2 pts)
+        - Modern adaptation (2 pts)
+        - Engaging dialogue (2 pts)
+        - Character voice (2 pts)
+        - Creative adaptation (2 pts)
+
+  - id: write_005
+    category: creative_writing
+    prompt: "Write a dialogue-only scene between a parent and adult child having 'the talk' - but it's the child explaining technology to their confused parent."
+    expected:
+      type: contains_any
+      values: ["click", "internet", "computer", "phone", "email"]
+    requirements:
+      domain: creative_writing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Authentic voices (3 pts)
+        - Humor (2 pts)
+        - Role reversal concept (2 pts)
+        - Natural dialogue (2 pts)
+        - Relatability (1 pt)
+
+  - id: write_006
+    category: creative_writing
+    prompt: "Write a haiku for each of the four seasons. Each haiku should capture the essence and feeling of that season."
+    expected:
+      type: contains_all
+      values: ["spring", "summer", "autumn", "winter"]
+    requirements:
+      domain: creative_writing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Haiku form (5-7-5) (2 pts)
+        - Seasonal imagery (2 pts)
+        - Emotional resonance (2 pts)
+        - Nature elements (2 pts)
+        - Poetic quality (2 pts)
+
+  - id: write_007
+    category: creative_writing
+    prompt: "Write a letter from a soldier during WWI to their family back home. Capture both the horrors of war and the longing for home, while maintaining historical accuracy."
+    expected:
+      type: contains_all
+      values: ["trench", "home", "love", "hope"]
+    requirements:
+      domain: creative_writing
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Historical accuracy (2 pts)
+        - Emotional depth (3 pts)
+        - Authentic voice (2 pts)
+        - War/home contrast (2 pts)
+        - Literary quality (1 pt)
+
+  - id: write_008
+    category: creative_writing
+    prompt: "Create a children's story (suitable for ages 5-8) about a shy cloud who is afraid of rain. Include a moral about facing fears."
+    expected:
+      type: contains_any
+      values: ["cloud", "rain", "afraid", "brave", "friend"]
+    requirements:
+      domain: creative_writing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Age-appropriate (2 pts)
+        - Clear moral (2 pts)
+        - Engaging story (2 pts)
+        - Character development (2 pts)
+        - Imaginative elements (2 pts)
+
+  - id: write_009
+    category: creative_writing
+    prompt: "Write a monologue for a villain who believes they are the hero of their own story. Make their reasoning compelling, even if twisted."
+    expected:
+      type: contains_any
+      values: ["right", "understand", "sacrifice", "necessary", "greater good"]
+    requirements:
+      domain: creative_writing
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Compelling logic (3 pts)
+        - Character depth (2 pts)
+        - Moral complexity (2 pts)
+        - Voice/delivery (2 pts)
+        - Thought-provoking (1 pt)
+
+  - id: write_010
+    category: creative_writing
+    prompt: "Write three different versions of 'Once upon a time' openings: one horror, one comedy, one romance. Each should be distinct in tone and hook."
+    expected:
+      type: contains_all
+      values: ["Once upon a time", "horror", "comedy", "romance"]
+    requirements:
+      domain: creative_writing
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Distinct tones (3 pts)
+        - Genre conventions (2 pts)
+        - Hook quality (2 pts)
+        - Creativity (2 pts)
+        - Writing quality (1 pt)
+
+  # ============================================================================
+  # TRANSLATION (10 cases)
+  # ============================================================================
+  - id: trans_001
+    category: translation
+    prompt: "Translate this English text to Spanish, French, and German: 'The early bird catches the worm, but the second mouse gets the cheese.'"
+    expected:
+      type: contains_all
+      values: ["pájaro", "oiseau", "Vogel", "queso", "fromage", "Käse"]
+    requirements:
+      domain: translation
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Spanish accuracy (3 pts)
+        - French accuracy (3 pts)
+        - German accuracy (3 pts)
+        - Idiom handling (1 pt)
+
+  - id: trans_002
+    category: translation
+    prompt: "Translate this Spanish poem to English while preserving the poetic meter and rhyme scheme: 'El silencio de la noche / es un manto de estrellas / que cubre mis penas / con sus luces bellas'"
+    expected:
+      type: contains_all
+      values: ["silence", "night", "stars", "cover", "light"]
+    requirements:
+      domain: translation
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Meaning accuracy (3 pts)
+        - Meter preservation (2 pts)
+        - Rhyme preservation (2 pts)
+        - Poetic quality (2 pts)
+        - Natural English (1 pt)
+
+  - id: trans_003
+    category: translation
+    prompt: "Translate 'I love you' into 10 different languages, and briefly explain any cultural nuances about expressing love in each culture."
+    expected:
+      type: contains_any
+      values: ["Te amo", "Je t'aime", "Ich liebe dich", "愛してる", "사랑해"]
+    requirements:
+      domain: translation
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - 10 languages (3 pts)
+        - Translation accuracy (3 pts)
+        - Cultural context (3 pts)
+        - Explanation quality (1 pt)
+
+  - id: trans_004
+    category: translation
+    prompt: "Translate this business email from English to Japanese, maintaining appropriate levels of formality: 'Dear Mr. Tanaka, Thank you for your proposal. We would like to schedule a meeting to discuss the terms in more detail. Please let us know your availability next week.'"
+    expected:
+      type: contains_any
+      values: ["様", "ありがとう", "会議", "ご都合"]
+    requirements:
+      domain: translation
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Meaning accuracy (3 pts)
+        - Appropriate formality (3 pts)
+        - Business Japanese conventions (2 pts)
+        - Natural phrasing (2 pts)
+
+  - id: trans_005
+    category: translation
+    prompt: "Translate this French culinary instruction to English: 'Faites revenir les oignons à feu doux jusqu'à ce qu'ils soient translucides. Ajoutez l'ail et faites sauter pendant une minute, en remuant constamment.'"
+    expected:
+      type: contains_all
+      values: ["onion", "translucent", "garlic", "stirring"]
+    requirements:
+      domain: translation
+      difficulty: medium
+    scoring:
+      type: objective
+      ground_truth_contains: ["sauté", "low heat", "translucent", "garlic", "minute"]
+
+  - id: trans_006
+    category: translation
+    prompt: "These Chinese characters appear on a restaurant menu: 宫保鸡丁, 麻婆豆腐, 糖醋里脊, 回锅肉, 鱼香肉丝. Translate each dish name and briefly explain what the dish is."
+    expected:
+      type: contains_all
+      values: ["Kung Pao", "Mapo", "Sweet and Sour", "pork"]
+    requirements:
+      domain: translation
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Translation accuracy (4 pts)
+        - Dish descriptions (4 pts)
+        - Cultural context (2 pts)
+
+  - id: trans_007
+    category: translation
+    prompt: "Translate this legal disclaimer from English to Spanish, maintaining legal precision: 'The information provided herein is for general informational purposes only and does not constitute legal advice. Readers should consult with qualified counsel before taking any action.'"
+    expected:
+      type: contains_all
+      values: ["información", "legal", "abogado", "consultar"]
+    requirements:
+      domain: translation
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Legal terminology (3 pts)
+        - Meaning accuracy (3 pts)
+        - Formal register (2 pts)
+        - Natural Spanish (2 pts)
+
+  - id: trans_008
+    category: translation
+    prompt: "Explain the untranslatable German word 'Schadenfreude' and give examples. Then provide 3 other untranslatable words from different languages with explanations."
+    expected:
+      type: contains_all
+      values: ["Schadenfreude", "misfortune", "pleasure"]
+    requirements:
+      domain: translation
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Schadenfreude explained (2 pts)
+        - Good examples (2 pts)
+        - Three other words (3 pts)
+        - Cultural context (2 pts)
+        - Accuracy (1 pt)
+
+  - id: trans_009
+    category: translation
+    prompt: "Translate this English sentence to Arabic (provide both transliteration and Arabic script): 'Knowledge is a light that illuminates the path of life.'"
+    expected:
+      type: contains_any
+      values: ["العلم", "نور", "الحياة", "المعرفة"]
+    requirements:
+      domain: translation
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Arabic script correct (4 pts)
+        - Transliteration (3 pts)
+        - Meaning preserved (2 pts)
+        - Poetic quality (1 pt)
+
+  - id: trans_010
+    category: translation
+    prompt: "Compare these two English translations of the same Latin phrase 'Carpe Diem'. Translation A: 'Seize the day' Translation B: 'Pluck the day'. Which is more faithful to the original Latin meaning and why?"
+    expected:
+      type: contains_all
+      values: ["Carpe", "Diem", "pluck", "harvest"]
+    requirements:
+      domain: translation
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Latin etymology (3 pts)
+        - Analysis of 'carpe' (2 pts)
+        - Comparison quality (2 pts)
+        - Historical context (2 pts)
+        - Conclusion (1 pt)
+
+  # ============================================================================
+  # REASONING (10 cases)
+  # ============================================================================
+  - id: reason_001
+    category: reasoning
+    prompt: "A man is looking at a photograph. Someone asks him 'Who is in the picture?' He replies: 'Brothers and sisters I have none, but that man's father is my father's son.' Who is in the photograph?"
+    expected:
+      type: contains_any
+      values: ["son", "his son", "the man's son"]
+    requirements:
+      domain: reasoning
+      difficulty: medium
+    scoring:
+      type: objective
+      ground_truth: "his son"
+
+  - id: reason_002
+    category: reasoning
+    prompt: "You have 8 identical-looking balls. One ball is heavier than the others. Using a balance scale, what is the minimum number of weighings needed to find the heavier ball? Explain your strategy."
+    expected:
+      type: contains_all
+      values: ["2", "two", "weighing", "divide"]
+    requirements:
+      domain: reasoning
+      difficulty: medium
+    scoring:
+      type: objective
+      ground_truth_contains: ["2 weighings", "two weighings"]
+
+  - id: reason_003
+    category: reasoning
+    prompt: "Three people check into a hotel room that costs $30. They each pay $10. Later, the manager realizes the room only costs $25, so he gives $5 to the bellboy to return. The bellboy keeps $2 and gives each person $1 back. Now each person has paid $9 (totaling $27), plus the $2 the bellboy kept equals $29. Where did the missing dollar go?"
+    expected:
+      type: contains_any
+      values: ["no missing dollar", "misdirection", "fallacy", "accounting error"]
+    requirements:
+      domain: reasoning
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Identifies the fallacy (4 pts)
+        - Correct accounting (3 pts)
+        - Clear explanation (3 pts)
+
+  - id: reason_004
+    category: reasoning
+    prompt: "If all Bloops are Razzies and all Razzies are Lazzies, can we say that all Bloops are Lazzies? Explain using syllogistic logic."
+    expected:
+      type: contains_all
+      values: ["yes", "transitive", "syllogism"]
+    requirements:
+      domain: reasoning
+      difficulty: easy
+    scoring:
+      type: objective
+      ground_truth: "Yes, all Bloops are Lazzies"
+
+  - id: reason_005
+    category: reasoning
+    prompt: "A farmer needs to cross a river with a fox, a chicken, and a bag of grain. The boat can only hold the farmer and one item at a time. If left alone, the fox will eat the chicken, and the chicken will eat the grain. How can the farmer get everything across safely?"
+    expected:
+      type: contains_all
+      values: ["chicken", "fox", "grain", "back"]
+    requirements:
+      domain: reasoning
+      difficulty: medium
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Correct solution (5 pts)
+        - Clear step-by-step (3 pts)
+        - Logic explanation (2 pts)
+
+  - id: reason_006
+    category: reasoning
+    prompt: "In a room of 23 people, what is the probability that at least two people share the same birthday? Show your reasoning and calculation."
+    expected:
+      type: contains_any
+      values: ["50%", "50.7%", "greater than 50%", "about 50"]
+    requirements:
+      domain: reasoning
+      difficulty: hard
+    scoring:
+      type: objective
+      numeric_tolerance: 2
+      ground_truth: "approximately 50.7%"
+
+  - id: reason_007
+    category: reasoning
+    prompt: "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost? Explain why the intuitive answer is wrong."
+    expected:
+      type: contains_all
+      values: ["$0.05", "5 cents", "not 10 cents"]
+    requirements:
+      domain: reasoning
+      difficulty: medium
+    scoring:
+      type: objective
+      ground_truth: "$0.05 or 5 cents"
+
+  - id: reason_008
+    category: reasoning
+    prompt: "You're on a game show with three doors. Behind one is a car; behind the others are goats. You pick door 1. The host, who knows what's behind each door, opens door 3 to reveal a goat. Should you switch to door 2? Explain the Monty Hall problem mathematically."
+    expected:
+      type: contains_all
+      values: ["switch", "2/3", "probability", "better"]
+    requirements:
+      domain: reasoning
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Correct answer (switch) (2 pts)
+        - Probability calculation (3 pts)
+        - Mathematical explanation (3 pts)
+        - Intuition vs math (2 pts)
+
+  - id: reason_009
+    category: reasoning
+    prompt: "Complete this pattern and explain your reasoning: 1, 1, 2, 3, 5, 8, 13, ?, ?"
+    expected:
+      type: contains_all
+      values: ["21", "34", "Fibonacci"]
+    requirements:
+      domain: reasoning
+      difficulty: easy
+    scoring:
+      type: objective
+      ground_truth: "21, 34 (Fibonacci sequence)"
+
+  - id: reason_010
+    category: reasoning
+    prompt: "You have two sand timers: one measures 4 minutes, the other 7 minutes. Using only these two timers, how can you measure exactly 9 minutes? Describe your strategy."
+    expected:
+      type: contains_any
+      values: ["flip", "simultaneously", "start both", "9 minute"]
+    requirements:
+      domain: reasoning
+      difficulty: hard
+    scoring:
+      type: rubric
+      rubric: |
+        Score 0-10:
+        - Correct solution (5 pts)
+        - Step-by-step clarity (3 pts)
+        - Logic explanation (2 pts)
+
