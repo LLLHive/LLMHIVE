@@ -43,6 +43,9 @@ export function useConversationsContext(): ConversationsContextValue {
   return context
 }
 
+// Alias for backwards compatibility and convenience
+export const useConversations = useConversationsContext
+
 /**
  * Provider that shares conversation state across the entire app
  */

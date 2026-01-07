@@ -21,78 +21,29 @@ import {
   saveOrchestratorSettings, 
   DEFAULT_ORCHESTRATOR_SETTINGS 
 } from "@/lib/settings-storage"
-import { useAuth } from "@/lib/auth-context"
+import { useConversationsContext } from "@/lib/conversations-context"
 import { toast } from "@/lib/toast"
 
-// Storage keys
-const CONVERSATIONS_KEY = "llmhive-conversations"
-const PROJECTS_KEY = "llmhive-projects"
-
-// Helper to sync to API (for authenticated users)
-async function syncToApi(conversations: Conversation[], projects: Project[]) {
-  try {
-    await Promise.all([
-      fetch("/api/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync", conversations }),
-      }),
-      fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync", projects }),
-      }),
-    ])
-    // Successfully synced to API
-  } catch (e) {
-    console.error("[ChatInterface] API sync failed:", e)
-  }
-}
-
-// Helper to load from API
-async function loadFromApi(): Promise<{ conversations: Conversation[], projects: Project[] } | null> {
-  try {
-    const [convRes, projRes] = await Promise.all([
-      fetch("/api/conversations"),
-      fetch("/api/projects"),
-    ])
-
-    if (convRes.ok && projRes.ok) {
-      const convData = await convRes.json()
-      const projData = await projRes.json()
-      
-      const conversations = (convData.conversations || []).map((c: any) => ({
-        ...c,
-        createdAt: new Date(c.createdAt),
-        updatedAt: new Date(c.updatedAt),
-        messages: (c.messages || []).map((m: any) => ({
-          ...m,
-          timestamp: new Date(m.timestamp),
-        })),
-      }))
-      
-      const projects = (projData.projects || []).map((p: any) => ({
-        ...p,
-        createdAt: new Date(p.createdAt),
-      }))
-
-      return { conversations, projects }
-    }
-  } catch (e) {
-    console.warn("[ChatInterface] API load failed:", e)
-  }
-  return null
-}
-
 export function ChatInterface() {
-  const auth = useAuth()
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  // Use shared context for conversations and projects
+  const {
+    conversations,
+    projects,
+    currentConversation,
+    setCurrentConversation,
+    createConversation,
+    updateConversation,
+    deleteConversation,
+    createProject,
+    deleteProject,
+    addConversationToProject,
+    removeConversationFromProject,
+  } = useConversationsContext()
+  
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [showArtifact, setShowArtifact] = useState(false)
   const [currentArtifact, setCurrentArtifact] = useState<Artifact | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
   const [orchestratorSettings, setOrchestratorSettings] = useState<OrchestratorSettings>(DEFAULT_ORCHESTRATOR_SETTINGS)
-  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -112,106 +63,11 @@ export function ChatInterface() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   
-  // Load settings and data on mount
+  // Load orchestrator settings on mount
   useEffect(() => {
-    const loadData = async () => {
-      const savedSettings = loadOrchestratorSettings()
-      setOrchestratorSettings(savedSettings)
-      
-      // Try to load from API first (if authenticated)
-      if (auth?.isAuthenticated) {
-        const apiData = await loadFromApi()
-        if (apiData && (apiData.conversations.length > 0 || apiData.projects.length > 0)) {
-          setConversations(apiData.conversations)
-          setProjects(apiData.projects)
-          // Cache to localStorage
-          localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(apiData.conversations))
-          localStorage.setItem(PROJECTS_KEY, JSON.stringify(apiData.projects))
-          // Loaded from API successfully
-          setSettingsLoaded(true)
-          return
-        }
-      }
-      
-      // Fallback to localStorage
-      try {
-        const savedConversations = localStorage.getItem(CONVERSATIONS_KEY)
-        if (savedConversations) {
-          const parsed = JSON.parse(savedConversations)
-          const restored = parsed.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt),
-            updatedAt: new Date(c.updatedAt),
-            messages: (c.messages || []).map((m: any) => ({
-              ...m,
-              timestamp: new Date(m.timestamp),
-            })),
-          }))
-          setConversations(restored)
-        }
-      } catch (e) {
-        console.error("Failed to load conversations:", e)
-      }
-      
-      try {
-        const savedProjects = localStorage.getItem(PROJECTS_KEY)
-        if (savedProjects) {
-          const parsed = JSON.parse(savedProjects)
-          const restored = parsed.map((p: any) => ({
-            ...p,
-            createdAt: new Date(p.createdAt),
-          }))
-          setProjects(restored)
-        }
-      } catch (e) {
-        console.error("Failed to load projects:", e)
-      }
-      
-      setSettingsLoaded(true)
-    }
-    
-    loadData()
-  }, [auth?.isAuthenticated])
-  
-  // Persist conversations when they change
-  useEffect(() => {
-    if (!settingsLoaded) return
-    
-    // Always save to localStorage
-    try {
-      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations))
-    } catch (e) {
-      console.error("Failed to save conversations:", e)
-    }
-    
-    // Also sync to API if authenticated (debounced)
-    if (auth?.isAuthenticated && conversations.length > 0) {
-      const timeoutId = setTimeout(() => {
-        syncToApi(conversations, projects)
-      }, 2000) // Debounce by 2 seconds
-      return () => clearTimeout(timeoutId)
-    }
-  }, [conversations, settingsLoaded, auth?.isAuthenticated])
-  
-  // Persist projects when they change
-  useEffect(() => {
-    if (!settingsLoaded) return
-    
-    // Always save to localStorage
-    try {
-      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects))
-    } catch (e) {
-      console.error("Failed to save projects:", e)
-    }
-    
-    // Also sync to API if authenticated (debounced)
-    if (auth?.isAuthenticated) {
-      const timeoutId = setTimeout(() => {
-        syncToApi(conversations, projects)
-      }, 2000) // Debounce by 2 seconds
-      return () => clearTimeout(timeoutId)
-    }
-  }, [projects, settingsLoaded, auth?.isAuthenticated])
+    const savedSettings = loadOrchestratorSettings()
+    setOrchestratorSettings(savedSettings)
+  }, [])
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -274,9 +130,10 @@ export function ChatInterface() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [showShortcutsModal, showRenameModal, showMoveModal, showAdvancedSettings, showArtifact])
 
-  const currentConversation = conversations.find((c) => c.id === currentConversationId)
+  // Get current conversation from context or by ID
+  const currentConv = currentConversation || conversations.find((c) => c.id === currentConversationId)
 
-  const handleNewChat = () => {
+  const handleNewChat = async () => {
     const newConv: Conversation = {
       id: `conv-${Date.now()}`,
       title: "New Chat",
@@ -285,7 +142,7 @@ export function ChatInterface() {
       updatedAt: new Date(),
       model: "gpt-4o",
     }
-    setConversations([newConv, ...conversations])
+    await createConversation(newConv)
     setCurrentConversationId(newConv.id)
     setShowArtifact(false)
     setCurrentArtifact(null)
@@ -300,27 +157,25 @@ export function ChatInterface() {
     handleNewChat()
   }
 
-  const handleSendMessage = (message: Message) => {
+  const handleSendMessage = async (message: Message) => {
     let targetConversationId = currentConversationId
 
     if (!targetConversationId) {
-      targetConversationId = handleNewChat()
+      targetConversationId = await handleNewChat()
     }
 
-    setConversations((prev) =>
-      prev.map((conv) => {
-        if (conv.id === targetConversationId) {
-          const updatedMessages = [...conv.messages, message]
-          return {
-            ...conv,
-            messages: updatedMessages,
-            updatedAt: new Date(),
-            title: conv.title === "New Chat" && message.role === "user" ? message.content.slice(0, 50) : conv.title,
-          }
-        }
-        return conv
-      }),
-    )
+    const conv = conversations.find(c => c.id === targetConversationId)
+    if (conv) {
+      const updatedMessages = [...conv.messages, message]
+      const newTitle = conv.title === "New Chat" && message.role === "user" 
+        ? message.content.slice(0, 50) 
+        : conv.title
+      
+      await updateConversation(targetConversationId, {
+        messages: updatedMessages,
+        title: newTitle,
+      })
+    }
 
     if (message.artifact) {
       setCurrentArtifact(message.artifact)
@@ -347,12 +202,12 @@ export function ChatInterface() {
     setShowDeleteDialog(true)
   }
 
-  const handleDeleteConversation = (id: string) => {
+  const handleDeleteConversation = async (id: string) => {
     // Clear the delete dialog state first
     setDeleteConversationId(null)
     
-    // Then update the conversations
-    setConversations((prev) => prev.filter((c) => c.id !== id))
+    // Delete from context (handles localStorage and API sync)
+    await deleteConversation(id)
     
     if (currentConversationId === id) {
       setCurrentConversationId(null)
@@ -373,37 +228,33 @@ export function ChatInterface() {
     }
   }
 
-  const handleArchiveConversation = (id: string) => {
+  const handleArchiveConversation = async (id: string) => {
     // Mark conversation as archived
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
-    )
+    await updateConversation(id, { archived: true })
     toast.info("Chat archived")
   }
 
-  const handleTogglePin = (id: string) => {
-    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c)))
+  const handleTogglePin = async (id: string) => {
+    const conv = conversations.find(c => c.id === id)
+    if (conv) {
+      await updateConversation(id, { pinned: !conv.pinned })
+    }
   }
 
-  const handleRenameConversation = (id: string, newTitle: string) => {
-    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title: newTitle } : c)))
+  const handleRenameConversation = async (id: string, newTitle: string) => {
+    await updateConversation(id, { title: newTitle })
   }
 
-  const handleMoveToProject = (conversationId: string, projectId: string) => {
-    setProjects((prev) =>
-      prev.map((project) => {
-        if (project.id === projectId) {
-          // Add conversation to project if not already there
-          if (!project.conversations.includes(conversationId)) {
-            return { ...project, conversations: [...project.conversations, conversationId] }
-          }
-        } else {
-          // Remove from other projects
-          return { ...project, conversations: project.conversations.filter((id) => id !== conversationId) }
-        }
-        return project
-      })
-    )
+  const handleMoveToProject = async (conversationId: string, projectId: string) => {
+    // Remove from all other projects first
+    for (const project of projects) {
+      if (project.id !== projectId && project.conversations.includes(conversationId)) {
+        await removeConversationFromProject(conversationId, project.id)
+      }
+    }
+    // Add to target project
+    await addConversationToProject(conversationId, projectId)
+    
     toast.success("Moved to project successfully")
     setShowMoveModal(false)
     setMoveConversationId(null)
@@ -419,18 +270,18 @@ export function ChatInterface() {
     setShowRenameModal(true)
   }
 
-  const handleCreateProject = (project: Omit<Project, "id" | "createdAt">) => {
+  const handleCreateProject = async (project: Omit<Project, "id" | "createdAt">) => {
     const newProject: Project = {
       ...project,
       id: `project-${Date.now()}`,
       createdAt: new Date(),
     }
-    setProjects((prev) => [...prev, newProject])
+    await createProject(newProject)
     toast.success(`Project "${newProject.name}" created`)
   }
 
-  const handleDeleteProject = (projectId: string) => {
-    setProjects((prev) => prev.filter((p) => p.id !== projectId))
+  const handleDeleteProject = async (projectId: string) => {
+    await deleteProject(projectId)
     toast.info("Project deleted")
   }
 
@@ -538,7 +389,7 @@ export function ChatInterface() {
         ) : (
           <>
             <ChatArea
-              conversation={currentConversation}
+              conversation={currentConv}
               onSendMessage={handleSendMessage}
               onShowArtifact={(artifact) => {
                 setCurrentArtifact(artifact)
