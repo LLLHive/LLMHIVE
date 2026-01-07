@@ -64,8 +64,46 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       setError(null)
 
+      // ALWAYS load localStorage first as the source of truth
+      let localConvs: Conversation[] = []
+      let localProjects: Project[] = []
+      
       try {
-        // Try to load from API first (if authenticated)
+        const savedConversations = localStorage.getItem(CONVERSATIONS_KEY)
+        const savedProjects = localStorage.getItem(PROJECTS_KEY)
+
+        if (savedConversations) {
+          const parsed = JSON.parse(savedConversations)
+          localConvs = parsed.map((c: any) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+            messages: (c.messages || []).map((m: any) => ({
+              ...m,
+              timestamp: new Date(m.timestamp),
+            })),
+          }))
+        }
+
+        if (savedProjects) {
+          const parsed = JSON.parse(savedProjects)
+          localProjects = parsed.map((p: any) => ({
+            ...p,
+            createdAt: new Date(p.createdAt),
+          }))
+        }
+        
+        console.log(`[ConversationsContext] Loaded from localStorage: ${localConvs.length} conversations, ${localProjects.length} projects`)
+      } catch (e) {
+        console.error("[ConversationsContext] Failed to load from localStorage:", e)
+      }
+
+      // Set localStorage data immediately so user sees their data
+      setConversations(localConvs)
+      setProjects(localProjects)
+
+      try {
+        // Try to load from API (if authenticated) and MERGE with localStorage
         if (auth?.isAuthenticated && auth?.user?.id) {
           try {
             const [convRes, projRes] = await Promise.all([
@@ -78,7 +116,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
               const projData = await projRes.json()
               
               // Restore Date objects
-              const restoredConvs = (convData.conversations || []).map((c: any) => ({
+              const apiConvs = (convData.conversations || []).map((c: any) => ({
                 ...c,
                 createdAt: new Date(c.createdAt),
                 updatedAt: new Date(c.updatedAt),
@@ -88,56 +126,42 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
                 })),
               }))
               
-              const restoredProjects = (projData.projects || []).map((p: any) => ({
+              const apiProjects = (projData.projects || []).map((p: any) => ({
                 ...p,
                 createdAt: new Date(p.createdAt),
               }))
 
-              setConversations(restoredConvs)
-              setProjects(restoredProjects)
+              console.log(`[ConversationsContext] API returned: ${apiConvs.length} conversations, ${apiProjects.length} projects`)
               
-              // Also cache to localStorage
-              localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(restoredConvs))
-              localStorage.setItem(PROJECTS_KEY, JSON.stringify(restoredProjects))
+              // CRITICAL: Only use API data if it has MORE data than localStorage
+              // This prevents the in-memory API storage from wiping local data on cold starts
+              if (apiConvs.length > localConvs.length) {
+                setConversations(apiConvs)
+                localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(apiConvs))
+                console.log(`[ConversationsContext] Using API conversations (more data)`)
+              } else if (apiConvs.length === 0 && localConvs.length > 0) {
+                // API returned empty but we have local data - sync local to API
+                console.log(`[ConversationsContext] API empty, syncing localStorage to API`)
+                // Keep using localStorage data, it will sync on next save
+              }
               
-              console.log(`[ConversationsContext] Loaded from API: ${restoredConvs.length} conversations, ${restoredProjects.length} projects`)
+              if (apiProjects.length > localProjects.length) {
+                setProjects(apiProjects)
+                localStorage.setItem(PROJECTS_KEY, JSON.stringify(apiProjects))
+                console.log(`[ConversationsContext] Using API projects (more data)`)
+              }
+              
               setIsInitialized(true)
               setIsLoading(false)
               return
             }
           } catch (apiError) {
-            console.warn("[ConversationsContext] API load failed, falling back to localStorage:", apiError)
+            console.warn("[ConversationsContext] API load failed, using localStorage:", apiError)
           }
         }
 
-        // Fallback to localStorage
-        const savedConversations = localStorage.getItem(CONVERSATIONS_KEY)
-        const savedProjects = localStorage.getItem(PROJECTS_KEY)
-
-        if (savedConversations) {
-          const parsed = JSON.parse(savedConversations)
-          const restored = parsed.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt),
-            updatedAt: new Date(c.updatedAt),
-            messages: (c.messages || []).map((m: any) => ({
-              ...m,
-              timestamp: new Date(m.timestamp),
-            })),
-          }))
-          setConversations(restored)
-        }
-
-        if (savedProjects) {
-          const parsed = JSON.parse(savedProjects)
-          const restored = parsed.map((p: any) => ({
-            ...p,
-            createdAt: new Date(p.createdAt),
-          }))
-          setProjects(restored)
-        }
-
-        console.log("[ConversationsContext] Loaded from localStorage")
+        // Already loaded from localStorage above - just mark as initialized
+        console.log("[ConversationsContext] Using localStorage data (no API or unauthenticated)")
         setIsInitialized(true)
       } catch (e) {
         console.error("[ConversationsContext] Failed to load:", e)

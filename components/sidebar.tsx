@@ -696,10 +696,10 @@ function ProjectItem({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
-          align="end" 
-          side="right" 
-          sideOffset={8} 
-          className="w-52 p-1"
+          align="start" 
+          side="bottom" 
+          sideOffset={4} 
+          className="w-52 p-1 z-[100]"
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <DropdownMenuItem
@@ -872,10 +872,10 @@ function ConversationItem({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
-          align="end" 
-          side="right"
-          sideOffset={8}
-          className="w-48 p-1"
+          align="start" 
+          side="bottom"
+          sideOffset={4}
+          className="w-48 p-1 z-[100]"
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           {/* Share option */}
