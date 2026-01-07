@@ -677,10 +677,14 @@ function ProjectItem({
       )}
       
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen(!menuOpen)
+            }}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
               // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
@@ -854,10 +858,14 @@ function ConversationItem({
       )}
 
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen(!menuOpen)
+            }}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
               // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
