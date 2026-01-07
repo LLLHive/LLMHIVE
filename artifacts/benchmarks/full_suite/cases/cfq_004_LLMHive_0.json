@@ -1,0 +1,60 @@
+{
+  "case_id": "cfq_004",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "cfq_004",
+    "status": "success",
+    "answer_text": "Python is used for a wide variety of applications across different fields: 1. **Web Development**: Python is used to build web applications with frameworks such as Django and Flask. 2. **Data Science and Machine Learning**: Python is a popular choice for data analysis, visualization, and machine learning.\n\nLibraries like Pandas, NumPy, Matplotlib, and frameworks like TensorFlow and scikit-learn are widely used. 3. **Scripting and Automation**: Python scripts are used for automating repetitive tasks, system administration, and workflow automation. 4. **Software Development**: Python is used for developing both standalone software and complex enterprise applications. 5. **Scientific Computing**: Python supports scientific and numeric computing with libraries such as SciPy and SymPy. 6. **Artificial Intelligence**: Python supports AI research and development, focusing on neural networks and deep learning, with libraries like Keras and PyTorch. 7. **Game Development**: Python can be used in game development, with libraries such as Pygame. 8. **Network Programming**: Python is used for creating network servers and client-side applications. 9. **Desktop GUI Applications**: Python can build cross-platform GUI applications with libraries like Tkinter and PyQt. 10. **Internet of Things (IoT)**: Python is used in IoT applications due to its simplicity and wide range of available libraries.\n\nThese uses are well-documented and recognized within the programming community.",
+    "structured_answer": {
+      "message": "Python is used for a wide variety of applications across different fields: 1. **Web Development**: Python is used to build web applications with frameworks such as Django and Flask. 2. **Data Science and Machine Learning**: Python is a popular choice for data analysis, visualization, and machine learning.\n\nLibraries like Pandas, NumPy, Matplotlib, and frameworks like TensorFlow and scikit-learn are widely used. 3. **Scripting and Automation**: Python scripts are used for automating repetitive tasks, system administration, and workflow automation. 4. **Software Development**: Python is used for developing both standalone software and complex enterprise applications. 5. **Scientific Computing**: Python supports scientific and numeric computing with libraries such as SciPy and SymPy. 6. **Artificial Intelligence**: Python supports AI research and development, focusing on neural networks and deep learning, with libraries like Keras and PyTorch. 7. **Game Development**: Python can be used in game development, with libraries such as Pygame. 8. **Network Programming**: Python is used for creating network servers and client-side applications. 9. **Desktop GUI Applications**: Python can build cross-platform GUI applications with libraries like Tkinter and PyQt. 10. **Internet of Things (IoT)**: Python is used in IoT applications due to its simplicity and wide range of available libraries.\n\nThese uses are well-documented and recognized within the programming community.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1135,
+      "latency_ms": 24993
+    },
+    "latency_ms": 24994.70281600952,
+    "timestamp": "2026-01-07T01:53:30.190522",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1135,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "cfq_004",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.8,
+    "rubric_weight": 0.2,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

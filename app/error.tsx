@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, RefreshCw, Home, Copy, Check, Bug, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
+import * as Sentry from "@sentry/nextjs"
 
 /**
  * Global error page for Next.js App Router.
@@ -27,6 +28,18 @@ export default function Error({
     const id = `ERR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
     setErrorId(error.digest || id)
     
+    // Report to Sentry
+    Sentry.captureException(error, {
+      tags: {
+        error_type: "app_error",
+        error_id: error.digest || id,
+      },
+      extra: {
+        url: typeof window !== "undefined" ? window.location.href : "unknown",
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
+      },
+    })
+    
     // Log the error to console with full details
     console.group(`[App Error] ${id}`)
     console.error("Error:", error)
@@ -35,9 +48,6 @@ export default function Error({
     console.error("Digest:", error.digest)
     console.error("Timestamp:", new Date().toISOString())
     console.groupEnd()
-    
-    // Here you would typically log to an error reporting service like Sentry
-    // logErrorToService(error, { errorId: id })
   }, [error])
 
   const handleCopyError = async () => {

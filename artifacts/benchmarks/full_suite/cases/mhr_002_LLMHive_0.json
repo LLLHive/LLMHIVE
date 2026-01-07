@@ -1,0 +1,64 @@
+{
+  "case_id": "mhr_002",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "mhr_002",
+    "status": "success",
+    "answer_text": "The Nobel Prize in Physics for 2007 was awarded to Albert Fert and Peter Gr\u00fcnberg for the discovery of Giant Magnetoresistance (GMR), a fundamental phenomenon that leads to the miniaturization of hard disk drives and revolutionized data reading technology.",
+    "structured_answer": {
+      "message": "The Nobel Prize in Physics for 2007 was awarded to Albert Fert and Peter Gr\u00fcnberg for the discovery of Giant Magnetoresistance (GMR), a fundamental phenomenon that leads to the miniaturization of hard disk drives and revolutionized data reading technology.",
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1098,
+      "latency_ms": 25808
+    },
+    "latency_ms": 25818.43090057373,
+    "timestamp": "2026-01-07T01:41:12.877341",
+    "metadata": {
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1098,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "mhr_002",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "regex": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.9,
+    "rubric_weight": 0.1,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

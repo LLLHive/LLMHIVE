@@ -258,8 +258,10 @@ export function Sidebar({
             )}
 
             {/* Content - ChatGPT Style Layout */}
-            <ScrollArea className="flex-1 px-3">
-              {/* Collaborate Section - Coming Soon */}
+            <ScrollArea className="flex-1 px-2 overflow-visible">
+              {/* Inner wrapper with padding to prevent clipping of rounded corners */}
+              <div className="px-1">
+              {/* Collaborate Section - Links to Settings/Collaboration */}
               <div className="py-2">
                 <button
                   onClick={() => setCollaborateExpanded(!collaborateExpanded)}
@@ -274,9 +276,9 @@ export function Sidebar({
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Clock className="h-3 w-3 text-muted-foreground" />
                     {collaborateExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      <ChevronUp className="h-4 w-4 text-foreground" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 text-foreground" />
                     )}
                   </div>
                 </button>
@@ -286,7 +288,17 @@ export function Sidebar({
                     <div className="text-sm text-muted-foreground">
                       <Sparkles className="h-5 w-5 mx-auto mb-2 text-[var(--bronze)]" />
                       <p className="font-medium">Coming Soon</p>
-                      <p className="text-xs mt-1">Real-time collaboration with your team</p>
+                      <p className="text-xs mt-1 mb-3">Real-time collaboration with your team</p>
+                      <Link href={ROUTES.SETTINGS}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7 hover:border-[var(--bronze)] hover:text-[var(--bronze)]"
+                        >
+                          <Settings className="h-3 w-3 mr-1.5" />
+                          Manage Settings
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -302,9 +314,9 @@ export function Sidebar({
                 >
                   <span className="font-medium">Projects</span>
                   {activeTab === "projects" ? (
-                    <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <ChevronUp className="h-4 w-4 flex-shrink-0 text-foreground" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-foreground" />
                   )}
                 </button>
                 
@@ -391,9 +403,9 @@ export function Sidebar({
                 >
                   <span className="font-medium">Chats</span>
                   {chatsExpanded ? (
-                    <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <ChevronUp className="h-4 w-4 flex-shrink-0 text-foreground" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-foreground" />
                   )}
                 </button>
                 
@@ -457,6 +469,7 @@ export function Sidebar({
                   />
                 </div>
               )}
+              </div>{/* Close inner wrapper */}
             </ScrollArea>
             
             {/* Settings at the bottom */}
@@ -494,20 +507,21 @@ export function Sidebar({
               >
                 <MessageSquare className="h-5 w-5" />
               </Button>
-              {/* Collapsed Collaborate (disabled) */}
+              {/* Collapsed Collaborate - links to Settings */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      disabled
-                      className="w-10 h-10 opacity-50 cursor-not-allowed"
-                    >
-                      <Users className="h-5 w-5" />
-                    </Button>
+                    <Link href={ROUTES.SETTINGS}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="w-10 h-10 hover:text-[var(--bronze)]"
+                      >
+                        <Users className="h-5 w-5" />
+                      </Button>
+                    </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="right">Collaborate (Coming Soon)</TooltipContent>
+                  <TooltipContent side="right">Collaborate (Coming Soon) - Go to Settings</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               <Button
@@ -643,8 +657,10 @@ function ProjectItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200",
+        "group relative flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-secondary cursor-pointer transition-all duration-200",
         (isExpanded || hasActiveChat) && "bg-secondary/50",
+        // Ensure the rounded corners are not clipped
+        "overflow-visible"
       )}
       onClick={onToggleExpand}
     >
@@ -667,9 +683,12 @@ function ProjectItem({
             size="icon" 
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
-              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+              // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
+              "opacity-100 md:opacity-40 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
               "hover:bg-secondary-foreground/10",
-              "focus:opacity-100 focus-visible:opacity-100"
+              "focus:opacity-100 focus-visible:opacity-100",
+              // Ensure it's above the highlight background
+              "relative z-10"
             )}
             aria-label="Project options"
           >
@@ -809,9 +828,11 @@ function ConversationItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200",
-        isActive && "bg-secondary ring-1 ring-[var(--bronze)]/30",
-        isNested && "py-1 text-[13px]",
+        "group relative flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-secondary cursor-pointer transition-all duration-200",
+        // Active state: fully rounded pill with bronze accent border (not ring to avoid clipping)
+        isActive && "bg-secondary/80 border border-[var(--bronze)]/40",
+        !isActive && "border border-transparent",
+        isNested && "py-1 text-[13px]"
       )}
       onClick={onSelect}
     >
@@ -838,9 +859,12 @@ function ConversationItem({
             size="icon" 
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
-              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+              // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
+              "opacity-100 md:opacity-40 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
               "hover:bg-secondary-foreground/10",
-              "focus:opacity-100 focus-visible:opacity-100"
+              "focus:opacity-100 focus-visible:opacity-100",
+              // Ensure it's above the highlight background
+              "relative z-10"
             )}
             aria-label="Chat options"
           >

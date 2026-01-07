@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       messages,
       models,  // User-selected models from the UI
       orchestratorSettings,
+      orchestrationEngine,  // Direct orchestration engine selection (hrm, prompt-diffusion, deep-conf, adaptive-ensemble)
       chatId,
       userId,
       projectId,
@@ -138,9 +139,14 @@ export async function POST(req: NextRequest) {
     const maxCostUsd = settings.maxCostUsd || orchestrationOverrides.maxCostUsd || null
     const preferCheaper = settings.preferCheaper || orchestrationOverrides.preferCheaper || false
     
+    // Map orchestration engine from UI to backend protocol
+    // Supports: hrm, prompt-diffusion, deep-conf, adaptive-ensemble
+    const protocol = orchestrationEngine || settings.orchestrationEngine || null
+    
     const payload = {
       prompt,
       models: selectedModels.length > 0 ? selectedModels : null,  // User-selected models for ensemble
+      protocol,  // Orchestration protocol/engine (HRM, Prompt Diffusion, DeepConf, Adaptive Ensemble)
       reasoning_mode: settings.reasoningMode || "standard",
       reasoning_method: selectedReasoningMethod, // Map from advancedReasoningMethods dropdown
       domain_pack: settings.domainPack || "default",
@@ -196,6 +202,7 @@ export async function POST(req: NextRequest) {
     console.log("[Chat API] Sending to backend:", {
       prompt: prompt.slice(0, 50) + "...",
       models: selectedModels,
+      protocol,
       orchestration: payload.orchestration,
       backendUrl: apiBase,
     })

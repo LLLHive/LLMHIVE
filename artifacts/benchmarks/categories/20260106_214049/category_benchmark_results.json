@@ -1,0 +1,121 @@
+{
+  "timestamp": "2026-01-06T21:40:49.475151",
+  "models": [
+    "gpt-4o",
+    "claude-3.5-sonnet"
+  ],
+  "categories": [
+    "reasoning"
+  ],
+  "quick_mode": true,
+  "results": {
+    "reasoning": {
+      "category": "reasoning",
+      "total_cases": 2,
+      "models_tested": 2,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "The man in the photograph is the son of the man who is speaking. \n\nHere's the breakdown of the statement: \n- \"Brothers and sisters I have none\" means the speaker has no siblings.\n- \"That man's father is my father's son\" implies that \"my father's son\" refers to the speaker himself, since he has no siblings.\n- Therefore, \"that man's father\" is the speaker, making the man in the photograph his son.",
+              "latency_ms": 2602.0729769952595,
+              "tokens_in": 52,
+              "tokens_out": 91,
+              "cost_usd": 0.001625,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "To find the heavier ball among 8 identical-looking balls using a balance scale, you can determine the heavier ball in a minimum of 2 weighings. Here's the strategy:\n\n1. **First Weighing:**\n   - Divide the 8 balls into three groups: two groups of 3 balls each and one group of 2 balls.\n   - Weigh the two groups of 3 balls against each other.\n\n   There are two possible outcomes:\n   - **Case 1:** One group of 3 balls is heavier. This means the heavier ball is in this group.\n   - **Case 2:** Both gro",
+              "latency_ms": 4156.107562012039,
+              "tokens_in": 47,
+              "tokens_out": 261,
+              "cost_usd": 0.00415,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 3379.0902695036493,
+            "total_cost_usd": 0.005775
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "Let me help solve this riddle step by step:\n\n1) First, let's understand what \"that man's father is my father's son\" means:\n   * \"My father's son\" refers to either the speaker himself or his brother\n   * Since the speaker says \"Brothers and sisters I have none\"\n   * Therefore, \"my father's son\" must be the speaker himself\n\n2) So, \"that man's father\" = \"the speaker himself\"\n\n3) Therefore:\n   * The man in the photograph is the son of the speaker\n\nThe answer is: The man is looking at a photograph of",
+              "latency_ms": 3977.506823997828,
+              "tokens_in": 55,
+              "tokens_out": 138,
+              "cost_usd": 0.002235,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "Let me solve this step by step.\n\n1) First, let's understand what we have:\n   * 8 balls in total\n   * 1 ball is heavier\n   * All balls look identical\n   * We can use a balance scale (comparing weights of two groups)\n\n2) Let's develop a strategy:\n   * First weighing: Split the balls into three groups\n   * Group 1: 3 balls\n   * Group 2: 3 balls\n   * Group 3: 2 balls (set aside)\n\n3) First weighing: Compare Group 1 vs Group 2 (3 balls vs 3 balls)\n\n4) Two possible outcomes:\n   * If one side is heavier",
+              "latency_ms": 10322.550847995444,
+              "tokens_in": 52,
+              "tokens_out": 415,
+              "cost_usd": 0.0063809999999999995,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 7150.028835996636,
+            "total_cost_usd": 0.008615999999999999
+          }
+        }
+      ]
+    }
+  },
+  "total_time_seconds": 21.07777190208435,
+  "model_aggregates": {
+    "gpt-4o": {
+      "total_cases": 2,
+      "successes": 2,
+      "errors": 0,
+      "total_latency_ms": 6758.180539007299,
+      "total_cost_usd": 0.005775,
+      "categories": {
+        "reasoning": 1.0
+      },
+      "overall_success_rate": 1.0,
+      "avg_latency_ms": 3379.0902695036493
+    },
+    "claude-3.5-sonnet": {
+      "total_cases": 2,
+      "successes": 2,
+      "errors": 0,
+      "total_latency_ms": 14300.057671993272,
+      "total_cost_usd": 0.008615999999999999,
+      "categories": {
+        "reasoning": 1.0
+      },
+      "overall_success_rate": 1.0,
+      "avg_latency_ms": 7150.028835996636
+    }
+  }
+}

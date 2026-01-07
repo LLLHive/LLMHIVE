@@ -1,0 +1,362 @@
+{
+  "suite_name": "Complex Reasoning Benchmark",
+  "suite_version": "1.0.0",
+  "git_commit": "033033a38318",
+  "timestamp": "20260107_014330",
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "timeout_seconds": 120.0,
+    "top_p": 1.0,
+    "enable_tools": true,
+    "enable_rag": true,
+    "enable_mcp2": true,
+    "deterministic": true,
+    "reasoning_mode": "standard",
+    "accuracy_level": 3,
+    "enable_hrm": true,
+    "enable_deep_consensus": false
+  },
+  "systems": [
+    "LLMHive",
+    "OpenRouter-gpt-4o"
+  ],
+  "results": [
+    {
+      "case_id": "tbr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "The profit margin is approximately 28.89%.",
+        "structured_answer": {
+          "message": "The profit margin is approximately 28.89%.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1004,
+          "latency_ms": 19171
+        },
+        "latency_ms": 19172.86491394043,
+        "timestamp": "2026-01-07T01:43:50.970896",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1004,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_001",
+      "system": "OpenRouter-gpt-4o",
+      "run_num": 0,
+      "result": {
+        "system_name": "OpenRouter-gpt-4o",
+        "model_id": "openai/gpt-4o",
+        "prompt_id": "tbr_001",
+        "status": "error",
+        "answer_text": "",
+        "structured_answer": null,
+        "latency_ms": 0.3778380050789565,
+        "timestamp": "2026-01-07T01:43:50.972460",
+        "metadata": {
+          "models_used": [],
+          "strategy_used": null,
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": "openai package required: pip install openai"
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "OpenRouter-gpt-4o",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Could not extract numeric value (expected: 28.89)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    },
+    {
+      "case_id": "fam_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_004",
+        "status": "success",
+        "answer_text": "The largest planet in our solar system is Jupiter.",
+        "structured_answer": {
+          "message": "The largest planet in our solar system is Jupiter.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 992,
+          "latency_ms": 13731
+        },
+        "latency_ms": 13732.898235321045,
+        "timestamp": "2026-01-07T01:44:04.707271",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 992,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_004",
+      "system": "OpenRouter-gpt-4o",
+      "run_num": 0,
+      "result": {
+        "system_name": "OpenRouter-gpt-4o",
+        "model_id": "openai/gpt-4o",
+        "prompt_id": "fam_004",
+        "status": "error",
+        "answer_text": "",
+        "structured_answer": null,
+        "latency_ms": 0.36779399670194834,
+        "timestamp": "2026-01-07T01:44:04.708704",
+        "metadata": {
+          "models_used": [],
+          "strategy_used": null,
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": "openai package required: pip install openai"
+      },
+      "score": {
+        "prompt_id": "fam_004",
+        "system_name": "OpenRouter-gpt-4o",
+        "objective_score": {
+          "score": 0.6666666666666666,
+          "passed": false,
+          "checks": {
+            "contains": false,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {
+            "contains": "Missing: 'Jupiter'"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.6666666666666666,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    }
+  ],
+  "scores": [
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "OpenRouter-gpt-4o",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Could not extract numeric value (expected: 28.89)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    },
+    {
+      "prompt_id": "fam_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_004",
+      "system_name": "OpenRouter-gpt-4o",
+      "objective_score": {
+        "score": 0.6666666666666666,
+        "passed": false,
+        "checks": {
+          "contains": false,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {
+          "contains": "Missing: 'Jupiter'"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.6666666666666666,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    }
+  ],
+  "aggregate": {
+    "total_cases": 4,
+    "systems": {
+      "LLMHive": {
+        "total_cases": 2,
+        "composite_mean": 1.0,
+        "composite_min": 1.0,
+        "composite_max": 1.0,
+        "objective_mean": 1.0,
+        "passed_count": 2,
+        "failed_count": 0,
+        "critical_failures": 0,
+        "critical_failure_ids": []
+      },
+      "OpenRouter-gpt-4o": {
+        "total_cases": 2,
+        "composite_mean": 0.5833333333333333,
+        "composite_min": 0.5,
+        "composite_max": 0.6666666666666666,
+        "objective_mean": 0.5833333333333333,
+        "passed_count": 0,
+        "failed_count": 2,
+        "critical_failures": 2,
+        "critical_failure_ids": [
+          "tbr_001",
+          "fam_004"
+        ]
+      }
+    }
+  },
+  "critical_failures": [],
+  "passed": true
+}

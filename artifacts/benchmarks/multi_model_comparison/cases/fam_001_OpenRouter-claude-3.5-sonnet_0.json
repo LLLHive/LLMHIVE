@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_001",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "fam_001",
+    "status": "success",
+    "answer_text": "Alexander Fleming discovered penicillin in 1928. He made this discovery accidentally when he noticed that mold (specifically, Penicillium notatum) had contaminated one of his petri dishes containing bacteria colonies. He observed that the area around the mold was clear, indicating that the mold had secreted something that inhibited bacterial growth. This observation led to the discovery of penicillin, the first antibiotic drug. However, it wasn't until the late 1930s and early 1940s that Howard Florey, Ernst Chain, and their team developed methods to produce penicillin in large quantities for clinical use.",
+    "structured_answer": null,
+    "latency_ms": 4647.7828649949515,
+    "timestamp": "2026-01-07T01:56:13.478051",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 14,
+      "tokens_out": 141,
+      "cost_usd": 0.0021569999999999996,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_001",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.9,
+    "rubric_weight": 0.1,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

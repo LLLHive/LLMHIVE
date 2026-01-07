@@ -1,0 +1,63 @@
+{
+  "case_id": "tbr_006",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_006",
+    "status": "success",
+    "answer_text": "is rounded correctly to two decimal places.",
+    "structured_answer": {
+      "message": "is rounded correctly to two decimal places.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 961,
+      "latency_ms": 17390
+    },
+    "latency_ms": 17392.407178878784,
+    "timestamp": "2026-01-06T22:14:11.146985",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 961,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_006",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.3333333333333333,
+      "passed": false,
+      "checks": {
+        "regex": false,
+        "numeric": false,
+        "no_clarification": true
+      },
+      "details": {
+        "regex": "Pattern not found: '176\\.71\\s*(?:sq(?:uare)?)?\\s*m'",
+        "numeric": "Could not extract numeric value (expected: 176.71)"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.3333333333333333,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

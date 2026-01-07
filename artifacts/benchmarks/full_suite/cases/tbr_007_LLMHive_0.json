@@ -1,0 +1,59 @@
+{
+  "case_id": "tbr_007",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_007",
+    "status": "success",
+    "answer_text": "6.41.",
+    "structured_answer": {
+      "message": "6.41.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1217,
+      "latency_ms": 21513
+    },
+    "latency_ms": 21514.78672027588,
+    "timestamp": "2026-01-07T01:45:42.384108",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1217,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_007",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "case_id": "tbr_001",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_001",
+    "status": "success",
+    "answer_text": "clearly marked as 'Final Answer:'.",
+    "structured_answer": {
+      "message": "clearly marked as 'Final Answer:'.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1058,
+      "latency_ms": 16178
+    },
+    "latency_ms": 16179.908752441406,
+    "timestamp": "2026-01-07T01:54:16.709793",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1058,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_001",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.5,
+      "passed": false,
+      "checks": {
+        "numeric": false,
+        "no_clarification": true
+      },
+      "details": {
+        "numeric": "Could not extract numeric value (expected: 28.89)"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.5,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

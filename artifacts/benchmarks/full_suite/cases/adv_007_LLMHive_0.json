@@ -1,0 +1,63 @@
+{
+  "case_id": "adv_007",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "adv_007",
+    "status": "success",
+    "answer_text": "According to Douglas Adams' \"The Hitchhiker's Guide to the Galaxy\", the humorous and literary answer to the meaning of life, the universe, and everything is the number 42.",
+    "structured_answer": {
+      "message": "According to Douglas Adams' \"The Hitchhiker's Guide to the Galaxy\", the humorous and literary answer to the meaning of life, the universe, and everything is the number 42.",
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1277,
+      "latency_ms": 28319
+    },
+    "latency_ms": 28320.690870285034,
+    "timestamp": "2026-01-07T01:55:24.114527",
+    "metadata": {
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1277,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "adv_007",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.4,
+    "rubric_weight": 0.6,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

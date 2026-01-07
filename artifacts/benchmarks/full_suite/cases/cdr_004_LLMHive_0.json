@@ -1,0 +1,61 @@
+{
+  "case_id": "cdr_004",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "cdr_004",
+    "status": "success",
+    "answer_text": "```\nPrime numbers between 1 and 30 are: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29. The count of these prime numbers is 10.\n```",
+    "structured_answer": {
+      "message": "```\nPrime numbers between 1 and 30 are: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29. The count of these prime numbers is 10.\n```",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1002,
+      "latency_ms": 18305
+    },
+    "latency_ms": 18306.838035583496,
+    "timestamp": "2026-01-07T01:50:38.733121",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1002,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "cdr_004",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.5,
+      "passed": false,
+      "checks": {
+        "numeric": false,
+        "no_clarification": true
+      },
+      "details": {
+        "numeric": "Value 1.0 not within tolerance of 10 (\u00b10)"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.5,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

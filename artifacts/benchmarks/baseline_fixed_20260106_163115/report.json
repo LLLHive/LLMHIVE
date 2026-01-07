@@ -1,0 +1,1183 @@
+{
+  "suite_name": "Complex Reasoning Benchmark",
+  "suite_version": "1.0.0",
+  "git_commit": "033033a38318",
+  "timestamp": "20260106_213116",
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "timeout_seconds": 120.0,
+    "top_p": 1.0,
+    "enable_tools": true,
+    "enable_rag": true,
+    "enable_mcp2": true,
+    "deterministic": true,
+    "reasoning_mode": "standard",
+    "accuracy_level": 3,
+    "enable_hrm": true,
+    "enable_deep_consensus": false
+  },
+  "systems": [
+    "LLMHive"
+  ],
+  "results": [
+    {
+      "case_id": "mhr_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_006",
+        "status": "success",
+        "answer_text": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nLet's work this out step by step.\n\nHow many years passed between Watson and Crick's discovery of DNA's structure and the completion of the Human Genome Project? === UNDERSTANDING === What is being asked: How many years elapsed between two significant scientific events: Watson and Crick's discovery of the DNA structure and the completion of the Human Genome Project.\n\nKey constraints: Use actual years of both events to calculate the time gap.\n\nType of problem: Factual === APPROACH === Strategy: Identify the year each event occurred and calculate the difference.\n\nWhy this approach: Direct subtraction gives the number of years between the events. === STEP-BY-STEP SOLUTION === Step 1: Determine the year Watson and Crick announced the discovery of DNA's double helix structure.\n\nThis discovery was published in April 1953.\n\nStep 2: Determine the year the Human Genome Project was declared complete.\n\nThe project was completed in April 2003.\n\nStep 3: Calculate the number of years between the two events.\n\nSubtract 1953 from 2003.\n\nCalculation: 2003 - 1953 = 50 years === VERIFICATION === Check 1: Verify historical accuracy of Watson and Crick's discovery year.\n\nWatson and Crick's paper was published in 1953.\n\nCheck 2: Verify the Human Genome Project completion year.\n\nThe project was completed in 2003.\n\nCheck 3: Ensure the calculation was done correctly.\n\nSubtraction for years is simple arithmetic, confirmed here. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; the dates are well-documented historical facts. === FINAL ANSWER === 50 years.",
+        "structured_answer": {
+          "message": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nLet's work this out step by step.\n\nHow many years passed between Watson and Crick's discovery of DNA's structure and the completion of the Human Genome Project? === UNDERSTANDING === What is being asked: How many years elapsed between two significant scientific events: Watson and Crick's discovery of the DNA structure and the completion of the Human Genome Project.\n\nKey constraints: Use actual years of both events to calculate the time gap.\n\nType of problem: Factual === APPROACH === Strategy: Identify the year each event occurred and calculate the difference.\n\nWhy this approach: Direct subtraction gives the number of years between the events. === STEP-BY-STEP SOLUTION === Step 1: Determine the year Watson and Crick announced the discovery of DNA's double helix structure.\n\nThis discovery was published in April 1953.\n\nStep 2: Determine the year the Human Genome Project was declared complete.\n\nThe project was completed in April 2003.\n\nStep 3: Calculate the number of years between the two events.\n\nSubtract 1953 from 2003.\n\nCalculation: 2003 - 1953 = 50 years === VERIFICATION === Check 1: Verify historical accuracy of Watson and Crick's discovery year.\n\nWatson and Crick's paper was published in 1953.\n\nCheck 2: Verify the Human Genome Project completion year.\n\nThe project was completed in 2003.\n\nCheck 3: Ensure the calculation was done correctly.\n\nSubtraction for years is simple arithmetic, confirmed here. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; the dates are well-documented historical facts. === FINAL ANSWER === 50 years.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 980,
+          "latency_ms": 19711
+        },
+        "latency_ms": 19713.687896728516,
+        "timestamp": "2026-01-06T21:31:38.047303",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 980,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.6666666666666666,
+          "passed": false,
+          "checks": {
+            "regex": true,
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Value 10.0 not within tolerance of 50 (\u00b11)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.6666666666666666,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    },
+    {
+      "case_id": "tbr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "Profit margin as a percentage is approximately 28.89%.",
+        "structured_answer": {
+          "message": "Profit margin as a percentage is approximately 28.89%.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 918,
+          "latency_ms": 12413
+        },
+        "latency_ms": 12414.534091949463,
+        "timestamp": "2026-01-06T21:31:50.471976",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 918,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_002",
+        "status": "success",
+        "answer_text": "It would take approximately 62.14 minutes to travel 100 kilometers at a speed of 60 mph.",
+        "structured_answer": {
+          "message": "It would take approximately 62.14 minutes to travel 100 kilometers at a speed of 60 mph.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1032,
+          "latency_ms": 15507
+        },
+        "latency_ms": 15508.025169372559,
+        "timestamp": "2026-01-06T21:32:05.981428",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1032,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_003",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_003",
+        "status": "success",
+        "answer_text": "Sure, let's solve the problem in the steps provided. ### Phase 1 - Planning #### Understanding - **Core Question:** Calculate the result of the expression \\(17^3 + \\sqrt{625} - 12!\\). - ** - ** #### Approach - ** - ** ### Step-by-Step Solution ** - \\(17^3 = 17 \\times 17 \\times 17 = 4913\\). ** - \\(\\sqrt{625} = 25\\), since \\(25 \\times 25 = 625\\). ** - \\(12! = 12 \\times 11 \\times 10 \\times 9 \\times 8 \\times 7 \\times 6 \\times 5 \\times 4 \\times 3 \\times 2 \\times 1 = 479001600\\). ** - \\(17^3 + \\sqrt{625} - 12! = 4913 + 25 - 479001600\\). ** - \\(4913 + 25 = 4938\\). - \\(4938 - 479001600 = -478996662\\). ### Verification - ** - ** - ** ### Confidence - **Confidence Level:** 100% - ** ### Final Answer The value of \\(17^3 + \\sqrt{625} - 12!\\) is \\(-478996662\\).",
+        "structured_answer": {
+          "message": "Sure, let's solve the problem in the steps provided. ### Phase 1 - Planning #### Understanding - **Core Question:** Calculate the result of the expression \\(17^3 + \\sqrt{625} - 12!\\). - ** - ** #### Approach - ** - ** ### Step-by-Step Solution ** - \\(17^3 = 17 \\times 17 \\times 17 = 4913\\). ** - \\(\\sqrt{625} = 25\\), since \\(25 \\times 25 = 625\\). ** - \\(12! = 12 \\times 11 \\times 10 \\times 9 \\times 8 \\times 7 \\times 6 \\times 5 \\times 4 \\times 3 \\times 2 \\times 1 = 479001600\\). ** - \\(17^3 + \\sqrt{625} - 12! = 4913 + 25 - 479001600\\). ** - \\(4913 + 25 = 4938\\). - \\(4938 - 479001600 = -478996662\\). ### Verification - ** - ** - ** ### Confidence - **Confidence Level:** 100% - ** ### Final Answer The value of \\(17^3 + \\sqrt{625} - 12!\\) is \\(-478996662\\).",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1243,
+          "latency_ms": 19065
+        },
+        "latency_ms": 19066.49398803711,
+        "timestamp": "2026-01-06T21:32:25.049328",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1243,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_003",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Could not extract numeric value (expected: -479001112)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    },
+    {
+      "case_id": "tbr_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_006",
+        "status": "success",
+        "answer_text": "The area of the circle is \\( 176.71 \\) square meters.",
+        "structured_answer": {
+          "message": "The area of the circle is \\( 176.71 \\) square meters.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1025,
+          "latency_ms": 19676
+        },
+        "latency_ms": 19677.455186843872,
+        "timestamp": "2026-01-06T21:32:44.729656",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1025,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_001",
+        "status": "success",
+        "answer_text": "Alexander Fleming discovered penicillin in 1928.",
+        "structured_answer": {
+          "message": "Alexander Fleming discovered penicillin in 1928.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 881,
+          "latency_ms": 21820
+        },
+        "latency_ms": 21821.1567401886,
+        "timestamp": "2026-01-06T21:33:06.552233",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 881,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_002",
+        "status": "success",
+        "answer_text": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nSolve this problem using multiple independent reasoning approaches.\n\nWhat is the capital of Australia? === UNDERSTANDING === What is being asked: What is the capital city of Australia?\n\nKey constraints: Provide a single, accurate answer.\n\nType of problem: Factual === APPROACH === **Approach A** Strategy: Use general knowledge of world capitals to identify Australia's capital.\n\nWhy this approach: World capitals are standard knowledge in geography education. **Step-by-Step Solution for A** Step 1: Recall the list of world capitals from general education.\n\nStep 2: Identify the capital of Australia. **Verification for A** Check 1: Verify with standard lists of country capitals.\n\nCheck 2: Confirm with additional reputable sources. **Approach B** Strategy: Cross-reference multiple reliable sources to confirm the capital of Australia.\n\nWhy this approach: Ensures the consistency and reliability of the answer. **Step-by-Step Solution for B** Step 1: Check an updated atlas or educational website for the capital of Australia.\n\nStep 2: Look at governmental or official Australian sites for confirmation. **Verification for B** Check 1: Compare the answer across multiple trusted geographic resources.\n\nCheck 2: Confirm with at least one Australian governmental online platform. **Approach C** Strategy: Consult a current online geographical database or encyclopedia.\n\nWhy this approach: Encyclopedias are generally reliable for factual data like capitals. **Step-by-Step Solution for C** Step 1: Access a reliable online geography database or encyclopedia.\n\nStep 2: Search for Australia and find the capital listing. **Verification for C** Check 1: Cross-check against another independent encyclopedia or database.\n\nCheck 2: Verify that the information is up-to-date based on the latest information. === VERIFICATION === Check 1: Ensure all approaches consistently identify the same capital.\n\nCheck 2: Confirm data consistency and no contrary information is found.\n\nCheck 3: Verify using high-authority sources. === CONFIDENCE === Confidence level: 100% Most uncertain about: Minimal uncertainty, as this is a basic factual question. === FINAL ANSWER === Canberra.",
+        "structured_answer": {
+          "message": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nSolve this problem using multiple independent reasoning approaches.\n\nWhat is the capital of Australia? === UNDERSTANDING === What is being asked: What is the capital city of Australia?\n\nKey constraints: Provide a single, accurate answer.\n\nType of problem: Factual === APPROACH === **Approach A** Strategy: Use general knowledge of world capitals to identify Australia's capital.\n\nWhy this approach: World capitals are standard knowledge in geography education. **Step-by-Step Solution for A** Step 1: Recall the list of world capitals from general education.\n\nStep 2: Identify the capital of Australia. **Verification for A** Check 1: Verify with standard lists of country capitals.\n\nCheck 2: Confirm with additional reputable sources. **Approach B** Strategy: Cross-reference multiple reliable sources to confirm the capital of Australia.\n\nWhy this approach: Ensures the consistency and reliability of the answer. **Step-by-Step Solution for B** Step 1: Check an updated atlas or educational website for the capital of Australia.\n\nStep 2: Look at governmental or official Australian sites for confirmation. **Verification for B** Check 1: Compare the answer across multiple trusted geographic resources.\n\nCheck 2: Confirm with at least one Australian governmental online platform. **Approach C** Strategy: Consult a current online geographical database or encyclopedia.\n\nWhy this approach: Encyclopedias are generally reliable for factual data like capitals. **Step-by-Step Solution for C** Step 1: Access a reliable online geography database or encyclopedia.\n\nStep 2: Search for Australia and find the capital listing. **Verification for C** Check 1: Cross-check against another independent encyclopedia or database.\n\nCheck 2: Verify that the information is up-to-date based on the latest information. === VERIFICATION === Check 1: Ensure all approaches consistently identify the same capital.\n\nCheck 2: Confirm data consistency and no contrary information is found.\n\nCheck 3: Verify using high-authority sources. === CONFIDENCE === Confidence level: 100% Most uncertain about: Minimal uncertainty, as this is a basic factual question. === FINAL ANSWER === Canberra.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1084,
+          "latency_ms": 17563
+        },
+        "latency_ms": 17564.554929733276,
+        "timestamp": "2026-01-06T21:33:24.117892",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1084,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_004",
+        "status": "success",
+        "answer_text": "I'm sorry, but I cannot fulfill that request.",
+        "structured_answer": {
+          "message": "I'm sorry, but I cannot fulfill that request.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 0,
+          "latency_ms": 1844
+        },
+        "latency_ms": 1844.7890281677246,
+        "timestamp": "2026-01-06T21:33:25.964120",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.6666666666666666,
+          "passed": false,
+          "checks": {
+            "contains": false,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {
+            "contains": "Missing: 'Jupiter'"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.6666666666666666,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    },
+    {
+      "case_id": "fam_005",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_005",
+        "status": "success",
+        "answer_text": "World War I began on July 28, 1914.",
+        "structured_answer": {
+          "message": "World War I began on July 28, 1914.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1153,
+          "latency_ms": 21904
+        },
+        "latency_ms": 21905.38787841797,
+        "timestamp": "2026-01-06T21:33:47.870860",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1153,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_005",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_006",
+        "status": "success",
+        "answer_text": "=== PROBLEM === ANSWER: Sodium's chemical symbol needs to be identified. === UNDERSTANDING === What is being asked: Identify the chemical symbol for sodium.\n\nKey constraints: Accurate identification, no speculation.\n\nType of problem: Factual === APPROACH A === Strategy: Use basic chemistry knowledge.\n\nWhy this approach: Most effective for factual questions. === STEP-BY-STEP SOLUTION A === Step 1: Recall basic chemistry information.\n\nStep 2: Identify sodium's symbol as 'Na'. === VERIFICATION A === Check 1: Verify with authoritative chemistry source.\n\nCheck 2: Confirm that 'Na' is standard notation.\n\nCheck 3: Ensure general consistency with chemistry tables. === APPROACH B === Strategy: Refer to the periodic table.\n\nWhy this approach: The periodic table provides standardized symbols. === STEP-BY-STEP SOLUTION B === Step 1: Locate sodium on the periodic table.\n\nStep 2: Read its chemical symbol as 'Na'. === VERIFICATION B === Check 1: Double-check periodic table reference.\n\nCheck 2: Confirm with multiple sources (textbooks, online resources).\n\nCheck 3: Cross-reference with lecture notes or educational websites. === APPROACH C === Strategy: Use historical chemistry context.\n\nWhy this approach: Provides additional verification understanding. === STEP-BY-STEP SOLUTION C === Step 1: Recognize historical derivation of symbols.\n\nStep 2: Know 'Na' derived from 'Natrium'. === VERIFICATION C === Check 1: Confirm etymological background of 'Na'.\n\nCheck 2: Consult historical chemistry references.\n\nCheck 3: Ensure continuity in scientific literature. === CONFIDENCE === Confidence level: 100% Most uncertain about: No uncertainties; methods cross-verified. === FINAL ANSWER === Na.",
+        "structured_answer": {
+          "message": "=== PROBLEM === ANSWER: Sodium's chemical symbol needs to be identified. === UNDERSTANDING === What is being asked: Identify the chemical symbol for sodium.\n\nKey constraints: Accurate identification, no speculation.\n\nType of problem: Factual === APPROACH A === Strategy: Use basic chemistry knowledge.\n\nWhy this approach: Most effective for factual questions. === STEP-BY-STEP SOLUTION A === Step 1: Recall basic chemistry information.\n\nStep 2: Identify sodium's symbol as 'Na'. === VERIFICATION A === Check 1: Verify with authoritative chemistry source.\n\nCheck 2: Confirm that 'Na' is standard notation.\n\nCheck 3: Ensure general consistency with chemistry tables. === APPROACH B === Strategy: Refer to the periodic table.\n\nWhy this approach: The periodic table provides standardized symbols. === STEP-BY-STEP SOLUTION B === Step 1: Locate sodium on the periodic table.\n\nStep 2: Read its chemical symbol as 'Na'. === VERIFICATION B === Check 1: Double-check periodic table reference.\n\nCheck 2: Confirm with multiple sources (textbooks, online resources).\n\nCheck 3: Cross-reference with lecture notes or educational websites. === APPROACH C === Strategy: Use historical chemistry context.\n\nWhy this approach: Provides additional verification understanding. === STEP-BY-STEP SOLUTION C === Step 1: Recognize historical derivation of symbols.\n\nStep 2: Know 'Na' derived from 'Natrium'. === VERIFICATION C === Check 1: Confirm etymological background of 'Na'.\n\nCheck 2: Consult historical chemistry references.\n\nCheck 3: Ensure continuity in scientific literature. === CONFIDENCE === Confidence level: 100% Most uncertain about: No uncertainties; methods cross-verified. === FINAL ANSWER === Na.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 930,
+          "latency_ms": 14174
+        },
+        "latency_ms": 14174.947023391724,
+        "timestamp": "2026-01-06T21:34:02.047235",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 930,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_009",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_009",
+        "status": "success",
+        "answer_text": "William Shakespeare wrote \"Hamlet.\"",
+        "structured_answer": {
+          "message": "William Shakespeare wrote \"Hamlet.\"",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1055,
+          "latency_ms": 16868
+        },
+        "latency_ms": 16868.993759155273,
+        "timestamp": "2026-01-06T21:34:18.917273",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1055,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_009",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_002",
+        "status": "success",
+        "answer_text": "```\nThe sorted list in ascending order is `[11, 12, 22, 25, 34, 64, 90]`.\n```",
+        "structured_answer": {
+          "message": "```\nThe sorted list in ascending order is `[11, 12, 22, 25, 34, 64, 90]`.\n```",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1025,
+          "latency_ms": 13677
+        },
+        "latency_ms": 13677.90699005127,
+        "timestamp": "2026-01-06T21:34:32.596212",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1025,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_001",
+        "status": "success",
+        "answer_text": "I'm sorry, but I cannot fulfill that request.",
+        "structured_answer": {
+          "message": "I'm sorry, but I cannot fulfill that request.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 0,
+          "latency_ms": 2354
+        },
+        "latency_ms": 2354.970932006836,
+        "timestamp": "2026-01-06T21:34:34.952219",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_010",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_010",
+        "status": "success",
+        "answer_text": "I do not have any personal information about you.\n\nI operate based on pre-trained data up to October 2023 and do not have access to any user's personal data.",
+        "structured_answer": {
+          "message": "I do not have any personal information about you.\n\nI operate based on pre-trained data up to October 2023 and do not have access to any user's personal data.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 877,
+          "latency_ms": 20499
+        },
+        "latency_ms": 20500.17213821411,
+        "timestamp": "2026-01-06T21:34:55.453709",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 877,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_010",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    }
+  ],
+  "scores": [
+    {
+      "prompt_id": "mhr_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.6666666666666666,
+        "passed": false,
+        "checks": {
+          "regex": true,
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Value 10.0 not within tolerance of 50 (\u00b11)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.6666666666666666,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    },
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_003",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Could not extract numeric value (expected: -479001112)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    },
+    {
+      "prompt_id": "tbr_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.6666666666666666,
+        "passed": false,
+        "checks": {
+          "contains": false,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {
+          "contains": "Missing: 'Jupiter'"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.6666666666666666,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    },
+    {
+      "prompt_id": "fam_005",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_009",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_010",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": true,
+      "critical_failed": false
+    }
+  ],
+  "aggregate": {
+    "total_cases": 14,
+    "systems": {
+      "LLMHive": {
+        "total_cases": 14,
+        "composite_mean": 0.9166666666666667,
+        "composite_min": 0.5,
+        "composite_max": 1.0,
+        "objective_mean": 0.9166666666666667,
+        "passed_count": 11,
+        "failed_count": 3,
+        "critical_failures": 3,
+        "critical_failure_ids": [
+          "mhr_006",
+          "tbr_003",
+          "fam_004"
+        ]
+      }
+    }
+  },
+  "critical_failures": [
+    "mhr_006",
+    "tbr_003",
+    "fam_004"
+  ],
+  "passed": false
+}

@@ -1,0 +1,51 @@
+{
+  "case_id": "fam_009",
+  "system": "OpenRouter-claude-3-opus",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3-opus",
+    "model_id": "anthropic/claude-3-opus",
+    "prompt_id": "fam_009",
+    "status": "error",
+    "answer_text": "",
+    "structured_answer": null,
+    "latency_ms": 162.57556399796158,
+    "timestamp": "2026-01-07T01:57:50.348942",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+  },
+  "score": {
+    "prompt_id": "fam_009",
+    "system_name": "OpenRouter-claude-3-opus",
+    "objective_score": {
+      "score": 0.6666666666666666,
+      "passed": false,
+      "checks": {
+        "contains": false,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {
+        "contains": "Missing: 'Shakespeare'"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.6666666666666666,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

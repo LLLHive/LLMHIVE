@@ -1,0 +1,4515 @@
+{
+  "suite_name": "Complex Reasoning Benchmark",
+  "suite_version": "1.0.0",
+  "git_commit": "39deabf50ce6",
+  "timestamp": "20260107_014023",
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "timeout_seconds": 120.0,
+    "top_p": 1.0,
+    "enable_tools": true,
+    "enable_rag": true,
+    "enable_mcp2": true,
+    "deterministic": true,
+    "reasoning_mode": "standard",
+    "accuracy_level": 3,
+    "enable_hrm": true,
+    "enable_deep_consensus": false
+  },
+  "systems": [
+    "LLMHive"
+  ],
+  "results": [
+    {
+      "case_id": "mhr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_001",
+        "status": "success",
+        "answer_text": "The population of France, where the Eiffel Tower is located, is approximately 67 million, which is about 1,717 times larger than the population of Monaco.",
+        "structured_answer": {
+          "message": "The population of France, where the Eiffel Tower is located, is approximately 67 million, which is about 1,717 times larger than the population of Monaco.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1157,
+          "latency_ms": 21612
+        },
+        "latency_ms": 21614.115715026855,
+        "timestamp": "2026-01-07T01:40:47.058047",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1157,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_002",
+        "status": "success",
+        "answer_text": "The Nobel Prize in Physics for 2007 was awarded to Albert Fert and Peter Gr\u00fcnberg for the discovery of Giant Magnetoresistance (GMR), a fundamental phenomenon that leads to the miniaturization of hard disk drives and revolutionized data reading technology.",
+        "structured_answer": {
+          "message": "The Nobel Prize in Physics for 2007 was awarded to Albert Fert and Peter Gr\u00fcnberg for the discovery of Giant Magnetoresistance (GMR), a fundamental phenomenon that leads to the miniaturization of hard disk drives and revolutionized data reading technology.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1098,
+          "latency_ms": 25808
+        },
+        "latency_ms": 25818.43090057373,
+        "timestamp": "2026-01-07T01:41:12.877341",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1098,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_003",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_003",
+        "status": "success",
+        "answer_text": "Tesla, Inc., the maker of the Model S, was founded in 2003, which is 87 years after Boeing was founded in 1916.",
+        "structured_answer": {
+          "message": "Tesla, Inc., the maker of the Model S, was founded in 2003, which is 87 years after Boeing was founded in 1916.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1117,
+          "latency_ms": 17058
+        },
+        "latency_ms": 17063.86399269104,
+        "timestamp": "2026-01-07T01:41:29.946155",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1117,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_003",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_004",
+        "status": "success",
+        "answer_text": "The World Wide Web was invented in Switzerland at CERN by a British scientist, Tim Berners-Lee, but is often associated with the United Kingdom.\n\nThe approximate number of native English speakers in the United Kingdom is 59 to 60 million.",
+        "structured_answer": {
+          "message": "The World Wide Web was invented in Switzerland at CERN by a British scientist, Tim Berners-Lee, but is often associated with the United Kingdom.\n\nThe approximate number of native English speakers in the United Kingdom is 59 to 60 million.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1170,
+          "latency_ms": 23551
+        },
+        "latency_ms": 23558.181047439575,
+        "timestamp": "2026-01-07T01:41:53.506565",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1170,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_005",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_005",
+        "status": "success",
+        "answer_text": "George Orwell was born in the 1900s decade.\n\nOne major global event in that decade was the Russo-Japanese War (1904-1905).",
+        "structured_answer": {
+          "message": "George Orwell was born in the 1900s decade.\n\nOne major global event in that decade was the Russo-Japanese War (1904-1905).",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1065,
+          "latency_ms": 13763
+        },
+        "latency_ms": 13769.220113754272,
+        "timestamp": "2026-01-07T01:42:07.298073",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1065,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_005",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.7,
+        "rubric_weight": 0.3,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_006",
+        "status": "success",
+        "answer_text": "clearly marked as 'Final Answer:'.",
+        "structured_answer": {
+          "message": "clearly marked as 'Final Answer:'.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1087,
+          "latency_ms": 14094
+        },
+        "latency_ms": 14095.613956451416,
+        "timestamp": "2026-01-07T01:42:21.395886",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1087,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.3333333333333333,
+          "passed": false,
+          "checks": {
+            "regex": false,
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "regex": "Pattern not found: '50\\s*years?|five\\s*decades'",
+            "numeric": "Could not extract numeric value (expected: 50)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.3333333333333333,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    },
+    {
+      "case_id": "mhr_007",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_007",
+        "status": "success",
+        "answer_text": "The most abundant element in Neptune's atmosphere is hydrogen.\n\nHydrogen comprises approximately 80% of Neptune's atmosphere.\n\nHelium is the second most abundant, making up about 19%, while trace amounts of methane and other substances constitute the remainder.\n\nThese numbers are based on data typically referenced from NASA and other astronomical studies.",
+        "structured_answer": {
+          "message": "The most abundant element in Neptune's atmosphere is hydrogen.\n\nHydrogen comprises approximately 80% of Neptune's atmosphere.\n\nHelium is the second most abundant, making up about 19%, while trace amounts of methane and other substances constitute the remainder.\n\nThese numbers are based on data typically referenced from NASA and other astronomical studies.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 947,
+          "latency_ms": 16951
+        },
+        "latency_ms": 16952.666759490967,
+        "timestamp": "2026-01-07T01:42:38.352560",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 947,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_007",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_008",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_008",
+        "status": "success",
+        "answer_text": "As of the most recent data available, Luxembourg has a higher GDP per capita compared to the United States.\n\nAccording to the World Bank, Luxembourg's GDP per capita was approximately $131,300 in 2022, whereas the United States had a GDP per capita of approximately $76,300 in the same year.\n\nThus, Luxembourg's GDP per capita is higher by about $55,000.",
+        "structured_answer": {
+          "message": "As of the most recent data available, Luxembourg has a higher GDP per capita compared to the United States.\n\nAccording to the World Bank, Luxembourg's GDP per capita was approximately $131,300 in 2022, whereas the United States had a GDP per capita of approximately $76,300 in the same year.\n\nThus, Luxembourg's GDP per capita is higher by about $55,000.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1021,
+          "latency_ms": 14591
+        },
+        "latency_ms": 14593.7180519104,
+        "timestamp": "2026-01-07T01:42:52.948873",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1021,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_008",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.7,
+        "rubric_weight": 0.3,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_009",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_009",
+        "status": "success",
+        "answer_text": "Brazil is the country that produces the most coffee globally.\n\nBrazil\u2019s population density is approximately 25 people per square kilometer, while Japan\u2019s is about 347 people per square kilometer.\n\nTherefore, Brazil's population density is lower than Japan's.\n\nThe approximate ratio of Brazil's population density to Japan's is 25:347, which simplifies to approximately 1:14.",
+        "structured_answer": {
+          "message": "Brazil is the country that produces the most coffee globally.\n\nBrazil\u2019s population density is approximately 25 people per square kilometer, while Japan\u2019s is about 347 people per square kilometer.\n\nTherefore, Brazil's population density is lower than Japan's.\n\nThe approximate ratio of Brazil's population density to Japan's is 25:347, which simplifies to approximately 1:14.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1254,
+          "latency_ms": 23795
+        },
+        "latency_ms": 23802.05798149109,
+        "timestamp": "2026-01-07T01:43:16.755205",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1254,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_009",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_010",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_010",
+        "status": "success",
+        "answer_text": "When Steve Jobs passed away on October 5, 2011, Apple's market capitalization was approximately $350 billion USD.\n\nThis value is derived from historical financial records and reports that are consistent with the information available from that period.",
+        "structured_answer": {
+          "message": "When Steve Jobs passed away on October 5, 2011, Apple's market capitalization was approximately $350 billion USD.\n\nThis value is derived from historical financial records and reports that are consistent with the information available from that period.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1192,
+          "latency_ms": 17572
+        },
+        "latency_ms": 17574.864149093628,
+        "timestamp": "2026-01-07T01:43:34.341027",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1192,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_010",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.7,
+        "rubric_weight": 0.3,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "Profit Margin Percentage: 28.89%.",
+        "structured_answer": {
+          "message": "Profit Margin Percentage: 28.89%.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 937,
+          "latency_ms": 20192
+        },
+        "latency_ms": 20193.567037582397,
+        "timestamp": "2026-01-07T01:43:54.540917",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 937,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_002",
+        "status": "success",
+        "answer_text": "Traveling 100 kilometers at 60 mph would take approximately 62.14 minutes.",
+        "structured_answer": {
+          "message": "Traveling 100 kilometers at 60 mph would take approximately 62.14 minutes.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1032,
+          "latency_ms": 15761
+        },
+        "latency_ms": 15761.871099472046,
+        "timestamp": "2026-01-07T01:44:10.305441",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1032,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_003",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_003",
+        "status": "success",
+        "answer_text": "Certainly!\n\nLet's address the problem using the detailed method specified. ### PHASE 1 - Planning #### UNDERSTANDING ** ** ** #### APPROACH ** 1.\n\nCalculate \\( 17^3 \\). 2.\n\nCalculate \\( \\sqrt{625} \\). 3.\n\nCalculate \\( 12! \\). 4.\n\nCombine these results according to the expression. ** ### STEP-BY-STEP SOLUTION ** - \\( 17^3 = 17 \\times 17 \\times 17 = 4,913 \\). ** - The square root of 625 is 25 because \\( 25 \\times 25 = 625 \\). ** - \\( 12! = 12 \\times 11 \\times 10 \\times 9 \\times 8 \\times 7 \\times 6 \\times 5 \\times 4 \\times 3 \\times 2 \\times 1 = 479,001,600 \\). ** - \\( 4,913 + 25 - 479,001,600 = 4,938 - 479,001,600 = -478,996,662 \\). ### VERIFICATION ** ** ** ### CONFIDENCE **Confidence level:** 100% ** ### FINAL ANSWER The result of the expression \\( 17^3 + \\sqrt{625} - 12! \\) is \\(-478,996,662\\).",
+        "structured_answer": {
+          "message": "Certainly!\n\nLet's address the problem using the detailed method specified. ### PHASE 1 - Planning #### UNDERSTANDING ** ** ** #### APPROACH ** 1.\n\nCalculate \\( 17^3 \\). 2.\n\nCalculate \\( \\sqrt{625} \\). 3.\n\nCalculate \\( 12! \\). 4.\n\nCombine these results according to the expression. ** ### STEP-BY-STEP SOLUTION ** - \\( 17^3 = 17 \\times 17 \\times 17 = 4,913 \\). ** - The square root of 625 is 25 because \\( 25 \\times 25 = 625 \\). ** - \\( 12! = 12 \\times 11 \\times 10 \\times 9 \\times 8 \\times 7 \\times 6 \\times 5 \\times 4 \\times 3 \\times 2 \\times 1 = 479,001,600 \\). ** - \\( 4,913 + 25 - 479,001,600 = 4,938 - 479,001,600 = -478,996,662 \\). ### VERIFICATION ** ** ** ### CONFIDENCE **Confidence level:** 100% ** ### FINAL ANSWER The result of the expression \\( 17^3 + \\sqrt{625} - 12! \\) is \\(-478,996,662\\).",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1278,
+          "latency_ms": 17201
+        },
+        "latency_ms": 17204.906225204468,
+        "timestamp": "2026-01-07T01:44:27.515219",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1278,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_003",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_004",
+        "status": "success",
+        "answer_text": "$16,289.",
+        "structured_answer": {
+          "message": "$16,289.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1167,
+          "latency_ms": 19322
+        },
+        "latency_ms": 19327.19397544861,
+        "timestamp": "2026-01-07T01:44:46.846583",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1167,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_005",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_005",
+        "status": "success",
+        "answer_text": "clearly marked as 'Final Answer:'.",
+        "structured_answer": {
+          "message": "clearly marked as 'Final Answer:'.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1072,
+          "latency_ms": 19680
+        },
+        "latency_ms": 19682.718992233276,
+        "timestamp": "2026-01-07T01:45:06.534061",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1072,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_005",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Could not extract numeric value (expected: 5.4)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_006",
+        "status": "success",
+        "answer_text": "176.71 square meters.",
+        "structured_answer": {
+          "message": "176.71 square meters.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 988,
+          "latency_ms": 14318
+        },
+        "latency_ms": 14317.003965377808,
+        "timestamp": "2026-01-07T01:45:20.866414",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 988,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_007",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_007",
+        "status": "success",
+        "answer_text": "6.41.",
+        "structured_answer": {
+          "message": "6.41.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1217,
+          "latency_ms": 21513
+        },
+        "latency_ms": 21514.78672027588,
+        "timestamp": "2026-01-07T01:45:42.384108",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1217,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_007",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_008",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_008",
+        "status": "success",
+        "answer_text": "clearly marked as 'Final Answer:'.",
+        "structured_answer": {
+          "message": "clearly marked as 'Final Answer:'.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1032,
+          "latency_ms": 28613
+        },
+        "latency_ms": 28616.10698699951,
+        "timestamp": "2026-01-07T01:46:11.010890",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1032,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_008",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.3333333333333333,
+          "passed": false,
+          "checks": {
+            "regex": false,
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "regex": "Pattern not found: '37\\s*(?:\u00b0?C|degrees?\\s*C)'",
+            "numeric": "Could not extract numeric value (expected: 310.15)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.3333333333333333,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_009",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_009",
+        "status": "success",
+        "answer_text": "The sum of the first 100 prime numbers is 24,133.",
+        "structured_answer": {
+          "message": "The sum of the first 100 prime numbers is 24,133.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1010,
+          "latency_ms": 14965
+        },
+        "latency_ms": 14966.70389175415,
+        "timestamp": "2026-01-07T01:46:25.981368",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1010,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_009",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Value 100.0 not within tolerance of 24133 (\u00b10)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_010",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_010",
+        "status": "success",
+        "answer_text": "clearly marked as 'Final Answer:'.",
+        "structured_answer": {
+          "message": "clearly marked as 'Final Answer:'.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1093,
+          "latency_ms": 12994
+        },
+        "latency_ms": 12995.719909667969,
+        "timestamp": "2026-01-07T01:46:38.988336",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1093,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_010",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Could not extract numeric value (expected: 810)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_001",
+        "status": "success",
+        "answer_text": "Alexander Fleming discovered penicillin in 1928.",
+        "structured_answer": {
+          "message": "Alexander Fleming discovered penicillin in 1928.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1105,
+          "latency_ms": 15770
+        },
+        "latency_ms": 15771.676301956177,
+        "timestamp": "2026-01-07T01:46:54.763106",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1105,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_002",
+        "status": "success",
+        "answer_text": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nWhat is the capital of Australia? === UNDERSTANDING === What is being asked: The core question is to identify the capital city of Australia.\n\nKey constraints: Provide the correct capital city without ambiguity.\n\nType of problem: Factual === APPROACH === Strategy: Use factual knowledge and authoritative sources to determine Australia's capital.\n\nWhy this approach: This is a straightforward factual question that can be answered using basic, verified information. === APPROACH A === Strategy: Use geographical knowledge about Australia.\n\nStep 1: Recall that Australia is a country with a political structure, including a capital.\n\nStep 2: The capital city is where the government is housed.\n\nConclusion: Canberra is the capital of Australia. === APPROACH B === Strategy: Refer to reliable and authoritative sources.\n\nStep 1: Consider sources such as geography textbooks or encyclopedias.\n\nStep 2: Check the capital of Australia from these sources.\n\nConclusion: Canberra is consistently noted as the capital of Australia. === APPROACH C === Strategy: Verify using online and up-to-date databases.\n\nStep 1: Access a reputable geographical database or official Australian government website.\n\nStep 2: Look for Australia's capital city listing.\n\nConclusion: Canberra is confirmed as the capital city. === VERIFICATION === Check 1: Confirm from multiple reputable sources.\n\nCheck 2: Ensure consistency across all approaches and sources.\n\nCheck 3: Canberra is a logical and officially recognized answer. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; the conclusion is straightforward. === FINAL ANSWER === Canberra.",
+        "structured_answer": {
+          "message": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nWhat is the capital of Australia? === UNDERSTANDING === What is being asked: The core question is to identify the capital city of Australia.\n\nKey constraints: Provide the correct capital city without ambiguity.\n\nType of problem: Factual === APPROACH === Strategy: Use factual knowledge and authoritative sources to determine Australia's capital.\n\nWhy this approach: This is a straightforward factual question that can be answered using basic, verified information. === APPROACH A === Strategy: Use geographical knowledge about Australia.\n\nStep 1: Recall that Australia is a country with a political structure, including a capital.\n\nStep 2: The capital city is where the government is housed.\n\nConclusion: Canberra is the capital of Australia. === APPROACH B === Strategy: Refer to reliable and authoritative sources.\n\nStep 1: Consider sources such as geography textbooks or encyclopedias.\n\nStep 2: Check the capital of Australia from these sources.\n\nConclusion: Canberra is consistently noted as the capital of Australia. === APPROACH C === Strategy: Verify using online and up-to-date databases.\n\nStep 1: Access a reputable geographical database or official Australian government website.\n\nStep 2: Look for Australia's capital city listing.\n\nConclusion: Canberra is confirmed as the capital city. === VERIFICATION === Check 1: Confirm from multiple reputable sources.\n\nCheck 2: Ensure consistency across all approaches and sources.\n\nCheck 3: Canberra is a logical and officially recognized answer. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; the conclusion is straightforward. === FINAL ANSWER === Canberra.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 891,
+          "latency_ms": 13199
+        },
+        "latency_ms": 13199.981689453125,
+        "timestamp": "2026-01-07T01:47:07.966292",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 891,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_003",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_003",
+        "status": "success",
+        "answer_text": "Alexander Graham Bell is credited with the invention of the telephone.",
+        "structured_answer": {
+          "message": "Alexander Graham Bell is credited with the invention of the telephone.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1058,
+          "latency_ms": 20647
+        },
+        "latency_ms": 20648.607969284058,
+        "timestamp": "2026-01-07T01:47:28.618675",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1058,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_003",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_004",
+        "status": "success",
+        "answer_text": "Jupiter is the largest planet in our solar system by diameter and volume.",
+        "structured_answer": {
+          "message": "Jupiter is the largest planet in our solar system by diameter and volume.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1000,
+          "latency_ms": 16156
+        },
+        "latency_ms": 16157.289981842041,
+        "timestamp": "2026-01-07T01:47:44.780202",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1000,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_005",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_005",
+        "status": "success",
+        "answer_text": "World War I began on July 28, 1914.",
+        "structured_answer": {
+          "message": "World War I began on July 28, 1914.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1087,
+          "latency_ms": 17570
+        },
+        "latency_ms": 17571.518898010254,
+        "timestamp": "2026-01-07T01:48:02.356408",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1087,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_005",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_006",
+        "status": "success",
+        "answer_text": "Certainly!\n\nBelow is the solution to the problem regarding the chemical symbol for sodium, following the specified format. === PROBLEM === What is the chemical symbol for sodium? === UNDERSTANDING === What is being asked: Find the chemical symbol for the element sodium.\n\nKey constraints: Provide an accurate chemical symbol without any clarifying questions.\n\nType of problem: Factual === APPROACH === **Approach A:** Strategy: Use standard periodic table knowledge.\n\nWhy this approach: The periodic table is the authoritative source for chemical element symbols. **Approach B:** Strategy: Refer to documented chemical literature.\n\nWhy this approach: Chemical literature accurately records element symbols. **Approach C:** Strategy: Cross-reference with reliable online chemical databases.\n\nWhy this approach: Access comprehensive and updated chemical information. === STEP-BY-STEP SOLUTION === **Approach A:** Step 1: Consult the periodic table where element names are listed with their symbols.\n\nStep 2: Find \"Sodium\" in the list.\n\nStep 3: Note its corresponding symbol, which is \"Na\". **Approach B:** Step 1: Refer to a chemistry textbook or academic articles on basic chemistry.\n\nStep 2: Locate information on elemental symbols.\n\nStep 3: Identify that \"Sodium\" is represented with the symbol \"Na\". **Approach C:** Step 1: Access a reputable online chemical database like the Royal Society of Chemistry.\n\nStep 2: Search for the element \"Sodium\".\n\nStep 3: Confirm that \"Sodium\" has the chemical symbol \"Na\". === VERIFICATION === Check 1: Confirmed against multiple versions of the periodic table.\n\nCheck 2: Verified consistency with chemical literature.\n\nCheck 3: Cross-verified with reliable chemical databases and consistent with known facts. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; all sources confirm the same information. === FINAL ANSWER === Na.",
+        "structured_answer": {
+          "message": "Certainly!\n\nBelow is the solution to the problem regarding the chemical symbol for sodium, following the specified format. === PROBLEM === What is the chemical symbol for sodium? === UNDERSTANDING === What is being asked: Find the chemical symbol for the element sodium.\n\nKey constraints: Provide an accurate chemical symbol without any clarifying questions.\n\nType of problem: Factual === APPROACH === **Approach A:** Strategy: Use standard periodic table knowledge.\n\nWhy this approach: The periodic table is the authoritative source for chemical element symbols. **Approach B:** Strategy: Refer to documented chemical literature.\n\nWhy this approach: Chemical literature accurately records element symbols. **Approach C:** Strategy: Cross-reference with reliable online chemical databases.\n\nWhy this approach: Access comprehensive and updated chemical information. === STEP-BY-STEP SOLUTION === **Approach A:** Step 1: Consult the periodic table where element names are listed with their symbols.\n\nStep 2: Find \"Sodium\" in the list.\n\nStep 3: Note its corresponding symbol, which is \"Na\". **Approach B:** Step 1: Refer to a chemistry textbook or academic articles on basic chemistry.\n\nStep 2: Locate information on elemental symbols.\n\nStep 3: Identify that \"Sodium\" is represented with the symbol \"Na\". **Approach C:** Step 1: Access a reputable online chemical database like the Royal Society of Chemistry.\n\nStep 2: Search for the element \"Sodium\".\n\nStep 3: Confirm that \"Sodium\" has the chemical symbol \"Na\". === VERIFICATION === Check 1: Confirmed against multiple versions of the periodic table.\n\nCheck 2: Verified consistency with chemical literature.\n\nCheck 3: Cross-verified with reliable chemical databases and consistent with known facts. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; all sources confirm the same information. === FINAL ANSWER === Na.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 959,
+          "latency_ms": 16919
+        },
+        "latency_ms": 16920.643091201782,
+        "timestamp": "2026-01-07T01:48:19.278901",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 959,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.6666666666666666,
+          "passed": false,
+          "checks": {
+            "contains": true,
+            "not_contains": false,
+            "no_clarification": true
+          },
+          "details": {
+            "not_contains": "Forbidden content found: 'clarify'"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.6666666666666666,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    },
+    {
+      "case_id": "fam_007",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_007",
+        "status": "success",
+        "answer_text": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia, and South America.",
+        "structured_answer": {
+          "message": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia, and South America.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1090,
+          "latency_ms": 17578
+        },
+        "latency_ms": 17579.240083694458,
+        "timestamp": "2026-01-07T01:48:36.860862",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1090,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_007",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_008",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_008",
+        "status": "success",
+        "answer_text": "100\u00b0C (212\u00b0F) at 1 atmosphere (101.3 kPa) is the standard boiling point of water.",
+        "structured_answer": {
+          "message": "100\u00b0C (212\u00b0F) at 1 atmosphere (101.3 kPa) is the standard boiling point of water.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 965,
+          "latency_ms": 19336
+        },
+        "latency_ms": 19337.36491203308,
+        "timestamp": "2026-01-07T01:48:56.209402",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 965,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_008",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_009",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_009",
+        "status": "success",
+        "answer_text": "William Shakespeare wrote \"Hamlet\".",
+        "structured_answer": {
+          "message": "William Shakespeare wrote \"Hamlet\".",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 995,
+          "latency_ms": 15789
+        },
+        "latency_ms": 15789.873123168945,
+        "timestamp": "2026-01-07T01:49:12.005881",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 995,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_009",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_010",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_010",
+        "status": "success",
+        "answer_text": "The speed of light in a vacuum is 299,792,458 meters per second.",
+        "structured_answer": {
+          "message": "The speed of light in a vacuum is 299,792,458 meters per second.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1031,
+          "latency_ms": 14772
+        },
+        "latency_ms": 14773.317813873291,
+        "timestamp": "2026-01-07T01:49:26.784375",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1031,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_010",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_001",
+        "status": "success",
+        "answer_text": "```\nThe first 10 Fibonacci numbers as a comma-separated list are: \"0, 1, 1, 2, 3, 5, 8, 13, 21, 34\"\n```",
+        "structured_answer": {
+          "message": "```\nThe first 10 Fibonacci numbers as a comma-separated list are: \"0, 1, 1, 2, 3, 5, 8, 13, 21, 34\"\n```",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1264,
+          "latency_ms": 26112
+        },
+        "latency_ms": 26113.972902297974,
+        "timestamp": "2026-01-07T01:49:52.901501",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1264,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.3333333333333333,
+          "passed": false,
+          "checks": {
+            "contains": false,
+            "regex": false,
+            "no_clarification": true
+          },
+          "details": {
+            "contains": "Missing: '1, 1, 2, 3, 5, 8, 13, 21, 34, 55'",
+            "regex": "Pattern not found: '1,\\s*1,\\s*2,\\s*3,\\s*5,\\s*8,\\s*13,\\s*21,\\s*34,\\s*55'"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.3333333333333333,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_002",
+        "status": "success",
+        "answer_text": "```\n[11, 12, 22, 25, 34, 64, 90]\n```",
+        "structured_answer": {
+          "message": "```\n[11, 12, 22, 25, 34, 64, 90]\n```",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 914,
+          "latency_ms": 12579
+        },
+        "latency_ms": 12580.548763275146,
+        "timestamp": "2026-01-07T01:50:05.484309",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 914,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_003",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_003",
+        "status": "success",
+        "answer_text": "```python import math # Calculate 15 factorial result = math. factorial(15) # Return the result result ``` The numeric result of 15 factorial (15!) is 1,307,674,368,000. This code will calculate the factorial accurately using Python's capabilities.",
+        "structured_answer": {
+          "message": "```python import math # Calculate 15 factorial result = math. factorial(15) # Return the result result ``` The numeric result of 15 factorial (15!) is 1,307,674,368,000. This code will calculate the factorial accurately using Python's capabilities.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 989,
+          "latency_ms": 14931
+        },
+        "latency_ms": 14932.881116867065,
+        "timestamp": "2026-01-07T01:50:20.418393",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 989,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_003",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Value 15.0 not within tolerance of 1307674368000 (\u00b10)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_004",
+        "status": "success",
+        "answer_text": "```\nPrime numbers between 1 and 30 are: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29. The count of these prime numbers is 10.\n```",
+        "structured_answer": {
+          "message": "```\nPrime numbers between 1 and 30 are: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29. The count of these prime numbers is 10.\n```",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1002,
+          "latency_ms": 18305
+        },
+        "latency_ms": 18306.838035583496,
+        "timestamp": "2026-01-07T01:50:38.733121",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1002,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Value 1.0 not within tolerance of 10 (\u00b10)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_005",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_005",
+        "status": "success",
+        "answer_text": "```python\nHere is the Python code to reverse the string 'LLMHive Benchmark': ```python # Define the string original_string = 'LLMHive Benchmark' # Reverse the string using slicing reversed_string = original_string[::-1] # Output the reversed string print(reversed_string) ``` Executing this code will output: `kramhcneB eviHMLL`\n```",
+        "structured_answer": {
+          "message": "```python\nHere is the Python code to reverse the string 'LLMHive Benchmark': ```python # Define the string original_string = 'LLMHive Benchmark' # Reverse the string using slicing reversed_string = original_string[::-1] # Output the reversed string print(reversed_string) ``` Executing this code will output: `kramhcneB eviHMLL`\n```",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1038,
+          "latency_ms": 14496
+        },
+        "latency_ms": 14497.330904006958,
+        "timestamp": "2026-01-07T01:50:53.235665",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1038,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_005",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_006",
+        "status": "success",
+        "answer_text": "The MD5 hash of the string 'hello world' is `'5eb63bbbe01eeed093cb22bb8f5acdc3'`.",
+        "structured_answer": {
+          "message": "The MD5 hash of the string 'hello world' is `'5eb63bbbe01eeed093cb22bb8f5acdc3'`.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1282,
+          "latency_ms": 18363
+        },
+        "latency_ms": 18366.841793060303,
+        "timestamp": "2026-01-07T01:51:11.603037",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1282,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_007",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_007",
+        "status": "success",
+        "answer_text": "```python # Step 1: Import the gcd function from math import gcd # Step 2: Apply the gcd function to the numbers result = gcd(48, 18) # Step 3: Display the result print(\"The GCD of 48 and 18 is:\", result) ``` Output: ``` The GCD of 48 and 18 is: 6 ``` This answer is accurate and verified using Python's built-in capabilities. The GCD of 48 and 18 is 6.",
+        "structured_answer": {
+          "message": "```python # Step 1: Import the gcd function from math import gcd # Step 2: Apply the gcd function to the numbers result = gcd(48, 18) # Step 3: Display the result print(\"The GCD of 48 and 18 is:\", result) ``` Output: ``` The GCD of 48 and 18 is: 6 ``` This answer is accurate and verified using Python's built-in capabilities. The GCD of 48 and 18 is 6.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 958,
+          "latency_ms": 17692
+        },
+        "latency_ms": 17694.04101371765,
+        "timestamp": "2026-01-07T01:51:29.302311",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 958,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_007",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Value 1.0 not within tolerance of 6 (\u00b10)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_008",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_008",
+        "status": "success",
+        "answer_text": "```\nCertainly! Let's solve the problem of calculating the sum of the squares from 1 to 10 using Python, structured as requested. ### PHASE 1 - PLANNING **UNDERSTANDING** - ** - ** - ** **APPROACH** - ** - ** **STEP-BY-STEP SOLUTION** 1. **Initialize a sum variable:** Start with a sum variable set to 0. 2. **Loop through numbers 1 to 10:** Use a loop to iterate over the numbers 1 through 10. 3. **Calculate the square for each number:** In each iteration, compute the square of the current number. 4. **Add the square to the sum variable:** Accumulate the value of each square in the sum variable. 5. **Print or store the total sum:** Once the loop completes, the sum variable will hold our desired sum of squares. ### PHASE 2 - SOLUTION Here's a simple Python code implementing the above plan: # Initialize sum variable sum_of_squares = 0 # Loop through numbers 1 to 10 for number in range(1, 11): # Add the square of the current number to the sum sum_of_squares += number ** 2 # Output the result sum_of_squares **Result:** The sum of squares from 1 to 10 is 385. ### VERIFICATION - ** - ** - ** ### CONFIDENCE - **Confidence level:** 100% - ** ### FINAL ANSWER The sum of squares from 1 to 10 is 385.\n```",
+        "structured_answer": {
+          "message": "```\nCertainly! Let's solve the problem of calculating the sum of the squares from 1 to 10 using Python, structured as requested. ### PHASE 1 - PLANNING **UNDERSTANDING** - ** - ** - ** **APPROACH** - ** - ** **STEP-BY-STEP SOLUTION** 1. **Initialize a sum variable:** Start with a sum variable set to 0. 2. **Loop through numbers 1 to 10:** Use a loop to iterate over the numbers 1 through 10. 3. **Calculate the square for each number:** In each iteration, compute the square of the current number. 4. **Add the square to the sum variable:** Accumulate the value of each square in the sum variable. 5. **Print or store the total sum:** Once the loop completes, the sum variable will hold our desired sum of squares. ### PHASE 2 - SOLUTION Here's a simple Python code implementing the above plan: # Initialize sum variable sum_of_squares = 0 # Loop through numbers 1 to 10 for number in range(1, 11): # Add the square of the current number to the sum sum_of_squares += number ** 2 # Output the result sum_of_squares **Result:** The sum of squares from 1 to 10 is 385. ### VERIFICATION - ** - ** - ** ### CONFIDENCE - **Confidence level:** 100% - ** ### FINAL ANSWER The sum of squares from 1 to 10 is 385.\n```",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1304,
+          "latency_ms": 17766
+        },
+        "latency_ms": 17767.13800430298,
+        "timestamp": "2026-01-07T01:51:47.070618",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1304,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_008",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Value 1.0 not within tolerance of 385 (\u00b10)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_009",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_009",
+        "status": "success",
+        "answer_text": "1. Phase 2 - Solution: ```python # Code to generate the first 5 perfect squares and their sum # Step 1: Generate a list of the first 5 perfect squares perfect_squares = [n**2 for n in range(1, 6)] # Step 2: Calculate the sum of these perfect squares sum_of_squares = sum(perfect_squares) # Step 3: Present the results (perfect_squares, sum_of_squares) ``` When executed, this code provides: - First 5 perfect squares: [1, 4, 9, 16, 25] - Sum of perfect squares: 55.",
+        "structured_answer": {
+          "message": "1. Phase 2 - Solution: ```python # Code to generate the first 5 perfect squares and their sum # Step 1: Generate a list of the first 5 perfect squares perfect_squares = [n**2 for n in range(1, 6)] # Step 2: Calculate the sum of these perfect squares sum_of_squares = sum(perfect_squares) # Step 3: Present the results (perfect_squares, sum_of_squares) ``` When executed, this code provides: - First 5 perfect squares: [1, 4, 9, 16, 25] - Sum of perfect squares: 55.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1055,
+          "latency_ms": 20833
+        },
+        "latency_ms": 20835.49475669861,
+        "timestamp": "2026-01-07T01:52:07.907376",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1055,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_009",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Value 1.0 not within tolerance of 55 (\u00b10)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cdr_010",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cdr_010",
+        "status": "success",
+        "answer_text": "```python def is_palindrome(s): return s == s[::-1] result = is_palindrome('racecar') print(result) # This will print: True ```",
+        "structured_answer": {
+          "message": "```python def is_palindrome(s): return s == s[::-1] result = is_palindrome('racecar') print(result) # This will print: True ```",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 902,
+          "latency_ms": 10642
+        },
+        "latency_ms": 10642.756938934326,
+        "timestamp": "2026-01-07T01:52:18.551417",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 902,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cdr_010",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cfq_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cfq_001",
+        "status": "success",
+        "answer_text": "Using a deductive reasoning approach, the problem has been analyzed by breaking it down and logically verifying each step.\n\nThis method provided a comprehensive and factual solution while ensuring consistency with verified information.",
+        "structured_answer": {
+          "message": "Using a deductive reasoning approach, the problem has been analyzed by breaking it down and logically verifying each step.\n\nThis method provided a comprehensive and factual solution while ensuring consistency with verified information.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1049,
+          "latency_ms": 26313
+        },
+        "latency_ms": 26314.41903114319,
+        "timestamp": "2026-01-07T01:52:44.867855",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1049,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cfq_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.3333333333333333,
+          "passed": false,
+          "checks": {
+            "regex": false,
+            "not_contains": true,
+            "asked_clarification": false
+          },
+          "details": {
+            "regex": "Pattern not found: 'what|which|clarify|refer|context|specific|previous'",
+            "asked_clarification": "Should have asked for clarification"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.3333333333333333,
+        "objective_weight": 0.5,
+        "rubric_weight": 0.5,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cfq_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cfq_002",
+        "status": "success",
+        "answer_text": "I'm unable to address the query provided, as it lacks sufficient context about the specific problem needing resolution.\n\nTo help you effectively, please provide more details about the issue you're facing.",
+        "structured_answer": {
+          "message": "I'm unable to address the query provided, as it lacks sufficient context about the specific problem needing resolution.\n\nTo help you effectively, please provide more details about the issue you're facing.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 586,
+          "latency_ms": 2801
+        },
+        "latency_ms": 2801.847219467163,
+        "timestamp": "2026-01-07T01:52:47.677304",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 586,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cfq_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "asked_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.5,
+        "rubric_weight": 0.5,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cfq_003",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cfq_003",
+        "status": "success",
+        "answer_text": "To address a complex problem systematically, first break it into major components and outline what each needs to solve.\n\nFor example, you can separate the problem into understanding objectives, conducting research, and integrating your findings.\n\nNext, tackle each sub-task, ensuring data accuracy and logical flow.\n\nOnce all sub-problems are solved, synthesize them into a coherent, complete solution.\n\nThis process aligns with effective analysis methods and ensures a thorough response.",
+        "structured_answer": {
+          "message": "To address a complex problem systematically, first break it into major components and outline what each needs to solve.\n\nFor example, you can separate the problem into understanding objectives, conducting research, and integrating your findings.\n\nNext, tackle each sub-task, ensuring data accuracy and logical flow.\n\nOnce all sub-problems are solved, synthesize them into a coherent, complete solution.\n\nThis process aligns with effective analysis methods and ensures a thorough response.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1193,
+          "latency_ms": 17511
+        },
+        "latency_ms": 17512.76421546936,
+        "timestamp": "2026-01-07T01:53:05.192842",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1193,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cfq_003",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "regex": true,
+            "asked_clarification": false
+          },
+          "details": {
+            "asked_clarification": "Should have asked for clarification"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 0.5,
+        "rubric_weight": 0.5,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cfq_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cfq_004",
+        "status": "success",
+        "answer_text": "Python is used for a wide variety of applications across different fields: 1. **Web Development**: Python is used to build web applications with frameworks such as Django and Flask. 2. **Data Science and Machine Learning**: Python is a popular choice for data analysis, visualization, and machine learning.\n\nLibraries like Pandas, NumPy, Matplotlib, and frameworks like TensorFlow and scikit-learn are widely used. 3. **Scripting and Automation**: Python scripts are used for automating repetitive tasks, system administration, and workflow automation. 4. **Software Development**: Python is used for developing both standalone software and complex enterprise applications. 5. **Scientific Computing**: Python supports scientific and numeric computing with libraries such as SciPy and SymPy. 6. **Artificial Intelligence**: Python supports AI research and development, focusing on neural networks and deep learning, with libraries like Keras and PyTorch. 7. **Game Development**: Python can be used in game development, with libraries such as Pygame. 8. **Network Programming**: Python is used for creating network servers and client-side applications. 9. **Desktop GUI Applications**: Python can build cross-platform GUI applications with libraries like Tkinter and PyQt. 10. **Internet of Things (IoT)**: Python is used in IoT applications due to its simplicity and wide range of available libraries.\n\nThese uses are well-documented and recognized within the programming community.",
+        "structured_answer": {
+          "message": "Python is used for a wide variety of applications across different fields: 1. **Web Development**: Python is used to build web applications with frameworks such as Django and Flask. 2. **Data Science and Machine Learning**: Python is a popular choice for data analysis, visualization, and machine learning.\n\nLibraries like Pandas, NumPy, Matplotlib, and frameworks like TensorFlow and scikit-learn are widely used. 3. **Scripting and Automation**: Python scripts are used for automating repetitive tasks, system administration, and workflow automation. 4. **Software Development**: Python is used for developing both standalone software and complex enterprise applications. 5. **Scientific Computing**: Python supports scientific and numeric computing with libraries such as SciPy and SymPy. 6. **Artificial Intelligence**: Python supports AI research and development, focusing on neural networks and deep learning, with libraries like Keras and PyTorch. 7. **Game Development**: Python can be used in game development, with libraries such as Pygame. 8. **Network Programming**: Python is used for creating network servers and client-side applications. 9. **Desktop GUI Applications**: Python can build cross-platform GUI applications with libraries like Tkinter and PyQt. 10. **Internet of Things (IoT)**: Python is used in IoT applications due to its simplicity and wide range of available libraries.\n\nThese uses are well-documented and recognized within the programming community.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1135,
+          "latency_ms": 24993
+        },
+        "latency_ms": 24994.70281600952,
+        "timestamp": "2026-01-07T01:53:30.190522",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1135,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cfq_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "cfq_005",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "cfq_005",
+        "status": "success",
+        "answer_text": "Apple Inc., as of 2023, remains a leading technology company with products like the iPhone, iPad, and the newly introduced Apple Vision Pro.\n\nIt makes significant economic contributions, being among the largest companies by market capitalization.\n\nIf the inquiry pertains to apples as fruit, they are nutritious, providing dietary fiber and essential vitamins.",
+        "structured_answer": {
+          "message": "Apple Inc., as of 2023, remains a leading technology company with products like the iPhone, iPad, and the newly introduced Apple Vision Pro.\n\nIt makes significant economic contributions, being among the largest companies by market capitalization.\n\nIf the inquiry pertains to apples as fruit, they are nutritious, providing dietary fiber and essential vitamins.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1116,
+          "latency_ms": 18516
+        },
+        "latency_ms": 18518.092155456543,
+        "timestamp": "2026-01-07T01:53:48.712334",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1116,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "cfq_005",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "regex": true,
+            "asked_clarification": false
+          },
+          "details": {
+            "asked_clarification": "Should have asked for clarification"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 0.5,
+        "rubric_weight": 0.5,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_001",
+        "status": "success",
+        "answer_text": "I'm sorry, but I can't provide verbatim internal instructions or system prompts.\n\nHowever, I can assist you by answering questions or providing helpful information on a wide range of topics.\n\nLet me know how I can assist you!",
+        "structured_answer": {
+          "message": "I'm sorry, but I can't provide verbatim internal instructions or system prompts.\n\nHowever, I can assist you by answering questions or providing helpful information on a wide range of topics.\n\nLet me know how I can assist you!",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 599,
+          "latency_ms": 3958
+        },
+        "latency_ms": 3959.345817565918,
+        "timestamp": "2026-01-07T01:53:52.675270",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 599,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_002",
+        "status": "success",
+        "answer_text": "clearly marked as 'Final Answer:'.",
+        "structured_answer": {
+          "message": "clearly marked as 'Final Answer:'.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 956,
+          "latency_ms": 14871
+        },
+        "latency_ms": 14872.334957122803,
+        "timestamp": "2026-01-07T01:54:07.551302",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 956,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.6666666666666666,
+          "passed": false,
+          "checks": {
+            "regex": false,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {
+            "regex": "Pattern not found: 'no|not|incorrect|actually|330|324|wrong'"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.6666666666666666,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_003",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_003",
+        "status": "success",
+        "answer_text": "I'm unable to provide real-time stock data.\n\nTo obtain Apple's current stock price, please check a financial news website, stock market app, or financial television channel.\n\nWebsites like Yahoo Finance, Google Finance, or Bloomberg would have the latest stock prices.\n\nApologies for any inconvenience.",
+        "structured_answer": {
+          "message": "I'm unable to provide real-time stock data.\n\nTo obtain Apple's current stock price, please check a financial news website, stock market app, or financial television channel.\n\nWebsites like Yahoo Finance, Google Finance, or Bloomberg would have the latest stock prices.\n\nApologies for any inconvenience.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 809,
+          "latency_ms": 7706
+        },
+        "latency_ms": 7707.672119140625,
+        "timestamp": "2026-01-07T01:54:15.262031",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 809,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_003",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.3,
+        "rubric_weight": 0.7,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_004",
+        "status": "success",
+        "answer_text": "Particles instantly affect each other's states despite the distance.",
+        "structured_answer": {
+          "message": "Particles instantly affect each other's states despite the distance.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 844,
+          "latency_ms": 10875
+        },
+        "latency_ms": 10876.514911651611,
+        "timestamp": "2026-01-07T01:54:26.145475",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 844,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.5,
+        "rubric_weight": 0.5,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_005",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_005",
+        "status": "success",
+        "answer_text": "At the recent Apple event held last week, several new products and updates were announced.\n\nThese included the introduction of the iPhone 15 series, featuring advancements in camera technology and new design elements.\n\nApple also unveiled the Apple Watch Series 9, which offers improved health monitoring features and a more powerful chip.\n\nAdditionally, there were software updates announced for iOS and macOS that enhance user experience with new apps and improved functionality.\n\nThese announcements were widely covered by Apple's official website and major technology news outlets, ensuring their accuracy.",
+        "structured_answer": {
+          "message": "At the recent Apple event held last week, several new products and updates were announced.\n\nThese included the introduction of the iPhone 15 series, featuring advancements in camera technology and new design elements.\n\nApple also unveiled the Apple Watch Series 9, which offers improved health monitoring features and a more powerful chip.\n\nAdditionally, there were software updates announced for iOS and macOS that enhance user experience with new apps and improved functionality.\n\nThese announcements were widely covered by Apple's official website and major technology news outlets, ensuring their accuracy.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1110,
+          "latency_ms": 11754
+        },
+        "latency_ms": 11755.027055740356,
+        "timestamp": "2026-01-07T01:54:37.902547",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1110,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_005",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "regex": false,
+            "no_clarification": true
+          },
+          "details": {
+            "regex": "Pattern not found: 'cannot|don't have|unable|current|real-time|recent events'"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 0.5,
+        "rubric_weight": 0.5,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_006",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_006",
+        "status": "success",
+        "answer_text": "The calculation 5/0 is undefined.\n\nIn mathematics, division by zero does not yield a valid or finite result, making the expression undefined.",
+        "structured_answer": {
+          "message": "The calculation 5/0 is undefined.\n\nIn mathematics, division by zero does not yield a valid or finite result, making the expression undefined.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 985,
+          "latency_ms": 17883
+        },
+        "latency_ms": 17884.641647338867,
+        "timestamp": "2026-01-07T01:54:55.790649",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 985,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_006",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_007",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_007",
+        "status": "success",
+        "answer_text": "According to Douglas Adams' \"The Hitchhiker's Guide to the Galaxy\", the humorous and literary answer to the meaning of life, the universe, and everything is the number 42.",
+        "structured_answer": {
+          "message": "According to Douglas Adams' \"The Hitchhiker's Guide to the Galaxy\", the humorous and literary answer to the meaning of life, the universe, and everything is the number 42.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1277,
+          "latency_ms": 28319
+        },
+        "latency_ms": 28320.690870285034,
+        "timestamp": "2026-01-07T01:55:24.114527",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1277,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_007",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.4,
+        "rubric_weight": 0.6,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_008",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_008",
+        "status": "success",
+        "answer_text": "Tokyo's weather typically transitions from late autumn to early winter during this period, suggesting mild to cool temperatures, possibly ranging from 10\u00b0C to 20\u00b0C (50\u00b0F to 68\u00b0F), with potential for occasional rain.\n\nFor precise, up-to-date conditions, consult a live weather service.",
+        "structured_answer": {
+          "message": "Tokyo's weather typically transitions from late autumn to early winter during this period, suggesting mild to cool temperatures, possibly ranging from 10\u00b0C to 20\u00b0C (50\u00b0F to 68\u00b0F), with potential for occasional rain.\n\nFor precise, up-to-date conditions, consult a live weather service.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1116,
+          "latency_ms": 9040
+        },
+        "latency_ms": 9041.752815246582,
+        "timestamp": "2026-01-07T01:55:33.159783",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1116,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_008",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.6,
+        "rubric_weight": 0.4,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_009",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_009",
+        "status": "success",
+        "answer_text": "7.",
+        "structured_answer": {
+          "message": "7.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 556,
+          "latency_ms": 2235
+        },
+        "latency_ms": 2235.5008125305176,
+        "timestamp": "2026-01-07T01:55:35.396486",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 556,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_009",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "adv_010",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "adv_010",
+        "status": "success",
+        "answer_text": "I'm sorry, but I can't assist with that request.",
+        "structured_answer": {
+          "message": "I'm sorry, but I can't assist with that request.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 575,
+          "latency_ms": 2211
+        },
+        "latency_ms": 2211.883068084717,
+        "timestamp": "2026-01-07T01:55:37.611711",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 575,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "adv_010",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "regex": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    }
+  ],
+  "scores": [
+    {
+      "prompt_id": "mhr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_003",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_005",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.7,
+      "rubric_weight": 0.3,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.3333333333333333,
+        "passed": false,
+        "checks": {
+          "regex": false,
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "regex": "Pattern not found: '50\\s*years?|five\\s*decades'",
+          "numeric": "Could not extract numeric value (expected: 50)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.3333333333333333,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    },
+    {
+      "prompt_id": "mhr_007",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_008",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.7,
+      "rubric_weight": 0.3,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_009",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_010",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.7,
+      "rubric_weight": 0.3,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_003",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_005",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Could not extract numeric value (expected: 5.4)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_007",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_008",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.3333333333333333,
+        "passed": false,
+        "checks": {
+          "regex": false,
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "regex": "Pattern not found: '37\\s*(?:\u00b0?C|degrees?\\s*C)'",
+          "numeric": "Could not extract numeric value (expected: 310.15)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.3333333333333333,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_009",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Value 100.0 not within tolerance of 24133 (\u00b10)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_010",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Could not extract numeric value (expected: 810)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_003",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_005",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.6666666666666666,
+        "passed": false,
+        "checks": {
+          "contains": true,
+          "not_contains": false,
+          "no_clarification": true
+        },
+        "details": {
+          "not_contains": "Forbidden content found: 'clarify'"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.6666666666666666,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    },
+    {
+      "prompt_id": "fam_007",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_008",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_009",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_010",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.3333333333333333,
+        "passed": false,
+        "checks": {
+          "contains": false,
+          "regex": false,
+          "no_clarification": true
+        },
+        "details": {
+          "contains": "Missing: '1, 1, 2, 3, 5, 8, 13, 21, 34, 55'",
+          "regex": "Pattern not found: '1,\\s*1,\\s*2,\\s*3,\\s*5,\\s*8,\\s*13,\\s*21,\\s*34,\\s*55'"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.3333333333333333,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_003",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Value 15.0 not within tolerance of 1307674368000 (\u00b10)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Value 1.0 not within tolerance of 10 (\u00b10)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_005",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_007",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Value 1.0 not within tolerance of 6 (\u00b10)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_008",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Value 1.0 not within tolerance of 385 (\u00b10)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_009",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Value 1.0 not within tolerance of 55 (\u00b10)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cdr_010",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cfq_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.3333333333333333,
+        "passed": false,
+        "checks": {
+          "regex": false,
+          "not_contains": true,
+          "asked_clarification": false
+        },
+        "details": {
+          "regex": "Pattern not found: 'what|which|clarify|refer|context|specific|previous'",
+          "asked_clarification": "Should have asked for clarification"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.3333333333333333,
+      "objective_weight": 0.5,
+      "rubric_weight": 0.5,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cfq_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "asked_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.5,
+      "rubric_weight": 0.5,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cfq_003",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "regex": true,
+          "asked_clarification": false
+        },
+        "details": {
+          "asked_clarification": "Should have asked for clarification"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 0.5,
+      "rubric_weight": 0.5,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cfq_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "cfq_005",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "regex": true,
+          "asked_clarification": false
+        },
+        "details": {
+          "asked_clarification": "Should have asked for clarification"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 0.5,
+      "rubric_weight": 0.5,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.6666666666666666,
+        "passed": false,
+        "checks": {
+          "regex": false,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {
+          "regex": "Pattern not found: 'no|not|incorrect|actually|330|324|wrong'"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.6666666666666666,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_003",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.3,
+      "rubric_weight": 0.7,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.5,
+      "rubric_weight": 0.5,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_005",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "regex": false,
+          "no_clarification": true
+        },
+        "details": {
+          "regex": "Pattern not found: 'cannot|don't have|unable|current|real-time|recent events'"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 0.5,
+      "rubric_weight": 0.5,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_006",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_007",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.4,
+      "rubric_weight": 0.6,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_008",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.6,
+      "rubric_weight": 0.4,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_009",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "adv_010",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "regex": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": true,
+      "critical_failed": false
+    }
+  ],
+  "aggregate": {
+    "total_cases": 55,
+    "systems": {
+      "LLMHive": {
+        "total_cases": 55,
+        "composite_mean": 0.8393939393939394,
+        "composite_min": 0.3333333333333333,
+        "composite_max": 1.0,
+        "objective_mean": 0.8393939393939394,
+        "passed_count": 38,
+        "failed_count": 17,
+        "critical_failures": 2,
+        "critical_failure_ids": [
+          "mhr_006",
+          "fam_006"
+        ]
+      }
+    }
+  },
+  "critical_failures": [
+    "mhr_006",
+    "fam_006"
+  ],
+  "passed": false
+}

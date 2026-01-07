@@ -1,0 +1,289 @@
+{
+  "suite_name": "Complex Reasoning Benchmark",
+  "suite_version": "1.0.0",
+  "git_commit": "033033a38318",
+  "timestamp": "20260106_205535",
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "timeout_seconds": 120.0,
+    "top_p": 1.0,
+    "enable_tools": true,
+    "enable_rag": true,
+    "enable_mcp2": true,
+    "deterministic": true,
+    "reasoning_mode": "standard",
+    "accuracy_level": 3,
+    "enable_hrm": true,
+    "enable_deep_consensus": false
+  },
+  "systems": [
+    "LLMHive"
+  ],
+  "results": [
+    {
+      "case_id": "mhr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_001",
+        "status": "success",
+        "answer_text": "The population of France is approximately 67 million people, and it is about 1,718 times larger than the population of Monaco, which is around 39,000 people.",
+        "structured_answer": {
+          "message": "The population of France is approximately 67 million people, and it is about 1,718 times larger than the population of Monaco, which is around 39,000 people.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1151,
+          "latency_ms": 17615
+        },
+        "latency_ms": 17617.80619621277,
+        "timestamp": "2026-01-06T20:55:55.146429",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1151,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "mhr_002",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_002",
+        "status": "success",
+        "answer_text": "The Nobel Prize in Physics in 2007 was awarded to Albert Fert and Peter Gr\u00fcnberg for the discovery of Giant Magnetoresistance, a phenomenon which is fundamental to reading data on hard disks.",
+        "structured_answer": {
+          "message": "The Nobel Prize in Physics in 2007 was awarded to Albert Fert and Peter Gr\u00fcnberg for the discovery of Giant Magnetoresistance, a phenomenon which is fundamental to reading data on hard disks.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1120,
+          "latency_ms": 24470
+        },
+        "latency_ms": 24470.659017562866,
+        "timestamp": "2026-01-06T20:56:19.618238",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1120,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_002",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nLet's work this out step by step.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage?\n\nPlease think through this problem step by step, showing your reasoning at each stage.\n\nDo not skip steps.\n\nAfter reasoning, provide a concise final answer clearly marked as 'Final Answer:'. === UNDERSTANDING === What is being asked: Calculate the profit margin percentage using given revenue and expenses.\n\nKey constraints: Use the formula for profit margin: Profit Margin = (Profit / Revenue) * 100 Type of problem: Math === APPROACH === Strategy: Calculate profit by subtracting expenses from revenue, then use the profit margin formula.\n\nWhy this approach: This is the standard method for calculating profit margin. === STEP-BY-STEP SOLUTION === Step 1: Calculate profit. - Profit = Revenue - Expenses - Profit = $4.5 million - $3.2 million - Profit = $1.3 million Step 2: Calculate profit margin percentage. - Profit Margin = (Profit / Revenue) * 100 - Profit Margin = ($1.3 million / $4.5 million) * 100 - Profit Margin \u2248 28.89% === VERIFICATION === Check 1: Verify profit calculation. - $4.5 million - $3.2 million = $1.3 million Check 2: Verify formula application. - Correct formula: Profit Margin = (Profit / Revenue) * 100 Check 3: Does the answer make sense? - A profit of $1.3 million from $4.5 million revenue gives a logical percentage. === CONFIDENCE === Confidence level: 100% Most uncertain about: No uncertainty, calculation is straightforward. === FINAL ANSWER === 28.89%.",
+        "structured_answer": {
+          "message": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nLet's work this out step by step.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage?\n\nPlease think through this problem step by step, showing your reasoning at each stage.\n\nDo not skip steps.\n\nAfter reasoning, provide a concise final answer clearly marked as 'Final Answer:'. === UNDERSTANDING === What is being asked: Calculate the profit margin percentage using given revenue and expenses.\n\nKey constraints: Use the formula for profit margin: Profit Margin = (Profit / Revenue) * 100 Type of problem: Math === APPROACH === Strategy: Calculate profit by subtracting expenses from revenue, then use the profit margin formula.\n\nWhy this approach: This is the standard method for calculating profit margin. === STEP-BY-STEP SOLUTION === Step 1: Calculate profit. - Profit = Revenue - Expenses - Profit = $4.5 million - $3.2 million - Profit = $1.3 million Step 2: Calculate profit margin percentage. - Profit Margin = (Profit / Revenue) * 100 - Profit Margin = ($1.3 million / $4.5 million) * 100 - Profit Margin \u2248 28.89% === VERIFICATION === Check 1: Verify profit calculation. - $4.5 million - $3.2 million = $1.3 million Check 2: Verify formula application. - Correct formula: Profit Margin = (Profit / Revenue) * 100 Check 3: Does the answer make sense? - A profit of $1.3 million from $4.5 million revenue gives a logical percentage. === CONFIDENCE === Confidence level: 100% Most uncertain about: No uncertainty, calculation is straightforward. === FINAL ANSWER === 28.89%.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1029,
+          "latency_ms": 14553
+        },
+        "latency_ms": 14554.532051086426,
+        "timestamp": "2026-01-06T20:56:34.173898",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1029,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    }
+  ],
+  "scores": [
+    {
+      "prompt_id": "mhr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "mhr_002",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    }
+  ],
+  "aggregate": {
+    "total_cases": 3,
+    "systems": {
+      "LLMHive": {
+        "total_cases": 3,
+        "composite_mean": 1.0,
+        "composite_min": 1.0,
+        "composite_max": 1.0,
+        "objective_mean": 1.0,
+        "passed_count": 3,
+        "failed_count": 0,
+        "critical_failures": 0,
+        "critical_failure_ids": []
+      }
+    }
+  },
+  "critical_failures": [],
+  "passed": true
+}

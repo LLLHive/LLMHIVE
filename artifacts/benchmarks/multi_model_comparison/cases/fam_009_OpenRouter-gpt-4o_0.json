@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_009",
+  "system": "OpenRouter-gpt-4o",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4o",
+    "model_id": "openai/gpt-4o",
+    "prompt_id": "fam_009",
+    "status": "success",
+    "answer_text": "\"Hamlet\" was written by William Shakespeare.",
+    "structured_answer": null,
+    "latency_ms": 1573.9790869993158,
+    "timestamp": "2026-01-07T01:57:45.093711",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 11,
+      "tokens_out": 10,
+      "cost_usd": 0.000205,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_009",
+    "system_name": "OpenRouter-gpt-4o",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

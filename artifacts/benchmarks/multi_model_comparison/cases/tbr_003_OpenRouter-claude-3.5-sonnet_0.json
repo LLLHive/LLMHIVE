@@ -1,0 +1,49 @@
+{
+  "case_id": "tbr_003",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "tbr_003",
+    "status": "success",
+    "answer_text": "Let me solve this step by step:\n\n1) First, let's calculate 17\u00b3\n   * 17\u00b3 = 17 \u00d7 17 \u00d7 17 = 4,913\n\n2) Next, let's find sqrt(625)\n   * \u221a625 = 25\n\n3) Now, let's calculate 12!\n   * 12! = 12 \u00d7 11 \u00d7 10 \u00d7 9 \u00d7 8 \u00d7 7 \u00d7 6 \u00d7 5 \u00d7 4 \u00d7 3 \u00d7 2 \u00d7 1\n   * 12! = 479,001,600\n\n4) Finally, let's put it all together:\n   * 17\u00b3 + \u221a625 - 12!\n   * 4,913 + 25 - 479,001,600\n   * = -478,996,662\n\nTherefore, 17\u00b3 + \u221a625 - 12! = -478,996,662",
+    "structured_answer": null,
+    "latency_ms": 5159.847361006541,
+    "timestamp": "2026-01-07T01:55:29.671681",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 23,
+      "tokens_out": 222,
+      "cost_usd": 0.003399,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_003",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "case_id": "cfq_005",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "cfq_005",
+    "status": "success",
+    "answer_text": "Apple Inc., as of 2023, remains a leading technology company with products like the iPhone, iPad, and the newly introduced Apple Vision Pro.\n\nIt makes significant economic contributions, being among the largest companies by market capitalization.\n\nIf the inquiry pertains to apples as fruit, they are nutritious, providing dietary fiber and essential vitamins.",
+    "structured_answer": {
+      "message": "Apple Inc., as of 2023, remains a leading technology company with products like the iPhone, iPad, and the newly introduced Apple Vision Pro.\n\nIt makes significant economic contributions, being among the largest companies by market capitalization.\n\nIf the inquiry pertains to apples as fruit, they are nutritious, providing dietary fiber and essential vitamins.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1116,
+      "latency_ms": 18516
+    },
+    "latency_ms": 18518.092155456543,
+    "timestamp": "2026-01-07T01:53:48.712334",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1116,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "cfq_005",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.5,
+      "passed": false,
+      "checks": {
+        "regex": true,
+        "asked_clarification": false
+      },
+      "details": {
+        "asked_clarification": "Should have asked for clarification"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.5,
+    "objective_weight": 0.5,
+    "rubric_weight": 0.5,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

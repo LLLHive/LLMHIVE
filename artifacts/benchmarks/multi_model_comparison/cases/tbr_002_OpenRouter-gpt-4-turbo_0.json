@@ -1,0 +1,50 @@
+{
+  "case_id": "tbr_002",
+  "system": "OpenRouter-gpt-4-turbo",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4-turbo",
+    "model_id": "openai/gpt-4-turbo",
+    "prompt_id": "tbr_002",
+    "status": "success",
+    "answer_text": "To convert kilometers to miles, you can use the conversion factor where 1 kilometer is approximately equal to 0.621371 miles.\n\n1. **Convert kilometers to miles:**\n   \\[\n   100 \\text{ kilometers} \\times 0.621371 \\text{ miles/kilometer} = 62.1371 \\text{ miles}\n   \\]\n\n2. **Calculate the time to travel 62.1371 miles at 60 mph:**\n   The formula to calculate time is:\n   \\[\n   \\text{Time} = \\frac{\\text{Distance}}{\\text{Speed}}\n   \\]\n   Plugging in the values:\n   \\[\n   \\text{Time} = \\frac{62.1371 \\text{ miles}}{60 \\text{ mph}} = 1.0356183 \\text{ hours}\n   \\]\n\n3. **Convert hours to minutes:**\n   Since 1 hour equals 60 minutes, you multiply the hours by 60:\n   \\[\n   1.0356183 \\text{ hours} \\times 60 \\text{ minutes/hour} = 62.1371 \\text{ minutes}\n   \\]\n\nTherefore, it would take approximately 62.14 minutes to travel 100 kilometers at a speed of 60 mph.",
+    "structured_answer": null,
+    "latency_ms": 5279.967595997732,
+    "timestamp": "2026-01-07T01:54:53.692819",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 31,
+      "tokens_out": 272,
+      "cost_usd": 0.00847,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_002",
+    "system_name": "OpenRouter-gpt-4-turbo",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

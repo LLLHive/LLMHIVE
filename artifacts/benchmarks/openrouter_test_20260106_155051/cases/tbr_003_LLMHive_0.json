@@ -1,0 +1,65 @@
+{
+  "case_id": "tbr_003",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_003",
+    "status": "success",
+    "answer_text": "The result of \\(17^3 + \\sqrt{625} - 12!\\) is \\(-[REDACTED_SSN]\\).",
+    "structured_answer": {
+      "message": "The result of \\(17^3 + \\sqrt{625} - 12!\\) is \\(-[REDACTED_SSN]\\).",
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1221,
+      "latency_ms": 21706
+    },
+    "latency_ms": 21707.32593536377,
+    "timestamp": "2026-01-06T20:52:07.546448",
+    "metadata": {
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1221,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_003",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.5,
+      "passed": false,
+      "checks": {
+        "numeric": false,
+        "no_clarification": true
+      },
+      "details": {
+        "numeric": "Value 17.0 not within tolerance of -479001112 (\u00b11)"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.5,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_004",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "fam_004",
+    "status": "success",
+    "answer_text": "Jupiter is the largest planet in our solar system. It is a gas giant with a mass more than two and a half times that of all the other planets in our solar system combined. Jupiter's diameter is approximately 88,846 miles (142,984 kilometers), which is roughly 11 times wider than Earth.",
+    "structured_answer": null,
+    "latency_ms": 2729.2311930068536,
+    "timestamp": "2026-01-07T01:47:02.708797",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 17,
+      "tokens_out": 69,
+      "cost_usd": 0.0010860000000000002,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_004",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

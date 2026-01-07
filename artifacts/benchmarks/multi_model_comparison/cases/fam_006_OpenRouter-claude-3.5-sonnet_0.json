@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_006",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "fam_006",
+    "status": "success",
+    "answer_text": "The chemical symbol for sodium is Na. This symbol comes from the Latin word for sodium, \"natrium.\"",
+    "structured_answer": null,
+    "latency_ms": 1459.1009959985968,
+    "timestamp": "2026-01-07T01:57:32.351705",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 15,
+      "tokens_out": 25,
+      "cost_usd": 0.00042,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_006",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

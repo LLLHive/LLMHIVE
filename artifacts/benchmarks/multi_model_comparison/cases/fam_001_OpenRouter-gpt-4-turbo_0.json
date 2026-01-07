@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_001",
+  "system": "OpenRouter-gpt-4-turbo",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4-turbo",
+    "model_id": "openai/gpt-4-turbo",
+    "prompt_id": "fam_001",
+    "status": "success",
+    "answer_text": "Penicillin was discovered by Alexander Fleming in 1928. Fleming was a Scottish bacteriologist who noticed that a mold called Penicillium notatum had accidentally contaminated a petri dish in his laboratory and was killing the bacteria he was studying. This observation led to the development of penicillin, the first widely used antibiotic, which has had a profound impact on the treatment of bacterial infections.",
+    "structured_answer": null,
+    "latency_ms": 2048.0638699955307,
+    "timestamp": "2026-01-07T01:56:08.829241",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 13,
+      "tokens_out": 81,
+      "cost_usd": 0.0025599999999999998,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_001",
+    "system_name": "OpenRouter-gpt-4-turbo",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.9,
+    "rubric_weight": 0.1,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

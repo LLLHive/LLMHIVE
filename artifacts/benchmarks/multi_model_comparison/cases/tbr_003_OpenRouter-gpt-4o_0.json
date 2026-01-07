@@ -1,0 +1,49 @@
+{
+  "case_id": "tbr_003",
+  "system": "OpenRouter-gpt-4o",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4o",
+    "model_id": "openai/gpt-4o",
+    "prompt_id": "tbr_003",
+    "status": "success",
+    "answer_text": "To solve the expression \\(17^3 + \\sqrt{625} - 12!\\), we need to calculate each part separately:\n\n1. Calculate \\(17^3\\):\n   \\[\n   17^3 = 17 \\times 17 \\times 17 = 289 \\times 17 = 4913\n   \\]\n\n2. Calculate \\(\\sqrt{625}\\):\n   \\[\n   \\sqrt{625} = 25\n   \\]\n\n3. Calculate \\(12!\\) (12 factorial):\n   \\[\n   12! = 12 \\times 11 \\times 10 \\times 9 \\times 8 \\times 7 \\times 6 \\times 5 \\times 4 \\times 3 \\times 2 \\times 1\n   \\]\n   \\[\n   = 479001600\n   \\]\n\nNow, substitute these values back into the original expression:\n\\[\n17^3 + \\sqrt{625} - 12! = 4913 + 25 - 479001600\n\\]\n\nCalculate the result:\n\\[\n4913 + 25 = 4938\n\\]\n\\[\n4938 - 479001600 = -478996662\n\\]\n\nThus, the result of the expression is \\(-478996662\\).",
+    "structured_answer": null,
+    "latency_ms": 4290.393083996605,
+    "timestamp": "2026-01-07T01:55:16.603732",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 22,
+      "tokens_out": 269,
+      "cost_usd": 0.004145,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_003",
+    "system_name": "OpenRouter-gpt-4o",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

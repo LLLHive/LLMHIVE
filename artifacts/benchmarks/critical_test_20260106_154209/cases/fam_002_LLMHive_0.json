@@ -1,0 +1,62 @@
+{
+  "case_id": "fam_002",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "fam_002",
+    "status": "success",
+    "answer_text": "Stub response for: --- Live Data --- [WEATHER live] { \"location\": \"...",
+    "structured_answer": {
+      "message": "Stub response for: --- Live Data --- [WEATHER live] { \"location\": \"...",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 0,
+      "latency_ms": 4
+    },
+    "latency_ms": 4.509925842285156,
+    "timestamp": "2026-01-06T20:42:13.275635",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_002",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.6666666666666666,
+      "passed": false,
+      "checks": {
+        "contains": false,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {
+        "contains": "Missing: 'Canberra'"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.6666666666666666,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

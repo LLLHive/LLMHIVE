@@ -1,0 +1,59 @@
+{
+  "case_id": "tbr_006",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_006",
+    "status": "success",
+    "answer_text": "The area of the circle is \\( 176.71 \\) square meters.",
+    "structured_answer": {
+      "message": "The area of the circle is \\( 176.71 \\) square meters.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1025,
+      "latency_ms": 19676
+    },
+    "latency_ms": 19677.455186843872,
+    "timestamp": "2026-01-06T21:32:44.729656",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1025,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_006",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "case_id": "fam_006",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "fam_006",
+    "status": "success",
+    "answer_text": "=== PROBLEM === What is the chemical symbol for sodium? === UNDERSTANDING === What is being asked: Identify the chemical symbol for the element sodium.\n\nKey constraints: Provide the correct and widely accepted chemical symbol.\n\nType of problem: Factual === APPROACH === Strategy: Use information from the periodic table of elements to identify the chemical symbol for sodium.\n\nWhy this approach: The periodic table is a highly reliable source for chemical symbols. === STEP-BY-STEP SOLUTION === Step 1: Sodium is an element found in the periodic table.\n\nStep 2: Each element on the periodic table is designated a unique one- or two-letter symbol.\n\nStep 3: Locate sodium on the periodic table to determine its symbol. === VERIFICATION === Check 1: Ensure sodium is correctly identified on the periodic table.\n\nCheck 2: Verify that the chemical symbol is consistent across reliable chemical references.\n\nCheck 3: Confirm that the symbol matches educational and scientific materials. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; the periodic table universally lists this information. === FINAL ANSWER === Na.",
+    "structured_answer": {
+      "message": "=== PROBLEM === What is the chemical symbol for sodium? === UNDERSTANDING === What is being asked: Identify the chemical symbol for the element sodium.\n\nKey constraints: Provide the correct and widely accepted chemical symbol.\n\nType of problem: Factual === APPROACH === Strategy: Use information from the periodic table of elements to identify the chemical symbol for sodium.\n\nWhy this approach: The periodic table is a highly reliable source for chemical symbols. === STEP-BY-STEP SOLUTION === Step 1: Sodium is an element found in the periodic table.\n\nStep 2: Each element on the periodic table is designated a unique one- or two-letter symbol.\n\nStep 3: Locate sodium on the periodic table to determine its symbol. === VERIFICATION === Check 1: Ensure sodium is correctly identified on the periodic table.\n\nCheck 2: Verify that the chemical symbol is consistent across reliable chemical references.\n\nCheck 3: Confirm that the symbol matches educational and scientific materials. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; the periodic table universally lists this information. === FINAL ANSWER === Na.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 790,
+      "latency_ms": 18440
+    },
+    "latency_ms": 18454.10108566284,
+    "timestamp": "2026-01-06T22:32:16.775611",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 790,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_006",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

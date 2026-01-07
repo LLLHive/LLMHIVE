@@ -1,0 +1,49 @@
+{
+  "case_id": "cdr_002",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "cdr_002",
+    "status": "success",
+    "answer_text": "Here's the Python code to sort the list in ascending order:\n\n```python\ndef bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n    return arr\n\n# Original list\nnumbers = [64, 34, 25, 12, 22, 11, 90]\n\n# Sort the list\nsorted_numbers = bubble_sort(numbers)\n\nprint(sorted_numbers)\n```\n\nOutput:\n```\n[11, 12, 22, 25, 34, 64, 90]\n```\n\nAlternatively, you can use Python's built-in sort() method or sorted() function:\n\n```python\nnumbers = [64, 34, 25, 12, 22, 11, 90]\n\n# Using sort() method\nnumbers.sort()\nprint(numbers)\n\n# OR using sorted() function\nsorted_numbers = sorted([64, 34, 25, 12, 22, 11, 90])\nprint(sorted_numbers)\n```\n\nBoth will output:\n```\n[11, 12, 22, 25, 34, 64, 90]\n```",
+    "structured_answer": null,
+    "latency_ms": 6370.918065003934,
+    "timestamp": "2026-01-07T01:58:20.583563",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 44,
+      "tokens_out": 319,
+      "cost_usd": 0.004917,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "cdr_002",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

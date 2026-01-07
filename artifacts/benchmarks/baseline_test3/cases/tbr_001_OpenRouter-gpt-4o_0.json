@@ -1,0 +1,49 @@
+{
+  "case_id": "tbr_001",
+  "system": "OpenRouter-gpt-4o",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4o",
+    "model_id": "openai/gpt-4o",
+    "prompt_id": "tbr_001",
+    "status": "success",
+    "answer_text": "To calculate the profit margin as a percentage, you first need to determine the profit, which is the difference between revenue and expenses. Then, divide the profit by the revenue and multiply by 100 to get the percentage.\n\n1. Calculate the profit:\n   \\[\n   \\text{Profit} = \\text{Revenue} - \\text{Expenses} = 4.5 \\text{ million} - 3.2 \\text{ million} = 1.3 \\text{ million}\n   \\]\n\n2. Calculate the profit margin as a percentage:\n   \\[\n   \\text{Profit Margin} = \\left( \\frac{\\text{Profit}}{\\text{Revenue}} \\right) \\times 100 = \\left( \\frac{1.3 \\text{ million}}{4.5 \\text{ million}} \\right) \\times 100\n   \\]\n\n3. Simplify the calculation:\n   \\[\n   \\text{Profit Margin} = \\left( \\frac{1.3}{4.5} \\right) \\times 100 \\approx 28.89\\%\n   \\]\n\nTherefore, the profit margin is approximately 28.89%.",
+    "structured_answer": null,
+    "latency_ms": 2672.178562002955,
+    "timestamp": "2026-01-07T01:46:41.666074",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 38,
+      "tokens_out": 244,
+      "cost_usd": 0.0038499999999999997,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_001",
+    "system_name": "OpenRouter-gpt-4o",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

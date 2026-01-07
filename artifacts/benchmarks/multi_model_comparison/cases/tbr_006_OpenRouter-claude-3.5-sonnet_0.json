@@ -1,0 +1,50 @@
+{
+  "case_id": "tbr_006",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "tbr_006",
+    "status": "success",
+    "answer_text": "Let me solve this step by step.\n\n1) The formula for the area of a circle is A = \u03c0r\u00b2\n2) r = 7.5 meters\n3) A = \u03c0(7.5)\u00b2\n4) A = \u03c0(56.25)\n5) A = 176.71458676...\n\nRounding to 2 decimal places:\nA = 176.71 square meters",
+    "structured_answer": null,
+    "latency_ms": 3529.123490996426,
+    "timestamp": "2026-01-07T01:55:54.306576",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 35,
+      "tokens_out": 95,
+      "cost_usd": 0.0015300000000000001,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_006",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

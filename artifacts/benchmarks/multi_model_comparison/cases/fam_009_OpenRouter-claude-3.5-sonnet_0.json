@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_009",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "fam_009",
+    "status": "success",
+    "answer_text": "William Shakespeare wrote Hamlet. It was written between 1599 and 1601 and is one of Shakespeare's most famous tragedies. The play tells the story of Prince Hamlet of Denmark seeking revenge against his uncle Claudius, who murdered Hamlet's father to seize the throne and marry Hamlet's mother.",
+    "structured_answer": null,
+    "latency_ms": 3914.265703991987,
+    "timestamp": "2026-01-07T01:57:50.184684",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 12,
+      "tokens_out": 72,
+      "cost_usd": 0.0011159999999999998,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_009",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "case_id": "fam_009",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "fam_009",
+    "status": "timeout",
+    "answer_text": "",
+    "structured_answer": null,
+    "latency_ms": 120000.0,
+    "timestamp": "2026-01-06T21:19:44.835258",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": "Timed out after 120.0s"
+  },
+  "score": {
+    "prompt_id": "fam_009",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.6666666666666666,
+      "passed": false,
+      "checks": {
+        "contains": false,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {
+        "contains": "Missing: 'Shakespeare'"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.6666666666666666,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

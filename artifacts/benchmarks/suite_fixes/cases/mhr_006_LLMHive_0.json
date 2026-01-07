@@ -1,0 +1,67 @@
+{
+  "case_id": "mhr_006",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "mhr_006",
+    "status": "success",
+    "answer_text": "clearly marked as 'Final Answer:'.",
+    "structured_answer": {
+      "message": "clearly marked as 'Final Answer:'.",
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1051,
+      "latency_ms": 17178
+    },
+    "latency_ms": 17180.22131919861,
+    "timestamp": "2026-01-06T22:06:24.986925",
+    "metadata": {
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1051,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "mhr_006",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.3333333333333333,
+      "passed": false,
+      "checks": {
+        "regex": false,
+        "numeric": false,
+        "no_clarification": true
+      },
+      "details": {
+        "regex": "Pattern not found: '50\\s*years?|five\\s*decades'",
+        "numeric": "Could not extract numeric value (expected: 50)"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.3333333333333333,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

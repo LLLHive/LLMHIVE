@@ -1,0 +1,65 @@
+{
+  "case_id": "mhr_001",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "mhr_001",
+    "status": "success",
+    "answer_text": "The population of France, where the Eiffel Tower is located, is approximately 68 million.\n\nIt is about 1,743 times larger than the population of Monaco, which is around 39,000.",
+    "structured_answer": {
+      "message": "The population of France, where the Eiffel Tower is located, is approximately 68 million.\n\nIt is about 1,743 times larger than the population of Monaco, which is around 39,000.",
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1161,
+      "latency_ms": 20185
+    },
+    "latency_ms": 20186.619758605957,
+    "timestamp": "2026-01-06T21:30:34.516299",
+    "metadata": {
+      "models_used": [
+        "GPT-4o",
+        "Claude 3.5 Sonnet",
+        "DeepSeek V3.2"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1161,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "mhr_001",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "regex": true,
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.8,
+    "rubric_weight": 0.2,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

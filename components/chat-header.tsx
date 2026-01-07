@@ -42,7 +42,6 @@ export function ChatHeader({
   onToggleFeature,
   criteriaSettings,
   onCriteriaChange,
-  currentModel,
 }: {
   selectedModels: string[]
   onToggleModel: (model: string) => void
@@ -54,7 +53,6 @@ export function ChatHeader({
   onToggleFeature: (feature: AdvancedFeature) => void
   criteriaSettings: CriteriaSettings
   onCriteriaChange: (settings: CriteriaSettings) => void
-  currentModel: any
 }) {
   return (
     <header className="border-b border-border p-3 flex items-center justify-between bg-card/50 backdrop-blur-xl sticky top-0 z-50">

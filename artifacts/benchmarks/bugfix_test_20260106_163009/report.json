@@ -1,0 +1,289 @@
+{
+  "suite_name": "Complex Reasoning Benchmark",
+  "suite_version": "1.0.0",
+  "git_commit": "033033a38318",
+  "timestamp": "20260106_213011",
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "timeout_seconds": 120.0,
+    "top_p": 1.0,
+    "enable_tools": true,
+    "enable_rag": true,
+    "enable_mcp2": true,
+    "deterministic": true,
+    "reasoning_mode": "standard",
+    "accuracy_level": 3,
+    "enable_hrm": true,
+    "enable_deep_consensus": false
+  },
+  "systems": [
+    "LLMHive"
+  ],
+  "results": [
+    {
+      "case_id": "mhr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "mhr_001",
+        "status": "success",
+        "answer_text": "The population of France, where the Eiffel Tower is located, is approximately 68 million.\n\nIt is about 1,743 times larger than the population of Monaco, which is around 39,000.",
+        "structured_answer": {
+          "message": "The population of France, where the Eiffel Tower is located, is approximately 68 million.\n\nIt is about 1,743 times larger than the population of Monaco, which is around 39,000.",
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1161,
+          "latency_ms": 20185
+        },
+        "latency_ms": 20186.619758605957,
+        "timestamp": "2026-01-06T21:30:34.516299",
+        "metadata": {
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1161,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "mhr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "regex": true,
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.8,
+        "rubric_weight": 0.2,
+        "is_critical": false,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "Certainly!\n\nLet\u2019s work through this problem using the prescribed format. === PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage? === UNDERSTANDING === What is being asked: Calculate the profit margin as a percentage based on given revenue and expenses.\n\nKey constraints: Use provided revenue and expenses figures.\n\nType of problem: Math === APPROACH === Strategy: Calculate the profit by subtracting expenses from revenue, then find the profit margin by dividing profit by revenue and multiplying by 100 to convert it to a percentage.\n\nWhy this approach: This is the standard formula for calculating profit margin. === STEP-BY-STEP SOLUTION === Step 1: Calculate the profit. - Profit = Revenue - Expenses - Profit = $4,500,000 - $3,200,000 - Profit = $1,300,000 Step 2: Calculate the profit margin as a percentage. - Profit Margin (%) = (Profit / Revenue) * 100 - Profit Margin (%) = ($1,300,000 / $4,500,000) * 100 - Profit Margin (%) = 0.288888... * 100 - Profit Margin (%) \u2248 28.89% === VERIFICATION === Check 1: Ensure that the profit was calculated correctly. - Subtracting expenses from revenue gives $1,300,000, which is correct.\n\nCheck 2: Ensure that the division and multiplication by 100 were performed correctly. - Dividing $1,300,000 by $4,500,000 results in approximately 0.288888. - Multiplying by 100 yields 28.89%.\n\nCheck 3: Does the answer make sense given the figures? - A profit of $1,300,000 on a revenue of $4,500,000 resulting in a 28.89% profit margin is reasonable. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; calculations are straightforward. === FINAL ANSWER === 28.89%.",
+        "structured_answer": {
+          "message": "Certainly!\n\nLet\u2019s work through this problem using the prescribed format. === PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage? === UNDERSTANDING === What is being asked: Calculate the profit margin as a percentage based on given revenue and expenses.\n\nKey constraints: Use provided revenue and expenses figures.\n\nType of problem: Math === APPROACH === Strategy: Calculate the profit by subtracting expenses from revenue, then find the profit margin by dividing profit by revenue and multiplying by 100 to convert it to a percentage.\n\nWhy this approach: This is the standard formula for calculating profit margin. === STEP-BY-STEP SOLUTION === Step 1: Calculate the profit. - Profit = Revenue - Expenses - Profit = $4,500,000 - $3,200,000 - Profit = $1,300,000 Step 2: Calculate the profit margin as a percentage. - Profit Margin (%) = (Profit / Revenue) * 100 - Profit Margin (%) = ($1,300,000 / $4,500,000) * 100 - Profit Margin (%) = 0.288888... * 100 - Profit Margin (%) \u2248 28.89% === VERIFICATION === Check 1: Ensure that the profit was calculated correctly. - Subtracting expenses from revenue gives $1,300,000, which is correct.\n\nCheck 2: Ensure that the division and multiplication by 100 were performed correctly. - Dividing $1,300,000 by $4,500,000 results in approximately 0.288888. - Multiplying by 100 yields 28.89%.\n\nCheck 3: Does the answer make sense given the figures? - A profit of $1,300,000 on a revenue of $4,500,000 resulting in a 28.89% profit margin is reasonable. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; calculations are straightforward. === FINAL ANSWER === 28.89%.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1016,
+          "latency_ms": 14150
+        },
+        "latency_ms": 14150.77805519104,
+        "timestamp": "2026-01-06T21:30:48.670833",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1016,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_001",
+        "status": "success",
+        "answer_text": "Alexander Fleming discovered penicillin in 1928.",
+        "structured_answer": {
+          "message": "Alexander Fleming discovered penicillin in 1928.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 750,
+          "latency_ms": 14860
+        },
+        "latency_ms": 14858.856916427612,
+        "timestamp": "2026-01-06T21:31:03.530961",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 750,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 0.9,
+        "rubric_weight": 0.1,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    }
+  ],
+  "scores": [
+    {
+      "prompt_id": "mhr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "regex": true,
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.8,
+      "rubric_weight": 0.2,
+      "is_critical": false,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 0.9,
+      "rubric_weight": 0.1,
+      "is_critical": true,
+      "critical_failed": false
+    }
+  ],
+  "aggregate": {
+    "total_cases": 3,
+    "systems": {
+      "LLMHive": {
+        "total_cases": 3,
+        "composite_mean": 1.0,
+        "composite_min": 1.0,
+        "composite_max": 1.0,
+        "objective_mean": 1.0,
+        "passed_count": 3,
+        "failed_count": 0,
+        "critical_failures": 0,
+        "critical_failure_ids": []
+      }
+    }
+  },
+  "critical_failures": [],
+  "passed": true
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { AlertOctagon, RefreshCw, Home, Copy, Check, Bug } from "lucide-react"
+import * as Sentry from "@sentry/nextjs"
 
 /**
  * Global error handler for root layout errors.
@@ -25,6 +26,17 @@ export default function GlobalError({
   useEffect(() => {
     const id = `GLOBAL-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
     setErrorId(error.digest || id)
+    
+    // Report to Sentry
+    Sentry.captureException(error, {
+      tags: {
+        error_type: "global_error",
+        error_id: error.digest || id,
+      },
+      extra: {
+        url: typeof window !== "undefined" ? window.location.href : "unknown",
+      },
+    })
     
     console.group(`[Global Error] ${id}`)
     console.error("Error:", error)

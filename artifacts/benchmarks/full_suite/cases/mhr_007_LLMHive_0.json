@@ -1,0 +1,60 @@
+{
+  "case_id": "mhr_007",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "mhr_007",
+    "status": "success",
+    "answer_text": "The most abundant element in Neptune's atmosphere is hydrogen.\n\nHydrogen comprises approximately 80% of Neptune's atmosphere.\n\nHelium is the second most abundant, making up about 19%, while trace amounts of methane and other substances constitute the remainder.\n\nThese numbers are based on data typically referenced from NASA and other astronomical studies.",
+    "structured_answer": {
+      "message": "The most abundant element in Neptune's atmosphere is hydrogen.\n\nHydrogen comprises approximately 80% of Neptune's atmosphere.\n\nHelium is the second most abundant, making up about 19%, while trace amounts of methane and other substances constitute the remainder.\n\nThese numbers are based on data typically referenced from NASA and other astronomical studies.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 947,
+      "latency_ms": 16951
+    },
+    "latency_ms": 16952.666759490967,
+    "timestamp": "2026-01-07T01:42:38.352560",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 947,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "mhr_007",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.8,
+    "rubric_weight": 0.2,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

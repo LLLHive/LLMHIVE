@@ -1,0 +1,61 @@
+{
+  "case_id": "adv_005",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "adv_005",
+    "status": "success",
+    "answer_text": "At the recent Apple event held last week, several new products and updates were announced.\n\nThese included the introduction of the iPhone 15 series, featuring advancements in camera technology and new design elements.\n\nApple also unveiled the Apple Watch Series 9, which offers improved health monitoring features and a more powerful chip.\n\nAdditionally, there were software updates announced for iOS and macOS that enhance user experience with new apps and improved functionality.\n\nThese announcements were widely covered by Apple's official website and major technology news outlets, ensuring their accuracy.",
+    "structured_answer": {
+      "message": "At the recent Apple event held last week, several new products and updates were announced.\n\nThese included the introduction of the iPhone 15 series, featuring advancements in camera technology and new design elements.\n\nApple also unveiled the Apple Watch Series 9, which offers improved health monitoring features and a more powerful chip.\n\nAdditionally, there were software updates announced for iOS and macOS that enhance user experience with new apps and improved functionality.\n\nThese announcements were widely covered by Apple's official website and major technology news outlets, ensuring their accuracy.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1110,
+      "latency_ms": 11754
+    },
+    "latency_ms": 11755.027055740356,
+    "timestamp": "2026-01-07T01:54:37.902547",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1110,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "adv_005",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.5,
+      "passed": false,
+      "checks": {
+        "regex": false,
+        "no_clarification": true
+      },
+      "details": {
+        "regex": "Pattern not found: 'cannot|don't have|unable|current|real-time|recent events'"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.5,
+    "objective_weight": 0.5,
+    "rubric_weight": 0.5,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

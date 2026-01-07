@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_005",
+  "system": "OpenRouter-claude-3.5-sonnet",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "prompt_id": "fam_005",
+    "status": "success",
+    "answer_text": "World War I began on July 28, 1914, when Austria-Hungary declared war on Serbia following the assassination of Archduke Franz Ferdinand in Sarajevo. Through a series of alliances, the conflict quickly escalated into a global war, with most of Europe's major powers drawn in by early August 1914. The main opposing forces were the Allied Powers (initially consisting of France, Russia, and Great Britain) and the Central Powers (initially consisting of Austria-Hungary and Germany).",
+    "structured_answer": null,
+    "latency_ms": 3395.8255789912073,
+    "timestamp": "2026-01-07T01:57:15.855507",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 14,
+      "tokens_out": 106,
+      "cost_usd": 0.0016319999999999998,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_005",
+    "system_name": "OpenRouter-claude-3.5-sonnet",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

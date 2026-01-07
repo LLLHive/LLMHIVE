@@ -1,0 +1,50 @@
+{
+  "case_id": "cdr_002",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "cdr_002",
+    "status": "error",
+    "answer_text": "",
+    "structured_answer": null,
+    "latency_ms": 0.3991127014160156,
+    "timestamp": "2026-01-06T20:38:22.366021",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": "cannot import name 'TuningSettings' from 'llmhive.app.models.orchestration' (/Users/camilodiaz/LLMHIVE/llmhive/src/llmhive/app/models/orchestration.py)"
+  },
+  "score": {
+    "prompt_id": "cdr_002",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.5,
+      "passed": false,
+      "checks": {
+        "contains": false,
+        "no_clarification": true
+      },
+      "details": {
+        "contains": "Missing: '[11, 12, 22, 25, 34, 64, 90]'"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.5,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth, currentUser } from "@clerk/nextjs/server"
 import Stripe from "stripe"
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "")
+// Lazy initialize Stripe - only create instance when needed and key is present
+function getStripe(): Stripe | null {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return null
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY)
+}
 
 // Price ID mapping
 const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
@@ -23,8 +28,9 @@ const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if Stripe is configured
-    if (!process.env.STRIPE_SECRET_KEY) {
+    // Get Stripe instance - returns null if not configured
+    const stripe = getStripe()
+    if (!stripe) {
       console.error("STRIPE_SECRET_KEY not configured")
       return NextResponse.json(
         { error: "Stripe not configured. Please contact support." },

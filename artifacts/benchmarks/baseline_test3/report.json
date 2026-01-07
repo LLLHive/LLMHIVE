@@ -1,0 +1,511 @@
+{
+  "suite_name": "Complex Reasoning Benchmark",
+  "suite_version": "1.0.0",
+  "git_commit": "033033a38318",
+  "timestamp": "20260107_014621",
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "timeout_seconds": 120.0,
+    "top_p": 1.0,
+    "enable_tools": true,
+    "enable_rag": true,
+    "enable_mcp2": true,
+    "deterministic": true,
+    "reasoning_mode": "standard",
+    "accuracy_level": 3,
+    "enable_hrm": true,
+    "enable_deep_consensus": false
+  },
+  "systems": [
+    "LLMHive",
+    "OpenRouter-gpt-4o",
+    "OpenRouter-claude-3.5-sonnet"
+  ],
+  "results": [
+    {
+      "case_id": "tbr_001",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "clearly marked as 'Final Answer:'.",
+        "structured_answer": {
+          "message": "clearly marked as 'Final Answer:'.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 1064,
+          "latency_ms": 15531
+        },
+        "latency_ms": 15532.664060592651,
+        "timestamp": "2026-01-07T01:46:38.992589",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 1064,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 0.5,
+          "passed": false,
+          "checks": {
+            "numeric": false,
+            "no_clarification": true
+          },
+          "details": {
+            "numeric": "Could not extract numeric value (expected: 28.89)"
+          }
+        },
+        "rubric_score": null,
+        "composite_score": 0.5,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": true
+      }
+    },
+    {
+      "case_id": "tbr_001",
+      "system": "OpenRouter-gpt-4o",
+      "run_num": 0,
+      "result": {
+        "system_name": "OpenRouter-gpt-4o",
+        "model_id": "openai/gpt-4o",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "To calculate the profit margin as a percentage, you first need to determine the profit, which is the difference between revenue and expenses. Then, divide the profit by the revenue and multiply by 100 to get the percentage.\n\n1. Calculate the profit:\n   \\[\n   \\text{Profit} = \\text{Revenue} - \\text{Expenses} = 4.5 \\text{ million} - 3.2 \\text{ million} = 1.3 \\text{ million}\n   \\]\n\n2. Calculate the profit margin as a percentage:\n   \\[\n   \\text{Profit Margin} = \\left( \\frac{\\text{Profit}}{\\text{Revenue}} \\right) \\times 100 = \\left( \\frac{1.3 \\text{ million}}{4.5 \\text{ million}} \\right) \\times 100\n   \\]\n\n3. Simplify the calculation:\n   \\[\n   \\text{Profit Margin} = \\left( \\frac{1.3}{4.5} \\right) \\times 100 \\approx 28.89\\%\n   \\]\n\nTherefore, the profit margin is approximately 28.89%.",
+        "structured_answer": null,
+        "latency_ms": 2672.178562002955,
+        "timestamp": "2026-01-07T01:46:41.666074",
+        "metadata": {
+          "models_used": [],
+          "strategy_used": null,
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 38,
+          "tokens_out": 244,
+          "cost_usd": 0.0038499999999999997,
+          "trace_id": null,
+          "raw_provider_payload": "[REDACTED]"
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "OpenRouter-gpt-4o",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "tbr_001",
+      "system": "OpenRouter-claude-3.5-sonnet",
+      "run_num": 0,
+      "result": {
+        "system_name": "OpenRouter-claude-3.5-sonnet",
+        "model_id": "anthropic/claude-3.5-sonnet",
+        "prompt_id": "tbr_001",
+        "status": "success",
+        "answer_text": "Let me solve this step by step.\n\n1) Profit = Revenue - Expenses\n   * Profit = $4.5 million - $3.2 million\n   * Profit = $1.3 million\n\n2) Profit Margin % = (Profit \u00f7 Revenue) \u00d7 100\n   * Profit Margin % = ($1.3 million \u00f7 $4.5 million) \u00d7 100\n   * Profit Margin % = 0.2888... \u00d7 100\n   * Profit Margin % = 28.89%\n\nThe profit margin is 28.89%",
+        "structured_answer": null,
+        "latency_ms": 3096.87071100052,
+        "timestamp": "2026-01-07T01:46:44.765357",
+        "metadata": {
+          "models_used": [],
+          "strategy_used": null,
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 40,
+          "tokens_out": 144,
+          "cost_usd": 0.0022799999999999995,
+          "trace_id": null,
+          "raw_provider_payload": "[REDACTED]"
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "tbr_001",
+        "system_name": "OpenRouter-claude-3.5-sonnet",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "numeric": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_004",
+      "system": "LLMHive",
+      "run_num": 0,
+      "result": {
+        "system_name": "LLMHive",
+        "model_id": "llmhive-orchestrator-v033033a38318",
+        "prompt_id": "fam_004",
+        "status": "success",
+        "answer_text": "The largest planet in our solar system is Jupiter.\n\nBased on its equatorial diameter of about 143,000 kilometers and its substantial volume, Jupiter is the biggest planet.\n\nThis is a well-established fact acknowledged by NASA and other scientific entities.",
+        "structured_answer": {
+          "message": "The largest planet in our solar system is Jupiter.\n\nBased on its equatorial diameter of about 143,000 kilometers and its substantial volume, Jupiter is the biggest planet.\n\nThis is a well-established fact acknowledged by NASA and other scientific entities.",
+          "models_used": [
+            "GPT-4o"
+          ],
+          "reasoning_mode": "ReasoningMode.standard",
+          "reasoning_method": "None",
+          "tokens_used": 996,
+          "latency_ms": 13827
+        },
+        "latency_ms": 13828.094244003296,
+        "timestamp": "2026-01-07T01:46:58.595192",
+        "metadata": {
+          "models_used": [
+            "GPT-4o"
+          ],
+          "strategy_used": "direct",
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 0,
+          "tokens_out": 996,
+          "cost_usd": null,
+          "trace_id": null
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_004",
+        "system_name": "LLMHive",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_004",
+      "system": "OpenRouter-gpt-4o",
+      "run_num": 0,
+      "result": {
+        "system_name": "OpenRouter-gpt-4o",
+        "model_id": "openai/gpt-4o",
+        "prompt_id": "fam_004",
+        "status": "success",
+        "answer_text": "The largest planet in our solar system is Jupiter. It is a gas giant with a diameter of about 139,820 kilometers (86,881 miles), making it significantly larger than any other planet in the solar system.",
+        "structured_answer": null,
+        "latency_ms": 1381.6487269941717,
+        "timestamp": "2026-01-07T01:46:59.977865",
+        "metadata": {
+          "models_used": [],
+          "strategy_used": null,
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 17,
+          "tokens_out": 44,
+          "cost_usd": 0.0007449999999999999,
+          "trace_id": null,
+          "raw_provider_payload": "[REDACTED]"
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_004",
+        "system_name": "OpenRouter-gpt-4o",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    },
+    {
+      "case_id": "fam_004",
+      "system": "OpenRouter-claude-3.5-sonnet",
+      "run_num": 0,
+      "result": {
+        "system_name": "OpenRouter-claude-3.5-sonnet",
+        "model_id": "anthropic/claude-3.5-sonnet",
+        "prompt_id": "fam_004",
+        "status": "success",
+        "answer_text": "Jupiter is the largest planet in our solar system. It is a gas giant with a mass more than two and a half times that of all the other planets in our solar system combined. Jupiter's diameter is approximately 88,846 miles (142,984 kilometers), which is roughly 11 times wider than Earth.",
+        "structured_answer": null,
+        "latency_ms": 2729.2311930068536,
+        "timestamp": "2026-01-07T01:47:02.708797",
+        "metadata": {
+          "models_used": [],
+          "strategy_used": null,
+          "verification_status": null,
+          "verification_score": null,
+          "confidence": null,
+          "sources_count": 0,
+          "tools_used": [],
+          "tokens_in": 17,
+          "tokens_out": 69,
+          "cost_usd": 0.0010860000000000002,
+          "trace_id": null,
+          "raw_provider_payload": "[REDACTED]"
+        },
+        "error_message": null
+      },
+      "score": {
+        "prompt_id": "fam_004",
+        "system_name": "OpenRouter-claude-3.5-sonnet",
+        "objective_score": {
+          "score": 1.0,
+          "passed": true,
+          "checks": {
+            "contains": true,
+            "not_contains": true,
+            "no_clarification": true
+          },
+          "details": {}
+        },
+        "rubric_score": null,
+        "composite_score": 1.0,
+        "objective_weight": 1.0,
+        "rubric_weight": 0.0,
+        "is_critical": true,
+        "critical_failed": false
+      }
+    }
+  ],
+  "scores": [
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 0.5,
+        "passed": false,
+        "checks": {
+          "numeric": false,
+          "no_clarification": true
+        },
+        "details": {
+          "numeric": "Could not extract numeric value (expected: 28.89)"
+        }
+      },
+      "rubric_score": null,
+      "composite_score": 0.5,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": true
+    },
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "OpenRouter-gpt-4o",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "tbr_001",
+      "system_name": "OpenRouter-claude-3.5-sonnet",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "numeric": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_004",
+      "system_name": "LLMHive",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_004",
+      "system_name": "OpenRouter-gpt-4o",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    },
+    {
+      "prompt_id": "fam_004",
+      "system_name": "OpenRouter-claude-3.5-sonnet",
+      "objective_score": {
+        "score": 1.0,
+        "passed": true,
+        "checks": {
+          "contains": true,
+          "not_contains": true,
+          "no_clarification": true
+        },
+        "details": {}
+      },
+      "rubric_score": null,
+      "composite_score": 1.0,
+      "objective_weight": 1.0,
+      "rubric_weight": 0.0,
+      "is_critical": true,
+      "critical_failed": false
+    }
+  ],
+  "aggregate": {
+    "total_cases": 6,
+    "systems": {
+      "LLMHive": {
+        "total_cases": 2,
+        "composite_mean": 0.75,
+        "composite_min": 0.5,
+        "composite_max": 1.0,
+        "objective_mean": 0.75,
+        "passed_count": 1,
+        "failed_count": 1,
+        "critical_failures": 1,
+        "critical_failure_ids": [
+          "tbr_001"
+        ]
+      },
+      "OpenRouter-gpt-4o": {
+        "total_cases": 2,
+        "composite_mean": 1.0,
+        "composite_min": 1.0,
+        "composite_max": 1.0,
+        "objective_mean": 1.0,
+        "passed_count": 2,
+        "failed_count": 0,
+        "critical_failures": 0,
+        "critical_failure_ids": []
+      },
+      "OpenRouter-claude-3.5-sonnet": {
+        "total_cases": 2,
+        "composite_mean": 1.0,
+        "composite_min": 1.0,
+        "composite_max": 1.0,
+        "objective_mean": 1.0,
+        "passed_count": 2,
+        "failed_count": 0,
+        "critical_failures": 0,
+        "critical_failure_ids": []
+      }
+    }
+  },
+  "critical_failures": [
+    "tbr_001"
+  ],
+  "passed": false
+}

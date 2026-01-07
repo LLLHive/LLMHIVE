@@ -1,0 +1,50 @@
+{
+  "case_id": "mhr_006",
+  "system": "OpenRouter-gpt-4-turbo",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4-turbo",
+    "model_id": "openai/gpt-4-turbo",
+    "prompt_id": "mhr_006",
+    "status": "success",
+    "answer_text": "James Watson and Francis Crick published their groundbreaking paper on the structure of DNA in April 1953. The Human Genome Project, which aimed to map all the genes in the human genome, was completed in April 2003. Therefore, 50 years passed between the discovery of DNA's structure and the completion of the Human Genome Project.",
+    "structured_answer": null,
+    "latency_ms": 1820.4250239941757,
+    "timestamp": "2026-01-07T01:53:57.932856",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 31,
+      "tokens_out": 68,
+      "cost_usd": 0.00235,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "mhr_006",
+    "system_name": "OpenRouter-gpt-4-turbo",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

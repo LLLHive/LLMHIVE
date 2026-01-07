@@ -1,0 +1,205 @@
+{
+  "timestamp": "2026-01-06T22:42:46.266838",
+  "models": [
+    "gpt-4o-mini",
+    "gemini-1.5-flash"
+  ],
+  "categories": [
+    "programming",
+    "reasoning"
+  ],
+  "quick_mode": true,
+  "results": {
+    "programming": {
+      "category": "programming",
+      "total_cases": 2,
+      "models_tested": 2,
+      "results": [
+        {
+          "model": "gpt-4o-mini",
+          "cases": [
+            {
+              "model": "gpt-4o-mini",
+              "case_id": "prog_001",
+              "category": "programming",
+              "status": "success",
+              "answer": "Certainly! Below is a Python implementation of a Least Recently Used (LRU) cache using a combination of a dictionary and a doubly linked list to achieve O(1) time complexity for both `get` and `put` operations. The code includes type hints and docstrings for clarity.\n\n```python\nclass Node:\n    \"\"\"A node in a doubly linked list.\"\"\"\n    def __init__(self, key: int, value: int):\n        self.key = key\n        self.value = value\n        self.prev = None\n        self.next = None\n\n\nclass LRUCache:\n   ",
+              "latency_ms": 23405.20043000288,
+              "tokens_in": 39,
+              "tokens_out": 980,
+              "cost_usd": 0.0005938499999999999,
+              "error": null
+            },
+            {
+              "model": "gpt-4o-mini",
+              "case_id": "prog_002",
+              "category": "programming",
+              "status": "success",
+              "answer": "The provided code implements the merge sort algorithm, but it has a performance issue due to the use of `pop(0)` on the lists `left` and `right`. The `pop(0)` operation removes the first element of the list, which is an O(n) operation because all the remaining elements need to be shifted one position to the left. This results in an overall time complexity of O(n^2) for the merge step, which is inefficient.\n\nTo fix this issue, we can use an index to keep track of the current position in the `left",
+              "latency_ms": 11564.957624999806,
+              "tokens_in": 141,
+              "tokens_out": 484,
+              "cost_usd": 0.00031154999999999996,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 17485.079027501342,
+            "total_cost_usd": 0.0009053999999999999
+          }
+        },
+        {
+          "model": "gemini-1.5-flash",
+          "cases": [
+            {
+              "model": "gemini-1.5-flash",
+              "case_id": "prog_001",
+              "category": "programming",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 226.3851519965101,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 400 - {\"error\":{\"message\":\"google/gemini-1.5-flash is not a valid model ID\",\"code\":400},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-flash",
+              "case_id": "prog_002",
+              "category": "programming",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 216.90758600016125,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 400 - {\"error\":{\"message\":\"google/gemini-1.5-flash is not a valid model ID\",\"code\":400},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 221.64636899833567,
+            "total_cost_usd": 0
+          }
+        }
+      ]
+    },
+    "reasoning": {
+      "category": "reasoning",
+      "total_cases": 2,
+      "models_tested": 2,
+      "results": [
+        {
+          "model": "gpt-4o-mini",
+          "cases": [
+            {
+              "model": "gpt-4o-mini",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "To solve the riddle, let's break down the statement: \n\nThe man says, \"Brothers and sisters I have none,\" which means he is an only child. \n\nThen he says, \"that man's father is my father's son.\" \n\nSince he has no siblings, \"my father's son\" refers to himself. Therefore, \"that man's father\" is the same as \"my father's son,\" which means that \"that man's father\" is the man himself.\n\nThis means that the man in the photograph is his son. \n\nSo, the person in the photograph is the man's son.",
+              "latency_ms": 2834.3155790062156,
+              "tokens_in": 52,
+              "tokens_out": 118,
+              "cost_usd": 7.859999999999999e-05,
+              "error": null
+            },
+            {
+              "model": "gpt-4o-mini",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "To find the heavier ball among 8 identical-looking balls using a balance scale, you can do this in a minimum of 2 weighings. Here's the strategy:\n\n1. **First Weighing**: Divide the 8 balls into three groups: two groups of 3 balls each and one group of 2 balls. Let's label the groups as follows:\n   - Group A: Balls 1, 2, 3\n   - Group B: Balls 4, 5, 6\n   - Group C: Balls 7, 8\n\n   Weigh Group A against Group B (i.e., weigh balls 1, 2, 3 against balls 4, 5, 6).\n\n   - **Case 1**: If Group A is heavie",
+              "latency_ms": 8318.22267798998,
+              "tokens_in": 47,
+              "tokens_out": 438,
+              "cost_usd": 0.00026984999999999997,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 5576.269128498097,
+            "total_cost_usd": 0.00034844999999999993
+          }
+        },
+        {
+          "model": "gemini-1.5-flash",
+          "cases": [
+            {
+              "model": "gemini-1.5-flash",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 212.67213800456375,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 400 - {\"error\":{\"message\":\"google/gemini-1.5-flash is not a valid model ID\",\"code\":400},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-flash",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 207.4415209935978,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 400 - {\"error\":{\"message\":\"google/gemini-1.5-flash is not a valid model ID\",\"code\":400},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 210.05682949908078,
+            "total_cost_usd": 0
+          }
+        }
+      ]
+    }
+  },
+  "total_time_seconds": 47.013188123703,
+  "model_aggregates": {
+    "gpt-4o-mini": {
+      "total_cases": 4,
+      "successes": 4,
+      "errors": 0,
+      "total_latency_ms": 46122.69631199888,
+      "total_cost_usd": 0.00125385,
+      "categories": {
+        "programming": 1.0,
+        "reasoning": 1.0
+      },
+      "overall_success_rate": 1.0,
+      "avg_latency_ms": 11530.67407799972
+    },
+    "gemini-1.5-flash": {
+      "total_cases": 4,
+      "successes": 0,
+      "errors": 4,
+      "total_latency_ms": 863.4063969948329,
+      "total_cost_usd": 0,
+      "categories": {
+        "programming": 0.0,
+        "reasoning": 0.0
+      },
+      "overall_success_rate": 0.0,
+      "avg_latency_ms": 215.85159924870823
+    }
+  }
+}

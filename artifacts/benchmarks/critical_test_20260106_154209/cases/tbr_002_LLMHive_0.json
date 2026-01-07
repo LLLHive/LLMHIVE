@@ -1,0 +1,63 @@
+{
+  "case_id": "tbr_002",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_002",
+    "status": "success",
+    "answer_text": "Stub response for: --- Live Data --- [WEATHER live] { \"location\": \"...",
+    "structured_answer": {
+      "message": "Stub response for: --- Live Data --- [WEATHER live] { \"location\": \"...",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 0,
+      "latency_ms": 7
+    },
+    "latency_ms": 7.355928421020508,
+    "timestamp": "2026-01-06T20:42:13.249911",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_002",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.3333333333333333,
+      "passed": false,
+      "checks": {
+        "regex": false,
+        "numeric": false,
+        "no_clarification": true
+      },
+      "details": {
+        "regex": "Pattern not found: '62\\s*minutes|about\\s*62|approximately\\s*62'",
+        "numeric": "Could not extract numeric value (expected: 62.14)"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.3333333333333333,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": true
+  }
+}

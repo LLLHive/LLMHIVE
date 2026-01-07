@@ -1,0 +1,50 @@
+{
+  "case_id": "fam_004",
+  "system": "OpenRouter-gpt-4o",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4o",
+    "model_id": "openai/gpt-4o",
+    "prompt_id": "fam_004",
+    "status": "success",
+    "answer_text": "The largest planet in our solar system is Jupiter. It is a gas giant with a diameter of about 139,820 kilometers (86,881 miles), making it significantly larger than any other planet in the solar system.",
+    "structured_answer": null,
+    "latency_ms": 1381.6487269941717,
+    "timestamp": "2026-01-07T01:46:59.977865",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 17,
+      "tokens_out": 44,
+      "cost_usd": 0.0007449999999999999,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "fam_004",
+    "system_name": "OpenRouter-gpt-4o",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "not_contains": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

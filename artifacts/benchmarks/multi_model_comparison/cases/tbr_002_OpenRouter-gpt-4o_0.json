@@ -1,0 +1,50 @@
+{
+  "case_id": "tbr_002",
+  "system": "OpenRouter-gpt-4o",
+  "run_num": 0,
+  "result": {
+    "system_name": "OpenRouter-gpt-4o",
+    "model_id": "openai/gpt-4o",
+    "prompt_id": "tbr_002",
+    "status": "success",
+    "answer_text": "To convert kilometers to miles, you can use the conversion factor: 1 kilometer is approximately 0.621371 miles.\n\nSo, to convert 100 kilometers to miles:\n\\[ 100 \\text{ km} \\times 0.621371 \\text{ miles/km} = 62.1371 \\text{ miles} \\]\n\nNext, to calculate how many minutes it would take to travel 62.1371 miles at 60 miles per hour, you can use the formula:\n\\[ \\text{Time (hours)} = \\frac{\\text{Distance (miles)}}{\\text{Speed (miles per hour)}} \\]\n\n\\[ \\text{Time (hours)} = \\frac{62.1371 \\text{ miles}}{60 \\text{ miles per hour}} = 1.0356185 \\text{ hours} \\]\n\nTo convert hours to minutes, multiply by 60:\n\\[ 1.0356185 \\text{ hours} \\times 60 \\text{ minutes/hour} = 62.13711 \\text{ minutes} \\]\n\nSo, it would take approximately 62.14 minutes to travel 100 kilometers at 60 miles per hour.",
+    "structured_answer": null,
+    "latency_ms": 3993.629951000912,
+    "timestamp": "2026-01-07T01:54:48.411251",
+    "metadata": {
+      "models_used": [],
+      "strategy_used": null,
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 31,
+      "tokens_out": 244,
+      "cost_usd": 0.003815,
+      "trace_id": null,
+      "raw_provider_payload": "[REDACTED]"
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_002",
+    "system_name": "OpenRouter-gpt-4o",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "regex": true,
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

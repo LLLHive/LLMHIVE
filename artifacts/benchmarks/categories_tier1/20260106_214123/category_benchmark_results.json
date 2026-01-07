@@ -1,0 +1,2449 @@
+{
+  "timestamp": "2026-01-06T21:41:23.100711",
+  "models": [
+    "gpt-4o",
+    "claude-3.5-sonnet",
+    "claude-3-opus",
+    "gemini-1.5-pro",
+    "mistral-large"
+  ],
+  "categories": [
+    "programming",
+    "science",
+    "health",
+    "legal",
+    "marketing",
+    "technology",
+    "finance",
+    "academia",
+    "roleplay",
+    "creative_writing",
+    "translation",
+    "reasoning"
+  ],
+  "quick_mode": true,
+  "results": {
+    "programming": {
+      "category": "programming",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "prog_001",
+              "category": "programming",
+              "status": "success",
+              "answer": "To implement a Least Recently Used (LRU) cache with O(1) time complexity for both `get` and `put` operations, we can use a combination of a dictionary and a doubly linked list. The dictionary will provide O(1) access to cache entries, while the doubly linked list will maintain the order of usage, allowing us to efficiently update the least recently used item.\n\nHere's a Python implementation of an LRU cache with type hints and docstrings:\n\n```python\nclass Node:\n    \"\"\"A node in a doubly linked li",
+              "latency_ms": 14182.038565006224,
+              "tokens_in": 39,
+              "tokens_out": 936,
+              "cost_usd": 0.014235000000000001,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "prog_002",
+              "category": "programming",
+              "status": "success",
+              "answer": "The given code implements the merge sort algorithm, but there is a performance issue related to the use of the `pop(0)` method on lists. The `pop(0)` operation is inefficient because it removes the first element of a list, which requires shifting all the other elements one position to the left. This operation has a time complexity of \\(O(n)\\), where \\(n\\) is the number of elements in the list. When used repeatedly in a loop, this can significantly degrade performance, especially for large lists.",
+              "latency_ms": 5684.115272000781,
+              "tokens_in": 141,
+              "tokens_out": 412,
+              "cost_usd": 0.006885,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 9933.076918503502,
+            "total_cost_usd": 0.02112
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "prog_001",
+              "category": "programming",
+              "status": "success",
+              "answer": "Here's a Python implementation of an LRU Cache with type hints, docstrings, and O(1) operations using a combination of a dictionary and doubly-linked list:\n\n```python\nfrom typing import Optional, TypeVar, Generic, Dict\n\nT = TypeVar('T')  # Generic type for cache values\n\nclass Node(Generic[T]):\n    \"\"\"\n    A node in the doubly-linked list that stores cache entries.\n    \n    Attributes:\n        key: The cache key\n        value: The cached value\n        prev: Reference to the previous node\n        ",
+              "latency_ms": 29423.176404001424,
+              "tokens_in": 41,
+              "tokens_out": 1525,
+              "cost_usd": 0.022998,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "prog_002",
+              "category": "programming",
+              "status": "success",
+              "answer": "The main performance issue in this code is the use of `pop(0)` in the merge function. Here's why it's inefficient and how to fix it:\n\n**Issue:**\n- Using `pop(0)` has O(n) time complexity because it requires shifting all remaining elements to the left\n- This makes the merge operation O(n\u00b2) instead of the desired O(n)\n\n**Fixed Version:**\n```python\ndef merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])",
+              "latency_ms": 9476.142176004942,
+              "tokens_in": 174,
+              "tokens_out": 468,
+              "cost_usd": 0.007542,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 19449.659290003183,
+            "total_cost_usd": 0.03054
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "prog_001",
+              "category": "programming",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 267.58826099103317,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "prog_002",
+              "category": "programming",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 238.93017799127847,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 253.25921949115582,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "prog_001",
+              "category": "programming",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 218.83681099279784,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "prog_002",
+              "category": "programming",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 222.64569500111975,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 220.7412529969588,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "prog_001",
+              "category": "programming",
+              "status": "success",
+              "answer": "# LRU Cache Implementation in Python\n\nHere's a Python implementation of an LRU (Least Recently Used) cache with O(1) time complexity for both get and put operations, using a combination of a dictionary and a doubly linked list:\n\n```python\nfrom typing import Any, Optional, Dict\n\nclass DLinkedNode:\n    \"\"\"Doubly linked node for LRU cache implementation.\"\"\"\n    def __init__(self, key: int = 0, value: Any = 0):\n        self.key = key\n        self.value = value\n        self.prev: Optional['DLinkedNod",
+              "latency_ms": 20568.441013994743,
+              "tokens_in": 35,
+              "tokens_out": 1302,
+              "cost_usd": 0.007882,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "prog_002",
+              "category": "programming",
+              "status": "success",
+              "answer": "### Issue Identification\n\nThe provided `merge_sort` implementation is functionally correct but inefficient due to the way the `merge` function is implemented. The primary performance issue lies in the use of `list.pop(0)` in the `merge` function.\n\n### Why `list.pop(0)` is Inefficient\n\nIn Python, `list.pop(0)` has a time complexity of **O(n)** because:\n- Lists in Python are implemented as dynamic arrays.\n- When you remove the first element (`pop(0)`), all subsequent elements must be shifted one p",
+              "latency_ms": 11355.469144997187,
+              "tokens_in": 138,
+              "tokens_out": 626,
+              "cost_usd": 0.004032,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 15961.955079495965,
+            "total_cost_usd": 0.011914000000000001
+          }
+        }
+      ]
+    },
+    "science": {
+      "category": "science",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "sci_001",
+              "category": "science",
+              "status": "success",
+              "answer": "CRISPR-Cas9 is a revolutionary gene-editing technology that allows for precise modifications to DNA within living organisms. The mechanism involves several key components and processes:\n\n1. **Guide RNA (gRNA):** The guide RNA is a crucial component of the CRISPR-Cas9 system. It is a short synthetic RNA composed of two parts: a scaffold sequence that binds to the Cas9 protein and a user-defined spacer sequence of about 20 nucleotides that is complementary to the target DNA sequence. The guide RNA",
+              "latency_ms": 10995.815647998825,
+              "tokens_in": 51,
+              "tokens_out": 625,
+              "cost_usd": 0.00963,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "sci_002",
+              "category": "science",
+              "status": "success",
+              "answer": "To derive the Schwarzschild radius formula, we start by considering the conditions under which an object becomes a black hole. Specifically, the Schwarzschild radius is the radius at which the escape velocity from the surface of a mass \\( M \\) equals the speed of light \\( c \\).\n\n### Step-by-step Derivation:\n\n1. **Escape Velocity Formula:**\n   The escape velocity \\( v_e \\) from the surface of a spherical mass \\( M \\) is given by:\n   \\[\n   v_e = \\sqrt{\\frac{2GM}{r}}\n   \\]\n   where \\( G \\) is the g",
+              "latency_ms": 9208.68604700081,
+              "tokens_in": 46,
+              "tokens_out": 716,
+              "cost_usd": 0.010969999999999999,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 10102.250847499818,
+            "total_cost_usd": 0.0206
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "sci_001",
+              "category": "science",
+              "status": "success",
+              "answer": "CRISPR-Cas9 Gene Editing Mechanism:\n\n1. Guide RNA (gRNA):\n- Consists of crRNA (CRISPR RNA) and tracrRNA (trans-activating RNA)\n- Guides Cas9 to specific DNA target sequence\n- Contains 20-nucleotide sequence complementary to target DNA\n- Must be adjacent to PAM sequence (NGG for Cas9)\n\n2. Cas9 Endonuclease:\n- Binds to gRNA forming ribonucleoprotein complex\n- Searches DNA for PAM sequence\n- Unwinds DNA at target site\n- Creates double-strand break 3-4 bases upstream of PAM\n\n3. DNA Repair Pathways:\n",
+              "latency_ms": 6895.699136002804,
+              "tokens_in": 59,
+              "tokens_out": 287,
+              "cost_usd": 0.004482,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "sci_002",
+              "category": "science",
+              "status": "success",
+              "answer": "I'll help you derive the Schwarzschild radius formula and then calculate it for a 10 solar mass black hole.\n\nDerivation:\n1) Start with escape velocity formula:\nv_escape = \u221a(2GM/r)\n\n2) For a black hole, the escape velocity equals the speed of light (c):\nc = \u221a(2GM/r)\n\n3) Square both sides:\nc\u00b2 = 2GM/r\n\n4) Multiply both sides by r:\nc\u00b2r = 2GM\n\n5) Solve for r (which becomes rs, the Schwarzschild radius):\nrs = 2GM/c\u00b2\n\nWhere:\nG = gravitational constant (6.674 \u00d7 10\u207b\u00b9\u00b9 m\u00b3/kg\u00b7s\u00b2)\nM = mass of the object\nc =",
+              "latency_ms": 7952.150896002422,
+              "tokens_in": 52,
+              "tokens_out": 339,
+              "cost_usd": 0.005241,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 7423.925016002613,
+            "total_cost_usd": 0.009722999999999999
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "sci_001",
+              "category": "science",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 237.52182700263802,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "sci_002",
+              "category": "science",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 221.37870200094767,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 229.45026450179284,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "sci_001",
+              "category": "science",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 200.41540199599694,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "sci_002",
+              "category": "science",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 227.71748300874606,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 214.0664425023715,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "sci_001",
+              "category": "science",
+              "status": "success",
+              "answer": "**CRISPR-Cas9 Gene Editing Mechanism**\n\nCRISPR-Cas9 (Clustered Regularly Interspaced Short Palindromic Repeats and CRISPR-associated protein 9) is a powerful **adaptive immune system** derived from bacteria, repurposed for **precise genome editing** in eukaryotic cells. Below is a step-by-step breakdown of its mechanism:\n\n---\n\n### **1. Components of the CRISPR-Cas9 System**\nThe system consists of two key components:\n- **Cas9 protein** \u2013 A **DNA endonuclease** (enzyme that cuts DNA) that introduc",
+              "latency_ms": 32197.49109201075,
+              "tokens_in": 47,
+              "tokens_out": 1664,
+              "cost_usd": 0.010078,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "sci_002",
+              "category": "science",
+              "status": "success",
+              "answer": "### **Derivation of the Schwarzschild Radius from First Principles**\n\nThe **Schwarzschild radius** (\\( r_s \\)) is the radius of the event horizon of a non-rotating, uncharged black hole. It is derived by setting the escape velocity equal to the speed of light (\\( c \\)) and solving for the radius. Here\u2019s a step-by-step derivation:\n\n---\n\n#### **Step 1: Escape Velocity Formula**\nThe escape velocity (\\( v_e \\)) from a spherical mass \\( M \\) at a distance \\( r \\) is given by:\n\n\\[\nv_e = \\sqrt{\\frac{2G",
+              "latency_ms": 13928.870093994192,
+              "tokens_in": 43,
+              "tokens_out": 992,
+              "cost_usd": 0.006038,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 23063.18059300247,
+            "total_cost_usd": 0.016116
+          }
+        }
+      ]
+    },
+    "health": {
+      "category": "health",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "health_001",
+              "category": "health",
+              "status": "success",
+              "answer": "Type 2 diabetes is a complex metabolic disorder characterized by chronic hyperglycemia due to a combination of insulin resistance and beta cell dysfunction. Here's a detailed explanation of its pathophysiology:\n\n1. **Insulin Resistance**: \n   - Insulin resistance is a condition where the body's cells, particularly muscle, fat, and liver cells, become less responsive to insulin. Insulin is a hormone produced by the pancreatic beta cells that facilitates the uptake of glucose from the bloodstream ",
+              "latency_ms": 9708.246314999997,
+              "tokens_in": 40,
+              "tokens_out": 523,
+              "cost_usd": 0.008045,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "health_002",
+              "category": "health",
+              "status": "success",
+              "answer": "The symptoms described\u2014crushing chest pain, shortness of breath, and diaphoresis\u2014are highly suggestive of an acute coronary syndrome (ACS), most likely an acute myocardial infarction (AMI), commonly known as a heart attack.\n\n### Likely Diagnosis:\n- **Acute Myocardial Infarction (AMI)**\n\n### Immediate Diagnostic Tests:\n1. **Electrocardiogram (ECG):** This is the first and most critical test to perform. It helps to identify ST-segment elevation, which indicates ST-Elevation Myocardial Infarction (",
+              "latency_ms": 14077.323461999185,
+              "tokens_in": 44,
+              "tokens_out": 714,
+              "cost_usd": 0.010929999999999999,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 11892.784888499591,
+            "total_cost_usd": 0.018975
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "health_001",
+              "category": "health",
+              "status": "success",
+              "answer": "The pathophysiology of Type 2 diabetes is complex and involves multiple interrelated mechanisms. Here's a comprehensive breakdown:\n\nInsulin Resistance:\n1. Primary mechanism\n- Cells become less responsive to insulin\n- Requires more insulin to achieve normal glucose uptake\n- Affects mainly muscle, fat, and liver cells\n\n2. Molecular level\n- Defects in insulin signaling pathways\n- Reduced insulin receptor sensitivity\n- Decreased GLUT4 transporter activity\n- Impaired intracellular glucose metabolism\n",
+              "latency_ms": 10154.17915400758,
+              "tokens_in": 41,
+              "tokens_out": 421,
+              "cost_usd": 0.006437999999999999,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "health_002",
+              "category": "health",
+              "status": "success",
+              "answer": "For this presentation, here's a systematic approach:\n\nLikely Diagnosis:\n- Acute Coronary Syndrome (ACS)/Acute Myocardial Infarction (MI)\n- Classic triad of symptoms suggests STEMI until proven otherwise\n\nImmediate Diagnostic Tests:\n1. 12-lead ECG (within 10 minutes of arrival)\n2. Cardiac biomarkers\n- Troponin I or T\n- CK-MB\n3. Basic labs\n- CBC\n- CMP\n- Coagulation profile\n- Lipid panel\n4. Chest X-ray\n\nEmergency Management:\n\nInitial Steps:\n1. ABC assessment\n2. Establish IV access\n3. Continuous car",
+              "latency_ms": 14093.988456996158,
+              "tokens_in": 46,
+              "tokens_out": 618,
+              "cost_usd": 0.009407999999999998,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 12124.083805501868,
+            "total_cost_usd": 0.015846
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "health_001",
+              "category": "health",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 231.89839300175663,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "health_002",
+              "category": "health",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 250.30069900094531,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 241.09954600135097,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "health_001",
+              "category": "health",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 248.16271600138862,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "health_002",
+              "category": "health",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 197.5281979975989,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 222.84545699949376,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "health_001",
+              "category": "health",
+              "status": "success",
+              "answer": "Type 2 diabetes (T2D) is a **chronic metabolic disorder** characterized by **hyperglycemia** (elevated blood glucose) due to a combination of **insulin resistance** and **beta-cell dysfunction**. The pathophysiology involves a complex interplay of genetic, environmental, and lifestyle factors, with **obesity** playing a central role. Below is a detailed breakdown of the key mechanisms:\n\n---\n\n### **1. Insulin Resistance**\n**Definition:** Insulin resistance is the **reduced ability of insulin-sens",
+              "latency_ms": 32662.835869996343,
+              "tokens_in": 34,
+              "tokens_out": 1731,
+              "cost_usd": 0.010454000000000001,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "health_002",
+              "category": "health",
+              "status": "success",
+              "answer": "### **Likely Diagnosis:**\nThe patient\u2019s presentation\u2014**crushing chest pain, shortness of breath (SOB), and diaphoresis (sweating)**\u2014is highly suggestive of **acute coronary syndrome (ACS)**, most likely:\n- **ST-elevation myocardial infarction (STEMI)** (if ECG shows ST-segment elevation or new LBBB)\n- **Non-ST-elevation myocardial infarction (NSTEMI)** (if ECG shows ST depression, T-wave inversions, or is normal but troponin is elevated)\n- **Unstable angina (UA)** (if troponin is negative but sy",
+              "latency_ms": 39354.282120009884,
+              "tokens_in": 39,
+              "tokens_out": 2000,
+              "cost_usd": 0.012078,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 36008.55899500311,
+            "total_cost_usd": 0.022532000000000003
+          }
+        }
+      ]
+    },
+    "legal": {
+      "category": "legal",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "legal_001",
+              "category": "legal",
+              "status": "success",
+              "answer": "Civil law and criminal law are two distinct branches of the legal system, each serving different purposes and involving different procedures, burdens of proof, remedies, and participants.\n\n### Civil Law\n\n**Purpose:**  \nCivil law deals with disputes between individuals, organizations, or between the two, in which compensation is awarded to the victim. The primary aim is to resolve non-criminal disputes and provide relief to the aggrieved party.\n\n**Burden of Proof:**  \nIn civil cases, the burden o",
+              "latency_ms": 8313.403341991943,
+              "tokens_in": 40,
+              "tokens_out": 492,
+              "cost_usd": 0.007579999999999999,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "legal_002",
+              "category": "legal",
+              "status": "success",
+              "answer": "Certainly! Below is a draft of a non-disclosure agreement (NDA) clause that includes the definition of confidential information, obligations of the receiving party, exceptions to confidentiality, and the term of the agreement:\n\n---\n\n**Confidentiality Clause**\n\n**1. Definition of Confidential Information:**  \nFor the purposes of this Agreement, \"Confidential Information\" shall mean any and all technical and non-technical information provided by the Disclosing Party to the Receiving Party, whether",
+              "latency_ms": 7616.099643011694,
+              "tokens_in": 41,
+              "tokens_out": 541,
+              "cost_usd": 0.008320000000000001,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 7964.751492501819,
+            "total_cost_usd": 0.0159
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "legal_001",
+              "category": "legal",
+              "status": "success",
+              "answer": "Here's a comparison of civil law and criminal law across key aspects:\n\nCivil Law:\n- Burden of proof: \"Preponderance of evidence\" (more likely than not, >50%)\n- Who brings the case: Private parties (individuals, organizations, companies)\n- Remedies/Penalties: Monetary compensation, injunctions, specific performance\n- Examples:\n  * Contract disputes\n  * Property disputes\n  * Personal injury cases\n  * Divorce proceedings\n  * Employment disputes\n\nCriminal Law:\n- Burden of proof: \"Beyond reasonable d",
+              "latency_ms": 6607.777323995833,
+              "tokens_in": 41,
+              "tokens_out": 256,
+              "cost_usd": 0.003963,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "legal_002",
+              "category": "legal",
+              "status": "success",
+              "answer": "CONFIDENTIALITY AND NON-DISCLOSURE AGREEMENT CLAUSE\n\n1. Definition of Confidential Information\n\"Confidential Information\" means any and all non-public, proprietary, technical, business, financial, or other information disclosed by the Disclosing Party to the Receiving Party, whether in written, oral, electronic, visual, or other form, including but not limited to:\n(a) Trade secrets, inventions, ideas, processes, formulas, source and object codes;\n(b) Business plans, financial information, custom",
+              "latency_ms": 11893.045528006041,
+              "tokens_in": 44,
+              "tokens_out": 587,
+              "cost_usd": 0.008936999999999999,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 9250.411426000937,
+            "total_cost_usd": 0.012899999999999998
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "legal_001",
+              "category": "legal",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 214.66155799862463,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "legal_002",
+              "category": "legal",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 212.55958400433883,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 213.61057100148173,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "legal_001",
+              "category": "legal",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 249.54993899154942,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "legal_002",
+              "category": "legal",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 198.13224600511603,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 223.84109249833273,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "legal_001",
+              "category": "legal",
+              "status": "success",
+              "answer": "**Civil Law vs. Criminal Law: Key Differences**\n\nCivil law and criminal law are two distinct branches of the legal system, each serving different purposes, procedures, and outcomes. Below is a comparison based on **burden of proof, remedies/penalties, who brings the case, and examples**.\n\n---\n\n### **1. Purpose**\n- **Civil Law**: Resolves disputes between **individuals, organizations, or entities** (e.g., contracts, property, family matters). The goal is to **compensate the injured party** or enf",
+              "latency_ms": 24651.646911996068,
+              "tokens_in": 37,
+              "tokens_out": 1282,
+              "cost_usd": 0.007766,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "legal_002",
+              "category": "legal",
+              "status": "success",
+              "answer": "Below is a **Non-Disclosure Agreement (NDA) Clause** that covers the requested elements in a clear, legally sound manner. This clause can be incorporated into a broader NDA or standalone agreement.\n\n---\n\n### **CONFIDENTIALITY CLAUSE**\n\n#### **1. DEFINITION OF CONFIDENTIAL INFORMATION**\n**\"Confidential Information\"** means any non-public, proprietary, or sensitive information disclosed by the **Disclosing Party** (or its affiliates, employees, or representatives) to the **Receiving Party** (or it",
+              "latency_ms": 20831.73476300726,
+              "tokens_in": 37,
+              "tokens_out": 1001,
+              "cost_usd": 0.0060799999999999995,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 22741.690837501665,
+            "total_cost_usd": 0.013846
+          }
+        }
+      ]
+    },
+    "marketing": {
+      "category": "marketing",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "mkt_001",
+              "category": "marketing",
+              "status": "success",
+              "answer": "Developing a go-to-market (GTM) strategy for a new B2B SaaS product designed to help companies manage remote teams involves several key components. Below is a comprehensive strategy that includes target market, positioning, pricing strategy, and channel strategy:\n\n### 1. Target Market\n\n**Primary Market:**\n- **Mid-sized Enterprises (50-500 employees):** These companies often have established remote work policies but may lack sophisticated tools for managing remote teams effectively.\n- **Industrie",
+              "latency_ms": 12288.373871997464,
+              "tokens_in": 43,
+              "tokens_out": 690,
+              "cost_usd": 0.010564999999999998,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "mkt_002",
+              "category": "marketing",
+              "status": "success",
+              "answer": "**1) Headline:**\n\n\"Revive Your Wardrobe: Where Style Meets Sustainability\"\n\n**2) Short-form Social Media Post:**\n\n\ud83c\udf3f\u2728 Introducing our Recycled Revival Collection! Elevate your style with pieces crafted from 100% recycled materials. Fashion-forward, eco-friendly, and designed for the conscious trendsetter. Join us in making a difference, one outfit at a time. #RecycledRevival #SustainableStyle #EcoChic\n\n**3) Longer Email Subject + Body:**\n\n**Subject:** Discover the Future of Fashion: Our New Recyc",
+              "latency_ms": 8095.2551770024,
+              "tokens_in": 51,
+              "tokens_out": 441,
+              "cost_usd": 0.00687,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 10191.814524499932,
+            "total_cost_usd": 0.017435
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "mkt_001",
+              "category": "marketing",
+              "status": "success",
+              "answer": "Here's a comprehensive go-to-market strategy for a B2B SaaS remote team management product:\n\nTarget Market:\n\nPrimary segments:\n- Mid-sized companies (100-1000 employees)\n- Technology and professional services firms\n- Companies with hybrid or fully remote work policies\n- Organizations with multiple office locations/global teams\n\nInitial focus:\n- North American market\n- Companies actively scaling remote operations\n- Organizations struggling with remote team productivity/engagement\n\nPositioning:\n\nV",
+              "latency_ms": 21175.33747300331,
+              "tokens_in": 47,
+              "tokens_out": 907,
+              "cost_usd": 0.013746000000000001,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "mkt_002",
+              "category": "marketing",
+              "status": "success",
+              "answer": "Here's the ad copy for the sustainable fashion collection:\n\n1) Headline:\n\"Wear the Change: Fashion That Gives Earth a Second Chance\"\n\n2) Social Media Post:\n\ud83c\udf3f Your next favorite outfit already existed.\nIntroducing REVIVAL - our most sustainable collection yet, crafted entirely from recycled materials. Each piece saves 700+ gallons of water and gives new life to fabrics that deserve a second act.\nShop mindfully. Look amazing. Make a difference.\n[Link] #SustainableFashion #EarthFirst\n\n3) Email:\nSub",
+              "latency_ms": 10903.901073004818,
+              "tokens_in": 53,
+              "tokens_out": 392,
+              "cost_usd": 0.006039,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 16039.619273004064,
+            "total_cost_usd": 0.019785
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "mkt_001",
+              "category": "marketing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 224.5104710018495,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "mkt_002",
+              "category": "marketing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 218.09642799780704,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 221.30344949982828,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "mkt_001",
+              "category": "marketing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 197.30704100220464,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "mkt_002",
+              "category": "marketing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 219.96130100160372,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 208.63417100190418,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "mkt_001",
+              "category": "marketing",
+              "status": "success",
+              "answer": "Developing a **go-to-market (GTM) strategy** for a **B2B SaaS product that helps companies manage remote teams** requires a deep understanding of the pain points of remote work, the competitive landscape, and the most effective ways to reach and convert target customers. Below is a structured **GTM strategy** covering **target market, positioning, pricing, and channel strategy**.\n\n---\n\n## **1. Target Market**\n### **Primary Audience: Companies with Remote or Hybrid Teams**\n#### **Ideal Customer P",
+              "latency_ms": 40795.80904400791,
+              "tokens_in": 41,
+              "tokens_out": 2000,
+              "cost_usd": 0.012082,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "mkt_002",
+              "category": "marketing",
+              "status": "success",
+              "answer": "### **1. Headline (for ads, landing pages, or banners):**\n**\"Wear the Change: Fashion That Loves the Planet Back\"**\n*(Alternative options:)*\n- **\"From Waste to Wow: The Future of Fashion is Recycled\"**\n- **\"Style That Doesn\u2019t Cost the Earth\u2014Meet Our New Recycled Collection\"**\n- **\"Sustainable Never Looked This Good\"**\n\n---\n\n### **2. Short-Form Social Media Post (Instagram/Facebook/TikTok):**\n**\ud83c\udf3f NEW DROP ALERT! \ud83c\udf3f**\n\nYour wardrobe just got a planet-friendly upgrade. \u2728 Introducing our **Recycled M",
+              "latency_ms": 16661.24283798854,
+              "tokens_in": 47,
+              "tokens_out": 721,
+              "cost_usd": 0.00442,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 28728.525940998225,
+            "total_cost_usd": 0.016502000000000003
+          }
+        }
+      ]
+    },
+    "technology": {
+      "category": "technology",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "tech_001",
+              "category": "technology",
+              "status": "success",
+              "answer": "Transformers are a type of neural network architecture that have revolutionized the field of natural language processing (NLP) and other sequence modeling tasks. They were introduced in the paper \"Attention is All You Need\" by Vaswani et al. in 2017. The key components of a transformer include the self-attention mechanism, positional encoding, and multi-head attention. Here's a detailed explanation of how these components work and why transformers outperform recurrent neural networks (RNNs) for ",
+              "latency_ms": 10466.265961003955,
+              "tokens_in": 40,
+              "tokens_out": 712,
+              "cost_usd": 0.010879999999999999,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "tech_002",
+              "category": "technology",
+              "status": "success",
+              "answer": "Designing a system architecture for a real-time chat application that supports 1 million concurrent users is a complex task that requires careful consideration of scalability, reliability, and performance. Below is a high-level architecture with technology choices, scalability approaches, message delivery guarantees, and data storage considerations.\n\n### 1. **Technology Choices**\n\n- **Frontend:**\n  - **Frameworks:** React.js, Vue.js, or Angular for building responsive and dynamic user interfaces",
+              "latency_ms": 14638.534828991396,
+              "tokens_in": 43,
+              "tokens_out": 750,
+              "cost_usd": 0.011465,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 12552.400394997676,
+            "total_cost_usd": 0.022344999999999997
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "tech_001",
+              "category": "technology",
+              "status": "success",
+              "answer": "Here's a comprehensive explanation of how transformer neural networks work:\n\n1. Overall Architecture\n- Consists of an encoder and decoder stack (though some models use only encoder or decoder)\n- Each stack contains multiple identical layers\n- Each layer has two main sub-components:\n  * Multi-head attention mechanism\n  * Feed-forward neural network\n\n2. Self-Attention Mechanism\n- Core innovation of transformers\n- Allows the model to weigh the importance of different words in relation to each other",
+              "latency_ms": 22861.307099999976,
+              "tokens_in": 47,
+              "tokens_out": 834,
+              "cost_usd": 0.012650999999999999,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "tech_002",
+              "category": "technology",
+              "status": "success",
+              "answer": "I'll design a scalable real-time chat architecture that can handle 1 million concurrent users. Here's a detailed breakdown:\n\n```\nHigh-Level Architecture:\n\n[Clients] \u2192 [Load Balancers] \u2192 [WebSocket Servers] \u2192 [Message Brokers] \u2192 [Application Servers] \u2192 [Databases/Cache]\n```\n\n1. Client-Side Components:\n```typescript\n// WebSocket connection handling\nclass ChatClient {\n  private ws: WebSocket;\n  private reconnectAttempts: number = 0;\n  \n  constructor(serverUrl: string) {\n    this.connect(serverUrl);",
+              "latency_ms": 30224.993918993277,
+              "tokens_in": 47,
+              "tokens_out": 1196,
+              "cost_usd": 0.018080999999999996,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 26543.150509496627,
+            "total_cost_usd": 0.030731999999999995
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "tech_001",
+              "category": "technology",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 224.9338189867558,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "tech_002",
+              "category": "technology",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 217.04848700028379,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 220.9911529935198,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "tech_001",
+              "category": "technology",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 204.76086900453083,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "tech_002",
+              "category": "technology",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 279.9978219991317,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 242.37934550183127,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "tech_001",
+              "category": "technology",
+              "status": "success",
+              "answer": "A **Transformer neural network** is a deep learning architecture introduced in the 2017 paper *\"Attention Is All You Need\"* by Vaswani et al. It revolutionized sequence modeling by relying entirely on **self-attention mechanisms** instead of recurrent or convolutional layers, leading to superior performance in tasks like machine translation, text generation, and more. Below is a breakdown of its key components and why it outperforms **Recurrent Neural Networks (RNNs)**.\n\n---\n\n## **1. Core Compon",
+              "latency_ms": 37802.84595100966,
+              "tokens_in": 39,
+              "tokens_out": 2000,
+              "cost_usd": 0.012078,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "tech_002",
+              "category": "technology",
+              "status": "success",
+              "answer": "Designing a **real-time chat application** that supports **1 million concurrent users** requires a **scalable, fault-tolerant, and low-latency** architecture. Below is a **high-level system design** covering **technology choices, scalability, message delivery guarantees, and data storage**.\n\n---\n\n## **1. System Requirements**\n- **1M concurrent users** (peak load)\n- **Low latency** (< 100ms for message delivery)\n- **High availability** (99.99% uptime)\n- **Message persistence** (history, search, a",
+              "latency_ms": 34902.217337003094,
+              "tokens_in": 40,
+              "tokens_out": 2000,
+              "cost_usd": 0.01208,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 36352.531644006376,
+            "total_cost_usd": 0.024158
+          }
+        }
+      ]
+    },
+    "finance": {
+      "category": "finance",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "fin_001",
+              "category": "finance",
+              "status": "success",
+              "answer": "The time value of money (TVM) is a financial concept that states that a sum of money is worth more now than the same sum will be in the future due to its potential earning capacity. This core principle of finance holds that, provided money can earn interest, any amount of money is worth more the sooner it is received. TVM is the reason why interest is paid or earned: interest, whether it is simple or compound, represents the time value of money.\n\nTo calculate the present value (PV) of a future s",
+              "latency_ms": 7654.090165000525,
+              "tokens_in": 61,
+              "tokens_out": 552,
+              "cost_usd": 0.008585,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "fin_002",
+              "category": "finance",
+              "status": "success",
+              "answer": "To perform a Discounted Cash Flow (DCF) analysis, we need to calculate the present value of the projected free cash flows and the terminal value, then sum them up to estimate the total enterprise value of the company.\n\n### Step 1: Calculate the Present Value of Projected Free Cash Flows\n\nThe formula to calculate the present value (PV) of future cash flows is:\n\n\\[ PV = \\frac{CF}{(1 + r)^n} \\]\n\nWhere:\n- \\( CF \\) is the cash flow for each year.\n- \\( r \\) is the discount rate (WACC).\n- \\( n \\) is th",
+              "latency_ms": 10239.612271994702,
+              "tokens_in": 89,
+              "tokens_out": 895,
+              "cost_usd": 0.013869999999999999,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 8946.851218497613,
+            "total_cost_usd": 0.022455
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "fin_001",
+              "category": "finance",
+              "status": "success",
+              "answer": "I'll explain the time value of money and solve both calculations.\n\nTime Value of Money (TVM):\nThe time value of money is a fundamental financial concept that states a dollar today is worth more than a dollar in the future because of its potential earning capacity. Money available today can be invested and earn returns, making it more valuable than the same amount received in the future.\n\nKey factors affecting TVM:\n1. Interest/discount rate\n2. Time period\n3. Initial or future amount\n4. Inflation\n",
+              "latency_ms": 10535.712236000109,
+              "tokens_in": 66,
+              "tokens_out": 404,
+              "cost_usd": 0.0062580000000000005,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "fin_002",
+              "category": "finance",
+              "status": "success",
+              "answer": "I'll help you perform a DCF analysis step by step.\n\n1. First, let's discount each year's free cash flows:\nYear 1: $1M/(1.10)\u00b9 = $909,091\nYear 2: $1.2M/(1.10)\u00b2 = $991,736\nYear 3: $1.5M/(1.10)\u00b3 = $1,125,382\nYear 4: $1.8M/(1.10)\u2074 = $1,225,053\nYear 5: $2M/(1.10)\u2075 = $1,241,842\n\n2. Calculate Terminal Value using Gordon Growth Model:\nTerminal Value = FCF\u2085 \u00d7 (1 + g)/(WACC - g)\nTerminal Value = $2M \u00d7 (1.03)/(0.10 - 0.03)\nTerminal Value = $2.06M/0.07\nTerminal Value = $29.43M\n\n3. Discount Terminal Value to",
+              "latency_ms": 8739.702977007255,
+              "tokens_in": 93,
+              "tokens_out": 361,
+              "cost_usd": 0.005693999999999999,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 9637.707606503682,
+            "total_cost_usd": 0.011952
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "fin_001",
+              "category": "finance",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 248.2782789884368,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "fin_002",
+              "category": "finance",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 276.02121800009627,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 262.14974849426653,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "fin_001",
+              "category": "finance",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 222.51057799439877,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "fin_002",
+              "category": "finance",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 246.2081879930338,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 234.35938299371628,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "fin_001",
+              "category": "finance",
+              "status": "success",
+              "answer": "### **Time Value of Money (TVM) Explained**\nThe **time value of money** is a financial concept that states that money available today is worth more than the same amount in the future due to its **earning potential**. This is because money can be invested to earn interest or returns over time.\n\nKey principles of TVM:\n1. **Present Value (PV)** \u2013 The current worth of a future sum of money, discounted at a specific rate.\n2. **Future Value (FV)** \u2013 The value of a current sum of money at a future date",
+              "latency_ms": 10708.66430598835,
+              "tokens_in": 64,
+              "tokens_out": 838,
+              "cost_usd": 0.005155999999999999,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "fin_002",
+              "category": "finance",
+              "status": "success",
+              "answer": "To perform a **Discounted Cash Flow (DCF) analysis**, we'll follow these steps:\n\n1. **Project Free Cash Flows (FCFs)** for the explicit forecast period (Years 1\u20135).\n2. **Calculate the Terminal Value (TV)** at the end of Year 5 using the **Gordon Growth Model**.\n3. **Discount all cash flows (FCFs + TV)** back to present value using the **Weighted Average Cost of Capital (WACC)**.\n4. **Sum the present values** to get the **Enterprise Value (EV)**.\n\n---\n\n### **Given Data:**\n- **Free Cash Flows (FCF",
+              "latency_ms": 17969.468928000424,
+              "tokens_in": 87,
+              "tokens_out": 1115,
+              "cost_usd": 0.0068639999999999994,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 14339.066616994387,
+            "total_cost_usd": 0.01202
+          }
+        }
+      ]
+    },
+    "academia": {
+      "category": "academia",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "acad_001",
+              "category": "academia",
+              "status": "success",
+              "answer": "The scientific method is a systematic process used by scientists to explore observations, answer questions, and test hypotheses. It is a foundational approach that ensures research is conducted in a structured, objective, and reproducible manner. Here are the key steps involved in the scientific method:\n\n1. **Observation**: This is the initial stage where a phenomenon is noticed, prompting curiosity. Observations can be made directly through the senses or indirectly through instruments. This ste",
+              "latency_ms": 12441.772199992556,
+              "tokens_in": 32,
+              "tokens_out": 630,
+              "cost_usd": 0.00961,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "acad_002",
+              "category": "academia",
+              "status": "success",
+              "answer": "**Abstract**\n\nBackground: Sleep deprivation is a prevalent issue among college students, often attributed to academic pressures and lifestyle choices. This study investigates the impact of sleep deprivation on cognitive performance in this demographic, aiming to provide insights into the potential academic and health consequences.\n\nMethods: A total of 100 college students aged 18-24 were recruited for this study. Participants were randomly assigned to either a sleep deprivation group, which was ",
+              "latency_ms": 6014.672953999252,
+              "tokens_in": 38,
+              "tokens_out": 326,
+              "cost_usd": 0.00508,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 9228.222576995904,
+            "total_cost_usd": 0.014690000000000002
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "acad_001",
+              "category": "academia",
+              "status": "success",
+              "answer": "The scientific method is a systematic approach to investigating phenomena and acquiring new knowledge. Here's a detailed breakdown of each step and an analysis of peer review:\n\nSteps of the Scientific Method:\n\n1. Observation\n- Making careful observations of a phenomenon\n- Identifying patterns or problems\n- Gathering initial information\n- Taking detailed notes\n\n2. Question Formation\n- Developing specific questions about observations\n- Focusing on what you want to learn\n- Ensuring questions are cl",
+              "latency_ms": 15617.880368998158,
+              "tokens_in": 34,
+              "tokens_out": 448,
+              "cost_usd": 0.006822,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "acad_002",
+              "category": "academia",
+              "status": "success",
+              "answer": "Abstract\n\nBackground: Sleep deprivation is increasingly common among college students, yet its impact on cognitive performance remains incompletely understood. This study investigated the relationship between sleep deprivation and cognitive performance metrics in undergraduate students, including attention, memory, and problem-solving abilities.\n\nMethods: 120 undergraduate students (ages 18-22) participated in a controlled study over two weeks. Participants were randomly assigned to either a sle",
+              "latency_ms": 13025.03441600129,
+              "tokens_in": 40,
+              "tokens_out": 330,
+              "cost_usd": 0.005070000000000001,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 14321.457392499724,
+            "total_cost_usd": 0.011892
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "acad_001",
+              "category": "academia",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 8125.673182992614,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "acad_002",
+              "category": "academia",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 1336.6845179989468,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 4731.17885049578,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "acad_001",
+              "category": "academia",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 916.2144620058825,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "acad_002",
+              "category": "academia",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 1084.8160729947267,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 1000.5152675003046,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "acad_001",
+              "category": "academia",
+              "status": "success",
+              "answer": "### **The Scientific Method: Step-by-Step Explanation**\nThe **scientific method** is a systematic approach to investigating natural phenomena, acquiring knowledge, and correcting previous understandings. It is iterative, meaning scientists often revisit earlier steps based on new findings. Here\u2019s a breakdown of each step:\n\n---\n\n#### **1. Observation**\n- **Definition:** The process of noticing and describing events or processes in a careful, systematic way.\n- **Key Points:**\n  - Observations can ",
+              "latency_ms": 30803.830623990507,
+              "tokens_in": 29,
+              "tokens_out": 2000,
+              "cost_usd": 0.012058000000000001,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "acad_002",
+              "category": "academia",
+              "status": "success",
+              "answer": "**Abstract**\n\n**Background:** Sleep deprivation is a prevalent issue among college students, with many reporting insufficient sleep due to academic demands, social activities, and irregular schedules. Chronic sleep loss has been linked to impairments in cognitive functions such as attention, memory, and executive functioning, yet its specific effects on academic performance remain underexplored. This study investigates the impact of sleep deprivation on cognitive performance in college students,",
+              "latency_ms": 10476.271040999563,
+              "tokens_in": 34,
+              "tokens_out": 475,
+              "cost_usd": 0.002918,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 20640.050832495035,
+            "total_cost_usd": 0.014976000000000001
+          }
+        }
+      ]
+    },
+    "roleplay": {
+      "category": "roleplay",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "role_001",
+              "category": "roleplay",
+              "status": "success",
+              "answer": "Ah, young squire, gather 'round and listen well, for the tales I bring from the Crusades are both wondrous and harrowing. The journey to the Holy Land was long and arduous, testing the mettle of even the most seasoned knights. We traversed vast lands and treacherous seas, each step fraught with peril and uncertainty.\n\nOur voyage began with a fleet of ships, their sails billowing like the wings of great birds as we crossed the tempestuous waters of the Mediterranean. The sea was a fickle mistress",
+              "latency_ms": 10915.02293398662,
+              "tokens_in": 50,
+              "tokens_out": 534,
+              "cost_usd": 0.00826,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "role_002",
+              "category": "roleplay",
+              "status": "success",
+              "answer": "As Sherlock Holmes, my approach to this mystery involves examining the clues provided by the note: 'autumn', 'bridge', and 'eleven'. Each word may hold significance, either individually or collectively, and could lead us to the whereabouts of the missing husband.\n\n1. **Autumn**: This word could refer to a time of year, a place, or even a metaphorical meaning. We must consider if there are any locations or events associated with 'autumn' that might be relevant. Additionally, it could symbolize ch",
+              "latency_ms": 11950.68637598888,
+              "tokens_in": 59,
+              "tokens_out": 573,
+              "cost_usd": 0.008889999999999999,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 11432.85465498775,
+            "total_cost_usd": 0.01715
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "role_001",
+              "category": "roleplay",
+              "status": "success",
+              "answer": "*Adjusts chainmail and leans forward with a weathered expression*\n\nYoung squire, gather close. You dream of glory and knighthood, as I once did, but let me tell you what I've learned in the Holy Land.\n\nThe journey itself tests a man as much as any blade. Three months at sea, where the waves rose like castle walls and good men emptied their stomachs day and night. We lost two ships to storms before even reaching Cyprus. The heat, lad - nothing in England prepares you for it. Your armor becomes an",
+              "latency_ms": 11341.722041004687,
+              "tokens_in": 53,
+              "tokens_out": 329,
+              "cost_usd": 0.0050940000000000004,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "role_002",
+              "category": "roleplay",
+              "status": "success",
+              "answer": "*Adjusts my smoking jacket and steeples my fingers beneath my chin*\n\nMy dear madam, pray tell - did your husband have any regular habits or routines? Though before you answer, I observe from your attire and the slight chalk dust on your sleeve that you are a schoolteacher, likely mathematics given the geometric pattern of your brooch. Your husband, I deduce from the wedding ring's wear pattern, has been married to you for approximately seven years.\n\n*Rises and paces thoughtfully*\n\nThe words them",
+              "latency_ms": 9739.080131010269,
+              "tokens_in": 64,
+              "tokens_out": 300,
+              "cost_usd": 0.004692,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 10540.401086007478,
+            "total_cost_usd": 0.009786
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "role_001",
+              "category": "roleplay",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 344.6912079962203,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "role_002",
+              "category": "roleplay",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 274.1801780066453,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 309.4356930014328,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "role_001",
+              "category": "roleplay",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 288.8588120113127,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "role_002",
+              "category": "roleplay",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 324.37571600894444,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 306.61726401012857,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "role_001",
+              "category": "roleplay",
+              "status": "success",
+              "answer": "**Sir Aldric\u2019s Tale: A Knight\u2019s Return from the Holy Land**\n\n*By the hearth of the great hall, the fire crackles low, casting long shadows upon the stone walls. Sir Aldric, his surcoat still dusted with the sands of Outremer, sits with a cup of spiced wine in hand. A young squire, wide-eyed and eager, kneels before him, clutching a practice sword. The knight exhales slowly, his gaze distant, as if seeing once more the lands beyond the sea.*\n\n**\"You wish to know of the Crusades, boy?\"** Sir Aldri",
+              "latency_ms": 33626.8170659896,
+              "tokens_in": 46,
+              "tokens_out": 1345,
+              "cost_usd": 0.008162,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "role_002",
+              "category": "roleplay",
+              "status": "success",
+              "answer": "**Sherlock Holmes\u2019 Deductions on the Case of the Missing Husband**\n\n*[The door to 221B Baker Street swings open, and a visibly distressed woman\u2014Mrs. Eleanor Whitmore\u2014is shown in by Mrs. Hudson. She clutches a crumpled note in her gloved hand. Holmes, pipe in mouth, observes her with keen interest before gesturing for her to sit.]*\n\n**Holmes:** *\"Pray, compose yourself, madam. The game, as they say, is afoot. You claim your husband vanished three days prior, leaving only this enigmatic note. \u2018Aut",
+              "latency_ms": 45704.49082700361,
+              "tokens_in": 58,
+              "tokens_out": 1936,
+              "cost_usd": 0.011732,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 39665.653946496604,
+            "total_cost_usd": 0.019894000000000002
+          }
+        }
+      ]
+    },
+    "creative_writing": {
+      "category": "creative_writing",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "write_001",
+              "category": "creative_writing",
+              "status": "success",
+              "answer": "The rain hammered against the windows of Sarah's dimly lit apartment, each drop a reminder of the isolation she had grown accustomed to. She sat curled up on the worn-out couch, the flickering light from the television casting eerie shadows across the room. Her phone buzzed on the coffee table, the screen illuminating with a notification that sent a chill down her spine. It was a text message from her own number. \"I know what you did,\" it read, the words glaring back at her with an accusatory me",
+              "latency_ms": 8626.42617399979,
+              "tokens_in": 28,
+              "tokens_out": 180,
+              "cost_usd": 0.0028399999999999996,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "write_002",
+              "category": "creative_writing",
+              "status": "success",
+              "answer": "In a dusty attic, where whispers sleep,  \nI lie forgotten, where shadows creep.  \nOnce vibrant hues, now softly fade,  \nIn sepia tones, my memories laid.  \n\nI am the echo of laughter's song,  \nA silent witness where moments belong.  \nTime, the artist, with gentle hands,  \nPaints over my colors, shifts my sands.  \n\nThe sun, a relentless, golden brush,  \nKisses my surface in a tender hush.  \nIts light, a lover, both warm and cruel,  \nTurns vivid dreams into a muted jewel.  \n\nI am the scent of lave",
+              "latency_ms": 8303.594676006469,
+              "tokens_in": 31,
+              "tokens_out": 323,
+              "cost_usd": 0.005,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 8465.010425003129,
+            "total_cost_usd": 0.00784
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "write_001",
+              "category": "creative_writing",
+              "status": "success",
+              "answer": "Here's an opening paragraph:\n\nThe message arrived at 3:17 AM, pulling Sarah from a dreamless sleep with its harsh blue glow. She might have ignored it, rolled over, and drifted off again, if not for the number that lit up her screen\u2014her own. Ten digits she knew by heart stared back at her, followed by five words that made her throat go dry: \"They're inside. Don't come home.\" Sarah sat up, heart hammering against her ribs, because she was home. She'd been home for hours, alone in her bed, and her",
+              "latency_ms": 4269.144784993841,
+              "tokens_in": 28,
+              "tokens_out": 139,
+              "cost_usd": 0.002169,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "write_002",
+              "category": "creative_writing",
+              "status": "success",
+              "answer": "Here's a poem from the perspective of a fading photograph:\n\n\"The Slow Fade\"\n\nMy edges curl like autumn leaves,\nWhile sepia bleeds into my bones.\nOnce-sharp faces turn to ghosts,\nTheir laughter trapped in silver tones.\n\nTime's fingers brush across my skin,\nDissolving moments day by day.\nThe colors of that summer noon\nNow drift like watercolors, gray.\n\nI hold their smiles in fading ink,\nThese strangers who I used to know\u2014\nTheir Sunday best now softly blurred,\nLike memories in falling snow.\n\nThe li",
+              "latency_ms": 7113.527990004513,
+              "tokens_in": 34,
+              "tokens_out": 242,
+              "cost_usd": 0.0037319999999999996,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 5691.336387499177,
+            "total_cost_usd": 0.005901
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "write_001",
+              "category": "creative_writing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 228.40197100595105,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "write_002",
+              "category": "creative_writing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 202.33644099789672,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 215.36920600192389,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "write_001",
+              "category": "creative_writing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 359.6491359930951,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "write_002",
+              "category": "creative_writing",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 291.3170359970536,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 325.48308599507436,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "write_001",
+              "category": "creative_writing",
+              "status": "success",
+              "answer": "**Opening Paragraph:**\n\nThe screen lit up with a chime, cutting through the silence of the empty apartment. Claire froze, her fingers tightening around the wineglass in her hand. The message wasn\u2019t from an unknown number\u2014it was from *hers*. The same digits she\u2019d dialed a thousand times, the same name that appeared at the top of her contacts. Her pulse hammered in her throat as she tapped the notification. The text was short, just three words, but they sent a chill skittering down her spine:\n\n*\"Y",
+              "latency_ms": 3677.7262310060905,
+              "tokens_in": 24,
+              "tokens_out": 118,
+              "cost_usd": 0.0007559999999999999,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "write_002",
+              "category": "creative_writing",
+              "status": "success",
+              "answer": "**The Fading Light**\n\nI was once a burst of sun\u2014\ngolden, sharp, alive with sound,\nthe laughter caught in silver threads,\nthe way your fingers brushed my frame.\n\nNow I am the ghost of noon,\na breath of dust on glass,\nthe edges softening like old lace,\nthe colors bleeding into dusk.\n\nI remember how the light would fall\u2014\nwarm as honey on your skin,\nhow the air smelled of rain and roses,\nhow your voice was bright as tin.\n\nBut time is a slow, unraveling tide,\nand I am just the echo left behind\u2014\na whi",
+              "latency_ms": 5735.181323994766,
+              "tokens_in": 27,
+              "tokens_out": 185,
+              "cost_usd": 0.001164,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 4706.453777500428,
+            "total_cost_usd": 0.00192
+          }
+        }
+      ]
+    },
+    "translation": {
+      "category": "translation",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "trans_001",
+              "category": "translation",
+              "status": "success",
+              "answer": "Here are the translations for the given text:\n\nSpanish: \"El p\u00e1jaro madrugador atrapa al gusano, pero el segundo rat\u00f3n se lleva el queso.\"\n\nFrench: \"L'oiseau matinal attrape le ver, mais la deuxi\u00e8me souris obtient le fromage.\"\n\nGerman: \"Der fr\u00fche Vogel f\u00e4ngt den Wurm, aber die zweite Maus bekommt den K\u00e4se.\"",
+              "latency_ms": 1753.6792430037167,
+              "tokens_in": 35,
+              "tokens_out": 78,
+              "cost_usd": 0.001345,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "trans_002",
+              "category": "translation",
+              "status": "success",
+              "answer": "The silence of the night / is a cloak of stars / that covers my sorrows / with its lovely light",
+              "latency_ms": 1152.7413909934694,
+              "tokens_in": 48,
+              "tokens_out": 22,
+              "cost_usd": 0.00057,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 1453.210316998593,
+            "total_cost_usd": 0.001915
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "trans_001",
+              "category": "translation",
+              "status": "success",
+              "answer": "Here are the translations:\n\nSpanish:\n\"El p\u00e1jaro madrugador atrapa el gusano, pero el segundo rat\u00f3n consigue el queso.\"\n\nFrench:\n\"L'oiseau matinal attrape le ver, mais c'est la deuxi\u00e8me souris qui obtient le fromage.\"\n\nGerman:\n\"Der fr\u00fche Vogel f\u00e4ngt den Wurm, aber die zweite Maus bekommt den K\u00e4se.\"",
+              "latency_ms": 2599.1592700011097,
+              "tokens_in": 38,
+              "tokens_out": 108,
+              "cost_usd": 0.0017339999999999999,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "trans_002",
+              "category": "translation",
+              "status": "success",
+              "answer": "Here's a translation that attempts to maintain a similar rhythm and rhyming pattern:\n\n\"The silence of the night / \nIs a blanket of stars bright / \nCovering my sorrow's plight / \nWith their beautiful light\"\n\nI preserved the rhyming endings (-ight) while trying to maintain the essence and imagery of the original Spanish poem. The meter follows a similar rhythmic pattern, though it's not exactly the same as Spanish and English have different natural cadences.",
+              "latency_ms": 4057.140317003359,
+              "tokens_in": 60,
+              "tokens_out": 108,
+              "cost_usd": 0.0018,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 3328.1497935022344,
+            "total_cost_usd": 0.003534
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "trans_001",
+              "category": "translation",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 398.9860660076374,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "trans_002",
+              "category": "translation",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 907.8577970067272,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 653.4219315071823,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "trans_001",
+              "category": "translation",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 188.91464700573124,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "trans_002",
+              "category": "translation",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 208.467163000023,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 198.69090500287712,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "trans_001",
+              "category": "translation",
+              "status": "success",
+              "answer": "Here\u2019s the translation of your English proverb into **Spanish, French, and German**:\n\n### **Spanish:**\n*\"El p\u00e1jaro madrugador atrapa el gusano, pero el segundo rat\u00f3n se lleva el queso.\"*\n\n### **French:**\n*\"Le premier oiseau attrape le ver, mais la deuxi\u00e8me souris obtient le fromage.\"*\n\n### **German:**\n*\"Der fr\u00fche Vogel f\u00e4ngt den Wurm, aber die zweite Maus bekommt den K\u00e4se.\"*",
+              "latency_ms": 2973.0598339956487,
+              "tokens_in": 31,
+              "tokens_out": 97,
+              "cost_usd": 0.000644,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "trans_002",
+              "category": "translation",
+              "status": "success",
+              "answer": "Here\u2019s a faithful English translation of your poem that preserves the **meter (8 syllables per line)** and **rhyme scheme (ABAB)** while keeping the imagery and emotional tone intact:\n\n---\n**\"The night\u2019s still hush so deep\"**\n*The night\u2019s still hush so deep*\n*is woven stars above,*\n*it cloaks my sorrows tight*\n*with light of tender love.*\n\n---\n\n### **Key Preservations:**\n1. **Meter:** Each line is **8 syllables** (e.g., *\"The night\u2019s still hush so deep\"* = 8).\n2. **Rhyme:** **ABAB** (deep/above/",
+              "latency_ms": 7547.85776900826,
+              "tokens_in": 46,
+              "tokens_out": 292,
+              "cost_usd": 0.001844,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 5260.458801501954,
+            "total_cost_usd": 0.0024879999999999998
+          }
+        }
+      ]
+    },
+    "reasoning": {
+      "category": "reasoning",
+      "total_cases": 2,
+      "models_tested": 5,
+      "results": [
+        {
+          "model": "gpt-4o",
+          "cases": [
+            {
+              "model": "gpt-4o",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "The man in the photograph is his son. \n\nHere's the breakdown: The man says, \"Brothers and sisters I have none, but that man's father is my father's son.\" \n\n- \"My father's son\" refers to himself since he has no brothers.\n- Therefore, \"that man's father is my father's son\" means \"that man's father is me.\"\n- So, the man in the photograph is his son.",
+              "latency_ms": 2326.464769008453,
+              "tokens_in": 52,
+              "tokens_out": 84,
+              "cost_usd": 0.00152,
+              "error": null
+            },
+            {
+              "model": "gpt-4o",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "To find the heavier ball among the 8 identical-looking balls using a balance scale, you can do it in a minimum of 2 weighings. Here's the strategy:\n\n1. **First Weighing:**\n   - Divide the 8 balls into three groups: two groups of 3 balls each, and one group of 2 balls.\n   - Weigh the two groups of 3 balls against each other.\n\n   There are two possible outcomes:\n   - If the scales balance, the heavier ball is in the group of 2 balls that were not weighed.\n   - If the scales do not balance, the hea",
+              "latency_ms": 4185.982166003669,
+              "tokens_in": 47,
+              "tokens_out": 277,
+              "cost_usd": 0.00439,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 3256.223467506061,
+            "total_cost_usd": 0.00591
+          }
+        },
+        {
+          "model": "claude-3.5-sonnet",
+          "cases": [
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "Let me help solve this riddle step by step.\n\n1. \"Brothers and sisters I have none\" - This means the man speaking is an only child.\n\n2. \"That man's father is my father's son\" - Let's break this down:\n   * \"My father's son\" - Since the speaker has no brothers, the only son of his father is himself\n   * So, \"my father's son\" = \"me\" (the speaker)\n   * Therefore, \"that man's father\" = \"me\"\n\n3. If the man in the photograph's father is the speaker...\n\nThe man in the photograph is the speaker's son.",
+              "latency_ms": 4726.836820002063,
+              "tokens_in": 55,
+              "tokens_out": 143,
+              "cost_usd": 0.0023099999999999996,
+              "error": null
+            },
+            {
+              "model": "claude-3.5-sonnet",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "Let me solve this step by step.\n\n1) First, let's think about the most efficient way to use the balance scale:\n   * Each weighing gives us information about the balls being compared\n   * We want to eliminate as many possibilities as possible with each weighing\n\n2) Let's develop a strategy:\n   * Split the 8 balls into three groups: 3-3-2\n   * First weighing: Compare two groups of 3 balls\n\n3) After first weighing:\n   * If one side is heavier, the heavy ball is in that group of 3\n   * If they're equ",
+              "latency_ms": 8398.009828000795,
+              "tokens_in": 52,
+              "tokens_out": 329,
+              "cost_usd": 0.005091,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 6562.423324001429,
+            "total_cost_usd": 0.007401
+          }
+        },
+        {
+          "model": "claude-3-opus",
+          "cases": [
+            {
+              "model": "claude-3-opus",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 221.75203199731186,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "claude-3-opus",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 294.584859002498,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for anthropic/claude-3-opus.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 258.1684454999049,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "gemini-1.5-pro",
+          "cases": [
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 760.4931989917532,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            },
+            {
+              "model": "gemini-1.5-pro",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "error",
+              "answer": "",
+              "latency_ms": 474.38901900022756,
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": null,
+              "error": "API error: 404 - {\"error\":{\"message\":\"No endpoints found for google/gemini-pro-1.5.\",\"code\":404},\"user_id\":\"user_36uIwugTPDa8b4aLjSSBnzKtX76\"}"
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 0,
+            "errors": 2,
+            "success_rate": 0.0,
+            "avg_latency_ms": 617.4411089959904,
+            "total_cost_usd": 0
+          }
+        },
+        {
+          "model": "mistral-large",
+          "cases": [
+            {
+              "model": "mistral-large",
+              "case_id": "reason_001",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "Alright, let's tackle this riddle step by step. I'll start by carefully reading the given information and then try to break it down to understand who is in the photograph.\n\n### The Riddle:\n\n*A man is looking at a photograph. Someone asks him, 'Who is in the picture?' He replies: 'Brothers and sisters I have none, but that man's father is my father's son.' Who is in the photograph?*\n\n### Understanding the Statement:\n\nThe man's response is the key here: \"Brothers and sisters I have none, but that ",
+              "latency_ms": 11034.953201000462,
+              "tokens_in": 50,
+              "tokens_out": 659,
+              "cost_usd": 0.004054,
+              "error": null
+            },
+            {
+              "model": "mistral-large",
+              "case_id": "reason_002",
+              "category": "reasoning",
+              "status": "success",
+              "answer": "Alright, let's tackle this problem step by step. We have 8 identical-looking balls, one of which is heavier than the others. We need to determine the minimum number of weighings required to identify the heavier ball using a balance scale. A balance scale can compare two groups of items and tell us which group is heavier or if they're equal.\n\n### Understanding the Problem\n\nFirst, let's understand what the balance scale can do for us in each weighing. Each time we use the scale, we can divide the ",
+              "latency_ms": 25089.86316800292,
+              "tokens_in": 43,
+              "tokens_out": 1435,
+              "cost_usd": 0.008696,
+              "error": null
+            }
+          ],
+          "stats": {
+            "total": 2,
+            "success": 2,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_latency_ms": 18062.40818450169,
+            "total_cost_usd": 0.012750000000000001
+          }
+        }
+      ]
+    }
+  },
+  "total_time_seconds": 1099.4877009391785,
+  "model_aggregates": {
+    "gpt-4o": {
+      "total_cases": 24,
+      "successes": 24,
+      "errors": 0,
+      "total_latency_ms": 210838.90345298278,
+      "total_cost_usd": 0.186335,
+      "categories": {
+        "programming": 1.0,
+        "science": 1.0,
+        "health": 1.0,
+        "legal": 1.0,
+        "marketing": 1.0,
+        "technology": 1.0,
+        "finance": 1.0,
+        "academia": 1.0,
+        "roleplay": 1.0,
+        "creative_writing": 1.0,
+        "translation": 1.0,
+        "reasoning": 1.0
+      },
+      "overall_success_rate": 1.0,
+      "avg_latency_ms": 8784.954310540948
+    },
+    "claude-3.5-sonnet": {
+      "total_cases": 24,
+      "successes": 24,
+      "errors": 0,
+      "total_latency_ms": 281824.64982004603,
+      "total_cost_usd": 0.16999199999999998,
+      "categories": {
+        "programming": 1.0,
+        "science": 1.0,
+        "health": 1.0,
+        "legal": 1.0,
+        "marketing": 1.0,
+        "technology": 1.0,
+        "finance": 1.0,
+        "academia": 1.0,
+        "roleplay": 1.0,
+        "creative_writing": 1.0,
+        "translation": 1.0,
+        "reasoning": 1.0
+      },
+      "overall_success_rate": 1.0,
+      "avg_latency_ms": 11742.693742501919
+    },
+    "claude-3-opus": {
+      "total_cases": 24,
+      "successes": 0,
+      "errors": 24,
+      "total_latency_ms": 15618.87615697924,
+      "total_cost_usd": 0,
+      "categories": {
+        "programming": 0.0,
+        "science": 0.0,
+        "health": 0.0,
+        "legal": 0.0,
+        "marketing": 0.0,
+        "technology": 0.0,
+        "finance": 0.0,
+        "academia": 0.0,
+        "roleplay": 0.0,
+        "creative_writing": 0.0,
+        "translation": 0.0,
+        "reasoning": 0.0
+      },
+      "overall_success_rate": 0.0,
+      "avg_latency_ms": 650.7865065408017
+    },
+    "gemini-1.5-pro": {
+      "total_cases": 24,
+      "successes": 0,
+      "errors": 24,
+      "total_latency_ms": 8031.229551997967,
+      "total_cost_usd": 0,
+      "categories": {
+        "programming": 0.0,
+        "science": 0.0,
+        "health": 0.0,
+        "legal": 0.0,
+        "marketing": 0.0,
+        "technology": 0.0,
+        "finance": 0.0,
+        "academia": 0.0,
+        "roleplay": 0.0,
+        "creative_writing": 0.0,
+        "translation": 0.0,
+        "reasoning": 0.0
+      },
+      "overall_success_rate": 0.0,
+      "avg_latency_ms": 334.634564666582
+    },
+    "mistral-large": {
+      "total_cases": 24,
+      "successes": 24,
+      "errors": 0,
+      "total_latency_ms": 531061.0704989958,
+      "total_cost_usd": 0.16911600000000002,
+      "categories": {
+        "programming": 1.0,
+        "science": 1.0,
+        "health": 1.0,
+        "legal": 1.0,
+        "marketing": 1.0,
+        "technology": 1.0,
+        "finance": 1.0,
+        "academia": 1.0,
+        "roleplay": 1.0,
+        "creative_writing": 1.0,
+        "translation": 1.0,
+        "reasoning": 1.0
+      },
+      "overall_success_rate": 1.0,
+      "avg_latency_ms": 22127.544604124825
+    }
+  }
+}

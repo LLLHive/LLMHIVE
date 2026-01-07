@@ -1,0 +1,61 @@
+{
+  "case_id": "cfq_003",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "cfq_003",
+    "status": "success",
+    "answer_text": "To address a complex problem systematically, first break it into major components and outline what each needs to solve.\n\nFor example, you can separate the problem into understanding objectives, conducting research, and integrating your findings.\n\nNext, tackle each sub-task, ensuring data accuracy and logical flow.\n\nOnce all sub-problems are solved, synthesize them into a coherent, complete solution.\n\nThis process aligns with effective analysis methods and ensures a thorough response.",
+    "structured_answer": {
+      "message": "To address a complex problem systematically, first break it into major components and outline what each needs to solve.\n\nFor example, you can separate the problem into understanding objectives, conducting research, and integrating your findings.\n\nNext, tackle each sub-task, ensuring data accuracy and logical flow.\n\nOnce all sub-problems are solved, synthesize them into a coherent, complete solution.\n\nThis process aligns with effective analysis methods and ensures a thorough response.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1193,
+      "latency_ms": 17511
+    },
+    "latency_ms": 17512.76421546936,
+    "timestamp": "2026-01-07T01:53:05.192842",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1193,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "cfq_003",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 0.5,
+      "passed": false,
+      "checks": {
+        "regex": true,
+        "asked_clarification": false
+      },
+      "details": {
+        "asked_clarification": "Should have asked for clarification"
+      }
+    },
+    "rubric_score": null,
+    "composite_score": 0.5,
+    "objective_weight": 0.5,
+    "rubric_weight": 0.5,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

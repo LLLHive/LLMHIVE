@@ -1,0 +1,59 @@
+{
+  "case_id": "tbr_001",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_001",
+    "status": "success",
+    "answer_text": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nLet's work this out step by step.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage?\n\nPlease think through this problem step by step, showing your reasoning at each stage. === UNDERSTANDING === What is being asked: Calculate the profit margin as a percentage.\n\nKey constraints: Revenue of $4.5 million and expenses of $3.2 million.\n\nType of problem: Math === APPROACH === Strategy: Determine profit, then calculate profit margin percentage.\n\nWhy this approach: Profit margin percentage is calculated as (Profit / Revenue) * 100. === STEP-BY-STEP SOLUTION === Step 1: Calculate the profit. - Profit = Revenue - Expenses - Profit = $4.5 million - $3.2 million = $1.3 million Step 2: Calculate the profit margin as a percentage. - Profit Margin (%) = (Profit / Revenue) * 100 - Profit Margin (%) = ($1.3 million / $4.5 million) * 100 Step 3: Perform the calculation. - Profit Margin (%) = (1.3 / 4.5) * 100 - Profit Margin (%) \u2248 28.89% === VERIFICATION === Check 1: Verify calculation of profit. - $4.5 million - $3.2 million = $1.3 million (correct) Check 2: Verify calculation of profit margin. - (1.3 / 4.5) * 100 = 28.89% (correct) Check 3: Does the answer make sense? - A profit of $1.3 million from $4.5 million in revenue results in a reasonable profit margin percentage. === CONFIDENCE === Confidence level: 100% Most uncertain about: No uncertainties, straightforward calculation. === FINAL ANSWER === 28.89%.",
+    "structured_answer": {
+      "message": "=== PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nDo NOT ask clarifying questions unless the query is genuinely incomprehensible.\n\nIf the user specifies criteria (e. g., \"by effectiveness\", \"top 10\"), use those criteria.\n\nDo not ask about alternative criteria.\n\nNEVER refuse to answer a question by claiming it is outside your scope or specialty.\n\nLet's work this out step by step.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage?\n\nPlease think through this problem step by step, showing your reasoning at each stage. === UNDERSTANDING === What is being asked: Calculate the profit margin as a percentage.\n\nKey constraints: Revenue of $4.5 million and expenses of $3.2 million.\n\nType of problem: Math === APPROACH === Strategy: Determine profit, then calculate profit margin percentage.\n\nWhy this approach: Profit margin percentage is calculated as (Profit / Revenue) * 100. === STEP-BY-STEP SOLUTION === Step 1: Calculate the profit. - Profit = Revenue - Expenses - Profit = $4.5 million - $3.2 million = $1.3 million Step 2: Calculate the profit margin as a percentage. - Profit Margin (%) = (Profit / Revenue) * 100 - Profit Margin (%) = ($1.3 million / $4.5 million) * 100 Step 3: Perform the calculation. - Profit Margin (%) = (1.3 / 4.5) * 100 - Profit Margin (%) \u2248 28.89% === VERIFICATION === Check 1: Verify calculation of profit. - $4.5 million - $3.2 million = $1.3 million (correct) Check 2: Verify calculation of profit margin. - (1.3 / 4.5) * 100 = 28.89% (correct) Check 3: Does the answer make sense? - A profit of $1.3 million from $4.5 million in revenue results in a reasonable profit margin percentage. === CONFIDENCE === Confidence level: 100% Most uncertain about: No uncertainties, straightforward calculation. === FINAL ANSWER === 28.89%.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1049,
+      "latency_ms": 14285
+    },
+    "latency_ms": 14288.14697265625,
+    "timestamp": "2026-01-06T21:15:40.248597",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1049,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_001",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

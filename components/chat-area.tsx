@@ -104,13 +104,35 @@ export function ChatArea({
   const [audioLevel, setAudioLevel] = useState(0)
   const [interimTranscript, setInterimTranscript] = useState("")
   const [isProcessingOCR, setIsProcessingOCR] = useState(false)
+  const [userHasScrolled, setUserHasScrolled] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const eventIdRef = useRef(0)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
   
   // Check for speech recognition support
   useEffect(() => {
     setSpeechSupported(voiceRecognition.supported)
+  }, [])
+  
+  // Auto-scroll to bottom when new messages arrive (unless user has scrolled up)
+  useEffect(() => {
+    if (conversation?.messages?.length && !userHasScrolled) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [conversation?.messages?.length, userHasScrolled])
+  
+  // Reset user scroll state when conversation changes
+  useEffect(() => {
+    setUserHasScrolled(false)
+  }, [conversation?.id])
+  
+  // Handle user scroll - detect if they've scrolled away from bottom
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100
+    setUserHasScrolled(!isNearBottom)
   }, [])
   
   // Enhanced voice recording with audio level visualization
@@ -240,8 +262,6 @@ export function ChatArea({
     // Filter out "automatic" if mixed with other models
     return selectedModels.filter(m => m !== "automatic")
   }
-
-  const currentModel = getModelById(selectedModels[0] || "gpt-4o")
   
   // Get active mode display info based on orchestrator settings
   const getActiveModeInfo = () => {
@@ -607,11 +627,27 @@ export function ChatArea({
           errorContent = `The server is currently unavailable${retryInfo}. Please try again later.`
           errorDetail = `Server error: ${error.status}${retryInfo}`
           toast.error(`API Error (${error.status}): ${error.message}`)
-        } else if (error.status === 401 || error.status === 403) {
-          errorContent = `Authentication error: ${error.message}`
+        } else if (error.status === 401) {
+          errorContent = `Authentication error: ${error.message}. Please sign in to continue.`
           errorDetail = `Auth error: ${error.status}`
           canRetry = false
-          toast.error(`API Error (${error.status}): ${error.message}`)
+          toast.error(`Please sign in to continue`)
+        } else if (error.status === 403) {
+          // Check if it's a subscription/plan limit error
+          const isLimitError = error.message?.toLowerCase().includes('limit') || 
+                               error.message?.toLowerCase().includes('quota') ||
+                               error.message?.toLowerCase().includes('plan') ||
+                               error.message?.toLowerCase().includes('upgrade')
+          if (isLimitError) {
+            errorContent = `You've reached your plan limit. [Upgrade to Pro](/pricing) for unlimited access.`
+            errorDetail = `Plan limit reached`
+            toast.error("Plan limit reached. Consider upgrading!")
+          } else {
+            errorContent = `Access denied: ${error.message}`
+            errorDetail = `Auth error: ${error.status}`
+            toast.error(`Access denied: ${error.message}`)
+          }
+          canRetry = false
         } else {
           errorContent = `I encountered an error: ${error.message}`
           errorDetail = `API error: ${error.status}`
@@ -727,7 +763,7 @@ export function ChatArea({
         </div>
       )}
 
-      <ScrollArea className="flex-1 relative z-10">
+      <ScrollArea className="flex-1 relative z-10" ref={scrollAreaRef} onScroll={handleScroll}>
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
           {displayMessages.map((message) => (
             <MessageBubble
@@ -797,6 +833,8 @@ export function ChatArea({
               />
             </div>
           )}
+          {/* Auto-scroll anchor */}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 

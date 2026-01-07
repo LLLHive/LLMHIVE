@@ -1,0 +1,60 @@
+{
+  "case_id": "mhr_003",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "mhr_003",
+    "status": "success",
+    "answer_text": "Tesla, Inc., the maker of the Model S, was founded in 2003, which is 87 years after Boeing was founded in 1916.",
+    "structured_answer": {
+      "message": "Tesla, Inc., the maker of the Model S, was founded in 2003, which is 87 years after Boeing was founded in 1916.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1117,
+      "latency_ms": 17058
+    },
+    "latency_ms": 17063.86399269104,
+    "timestamp": "2026-01-07T01:41:29.946155",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1117,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "mhr_003",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "contains": true,
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 0.9,
+    "rubric_weight": 0.1,
+    "is_critical": false,
+    "critical_failed": false
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "case_id": "tbr_001",
+  "system": "LLMHive",
+  "run_num": 0,
+  "result": {
+    "system_name": "LLMHive",
+    "model_id": "llmhive-orchestrator-v033033a38318",
+    "prompt_id": "tbr_001",
+    "status": "success",
+    "answer_text": "Certainly!\n\nLet\u2019s work through this problem using the prescribed format. === PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage? === UNDERSTANDING === What is being asked: Calculate the profit margin as a percentage based on given revenue and expenses.\n\nKey constraints: Use provided revenue and expenses figures.\n\nType of problem: Math === APPROACH === Strategy: Calculate the profit by subtracting expenses from revenue, then find the profit margin by dividing profit by revenue and multiplying by 100 to convert it to a percentage.\n\nWhy this approach: This is the standard formula for calculating profit margin. === STEP-BY-STEP SOLUTION === Step 1: Calculate the profit. - Profit = Revenue - Expenses - Profit = $4,500,000 - $3,200,000 - Profit = $1,300,000 Step 2: Calculate the profit margin as a percentage. - Profit Margin (%) = (Profit / Revenue) * 100 - Profit Margin (%) = ($1,300,000 / $4,500,000) * 100 - Profit Margin (%) = 0.288888... * 100 - Profit Margin (%) \u2248 28.89% === VERIFICATION === Check 1: Ensure that the profit was calculated correctly. - Subtracting expenses from revenue gives $1,300,000, which is correct.\n\nCheck 2: Ensure that the division and multiplication by 100 were performed correctly. - Dividing $1,300,000 by $4,500,000 results in approximately 0.288888. - Multiplying by 100 yields 28.89%.\n\nCheck 3: Does the answer make sense given the figures? - A profit of $1,300,000 on a revenue of $4,500,000 resulting in a 28.89% profit margin is reasonable. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; calculations are straightforward. === FINAL ANSWER === 28.89%.",
+    "structured_answer": {
+      "message": "Certainly!\n\nLet\u2019s work through this problem using the prescribed format. === PROBLEM === IMPORTANT: Answer the user's question directly and completely.\n\nCalculate: If a company has revenue of $4.5 million and expenses of $3.2 million, what is the profit margin as a percentage? === UNDERSTANDING === What is being asked: Calculate the profit margin as a percentage based on given revenue and expenses.\n\nKey constraints: Use provided revenue and expenses figures.\n\nType of problem: Math === APPROACH === Strategy: Calculate the profit by subtracting expenses from revenue, then find the profit margin by dividing profit by revenue and multiplying by 100 to convert it to a percentage.\n\nWhy this approach: This is the standard formula for calculating profit margin. === STEP-BY-STEP SOLUTION === Step 1: Calculate the profit. - Profit = Revenue - Expenses - Profit = $4,500,000 - $3,200,000 - Profit = $1,300,000 Step 2: Calculate the profit margin as a percentage. - Profit Margin (%) = (Profit / Revenue) * 100 - Profit Margin (%) = ($1,300,000 / $4,500,000) * 100 - Profit Margin (%) = 0.288888... * 100 - Profit Margin (%) \u2248 28.89% === VERIFICATION === Check 1: Ensure that the profit was calculated correctly. - Subtracting expenses from revenue gives $1,300,000, which is correct.\n\nCheck 2: Ensure that the division and multiplication by 100 were performed correctly. - Dividing $1,300,000 by $4,500,000 results in approximately 0.288888. - Multiplying by 100 yields 28.89%.\n\nCheck 3: Does the answer make sense given the figures? - A profit of $1,300,000 on a revenue of $4,500,000 resulting in a 28.89% profit margin is reasonable. === CONFIDENCE === Confidence level: 100% Most uncertain about: There is no uncertainty; calculations are straightforward. === FINAL ANSWER === 28.89%.",
+      "models_used": [
+        "GPT-4o"
+      ],
+      "reasoning_mode": "ReasoningMode.standard",
+      "reasoning_method": "None",
+      "tokens_used": 1016,
+      "latency_ms": 14150
+    },
+    "latency_ms": 14150.77805519104,
+    "timestamp": "2026-01-06T21:30:48.670833",
+    "metadata": {
+      "models_used": [
+        "GPT-4o"
+      ],
+      "strategy_used": "direct",
+      "verification_status": null,
+      "verification_score": null,
+      "confidence": null,
+      "sources_count": 0,
+      "tools_used": [],
+      "tokens_in": 0,
+      "tokens_out": 1016,
+      "cost_usd": null,
+      "trace_id": null
+    },
+    "error_message": null
+  },
+  "score": {
+    "prompt_id": "tbr_001",
+    "system_name": "LLMHive",
+    "objective_score": {
+      "score": 1.0,
+      "passed": true,
+      "checks": {
+        "numeric": true,
+        "no_clarification": true
+      },
+      "details": {}
+    },
+    "rubric_score": null,
+    "composite_score": 1.0,
+    "objective_weight": 1.0,
+    "rubric_weight": 0.0,
+    "is_critical": true,
+    "critical_failed": false
+  }
+}

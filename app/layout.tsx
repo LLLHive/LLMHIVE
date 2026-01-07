@@ -7,6 +7,7 @@ import { AnalyticsWrapper } from "@/components/analytics"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
+import { ConversationsProvider } from "@/lib/conversations-context"
 import { AppearanceSettingsLoader } from "@/components/appearance-settings-loader"
 import AppBackground from "@/components/branding/AppBackground"
 import { ForestBackgroundWrapper } from "@/components/forest-background-wrapper"
@@ -97,18 +98,20 @@ export default function RootLayout({
             disableTransitionOnChange={false}
           >
             <AuthProvider>
-              <AppearanceSettingsLoader />
-              {children}
-              <Toaster 
-                position="bottom-right"
-                closeButton
-                richColors
-                expand={false}
-                toastOptions={{
-                  duration: 4000,
-                }}
-              />
-              <AnalyticsWrapper />
+              <ConversationsProvider>
+                <AppearanceSettingsLoader />
+                {children}
+                <Toaster 
+                  position="bottom-right"
+                  closeButton
+                  richColors
+                  expand={false}
+                  toastOptions={{
+                    duration: 4000,
+                  }}
+                />
+                <AnalyticsWrapper />
+              </ConversationsProvider>
             </AuthProvider>
           </ThemeProvider>
         </body>
