@@ -676,7 +676,7 @@ function ProjectItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
       
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button 
             variant="ghost" 
@@ -699,7 +699,7 @@ function ProjectItem({
           align="start" 
           side="bottom" 
           sideOffset={4} 
-          className="w-52 p-1 z-[100]"
+          className="w-52 p-1 z-[200]"
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <DropdownMenuItem
@@ -852,7 +852,7 @@ function ConversationItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
 
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button 
             variant="ghost" 
@@ -875,7 +875,7 @@ function ConversationItem({
           align="start" 
           side="bottom"
           sideOffset={4}
-          className="w-48 p-1 z-[100]"
+          className="w-48 p-1 z-[200]"
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           {/* Share option */}
