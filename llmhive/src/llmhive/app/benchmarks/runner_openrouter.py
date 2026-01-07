@@ -34,30 +34,144 @@ class OpenRouterRunner(RunnerBase):
     """
     
     AVAILABLE_MODELS = {
-        "gpt-4-turbo": "openai/gpt-4-turbo",
+        # =================================================================
+        # TOP TIER: Latest Flagship Models (2025)
+        # =================================================================
+        # Anthropic Claude 4 Series
+        "claude-opus-4": "anthropic/claude-opus-4",
+        "claude-opus-4.5": "anthropic/claude-opus-4.5",
+        "claude-sonnet-4": "anthropic/claude-sonnet-4",
+        "claude-sonnet-4.5": "anthropic/claude-sonnet-4.5",
+        "claude-haiku-4.5": "anthropic/claude-haiku-4.5",
+        
+        # Google Gemini 2.5/3 Series
+        "gemini-2.5-pro": "google/gemini-2.5-pro",
+        "gemini-2.5-flash": "google/gemini-2.5-flash",
+        "gemini-3-pro": "google/gemini-3-pro-preview",
+        "gemini-3-flash": "google/gemini-3-flash-preview",
+        
+        # DeepSeek R1 (Reasoning)
+        "deepseek-r1": "deepseek/deepseek-r1",
+        "deepseek-v3.2": "deepseek/deepseek-v3.2",
+        "deepseek-v3": "deepseek/deepseek-chat",
+        
+        # OpenAI o1/o3 Reasoning
+        "o1": "openai/o1",
+        "o1-mini": "openai/o1-mini",
+        "o1-preview": "openai/o1-preview",
+        "o3-mini": "openai/o3-mini",
+        
+        # =================================================================
+        # HIGH TIER: Current Generation Flagships
+        # =================================================================
+        # OpenAI GPT-4 Series
         "gpt-4o": "openai/gpt-4o",
+        "gpt-4-turbo": "openai/gpt-4-turbo",
         "gpt-4o-mini": "openai/gpt-4o-mini",
-        "claude-3-opus": "anthropic/claude-3-opus",
+        
+        # Anthropic Claude 3.x Series
+        "claude-3.7-sonnet": "anthropic/claude-3.7-sonnet",
         "claude-3.5-sonnet": "anthropic/claude-3.5-sonnet",
+        "claude-3.5-haiku": "anthropic/claude-3.5-haiku",
         "claude-3-haiku": "anthropic/claude-3-haiku",
-        "gemini-pro": "google/gemini-pro",
-        "gemini-1.5-pro": "google/gemini-pro-1.5",
+        
+        # Google Gemini 2.0+ Series (1.5 series deprecated on OpenRouter)
+        "gemini-2.0-flash": "google/gemini-2.0-flash-001",
+        "gemini-2.5-flash": "google/gemini-2.5-flash",
+        "gemini-2.5-pro": "google/gemini-2.5-pro",
+        # Legacy aliases (mapped to newer versions)
+        "gemini-1.5-pro": "google/gemini-2.5-pro",
+        "gemini-1.5-flash": "google/gemini-2.5-flash",
+        "gemini-pro": "google/gemini-2.5-pro",
+        "gemini-flash": "google/gemini-2.5-flash",
+        
+        # =================================================================
+        # STRONG TIER: Open Source & Specialized
+        # =================================================================
+        # Meta/Llama Models
         "llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
+        "llama-3.1-405b": "meta-llama/llama-3.1-405b-instruct",
+        "llama-3.2-90b": "meta-llama/llama-3.2-90b-vision-instruct",
+        
+        # Mistral Models
         "mistral-large": "mistralai/mistral-large",
+        "codestral": "mistralai/codestral-latest",
+        "mixtral-8x22b": "mistralai/mixtral-8x22b-instruct",
+        
+        # Cohere Models
+        "command-r-plus": "cohere/command-r-plus-08-2024",
+        "command-a": "cohere/command-a",
+        
+        # Qwen Models
+        "qwen-2.5-72b": "qwen/qwen-2.5-72b-instruct",
+        "qwen-2.5-coder": "qwen/qwen-2.5-coder-32b-instruct",
+        
+        # xAI Grok
+        "grok-2": "x-ai/grok-2-1212",
+        "grok-beta": "x-ai/grok-beta",
+        
+        # Nous Research
+        "hermes-3-70b": "nousresearch/hermes-3-llama-3.1-70b",
     }
     
     # Approximate costs per 1K tokens (input/output)
     MODEL_COSTS = {
+        # OpenAI
         "openai/gpt-4-turbo": (0.01, 0.03),
         "openai/gpt-4o": (0.005, 0.015),
         "openai/gpt-4o-mini": (0.00015, 0.0006),
-        "anthropic/claude-3-opus": (0.015, 0.075),
+        "openai/o1": (0.015, 0.06),
+        "openai/o1-mini": (0.003, 0.012),
+        "openai/o1-preview": (0.015, 0.06),
+        # Anthropic
+        "anthropic/claude-opus-4": (0.015, 0.075),
+        "anthropic/claude-opus-4.5": (0.015, 0.075),
+        "anthropic/claude-sonnet-4": (0.003, 0.015),
+        "anthropic/claude-sonnet-4.5": (0.003, 0.015),
+        "anthropic/claude-haiku-4.5": (0.0008, 0.004),
+        "anthropic/claude-3.7-sonnet": (0.003, 0.015),
         "anthropic/claude-3.5-sonnet": (0.003, 0.015),
+        "anthropic/claude-3.5-haiku": (0.0008, 0.004),
+        "anthropic/claude-3-opus": (0.015, 0.075),
+        "anthropic/claude-3-sonnet": (0.003, 0.015),
         "anthropic/claude-3-haiku": (0.00025, 0.00125),
-        "google/gemini-pro": (0.000125, 0.000375),
-        "google/gemini-pro-1.5": (0.00125, 0.005),
+        # Google (2.0+ series - 1.5 deprecated on OpenRouter)
+        "google/gemini-2.0-flash-001": (0.0001, 0.0004),
+        "google/gemini-2.5-pro": (0.00125, 0.005),
+        "google/gemini-2.5-flash": (0.0001, 0.0004),
+        "google/gemini-2.5-pro-preview": (0.00125, 0.005),
+        "google/gemini-3-pro-preview": (0.0015, 0.006),
+        "google/gemini-3-flash-preview": (0.0001, 0.0004),
+        # Meta
         "meta-llama/llama-3.1-70b-instruct": (0.0009, 0.0009),
+        "meta-llama/llama-3.1-405b-instruct": (0.003, 0.003),
+        "meta-llama/llama-3.2-90b-vision-instruct": (0.0009, 0.0009),
+        # Mistral
         "mistralai/mistral-large": (0.002, 0.006),
+        "mistralai/mistral-medium": (0.0027, 0.0081),
+        "mistralai/codestral-latest": (0.001, 0.003),
+        "mistralai/mixtral-8x22b-instruct": (0.0009, 0.0009),
+        # DeepSeek
+        "deepseek/deepseek-chat": (0.00014, 0.00028),
+        "deepseek/deepseek-r1": (0.00055, 0.00219),
+        "deepseek/deepseek-v3.2": (0.00027, 0.00110),
+        "deepseek/deepseek-reasoner": (0.00055, 0.00219),
+        "deepseek/deepseek-coder": (0.00014, 0.00028),
+        # Cohere
+        "cohere/command-r-plus": (0.003, 0.015),
+        "cohere/command-r": (0.0005, 0.0015),
+        # Qwen
+        "qwen/qwen-2.5-72b-instruct": (0.0004, 0.0004),
+        "qwen/qwen-2.5-coder-32b-instruct": (0.00015, 0.00015),
+        # xAI
+        "x-ai/grok-2-1212": (0.002, 0.01),
+        "x-ai/grok-beta": (0.005, 0.015),
+        # Nous
+        "nousresearch/hermes-3-llama-3.1-70b": (0.0004, 0.0004),
+        # Other
+        "01-ai/yi-large": (0.0003, 0.0003),
+        "microsoft/phi-3-medium-128k-instruct": (0.00014, 0.00014),
+        "databricks/dbrx-instruct": (0.00075, 0.00075),
     }
     
     def __init__(self, model: str = "gpt-4o"):
@@ -130,7 +244,8 @@ class OpenRouterRunner(RunnerBase):
                 prompt_id=case.id,
                 status=RunnerStatus.SKIPPED,
                 answer_text="",
-                metadata=RunMetadata(skipped=True, skipped_reason=self.skip_reason()),
+                error_message=self.skip_reason(),
+                metadata=RunMetadata(),
             )
         
         start_time = time.perf_counter()
@@ -157,8 +272,7 @@ class OpenRouterRunner(RunnerBase):
             }
             
             # Make API call in thread pool (httpx client is sync)
-            loop = asyncio.get_event_loop()
-            http_response = await loop.run_in_executor(
+            http_response = await asyncio.get_running_loop().run_in_executor(
                 None,
                 lambda: client.post("/chat/completions", json=payload)
             )
@@ -255,7 +369,7 @@ class Claude35SonnetRunner(OpenRouterRunner):
 
 
 class GeminiProRunner(OpenRouterRunner):
-    """Runner for Gemini Pro via OpenRouter."""
+    """Runner for Gemini 2.5 Pro via OpenRouter."""
     def __init__(self):
-        super().__init__(model="gemini-pro")
+        super().__init__(model="gemini-2.5-pro")
 
