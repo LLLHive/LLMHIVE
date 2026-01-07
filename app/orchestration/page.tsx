@@ -18,6 +18,7 @@ import { UserAccountMenu } from "@/components/user-account-menu"
 import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settings-storage"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
+import { useConversationsContext } from "@/lib/conversations-context"
 import { STORAGE_KEYS, type SelectedModelConfig, type UserTier, TIER_CONFIGS, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, canAccessModel } from "@/lib/openrouter/tiers"
 import { 
   useOpenRouterCategories, 
@@ -235,6 +236,7 @@ type DrawerId = "models" | "reasoning" | "tuning" | "features" | "tools" | "stan
 export default function OrchestrationPage() {
   const router = useRouter()
   const auth = useAuth()
+  const { conversations, projects, deleteConversation, updateConversation } = useConversationsContext()
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
@@ -421,15 +423,18 @@ export default function OrchestrationPage() {
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        conversations={[]}
+        conversations={conversations}
         currentConversationId={null}
-        onSelectConversation={() => router.push(ROUTES.HOME)}
+        onSelectConversation={(id) => router.push(`${ROUTES.HOME}?chat=${id}`)}
         onNewChat={() => router.push(ROUTES.HOME)}
-        onDeleteConversation={() => {}}
-        onTogglePin={() => {}}
+        onDeleteConversation={(id) => deleteConversation(id)}
+        onTogglePin={(id) => {
+          const conv = conversations.find(c => c.id === id)
+          if (conv) updateConversation(id, { pinned: !conv.pinned })
+        }}
         onRenameConversation={() => {}}
         onMoveToProject={() => {}}
-        projects={[]}
+        projects={projects}
         onGoHome={() => router.push(ROUTES.HOME)}
       />
       </div>

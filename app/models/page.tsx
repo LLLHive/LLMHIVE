@@ -31,6 +31,7 @@ import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
+import { useConversationsContext } from "@/lib/conversations-context"
 import { listModels, getRankings } from "@/lib/openrouter/api"
 import type { OpenRouterModel, RankingDimension } from "@/lib/openrouter/types"
 import { 
@@ -222,6 +223,7 @@ function ModelCard({
 export default function ModelsPage() {
   const router = useRouter()
   const auth = useAuth()
+  const { conversations, projects, deleteConversation, updateConversation } = useConversationsContext()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activeCategory, setActiveCategory] = useState<RankingDimension | null>(null)
   const [rankedModels, setRankedModels] = useState<RankedModelData[]>([])
@@ -334,15 +336,18 @@ export default function ModelsPage() {
       {/* Glassmorphism Sidebar */}
       <div className="llmhive-glass-sidebar h-full">
       <Sidebar
-        conversations={[]}
+        conversations={conversations}
         currentConversationId={null}
         onNewChat={() => router.push(ROUTES.HOME)}
-        onSelectConversation={() => router.push(ROUTES.HOME)}
-        onDeleteConversation={() => {}}
-        onTogglePin={() => {}}
+        onSelectConversation={(id) => router.push(`${ROUTES.HOME}?chat=${id}`)}
+        onDeleteConversation={(id) => deleteConversation(id)}
+        onTogglePin={(id) => {
+          const conv = conversations.find(c => c.id === id)
+          if (conv) updateConversation(id, { pinned: !conv.pinned })
+        }}
         onRenameConversation={() => {}}
         onMoveToProject={() => {}}
-        projects={[]}
+        projects={projects}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onGoHome={() => router.push(ROUTES.HOME)}

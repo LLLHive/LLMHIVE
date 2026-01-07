@@ -15,6 +15,7 @@ import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
+import { useConversationsContext } from "@/lib/conversations-context"
 import { toast } from "@/lib/toast"
 
 // LocalStorage keys for settings persistence
@@ -121,6 +122,12 @@ type DrawerId = "account" | "billing" | "api-keys" | "connections" | "notificati
 export default function SettingsPage() {
   const router = useRouter()
   const auth = useAuth()
+  const { 
+    conversations, 
+    projects, 
+    deleteConversation, 
+    updateConversation 
+  } = useConversationsContext()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
@@ -237,15 +244,18 @@ export default function SettingsPage() {
       {/* Glassmorphism Sidebar */}
       <div className="llmhive-glass-sidebar h-full">
         <Sidebar
-          conversations={[]}
+          conversations={conversations}
           currentConversationId={null}
           onNewChat={() => router.push(ROUTES.HOME)}
-          onSelectConversation={() => router.push(ROUTES.HOME)}
-          onDeleteConversation={() => {}}
-          onTogglePin={() => {}}
+          onSelectConversation={(id) => router.push(`${ROUTES.HOME}?chat=${id}`)}
+          onDeleteConversation={(id) => deleteConversation(id)}
+          onTogglePin={(id) => {
+            const conv = conversations.find(c => c.id === id)
+            if (conv) updateConversation(id, { pinned: !conv.pinned })
+          }}
           onRenameConversation={() => {}}
           onMoveToProject={() => {}}
-          projects={[]}
+          projects={projects}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           onGoHome={() => router.push(ROUTES.HOME)}
