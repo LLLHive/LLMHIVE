@@ -63,8 +63,45 @@ class GoldenPrompt:
 
 
 @dataclass
+class RetrievalTrace:
+    """Detailed trace for RAG retrieval operations."""
+    documents_fetched: int = 0
+    documents_after_rerank: int = 0
+    rerank_model: Optional[str] = None
+    hyde_used: bool = False
+    cache_hit: bool = False
+    retrieval_method: str = "unknown"  # semantic, lexical, hybrid, hyde
+    top_doc_score: float = 0.0
+    query_terms_matched: List[str] = field(default_factory=list)
+    latency_ms: float = 0.0
+
+
+@dataclass
+class ToolTrace:
+    """Detailed trace for tool operations."""
+    tool_name: str
+    triggered: bool = False
+    success: bool = False
+    retry_count: int = 0
+    fallback_used: bool = False
+    execution_time_ms: float = 0.0
+    error: Optional[str] = None
+
+
+@dataclass
+class PlannerTrace:
+    """Detailed trace for MCP2 planner operations."""
+    steps_planned: int = 0
+    steps_executed: int = 0
+    steps_verified: int = 0
+    domain_shard: Optional[str] = None
+    fallback_triggered: bool = False
+    total_time_ms: float = 0.0
+
+
+@dataclass
 class AuditResult:
-    """Result of auditing a single prompt."""
+    """Result of auditing a single prompt with detailed traces."""
     prompt_id: str
     category: str
     prompt_text: str
@@ -83,6 +120,12 @@ class AuditResult:
     error: Optional[str] = None
     failure_reason: Optional[str] = None
     critical: bool = False
+    # Enhanced tracing (v2)
+    retrieval_trace: Optional[RetrievalTrace] = None
+    tool_traces: List[ToolTrace] = field(default_factory=list)
+    planner_trace: Optional[PlannerTrace] = None
+    # Quality assertions
+    assertion_results: Dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
@@ -98,6 +141,12 @@ class AuditReport:
     pass_rate: float
     results: List[AuditResult] = field(default_factory=list)
     summary_by_category: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    # Enhanced metrics (v2)
+    assertion_summary: Dict[str, Dict[str, int]] = field(default_factory=dict)  # assertion -> {passed, failed}
+    avg_latency_ms: float = 0.0
+    tool_usage_rate: float = 0.0
+    rag_usage_rate: float = 0.0
+    fallback_rate: float = 0.0
 
 
 def load_golden_prompts(path: Path) -> List[GoldenPrompt]:
@@ -152,6 +201,151 @@ def evaluate_response(prompt: GoldenPrompt, answer: str) -> tuple[bool, Optional
             return False, "Stub provider detected - real provider required"
     
     return True, None
+
+
+def run_quality_assertions(
+    prompt: GoldenPrompt,
+    result: 'AuditResult',
+) -> Dict[str, bool]:
+    """Run quality assertions based on prompt requirements.
+    
+    These assertions check for:
+    - Unnecessary tool triggers
+    - Fallback behavior
+    - Retrieval quality
+    - Response format
+    
+    Returns:
+        Dict of assertion name -> passed
+    """
+    assertions = {}
+    reqs = prompt.requirements
+    
+    # Assertion: No unnecessary tool use
+    if reqs.get('requires_no_clarification') and not reqs.get('requires_tools'):
+        # If it's a simple factoid, tools shouldn't have been triggered
+        tools_triggered = len(result.tool_traces) > 0 and any(t.triggered for t in result.tool_traces)
+        # Allow tools if they were explicitly needed
+        if tools_triggered and prompt.category == 'factoid':
+            assertions['no_unnecessary_tools'] = False
+        else:
+            assertions['no_unnecessary_tools'] = True
+    
+    # Assertion: Tools were triggered when required
+    if reqs.get('requires_tools'):
+        tools_triggered = len(result.tool_traces) > 0 and any(t.triggered for t in result.tool_traces)
+        assertions['tools_triggered_when_needed'] = tools_triggered
+    
+    # Assertion: Fallback worked when tools failed
+    if reqs.get('test_fallback'):
+        # If tools failed, fallback should have activated
+        tool_failed = any(not t.success for t in result.tool_traces)
+        fallback_used = any(t.fallback_used for t in result.tool_traces)
+        # Pass if either tools succeeded OR fallback was used
+        assertions['fallback_on_failure'] = not tool_failed or fallback_used
+    
+    # Assertion: RAG was used when required
+    if reqs.get('requires_rag'):
+        rag_used = result.retrieval_trace is not None and result.retrieval_trace.documents_fetched > 0
+        assertions['rag_used_when_needed'] = rag_used
+    
+    # Assertion: Sandbox activated when required
+    if reqs.get('requires_sandbox'):
+        sandbox_triggered = any(
+            t.tool_name in ('python_exec', 'code_exec', 'sandbox') and t.triggered
+            for t in result.tool_traces
+        )
+        assertions['sandbox_triggered'] = sandbox_triggered
+    
+    # Assertion: HRM triggered for complex queries
+    if reqs.get('should_trigger_hrm'):
+        hrm_used = result.strategy_used == 'hrm' or (
+            result.planner_trace is not None and result.planner_trace.steps_planned > 1
+        )
+        assertions['hrm_triggered'] = hrm_used
+    
+    # Assertion: No clarification was asked when not needed
+    if reqs.get('requires_no_clarification'):
+        clarification_phrases = [
+            'could you clarify', 'what do you mean', 'please specify',
+            'more details', 'which one', 'can you provide more',
+        ]
+        asked_clarification = any(
+            phrase in result.final_answer.lower()
+            for phrase in clarification_phrases
+        )
+        assertions['no_unnecessary_clarification'] = not asked_clarification
+    
+    # Assertion: Reranking improved results (for rerank tests)
+    if reqs.get('test_reranking') and result.retrieval_trace:
+        # If reranking was supposed to happen, check it did
+        reranked = result.retrieval_trace.rerank_model is not None
+        assertions['reranking_applied'] = reranked
+    
+    return assertions
+
+
+def extract_traces_from_result(result: Any) -> tuple[
+    Optional[RetrievalTrace],
+    List[ToolTrace],
+    Optional[PlannerTrace],
+]:
+    """Extract detailed traces from orchestrator result.
+    
+    Args:
+        result: Raw orchestrator result
+        
+    Returns:
+        Tuple of (retrieval_trace, tool_traces, planner_trace)
+    """
+    retrieval_trace = None
+    tool_traces = []
+    planner_trace = None
+    
+    # Try to extract retrieval info
+    if hasattr(result, 'retrieval_info') or hasattr(result, 'rag_trace'):
+        rag_info = getattr(result, 'retrieval_info', None) or getattr(result, 'rag_trace', {})
+        if rag_info:
+            retrieval_trace = RetrievalTrace(
+                documents_fetched=rag_info.get('documents_fetched', 0),
+                documents_after_rerank=rag_info.get('documents_after_rerank', 0),
+                rerank_model=rag_info.get('rerank_model'),
+                hyde_used=rag_info.get('hyde_used', False),
+                cache_hit=rag_info.get('cache_hit', False),
+                retrieval_method=rag_info.get('method', 'unknown'),
+                top_doc_score=rag_info.get('top_score', 0.0),
+                latency_ms=rag_info.get('latency_ms', 0.0),
+            )
+    
+    # Try to extract tool info
+    if hasattr(result, 'tool_results') or hasattr(result, 'tools_trace'):
+        tools_info = getattr(result, 'tool_results', None) or getattr(result, 'tools_trace', [])
+        for tool_info in (tools_info or []):
+            if isinstance(tool_info, dict):
+                tool_traces.append(ToolTrace(
+                    tool_name=tool_info.get('name', 'unknown'),
+                    triggered=tool_info.get('triggered', True),
+                    success=tool_info.get('success', False),
+                    retry_count=tool_info.get('retry_count', 0),
+                    fallback_used=tool_info.get('fallback_used', False),
+                    execution_time_ms=tool_info.get('execution_time_ms', 0.0),
+                    error=tool_info.get('error'),
+                ))
+    
+    # Try to extract planner info
+    if hasattr(result, 'planner_trace') or hasattr(result, 'plan_info'):
+        plan_info = getattr(result, 'planner_trace', None) or getattr(result, 'plan_info', {})
+        if plan_info:
+            planner_trace = PlannerTrace(
+                steps_planned=plan_info.get('steps_planned', 0),
+                steps_executed=plan_info.get('steps_executed', 0),
+                steps_verified=plan_info.get('steps_verified', 0),
+                domain_shard=plan_info.get('domain', plan_info.get('domain_shard')),
+                fallback_triggered=plan_info.get('fallback_triggered', False),
+                total_time_ms=plan_info.get('total_time_ms', 0.0),
+            )
+    
+    return retrieval_trace, tool_traces, planner_trace
 
 
 class LocalModeExecutor:
@@ -237,14 +431,15 @@ class LocalModeExecutor:
             if hasattr(result, 'final_response') and hasattr(result.final_response, 'tokens_used'):
                 tokens_used = result.final_response.tokens_used
             
-            # Evaluate the response
-            passed, failure_reason = evaluate_response(prompt, final_answer)
+            # Extract detailed traces
+            retrieval_trace, tool_traces, planner_trace = extract_traces_from_result(result)
             
-            return AuditResult(
+            # Build preliminary audit result for assertions
+            audit_result = AuditResult(
                 prompt_id=prompt.id,
                 category=prompt.category,
                 prompt_text=prompt.prompt,
-                passed=passed,
+                passed=True,  # Will be updated
                 final_answer=final_answer[:500],  # Truncate for report
                 trace_id=trace_id,
                 models_used=models_used if isinstance(models_used, list) else [models_used],
@@ -256,9 +451,32 @@ class LocalModeExecutor:
                 tools_used=tools_used if isinstance(tools_used, list) else [],
                 latency_ms=latency_ms,
                 tokens_used=tokens_used,
-                failure_reason=failure_reason,
                 critical=prompt.critical,
+                retrieval_trace=retrieval_trace,
+                tool_traces=tool_traces,
+                planner_trace=planner_trace,
             )
+            
+            # Evaluate the response
+            passed, failure_reason = evaluate_response(prompt, final_answer)
+            audit_result.passed = passed
+            audit_result.failure_reason = failure_reason
+            
+            # Run quality assertions
+            assertions = run_quality_assertions(prompt, audit_result)
+            audit_result.assertion_results = assertions
+            
+            # Check if any critical assertion failed
+            for assertion_name, assertion_passed in assertions.items():
+                if not assertion_passed:
+                    logger.warning(f"Assertion failed for {prompt.id}: {assertion_name}")
+                    # Some assertions can override pass/fail status
+                    if assertion_name in ('tools_triggered_when_needed', 'sandbox_triggered'):
+                        if prompt.requirements.get('requires_tools') or prompt.requirements.get('requires_sandbox'):
+                            audit_result.passed = False
+                            audit_result.failure_reason = f"Assertion failed: {assertion_name}"
+            
+            return audit_result
             
         except Exception as e:
             latency_ms = (time.perf_counter() - start_time) * 1000
@@ -470,6 +688,33 @@ async def run_audit(
         else:
             summary_by_category[r.category]['failed'] += 1
     
+    # Assertion summary
+    assertion_summary: Dict[str, Dict[str, int]] = {}
+    for r in results:
+        for assertion_name, assertion_passed in r.assertion_results.items():
+            if assertion_name not in assertion_summary:
+                assertion_summary[assertion_name] = {'passed': 0, 'failed': 0}
+            if assertion_passed:
+                assertion_summary[assertion_name]['passed'] += 1
+            else:
+                assertion_summary[assertion_name]['failed'] += 1
+    
+    # Enhanced metrics
+    total_latency = sum(r.latency_ms for r in results)
+    avg_latency = total_latency / len(results) if results else 0.0
+    
+    tool_used_count = sum(1 for r in results if len(r.tool_traces) > 0)
+    tool_usage_rate = tool_used_count / len(results) if results else 0.0
+    
+    rag_used_count = sum(1 for r in results if r.retrieval_trace is not None)
+    rag_usage_rate = rag_used_count / len(results) if results else 0.0
+    
+    fallback_count = sum(
+        1 for r in results 
+        if any(t.fallback_used for t in r.tool_traces)
+    )
+    fallback_rate = fallback_count / len(results) if results else 0.0
+    
     report = AuditReport(
         timestamp=datetime.now().isoformat(),
         mode=mode,
@@ -481,6 +726,11 @@ async def run_audit(
         pass_rate=passed / len(results) if results else 0,
         results=results,
         summary_by_category=summary_by_category,
+        assertion_summary=assertion_summary,
+        avg_latency_ms=avg_latency,
+        tool_usage_rate=tool_usage_rate,
+        rag_usage_rate=rag_usage_rate,
+        fallback_rate=fallback_rate,
     )
     
     return report
@@ -489,7 +739,7 @@ async def run_audit(
 def print_report(report: AuditReport):
     """Print a formatted report to console."""
     print("\n" + "=" * 70)
-    print("LLMHIVE LIVE PROMPT AUDIT REPORT")
+    print("LLMHIVE LIVE PROMPT AUDIT REPORT (v2 - Enhanced Tracing)")
     print("=" * 70)
     print(f"Timestamp: {report.timestamp}")
     print(f"Mode: {report.mode}")
@@ -503,10 +753,26 @@ def print_report(report: AuditReport):
     print(f"Pass Rate: {report.pass_rate:.1%}")
     print("-" * 70)
     
+    # Enhanced metrics
+    print("\nPerformance Metrics:")
+    print(f"  Average Latency: {report.avg_latency_ms:.1f}ms")
+    print(f"  Tool Usage Rate: {report.tool_usage_rate:.1%}")
+    print(f"  RAG Usage Rate: {report.rag_usage_rate:.1%}")
+    print(f"  Fallback Rate: {report.fallback_rate:.1%}")
+    
     print("\nResults by Category:")
-    for category, stats in report.summary_by_category.items():
+    for category, stats in sorted(report.summary_by_category.items()):
         rate = stats['passed'] / stats['total'] if stats['total'] > 0 else 0
         print(f"  {category}: {stats['passed']}/{stats['total']} ({rate:.0%})")
+    
+    # Assertion summary
+    if report.assertion_summary:
+        print("\nQuality Assertions:")
+        for assertion, stats in sorted(report.assertion_summary.items()):
+            total = stats['passed'] + stats['failed']
+            rate = stats['passed'] / total if total > 0 else 0
+            status = "✅" if stats['failed'] == 0 else "⚠️"
+            print(f"  {status} {assertion}: {stats['passed']}/{total} ({rate:.0%})")
     
     # Show failures
     failures = [r for r in report.results if not r.passed]
@@ -516,15 +782,34 @@ def print_report(report: AuditReport):
         for r in failures:
             critical_marker = " [CRITICAL]" if r.critical else ""
             print(f"\n  {r.prompt_id}{critical_marker}")
+            print(f"  Category: {r.category}")
             print(f"  Prompt: {r.prompt_text[:60]}...")
             print(f"  Reason: {r.failure_reason or r.error}")
             if r.final_answer:
                 print(f"  Answer: {r.final_answer[:100]}...")
+            # Show trace info if available
+            if r.retrieval_trace:
+                print(f"  RAG: {r.retrieval_trace.documents_fetched} docs fetched, method={r.retrieval_trace.retrieval_method}")
+            if r.tool_traces:
+                tools_info = ", ".join(f"{t.tool_name}({'✓' if t.success else '✗'})" for t in r.tool_traces)
+                print(f"  Tools: {tools_info}")
+            if r.planner_trace:
+                print(f"  Planner: {r.planner_trace.steps_executed}/{r.planner_trace.steps_planned} steps, domain={r.planner_trace.domain_shard}")
+            # Show failed assertions
+            failed_assertions = [k for k, v in r.assertion_results.items() if not v]
+            if failed_assertions:
+                print(f"  Failed Assertions: {', '.join(failed_assertions)}")
     
     print("\n" + "=" * 70)
     
     if report.critical_failed > 0:
         print("❌ AUDIT FAILED - Critical prompts did not pass")
+    elif any(
+        stats['failed'] > 0 
+        for name, stats in report.assertion_summary.items() 
+        if name in ('tools_triggered_when_needed', 'no_unnecessary_tools')
+    ):
+        print("⚠️ AUDIT WARNING - Some quality assertions failed")
     else:
         print("✅ AUDIT PASSED - No critical failures")
     print("=" * 70)

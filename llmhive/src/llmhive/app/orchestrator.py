@@ -386,8 +386,12 @@ except ImportError:
                 def generate(self, prompt, **kwargs):
                     class Result:
                         text = f'Stub response for: {prompt[:50]}...'
+                        content = f'Stub response for: {prompt[:50]}...'
                         model = 'stub'
                     return Result()
+                async def complete(self, prompt, **kwargs):
+                    """Async complete method for compatibility with refinement loop."""
+                    return self.generate(prompt, **kwargs)
             STUB_AVAILABLE = True
         except Exception:
             pass
@@ -397,6 +401,26 @@ try:
     from .models.orchestration import OrchestrationArtifacts
 except ImportError:
     OrchestrationArtifacts = None  # type: ignore
+
+
+# Module-level LLMResult class for use across methods
+class LLMResult:
+    """Result from an LLM generation request."""
+    
+    def __init__(
+        self,
+        content: str,
+        model: str,
+        tokens: int = 0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
+        self.content = content
+        self.model = model
+        self.tokens_used = tokens
+        self.metadata = metadata or {}
+    
+    def __repr__(self):
+        return f"LLMResult(model={self.model}, tokens={self.tokens_used}, content_len={len(self.content)})"
 
 
 class Orchestrator:
@@ -1571,8 +1595,8 @@ Please provide an accurate, well-verified response."""
         try:
             from .openrouter.dynamic_catalog import get_high_accuracy_models
             
-            # Fetch from dynamic catalog
-            models = await get_high_accuracy_models(limit=10, categories=["science", "health", "legal", "finance", "academia"])
+            # Fetch from dynamic catalog (use task_type and max_count params)
+            models = await get_high_accuracy_models(task_type="general", max_count=10)
             
             if models:
                 result = []
@@ -1770,32 +1794,15 @@ Please provide an accurate, well-verified response."""
         # Initialize scratchpad for this query
         scratchpad = Scratchpad() if MEMORY_AVAILABLE and Scratchpad else None
         
-        # Import/define ProtocolResult and LLMResult early for use in early returns
-        # These need to be available before any early return statements
+        # Import/define ProtocolResult early for use in early returns
+        # LLMResult is already defined at module level (line ~407)
         try:
             from .protocols.base import ProtocolResult as _ProtocolResult
             ProtocolResult = _ProtocolResult
         except ImportError:
             ProtocolResult = None
         
-        try:
-            from ..services.base import LLMResult as _LLMResult
-            LLMResult = _LLMResult
-        except ImportError:
-            try:
-                from .services.base import LLMResult as _LLMResult
-                LLMResult = _LLMResult
-            except ImportError:
-                LLMResult = None
-        
-        # Fallback: create minimal structures if imports fail
-        if LLMResult is None:
-            class LLMResult:
-                def __init__(self, content: str, model: str, tokens: int = 0):
-                    self.content = content
-                    self.model = model
-                    self.tokens_used = tokens
-        
+        # Define ProtocolResult fallback if import failed
         if ProtocolResult is None:
             class ProtocolResult:
                 def __init__(self, final_response, initial_responses=None, critiques=None, 
@@ -1827,7 +1834,12 @@ Please provide an accurate, well-verified response."""
             )
         
         # Stage 3: Enhanced Prompt Injection Defense (Phase -1.5)
-        if self.injection_detector and STAGE3_AVAILABLE:
+        # Note: skip_injection_check may be set to True if the caller (e.g., orchestrator_adapter)
+        # has already checked the RAW user prompt. This is important because 'prompt' here may
+        # be an enhanced/system prompt containing instructions like "act as a planner" which
+        # would falsely trigger injection detection.
+        skip_injection_check = kwargs.get("skip_injection_check", False)
+        if self.injection_detector and STAGE3_AVAILABLE and not skip_injection_check:
             try:
                 injection_check = self.injection_detector.check(prompt)
                 if injection_check.should_block:

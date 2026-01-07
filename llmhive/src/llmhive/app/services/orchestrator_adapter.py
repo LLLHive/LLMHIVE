@@ -1584,6 +1584,39 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             )
         
         # ========================================================================
+        # STEP -1: SECURITY - Injection check on RAW user prompt (BEFORE enhancement)
+        # ========================================================================
+        # CRITICAL: Check injection on the ORIGINAL user prompt, not the enhanced one.
+        # The enhanced prompt contains system instructions (e.g., "act as a planner")
+        # which would falsely trigger injection detection.
+        try:
+            from ..orchestration.stage3_upgrades import create_injection_detector, STAGE3_AVAILABLE as _S3_AVAILABLE
+            if _S3_AVAILABLE:
+                _early_injection_detector = create_injection_detector(block_threshold="medium")
+                injection_check = _early_injection_detector.check(request.prompt)
+                if injection_check.should_block:
+                    logger.warning(
+                        "Prompt injection BLOCKED (early check): threat=%s",
+                        injection_check.threat_level
+                    )
+                    return ChatResponse(
+                        message=_early_injection_detector.get_safe_refusal(),
+                        models_used=["security_filter"],
+                        reasoning_mode=request.reasoning_mode,
+                        reasoning_method=request.reasoning_method,
+                        domain_pack=request.domain_pack,
+                        agent_mode=request.agent_mode,
+                        used_tuning=request.tuning,
+                        metadata=request.metadata,
+                        tokens_used="0",
+                        latency_ms=int((time.perf_counter() - start_time) * 1000),
+                        agent_traces=[],
+                        extra={"blocked": True, "reason": "injection_detected"},
+                    )
+        except ImportError:
+            pass  # Stage 3 not available, skip early injection check
+        
+        # ========================================================================
         # STEP 0: RAG AUGMENTATION (If enabled)
         # ========================================================================
         enable_rag = getattr(request.orchestration, 'enable_vector_rag', False)
@@ -2193,6 +2226,9 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         if not use_elite or elite_result is None:
             # Standard orchestration path
+            # Note: skip_injection_check=True because we already did the check on the raw user prompt
+            # in STEP -1 above. The enhanced_prompt contains system instructions which would
+            # falsely trigger injection detection (e.g., "act as a planner").
             artifacts = await _orchestrator.orchestrate(
                 enhanced_prompt,
                 actual_models,
@@ -2201,6 +2237,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 use_deep_consensus=orchestration_config.get("use_deep_consensus", False),
                 use_prompt_diffusion=orchestration_config.get("use_prompt_diffusion", False),
                 accuracy_level=accuracy_level,
+                skip_injection_check=True,  # Already checked on raw prompt
             )
             final_text = artifacts.final_response.content
         

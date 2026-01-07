@@ -1,0 +1,10 @@
+{
+  "metadata": {
+    "description": "Pre-captured Perplexity responses for benchmark comparison",
+    "capture_date": null,
+    "model": "llama-3.1-sonar-large-128k-online",
+    "notes": "Populate this file by running Perplexity with live API and saving responses"
+  },
+  "responses": []
+}
+

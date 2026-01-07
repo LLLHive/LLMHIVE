@@ -1,0 +1,510 @@
+# LLMHive Domain-Specific Benchmark Suite v1.0
+# =============================================
+# Tests LLMHive performance on specialized domain knowledge:
+# - Finance & Economics
+# - Medical & Health
+# - Legal
+# - Technical/Engineering
+# - Scientific Research
+#
+# Version: 1.0.0
+# Last Updated: 2026-01-06
+
+metadata:
+  suite_name: "Domain-Specific Benchmark"
+  version: "1.0.0"
+  description: "Tests specialized domain knowledge and reasoning"
+  categories:
+    - finance
+    - medical
+    - legal
+    - technical
+    - scientific
+  total_prompts: 30
+  created_date: "2026-01-06"
+  maintainer: "LLMHive Benchmark Team"
+
+prompts:
+  # ===========================================================================
+  # CATEGORY: FINANCE & ECONOMICS (6 prompts)
+  # ===========================================================================
+  
+  - id: fin_001
+    category: finance
+    prompt: "What is the difference between the P/E ratio and the PEG ratio, and when would an investor prefer to use each?"
+    expected:
+      expected_contains: "earnings"
+      expected_regex: "growth|PEG.*growth|P/E.*price"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should explain both ratios and their use cases"
+
+  - id: fin_002
+    category: finance
+    prompt: "Calculate the compound annual growth rate (CAGR) if an investment grows from $10,000 to $16,000 over 5 years."
+    expected:
+      expected_numeric:
+        value: 9.86
+        tolerance: 0.5
+        extract_pattern: "([0-9.]+)%?"
+    requirements:
+      requires_tools: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 1.0
+      rubric_weight: 0.0
+      critical: false
+    notes: "CAGR = (16000/10000)^(1/5) - 1 = 9.86%"
+
+  - id: fin_003
+    category: finance
+    prompt: "What is quantitative easing and how does it affect inflation?"
+    expected:
+      expected_regex: "central bank|money supply|bond|inflation"
+      expected_contains: null
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Should explain QE mechanism and inflation relationship"
+
+  - id: fin_004
+    category: finance
+    prompt: "If the risk-free rate is 3%, market return is 10%, and a stock has a beta of 1.5, what is the expected return according to CAPM?"
+    expected:
+      expected_numeric:
+        value: 13.5
+        tolerance: 0.5
+        extract_pattern: "([0-9.]+)%?"
+    requirements:
+      requires_tools: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 1.0
+      rubric_weight: 0.0
+      critical: false
+    notes: "CAPM: E(R) = Rf + β(Rm - Rf) = 3 + 1.5(10-3) = 13.5%"
+
+  - id: fin_005
+    category: finance
+    prompt: "Explain the concept of 'yield curve inversion' and its historical significance as an economic indicator."
+    expected:
+      expected_regex: "recession|short.?term|long.?term|inverted|economic"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should mention recession prediction capability"
+
+  - id: fin_006
+    category: finance
+    prompt: "What is the difference between fiscal policy and monetary policy? Give an example of each."
+    expected:
+      expected_regex: "government|central bank|tax|interest rate"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Should distinguish government vs central bank actions"
+
+  # ===========================================================================
+  # CATEGORY: MEDICAL & HEALTH (6 prompts)
+  # ===========================================================================
+
+  - id: med_001
+    category: medical
+    prompt: "What is the mechanism of action of metformin in treating type 2 diabetes?"
+    expected:
+      expected_regex: "glucose|liver|insulin|AMP.?kinase|gluconeogenesis"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should mention hepatic glucose production reduction"
+
+  - id: med_002
+    category: medical
+    prompt: "What are the differences between Type I and Type II hypersensitivity reactions? Give an example of each."
+    expected:
+      expected_regex: "IgE|immediate|anaphylaxis|antibody|cytotoxic"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should contrast immediate vs cytotoxic reactions"
+
+  - id: med_003
+    category: medical
+    prompt: "Explain the coagulation cascade, focusing on the intrinsic and extrinsic pathways."
+    expected:
+      expected_regex: "factor|thrombin|fibrin|intrinsic|extrinsic"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Should explain both pathways and their convergence"
+
+  - id: med_004
+    category: medical
+    prompt: "What is herd immunity and what percentage of a population typically needs to be immune for it to be effective against measles?"
+    expected:
+      expected_numeric:
+        value: 95
+        tolerance: 3
+        extract_pattern: "([0-9]+)%?"
+      expected_regex: "herd|immunity|vaccination"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Measles requires ~95% immunity due to high R0"
+
+  - id: med_005
+    category: medical
+    prompt: "What are the stages of the cell cycle and what checkpoints exist to prevent uncontrolled division?"
+    expected:
+      expected_regex: "G1|S|G2|M|mitosis|checkpoint|cyclin"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should cover G1/S/G2/M phases and checkpoint mechanisms"
+
+  - id: med_006
+    category: medical
+    prompt: "A patient presents with polyuria, polydipsia, and unexplained weight loss. What condition should be suspected and what test would confirm it?"
+    expected:
+      expected_regex: "diabetes|glucose|A1C|fasting.*blood.*sugar|HbA1c"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Classic diabetes mellitus presentation"
+
+  # ===========================================================================
+  # CATEGORY: LEGAL (6 prompts)
+  # ===========================================================================
+
+  - id: leg_001
+    category: legal
+    prompt: "What is the difference between criminal law and civil law in the United States?"
+    expected:
+      expected_regex: "state|prosecution|plaintiff|defendant|burden.*proof|beyond.*reasonable"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should contrast prosecution vs private parties, burden of proof"
+
+  - id: leg_002
+    category: legal
+    prompt: "Explain the concept of 'stare decisis' and its role in common law systems."
+    expected:
+      expected_regex: "precedent|decision|binding|court|stand.*by"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Latin for 'to stand by things decided'"
+
+  - id: leg_003
+    category: legal
+    prompt: "What are the elements required to prove negligence in a tort case?"
+    expected:
+      expected_regex: "duty|breach|causation|damages"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Duty, breach, causation, damages"
+
+  - id: leg_004
+    category: legal
+    prompt: "What is the difference between a patent, trademark, and copyright?"
+    expected:
+      expected_regex: "invention|brand|creative|original|protection"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should distinguish all three IP types"
+
+  - id: leg_005
+    category: legal
+    prompt: "Explain the principle of 'habeas corpus' and its significance in protecting individual rights."
+    expected:
+      expected_regex: "body|detention|unlawful|court|release|liberty"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Writ challenging unlawful detention"
+
+  - id: leg_006
+    category: legal
+    prompt: "What is the 'reasonable person' standard in tort law?"
+    expected:
+      expected_regex: "ordinary|prudent|care|standard|conduct|objective"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Objective standard for negligence"
+
+  # ===========================================================================
+  # CATEGORY: TECHNICAL/ENGINEERING (6 prompts)
+  # ===========================================================================
+
+  - id: tech_001
+    category: technical
+    prompt: "Explain the difference between TCP and UDP protocols and when you would use each."
+    expected:
+      expected_regex: "reliable|connection|stream|datagram|handshake|order"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Should contrast reliability vs speed tradeoffs"
+
+  - id: tech_002
+    category: technical
+    prompt: "What is the time complexity of quicksort in the average and worst cases, and why?"
+    expected:
+      expected_regex: "O\\(n.*log.*n\\)|O\\(n\\^?2\\)|pivot|partition"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Average O(n log n), worst O(n²)"
+
+  - id: tech_003
+    category: technical
+    prompt: "Explain the CAP theorem in distributed systems and its implications."
+    expected:
+      expected_regex: "consistency|availability|partition|tolerance|two.*three"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Can only guarantee 2 of 3 properties"
+
+  - id: tech_004
+    category: technical
+    prompt: "What is the difference between symmetric and asymmetric encryption? Give an example algorithm for each."
+    expected:
+      expected_regex: "key|AES|RSA|public|private|shared|faster"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Should mention AES (symmetric) and RSA (asymmetric)"
+
+  - id: tech_005
+    category: technical
+    prompt: "Explain what ACID properties mean in database transactions."
+    expected:
+      expected_regex: "atomicity|consistency|isolation|durability"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Must explain all four properties"
+
+  - id: tech_006
+    category: technical
+    prompt: "Calculate the bandwidth needed to stream 1080p video at 30fps with 24-bit color depth, assuming no compression."
+    expected:
+      expected_numeric:
+        value: 1.49
+        tolerance: 0.2
+        extract_pattern: "([0-9.]+)\\s*Gbps"
+      expected_regex: "1920.*1080|Gb|billion"
+    requirements:
+      requires_tools: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 1.0
+      rubric_weight: 0.0
+      critical: false
+    notes: "1920*1080*30*24 = ~1.49 Gbps uncompressed"
+
+  # ===========================================================================
+  # CATEGORY: SCIENTIFIC RESEARCH (6 prompts)
+  # ===========================================================================
+
+  - id: sci_001
+    category: scientific
+    prompt: "Explain the difference between Type I and Type II errors in hypothesis testing."
+    expected:
+      expected_regex: "false positive|false negative|null hypothesis|alpha|beta|reject"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Type I = false positive, Type II = false negative"
+
+  - id: sci_002
+    category: scientific
+    prompt: "What is the Heisenberg Uncertainty Principle and what does it fundamentally tell us about quantum mechanics?"
+    expected:
+      expected_regex: "position|momentum|measure|simultaneous|precision|fundamental"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Cannot precisely measure position and momentum simultaneously"
+
+  - id: sci_003
+    category: scientific
+    prompt: "Explain the difference between correlation and causation with an example."
+    expected:
+      expected_regex: "cause|relationship|variable|confound|third"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Should give concrete example of spurious correlation"
+
+  - id: sci_004
+    category: scientific
+    prompt: "What is the significance of a p-value of 0.05 in statistical hypothesis testing?"
+    expected:
+      expected_regex: "5%|probability|null|significant|chance|threshold"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "5% probability of observing result if null is true"
+
+  - id: sci_005
+    category: scientific
+    prompt: "Explain the central dogma of molecular biology."
+    expected:
+      expected_regex: "DNA|RNA|protein|transcription|translation|replication"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "DNA → RNA → Protein"
+
+  - id: sci_006
+    category: scientific
+    prompt: "What is the difference between accuracy and precision in scientific measurements?"
+    expected:
+      expected_regex: "true value|close|consistent|reproducible|target"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Accuracy = closeness to true value; Precision = consistency"
+
+# =============================================================================
+# RUBRIC DEFINITIONS (same as complex_reasoning_v1)
+# =============================================================================
+rubrics:
+  default:
+    reasoning_depth:
+      description: "How thoroughly does the response explore the problem?"
+      levels:
+        5: "Comprehensive multi-step reasoning with clear logic"
+        4: "Good reasoning with most steps explained"
+        3: "Adequate reasoning but missing some steps"
+        2: "Shallow reasoning, jumps to conclusion"
+        1: "No apparent reasoning"
+    
+    accuracy_likelihood:
+      description: "How likely is the response to be factually accurate?"
+      levels:
+        5: "High confidence in accuracy, cites sources or verifiable facts"
+        4: "Likely accurate with minor uncertainty"
+        3: "Plausible but unverified"
+        2: "Questionable accuracy"
+        1: "Likely inaccurate or fabricated"
+    
+    domain_expertise:
+      description: "Does the response demonstrate domain-specific knowledge?"
+      levels:
+        5: "Uses correct terminology and shows deep understanding"
+        4: "Good domain knowledge with proper terminology"
+        3: "Basic domain knowledge"
+        2: "Limited domain understanding"
+        1: "No domain expertise evident"
+    
+    completeness:
+      description: "Does the response fully address the query?"
+      levels:
+        5: "Fully addresses all aspects of the query"
+        4: "Addresses most aspects"
+        3: "Addresses core query but misses details"
+        2: "Partially addresses query"
+        1: "Fails to address the query"
+

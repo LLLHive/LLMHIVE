@@ -463,12 +463,251 @@ prompts:
       requires_real_provider: true
     notes: "Should not return stub response for simple math"
 
+  # ===========================================================================
+  # COMPLEX MULTI-HOP QUESTIONS (New - RAG/Tool Upgrade)
+  # These require synthesizing information from multiple sources
+  # ===========================================================================
+  - id: multihop_001
+    category: multi_hop
+    prompt: "What is the population of the country where the Eiffel Tower is located, and what percentage of Europe's total population does it represent?"
+    expected_regex: "France|million|population|percent|Europe"
+    critical: false
+    requirements:
+      requires_rag: true
+      should_trigger_hrm: true
+    notes: "Two-hop: Eiffel Tower -> France -> population -> Europe comparison"
+
+  - id: multihop_002
+    category: multi_hop
+    prompt: "Who won the Nobel Prize in Physics in the year that the iPhone was first released, and what was their discovery?"
+    expected_regex: "2007|Albert Fert|Peter Grünberg|magnetoresistance|GMR|Nobel"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Two-hop: iPhone launch year -> 2007 Nobel Physics prize"
+
+  - id: multihop_003
+    category: multi_hop
+    prompt: "Compare the founding year of the company that makes the Model S electric car with the company that makes the 747 airplane"
+    expected_regex: "Tesla|Boeing|2003|1916|founded|comparison"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Two-hop: Identify companies from products, compare founding dates"
+
+  - id: multihop_004
+    category: multi_hop
+    prompt: "What language is spoken in the country that invented the World Wide Web, and how many native speakers does it have?"
+    expected_regex: "English|United Kingdom|Tim Berners-Lee|CERN|million|native"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Three-hop: WWW inventor -> country -> language -> speakers"
+
+  - id: multihop_005
+    category: multi_hop
+    prompt: "In what decade was the author of 1984 born, and what major world event was happening then?"
+    expected_regex: "George Orwell|1903|1900s|World War|Edwardian"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Two-hop: 1984 author -> birth year -> historical context"
+
+  - id: multihop_006
+    category: multi_hop
+    prompt: "What is the GDP per capita of the country that hosts the headquarters of the United Nations, compared to the global average?"
+    expected_regex: "United States|New York|GDP|dollar|per capita|average"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Multi-hop: UN HQ -> USA -> GDP per capita -> comparison"
+
+  - id: multihop_007
+    category: multi_hop
+    prompt: "How many years passed between the discovery of DNA's structure and the completion of the Human Genome Project?"
+    expected_regex: "1953|2003|50|years|Watson|Crick|HGP"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Calculate time between two scientific milestones"
+
+  - id: multihop_008
+    category: multi_hop
+    prompt: "What element is most abundant in the atmosphere of the planet named after the Roman god of the sea?"
+    expected_regex: "Neptune|hydrogen|helium|atmosphere|planet"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Two-hop: Roman god of sea -> Neptune -> atmosphere composition"
+
+  - id: multihop_009
+    category: multi_hop
+    prompt: "Compare the population density of Japan to the country that produces the most coffee globally"
+    expected_regex: "Japan|Brazil|density|km|square|coffee|population"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Identify top coffee producer, compare densities"
+
+  - id: multihop_010
+    category: multi_hop
+    prompt: "What was the market cap of Apple when the creator of the iPhone passed away?"
+    expected_regex: "Steve Jobs|2011|billion|Apple|market"
+    critical: false
+    requirements:
+      requires_rag: true
+    notes: "Two-hop: iPhone creator -> death date -> Apple market cap at that time"
+
+  # ===========================================================================
+  # RAG + TOOL COMBINED CASES (New - Tests Integration)
+  # These require both retrieval AND tool use
+  # ===========================================================================
+  - id: rag_tool_001
+    category: rag_tool_combined
+    prompt: "Find the founding date of Microsoft, then calculate how many days old the company is as of today"
+    expected_regex: "1975|April|days|Microsoft|old|founded"
+    critical: false
+    requirements:
+      requires_rag: true
+      requires_tools: true
+    notes: "RAG to find date, calculator for days since"
+
+  - id: rag_tool_002
+    category: rag_tool_combined
+    prompt: "Look up the height of Mount Everest in feet and convert it to meters"
+    expected_regex: "8848|8849|29032|Everest|meters|feet|convert"
+    critical: false
+    requirements:
+      requires_rag: true
+      requires_tools: true
+    notes: "RAG for height, converter tool for unit conversion"
+
+  - id: rag_tool_003
+    category: rag_tool_combined
+    prompt: "Search for Tesla's current stock price and calculate what a 10% increase would be"
+    expected_regex: "Tesla|TSLA|stock|price|percent|increase|\\$"
+    critical: false
+    requirements:
+      requires_tools: true
+    notes: "Web search for stock price, calculator for percentage"
+
+  - id: rag_tool_004
+    category: rag_tool_combined
+    prompt: "Find the distance between New York and Los Angeles in miles, then calculate how long it would take to drive at 65 mph"
+    expected_regex: "2800|2789|miles|hours|drive|New York|Los Angeles"
+    critical: false
+    requirements:
+      requires_rag: true
+      requires_tools: true
+    notes: "RAG for distance, calculator for time"
+
+  - id: rag_tool_005
+    category: rag_tool_combined
+    prompt: "Look up the population of Tokyo and calculate what percentage it is of Japan's total population"
+    expected_regex: "Tokyo|Japan|million|percent|population"
+    critical: false
+    requirements:
+      requires_rag: true
+      requires_tools: true
+    notes: "RAG for both populations, calculator for percentage"
+
+  # ===========================================================================
+  # SANDBOX ACTIVATION PROMPTS (New - Code Execution Tests)
+  # These should trigger Python sandbox execution
+  # ===========================================================================
+  - id: sandbox_001
+    category: sandbox
+    prompt: "Write and run a Python function to calculate the first 10 Fibonacci numbers"
+    expected_regex: "1|1|2|3|5|8|13|21|34|55|Fibonacci|python"
+    critical: false
+    requirements:
+      requires_sandbox: true
+    notes: "Should execute Python code in sandbox"
+
+  - id: sandbox_002
+    category: sandbox
+    prompt: "Execute Python code to sort this list: [64, 34, 25, 12, 22, 11, 90]"
+    expected_regex: "11|12|22|25|34|64|90|sorted|sort"
+    critical: false
+    requirements:
+      requires_sandbox: true
+    notes: "Simple sort operation in sandbox"
+
+  - id: sandbox_003
+    category: sandbox
+    prompt: "Run a Python script that calculates the factorial of 12"
+    expected_regex: "479001600|factorial|12"
+    critical: false
+    requirements:
+      requires_sandbox: true
+    notes: "Mathematical computation in sandbox"
+
+  - id: sandbox_004
+    category: sandbox
+    prompt: "Execute code to generate a list of prime numbers between 1 and 50"
+    expected_regex: "2|3|5|7|11|13|17|19|23|29|31|37|41|43|47|prime"
+    critical: false
+    requirements:
+      requires_sandbox: true
+    notes: "Prime number generation in sandbox"
+
+  - id: sandbox_005
+    category: sandbox
+    prompt: "Write and execute Python code to reverse the string 'Hello World'"
+    expected_regex: "dlroW olleH|reverse|string"
+    critical: false
+    requirements:
+      requires_sandbox: true
+    notes: "String manipulation in sandbox"
+
+  # ===========================================================================
+  # TOOL FALLBACK TESTS (New - Verifies Graceful Degradation)
+  # ===========================================================================
+  - id: fallback_001
+    category: tool_fallback
+    prompt: "What is the weather like in Tokyo right now? If you can't get live data, provide general climate information."
+    expected_regex: "weather|Tokyo|climate|temperature|unable|cannot|generally"
+    critical: false
+    requirements:
+      test_fallback: true
+    notes: "Should either get live data OR fallback gracefully to general info"
+
+  - id: fallback_002
+    category: tool_fallback
+    prompt: "Search for the latest news about quantum computing breakthroughs"
+    expected_regex: "quantum|computing|research|unable|news|breakthrough"
+    critical: false
+    requirements:
+      test_fallback: true
+    notes: "Web search with fallback to knowledge base info"
+
+  # ===========================================================================
+  # RERANKING QUALITY TESTS (New - Verifies Cross-Encoder Impact)
+  # ===========================================================================
+  - id: rerank_001
+    category: rerank_test
+    prompt: "What are the main differences between supervised and unsupervised machine learning?"
+    expected_regex: "supervised|unsupervised|labeled|unlabeled|training|data|difference"
+    critical: false
+    requirements:
+      test_reranking: true
+    notes: "Should return well-organized comparison with reranking"
+
+  - id: rerank_002
+    category: rerank_test
+    prompt: "Explain the role of mitochondria in cellular respiration"
+    expected_regex: "mitochondria|ATP|energy|respiration|cell|powerhouse"
+    critical: false
+    requirements:
+      test_reranking: true
+    notes: "Specific scientific topic requiring precise retrieval"
+
 # =============================================================================
 # METADATA
 # =============================================================================
 metadata:
-  version: "1.0.0"
-  total_prompts: 50
+  version: "2.0.0"
+  total_prompts: 75
   critical_count: 22
   categories:
     factoid: 14
@@ -481,6 +720,17 @@ metadata:
     consensus: 2
     verify: 2
     stub: 1
+    multi_hop: 10
+    rag_tool_combined: 5
+    sandbox: 5
+    tool_fallback: 2
+    rerank_test: 2
+  new_in_v2:
+    - "10 complex multi-hop questions requiring multi-source synthesis"
+    - "5 RAG+Tool combined scenarios testing integration"
+    - "5 sandbox activation prompts for code execution"
+    - "2 tool fallback tests for graceful degradation"
+    - "2 reranking quality tests"
   last_updated: "2026-01-06"
   maintainer: "LLMHive Quality Team"
 

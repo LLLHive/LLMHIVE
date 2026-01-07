@@ -183,32 +183,115 @@ class AnswerRefiner:
         - Self-critique sections
         - "Confidence Level: X/10" internal notes
         - Reasoning scaffold sections (=== PROBLEM ===, === UNDERSTANDING ===, etc.)
+        - System instructions that leaked into the output
         """
-        # FIRST: If content has "=== FINAL ANSWER ===" section, extract ONLY that
+        # FIRST: Check if content starts with scaffold markers containing system instructions
+        # Pattern: "=== PROBLEM === IMPORTANT: ..." or similar
+        scaffold_start_pattern = r'^===\s*(PROBLEM|UNDERSTANDING|APPROACH)\s*===\s*(IMPORTANT:|CRITICAL:)?\s*'
+        if re.match(scaffold_start_pattern, content, re.IGNORECASE):
+            # Look for "Final Answer:" section first
+            final_match = re.search(r'(?:Final\s*Answer\s*:?|===\s*FINAL\s*ANSWER\s*===)\s*(.+)', content, re.IGNORECASE | re.DOTALL)
+            if final_match:
+                answer = final_match.group(1).strip()
+                # Clean any trailing scaffold
+                answer = re.sub(r'\s*===\s*\w+.*$', '', answer, flags=re.DOTALL)
+                if answer and len(answer) > 20:
+                    logger.info("Extracted final answer from scaffold (pattern: Final Answer)")
+                    return answer.strip()
+            
+            # Try to find the actual question and answer in the scaffold
+            # Look for the user's question followed by "=== UNDERSTANDING ===" and extract the answer
+            understanding_match = re.search(r'===\s*UNDERSTANDING\s*===.*?===\s*(?:SOLUTION|ANSWER|SYNTHESIS|FINAL)\s*===\s*(.+?)(?:===|$)', 
+                                          content, re.IGNORECASE | re.DOTALL)
+            if understanding_match:
+                answer = understanding_match.group(1).strip()
+                if answer and len(answer) > 20:
+                    logger.info("Extracted answer from scaffold (pattern: after UNDERSTANDING)")
+                    return answer
+        
+        # SECOND: If content has "=== FINAL ANSWER ===" section, extract ONLY that
         if "=== FINAL ANSWER ===" in content:
             final_part = content.split("=== FINAL ANSWER ===")[-1].strip()
             # Remove any trailing scaffold if present
             for scaffold in ["=== ", "---", "***"]:
                 if scaffold in final_part:
                     final_part = final_part.split(scaffold)[0].strip()
-            if final_part and len(final_part) > 20:
+            # Validate extracted content looks like an actual answer
+            final_lower = final_part.lower()
+            looks_like_meta = (
+                final_lower.startswith("is ") or
+                final_lower.startswith("are ") or
+                final_lower.startswith("was ") or
+                final_lower.startswith("clearly ") or
+                final_lower.startswith("marked ") or
+                final_lower.startswith("should ") or
+                "rounded correctly" in final_lower or
+                ("decimal places" in final_lower and not any(c.isdigit() for c in final_part[:20])) or
+                "'Final Answer'" in final_part or
+                '"Final Answer"' in final_part or
+                "Final Answer:" in final_part or
+                final_part.startswith("'") or
+                final_part.startswith('"') or
+                final_part.startswith(".")
+            )
+            # Accept shorter answers if they look like valid results (numbers, names, etc.)
+            # Minimum 3 characters, or 20 if no numbers/capitals present
+            has_meaningful_content = any(c.isdigit() for c in final_part) or any(c.isupper() for c in final_part[1:])
+            min_length = 3 if has_meaningful_content else 20
+            if final_part and len(final_part) >= min_length and not looks_like_meta:
                 logger.info("Extracted final answer from reasoning scaffold")
                 return final_part
+            elif looks_like_meta:
+                logger.warning("Extracted answer looks like meta-text, skipping extraction: %s", final_part[:50])
         
-        # Reasoning scaffold sections to remove entirely (with content up to next section)
+        # Check for "Final Answer:" pattern (without scaffold markers)
+        # But avoid extracting meta-text like "should be marked as 'Final Answer:'"
+        if "Final Answer:" in content or "final answer:" in content.lower():
+            # First check for quoted references like 'Final Answer:' or "Final Answer:"
+            # which indicate meta-text rather than actual answers
+            parts = re.split(r'Final\s*Answer\s*:?\s*', content, flags=re.IGNORECASE)
+            if len(parts) > 1:
+                answer = parts[-1].strip()
+                # Clean trailing scaffold
+                answer = re.sub(r'\s*===\s*\w+.*$', '', answer, flags=re.DOTALL)
+                # Validate that the answer doesn't look like meta-text
+                # Skip if it starts with punctuation, quotes, or contains "Final Answer"
+                answer_lower = answer.lower()
+                looks_like_meta = (
+                    answer.startswith("'") or
+                    answer.startswith('"') or
+                    answer.startswith('.') or
+                    answer_lower.startswith("clearly ") or
+                    answer_lower.startswith("is ") or
+                    answer_lower.startswith("are ") or
+                    answer_lower.startswith("was ") or
+                    "Final Answer" in answer or
+                    "'Final Answer'" in answer or
+                    '"Final Answer"' in answer or
+                    "marked as" in answer_lower or
+                    "should be" in answer_lower
+                )
+                if answer and len(answer) > 20 and not looks_like_meta:
+                    logger.info("Extracted final answer from 'Final Answer:' marker")
+                    return answer
+                elif looks_like_meta:
+                    logger.warning("Extracted answer from 'Final Answer:' looks like meta-text, skipping: %s", answer[:50])
+        
+        # THIRD: Remove scaffold sections entirely (with content up to next section)
+        # Use more robust lookahead that handles whitespace before ===
         scaffold_sections = [
-            r"===\s*PROBLEM\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*UNDERSTANDING\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*APPROACH\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*STEP-BY-STEP\s+SOLUTION\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*VERIFICATION\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*CONFIDENCE\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*SYNTHESIS\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*PERSPECTIVE\s+\d+.*?===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*PROPOSER\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*CRITIC\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*DEFENDER\s*===.*?(?====\s*\w+\s*===|$)",
-            r"===\s*ATTEMPT\s+\d+\s*===.*?(?====\s*\w+\s*===|$)",
+            r"===\s*PROBLEM\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*UNDERSTANDING\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*APPROACH\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*STEP-BY-STEP\s+SOLUTION\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*VERIFICATION\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*CONFIDENCE\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*SYNTHESIS\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*PERSPECTIVE\s+\d+.*?===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*PROPOSER\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*CRITIC\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*DEFENDER\s*===.*?(?=\s*===\s*\w+\s*===|$)",
+            r"===\s*ATTEMPT\s+\d+\s*===.*?(?=\s*===\s*\w+\s*===|$)",
         ]
         
         cleaned = content
@@ -217,6 +300,16 @@ class AnswerRefiner:
         
         # Also strip any remaining "=== SOMETHING ===" headers
         cleaned = re.sub(r"===\s*[A-Z][A-Z\s]+===\s*\n?", "", cleaned, flags=re.IGNORECASE)
+        
+        # Remove leaked system instructions (IMPORTANT: Answer directly...)
+        leaked_instructions = [
+            r"IMPORTANT:\s*Answer the user's question directly.*?(?=\n\n|\Z)",
+            r"Do NOT ask clarifying questions unless.*?(?=\n\n|\Z)",
+            r"NEVER refuse to answer a question by claiming.*?(?=\n\n|\Z)",
+            r"Let's work this out step by step\.?\s*",
+        ]
+        for pattern in leaked_instructions:
+            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.DOTALL)
         
         # Patterns that indicate meta-commentary (case-insensitive)
         meta_patterns = [

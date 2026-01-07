@@ -1,0 +1,285 @@
+# Scheduled Benchmark Monitoring
+# ================================
+# Runs benchmarks on a schedule and alerts on regressions.
+# - Daily: Critical prompts only (quick check)
+# - Weekly: Full suite comparison
+# - Creates GitHub Issues on critical failures
+
+name: Scheduled Benchmarks
+
+on:
+  schedule:
+    # Daily critical-only check at 6 AM UTC (1 AM EST)
+    - cron: '0 6 * * *'
+    # Weekly full benchmark Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Benchmark mode'
+        required: true
+        default: 'critical'
+        type: choice
+        options:
+          - critical
+          - full
+          - domain
+      enable_external:
+        description: 'Include external baselines (requires secrets)'
+        required: false
+        type: boolean
+        default: false
+      create_issue:
+        description: 'Create GitHub issue on failures'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  PYTHONPATH: llmhive/src
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    outputs:
+      passed: ${{ steps.run-benchmark.outputs.passed }}
+      critical_failures: ${{ steps.run-benchmark.outputs.critical_failures }}
+      report_path: ${{ steps.run-benchmark.outputs.report_path }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r llmhive/requirements.txt
+          pip install pytest pyyaml
+      
+      - name: Determine benchmark mode
+        id: mode
+        run: |
+          # Determine mode based on trigger
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            MODE="${{ inputs.mode }}"
+          elif [ "${{ github.event.schedule }}" == "0 6 * * *" ]; then
+            MODE="critical"
+          else
+            MODE="full"
+          fi
+          echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "Benchmark mode: $MODE"
+      
+      - name: Run Critical Benchmarks
+        if: steps.mode.outputs.mode == 'critical'
+        id: run-critical
+        run: |
+          python -m llmhive.app.benchmarks.cli \
+            --systems llmhive \
+            --mode local \
+            --critical-only \
+            --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
+      
+      - name: Run Full Benchmarks
+        if: steps.mode.outputs.mode == 'full'
+        id: run-full
+        run: |
+          python -m llmhive.app.benchmarks.cli \
+            --systems llmhive \
+            --mode local \
+            --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
+      
+      - name: Run Domain Benchmarks
+        if: steps.mode.outputs.mode == 'domain'
+        id: run-domain
+        run: |
+          python -m llmhive.app.benchmarks.cli \
+            --suite benchmarks/suites/domain_specific_v1.yaml \
+            --systems llmhive \
+            --mode local \
+            --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
+      
+      - name: Run External Baselines
+        if: inputs.enable_external && (secrets.OPENAI_API_KEY || secrets.ANTHROPIC_API_KEY)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          SYSTEMS="llmhive"
+          if [ -n "$OPENAI_API_KEY" ]; then SYSTEMS="$SYSTEMS,openai"; fi
+          if [ -n "$ANTHROPIC_API_KEY" ]; then SYSTEMS="$SYSTEMS,anthropic"; fi
+          
+          python -m llmhive.app.benchmarks.cli \
+            --systems $SYSTEMS \
+            --mode local \
+            --outdir artifacts/benchmarks/external_$(date +%Y%m%d_%H%M%S)
+      
+      - name: Analyze Results
+        id: run-benchmark
+        run: |
+          # Find latest report
+          REPORT=$(ls -t artifacts/benchmarks/*/report.json 2>/dev/null | head -1)
+          
+          if [ -z "$REPORT" ]; then
+            echo "No benchmark report found"
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "critical_failures=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "report_path=$REPORT" >> $GITHUB_OUTPUT
+          
+          # Extract results
+          PASSED=$(python -c "import json; r=json.load(open('$REPORT')); print('true' if r.get('passed', True) else 'false')")
+          CRITICAL=$(python -c "import json; r=json.load(open('$REPORT')); print(len(r.get('critical_failures', [])))")
+          
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "critical_failures=$CRITICAL" >> $GITHUB_OUTPUT
+          
+          # Run summary
+          python scripts/benchmark_summary.py --report "$REPORT"
+      
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.run_id }}
+          path: artifacts/benchmarks/
+          retention-days: 30
+  
+  create-issue:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    if: |
+      needs.benchmark.outputs.passed == 'false' && 
+      (github.event_name != 'workflow_dispatch' || inputs.create_issue)
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-results-${{ github.run_id }}
+          path: artifacts/benchmarks/
+      
+      - name: Create Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Find the report
+            const reportPath = '${{ needs.benchmark.outputs.report_path }}';
+            let report = {};
+            try {
+              report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            } catch (e) {
+              console.log('Could not read report:', e);
+            }
+            
+            const criticalFailures = report.critical_failures || [];
+            const aggregate = report.aggregate || {};
+            
+            // Build issue body
+            let body = `## 🚨 Benchmark Regression Detected
+            
+            **Run Date**: ${new Date().toISOString()}
+            **Git Commit**: ${report.git_commit || 'unknown'}
+            **Suite**: ${report.suite_name || 'unknown'} v${report.suite_version || '?'}
+            
+            ### Critical Failures (${criticalFailures.length})
+            
+            ${criticalFailures.length > 0 ? criticalFailures.map(f => `- \`${f}\``).join('\n') : 'None'}
+            
+            ### System Scores
+            
+            | System | Mean Score | Passed | Failed |
+            |--------|------------|--------|--------|
+            `;
+            
+            const systems = aggregate.systems || {};
+            for (const [name, stats] of Object.entries(systems)) {
+              body += `| ${name} | ${(stats.composite_mean || 0).toFixed(3)} | ${stats.passed_count || 0} | ${stats.failed_count || 0} |\n`;
+            }
+            
+            body += `
+            ### Next Steps
+            
+            1. Review the failed prompts in the benchmark artifacts
+            2. Identify root causes (factual error, tool failure, reasoning gap)
+            3. Implement fixes and re-run benchmarks
+            
+            ---
+            *This issue was automatically created by the scheduled benchmark workflow.*
+            `;
+            
+            // Check for existing open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'benchmark-regression',
+              state: 'open',
+            });
+            
+            if (issues.data.length > 0) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `## New Benchmark Run Results\n\n${body}`,
+              });
+              console.log(`Updated existing issue #${issues.data[0].number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Benchmark Regression: ${criticalFailures.length} critical failure(s)`,
+                body: body,
+                labels: ['benchmark-regression', 'automated'],
+              });
+              console.log('Created new issue');
+            }
+  
+  notify-slack:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    if: |
+      needs.benchmark.outputs.passed == 'false' && 
+      vars.SLACK_WEBHOOK_URL
+    
+    steps:
+      - name: Send Slack Notification
+        run: |
+          curl -X POST ${{ vars.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            -d '{
+              "text": "🚨 LLMHive Benchmark Regression",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚨 Benchmark Regression Detected"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Critical Failures*: ${{ needs.benchmark.outputs.critical_failures }}\n*Workflow*: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  }
+                }
+              ]
+            }'
+

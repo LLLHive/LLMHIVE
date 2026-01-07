@@ -1,0 +1,575 @@
+# LLMHive Advanced Reasoning Benchmark Suite v1.0
+# ================================================
+# Extended test coverage for complex reasoning patterns:
+# - Multi-step mathematical proofs
+# - Logical puzzles and deduction
+# - Counterfactual reasoning
+# - Analogical reasoning
+# - Meta-cognitive tasks
+#
+# Version: 1.0.0
+# Last Updated: 2026-01-06
+
+metadata:
+  suite_name: "Advanced Reasoning Benchmark"
+  version: "1.0.0"
+  description: "Tests advanced reasoning patterns beyond basic multi-hop"
+  categories:
+    - mathematical_proofs
+    - logical_puzzles
+    - counterfactual
+    - analogical
+    - metacognitive
+    - constraint_satisfaction
+  total_prompts: 36
+  created_date: "2026-01-06"
+  maintainer: "LLMHive Benchmark Team"
+
+prompts:
+  # ===========================================================================
+  # CATEGORY: MATHEMATICAL PROOFS (6 prompts)
+  # ===========================================================================
+  
+  - id: math_001
+    category: mathematical_proofs
+    prompt: "Prove that the square root of 2 is irrational using proof by contradiction."
+    expected:
+      expected_regex: "contradiction|assume|rational|p/q|even|odd"
+      expected_contains: null
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Classic proof by contradiction"
+
+  - id: math_002
+    category: mathematical_proofs
+    prompt: "Prove that there are infinitely many prime numbers."
+    expected:
+      expected_regex: "contradiction|assume|finite|product|p1.*p2|Euclid"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Euclid's classic proof"
+
+  - id: math_003
+    category: mathematical_proofs
+    prompt: "Prove by induction that the sum of the first n positive integers is n(n+1)/2."
+    expected:
+      expected_regex: "base case|inductive|hypothesis|k\\+1|n\\(n\\+1\\)/2"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Standard induction proof"
+
+  - id: math_004
+    category: mathematical_proofs
+    prompt: "Show that if a divides b and b divides c, then a divides c (transitivity of divisibility)."
+    expected:
+      expected_regex: "integer|b.*=.*a.*k|c.*=.*b.*m|transitive"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Basic number theory proof"
+
+  - id: math_005
+    category: mathematical_proofs
+    prompt: "Prove that for any sets A and B, (A ∪ B)' = A' ∩ B' (De Morgan's Law)."
+    expected:
+      expected_regex: "De Morgan|complement|intersection|union|element|both"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Set theory proof"
+
+  - id: math_006
+    category: mathematical_proofs
+    prompt: "Prove that 0.999... (repeating) equals 1."
+    expected:
+      expected_regex: "10x|x.*=.*0\\.999|9x.*=.*9|limit|infinite|series"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Classic demonstration"
+
+  # ===========================================================================
+  # CATEGORY: LOGICAL PUZZLES (6 prompts)
+  # ===========================================================================
+
+  - id: logic_001
+    category: logical_puzzles
+    prompt: "Three boxes are labeled 'Apples', 'Oranges', and 'Mixed'. All labels are wrong. You can pick one fruit from one box to determine all contents. Which box do you pick from and why?"
+    expected:
+      expected_regex: "Mixed|label.*wrong|cannot.*be|must.*be"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: true
+    notes: "Classic logic puzzle - pick from Mixed box"
+
+  - id: logic_002
+    category: logical_puzzles
+    prompt: "A farmer needs to cross a river with a wolf, a goat, and a cabbage. The boat can only carry the farmer and one item. If left alone, the wolf will eat the goat, and the goat will eat the cabbage. What's the solution?"
+    expected:
+      expected_regex: "goat.*first|bring.*back|cross|sequence|step"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "River crossing puzzle"
+
+  - id: logic_003
+    category: logical_puzzles
+    prompt: "You have 8 balls, one is heavier. Using a balance scale, what is the minimum number of weighings needed to find the heavy ball? Explain your strategy."
+    expected:
+      expected_numeric:
+        value: 2
+        tolerance: 0
+        extract_pattern: "(\\d+)\\s*weighing"
+      expected_regex: "divide|three.*groups|2|two"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Binary/ternary search with balance"
+
+  - id: logic_004
+    category: logical_puzzles
+    prompt: "If all roses are flowers, and some flowers fade quickly, can we conclude that some roses fade quickly? Explain using logical reasoning."
+    expected:
+      expected_regex: "cannot.*conclude|fallacy|syllogism|some.*does.*not|invalid"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: true
+    notes: "Invalid syllogism - should identify fallacy"
+
+  - id: logic_005
+    category: logical_puzzles
+    prompt: "Knights always tell the truth and knaves always lie. Person A says 'We are both knaves.' What are A and B?"
+    expected:
+      expected_regex: "A.*knave|B.*knight|contradiction|cannot.*both"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Knights and knaves puzzle"
+
+  - id: logic_006
+    category: logical_puzzles
+    prompt: "There are five houses in a row. Each house is painted a different color and has an owner of different nationality, pet, drink, and cigarette brand. Given: The Brit lives in the red house. The Swede keeps dogs. The Dane drinks tea. The green house is immediately to the left of the white house. The green house owner drinks coffee. The person who smokes Pall Mall has birds. The owner of the yellow house smokes Dunhill. The man living in the center house drinks milk. The Norwegian lives in the first house. The man who smokes Blends lives next to the one who keeps cats. The man who keeps horses lives next to Dunhill smoker. The man who smokes Blue Master drinks beer. The German smokes Prince. The Norwegian lives next to the blue house. The man who smokes Blends has a neighbor who drinks water. Who owns the fish?"
+    expected:
+      expected_regex: "German|fish"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.9
+      rubric_weight: 0.1
+      critical: true
+    notes: "Einstein's riddle - German owns fish"
+
+  # ===========================================================================
+  # CATEGORY: COUNTERFACTUAL REASONING (6 prompts)
+  # ===========================================================================
+
+  - id: counter_001
+    category: counterfactual
+    prompt: "If water boiled at 50°C instead of 100°C, how would human cooking and food preparation be different?"
+    expected:
+      expected_regex: "cook|food|temperature|pressure|technique|faster|change"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.3
+      rubric_weight: 0.7
+      critical: false
+    notes: "Tests counterfactual reasoning about physics"
+
+  - id: counter_002
+    category: counterfactual
+    prompt: "If the Roman Empire had never fallen, how might modern Europe's political structure differ?"
+    expected:
+      expected_regex: "unif|central|language|nation|state|empire"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.3
+      rubric_weight: 0.7
+      critical: false
+    notes: "Historical counterfactual"
+
+  - id: counter_003
+    category: counterfactual
+    prompt: "If humans had evolved with four arms instead of two, how would architecture and tool design be different?"
+    expected:
+      expected_regex: "grip|reach|multi|task|design|lever|control"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.3
+      rubric_weight: 0.7
+      critical: false
+    notes: "Biological counterfactual"
+
+  - id: counter_004
+    category: counterfactual
+    prompt: "What would happen to Earth's climate if the moon suddenly disappeared?"
+    expected:
+      expected_regex: "tide|axis|tilt|stabiliz|wobble|season|ocean"
+    requirements:
+      requires_rag: true
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Scientific counterfactual"
+
+  - id: counter_005
+    category: counterfactual
+    prompt: "If the printing press had been invented 500 years earlier, how might the history of science and religion be different?"
+    expected:
+      expected_regex: "spread|knowledge|church|reform|literacy|earlier"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.3
+      rubric_weight: 0.7
+      critical: false
+    notes: "Technology counterfactual"
+
+  - id: counter_006
+    category: counterfactual
+    prompt: "If photosynthesis produced oxygen at night instead of during the day, how would ecosystems adapt?"
+    expected:
+      expected_regex: "nocturnal|circadian|animal|plant|adapt|behavior|oxygen"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.3
+      rubric_weight: 0.7
+      critical: false
+    notes: "Biological counterfactual"
+
+  # ===========================================================================
+  # CATEGORY: ANALOGICAL REASONING (6 prompts)
+  # ===========================================================================
+
+  - id: analog_001
+    category: analogical
+    prompt: "Complete the analogy and explain your reasoning: Atom is to molecule as letter is to ___?"
+    expected:
+      expected_regex: "word|building block|component|small.*larger"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Part-to-whole analogy"
+
+  - id: analog_002
+    category: analogical
+    prompt: "How is the immune system analogous to a country's military defense? Identify at least 4 parallels."
+    expected:
+      expected_regex: "invader|patrol|memory|barrier|response|defense"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Complex system analogy"
+
+  - id: analog_003
+    category: analogical
+    prompt: "Explain how an electric circuit is analogous to a water pipe system. What corresponds to voltage, current, and resistance?"
+    expected:
+      expected_regex: "pressure|flow|pipe.*diameter|narrow|water.*current|height.*voltage"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.6
+      rubric_weight: 0.4
+      critical: false
+    notes: "Physics analogy"
+
+  - id: analog_004
+    category: analogical
+    prompt: "In what way is a company's organizational structure analogous to a biological organism?"
+    expected:
+      expected_regex: "organ|function|CEO.*brain|blood.*flow|hierarchy|special"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.4
+      rubric_weight: 0.6
+      critical: false
+    notes: "Organization analogy"
+
+  - id: analog_005
+    category: analogical
+    prompt: "Complete: Thermometer is to temperature as speedometer is to ___ as barometer is to ___?"
+    expected:
+      expected_regex: "speed|velocity|pressure|atmospheric"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Measurement instrument analogy"
+
+  - id: analog_006
+    category: analogical
+    prompt: "Draw an analogy between natural selection in biology and market competition in economics. What corresponds to 'fitness'?"
+    expected:
+      expected_regex: "adapt|compet|surviv|profit|select|resource|fitness.*market|efficiency"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Cross-domain analogy"
+
+  # ===========================================================================
+  # CATEGORY: METACOGNITIVE TASKS (6 prompts)
+  # ===========================================================================
+
+  - id: meta_001
+    category: metacognitive
+    prompt: "Rate your confidence (as a percentage) in the following statement and explain your reasoning: 'The Eiffel Tower is taller than the Statue of Liberty.'"
+    expected:
+      expected_numeric:
+        value: 95
+        tolerance: 10
+        extract_pattern: "(\\d+)%?"
+      expected_regex: "confident|certain|Eiffel.*330|Statue.*93|meter|feet"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Confidence calibration - true statement"
+
+  - id: meta_002
+    category: metacognitive
+    prompt: "For this question, identify what additional information you would need to give a definitive answer, then provide your best estimate: 'How many piano tuners are there in Chicago?'"
+    expected:
+      expected_regex: "population|piano|household|estimate|Fermi|assum"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.4
+      rubric_weight: 0.6
+      critical: false
+    notes: "Fermi estimation with metacognition"
+
+  - id: meta_003
+    category: metacognitive
+    prompt: "Explain three ways your answer to a complex question might be wrong, using this as an example: 'What will be the dominant programming language in 2030?'"
+    expected:
+      expected_regex: "predict|uncertain|bias|assumption|wrong|limitation|future"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.4
+      rubric_weight: 0.6
+      critical: false
+    notes: "Self-critique and epistemic humility"
+
+  - id: meta_004
+    category: metacognitive
+    prompt: "You're asked 'What is 847 × 293?' Without calculating, estimate the answer and explain how confident you should be in your estimate."
+    expected:
+      expected_numeric:
+        value: 248171
+        tolerance: 50000
+        extract_pattern: "([0-9,]+)"
+      expected_regex: "estimate|rough|approximately|round|confidence"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Estimation and confidence calibration"
+
+  - id: meta_005
+    category: metacognitive
+    prompt: "If you were explaining quantum entanglement to a 10-year-old, a physics undergraduate, and a professor, how would your explanations differ? Give a brief example of each."
+    expected:
+      expected_regex: "simple|analogy|technical|math|formula|audience|level"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.4
+      rubric_weight: 0.6
+      critical: false
+    notes: "Audience awareness and adaptation"
+
+  - id: meta_006
+    category: metacognitive
+    prompt: "What types of questions are you (as an AI) most likely to answer incorrectly? Give 3 categories with explanations."
+    expected:
+      expected_regex: "recent|temporal|personal|subjective|hallucin|knowledge.*cutoff|real.?time"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.5
+      rubric_weight: 0.5
+      critical: false
+    notes: "Self-awareness of limitations"
+
+  # ===========================================================================
+  # CATEGORY: CONSTRAINT SATISFACTION (6 prompts)
+  # ===========================================================================
+
+  - id: const_001
+    category: constraint_satisfaction
+    prompt: "Schedule 4 meetings (A, B, C, D) in 4 time slots (9AM, 10AM, 11AM, 12PM) such that: A must be before B, C cannot be at 10AM, D must be immediately after A, and B must be at 11AM or later. Show one valid schedule."
+    expected:
+      expected_regex: "A.*9|D.*10|B.*11|C.*(9|11|12)|schedule|valid"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Scheduling constraint problem"
+
+  - id: const_002
+    category: constraint_satisfaction
+    prompt: "Place 8 queens on a chess board such that no two queens can attack each other. Describe the positions of at least 4 queens in your solution."
+    expected:
+      expected_regex: "row|column|diagonal|position|a\\d|[a-h]\\d"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "N-queens problem"
+
+  - id: const_003
+    category: constraint_satisfaction
+    prompt: "You have three jugs: 8 liters (full), 5 liters (empty), and 3 liters (empty). How do you measure exactly 4 liters?"
+    expected:
+      expected_regex: "pour|step|transfer|8.*5.*3|4.*liter"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.7
+      rubric_weight: 0.3
+      critical: false
+    notes: "Water jug problem"
+
+  - id: const_004
+    category: constraint_satisfaction
+    prompt: "Create a 3x3 magic square using the numbers 1-9, where all rows, columns, and diagonals sum to 15."
+    expected:
+      expected_regex: "5.*center|2.*9.*4|7.*5.*3|6.*1.*8|15"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Magic square construction"
+
+  - id: const_005
+    category: constraint_satisfaction
+    prompt: "A cryptarithmetic puzzle: SEND + MORE = MONEY. Each letter represents a unique digit 0-9. What are the values?"
+    expected:
+      expected_regex: "S.*=.*9|E.*=.*5|N.*=.*6|D.*=.*7|M.*=.*1|O.*=.*0|R.*=.*8|Y.*=.*2|9567.*1085.*10652"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.9
+      rubric_weight: 0.1
+      critical: true
+    notes: "Classic cryptarithmetic"
+
+  - id: const_006
+    category: constraint_satisfaction
+    prompt: "Arrange the letters A, B, C, D in a row such that: A is not first, B is not last, C is somewhere to the right of A, and D is not adjacent to B. List all valid arrangements."
+    expected:
+      expected_regex: "BADC|BDAC|CADB|DACB|arrangement|valid"
+    requirements:
+      requires_no_clarification: true
+    scoring:
+      objective_weight: 0.8
+      rubric_weight: 0.2
+      critical: false
+    notes: "Arrangement with constraints"
+
+# =============================================================================
+# RUBRIC DEFINITIONS
+# =============================================================================
+rubrics:
+  default:
+    reasoning_depth:
+      description: "How thoroughly does the response explore the problem?"
+      levels:
+        5: "Comprehensive multi-step reasoning with clear logic"
+        4: "Good reasoning with most steps explained"
+        3: "Adequate reasoning but missing some steps"
+        2: "Shallow reasoning, jumps to conclusion"
+        1: "No apparent reasoning"
+    
+    accuracy_likelihood:
+      description: "How likely is the response to be correct?"
+      levels:
+        5: "High confidence in correctness"
+        4: "Likely correct with minor issues"
+        3: "Partially correct"
+        2: "Likely incorrect"
+        1: "Definitely incorrect"
+    
+    proof_rigor:
+      description: "For proofs/solutions, how rigorous is the approach?"
+      levels:
+        5: "Formal and complete proof"
+        4: "Valid proof with minor gaps"
+        3: "Mostly valid reasoning"
+        2: "Significant logical gaps"
+        1: "Invalid or missing proof"
+    
+    creativity:
+      description: "For counterfactuals/analogies, how creative is the reasoning?"
+      levels:
+        5: "Highly creative and insightful"
+        4: "Creative with good insights"
+        3: "Standard/expected reasoning"
+        2: "Limited creativity"
+        1: "Unimaginative or irrelevant"
+
