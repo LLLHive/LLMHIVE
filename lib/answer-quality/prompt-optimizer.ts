@@ -219,11 +219,31 @@ export function optimizePrompt(query: string, analysis?: QueryAnalysis): Optimiz
 }
 
 function detectIntent(query: string): QueryIntent {
+  // First, detect domain to avoid misclassifying non-tech queries as troubleshooting
+  const isMedicalDomain = /\b(medical|health|disease|symptom|treatment|diagnosis|patient|clinical|doctor|medicine|therapy|condition|medication|healthcare|nursing)\b/i.test(query)
+  const isLegalDomain = /\b(legal|law|court|attorney|lawsuit|contract|rights|liability|regulation|compliance|statute|legislation)\b/i.test(query)
+  const isFinanceDomain = /\b(invest|stock|financial|tax|budget|accounting|portfolio|market|banking|trading)\b/i.test(query)
+  const isTechDomain = /\b(code|software|programming|developer|api|database|framework|javascript|python|typescript|react|node)\b/i.test(query)
+  
+  // For non-tech domains, prefer research/analytical over troubleshooting
+  const isNonTechDomain = (isMedicalDomain || isLegalDomain || isFinanceDomain) && !isTechDomain
+  
   for (const { intent, patterns } of INTENT_PATTERNS) {
+    // Skip troubleshooting intent for non-tech domains unless explicitly about code/debugging
+    if (intent === 'troubleshooting' && isNonTechDomain) {
+      continue
+    }
+    
     if (patterns.some(pattern => pattern.test(query))) {
       return intent
     }
   }
+  
+  // Default to research for professional domains
+  if (isNonTechDomain) {
+    return 'research'
+  }
+  
   return 'conversational'
 }
 

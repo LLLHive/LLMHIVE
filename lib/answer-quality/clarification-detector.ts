@@ -146,15 +146,21 @@ function checkForDirectClarificationNeeds(query: string): {
   }
   
   if (topicContextNeeded && questions.length < 2) {
-    // Add context-specific question based on detected topic
-    if (/\b(error|bug|issue|problem)\b/i.test(query)) {
+    // Detect domain first to ask domain-appropriate questions
+    const isMedicalDomain = /\b(medical|health|disease|symptom|treatment|diagnosis|patient|clinical|doctor|medicine|therapy|condition|medication)\b/i.test(query)
+    const isLegalDomain = /\b(legal|law|court|attorney|lawsuit|contract|rights|liability|regulation|compliance)\b/i.test(query)
+    const isFinanceDomain = /\b(invest|stock|financial|tax|budget|money|accounting|portfolio|market)\b/i.test(query)
+    const isTechDomain = /\b(code|app|application|software|programming|developer|bug|error|debug|api|database|framework)\b/i.test(query)
+    
+    // Only apply tech-focused questions for tech domain
+    if (isTechDomain && /\b(error|bug|issue|problem)\b/i.test(query)) {
       questions.push({
         id: 'error-context',
         question: 'What error message or unexpected behavior are you seeing?',
         type: 'recommended',
         reason: 'Knowing the exact error helps me provide a targeted solution',
       })
-    } else if (/\b(app|application|code|project|system)\b/i.test(query)) {
+    } else if (isTechDomain && /\b(app|application|code|project|system)\b/i.test(query)) {
       questions.push({
         id: 'tech-context',
         question: 'What programming language, framework, or technology are you using?',
@@ -162,10 +168,35 @@ function checkForDirectClarificationNeeds(query: string): {
         reason: 'This helps me give you relevant code examples and advice',
         options: ['JavaScript/TypeScript', 'Python', 'Java', 'Other'],
       })
+    } else if (isMedicalDomain) {
+      // Medical-specific clarification
+      questions.push({
+        id: 'medical-context',
+        question: 'Could you provide more details about the specific condition or topic you are researching?',
+        type: 'recommended',
+        reason: 'This helps me provide more relevant medical research information',
+      })
+    } else if (isLegalDomain) {
+      // Legal-specific clarification
+      questions.push({
+        id: 'legal-context',
+        question: 'What jurisdiction or type of law are you asking about?',
+        type: 'recommended',
+        reason: 'Legal matters vary significantly by jurisdiction and area of law',
+        options: ['United States', 'European Union', 'Other jurisdiction', 'General principles'],
+      })
+    } else if (isFinanceDomain) {
+      // Finance-specific clarification
+      questions.push({
+        id: 'finance-context',
+        question: 'What is your investment timeline and risk tolerance?',
+        type: 'recommended',
+        reason: 'Financial advice varies based on your goals and risk profile',
+      })
     } else if (/\b(better|improve|optimize|best)\b/i.test(query)) {
       questions.push({
         id: 'goal-context',
-        question: 'What is your main goal or priority? (e.g., performance, readability, cost)',
+        question: 'What is your main goal or priority?',
         type: 'recommended',
         reason: "Different goals lead to different 'best' solutions",
       })
@@ -281,11 +312,22 @@ export function makeClarificationDecision(analysis: QueryAnalysis): Clarificatio
   analysis.missingContext.forEach(ctx => {
     confidence -= 0.2
     if (questions.length < CLARIFICATION_THRESHOLDS.MAX_QUESTIONS) {
+      // Generate proper question based on context type
+      let question: string
+      const ctxLower = ctx.toLowerCase()
+      
+      // Handle sentences that are already questions
+      if (ctxLower.startsWith('what ') || ctxLower.startsWith('which ') || ctxLower.startsWith('how ')) {
+        question = ctx.endsWith('?') ? ctx : `${ctx}?`
+      } else {
+        question = `What ${ctxLower} are you referring to?`
+      }
+      
       questions.push({
         id: `context-${questions.length}`,
-        question: `What ${ctx.toLowerCase()} are you referring to?`,
+        question,
         type: 'required',
-        reason: `The ${ctx.toLowerCase()} is needed to provide an accurate answer`,
+        reason: `This information is needed to provide an accurate answer`,
       })
     }
   })
