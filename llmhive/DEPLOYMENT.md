@@ -116,7 +116,9 @@ Current production configuration:
 
 ## Firestore Setup
 
-1. Create Firestore database in Native mode:
+> **Note:** If you already have a Firestore database configured, skip this section.
+
+1. Create Firestore database in Native mode (only for new projects):
    ```bash
    gcloud firestore databases create --location=us-east1
    ```
@@ -126,9 +128,16 @@ Current production configuration:
    # The indexes will be auto-created on first query
    ```
 
+**Existing Implementation:** The Firestore integration is already fully implemented in:
+- `llmhive/src/llmhive/app/firestore_db.py` - Core client
+- `llmhive/src/llmhive/app/services/conversations_firestore.py` - Conversations service
+- `llmhive/src/llmhive/app/routers/conversations.py` - API endpoints
+
 ## Pinecone Setup
 
-1. Create a Pinecone index via the Pinecone Console or CLI:
+> **Note:** If you already have a Pinecone index configured, skip this section.
+
+1. Create a Pinecone index via the Pinecone Console or CLI (only for new projects):
    ```bash
    pc index create \
      -n llmhive-memory \
@@ -140,6 +149,12 @@ Current production configuration:
    ```
 
 2. Set the `PINECONE_API_KEY` secret in Secret Manager
+
+**Existing Implementation:** The Pinecone integration is already fully implemented in:
+- `llmhive/src/llmhive/app/knowledge/pinecone_kb.py` - Knowledge base (859 lines)
+- `llmhive/src/llmhive/app/rlhf/pinecone_feedback.py` - RLHF feedback storage
+- `llmhive/src/llmhive/app/memory/vector_store.py` - Vector store abstraction
+- `llmhive/src/llmhive/app/learning/answer_store.py` - Answer caching
 
 ## Monitoring
 
