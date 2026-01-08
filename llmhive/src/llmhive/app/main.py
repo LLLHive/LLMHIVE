@@ -620,3 +620,11 @@ try:
     logger.info("✓ Conversations router enabled at /v1/data/")
 except ImportError as e:
     logger.debug("Conversations router not available: %s", e)
+
+# Include admin router for system administration and weekly optimization
+try:
+    from .routers import admin as admin_router
+    app.include_router(admin_router.router)
+    logger.info("✓ Admin router enabled at /api/v1/admin/")
+except ImportError as e:
+    logger.debug("Admin router not available: %s", e)

@@ -2081,8 +2081,45 @@ Please provide an accurate, well-verified response."""
                 logger.warning("Dialogue pre-processing failed: %s", e)
         
         # Phase 0: Prompt Diffusion (optional pre-processing)
+        # Auto-activate for complex/ambiguous queries when feature is enabled
         diffusion_result: Optional[Any] = None
         original_prompt = prompt  # Store original for transparency
+        
+        # Auto-detect if prompt diffusion should be activated
+        auto_diffusion_reasons: List[str] = []
+        if not use_prompt_diffusion and self.prompt_diffusion and PROMPT_DIFFUSION_AVAILABLE:
+            # Check if query complexity warrants automatic diffusion
+            prompt_lower = prompt.lower()
+            word_count = len(prompt.split())
+            
+            # High complexity indicators (auto-activate)
+            complexity_indicators = [
+                word_count > 80,  # Long queries often need refinement
+                prompt_lower.count("?") >= 3,  # Multiple questions
+                "compare" in prompt_lower and "vs" in prompt_lower,  # Comparison queries
+                any(kw in prompt_lower for kw in ["analyze", "evaluate", "assess", "critique"]),
+                prompt_lower.count(",") >= 5,  # Multiple clauses
+                accuracy_level >= 4,  # User wants high accuracy
+            ]
+            
+            # Ambiguity indicators (needs clarification refinement)
+            ambiguity_indicators = [
+                "it" in prompt_lower.split()[:5] and "?" in prompt,  # Pronoun-heavy start
+                any(vague in prompt_lower for vague in ["something like", "kind of", "maybe", "probably"]),
+                "this" in prompt_lower.split()[:3] and len(prompt.split()) > 10,
+            ]
+            
+            complexity_score = sum(complexity_indicators)
+            ambiguity_score = sum(ambiguity_indicators)
+            
+            if complexity_score >= 2:
+                use_prompt_diffusion = True
+                auto_diffusion_reasons.append(f"high_complexity({complexity_score}/6)")
+                logger.info("Auto-activating prompt diffusion: high complexity score %d", complexity_score)
+            elif ambiguity_score >= 1 and word_count > 15:
+                use_prompt_diffusion = True
+                auto_diffusion_reasons.append(f"ambiguity_detected({ambiguity_score})")
+                logger.info("Auto-activating prompt diffusion: ambiguity detected")
         
         if use_prompt_diffusion and self.prompt_diffusion and PROMPT_DIFFUSION_AVAILABLE:
             try:
@@ -2118,6 +2155,8 @@ Please provide an accurate, well-verified response."""
                         scratchpad.write("diffusion_improvements", [
                             imp for v in diffusion_result.versions for imp in v.improvements
                         ])
+                        if auto_diffusion_reasons:
+                            scratchpad.write("auto_diffusion_reasons", auto_diffusion_reasons)
                 
             except Exception as e:
                 logger.warning("Prompt diffusion failed: %s", e)

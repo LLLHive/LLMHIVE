@@ -123,3 +123,31 @@ def log_feature_states() -> None:
     logger.info("Feature flags - Enabled: %s", enabled)
     logger.info("Feature flags - Disabled: %s", disabled)
 
+
+def enable_feature(flag: FeatureFlags) -> None:
+    """Enable a feature flag at runtime.
+    
+    Sets the corresponding environment variable to enable the feature.
+    This persists only for the current process.
+    
+    Args:
+        flag: The feature flag to enable
+    """
+    env_var = f"FEATURE_{flag.value.upper()}"
+    os.environ[env_var] = "true"
+    logger.info("Feature %s enabled (runtime)", flag.value)
+
+
+def disable_feature(flag: FeatureFlags) -> None:
+    """Disable a feature flag at runtime.
+    
+    Sets the corresponding environment variable to disable the feature.
+    This persists only for the current process.
+    
+    Args:
+        flag: The feature flag to disable
+    """
+    env_var = f"FEATURE_{flag.value.upper()}"
+    os.environ[env_var] = "false"
+    logger.info("Feature %s disabled (runtime)", flag.value)
+
