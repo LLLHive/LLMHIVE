@@ -72,6 +72,7 @@ export interface Conversation {
   model: string
   pinned?: boolean
   archived?: boolean
+  projectId?: string
 }
 
 export interface Project {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,13 +15,32 @@ import {
   TrendingDown, 
   Minus,
   BarChart3,
-  PieChart,
+  PieChart as PieChartIcon,
   Activity,
   Calendar,
   ArrowLeft,
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  RadialBarChart,
+  RadialBar,
+} from "recharts"
 
 interface FeedbackStats {
   period_days: number
@@ -61,6 +80,20 @@ interface FeedbackStats {
     quality_score: number
   }
 }
+
+// Chart colors
+const COLORS = {
+  bronze: "hsl(30, 72%, 45%)",
+  gold: "hsl(42, 87%, 55%)",
+  green: "hsl(142, 76%, 36%)",
+  red: "hsl(0, 84%, 60%)",
+  blue: "hsl(217, 91%, 60%)",
+  purple: "hsl(262, 83%, 58%)",
+  orange: "hsl(25, 95%, 53%)",
+  cyan: "hsl(187, 92%, 40%)",
+}
+
+const PIE_COLORS = [COLORS.bronze, COLORS.green, COLORS.blue, COLORS.purple, COLORS.orange]
 
 function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
   if (trend === "up") return <TrendingUp className="h-4 w-4 text-green-500" />
@@ -104,93 +137,55 @@ function StatCard({
   )
 }
 
-function SimpleBarChart({ data, maxValue }: { data: { label: string; value: number; color?: string }[]; maxValue: number }) {
-  return (
-    <div className="space-y-3">
-      {data.map((item, i) => (
-        <div key={i} className="space-y-1">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{item.label}</span>
-            <span className="text-muted-foreground">{item.value}</span>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div 
-              className={cn(
-                "h-full rounded-full transition-all",
-                item.color || "bg-[var(--bronze)]"
-              )}
-              style={{ width: `${(item.value / maxValue) * 100}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+// Custom tooltip for charts
+function CustomTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+        <p className="text-sm font-medium mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-xs" style={{ color: entry.color }}>
+            {entry.name}: {entry.value}
+          </p>
+        ))}
+      </div>
+    )
+  }
+  return null
 }
 
+// Satisfaction Gauge using RadialBarChart
 function SatisfactionGauge({ value }: { value: number }) {
   const percentage = Math.round(value * 100)
-  const color = percentage >= 80 ? "text-green-500" : percentage >= 60 ? "text-yellow-500" : "text-red-500"
-  const bgColor = percentage >= 80 ? "bg-green-500" : percentage >= 60 ? "bg-yellow-500" : "bg-red-500"
+  const color = percentage >= 80 ? COLORS.green : percentage >= 60 ? COLORS.orange : COLORS.red
+  
+  const data = [{ name: "Satisfaction", value: percentage, fill: color }]
   
   return (
-    <div className="flex flex-col items-center justify-center p-6">
-      <div className="relative w-32 h-32">
-        {/* Background circle */}
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="10"
-            className="text-muted"
+    <div className="flex flex-col items-center justify-center p-4">
+      <ResponsiveContainer width={200} height={200}>
+        <RadialBarChart
+          cx="50%"
+          cy="50%"
+          innerRadius="70%"
+          outerRadius="100%"
+          barSize={20}
+          data={data}
+          startAngle={180}
+          endAngle={0}
+        >
+          <RadialBar
+            dataKey="value"
+            cornerRadius={10}
+            background={{ fill: "hsl(var(--muted))" }}
           />
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="10"
-            strokeDasharray={`${percentage * 2.83} 283`}
-            className={color}
-          />
-        </svg>
-        {/* Center text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={cn("text-3xl font-bold", color)}>{percentage}%</span>
-          <span className="text-xs text-muted-foreground">Satisfaction</span>
-        </div>
+        </RadialBarChart>
+      </ResponsiveContainer>
+      <div className="mt-[-100px] flex flex-col items-center">
+        <span className="text-4xl font-bold" style={{ color }}>{percentage}%</span>
+        <span className="text-sm text-muted-foreground">Satisfaction</span>
       </div>
     </div>
-  )
-}
-
-function MiniChart({ data, height = 40 }: { data: number[]; height?: number }) {
-  if (!data.length) return null
-  
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
-  
-  const points = data.map((value, i) => {
-    const x = (i / (data.length - 1)) * 100
-    const y = height - ((value - min) / range) * height
-    return `${x},${y}`
-  }).join(" ")
-  
-  return (
-    <svg className="w-full" height={height} viewBox={`0 0 100 ${height}`} preserveAspectRatio="none">
-      <polyline
-        points={points}
-        fill="none"
-        stroke="var(--bronze)"
-        strokeWidth="2"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
   )
 }
 
@@ -199,24 +194,24 @@ export default function FeedbackAnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState("30")
 
-  useEffect(() => {
-    async function fetchStats() {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`/api/analytics/feedback?days=${selectedPeriod}`)
-        if (response.ok) {
-          const data = await response.json()
-          setStats(data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch analytics:", error)
-      } finally {
-        setIsLoading(false)
+  const fetchStats = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/analytics/feedback?days=${selectedPeriod}`)
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
       }
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error)
+    } finally {
+      setIsLoading(false)
     }
-    
-    fetchStats()
   }, [selectedPeriod])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
 
   if (isLoading) {
     return (
@@ -238,6 +233,36 @@ export default function FeedbackAnalyticsPage() {
     )
   }
 
+  // Prepare data for charts
+  const feedbackBreakdownData = [
+    { name: "Thumbs Up", value: stats.totals.thumbs_up, color: COLORS.green },
+    { name: "Thumbs Down", value: stats.totals.thumbs_down, color: COLORS.red },
+    { name: "Copies", value: stats.totals.copies, color: COLORS.blue },
+    { name: "Shares", value: stats.totals.shares, color: COLORS.purple },
+    { name: "Regenerations", value: stats.totals.regenerations, color: COLORS.orange },
+  ]
+
+  const modelBarData = stats.model_stats.map(m => ({
+    name: m.model.split("/").pop() || m.model,
+    satisfaction: Math.round(m.satisfaction * 100),
+    thumbsUp: m.thumbs_up,
+    thumbsDown: m.thumbs_down,
+  })).sort((a, b) => b.satisfaction - a.satisfaction)
+
+  const domainData = stats.domain_stats.map(d => ({
+    name: d.domain.charAt(0).toUpperCase() + d.domain.slice(1),
+    count: d.count,
+    satisfaction: Math.round(d.satisfaction * 100),
+  }))
+
+  const timelineData = stats.daily_stats.map(d => ({
+    date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    satisfaction: Math.round(d.satisfaction_rate * 100),
+    total: d.total,
+    thumbsUp: d.thumbs_up,
+    thumbsDown: d.thumbs_down,
+  }))
+
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
       {/* Header */}
@@ -254,7 +279,7 @@ export default function FeedbackAnalyticsPage() {
           </div>
         </div>
         
-        {/* Period Selector */}
+        {/* Period Selector + Refresh */}
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <select
@@ -266,6 +291,9 @@ export default function FeedbackAnalyticsPage() {
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
           </select>
+          <Button variant="outline" size="icon" onClick={fetchStats} disabled={isLoading}>
+            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+          </Button>
         </div>
       </div>
 
@@ -280,46 +308,46 @@ export default function FeedbackAnalyticsPage() {
         />
         <StatCard
           title="Thumbs Up"
-          value={stats.totals.thumbs_up}
+          value={stats.totals.thumbs_up.toLocaleString()}
           icon={ThumbsUp}
           description="Positive feedback"
           color="green-500"
         />
         <StatCard
           title="Thumbs Down"
-          value={stats.totals.thumbs_down}
+          value={stats.totals.thumbs_down.toLocaleString()}
           icon={ThumbsDown}
           description="Negative feedback"
           color="red-500"
         />
         <StatCard
           title="Copies"
-          value={stats.totals.copies}
+          value={stats.totals.copies.toLocaleString()}
           icon={Copy}
           description="Answer copied"
         />
         <StatCard
           title="Shares"
-          value={stats.totals.shares}
+          value={stats.totals.shares.toLocaleString()}
           icon={Share2}
           description="Answers shared"
         />
         <StatCard
           title="Regenerations"
-          value={stats.totals.regenerations}
+          value={stats.totals.regenerations.toLocaleString()}
           icon={RefreshCw}
           description="Retry requests"
           color="yellow-500"
         />
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - Charts */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Satisfaction Gauge + Trends */}
+        {/* Left Column - Satisfaction Gauge */}
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-5 w-5" />
+              <PieChartIcon className="h-5 w-5" />
               Overall Satisfaction
             </CardTitle>
             <CardDescription>
@@ -348,7 +376,7 @@ export default function FeedbackAnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Right Column - Tabs with detailed views */}
+        {/* Right Column - Tabs with detailed charts */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -357,57 +385,128 @@ export default function FeedbackAnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="models">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="models">By Model</TabsTrigger>
-                <TabsTrigger value="domains">By Domain</TabsTrigger>
+            <Tabs defaultValue="timeline">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                <TabsTrigger value="models">Models</TabsTrigger>
+                <TabsTrigger value="domains">Domains</TabsTrigger>
+                <TabsTrigger value="breakdown">Breakdown</TabsTrigger>
               </TabsList>
               
+              {/* Timeline Tab - Area Chart */}
+              <TabsContent value="timeline" className="mt-4">
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={timelineData}>
+                      <defs>
+                        <linearGradient id="colorSatisfaction" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={COLORS.bronze} stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor={COLORS.bronze} stopOpacity={0.1}/>
+                        </linearGradient>
+                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={COLORS.blue} stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor={COLORS.blue} stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                      <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Area
+                        type="monotone"
+                        dataKey="satisfaction"
+                        name="Satisfaction %"
+                        stroke={COLORS.bronze}
+                        fillOpacity={1}
+                        fill="url(#colorSatisfaction)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        name="Total Feedback"
+                        stroke={COLORS.blue}
+                        fillOpacity={1}
+                        fill="url(#colorTotal)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Daily satisfaction rate and engagement over {stats.period_days} days
+                </p>
+              </TabsContent>
+              
+              {/* Models Tab - Bar Chart */}
               <TabsContent value="models" className="mt-4">
-                <SimpleBarChart
-                  data={stats.model_stats.map(m => ({
-                    label: m.model,
-                    value: Math.round(m.satisfaction * 100),
-                    color: m.satisfaction >= 0.8 ? "bg-green-500" : m.satisfaction >= 0.6 ? "bg-yellow-500" : "bg-red-500"
-                  }))}
-                  maxValue={100}
-                />
-                <p className="text-xs text-muted-foreground mt-4">
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={modelBarData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis type="number" domain={[0, 100]} tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                      <YAxis dataKey="name" type="category" width={100} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar
+                        dataKey="satisfaction"
+                        name="Satisfaction %"
+                        fill={COLORS.bronze}
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
                   Satisfaction rate by model (higher is better)
                 </p>
               </TabsContent>
               
+              {/* Domains Tab - Bar Chart */}
               <TabsContent value="domains" className="mt-4">
-                <SimpleBarChart
-                  data={stats.domain_stats.map(d => ({
-                    label: d.domain.charAt(0).toUpperCase() + d.domain.slice(1),
-                    value: d.count,
-                  }))}
-                  maxValue={Math.max(...stats.domain_stats.map(d => d.count))}
-                />
-                <p className="text-xs text-muted-foreground mt-4">
-                  Query distribution by domain
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={domainData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Bar dataKey="count" name="Query Count" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="satisfaction" name="Satisfaction %" fill={COLORS.bronze} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Query distribution and satisfaction by domain
                 </p>
               </TabsContent>
-              
-              <TabsContent value="timeline" className="mt-4 space-y-4">
-                <div>
-                  <p className="text-sm font-medium mb-2">Daily Satisfaction Rate</p>
-                  <MiniChart 
-                    data={stats.daily_stats.map(d => d.satisfaction_rate * 100)} 
-                    height={60}
-                  />
+
+              {/* Breakdown Tab - Pie Chart */}
+              <TabsContent value="breakdown" className="mt-4">
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={feedbackBreakdownData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {feedbackBreakdownData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-                <div>
-                  <p className="text-sm font-medium mb-2">Daily Engagement</p>
-                  <MiniChart 
-                    data={stats.daily_stats.map(d => d.total)} 
-                    height={60}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Trends over the selected {stats.period_days} day period
+                <p className="text-xs text-muted-foreground mt-2">
+                  Distribution of feedback types
                 </p>
               </TabsContent>
             </Tabs>
@@ -456,7 +555,47 @@ export default function FeedbackAnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Engagement Timeline - Line Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Over Time</CardTitle>
+          <CardDescription>
+            Thumbs up vs thumbs down trends
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={timelineData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="thumbsUp"
+                  name="Thumbs Up"
+                  stroke={COLORS.green}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="thumbsDown"
+                  name="Thumbs Down"
+                  stroke={COLORS.red}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
-

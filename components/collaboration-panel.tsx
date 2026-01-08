@@ -1,168 +1,354 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Users, UserPlus, Mail, Link2, Crown, Shield, UserIcon, MoreHorizontal } from "lucide-react"
+import { 
+  Users, 
+  UserPlus, 
+  Mail, 
+  Link2, 
+  Crown, 
+  Shield, 
+  UserIcon, 
+  MoreHorizontal,
+  MessageSquare,
+  Send,
+  Wifi,
+  WifiOff,
+  Loader2,
+  Copy,
+  Check,
+} from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/lib/toast"
-
-interface Collaborator {
-  id: string
-  name: string
-  email: string
-  avatar?: string
-  role: "owner" | "editor" | "viewer"
-  status: "online" | "offline"
-}
+import { useCollaboration, CollaborationUser, CollaborationMessage } from "@/lib/hooks/use-collaboration"
+import { cn } from "@/lib/utils"
 
 export function CollaborationPanel() {
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([
-    {
-      id: "1",
-      name: "You",
-      email: "you@example.com",
-      role: "owner",
-      status: "online",
+  const {
+    sessionId,
+    users,
+    messages,
+    isConnected,
+    isConnecting,
+    error,
+    connect,
+    disconnect,
+    sendMessage,
+    sendTypingStart,
+    sendTypingStop,
+    createSession,
+  } = useCollaboration({
+    onUserJoin: (user) => {
+      toast.success(`${user.name} joined the session`)
     },
-  ])
+    onUserLeave: (userId) => {
+      const user = users.find(u => u.id === userId)
+      if (user) {
+        toast.info(`${user.name} left the session`)
+      }
+    },
+  })
+
   const [inviteEmail, setInviteEmail] = useState("")
+  const [chatInput, setChatInput] = useState("")
+  const [joinSessionId, setJoinSessionId] = useState("")
+  const [copiedLink, setCopiedLink] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Auto-scroll to new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const handleCreateSession = async () => {
+    const newSessionId = await createSession()
+    if (newSessionId) {
+      await connect(newSessionId)
+      toast.success("Session created!")
+    }
+  }
+
+  const handleJoinSession = async () => {
+    if (!joinSessionId.trim()) {
+      toast.error("Please enter a session ID")
+      return
+    }
+    await connect(joinSessionId.trim())
+  }
 
   const handleInvite = () => {
     if (!inviteEmail.trim()) return
     
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(inviteEmail)) {
       toast.error("Please enter a valid email address")
       return
     }
     
-    // Add new collaborator (pending invite)
-    const newCollaborator: Collaborator = {
-      id: `collab-${Date.now()}`,
-      name: inviteEmail.split("@")[0],
-      email: inviteEmail,
-      role: "viewer",
-      status: "offline",
-    }
-    setCollaborators((prev) => [...prev, newCollaborator])
+    // Send invite email
+    const subject = encodeURIComponent("Join my LLMHive collaboration session")
+    const shareUrl = `${window.location.origin}/collaborate?session=${sessionId}`
+    const body = encodeURIComponent(`I'd like to invite you to collaborate on LLMHive.\n\nJoin here: ${shareUrl}`)
+    window.open(`mailto:${inviteEmail}?subject=${subject}&body=${body}`, "_blank")
+    
     toast.success(`Invitation sent to ${inviteEmail}`)
     setInviteEmail("")
   }
 
-  const handleEmailInvite = () => {
-    const subject = encodeURIComponent("Join my LLMHive workspace")
-    const body = encodeURIComponent("I'd like to invite you to collaborate on LLMHive. Click here to join: [link]")
-    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank")
-    toast.info("Opening email client...")
-  }
-
   const handleCopyLink = async () => {
-    const shareLink = `${window.location.origin}/share/${Date.now()}`
+    if (!sessionId) return
+    
+    const shareLink = `${window.location.origin}/collaborate?session=${sessionId}`
     try {
       await navigator.clipboard.writeText(shareLink)
-      toast.success("Share link copied to clipboard!")
+      setCopiedLink(true)
+      toast.success("Share link copied!")
+      setTimeout(() => setCopiedLink(false), 2000)
     } catch {
       toast.error("Failed to copy link")
     }
   }
 
-  return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-border">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Users className="h-6 w-6" />
-          Collaboration
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">Share and collaborate with your team</p>
-      </div>
+  const handleSendChat = () => {
+    if (!chatInput.trim()) return
+    sendMessage(chatInput.trim())
+    setChatInput("")
+    sendTypingStop()
+  }
 
-      <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6">
-          {/* Invite Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Invite Collaborators</h3>
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="email@example.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-              />
-              <Button onClick={handleInvite} className="bronze-gradient">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Invite
-              </Button>
-            </div>
+  const handleChatInputChange = (value: string) => {
+    setChatInput(value)
+    
+    // Typing indicator
+    if (value.trim()) {
+      sendTypingStart()
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      typingTimeoutRef.current = setTimeout(() => {
+        sendTypingStop()
+      }, 2000)
+    } else {
+      sendTypingStop()
+    }
+  }
 
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent" onClick={handleEmailInvite}>
-                <Mail className="h-3 w-3 mr-2" />
-                Email Invite
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent" onClick={handleCopyLink}>
-                <Link2 className="h-3 w-3 mr-2" />
-                Copy Link
-              </Button>
-            </div>
+  // Not connected - show join/create options
+  if (!isConnected && !isConnecting) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            Collaboration
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Real-time collaboration with your team
+          </p>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+          <div className="text-center space-y-2">
+            <WifiOff className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="font-semibold">Not Connected</h3>
+            <p className="text-sm text-muted-foreground">
+              Create or join a session to collaborate in real-time
+            </p>
           </div>
 
-          <div className="h-px bg-border" />
+          <div className="w-full max-w-xs space-y-4">
+            <Button onClick={handleCreateSession} className="w-full bronze-gradient">
+              <Users className="h-4 w-4 mr-2" />
+              Create New Session
+            </Button>
 
-          {/* Collaborators List */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Team Members ({collaborators.length})</h3>
-            <div className="space-y-2">
-              {collaborators.map((collaborator) => (
-                <CollaboratorItem
-                  key={collaborator.id}
-                  collaborator={collaborator}
-                  onRemove={() => setCollaborators(collaborators.filter((c) => c.id !== collaborator.id))}
-                  onRoleChange={(role) => {
-                    setCollaborators(collaborators.map((c) => (c.id === collaborator.id ? { ...c, role } : c)))
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="h-px bg-border" />
-
-          {/* Permissions */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Sharing Settings</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                <div>
-                  <p className="font-medium">Anyone with the link</p>
-                  <p className="text-xs text-muted-foreground">Can view and comment</p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Change
-                </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">or</span>
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Input
+                placeholder="Enter session ID"
+                value={joinSessionId}
+                onChange={(e) => setJoinSessionId(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleJoinSession()}
+              />
+              <Button 
+                variant="outline" 
+                className="w-full bg-transparent"
+                onClick={handleJoinSession}
+              >
+                Join Session
+              </Button>
+            </div>
           </div>
+
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
         </div>
-      </ScrollArea>
+      </div>
+    )
+  }
+
+  // Connecting state
+  if (isConnecting) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--bronze)]" />
+        <p className="mt-2 text-sm text-muted-foreground">Connecting...</p>
+      </div>
+    )
+  }
+
+  // Connected - show collaboration interface
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Wifi className="h-4 w-4 text-green-500" />
+          <span className="text-sm font-medium">Connected</span>
+          <Badge variant="secondary" className="text-xs">
+            {users.length} online
+          </Badge>
+        </div>
+        <Button variant="ghost" size="sm" onClick={disconnect}>
+          Leave
+        </Button>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="team" className="flex-1 flex flex-col">
+        <TabsList className="grid w-full grid-cols-2 mx-4 mt-2" style={{ width: "calc(100% - 2rem)" }}>
+          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="chat">Chat</TabsTrigger>
+        </TabsList>
+
+        {/* Team Tab */}
+        <TabsContent value="team" className="flex-1 flex flex-col mt-0">
+          <ScrollArea className="flex-1">
+            <div className="p-4 space-y-4">
+              {/* Invite Section */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Invite Collaborators</h3>
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="email@example.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+                  />
+                  <Button onClick={handleInvite} size="icon">
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 bg-transparent" 
+                    onClick={handleCopyLink}
+                  >
+                    {copiedLink ? (
+                      <Check className="h-3 w-3 mr-2 text-green-500" />
+                    ) : (
+                      <Link2 className="h-3 w-3 mr-2" />
+                    )}
+                    {copiedLink ? "Copied!" : "Copy Link"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="h-px bg-border" />
+
+              {/* Users List */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Team ({users.length})</h3>
+                <div className="space-y-2">
+                  {users.map((user) => (
+                    <CollaboratorItem key={user.id} user={user} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-px bg-border" />
+
+              {/* Session Info */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">Session Info</h3>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span>Session ID:</span>
+                    <code className="bg-muted px-1.5 py-0.5 rounded">{sessionId?.slice(0, 8)}...</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Chat Tab */}
+        <TabsContent value="chat" className="flex-1 flex flex-col mt-0">
+          <ScrollArea className="flex-1 px-4">
+            <div className="space-y-3 py-4">
+              {messages.length === 0 ? (
+                <div className="text-center text-sm text-muted-foreground py-8">
+                  <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No messages yet</p>
+                  <p className="text-xs">Start the conversation!</p>
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <ChatMessage key={msg.id} message={msg} />
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Typing indicator */}
+          {users.some(u => u.status === "typing") && (
+            <div className="px-4 py-1 text-xs text-muted-foreground">
+              {users.filter(u => u.status === "typing").map(u => u.name).join(", ")} typing...
+            </div>
+          )}
+
+          {/* Chat Input */}
+          <div className="p-4 border-t border-border">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Type a message..."
+                value={chatInput}
+                onChange={(e) => handleChatInputChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendChat()}
+              />
+              <Button onClick={handleSendChat} size="icon" disabled={!chatInput.trim()}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
 
-function CollaboratorItem({
-  collaborator,
-  onRemove,
-  onRoleChange,
-}: {
-  collaborator: Collaborator
-  onRemove: () => void
-  onRoleChange: (role: Collaborator["role"]) => void
-}) {
+function CollaboratorItem({ user }: { user: CollaborationUser }) {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "owner":
@@ -185,54 +371,70 @@ function CollaboratorItem({
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "online":
+        return "bg-green-500"
+      case "typing":
+        return "bg-yellow-500 animate-pulse"
+      default:
+        return "bg-gray-400"
+    }
+  }
+
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-[var(--bronze)] transition-colors">
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between p-2 rounded-lg border border-border hover:border-[var(--bronze)] transition-colors">
+      <div className="flex items-center gap-2">
         <div className="relative">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={collaborator.avatar || "/placeholder.svg"} />
-            <AvatarFallback>{collaborator.name[0]}</AvatarFallback>
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user.avatar || "/placeholder.svg"} />
+            <AvatarFallback className="text-xs">{user.name[0]}</AvatarFallback>
           </Avatar>
           <div
-            className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${
-              collaborator.status === "online" ? "bg-green-500" : "bg-gray-400"
-            }`}
+            className={cn(
+              "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background",
+              getStatusColor(user.status)
+            )}
           />
         </div>
         <div>
-          <p className="text-sm font-medium">{collaborator.name}</p>
-          <p className="text-xs text-muted-foreground">{collaborator.email}</p>
+          <p className="text-sm font-medium leading-none">{user.name}</p>
+          <p className="text-xs text-muted-foreground">{user.email}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary" className={getRoleColor(collaborator.role)}>
-          {getRoleIcon(collaborator.role)}
-          <span className="ml-1 capitalize">{collaborator.role}</span>
-        </Badge>
+      <Badge variant="secondary" className={cn("text-xs", getRoleColor(user.role))}>
+        {getRoleIcon(user.role)}
+        <span className="ml-1 capitalize">{user.role}</span>
+      </Badge>
+    </div>
+  )
+}
 
-        {collaborator.role !== "owner" && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onRoleChange("editor")}>
-                <Shield className="h-4 w-4 mr-2" />
-                Make Editor
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onRoleChange("viewer")}>
-                <UserIcon className="h-4 w-4 mr-2" />
-                Make Viewer
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onRemove} className="text-destructive">
-                Remove
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+function ChatMessage({ message }: { message: CollaborationMessage }) {
+  const isSystem = message.type === "system"
+  
+  if (isSystem) {
+    return (
+      <div className="text-center text-xs text-muted-foreground py-1">
+        {message.content}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex gap-2">
+      <Avatar className="h-6 w-6 flex-shrink-0 mt-0.5">
+        <AvatarFallback className="text-xs">{message.userName[0]}</AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-medium">{message.userName}</span>
+          <span className="text-xs text-muted-foreground">
+            {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        </div>
+        <p className="text-sm text-foreground/80 break-words">{message.content}</p>
       </div>
     </div>
   )

@@ -1,18 +1,21 @@
 "use client"
 
-import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react"
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import type { Conversation, Project } from "@/lib/types"
 
 const CONVERSATIONS_KEY = "llmhive-conversations"
 const PROJECTS_KEY = "llmhive-projects"
+const SYNC_DEBOUNCE_MS = 2000
 
 interface ConversationsContextValue {
   conversations: Conversation[]
   projects: Project[]
   currentConversation: Conversation | null
   isLoading: boolean
+  isSyncing: boolean
   error: string | null
+  lastSyncedAt: Date | null
   // Current conversation
   setCurrentConversation: (conv: Conversation | null) => void
   // Conversation actions
@@ -48,6 +51,7 @@ export const useConversations = useConversationsContext
 
 /**
  * Provider that shares conversation state across the entire app
+ * Uses localStorage for immediate persistence + API sync for cross-device/browser
  */
 export function ConversationsProvider({ children }: { children: ReactNode }) {
   const auth = useAuth()
@@ -55,10 +59,18 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSyncing, setIsSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null)
+  
+  // Ref to track pending changes for smart sync
+  const pendingChangesRef = useRef<{ conversations: boolean; projects: boolean }>({
+    conversations: false,
+    projects: false,
+  })
 
-  // Load data on mount
+  // Load data on mount - localStorage first, then merge with API
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
@@ -103,7 +115,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       setProjects(localProjects)
 
       try {
-        // Try to load from API (if authenticated) and MERGE with localStorage
+        // Try to load from API (if authenticated) and merge with localStorage
         if (auth?.isAuthenticated && auth?.user?.id) {
           try {
             const [convRes, projRes] = await Promise.all([
@@ -131,26 +143,25 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
                 createdAt: new Date(p.createdAt),
               }))
 
-              console.log(`[ConversationsContext] API returned: ${apiConvs.length} conversations, ${apiProjects.length} projects`)
+              console.log(`[ConversationsContext] API returned: ${apiConvs.length} conversations, ${apiProjects.length} projects (storage: ${convData.storage})`)
               
-              // CRITICAL: Only use API data if it has MORE data than localStorage
-              // This prevents the in-memory API storage from wiping local data on cold starts
-              if (apiConvs.length > localConvs.length) {
-                setConversations(apiConvs)
-                localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(apiConvs))
-                console.log(`[ConversationsContext] Using API conversations (more data)`)
-              } else if (apiConvs.length === 0 && localConvs.length > 0) {
-                // API returned empty but we have local data - sync local to API
-                console.log(`[ConversationsContext] API empty, syncing localStorage to API`)
-                // Keep using localStorage data, it will sync on next save
+              // Merge strategy: Use the source with MORE data, or merge by ID
+              const mergedConvs = mergeByTimestamp(localConvs, apiConvs)
+              const mergedProjects = mergeByTimestamp(localProjects, apiProjects)
+              
+              if (mergedConvs.length !== localConvs.length || JSON.stringify(mergedConvs) !== JSON.stringify(localConvs)) {
+                setConversations(mergedConvs)
+                localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(mergedConvs))
+                console.log(`[ConversationsContext] Merged conversations: ${mergedConvs.length} total`)
               }
               
-              if (apiProjects.length > localProjects.length) {
-                setProjects(apiProjects)
-                localStorage.setItem(PROJECTS_KEY, JSON.stringify(apiProjects))
-                console.log(`[ConversationsContext] Using API projects (more data)`)
+              if (mergedProjects.length !== localProjects.length || JSON.stringify(mergedProjects) !== JSON.stringify(localProjects)) {
+                setProjects(mergedProjects)
+                localStorage.setItem(PROJECTS_KEY, JSON.stringify(mergedProjects))
+                console.log(`[ConversationsContext] Merged projects: ${mergedProjects.length} total`)
               }
               
+              setLastSyncedAt(new Date())
               setIsInitialized(true)
               setIsLoading(false)
               return
@@ -180,6 +191,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     
     try {
       localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations))
+      pendingChangesRef.current.conversations = true
     } catch (e) {
       console.error("[ConversationsContext] Failed to save conversations to localStorage:", e)
     }
@@ -190,37 +202,78 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     
     try {
       localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects))
+      pendingChangesRef.current.projects = true
     } catch (e) {
       console.error("[ConversationsContext] Failed to save projects to localStorage:", e)
     }
   }, [projects, isInitialized])
 
-  // Sync to API when data changes (debounced)
+  // Debounced sync to API when data changes
   useEffect(() => {
     if (!isInitialized || !auth?.isAuthenticated) return
 
     const syncToApi = async () => {
+      if (!pendingChangesRef.current.conversations && !pendingChangesRef.current.projects) {
+        return // No changes to sync
+      }
+
+      setIsSyncing(true)
+      
       try {
-        await Promise.all([
-          fetch("/api/conversations", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "sync", conversations }),
-          }),
-          fetch("/api/projects", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "sync", projects }),
-          }),
-        ])
+        const promises: Promise<Response>[] = []
+        
+        if (pendingChangesRef.current.conversations) {
+          promises.push(
+            fetch("/api/conversations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                action: "sync", 
+                conversations: conversations.map(c => ({
+                  ...c,
+                  createdAt: c.createdAt.toISOString(),
+                  updatedAt: c.updatedAt.toISOString(),
+                  messages: c.messages.map(m => ({
+                    ...m,
+                    timestamp: m.timestamp.toISOString(),
+                  })),
+                })),
+              }),
+            })
+          )
+        }
+        
+        if (pendingChangesRef.current.projects) {
+          promises.push(
+            fetch("/api/projects", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                action: "sync", 
+                projects: projects.map(p => ({
+                  ...p,
+                  createdAt: p.createdAt.toISOString(),
+                })),
+              }),
+            })
+          )
+        }
+        
+        await Promise.all(promises)
+        
+        // Clear pending changes
+        pendingChangesRef.current = { conversations: false, projects: false }
+        setLastSyncedAt(new Date())
         console.log("[ConversationsContext] Synced to API")
       } catch (e) {
         console.error("[ConversationsContext] API sync failed:", e)
+      } finally {
+        setIsSyncing(false)
       }
     }
 
     // Debounce sync to avoid too many requests
-    const timeoutId = setTimeout(syncToApi, 1000)
+    const timeoutId = setTimeout(syncToApi, SYNC_DEBOUNCE_MS)
     return () => clearTimeout(timeoutId)
   }, [conversations, projects, isInitialized, auth?.isAuthenticated])
 
@@ -280,6 +333,10 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         return p
       })
     )
+    // Also update conversation's projectId
+    setConversations(prev =>
+      prev.map(c => (c.id === conversationId ? { ...c, projectId, updatedAt: new Date() } : c))
+    )
   }, [])
 
   const removeConversationFromProject = useCallback(async (conversationId: string, projectId: string) => {
@@ -291,28 +348,56 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         return p
       })
     )
+    // Also update conversation's projectId
+    setConversations(prev =>
+      prev.map(c => (c.id === conversationId && c.projectId === projectId ? { ...c, projectId: undefined, updatedAt: new Date() } : c))
+    )
   }, [])
 
   const syncNow = useCallback(async () => {
     if (!auth?.isAuthenticated) return
+    
+    setIsSyncing(true)
     
     try {
       await Promise.all([
         fetch("/api/conversations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "sync", conversations }),
+          body: JSON.stringify({ 
+            action: "sync", 
+            conversations: conversations.map(c => ({
+              ...c,
+              createdAt: c.createdAt.toISOString(),
+              updatedAt: c.updatedAt.toISOString(),
+              messages: c.messages.map(m => ({
+                ...m,
+                timestamp: m.timestamp.toISOString(),
+              })),
+            })),
+          }),
         }),
         fetch("/api/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "sync", projects }),
+          body: JSON.stringify({ 
+            action: "sync", 
+            projects: projects.map(p => ({
+              ...p,
+              createdAt: p.createdAt.toISOString(),
+            })),
+          }),
         }),
       ])
+      
+      pendingChangesRef.current = { conversations: false, projects: false }
+      setLastSyncedAt(new Date())
       console.log("[ConversationsContext] Manual sync completed")
     } catch (e) {
       console.error("[ConversationsContext] Manual sync failed:", e)
       throw e
+    } finally {
+      setIsSyncing(false)
     }
   }, [auth?.isAuthenticated, conversations, projects])
 
@@ -321,7 +406,9 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     projects,
     currentConversation,
     isLoading,
+    isSyncing,
     error,
+    lastSyncedAt,
     setCurrentConversation,
     createConversation,
     updateConversation,
@@ -341,3 +428,38 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
   )
 }
 
+/**
+ * Merge two arrays of items by ID, preferring the more recently updated item
+ */
+function mergeByTimestamp<T extends { id: string; updatedAt?: Date }>(
+  local: T[],
+  remote: T[]
+): T[] {
+  const map = new Map<string, T>()
+  
+  // Add all local items
+  for (const item of local) {
+    map.set(item.id, item)
+  }
+  
+  // Merge remote items - prefer more recent
+  for (const item of remote) {
+    const existing = map.get(item.id)
+    if (!existing) {
+      map.set(item.id, item)
+    } else if (item.updatedAt && existing.updatedAt) {
+      const itemTime = new Date(item.updatedAt).getTime()
+      const existingTime = new Date(existing.updatedAt).getTime()
+      if (itemTime > existingTime) {
+        map.set(item.id, item)
+      }
+    }
+  }
+  
+  // Sort by updatedAt descending
+  return Array.from(map.values()).sort((a, b) => {
+    const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
+    const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
+    return bTime - aTime
+  })
+}
