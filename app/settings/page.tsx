@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Key, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2 } from "lucide-react"
+import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
@@ -23,7 +23,6 @@ const STORAGE_KEYS = {
   APPEARANCE: "llmhive-appearance-settings",
   NOTIFICATIONS: "llmhive-notification-settings",
   PRIVACY: "llmhive-privacy-settings",
-  API_KEYS: "llmhive-api-keys",
   CONNECTIONS: "llmhive-connections",
 }
 
@@ -42,13 +41,6 @@ const settingsCards = [
     description: "Subscription and payment settings",
     icon: CreditCard,
     badgeClass: "icon-badge-green",
-  },
-  {
-    id: "api-keys",
-    title: "API Keys",
-    description: "Configure external service API keys",
-    icon: Key,
-    badgeClass: "icon-badge-amber",
   },
   {
     id: "connections",
@@ -80,14 +72,6 @@ const settingsCards = [
   },
 ]
 
-// API Keys data
-const apiKeys = [
-  { id: "openai", label: "OpenAI", placeholder: "sk-...", connected: true },
-  { id: "anthropic", label: "Anthropic", placeholder: "sk-ant-...", connected: false },
-  { id: "google", label: "Google AI", placeholder: "AIza...", connected: false },
-  { id: "cohere", label: "Cohere", placeholder: "...", connected: false },
-]
-
 // Connections data
 const connections = [
   { id: "github", label: "GitHub", description: "Connect your repositories", icon: Github, connected: true },
@@ -117,7 +101,7 @@ const appearanceOptions = [
   { id: "soundEffects", label: "Sound Effects", description: "Play sounds for notifications" },
 ]
 
-type DrawerId = "account" | "billing" | "api-keys" | "connections" | "notifications" | "privacy" | "appearance" | null
+type DrawerId = "account" | "billing" | "connections" | "notifications" | "privacy" | "appearance" | null
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -134,7 +118,6 @@ export default function SettingsPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // State for various settings - initialized from localStorage
-  const [connectedKeys, setConnectedKeys] = useState<string[]>([])
   const [connectedServices, setConnectedServices] = useState<string[]>([])
   const [enabledNotifications, setEnabledNotifications] = useState<string[]>([])
   const [privacySettings, setPrivacySettings] = useState<string[]>([])
@@ -148,14 +131,12 @@ export default function SettingsPage() {
       const savedAppearance = localStorage.getItem(STORAGE_KEYS.APPEARANCE)
       const savedNotifications = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)
       const savedPrivacy = localStorage.getItem(STORAGE_KEYS.PRIVACY)
-      const savedApiKeys = localStorage.getItem(STORAGE_KEYS.API_KEYS)
       const savedConnections = localStorage.getItem(STORAGE_KEYS.CONNECTIONS)
       
       const parsedAppearance = savedAppearance ? JSON.parse(savedAppearance) : ["animations"]
       setAppearanceSettings(parsedAppearance)
       setEnabledNotifications(savedNotifications ? JSON.parse(savedNotifications) : ["email", "updates"])
       setPrivacySettings(savedPrivacy ? JSON.parse(savedPrivacy) : ["shareUsage"])
-      setConnectedKeys(savedApiKeys ? JSON.parse(savedApiKeys) : ["openai"])
       setConnectedServices(savedConnections ? JSON.parse(savedConnections) : ["github"])
       
       document.documentElement.classList.toggle('compact-mode', parsedAppearance.includes('compactMode'))
@@ -165,18 +146,8 @@ export default function SettingsPage() {
       setAppearanceSettings(["animations"])
       setEnabledNotifications(["email", "updates"])
       setPrivacySettings(["shareUsage"])
-      setConnectedKeys(["openai"])
       setConnectedServices(["github"])
     }
-  }, [])
-
-  const toggleKey = useCallback((id: string) => {
-    setConnectedKeys((prev) => {
-      const next = prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]
-      localStorage.setItem(STORAGE_KEYS.API_KEYS, JSON.stringify(next))
-      toast.success(`API key ${prev.includes(id) ? 'removed' : 'added'}`)
-      return next
-    })
   }, [])
 
   const toggleService = useCallback((id: string) => {
@@ -225,7 +196,6 @@ export default function SettingsPage() {
 
   const getCount = (id: string) => {
     switch (id) {
-      case "api-keys": return connectedKeys.length
       case "connections": return connectedServices.length
       case "notifications": return enabledNotifications.length
       case "privacy": return privacySettings.length
@@ -452,62 +422,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-
-      {/* API Keys Drawer */}
-      <Sheet open={activeDrawer === "api-keys"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
-        <SheetContent className="w-[280px] sm:w-[320px] glass-card border-l-0 p-0">
-          <SheetHeader className="p-4 pb-3 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="icon-badge icon-badge-amber">
-                <Key className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <SheetTitle className="text-base font-semibold">API Keys</SheetTitle>
-                <p className="text-xs text-muted-foreground">{connectedKeys.length} keys configured</p>
-              </div>
-            </div>
-          </SheetHeader>
-          <ScrollArea className="h-[calc(100vh-100px)]">
-            <div className="p-4 space-y-2">
-              {apiKeys.map((key) => {
-                const isConnected = connectedKeys.includes(key.id)
-                return (
-                  <button
-                    key={key.id}
-                    onClick={() => toggleKey(key.id)}
-                    className={`w-full p-3 rounded-lg border transition-all text-left ${
-                      isConnected
-                        ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
-                        : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                          isConnected ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
-                        }`}
-                      >
-                        {isConnected && <Check className="h-3 w-3 text-black" />}
-                      </div>
-                      <div className="flex-1">
-                        <span className={`text-sm block ${isConnected ? "text-[var(--gold)]" : ""}`}>
-                          {key.label}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{key.placeholder}</span>
-                      </div>
-                      {isConnected && (
-                        <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
-                          Connected
-                        </Badge>
-                      )}
-                    </div>
-                  </button>
-                )
-              })}
             </div>
           </ScrollArea>
         </SheetContent>
