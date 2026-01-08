@@ -671,6 +671,7 @@ function ProjectItem({
           <Button 
             variant="ghost" 
             size="icon" 
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
@@ -839,6 +840,7 @@ function ConversationItem({
           <Button 
             variant="ghost" 
             size="icon" 
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
