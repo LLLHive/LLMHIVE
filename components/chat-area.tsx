@@ -765,19 +765,28 @@ export function ChatArea({
 
       <ScrollArea className="flex-1 relative z-10" ref={scrollAreaRef} onScroll={handleScroll}>
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-          {displayMessages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              onShowArtifact={onShowArtifact}
-              onShowInsights={() => {
-                setSelectedMessageForInsights(message)
-                setShowInsights(true)
-              }}
-              incognitoMode={incognitoMode}
-              onToggleIncognito={() => setIncognitoMode(!incognitoMode)}
-            />
-          ))}
+          {displayMessages.map((message, index) => {
+            // Find the previous user message for context (for RLHF training)
+            const previousUserMessage = message.role === "assistant" 
+              ? displayMessages.slice(0, index).reverse().find(m => m.role === "user")
+              : undefined
+            
+            return (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                previousUserMessage={previousUserMessage}
+                conversationId={conversation?.id}
+                onShowArtifact={onShowArtifact}
+                onShowInsights={() => {
+                  setSelectedMessageForInsights(message)
+                  setShowInsights(true)
+                }}
+                incognitoMode={incognitoMode}
+                onToggleIncognito={() => setIncognitoMode(!incognitoMode)}
+              />
+            )
+          })}
           {isLoading && (
             <div className="flex gap-3 items-start">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--bronze)] to-[var(--gold)] flex items-center justify-center">

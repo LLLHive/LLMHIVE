@@ -164,6 +164,19 @@ except ImportError:
     AgentExecutionResult = None  # type: ignore
     logger.warning("Agent executor module not available")
 
+# Import RLHF feedback store for RAG context enhancement
+try:
+    from .rlhf.pinecone_feedback import (
+        PineconeFeedbackStore,
+        get_pinecone_feedback_store,
+    )
+    RLHF_FEEDBACK_AVAILABLE = True
+except ImportError:
+    RLHF_FEEDBACK_AVAILABLE = False
+    PineconeFeedbackStore = None  # type: ignore
+    get_pinecone_feedback_store = None  # type: ignore
+    logger.debug("RLHF feedback store not available")
+
 # Import local model provider and registry
 try:
     from .providers import (
@@ -463,17 +476,19 @@ class Orchestrator:
             except Exception as e:
                 logger.warning("Failed to initialize memory manager: %s", e)
         
-        # Initialize fact checker if available
+        # Initialize fact checker if available and enabled
         self.fact_checker: Optional[Any] = None
-        if FACT_CHECK_AVAILABLE and FactChecker:
+        if FACT_CHECK_AVAILABLE and FactChecker and is_feature_enabled(FeatureFlags.FACT_VERIFICATION):
             try:
                 self.fact_checker = FactChecker(
                     memory_manager=self.memory_manager,
                     max_verification_iterations=2,
                 )
-                logger.info("Fact checker initialized")
+                logger.info("Fact checker initialized (FACT_VERIFICATION enabled)")
             except Exception as e:
                 logger.warning("Failed to initialize fact checker: %s", e)
+        elif FACT_CHECK_AVAILABLE and FactChecker:
+            logger.debug("Fact checker available but FACT_VERIFICATION feature disabled")
         
         # Initialize guardrails if available
         self.safety_validator: Optional[Any] = None
@@ -2231,6 +2246,35 @@ Please provide an accurate, well-verified response."""
                             rag_config.mode.value,
                             len(rag_chunks),
                         )
+                
+                # PR5: RLHF Feedback Context - Learn from past successful answers
+                if RLHF_FEEDBACK_AVAILABLE and is_feature_enabled(FeatureFlags.RLHF_FEEDBACK):
+                    try:
+                        feedback_store = get_pinecone_feedback_store()
+                        # Get similar positive feedback examples
+                        positive_examples = await feedback_store.find_similar_feedback(
+                            query=prompt,
+                            positive_only=True,
+                            limit=2,
+                            min_score=0.7,
+                        )
+                        
+                        if positive_examples:
+                            feedback_context = "[SIMILAR SUCCESSFUL ANSWERS - Use as reference style]\n"
+                            for ex in positive_examples:
+                                feedback_context += f"Q: {ex.query[:200]}...\nA: {ex.answer[:500]}...\n---\n"
+                            
+                            if tool_context:
+                                tool_context = f"{tool_context}\n\n{feedback_context}"
+                            else:
+                                tool_context = feedback_context
+                            
+                            logger.info(
+                                "PR5: RLHF feedback context added (%d positive examples)",
+                                len(positive_examples),
+                            )
+                    except Exception as e:
+                        logger.debug("PR5: RLHF feedback retrieval skipped: %s", e)
                     
             except Exception as e:
                 logger.warning("PR4: Tool analysis/execution failed: %s", e)
@@ -2363,6 +2407,59 @@ Please provide an accurate, well-verified response."""
         # Consensus result tracking
         consensus_result: Optional[Any] = None
         hrm_execution_result: Optional[Any] = None
+        
+        # Phase 2.4: Critique-and-Improve Protocol for Complex Queries
+        # If the query is complex and the feature is enabled, use multi-model critique
+        use_critique_protocol = False
+        if (is_feature_enabled(FeatureFlags.CRITIQUE_AND_IMPROVE) 
+            and HRM_AVAILABLE 
+            and is_complex_query 
+            and accuracy_level >= 4):
+            try:
+                query_complexity = is_complex_query(augmented_prompt)
+                if query_complexity:
+                    use_critique_protocol = True
+                    logger.info("Query identified as complex - enabling Critique-and-Improve protocol")
+            except Exception as e:
+                logger.debug("Complexity check failed: %s", e)
+        
+        # Execute Critique-and-Improve if triggered
+        if use_critique_protocol:
+            try:
+                from .protocols import CritiqueAndImproveProtocol
+                
+                critique_protocol = CritiqueAndImproveProtocol(
+                    providers=self.providers,
+                    model_registry=self,  # Use self as a simple registry
+                    planner=self.hrm_planner if use_hrm else None,
+                    max_critique_rounds=2,
+                    min_models=2,
+                    max_models=min(len(models_to_use), 3),
+                )
+                
+                protocol_result = await critique_protocol.execute(
+                    prompt=prompt,
+                    context=memory_context,
+                    knowledge_snippets=None,
+                    models=models_to_use[:3],
+                    mode="accuracy" if accuracy_level >= 4 else "speed",
+                )
+                
+                if protocol_result and protocol_result.final_response:
+                    logger.info(
+                        "Critique-and-Improve protocol completed: %d drafts, %d critiques",
+                        len(protocol_result.initial_responses or []),
+                        len(protocol_result.critiques or []),
+                    )
+                    
+                    # Update scratchpad
+                    if scratchpad:
+                        scratchpad.write("protocol_used", "critique_and_improve")
+                        scratchpad.write("critique_rounds", len(protocol_result.critiques or []))
+                    
+                    return protocol_result
+            except Exception as e:
+                logger.warning("Critique-and-Improve protocol failed, falling back: %s", e)
         
         # Phase 2.5: Hierarchical Plan Execution (if HRM enabled and plan exists)
         # This executes the multi-step reasoning chain before consensus or single model

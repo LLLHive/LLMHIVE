@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Maximize2, Code, Share2, Eye, EyeOff, Twitter, Link, MessageSquare, Info } from "lucide-react"
 import {
@@ -14,28 +14,62 @@ import { cn } from "@/lib/utils"
 import { toast } from "@/lib/toast"
 import { AnswerQualityDrawer, useDevMode, type QualityMetadata } from "@/components/answer-quality-drawer"
 
+// Record feedback to backend for RLHF training
+async function recordFeedback(
+  feedbackType: "thumbs_up" | "thumbs_down" | "copy" | "share" | "regenerate",
+  userQuery: string,
+  answerText: string,
+  modelUsed?: string,
+  sessionId?: string,
+) {
+  try {
+    await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_query: userQuery,
+        answer_text: answerText,
+        feedback_type: feedbackType,
+        model_used: modelUsed,
+        session_id: sessionId,
+      }),
+    })
+  } catch (error) {
+    // Silently fail - feedback is non-critical
+    console.debug("[Feedback] Failed to record:", error)
+  }
+}
+
 interface MessageBubbleProps {
   message: Message
+  previousUserMessage?: Message // For context
   onShowArtifact: (artifact: Artifact) => void
   onShowInsights: () => void
   incognitoMode: boolean
   onToggleIncognito: () => void
   onRegenerate?: () => void
+  conversationId?: string
 }
 
 export function MessageBubble({
   message,
+  previousUserMessage,
   onShowArtifact,
   onShowInsights,
   incognitoMode,
   onToggleIncognito,
   onRegenerate,
+  conversationId,
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
   const [liked, setLiked] = useState(false)
   const [disliked, setDisliked] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [feedbackSent, setFeedbackSent] = useState(false)
   const isDevMode = useDevMode()
+  
+  // Get the user query that prompted this response
+  const userQuery = previousUserMessage?.content || ""
   
   // Extract quality metadata from message if available
   const qualityMetadata: QualityMetadata | undefined = message.qualityMetadata ? {
@@ -55,40 +89,66 @@ export function MessageBubble({
     improvementApplied: message.qualityMetadata.improvementApplied,
   } : undefined
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(message.content)
     setCopied(true)
     toast.success("Copied to clipboard")
     setTimeout(() => setCopied(false), 2000)
-  }
+    
+    // Track copy as implicit positive feedback (non-blocking)
+    if (userQuery) {
+      recordFeedback("copy", userQuery, message.content, message.model, conversationId)
+    }
+  }, [message.content, message.model, userQuery, conversationId])
 
-  const handleLike = () => {
-    setLiked(!liked)
+  const handleLike = useCallback(() => {
+    const newLiked = !liked
+    setLiked(newLiked)
     if (disliked) setDisliked(false)
-    if (!liked) {
-      toast.success("Thanks for your feedback!")
+    
+    if (newLiked) {
+      toast.success("Thanks for your feedback! 🎉")
+      setFeedbackSent(true)
+      
+      // Record positive feedback for RLHF training
+      if (userQuery) {
+        recordFeedback("thumbs_up", userQuery, message.content, message.model, conversationId)
+      }
     }
-  }
+  }, [liked, disliked, userQuery, message.content, message.model, conversationId])
 
-  const handleDislike = () => {
-    setDisliked(!disliked)
+  const handleDislike = useCallback(() => {
+    const newDisliked = !disliked
+    setDisliked(newDisliked)
     if (liked) setLiked(false)
-    if (!disliked) {
-      toast.info("We'll work on improving this")
+    
+    if (newDisliked) {
+      toast.info("Thanks for helping us improve! 🛠️")
+      setFeedbackSent(true)
+      
+      // Record negative feedback for RLHF training
+      if (userQuery) {
+        recordFeedback("thumbs_down", userQuery, message.content, message.model, conversationId)
+      }
     }
-  }
+  }, [liked, disliked, userQuery, message.content, message.model, conversationId])
   
-  const handleRegenerate = () => {
+  const handleRegenerate = useCallback(() => {
     if (onRegenerate) {
       setIsRegenerating(true)
       onRegenerate()
       setTimeout(() => setIsRegenerating(false), 500)
+      
+      // Track regeneration as implicit negative feedback
+      if (userQuery) {
+        recordFeedback("regenerate", userQuery, message.content, message.model, conversationId)
+      }
     } else {
       toast.info("Regeneration not available for this message")
     }
-  }
+  }, [onRegenerate, userQuery, message.content, message.model, conversationId])
   
-  const handleShare = async (method: 'copy-link' | 'twitter') => {
+  const handleShare = useCallback(async (method: 'copy-link' | 'twitter') => {
     const text = message.content.slice(0, 280)
     
     if (method === 'copy-link') {
@@ -100,7 +160,12 @@ export function MessageBubble({
       const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}%0A%0A—%20via%20LLMHive`
       window.open(twitterUrl, '_blank', 'width=550,height=420')
     }
-  }
+    
+    // Track share as positive feedback (user liked it enough to share)
+    if (userQuery) {
+      recordFeedback("share", userQuery, message.content, message.model, conversationId)
+    }
+  }, [message.content, userQuery, message.model, conversationId])
 
   if (message.role === "user") {
     return (
@@ -252,20 +317,28 @@ export function MessageBubble({
           <Button
             size="icon"
             variant="ghost"
-            className={cn("h-7 w-7", liked && "text-[var(--bronze)]")}
+            className={cn(
+              "h-7 w-7 transition-all",
+              liked && "text-[var(--bronze)] bg-[var(--bronze)]/10",
+              feedbackSent && liked && "ring-1 ring-[var(--bronze)]/30"
+            )}
             onClick={handleLike}
-            title="Good response"
+            title={liked ? "You liked this response" : "Good response"}
           >
-            <ThumbsUp className="h-3 w-3" />
+            <ThumbsUp className={cn("h-3 w-3", liked && "fill-current")} />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            className={cn("h-7 w-7", disliked && "text-destructive")}
+            className={cn(
+              "h-7 w-7 transition-all",
+              disliked && "text-destructive bg-destructive/10",
+              feedbackSent && disliked && "ring-1 ring-destructive/30"
+            )}
             onClick={handleDislike}
-            title="Poor response"
+            title={disliked ? "You disliked this response" : "Poor response"}
           >
-            <ThumbsDown className="h-3 w-3" />
+            <ThumbsDown className={cn("h-3 w-3", disliked && "fill-current")} />
           </Button>
           <Button 
             size="icon" 

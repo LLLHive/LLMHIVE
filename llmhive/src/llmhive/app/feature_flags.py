@@ -37,10 +37,13 @@ class FeatureFlags(str, Enum):
     # Learning features
     ADAPTIVE_ROUTING = "adaptive_routing"  # Performance-based model routing
     WEEKLY_OPTIMIZATION = "weekly_optimization"  # Weekly improvement jobs
+    RLHF_FEEDBACK = "rlhf_feedback"  # Learn from user feedback (thumbs up/down)
     
     # Advanced orchestration
     DEEP_CONSENSUS = "deep_consensus"  # Multi-model consensus building
     PROMPT_DIFFUSION = "prompt_diffusion"  # Advanced prompt optimization
+    CRITIQUE_AND_IMPROVE = "critique_and_improve"  # Multi-round critique protocol
+    FACT_VERIFICATION = "fact_verification"  # Verify facts before responding
 
 
 # Default feature states (can be overridden by env vars)
@@ -59,6 +62,11 @@ DEFAULT_FEATURE_STATES: Dict[FeatureFlags, bool] = {
     # Already enabled (stable features) - VALIDATED
     FeatureFlags.ADAPTIVE_ROUTING: True,  # Performance-based routing - VALIDATED
     FeatureFlags.DEEP_CONSENSUS: True,  # Multi-model synthesis - VALIDATED
+    
+    # RLHF & Quality features - ENABLED for continuous improvement
+    FeatureFlags.RLHF_FEEDBACK: True,  # Learn from thumbs up/down - ENABLED
+    FeatureFlags.CRITIQUE_AND_IMPROVE: True,  # Multi-round critique for complex queries - ENABLED
+    FeatureFlags.FACT_VERIFICATION: True,  # Verify factual claims - ENABLED
     
     # Advanced feature - kept disabled for launch
     FeatureFlags.PROMPT_DIFFUSION: False,  # Advanced prompt optimization - not critical
