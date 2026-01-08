@@ -666,13 +666,12 @@ function ProjectItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
       
-      <DropdownMenu modal={false}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
               // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
@@ -692,15 +691,9 @@ function ProjectItem({
           side="bottom" 
           sideOffset={4} 
           className="w-52 p-1 z-[200]"
-          portal={false}
-          onCloseAutoFocus={(e) => e.preventDefault()}
-          onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onSelect()
-            }}
+            onClick={() => { onSelect() }}
             className="cursor-pointer rounded-sm"
           >
             <FolderOpen className="h-4 w-4 mr-2" />
@@ -711,10 +704,7 @@ function ProjectItem({
           
           {/* Rename */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onRename?.()
-            }}
+            onClick={() => { onRename?.() }}
             className="cursor-pointer rounded-sm"
           >
             <Pencil className="h-4 w-4 mr-2" />
@@ -733,10 +723,7 @@ function ProjectItem({
           
           {/* Pin/Unpin Project */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onTogglePin?.()
-            }}
+            onClick={() => { onTogglePin?.() }}
             className="cursor-pointer rounded-sm"
           >
             {(project as any).pinned ? (
@@ -754,10 +741,7 @@ function ProjectItem({
           
           {/* Archive */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onArchive?.()
-            }}
+            onClick={() => { onArchive?.() }}
             className="cursor-pointer rounded-sm"
           >
             <Archive className="h-4 w-4 mr-2" />
@@ -768,10 +752,7 @@ function ProjectItem({
           
           {/* Delete */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onDelete()
-            }}
+            onClick={() => { onDelete() }}
             className="text-destructive cursor-pointer rounded-sm"
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -835,13 +816,12 @@ function ConversationItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
 
-      <DropdownMenu modal={false}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
               // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
@@ -861,16 +841,10 @@ function ConversationItem({
           side="bottom"
           sideOffset={4}
           className="w-48 p-1 z-[200]"
-          portal={false}
-          onCloseAutoFocus={(e) => e.preventDefault()}
-          onClick={(e) => e.stopPropagation()}
         >
           {/* Share option */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onShare?.()
-            }}
+            onClick={() => { onShare?.() }}
             className="cursor-pointer rounded-sm"
           >
             <Share className="h-4 w-4 mr-2" />
@@ -891,10 +865,7 @@ function ConversationItem({
           
           {/* Rename */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onRename()
-            }}
+            onClick={() => { onRename() }}
             className="cursor-pointer rounded-sm"
           >
             <Pencil className="h-4 w-4 mr-2" />
@@ -903,10 +874,7 @@ function ConversationItem({
           
           {/* Move to Project */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onMoveToProject()
-            }}
+            onClick={() => { onMoveToProject() }}
             className="cursor-pointer rounded-sm"
           >
             <FolderInput className="h-4 w-4 mr-2" />
@@ -915,10 +883,7 @@ function ConversationItem({
           
           {/* Pin/Unpin */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onTogglePin()
-            }}
+            onClick={() => { onTogglePin() }}
             className="cursor-pointer rounded-sm"
           >
             {conversation.pinned ? (
@@ -936,10 +901,7 @@ function ConversationItem({
           
           {/* Archive */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onArchive?.()
-            }}
+            onClick={() => { onArchive?.() }}
             className="cursor-pointer rounded-sm"
           >
             <Archive className="h-4 w-4 mr-2" />
@@ -950,10 +912,7 @@ function ConversationItem({
           
           {/* Delete - with destructive styling */}
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              onDelete()
-            }}
+            onClick={() => { onDelete() }}
             className="cursor-pointer rounded-sm text-destructive focus:text-destructive focus:bg-destructive/10"
           >
             <Trash2 className="h-4 w-4 mr-2" />
