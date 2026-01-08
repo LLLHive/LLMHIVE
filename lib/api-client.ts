@@ -240,11 +240,26 @@ export interface ChatRequest {
   projectId?: string
 }
 
+export interface QualityMetadata {
+  traceId?: string
+  confidence?: number
+  confidenceLabel?: "high" | "medium" | "low"
+  verificationScore?: number
+  issuesFound?: number
+  correctionsApplied?: boolean
+  eliteStrategy?: string
+  consensusScore?: number
+  taskType?: string
+  cached?: boolean
+}
+
 export interface ChatResponse {
   content: string
   modelsUsed: string[]
   tokensUsed: number
   latencyMs: number
+  /** Quality metadata from backend orchestration */
+  qualityMetadata?: QualityMetadata
   /** Retry information if retries were attempted */
   retryInfo?: RetryInfo
 }
@@ -541,6 +556,7 @@ export async function sendChat(
       const modelsUsedHeader = response.headers.get("X-Models-Used")
       const tokensUsedHeader = response.headers.get("X-Tokens-Used")
       const backendLatencyHeader = response.headers.get("X-Latency-Ms")
+      const qualityMetadataHeader = response.headers.get("X-Quality-Metadata")
 
       // Parse models used
       let modelsUsed: string[] = request.models
@@ -551,6 +567,16 @@ export async function sendChat(
           if (filtered.length > 0) modelsUsed = filtered
         } catch {
           // Keep default
+        }
+      }
+
+      // Parse quality metadata
+      let qualityMetadata: any = undefined
+      if (qualityMetadataHeader) {
+        try {
+          qualityMetadata = JSON.parse(qualityMetadataHeader)
+        } catch {
+          // Ignore parsing errors
         }
       }
 
@@ -577,6 +603,7 @@ export async function sendChat(
         modelsUsed,
         tokensUsed,
         latencyMs,
+        qualityMetadata,
       }
     },
     DEFAULT_RETRY_CONFIG, // Up to 3 retries for chat

@@ -51,6 +51,7 @@ import type { Conversation, Project } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { ProjectsPanel } from "./projects-panel"
 import { DiscoverCard } from "./discover-card"
+import { CollaborationPanel } from "./collaboration-panel"
 
 interface SidebarProps {
   conversations: Conversation[]
@@ -284,22 +285,8 @@ export function Sidebar({
                 </button>
                 
                 {collaborateExpanded && (
-                  <div className="mt-1 px-2 py-4 text-center">
-                    <div className="text-sm text-muted-foreground">
-                      <Sparkles className="h-5 w-5 mx-auto mb-2 text-[var(--bronze)]" />
-                      <p className="font-medium">Coming Soon</p>
-                      <p className="text-xs mt-1 mb-3">Real-time collaboration with your team</p>
-                      <Link href={ROUTES.SETTINGS}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-7 hover:border-[var(--bronze)] hover:text-[var(--bronze)]"
-                        >
-                          <Settings className="h-3 w-3 mr-1.5" />
-                          Manage Settings
-                        </Button>
-                      </Link>
-                    </div>
+                  <div className="mt-1">
+                    <CollaborationPanel />
                   </div>
                 )}
               </div>

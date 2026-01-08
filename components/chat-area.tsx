@@ -27,6 +27,7 @@ import { ChatToolbar } from "./chat-toolbar"
 import { OrchestrationStudio } from "./orchestration-studio"
 import { LiveStatusPanel } from "./live-status-panel"
 import { ModelsUsedDisplay } from "./models-used-display"
+import { AnswerComparison, useAnswerComparison } from "./answer-comparison"
 
 // When "automatic" is selected, we pass an empty array to let the backend
 // intelligently select the best models based on query analysis, domain, and rankings
@@ -99,6 +100,10 @@ export function ChatArea({
   const [lastModelsUsed, setLastModelsUsed] = useState<string[]>([])
   const [lastTokensUsed, setLastTokensUsed] = useState<number>(0)
   const [lastLatencyMs, setLastLatencyMs] = useState<number>(0)
+  const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null)
+  
+  // Answer comparison for A/B testing
+  const { comparisonData, showComparison, hideComparison, isComparing } = useAnswerComparison()
   const [isListening, setIsListening] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
   const [audioLevel, setAudioLevel] = useState(0)
@@ -540,7 +545,7 @@ export function ChatArea({
       // Clear retry status on success
       setRetryStatus(null)
 
-      const { content: assistantContent, modelsUsed, tokensUsed, latencyMs } = chatResponse
+      const { content: assistantContent, modelsUsed, tokensUsed, latencyMs, qualityMetadata } = chatResponse
 
       // Build agent info from actual models used
       const agentContributions = modelsUsed.slice(0, 3).map((modelId, index) => {
@@ -567,6 +572,19 @@ export function ChatArea({
         consensus: modelsUsed.length > 1 
           ? { confidence: 88, debateOccurred: true, consensusNote: `${modelsUsed.length} models reached consensus` }
           : { confidence: 95, debateOccurred: false, consensusNote: "Single model response" },
+        // Quality metadata from backend
+        qualityMetadata: qualityMetadata ? {
+          traceId: qualityMetadata.traceId,
+          confidence: qualityMetadata.confidence,
+          confidenceLabel: qualityMetadata.confidenceLabel,
+          verificationScore: qualityMetadata.verificationScore,
+          issuesFound: qualityMetadata.issuesFound,
+          correctionsApplied: qualityMetadata.correctionsApplied,
+          eliteStrategy: qualityMetadata.eliteStrategy,
+          consensusScore: qualityMetadata.consensusScore,
+          taskType: qualityMetadata.taskType,
+          cached: qualityMetadata.cached,
+        } : undefined,
       }
 
       onSendMessage(assistantMessage)
@@ -693,6 +711,103 @@ export function ChatArea({
     }
   }
 
+  // Regenerate a response for a given message
+  const handleRegenerate = useCallback(async (messageId: string, originalUserInput: string) => {
+    if (isLoading || regeneratingMessageId) return
+    
+    setRegeneratingMessageId(messageId)
+    setIsLoading(true)
+    
+    // Start orchestration status
+    setOrchestrationStatus({
+      isActive: true,
+      currentStep: "Regenerating response...",
+      events: [],
+      modelsUsed: [],
+      startTime: new Date(),
+    })
+
+    try {
+      const actualModels = getActualModels()
+      
+      // Create a temporary user message for the regeneration
+      const regenerateMessage: Message = {
+        id: `regen-${Date.now()}`,
+        role: "user",
+        content: originalUserInput,
+        timestamp: new Date(),
+      }
+      
+      const chatResponse = await sendChat(
+        {
+          messages: [regenerateMessage],
+          models: actualModels,
+          orchestratorSettings: {
+            ...orchestratorSettings,
+            selectedModels: actualModels,
+          },
+          chatId: conversation?.id,
+        }
+      )
+
+      const { content: assistantContent, modelsUsed, tokensUsed, latencyMs } = chatResponse
+
+      // Build agent info
+      const agentContributions = modelsUsed.slice(0, 3).map((modelId, index) => {
+        const model = getModelById(modelId)
+        const roles = ["Regenerated response", "Verification", "Quality check"]
+        return {
+          agentId: `agent-${index + 1}`,
+          agentName: model?.name || modelId,
+          agentType: "general" as const,
+          contribution: roles[index] || "Supporting response",
+          confidence: 0.9 - (index * 0.05),
+        }
+      })
+
+      const newAssistantMessage: Message = {
+        id: `msg-${Date.now()}`,
+        role: "assistant",
+        content: assistantContent || "I apologize, but I couldn't regenerate a response.",
+        timestamp: new Date(),
+        model: modelsUsed[0] || actualModels[0],
+        agents: agentContributions,
+        consensus: modelsUsed.length > 1 
+          ? { confidence: 88, debateOccurred: true, consensusNote: `${modelsUsed.length} models collaborated` }
+          : { confidence: 95, debateOccurred: false, consensusNote: "Regenerated response" },
+        isRegenerated: true,
+      }
+
+      onSendMessage(newAssistantMessage)
+      
+      setLastModelsUsed(modelsUsed)
+      setLastLatencyMs(latencyMs)
+      setLastTokensUsed(tokensUsed)
+      
+      toast.success("Response regenerated!")
+      
+      setOrchestrationStatus((prev) => ({
+        ...prev,
+        isActive: false,
+        currentStep: "Completed",
+        modelsUsed,
+        endTime: new Date(),
+        latencyMs,
+      }))
+    } catch (error) {
+      console.error("Regeneration error:", error)
+      toast.error("Failed to regenerate response. Please try again.")
+      
+      setOrchestrationStatus((prev) => ({
+        ...prev,
+        isActive: false,
+      }))
+    } finally {
+      setIsLoading(false)
+      setRegeneratingMessageId(null)
+    }
+  }, [isLoading, regeneratingMessageId, orchestratorSettings, conversation?.id, onSendMessage])
+
   const displayMessages = conversation?.messages || []
 
   return (
@@ -784,6 +899,7 @@ export function ChatArea({
                 }}
                 incognitoMode={incognitoMode}
                 onToggleIncognito={() => setIncognitoMode(!incognitoMode)}
+                onRegenerate={previousUserMessage ? () => handleRegenerate(message.id, previousUserMessage.content) : undefined}
               />
             )
           })}
@@ -1018,6 +1134,25 @@ export function ChatArea({
           </p>
         </div>
       </div>
+      
+      {/* Answer Comparison Dialog for A/B Testing */}
+      {isComparing && comparisonData && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-background border border-border rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <AnswerComparison
+              query={comparisonData.query}
+              answerA={comparisonData.answerA}
+              answerB={comparisonData.answerB}
+              onPreferenceSelected={(preference, reason) => {
+                console.log("User preference:", preference, reason)
+                hideComparison()
+              }}
+              onSkip={hideComparison}
+              conversationId={conversation?.id}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

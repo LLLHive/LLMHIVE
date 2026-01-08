@@ -14,6 +14,13 @@ export interface QualityMetadata {
   isStub?: boolean
   selfGraded?: boolean
   improvementApplied?: boolean
+  // Extended fields for full orchestration metadata
+  issuesFound?: number
+  correctionsApplied?: boolean
+  eliteStrategy?: string
+  consensusScore?: number
+  taskType?: string
+  cached?: boolean
 }
 
 export interface Message {
@@ -33,6 +40,7 @@ export interface Message {
   citations?: Citation[]
   isProcessing?: boolean
   isClarificationRequest?: boolean
+  isRegenerated?: boolean
   modelsUsed?: string[]
   metadata?: Record<string, unknown>
   /** Quality metadata for "Why this answer?" drawer */

@@ -310,12 +310,29 @@ export async function POST(req: NextRequest) {
     
     const tokensUsed = data.tokens_used || 0
     const latencyMs = data.latency_ms || 0
+    
+    // Extract quality metadata from backend response
+    const extra = data.extra || {}
+    const qualityMetadata = {
+      traceId: extra.trace_id || `trace-${Date.now()}`,
+      confidence: extra.elite_orchestration?.confidence ?? extra.verification?.confidence ?? 0.85,
+      confidenceLabel: extra.verification?.confidence >= 0.9 ? "high" : 
+                       extra.verification?.confidence >= 0.7 ? "medium" : "low",
+      verificationScore: extra.verification?.confidence,
+      issuesFound: extra.verification?.issues_found || 0,
+      correctionsApplied: extra.verification?.corrected || false,
+      eliteStrategy: extra.elite_orchestration?.strategy,
+      consensusScore: extra.elite_orchestration?.consensus_score,
+      taskType: extra.task_type,
+      cached: extra.source === "knowledge_base_cache",
+    }
 
     console.log("[Chat API] Received from backend:", {
       messageLength: messageContent.length,
       modelsUsed,
       tokensUsed,
       latencyMs,
+      qualityMetadata,
     })
 
     // Return as streaming response with metadata in headers
@@ -340,8 +357,10 @@ export async function POST(req: NextRequest) {
         "X-Models-Used": JSON.stringify(modelsUsed),
         "X-Tokens-Used": String(tokensUsed),
         "X-Latency-Ms": String(latencyMs),
+        // Quality metadata for answer insights
+        "X-Quality-Metadata": JSON.stringify(qualityMetadata),
         // Allow frontend to access custom headers
-        "Access-Control-Expose-Headers": "X-Models-Used, X-Tokens-Used, X-Latency-Ms",
+        "Access-Control-Expose-Headers": "X-Models-Used, X-Tokens-Used, X-Latency-Ms, X-Quality-Metadata",
       },
     })
   } catch (error: any) {

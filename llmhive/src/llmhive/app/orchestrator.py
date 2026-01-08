@@ -232,6 +232,16 @@ if FEATURE_FLAGS_AVAILABLE and is_feature_enabled(FeatureFlags.VECTOR_MEMORY):
 else:
     logger.debug("Vector memory feature disabled or feature flags unavailable")
 
+# Import answer store for cross-session reuse
+ANSWER_STORE_AVAILABLE = False
+try:
+    if FEATURE_FLAGS_AVAILABLE and is_feature_enabled(FeatureFlags.CROSS_SESSION_REUSE):
+        from .learning.answer_store import get_answer_store, StoredAnswer
+        ANSWER_STORE_AVAILABLE = True
+        logger.info("Answer store enabled for cross-session reuse")
+except ImportError as e:
+    logger.debug("Answer store not available: %s", e)
+
 # Import consensus manager components
 try:
     from .orchestration.consensus_manager import (
@@ -597,6 +607,15 @@ class Orchestrator:
                 logger.info("Shared memory manager initialized")
             except Exception as e:
                 logger.warning("Failed to initialize shared memory: %s", e)
+        
+        # Initialize answer store for cross-session reuse
+        self.answer_store: Optional[Any] = None
+        if ANSWER_STORE_AVAILABLE:
+            try:
+                self.answer_store = get_answer_store()
+                logger.info("Answer store initialized for cross-session reuse")
+            except Exception as e:
+                logger.warning("Failed to initialize answer store: %s", e)
         
         # Initialize live data manager
         self.live_data: Optional[Any] = None
@@ -2137,6 +2156,52 @@ Please provide an accurate, well-verified response."""
             except Exception as e:
                 logger.warning("Live data retrieval failed: %s", e)
         
+        # Phase 0.5: Cross-Session Reuse Check
+        # Check if we have a high-quality cached answer for a similar query
+        enable_cross_session = kwargs.get("enable_cross_session_reuse", True)
+        if (enable_cross_session and ANSWER_STORE_AVAILABLE and 
+            self.answer_store and FEATURE_FLAGS_AVAILABLE and 
+            is_feature_enabled(FeatureFlags.CROSS_SESSION_REUSE)):
+            try:
+                similar_answers = self.answer_store.search_similar(
+                    query=prompt,
+                    user_id=user_id,
+                    top_k=3,
+                    min_relevance=0.85,  # High threshold for reuse
+                )
+                
+                if similar_answers:
+                    best_match = similar_answers[0]
+                    if best_match.relevance_score >= 0.9:
+                        logger.info(
+                            "Cross-session reuse: Found cached answer (score=%.2f, reused=%d times)",
+                            best_match.relevance_score,
+                            best_match.times_reused,
+                        )
+                        
+                        # Update reuse count
+                        self.answer_store.mark_reused(best_match.id)
+                        
+                        if scratchpad:
+                            scratchpad.write("cross_session_reuse", True)
+                            scratchpad.write("cached_answer_id", best_match.id)
+                            scratchpad.write("cached_relevance_score", best_match.relevance_score)
+                        
+                        # Return the cached answer
+                        cached_result = LLMResult(
+                            content=best_match.answer_text,
+                            model="cached:" + (best_match.models_used[0] if best_match.models_used else "unknown"),
+                            tokens=0,  # No tokens used for cached response
+                        )
+                        
+                        return _make_early_return(
+                            cached_result,
+                            [f"Cross-session reuse: Answer from {best_match.created_at}"]
+                        )
+                        
+            except Exception as e:
+                logger.warning("Cross-session reuse check failed: %s", e)
+        
         # Phase 1: Memory Retrieval (before model dispatch)
         memory_context = ""
         memory_hits = []
@@ -3012,6 +3077,31 @@ Please provide an accurate, well-verified response."""
                 logger.info("Stored verified answer in memory: %s", record_id[:8] if record_id else "failed")
             except Exception as e:
                 logger.warning("Failed to store answer in memory: %s", e)
+        
+        # Store high-quality answer for cross-session reuse
+        if (ANSWER_STORE_AVAILABLE and self.answer_store and verification_passed and
+            FEATURE_FLAGS_AVAILABLE and is_feature_enabled(FeatureFlags.CROSS_SESSION_REUSE)):
+            try:
+                # Calculate quality score based on verification and consensus
+                quality_score = 0.8  # Base score for verified answers
+                if verification_report and hasattr(verification_report, 'verification_score'):
+                    quality_score = max(quality_score, verification_report.verification_score)
+                
+                stored_id = self.answer_store.store(
+                    query=prompt,
+                    answer=result.content,
+                    quality_score=quality_score,
+                    domain=domain,
+                    complexity="moderate",
+                    models_used=[result.model] if result.model else [],
+                    consensus_method=protocol_name if protocol_name else "single",
+                    session_id=session_id,
+                    user_id=user_id,
+                )
+                logger.info("Stored answer for cross-session reuse: %s (score=%.2f)", 
+                           stored_id[:8] if stored_id else "failed", quality_score)
+            except Exception as e:
+                logger.warning("Failed to store answer for cross-session reuse: %s", e)
         
         # Build consensus notes
         consensus_notes = [f"Response generated using {result.model}"]
