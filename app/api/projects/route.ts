@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-
-// In-memory storage (will be replaced with database in production)
-let projects: Map<string, any[]> = new Map()
+import { kv } from "@vercel/kv"
 
 interface Project {
   id: string
@@ -12,7 +10,22 @@ interface Project {
   createdAt: string
   color?: string
   icon?: string
+  pinned?: boolean
+  archived?: boolean
 }
+
+// Helper to get the KV key for a user's projects
+function getProjectsKey(userId: string): string {
+  return `projects:${userId}`
+}
+
+// Check if KV is available (has required env vars)
+function isKVAvailable(): boolean {
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+}
+
+// In-memory fallback for local development without KV
+const localFallback: Map<string, Project[]> = new Map()
 
 /**
  * GET /api/projects - Get all projects for the current user
@@ -28,9 +41,16 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const userProjects = projects.get(userId) || []
-    
-    console.log(`[Projects API] GET for user ${userId}: ${userProjects.length} projects`)
+    let userProjects: Project[] = []
+
+    if (isKVAvailable()) {
+      const stored = await kv.get<Project[]>(getProjectsKey(userId))
+      userProjects = stored || []
+      console.log(`[Projects API] GET from KV for user ${userId}: ${userProjects.length} projects`)
+    } else {
+      userProjects = localFallback.get(userId) || []
+      console.log(`[Projects API] GET from memory (no KV) for user ${userId}: ${userProjects.length} projects`)
+    }
     
     return NextResponse.json({
       projects: userProjects,
@@ -61,52 +81,72 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const { action } = body
+    const key = getProjectsKey(userId)
+
+    // Helper to get existing projects
+    async function getExisting(): Promise<Project[]> {
+      if (isKVAvailable()) {
+        return (await kv.get<Project[]>(key)) || []
+      }
+      return localFallback.get(userId!) || []
+    }
+
+    // Helper to save projects
+    async function saveProjects(projects: Project[]): Promise<void> {
+      if (isKVAvailable()) {
+        await kv.set(key, projects)
+      } else {
+        localFallback.set(userId!, projects)
+      }
+    }
 
     if (action === "sync") {
       // Full sync - replace all projects
-      projects.set(userId, body.projects || [])
-      console.log(`[Projects API] SYNC for user ${userId}: ${body.projects?.length || 0} projects`)
+      const dataToStore = body.projects || []
+      await saveProjects(dataToStore)
+      console.log(`[Projects API] SYNC for user ${userId}: ${dataToStore.length} projects (${isKVAvailable() ? 'KV' : 'memory'})`)
       return NextResponse.json({
         success: true,
-        count: body.projects?.length || 0,
+        count: dataToStore.length,
+        storage: isKVAvailable() ? "kv" : "memory"
       })
     }
 
     if (action === "create") {
-      const existing = projects.get(userId) || []
+      const existing = await getExisting()
       const newProject = body.project
       if (newProject) {
         existing.push(newProject)
-        projects.set(userId, existing)
+        await saveProjects(existing)
         console.log(`[Projects API] CREATE for user ${userId}: ${newProject.id}`)
       }
       return NextResponse.json({ success: true, project: newProject })
     }
 
     if (action === "update") {
-      const existing = projects.get(userId) || []
+      const existing = await getExisting()
       const projectId = body.projectId
       const updates = body.updates
       
       const updated = existing.map(p => 
         p.id === projectId ? { ...p, ...updates } : p
       )
-      projects.set(userId, updated)
+      await saveProjects(updated)
       console.log(`[Projects API] UPDATE for user ${userId}: ${projectId}`)
       return NextResponse.json({ success: true })
     }
 
     if (action === "delete") {
-      const existing = projects.get(userId) || []
+      const existing = await getExisting()
       const projectId = body.projectId
       const filtered = existing.filter(p => p.id !== projectId)
-      projects.set(userId, filtered)
+      await saveProjects(filtered)
       console.log(`[Projects API] DELETE for user ${userId}: ${projectId}`)
       return NextResponse.json({ success: true })
     }
 
     if (action === "addConversation") {
-      const existing = projects.get(userId) || []
+      const existing = await getExisting()
       const projectId = body.projectId
       const conversationId = body.conversationId
       
@@ -120,13 +160,13 @@ export async function POST(req: NextRequest) {
         }
         return p
       })
-      projects.set(userId, updated)
+      await saveProjects(updated)
       console.log(`[Projects API] ADD CONVERSATION for user ${userId}: ${conversationId} -> ${projectId}`)
       return NextResponse.json({ success: true })
     }
 
     if (action === "removeConversation") {
-      const existing = projects.get(userId) || []
+      const existing = await getExisting()
       const projectId = body.projectId
       const conversationId = body.conversationId
       
@@ -136,7 +176,7 @@ export async function POST(req: NextRequest) {
         }
         return p
       })
-      projects.set(userId, updated)
+      await saveProjects(updated)
       console.log(`[Projects API] REMOVE CONVERSATION for user ${userId}: ${conversationId} from ${projectId}`)
       return NextResponse.json({ success: true })
     }
@@ -153,4 +193,3 @@ export async function POST(req: NextRequest) {
     )
   }
 }
-

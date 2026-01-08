@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-
-// Vercel KV for persistent storage (or fallback to in-memory for local dev)
-let conversations: Map<string, any[]> = new Map()
+import { kv } from "@vercel/kv"
 
 // Types
 interface Conversation {
@@ -17,10 +15,18 @@ interface Conversation {
   projectId?: string
 }
 
-interface ConversationsStore {
-  conversations: Conversation[]
-  updatedAt: string
+// Helper to get the KV key for a user's conversations
+function getConversationsKey(userId: string): string {
+  return `conversations:${userId}`
 }
+
+// Check if KV is available (has required env vars)
+function isKVAvailable(): boolean {
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+}
+
+// In-memory fallback for local development without KV
+const localFallback: Map<string, Conversation[]> = new Map()
 
 /**
  * GET /api/conversations - Get all conversations for the current user
@@ -36,10 +42,18 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Get conversations for this user
-    const userConversations = conversations.get(userId) || []
-    
-    console.log(`[Conversations API] GET for user ${userId}: ${userConversations.length} conversations`)
+    let userConversations: Conversation[] = []
+
+    if (isKVAvailable()) {
+      // Use Vercel KV for persistent storage
+      const stored = await kv.get<Conversation[]>(getConversationsKey(userId))
+      userConversations = stored || []
+      console.log(`[Conversations API] GET from KV for user ${userId}: ${userConversations.length} conversations`)
+    } else {
+      // Fallback to in-memory for local dev
+      userConversations = localFallback.get(userId) || []
+      console.log(`[Conversations API] GET from memory (no KV) for user ${userId}: ${userConversations.length} conversations`)
+    }
     
     return NextResponse.json({
       conversations: userConversations,
@@ -70,28 +84,49 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const { conversations: userConvs, action } = body
+    const key = getConversationsKey(userId)
 
     if (action === "sync") {
       // Full sync - replace all conversations
-      conversations.set(userId, userConvs || [])
-      console.log(`[Conversations API] SYNC for user ${userId}: ${userConvs?.length || 0} conversations`)
+      const dataToStore = userConvs || []
+      
+      if (isKVAvailable()) {
+        await kv.set(key, dataToStore)
+        console.log(`[Conversations API] SYNC to KV for user ${userId}: ${dataToStore.length} conversations`)
+      } else {
+        localFallback.set(userId, dataToStore)
+        console.log(`[Conversations API] SYNC to memory (no KV) for user ${userId}: ${dataToStore.length} conversations`)
+      }
       
       // Also sync to vector database for learning
-      await syncToVectorDatabase(userId, userConvs || [])
+      await syncToVectorDatabase(userId, dataToStore)
       
       return NextResponse.json({
         success: true,
-        count: userConvs?.length || 0,
+        count: dataToStore.length,
+        storage: isKVAvailable() ? "kv" : "memory"
       })
     }
 
     if (action === "create") {
       // Create a new conversation
-      const existing = conversations.get(userId) || []
+      let existing: Conversation[] = []
+      
+      if (isKVAvailable()) {
+        existing = (await kv.get<Conversation[]>(key)) || []
+      } else {
+        existing = localFallback.get(userId) || []
+      }
+      
       const newConv = body.conversation
       if (newConv) {
         existing.unshift(newConv)
-        conversations.set(userId, existing)
+        
+        if (isKVAvailable()) {
+          await kv.set(key, existing)
+        } else {
+          localFallback.set(userId, existing)
+        }
         console.log(`[Conversations API] CREATE for user ${userId}: ${newConv.id}`)
       }
       return NextResponse.json({ success: true, conversation: newConv })
@@ -99,14 +134,26 @@ export async function POST(req: NextRequest) {
 
     if (action === "update") {
       // Update a specific conversation
-      const existing = conversations.get(userId) || []
+      let existing: Conversation[] = []
+      
+      if (isKVAvailable()) {
+        existing = (await kv.get<Conversation[]>(key)) || []
+      } else {
+        existing = localFallback.get(userId) || []
+      }
+      
       const convId = body.conversationId
       const updates = body.updates
       
       const updated = existing.map(c => 
         c.id === convId ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c
       )
-      conversations.set(userId, updated)
+      
+      if (isKVAvailable()) {
+        await kv.set(key, updated)
+      } else {
+        localFallback.set(userId, updated)
+      }
       console.log(`[Conversations API] UPDATE for user ${userId}: ${convId}`)
       
       // Sync updated conversation to vector database
@@ -120,10 +167,22 @@ export async function POST(req: NextRequest) {
 
     if (action === "delete") {
       // Delete a conversation
-      const existing = conversations.get(userId) || []
+      let existing: Conversation[] = []
+      
+      if (isKVAvailable()) {
+        existing = (await kv.get<Conversation[]>(key)) || []
+      } else {
+        existing = localFallback.get(userId) || []
+      }
+      
       const convId = body.conversationId
       const filtered = existing.filter(c => c.id !== convId)
-      conversations.set(userId, filtered)
+      
+      if (isKVAvailable()) {
+        await kv.set(key, filtered)
+      } else {
+        localFallback.set(userId, filtered)
+      }
       console.log(`[Conversations API] DELETE for user ${userId}: ${convId}`)
       return NextResponse.json({ success: true })
     }
@@ -202,4 +261,3 @@ async function syncConversationToVector(userId: string, conv: Conversation) {
     console.error("[Conversations API] Single conversation sync error:", error)
   }
 }
-
