@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2 } from "lucide-react"
+import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
@@ -69,6 +69,13 @@ const settingsCards = [
     description: "Theme, display, and accessibility",
     icon: Palette,
     badgeClass: "icon-badge-orange",
+  },
+  {
+    id: "analytics",
+    title: "Analytics",
+    description: "View feedback and quality metrics",
+    icon: BarChart3,
+    badgeClass: "icon-badge-purple",
   },
 ]
 
@@ -263,7 +270,13 @@ export default function SettingsPage() {
                   return (
                     <button
                       key={card.id}
-                      onClick={() => setActiveDrawer(card.id as DrawerId)}
+                      onClick={() => {
+                        if (card.id === "analytics") {
+                          router.push("/admin/analytics")
+                        } else {
+                          setActiveDrawer(card.id as DrawerId)
+                        }
+                      }}
                       className="settings-card group llmhive-fade-in"
                       style={{ animationDelay: `${0.1 + index * 0.05}s` }}
                     >

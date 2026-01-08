@@ -68,8 +68,8 @@ DEFAULT_FEATURE_STATES: Dict[FeatureFlags, bool] = {
     FeatureFlags.CRITIQUE_AND_IMPROVE: True,  # Multi-round critique for complex queries - ENABLED
     FeatureFlags.FACT_VERIFICATION: True,  # Verify factual claims - ENABLED
     
-    # Advanced feature - kept disabled for launch
-    FeatureFlags.PROMPT_DIFFUSION: False,  # Advanced prompt optimization - not critical
+    # Advanced feature - now enabled for quality optimization
+    FeatureFlags.PROMPT_DIFFUSION: True,  # Advanced prompt optimization - ENABLED
 }
 
 
