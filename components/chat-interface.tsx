@@ -204,8 +204,13 @@ export function ChatInterface() {
   }
 
   const handleOpenDeleteDialog = (id: string) => {
-    setDeleteConversationId(id)
-    setShowDeleteDialog(true)
+    // Close mobile sidebar first to prevent focus trap issues
+    setMobileSidebarOpen(false)
+    // Small delay to let sidebar close before opening dialog
+    setTimeout(() => {
+      setDeleteConversationId(id)
+      setShowDeleteDialog(true)
+    }, 100)
   }
 
   const handleDeleteConversation = async (id: string) => {
@@ -225,6 +230,9 @@ export function ChatInterface() {
   }
 
   const handleShareConversation = (id: string) => {
+    // Close mobile sidebar
+    setMobileSidebarOpen(false)
+    
     // TODO: Implement share functionality
     const conv = conversations.find((c) => c.id === id)
     if (conv) {
@@ -235,6 +243,9 @@ export function ChatInterface() {
   }
 
   const handleArchiveConversation = async (id: string) => {
+    // Close mobile sidebar
+    setMobileSidebarOpen(false)
+    
     // Mark conversation as archived
     await updateConversation(id, { archived: true })
     toast.info("Chat archived")
@@ -267,18 +278,30 @@ export function ChatInterface() {
   }
 
   const handleOpenMoveModal = (conversationId: string) => {
-    setMoveConversationId(conversationId)
-    setShowMoveModal(true)
+    // Close mobile sidebar first to prevent focus trap issues
+    setMobileSidebarOpen(false)
+    setTimeout(() => {
+      setMoveConversationId(conversationId)
+      setShowMoveModal(true)
+    }, 100)
   }
 
   const handleOpenRenameModal = (conversationId: string) => {
-    setRenameConversationId(conversationId)
-    setShowRenameModal(true)
+    // Close mobile sidebar first to prevent focus trap issues
+    setMobileSidebarOpen(false)
+    setTimeout(() => {
+      setRenameConversationId(conversationId)
+      setShowRenameModal(true)
+    }, 100)
   }
 
   const handleOpenRenameProjectModal = (projectId: string) => {
-    setRenameProjectId(projectId)
-    setShowRenameProjectModal(true)
+    // Close mobile sidebar first to prevent focus trap issues
+    setMobileSidebarOpen(false)
+    setTimeout(() => {
+      setRenameProjectId(projectId)
+      setShowRenameProjectModal(true)
+    }, 100)
   }
 
   const handleRenameProject = async (projectId: string, newName: string) => {
