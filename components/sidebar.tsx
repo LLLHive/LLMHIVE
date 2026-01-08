@@ -644,16 +644,6 @@ function ProjectItem({
   onArchive?: () => void
   hasActiveChat?: boolean
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  
-  const handleDelete = () => {
-    setMenuOpen(false) // Close menu first
-    // Wait for menu to close, then trigger delete
-    setTimeout(() => {
-      onDelete()
-    }, 100)
-  }
-
   return (
     <div
       className={cn(
@@ -676,15 +666,12 @@ function ProjectItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
       
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={(e) => {
-              e.stopPropagation()
-              setMenuOpen(!menuOpen)
-            }}
+            onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
               // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
@@ -782,7 +769,7 @@ function ProjectItem({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
-              handleDelete()
+              onDelete()
             }}
             className="text-destructive cursor-pointer rounded-sm"
           >
@@ -820,16 +807,6 @@ function ConversationItem({
   onStartGroupChat?: () => void
   isNested?: boolean
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  
-  const handleDelete = () => {
-    setMenuOpen(false) // Close menu first
-    // Wait for menu to close, then trigger delete
-    setTimeout(() => {
-      onDelete()
-    }, 100)
-  }
-
   return (
     <div
       className={cn(
@@ -857,15 +834,12 @@ function ConversationItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
 
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={(e) => {
-              e.stopPropagation()
-              setMenuOpen(!menuOpen)
-            }}
+            onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
               // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
@@ -979,7 +953,7 @@ function ConversationItem({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
-              handleDelete()
+              onDelete()
             }}
             className="cursor-pointer rounded-sm text-destructive focus:text-destructive focus:bg-destructive/10"
           >
