@@ -612,3 +612,11 @@ if is_feature_enabled(FeatureFlags.VECTOR_MEMORY):
         logger.debug("Memory router not available: %s", e)
 else:
     logger.info("Memory router disabled by feature flag (VECTOR_MEMORY)")
+
+# Include conversations router for persistent conversation/project storage
+try:
+    from .routers import conversations as conversations_router
+    app.include_router(conversations_router.router)
+    logger.info("✓ Conversations router enabled at /v1/data/")
+except ImportError as e:
+    logger.debug("Conversations router not available: %s", e)

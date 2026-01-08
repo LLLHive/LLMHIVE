@@ -1,34 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { kv } from "@vercel/kv"
 
-interface Project {
-  id: string
-  name: string
-  description?: string
-  conversations: string[]
-  createdAt: string
-  color?: string
-  icon?: string
-  pinned?: boolean
-  archived?: boolean
-}
-
-// Helper to get the KV key for a user's projects
-function getProjectsKey(userId: string): string {
-  return `projects:${userId}`
-}
-
-// Check if KV is available (has required env vars)
-function isKVAvailable(): boolean {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
-}
-
-// In-memory fallback for local development without KV
-const localFallback: Map<string, Project[]> = new Map()
+/**
+ * Backend API URL for persistent storage (Firestore + Pinecone)
+ */
+const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
 /**
  * GET /api/projects - Get all projects for the current user
+ * Proxies to backend: GET /v1/data/projects
  */
 export async function GET(req: NextRequest) {
   try {
@@ -41,20 +21,32 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    let userProjects: Project[] = []
+    // Call backend API
+    const response = await fetch(`${BACKEND_URL}/v1/data/projects`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-User-Id": userId,
+        "X-API-Key": process.env.LLMHIVE_API_KEY || "",
+      },
+    })
 
-    if (isKVAvailable()) {
-      const stored = await kv.get<Project[]>(getProjectsKey(userId))
-      userProjects = stored || []
-      console.log(`[Projects API] GET from KV for user ${userId}: ${userProjects.length} projects`)
-    } else {
-      userProjects = localFallback.get(userId) || []
-      console.log(`[Projects API] GET from memory (no KV) for user ${userId}: ${userProjects.length} projects`)
+    if (!response.ok) {
+      console.error(`[Projects API] Backend error: ${response.status}`)
+      return NextResponse.json(
+        { error: "Backend unavailable", projects: [] },
+        { status: 502 }
+      )
     }
+
+    const data = await response.json()
+    
+    console.log(`[Projects API] GET from backend for user ${userId}: ${data.count} projects`)
     
     return NextResponse.json({
-      projects: userProjects,
-      count: userProjects.length,
+      projects: data.projects || [],
+      count: data.count || 0,
+      storage: "firestore",
     })
   } catch (error) {
     console.error("[Projects API] GET error:", error)
@@ -67,6 +59,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/projects - Create/update/delete projects
+ * Proxies to backend: POST /v1/data/projects/{action}
  */
 export async function POST(req: NextRequest) {
   try {
@@ -81,110 +74,88 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const { action } = body
-    const key = getProjectsKey(userId)
 
-    // Helper to get existing projects
-    async function getExisting(): Promise<Project[]> {
-      if (isKVAvailable()) {
-        return (await kv.get<Project[]>(key)) || []
-      }
-      return localFallback.get(userId!) || []
+    // Map actions to backend endpoints
+    let endpoint: string
+    let backendBody: any
+
+    switch (action) {
+      case "sync":
+        endpoint = `${BACKEND_URL}/v1/data/projects/sync`
+        backendBody = { projects: body.projects || [] }
+        break
+
+      case "create":
+        endpoint = `${BACKEND_URL}/v1/data/projects/create`
+        backendBody = { project: body.project }
+        break
+
+      case "update":
+        endpoint = `${BACKEND_URL}/v1/data/projects/update`
+        backendBody = {
+          projectId: body.projectId,
+          updates: body.updates,
+        }
+        break
+
+      case "delete":
+        endpoint = `${BACKEND_URL}/v1/data/projects/delete?projectId=${encodeURIComponent(body.projectId)}`
+        backendBody = {}
+        break
+
+      case "addConversation":
+        endpoint = `${BACKEND_URL}/v1/data/projects/add-conversation`
+        backendBody = {
+          projectId: body.projectId,
+          conversationId: body.conversationId,
+        }
+        break
+
+      case "removeConversation":
+        endpoint = `${BACKEND_URL}/v1/data/projects/remove-conversation`
+        backendBody = {
+          projectId: body.projectId,
+          conversationId: body.conversationId,
+        }
+        break
+
+      default:
+        return NextResponse.json(
+          { error: "Invalid action" },
+          { status: 400 }
+        )
     }
 
-    // Helper to save projects
-    async function saveProjects(projects: Project[]): Promise<void> {
-      if (isKVAvailable()) {
-        await kv.set(key, projects)
-      } else {
-        localFallback.set(userId!, projects)
-      }
-    }
+    // Call backend API
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-User-Id": userId,
+        "X-API-Key": process.env.LLMHIVE_API_KEY || "",
+      },
+      body: JSON.stringify(backendBody),
+    })
 
-    if (action === "sync") {
-      // Full sync - replace all projects
-      const dataToStore = body.projects || []
-      await saveProjects(dataToStore)
-      console.log(`[Projects API] SYNC for user ${userId}: ${dataToStore.length} projects (${isKVAvailable() ? 'KV' : 'memory'})`)
-      return NextResponse.json({
-        success: true,
-        count: dataToStore.length,
-        storage: isKVAvailable() ? "kv" : "memory"
-      })
-    }
-
-    if (action === "create") {
-      const existing = await getExisting()
-      const newProject = body.project
-      if (newProject) {
-        existing.push(newProject)
-        await saveProjects(existing)
-        console.log(`[Projects API] CREATE for user ${userId}: ${newProject.id}`)
-      }
-      return NextResponse.json({ success: true, project: newProject })
-    }
-
-    if (action === "update") {
-      const existing = await getExisting()
-      const projectId = body.projectId
-      const updates = body.updates
-      
-      const updated = existing.map(p => 
-        p.id === projectId ? { ...p, ...updates } : p
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`[Projects API] Backend error: ${response.status} - ${errorText}`)
+      return NextResponse.json(
+        { error: "Backend operation failed", success: false },
+        { status: 502 }
       )
-      await saveProjects(updated)
-      console.log(`[Projects API] UPDATE for user ${userId}: ${projectId}`)
-      return NextResponse.json({ success: true })
     }
 
-    if (action === "delete") {
-      const existing = await getExisting()
-      const projectId = body.projectId
-      const filtered = existing.filter(p => p.id !== projectId)
-      await saveProjects(filtered)
-      console.log(`[Projects API] DELETE for user ${userId}: ${projectId}`)
-      return NextResponse.json({ success: true })
-    }
+    const data = await response.json()
+    
+    console.log(`[Projects API] ${action.toUpperCase()} for user ${userId}: success=${data.success}`)
+    
+    return NextResponse.json({
+      success: data.success,
+      message: data.message,
+      storage: "firestore",
+    })
 
-    if (action === "addConversation") {
-      const existing = await getExisting()
-      const projectId = body.projectId
-      const conversationId = body.conversationId
-      
-      const updated = existing.map(p => {
-        if (p.id === projectId) {
-          const convs = p.conversations || []
-          if (!convs.includes(conversationId)) {
-            convs.push(conversationId)
-          }
-          return { ...p, conversations: convs }
-        }
-        return p
-      })
-      await saveProjects(updated)
-      console.log(`[Projects API] ADD CONVERSATION for user ${userId}: ${conversationId} -> ${projectId}`)
-      return NextResponse.json({ success: true })
-    }
-
-    if (action === "removeConversation") {
-      const existing = await getExisting()
-      const projectId = body.projectId
-      const conversationId = body.conversationId
-      
-      const updated = existing.map(p => {
-        if (p.id === projectId) {
-          return { ...p, conversations: (p.conversations || []).filter((id: string) => id !== conversationId) }
-        }
-        return p
-      })
-      await saveProjects(updated)
-      console.log(`[Projects API] REMOVE CONVERSATION for user ${userId}: ${conversationId} from ${projectId}`)
-      return NextResponse.json({ success: true })
-    }
-
-    return NextResponse.json(
-      { error: "Invalid action" },
-      { status: 400 }
-    )
   } catch (error) {
     console.error("[Projects API] POST error:", error)
     return NextResponse.json(
