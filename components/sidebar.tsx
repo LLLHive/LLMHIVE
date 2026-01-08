@@ -694,9 +694,13 @@ function ProjectItem({
           className="w-52 p-1 z-[200]"
           portal={false}
           onCloseAutoFocus={(e) => e.preventDefault()}
+          onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenuItem
-            onSelect={() => onSelect()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onSelect()
+            }}
             className="cursor-pointer rounded-sm"
           >
             <FolderOpen className="h-4 w-4 mr-2" />
@@ -707,7 +711,10 @@ function ProjectItem({
           
           {/* Rename */}
           <DropdownMenuItem
-            onSelect={() => onRename?.()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onRename?.()
+            }}
             className="cursor-pointer rounded-sm"
           >
             <Pencil className="h-4 w-4 mr-2" />
@@ -726,7 +733,10 @@ function ProjectItem({
           
           {/* Pin/Unpin Project */}
           <DropdownMenuItem
-            onSelect={() => onTogglePin?.()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onTogglePin?.()
+            }}
             className="cursor-pointer rounded-sm"
           >
             {(project as any).pinned ? (
@@ -744,7 +754,10 @@ function ProjectItem({
           
           {/* Archive */}
           <DropdownMenuItem
-            onSelect={() => onArchive?.()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onArchive?.()
+            }}
             className="cursor-pointer rounded-sm"
           >
             <Archive className="h-4 w-4 mr-2" />
@@ -755,7 +768,10 @@ function ProjectItem({
           
           {/* Delete */}
           <DropdownMenuItem
-            onSelect={() => onDelete()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onDelete()
+            }}
             className="text-destructive cursor-pointer rounded-sm"
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -847,10 +863,14 @@ function ConversationItem({
           className="w-48 p-1 z-[200]"
           portal={false}
           onCloseAutoFocus={(e) => e.preventDefault()}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Share option */}
           <DropdownMenuItem
-            onSelect={() => onShare?.()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onShare?.()
+            }}
             className="cursor-pointer rounded-sm"
           >
             <Share className="h-4 w-4 mr-2" />
@@ -859,7 +879,6 @@ function ConversationItem({
           
           {/* Start a group chat - Coming soon */}
           <DropdownMenuItem
-            onSelect={() => onStartGroupChat?.()}
             className="cursor-pointer rounded-sm"
             disabled
           >
@@ -872,7 +891,10 @@ function ConversationItem({
           
           {/* Rename */}
           <DropdownMenuItem
-            onSelect={() => onRename()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onRename()
+            }}
             className="cursor-pointer rounded-sm"
           >
             <Pencil className="h-4 w-4 mr-2" />
@@ -881,7 +903,10 @@ function ConversationItem({
           
           {/* Move to Project */}
           <DropdownMenuItem
-            onSelect={() => onMoveToProject()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onMoveToProject()
+            }}
             className="cursor-pointer rounded-sm"
           >
             <FolderInput className="h-4 w-4 mr-2" />
@@ -890,7 +915,10 @@ function ConversationItem({
           
           {/* Pin/Unpin */}
           <DropdownMenuItem
-            onSelect={() => onTogglePin()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onTogglePin()
+            }}
             className="cursor-pointer rounded-sm"
           >
             {conversation.pinned ? (
@@ -908,7 +936,10 @@ function ConversationItem({
           
           {/* Archive */}
           <DropdownMenuItem
-            onSelect={() => onArchive?.()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onArchive?.()
+            }}
             className="cursor-pointer rounded-sm"
           >
             <Archive className="h-4 w-4 mr-2" />
@@ -919,7 +950,10 @@ function ConversationItem({
           
           {/* Delete - with destructive styling */}
           <DropdownMenuItem
-            onSelect={() => onDelete()}
+            onSelect={(e) => {
+              e.preventDefault()
+              onDelete()
+            }}
             className="cursor-pointer rounded-sm text-destructive focus:text-destructive focus:bg-destructive/10"
           >
             <Trash2 className="h-4 w-4 mr-2" />
