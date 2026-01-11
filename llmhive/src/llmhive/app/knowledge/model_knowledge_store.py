@@ -127,7 +127,24 @@ class ModelKnowledgeStore:
             logger.info("Using in-memory cache for model knowledge")
     
     def _initialize_pinecone(self) -> None:
-        """Initialize Pinecone client and ensure index exists."""
+        """Initialize Pinecone via registry (host-based) or direct connection."""
+        # Try registry-based connection first (supports host-based connections)
+        try:
+            from .pinecone_registry import get_pinecone_registry, IndexKind
+            
+            registry = get_pinecone_registry()
+            if registry.is_available:
+                self.index = registry.get_index(IndexKind.MODEL_KNOWLEDGE)
+                if self.index:
+                    self._initialized = True
+                    logger.info("Model knowledge store initialized via registry (host-based)")
+                    return
+        except ImportError:
+            logger.debug("Pinecone registry not available, using direct connection")
+        except Exception as e:
+            logger.warning("Registry connection failed: %s, falling back to direct", e)
+        
+        # Fallback: Direct connection (for backward compatibility)
         try:
             self.pc = Pinecone(api_key=self.api_key)
             
@@ -148,7 +165,7 @@ class ModelKnowledgeStore:
             
             self.index = self.pc.Index(self.INDEX_NAME)
             self._initialized = True
-            logger.info("Model knowledge store initialized with Pinecone")
+            logger.info("Model knowledge store initialized via direct connection")
             
         except Exception as e:
             logger.error(f"Failed to initialize Pinecone for model knowledge: {e}")

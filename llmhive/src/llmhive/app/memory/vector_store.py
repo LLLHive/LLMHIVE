@@ -326,11 +326,28 @@ class PineconeVectorStore(VectorStore):
         self._initialize()
     
     def _initialize(self) -> None:
-        """Initialize Pinecone connection."""
+        """Initialize Pinecone via registry (host-based) or direct connection."""
         if not self._api_key:
             logger.warning("Pinecone API key not configured")
             return
         
+        # Try registry-based connection first (supports host-based connections)
+        try:
+            from ..knowledge.pinecone_registry import get_pinecone_registry, IndexKind
+            
+            registry = get_pinecone_registry()
+            if registry.is_available:
+                self._index = registry.get_index(IndexKind.MEMORY)
+                if self._index:
+                    self._initialized = True
+                    logger.info("PineconeVectorStore initialized via registry (host-based)")
+                    return
+        except ImportError:
+            logger.debug("Pinecone registry not available, using direct connection")
+        except Exception as e:
+            logger.warning("Registry connection failed: %s, falling back to direct", e)
+        
+        # Fallback: Direct connection (for backward compatibility)
         try:
             from pinecone import Pinecone
             
@@ -353,12 +370,12 @@ class PineconeVectorStore(VectorStore):
             try:
                 stats = self._index.describe_index_stats()
                 logger.info(
-                    "PineconeVectorStore initialized: index=%s, records=%s",
+                    "PineconeVectorStore initialized via direct connection: index=%s, records=%s",
                     self._index_name,
                     stats.get("total_vector_count", "unknown"),
                 )
             except Exception:
-                logger.info("PineconeVectorStore initialized: index=%s", self._index_name)
+                logger.info("PineconeVectorStore initialized via direct connection: index=%s", self._index_name)
             
         except ImportError:
             logger.warning("Pinecone package not installed. Run: pip install pinecone")

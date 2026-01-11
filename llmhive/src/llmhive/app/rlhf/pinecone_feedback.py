@@ -112,7 +112,7 @@ class PineconeFeedbackStore:
         self._initialized = False
     
     def _ensure_initialized(self) -> bool:
-        """Ensure Pinecone client is initialized."""
+        """Ensure Pinecone client is initialized via registry or direct connection."""
         if self._initialized:
             return True
         
@@ -124,6 +124,23 @@ class PineconeFeedbackStore:
             logger.error("PINECONE_API_KEY not set")
             return False
         
+        # Try registry-based connection first (supports host-based connections)
+        try:
+            from ..knowledge.pinecone_registry import get_pinecone_registry, IndexKind
+            
+            registry = get_pinecone_registry()
+            if registry.is_available:
+                self._index = registry.get_index(IndexKind.RLHF_FEEDBACK)
+                if self._index:
+                    self._initialized = True
+                    logger.info("Pinecone feedback store initialized via registry (host-based)")
+                    return True
+        except ImportError:
+            logger.debug("Pinecone registry not available, using direct connection")
+        except Exception as e:
+            logger.warning("Registry connection failed: %s, falling back to direct", e)
+        
+        # Fallback: Direct connection (for backward compatibility)
         try:
             self._pc = Pinecone(api_key=self.api_key)
             
@@ -145,7 +162,7 @@ class PineconeFeedbackStore:
             
             self._index = self._pc.Index(self.index_name)
             self._initialized = True
-            logger.info("Pinecone feedback store initialized: %s", self.index_name)
+            logger.info("Pinecone feedback store initialized via direct connection: %s", self.index_name)
             return True
             
         except Exception as e:

@@ -7,6 +7,7 @@ for orchestrator learning and RAG capabilities.
 Includes:
 - PineconeKnowledgeBase: General knowledge storage (answers, patterns, domain knowledge)
 - ModelKnowledgeStore: Model intelligence storage (profiles, rankings, capabilities)
+- PineconeRegistry: Centralized connection management for all Pinecone indexes
 """
 
 from .pinecone_kb import (
@@ -15,6 +16,23 @@ from .pinecone_kb import (
     RecordType,
     get_knowledge_base,
 )
+
+# Pinecone Registry for centralized connection management
+try:
+    from .pinecone_registry import (
+        PineconeRegistry,
+        IndexKind,
+        INDEX_CONFIGS,
+        get_pinecone_registry,
+        get_index,
+        is_pinecone_available,
+    )
+    PINECONE_REGISTRY_AVAILABLE = True
+except ImportError:
+    PINECONE_REGISTRY_AVAILABLE = False
+    PineconeRegistry = None  # type: ignore
+    IndexKind = None  # type: ignore
+    get_pinecone_registry = None  # type: ignore
 
 # Model Knowledge Store for orchestration intelligence
 try:

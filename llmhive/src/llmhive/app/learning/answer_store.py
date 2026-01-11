@@ -384,10 +384,15 @@ class SQLiteAnswerStore:
 
 
 class PineconeAnswerStore:
-    """Pinecone-based answer storage for semantic search."""
+    """Pinecone-based answer storage for semantic search.
     
-    INDEX_NAME = "llmhive-answer-cache"
-    NAMESPACE = "answers"
+    Uses the ORCHESTRATOR_KB index with a dedicated namespace for answer caching.
+    This avoids needing a separate index while maintaining isolation.
+    """
+    
+    # Reuse orchestrator-kb index with a dedicated namespace
+    INDEX_NAME = "llmhive-orchestrator-kb"  # Changed from llmhive-answer-cache
+    NAMESPACE = "answer_cache"  # Dedicated namespace for answer caching
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("PINECONE_API_KEY")
@@ -399,28 +404,36 @@ class PineconeAnswerStore:
             self._initialize_pinecone()
     
     def _initialize_pinecone(self) -> None:
-        """Initialize Pinecone client and index."""
+        """Initialize Pinecone via registry (host-based) or direct connection."""
+        # Try registry-based connection first (supports host-based connections)
+        try:
+            from ..knowledge.pinecone_registry import get_pinecone_registry, IndexKind
+            
+            registry = get_pinecone_registry()
+            if registry.is_available:
+                # Use ANSWER_CACHE kind which maps to ORCHESTRATOR_KB host
+                self.index = registry.get_index(IndexKind.ANSWER_CACHE)
+                if self.index:
+                    self._initialized = True
+                    logger.info("Pinecone answer store initialized via registry (host-based)")
+                    return
+        except ImportError:
+            logger.debug("Pinecone registry not available, using direct connection")
+        except Exception as e:
+            logger.warning("Registry connection failed: %s, falling back to direct", e)
+        
+        # Fallback: Direct connection (for backward compatibility)
         try:
             self.pc = Pinecone(api_key=self.api_key)
             
             if not self.pc.has_index(self.INDEX_NAME):
-                logger.info("Creating Pinecone index: %s", self.INDEX_NAME)
-                self.pc.create_index_for_model(
-                    name=self.INDEX_NAME,
-                    cloud="aws",
-                    region="us-east-1",
-                    embed={
-                        "model": "llama-text-embed-v2",
-                        "field_map": {"text": "query_text"}
-                    }
-                )
-                # Wait for index to be ready
-                import time
-                time.sleep(5)
+                # Don't create - just warn, as we're reusing orchestrator-kb
+                logger.warning("Orchestrator KB index not found, answer store will be disabled")
+                return
             
             self.index = self.pc.Index(self.INDEX_NAME)
             self._initialized = True
-            logger.info("Pinecone answer store initialized")
+            logger.info("Pinecone answer store initialized via direct connection")
             
         except Exception as e:
             logger.error("Failed to initialize Pinecone: %s", e)

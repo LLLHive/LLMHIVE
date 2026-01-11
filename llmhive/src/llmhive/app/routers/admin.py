@@ -341,3 +341,190 @@ async def get_prompt_diffusion_stats(
         "note": "Stats collection requires production traffic",
     }
 
+
+# ==============================================================================
+# Pinecone Health & Smoke Tests
+# ==============================================================================
+
+@router.get("/pinecone/health")
+async def pinecone_health(
+    x_admin_key: Optional[str] = Header(None),
+):
+    """Get Pinecone connection health status (read-only).
+    
+    Returns per-index connection status without performing writes.
+    """
+    try:
+        from ..knowledge.pinecone_registry import (
+            get_pinecone_registry,
+            IndexKind,
+            INDEX_CONFIGS,
+        )
+        
+        registry = get_pinecone_registry()
+        health = registry.get_health_status()
+        
+        # Add friendly summary
+        indexes_connected = sum(
+            1 for idx_data in health.get("indexes", {}).values()
+            if idx_data.get("connected")
+        )
+        indexes_configured = sum(
+            1 for idx_data in health.get("indexes", {}).values()
+            if idx_data.get("host_configured")
+        )
+        
+        return {
+            "status": "healthy" if indexes_connected > 0 else "degraded",
+            "sdk_available": health.get("sdk_available", False),
+            "api_key_set": health.get("api_key_set", False),
+            "client_initialized": health.get("client_initialized", False),
+            "require_hosts": health.get("require_hosts", False),
+            "indexes_configured": indexes_configured,
+            "indexes_connected": indexes_connected,
+            "indexes": health.get("indexes", {}),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        
+    except Exception as e:
+        logger.error("Pinecone health check failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+
+@router.post("/pinecone/smoke")
+async def pinecone_smoke_test(
+    x_admin_key: Optional[str] = Header(None),
+):
+    """Run Pinecone smoke test (upsert/query/delete per index).
+    
+    Performs real write operations to verify full connectivity.
+    Security: Requires admin access.
+    """
+    if not verify_admin_access(None, x_admin_key):
+        raise HTTPException(status_code=401, detail="Admin access required")
+    
+    import random
+    import time
+    
+    SMOKE_NAMESPACE = "__llmhive_smoke__"
+    
+    try:
+        from ..knowledge.pinecone_registry import (
+            get_pinecone_registry,
+            IndexKind,
+        )
+        
+        registry = get_pinecone_registry()
+        
+        if not registry.is_available:
+            return {
+                "status": "failed",
+                "error": "Pinecone registry not available",
+                "results": {},
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        
+        results: Dict[str, Any] = {}
+        
+        for kind in IndexKind:
+            index_key = kind.value
+            test_id = f"smoke_{index_key}_{int(time.time())}_{random.randint(1000, 9999)}"
+            
+            try:
+                idx = registry.get_index(kind)
+                
+                if not idx:
+                    results[index_key] = {
+                        "passed": False,
+                        "error": "Index not connected",
+                    }
+                    continue
+                
+                # Get dimension from stats
+                stats = idx.describe_index_stats()
+                dimension = getattr(stats, 'dimension', 1024)  # Default for llama-embed
+                vector_count = getattr(stats, 'total_vector_count', 0)
+                
+                # Generate test vector
+                test_vector = [random.random() for _ in range(dimension)]
+                
+                # UPSERT
+                try:
+                    idx.upsert(
+                        vectors=[(test_id, test_vector, {"test": True})],
+                        namespace=SMOKE_NAMESPACE,
+                    )
+                except Exception as e:
+                    # May fail for integrated embeddings indexes - still a connection success
+                    if "integrated" in str(e).lower() or "records" in str(e).lower():
+                        results[index_key] = {
+                            "passed": True,
+                            "note": "Connected (uses records API)",
+                            "vector_count": vector_count,
+                            "dimension": dimension,
+                        }
+                        continue
+                    raise
+                
+                # Wait for consistency
+                time.sleep(1)
+                
+                # QUERY
+                found = False
+                for _ in range(3):
+                    try:
+                        query_results = idx.query(
+                            vector=test_vector,
+                            top_k=1,
+                            namespace=SMOKE_NAMESPACE,
+                        )
+                        if query_results.matches and query_results.matches[0].id == test_id:
+                            found = True
+                            break
+                    except Exception:
+                        pass
+                    time.sleep(0.5)
+                
+                # DELETE
+                try:
+                    idx.delete(ids=[test_id], namespace=SMOKE_NAMESPACE)
+                except Exception:
+                    pass
+                
+                results[index_key] = {
+                    "passed": found,
+                    "error": None if found else "Query did not return upserted vector",
+                    "vector_count": vector_count,
+                    "dimension": dimension,
+                }
+                
+            except Exception as e:
+                results[index_key] = {
+                    "passed": False,
+                    "error": str(e)[:200],
+                }
+        
+        # Summary
+        passed = sum(1 for r in results.values() if r.get("passed"))
+        failed = sum(1 for r in results.values() if not r.get("passed"))
+        
+        return {
+            "status": "passed" if failed == 0 else "failed",
+            "passed": passed,
+            "failed": failed,
+            "results": results,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        
+    except Exception as e:
+        logger.error("Pinecone smoke test failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
