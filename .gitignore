@@ -118,3 +118,8 @@ playwright/.cache/
 test-results/
 /test-results/
 .env*.local
+
+# ===========================================
+# BACKUPS (contains sensitive env files)
+# ===========================================
+backups/
