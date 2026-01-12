@@ -114,24 +114,75 @@ def extract_region_from_host(host: str) -> Optional[str]:
     """Extract the region from a Pinecone host URL.
     
     Host format examples:
-    - llmhive-memory-abc123.svc.us-east-1.pinecone.io
-    - index-name.svc.us-central1-gcp.pinecone.io
+    - Legacy: llmhive-memory-abc123.svc.us-east-1.pinecone.io
+    - Legacy: index-name.svc.us-central1-gcp.pinecone.io
+    - Serverless: index-name-aped-4627-b74a.svc.aped-4627-b74a.pinecone.io
+    
+    Note: Serverless URLs use project IDs (aped-xxxx-xxxx) instead of regions.
+    The actual region is determined at index creation time.
     
     Returns:
-        Region string or None if not parseable
+        Region string, "serverless" for serverless URLs, or None if not parseable
     """
     if not host:
         return None
     try:
         # Remove protocol if present
         host = host.replace("https://", "").replace("http://", "")
-        # Format: index-id.svc.REGION.pinecone.io
+        # Format: index-id.svc.REGION_OR_PROJECT.pinecone.io
         parts = host.split(".")
         if len(parts) >= 4 and parts[1] == "svc":
-            return parts[2]
+            region_or_project = parts[2]
+            # Serverless project IDs match pattern: aped-xxxx-xxxx or similar
+            # They are NOT regions - they're project identifiers
+            if _is_serverless_project_id(region_or_project):
+                return "serverless"
+            return region_or_project
     except Exception:
         pass
     return None
+
+
+def _is_serverless_project_id(identifier: str) -> bool:
+    """Check if an identifier is a Pinecone serverless project ID.
+    
+    Serverless project IDs have patterns like:
+    - aped-xxxx-xxxx (e.g., aped-4627-b74a)
+    - Various alphanumeric patterns that don't match known region formats
+    
+    Known region formats:
+    - us-east-1, us-west-2 (AWS)
+    - us-central1-gcp, europe-west1-gcp (GCP)
+    - eastus-azure (Azure)
+    """
+    if not identifier:
+        return False
+    
+    # Known region prefixes
+    region_prefixes = (
+        "us-", "eu-", "ap-", "sa-", "ca-", "me-", "af-",  # AWS-style
+        "asia-", "europe-", "australia-", "northamerica-", "southamerica-",  # GCP-style
+        "eastus", "westus", "centralus", "northeurope", "westeurope",  # Azure-style
+    )
+    
+    # Check if it looks like a known region
+    if any(identifier.startswith(prefix) for prefix in region_prefixes):
+        return False
+    
+    # Serverless project IDs typically:
+    # - Start with 'aped-', 'gcp-', 'aws-' followed by hex-like segments
+    # - Don't match any known region pattern
+    # - Often have format: xxxx-xxxx-xxxx
+    serverless_patterns = ("aped-", "gcp-", "aws-", "azure-")
+    if any(identifier.startswith(prefix) for prefix in serverless_patterns):
+        return True
+    
+    # If it has multiple dashes and doesn't look like a region, assume serverless
+    dash_count = identifier.count("-")
+    if dash_count >= 2 and not any(identifier.startswith(p) for p in region_prefixes):
+        return True
+    
+    return False
 
 
 class PineconeRegistryError(Exception):
@@ -324,8 +375,8 @@ class PineconeRegistry:
                 "detected_region": detected_region,
             }
             
-            # Check for region mismatch
-            if detected_region and EXPECTED_REGION and detected_region != EXPECTED_REGION:
+            # Check for region mismatch (skip for serverless - they don't have region in URL)
+            if detected_region and detected_region != "serverless" and EXPECTED_REGION and detected_region != EXPECTED_REGION:
                 warning = (
                     f"{kind.value} index appears to be in region '{detected_region}' "
                     f"but expected region is '{EXPECTED_REGION}'. "
@@ -333,6 +384,9 @@ class PineconeRegistry:
                 )
                 index_status["region_warning"] = warning
                 status["region_warnings"].append(warning)
+            elif detected_region == "serverless":
+                # Serverless indexes use project IDs, not regions in URL
+                index_status["index_type"] = "serverless"
             
             # Get vector count if connected
             if index:

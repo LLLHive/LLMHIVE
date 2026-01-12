@@ -56,6 +56,32 @@ class TestExtractRegionFromHost:
         """Should return None for invalid format."""
         assert extract_region_from_host("not-a-valid-host") is None
         assert extract_region_from_host("example.com") is None
+    
+    def test_extract_region_serverless_aped(self):
+        """Should return 'serverless' for Pinecone serverless URLs (aped-xxxx-xxxx)."""
+        host = "llmhive-orchestrator-kb-aped-4627-b74a.svc.aped-4627-b74a.pinecone.io"
+        assert extract_region_from_host(host) == "serverless"
+    
+    def test_extract_region_serverless_with_https(self):
+        """Should handle https:// prefix for serverless URLs."""
+        host = "https://llmhive-memory-aped-1234-abcd.svc.aped-1234-abcd.pinecone.io"
+        assert extract_region_from_host(host) == "serverless"
+    
+    def test_extract_region_serverless_aws_project(self):
+        """Should return 'serverless' for AWS serverless project IDs."""
+        host = "index-name-aws-12ab-34cd.svc.aws-12ab-34cd.pinecone.io"
+        assert extract_region_from_host(host) == "serverless"
+    
+    def test_extract_region_preserves_real_regions(self):
+        """Should still correctly identify real region URLs."""
+        # AWS regions
+        assert extract_region_from_host("idx.svc.us-east-1.pinecone.io") == "us-east-1"
+        assert extract_region_from_host("idx.svc.us-west-2.pinecone.io") == "us-west-2"
+        assert extract_region_from_host("idx.svc.eu-west-1.pinecone.io") == "eu-west-1"
+        assert extract_region_from_host("idx.svc.ap-southeast-1.pinecone.io") == "ap-southeast-1"
+        # GCP regions
+        assert extract_region_from_host("idx.svc.us-central1-gcp.pinecone.io") == "us-central1-gcp"
+        assert extract_region_from_host("idx.svc.europe-west1-gcp.pinecone.io") == "europe-west1-gcp"
 
 
 class TestIndexKind:
