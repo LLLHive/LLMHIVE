@@ -67,6 +67,8 @@ interface ChatAreaProps {
   onOrchestratorSettingsChange: (settings: Partial<OrchestratorSettings>) => void
   onOpenAdvancedSettings: () => void
   userAccountMenu?: React.ReactNode
+  initialQuery?: string | null
+  onInitialQueryProcessed?: () => void
 }
 
 export function ChatArea({
@@ -77,8 +79,11 @@ export function ChatArea({
   onOrchestratorSettingsChange,
   onOpenAdvancedSettings,
   userAccountMenu,
+  initialQuery,
+  onInitialQueryProcessed,
 }: ChatAreaProps) {
   const [input, setInput] = useState("")
+  const initialQueryProcessedRef = useRef(false)
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInsights, setShowInsights] = useState(false)
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
@@ -120,6 +125,26 @@ export function ChatArea({
   useEffect(() => {
     setSpeechSupported(voiceRecognition.supported)
   }, [])
+  
+  // Handle initial query from URL (deep linking from Discover, templates, etc.)
+  useEffect(() => {
+    if (initialQuery && !initialQueryProcessedRef.current) {
+      initialQueryProcessedRef.current = true
+      // Set the input to the initial query
+      setInput(initialQuery)
+      // Notify parent that query has been processed
+      onInitialQueryProcessed?.()
+      // Auto-submit after a short delay to allow UI to render
+      const timer = setTimeout(() => {
+        // Trigger the send by simulating form submission
+        const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement
+        if (sendButton) {
+          sendButton.click()
+        }
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [initialQuery, onInitialQueryProcessed])
   
   // Auto-scroll to bottom when new messages arrive (unless user has scrolled up)
   useEffect(() => {
@@ -1096,6 +1121,7 @@ export function ChatArea({
               </div>
               <Button
                 size="icon"
+                data-send-button
                 onClick={() => handleSend()}
                 disabled={(!input.trim() && attachments.length === 0) || isLoading}
                 className="h-7 w-7 md:h-8 md:w-8 bronze-gradient disabled:opacity-50"

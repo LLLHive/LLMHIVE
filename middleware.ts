@@ -4,13 +4,29 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 // Route Configuration
 // =============================================================================
 
-// Define public routes that don't require authentication
+/**
+ * Public routes that don't require authentication.
+ * These routes are accessible to everyone including non-logged-in users.
+ */
 const isPublicRoute = createRouteMatcher([
+  // Auth routes
   "/sign-in(.*)",
   "/sign-up(.*)",
+  
+  // Marketing/public pages (must be accessible for SEO and conversions)
+  "/landing(.*)",
+  "/pricing(.*)",
+  "/about(.*)",
+  "/terms(.*)",
+  "/privacy(.*)",
+  "/cookies(.*)",
+  "/contact(.*)",
+  "/discover(.*)",
+  
+  // API routes that should be public
   "/api/webhooks(.*)",
   "/api/health",
-  "/api/openrouter(.*)",  // OpenRouter API routes should be public for model catalog
+  "/api/openrouter(.*)",  // OpenRouter API routes for model catalog
   "/api/settings(.*)",    // Settings API for loading user preferences
 ])
 
@@ -18,11 +34,17 @@ const isPublicRoute = createRouteMatcher([
 const isE2ETest = process.env.PLAYWRIGHT_TEST === "true" || process.env.CI === "true"
 
 // =============================================================================
-// Clerk Auth Proxy (renamed from middleware for Next.js 16+)
+// Clerk Auth Middleware
 // =============================================================================
 
-// Named export "proxy" for Next.js 16+ (replaces default export "middleware")
-export const proxy = clerkMiddleware(async (auth, request) => {
+/**
+ * Clerk middleware for authentication.
+ * 
+ * - Public routes are accessible to everyone
+ * - All other routes require authentication
+ * - E2E tests bypass authentication
+ */
+export default clerkMiddleware(async (auth, request) => {
   // Skip auth in E2E test mode to allow automated testing
   if (isE2ETest) {
     return

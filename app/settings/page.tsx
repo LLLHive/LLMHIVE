@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
+import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
 import { LogoText } from "@/components/branding"
 import { Badge } from "@/components/ui/badge"
@@ -113,6 +114,7 @@ type DrawerId = "account" | "billing" | "connections" | "notifications" | "priva
 export default function SettingsPage() {
   const router = useRouter()
   const auth = useAuth()
+  const { user: clerkUser } = useUser()
   const { 
     conversations, 
     projects, 
@@ -129,6 +131,45 @@ export default function SettingsPage() {
   const [enabledNotifications, setEnabledNotifications] = useState<string[]>([])
   const [privacySettings, setPrivacySettings] = useState<string[]>([])
   const [appearanceSettings, setAppearanceSettings] = useState<string[]>([])
+  
+  // Account form state
+  const [displayName, setDisplayName] = useState("")
+  const [isSavingAccount, setIsSavingAccount] = useState(false)
+  
+  // Initialize account form with Clerk user data
+  useEffect(() => {
+    if (clerkUser) {
+      setDisplayName(clerkUser.fullName || clerkUser.firstName || "")
+    }
+  }, [clerkUser])
+  
+  // Save account changes to Clerk
+  const handleSaveAccount = async () => {
+    if (!clerkUser) {
+      toast.error("You must be signed in to save changes")
+      return
+    }
+    
+    setIsSavingAccount(true)
+    try {
+      // Parse the name into first/last name
+      const nameParts = displayName.trim().split(" ")
+      const firstName = nameParts[0] || ""
+      const lastName = nameParts.slice(1).join(" ") || ""
+      
+      await clerkUser.update({
+        firstName,
+        lastName,
+      })
+      
+      toast.success("Account updated successfully!")
+    } catch (error) {
+      console.error("Failed to update account:", error)
+      toast.error("Failed to update account. Please try again.")
+    } finally {
+      setIsSavingAccount(false)
+    }
+  }
   
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -326,39 +367,71 @@ export default function SettingsPage() {
           <ScrollArea className="h-[calc(100vh-100px)]">
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-4 p-3 rounded-lg glass-card">
-                <div className="w-14 h-14 rounded-full bg-[var(--bronze)]/20 flex items-center justify-center">
-                  <User className="h-7 w-7 text-[var(--bronze)]" />
-                </div>
-                <Button variant="outline" size="sm" className="bg-white/5 border-white/10">
+                {clerkUser?.imageUrl ? (
+                  <img 
+                    src={clerkUser.imageUrl} 
+                    alt="Profile" 
+                    className="w-14 h-14 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-[var(--bronze)]/20 flex items-center justify-center">
+                    <User className="h-7 w-7 text-[var(--bronze)]" />
+                  </div>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-white/5 border-white/10"
+                  onClick={() => auth.openUserProfile()}
+                >
                   Change Avatar
                 </Button>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Display Name</Label>
-                <Input placeholder="Your name" defaultValue="User" className="bg-white/5 border-white/10" />
+                <Input 
+                  placeholder="Your name" 
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="bg-white/5 border-white/10" 
+                />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Email</Label>
-                <Input type="email" placeholder="your@email.com" className="bg-white/5 border-white/10" />
+                <Input 
+                  type="email" 
+                  value={clerkUser?.primaryEmailAddress?.emailAddress || ""}
+                  disabled
+                  className="bg-white/5 border-white/10 opacity-60 cursor-not-allowed" 
+                />
+                <p className="text-[10px] text-muted-foreground">Email is managed by your sign-in provider</p>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Bio</Label>
-                <Input placeholder="Tell us about yourself" className="bg-white/5 border-white/10" />
-              </div>
-
-              <Button className="w-full bronze-gradient hover:opacity-90">
-                <Save className="h-4 w-4 mr-2" />
+              <Button 
+                className="w-full bronze-gradient hover:opacity-90"
+                onClick={handleSaveAccount}
+                disabled={isSavingAccount || !displayName.trim()}
+              >
+                {isSavingAccount ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
                 Save Changes
               </Button>
 
               <div className="pt-4 border-t border-white/10">
-                <p className="text-xs text-destructive mb-2">Danger Zone</p>
-                <Button variant="destructive" size="sm" className="w-full">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Account
+                <p className="text-xs text-muted-foreground mb-2">Advanced Settings</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full bg-white/5 border-white/10"
+                  onClick={() => auth.openUserProfile()}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Manage Account in Clerk
                 </Button>
               </div>
             </div>

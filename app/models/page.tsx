@@ -231,9 +231,32 @@ export default function ModelsPage() {
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [showDetails, setShowDetails] = useState<OpenRouterModel | null>(null)
+  const [userTier, setUserTier] = useState<UserTier>('free')
   
-  // TODO: Get from auth context
-  const userTier: UserTier = 'pro'
+  // Fetch user's subscription tier from billing API
+  useEffect(() => {
+    async function fetchSubscriptionTier() {
+      try {
+        const response = await fetch('/api/billing/subscription')
+        if (response.ok) {
+          const data = await response.json()
+          // Map subscription tier to UserTier type
+          const tier = data.subscription?.tier?.toLowerCase() || 'free'
+          if (tier === 'pro' || tier === 'enterprise') {
+            setUserTier(tier as UserTier)
+          } else {
+            setUserTier('free')
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscription:', error)
+        // Default to free tier on error
+        setUserTier('free')
+      }
+    }
+    fetchSubscriptionTier()
+  }, [])
+  
   const tierConfig = TIER_CONFIGS[userTier]
   
   // Load all models on mount

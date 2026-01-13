@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { LogoText } from "@/components/branding"
 import { Sidebar } from "./sidebar"
 import { ChatArea } from "./chat-area"
@@ -26,6 +27,9 @@ import { useConversationsContext } from "@/lib/conversations-context"
 import { toast } from "@/lib/toast"
 
 export function ChatInterface() {
+  // URL search params for deep linking (e.g., from Discover page)
+  const searchParams = useSearchParams()
+  
   // Use shared context for conversations and projects
   const {
     conversations,
@@ -69,11 +73,30 @@ export function ChatInterface() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   
+  // Initial query from URL (for deep linking from Discover, templates, etc.)
+  const [initialQuery, setInitialQuery] = useState<string | null>(null)
+  const queryProcessedRef = useRef(false)
+  
   // Load orchestrator settings on mount
   useEffect(() => {
     const savedSettings = loadOrchestratorSettings()
     setOrchestratorSettings(savedSettings)
   }, [])
+  
+  // Handle URL query parameter (e.g., ?q=search+query)
+  useEffect(() => {
+    const queryParam = searchParams.get('q')
+    if (queryParam && !queryProcessedRef.current) {
+      queryProcessedRef.current = true
+      setInitialQuery(queryParam)
+      // Clear the URL parameter without triggering a navigation
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('q')
+        window.history.replaceState({}, '', url.toString())
+      }
+    }
+  }, [searchParams])
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -421,7 +444,7 @@ export function ChatInterface() {
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden md:pt-0 pt-14">
-        {!currentConversationId ? (
+        {!currentConversationId && !initialQuery ? (
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex-1 h-full overflow-auto">
               <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
@@ -439,6 +462,8 @@ export function ChatInterface() {
               orchestratorSettings={orchestratorSettings}
               onOrchestratorSettingsChange={updateOrchestratorSettings}
               onOpenAdvancedSettings={() => setShowAdvancedSettings(true)}
+              initialQuery={initialQuery}
+              onInitialQueryProcessed={() => setInitialQuery(null)}
             />
             {showArtifact && currentArtifact && (
               <ArtifactPanel artifact={currentArtifact} onClose={() => setShowArtifact(false)} />
