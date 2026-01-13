@@ -95,15 +95,13 @@ jobs:
           touch .gitignore
           grep -qxF ".env" .gitignore || echo ".env" >> .gitignore
           if [ ! -f .env.example ]; then
-            cat > .env.example <<'EOF'
-# DO NOT COMMIT REAL KEYS
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-GEMINI_API_KEY=
-GROK_API_KEY=
-DEEPSEEK_API_KEY=
-MANUS_API_KEY=
-EOF
+            echo "# DO NOT COMMIT REAL KEYS" > .env.example
+            echo "OPENAI_API_KEY=" >> .env.example
+            echo "ANTHROPIC_API_KEY=" >> .env.example
+            echo "GEMINI_API_KEY=" >> .env.example
+            echo "GROK_API_KEY=" >> .env.example
+            echo "DEEPSEEK_API_KEY=" >> .env.example
+            echo "MANUS_API_KEY=" >> .env.example
           fi
           git rm -f --cached .env llmhive/env 2>/dev/null || true
           git add .gitignore .env.example || true

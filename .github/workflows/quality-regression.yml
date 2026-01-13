@@ -202,7 +202,7 @@ jobs:
             echo "❌ Live Prompt Audit: **Failed**" >> $GITHUB_STEP_SUMMARY
           fi
 
-  # Optional Slack notification
+  # Optional Slack notification - step uses continue-on-error: true
   notify:
     name: Notify on Failure
     runs-on: ubuntu-latest
@@ -210,8 +210,7 @@ jobs:
     if: |
       failure() && 
       github.event_name == 'schedule' &&
-      github.repository_owner == 'LLMHive' &&
-      secrets.SLACK_WEBHOOK_URL != ''
+      github.repository_owner == 'LLMHive'
     
     steps:
       - name: Send Slack notification

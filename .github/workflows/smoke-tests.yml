@@ -107,13 +107,12 @@ jobs:
           comment_mode: "off"
 
       # Slack notifications are OPTIONAL - only run if webhook is configured
-      # This step will be skipped (not failed) if SLACK_WEBHOOK_URL secret is not set
+      # This step uses continue-on-error: true so it fails silently if no webhook
       - name: Send Slack notification on failure
         if: |
           failure() && 
           github.event_name != 'workflow_dispatch' &&
-          github.repository_owner == 'LLMHive' &&
-          secrets.SLACK_WEBHOOK_URL != ''
+          github.repository_owner == 'LLMHive'
         uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |

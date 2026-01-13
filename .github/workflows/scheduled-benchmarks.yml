@@ -108,11 +108,17 @@ jobs:
             --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
       
       - name: Run External Baselines
-        if: inputs.enable_external && (secrets.OPENAI_API_KEY || secrets.ANTHROPIC_API_KEY)
+        if: inputs.enable_external
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
+          # Check if any API keys are available
+          if [ -z "$OPENAI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice::Skipping external baselines - no API keys configured"
+            exit 0
+          fi
+          
           SYSTEMS="llmhive"
           if [ -n "$OPENAI_API_KEY" ]; then SYSTEMS="$SYSTEMS,openai"; fi
           if [ -n "$ANTHROPIC_API_KEY" ]; then SYSTEMS="$SYSTEMS,anthropic"; fi
