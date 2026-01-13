@@ -38,13 +38,13 @@ const isE2ETest = process.env.PLAYWRIGHT_TEST === "true" || process.env.CI === "
 // =============================================================================
 
 /**
- * Clerk middleware for authentication.
+ * Clerk proxy for authentication (Next.js 16+).
  * 
  * - Public routes are accessible to everyone
  * - All other routes require authentication
  * - E2E tests bypass authentication
  */
-export default clerkMiddleware(async (auth, request) => {
+export const proxy = clerkMiddleware(async (auth, request) => {
   // Skip auth in E2E test mode to allow automated testing
   if (isE2ETest) {
     return
