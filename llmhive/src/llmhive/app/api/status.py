@@ -18,8 +18,8 @@ try:
         get_tracer,
         get_current_span,
         trace_tool,
-        _initialized as TRACING_INITIALIZED,
-        _config as TRACING_CONFIG,
+        is_tracing_initialized,
+        get_tracing_config,
     )
     from opentelemetry import trace as otel_trace
     TRACING_IMPORTS_OK = True
@@ -28,8 +28,8 @@ except ImportError as e:
     OTLP_AVAILABLE = False
     GCP_TRACE_AVAILABLE = False
     TRACING_IMPORTS_OK = False
-    TRACING_INITIALIZED = False
-    TRACING_CONFIG = None
+    is_tracing_initialized = lambda: False
+    get_tracing_config = lambda: None
     otel_trace = None
     logger.info("Tracing imports not available: %s", e)
 
@@ -124,12 +124,16 @@ def get_tracing_diagnostics() -> Dict[str, Any]:
     
     Use this endpoint to verify tracing is working correctly.
     """
+    # Get current tracing state dynamically (not at module load time)
+    tracing_initialized = is_tracing_initialized() if TRACING_IMPORTS_OK else False
+    tracing_config = get_tracing_config() if TRACING_IMPORTS_OK else None
+    
     diagnostics = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "opentelemetry": {
             "available": OTEL_AVAILABLE,
             "imports_ok": TRACING_IMPORTS_OK,
-            "initialized": TRACING_INITIALIZED if TRACING_IMPORTS_OK else False,
+            "initialized": tracing_initialized,
         },
         "exporters": {
             "otlp_available": OTLP_AVAILABLE,
@@ -149,15 +153,15 @@ def get_tracing_diagnostics() -> Dict[str, Any]:
     }
     
     # Check tracing configuration
-    if TRACING_IMPORTS_OK and TRACING_CONFIG:
+    if TRACING_IMPORTS_OK and tracing_config:
         diagnostics["config"] = {
-            "service_name": TRACING_CONFIG.service_name,
-            "service_version": TRACING_CONFIG.service_version,
-            "environment": TRACING_CONFIG.environment,
-            "otlp_endpoint": TRACING_CONFIG.otlp_endpoint,
-            "use_gcp_trace": TRACING_CONFIG.use_gcp_trace,
-            "use_console_exporter": TRACING_CONFIG.use_console_exporter,
-            "sample_rate": TRACING_CONFIG.sample_rate,
+            "service_name": tracing_config.service_name,
+            "service_version": tracing_config.service_version,
+            "environment": tracing_config.environment,
+            "otlp_endpoint": tracing_config.otlp_endpoint,
+            "use_gcp_trace": tracing_config.use_gcp_trace,
+            "use_console_exporter": tracing_config.use_console_exporter,
+            "sample_rate": tracing_config.sample_rate,
         }
     
     # Get current span info if available
@@ -188,7 +192,7 @@ def get_tracing_diagnostics() -> Dict[str, Any]:
         diagnostics["recommendations"].append(
             "Install GCP Trace: pip install opentelemetry-exporter-gcp-trace"
         )
-    if OTEL_AVAILABLE and not TRACING_INITIALIZED:
+    if OTEL_AVAILABLE and not tracing_initialized:
         diagnostics["recommendations"].append(
             "Tracing not initialized - check startup logs for errors"
         )

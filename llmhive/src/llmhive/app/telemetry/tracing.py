@@ -193,6 +193,27 @@ def get_tracer() -> Optional[Any]:
     return _tracer
 
 
+def is_tracing_initialized() -> bool:
+    """Check if tracing has been initialized.
+    
+    This function provides a dynamic check of the initialization state,
+    unlike importing _initialized which captures the value at import time.
+    
+    Returns:
+        True if tracing is initialized, False otherwise.
+    """
+    return _initialized
+
+
+def get_tracing_config() -> Optional[TracingConfig]:
+    """Get the current tracing configuration.
+    
+    Returns:
+        The TracingConfig if initialized, None otherwise.
+    """
+    return _config
+
+
 def get_current_span() -> Optional[Any]:
     """Get the current active span.
     
