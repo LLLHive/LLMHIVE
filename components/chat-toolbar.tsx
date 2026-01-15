@@ -14,7 +14,7 @@ import type {
   AdvancedReasoningMethod,
   AdvancedFeature,
 } from "@/lib/types"
-import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
+import { getModelLogo } from "@/lib/models"
 import { CriteriaEqualizer } from "./criteria-equalizer"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
@@ -382,36 +382,6 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                 })
               )}
               
-              <DropdownMenuSeparator />
-              
-              {/* Built-in Models */}
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                Built-in Models
-              </DropdownMenuLabel>
-              {AVAILABLE_MODELS.map((model) => {
-                const isSelected = selectedModels.includes(model.id)
-                return (
-                  <DropdownMenuItem
-                    key={model.id}
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      toggleModel(model.id)
-                    }}
-                    className="gap-2 cursor-pointer"
-                  >
-                    <div className="w-5 h-5 relative flex-shrink-0">
-                      <Image
-                        src={getModelLogo(model.provider) || "/placeholder.svg"}
-                        alt={model.provider}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="flex-1">{model.name}</span>
-                    {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                  </DropdownMenuItem>
-                )
-              })}
             </>
           )}
         </DropdownMenuContent>
