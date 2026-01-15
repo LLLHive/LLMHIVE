@@ -105,38 +105,53 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "50")
   const offset = parseInt(searchParams.get("offset") || "0")
   
-  // PRIORITY 1: Try Pinecone-backed API (persistent storage)
+  // PRIORITY 1: OpenRouter API (source of truth for available models)
+  // This ensures we always show the LATEST models (GPT-5.2, Claude 4.5, Gemini 3, etc.)
   try {
-    const pineconeUrl = `${BACKEND_URL}/api/v1/models/profiles?limit=${limit}&search=${encodeURIComponent(search)}`
-    
-    const pineconeResponse = await fetch(pineconeUrl, {
+    const openRouterResponse = await fetch(OPENROUTER_API_URL, {
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": process.env.LLMHIVE_API_KEY || "",
       },
-      signal: AbortSignal.timeout(5000),
+      next: { revalidate: 300 }, // Cache for 5 minutes (was 1 hour - too stale)
     })
     
-    if (pineconeResponse.ok) {
-      const data = await pineconeResponse.json()
-      if (data.models && data.models.length > 0) {
-        // Transform Pinecone models to our format
-        const models = data.models.map(transformPineconeModel)
-        return NextResponse.json({
-          models,
-          total: data.total || models.length,
-          limit,
-          offset,
-          data_source: "Pinecone Knowledge Store (persistent)",
-          last_sync: data.last_updated || new Date().toISOString(),
-        })
+    if (openRouterResponse.ok) {
+      const openRouterData = await openRouterResponse.json()
+      const rawModels = openRouterData.data || []
+      
+      // Transform models to our format
+      let models = rawModels.map(transformModel)
+      
+      // Apply search filter
+      if (search) {
+        const searchLower = search.toLowerCase()
+        models = models.filter((m: { id: string; name: string; description: string }) => 
+          m.id.toLowerCase().includes(searchLower) ||
+          m.name.toLowerCase().includes(searchLower) ||
+          (m.description && m.description.toLowerCase().includes(searchLower))
+        )
       }
+      
+      // Get total before pagination
+      const total = models.length
+      
+      // Apply pagination
+      models = models.slice(offset, offset + limit)
+      
+      return NextResponse.json({
+        models,
+        total,
+        limit,
+        offset,
+        data_source: "OpenRouter API (live)",
+        last_sync: new Date().toISOString(),
+      })
     }
   } catch (err) {
-    console.log("Pinecone API unavailable, trying SQLite backend:", err)
+    console.log("OpenRouter API unavailable, trying backend:", err)
   }
   
-  // PRIORITY 2: Try SQLite backend (ephemeral)
+  // PRIORITY 2: Try SQLite backend (has synced OpenRouter data)
   try {
     const query = searchParams.toString()
     const url = `${BACKEND_URL}/api/v1/openrouter/models${query ? `?${query}` : ""}`
@@ -165,61 +180,47 @@ export async function GET(request: Request) {
       }
     }
   } catch {
-    // Backend unavailable, will fallback to OpenRouter
+    // Backend unavailable, will fallback to Pinecone
   }
   
-  // FALLBACK: Fetch directly from OpenRouter API
+  // PRIORITY 3: Try Pinecone-backed API (may have enriched metadata but older model list)
   try {
-    const openRouterResponse = await fetch(OPENROUTER_API_URL, {
+    const pineconeUrl = `${BACKEND_URL}/api/v1/models/profiles?limit=${limit}&search=${encodeURIComponent(search)}`
+    
+    const pineconeResponse = await fetch(pineconeUrl, {
       headers: {
         "Content-Type": "application/json",
+        "X-API-Key": process.env.LLMHIVE_API_KEY || "",
       },
-      next: { revalidate: 3600 }, // Cache for 1 hour
+      signal: AbortSignal.timeout(5000),
     })
     
-    if (!openRouterResponse.ok) {
-      throw new Error(`OpenRouter API error: ${openRouterResponse.status}`)
+    if (pineconeResponse.ok) {
+      const data = await pineconeResponse.json()
+      if (data.models && data.models.length > 0) {
+        // Transform Pinecone models to our format
+        const models = data.models.map(transformPineconeModel)
+        return NextResponse.json({
+          models,
+          total: data.total || models.length,
+          limit,
+          offset,
+          data_source: "Pinecone Knowledge Store (cached)",
+          last_sync: data.last_updated || new Date().toISOString(),
+        })
+      }
     }
-    
-    const openRouterData = await openRouterResponse.json()
-    const rawModels = openRouterData.data || []
-    
-    // Transform models to our format
-    let models = rawModels.map(transformModel)
-    
-    // Apply search filter
-    if (search) {
-      const searchLower = search.toLowerCase()
-      models = models.filter((m: { id: string; name: string; description: string }) => 
-        m.id.toLowerCase().includes(searchLower) ||
-        m.name.toLowerCase().includes(searchLower) ||
-        (m.description && m.description.toLowerCase().includes(searchLower))
-      )
-    }
-    
-    // Get total before pagination
-    const total = models.length
-    
-    // Apply pagination
-    models = models.slice(offset, offset + limit)
-    
-    return NextResponse.json({
-      models,
-      total,
-      limit,
-      offset,
-      data_source: "OpenRouter API (live fallback)",
-      last_sync: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("OpenRouter API error:", error)
-    return NextResponse.json({
-      models: [],
-      total: 0,
-      limit,
-      offset,
-      message: "Failed to fetch models from all sources",
-      error: error instanceof Error ? error.message : "Unknown error",
-    })
+  } catch (err) {
+    console.log("Pinecone API unavailable:", err)
   }
+  
+  // FINAL FALLBACK: Return empty with error message
+  return NextResponse.json({
+    models: [],
+    total: 0,
+    limit,
+    offset,
+    message: "Failed to fetch models from all sources (OpenRouter, Backend, Pinecone)",
+    error: "All data sources unavailable",
+  })
 }
