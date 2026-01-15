@@ -70,16 +70,18 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
     { model: mockModel("qwen/qwen", "Qwen Models", "qwen", 0, 0, "69.1B"), rank: 7, score: 3.9, metrics: { share: "3.9%", tokens: "69.1B" } },
   ],
   
-  // Programming Category
+  // Programming Category - Updated January 2026
   programming: [
-    { model: mockModel("x-ai/grok-code-fast-1", "Grok Code Fast 1", "x-ai", 128000, 2, "1.24T"), rank: 1, score: 49.2, metrics: { share: "49.2%", tokens: "1.24T" } },
-    { model: mockModel("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5", "anthropic", 200000, 3, "291B"), rank: 2, score: 11.5, metrics: { share: "11.5%", tokens: "291B" } },
-    { model: mockModel("minimax/minimax-m2", "MiniMax M2", "minimax", 128000, 1, "179B"), rank: 3, score: 7.1, metrics: { share: "7.1%", tokens: "179B" } },
-    { model: mockModel("qwen/qwen3-coder-30b", "Qwen3 Coder 30B", "qwen", 128000, 0.5, "102B"), rank: 4, score: 4.0, metrics: { share: "4.0%", tokens: "102B" } },
-    { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "84B"), rank: 5, score: 3.3, metrics: { share: "3.3%", tokens: "84B" } },
-    { model: mockModel("kwaipilot/kat-coder-pro", "Kat Coder Pro V1", "kwaipilot", 64000, 0.8, "53.8B"), rank: 6, score: 2.1, metrics: { share: "2.1%", tokens: "53.8B" } },
-    { model: mockModel("anthropic/claude-sonnet-4", "Claude Sonnet 4", "anthropic", 200000, 2, "40.6B"), rank: 7, score: 1.6, metrics: { share: "1.6%", tokens: "40.6B" } },
-    { model: mockModel("google/gemini-2.5-flash", "Gemini 2.5 Flash", "google", 1000000, 0.3, "40.3B"), rank: 8, score: 1.6, metrics: { share: "1.6%", tokens: "40.3B" } },
+    { model: mockModel("openai/gpt-5.2-codex", "GPT-5.2 Codex", "openai", 256000, 1.75, "2.1T"), rank: 1, score: 52.0, metrics: { share: "52.0%", tokens: "2.1T" } },
+    { model: mockModel("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5", "anthropic", 200000, 3, "450B"), rank: 2, score: 15.5, metrics: { share: "15.5%", tokens: "450B" } },
+    { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "280B"), rank: 3, score: 9.8, metrics: { share: "9.8%", tokens: "280B" } },
+    { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "195B"), rank: 4, score: 6.7, metrics: { share: "6.7%", tokens: "195B" } },
+    { model: mockModel("openai/o3", "OpenAI o3", "openai", 128000, 2, "150B"), rank: 5, score: 5.2, metrics: { share: "5.2%", tokens: "150B" } },
+    { model: mockModel("deepseek/deepseek-v3.2", "DeepSeek V3.2", "deepseek", 128000, 0.3, "120B"), rank: 6, score: 4.1, metrics: { share: "4.1%", tokens: "120B" } },
+    { model: mockModel("meta-llama/llama-4-70b", "Llama 4 70B", "meta-llama", 128000, 0.4, "95B"), rank: 7, score: 3.3, metrics: { share: "3.3%", tokens: "95B" } },
+    { model: mockModel("mistralai/codestral-2512", "Codestral 2512", "mistralai", 128000, 1, "75B"), rank: 8, score: 2.6, metrics: { share: "2.6%", tokens: "75B" } },
+    { model: mockModel("x-ai/grok-code-fast-1", "Grok Code Fast 1", "x-ai", 128000, 2, "65B"), rank: 9, score: 2.2, metrics: { share: "2.2%", tokens: "65B" } },
+    { model: mockModel("google/gemini-2.5-flash", "Gemini 2.5 Flash", "google", 1000000, 0.3, "50B"), rank: 10, score: 1.7, metrics: { share: "1.7%", tokens: "50B" } },
   ],
   
   // Roleplay Category
@@ -114,11 +116,13 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
     { model: mockModel("deepseek/deepseek-chat", "DeepSeek Chat", "deepseek", 64000, 0.14, "55B"), rank: 4, score: 12, metrics: { share: "12%", tokens: "55B" } },
   ],
   
-  // Science Category
+  // Science Category - Updated January 2026
   science: [
-    { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", "anthropic", 200000, 3, "95B"), rank: 1, score: 35, metrics: { share: "35%", tokens: "95B" } },
-    { model: mockModel("openai/gpt-4o", "GPT-4o", "openai", 128000, 5, "85B"), rank: 2, score: 31, metrics: { share: "31%", tokens: "85B" } },
-    { model: mockModel("google/gemini-2.5-pro", "Gemini 2.5 Pro", "google", 2000000, 2.5, "50B"), rank: 3, score: 18, metrics: { share: "18%", tokens: "50B" } },
+    { model: mockModel("openai/gpt-5.2-pro", "GPT-5.2 Pro", "openai", 256000, 21, "180B"), rank: 1, score: 38, metrics: { share: "38%", tokens: "180B" } },
+    { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "150B"), rank: 2, score: 32, metrics: { share: "32%", tokens: "150B" } },
+    { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "85B"), rank: 3, score: 18, metrics: { share: "18%", tokens: "85B" } },
+    { model: mockModel("openai/o3", "OpenAI o3", "openai", 128000, 2, "45B"), rank: 4, score: 9, metrics: { share: "9%", tokens: "45B" } },
+    { model: mockModel("deepseek/deepseek-r1", "DeepSeek R1", "deepseek", 128000, 0.55, "25B"), rank: 5, score: 5, metrics: { share: "5%", tokens: "25B" } },
   ],
   
   // Translation Category  
@@ -128,11 +132,12 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
     { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", "anthropic", 200000, 3, "45B"), rank: 3, score: 20, metrics: { share: "20%", tokens: "45B" } },
   ],
   
-  // Legal Category
+  // Legal Category - Updated January 2026
   legal: [
-    { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", "anthropic", 200000, 3, "75B"), rank: 1, score: 42, metrics: { share: "42%", tokens: "75B" } },
-    { model: mockModel("openai/gpt-4o", "GPT-4o", "openai", 128000, 5, "55B"), rank: 2, score: 31, metrics: { share: "31%", tokens: "55B" } },
-    { model: mockModel("google/gemini-2.5-pro", "Gemini 2.5 Pro", "google", 2000000, 2.5, "28B"), rank: 3, score: 16, metrics: { share: "16%", tokens: "28B" } },
+    { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "125B"), rank: 1, score: 45, metrics: { share: "45%", tokens: "125B" } },
+    { model: mockModel("openai/gpt-5.2-pro", "GPT-5.2 Pro", "openai", 256000, 21, "85B"), rank: 2, score: 31, metrics: { share: "31%", tokens: "85B" } },
+    { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "45B"), rank: 3, score: 16, metrics: { share: "16%", tokens: "45B" } },
+    { model: mockModel("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5", "anthropic", 200000, 3, "25B"), rank: 4, score: 9, metrics: { share: "9%", tokens: "25B" } },
   ],
   
   // Finance Category
@@ -142,11 +147,12 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
     { model: mockModel("google/gemini-2.5-pro", "Gemini 2.5 Pro", "google", 2000000, 2.5, "45B"), rank: 3, score: 18, metrics: { share: "18%", tokens: "45B" } },
   ],
   
-  // Health Category
+  // Health Category - Updated January 2026
   health: [
-    { model: mockModel("anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet", "anthropic", 200000, 3, "68B"), rank: 1, score: 40, metrics: { share: "40%", tokens: "68B" } },
-    { model: mockModel("openai/gpt-4o", "GPT-4o", "openai", 128000, 5, "52B"), rank: 2, score: 31, metrics: { share: "31%", tokens: "52B" } },
-    { model: mockModel("google/gemini-2.5-pro", "Gemini 2.5 Pro", "google", 2000000, 2.5, "32B"), rank: 3, score: 19, metrics: { share: "19%", tokens: "32B" } },
+    { model: mockModel("openai/gpt-5.2-pro", "GPT-5.2 Pro", "openai", 256000, 21, "95B"), rank: 1, score: 42, metrics: { share: "42%", tokens: "95B" } },
+    { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "75B"), rank: 2, score: 33, metrics: { share: "33%", tokens: "75B" } },
+    { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "40B"), rank: 3, score: 18, metrics: { share: "18%", tokens: "40B" } },
+    { model: mockModel("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5", "anthropic", 200000, 3, "18B"), rank: 4, score: 8, metrics: { share: "8%", tokens: "18B" } },
   ],
   
   // Academia Category
@@ -260,10 +266,24 @@ export async function GET(
   // Return mock data in proper RankedModel format
   const rankings = MOCK_RANKINGS[dimension as DimensionKey] || MOCK_RANKINGS.leaderboard
   
+  // Transform to the format expected by the hook (entries with model_id, model_name)
+  const entries = rankings.map(r => ({
+    rank: r.rank,
+    model_id: r.model.id,
+    model_name: r.model.name,
+    author: r.model.author,
+    score: r.score,
+    metrics: r.metrics,
+    // Include full model data for UI
+    model: r.model,
+  }))
+  
   return NextResponse.json({
     dimension,
     time_range: "7d",
+    // Include both formats for compatibility
     models: rankings,
+    entries: entries,  // Hook expects this
     count: rankings.length,
     data_source: "OpenRouter Rankings (derived)",
     generated_at: new Date().toISOString(),

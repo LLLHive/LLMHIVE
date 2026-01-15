@@ -57,7 +57,7 @@ const tiers = [
     description: "Perfect for trying out LLMHive",
     features: [
       "50 messages/month",
-      "Access to 50+ models",
+      "Budget models (Llama, DeepSeek)",
       "Basic orchestration",
       "Community support"
     ],
@@ -67,12 +67,12 @@ const tiers = [
   },
   {
     name: "Pro",
-    price: "$29",
+    price: "$29.99",
     period: "/month",
     description: "For professionals and small teams",
     features: [
-      "Unlimited messages",
-      "Access to 400+ models (GPT-5.2, Claude 4.5, etc.)",
+      "1,000 messages/month",
+      "Premium models (GPT-4o, Claude Sonnet 4.5)",
       "Advanced orchestration (HRM, DeepConf)",
       "Priority support",
       "Custom system prompts",
@@ -84,11 +84,12 @@ const tiers = [
   },
   {
     name: "Enterprise",
-    price: "Custom",
+    price: "$199.99",
+    period: "/month",
     description: "For organizations with advanced needs",
     features: [
-      "Everything in Pro",
-      "Custom model fine-tuning",
+      "5,000 messages + overage",
+      "Flagship models (GPT-5.2 Pro, Claude Opus 4.5)",
       "SLA guarantees",
       "Dedicated support",
       "SSO & SAML",
