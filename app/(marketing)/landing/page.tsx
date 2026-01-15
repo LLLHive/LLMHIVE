@@ -21,7 +21,7 @@ const features = [
   {
     icon: Brain,
     title: "Multi-Model Orchestration",
-    description: "Route queries to the best AI model automatically. GPT-4, Claude, Gemini, DeepSeek, and more—all in one place."
+    description: "Route queries to the best AI model automatically. GPT-5.2, Claude 4.5, Gemini 3, DeepSeek V3.2, and 400+ more—all in one place."
   },
   {
     icon: Layers,
@@ -45,8 +45,8 @@ const features = [
   },
   {
     icon: Globe,
-    title: "100+ Models",
-    description: "Access to every major AI provider through a single, unified API and interface."
+    title: "400+ Models",
+    description: "Access to every major AI provider including OpenAI, Anthropic, Google, Meta, Mistral, and more through a single interface."
   }
 ]
 
@@ -57,7 +57,7 @@ const tiers = [
     description: "Perfect for trying out LLMHive",
     features: [
       "50 messages/month",
-      "Access to 10+ models",
+      "Access to 50+ models",
       "Basic orchestration",
       "Community support"
     ],
@@ -72,7 +72,7 @@ const tiers = [
     description: "For professionals and small teams",
     features: [
       "Unlimited messages",
-      "Access to 100+ models",
+      "Access to 400+ models (GPT-5.2, Claude 4.5, etc.)",
       "Advanced orchestration (HRM, DeepConf)",
       "Priority support",
       "Custom system prompts",
@@ -104,7 +104,7 @@ const stats = [
   { value: "10M+", label: "Messages Processed" },
   { value: "99.9%", label: "Uptime" },
   { value: "150ms", label: "Avg Response Time" },
-  { value: "100+", label: "AI Models" },
+  { value: "400+", label: "AI Models" },
 ]
 
 export default function LandingPage() {
@@ -156,7 +156,7 @@ export default function LandingPage() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm mb-8">
               <Sparkles className="h-4 w-4" />
-              <span>Now with Claude 4, GPT-5 & Gemini 2.5</span>
+              <span>Now with GPT-5.2, Claude 4.5 Opus, Gemini 3 & Llama 4</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
               One Interface.<br />Every AI Model.

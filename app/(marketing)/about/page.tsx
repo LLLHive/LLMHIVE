@@ -82,8 +82,8 @@ export default function AboutPage() {
           <div className="prose prose-invert max-w-none">
             <h2 className="text-2xl font-semibold mb-6">The Problem We Solve</h2>
             <p className="text-muted-foreground leading-relaxed mb-6">
-              The AI landscape is fragmented. GPT-4 excels at creative writing, Claude shines in 
-              analysis, Gemini dominates in multimodal tasks, and DeepSeek offers incredible value. 
+              The AI landscape is fragmented. GPT-5.2 excels at creative writing, Claude 4.5 shines in 
+              analysis, Gemini 3 dominates in multimodal tasks, and DeepSeek V3.2 offers incredible value. 
               But switching between these tools is tedious, expensive, and time-consuming.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-6">
@@ -127,7 +127,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-[var(--bronze)] mb-2">100+</div>
+              <div className="text-4xl font-bold text-[var(--bronze)] mb-2">400+</div>
               <div className="text-sm text-muted-foreground">AI Models</div>
             </div>
             <div>

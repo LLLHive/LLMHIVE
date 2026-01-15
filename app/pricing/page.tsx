@@ -83,7 +83,7 @@ const pricingTiers: PricingTier[] = [
     popular: true,
     features: [
       "3,000 messages/month",
-      "All models including Premium",
+      "400+ models (GPT-5.2, Claude 4.5, Gemini 3)",
       "Unlimited projects",
       "Unlimited chat history",
       "All Industry Packs",
@@ -414,7 +414,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t border-border/50 mt-24 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 LLMHive. All rights reserved.</p>
+          <p>© 2026 LLMHive. All rights reserved.</p>
         </div>
       </footer>
     </div>

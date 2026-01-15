@@ -66,17 +66,63 @@ class TaskDomain(str, Enum):
 
 
 # Mapping from task types to ranking dimensions
+# Enhanced Q1 2026: Added health_medical, science_research, legal, financial categories
 TASK_TO_RANKING: Dict[str, List[RankingDimension]] = {
+    # Code/Programming - needs reliable tool use
     "coding": [RankingDimension.TOOLS_AGENTS, RankingDimension.MOST_RELIABLE],
+    "code_generation": [RankingDimension.TOOLS_AGENTS, RankingDimension.MOST_RELIABLE],
     "debugging": [RankingDimension.TOOLS_AGENTS, RankingDimension.MOST_RELIABLE],
+    
+    # Math/Quantitative - needs reliability and reasoning
     "math": [RankingDimension.MOST_RELIABLE, RankingDimension.BEST_VALUE],
+    "math_problem": [RankingDimension.MOST_RELIABLE, RankingDimension.BEST_VALUE],
+    
+    # Health/Medical - CRITICAL: Prioritize reliability and quality over speed
+    "health": [RankingDimension.MOST_RELIABLE, RankingDimension.LONG_CONTEXT],
+    "health_medical": [RankingDimension.MOST_RELIABLE, RankingDimension.LONG_CONTEXT],
+    "medical": [RankingDimension.MOST_RELIABLE, RankingDimension.LONG_CONTEXT],
+    
+    # Science/Research - needs long context and reliability
     "research": [RankingDimension.LONG_CONTEXT, RankingDimension.MOST_RELIABLE],
+    "science_research": [RankingDimension.LONG_CONTEXT, RankingDimension.MOST_RELIABLE],
+    "science": [RankingDimension.LONG_CONTEXT, RankingDimension.MOST_RELIABLE],
+    
+    # Legal - needs reliability and long context for documents
+    "legal": [RankingDimension.MOST_RELIABLE, RankingDimension.LONG_CONTEXT],
+    "legal_analysis": [RankingDimension.MOST_RELIABLE, RankingDimension.LONG_CONTEXT],
+    
+    # Finance/Business - needs reliability and tools for calculations
+    "financial": [RankingDimension.MOST_RELIABLE, RankingDimension.TOOLS_AGENTS],
+    "financial_analysis": [RankingDimension.MOST_RELIABLE, RankingDimension.TOOLS_AGENTS],
+    "business": [RankingDimension.MOST_RELIABLE, RankingDimension.BEST_VALUE],
+    
+    # Analysis - needs long context
     "analysis": [RankingDimension.LONG_CONTEXT, RankingDimension.BEST_VALUE],
+    "research_analysis": [RankingDimension.LONG_CONTEXT, RankingDimension.MOST_RELIABLE],
+    
+    # Creative - trending models often have better creative outputs
     "creative": [RankingDimension.TRENDING, RankingDimension.BEST_VALUE],
+    "creative_writing": [RankingDimension.TRENDING, RankingDimension.BEST_VALUE],
+    
+    # Multimodal/Vision
     "multimodal": [RankingDimension.MULTIMODAL, RankingDimension.MOST_RELIABLE],
+    "vision": [RankingDimension.MULTIMODAL, RankingDimension.MOST_RELIABLE],
+    
+    # Tools/Agents
     "tools": [RankingDimension.TOOLS_AGENTS, RankingDimension.FASTEST],
+    "agents": [RankingDimension.TOOLS_AGENTS, RankingDimension.MOST_RELIABLE],
+    
+    # General/Default
     "general": [RankingDimension.BEST_VALUE, RankingDimension.MOST_RELIABLE],
+    "explanation": [RankingDimension.BEST_VALUE, RankingDimension.MOST_RELIABLE],
+    "factual_question": [RankingDimension.MOST_RELIABLE, RankingDimension.BEST_VALUE],
+    "summarization": [RankingDimension.LONG_CONTEXT, RankingDimension.FASTEST],
+    "planning": [RankingDimension.MOST_RELIABLE, RankingDimension.TOOLS_AGENTS],
+    "comparison": [RankingDimension.MOST_RELIABLE, RankingDimension.BEST_VALUE],
+    
+    # Speed-optimized
     "fast_response": [RankingDimension.FASTEST, RankingDimension.BEST_VALUE],
+    "high_quality": [RankingDimension.MOST_RELIABLE, RankingDimension.LONG_CONTEXT],
 }
 
 # Mapping from strategy to ranking dimensions
@@ -85,6 +131,115 @@ STRATEGY_TO_RANKING: Dict[SelectionStrategy, List[RankingDimension]] = {
     SelectionStrategy.SPEED: [RankingDimension.FASTEST, RankingDimension.BEST_VALUE],
     SelectionStrategy.VALUE: [RankingDimension.BEST_VALUE, RankingDimension.LOWEST_COST],
     SelectionStrategy.BALANCED: [RankingDimension.BEST_VALUE, RankingDimension.MOST_RELIABLE],
+}
+
+# =============================================================================
+# QUALITY-BASED MODEL PREFERENCES (Q1 2026)
+# =============================================================================
+# These preferences override OpenRouter usage-based rankings for specific tasks
+# where we need quality over popularity. Based on benchmark data and internal testing.
+
+QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
+    # ==========================================================================
+    # UPDATED JANUARY 2026 - With Latest Flagship Models
+    # ==========================================================================
+    
+    # Health/Medical: Prioritize models with proven accuracy on medical benchmarks
+    # These models have shown best performance on MedQA, PubMedQA, clinical tasks
+    "health_medical": [
+        "anthropic/claude-opus-4.5",  # NEW: Best overall Anthropic
+        "openai/gpt-5.2-pro",         # Latest OpenAI flagship
+        "anthropic/claude-opus-4.1",  # Strong medical reasoning
+        "google/gemini-3-pro-preview", # NEW: Latest Google
+        "openai/o3-deep-research",    # NEW: Deep research for complex cases
+        "anthropic/claude-sonnet-4.5", # Good balance speed/quality
+        "openai/gpt-5.2",             # Strong baseline
+        "google/gemini-2.5-pro",      # Proven track record
+    ],
+    
+    # Math/Reasoning: Prioritize reasoning specialists
+    "math_problem": [
+        "openai/o3-deep-research",    # NEW: Best deep reasoning
+        "openai/o3",                  # Excellent math reasoning
+        "openai/o1-pro",              # Strong reasoning
+        "anthropic/claude-opus-4.5",  # NEW: Top Anthropic
+        "deepseek/deepseek-v3.2-speciale", # NEW: Enhanced DeepSeek
+        "google/gemini-3-pro-preview", # NEW: Latest Google
+        "openai/gpt-5.2-pro",         # Strong math
+        "qwen/qwen3-max",             # NEW: Strong on math benchmarks
+    ],
+    
+    # Code Generation: Prioritize coding specialists
+    "code_generation": [
+        "openai/gpt-5.2-codex",       # NEW: Best coding model
+        "anthropic/claude-sonnet-4.5", # NEW: Excellent coding
+        "mistralai/devstral-2512",    # NEW: Developer specialist
+        "deepseek/deepseek-v3.2-speciale", # NEW: Top coder
+        "x-ai/grok-code-fast-1",      # NEW: Fast code specialist
+        "anthropic/claude-opus-4.5",  # Quality code
+        "openai/gpt-5.2-pro",         # Strong overall
+        "deepseek/deepseek-v3.2",     # Excellent coder
+    ],
+    
+    # Research/Analysis: Prioritize long context and accuracy
+    "research_analysis": [
+        "openai/o3-deep-research",    # NEW: Purpose-built for research
+        "google/gemini-3-pro-preview", # NEW: Best long context
+        "anthropic/claude-opus-4.5",  # NEW: Excellent analysis
+        "openai/gpt-5.2-pro",         # Strong research
+        "anthropic/claude-sonnet-4.5", # Good balance
+        "openai/o4-mini-deep-research", # NEW: Faster research option
+        "google/gemini-2.5-pro",      # Proven
+    ],
+    
+    # Legal: Prioritize accuracy and reasoning
+    "legal_analysis": [
+        "anthropic/claude-opus-4.5",  # NEW: Best legal reasoning
+        "anthropic/claude-opus-4.1",  # Strong legal
+        "openai/gpt-5.2-pro",         # Strong accuracy
+        "google/gemini-3-pro-preview", # NEW: Good for documents
+        "openai/o3-deep-research",    # Complex reasoning
+        "mistralai/mistral-large-2512", # NEW: Latest Mistral
+    ],
+    
+    # Financial: Prioritize accuracy and calculation
+    "financial_analysis": [
+        "openai/gpt-5.2-pro",         # Strong quantitative
+        "openai/o3-deep-research",    # Complex calculations
+        "anthropic/claude-opus-4.5",  # NEW: Best analysis
+        "google/gemini-3-pro-preview", # NEW: Strong on numbers
+        "deepseek/deepseek-v3.2-speciale", # Strong reasoning
+        "qwen/qwen3-max",             # NEW: Strong math
+    ],
+    
+    # Science: Prioritize accuracy and knowledge
+    "science_research": [
+        "google/gemini-3-pro-preview", # NEW: Latest scientific knowledge
+        "openai/o3-deep-research",    # NEW: Deep scientific analysis
+        "anthropic/claude-opus-4.5",  # NEW: Excellent reasoning
+        "openai/gpt-5.2-pro",         # Excellent accuracy
+        "anthropic/claude-opus-4.1",  # Strong scientific
+        "google/gemini-2.5-pro",      # Proven
+    ],
+    
+    # Creative: Prioritize creativity and quality
+    "creative_writing": [
+        "anthropic/claude-opus-4.5",  # NEW: Most creative
+        "anthropic/claude-sonnet-4.5", # NEW: Good creative
+        "openai/gpt-5.2",             # Strong creative
+        "anthropic/claude-3.7-sonnet", # NEW: Good creative flow
+        "google/gemini-3-pro-preview", # NEW: Good variety
+        "meta-llama/llama-4-maverick", # NEW: Creative experiments
+    ],
+    
+    # High Quality (explicit quality mode): Use best available
+    "high_quality": [
+        "anthropic/claude-opus-4.5",  # NEW: Best overall Anthropic
+        "openai/gpt-5.2-pro",         # Best overall OpenAI
+        "openai/o3-deep-research",    # NEW: Deep reasoning
+        "google/gemini-3-pro-preview", # NEW: Latest Google
+        "openai/gpt-5-pro",       # Quality focused
+    ],
 }
 
 
@@ -228,6 +383,7 @@ class OpenRouterModelSelector:
         require_vision: bool = False,
         exclude_models: Optional[List[str]] = None,
         tenant_id: Optional[str] = None,
+        use_quality_preferences: bool = True,  # Q1 2026: Enable quality-based selection
     ) -> SelectionResult:
         """Select models based on task type and requirements.
         
@@ -242,9 +398,15 @@ class OpenRouterModelSelector:
             require_vision: Require vision/image support
             exclude_models: Models to exclude
             tenant_id: Tenant ID for tenant-specific rankings
+            use_quality_preferences: Use quality-based model preferences (default: True)
             
         Returns:
             SelectionResult with selected models
+            
+        Q1 2026 Enhancement:
+            When use_quality_preferences=True, models from QUALITY_MODEL_PREFERENCES
+            are prioritized for critical task types (health_medical, math_problem, etc.)
+            This ensures quality over popularity for tasks where accuracy matters.
         """
         # Auto-detect strategy based on task
         if strategy == SelectionStrategy.AUTOMATIC:
@@ -252,6 +414,15 @@ class OpenRouterModelSelector:
         
         # Determine domain
         effective_domain = domain or self._task_to_domain(task_type)
+        
+        # Q1 2026: Check if this task type has quality preferences
+        quality_preferred_models = []
+        if use_quality_preferences and task_type in QUALITY_MODEL_PREFERENCES:
+            quality_preferred_models = QUALITY_MODEL_PREFERENCES[task_type]
+            logger.info(
+                "Using quality preferences for task=%s: %s",
+                task_type, quality_preferred_models[:3]
+            )
         
         # Get ranking dimensions for task and strategy
         task_dimensions = TASK_TO_RANKING.get(task_type, TASK_TO_RANKING["general"])
@@ -310,6 +481,21 @@ class OpenRouterModelSelector:
                     
             except Exception as e:
                 logger.warning("Failed to fetch %s ranking: %s", dimension.value, e)
+        
+        # Q1 2026: Apply quality preference boosts
+        if quality_preferred_models:
+            for idx, preferred_model in enumerate(quality_preferred_models):
+                if preferred_model in all_candidates:
+                    # Boost score based on position in preference list
+                    # Higher position = bigger boost
+                    boost = 100.0 - (idx * 10)  # 100, 90, 80, 70, ...
+                    all_candidates[preferred_model].score += boost
+                    all_candidates[preferred_model].selection_reason = f"quality_preferred_rank_{idx+1}"
+                    logger.debug(
+                        "Boosted %s by %.1f (quality preference #%d)",
+                        preferred_model, boost, idx + 1
+                    )
+            reasoning_parts.append(f"quality_preferences: {len(quality_preferred_models)} preferred models")
         
         # If no candidates, use fallback
         if not all_candidates:

@@ -266,22 +266,711 @@ MODEL_CAPABILITIES: Dict[str, Dict[ModelCapability, float]] = {
         ModelCapability.SPEED: 0.80,
         ModelCapability.QUALITY: 0.90,
     },
+    # ==========================================================================
+    # GPT-5.x Series (Q1 2026) - Next-gen flagship models
+    # ==========================================================================
+    # GPT-5: Flagship model - best overall quality
+    "gpt-5": {
+        ModelCapability.CODING: 0.97,
+        ModelCapability.REASONING: 0.98,
+        ModelCapability.MATH: 0.96,
+        ModelCapability.CREATIVE: 0.92,
+        ModelCapability.FACTUAL: 0.96,
+        ModelCapability.ANALYSIS: 0.97,
+        ModelCapability.SUMMARIZATION: 0.94,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.98,
+        ModelCapability.SPEED: 0.65,
+        ModelCapability.QUALITY: 0.98,
+    },
+    # GPT-5 Pro: Enhanced reasoning and accuracy
+    "gpt-5-pro": {
+        ModelCapability.CODING: 0.98,
+        ModelCapability.REASONING: 0.99,
+        ModelCapability.MATH: 0.98,
+        ModelCapability.CREATIVE: 0.90,
+        ModelCapability.FACTUAL: 0.98,
+        ModelCapability.ANALYSIS: 0.98,
+        ModelCapability.SUMMARIZATION: 0.95,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.98,
+        ModelCapability.SPEED: 0.55,
+        ModelCapability.QUALITY: 0.99,
+    },
+    # GPT-5 Mini: Fast and efficient
+    "gpt-5-mini": {
+        ModelCapability.CODING: 0.88,
+        ModelCapability.REASONING: 0.86,
+        ModelCapability.MATH: 0.85,
+        ModelCapability.CREATIVE: 0.82,
+        ModelCapability.FACTUAL: 0.86,
+        ModelCapability.ANALYSIS: 0.85,
+        ModelCapability.SUMMARIZATION: 0.88,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.95,
+        ModelCapability.QUALITY: 0.86,
+    },
+    # GPT-5 Nano: Ultra-fast, cost-effective
+    "gpt-5-nano": {
+        ModelCapability.CODING: 0.78,
+        ModelCapability.REASONING: 0.75,
+        ModelCapability.MATH: 0.72,
+        ModelCapability.CREATIVE: 0.70,
+        ModelCapability.FACTUAL: 0.76,
+        ModelCapability.ANALYSIS: 0.74,
+        ModelCapability.SUMMARIZATION: 0.80,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.82,
+        ModelCapability.SPEED: 0.98,
+        ModelCapability.QUALITY: 0.75,
+    },
+    # GPT-5.1: Iterative improvement
+    "gpt-5.1": {
+        ModelCapability.CODING: 0.97,
+        ModelCapability.REASONING: 0.98,
+        ModelCapability.MATH: 0.97,
+        ModelCapability.CREATIVE: 0.93,
+        ModelCapability.FACTUAL: 0.97,
+        ModelCapability.ANALYSIS: 0.97,
+        ModelCapability.SUMMARIZATION: 0.95,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.98,
+        ModelCapability.SPEED: 0.68,
+        ModelCapability.QUALITY: 0.98,
+    },
+    # GPT-5.2: Latest iteration
+    "gpt-5.2": {
+        ModelCapability.CODING: 0.98,
+        ModelCapability.REASONING: 0.98,
+        ModelCapability.MATH: 0.97,
+        ModelCapability.CREATIVE: 0.94,
+        ModelCapability.FACTUAL: 0.97,
+        ModelCapability.ANALYSIS: 0.98,
+        ModelCapability.SUMMARIZATION: 0.95,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.98,
+        ModelCapability.SPEED: 0.70,
+        ModelCapability.QUALITY: 0.98,
+    },
+    # GPT-5.2 Pro: Best-in-class
+    "gpt-5.2-pro": {
+        ModelCapability.CODING: 0.99,
+        ModelCapability.REASONING: 0.99,
+        ModelCapability.MATH: 0.99,
+        ModelCapability.CREATIVE: 0.92,
+        ModelCapability.FACTUAL: 0.99,
+        ModelCapability.ANALYSIS: 0.99,
+        ModelCapability.SUMMARIZATION: 0.96,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.99,
+        ModelCapability.SPEED: 0.52,
+        ModelCapability.QUALITY: 0.99,
+    },
+    # ==========================================================================
+    # OpenAI o-Series: Reasoning Specialists
+    # ==========================================================================
+    # o1: Dedicated reasoning model
+    "o1": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.99,  # Specialist!
+        ModelCapability.MATH: 0.98,       # Specialist!
+        ModelCapability.CREATIVE: 0.70,   # Lower for creative
+        ModelCapability.FACTUAL: 0.92,
+        ModelCapability.ANALYSIS: 0.96,
+        ModelCapability.SUMMARIZATION: 0.82,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.40,      # Slower due to reasoning
+        ModelCapability.QUALITY: 0.96,
+    },
+    # o1-pro: Enhanced reasoning
+    "o1-pro": {
+        ModelCapability.CODING: 0.96,
+        ModelCapability.REASONING: 0.995, # Best reasoning!
+        ModelCapability.MATH: 0.99,       # Near-perfect math
+        ModelCapability.CREATIVE: 0.68,
+        ModelCapability.FACTUAL: 0.94,
+        ModelCapability.ANALYSIS: 0.97,
+        ModelCapability.SUMMARIZATION: 0.80,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.86,
+        ModelCapability.SPEED: 0.30,      # Very slow
+        ModelCapability.QUALITY: 0.97,
+    },
+    # o3: Latest reasoning model
+    "o3": {
+        ModelCapability.CODING: 0.97,
+        ModelCapability.REASONING: 0.995, # Top-tier reasoning
+        ModelCapability.MATH: 0.99,
+        ModelCapability.CREATIVE: 0.72,
+        ModelCapability.FACTUAL: 0.95,
+        ModelCapability.ANALYSIS: 0.98,
+        ModelCapability.SUMMARIZATION: 0.83,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.35,
+        ModelCapability.QUALITY: 0.98,
+    },
+    # o4-mini: Fast reasoning
+    "o4-mini": {
+        ModelCapability.CODING: 0.90,
+        ModelCapability.REASONING: 0.94,
+        ModelCapability.MATH: 0.95,
+        ModelCapability.CREATIVE: 0.68,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.90,
+        ModelCapability.SUMMARIZATION: 0.78,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.85,
+        ModelCapability.SPEED: 0.75,
+        ModelCapability.QUALITY: 0.92,
+    },
+    # ==========================================================================
+    # Gemini 2.0 Series
+    # ==========================================================================
+    # Gemini 2.0 Pro: Long context, multimodal
+    "gemini-2.0-pro": {
+        ModelCapability.CODING: 0.90,
+        ModelCapability.REASONING: 0.92,
+        ModelCapability.MATH: 0.94,
+        ModelCapability.CREATIVE: 0.85,
+        ModelCapability.FACTUAL: 0.94,
+        ModelCapability.ANALYSIS: 0.93,
+        ModelCapability.SUMMARIZATION: 0.90,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.78,
+        ModelCapability.QUALITY: 0.92,
+    },
+    # Gemini 2.0 Flash: Speed optimized
+    "gemini-2.0-flash": {
+        ModelCapability.CODING: 0.82,
+        ModelCapability.REASONING: 0.80,
+        ModelCapability.MATH: 0.82,
+        ModelCapability.CREATIVE: 0.78,
+        ModelCapability.FACTUAL: 0.84,
+        ModelCapability.ANALYSIS: 0.80,
+        ModelCapability.SUMMARIZATION: 0.84,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.82,
+        ModelCapability.SPEED: 0.96,
+        ModelCapability.QUALITY: 0.80,
+    },
+    # ==========================================================================
+    # Llama 4 Series (Meta)
+    # ==========================================================================
+    "llama-4-70b": {
+        ModelCapability.CODING: 0.90,
+        ModelCapability.REASONING: 0.88,
+        ModelCapability.MATH: 0.86,
+        ModelCapability.CREATIVE: 0.82,
+        ModelCapability.FACTUAL: 0.86,
+        ModelCapability.ANALYSIS: 0.87,
+        ModelCapability.SUMMARIZATION: 0.85,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.75,
+        ModelCapability.QUALITY: 0.88,
+    },
+    "llama-4-405b": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.93,
+        ModelCapability.MATH: 0.91,
+        ModelCapability.CREATIVE: 0.86,
+        ModelCapability.FACTUAL: 0.92,
+        ModelCapability.ANALYSIS: 0.92,
+        ModelCapability.SUMMARIZATION: 0.90,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.92,
+        ModelCapability.SPEED: 0.60,
+        ModelCapability.QUALITY: 0.93,
+    },
+    # ==========================================================================
+    # Qwen 3 Series (Alibaba)
+    # ==========================================================================
+    "qwen-3-72b": {
+        ModelCapability.CODING: 0.92,
+        ModelCapability.REASONING: 0.90,
+        ModelCapability.MATH: 0.92,
+        ModelCapability.CREATIVE: 0.80,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.89,
+        ModelCapability.SUMMARIZATION: 0.86,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.72,
+        ModelCapability.QUALITY: 0.90,
+    },
+    # ==========================================================================
+    # Mistral Large 2
+    # ==========================================================================
+    "mistral-large-2": {
+        ModelCapability.CODING: 0.91,
+        ModelCapability.REASONING: 0.89,
+        ModelCapability.MATH: 0.88,
+        ModelCapability.CREATIVE: 0.84,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.88,
+        ModelCapability.SUMMARIZATION: 0.86,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.78,
+        ModelCapability.QUALITY: 0.89,
+    },
+    # ==========================================================================
+    # LATEST MODELS (January 2026 Update)
+    # ==========================================================================
+    
+    # --------------------------------------------------------------------------
+    # Claude 4.5 Series (Anthropic's Latest - January 2026)
+    # --------------------------------------------------------------------------
+    # Claude 4.5 Opus: BEST Anthropic model - surpasses Claude 4
+    "claude-opus-4.5": {
+        ModelCapability.CODING: 0.98,
+        ModelCapability.REASONING: 0.99,
+        ModelCapability.MATH: 0.96,
+        ModelCapability.CREATIVE: 0.98,
+        ModelCapability.FACTUAL: 0.97,
+        ModelCapability.ANALYSIS: 0.98,
+        ModelCapability.SUMMARIZATION: 0.95,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.98,
+        ModelCapability.SPEED: 0.50,
+        ModelCapability.QUALITY: 0.99,
+    },
+    # Claude 4.5 Sonnet: Excellent balance of quality and speed
+    "claude-sonnet-4.5": {
+        ModelCapability.CODING: 0.97,
+        ModelCapability.REASONING: 0.96,
+        ModelCapability.MATH: 0.92,
+        ModelCapability.CREATIVE: 0.94,
+        ModelCapability.FACTUAL: 0.94,
+        ModelCapability.ANALYSIS: 0.95,
+        ModelCapability.SUMMARIZATION: 0.93,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.96,
+        ModelCapability.SPEED: 0.70,
+        ModelCapability.QUALITY: 0.96,
+    },
+    # Claude 4.5 Haiku: Fast and efficient
+    "claude-haiku-4.5": {
+        ModelCapability.CODING: 0.85,
+        ModelCapability.REASONING: 0.82,
+        ModelCapability.MATH: 0.80,
+        ModelCapability.CREATIVE: 0.80,
+        ModelCapability.FACTUAL: 0.82,
+        ModelCapability.ANALYSIS: 0.80,
+        ModelCapability.SUMMARIZATION: 0.85,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.95,
+        ModelCapability.QUALITY: 0.82,
+    },
+    # Claude 4.1 Opus: Intermediate upgrade
+    "claude-opus-4.1": {
+        ModelCapability.CODING: 0.96,
+        ModelCapability.REASONING: 0.98,
+        ModelCapability.MATH: 0.94,
+        ModelCapability.CREATIVE: 0.96,
+        ModelCapability.FACTUAL: 0.95,
+        ModelCapability.ANALYSIS: 0.97,
+        ModelCapability.SUMMARIZATION: 0.94,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.97,
+        ModelCapability.SPEED: 0.52,
+        ModelCapability.QUALITY: 0.98,
+    },
+    # Claude 3.7 Sonnet with thinking: Enhanced reasoning
+    "claude-3.7-sonnet": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.95,
+        ModelCapability.MATH: 0.90,
+        ModelCapability.CREATIVE: 0.92,
+        ModelCapability.FACTUAL: 0.92,
+        ModelCapability.ANALYSIS: 0.94,
+        ModelCapability.SUMMARIZATION: 0.91,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.94,
+        ModelCapability.SPEED: 0.68,
+        ModelCapability.QUALITY: 0.94,
+    },
+    
+    # --------------------------------------------------------------------------
+    # Gemini 3 Series (Google's Latest - January 2026)
+    # --------------------------------------------------------------------------
+    # Gemini 3 Pro Preview: Next-gen Google flagship
+    "gemini-3-pro-preview": {
+        ModelCapability.CODING: 0.96,
+        ModelCapability.REASONING: 0.97,
+        ModelCapability.MATH: 0.98,
+        ModelCapability.CREATIVE: 0.90,
+        ModelCapability.FACTUAL: 0.97,
+        ModelCapability.ANALYSIS: 0.96,
+        ModelCapability.SUMMARIZATION: 0.94,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.95,
+        ModelCapability.SPEED: 0.72,
+        ModelCapability.QUALITY: 0.97,
+    },
+    # Gemini 3 Flash Preview: Fast next-gen
+    "gemini-3-flash-preview": {
+        ModelCapability.CODING: 0.88,
+        ModelCapability.REASONING: 0.86,
+        ModelCapability.MATH: 0.90,
+        ModelCapability.CREATIVE: 0.82,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.85,
+        ModelCapability.SUMMARIZATION: 0.88,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.96,
+        ModelCapability.QUALITY: 0.86,
+    },
+    # Gemini 2.5 Flash Lite: Ultra-fast, cost-effective
+    "gemini-2.5-flash-lite": {
+        ModelCapability.CODING: 0.78,
+        ModelCapability.REASONING: 0.75,
+        ModelCapability.MATH: 0.78,
+        ModelCapability.CREATIVE: 0.72,
+        ModelCapability.FACTUAL: 0.78,
+        ModelCapability.ANALYSIS: 0.74,
+        ModelCapability.SUMMARIZATION: 0.80,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.80,
+        ModelCapability.SPEED: 0.98,
+        ModelCapability.QUALITY: 0.75,
+    },
+    
+    # --------------------------------------------------------------------------
+    # OpenAI Deep Research Models (January 2026)
+    # --------------------------------------------------------------------------
+    # o3 Deep Research: Extended reasoning for research
+    "o3-deep-research": {
+        ModelCapability.CODING: 0.95,
+        ModelCapability.REASONING: 0.998,  # Best reasoning
+        ModelCapability.MATH: 0.99,
+        ModelCapability.CREATIVE: 0.70,
+        ModelCapability.FACTUAL: 0.97,
+        ModelCapability.ANALYSIS: 0.98,
+        ModelCapability.SUMMARIZATION: 0.85,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.20,  # Very slow, deep thinking
+        ModelCapability.QUALITY: 0.98,
+    },
+    # o4-mini Deep Research: Faster research variant
+    "o4-mini-deep-research": {
+        ModelCapability.CODING: 0.92,
+        ModelCapability.REASONING: 0.96,
+        ModelCapability.MATH: 0.97,
+        ModelCapability.CREATIVE: 0.68,
+        ModelCapability.FACTUAL: 0.92,
+        ModelCapability.ANALYSIS: 0.94,
+        ModelCapability.SUMMARIZATION: 0.82,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.86,
+        ModelCapability.SPEED: 0.55,
+        ModelCapability.QUALITY: 0.95,
+    },
+    # GPT-5.2 Codex: Specialized for code
+    "gpt-5.2-codex": {
+        ModelCapability.CODING: 0.995,  # Best coding model
+        ModelCapability.REASONING: 0.94,
+        ModelCapability.MATH: 0.95,
+        ModelCapability.CREATIVE: 0.75,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.90,
+        ModelCapability.SUMMARIZATION: 0.82,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.95,
+        ModelCapability.SPEED: 0.65,
+        ModelCapability.QUALITY: 0.96,
+    },
+    
+    # --------------------------------------------------------------------------
+    # DeepSeek Latest (January 2026)
+    # --------------------------------------------------------------------------
+    # DeepSeek V3.2 Speciale: Enhanced version
+    "deepseek-v3.2-speciale": {
+        ModelCapability.CODING: 0.97,
+        ModelCapability.REASONING: 0.95,
+        ModelCapability.MATH: 0.96,
+        ModelCapability.CREATIVE: 0.80,
+        ModelCapability.FACTUAL: 0.92,
+        ModelCapability.ANALYSIS: 0.93,
+        ModelCapability.SUMMARIZATION: 0.88,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.92,
+        ModelCapability.SPEED: 0.80,
+        ModelCapability.QUALITY: 0.95,
+    },
+    # DeepSeek V3.1 Terminus: Specialized variant
+    "deepseek-v3.1-terminus": {
+        ModelCapability.CODING: 0.95,
+        ModelCapability.REASONING: 0.94,
+        ModelCapability.MATH: 0.95,
+        ModelCapability.CREATIVE: 0.78,
+        ModelCapability.FACTUAL: 0.90,
+        ModelCapability.ANALYSIS: 0.92,
+        ModelCapability.SUMMARIZATION: 0.86,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.82,
+        ModelCapability.QUALITY: 0.93,
+    },
+    # DeepSeek Chat V3.1
+    "deepseek-chat-v3.1": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.93,
+        ModelCapability.MATH: 0.94,
+        ModelCapability.CREATIVE: 0.80,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.90,
+        ModelCapability.SUMMARIZATION: 0.86,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.82,
+        ModelCapability.QUALITY: 0.92,
+    },
+    
+    # --------------------------------------------------------------------------
+    # Grok Latest (X.AI - January 2026)
+    # --------------------------------------------------------------------------
+    # Grok 4.1 Fast: Speed-optimized
+    "grok-4.1-fast": {
+        ModelCapability.CODING: 0.88,
+        ModelCapability.REASONING: 0.90,
+        ModelCapability.MATH: 0.87,
+        ModelCapability.CREATIVE: 0.85,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.86,
+        ModelCapability.SUMMARIZATION: 0.84,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.92,
+        ModelCapability.QUALITY: 0.88,
+    },
+    # Grok 4 Fast
+    "grok-4-fast": {
+        ModelCapability.CODING: 0.86,
+        ModelCapability.REASONING: 0.88,
+        ModelCapability.MATH: 0.85,
+        ModelCapability.CREATIVE: 0.83,
+        ModelCapability.FACTUAL: 0.86,
+        ModelCapability.ANALYSIS: 0.85,
+        ModelCapability.SUMMARIZATION: 0.82,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.86,
+        ModelCapability.SPEED: 0.94,
+        ModelCapability.QUALITY: 0.86,
+    },
+    # Grok Code Fast: Specialized for coding
+    "grok-code-fast-1": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.85,
+        ModelCapability.MATH: 0.88,
+        ModelCapability.CREATIVE: 0.70,
+        ModelCapability.FACTUAL: 0.80,
+        ModelCapability.ANALYSIS: 0.82,
+        ModelCapability.SUMMARIZATION: 0.78,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.92,
+        ModelCapability.QUALITY: 0.88,
+    },
+    
+    # --------------------------------------------------------------------------
+    # Mistral Latest (January 2026)
+    # --------------------------------------------------------------------------
+    # Mistral Large 2512: Latest flagship
+    "mistral-large-2512": {
+        ModelCapability.CODING: 0.93,
+        ModelCapability.REASONING: 0.92,
+        ModelCapability.MATH: 0.90,
+        ModelCapability.CREATIVE: 0.86,
+        ModelCapability.FACTUAL: 0.90,
+        ModelCapability.ANALYSIS: 0.91,
+        ModelCapability.SUMMARIZATION: 0.88,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.92,
+        ModelCapability.SPEED: 0.76,
+        ModelCapability.QUALITY: 0.92,
+    },
+    # Devstral 2512: Developer-focused
+    "devstral-2512": {
+        ModelCapability.CODING: 0.95,
+        ModelCapability.REASONING: 0.88,
+        ModelCapability.MATH: 0.90,
+        ModelCapability.CREATIVE: 0.72,
+        ModelCapability.FACTUAL: 0.85,
+        ModelCapability.ANALYSIS: 0.86,
+        ModelCapability.SUMMARIZATION: 0.80,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.85,
+        ModelCapability.QUALITY: 0.90,
+    },
+    
+    # --------------------------------------------------------------------------
+    # Qwen Latest (Alibaba - January 2026)
+    # --------------------------------------------------------------------------
+    # Qwen3 Max: Flagship Qwen
+    "qwen3-max": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.93,
+        ModelCapability.MATH: 0.95,
+        ModelCapability.CREATIVE: 0.85,
+        ModelCapability.FACTUAL: 0.92,
+        ModelCapability.ANALYSIS: 0.92,
+        ModelCapability.SUMMARIZATION: 0.90,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.92,
+        ModelCapability.SPEED: 0.70,
+        ModelCapability.QUALITY: 0.93,
+    },
+    # Qwen3 VL 235B: Vision-language multimodal
+    "qwen3-vl-235b": {
+        ModelCapability.CODING: 0.90,
+        ModelCapability.REASONING: 0.92,
+        ModelCapability.MATH: 0.93,
+        ModelCapability.CREATIVE: 0.88,
+        ModelCapability.FACTUAL: 0.90,
+        ModelCapability.ANALYSIS: 0.91,
+        ModelCapability.SUMMARIZATION: 0.88,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.55,
+        ModelCapability.QUALITY: 0.92,
+    },
+    
+    # --------------------------------------------------------------------------
+    # Llama Latest (Meta - January 2026)
+    # --------------------------------------------------------------------------
+    # Llama 4 Maverick: Experimental flagship
+    "llama-4-maverick": {
+        ModelCapability.CODING: 0.92,
+        ModelCapability.REASONING: 0.91,
+        ModelCapability.MATH: 0.89,
+        ModelCapability.CREATIVE: 0.88,
+        ModelCapability.FACTUAL: 0.90,
+        ModelCapability.ANALYSIS: 0.90,
+        ModelCapability.SUMMARIZATION: 0.88,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.91,
+        ModelCapability.SPEED: 0.72,
+        ModelCapability.QUALITY: 0.91,
+    },
+    # Llama 3.3 Nemotron Super: NVIDIA optimized
+    "llama-3.3-nemotron-super-49b": {
+        ModelCapability.CODING: 0.90,
+        ModelCapability.REASONING: 0.89,
+        ModelCapability.MATH: 0.88,
+        ModelCapability.CREATIVE: 0.82,
+        ModelCapability.FACTUAL: 0.88,
+        ModelCapability.ANALYSIS: 0.88,
+        ModelCapability.SUMMARIZATION: 0.86,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.90,
+        ModelCapability.SPEED: 0.82,
+        ModelCapability.QUALITY: 0.89,
+    },
 }
 
 # Create aliases for full OpenRouter IDs (maps to same capabilities)
 _MODEL_ALIASES = {
+    # ==========================================================================
+    # OpenAI Models
+    # ==========================================================================
+    # GPT-4 series
     "openai/gpt-4o": "gpt-4o",
     "openai/gpt-4o-mini": "gpt-4o-mini",
+    # GPT-5 series (Q1 2026)
+    "openai/gpt-5": "gpt-5",
+    "openai/gpt-5-pro": "gpt-5-pro",
+    "openai/gpt-5-mini": "gpt-5-mini",
+    "openai/gpt-5-nano": "gpt-5-nano",
+    "openai/gpt-5-chat": "gpt-5",
+    "openai/gpt-5.1": "gpt-5.1",
+    "openai/gpt-5.1-chat": "gpt-5.1",
+    "openai/gpt-5.1-codex": "gpt-5.1",
+    "openai/gpt-5.1-codex-max": "gpt-5.1",
+    "openai/gpt-5.1-codex-mini": "gpt-5.1",
+    "openai/gpt-5.2": "gpt-5.2",
+    "openai/gpt-5.2-pro": "gpt-5.2-pro",
+    "openai/gpt-5.2-chat": "gpt-5.2",
+    "openai/gpt-5.2-codex": "gpt-5.2-codex",  # NEW: Codex variant
+    "openai/gpt-5-image": "gpt-5",
+    "openai/gpt-5-image-mini": "gpt-5-mini",
+    "openai/gpt-5-codex": "gpt-5",
+    # o-series (reasoning specialists)
+    "openai/o1": "o1",
+    "openai/o1-pro": "o1-pro",
+    "openai/o3": "o3",
+    "openai/o4-mini": "o4-mini",
+    "openai/o1-mini": "o4-mini",
+    "openai/o3-deep-research": "o3-deep-research",  # NEW: Deep research
+    "openai/o4-mini-deep-research": "o4-mini-deep-research",  # NEW: Deep research
+    
+    # ==========================================================================
+    # Anthropic Claude Models (January 2026 Latest)
+    # ==========================================================================
+    # Claude 4.5 series (LATEST)
+    "anthropic/claude-opus-4.5": "claude-opus-4.5",  # NEW: Best Anthropic
+    "anthropic/claude-sonnet-4.5": "claude-sonnet-4.5",  # NEW
+    "anthropic/claude-haiku-4.5": "claude-haiku-4.5",  # NEW
+    # Claude 4.1 series
+    "anthropic/claude-opus-4.1": "claude-opus-4.1",  # NEW
+    # Claude 4.0 series
     "anthropic/claude-sonnet-4": "claude-sonnet-4",
     "anthropic/claude-opus-4": "claude-opus-4",
-    "anthropic/claude-3-5-sonnet-20241022": "claude-sonnet-4",  # Map old to new
+    # Claude 3.7 series
+    "anthropic/claude-3.7-sonnet": "claude-3.7-sonnet",  # NEW
+    "anthropic/claude-3.7-sonnet:thinking": "claude-3.7-sonnet",  # NEW with thinking
+    # Claude 3.5 series (legacy)
+    "anthropic/claude-3-5-sonnet-20241022": "claude-sonnet-4",
+    "anthropic/claude-3.5-sonnet": "claude-sonnet-4",
+    "anthropic/claude-3.5-sonnet:beta": "claude-sonnet-4",
+    "anthropic/claude-3.5-haiku": "claude-haiku-4.5",
+    
+    # ==========================================================================
+    # Google Gemini Models (January 2026 Latest)
+    # ==========================================================================
+    # Gemini 3 series (LATEST)
+    "google/gemini-3-pro-preview": "gemini-3-pro-preview",  # NEW: Latest flagship
+    "google/gemini-3-flash-preview": "gemini-3-flash-preview",  # NEW
+    "google/gemini-3-pro-image-preview": "gemini-3-pro-preview",
+    # Gemini 2.5 series
     "google/gemini-2.5-pro": "gemini-2.5-pro",
     "google/gemini-2.5-flash": "gemini-2.5-flash",
+    "google/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",  # NEW
+    "google/gemini-2.5-flash-lite-preview-09-2025": "gemini-2.5-flash-lite",
+    "google/gemini-2.5-flash-image": "gemini-2.5-flash",
+    "google/gemini-2.5-flash-image-preview": "gemini-2.5-flash",
+    # Gemini 2.0 series
+    "google/gemini-2.0-pro": "gemini-2.0-pro",
+    "google/gemini-2.0-flash": "gemini-2.0-flash",
+    "google/gemini-2.0-pro-exp": "gemini-2.0-pro",
+    "google/gemini-2.0-flash-exp": "gemini-2.0-flash",
+    
+    # ==========================================================================
+    # DeepSeek Models (January 2026 Latest)
+    # ==========================================================================
     "deepseek/deepseek-v3.2": "deepseek-v3.2",
+    "deepseek/deepseek-v3.2-speciale": "deepseek-v3.2-speciale",  # NEW
+    "deepseek/deepseek-v3.2-exp": "deepseek-v3.2-speciale",
+    "deepseek/deepseek-v3.1-terminus": "deepseek-v3.1-terminus",  # NEW
+    "deepseek/deepseek-v3.1-terminus:exacto": "deepseek-v3.1-terminus",
+    "deepseek/deepseek-chat-v3.1": "deepseek-chat-v3.1",  # NEW
     "deepseek/deepseek-chat": "deepseek-chat",
     "deepseek/deepseek-r1-0528": "deepseek-r1-0528",
+    "deepseek/deepseek-r1": "deepseek-r1-0528",
+    "deepseek/deepseek-v3": "deepseek-v3.2",
+    
+    # ==========================================================================
+    # X.AI Grok Models (January 2026 Latest)
+    # ==========================================================================
     "x-ai/grok-4": "grok-4",
+    "x-ai/grok-4.1-fast": "grok-4.1-fast",  # NEW
+    "x-ai/grok-4-fast": "grok-4-fast",  # NEW
+    "x-ai/grok-code-fast-1": "grok-code-fast-1",  # NEW: Code specialist
+    "x-ai/grok-3": "grok-4",  # Map older to newer
+    "x-ai/grok-3-mini": "grok-4-fast",
     "x-ai/grok-2": "grok-2",
+    
+    # ==========================================================================
+    # Meta Llama Models (January 2026 Latest)
+    # ==========================================================================
+    "meta-llama/llama-4-maverick": "llama-4-maverick",  # NEW: Experimental flagship
+    "meta-llama/llama-4-70b": "llama-4-70b",
+    "meta-llama/llama-4-405b": "llama-4-405b",
+    "meta-llama/llama-4-70b-instruct": "llama-4-70b",
+    "meta-llama/llama-4-405b-instruct": "llama-4-405b",
+    "nvidia/llama-3.3-nemotron-super-49b-v1.5": "llama-3.3-nemotron-super-49b",  # NEW: NVIDIA
+    "nvidia/llama-3.1-nemotron-ultra-253b-v1": "llama-4-405b",
+    
+    # ==========================================================================
+    # Qwen Models (Alibaba - January 2026 Latest)
+    # ==========================================================================
+    "qwen/qwen3-max": "qwen3-max",  # NEW: Flagship
+    "qwen/qwen3-vl-235b-a22b-instruct": "qwen3-vl-235b",  # NEW: Multimodal
+    "qwen/qwen3-vl-235b-a22b-thinking": "qwen3-vl-235b",
+    "qwen/qwen3-vl-32b-instruct": "qwen3-vl-235b",
+    "qwen/qwen3-vl-8b-instruct": "qwen-3-72b",
+    "qwen/qwen-3-72b": "qwen-3-72b",
+    "qwen/qwen3-72b": "qwen-3-72b",
+    "qwen/qwen-3-72b-instruct": "qwen-3-72b",
+    
+    # ==========================================================================
+    # Mistral Models (January 2026 Latest)
+    # ==========================================================================
+    "mistralai/mistral-large-2512": "mistral-large-2512",  # NEW: Latest flagship
+    "mistralai/devstral-2512": "devstral-2512",  # NEW: Developer model
+    "mistralai/devstral-2512:free": "devstral-2512",
+    "mistralai/mistral-large-2": "mistral-large-2",
+    "mistralai/mistral-large-2411": "mistral-large-2",
+    "mistralai/ministral-14b-2512": "mistral-large-2",
+    "mistralai/ministral-8b-2512": "mistral-large-2",
 }
 
 # Add aliases to MODEL_CAPABILITIES
@@ -1706,7 +2395,14 @@ Reply with ONLY the number of the best response (e.g., "1" or "2")."""
         responses: List[ModelResponse],
         task_type: str,
     ) -> Tuple[str, str]:
-        """Synthesize multiple responses with quality weighting."""
+        """Synthesize multiple responses with quality weighting.
+        
+        Enhanced synthesis (Q1 2026):
+        - Longer context windows (4000 chars) for better synthesis
+        - Conflict detection between responses
+        - Task-type-specific synthesis strategies
+        - Structured merge instructions
+        """
         if len(responses) == 1:
             return responses[0].content, responses[0].model
         
@@ -1720,21 +2416,42 @@ Reply with ONLY the number of the best response (e.g., "1" or "2")."""
         if len(sorted_responses) > 1:
             secondary = sorted_responses[1]
             
-            if secondary.quality_score >= primary.quality_score * 0.9:
-                # Synthesize
-                synth_prompt = f"""Combine the best elements of these two responses:
+            if secondary.quality_score >= primary.quality_score * 0.85:  # Lowered threshold
+                # Detect potential conflicts
+                conflict_indicators = self._detect_response_conflicts(
+                    primary.content, secondary.content
+                )
+                
+                # Task-specific synthesis instructions
+                task_instructions = self._get_synthesis_instructions(task_type)
+                
+                # Enhanced synthesis prompt with longer context
+                synth_prompt = f"""You are an expert synthesizer. Your task is to create the best possible answer by intelligently combining multiple AI responses.
 
-CRITICAL: Provide the combined answer directly. Do NOT ask clarifying questions.
+## User's Question
+{prompt}
 
-Question: {prompt}
+## Response A (Quality Score: {primary.quality_score:.2f}, Model: {primary.model})
+{primary.content[:4000]}
 
-Response A (primary):
-{primary.content[:1500]}
+## Response B (Quality Score: {secondary.quality_score:.2f}, Model: {secondary.model})
+{secondary.content[:4000]}
 
-Response B (secondary):
-{secondary.content[:1500]}
+## Synthesis Instructions
+{task_instructions}
 
-Create a combined response that takes the best from both. Output only the final response. Do NOT ask questions."""
+{conflict_indicators}
+
+## Output Requirements
+1. Create ONE unified, comprehensive answer
+2. Take the BEST information from each response
+3. Resolve any conflicts using logic and evidence
+4. Maintain accuracy - do not add unsupported claims
+5. Keep the appropriate tone and depth for the topic
+6. Do NOT ask clarifying questions - provide a complete answer
+7. Do NOT mention that you are synthesizing responses
+
+Provide your synthesized answer now:"""
 
                 synth_model = self._select_best_model("synthesis", list(self.model_providers.keys()))
                 
@@ -1746,24 +2463,135 @@ Create a combined response that takes the best from both. Output only the final 
         
         return primary.content, primary.model
     
+    def _detect_response_conflicts(self, response_a: str, response_b: str) -> str:
+        """Detect potential conflicts between responses for synthesis guidance."""
+        # Simple heuristic: look for contradictory patterns
+        conflict_words = ['however', 'but', 'contrary', 'disagree', 'incorrect', 'wrong']
+        
+        a_lower = response_a.lower()
+        b_lower = response_b.lower()
+        
+        # Check for numerical disagreements (very rough heuristic)
+        import re
+        nums_a = set(re.findall(r'\b\d+\.?\d*\b', response_a))
+        nums_b = set(re.findall(r'\b\d+\.?\d*\b', response_b))
+        numerical_diff = nums_a.symmetric_difference(nums_b)
+        
+        if len(numerical_diff) > 5:
+            return """## Conflict Alert
+The responses contain different numerical values. Please verify calculations and use the most accurate figures."""
+        
+        # Check for hedging language differences
+        hedging_a = sum(1 for w in ['might', 'may', 'could', 'possibly', 'perhaps'] if w in a_lower)
+        hedging_b = sum(1 for w in ['might', 'may', 'could', 'possibly', 'perhaps'] if w in b_lower)
+        
+        if abs(hedging_a - hedging_b) > 3:
+            return """## Confidence Note
+The responses have different levels of certainty. Prefer definitive statements when well-supported."""
+        
+        return ""
+    
+    def _get_synthesis_instructions(self, task_type: str) -> str:
+        """Get task-specific synthesis instructions."""
+        instructions = {
+            "health_medical": """For medical/health topics:
+- Prioritize accuracy and safety above all
+- Include appropriate disclaimers
+- Cite mechanisms of action when relevant
+- Be conservative with recommendations""",
+            
+            "code_generation": """For code/programming:
+- Ensure the code is syntactically correct
+- Prefer the more efficient solution
+- Include error handling if either response has it
+- Keep helpful comments""",
+            
+            "math_problem": """For math problems:
+- Verify calculations step by step
+- Use the solution with clearer reasoning
+- Show work where appropriate
+- Double-check final numerical answers""",
+            
+            "creative_writing": """For creative content:
+- Blend the most engaging elements
+- Maintain consistent tone and style
+- Preserve unique creative choices
+- Ensure narrative coherence""",
+            
+            "research_analysis": """For research/analysis:
+- Integrate complementary insights
+- Maintain logical flow
+- Cite sources if provided
+- Present balanced perspectives""",
+            
+            "factual_question": """For factual questions:
+- Use the most well-supported facts
+- Verify claims against both responses
+- Be precise with terminology
+- Acknowledge uncertainty where appropriate""",
+        }
+        return instructions.get(task_type, """General synthesis:
+- Combine the strongest elements from each response
+- Ensure logical coherence
+- Maintain appropriate depth and detail""")
+    
     async def _synthesize_expert_panel(
         self,
         prompt: str,
         role_responses: Dict[str, ModelResponse],
     ) -> str:
-        """Synthesize expert panel responses."""
-        synth_prompt = f"""Synthesize these expert perspectives into one comprehensive answer:
+        """Synthesize expert panel responses with enhanced multi-perspective integration.
+        
+        Enhanced (Q1 2026):
+        - Structured role-based synthesis
+        - Longer context per expert (2000 chars)
+        - Explicit conflict resolution
+        - Quality-weighted integration
+        """
+        # Sort roles by quality for prioritization
+        sorted_roles = sorted(
+            role_responses.items(),
+            key=lambda x: x[1].quality_score,
+            reverse=True
+        )
+        
+        synth_prompt = f"""You are a master synthesizer tasked with combining expert perspectives into one world-class answer.
 
-CRITICAL: Provide the answer directly. Do NOT ask clarifying questions.
+## User's Question
+{prompt}
 
-Question: {prompt}
+## Expert Panel Responses
+"""
+        for role, resp in sorted_roles:
+            role_description = {
+                "researcher": "Deep research and fact-finding",
+                "analyst": "Critical analysis and evaluation",
+                "synthesizer": "Integration and summary",
+                "critic": "Quality assessment and error detection",
+                "creative": "Novel approaches and ideas",
+                "validator": "Verification and fact-checking",
+            }.get(role, role.title())
+            
+            synth_prompt += f"""### {role.upper()} ({role_description})
+Quality Score: {resp.quality_score:.2f}
+{resp.content[:2000]}
 
 """
-        for role, resp in role_responses.items():
-            synth_prompt += f"{role.upper()} perspective:\n{resp.content[:1000]}\n\n"
         
-        synth_prompt += """Create a unified, comprehensive answer that integrates all perspectives. 
-Output only the final synthesized answer. Do NOT ask questions."""
+        synth_prompt += """## Synthesis Guidelines
+1. **Weight by Quality**: Give more weight to higher-quality expert responses
+2. **Resolve Conflicts**: If experts disagree, use evidence and logic to determine the best answer
+3. **Integrate Strengths**: Each expert may have unique insights - capture them all
+4. **Maintain Coherence**: The final answer should read as one unified response
+5. **Be Comprehensive**: Cover all relevant aspects raised by the experts
+6. **Be Accurate**: Do not introduce information not supported by the expert responses
+
+## Output
+Provide a single, comprehensive, well-structured answer that a user would receive.
+Do NOT mention that you are synthesizing or that this comes from multiple experts.
+Do NOT ask clarifying questions.
+
+Your synthesized answer:"""
 
         synth_model = self._select_best_model("synthesis", list(self.model_providers.keys()))
         
@@ -1771,8 +2599,9 @@ Output only the final synthesized answer. Do NOT ask questions."""
             result = await self._call_model(synth_model, synth_prompt)
             return result.content
         except Exception:
-            # Fallback: use analyst response
-            return role_responses.get("analyst", list(role_responses.values())[0]).content
+            # Fallback: use highest quality response
+            best_role = sorted_roles[0] if sorted_roles else list(role_responses.items())[0]
+            return best_role[1].content
     
     def _log_performance(self, result: EliteResult, task_type: str) -> None:
         """Log performance for learning.
