@@ -200,20 +200,63 @@ def extract_math_expression(query: str) -> str:
     if percent_of_match:
         return f"{percent_of_match.group(2)} * {percent_of_match.group(1)} / 100"
     
-    # Pattern: "profit margin" with revenue and cost
-    # E.g., "revenue 500 cost 350" -> "(500-350)/500*100"
-    profit_match = re.search(r'revenue\s*([\d.]+).*cost\s*([\d.]+)', text)
-    if profit_match:
-        return f"({profit_match.group(1)} - {profit_match.group(2)}) / {profit_match.group(1)} * 100"
+    # Pattern: "profit margin" with revenue and cost/expenses
+    # Handle variations like "$4.5 million" or "4500000"
+    def extract_number_with_units(match_str: str) -> str:
+        """Extract number handling $ and million/billion units."""
+        # Remove $ and commas
+        num_str = match_str.replace('$', '').replace(',', '')
+        # Handle million/billion
+        if 'million' in num_str.lower():
+            num_match = re.search(r'([\d.]+)', num_str)
+            if num_match:
+                return str(float(num_match.group(1)) * 1000000)
+        if 'billion' in num_str.lower():
+            num_match = re.search(r'([\d.]+)', num_str)
+            if num_match:
+                return str(float(num_match.group(1)) * 1000000000)
+        num_match = re.search(r'([\d.]+)', num_str)
+        return num_match.group(1) if num_match else num_str
+    
+    profit_match = re.search(r'revenue\s*(?:of\s*)?\$?([\d.,]+\s*(?:million|billion)?)', text, re.IGNORECASE)
+    expense_match = re.search(r'(?:expense|cost)s?\s*(?:of\s*)?\$?([\d.,]+\s*(?:million|billion)?)', text, re.IGNORECASE)
+    if profit_match and expense_match:
+        revenue = extract_number_with_units(profit_match.group(1))
+        expense = extract_number_with_units(expense_match.group(1))
+        return f"({revenue} - {expense}) / {revenue} * 100"
     
     # Pattern: convert miles to km or km to miles
-    km_to_miles = re.search(r'([\d.]+)\s*(?:km|kilometers?)\s*(?:to|in)\s*miles?', text)
+    # Handle variations like "100 km to miles", "How many miles is 100 km", etc.
+    km_to_miles = re.search(r'([\d.]+)\s*(?:km|kilometers?)\s*(?:to|in|is)?\s*miles?', text)
     if km_to_miles:
         return f"{km_to_miles.group(1)} * 0.621371"
     
-    miles_to_km = re.search(r'([\d.]+)\s*miles?\s*(?:to|in)\s*(?:km|kilometers?)', text)
+    # Also handle "how many miles is X km" pattern
+    how_many_miles = re.search(r'how many miles\s*(?:is|are|in)?\s*([\d.]+)\s*(?:km|kilometers?)', text)
+    if how_many_miles:
+        return f"{how_many_miles.group(1)} * 0.621371"
+    
+    miles_to_km = re.search(r'([\d.]+)\s*miles?\s*(?:to|in|is)?\s*(?:km|kilometers?)', text)
     if miles_to_km:
         return f"{miles_to_km.group(1)} * 1.60934"
+    
+    # Handle "how many km is X miles" pattern
+    how_many_km = re.search(r'how many\s*(?:km|kilometers?)\s*(?:is|are|in)?\s*([\d.]+)\s*miles?', text)
+    if how_many_km:
+        return f"{how_many_km.group(1)} * 1.60934"
+    
+    # Pattern: "area of a circle with radius X"
+    circle_area = re.search(r'area\s*(?:of\s*(?:a\s*)?)?circle.*radius\s*([\d.]+)', text)
+    if circle_area:
+        r = circle_area.group(1)
+        return f"3.14159265359 * {r} * {r}"
+    
+    # Pattern: "radius X" in context of area/circle
+    if 'circle' in text and 'area' in text:
+        radius_match = re.search(r'radius\s*(?:of\s*)?([\d.]+)', text)
+        if radius_match:
+            r = radius_match.group(1)
+            return f"3.14159265359 * {r} * {r}"
     
     # Fallback: extract all numbers and operators
     # This is a last resort
