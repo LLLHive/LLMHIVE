@@ -149,6 +149,92 @@ def should_use_calculator(query: str) -> bool:
     return False
 
 
+def extract_math_expression(query: str) -> str:
+    """Extract mathematical expression from natural language query.
+    
+    Converts natural language math to evaluable expressions:
+    - "What is 25 * 47?" -> "25 * 47"
+    - "Calculate 100 divided by 4" -> "100 / 4"
+    - "28.89% profit margin" -> handles percentage calculations
+    
+    Args:
+        query: Natural language query containing math
+        
+    Returns:
+        Extracted/converted math expression ready for calculator
+    """
+    # First, try to find a pure math expression in the query
+    # Pattern for expressions like "25 * 47", "100 + 50", "3.14 * 2"
+    pure_math = re.search(r'([\d.]+\s*[\+\-\*/\^x×÷%]\s*[\d.]+(?:\s*[\+\-\*/\^x×÷%]\s*[\d.]+)*)', query)
+    if pure_math:
+        expr = pure_math.group(1)
+        # Normalize operators
+        expr = expr.replace('×', '*').replace('÷', '/').replace('x', '*')
+        return expr.strip()
+    
+    # Handle natural language operators
+    text = query.lower()
+    
+    # Pattern: "X times Y" or "X multiplied by Y"
+    times_match = re.search(r'([\d.]+)\s*(?:times|multiplied by|x)\s*([\d.]+)', text)
+    if times_match:
+        return f"{times_match.group(1)} * {times_match.group(2)}"
+    
+    # Pattern: "X divided by Y"
+    div_match = re.search(r'([\d.]+)\s*divided by\s*([\d.]+)', text)
+    if div_match:
+        return f"{div_match.group(1)} / {div_match.group(2)}"
+    
+    # Pattern: "X plus Y" or "X added to Y"
+    plus_match = re.search(r'([\d.]+)\s*(?:plus|added to|\+)\s*([\d.]+)', text)
+    if plus_match:
+        return f"{plus_match.group(1)} + {plus_match.group(2)}"
+    
+    # Pattern: "X minus Y" or "X subtracted from Y"
+    minus_match = re.search(r'([\d.]+)\s*(?:minus|subtracted from|\-)\s*([\d.]+)', text)
+    if minus_match:
+        return f"{minus_match.group(1)} - {minus_match.group(2)}"
+    
+    # Pattern: "X% of Y" -> "Y * X / 100"
+    percent_of_match = re.search(r'([\d.]+)%?\s*(?:percent\s+)?of\s*([\d.]+)', text)
+    if percent_of_match:
+        return f"{percent_of_match.group(2)} * {percent_of_match.group(1)} / 100"
+    
+    # Pattern: "profit margin" with revenue and cost
+    # E.g., "revenue 500 cost 350" -> "(500-350)/500*100"
+    profit_match = re.search(r'revenue\s*([\d.]+).*cost\s*([\d.]+)', text)
+    if profit_match:
+        return f"({profit_match.group(1)} - {profit_match.group(2)}) / {profit_match.group(1)} * 100"
+    
+    # Pattern: convert miles to km or km to miles
+    km_to_miles = re.search(r'([\d.]+)\s*(?:km|kilometers?)\s*(?:to|in)\s*miles?', text)
+    if km_to_miles:
+        return f"{km_to_miles.group(1)} * 0.621371"
+    
+    miles_to_km = re.search(r'([\d.]+)\s*miles?\s*(?:to|in)\s*(?:km|kilometers?)', text)
+    if miles_to_km:
+        return f"{miles_to_km.group(1)} * 1.60934"
+    
+    # Fallback: extract all numbers and operators
+    # This is a last resort
+    numbers = re.findall(r'[\d.]+', query)
+    if len(numbers) >= 2:
+        # Check for operation keywords
+        if any(word in text for word in ['multiply', 'times', 'product']):
+            return f"{numbers[0]} * {numbers[1]}"
+        elif any(word in text for word in ['divide', 'quotient']):
+            return f"{numbers[0]} / {numbers[1]}"
+        elif any(word in text for word in ['add', 'sum', 'total']):
+            return f"{numbers[0]} + {numbers[1]}"
+        elif any(word in text for word in ['subtract', 'difference', 'minus']):
+            return f"{numbers[0]} - {numbers[1]}"
+    
+    # If no pattern matched, return the original query
+    # The calculator's sanitizer might be able to handle it
+    logger.warning("Could not extract math expression from: %s", query[:50])
+    return query
+
+
 # ==============================================================================
 # Tool Implementations (Abstract Base)
 # ==============================================================================

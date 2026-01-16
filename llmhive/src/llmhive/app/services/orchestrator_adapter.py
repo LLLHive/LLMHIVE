@@ -1869,14 +1869,18 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 # ================================================================
                 # FIX 1.1: Force calculator for math queries BEFORE standard analysis
                 # ================================================================
-                from ..orchestration.tool_broker import should_use_calculator, ToolType as TT, ToolPriority, ToolRequest
+                from ..orchestration.tool_broker import should_use_calculator, extract_math_expression, ToolType as TT, ToolPriority, ToolRequest
                 if should_use_calculator(base_prompt):
                     logger.info("FIX 1.1: Forcing calculator for detected math query")
                     try:
-                        # Create a calculator request and execute it
+                        # Extract the math expression from natural language
+                        math_expr = extract_math_expression(base_prompt)
+                        logger.info("FIX 1.1: Extracted math expression: %s", math_expr)
+                        
+                        # Create a calculator request with the extracted expression
                         calc_request = ToolRequest(
                             tool_type=TT.CALCULATOR,
-                            query=base_prompt,
+                            query=math_expr,  # Use extracted expression, not full query
                             purpose="Mathematical calculation (forced)",
                             priority=ToolPriority.CRITICAL,
                         )
