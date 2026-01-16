@@ -25,6 +25,14 @@ on:
           - critical
           - full
           - domain
+      test_target:
+        description: 'Test target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - local
       enable_external:
         description: 'Include external baselines (requires secrets)'
         required: false
@@ -64,27 +72,47 @@ jobs:
           pip install -r llmhive/requirements.txt
           pip install pytest pyyaml
       
-      - name: Determine benchmark mode
+      - name: Determine benchmark mode and target
         id: mode
         run: |
           # Determine mode based on trigger
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             MODE="${{ inputs.mode }}"
+            TARGET="${{ inputs.test_target }}"
           elif [ "${{ github.event.schedule }}" == "0 6 * * *" ]; then
             MODE="critical"
+            TARGET="production"  # Scheduled runs test production
           else
             MODE="full"
+            TARGET="production"  # Scheduled runs test production
           fi
           echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "target=$TARGET" >> $GITHUB_OUTPUT
           echo "Benchmark mode: $MODE"
+          echo "Test target: $TARGET"
+          
+          # Set production URL for HTTP mode
+          # Note: Chat endpoint is at /v1/chat (not /api/v1/chat)
+          if [ "$TARGET" == "production" ]; then
+            echo "LLMHIVE_BENCHMARK_URL=https://llmhive-orchestrator-792354158895.us-east1.run.app" >> $GITHUB_ENV
+            echo "BENCHMARK_MODE=http" >> $GITHUB_ENV
+            echo "Using production API: https://llmhive-orchestrator-792354158895.us-east1.run.app"
+          else
+            echo "BENCHMARK_MODE=local" >> $GITHUB_ENV
+            echo "Using local mode (direct Python invocation)"
+          fi
       
       - name: Run Critical Benchmarks
         if: steps.mode.outputs.mode == 'critical'
         id: run-critical
         run: |
+          echo "Running benchmarks in $BENCHMARK_MODE mode"
+          if [ "$BENCHMARK_MODE" == "http" ]; then
+            echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+          fi
           python -m llmhive.app.benchmarks.cli \
             --systems llmhive \
-            --mode local \
+            --mode $BENCHMARK_MODE \
             --critical-only \
             --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
       
@@ -92,19 +120,27 @@ jobs:
         if: steps.mode.outputs.mode == 'full'
         id: run-full
         run: |
+          echo "Running benchmarks in $BENCHMARK_MODE mode"
+          if [ "$BENCHMARK_MODE" == "http" ]; then
+            echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+          fi
           python -m llmhive.app.benchmarks.cli \
             --systems llmhive \
-            --mode local \
+            --mode $BENCHMARK_MODE \
             --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
       
       - name: Run Domain Benchmarks
         if: steps.mode.outputs.mode == 'domain'
         id: run-domain
         run: |
+          echo "Running benchmarks in $BENCHMARK_MODE mode"
+          if [ "$BENCHMARK_MODE" == "http" ]; then
+            echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+          fi
           python -m llmhive.app.benchmarks.cli \
             --suite benchmarks/suites/domain_specific_v1.yaml \
             --systems llmhive \
-            --mode local \
+            --mode $BENCHMARK_MODE \
             --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
       
       # Authenticate to GCP for Secret Manager access (for external baselines)
