@@ -71,6 +71,7 @@ jobs:
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           
+          # OpenRouter API key (required for model sync)
           OPENROUTER_KEY=$(gcloud secrets versions access latest --secret="open-router-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$OPENROUTER_KEY" ]; then
             echo "✅ Retrieved open-router-key from Secret Manager"
@@ -79,12 +80,8 @@ jobs:
             echo "::warning::Could not fetch open-router-key"
           fi
           
-          # DATABASE_URL might be a different secret name
-          DB_URL=$(gcloud secrets versions access latest --secret="database-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
-          if [ -n "$DB_URL" ]; then
-            echo "✅ Retrieved database-url from Secret Manager"
-            echo "DATABASE_URL=$DB_URL" >> $GITHUB_ENV
-          fi
+          # Note: Firestore access uses the WIF service account credentials (ADC)
+          # No DATABASE_URL needed - the service account has Firestore access
       
       - name: Run OpenRouter Sync
         run: |
