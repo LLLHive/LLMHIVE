@@ -118,17 +118,42 @@ jobs:
             echo "telemetry=${{ inputs.telemetry_enabled || 'false' }}" >> $GITHUB_OUTPUT
           fi
       
+      - name: Check required secrets
+        id: check-secrets
+        run: |
+          MISSING=""
+          if [ -z "${{ secrets.PINECONE_API_KEY }}" ]; then
+            MISSING="$MISSING PINECONE_API_KEY"
+          fi
+          if [ -z "${{ secrets.OPENROUTER_API_KEY }}" ]; then
+            MISSING="$MISSING OPENROUTER_API_KEY"
+          fi
+          
+          if [ -n "$MISSING" ]; then
+            echo "has_secrets=false" >> $GITHUB_OUTPUT
+            echo "::warning::Missing secrets:$MISSING - Running in dry-run mode"
+          else
+            echo "has_secrets=true" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Run ModelDB Refresh
         env:
           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GOOGLE_CLOUD_PROJECT: llmhive-orchestrator
-          MODELDB_EMBEDDINGS_ENABLED: ${{ steps.gcp-auth.outcome == 'success' && 'true' || 'false' }}
+          MODELDB_EMBEDDINGS_ENABLED: ${{ steps.gcp-auth.outputs.outcome == 'success' && 'true' || 'false' }}
         run: |
           cd data/modeldb
           
           # Build command args
           ARGS=""
+          
+          # If secrets are missing, force dry-run mode
+          if [ "${{ steps.check-secrets.outputs.has_secrets }}" != "true" ]; then
+            echo "⚠️ Secrets not configured - running in dry-run mode"
+            ARGS="$ARGS --dry-run"
+          fi
+          
           if [ "${{ inputs.dry_run }}" == "true" ]; then
             ARGS="$ARGS --dry-run"
           fi
@@ -155,7 +180,7 @@ jobs:
           fi
           
           # If GCP auth failed, skip pipeline (Firestore/Pinecone)
-          if [ "${{ steps.gcp-auth.outcome }}" != "success" ]; then
+          if [ "${{ steps.gcp-auth.outputs.outcome }}" != "success" ]; then
             echo "::warning::GCP auth not available, skipping Firestore/Pinecone pipeline"
             ARGS="$ARGS --skip-pipeline"
           fi
