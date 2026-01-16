@@ -71,36 +71,23 @@ jobs:
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           
-          # Production URL
-          PROD_URL=$(gcloud secrets versions access latest --secret="production-api-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
-          if [ -n "$PROD_URL" ]; then
-            echo "✅ Retrieved production-api-url from Secret Manager"
-            echo "PRODUCTION_API_URL=$PROD_URL" >> $GITHUB_ENV
-          fi
-          
-          # Smoke test API key
-          SMOKE_KEY=$(gcloud secrets versions access latest --secret="smoke-test-api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
-          if [ -n "$SMOKE_KEY" ]; then
-            echo "✅ Retrieved smoke-test-api-key from Secret Manager"
-            echo "SMOKE_TEST_API_KEY=$SMOKE_KEY" >> $GITHUB_ENV
-          fi
-          
-          # Slack webhook URL (optional)
-          SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
-          if [ -n "$SLACK_URL" ]; then
-            echo "✅ Retrieved slack-webhook-url from Secret Manager"
-            echo "SLACK_WEBHOOK_URL=$SLACK_URL" >> $GITHUB_ENV
+          # API key (using existing 'api-key' secret)
+          API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$API_KEY" ]; then
+            echo "✅ Retrieved api-key from Secret Manager"
+            echo "SMOKE_TEST_API_KEY=$API_KEY" >> $GITHUB_ENV
+          else
+            echo "::warning::api-key not found in Secret Manager"
           fi
 
       - name: Determine production URL
         id: url
         run: |
+          # Priority: 1) Manual input, 2) Cloud Run production URL
           if [ -n "${{ github.event.inputs.production_url }}" ]; then
             echo "url=${{ github.event.inputs.production_url }}" >> $GITHUB_OUTPUT
-          elif [ -n "$PRODUCTION_API_URL" ]; then
-            echo "url=$PRODUCTION_API_URL" >> $GITHUB_OUTPUT
           else
-            echo "url=https://api.llmhive.ai" >> $GITHUB_OUTPUT
+            echo "url=https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app" >> $GITHUB_OUTPUT
           fi
 
       - name: Run smoke tests
@@ -212,32 +199,14 @@ jobs:
       - name: Install dependencies
         run: pip install pytest requests
 
-      # Authenticate to GCP for Secret Manager access
-      - name: Authenticate to Google Cloud
-        id: gcp-auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-        continue-on-error: true
-
-      - name: Fetch production URL from GCP Secret Manager
-        if: steps.gcp-auth.outcome == 'success'
-        run: |
-          PROD_URL=$(gcloud secrets versions access latest --secret="production-api-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
-          if [ -n "$PROD_URL" ]; then
-            echo "PRODUCTION_API_URL=$PROD_URL" >> $GITHUB_ENV
-          fi
-
       - name: Determine production URL
         id: url
         run: |
+          # Priority: 1) Manual input, 2) Cloud Run production URL
           if [ -n "${{ github.event.inputs.production_url }}" ]; then
             echo "url=${{ github.event.inputs.production_url }}" >> $GITHUB_OUTPUT
-          elif [ -n "$PRODUCTION_API_URL" ]; then
-            echo "url=$PRODUCTION_API_URL" >> $GITHUB_OUTPUT
           else
-            echo "url=https://api.llmhive.ai" >> $GITHUB_OUTPUT
+            echo "url=https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app" >> $GITHUB_OUTPUT
           fi
 
       - name: Run critical health checks only

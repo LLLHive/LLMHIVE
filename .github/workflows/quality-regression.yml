@@ -127,28 +127,17 @@ jobs:
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           
-          STAGING_URL=$(gcloud secrets versions access latest --secret="llmhive-staging-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
-          if [ -n "$STAGING_URL" ]; then
-            echo "✅ Retrieved llmhive-staging-url from Secret Manager"
-            echo "LLMHIVE_STAGING_URL=$STAGING_URL" >> $GITHUB_ENV
-            echo "has_staging_url=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_staging_url=false" >> $GITHUB_OUTPUT
-          fi
+          # Use production URL (no staging environment - use production for live audit)
+          echo "LLMHIVE_STAGING_URL=https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app" >> $GITHUB_ENV
+          echo "✅ Using production URL for live audit"
           
-          API_KEY=$(gcloud secrets versions access latest --secret="llmhive-api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          # API key (using existing 'api-key' secret)
+          API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$API_KEY" ]; then
-            echo "✅ Retrieved llmhive-api-key from Secret Manager"
+            echo "✅ Retrieved api-key from Secret Manager"
             echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
-            echo "has_api_key=true" >> $GITHUB_OUTPUT
           else
-            echo "has_api_key=false" >> $GITHUB_OUTPUT
-          fi
-          
-          # Slack webhook (optional)
-          SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
-          if [ -n "$SLACK_URL" ]; then
-            echo "SLACK_WEBHOOK_URL=$SLACK_URL" >> $GITHUB_ENV
+            echo "::warning::api-key not found in Secret Manager"
           fi
 
       - name: Check if secrets are available
@@ -158,7 +147,7 @@ jobs:
             echo "secrets_available=true" >> $GITHUB_OUTPUT
           else
             echo "secrets_available=false" >> $GITHUB_OUTPUT
-            echo "::notice::Skipping live audit - LLMHIVE_STAGING_URL or LLMHIVE_API_KEY not configured in GCP Secret Manager"
+            echo "::notice::Skipping live audit - API key not available"
           fi
 
       - name: Run live audit (staging)
