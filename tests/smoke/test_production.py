@@ -36,14 +36,14 @@ class TestHealthEndpoints:
         http_client: requests.Session,
         timer: type[ResponseTimer],
     ) -> None:
-        """Test /healthz endpoint returns 200."""
-        url = f"{smoke_config.base_url}/healthz"
+        """Test /health endpoint returns 200 (primary health check)."""
+        url = f"{smoke_config.base_url}/health"
         
-        with timer("GET /healthz"):
+        with timer("GET /health"):
             response = http_client.get(url, timeout=smoke_config.timeout)
         
         assert response.status_code == 200, f"Health check failed: {response.text}"
-        logger.info(f"✅ /healthz returned {response.status_code}")
+        logger.info(f"✅ /health returned {response.status_code}")
     
     def test_health_endpoint(
         self,
@@ -302,10 +302,10 @@ class TestPerformance:
         timer: type[ResponseTimer],
     ) -> None:
         """Verify health endpoint responds within acceptable time."""
-        url = f"{smoke_config.base_url}/healthz"
+        url = f"{smoke_config.base_url}/health"
         max_response_time_ms = 1000  # 1 second max
         
-        with timer("GET /healthz (performance)") as t:
+        with timer("GET /health (performance)") as t:
             response = http_client.get(url, timeout=smoke_config.timeout)
         
         if response.status_code == 200:
@@ -319,7 +319,7 @@ class TestPerformance:
         http_client: requests.Session,
     ) -> None:
         """Run multiple health checks and measure consistency."""
-        url = f"{smoke_config.base_url}/healthz"
+        url = f"{smoke_config.base_url}/health"
         num_requests = 5
         response_times: list[float] = []
         
