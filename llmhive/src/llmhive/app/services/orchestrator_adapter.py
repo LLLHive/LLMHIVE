@@ -1754,7 +1754,34 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # STEP 1.25: CLARIFICATION CHECK (Optional - adds questions to extra)
         # ========================================================================
         clarification_questions = []
-        if CLARIFICATION_AVAILABLE and prompt_spec and prompt_spec.analysis.ambiguities:
+        
+        # FIX 1.2: Skip clarification for clear factoid queries
+        def _should_skip_clarification(query: str) -> bool:
+            """Skip clarification for clear factual questions."""
+            import re as re_local
+            query_lower = query.lower().strip()
+            
+            # Always skip for well-formed questions with good length
+            if query_lower.endswith('?') and len(query.split()) >= 5:
+                return True
+            
+            # Factoid patterns that NEVER need clarification
+            NEVER_CLARIFY_PATTERNS = [
+                r'\b(who|what|when|where)\s+(discovered|invented|wrote|created|founded|is|are|was|were)\b',
+                r'\b(capital|largest|smallest|highest|lowest|first|last)\b.*\b(of|in)\b',
+                r'\b(chemical symbol|boiling point|speed of light|melting point)\b',
+                r'\bwhat year\b',
+                r'\bhow (tall|old|far|long|much|many)\b',
+            ]
+            for pattern in NEVER_CLARIFY_PATTERNS:
+                if re_local.search(pattern, query_lower):
+                    logger.debug("FIX 1.2: Skipping clarification for factoid query")
+                    return True
+            return False
+        
+        skip_clarification = _should_skip_clarification(request.prompt)
+        
+        if CLARIFICATION_AVAILABLE and prompt_spec and prompt_spec.analysis.ambiguities and not skip_clarification:
             try:
                 clarification_mgr = ClarificationManager()
                 # Check if prompt is ambiguous enough to warrant clarification
@@ -1838,6 +1865,48 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         if TOOL_BROKER_AVAILABLE and (prompt_spec is None or prompt_spec.analysis.requires_tools or force_web_search):
             try:
                 broker = get_tool_broker()
+                
+                # ================================================================
+                # FIX 1.1: Force calculator for math queries BEFORE standard analysis
+                # ================================================================
+                from ..orchestration.tool_broker import should_use_calculator, ToolType as TT, ToolPriority, ToolRequest
+                if should_use_calculator(base_prompt):
+                    logger.info("FIX 1.1: Forcing calculator for detected math query")
+                    try:
+                        # Create a calculator request and execute it
+                        calc_request = ToolRequest(
+                            tool_type=TT.CALCULATOR,
+                            query=base_prompt,
+                            purpose="Mathematical calculation (forced)",
+                            priority=ToolPriority.CRITICAL,
+                        )
+                        calc_results = await broker.execute_tools([calc_request], parallel=False)
+                        calc_result = calc_results.get(TT.CALCULATOR)
+                        
+                        if calc_result and calc_result.success and calc_result.data:
+                            calc_data = calc_result.data
+                            result_value = calc_data.get('result', 'N/A')
+                            expression = calc_data.get('expression', base_prompt)
+                            calc_context = (
+                                f"\n\n[CALCULATOR VERIFIED RESULT]\n"
+                                f"Expression: {expression}\n"
+                                f"Result: {result_value}\n"
+                                f"[END CALCULATOR RESULT]\n\n"
+                                f"IMPORTANT: Use the calculator result above as the authoritative answer. "
+                                f"Do NOT recalculate - the result is verified.\n\n"
+                            )
+                            base_prompt = calc_context + base_prompt
+                            tool_context = calc_context
+                            tool_results_info = {
+                                "used": True,
+                                "tools": ["calculator"],
+                                "success_count": 1,
+                                "reasoning": "Math query - calculator forced",
+                            }
+                            logger.info("Calculator result: %s = %s", expression, result_value)
+                    except Exception as calc_e:
+                        logger.warning("Forced calculator failed: %s", calc_e)
+                
                 tool_analysis = broker.analyze_tool_needs(base_prompt)
                 
                 # Force web search if enable_live_research is set

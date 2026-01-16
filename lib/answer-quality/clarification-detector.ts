@@ -69,12 +69,23 @@ const TEMPORAL_PATTERNS = [
 ]
 
 // Queries that should NEVER trigger clarification (clear, complete questions)
+// FIX 1.2: Expanded to include more factoid patterns
 const SKIP_CLARIFICATION_PATTERNS = [
   /^what\s+(is|are|was|were|does|do|can|could|would|should)\s+.{10,}/i, // "what is X" with enough context
   /^how\s+(do|does|can|could|would|should|to)\s+.{10,}/i, // "how to X" with enough context
   /^(tell me|explain|describe)\s+(about|how|what|why)\s+.{10,}/i, // "tell me about X" with context
   /^(can you|could you|please)\s+(explain|help|tell|show|describe)\s+.{10,}/i, // polite requests with context
   /\?\s*$/i, // Ends with question mark - user has formed a complete question
+  // FIX 1.2: Factoid patterns - these are clear questions that need direct answers
+  /\b(who|what|when|where)\s+(discovered|invented|wrote|created|founded|is|are|was|were)\b.{5,}/i,
+  /\b(capital|largest|smallest|highest|lowest|first|last|oldest|youngest)\s+(of|in|city|country)\b/i,
+  /\b(chemical symbol|boiling point|melting point|atomic number|atomic weight)\b/i,
+  /\b(how tall|how old|how far|how long|how much does|how many)\b.{5,}/i,
+  /\b(what year|what date|what time|what day)\b/i,
+  /\b(speed of light|speed of sound|gravitational constant)\b/i,
+  /\bwho\s+(is|was|are|were)\s+.{3,}/i, // "Who is Albert Einstein?"
+  /\bwhen\s+(did|was|were|is)\s+.{3,}/i, // "When did WWI begin?"
+  /\bwhere\s+(is|was|are|were|did)\s+.{3,}/i, // "Where is Australia?"
 ]
 
 /**

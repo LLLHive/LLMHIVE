@@ -1635,19 +1635,28 @@ Please provide an accurate, well-verified response."""
             if models:
                 result = []
                 for m in models:
+                    # FIX 1.3: Handle both string (model_id) and dict formats
+                    # get_high_accuracy_models returns List[str] of model IDs
+                    if isinstance(m, str):
+                        model_id = m
+                    elif isinstance(m, dict):
+                        model_id = m.get("id", "")
+                    else:
+                        logger.warning("Unexpected model type in catalog: %s", type(m))
+                        continue
+                    
                     # Extract provider from model_id (e.g., "openai/gpt-4o" -> "openai")
-                    model_id = m.get("id", "")
                     if "/" in model_id:
                         provider = model_id.split("/")[0]
                         result.append((provider, model_id))
                     else:
-                        # Try to infer provider from family
-                        family = m.get("family", "").lower()
-                        if "gpt" in family or "o1" in family or "o3" in family:
+                        # Try to infer provider from model_id pattern
+                        model_lower = model_id.lower()
+                        if "gpt" in model_lower or "o1" in model_lower or "o3" in model_lower or "o4" in model_lower:
                             result.append(("openai", model_id))
-                        elif "claude" in family:
+                        elif "claude" in model_lower:
                             result.append(("anthropic", model_id))
-                        elif "gemini" in family:
+                        elif "gemini" in model_lower:
                             result.append(("google", model_id))
                         else:
                             result.append(("openrouter", model_id))

@@ -96,6 +96,60 @@ class ToolAnalysis:
 
 
 # ==============================================================================
+# FIX 1.1: Enhanced Math Detection for Forced Calculator Usage
+# ==============================================================================
+
+# Comprehensive patterns for math queries that MUST use calculator
+MATH_PATTERNS = [
+    r'\b(calculate|compute|what is)\b.*[\d+\-*/^%]',  # "calculate 5+3", "what is 25 * 47"
+    r'\b(profit margin|percentage|percent)\b.*\d',    # Financial calculations
+    r'\b(convert|how many|how much)\b.*\b(miles?|km|kilometers?|minutes?|hours?|feet|meters?|pounds?|kg|kilograms?)\b',  # Conversions
+    r'\b\d+\s*[\+\-\*/\^x×÷]\s*\d+\b',               # Direct math: "25 * 47", "100 / 4"
+    r'\b(sqrt|square root|factorial|cubed?)\b',       # Math functions
+    r'\b(compound interest|simple interest|area|volume|radius|circumference)\b',  # Formulas
+    r'\b(standard deviation|mean|median|average|variance)\b.*\d',  # Statistics
+    r'\bpi\s*[\*×]',                                  # Circle calculations
+    r'\b\d+\s*%\s*(of|off)\b',                        # Percentage: "20% of 150"
+    r'\bsum\s*of\s*\d',                              # Sum operations
+    r'\b(divide|multiply|add|subtract)\b.*\d',        # Explicit operations
+    r'\b(total|remainder|quotient|product)\b.*\d',    # Math terms
+    r'\b(squared|cubed)\b',                          # Powers
+    r'\bsolve\b.*[=]',                               # Equations
+]
+
+def should_use_calculator(query: str) -> bool:
+    """Determine if calculator tool should be FORCED for this query.
+    
+    This function ensures math queries are handled by the calculator tool
+    rather than relying on LLM inference which can make calculation errors.
+    
+    Args:
+        query: The user's query text
+        
+    Returns:
+        True if calculator should be forced, False otherwise
+    """
+    query_lower = query.lower()
+    
+    # Check against comprehensive math patterns
+    for pattern in MATH_PATTERNS:
+        if re.search(pattern, query_lower):
+            logger.debug("Math pattern matched for calculator: %s", pattern)
+            return True
+    
+    # Also check for simple number + operator patterns
+    # E.g., "25 times 47", "100 divided by 4"
+    if re.search(r'\d+\s*(times|divided by|plus|minus)\s*\d+', query_lower):
+        return True
+    
+    # Check for explicit calculation requests
+    if re.search(r'\b(find|give me|tell me|what\'?s?)\b.*\b(result|answer|value)\b.*\d', query_lower):
+        return True
+    
+    return False
+
+
+# ==============================================================================
 # Tool Implementations (Abstract Base)
 # ==============================================================================
 
