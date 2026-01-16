@@ -107,15 +107,39 @@ jobs:
             --mode local \
             --outdir artifacts/benchmarks/scheduled_$(date +%Y%m%d_%H%M%S)
       
+      # Authenticate to GCP for Secret Manager access (for external baselines)
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        if: inputs.enable_external
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Fetch API keys from GCP Secret Manager
+        if: inputs.enable_external && steps.gcp-auth.outcome == 'success'
+        run: |
+          echo "Fetching API keys from GCP Secret Manager..."
+          
+          OPENAI_KEY=$(gcloud secrets versions access latest --secret="openai-api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$OPENAI_KEY" ]; then
+            echo "✅ Retrieved openai-api-key from Secret Manager"
+            echo "OPENAI_API_KEY=$OPENAI_KEY" >> $GITHUB_ENV
+          fi
+          
+          ANTHROPIC_KEY=$(gcloud secrets versions access latest --secret="anthropic-api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$ANTHROPIC_KEY" ]; then
+            echo "✅ Retrieved anthropic-api-key from Secret Manager"
+            echo "ANTHROPIC_API_KEY=$ANTHROPIC_KEY" >> $GITHUB_ENV
+          fi
+
       - name: Run External Baselines
         if: inputs.enable_external
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           # Check if any API keys are available
           if [ -z "$OPENAI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::notice::Skipping external baselines - no API keys configured"
+            echo "::notice::Skipping external baselines - no API keys configured in GCP Secret Manager"
             exit 0
           fi
           
@@ -260,14 +284,34 @@ jobs:
   notify-slack:
     needs: benchmark
     runs-on: ubuntu-latest
-    if: |
-      needs.benchmark.outputs.passed == 'false' && 
-      vars.SLACK_WEBHOOK_URL
+    if: needs.benchmark.outputs.passed == 'false'
     
     steps:
-      - name: Send Slack Notification
+      # Authenticate to GCP for Secret Manager access
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Fetch Slack webhook from GCP Secret Manager
+        id: fetch-slack
+        if: steps.gcp-auth.outcome == 'success'
         run: |
-          curl -X POST ${{ vars.SLACK_WEBHOOK_URL }} \
+          SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$SLACK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL=$SLACK_URL" >> $GITHUB_ENV
+            echo "has_webhook=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_webhook=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack Notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-type: application/json' \
             -d '{
               "text": "🚨 LLMHive Benchmark Regression",

@@ -112,21 +112,57 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-asyncio pyyaml requests aiohttp
 
+      # Authenticate to GCP for Secret Manager access
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Fetch secrets from GCP Secret Manager
+        id: fetch-secrets
+        if: steps.gcp-auth.outcome == 'success'
+        run: |
+          echo "Fetching secrets from GCP Secret Manager..."
+          
+          STAGING_URL=$(gcloud secrets versions access latest --secret="llmhive-staging-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$STAGING_URL" ]; then
+            echo "✅ Retrieved llmhive-staging-url from Secret Manager"
+            echo "LLMHIVE_STAGING_URL=$STAGING_URL" >> $GITHUB_ENV
+            echo "has_staging_url=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_staging_url=false" >> $GITHUB_OUTPUT
+          fi
+          
+          API_KEY=$(gcloud secrets versions access latest --secret="llmhive-api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$API_KEY" ]; then
+            echo "✅ Retrieved llmhive-api-key from Secret Manager"
+            echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
+            echo "has_api_key=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_api_key=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Slack webhook (optional)
+          SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$SLACK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL=$SLACK_URL" >> $GITHUB_ENV
+          fi
+
       - name: Check if secrets are available
         id: check_secrets
         run: |
-          if [ -n "${{ secrets.LLMHIVE_STAGING_URL }}" ] && [ -n "${{ secrets.LLMHIVE_API_KEY }}" ]; then
+          if [ -n "$LLMHIVE_STAGING_URL" ] && [ -n "$LLMHIVE_API_KEY" ]; then
             echo "secrets_available=true" >> $GITHUB_OUTPUT
           else
             echo "secrets_available=false" >> $GITHUB_OUTPUT
-            echo "::notice::Skipping live audit - LLMHIVE_STAGING_URL or LLMHIVE_API_KEY not configured"
+            echo "::notice::Skipping live audit - LLMHIVE_STAGING_URL or LLMHIVE_API_KEY not configured in GCP Secret Manager"
           fi
 
       - name: Run live audit (staging)
         if: steps.check_secrets.outputs.secrets_available == 'true'
-        env:
-          LLMHIVE_STAGING_URL: ${{ secrets.LLMHIVE_STAGING_URL }}
-          LLMHIVE_API_KEY: ${{ secrets.LLMHIVE_API_KEY }}
         run: |
           max_prompts="${{ github.event.inputs.max_prompts || '50' }}"
           
@@ -213,7 +249,25 @@ jobs:
       github.repository_owner == 'LLMHive'
     
     steps:
+      # Authenticate to GCP for Secret Manager access
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Fetch Slack webhook from GCP Secret Manager
+        if: steps.gcp-auth.outcome == 'success'
+        run: |
+          SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$SLACK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL=$SLACK_URL" >> $GITHUB_ENV
+          fi
+
       - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |
@@ -239,7 +293,7 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
         continue-on-error: true
 
