@@ -118,28 +118,43 @@ jobs:
             echo "telemetry=${{ inputs.telemetry_enabled || 'false' }}" >> $GITHUB_OUTPUT
           fi
       
-      - name: Check required secrets
-        id: check-secrets
+      - name: Fetch secrets from GCP Secret Manager
+        id: fetch-secrets
+        if: steps.gcp-auth.outputs.outcome == 'success'
         run: |
-          MISSING=""
-          if [ -z "${{ secrets.PINECONE_API_KEY }}" ]; then
-            MISSING="$MISSING PINECONE_API_KEY"
-          fi
-          if [ -z "${{ secrets.OPENROUTER_API_KEY }}" ]; then
-            MISSING="$MISSING OPENROUTER_API_KEY"
+          echo "Fetching secrets from GCP Secret Manager..."
+          
+          # Fetch PINECONE_API_KEY
+          PINECONE_KEY=$(gcloud secrets versions access latest --secret="pinecone-api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$PINECONE_KEY" ]; then
+            echo "✅ Retrieved pinecone-api-key from Secret Manager"
+            echo "PINECONE_API_KEY=$PINECONE_KEY" >> $GITHUB_ENV
+            echo "pinecone_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Could not fetch pinecone-api-key from Secret Manager"
+            echo "pinecone_ok=false" >> $GITHUB_OUTPUT
           fi
           
-          if [ -n "$MISSING" ]; then
-            echo "has_secrets=false" >> $GITHUB_OUTPUT
-            echo "::warning::Missing secrets:$MISSING - Running in dry-run mode"
+          # Fetch OPENROUTER_API_KEY
+          OPENROUTER_KEY=$(gcloud secrets versions access latest --secret="open-router-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$OPENROUTER_KEY" ]; then
+            echo "✅ Retrieved open-router-key from Secret Manager"
+            echo "OPENROUTER_API_KEY=$OPENROUTER_KEY" >> $GITHUB_ENV
+            echo "openrouter_ok=true" >> $GITHUB_OUTPUT
           else
+            echo "::warning::Could not fetch open-router-key from Secret Manager"
+            echo "openrouter_ok=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Determine if we have all secrets
+          if [ "$PINECONE_KEY" != "" ] && [ "$OPENROUTER_KEY" != "" ]; then
             echo "has_secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_secrets=false" >> $GITHUB_OUTPUT
           fi
       
       - name: Run ModelDB Refresh
         env:
-          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GOOGLE_CLOUD_PROJECT: llmhive-orchestrator
           MODELDB_EMBEDDINGS_ENABLED: ${{ steps.gcp-auth.outputs.outcome == 'success' && 'true' || 'false' }}
         run: |
@@ -148,9 +163,9 @@ jobs:
           # Build command args
           ARGS=""
           
-          # If secrets are missing, force dry-run mode
-          if [ "${{ steps.check-secrets.outputs.has_secrets }}" != "true" ]; then
-            echo "⚠️ Secrets not configured - running in dry-run mode"
+          # If GCP auth failed or secrets couldn't be fetched, run in dry-run mode
+          if [ "${{ steps.gcp-auth.outputs.outcome }}" != "success" ] || [ "${{ steps.fetch-secrets.outputs.has_secrets }}" != "true" ]; then
+            echo "⚠️ Secrets not available - running in dry-run mode"
             ARGS="$ARGS --dry-run"
           fi
           
