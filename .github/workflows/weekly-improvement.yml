@@ -56,20 +56,51 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
       
+      # Authenticate to GCP for Secret Manager access
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+      
+      - name: Fetch secrets from GCP Secret Manager
+        id: fetch-secrets
+        if: steps.gcp-auth.outcome == 'success'
+        run: |
+          echo "Fetching secrets from GCP Secret Manager..."
+          
+          OPENROUTER_KEY=$(gcloud secrets versions access latest --secret="open-router-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$OPENROUTER_KEY" ]; then
+            echo "✅ Retrieved open-router-key from Secret Manager"
+            echo "OPENROUTER_API_KEY=$OPENROUTER_KEY" >> $GITHUB_ENV
+          else
+            echo "::warning::Could not fetch open-router-key"
+          fi
+          
+          # DATABASE_URL might be a different secret name
+          DB_URL=$(gcloud secrets versions access latest --secret="database-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$DB_URL" ]; then
+            echo "✅ Retrieved database-url from Secret Manager"
+            echo "DATABASE_URL=$DB_URL" >> $GITHUB_ENV
+          fi
+      
       - name: Run OpenRouter Sync
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           cd llmhive
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "::warning::OPENROUTER_API_KEY not available, skipping sync"
+            exit 0
+          fi
           python -m llmhive.app.openrouter.scheduler --sync ${{ inputs.dry_run == 'true' && '--dry-run' || '' }}
       
       - name: Run Weekly Improvement Cycle
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           cd llmhive
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "::warning::OPENROUTER_API_KEY not available, running in limited mode"
+          fi
           python -m llmhive.app.weekly_improvement --run \
             ${{ inputs.dry_run == 'true' && '--dry-run' || '' }} \
             ${{ inputs.skip_benchmarks == 'true' && '--no-benchmarks' || '' }} \
