@@ -149,9 +149,30 @@ export function ChatArea({
   // Auto-scroll to bottom when new messages arrive (unless user has scrolled up)
   useEffect(() => {
     if (conversation?.messages?.length && !userHasScrolled) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      // Use setTimeout to ensure DOM has updated before scrolling
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 100)
     }
   }, [conversation?.messages?.length, userHasScrolled])
+  
+  // Also scroll when clarification state changes (ensures clarification questions are visible)
+  useEffect(() => {
+    if (pendingClarification && !userHasScrolled) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 150)
+    }
+  }, [pendingClarification, userHasScrolled])
+  
+  // Scroll when loading starts (ensures user can see their message + loading indicator)
+  useEffect(() => {
+    if (isLoading && !userHasScrolled) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 50)
+    }
+  }, [isLoading, userHasScrolled])
   
   // Reset user scroll state when conversation changes
   useEffect(() => {
@@ -444,26 +465,37 @@ export function ChatArea({
       
       if (clarificationDecision.shouldAskClarification && clarificationDecision.questions.length > 0) {
         // Store the input and show clarification questions
-        setPendingInput(input)
+        const userInput = input
+        setPendingInput(userInput)
         setPendingClarification(clarificationDecision)
         
-        // Show clarification message from AI
-        const clarificationMessage: Message = {
-          id: `msg-${Date.now()}`,
-          role: "assistant",
-          content: formatClarificationMessage(clarificationDecision),
-          timestamp: new Date(),
-          isClarificationRequest: true,
-        }
-        onSendMessage({ 
-          id: `msg-${Date.now()}-user`,
+        // Create unique timestamps for both messages
+        const now = Date.now()
+        
+        // FIRST: Send user message so it's visible in the chat
+        const userMessage: Message = {
+          id: `msg-user-${now}`,
           role: "user",
-          content: input,
-          timestamp: new Date(),
-        })
-        onSendMessage(clarificationMessage)
+          content: userInput,
+          timestamp: new Date(now),
+        }
+        onSendMessage(userMessage)
+        
+        // Clear input immediately so user sees their message was received
         setInput("")
-        toast.info("I have a few clarifying questions to better help you.")
+        
+        // THEN: After a brief delay, show the clarification message (ensures user message renders first)
+        setTimeout(() => {
+          const clarificationMessage: Message = {
+            id: `msg-clarify-${now + 1}`,
+            role: "assistant",
+            content: formatClarificationMessage(clarificationDecision),
+            timestamp: new Date(now + 1),
+            isClarificationRequest: true,
+          }
+          onSendMessage(clarificationMessage)
+        }, 50)
+        
         return
       }
     }
@@ -513,6 +545,11 @@ export function ChatArea({
     setInput("")
     setAttachments([])
     setIsLoading(true)
+    
+    // Ensure scroll to show user message + loading indicator immediately
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, 100)
 
     // Start orchestration status
     const startTime = Date.now()
@@ -1131,12 +1168,17 @@ export function ChatArea({
             </div>
           </div>
           
-          {/* Clarification prompt - proceed anyway button */}
+          {/* Clarification helper - visible when waiting for user response */}
           {pendingClarification && (
-            <div className="flex items-center justify-center gap-2 mt-2 px-4">
-              <span className="text-xs text-muted-foreground">Have clarifications?</span>
+            <div className="flex items-center justify-between gap-3 mt-3 px-4 py-2 rounded-lg bg-[var(--bronze)]/5 border border-[var(--bronze)]/20">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[var(--bronze)] animate-pulse" />
+                <span className="text-xs text-muted-foreground">
+                  Respond above to help me answer better, or:
+                </span>
+              </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   // Clear clarification state and proceed with original input
@@ -1147,9 +1189,9 @@ export function ChatArea({
                   // Trigger send with skip flag after state update
                   setTimeout(() => handleSend(true), 0)
                 }}
-                className="text-xs h-6 px-2 text-[var(--bronze)] hover:bg-[var(--bronze)]/10"
+                className="text-xs h-7 px-3 border-[var(--bronze)]/30 text-[var(--bronze)] hover:bg-[var(--bronze)]/10"
               >
-                Skip & proceed with original question
+                Skip questions & answer now
               </Button>
             </div>
           )}

@@ -28,35 +28,31 @@ export interface ClarificationDecision {
 
 // Thresholds for clarification decisions
 const CLARIFICATION_THRESHOLDS = {
-  // Minimum confidence to proceed without clarification (lowered to be more aggressive)
-  MIN_CONFIDENCE_TO_PROCEED: 0.8,
+  // Minimum confidence to proceed without clarification (raised to reduce false positives)
+  MIN_CONFIDENCE_TO_PROCEED: 0.6,
   // Maximum number of clarification questions to ask
-  MAX_QUESTIONS: 3,
+  MAX_QUESTIONS: 2,
   // Minimum severity to require clarification
-  MIN_SEVERITY_TO_ASK: 'low' as const,
-  // Minimum word count for a query to be considered complete
-  MIN_WORDS_FOR_COMPLETE_QUERY: 8,
+  MIN_SEVERITY_TO_ASK: 'medium' as const,
+  // Minimum word count for a query to be considered complete (lowered)
+  MIN_WORDS_FOR_COMPLETE_QUERY: 5,
   // Maximum word count before we consider query long enough
-  MAX_WORDS_BEFORE_OK: 15,
+  MAX_WORDS_BEFORE_OK: 10,
 }
 
-// Patterns that indicate a vague or incomplete query
+// Patterns that indicate a vague or incomplete query (only truly vague single-phrase queries)
 const VAGUE_QUERY_PATTERNS = [
   /^(help|help me)$/i,
-  /^(what|how|why|tell me)$/i,
+  /^(what|how|why)$/i, // Only trigger on single words, not phrases
   /^(explain|describe|show)$/i,
-  /^[a-z]+\??$/i, // Single word queries
-  /^(do|can you|could you)$/i,
-  /^(I need|I want|need help with)$/i,
-  /^(best|top|good)\s+\w+\??$/i, // "best practices?" etc
+  /^[a-z]{1,6}\??$/i, // Single short word queries only
 ]
 
-// Topics that often need clarification
-const TOPICS_NEEDING_CONTEXT = [
-  /\b(app|application|system|project|code|website|site)\b/i,
-  /\b(error|bug|issue|problem|fix)\b/i,
-  /\b(better|improve|optimize|best)\b/i,
-  /\b(my|our|the)\s+(code|app|project|system)\b/i,
+// Topics that often need clarification - ONLY for tech domain
+// These should NOT trigger for medical, legal, or other non-tech domains
+const TECH_TOPICS_NEEDING_CONTEXT = [
+  /\b(my|our)\s+(code|app|application|project|system|website|software|program)\b/i,
+  /\b(this|the)\s+(error|bug|issue)\s+(in|with)\b/i,
 ]
 
 // Patterns that need criteria clarification (top/best without criteria)
@@ -68,8 +64,17 @@ const RANKING_PATTERNS = [
 
 // Patterns that indicate temporal/current data needs
 const TEMPORAL_PATTERNS = [
-  /\b(today|now|current|currently|latest|recent|newest|as of|this year|this month|this week|2024|2025)\b/i,
+  /\b(today|now|current|currently|latest|recent|newest|as of|this year|this month|this week|2024|2025|2026)\b/i,
   /\b(right now|at the moment|presently|these days)\b/i,
+]
+
+// Queries that should NEVER trigger clarification (clear, complete questions)
+const SKIP_CLARIFICATION_PATTERNS = [
+  /^what\s+(is|are|was|were|does|do|can|could|would|should)\s+.{10,}/i, // "what is X" with enough context
+  /^how\s+(do|does|can|could|would|should|to)\s+.{10,}/i, // "how to X" with enough context
+  /^(tell me|explain|describe)\s+(about|how|what|why)\s+.{10,}/i, // "tell me about X" with context
+  /^(can you|could you|please)\s+(explain|help|tell|show|describe)\s+.{10,}/i, // polite requests with context
+  /\?\s*$/i, // Ends with question mark - user has formed a complete question
 ]
 
 /**
@@ -97,6 +102,7 @@ export function shouldAskClarification(query: string): ClarificationDecision {
 
 /**
  * Direct pattern-based clarification check (faster, catches obvious cases)
+ * IMPROVED: Much more conservative - only asks when truly necessary
  */
 function checkForDirectClarificationNeeds(query: string): {
   needed: boolean
@@ -108,155 +114,124 @@ function checkForDirectClarificationNeeds(query: string): {
   const words = query.trim().split(/\s+/)
   const wordCount = words.length
   
-  // Very short queries almost always need clarification
-  if (wordCount < 4) {
-    confidence -= 0.4
+  // FIRST: Check if query should SKIP clarification entirely
+  // Well-formed questions with enough context should proceed directly
+  for (const pattern of SKIP_CLARIFICATION_PATTERNS) {
+    if (pattern.test(query)) {
+      console.log('🔍 Skipping clarification - query is well-formed:', query.slice(0, 40))
+      return { needed: false, questions: [], confidence: 1.0 }
+    }
+  }
+  
+  // Detect domain FIRST to avoid asking irrelevant questions
+  const isMedicalDomain = /\b(medical|health|disease|symptom|treatment|diagnosis|patient|clinical|doctor|medicine|therapy|condition|medication|healthcare|surgery|nurse|hospital)\b/i.test(query)
+  const isLegalDomain = /\b(legal|law|court|attorney|lawsuit|contract|rights|liability|regulation|compliance|lawyer|sue|judge|verdict)\b/i.test(query)
+  const isFinanceDomain = /\b(invest|stock|financial|tax|budget|money|accounting|portfolio|market|crypto|bitcoin|trading|401k|ira|mortgage)\b/i.test(query)
+  const isTechDomain = /\b(code|coding|app|application|software|programming|developer|bug|error|debug|api|database|framework|javascript|python|react|node)\b/i.test(query)
+  const isResearchDomain = /\b(research|study|academic|paper|journal|scientific|experiment|hypothesis|thesis|dissertation)\b/i.test(query)
+  
+  // Only trigger clarification for VERY short queries (< 3 words) 
+  if (wordCount < 3) {
+    confidence -= 0.5
     questions.push({
       id: 'short-query',
-      question: 'Could you provide more details about what you need help with?',
+      question: 'Could you tell me more about what you need help with?',
       type: 'required',
-      reason: 'Your query is quite brief - more context helps me give you a better answer',
+      reason: 'A bit more context helps me give you a better answer',
+    })
+  }
+  // Check for genuinely vague single-word/phrase patterns
+  else {
+    for (const pattern of VAGUE_QUERY_PATTERNS) {
+      if (pattern.test(query)) {
+        confidence -= 0.4
+        if (questions.length === 0) {
+          questions.push({
+            id: 'vague-pattern',
+            question: 'What specifically would you like help with?',
+            type: 'required',
+            reason: 'I want to make sure I understand your request',
+          })
+        }
+        break
+      }
+    }
+  }
+  
+  // ONLY check for tech context if it's a tech query AND very short
+  if (isTechDomain && wordCount < CLARIFICATION_THRESHOLDS.MAX_WORDS_BEFORE_OK) {
+    let techContextNeeded = false
+    for (const pattern of TECH_TOPICS_NEEDING_CONTEXT) {
+      if (pattern.test(query)) {
+        techContextNeeded = true
+        confidence -= 0.15
+        break
+      }
+    }
+    
+    if (techContextNeeded && questions.length === 0) {
+      if (/\b(error|bug|issue|problem)\b/i.test(query)) {
+        questions.push({
+          id: 'error-context',
+          question: 'What error message or unexpected behavior are you seeing?',
+          type: 'recommended',
+          reason: 'The exact error helps me provide a targeted solution',
+        })
+      } else if (/\b(my|our)\s+(code|app|application)\b/i.test(query)) {
+        questions.push({
+          id: 'tech-context',
+          question: 'What programming language or framework are you using?',
+          type: 'recommended',
+          reason: 'This helps me give you relevant examples',
+          options: ['JavaScript/TypeScript', 'Python', 'Java/Kotlin', 'Other'],
+        })
+      }
+    }
+  }
+  
+  // DON'T ask clarification for clear domain-specific questions
+  // Medical, legal, finance, research queries should proceed without unnecessary clarification
+  // unless they're extremely vague
+  
+  // Check for ranking/comparison queries - but DON'T ask if query has enough context
+  const isRankingQuery = RANKING_PATTERNS.some(p => p.test(query))
+  const isTemporalQuery = TEMPORAL_PATTERNS.some(p => p.test(query))
+  
+  // For ranking queries, only ask clarification if VERY short
+  if (isRankingQuery && wordCount < 6 && questions.length === 0) {
+    confidence -= 0.2
+    questions.push({
+      id: 'ranking-criteria',
+      question: 'What criteria matter most to you?',
+      type: 'optional',
+      reason: '"Best" depends on your specific priorities',
+      options: ['Performance/Quality', 'Cost/Value', 'Ease of use', 'Just give me recommendations'],
     })
   }
   
-  // Check for vague patterns
-  for (const pattern of VAGUE_QUERY_PATTERNS) {
-    if (pattern.test(query)) {
-      confidence -= 0.3
-      if (questions.length < 2) {
-        questions.push({
-          id: 'vague-pattern',
-          question: 'What specifically would you like to know or accomplish?',
-          type: 'required',
-          reason: 'I want to make sure I understand your request correctly',
-        })
-      }
-      break
-    }
-  }
-  
-  // Check for topics that typically need context
-  let topicContextNeeded = false
-  for (const pattern of TOPICS_NEEDING_CONTEXT) {
-    if (pattern.test(query) && wordCount < CLARIFICATION_THRESHOLDS.MAX_WORDS_BEFORE_OK) {
-      topicContextNeeded = true
-      confidence -= 0.2
-      break
-    }
-  }
-  
-  if (topicContextNeeded && questions.length < 2) {
-    // Detect domain first to ask domain-appropriate questions
-    const isMedicalDomain = /\b(medical|health|disease|symptom|treatment|diagnosis|patient|clinical|doctor|medicine|therapy|condition|medication)\b/i.test(query)
-    const isLegalDomain = /\b(legal|law|court|attorney|lawsuit|contract|rights|liability|regulation|compliance)\b/i.test(query)
-    const isFinanceDomain = /\b(invest|stock|financial|tax|budget|money|accounting|portfolio|market)\b/i.test(query)
-    const isTechDomain = /\b(code|app|application|software|programming|developer|bug|error|debug|api|database|framework)\b/i.test(query)
-    
-    // Only apply tech-focused questions for tech domain
-    if (isTechDomain && /\b(error|bug|issue|problem)\b/i.test(query)) {
-      questions.push({
-        id: 'error-context',
-        question: 'What error message or unexpected behavior are you seeing?',
-        type: 'recommended',
-        reason: 'Knowing the exact error helps me provide a targeted solution',
-      })
-    } else if (isTechDomain && /\b(app|application|code|project|system)\b/i.test(query)) {
-      questions.push({
-        id: 'tech-context',
-        question: 'What programming language, framework, or technology are you using?',
-        type: 'recommended',
-        reason: 'This helps me give you relevant code examples and advice',
-        options: ['JavaScript/TypeScript', 'Python', 'Java', 'Other'],
-      })
-    } else if (isMedicalDomain) {
-      // Medical-specific clarification
-      questions.push({
-        id: 'medical-context',
-        question: 'Could you provide more details about the specific condition or topic you are researching?',
-        type: 'recommended',
-        reason: 'This helps me provide more relevant medical research information',
-      })
-    } else if (isLegalDomain) {
-      // Legal-specific clarification
-      questions.push({
-        id: 'legal-context',
-        question: 'What jurisdiction or type of law are you asking about?',
-        type: 'recommended',
-        reason: 'Legal matters vary significantly by jurisdiction and area of law',
-        options: ['United States', 'European Union', 'Other jurisdiction', 'General principles'],
-      })
-    } else if (isFinanceDomain) {
-      // Finance-specific clarification
-      questions.push({
-        id: 'finance-context',
-        question: 'What is your investment timeline and risk tolerance?',
-        type: 'recommended',
-        reason: 'Financial advice varies based on your goals and risk profile',
-      })
-    } else if (/\b(better|improve|optimize|best)\b/i.test(query)) {
-      questions.push({
-        id: 'goal-context',
-        question: 'What is your main goal or priority?',
-        type: 'recommended',
-        reason: "Different goals lead to different 'best' solutions",
-      })
-    }
-  }
-  
-  // Check for ranking/comparison queries that need criteria
-  const isRankingQuery = RANKING_PATTERNS.some(p => p.test(query))
-  
-  // DEBUG: Log pattern matching results
-  console.log('🔍 Clarification patterns:', { 
-    query: query.slice(0, 50),
-    isRankingQuery, 
-    isTemporalQuery: TEMPORAL_PATTERNS.some(p => p.test(query)),
-    wordCount,
-    currentConfidence: confidence,
-    questionsCount: questions.length,
-  })
-  
-  if (isRankingQuery) {
-    confidence -= 0.25
-    if (questions.length < 2) {
-      questions.push({
-        id: 'ranking-criteria',
-        question: 'What criteria matter most to you for ranking?',
-        type: 'recommended',
-        reason: '"Best" or "top" depends on your specific needs and priorities',
-        options: ['Performance/Quality', 'Cost/Pricing', 'Ease of use', 'Specific use case (please specify)'],
-      })
-    }
-  }
-  
-  // Check for temporal queries that need real-time data
-  const isTemporalQuery = TEMPORAL_PATTERNS.some(p => p.test(query))
+  // For temporal queries - just note it, don't ask unnecessary questions
+  // The orchestrator will automatically use live research when needed
   if (isTemporalQuery) {
-    confidence -= 0.15 // Reduce confidence for temporal queries
-    if (questions.length < 3 && isRankingQuery) {
-      questions.push({
-        id: 'temporal-scope',
-        question: 'Would you like me to search for the most current information online?',
-        type: 'optional',
-        reason: 'I can access real-time data to ensure the answer reflects the latest developments',
-        options: ['Yes, use real-time data', 'No, general knowledge is fine'],
-      })
-    }
+    confidence -= 0.05 // Minor reduction - temporal queries are usually fine
   }
   
-  const needed = questions.length > 0 && confidence < CLARIFICATION_THRESHOLDS.MIN_CONFIDENCE_TO_PROCEED
+  // Final decision - be CONSERVATIVE about asking clarification
+  // Only ask if confidence is truly low AND we have questions worth asking
+  const hasRequiredQuestions = questions.some(q => q.type === 'required')
+  const needed = (hasRequiredQuestions || (questions.length > 0 && confidence < CLARIFICATION_THRESHOLDS.MIN_CONFIDENCE_TO_PROCEED))
   
-  // DEBUG: Final decision
-  console.log('🔍 Clarification final:', { 
-    needed,
-    confidence, 
-    threshold: CLARIFICATION_THRESHOLDS.MIN_CONFIDENCE_TO_PROCEED,
-    questionsCount: questions.length,
-  })
+  // Only log when clarification is actually triggered (reduce noise)
+  if (needed) {
+    console.log('🔍 Clarification needed:', { 
+      query: query.slice(0, 40),
+      confidence, 
+      questionCount: questions.length,
+    })
+  }
   
   return {
     needed,
-    questions,
+    questions: questions.slice(0, CLARIFICATION_THRESHOLDS.MAX_QUESTIONS),
     confidence,
   }
 }
