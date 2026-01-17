@@ -1,0 +1,263 @@
+{
+  "timestamp": "2026-01-17T09:08:41.234721",
+  "summary": {
+    "total_prompts": 3,
+    "llmhive_wins": 0,
+    "premium_wins": 3,
+    "ties": 0,
+    "avg_llmhive_quality": 0.0,
+    "avg_premium_quality": 1.0,
+    "avg_cost_savings_percent": 44.14329831376738,
+    "avg_llmhive_latency_ms": 15960.664749145508,
+    "avg_premium_latency_ms": 5451.29406452179,
+    "by_category": {
+      "math": {
+        "count": 1,
+        "llmhive_wins": 0,
+        "avg_quality_diff": -1.0,
+        "avg_cost_savings": 8.742471253878449
+      },
+      "reasoning": {
+        "count": 1,
+        "llmhive_wins": 0,
+        "avg_quality_diff": -1.0,
+        "avg_cost_savings": 23.68742368742369
+      },
+      "factual": {
+        "count": 1,
+        "llmhive_wins": 0,
+        "avg_quality_diff": -1.0,
+        "avg_cost_savings": 100.0
+      }
+    }
+  },
+  "results": [
+    {
+      "prompt_id": "math_001",
+      "category": "math",
+      "llmhive_wins": false,
+      "cost_savings_percent": 8.742471253878449,
+      "quality_difference": -1.0,
+      "llmhive": {
+        "prompt_id": "math_001",
+        "category": "math",
+        "system": "llmhive_orchestrated",
+        "answer": "Stub response for: Solve this problem.\n\nYou MUST express confidence, a...",
+        "latency_ms": 25373.286247253418,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.0,
+        "elements_found": [],
+        "elements_missing": [
+          "30%",
+          "profit margin",
+          "$1.44 million",
+          "expenses"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-4o": {
+          "prompt_id": "math_001",
+          "category": "math",
+          "system": "openai/gpt-4o",
+          "answer": "To calculate the profit margin percentage, we first need to determine the profit. Profit is calculated as revenue minus expenses:\n\n\\[\n\\text{Profit} = \\text{Revenue} - \\text{Expenses} = \\$2,400,000 - \\$1,680,000 = \\$720,000\n\\]\n\nNext, the profit margin percentage is calculated by dividing the profit by the revenue and then multiplying by 100 to convert it to a percentage:\n\n\\[\n\\text{Profit Margin Percentage} = \\left( \\frac{\\text{Profit}}{\\text{Revenue}} \\right) \\times 100 = \\left( \\frac{\\$720,000}{\\$2,400,000} \\right) \\times 100 = 30\\%\n\\]\n\nCurrently, the profit margin is 30%.\n\nTo achieve a profit margin of 40%, we set up the following equation using the desired profit margin:\n\n\\[\n\\text{Desired Profit Margin} = \\left( \\frac{\\text{Revenue} - \\text{Expenses}}{\\text{Revenue}} \\right) \\times 100 = 40\\%\n\\]\n\nSubstituting the known revenue and simplifying, we have:\n\n\\[\n0.40 = \\frac{\\$2,400,000 - \\text{Expenses}}{\\$2,400,000}\n\\]\n\nSolving for the expenses:\n\n\\[\n0.40 \\times \\$2,400,000 = \\$2,400,000 - \\text{Expenses}\n\\]\n\n\\[\n\\$960,000 = \\$2,400,000 - \\text{Expenses}\n\\]\n\n\\[\n\\text{Expenses} = \\$2,400,000 - \\$960,000 = \\$1,440,000\n\\]\n\nTo achieve a 40% profit margin with the same revenue of $2.4 million, the company's expenses should be $1.44 million.",
+          "latency_ms": 3872.692823410034,
+          "models_used": [
+            "openai/gpt-4o"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.0040275,
+          "quality_score": 1.0,
+          "elements_found": [
+            "30%",
+            "profit margin",
+            "$1.44 million",
+            "expenses"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-sonnet-4": {
+          "prompt_id": "math_001",
+          "category": "math",
+          "system": "anthropic/claude-sonnet-4",
+          "answer": "I'll solve this step by step.\n\n**Step 1: Calculate current profit and profit margin**\n\nCurrent profit = Revenue - Expenses\nCurrent profit = $2.4 million - $1.68 million = $0.72 million\n\nCurrent profit margin = (Profit \u00f7 Revenue) \u00d7 100%\nCurrent profit margin = ($0.72M \u00f7 $2.4M) \u00d7 100% = **30%**\n\n**Step 2: Calculate required expenses for 40% profit margin**\n\nIf they want a 40% profit margin with the same revenue:\n\nTarget profit = 40% \u00d7 $2.4 million = $0.96 million\n\nSince Profit = Revenue - Expenses:\n$0.96M = $2.4M - New Expenses\nNew Expenses = $2.4M - $0.96M = **$1.44 million**\n\n**Summary:**\n- Current profit margin: **30%**\n- To achieve 40% profit margin: expenses should be **$1.44 million**\n- This means they need to reduce expenses by $240,000 ($1.68M - $1.44M)",
+          "latency_ms": 4510.163068771362,
+          "models_used": [
+            "anthropic/claude-sonnet-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.004191,
+          "quality_score": 1.0,
+          "elements_found": [
+            "30%",
+            "profit margin",
+            "$1.44 million",
+            "expenses"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_001",
+      "category": "reasoning",
+      "llmhive_wins": false,
+      "cost_savings_percent": 23.68742368742369,
+      "quality_difference": -1.0,
+      "llmhive": {
+        "prompt_id": "reason_001",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "Stub response for: Solve this problem.\n\nYou MUST express confidence, a...",
+        "latency_ms": 22508.708000183105,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.0,
+        "elements_found": [],
+        "elements_missing": [
+          "23 chickens",
+          "12 rabbits",
+          "2 legs",
+          "4 legs",
+          "equation"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-4o": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "openai/gpt-4o",
+          "answer": "To solve the problem of determining how many chickens and rabbits the farmer has, we can use a system of equations. Let's define:\n\n- \\( c \\) as the number of chickens\n- \\( r \\) as the number of rabbits\n\nWe know the following from the problem:\n\n1. Each chicken has 1 head and each rabbit has 1 head. The farmer counts 35 heads in total. Therefore, the equation for the heads is:\n   \\[\n   c + r = 35\n   \\]\n\n2. Each chicken has 2 legs and each rabbit has 4 legs. The farmer counts 94 legs in total. Therefore, the equation for the legs is:\n   \\[\n   2c + 4r = 94\n   \\]\n\nNow we have the system of equations:\n\\[\n\\begin{align*}\n1. & \\quad c + r = 35 \\\\\n2. & \\quad 2c + 4r = 94\n\\end{align*}\n\\]\n\nLet's solve this system step by step.\n\nFirst, simplify the second equation by dividing all terms by 2:\n\\[\nc + 2r = 47\n\\]\n\nNow, we have a simpler system:\n\\[\n\\begin{align*}\n1. & \\quad c + r = 35 \\\\\n2. & \\quad c + 2r = 47\n\\end{align*}\n\\]\n\nSubtract the first equation from the second equation to find \\( r \\):\n\\[\n(c + 2r) - (c + r) = 47 - 35\n\\]\n\\[\nc + 2r - c - r = 12\n\\]\n\\[\nr = 12\n\\]\n\nNow that we know \\( r = 12 \\), substitute this value back into the first equation to find \\( c \\):\n\\[\nc + 12 = 35\n\\]\n\\[\nc = 35 - 12\n\\]\n\\[\nc = 23\n\\]\n\nThus, the farmer has 23 chickens and 12 rabbits.\n\nTo verify, let's check the total number of legs:\n\n- Chickens: \\( 23 \\times 2 = 46 \\) legs\n- Rabbits: \\( 12 \\times 4 = 48 \\) legs\n- Total legs: \\( 46 + 48 = 94 \\) legs\n\nThe calculations are consistent with the given information. Therefore, the farmer has 23 chickens and 12 rabbits.",
+          "latency_ms": 5605.605125427246,
+          "models_used": [
+            "openai/gpt-4o"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.00525,
+          "quality_score": 1.0,
+          "elements_found": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-sonnet-4": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "anthropic/claude-sonnet-4",
+          "answer": "I need to find the number of chickens and rabbits given the total heads and legs.\n\nLet me define variables:\n- Let c = number of chickens\n- Let r = number of rabbits\n\nNow I'll set up equations based on what I know:\n\n**Setting up the equations:**\n- Each animal has 1 head, so: c + r = 35\n- Chickens have 2 legs, rabbits have 4 legs, so: 2c + 4r = 94\n\n**Solving the system of equations:**\n\nFrom the first equation: c = 35 - r\n\nSubstituting into the second equation:\n2(35 - r) + 4r = 94\n70 - 2r + 4r = 94\n70 + 2r = 94\n2r = 24\nr = 12\n\nNow finding c:\nc = 35 - r = 35 - 12 = 23\n\n**Checking the answer:**\n- Heads: 23 + 12 = 35 \u2713\n- Legs: 23(2) + 12(4) = 46 + 48 = 94 \u2713\n\n**Answer:** The farmer has 23 chickens and 12 rabbits.",
+          "latency_ms": 4705.325126647949,
+          "models_used": [
+            "anthropic/claude-sonnet-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.004578,
+          "quality_score": 1.0,
+          "elements_found": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "fact_002",
+      "category": "factual",
+      "llmhive_wins": false,
+      "cost_savings_percent": 100.0,
+      "quality_difference": -1.0,
+      "llmhive": {
+        "prompt_id": "fact_002",
+        "category": "factual",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "chloroplast",
+          "carbon dioxide",
+          "water",
+          "glucose",
+          "oxygen",
+          "light"
+        ],
+        "error": "Client error '422 unknown' for url 'https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422"
+      },
+      "premium": {
+        "openai/gpt-4o": {
+          "prompt_id": "fact_002",
+          "category": "factual",
+          "system": "openai/gpt-4o",
+          "answer": "Photosynthesis is a fundamental biological process by which plants, algae, and some bacteria convert light energy into chemical energy stored in glucose. This process primarily occurs in the chloroplasts of plant cells.\n\n### Inputs:\n1. **Light Energy**: Sunlight is absorbed by chlorophyll, the green pigment in chloroplasts.\n2. **Carbon Dioxide (CO2)**: Enters the plant through small openings called stomata, which are primarily located on the underside of leaves.\n3. **Water (H2O)**: Absorbed by roots from the soil and transported to leaves through the plant's vascular system.\n\n### Process:\nPhotosynthesis can be divided into two main stages: the light-dependent reactions and the light-independent reactions (Calvin cycle).\n\n1. **Light-Dependent Reactions**:\n   - **Location**: Thylakoid membranes of the chloroplasts.\n   - **Process**: Chlorophyll absorbs sunlight, which excites electrons, initiating a chain of reactions.\n   - **Products**: ATP (adenosine triphosphate) and NADPH (nicotinamide adenine dinucleotide phosphate), both of which store energy and reducing power for the next stage. Oxygen is released as a byproduct from the splitting of water molecules.\n\n2. **Light-Independent Reactions (Calvin Cycle)**:\n   - **Location**: Stroma of the chloroplasts.\n   - **Process**: ATP and NADPH generated in the light-dependent reactions are used to convert carbon dioxide into glucose through a series of enzymatic steps.\n   - **Products**: Glucose (C6H12O6), which can be used for energy or stored as starch.\n\n### Outputs:\n1. **Glucose (C6H12O6)**: Serves as an energy source for the plant and can be converted into other carbohydrates, such as starch and cellulose.\n2. **Oxygen (O2)**: Released into the atmosphere as a byproduct.\n\nOverall, photosynthesis is essential for life on Earth as it provides the oxygen we breathe and forms the base of the food chain.",
+          "latency_ms": 6368.072986602783,
+          "models_used": [
+            "openai/gpt-4o"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.004392500000000001,
+          "quality_score": 1.0,
+          "elements_found": [
+            "chloroplast",
+            "carbon dioxide",
+            "water",
+            "glucose",
+            "oxygen",
+            "light"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-sonnet-4": {
+          "prompt_id": "fact_002",
+          "category": "factual",
+          "system": "anthropic/claude-sonnet-4",
+          "answer": "# Photosynthesis: The Plant's Energy Factory\n\nPhotosynthesis is the fundamental process by which plants convert light energy into chemical energy, producing glucose and oxygen from carbon dioxide and water.\n\n## **Location in Plant Cells**\n\nPhotosynthesis occurs in the **chloroplasts**, specialized organelles found primarily in leaf cells. Within chloroplasts, the process happens in two main areas:\n- **Thylakoids**: Flattened membrane sacs where light reactions occur\n- **Stroma**: The fluid-filled space surrounding thylakoids where carbon fixation takes place\n\n## **Inputs and Outputs**\n\n### Inputs:\n- **Carbon dioxide (CO\u2082)** - absorbed from air through stomata\n- **Water (H\u2082O)** - absorbed by roots from soil\n- **Sunlight** - captured by chlorophyll and other pigments\n\n### Outputs:\n- **Glucose (C\u2086H\u2081\u2082O\u2086)** - stored energy for the plant\n- **Oxygen (O\u2082)** - released as a byproduct through stomata\n\n## **The Two-Stage Process**\n\n### **Stage 1: Light Reactions (Photo)**\n- Occur in thylakoid membranes\n- Chlorophyll absorbs light energy\n- Water molecules are split, releasing oxygen\n- Energy is captured in molecules called ATP and NADPH\n\n### **Stage 2: Calvin Cycle (Synthesis)**\n- Occurs in the stroma\n- Uses ATP and NADPH from light reactions\n- Carbon dioxide is \"fixed\" into organic molecules\n- Glucose is produced through a series of chemical reactions\n\n## **Overall Chemical Equation**\n```\n6CO\u2082 + 6H\u2082O + light energy \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082\n```\n\nThis process is essential for life on Earth, as it produces the oxygen we breathe and forms the base of most food chains.",
+          "latency_ms": 7645.905256271362,
+          "models_used": [
+            "anthropic/claude-sonnet-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.006797999999999999,
+          "quality_score": 1.0,
+          "elements_found": [
+            "chloroplast",
+            "carbon dioxide",
+            "water",
+            "glucose",
+            "oxygen",
+            "light"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "timestamp": "2026-01-17T09:01:07.574995",
+  "summary": {
+    "total_prompts": 3,
+    "llmhive_wins": 3,
+    "premium_wins": 0,
+    "ties": 0,
+    "avg_llmhive_quality": 0.0,
+    "avg_premium_quality": 0.0,
+    "avg_cost_savings_percent": 0.0,
+    "avg_llmhive_latency_ms": 0.0,
+    "avg_premium_latency_ms": 0.0,
+    "by_category": {
+      "math": {
+        "count": 1,
+        "llmhive_wins": 1,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      },
+      "reasoning": {
+        "count": 1,
+        "llmhive_wins": 1,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      },
+      "factual": {
+        "count": 1,
+        "llmhive_wins": 1,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      }
+    }
+  },
+  "results": [
+    {
+      "prompt_id": "math_001",
+      "category": "math",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "math_001",
+        "category": "math",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "30%",
+          "profit margin",
+          "$1.44 million",
+          "expenses"
+        ],
+        "error": "1 validation error for OrchestrationSettings\naccuracy_level\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='high', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/int_parsing"
+      },
+      "premium": {
+        "openai/gpt-4o-mini": {
+          "prompt_id": "math_001",
+          "category": "math",
+          "system": "openai/gpt-4o-mini",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-4o-mini"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "30%",
+            "profit margin",
+            "$1.44 million",
+            "expenses"
+          ],
+          "error": "OPENROUTER_API_KEY not set"
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_001",
+      "category": "reasoning",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "reason_001",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "23 chickens",
+          "12 rabbits",
+          "2 legs",
+          "4 legs",
+          "equation"
+        ],
+        "error": "1 validation error for OrchestrationSettings\naccuracy_level\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='high', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/int_parsing"
+      },
+      "premium": {
+        "openai/gpt-4o-mini": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "openai/gpt-4o-mini",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-4o-mini"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "error": "OPENROUTER_API_KEY not set"
+        }
+      }
+    },
+    {
+      "prompt_id": "fact_002",
+      "category": "factual",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "fact_002",
+        "category": "factual",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "chloroplast",
+          "carbon dioxide",
+          "water",
+          "glucose",
+          "oxygen",
+          "light"
+        ],
+        "error": "1 validation error for OrchestrationSettings\naccuracy_level\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='high', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/int_parsing"
+      },
+      "premium": {
+        "openai/gpt-4o-mini": {
+          "prompt_id": "fact_002",
+          "category": "factual",
+          "system": "openai/gpt-4o-mini",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-4o-mini"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "chloroplast",
+            "carbon dioxide",
+            "water",
+            "glucose",
+            "oxygen",
+            "light"
+          ],
+          "error": "OPENROUTER_API_KEY not set"
+        }
+      }
+    }
+  ]
+}

@@ -237,6 +237,75 @@ _orchestrator = Orchestrator()
 
 # Elite orchestrator instance (initialized on first use)
 _elite_orchestrator: Optional[EliteOrchestrator] = None
+
+
+def _strip_internal_scaffolding(text: str) -> str:
+    """
+    Strip internal orchestration scaffolding from the final response.
+    
+    This removes patterns that should never appear in user-facing output:
+    - === PROBLEM === sections
+    - IMPORTANT: Answer the user's... instructions
+    - Internal reasoning scaffold markers
+    """
+    if not text:
+        return text
+    
+    import re
+    
+    # Pattern 1: Remove "=== PROBLEM ===" or similar scaffold headers with instructions
+    scaffold_pattern = r'^===\s*(PROBLEM|UNDERSTANDING|APPROACH|SOLUTION)\s*===\s*(IMPORTANT:|CRITICAL:)?'
+    if re.match(scaffold_pattern, text, re.IGNORECASE):
+        # Try to find "=== FINAL ANSWER ===" or "=== SYNTHESIS ===" and extract from there
+        final_patterns = [
+            r'===\s*FINAL\s*ANSWER\s*===\s*(.+?)(?:===|$)',
+            r'===\s*SYNTHESIS\s*===\s*(.+?)(?:===|$)',
+            r'===\s*SOLUTION\s*===\s*(.+?)(?:===|$)',
+            r'Final\s*Answer\s*:\s*(.+?)(?:\n===|$)',
+        ]
+        for pattern in final_patterns:
+            match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+            if match:
+                extracted = match.group(1).strip()
+                if len(extracted) > 20:  # Ensure we got meaningful content
+                    logger.info("Stripped internal scaffold, extracted final answer")
+                    return extracted
+        
+        # If no clear final answer section, try to find content after system instructions
+        # Look for the first line that doesn't look like an instruction
+        lines = text.split('\n')
+        content_start = 0
+        for i, line in enumerate(lines):
+            line_lower = line.strip().lower()
+            # Skip scaffold markers and system instructions
+            if (line_lower.startswith('===') or
+                line_lower.startswith('important:') or
+                line_lower.startswith('critical:') or
+                'do not ask' in line_lower or
+                'never refuse' in line_lower or
+                'answer the user' in line_lower):
+                content_start = i + 1
+                continue
+            break
+        
+        if content_start > 0 and content_start < len(lines):
+            cleaned = '\n'.join(lines[content_start:]).strip()
+            if len(cleaned) > 20:
+                logger.info("Stripped %d lines of internal scaffold", content_start)
+                return cleaned
+    
+    # Pattern 2: Remove leading "IMPORTANT: Answer the user's..." instruction block
+    instruction_pattern = r'^IMPORTANT:\s*Answer the user.*?(?:NEVER refuse[^.]*\.)\s*'
+    text = re.sub(instruction_pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+    
+    # Pattern 3: Remove "Stub response for:" patterns
+    stub_pattern = r'^Stub response for:.*?\n+'
+    text = re.sub(stub_pattern, '', text, flags=re.IGNORECASE)
+    
+    # Pattern 4: Remove trailing scaffold markers
+    text = re.sub(r'\s*===\s*(END|COMPLETE|DONE)\s*===\s*$', '', text, flags=re.IGNORECASE)
+    
+    return text.strip()
 _quality_booster: Optional[QualityBooster] = None
 
 
@@ -2626,6 +2695,11 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 "I apologize, but I was unable to generate a response to your query. "
                 "Please try again or rephrase your question."
             )
+        
+        # ========================================================================
+        # FINAL CLEANUP: Strip any internal scaffolding from the response
+        # ========================================================================
+        final_text = _strip_internal_scaffolding(final_text)
         
         # Build response with models_used
         response = ChatResponse(

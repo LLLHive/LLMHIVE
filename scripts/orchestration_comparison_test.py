@@ -377,12 +377,13 @@ async def run_llmhive_http(prompt: TestPrompt) -> TestResult:
             )
         
         # Select reasoning mode based on prompt requirements
+        # Valid modes: 'fast', 'standard', 'deep'
         if prompt.requires_reasoning and prompt.difficulty == "hard":
             reasoning_mode = "deep"
         elif prompt.requires_reasoning:
             reasoning_mode = "standard"
         else:
-            reasoning_mode = "quick"
+            reasoning_mode = "fast"
         
         payload = {
             "prompt": prompt.prompt,
@@ -535,12 +536,13 @@ async def run_llmhive_orchestrated(
         )
         
         # Select reasoning mode based on prompt requirements
+        # Valid modes: fast, standard, deep
         if prompt.requires_reasoning and prompt.difficulty == "hard":
             reasoning_mode = ReasoningMode.deep
         elif prompt.requires_reasoning:
             reasoning_mode = ReasoningMode.standard
         else:
-            reasoning_mode = ReasoningMode.quick
+            reasoning_mode = ReasoningMode.fast
         
         request = ChatRequest(
             prompt=prompt.prompt,
