@@ -223,13 +223,12 @@ BUDGET_MODELS = [
     "cohere/command-r",  # Affordable
 ]
 
-# Premium single models for comparison
+# Premium single models for comparison (TOP TIER January 2026)
 PREMIUM_MODELS = [
-    "openai/gpt-4o",
-    "anthropic/claude-opus-4",
-    "anthropic/claude-sonnet-4",
-    "google/gemini-2.5-pro",
-    "openai/o1",
+    "openai/gpt-5.2",           # Latest GPT model
+    "anthropic/claude-opus-4",   # Top Anthropic
+    "openai/o3",                 # Top reasoning model
+    "google/gemini-3-pro-preview",  # Latest Gemini
 ]
 
 
@@ -320,12 +319,17 @@ def estimate_cost(
     """Estimate cost for a model call in USD."""
     # Approximate costs per 1M tokens (input/output)
     COSTS = {
-        # Premium models
-        "openai/gpt-4o": (2.50, 10.00),
+        # Premium models (TOP TIER January 2026)
+        "openai/gpt-5.2": (15.00, 60.00),
+        "openai/gpt-5.2-pro": (20.00, 80.00),
         "anthropic/claude-opus-4": (15.00, 75.00),
+        "anthropic/claude-opus-4.5": (20.00, 80.00),
         "anthropic/claude-sonnet-4": (3.00, 15.00),
+        "google/gemini-3-pro-preview": (2.50, 10.00),
         "google/gemini-2.5-pro": (1.25, 5.00),
         "openai/o1": (15.00, 60.00),
+        "openai/o3": (20.00, 80.00),
+        "openai/gpt-4o": (2.50, 10.00),
         
         # Budget models
         "deepseek/deepseek-chat": (0.14, 0.28),
@@ -394,9 +398,9 @@ async def run_llmhive_http(prompt: TestPrompt) -> TestResult:
                 "temperature": 0.7,
                 "max_tokens": 2000,
                 "top_p": 0.95,
-                "accuracy_level": 4,  # High accuracy
-                "enable_hrm": True,
-                "enable_deep_consensus": True,
+                "accuracy_level": 3,  # Medium-high accuracy (4 causes reasoning hack issues)
+                "enable_hrm": False,  # HRM currently has issues with high accuracy
+                "enable_deep_consensus": False,  # Disabled to avoid template leakage
                 "enable_tool_broker": prompt.requires_tools,
                 "enable_verification": True,
                 "prefer_cheaper_models": True,  # Use budget models
@@ -902,11 +906,11 @@ async def main():
             print("   Or run with --llmhive-only to skip premium comparisons.")
             print()
     
-    # Select premium models
+    # Select premium models (default: top-tier models January 2026)
     if args.premium_models:
         premium_models = [m.strip() for m in args.premium_models.split(",")]
     else:
-        premium_models = ["openai/gpt-4o", "anthropic/claude-sonnet-4"]
+        premium_models = ["openai/gpt-5.2", "anthropic/claude-opus-4"]
     
     # Select prompts
     if args.prompts:

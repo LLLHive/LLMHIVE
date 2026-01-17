@@ -247,11 +247,41 @@ def _strip_internal_scaffolding(text: str) -> str:
     - === PROBLEM === sections
     - IMPORTANT: Answer the user's... instructions
     - Internal reasoning scaffold markers
+    - Reasoning hack templates (confidence_gated, self_debate, etc.)
     """
     if not text:
         return text
     
     import re
+    
+    # Pattern 0: Check for reasoning hack template leakage
+    # These templates should NEVER appear in the output - they mean the LLM returned its prompt
+    reasoning_hack_patterns = [
+        r'^Solve this problem\.\s*You MUST express confidence',  # confidence_gated template
+        r'^===\s*ATTEMPT\s*\d+\s*===',  # confidence_gated attempt markers
+        r'^\[IF CONFIDENCE\s*<\s*\d+%,\s*CONTINUE:\]',  # template instructions
+        r'^Let me think through this step by step',  # basic_cot template start
+        r'^=== Step 1: Understand the Problem ===',  # structured_reasoning template
+        r'^I\'ll analyze this from multiple perspectives',  # self_debate template
+    ]
+    for pattern in reasoning_hack_patterns:
+        if re.match(pattern, text, re.IGNORECASE | re.MULTILINE):
+            logger.warning("Detected reasoning hack template in response - extracting final answer")
+            # Try to find actual answer content
+            # Look for common answer patterns
+            answer_patterns = [
+                r'(?:Final\s*Answer|FINAL\s*ANSWER)[:\s]*(.+?)(?:$|\n===)',
+                r'(?:The answer is|Therefore)[:\s]*(.+?)(?:\n\n|$)',
+                r'(?:Solution|Result)[:\s]*(.+?)(?:\n\n|$)',
+            ]
+            for ap in answer_patterns:
+                match = re.search(ap, text, re.IGNORECASE | re.DOTALL)
+                if match:
+                    extracted = match.group(1).strip()
+                    if len(extracted) > 10:
+                        return extracted
+            # If no clear answer found, return error message
+            return "I apologize, but I encountered an error processing your request. Please try again."
     
     # Pattern 1: Remove "=== PROBLEM ===" or similar scaffold headers with instructions
     scaffold_pattern = r'^===\s*(PROBLEM|UNDERSTANDING|APPROACH|SOLUTION)\s*===\s*(IMPORTANT:|CRITICAL:)?'
