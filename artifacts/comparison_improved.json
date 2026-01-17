@@ -1,0 +1,435 @@
+{
+  "timestamp": "2026-01-17T11:00:38.264410",
+  "summary": {
+    "total_prompts": 5,
+    "llmhive_wins": 0,
+    "premium_wins": 5,
+    "ties": 0,
+    "avg_llmhive_quality": 0.24,
+    "avg_premium_quality": 0.96,
+    "avg_cost_savings_percent": 88.71842872696752,
+    "avg_llmhive_latency_ms": 38784.67321395874,
+    "avg_premium_latency_ms": 25316.068696975708,
+    "by_category": {
+      "math": {
+        "count": 1,
+        "llmhive_wins": 0,
+        "avg_quality_diff": -1.0,
+        "avg_cost_savings": 97.9912418143104
+      },
+      "reasoning": {
+        "count": 2,
+        "llmhive_wins": 0,
+        "avg_quality_diff": -0.5,
+        "avg_cost_savings": 83.02439145695736
+      },
+      "multi_step": {
+        "count": 2,
+        "llmhive_wins": 0,
+        "avg_quality_diff": -0.8,
+        "avg_cost_savings": 89.77605945330623
+      }
+    }
+  },
+  "results": [
+    {
+      "prompt_id": "math_002",
+      "category": "math",
+      "llmhive_wins": false,
+      "cost_savings_percent": 97.9912418143104,
+      "quality_difference": -1.0,
+      "llmhive": {
+        "prompt_id": "math_002",
+        "category": "math",
+        "system": "llmhive_orchestrated",
+        "answer": "is accurate to the cent.",
+        "latency_ms": 64209.00297164917,
+        "models_used": [
+          "GPT-4o"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00125,
+        "quality_score": 0.0,
+        "elements_found": [],
+        "elements_missing": [
+          "$14,176",
+          "compound interest",
+          "monthly",
+          "$4,176"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "math_002",
+          "category": "math",
+          "system": "openai/gpt-5.2",
+          "answer": "Use the compound interest formula:\n\n\\[\nA=P\\left(1+\\frac{r}{n}\\right)^{nt}\n\\]\n\nWhere \\(P=10000\\), \\(r=0.07\\), \\(n=12\\) (monthly), \\(t=5\\).\n\n\\[\nA=10000\\left(1+\\frac{0.07}{12}\\right)^{12\\cdot 5}\n=10000(1.005833333)^{60}\n\\approx 10000(1.417625)\n\\approx \\$14{,}176.25\n\\]\n\n- **Total amount after 5 years:** \\(\\boxed{\\$14{,}176.25}\\)  \n- **Interest earned:** \\(\\boxed{\\$14{,}176.25 - \\$10{,}000 = \\$4{,}176.25}\\)",
+          "latency_ms": 21609.835863113403,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.101055,
+          "quality_score": 0.5,
+          "elements_found": [
+            "compound interest",
+            "monthly"
+          ],
+          "elements_missing": [
+            "$14,176",
+            "$4,176"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "math_002",
+          "category": "math",
+          "system": "anthropic/claude-opus-4",
+          "answer": "I'll calculate the compound interest for you step by step.\n\nGiven information:\n- Principal (P) = $10,000\n- Annual interest rate (r) = 7% = 0.07\n- Compounding frequency (n) = 12 times per year (monthly)\n- Time period (t) = 5 years\n\n**Formula for compound interest:**\nA = P(1 + r/n)^(nt)\n\n**Calculation:**\nA = 10,000(1 + 0.07/12)^(12\u00d75)\nA = 10,000(1 + 0.00583333)^60\nA = 10,000(1.00583333)^60\nA = 10,000(1.41765)\nA = $14,176.50\n\n**Results:**\n- **Total amount after 5 years: $14,176.50**\n- **Interest earned: $14,176.50 - $10,000 = $4,176.50**\n\nThis means your $10,000 investment will grow by $4,176.50 over the 5-year period, giving you a total of $14,176.50. The monthly compounding results in earning interest on your interest, which is why the growth is more than simple interest would provide.",
+          "latency_ms": 18536.154985427856,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.023399999999999997,
+          "quality_score": 1.0,
+          "elements_found": [
+            "$14,176",
+            "compound interest",
+            "monthly",
+            "$4,176"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_001",
+      "category": "reasoning",
+      "llmhive_wins": false,
+      "cost_savings_percent": 82.43148278285312,
+      "quality_difference": -0.8,
+      "llmhive": {
+        "prompt_id": "reason_001",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "The farmer has 23 chickens and 12 rabbits.",
+        "latency_ms": 17177.08992958069,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.2,
+        "elements_found": [
+          "23 chickens",
+          "12 rabbits"
+        ],
+        "elements_missing": [
+          "2 legs",
+          "4 legs",
+          "equation"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "openai/gpt-5.2",
+          "answer": "Let:\n- \\(c\\) = number of chickens  \n- \\(r\\) = number of rabbits  \n\n**Step 1: Use the heads count.**  \nEach animal has 1 head, and there are 35 heads total:\n\\[\nc + r = 35\n\\]\n\n**Step 2: Use the legs count.**  \nChickens have 2 legs, rabbits have 4 legs, and there are 94 legs total:\n\\[\n2c + 4r = 94\n\\]\n\n**Step 3: Solve the system.**  \nFrom the first equation:\n\\[\nc = 35 - r\n\\]\nSubstitute into the legs equation:\n\\[\n2(35 - r) + 4r = 94\n\\]\nDistribute:\n\\[\n70 - 2r + 4r = 94\n\\]\nCombine like terms:\n\\[\n70 + 2r = 94\n\\]\nSubtract 70:\n\\[\n2r = 24\n\\]\nDivide by 2:\n\\[\nr = 12\n\\]\n\n**Step 4: Find chickens.**\n\\[\nc = 35 - 12 = 23\n\\]\n\n**Answer:** The farmer has **23 chickens** and **12 rabbits**.",
+          "latency_ms": 3644.998788833618,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.016724999999999997,
+          "quality_score": 1.0,
+          "elements_found": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "anthropic/claude-opus-4",
+          "answer": "I need to find the number of chickens and rabbits based on the total number of heads and legs.\n\nLet me define variables:\n- Let c = number of chickens\n- Let r = number of rabbits\n\nNow I'll set up equations based on what I know:\n- Each chicken has 1 head and each rabbit has 1 head\n- Each chicken has 2 legs and each rabbit has 4 legs\n\nFrom the given information:\n- Total heads: c + r = 35\n- Total legs: 2c + 4r = 94\n\nNow I'll solve this system of equations.\n\nFrom the first equation:\nc + r = 35\nc = 35 - r\n\nSubstituting this into the second equation:\n2c + 4r = 94\n2(35 - r) + 4r = 94\n70 - 2r + 4r = 94\n70 + 2r = 94\n2r = 24\nr = 12\n\nNow I can find the number of chickens:\nc = 35 - r\nc = 35 - 12\nc = 23\n\nLet me verify this answer:\n- Heads: 23 + 12 = 35 \u2713\n- Legs: 2(23) + 4(12) = 46 + 48 = 94 \u2713\n\nTherefore, the farmer has 23 chickens and 12 rabbits.",
+          "latency_ms": 17295.201063156128,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.025965,
+          "quality_score": 1.0,
+          "elements_found": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_002",
+      "category": "reasoning",
+      "llmhive_wins": false,
+      "cost_savings_percent": 83.6173001310616,
+      "quality_difference": -0.20000000000000007,
+      "llmhive": {
+        "prompt_id": "reason_002",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "No, we cannot logically conclude that some roses fade quickly based on the given premises.\n\nWhile all roses are flowers, and some flowers fade quickly, the flowers that fade quickly could be entirely different types of flowers (not roses).\n\nThe premises don't provide sufficient information to determine whether any roses are among the flowers that fade quickly.\n\nThis would be a logical fallacy - just because roses belong to the larger category of flowers, and some members of that category have a certain property, doesn't mean roses specifically must have that property.",
+        "latency_ms": 25531.32700920105,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.7,
+        "elements_found": [
+          "some",
+          "all",
+          "logical fallacy"
+        ],
+        "elements_missing": [
+          "cannot conclude",
+          "syllogism"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "reason_002",
+          "category": "reasoning",
+          "system": "openai/gpt-5.2",
+          "answer": "No, that conclusion does **not** logically follow.\n\n### Given:\n1. **All roses are flowers.**  \n   \\( \\text{Roses} \\subseteq \\text{Flowers} \\)\n\n2. **Some flowers fade quickly.**  \n   \\( \\exists x(\\text{Flower}(x) \\land \\text{FadesQuickly}(x)) \\)\n\n### Proposed conclusion:\n- **Some roses fade quickly.**  \n  \\( \\exists x(\\text{Rose}(x) \\land \\text{FadesQuickly}(x)) \\)\n\n### Why it doesn\u2019t follow\nPremise (2) only says that *at least one* flower fades quickly, but it doesn\u2019t say anything about whether that flower is a rose. The \u201csome flowers\u201d that fade quickly could all be *non-roses*.\n\n### Counterexample (shows invalidity)\nImagine:\n- Roses are flowers, but **roses never fade quickly**.\n- Tulips are flowers and **some tulips fade quickly**.\n\nThen:\n- \u201cAll roses are flowers\u201d is true.\n- \u201cSome flowers fade quickly\u201d is true (the tulips).\n- But \u201cSome roses fade quickly\u201d is false.\n\nSince the premises can be true while the conclusion is false, the argument is **invalid**.",
+          "latency_ms": 5567.582130432129,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.02022,
+          "quality_score": 0.4,
+          "elements_found": [
+            "some",
+            "all"
+          ],
+          "elements_missing": [
+            "cannot conclude",
+            "syllogism",
+            "logical fallacy"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "reason_002",
+          "category": "reasoning",
+          "system": "anthropic/claude-opus-4",
+          "answer": "No, we cannot conclude that some roses fade quickly based on the given information.\n\nLet me explain the logical reasoning:\n\n**Given premises:**\n1. All roses are flowers\n2. Some flowers fade quickly\n\n**Why we can't make the conclusion:**\n\nThe relationship between roses and flowers that fade quickly is not established by these premises. Here's why:\n\n- While all roses are flowers, roses only make up a subset of all flowers\n- The \"some flowers\" that fade quickly might be entirely different types of flowers (like tulips, daisies, or lilies)\n- The premises don't tell us whether any roses are included in the group of \"flowers that fade quickly\"\n\n**Visual example:**\nImagine flowers as a large circle. Roses form a smaller circle completely inside the flower circle. The \"flowers that fade quickly\" could be another circle that:\n- Overlaps with roses (meaning some roses fade quickly)\n- Doesn't overlap with roses at all (meaning no roses fade quickly)\n- Partially overlaps with roses (meaning some but not all roses fade quickly)\n\nSince we don't know which scenario is true, we cannot logically conclude that some roses fade quickly. The premises are consistent with the possibility that NO roses fade quickly - perhaps all the quickly-fading flowers are non-rose varieties.\n\nThis is a common logical fallacy called \"undistributed middle\" - just because two groups (roses and quickly-fading flowers) are both related to a third group (flowers) doesn't mean they're related to each other.",
+          "latency_ms": 21420.319080352783,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.02556,
+          "quality_score": 0.9,
+          "elements_found": [
+            "cannot conclude",
+            "some",
+            "all",
+            "logical fallacy"
+          ],
+          "elements_missing": [
+            "syllogism"
+          ],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "multi_001",
+      "category": "multi_step",
+      "llmhive_wins": false,
+      "cost_savings_percent": 96.84343434343434,
+      "quality_difference": -0.7,
+      "llmhive": {
+        "prompt_id": "multi_001",
+        "category": "multi_step",
+        "system": "llmhive_orchestrated",
+        "answer": "1. The complete REST API design includes: **1. Endpoints:** 9 total endpoints covering full CRUD operations, authentication, and filtering **2. Data Model:** 8-field todo structure with proper data types and constraints **3. Authentication:** JWT-based system with Bearer token authorization **4. Examples:** Complete request/response cycle for todo creation with proper HTTP status codes This design follows REST principles, implements proper security, and provides a scalable foundation for a production todo application. The API supports multi-user scenarios, includes comprehensive error handling, and uses industry-standard authentication patterns.",
+        "latency_ms": 38112.81704902649,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.3,
+        "elements_found": [
+          "id",
+          "JWT",
+          "authentication"
+        ],
+        "elements_missing": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE",
+          "/todos",
+          "title",
+          "completed"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "multi_001",
+          "category": "multi_step",
+          "system": "openai/gpt-5.2",
+          "answer": "## 1) Endpoints (HTTP methods + paths)\n\nAssume base URL: `https://api.example.com/v1` and JSON for all request/response bodies.\n\n### Auth\n| Method | Path | Description |\n|---|---|---|\n| POST | `/auth/register` | Create a user account |\n| POST | `/auth/login` | Exchange credentials for an access token (and optional refresh token) |\n| POST | `/auth/refresh` | Get a new access token using a refresh token |\n| POST | `/auth/logout` | Revoke refresh token / end session (optional) |\n\n### Todos (per authenticated user)\n| Method | Path | Description |\n|---|---|---|\n| GET | `/todos` | List todos (supports filtering, sorting, pagination) |\n| POST | `/todos` | Create a new todo |\n| GET | `/todos/{todoId}` | Get a single todo |\n| PATCH | `/todos/{todoId}` | Update fields of a todo (partial update) |\n| PUT | `/todos/{todoId}` | Replace a todo (full update) |\n| DELETE | `/todos/{todoId}` | Delete a todo |\n\n### Optional convenience endpoints\n| Method | Path | Description |\n|---|---|---|\n| POST | `/todos/{todoId}/complete` | Mark completed (sets `completed=true`, `completedAt=now`) |\n| POST | `/todos/{todoId}/reopen` | Mark not completed (sets `completed=false`, clears `completedAt`) |\n\n### Query parameters for `GET /todos`\n- `status`: `all` (default) \\| `active` \\| `completed`\n- `q`: full-text search in title/description\n- `dueBefore`, `dueAfter`: ISO8601 datetime filters\n- `limit` (default 20, max 100), `cursor` (for cursor-based pagination)\n- `sort`: e.g. `createdAt`, `-dueAt` (leading `-` = desc)\n\n### Standard status codes\n- `200 OK` (read/update), `201 Created` (create), `204 No Content` (delete)\n- `400 Bad Request` (validation), `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict` (optional), `429 Too Many Requests` (optional)\n\n### Error response shape (recommended)\n```json\n{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"title is required\",\n    \"details\": [\n      { \"field\": \"title\", \"issue\": \"required\" }\n    ],\n    \"requestId\": \"d7f1b0c1...\"\n  }\n}\n```\n\n---\n\n## 2) Data model for a Todo item\n\n### Todo (JSON resource)\n```json\n{\n  \"id\": \"todo_01HZX...\",\n  \"userId\": \"user_01HZY...\", \n  \"title\": \"Buy groceries\",\n  \"description\": \"Milk, eggs, rice\",\n  \"completed\": false,\n  \"priority\": \"normal\",\n  \"dueAt\": \"2026-01-20T18:00:00Z\",\n  \"completedAt\": null,\n  \"createdAt\": \"2026-01-17T10:15:30Z\",\n  \"updatedAt\": \"2026-01-17T10:15:30Z\",\n  \"version\": 1\n}\n```\n\n### Field notes\n- `id`: server-generated unique ID (UUID/ULID)\n- `userId`: owner; derived from auth context (not settable by clients)\n- `title`: required, 1\u2013200 chars\n- `description`: optional\n- `completed`: boolean\n- `priority`: enum like `low | normal | high` (optional)\n- `dueAt`: optional ISO8601 datetime\n- `completedAt`: set when completed, else null\n- `createdAt/updatedAt`: server timestamps\n- `version`: integer for optimistic concurrency (optional; can be used with `If-Match`)\n\n---\n\n## 3) Example: Create a todo (request/response)\n\n### Request\n`POST /v1/todos`\nHeaders:\n- `Authorization: Bearer <access_token>`\n- `Content-Type: application/json`\n\nBody:\n```json\n{\n  \"title\": \"Schedule dentist appointment\",\n  \"description\": \"Call Dr. Smith\",\n  \"dueAt\": \"2026-01-22T15:30:00Z\",\n  \"priority\": \"high\"\n}\n```\n\n### Successful response\nStatus: `201 Created`  \nHeaders:\n- `Location: /v1/todos/todo_01J0ABCDEF123456`\n\nBody:\n```json\n{\n  \"id\": \"todo_01J0ABCDEF123456\",\n  \"userId\": \"user_01J0USER123456789\",\n  \"title\": \"Schedule dentist appointment\",\n  \"description\": \"Call Dr. Smith\",\n  \"completed\": false,\n  \"priority\": \"high\",\n  \"dueAt\": \"2026-01-22T15:30:00Z\",\n  \"completedAt\": null,\n  \"createdAt\": \"2026-01-17T12:00:00Z\",\n  \"updatedAt\": \"2026-01-17T12:00:00Z\",\n  \"version\": 1\n}\n```\n\n---\n\n## 4) Authentication approach\n\n### Recommended: Bearer JWT access tokens (plus refresh tokens)\n1. **Login**\n   - Client calls `POST /auth/login` with username/password (or email/password).\n   - API returns:\n     - **Access token (JWT)**: short-lived (e.g., 15 minutes)\n     - **Refresh token**: longer-lived (e.g., 30 days), stored securely (httpOnly cookie for web, secure storage on mobile)\n\n2. **Use tokens on requests**\n   - Client includes `Authorization: Bearer <access_token>` for all `/todos` endpoints.\n   - Server verifies JWT signature, expiry, issuer/audience.\n   - Server derives `userId` from token claims (e.g., `sub`), ensuring users only access their own todos.\n\n3. **Refresh**\n   - When access token expires, client calls `POST /auth/refresh` using the refresh token.\n   - Server validates refresh token, rotates it (recommended), and issues a new access token.\n\n4. **Logout / revocation**\n   - `POST /auth/logout` invalidates the refresh token server-side (store refresh tokens hashed).\n   - Access tokens typically expire naturally (or use a token revocation list if needed).\n\n### Authorization rules\n- All `/todos` endpoints require authentication (`401` if missing/invalid token).\n- Ownership enforced: a user can only read/update/delete todos where `todo.userId == token.sub` (`404` or `403` depending on your preference; `404` avoids resource enumeration).\n\n### Security basics\n- Always HTTPS\n- Rate limit login and refresh endpoints\n- Store passwords as salted hashes (bcrypt/argon2)\n- Validate input strictly; return `400` with details\n\nIf you want, I can also provide an OpenAPI (Swagger) spec for this API.",
+          "latency_ms": 21617.43402481079,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.097095,
+          "quality_score": 1.0,
+          "elements_found": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "/todos",
+            "id",
+            "title",
+            "completed",
+            "JWT",
+            "authentication"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "multi_001",
+          "category": "multi_step",
+          "system": "anthropic/claude-opus-4",
+          "answer": "## Complete REST API Design for Todo List Application\n\n### 1. API Endpoints\n\n| HTTP Method | Endpoint | Description |\n|------------|----------|-------------|\n| **Authentication** |\n| POST | `/api/auth/register` | Register a new user |\n| POST | `/api/auth/login` | Login user |\n| POST | `/api/auth/logout` | Logout user |\n| POST | `/api/auth/refresh` | Refresh access token |\n| **User Management** |\n| GET | `/api/users/profile` | Get current user profile |\n| PUT | `/api/users/profile` | Update user profile |\n| DELETE | `/api/users/profile` | Delete user account |\n| **Todo Operations** |\n| GET | `/api/todos` | Get all todos for authenticated user |\n| GET | `/api/todos/:id` | Get a specific todo by ID |\n| POST | `/api/todos` | Create a new todo |\n| PUT | `/api/todos/:id` | Update a todo |\n| PATCH | `/api/todos/:id` | Partially update a todo |\n| DELETE | `/api/todos/:id` | Delete a todo |\n| **Bulk Operations** |\n| POST | `/api/todos/bulk-delete` | Delete multiple todos |\n| PATCH | `/api/todos/bulk-update` | Update multiple todos |\n\n### 2. Data Models\n\n#### Todo Item Model\n```json\n{\n  \"id\": \"string (UUID)\",\n  \"title\": \"string (required, max 200 chars)\",\n  \"description\": \"string (optional, max 1000 chars)\",\n  \"completed\": \"boolean (default: false)\",\n  \"priority\": \"enum ['low', 'medium', 'high'] (default: 'medium')\",\n  \"dueDate\": \"ISO 8601 datetime (optional)\",\n  \"tags\": \"array of strings (optional)\",\n  \"createdAt\": \"ISO 8601 datetime\",\n  \"updatedAt\": \"ISO 8601 datetime\",\n  \"userId\": \"string (UUID, foreign key)\"\n}\n```\n\n#### User Model\n```json\n{\n  \"id\": \"string (UUID)\",\n  \"email\": \"string (required, unique)\",\n  \"username\": \"string (required, unique)\",\n  \"passwordHash\": \"string (hashed)\",\n  \"createdAt\": \"ISO 8601 datetime\",\n  \"updatedAt\": \"ISO 8601 datetime\"\n}\n```\n\n### 3. Example Request/Response for Creating a Todo\n\n#### Request\n```http\nPOST /api/todos\nContent-Type: application/json\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\n\n{\n  \"title\": \"Complete API documentation\",\n  \"description\": \"Write comprehensive documentation for the todo API including examples\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2024-12-31T23:59:59Z\",\n  \"tags\": [\"work\", \"documentation\", \"urgent\"]\n}\n```\n\n#### Successful Response (201 Created)\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"title\": \"Complete API documentation\",\n    \"description\": \"Write comprehensive documentation for the todo API including examples\",\n    \"completed\": false,\n    \"priority\": \"high\",\n    \"dueDate\": \"2024-12-31T23:59:59Z\",\n    \"tags\": [\"work\", \"documentation\", \"urgent\"],\n    \"createdAt\": \"2024-01-15T10:30:00Z\",\n    \"updatedAt\": \"2024-01-15T10:30:00Z\",\n    \"userId\": \"123e4567-e89b-12d3-a456-426614174000\"\n  },\n  \"message\": \"Todo created successfully\"\n}\n```\n\n#### Error Response (400 Bad Request)\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Validation failed\",\n    \"details\": [\n      {\n        \"field\": \"title\",\n        \"message\": \"Title is required and cannot be empty\"\n      }\n    ]\n  }\n}\n```\n\n### 4. Authentication Strategy\n\n#### JWT-Based Authentication Flow\n\n1. **Registration Process:**\n   - User provides email, username, and password\n   - Password is hashed using bcrypt (with salt rounds of 10+)\n   - User record is created in database\n   - Email verification token is sent (optional)\n\n2. **Login Process:**\n   ```http\n   POST /api/auth/login\n   Content-Type: application/json\n\n   {\n     \"email\": \"user@example.com\",\n     \"password\": \"SecurePassword123!\"\n   }\n   ```\n\n   **Response:**\n   ```json\n   {\n     \"success\": true,\n     \"data\": {\n       \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n       \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n       \"expiresIn\": 3600,\n       \"tokenType\": \"Bearer\",\n       \"user\": {\n         \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n         \"email\": \"user@example.com\",\n         \"username\": \"johndoe\"\n       }\n     }\n   }\n   ```\n\n3. **Token Management:**\n   - **Access Token**: Short-lived (15-30 minutes), contains user ID and permissions\n   - **Refresh Token**: Long-lived (7-30 days), stored in httpOnly cookie\n   - Tokens are signed with RS256 or HS256 algorithm\n\n4. **Authorization Header:**\n   ```http\n   Authorization: Bearer <access_token>\n   ```\n\n5. **Token Refresh Flow:**\n   ```http\n   POST /api/auth/refresh\n   Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\n   ```\n\n6. **Security Measures:**\n   - Rate limiting on auth endpoints (e.g., 5 attempts per 15 minutes)\n   - IP-based blocking for suspicious activities\n   - Refresh token rotation on use\n   - Logout blacklists tokens until expiration\n   - HTTPS required for all endpoints\n   - CORS properly configured\n   - Input validation and sanitization\n   - SQL injection prevention through parameterized queries\n\n#### Middleware Example (Pseudocode):\n```javascript\nfunction authenticateToken(req, res, next) {\n  const authHeader = req.headers['authorization'];\n  const token = authHeader && authHeader.split(' ')[1];\n\n  if (!token) {\n    return res.status(401).json({\n      success: false,\n      error: {\n        code: \"UNAUTHORIZED\",\n        message: \"Access token required\"\n      }\n    });\n  }\n\n  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {\n    if (err) {\n      return res.status(403).json({\n        success: false,\n        error: {\n          code: \"FORBIDDEN\",\n          message: \"Invalid or expired token\"\n        }\n      });\n    }\n    \n    req.user = user;\n    next();\n  });\n}\n```\n\nThis design provides a secure, scalable, and maintainable REST API for a todo list application with proper authentication and authorization mechanisms.",
+          "latency_ms": 89348.58202934265,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.14050500000000002,
+          "quality_score": 1.0,
+          "elements_found": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "/todos",
+            "id",
+            "title",
+            "completed",
+            "JWT",
+            "authentication"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "multi_002",
+      "category": "multi_step",
+      "llmhive_wins": false,
+      "cost_savings_percent": 82.70868456317814,
+      "quality_difference": -0.9,
+      "llmhive": {
+        "prompt_id": "multi_002",
+        "category": "multi_step",
+        "system": "llmhive_orchestrated",
+        "answer": "I apologize, but I encountered an error processing your request: name 're' is not defined",
+        "latency_ms": 48893.129110336304,
+        "models_used": [],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.01,
+        "quality_score": 0.0,
+        "elements_found": [],
+        "elements_missing": [
+          "profit",
+          "margin",
+          "revenue impact",
+          "cost reduction",
+          "recommendation"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "multi_002",
+          "category": "multi_step",
+          "system": "openai/gpt-5.2",
+          "answer": "### Current baseline (per month)\n- **Revenue:** $18,000  \n- **Costs:** Rent $3,000 + Utilities $500 + Supplies $2,000 + Labor $8,000 = **$13,500**\n- **Profit:** $18,000 \u2212 $13,500 = **$4,500**\n\n---\n\n## Option A: Move to cheaper rent, but 15% less foot traffic\n**Change:**\n- Rent drops from $3,000 \u2192 **$2,200** (save **$800**)\n- Revenue drops by 15%: $18,000 \u00d7 0.85 = **$15,300** (loss **$2,700**)\n\n**New monthly picture (assuming other costs unchanged):**\n- Revenue: **$15,300**\n- Costs: Rent $2,200 + Utilities $500 + Supplies $2,000 + Labor $8,000 = **$12,700**\n- Profit: $15,300 \u2212 $12,700 = **$2,600**\n\n**Impact vs. today:** Profit **decreases by $1,900/month** ($4,500 \u2192 $2,600)\n\n**Notes/Risks:**\n- This is the highest-risk move because it reduces demand (and likely reduces impulse purchases).\n- Even if labor could later be reduced due to lower volume, the immediate hit to sales is large.\n- You\u2019d also have one-time moving/renovation/marketing costs not included here.\n\n**Conclusion:** Financially unfavorable under the given assumptions.\n\n---\n\n## Option B: Reduce labor by $1,500/month via automation\n**Change:**\n- Labor: $8,000 \u2192 **$6,500** (save **$1,500**)\n- Revenue assumed unchanged (key assumption)\n\n**New monthly picture:**\n- Revenue: **$18,000**\n- Costs: Rent $3,000 + Utilities $500 + Supplies $2,000 + Labor $6,500 = **$12,000**\n- Profit: $18,000 \u2212 $12,000 = **$6,000**\n\n**Impact vs. today:** Profit **increases by $1,500/month** ($4,500 \u2192 $6,000)\n\n**Notes/Risks:**\n- Biggest risk is service speed/experience: if automation causes longer waits, mistakes, or less hospitality, revenue could slip.\n- There may be upfront costs (equipment/software). Still, even a $6,000\u2013$10,000 one-time investment can pay back quickly at $1,500/month savings.\n\n**Conclusion:** Best pure financial improvement, assuming service quality is maintained.\n\n---\n\n## Option C: Switch suppliers saving $400/month, slightly lower quality\n**Change:**\n- Supplies: $2,000 \u2192 **$1,600** (save **$400**)\n- Revenue assumed unchanged (but quality risk)\n\n**New monthly picture:**\n- Revenue: **$18,000**\n- Costs: Rent $3,000 + Utilities $500 + Supplies $1,600 + Labor $8,000 = **$13,100**\n- Profit: $18,000 \u2212 $13,100 = **$4,900**\n\n**Impact vs. today:** Profit **increases by $400/month** ($4,500 \u2192 $4,900)\n\n**Notes/Risks:**\n- \u201cSlightly lower quality\u201d can easily reduce repeat business, online ratings, or upsell rates.\n- If revenue dropped by just **2.3%** (~$410), it would erase the entire $400 savings.\n\n**Conclusion:** Modest upside with meaningful brand/repeat-customer risk unless carefully tested.\n\n---\n\n# Recommendation (best strategy)\n### Primary recommendation: **Option B (automation labor reduction)**\nIt produces the **largest monthly profit increase (+$1,500)** without directly cutting demand (unlike moving), and it doesn\u2019t inherently degrade product quality (unlike supplier downgrades), assuming implementation is done well.\n\n### Secondary recommendation: **Consider Option C only if you can test quality safely**\nIf you can switch *select items* or negotiate pricing without noticeable quality loss, Option C can add savings. But don\u2019t risk core ingredients that define taste (espresso beans, milk, key syrups) unless you can validate customers won\u2019t notice or care.\n\n### Avoid: **Option A**\nGiven the numbers, it reduces profit substantially. A rent saving of $800 does not compensate for a likely $2,700 revenue hit.\n\n---\n\n## If you want the \u201cbest overall\u201d cost strategy\n- **Do B first**, track customer wait time, order accuracy, and daily sales for 4\u20138 weeks.\n- **Then pilot C** (limited trial, or only for non-core inputs), monitor repeat customer behavior and reviews.\n- **Only consider A** if you have strong evidence the 15% foot traffic drop won\u2019t translate to revenue (e.g., better parking, higher ticket size customers, delivery-focused model), or if the current location has hidden problems.\n\nIf you share gross margin by product (coffee vs food), and whether revenue is foot-traffic dependent vs delivery/online, I can refine the revenue sensitivity and show break-even points more precisely.",
+          "latency_ms": 21007.554054260254,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.076605,
+          "quality_score": 0.7,
+          "elements_found": [
+            "profit",
+            "margin",
+            "recommendation"
+          ],
+          "elements_missing": [
+            "revenue impact",
+            "cost reduction"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "multi_002",
+          "category": "multi_step",
+          "system": "anthropic/claude-opus-4",
+          "answer": "I'll analyze each cost-reduction option by calculating the financial impact and considering operational implications.\n\n## Current Situation\n- **Monthly Revenue:** $18,000\n- **Monthly Costs:** $13,500\n  - Rent: $3,000\n  - Utilities: $500\n  - Supplies: $2,000\n  - Labor: $8,000\n- **Monthly Profit:** $4,500\n\n## Option Analysis\n\n### Option A: Move to Cheaper Location\n- **New rent:** $2,200 (saves $800)\n- **Revenue impact:** 15% reduction = $18,000 \u00d7 0.85 = $15,300\n- **New profit:** $15,300 - $12,700 = $2,600\n- **Net impact:** -$1,900/month profit decrease \u274c\n\n### Option B: Automation\n- **Labor savings:** $1,500\n- **New labor cost:** $6,500\n- **Revenue:** Unchanged at $18,000\n- **New profit:** $18,000 - $12,000 = $6,000\n- **Net impact:** +$1,500/month profit increase \u2713\n\n### Option C: Switch Suppliers\n- **Supply savings:** $400\n- **New supply cost:** $1,600\n- **Revenue:** Potentially at risk due to quality\n- **New profit:** $18,000 - $13,100 = $4,900\n- **Net impact:** +$400/month profit increase \u2713\n\n## Recommendation: **Option B - Automation**\n\n### Reasoning:\n1. **Highest financial benefit:** $1,500 monthly savings with no revenue reduction\n2. **Long-term sustainability:** Automation provides consistent savings\n3. **Maintains quality:** No compromise on product quality or location convenience\n4. **ROI potential:** Even with upfront automation costs, the payback period is likely reasonable\n\n### Implementation considerations:\n- Ensure remaining staff can handle customer service effectively\n- Invest saved funds in training for technical maintenance\n- Monitor customer satisfaction during transition\n- Consider combining with Option C later if quality impact proves minimal\n\nOption B provides the best balance of cost reduction and business stability.",
+          "latency_ms": 33113.024950027466,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.03906,
+          "quality_score": 0.9,
+          "elements_found": [
+            "profit",
+            "revenue impact",
+            "cost reduction",
+            "recommendation"
+          ],
+          "elements_missing": [
+            "margin"
+          ],
+          "error": null
+        }
+      }
+    }
+  ]
+}
