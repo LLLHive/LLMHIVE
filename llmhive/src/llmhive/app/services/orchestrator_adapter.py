@@ -1108,12 +1108,65 @@ def _detect_task_type(prompt: str) -> str:
     """
     prompt_lower = prompt.lower()
     
+    # ===========================================================================
+    # PRIORITY 1: Multi-step Tasks (need decomposition and HRM)
+    # ===========================================================================
+    # Detect numbered requirements, complex designs, multi-part requests
+    multi_step_indicators = [
+        # Numbered requirements
+        r'\b(1\)|1\.|first).*(2\)|2\.|second)',
+        r'include:?\s*\d+\)',
+        # Complex design tasks
+        r'\b(design|create|build)\s+.*(complete|full|entire|comprehensive)',
+        r'\b(rest\s+api|api\s+design|system\s+design)\b',
+        # Multi-requirement tasks
+        r'\b(want|need|require)\s+.*(and|,).*(and|,)',
+        # Explicit multi-part
+        r'\b(list|provide|include)\s*:.*\d+\)',
+    ]
+    for pattern in multi_step_indicators:
+        if re.search(pattern, prompt_lower):
+            return "multi_step"
+    
+    # ===========================================================================
+    # PRIORITY 2: Reasoning/Logic Tasks (need chain-of-thought)
+    # ===========================================================================
+    # Detect logic puzzles, syllogisms, word problems with unknowns
+    reasoning_indicators = [
+        # Logic puzzles and word problems
+        r'\b(how many|how much)\b.*(if|when|given)',
+        r'\b(chickens?|rabbits?|cows?|sheep|animals?)\b.*\b(heads?|legs?|total)\b',
+        r'\b(heads?|legs?)\b.*\b(count|total|number)\b',
+        # Syllogisms and formal logic
+        r'\b(all|some|no|none)\s+\w+\s+(are|is)\b.*\b(can we conclude|therefore|implies)\b',
+        r'\b(if all|if some|if no)\b.*\b(then|therefore|conclude)\b',
+        r'\bcan we (conclude|infer|deduce)\b',
+        # Deductive reasoning
+        r'\b(valid|invalid|logical|fallacy)\b.*\b(argument|reasoning|conclusion)\b',
+        # Multi-step word problems
+        r'\b(age|years? old)\b.*\b(older|younger|twice|half)\b',
+        r'\b(distance|speed|time)\b.*\b(traveled|moving|mph|km/h)\b',
+        # Probability and statistics reasoning
+        r'\b(probability|odds|chance|likely)\b.*\b(if|given|when)\b',
+    ]
+    for pattern in reasoning_indicators:
+        if re.search(pattern, prompt_lower):
+            return "reasoning"
+    
+    # ===========================================================================
+    # PRIORITY 3: Math Problems (need calculator)
+    # ===========================================================================
     # Code/Programming - DeepSeek, Claude Sonnet 4, GPT-4o excel
     if any(kw in prompt_lower for kw in ["code", "function", "implement", "debug", "program", "script", "api", "backend", "frontend"]):
         return "code_generation"
     
     # Math/Quantitative - o1, GPT-4o, Gemini Pro excel
-    elif any(kw in prompt_lower for kw in ["calculate", "solve", "math", "equation", "integral", "derivative", "proof"]):
+    # Enhanced patterns for financial calculations
+    elif any(kw in prompt_lower for kw in [
+        "calculate", "solve", "math", "equation", "integral", "derivative", "proof",
+        "compound interest", "simple interest", "invested at", "annual interest",
+        "compounded", "principal", "rate of return", "profit margin"
+    ]):
         return "math_problem"
     
     # Health/Medical - Claude Opus 4, GPT-5, Med-PaLM 3 excel (requires accuracy)
@@ -1244,6 +1297,23 @@ def _select_elite_strategy(
             logger.info("Strategy: Factual question, 3+ models, high accuracy -> expert_panel")
             return "expert_panel"
         logger.info("Strategy: Factual question with high accuracy -> challenge_and_refine")
+        return "challenge_and_refine"
+    
+    # ========================================================================
+    # PHASE 1.5: REASONING AND MULTI-STEP TASKS (Need special handling)
+    # ========================================================================
+    
+    # Reasoning tasks need chain-of-thought and verification
+    if task_type == "reasoning":
+        logger.info("Strategy: Reasoning task detected -> challenge_and_refine (forces verification)")
+        return "challenge_and_refine"  # Always verify reasoning
+    
+    # Multi-step tasks need decomposition and synthesis
+    if task_type == "multi_step":
+        if num_models >= 3:
+            logger.info("Strategy: Multi-step task, 3+ models -> expert_panel (decomposition)")
+            return "expert_panel"  # Different models for different sub-tasks
+        logger.info("Strategy: Multi-step task -> challenge_and_refine (iterative refinement)")
         return "challenge_and_refine"
     
     # ========================================================================
@@ -2217,6 +2287,67 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             base_prompt,
             domain_pack=request.domain_pack.value,
         )
+        
+        # ===========================================================================
+        # SPECIAL HANDLING: Reasoning and Multi-step Tasks
+        # ===========================================================================
+        # These task types need specialized prompts to improve quality
+        
+        # Re-detect task type to ensure we catch reasoning/multi_step
+        task_type_for_special = _detect_task_type(base_prompt)
+        
+        if task_type_for_special == "reasoning":
+            # Apply chain-of-thought prompt for reasoning tasks
+            reasoning_cot_prompt = """You are solving a logic or reasoning problem. Follow these steps EXACTLY:
+
+STEP 1 - UNDERSTAND: Read the problem carefully. Identify what is given and what is asked.
+
+STEP 2 - FORMULATE: Set up equations or logical statements. Define variables clearly.
+- For word problems: Let x = [unknown 1], y = [unknown 2], etc.
+- For logic problems: State the premises clearly.
+
+STEP 3 - SOLVE: Work through the problem step by step. Show ALL work.
+- Substitute values and solve equations
+- Apply logical rules systematically
+
+STEP 4 - VERIFY: Check your answer against the original constraints.
+- Substitute back to verify equations balance
+- Ensure the logic is valid
+
+STEP 5 - ANSWER: State your final answer clearly.
+
+PROBLEM:
+{question}
+
+Now solve this step by step:"""
+            enhanced_prompt = reasoning_cot_prompt.replace("{question}", base_prompt)
+            logger.info("Applied specialized chain-of-thought prompt for reasoning task")
+        
+        elif task_type_for_special == "multi_step":
+            # Apply task decomposition prompt for multi-step tasks
+            multi_step_prompt = """You are handling a complex, multi-part request. Follow this structured approach:
+
+PHASE 1 - DECOMPOSE: Break the request into distinct sub-tasks.
+List each sub-task numbered (1, 2, 3, etc.)
+
+PHASE 2 - EXECUTE: Complete each sub-task thoroughly.
+For each sub-task:
+- State what you're addressing
+- Provide complete details
+- Verify completeness
+
+PHASE 3 - SYNTHESIZE: Combine all parts into a coherent, complete response.
+
+REQUEST:
+{question}
+
+Now decompose and solve:"""
+            enhanced_prompt = multi_step_prompt.replace("{question}", base_prompt)
+            # Enable HRM for multi-step tasks if not already enabled
+            if not orchestration_config.get("use_hrm"):
+                orchestration_config["use_hrm"] = True
+                logger.info("Enabled HRM for multi-step task decomposition")
+            logger.info("Applied task decomposition prompt for multi-step task")
         
         # ===========================================================================
         # Apply reasoning hacks for non-reasoning models to unlock deeper thinking

@@ -115,6 +115,17 @@ MATH_PATTERNS = [
     r'\b(total|remainder|quotient|product)\b.*\d',    # Math terms
     r'\b(squared|cubed)\b',                          # Powers
     r'\bsolve\b.*[=]',                               # Equations
+    # ========================================================================
+    # NEW: Enhanced financial calculation patterns
+    # ========================================================================
+    r'\b(invested|invest)\s*(at|with)\s*\d+(\.\d+)?%',  # "invested at 7%"
+    r'\b\d+(\.\d+)?%\s*(annual|yearly|monthly)\s*(interest|rate)\b',  # "7% annual interest"
+    r'\b(compounded|compounding)\s*(monthly|annually|quarterly|daily)\b',  # "compounded monthly"
+    r'\bfor\s*\d+\s*(years?|months?)\b.*\b(interest|rate|invested)\b',  # "for 5 years"
+    r'\$[\d,]+(\.\d+)?\b.*\b(invest|rate|interest|compound)\b',  # "$10,000 invested"
+    r'\b(principal|initial\s*(amount|investment))\b.*\$?\d',  # "principal of $10,000"
+    r'\b(final\s*amount|future\s*value|total\s*interest)\b',  # Financial terms
+    r'\b(annuity|amortization|depreciation)\b',  # Financial calculations
 ]
 
 def should_use_calculator(query: str) -> bool:
@@ -257,6 +268,53 @@ def extract_math_expression(query: str) -> str:
         if radius_match:
             r = radius_match.group(1)
             return f"3.14159265359 * {r} * {r}"
+    
+    # ========================================================================
+    # NEW: Compound Interest Formula
+    # A = P(1 + r/n)^(nt)
+    # ========================================================================
+    # Pattern: "compound interest on $P at r% annual interest, compounded n times, for t years"
+    compound_pattern = re.search(
+        r'\$?([\d,]+(?:\.\d+)?)\s*(?:invested\s+)?(?:at\s+)?([\d.]+)%?\s*(?:annual\s+)?interest.*'
+        r'compounded\s*(monthly|annually|quarterly|daily).*?'
+        r'(?:for\s+)?([\d.]+)\s*years?',
+        text, re.IGNORECASE
+    )
+    if compound_pattern:
+        principal = compound_pattern.group(1).replace(',', '')
+        rate = compound_pattern.group(2)
+        compound_freq = compound_pattern.group(3).lower()
+        years = compound_pattern.group(4)
+        
+        # Map compounding frequency to n (times per year)
+        freq_map = {
+            'monthly': '12',
+            'annually': '1',
+            'quarterly': '4',
+            'daily': '365',
+        }
+        n = freq_map.get(compound_freq, '12')
+        
+        # A = P * (1 + r/n)^(n*t)
+        # Using sympy-compatible expression
+        formula = f"{principal} * (1 + {rate}/100/{n}) ** ({n} * {years})"
+        logger.info("Extracted compound interest formula: %s", formula)
+        return formula
+    
+    # Simpler compound interest pattern without explicit "compounded" word
+    simple_compound = re.search(
+        r'\$?([\d,]+(?:\.\d+)?)\s*(?:invested\s+)?(?:at\s+)?([\d.]+)%.*?'
+        r'(?:for\s+)?([\d.]+)\s*years?',
+        text, re.IGNORECASE
+    )
+    if simple_compound and ('interest' in text or 'invested' in text):
+        principal = simple_compound.group(1).replace(',', '')
+        rate = simple_compound.group(2)
+        years = simple_compound.group(3)
+        # Default to annual compounding
+        formula = f"{principal} * (1 + {rate}/100) ** {years}"
+        logger.info("Extracted simple compound interest formula: %s", formula)
+        return formula
     
     # Fallback: extract all numbers and operators
     # This is a last resort
