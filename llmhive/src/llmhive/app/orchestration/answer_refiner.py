@@ -87,6 +87,9 @@ class RefinementConfig:
     recent_context: Optional[List[str]] = None
     # New: source attribution
     include_sources: bool = True
+    # New: preserve full reasoning/work for reasoning tasks
+    # When True, skip extraction of just final answer - keep full response with steps
+    preserve_reasoning_steps: bool = False
 
 
 @dataclass(slots=True)
@@ -195,9 +198,23 @@ class AnswerRefiner:
                 answer = final_match.group(1).strip()
                 # Clean any trailing scaffold
                 answer = re.sub(r'\s*===\s*\w+.*$', '', answer, flags=re.DOTALL)
-                if answer and len(answer) > 20:
+                answer_lower = answer.lower()
+                # Check if extracted content is actually meta-text, not a real answer
+                looks_like_meta = (
+                    answer_lower.startswith("clearly ") or
+                    answer_lower.startswith("marked ") or
+                    answer_lower.startswith("should ") or
+                    answer_lower.startswith("is ") or
+                    answer_lower.startswith("are ") or
+                    answer_lower.startswith("provide ") or
+                    "'final answer'" in answer_lower or
+                    "marked as" in answer_lower
+                )
+                if answer and len(answer) > 20 and not looks_like_meta:
                     logger.info("Extracted final answer from scaffold (pattern: Final Answer)")
                     return answer.strip()
+                elif looks_like_meta:
+                    logger.warning("Scaffold extraction found meta-text, skipping: %s", answer[:50])
             
             # Try to find the actual question and answer in the scaffold
             # Look for the user's question followed by "=== UNDERSTANDING ===" and extract the answer
@@ -390,10 +407,14 @@ class AnswerRefiner:
         refinement_notes: List[str] = []
         
         # Strip meta-commentary and reasoning scaffold that may have leaked from orchestration
+        # BUT preserve full response if preserve_reasoning_steps is True (for reasoning tasks)
         original_content = content
-        content = self._strip_meta_commentary(content)
-        if content != original_content:
-            improvements_made.append("Removed meta-commentary and reasoning scaffold from response")
+        if not config.preserve_reasoning_steps:
+            content = self._strip_meta_commentary(content)
+            if content != original_content:
+                improvements_made.append("Removed meta-commentary and reasoning scaffold from response")
+        else:
+            logger.info("Preserving full reasoning steps (preserve_reasoning_steps=True)")
         
         # Apply domain-based tone if not explicitly set
         if config.domain != "general" and config.tone == ToneStyle.PROFESSIONAL:
@@ -412,6 +433,7 @@ class AnswerRefiner:
                 avoid_repetition=config.avoid_repetition,
                 recent_context=config.recent_context,
                 include_sources=config.include_sources,
+                preserve_reasoning_steps=config.preserve_reasoning_steps,
             )
             improvements_made.append(f"Applied {suggested_tone.value} tone for {config.domain} domain")
         

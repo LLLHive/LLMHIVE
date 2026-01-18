@@ -2443,7 +2443,9 @@ Please provide an accurate, well-verified response."""
                 logger.warning("HRM planning failed, falling back to flat plan: %s", e)
         
         # Phase 2: Adaptive Model Selection
-        selected_models = models or ["stub"]
+        # NEVER default to stub - use a real model as fallback
+        default_fallback = ["openai/gpt-4o-mini"] if "openrouter" in self.providers else ["gpt-4o-mini"]
+        selected_models = models or default_fallback
         model_assignments: Dict[str, str] = {}
         
         if use_adaptive_routing and self.adaptive_router and ADAPTIVE_ROUTING_AVAILABLE:
@@ -2473,13 +2475,13 @@ Please provide an accurate, well-verified response."""
                 )
             except Exception as e:
                 logger.warning("Adaptive routing failed, using default models: %s", e)
-                selected_models = models or ["stub"]
+                selected_models = models or default_fallback
         else:
-            selected_models = models or ["stub"]
+            selected_models = models or default_fallback
         
         # Ensure we have at least one model
         if not selected_models:
-            selected_models = ["stub"]
+            selected_models = default_fallback
         
         models_to_use = selected_models
         
@@ -2750,7 +2752,10 @@ Please provide an accurate, well-verified response."""
             # Get the provider for the first model
             first_model = models_to_use[0]
             provider_name = model_to_provider.get(first_model, first_model)
-            provider = self.providers.get(provider_name) or self.providers.get("stub")
+            # Try to get the provider, fallback to openrouter if available (not stub)
+            provider = self.providers.get(provider_name)
+            if not provider:
+                provider = self.providers.get("openrouter") or self.providers.get("openai") or self.providers.get("stub")
             if not provider:
                 # Create minimal stub response
                 result = LLMResult(
@@ -2873,8 +2878,9 @@ Please provide an accurate, well-verified response."""
                 logger.warning("Tool execution failed: %s", e)
         
         # Fact verification and iterative refinement loop
-        use_verification = kwargs.get("use_verification", True)
-        use_refinement_loop = kwargs.get("use_refinement_loop", True)
+        # NOTE: Refinement loop disabled for accuracy_level <= 3 due to system prompt leakage issues
+        use_verification = kwargs.get("use_verification", True) and accuracy_level >= 4
+        use_refinement_loop = kwargs.get("use_refinement_loop", True) and accuracy_level >= 4
         verification_report = None
         refinement_result: Optional[Any] = None
         verification_passed = True

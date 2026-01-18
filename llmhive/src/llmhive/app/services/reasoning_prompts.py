@@ -186,3 +186,108 @@ Current approach: {current_branch}{attempts_text}
 
 Is this approach promising? What is the next step, or is this a dead-end? If promising, continue developing it. If not, suggest an alternative approach."""
 
+
+# ==============================================================================
+# PHASE 4: CATEGORY-SPECIFIC PROMPT TEMPLATES
+# Optimized prompts per task type for better quality
+# ==============================================================================
+
+CATEGORY_PROMPTS = {
+    "math_problem": """Solve this math problem accurately. Show your work step by step.
+
+{question}
+
+IMPORTANT:
+- Show all calculations clearly
+- State the final numerical answer explicitly
+- Round appropriately if needed
+- Double-check your arithmetic""",
+
+    "code_generation": """Write clean, well-documented code for this task.
+
+{question}
+
+REQUIREMENTS:
+- Use the programming language specified (or Python if not specified)
+- Include helpful comments
+- Handle edge cases
+- Follow best practices for the language""",
+
+    "reasoning": """Think through this problem carefully using logical reasoning.
+
+{question}
+
+Approach this step-by-step:
+1. Identify what is being asked
+2. List the key facts and constraints
+3. Apply logical reasoning
+4. Arrive at a clear conclusion""",
+
+    "creative_writing": """Create engaging, original content for this request.
+
+{question}
+
+Focus on:
+- Originality and creativity
+- Engaging language and style
+- Meeting the specific requirements
+- Quality over quantity""",
+
+    "factual_question": """Provide accurate, factual information for this question.
+
+{question}
+
+Ensure your response is:
+- Factually accurate
+- Based on reliable information
+- Clear and well-organized
+- Directly addresses the question""",
+
+    "analysis": """Analyze this topic thoroughly and systematically.
+
+{question}
+
+Structure your analysis:
+- Key points to consider
+- Pros and cons where relevant
+- Supporting evidence or reasoning
+- Clear conclusions""",
+
+    "multi_step": """Complete this multi-part task thoroughly.
+
+{question}
+
+Approach systematically:
+- Address each requirement explicitly
+- Maintain logical flow between parts
+- Ensure nothing is missed
+- Provide a complete response""",
+
+    "comparison": """Compare these items/options comprehensively.
+
+{question}
+
+Include in your comparison:
+- Key similarities and differences
+- Strengths and weaknesses of each
+- Relevant factors and criteria
+- A balanced conclusion""",
+}
+
+
+def get_category_prompt(task_type: str, question: str) -> str:
+    """
+    Get an optimized prompt for a specific task category.
+    
+    Args:
+        task_type: The detected task type
+        question: The user's original question
+        
+    Returns:
+        Enhanced prompt optimized for the task category
+    """
+    template = CATEGORY_PROMPTS.get(task_type.lower())
+    if template:
+        return template.format(question=question)
+    return question  # Return original if no template
+

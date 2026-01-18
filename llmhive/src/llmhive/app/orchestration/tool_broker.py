@@ -102,7 +102,8 @@ class ToolAnalysis:
 # Comprehensive patterns for math queries that MUST use calculator
 MATH_PATTERNS = [
     r'\b(calculate|compute|what is)\b.*[\d+\-*/^%]',  # "calculate 5+3", "what is 25 * 47"
-    r'\b(profit margin|percentage|percent)\b.*\d',    # Financial calculations
+    r'\b(profit margin|percentage|percent)\b',        # Financial calculations (don't require digit after)
+    r'\b(revenue|expenses?|sales|costs?)\b.*\$[\d,]+', # Revenue/expense with dollar amounts
     r'\b(convert|how many|how much)\b.*\b(miles?|km|kilometers?|minutes?|hours?|feet|meters?|pounds?|kg|kilograms?)\b',  # Conversions
     r'\b\d+\s*[\+\-\*/\^x×÷]\s*\d+\b',               # Direct math: "25 * 47", "100 / 4"
     r'\b(sqrt|square root|factorial|cubed?)\b',       # Math functions

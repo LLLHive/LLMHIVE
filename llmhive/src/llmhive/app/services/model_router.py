@@ -364,6 +364,65 @@ TASK_CAPABILITY_MAP = {
     "fast_response": "speed",
     "high_quality": "overall",
     "general": "overall",
+    # New mappings for comparison test categories
+    "reasoning": "reasoning",
+    "multi_step": "reasoning",
+    "analysis": "analysis",
+}
+
+# ==============================================================================
+# OPTIMIZED TASK-SPECIFIC MODEL PREFERENCES
+# Based on empirical testing (Phase 4 optimization)
+# ==============================================================================
+TASK_OPTIMIZED_MODELS = {
+    # Math: DeepSeek and GPT-4o are best for calculations
+    "math_problem": [
+        FALLBACK_DEEPSEEK,      # 95 coding, 90 math
+        FALLBACK_GPT_4O,        # 90 math
+        FALLBACK_GEMINI_2_5,    # 90 math
+    ],
+    # Coding: DeepSeek excels, Claude is excellent too
+    "code_generation": [
+        FALLBACK_DEEPSEEK,      # 95 coding - exceptional
+        FALLBACK_GPT_4O,        # 95 coding
+        FALLBACK_CLAUDE_SONNET_4,  # 95 coding
+    ],
+    # Reasoning: Claude and GPT-4o best
+    "reasoning": [
+        FALLBACK_CLAUDE_SONNET_4,  # 95 reasoning
+        FALLBACK_GPT_4O,           # 95 reasoning
+        FALLBACK_GEMINI_2_5,       # 92 reasoning
+    ],
+    # Creative: Claude excels at creative writing
+    "creative_writing": [
+        FALLBACK_CLAUDE_SONNET_4,  # 95 creative
+        FALLBACK_CLAUDE_3_5,       # 90 creative
+        FALLBACK_GROK_4,           # 88 creative
+    ],
+    # Factual: Grok has real-time knowledge
+    "factual_question": [
+        FALLBACK_GROK_4,           # 95 factual - real-time
+        FALLBACK_GEMINI_2_5,       # 92 factual
+        FALLBACK_GPT_4O,           # 90 factual
+    ],
+    # Analysis: Claude and GPT-4o excel
+    "analysis": [
+        FALLBACK_CLAUDE_SONNET_4,  # 95 analysis
+        FALLBACK_GPT_4O,           # 95 analysis
+        FALLBACK_GEMINI_2_5,       # 90 analysis
+    ],
+    # Multi-step: Needs strong reasoning
+    "multi_step": [
+        FALLBACK_CLAUDE_SONNET_4,  # Best for complex decomposition
+        FALLBACK_GPT_4O,           # Strong reasoning
+        FALLBACK_GEMINI_2_5,       # Good reasoning
+    ],
+    # Comparison: Analysis capability
+    "comparison": [
+        FALLBACK_CLAUDE_SONNET_4,  # 95 analysis
+        FALLBACK_GPT_4O,           # 95 analysis
+        FALLBACK_GEMINI_2_5,       # 90 analysis
+    ],
 }
 
 
@@ -385,8 +444,23 @@ def get_best_models_for_task(
     Returns:
         List of best models for the task, ordered by fit
     """
+    task_lower = task_type.lower()
+    
+    # PHASE 4 OPTIMIZATION: Check task-specific optimized models first
+    if task_lower in TASK_OPTIMIZED_MODELS:
+        optimized = TASK_OPTIMIZED_MODELS[task_lower]
+        if available_models:
+            # Filter to available models while preserving order
+            filtered = [m for m in optimized if m in available_models]
+            if filtered:
+                logger.info("Phase4 optimized routing: task=%s, models=%s", task_lower, filtered[:num_models])
+                return filtered[:num_models]
+        else:
+            logger.info("Phase4 optimized routing: task=%s, models=%s", task_lower, optimized[:num_models])
+            return optimized[:num_models]
+    
     # Map task type to capability
-    capability = TASK_CAPABILITY_MAP.get(task_type.lower(), "overall")
+    capability = TASK_CAPABILITY_MAP.get(task_lower, "overall")
     
     # Default criteria if not provided
     if not criteria:

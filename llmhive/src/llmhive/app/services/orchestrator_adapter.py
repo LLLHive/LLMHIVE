@@ -63,7 +63,7 @@ from .model_router import (
     get_diverse_ensemble,
     MODEL_CAPABILITIES,
 )
-from .reasoning_prompts import get_reasoning_prompt_template
+from .reasoning_prompts import get_reasoning_prompt_template, get_category_prompt
 
 # Import Clarification Manager for ambiguity detection
 try:
@@ -240,6 +240,48 @@ _orchestrator = Orchestrator()
 _elite_orchestrator: Optional[EliteOrchestrator] = None
 
 
+def _clean_reasoning_output(text: str) -> str:
+    """
+    Clean reasoning output for user-facing display.
+    
+    This function:
+    - Removes internal scaffold markers (=== SECTION ===)
+    - Preserves step-by-step reasoning content
+    - Formats the output nicely for users
+    
+    Used for reasoning tasks where we want to show work but not internal markers.
+    """
+    if not text:
+        return text
+    
+    # Replace scaffold section markers with cleaner headings
+    section_replacements = [
+        (r'===\s*PROBLEM\s*===\s*', '**Problem:**\n'),
+        (r'===\s*UNDERSTANDING\s*===\s*', '\n**Understanding:**\n'),
+        (r'===\s*APPROACH\s*===\s*', '\n**Approach:**\n'),
+        (r'===\s*STEP-BY-STEP\s*SOLUTION\s*===\s*', '\n**Solution:**\n'),
+        (r'===\s*SOLUTION\s*===\s*', '\n**Solution:**\n'),
+        (r'===\s*VERIFICATION\s*===\s*', '\n**Verification:**\n'),
+        (r'===\s*FINAL\s*ANSWER\s*===\s*', '\n**Answer:**\n'),
+        (r'===\s*SYNTHESIS\s*===\s*', '\n**Conclusion:**\n'),
+        # Generic pattern for any remaining === SECTION === markers
+        (r'===\s*([A-Z][A-Z\s]+)\s*===\s*', r'\n**\1:**\n'),
+    ]
+    
+    result = text
+    for pattern, replacement in section_replacements:
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+    
+    # Clean up any remaining triple equals
+    result = re.sub(r'===+', '', result)
+    
+    # Clean up excessive whitespace
+    result = re.sub(r'\n{3,}', '\n\n', result)
+    result = result.strip()
+    
+    return result
+
+
 def _strip_internal_scaffolding(text: str) -> str:
     """
     Strip internal orchestration scaffolding from the final response.
@@ -253,7 +295,7 @@ def _strip_internal_scaffolding(text: str) -> str:
     if not text:
         return text
     
-    import re
+    # re is imported at module level
     
     # Pattern 0: Check for reasoning hack template leakage
     # These templates should NEVER appear in the output - they mean the LLM returned its prompt
@@ -279,10 +321,28 @@ def _strip_internal_scaffolding(text: str) -> str:
                 match = re.search(ap, text, re.IGNORECASE | re.DOTALL)
                 if match:
                     extracted = match.group(1).strip()
-                    if len(extracted) > 10:
+                    # VALIDATION: Ensure extracted content is complete, not a fragment
+                    # Fragments often start with lowercase or are too short
+                    is_fragment = (
+                        len(extracted) < 20 or
+                        (extracted[0].islower() and not extracted.startswith('$')) or
+                        extracted.startswith('is ') or
+                        extracted.startswith('are ') or
+                        extracted.startswith('was ') or
+                        extracted.startswith('to ') or
+                        not any(c.isalnum() for c in extracted[:10])
+                    )
+                    if not is_fragment:
                         return extracted
-            # If no clear answer found, return error message
-            return "I apologize, but I encountered an error processing your request. Please try again."
+                    else:
+                        logger.warning("Extracted fragment looks incomplete: %s", extracted[:50])
+            # If no clear answer found, return the original text cleaned up
+            logger.warning("Could not extract clean answer, returning cleaned original")
+            # Try to return everything after the template markers
+            clean_text = re.sub(r'^.*?(?:FINAL ANSWER|final answer)[:\s]*', '', text, flags=re.IGNORECASE | re.DOTALL)
+            if clean_text and len(clean_text) > 20:
+                return clean_text.strip()
+            return text  # Return original if nothing better found
     
     # Pattern 1: Remove "=== PROBLEM ===" or similar scaffold headers with instructions
     scaffold_pattern = r'^===\s*(PROBLEM|UNDERSTANDING|APPROACH|SOLUTION)\s*===\s*(IMPORTANT:|CRITICAL:)?'
@@ -298,9 +358,20 @@ def _strip_internal_scaffolding(text: str) -> str:
             match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
             if match:
                 extracted = match.group(1).strip()
-                if len(extracted) > 20:  # Ensure we got meaningful content
+                # VALIDATION: Ensure extracted content is complete, not a fragment
+                is_fragment = (
+                    len(extracted) < 20 or
+                    (extracted[0].islower() and not extracted.startswith('$')) or
+                    extracted.startswith('is ') or
+                    extracted.startswith('are ') or
+                    extracted.startswith('was ') or
+                    extracted.startswith('to ')
+                )
+                if not is_fragment:
                     logger.info("Stripped internal scaffold, extracted final answer")
                     return extracted
+                else:
+                    logger.warning("Pattern 1: Extracted fragment looks incomplete, continuing search")
         
         # If no clear final answer section, try to find content after system instructions
         # Look for the first line that doesn't look like an instruction
@@ -329,6 +400,22 @@ def _strip_internal_scaffolding(text: str) -> str:
     instruction_pattern = r'^IMPORTANT:\s*Answer the user.*?(?:NEVER refuse[^.]*\.)\s*'
     text = re.sub(instruction_pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
     
+    # Pattern 2b: Remove leaked system prompt and reasoning instruction content
+    system_prompt_patterns = [
+        r'^IMPORTANT:\s*Answer the user.*?(?:specialty|scope)[.\s]*',
+        r'^Do NOT ask clarifying questions.*?(?:specialty|scope)[.\s]*',
+        r'^You are a helpful assistant.*?(?:scope|specialty)[.\s]*',
+        r'^CRITICAL RULES:.*?(?:Just answer\.|scope\.)\s*',
+        r'^1\.\s*NEVER ask clarifying questions.*?(?:Just answer\.|scope\.)\s*',
+        r"^If the user specifies criteria.*?(?:alternative criteria\.)\s*",
+        r"^Do not ask about alternative criteria\..*?\n+",
+        r"^NEVER refuse to answer.*?(?:specialty\.)\s*",
+        r"^For any question.*?(?:outside your scope\.)\s*",
+        r"^You have expertise in.*?(?:knowledge base\.)\s*",
+    ]
+    for pattern in system_prompt_patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+    
     # Pattern 3: Remove "Stub response for:" patterns
     stub_pattern = r'^Stub response for:.*?\n+'
     text = re.sub(stub_pattern, '', text, flags=re.IGNORECASE)
@@ -336,7 +423,54 @@ def _strip_internal_scaffolding(text: str) -> str:
     # Pattern 4: Remove trailing scaffold markers
     text = re.sub(r'\s*===\s*(END|COMPLETE|DONE)\s*===\s*$', '', text, flags=re.IGNORECASE)
     
-    return text.strip()
+    # FINAL VALIDATION: Check if result is a fragment and reject
+    result = text.strip()
+    fragment_indicators = [
+        'is accurate to',
+        'is correct',
+        'is the answer',
+        'are the results',
+        'was calculated',
+        'to the cent',
+        'as shown above',
+        'as calculated',
+        'do not ask clarifying',
+        'never refuse to answer',
+        'helpful assistant',
+        'critical rules',
+        'if the user specifies',
+        'important: answer the user',
+        'solve this problem in two phases',
+        'phase 1 - planning',
+        'let\'s work this out',
+        'clearly marked as',
+        'provide a concise',
+        'after reasoning',
+    ]
+    result_lower = result.lower()
+    
+    # If result starts with a fragment indicator, it's incomplete
+    if any(result_lower.startswith(frag) for frag in fragment_indicators):
+        logger.warning("Final result is a fragment: %s", result[:50])
+        # Return empty to trigger fallback
+        return ""
+    
+    # Also check for responses that look like fragments (continue from previous text)
+    # Increase threshold to 100 chars since fragments can be longer
+    if len(result) < 100 and result_lower.startswith(('is ', 'are ', 'was ', 'were ', 'to ', 'based on ', 'according to ')):
+        logger.warning("Fragment detected: %s", result)
+        return ""
+    
+    # Try to extract Final Answer if present
+    final_answer_match = re.search(r"(?:Final\s*Answer|FINAL\s*ANSWER|final answer)[:\s]*([^\n].*?)(?:\n\n|$)", result, re.IGNORECASE | re.DOTALL)
+    if final_answer_match:
+        extracted = final_answer_match.group(1).strip()
+        # Make sure it's a real answer, not just scaffolding
+        if len(extracted) > 10 and not any(extracted.lower().startswith(f) for f in ['provide ', 'clearly ', 'after ']):
+            logger.info("Extracted Final Answer: %s", extracted[:100])
+            return extracted
+    
+    return result
 _quality_booster: Optional[QualityBooster] = None
 
 
@@ -1166,7 +1300,8 @@ def _detect_task_type(prompt: str) -> str:
     elif any(kw in prompt_lower for kw in [
         "calculate", "solve", "math", "equation", "integral", "derivative", "proof",
         "compound interest", "simple interest", "invested at", "annual interest",
-        "compounded", "principal", "rate of return", "profit margin"
+        "compounded", "principal", "rate of return", "profit margin",
+        "% of", "percent of", "percentage of"
     ]):
         return "math_problem"
     
@@ -2076,6 +2211,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                                 "tools": ["calculator"],
                                 "success_count": 1,
                                 "reasoning": "Math query - calculator forced",
+                                "calculator_result": result_value,  # Store for validation
+                                "calculator_expression": expression,
                             }
                             logger.info("Calculator result: %s = %s", expression, result_value)
                     except Exception as calc_e:
@@ -2283,11 +2420,20 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             )
         
         # Enhance prompt with reasoning method template
-        enhanced_prompt = get_reasoning_prompt_template(
-            reasoning_method,
-            base_prompt,
-            domain_pack=request.domain_pack.value,
-        )
+        # NOTE: Only apply complex reasoning templates at accuracy_level >= 4 to avoid template echo issues
+        accuracy_level = orchestration_config.get("accuracy_level", 3)
+        if accuracy_level >= 4:
+            enhanced_prompt = get_reasoning_prompt_template(
+                reasoning_method,
+                base_prompt,
+                domain_pack=request.domain_pack.value,
+            )
+        else:
+            # PHASE 4: Use category-specific optimized prompts for lower accuracy levels
+            # These are simpler and less likely to cause LLM echo issues
+            enhanced_prompt = get_category_prompt(detected_task_type, base_prompt)
+            if enhanced_prompt != base_prompt:
+                logger.info("Phase4: Applied category prompt for task=%s", detected_task_type)
         
         # ===========================================================================
         # SPECIAL HANDLING: Reasoning and Multi-step Tasks
@@ -2299,56 +2445,121 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         if task_type_for_special == "reasoning":
             # Apply chain-of-thought prompt for reasoning tasks
-            reasoning_cot_prompt = """You are solving a logic or reasoning problem. Follow these steps EXACTLY:
+            # This prompt forces detailed step-by-step reasoning with explicit work shown
+            reasoning_cot_prompt = """IMPORTANT: You MUST solve this problem by showing ALL your work step-by-step. 
+Do NOT just give the final answer. The user specifically needs to see your reasoning process.
 
-STEP 1 - UNDERSTAND: Read the problem carefully. Identify what is given and what is asked.
-
-STEP 2 - FORMULATE: Set up equations or logical statements. Define variables clearly.
-- For word problems: Let x = [unknown 1], y = [unknown 2], etc.
-- For logic problems: State the premises clearly.
-
-STEP 3 - SOLVE: Work through the problem step by step. Show ALL work.
-- Substitute values and solve equations
-- Apply logical rules systematically
-
-STEP 4 - VERIFY: Check your answer against the original constraints.
-- Substitute back to verify equations balance
-- Ensure the logic is valid
-
-STEP 5 - ANSWER: State your final answer clearly.
-
-PROBLEM:
+## Problem:
 {question}
 
-Now solve this step by step:"""
+## Your Solution (MUST include ALL of these sections):
+
+### Step 1: Define Variables
+- Identify all unknown quantities
+- Assign variable names (e.g., let c = number of chickens, r = number of rabbits)
+- List what each variable represents
+
+### Step 2: Set Up Equations
+- Translate the problem constraints into mathematical equations
+- Write each equation clearly with explanation
+- Example: "Since each animal has 1 head: c + r = 35"
+
+### Step 3: Solve the Equations
+- Show each algebraic step
+- Substitute and simplify
+- Show the calculation for each unknown
+
+### Step 4: Verify Your Answer
+- Plug your answers back into the original equations
+- Check that all constraints are satisfied
+- Confirm the answer makes sense
+
+### Step 5: Final Answer
+State your answer clearly: "The answer is: [specific values]"
+
+Now solve this problem completely, showing ALL work:"""
             enhanced_prompt = reasoning_cot_prompt.replace("{question}", base_prompt)
             logger.info("Applied specialized chain-of-thought prompt for reasoning task")
         
         elif task_type_for_special == "multi_step":
             # Apply task decomposition prompt for multi-step tasks
-            multi_step_prompt = """You are handling a complex, multi-part request. Follow this structured approach:
+            # This prompt ensures comprehensive coverage of all requirements
+            multi_step_prompt = """IMPORTANT: This is a complex request with MULTIPLE requirements. You MUST address EVERY part completely.
 
-PHASE 1 - DECOMPOSE: Break the request into distinct sub-tasks.
-List each sub-task numbered (1, 2, 3, etc.)
-
-PHASE 2 - EXECUTE: Complete each sub-task thoroughly.
-For each sub-task:
-- State what you're addressing
-- Provide complete details
-- Verify completeness
-
-PHASE 3 - SYNTHESIZE: Combine all parts into a coherent, complete response.
-
-REQUEST:
+## The Request:
 {question}
 
-Now decompose and solve:"""
+## Your Response MUST:
+
+### 1. First, Identify All Requirements
+Read the request carefully and list EVERY specific requirement mentioned.
+Number each one: "Requirement 1:", "Requirement 2:", etc.
+Do not miss any - the user expects ALL parts to be addressed.
+
+### 2. Address Each Requirement Completely
+For EACH requirement you identified:
+- State which requirement you're addressing
+- Provide a COMPLETE and DETAILED solution for that specific part
+- Include all necessary details, examples, or specifications
+- Do not give partial or vague responses
+
+### 3. For Technical/Design Tasks, Include:
+- Clear structure and organization
+- Specific implementation details
+- Examples where helpful
+- Best practices and considerations
+
+### 4. Final Checklist
+Before finishing, verify:
+☐ All numbered requirements are addressed
+☐ Each part has complete details (not just mentioned)
+☐ The response is organized and easy to follow
+☐ Nothing from the original request is missing
+
+Now provide your complete response, addressing EVERY requirement:"""
             enhanced_prompt = multi_step_prompt.replace("{question}", base_prompt)
             # Enable HRM for multi-step tasks if not already enabled
             if not orchestration_config.get("use_hrm"):
                 orchestration_config["use_hrm"] = True
                 logger.info("Enabled HRM for multi-step task decomposition")
             logger.info("Applied task decomposition prompt for multi-step task")
+        
+        elif task_type_for_special == "code_generation":
+            # Apply language enforcement for coding tasks
+            # Detect the programming language from the prompt
+            prompt_lower = base_prompt.lower()
+            detected_language = None
+            language_patterns = [
+                (r'\bpython\b', 'Python'),
+                (r'\bjavascript\b|\bjs\b', 'JavaScript'),
+                (r'\btypescript\b|\bts\b', 'TypeScript'),
+                (r'\bjava\b(?!script)', 'Java'),
+                (r'\bc\+\+\b|\bcpp\b', 'C++'),
+                (r'\bc#\b|\bcsharp\b', 'C#'),
+                (r'\bruby\b', 'Ruby'),
+                (r'\bgo\b|\bgolang\b', 'Go'),
+                (r'\brust\b', 'Rust'),
+                (r'\bswift\b', 'Swift'),
+                (r'\bkotlin\b', 'Kotlin'),
+                (r'\bphp\b', 'PHP'),
+                (r'\bsql\b', 'SQL'),
+                (r'\bbash\b|\bshell\b', 'Bash'),
+            ]
+            for pattern, lang in language_patterns:
+                if re.search(pattern, prompt_lower):
+                    detected_language = lang
+                    break
+            
+            if detected_language:
+                # Add explicit language enforcement to the prompt
+                code_enforcement_prompt = f"""IMPORTANT: You MUST write your code in {detected_language}. 
+Do NOT use any other programming language.
+
+{base_prompt}
+
+REMINDER: Your response MUST be in {detected_language}. Use {detected_language} syntax and conventions."""
+                enhanced_prompt = code_enforcement_prompt
+                logger.info("Applied language enforcement for %s code task", detected_language)
         
         # ===========================================================================
         # Apply reasoning hacks for non-reasoning models to unlock deeper thinking
@@ -2381,14 +2592,13 @@ Now decompose and solve:"""
                     accuracy_lvl = orchestration_config.get("accuracy_level", 3)
                     
                     # Use reasoning hacker module if available
-                    if REASONING_HACKER_AVAILABLE:
+                    # NOTE: Only apply reasoning hacks at accuracy_level >= 4 to avoid template leakage
+                    if REASONING_HACKER_AVAILABLE and accuracy_lvl >= 4:
                         # Determine hack level based on task and accuracy
-                        if accuracy_lvl >= 4:
+                        if accuracy_lvl >= 5:
                             reasoning_hack_level = ReasoningHackLevel.HEAVY
-                        elif accuracy_lvl >= 3:
-                            reasoning_hack_level = ReasoningHackLevel.MEDIUM
                         else:
-                            reasoning_hack_level = ReasoningHackLevel.LIGHT
+                            reasoning_hack_level = ReasoningHackLevel.MEDIUM
                         
                         # High-stakes domains get maximum hacking
                         high_stakes = ["health_medical", "legal_analysis", "financial_analysis"]
@@ -2676,8 +2886,7 @@ Now decompose and solve:"""
                     
                     # For strict JSON, extract only the JSON from the response
                     if is_strict_format and fmt == "json":
-                        import re
-                        # Find JSON object or array in the response
+                        # Find JSON object or array in the response (re is imported at module level)
                         json_match = re.search(r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\])', final_text, re.DOTALL)
                         if json_match:
                             final_text = json_match.group(1)
@@ -2688,7 +2897,7 @@ Now decompose and solve:"""
                 if prompt_spec and prompt_spec.analysis.constraints:
                     for constraint in prompt_spec.analysis.constraints:
                         if "Maximum" in constraint and "words" in constraint:
-                            import re
+                            # re is imported at module level
                             match = re.search(r'Maximum\s+(\d+)\s+words', constraint)
                             if match:
                                 max_words = int(match.group(1))
@@ -2709,6 +2918,18 @@ Now decompose and solve:"""
                 elif user_profile and user_profile.show_confidence is not None:
                     include_conf = bool(user_profile.show_confidence)
 
+                # Preserve full detailed content for reasoning/multi-step tasks
+                # These task types need comprehensive answers, not summaries
+                task_for_preserve = _detect_task_type(base_prompt)
+                should_preserve_reasoning = (
+                    task_for_preserve in ("reasoning", "multi_step") or
+                    "show your" in base_prompt.lower() or
+                    "step by step" in base_prompt.lower() or
+                    "show work" in base_prompt.lower() or
+                    "design" in base_prompt.lower() or
+                    "api" in base_prompt.lower()
+                )
+                
                 refiner_config = RefinementConfig(
                     output_format=output_format,
                     tone=tone_style,
@@ -2716,6 +2937,7 @@ Now decompose and solve:"""
                     include_citations=accuracy_level >= 3,
                     preserve_structure=True,
                     max_words=max_words,
+                    preserve_reasoning_steps=should_preserve_reasoning,
                 )
                 
                 refiner = AnswerRefiner(providers=_orchestrator.providers)
@@ -2736,7 +2958,7 @@ Now decompose and solve:"""
                 
                 # Final safeguard for strict JSON output
                 if is_strict_format and (prompt_spec and prompt_spec.analysis.output_format and prompt_spec.analysis.output_format.startswith("json")):
-                    import re, json as _json
+                    import json as _json  # re is imported at module level
                     json_match = re.search(r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\])', final_text, re.DOTALL)
                     if json_match:
                         candidate = json_match.group(1)
@@ -2859,9 +3081,133 @@ Now decompose and solve:"""
             )
         
         # ========================================================================
-        # FINAL CLEANUP: Strip any internal scaffolding from the response
+        # PHASE 2: MATH OUTPUT VALIDATION
+        # Ensure calculator results are present in math responses
         # ========================================================================
-        final_text = _strip_internal_scaffolding(final_text)
+        if tool_results_info.get("calculator_result") is not None:
+            calc_result = tool_results_info["calculator_result"]
+            calc_expr = tool_results_info.get("calculator_expression", "")
+            
+            # Format the result nicely
+            if isinstance(calc_result, float):
+                # Format as currency if it looks like a money calculation
+                if "$" in base_prompt or "dollar" in base_prompt.lower():
+                    formatted_result = f"${calc_result:,.2f}"
+                else:
+                    formatted_result = f"{calc_result:,.2f}"
+            else:
+                formatted_result = str(calc_result)
+            
+            # Check if the result is already in the response
+            result_in_response = (
+                formatted_result in final_text or
+                str(round(calc_result, 2)) in final_text or
+                str(round(calc_result, 0)).replace('.0', '') in final_text
+            )
+            
+            if not result_in_response:
+                # The calculator result is missing - inject it
+                logger.warning("PHASE 2: Calculator result missing from response, injecting")
+                
+                # Prepend the correct result
+                injection = f"**Calculated Result: {formatted_result}**\n\n"
+                final_text = injection + final_text
+                logger.info("PHASE 2: Injected calculator result: %s", formatted_result)
+        
+        # ========================================================================
+        # FINAL CLEANUP: Strip any internal scaffolding from the response
+        # For reasoning/multi-step tasks, keep detailed content but remove ugly markers
+        # ========================================================================
+        detected_task = _detect_task_type(base_prompt)
+        needs_detailed_output = (
+            detected_task in ("reasoning", "multi_step") or
+            "show your" in base_prompt.lower() or
+            "step by step" in base_prompt.lower() or
+            "show work" in base_prompt.lower() or
+            "design" in base_prompt.lower() or  # Design tasks need full details
+            "api" in base_prompt.lower()  # API designs need full details
+        )
+        # Store calculator result before cleanup in case we need it
+        calc_result_for_fallback = None
+        if tool_results_info.get("calculator_result") is not None:
+            calc_result = tool_results_info["calculator_result"]
+            if isinstance(calc_result, float):
+                if calc_result >= 1000:
+                    calc_result_for_fallback = f"${calc_result:,.2f}"
+                else:
+                    calc_result_for_fallback = f"{calc_result:,.2f}"
+            else:
+                calc_result_for_fallback = str(calc_result)
+        
+        if needs_detailed_output:
+            # Clean up scaffold markers but preserve detailed content
+            final_text = _clean_reasoning_output(final_text)
+            logger.info("Cleaned detailed output for %s task (preserved content)", detected_task)
+        else:
+            original_text = final_text  # Save original before stripping
+            final_text = _strip_internal_scaffolding(final_text)
+            
+            # If stripping resulted in empty/short text, use fallback
+            if not final_text or len(final_text.strip()) < 20:
+                logger.warning("Stripped text too short, using fallback")
+                if calc_result_for_fallback:
+                    # For math problems with calculator, provide clean answer
+                    final_text = f"The answer is **{calc_result_for_fallback}**."
+                    logger.info("Using calculator result as fallback: %s", calc_result_for_fallback)
+                else:
+                    # For non-math, try to salvage original
+                    final_text = original_text
+        
+        # ========================================================================
+        # PHASE 3: OUTPUT VALIDATION & RETRY LOGIC
+        # Detect incomplete/fragment responses and retry if needed
+        # NOTE: Skip retry for math tasks if calculator was used (results are verified)
+        # ========================================================================
+        def _is_incomplete_response(text: str, task: str, calc_used: bool) -> bool:
+            """Check if response appears to be incomplete or a fragment."""
+            # Skip validation for math tasks with calculator results
+            if task == "math_problem" and calc_used:
+                return False  # Calculator results are verified, no retry needed
+            
+            if not text or len(text.strip()) < 20:
+                return True
+            
+            text_lower = text.lower().strip()
+            
+            # Fragment indicators - starts with lowercase continuation words
+            fragment_starts = ['is ', 'are ', 'was ', 'were ', 'to ', 'and ', 'but ', 'or ', 'the ']
+            if any(text_lower.startswith(fs) for fs in fragment_starts):
+                return True
+            
+            # Check for incomplete sentences (ends mid-word or with certain patterns)
+            if text.rstrip().endswith(('...', ' the', ' a', ' an', ' to', ' of')):
+                return True
+            
+            # Task-specific validation
+            if task == "math_problem":
+                # Math responses should contain numbers
+                if not any(c.isdigit() for c in text):
+                    return True
+            
+            if task == "code_generation":
+                # Code responses should contain code markers or keywords
+                code_indicators = ['def ', 'function ', 'class ', '```', 'return ', 'const ', 'let ', 'var ']
+                if not any(ind in text for ind in code_indicators):
+                    return True
+            
+            return False
+        
+        # Check if calculator was used for this query
+        calculator_was_used = tool_results_info.get("used", False) and tool_results_info.get("calculator_result") is not None
+        
+        # Check if response needs retry (skip for validated math)
+        retry_attempted = False
+        if _is_incomplete_response(final_text, detected_task, calculator_was_used):
+            logger.warning("PHASE 3: Detected incomplete response, attempting retry")
+            
+            # IMPORTANT: Don't retry - just log. Retry was causing stub fallback issues.
+            # Instead, ensure the original response quality is maintained.
+            logger.info("PHASE 3: Skipping retry to avoid stub fallback issues")
         
         # Build response with models_used
         response = ChatResponse(

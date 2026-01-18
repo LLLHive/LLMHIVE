@@ -736,11 +736,24 @@ Output each sub-question on a new line, prefixed with "Q:"."""
             "grok": "grok",
             "gemini": "gemini",
             "deepseek": "deepseek",
+            "openai/": "openrouter",  # OpenRouter format
+            "anthropic/": "openrouter",  # OpenRouter format
+            "google/": "openrouter",  # OpenRouter format
+            "meta-llama/": "openrouter",  # OpenRouter format
         }
         
         for prefix, provider_name in provider_map.items():
             if model_lower.startswith(prefix) and provider_name in self.providers:
                 return self.providers[provider_name]
+        
+        # If model has a slash, it's likely OpenRouter format
+        if "/" in model_lower and "openrouter" in self.providers:
+            return self.providers["openrouter"]
+        
+        # Last resort: skip stub, try first non-stub provider
+        for name, provider in self.providers.items():
+            if name != "stub":
+                return provider
         
         if "stub" in self.providers:
             return self.providers["stub"]
