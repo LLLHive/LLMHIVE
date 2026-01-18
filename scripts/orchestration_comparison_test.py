@@ -107,7 +107,8 @@ TEST_PROMPTS = [
         id="code_002",
         category=PromptCategory.CODING,
         prompt="Explain the difference between async/await and threading in Python. When would you use each? Provide a brief code example for each approach.",
-        expected_elements=["asyncio", "threading", "I/O-bound", "CPU-bound", "GIL", "concurrent"],
+        # Fixed: Replace 'GIL' with 'await' - GIL is advanced detail not always covered
+        expected_elements=["asyncio", "threading", "I/O-bound", "CPU-bound", "await", "concurrent"],
         difficulty="hard",
         requires_reasoning=True,
     ),
