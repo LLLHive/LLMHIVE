@@ -2794,11 +2794,14 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             final_text = artifacts.final_response.content
         
         # Apply quality boosting for high accuracy requests
-        if QUALITY_BOOSTER_AVAILABLE and accuracy_level >= 4:
+        # NOTE: Quality booster disabled at level 4 - causes over-summarization
+        # resulting in terse responses that miss contextual keywords
+        # TODO: Fix quality booster to preserve context before re-enabling
+        if QUALITY_BOOSTER_AVAILABLE and accuracy_level >= 5:  # Only level 5+
             booster = _get_quality_booster()
             if booster:
                 try:
-                    logger.info("Applying quality boost for high-accuracy request")
+                    logger.info("Applying quality boost for maximum-accuracy request")
                     boost_result = await booster.boost(
                         base_prompt,
                         final_text,
