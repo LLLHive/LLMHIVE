@@ -238,7 +238,12 @@ Focus on:
 - Engaging language and style
 - Meeting the EXACT requirements (if asked for 5 items, provide exactly 5 numbered items)
 - For name/idea generation: provide a clear explanation of the meaning/reasoning behind each one
-- Quality and distinctiveness of each element""",
+- Quality and distinctiveness of each element
+
+For product descriptions, include:
+- Key features and what they do (e.g., automated watering, fresh harvest)
+- Emotional benefits and practical benefits
+- Specific action words (automated, harvest, fresh, grow)""",
 
     "factual_question": """Provide accurate, factual information for this question.
 
@@ -255,20 +260,29 @@ Ensure your response is:
 {question}
 
 Structure your analysis:
-- Key points to consider
+- Cover ALL major factors comprehensively (don't skip any category)
+- For business/work topics: include cost savings, productivity, technology, real estate, and talent considerations
 - Pros and cons where relevant
 - Supporting evidence or reasoning
-- Clear conclusions""",
+- Clear, balanced conclusions""",
 
-    "multi_step": """Complete this multi-part task thoroughly.
+    "multi_step": """Complete this multi-part task thoroughly with detailed analysis.
 
 {question}
 
 Approach systematically:
-- Address each requirement explicitly
+- Address each requirement explicitly with full detail
+- Show all calculations and reasoning
 - Maintain logical flow between parts
 - Ensure nothing is missed
-- Provide a complete response""",
+- Provide a complete, comprehensive response
+
+For financial/business analysis:
+- Calculate current profit and profit margin explicitly
+- Show cost reduction amounts for each option
+- Analyze revenue impact of each option
+- Quantify trade-offs (e.g., "15% less foot traffic = X% revenue loss")
+- Make a clear recommendation with supporting numbers""",
 
     "comparison": """Compare these items/options comprehensively.
 

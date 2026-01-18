@@ -1,0 +1,1180 @@
+{
+  "timestamp": "2026-01-17T22:28:04.771106",
+  "summary": {
+    "total_prompts": 14,
+    "llmhive_wins": 9,
+    "premium_wins": 5,
+    "ties": 0,
+    "avg_llmhive_quality": 0.7795918367346939,
+    "avg_premium_quality": 0.9214285714285715,
+    "avg_cost_savings_percent": 88.49829959193958,
+    "avg_llmhive_latency_ms": 27688.04052897862,
+    "avg_premium_latency_ms": 22829.613932541437,
+    "by_category": {
+      "math": {
+        "count": 2,
+        "llmhive_wins": 1,
+        "avg_quality_diff": -0.5,
+        "avg_cost_savings": 87.88071239407638
+      },
+      "coding": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 94.82238012006195
+      },
+      "reasoning": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.15000000000000002,
+        "avg_cost_savings": 82.38325516328524
+      },
+      "creative": {
+        "count": 2,
+        "llmhive_wins": 0,
+        "avg_quality_diff": -0.25,
+        "avg_cost_savings": 79.19059096910344
+      },
+      "factual": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.04999999999999999,
+        "avg_cost_savings": 85.310288366764
+      },
+      "analysis": {
+        "count": 2,
+        "llmhive_wins": 1,
+        "avg_quality_diff": -0.09285714285714286,
+        "avg_cost_savings": 94.93768466982752
+      },
+      "multi_step": {
+        "count": 2,
+        "llmhive_wins": 1,
+        "avg_quality_diff": -0.35,
+        "avg_cost_savings": 94.9631854604585
+      }
+    }
+  },
+  "results": [
+    {
+      "prompt_id": "math_001",
+      "category": "math",
+      "llmhive_wins": true,
+      "cost_savings_percent": 78.79558948261239,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "math_001",
+        "category": "math",
+        "system": "llmhive_orchestrated",
+        "answer": "Current profit margin: 30% Required expenses for 40% profit margin: $1.44 million (a reduction of $240,000 from current expenses)",
+        "latency_ms": 19816.23125076294,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "30%",
+          "profit margin",
+          "$1.44 million",
+          "expenses"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "math_001",
+          "category": "math",
+          "system": "openai/gpt-5.2",
+          "answer": "Profit = Revenue \u2212 Expenses = \\$2.4M \u2212 \\$1.68M = **\\$0.72M**.\n\n### 1) Current profit margin\n\\[\n\\text{Profit margin}=\\frac{\\text{Profit}}{\\text{Revenue}}\\times 100\n=\\frac{0.72}{2.4}\\times 100= **30\\%**\n\\]\n\n### 2) Expenses needed for a 40% margin (same revenue)\nA 40% profit margin means profit is 40% of revenue:\n\\[\n\\text{Target profit}=0.40 \\times 2.4M = **\\$0.96M**\n\\]\nSo expenses must be:\n\\[\n\\text{Expenses}=\\text{Revenue}-\\text{Target profit}=2.4M-0.96M= **\\$1.44M**\n\\]\n\n**Answer:** Current profit margin = **30%**. To reach **40%**, expenses should be **\\$1.44 million** (with revenue still \\$2.4 million).",
+          "latency_ms": 6340.916872024536,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.01419,
+          "quality_score": 1.0,
+          "elements_found": [
+            "30%",
+            "profit margin",
+            "$1.44 million",
+            "expenses"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "math_001",
+          "category": "math",
+          "system": "anthropic/claude-opus-4",
+          "answer": "I'll help you calculate the current profit margin and determine the required expenses for a 40% margin.\n\n**Current Situation:**\n- Revenue: $2,400,000\n- Expenses: $1,680,000\n- Profit: $2,400,000 - $1,680,000 = $720,000\n\n**Current Profit Margin:**\nProfit Margin = (Profit \u00f7 Revenue) \u00d7 100\nProfit Margin = ($720,000 \u00f7 $2,400,000) \u00d7 100\nProfit Margin = **30%**\n\n**To achieve a 40% profit margin:**\n- Target Profit = 40% \u00d7 $2,400,000 = $960,000\n- Required Expenses = Revenue - Target Profit\n- Required Expenses = $2,400,000 - $960,000 = **$1,440,000**\n\n**Summary:**\n- Current profit margin: 30%\n- To achieve 40% margin, expenses must be reduced from $1,680,000 to $1,440,000\n- This represents a reduction of $240,000 in expenses (14.3% decrease)",
+          "latency_ms": 14544.330596923828,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.02118,
+          "quality_score": 0.85,
+          "elements_found": [
+            "30%",
+            "profit margin",
+            "expenses"
+          ],
+          "elements_missing": [
+            "$1.44 million"
+          ],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "math_002",
+      "category": "math",
+      "llmhive_wins": false,
+      "cost_savings_percent": 96.96583530554038,
+      "quality_difference": -1.0,
+      "llmhive": {
+        "prompt_id": "math_002",
+        "category": "math",
+        "system": "llmhive_orchestrated",
+        "answer": "is accurate to the cent.",
+        "latency_ms": 20567.980766296387,
+        "models_used": [
+          "GPT-4o"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00125,
+        "quality_score": 0.0,
+        "elements_found": [],
+        "elements_missing": [
+          "$14,176",
+          "compound interest",
+          "monthly",
+          "$4,176"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "math_002",
+          "category": "math",
+          "system": "openai/gpt-5.2",
+          "answer": "Use the compound interest formula:\n\n\\[\nA=P\\left(1+\\frac{r}{n}\\right)^{nt}\n\\]\n\nWhere \\(P=10000\\), \\(r=0.07\\), \\(n=12\\) (monthly), \\(t=5\\).\n\n\\[\nA=10000\\left(1+\\frac{0.07}{12}\\right)^{12\\cdot 5}\n=10000(1.0058333333)^{60}\n\\approx 10000(1.417624)\n\\approx \\$14{,}176.24\n\\]\n\n- **Total amount after 5 years:** \\(\\boxed{\\$14{,}176.24}\\)  \n- **Interest earned:** \\(\\boxed{\\$14{,}176.24 - \\$10{,}000 = \\$4{,}176.24}\\)",
+          "latency_ms": 17113.017797470093,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.059294999999999994,
+          "quality_score": 0.5,
+          "elements_found": [
+            "compound interest",
+            "monthly"
+          ],
+          "elements_missing": [
+            "$14,176",
+            "$4,176"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "math_002",
+          "category": "math",
+          "system": "anthropic/claude-opus-4",
+          "answer": "I'll calculate the compound interest for you step by step.\n\nGiven information:\n- Principal (P) = $10,000\n- Annual interest rate (r) = 7% = 0.07\n- Compounding frequency (n) = 12 times per year (monthly)\n- Time period (t) = 5 years\n\n**Formula for compound interest:**\nA = P(1 + r/n)^(nt)\n\n**Calculation:**\nA = 10,000(1 + 0.07/12)^(12\u00d75)\nA = 10,000(1 + 0.005833...)^60\nA = 10,000(1.005833...)^60\nA = 10,000(1.41765...)\nA = $14,176.25\n\n**Results:**\n- **Total Amount: $14,176.25**\n- **Interest Earned: $14,176.25 - $10,000 = $4,176.25**\n\nThis means that your $10,000 investment will grow to $14,176.25 after 5 years, earning you $4,176.25 in compound interest. The monthly compounding helps your money grow faster than if it were compounded annually, as you earn interest on your interest more frequently.",
+          "latency_ms": 15554.933071136475,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.0231,
+          "quality_score": 1.0,
+          "elements_found": [
+            "$14,176",
+            "compound interest",
+            "monthly",
+            "$4,176"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "code_001",
+      "category": "coding",
+      "llmhive_wins": true,
+      "cost_savings_percent": 95.07777121480606,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "code_001",
+        "category": "coding",
+        "system": "llmhive_orchestrated",
+        "answer": "```python from typing import List, Optional, Union def binary_search(arr: List[Union[int, float]], target: Union[int, float]) -> Optional[int]: \"\"\" Performs binary search on a sorted list to find the index of target element. Args: arr: A sorted list of integers or floats in ascending order target: The element to search for Returns: The index of the target element if found, None otherwise Raises: TypeError: If arr is not a list or contains non-numeric types ValueError: If the list is not sorted in ascending order Time Complexity: O(log n) where n is the length of the array Space Complexity: O(1) - uses constant extra space Example: >>> binary_search([1, 3, 5, 7, 9], 5) 2 >>> binary_search([1, 3, 5, 7, 9], 4) None \"\"\" # Input validation if not isinstance(arr, list): raise TypeError(\"First argument must be a list\") if not arr: # Empty list case return None # Check if all elements are numeric if not all(isinstance(x, (int, float)) for x in arr): raise TypeError(\"List must contain only numeric values (int or float)\") # Check if target is numeric if not isinstance(target, (int, float)): raise TypeError(\"Target must be a numeric value (int or float)\") # Verify list is sorted for i in range(1, len(arr)): if arr[i] < arr[i-1]: raise ValueError(\"List must be sorted in ascending order\") # Binary search implementation left = 0 right = len(arr) - 1 while left <= right: mid = left + (right - left) // 2 # Prevents integer overflow if arr[mid] == target: return mid elif arr[mid] < target: left = mid + 1 else: right = mid - 1 return None # Target not found # Example usage and test cases if __name__ == \"__main__\": # Test cases test_array = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19] print(\"Test Array:\", test_array) print(f\"Search for 7: Index {binary_search(test_array, 7)}\") # Should return 3 print(f\"Search for 1: Index {binary_search(test_array, 1)}\") # Should return 0 print(f\"Search for 19: Index {binary_search(test_array, 19)}\") # Should return 9 print(f\"Search for 4: Index {binary_search(test_array, 4)}\") # Should return None print(f\"Search for 20: Index {binary_search(test_array, 20)}\") # Should return None # Edge cases print(f\"Empty list: {binary_search([], 5)}\") # Should return None print(f\"Single element (found): {binary_search([5], 5)}\") # Should return 0 print(f\"Single element (not found): {binary_search([5], 3)}\") # Should return None # Error handling examples try: binary_search([3, 1, 4, 1, 5], 4) # Unsorted list except ValueError as e: print(f\"Caught expected error: {e}\") try: binary_search([1, 2, \"three\", 4], 2) # Non-numeric elements except TypeError as e: print(f\"Caught expected error: {e}\") ``` **Time Complexity Explanation:** - **Time Complexity: O(log n)** - In each iteration, we eliminate half of the remaining search space, leading to a logarithmic time complexity - **Space Complexity: O(1)** - We only use a constant amount of extra space for variables (left, right, mid) **Key Features:** 1. **Type Hints**: Uses `typing` module for clear parameter and return type specification 2. **Error Handling**: Validates input types, empty lists, and sorted order requirement 3. **Overflow Prevention**: Uses `left + (right - left) // 2` instead of `(left + right) // 2` 4. **Comprehensive Documentation**: Detailed docstring with examples and complexity analysis 5. **Robust Testing**: Includes edge cases and error condition examples.",
+        "latency_ms": 31715.70920944214,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "def binary_search",
+          "O(log n)",
+          "left",
+          "right",
+          "mid",
+          "type hints"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "code_001",
+          "category": "coding",
+          "system": "openai/gpt-5.2",
+          "answer": "```python\nfrom __future__ import annotations\n\nfrom collections.abc import Sequence\nfrom typing import TypeVar\n\nT = TypeVar(\"T\")\n\n\ndef binary_search(sorted_seq: Sequence[T], target: T) -> int:\n    \"\"\"\n    Perform binary search on a sorted sequence.\n\n    Args:\n        sorted_seq: A sequence sorted in non-decreasing order (ascending).\n        target: The value to find.\n\n    Returns:\n        The index of `target` if found; otherwise -1.\n\n    Raises:\n        TypeError: If `sorted_seq` is not a sequence, or if elements cannot be\n                   compared to `target` using < / >.\n        ValueError: If `sorted_seq` is empty.\n    \"\"\"\n    if not isinstance(sorted_seq, Sequence):\n        raise TypeError(\"sorted_seq must be a sequence (e.g., list, tuple).\")\n\n    if len(sorted_seq) == 0:\n        raise ValueError(\"sorted_seq must not be empty.\")\n\n    left, right = 0, len(sorted_seq) - 1\n\n    while left <= right:\n        mid = (left + right) // 2\n        mid_val = sorted_seq[mid]\n\n        try:\n            if mid_val == target:\n                return mid\n            if mid_val < target:\n                left = mid + 1\n            else:\n                right = mid - 1\n        except TypeError as e:\n            raise TypeError(\n                \"Elements of sorted_seq must be comparable with target.\"\n            ) from e\n\n    return -1\n```\n\n### Time complexity\nBinary search halves the search interval each iteration. For a sequence of length **n**, it performs at most about **log\u2082(n)** comparisons, so:\n\n- **Time:** `O(log n)`  \n- **Space:** `O(1)` (iterative implementation uses constant extra memory)\n\nNote: This assumes the input is already sorted. Checking whether it\u2019s sorted would take `O(n)` and is typically not done inside the search.",
+          "latency_ms": 4909.6519947052,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.025334999999999996,
+          "quality_score": 0.9333333333333333,
+          "elements_found": [
+            "def binary_search",
+            "O(log n)",
+            "left",
+            "right",
+            "mid"
+          ],
+          "elements_missing": [
+            "type hints"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "code_001",
+          "category": "coding",
+          "system": "anthropic/claude-opus-4",
+          "answer": "Here's a comprehensive implementation of binary search in Python:\n\n```python\nfrom typing import List, Optional, Union\n\ndef binary_search(arr: List[Union[int, float]], target: Union[int, float]) -> Optional[int]:\n    \"\"\"\n    Performs binary search on a sorted list to find the target element.\n    \n    Args:\n        arr: A sorted list of integers or floats\n        target: The element to search for\n        \n    Returns:\n        The index of the target element if found, None otherwise\n        \n    Raises:\n        ValueError: If the input list is not sorted\n        TypeError: If inputs are of invalid types\n    \"\"\"\n    # Type checking\n    if not isinstance(arr, list):\n        raise TypeError(\"First argument must be a list\")\n    \n    if not all(isinstance(x, (int, float)) for x in arr):\n        raise TypeError(\"All elements in the list must be integers or floats\")\n    \n    if not isinstance(target, (int, float)):\n        raise TypeError(\"Target must be an integer or float\")\n    \n    # Check if array is sorted\n    if not is_sorted(arr):\n        raise ValueError(\"Input list must be sorted in ascending order\")\n    \n    # Handle empty list\n    if not arr:\n        return None\n    \n    left = 0\n    right = len(arr) - 1\n    \n    while left <= right:\n        # Calculate middle index (avoiding potential overflow)\n        mid = left + (right - left) // 2\n        \n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    \n    return None\n\n\ndef is_sorted(arr: List[Union[int, float]]) -> bool:\n    \"\"\"Helper function to check if a list is sorted in ascending order.\"\"\"\n    return all(arr[i] <= arr[i + 1] for i in range(len(arr) - 1))\n\n\n# Recursive implementation (alternative approach)\ndef binary_search_recursive(arr: List[Union[int, float]], target: Union[int, float], \n                          left: int = 0, right: Optional[int] = None) -> Optional[int]:\n    \"\"\"\n    Recursive implementation of binary search.\n    \n    Args:\n        arr: A sorted list of integers or floats\n        target: The element to search for\n        left: Starting index (default: 0)\n        right: Ending index (default: len(arr) - 1)\n        \n    Returns:\n        The index of the target element if found, None otherwise\n    \"\"\"\n    if right is None:\n        right = len(arr) - 1\n    \n    # Base case: element not found\n    if left > right:\n        return None\n    \n    # Calculate middle index\n    mid = left + (right - left) // 2\n    \n    if arr[mid] == target:\n        return mid\n    elif arr[mid] < target:\n        return binary_search_recursive(arr, target, mid + 1, right)\n    else:\n        return binary_search_recursive(arr, target, left, mid - 1)\n\n\n# Example usage and testing\nif __name__ == \"__main__\":\n    # Test cases\n    test_cases = [\n        ([1, 3, 5, 7, 9, 11, 13], 7, 3),\n        ([1, 3, 5, 7, 9, 11, 13], 1, 0),\n        ([1, 3, 5, 7, 9, 11, 13], 13, 6),\n        ([1, 3, 5, 7, 9, 11, 13], 4, None),\n        ([1], 1, 0),\n        ([1], 2, None),\n        ([], 5, None),\n        ([1.5, 2.7, 3.9, 5.1], 3.9, 2),\n    ]\n    \n    print(\"Testing iterative binary search:\")\n    for arr, target, expected in test_cases:\n        result = binary_search(arr, target)\n        print(f\"Array: {arr}, Target: {target}, Result: {result}, Expected: {expected}, \"\n              f\"Pass: {result == expected}\")\n    \n    print(\"\\nTesting recursive binary search:\")\n    for arr, target, expected in test_cases:\n        result = binary_search_recursive(arr, target)\n        print(f\"Array: {arr}, Target: {target}, Result: {result}, Expected: {expected}, \"\n              f\"Pass: {result == expected}\")\n    \n    # Test error handling\n    print(\"\\nTesting error handling:\")\n    try:\n        binary_search([3, 1, 4, 1, 5], 4)  # Unsorted list\n    except ValueError as e:\n        print(f\"Caught expected error: {e}\")\n    \n    try:\n        binary_search(\"not a list\", 5)  # Invalid type\n    except TypeError as e:\n        print(f\"Caught expected error: {e}\")\n```\n\n## Time Complexity Analysis\n\n**Time Complexity: O(log n)**\n\nBinary search has a logarithmic time complexity because:\n\n1. **Divide and Conquer**: In each iteration, we eliminate half of the remaining elements\n2. **Number of iterations**: The maximum number of iterations is log\u2082(n) + 1\n3. **Mathematical proof**: \n   - Starting with n elements\n   - After 1 iteration: n/2 elements remain\n   - After 2 iterations: n/4 elements remain\n   - After k iterations: n/2^k elements remain\n   - Search ends when n/2^k = 1, so k = log\u2082(n)\n\n**Space Complexity:**\n- **Iterative version**: O(1) - only uses a constant amount of extra space\n- **Recursive version**: O(log n) - due to the recursive call stack\n\n## Key Features of This Implementation:\n\n1. **Type Hints**: Uses Python's typing module for better code clarity and IDE support\n\n2. **Error Handling**:\n   - Validates input types\n   - Checks if the list is sorted\n   - Handles empty lists gracefully\n\n3. **Overflow Prevention**: Uses `mid = left + (right - left) // 2` instead of `mid = (left + right) // 2` to prevent potential integer overflow in other languages\n\n4. **Flexibility**: Works with both integers and floats\n\n5. **Both Implementations**: Includes both iterative and recursive approaches\n\n## When to Use Binary Search:\n\n- **Pros**:\n  - Very efficient for large sorted datasets\n  - Predictable performance\n  - Simple to implement\n\n- **Cons**:\n  - Requires sorted data\n  - Not efficient for small datasets (overhead might exceed benefits)\n  - Not suitable for linked lists (no random access)\n\nBinary search is ideal when you have a large, sorted dataset and need to perform multiple searches. The initial cost of sorting (O(n log n)) is amortized over many searches.",
+          "latency_ms": 67426.8388748169,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.127035,
+          "quality_score": 1.0,
+          "elements_found": [
+            "def binary_search",
+            "O(log n)",
+            "left",
+            "right",
+            "mid",
+            "type hints"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "code_002",
+      "category": "coding",
+      "llmhive_wins": true,
+      "cost_savings_percent": 94.56698902531782,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "code_002",
+        "category": "coding",
+        "system": "llmhive_orchestrated",
+        "answer": "```python\n## Async/Await vs Threading in Python ### Key Differences: **Async/Await (Asynchronous Programming):** - Single-threaded cooperative multitasking - Uses an event loop to manage coroutines - Tasks voluntarily yield control with `await` - Ideal for I/O-bound operations - Lower memory overhead - No thread synchronization issues **Threading:** - Multi-threaded preemptive multitasking - Creates actual OS threads - Python's GIL limits true parallelism for CPU tasks - Better for I/O-bound tasks that block or CPU-bound tasks with C extensions - Higher memory overhead per thread - Requires synchronization mechanisms ### When to Use Each: **Use Async/Await for:** - Network requests (HTTP, API calls) - Database queries - File I/O operations - WebSocket connections - High-concurrency scenarios with many I/O operations **Use Threading for:** - Blocking operations that can't be made async - CPU-bound tasks with C extensions (numpy, etc.) - Legacy code integration - Operations requiring true parallelism ### Code Examples: **Async/Await Example:** ```python import asyncio import aiohttp import time async def fetch_url(session, url): \"\"\"Asynchronously fetch a URL\"\"\" async with session. get(url) as response: return await response. text() async def main(): \"\"\"Main async function demonstrating concurrent requests\"\"\" urls = [ 'https://httpbin. org/delay/1', 'https://httpbin. org/delay/1', 'https://httpbin. org/delay/1' ] start_time = time. time() async with aiohttp. ClientSession() as session: # Run all requests concurrently tasks = [fetch_url(session, url) for url in urls] results = await asyncio. gather(*tasks) end_time = time. time() print(f\"Async: Completed {len(results)} requests in {end_time - start_time:.2f} seconds\") # Run the async example # asyncio. run(main()) ``` **Threading Example:** ```python import threading import requests import time def fetch_url_sync(url, results, index): \"\"\"Synchronously fetch a URL in a thread\"\"\" try: response = requests. get(url) results[index] = response. text except Exception as e: results[index] = str(e) def main_threading(): \"\"\"Main function demonstrating threading\"\"\" urls = [ 'https://httpbin. org/delay/1', 'https://httpbin. org/delay/1', 'https://httpbin. org/delay/1' ] start_time = time. time() # Create threads and results storage threads = [] results = [None] * len(urls) # Start all threads for i, url in enumerate(urls): thread = threading. Thread(target=fetch_url_sync, args=(url, results, i)) threads. append(thread) thread. start() # Wait for all threads to complete for thread in threads: thread. join() end_time = time. time() print(f\"Threading: Completed {len(results)} requests in {end_time - start_time:.2f} seconds\") # Run the threading example # main_threading() ``` **CPU-Bound Task Example (showing difference):** ```python import asyncio import threading import time def cpu_bound_task(n): \"\"\"CPU-intensive calculation\"\"\" total = 0 for i in range(n): total += i ** 2 return total # Async version (won't provide real parallelism for CPU tasks) async def async_cpu_example(): \"\"\"Async version - runs sequentially due to CPU-bound nature\"\"\" start = time. time() tasks = [asyncio. to_thread(cpu_bound_task, 1000000) for _ in range(3)] results = await asyncio. gather(*tasks) end = time. time() print(f\"Async CPU-bound: {end - start:.2f} seconds\") # Threading version (limited by GIL but can help with some operations) def threading_cpu_example(): \"\"\"Threading version\"\"\" start = time. time() threads = [] for _ in range(3): thread = threading. Thread(target=cpu_bound_task, args=(1000000,)) threads. append(thread) thread. start() for thread in threads: thread. join() end = time. time() print(f\"Threading CPU-bound: {end - start:.2f} seconds\") # Example usage: # asyncio. run(async_cpu_example()) # threading_cpu_example() ``` ### Summary: - **Async/await**: Single-threaded, event-driven, excellent for I/O-bound concurrent operations - **Threading**: Multi-threaded, good for I/O-bound tasks and some CPU-bound scenarios, but limited by Python's GIL for pure CPU tasks - Choose async/await for modern I/O-heavy applications, threading for legacy integration or specific blocking operations.\n```",
+        "latency_ms": 37494.87113952637,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "asyncio",
+          "threading",
+          "I/O-bound",
+          "CPU-bound",
+          "GIL",
+          "concurrent"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "code_002",
+          "category": "coding",
+          "system": "openai/gpt-5.2",
+          "answer": "## Conceptual difference\n\n### `async/await` (asyncio): *concurrency via cooperative multitasking*\n- Runs many tasks on (typically) a single OS thread using an **event loop**.\n- Tasks **yield control explicitly** at `await` points (cooperative scheduling).\n- Best for **I/O-bound** work with lots of waiting (network calls, sockets, DB queries, file I/O when supported by async libs).\n- Requires **async-compatible libraries** (e.g., `aiohttp` instead of `requests`).\n\n### Threading: *concurrency via OS threads (preemptive scheduling)*\n- Runs code in multiple **OS-level threads** within one process.\n- The OS can switch between threads at any time (preemptive scheduling).\n- In CPython, the **GIL** means threads don\u2019t speed up **CPU-bound** Python code much, but they\u2019re useful for:\n  - **Blocking I/O** using normal synchronous libraries (e.g., `requests`)\n  - Running background tasks without converting code to async\n  - Interacting with libraries that aren\u2019t async-friendly\n\n## When to use each\n\nUse **`async/await`** when:\n- You have **many concurrent I/O operations** (hundreds/thousands), like web scraping, API fan-out, websocket servers.\n- You can use async libraries end-to-end.\n- You want efficient concurrency with low overhead per task.\n\nUse **threading** when:\n- You need concurrency with **existing blocking libraries** (e.g., `requests`, many DB drivers).\n- You have a smaller number of concurrent operations (dozens) and want simpler integration.\n- You\u2019re doing I/O-bound work and don\u2019t want to restructure code around an event loop.\n\n> Note: For **CPU-bound** parallelism in Python, prefer **multiprocessing** or native extensions\u2014threads won\u2019t bypass the GIL for pure Python CPU work.\n\n---\n\n## Brief code example: `async/await` (asyncio + aiohttp)\n\n```python\nimport asyncio\nimport aiohttp\n\nasync def fetch(session, url):\n    async with session.get(url) as resp:\n        return await resp.text()\n\nasync def main():\n    urls = [\"https://example.com\", \"https://www.python.org\", \"https://httpbin.org/get\"]\n    async with aiohttp.ClientSession() as session:\n        pages = await asyncio.gather(*(fetch(session, u) for u in urls))\n    print([len(p) for p in pages])\n\nasyncio.run(main())\n```\n\n---\n\n## Brief code example: threading (ThreadPoolExecutor + requests)\n\n```python\nfrom concurrent.futures import ThreadPoolExecutor\nimport requests\n\ndef fetch(url):\n    r = requests.get(url, timeout=10)\n    return r.text\n\nurls = [\"https://example.com\", \"https://www.python.org\", \"https://httpbin.org/get\"]\n\nwith ThreadPoolExecutor(max_workers=10) as pool:\n    pages = list(pool.map(fetch, urls))\n\nprint([len(p) for p in pages])\n```\n\n---\n\n### Rule of thumb\n- Many concurrent network calls + async libraries available \u2192 **async/await**\n- Need to use blocking calls/libraries without refactoring \u2192 **threads**",
+          "latency_ms": 10848.305940628052,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.040455000000000005,
+          "quality_score": 1.0,
+          "elements_found": [
+            "asyncio",
+            "threading",
+            "I/O-bound",
+            "CPU-bound",
+            "GIL",
+            "concurrent"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "code_002",
+          "category": "coding",
+          "system": "anthropic/claude-opus-4",
+          "answer": "## Async/Await vs Threading in Python\n\n### Key Differences\n\n**Async/Await (Asyncio)**\n- **Concurrency model**: Cooperative multitasking (single-threaded)\n- **Best for**: I/O-bound operations (network requests, file operations, database queries)\n- **How it works**: Tasks voluntarily yield control when waiting for I/O\n- **GIL impact**: Not affected since it's single-threaded\n- **Resource usage**: Lightweight, can handle thousands of concurrent tasks\n\n**Threading**\n- **Concurrency model**: Preemptive multitasking (multi-threaded)\n- **Best for**: I/O-bound operations, some CPU-bound tasks with releases of GIL\n- **How it works**: OS manages thread switching\n- **GIL impact**: Limited by Global Interpreter Lock for CPU-bound tasks\n- **Resource usage**: More overhead, each thread has its own stack\n\n### When to Use Each\n\n**Use Async/Await when:**\n- Dealing with many concurrent I/O operations\n- Making multiple API calls or database queries\n- Building web servers or network applications\n- You need thousands of concurrent operations\n\n**Use Threading when:**\n- Integrating with blocking libraries that don't support async\n- Performing I/O-bound tasks with legacy code\n- Running CPU-bound operations that release the GIL (like NumPy operations)\n- You need true parallelism with C extensions\n\n### Code Examples\n\n#### Async/Await Example\n```python\nimport asyncio\nimport aiohttp\nimport time\n\nasync def fetch_data(session, url, id):\n    \"\"\"Asynchronously fetch data from a URL\"\"\"\n    print(f\"Starting request {id}\")\n    async with session.get(url) as response:\n        data = await response.text()\n        print(f\"Completed request {id}\")\n        return len(data)\n\nasync def main():\n    urls = ['http://example.com' for _ in range(5)]\n    \n    async with aiohttp.ClientSession() as session:\n        # Create tasks for concurrent execution\n        tasks = [fetch_data(session, url, i) for i, url in enumerate(urls)]\n        \n        # Run all tasks concurrently\n        start = time.time()\n        results = await asyncio.gather(*tasks)\n        end = time.time()\n        \n        print(f\"Results: {results}\")\n        print(f\"Total time: {end - start:.2f} seconds\")\n\n# Run the async function\nasyncio.run(main())\n```\n\n#### Threading Example\n```python\nimport threading\nimport requests\nimport time\nfrom concurrent.futures import ThreadPoolExecutor\n\ndef fetch_data(url, id):\n    \"\"\"Fetch data using threads\"\"\"\n    print(f\"Thread {threading.current_thread().name}: Starting request {id}\")\n    response = requests.get(url)\n    print(f\"Thread {threading.current_thread().name}: Completed request {id}\")\n    return len(response.text)\n\ndef main():\n    urls = ['http://example.com' for _ in range(5)]\n    \n    # Using ThreadPoolExecutor for cleaner thread management\n    start = time.time()\n    with ThreadPoolExecutor(max_workers=5) as executor:\n        # Submit all tasks\n        futures = [executor.submit(fetch_data, url, i) for i, url in enumerate(urls)]\n        \n        # Collect results\n        results = [future.result() for future in futures]\n    \n    end = time.time()\n    \n    print(f\"Results: {results}\")\n    print(f\"Total time: {end - start:.2f} seconds\")\n\nif __name__ == \"__main__\":\n    main()\n```\n\n### Performance Comparison Example\n\nHere's a simple example comparing both approaches for I/O-bound tasks:\n\n```python\nimport asyncio\nimport threading\nimport time\nimport queue\n\n# Simulated I/O-bound task\ndef io_task(duration=0.1):\n    \"\"\"Simulate an I/O operation\"\"\"\n    time.sleep(duration)\n\n# Async version\nasync def async_io_task(duration=0.1):\n    \"\"\"Simulate an async I/O operation\"\"\"\n    await asyncio.sleep(duration)\n\n# Test with many concurrent operations\nnum_tasks = 100\n\n# Threading approach\ndef threading_test():\n    start = time.time()\n    threads = []\n    \n    for i in range(num_tasks):\n        t = threading.Thread(target=io_task)\n        t.start()\n        threads.append(t)\n    \n    for t in threads:\n        t.join()\n    \n    return time.time() - start\n\n# Async approach\nasync def async_test():\n    start = time.time()\n    tasks = [async_io_task() for _ in range(num_tasks)]\n    await asyncio.gather(*tasks)\n    return time.time() - start\n\n# Run tests\nprint(f\"Threading time: {threading_test():.2f} seconds\")\nprint(f\"Async time: {asyncio.run(async_test()):.2f} seconds\")\n```\n\n### Summary\n\n- **Async/await** is ideal for modern I/O-bound applications with many concurrent operations\n- **Threading** is better for legacy code integration and specific scenarios where true parallelism is needed\n- Both are limited by the GIL for CPU-bound tasks in pure Python\n- For CPU-bound parallelism, consider `multiprocessing` instead",
+          "latency_ms": 61556.732177734375,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.09759,
+          "quality_score": 1.0,
+          "elements_found": [
+            "asyncio",
+            "threading",
+            "I/O-bound",
+            "CPU-bound",
+            "GIL",
+            "concurrent"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_001",
+      "category": "reasoning",
+      "llmhive_wins": true,
+      "cost_savings_percent": 81.52254249815225,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "reason_001",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "# SOLVING THE CHICKENS AND RABBITS PROBLEM \n**Understanding:**\nWhat is being asked: Find the number of chickens and rabbits given total heads and legs Key constraints: 35 total heads, 94 total legs, chickens have 2 legs, rabbits have 4 legs Type of problem: System of linear equations (algebra) \n**Approach:**\nStrategy: Set up a system of two equations with two unknowns and solve using substitution Why this approach: This is a classic system of equations problem where we have two constraints and two unknowns \n**Solution:**\n### Step 1: Define Variables - Let c = number of chickens - Let r = number of rabbits - Each chicken has 1 head and 2 legs - Each rabbit has 1 head and 4 legs ### Step 2: Set Up Equations From the given information: - Total heads: c + r = 35 (each animal has exactly 1 head) - Total legs: 2c + 4r = 94 (chickens have 2 legs, rabbits have 4 legs) ### Step 3: Solve the Equations From equation 1: c + r = 35 Solve for c: c = 35 - r Substitute into equation 2: 2(35 - r) + 4r = 94 70 - 2r + 4r = 94 70 + 2r = 94 2r = 94 - 70 2r = 24 r = 12 Now find c: c = 35 - r = 35 - 12 = 23 ### Step 4: Verify Your Answer Check equation 1 (heads): 23 + 12 = 35 \u2713 Check equation 2 (legs): 2(23) + 4(12) = 46 + 48 = 94 \u2713 Both equations are satisfied. ### Step 5: Final Answer The farmer has 23 chickens and 12 rabbits. \n**Verification:**\nCheck 1: Total animals = 23 + 12 = 35 heads \u2713 Check 2: Total legs = (23 \u00d7 2) + (12 \u00d7 4) = 46 + 48 = 94 \u2713 Check 3: Answer makes sense - positive integers for both animals \u2713 \n**CONFIDENCE :**\nConfidence level: 100% Most uncertain about: Nothing - this is a straightforward algebraic solution with clear verification \n**Answer:**\nThe farmer has 23 chickens and 12 rabbits.",
+        "latency_ms": 17703.818798065186,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "23 chickens",
+          "12 rabbits",
+          "2 legs",
+          "4 legs",
+          "equation"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "openai/gpt-5.2",
+          "answer": "Let:\n- \\(c\\) = number of chickens\n- \\(r\\) = number of rabbits\n\n**1) Use the heads count.**  \nEach animal has 1 head, so:\n\\[\nc + r = 35\n\\]\n\n**2) Use the legs count.**  \nChickens have 2 legs, rabbits have 4 legs, so:\n\\[\n2c + 4r = 94\n\\]\n\n**3) Solve the system.**  \nFrom the heads equation:\n\\[\nc = 35 - r\n\\]\nSubstitute into the legs equation:\n\\[\n2(35 - r) + 4r = 94\n\\]\nDistribute:\n\\[\n70 - 2r + 4r = 94\n\\]\nCombine like terms:\n\\[\n70 + 2r = 94\n\\]\nSubtract 70:\n\\[\n2r = 24\n\\]\nDivide by 2:\n\\[\nr = 12\n\\]\n\n**4) Find chickens.**\n\\[\nc = 35 - 12 = 23\n\\]\n\n**Answer:** The farmer has **23 chickens** and **12 rabbits**.",
+          "latency_ms": 4443.737030029297,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.015524999999999999,
+          "quality_score": 1.0,
+          "elements_found": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "anthropic/claude-opus-4",
+          "answer": "I need to find the number of chickens and rabbits based on the total number of heads and legs.\n\nLet me define variables:\n- Let c = number of chickens\n- Let r = number of rabbits\n\nNow I'll set up equations based on what I know:\n- Each chicken has 1 head and each rabbit has 1 head\n- Each chicken has 2 legs and each rabbit has 4 legs\n\nFrom the given information:\n- Total heads: c + r = 35\n- Total legs: 2c + 4r = 94\n\nNow I'll solve this system of equations:\n\nFrom the first equation: c + r = 35\nTherefore: c = 35 - r\n\nSubstituting this into the second equation:\n2(35 - r) + 4r = 94\n70 - 2r + 4r = 94\n70 + 2r = 94\n2r = 24\nr = 12\n\nNow I can find the number of chickens:\nc = 35 - r = 35 - 12 = 23\n\nLet me verify this answer:\n- Heads: 23 + 12 = 35 \u2713\n- Legs: 2(23) + 4(12) = 46 + 48 = 94 \u2713\n\nTherefore, the farmer has 23 chickens and 12 rabbits.",
+          "latency_ms": 16146.786212921143,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.025064999999999997,
+          "quality_score": 1.0,
+          "elements_found": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_002",
+      "category": "reasoning",
+      "llmhive_wins": true,
+      "cost_savings_percent": 83.24396782841823,
+      "quality_difference": 0.30000000000000004,
+      "llmhive": {
+        "prompt_id": "reason_002",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "**Problem:**\n## Problem: If all roses are flowers, and some flowers fade quickly, can we conclude that some roses fade quickly?\n\nExplain your logical reasoning. \n**Understanding:**\nWhat is being asked: Whether we can logically conclude that some roses fade quickly based on the given premises Key constraints: Two premises provided - universal statement about roses and existential statement about flowers Type of problem: Logic/deductive reasoning problem involving categorical syllogisms \n**Approach:**\nStrategy: Analyze this as a formal logic problem using set theory and syllogistic reasoning Why this approach: This is a classic logical fallacy question that requires careful analysis of what can and cannot be validly concluded from the given premises \n**Solution:**\n### Step 1: Define Variables - Let R = the set of all roses - Let F = the set of all flowers - Let Q = the set of things that fade quickly - We need to determine if R \u2229 Q \u2260 \u2205 (some roses fade quickly) ### Step 2: Set Up Logical Statements - Premise 1: \"All roses are flowers\" \u2192 R \u2286 F (roses are a subset of flowers) - Premise 2: \"Some flowers fade quickly\" \u2192 F \u2229 Q \u2260 \u2205 (there exists at least one flower that fades quickly) - Question: Can we conclude R \u2229 Q \u2260 \u2205? (some roses fade quickly) ### Step 3: Analyze the Logic From the premises: - We know roses are entirely contained within the set of flowers - We know that somewhere within the set of flowers, there are some that fade quickly - However, we don't know WHERE within the flower set these quick-fading flowers are located ### Step 4: Test with Counterexample Consider this scenario: - Roses = {rose1, rose2, rose3} (none fade quickly) - Other flowers = {tulip1, daisy1} (these fade quickly) - All flowers = {rose1, rose2, rose3, tulip1, daisy1} This satisfies both premises: - All roses are flowers \u2713 - Some flowers (tulips, daisies) fade quickly \u2713 - But NO roses fade quickly ### Step 5: Verify Logical Form This is attempting to conclude: R \u2229 Q \u2260 \u2205 From: R \u2286 F and F \u2229 Q \u2260 \u2205 This is logically invalid - it commits the fallacy of undistributed middle. \n**Verification:**\nCheck 1: The premises are correctly interpreted as universal (all roses are flowers) and existential (some flowers fade quickly) Check 2: The logical chain shows we cannot validly conclude the specific subset of roses has the property that only some unspecified flowers have Check 3: The counterexample demonstrates the conclusion can be false while premises remain true \n**CONFIDENCE :**\nConfidence level: 95% Most uncertain about: Whether the explanation clearly demonstrates why this specific logical error occurs \n**Answer:**\n**No, we cannot conclude that some roses fade quickly.** The reasoning is logically invalid.\n\nWhile we know all roses are flowers, and some flowers fade quickly, we don't know which specific flowers fade quickly.\n\nThe quick-fading flowers could be entirely non-roses (like tulips or daisies).\n\nThe premises don't provide enough information to determine whether any roses are among the quick-fading flowers.\n\nThis is a classic logical fallacy - just because roses belong to the larger category of flowers, and some members of that larger category have a certain property, doesn't mean roses specifically have that property.",
+        "latency_ms": 26667.184829711914,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "cannot conclude",
+          "syllogism",
+          "some",
+          "all",
+          "logical fallacy"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "reason_002",
+          "category": "reasoning",
+          "system": "openai/gpt-5.2",
+          "answer": "No, that conclusion does **not** follow.\n\n### Logical form\n- Premise 1: **All roses are flowers.**  \n  \\( \\forall x \\,(R(x) \\rightarrow F(x)) \\)\n- Premise 2: **Some flowers fade quickly.**  \n  \\( \\exists x \\,(F(x) \\land Q(x)) \\) where \\(Q(x)\\) = \u201cfades quickly\u201d\n- Proposed conclusion: **Some roses fade quickly.**  \n  \\( \\exists x \\,(R(x) \\land Q(x)) \\)\n\n### Why it doesn\u2019t follow\nPremise 2 only tells us that *at least one* flower fades quickly, but it does **not** tell us whether that flower is a rose. The \u201csome\u201d flower could be a tulip, daisy, etc.\n\n### Counterexample (shows invalidity)\nImagine:\n- Roses exist and are flowers (true).\n- Some non-rose flowers (e.g., daisies) fade quickly (true).\n- But **no roses** fade quickly (false conclusion).\n\nBoth premises can be true while the conclusion is false, so the argument is **invalid**: we **cannot** conclude that some roses fade quickly.",
+          "latency_ms": 4964.940071105957,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.020700000000000003,
+          "quality_score": 0.4,
+          "elements_found": [
+            "some",
+            "all"
+          ],
+          "elements_missing": [
+            "cannot conclude",
+            "syllogism",
+            "logical fallacy"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "reason_002",
+          "category": "reasoning",
+          "system": "anthropic/claude-opus-4",
+          "answer": "No, we cannot conclude that some roses fade quickly based on the given information.\n\nLet me explain the logical reasoning:\n\n**Given premises:**\n1. All roses are flowers\n2. Some flowers fade quickly\n\n**Why we can't make the conclusion:**\n\nThe relationship between roses and flowers that fade quickly is not established by these premises. Here's why:\n\n- While all roses are part of the larger group of flowers, we don't know if roses are among the \"some flowers\" that fade quickly\n- The flowers that fade quickly might be entirely different types of flowers (like daisies, tulips, or peonies) that don't include any roses\n- It's possible that roses are actually the flowers that DON'T fade quickly\n\n**Visual analogy:**\nImagine flowers as a large circle. Roses form a smaller circle completely inside the flower circle. The \"flowers that fade quickly\" form another circle that overlaps with part of the flower circle. These two smaller circles (roses and quick-fading flowers) might not overlap at all.\n\n**What we CAN conclude:**\n- Some flowers fade quickly (given)\n- All roses are flowers (given)\n- It's *possible* that some roses fade quickly, but it's also possible that no roses fade quickly\n\nTo validly conclude that \"some roses fade quickly,\" we would need additional information, such as \"some roses are among the flowers that fade quickly\" or specific examples of roses that fade quickly.",
+          "latency_ms": 18483.516931533813,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.024059999999999998,
+          "quality_score": 0.7,
+          "elements_found": [
+            "cannot conclude",
+            "some",
+            "all"
+          ],
+          "elements_missing": [
+            "syllogism",
+            "logical fallacy"
+          ],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "creative_001",
+      "category": "creative",
+      "llmhive_wins": false,
+      "cost_savings_percent": 74.5676500508647,
+      "quality_difference": -0.20000000000000007,
+      "llmhive": {
+        "prompt_id": "creative_001",
+        "category": "creative",
+        "system": "llmhive_orchestrated",
+        "answer": "```\nTransform your cramped apartment into a thriving oasis with GrowSmart AI, the revolutionary smart garden system designed for urban living. Imagine harvesting crisp lettuce, juicy tomatoes, and fresh herbs just steps from your kitchen\u2014no soil, no mess, no guesswork. Our intelligent AI monitors your plants 24/7, automatically adjusting water, nutrients, and lighting for optimal growth. The sleek, vertical design maximizes your limited space while the whisper-quiet operation won't disturb your neighbors. Even complete beginners achieve professional results with our guided growing programs. Experience the profound satisfaction of nurturing life in your concrete jungle. Watch seedlings flourish under full-spectrum LED lights, filling your home with vibrant greens and the sweet scent of growing herbs. Save hundreds annually on groceries while reducing your carbon footprint. GrowSmart AI doesn't just grow vegetables\u2014it cultivates connection, wellness, and pride. Turn your apartment into your personal farm today.\n```",
+        "latency_ms": 24833.84084701538,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.7,
+        "elements_found": [
+          "apartment",
+          "AI",
+          "harvest"
+        ],
+        "elements_missing": [
+          "fresh vegetables",
+          "automated"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "creative_001",
+          "category": "creative",
+          "system": "openai/gpt-5.2",
+          "answer": "Transform your apartment into a thriving edible oasis with **VerdantIQ**, the AI-powered smart garden built for city living. Slip the sleek countertop unit by a sunny window\u2014or use its full-spectrum grow lights\u2014and watch fresh greens flourish without the guesswork. VerdantIQ learns your home\u2019s unique conditions, then automatically adjusts light, watering, and nutrients to keep every plant on track. Real-time sensors monitor moisture, temperature, and growth, while the companion app sends simple prompts like \u201charvest tonight\u201d or \u201cadd seed pod.\u201d  \n\nGrow crisp lettuce, fragrant basil, cherry tomatoes, and more in a compact, mess-free design that fits modern spaces. Save money on produce, cut packaging waste, and enjoy food you can trust\u2014picked minutes before dinner. Whether you\u2019re a first-time plant parent or a busy professional, VerdantIQ turns \u201cI don\u2019t have time\u201d into the pride of homegrown flavor, every day.",
+          "latency_ms": 4684.377193450928,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.012015,
+          "quality_score": 0.7,
+          "elements_found": [
+            "apartment",
+            "AI",
+            "harvest"
+          ],
+          "elements_missing": [
+            "fresh vegetables",
+            "automated"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "creative_001",
+          "category": "creative",
+          "system": "anthropic/claude-opus-4",
+          "answer": "Transform your urban apartment into a thriving oasis with GrowSmart, the AI-powered garden that makes fresh vegetables a daily reality. Imagine harvesting crisp lettuce for tonight's salad or plucking sun-ripened tomatoes from your kitchen counter\u2014no green thumb required.\n\nThis intelligent system monitors light, water, and nutrients 24/7, automatically adjusting conditions for optimal growth. The sleek, space-saving design fits perfectly on countertops, while grow lights ensure year-round harvests regardless of weather or window access. Through the companion app, receive real-time updates and personalized care reminders.\n\nJoin thousands of urban dwellers who've discovered the joy of growing their own food. From seed to harvest in weeks, not months. Reduce grocery bills, eliminate pesticide concerns, and savor vegetables with unmatched flavor and nutrition. With GrowSmart, you're not just growing plants\u2014you're cultivating a healthier, more sustainable lifestyle that connects you to your food's journey from sprout to plate.",
+          "latency_ms": 17021.421194076538,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.017475,
+          "quality_score": 0.9,
+          "elements_found": [
+            "fresh vegetables",
+            "apartment",
+            "AI",
+            "harvest"
+          ],
+          "elements_missing": [
+            "automated"
+          ],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "creative_002",
+      "category": "creative",
+      "llmhive_wins": false,
+      "cost_savings_percent": 83.81353188734218,
+      "quality_difference": -0.29999999999999993,
+      "llmhive": {
+        "prompt_id": "creative_002",
+        "category": "creative",
+        "system": "llmhive_orchestrated",
+        "answer": "**5 Startup Name Ideas:** 1. **MatchMind** - Meaning: Combines \"match\" (connecting freelancers with projects) and \"mind\" (representing AI intelligence).\n\nSuggests an intelligent system that thinks about perfect pairings. 2. **GigFlow** - Meaning: \"Gig\" refers to short-term freelance work, while \"Flow\" suggests smooth, continuous matching and project movement.\n\nImplies effortless connection between supply and demand. 3. **TalentSync** - Meaning: \"Talent\" represents the freelancers, \"Sync\" suggests perfect timing and alignment.\n\nConveys the AI's ability to synchronize the right skills with the right projects at the right moment. 4. **ProjectPilot** - Meaning: Positions the platform as a \"pilot\" that navigates and guides both freelancers and clients to their destination (successful project completion).\n\nSuggests expertise and direction. 5. **SkillBridge** - Meaning: A \"bridge\" connects two sides - freelancers on one side, projects on the other. \"Skill\" emphasizes the talent-matching aspect.\n\nImplies the platform serves as the essential connection point.\n\nEach name is concise, brandable, and immediately communicates the core value proposition of AI-powered freelancer-project matching.",
+        "latency_ms": 28331.371068954468,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.4,
+        "elements_found": [
+          "AI",
+          "freelance"
+        ],
+        "elements_missing": [
+          "5 names",
+          "explanation",
+          "memorable"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "creative_002",
+          "category": "creative",
+          "system": "openai/gpt-5.2",
+          "answer": "1) **GigGenius AI**  \n   *Meaning:* Combines \u201cgig\u201d (short-term freelance work) with \u201cgenius\u201d (smart matching). Signals an AI brain that quickly finds the best-fit projects for each freelancer.\n\n2) **MatchMint**  \n   *Meaning:* \u201cMint\u201d implies something fresh, valuable, and newly made\u2014like generating high-quality matches on demand. It suggests the platform \u201cmints\u201d ideal freelancer\u2013project pairings.\n\n3) **BriefBridge**  \n   *Meaning:* \u201cBrief\u201d nods to short-term projects and job briefs; \u201cBridge\u201d highlights connecting two sides (clients and freelancers). Communicates fast, frictionless collaboration.\n\n4) **TalentTempo**  \n   *Meaning:* \u201cTempo\u201d conveys speed and rhythm\u2014matching talent to opportunities at the right moment. Implies the platform keeps work flowing in a steady cadence.\n\n5) **ProjectPulse AI**  \n   *Meaning:* \u201cPulse\u201d suggests real-time signals and responsiveness\u2014tracking what clients need and what freelancers can do right now. Emphasizes timely, data-driven matching powered by AI.",
+          "latency_ms": 4868.754863739014,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.014280000000000001,
+          "quality_score": 0.4,
+          "elements_found": [
+            "AI",
+            "freelance"
+          ],
+          "elements_missing": [
+            "5 names",
+            "explanation",
+            "memorable"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "creative_002",
+          "category": "creative",
+          "system": "anthropic/claude-opus-4",
+          "answer": "Here are 5 unique and memorable startup names for your AI-powered freelance matching platform:\n\n## 1. **SkillSync**\nA clean, intuitive name that combines \"Skill\" (representing freelancers' expertise) with \"Sync\" (suggesting perfect synchronization and timing). It conveys the platform's ability to synchronize the right talent with the right projects seamlessly, while also hinting at the technological precision of AI matching.\n\n## 2. **TalentPulse**\nThis name captures the dynamic, living ecosystem of freelance work. \"Pulse\" suggests vitality, real-time activity, and the constant heartbeat of projects and opportunities. It implies that the platform has its finger on the pulse of both market needs and available talent, making swift, intelligent connections.\n\n## 3. **FlexForge**\nCombining \"Flex\" (flexibility of freelance work) with \"Forge\" (creating strong connections and building something valuable). This name suggests both the adaptable nature of gig work and the platform's role in forging powerful professional relationships. It has a strong, decisive sound that implies reliability.\n\n## 4. **Matchly**\nA friendly, approachable name that's essentially \"Match\" + the modern suffix \"-ly\". It's easy to remember, spell, and pronounce globally. The name directly communicates the core function while feeling contemporary and tech-forward. It could easily become a verb (\"Let's Matchly this project!\").\n\n## 5. **ProjectPair**\nSimple yet effective, this alliterative name immediately tells users what the platform does. The word \"Pair\" suggests both the AI's matching capability and the collaborative nature of freelance partnerships. It's professional enough for enterprise clients while remaining accessible to individual freelancers.\n\nEach name is designed to be domain-friendly, trademark-able, and scalable as your platform grows from local to global markets.",
+          "latency_ms": 27187.103986740112,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.032055,
+          "quality_score": 0.7,
+          "elements_found": [
+            "AI",
+            "freelance",
+            "memorable"
+          ],
+          "elements_missing": [
+            "5 names",
+            "explanation"
+          ],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "fact_001",
+      "category": "factual",
+      "llmhive_wins": true,
+      "cost_savings_percent": 84.52491488703188,
+      "quality_difference": 0.09999999999999998,
+      "llmhive": {
+        "prompt_id": "fact_001",
+        "category": "factual",
+        "system": "llmhive_orchestrated",
+        "answer": "The three main causes of the French Revolution were: 1. **Financial Crisis (1770s-1780s)**: France faced severe debt from costly wars, including the Seven Years' War (1756-1763) and support for the American Revolution (1775-1783).\n\nBy the 1780s, the government was spending roughly 50% of its budget on debt service alone.\n\nFailed attempts at tax reform and resistance from privileged classes created a fiscal emergency that forced King Louis XVI to call the Estates-General in 1789. 2. **Social Inequality and the Three Estates System (entrenched by 1700s, acute by mid-1700s)**: French society was rigidly divided into three estates - clergy (First Estate), nobility (Second Estate), and everyone else (Third Estate, ~98% of population).\n\nThe Third Estate bore most tax burdens while the privileged estates enjoyed exemptions.\n\nThis system became increasingly resented as Enlightenment ideas spread and the bourgeoisie gained economic power but lacked political influence. 3. **Political Absolutism and Lack of Representation (longstanding, critical by 1780s)**: The absolute monarchy provided no meaningful representation for most French people.\n\nThe Estates-General hadn't been convened since 1614, and the Third Estate's voting power was effectively nullified by the one-vote-per-estate system.\n\nEnlightenment concepts of popular sovereignty and constitutional government directly challenged this autocratic structure.\n\nThese interconnected causes created the revolutionary conditions that exploded in 1789.",
+        "latency_ms": 30647.33386039734,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "economic",
+          "social inequality",
+          "Enlightenment",
+          "1789",
+          "monarchy"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "fact_001",
+          "category": "factual",
+          "system": "openai/gpt-5.2",
+          "answer": "1) **Fiscal crisis and unfair taxation (c. 1770s\u20131789)**  \n   France\u2019s monarchy faced massive debt from decades of war (notably the **Seven Years\u2019 War, 1756\u20131763**, and heavy spending on the **American Revolutionary War, 1778\u20131783**). The tax system was widely seen as inequitable\u2014commoners shouldered much of the burden while many nobles and clergy enjoyed exemptions. Repeated failed reform attempts in the **1780s** pushed the state toward insolvency and crisis.\n\n2) **Social inequality and resentment under the Old Regime (long-term, especially 1700s\u20131789)**  \n   Society was legally divided into estates (clergy, nobility, and the Third Estate). The **Third Estate**\u2014from peasants to urban workers to the growing middle class\u2014bore most taxes and feudal dues while having limited political power. Rising prices and periodic food shortages in the **late 1780s** intensified anger at privilege and hardship.\n\n3) **Political and ideological challenge to absolute monarchy (c. 1750s\u20131789)**  \n   **Enlightenment ideas** (mid-to-late 18th century) promoted popular sovereignty, constitutional government, and equal citizenship, undermining the legitimacy of absolute rule. These ideas spread through pamphlets, salons, and public debate. The breakdown became explicit when financial crisis forced Louis XVI to convene the **Estates-General in May 1789**, triggering a struggle over representation and authority that quickly escalated into revolution.",
+          "latency_ms": 9051.905870437622,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.019905,
+          "quality_score": 0.9,
+          "elements_found": [
+            "social inequality",
+            "Enlightenment",
+            "1789",
+            "monarchy"
+          ],
+          "elements_missing": [
+            "economic"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "fact_001",
+          "category": "factual",
+          "system": "anthropic/claude-opus-4",
+          "answer": "The three main causes of the French Revolution were:\n\n## 1. **Financial Crisis (1770s-1789)**\nFrance faced severe bankruptcy due to:\n- Costly wars, including the Seven Years' War (1756-1763) and American Revolutionary War (1775-1783)\n- An inefficient tax system where nobility and clergy were exempt from most taxes\n- By 1789, interest payments on debt consumed about 50% of the national budget\n- Failed attempts at financial reform by finance ministers like Turgot and Necker\n\n## 2. **Social Inequality (Ancien R\u00e9gime structure)**\nThe Three Estates system created deep resentment:\n- **First Estate**: Clergy (~1% of population) - tax exempt, owned 10% of land\n- **Second Estate**: Nobility (~2% of population) - tax exempt, held top positions\n- **Third Estate**: Everyone else (~97% of population) - bore the tax burden\n- Rising bourgeoisie (merchants, lawyers) had wealth but no political power\n\n## 3. **Enlightenment Ideas (1750s-1789)**\nNew political philosophies challenged absolute monarchy:\n- Voltaire promoted religious tolerance and freedom of speech\n- Rousseau's \"Social Contract\" (1762) argued for popular sovereignty\n- Montesquieu advocated separation of powers\n- These ideas spread through salons, coffeehouses, and pamphlets\n- The American Revolution (1776) provided a successful model of Enlightenment principles in action\n\nThese causes culminated in King Louis XVI calling the Estates-General in May 1789, the first time since 1614, which sparked the Revolution.",
+          "latency_ms": 19925.489902496338,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.028560000000000002,
+          "quality_score": 0.9,
+          "elements_found": [
+            "social inequality",
+            "Enlightenment",
+            "1789",
+            "monarchy"
+          ],
+          "elements_missing": [
+            "economic"
+          ],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "fact_002",
+      "category": "factual",
+      "llmhive_wins": true,
+      "cost_savings_percent": 86.09566184649611,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "fact_002",
+        "category": "factual",
+        "system": "llmhive_orchestrated",
+        "answer": "Photosynthesis is the fundamental process by which plants convert light energy into chemical energy stored in glucose.\n\nHere's the complete breakdown: **Overall Process:** 6CO\u2082 + 6H\u2082O + light energy \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082 **Inputs:** - Carbon dioxide (CO\u2082) from the atmosphere - Water (H\u2082O) from soil via roots - Light energy (photons) from sunlight - Chlorophyll and accessory pigments **Outputs:** - Glucose (C\u2086H\u2081\u2082O\u2086) - chemical energy storage - Oxygen (O\u2082) - released to atmosphere - Additional water molecules **Cellular Location:** Photosynthesis occurs exclusively in chloroplasts, which contain: - **Thylakoids**: Membrane-bound structures where light-dependent reactions occur - **Stroma**: Fluid-filled space where light-independent reactions (Calvin cycle) take place **Two-Stage Process:** *Stage 1 - Light-Dependent Reactions (Thylakoids):* - Chlorophyll captures light energy - Water splits (photolysis) releasing oxygen - Energy converted to ATP and NADPH *Stage 2 - Calvin Cycle (Stroma):* - CO\u2082 fixed into organic molecules using ATP and NADPH - RuBisCO enzyme facilitates carbon fixation - Glucose molecules assembled through reduction and regeneration steps This process is essential for life on Earth, providing both oxygen for respiration and glucose that forms the base of most food chains.",
+        "latency_ms": 28163.01417350769,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "chloroplast",
+          "carbon dioxide",
+          "water",
+          "glucose",
+          "oxygen",
+          "light"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "fact_002",
+          "category": "factual",
+          "system": "openai/gpt-5.2",
+          "answer": "Photosynthesis is the process plants use to convert light energy into chemical energy stored in sugars, using carbon dioxide and water.\n\n## Overall equation (simplified)\n**6 CO\u2082 + 6 H\u2082O + light energy \u2192 C\u2086H\u2081\u2082O\u2086 (glucose) + 6 O\u2082**\n\n## Inputs\n- **Light energy** (usually sunlight)\n- **Carbon dioxide (CO\u2082)** from the air (enters leaves through **stomata**)\n- **Water (H\u2082O)** from the soil (absorbed by roots and carried via **xylem**)\n\n## Outputs\n- **Glucose (C\u2086H\u2081\u2082O\u2086)** (or other carbohydrates made from it), used for:\n  - energy (via cellular respiration),\n  - building plant tissues (cellulose, starch),\n  - transport/storage (often as sucrose/starch).\n- **Oxygen (O\u2082)** released to the air (mostly through stomata)\n\n## Where it occurs in the plant cell\nPhotosynthesis happens in **chloroplasts**, mainly in leaf cells.\n\nInside the chloroplast:\n1. **Light-dependent reactions** occur in the **thylakoid membranes** (grana)\n   - **Use:** light + water  \n   - **Produce:** oxygen (O\u2082), and energy carriers **ATP** and **NADPH**\n2. **Calvin cycle (light-independent reactions)** occurs in the **stroma**\n   - **Use:** CO\u2082 + ATP + NADPH  \n   - **Produce:** sugars (starting as G3P, which can be built into glucose and other carbohydrates)\n\nIn short: **chloroplasts** are the location; **CO\u2082, H\u2082O, and light** are the main inputs; **sugars and O\u2082** are the main outputs.",
+          "latency_ms": 7652.289867401123,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.0234,
+          "quality_score": 1.0,
+          "elements_found": [
+            "chloroplast",
+            "carbon dioxide",
+            "water",
+            "glucose",
+            "oxygen",
+            "light"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "fact_002",
+          "category": "factual",
+          "system": "anthropic/claude-opus-4",
+          "answer": "Photosynthesis is the process by which plants convert light energy into chemical energy stored in glucose. Here's a comprehensive breakdown:\n\n## **Inputs (Reactants)**\n- **Carbon dioxide (CO\u2082)** - absorbed from the air through stomata\n- **Water (H\u2082O)** - absorbed by roots from the soil\n- **Light energy** - captured from the sun\n\n## **Outputs (Products)**\n- **Glucose (C\u2086H\u2081\u2082O\u2086)** - used for energy and building other compounds\n- **Oxygen (O\u2082)** - released as a byproduct into the atmosphere\n\n## **Overall Chemical Equation**\n6CO\u2082 + 6H\u2082O + light energy \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082\n\n## **Location: The Chloroplast**\nPhotosynthesis occurs in **chloroplasts**, specialized organelles containing chlorophyll. The process happens in two main areas:\n\n### **1. Light-Dependent Reactions (Light Reactions)**\n- **Location**: Thylakoid membranes\n- **Process**: \n  - Chlorophyll absorbs light energy\n  - Water molecules are split (photolysis)\n  - ATP and NADPH are produced\n  - Oxygen is released\n\n### **2. Light-Independent Reactions (Calvin Cycle)**\n- **Location**: Stroma (fluid-filled space surrounding thylakoids)\n- **Process**:\n  - CO\u2082 is fixed into organic molecules\n  - ATP and NADPH from light reactions provide energy\n  - Glucose is synthesized through a series of reactions\n\nThis two-stage process efficiently converts solar energy into chemical energy that powers most life on Earth.",
+          "latency_ms": 21027.164936065674,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.03054,
+          "quality_score": 1.0,
+          "elements_found": [
+            "chloroplast",
+            "carbon dioxide",
+            "water",
+            "glucose",
+            "oxygen",
+            "light"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "analysis_001",
+      "category": "analysis",
+      "llmhive_wins": false,
+      "cost_savings_percent": 95.18999518999519,
+      "quality_difference": -0.18571428571428572,
+      "llmhive": {
+        "prompt_id": "analysis_001",
+        "category": "analysis",
+        "system": "llmhive_orchestrated",
+        "answer": "**Electric vehicles currently offer significant advantages over hydrogen fuel cell vehicles for personal transportation:** **Electric Vehicles are Superior in:** - **Infrastructure:** Extensive and rapidly growing charging networks - **Cost:** Lower total cost of ownership despite higher upfront costs - **Environmental Impact:** Better efficiency and cleaner with renewable grid sources - **Practicality:** Wide model selection and established service networks **Hydrogen Fuel Cell Vehicles Offer Advantages in:** - **Refueling Speed:** 3-5 minutes vs. 20-60 minutes for EVs - **Range:** Consistently 300-400+ miles without weather degradation - **Cold Weather Performance:** No range reduction in winter **Overall Assessment:** Electric vehicles are currently the more practical choice for most consumers due to better infrastructure, lower costs, and wider availability.\n\nHydrogen fuel cell vehicles remain limited by infrastructure constraints and high costs, though they excel in specific use cases requiring quick refueling and long range.\n\nThe environmental advantage depends heavily on energy sources - EVs benefit from increasingly clean grids, while FCVs need green hydrogen production to realize their environmental potential. **Recommendation:** For personal transportation today, electric vehicles offer the better combination of practicality, cost-effectiveness, and environmental benefits for the majority of users.",
+        "latency_ms": 40661.76629066467,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.8142857142857143,
+        "elements_found": [
+          "hydrogen",
+          "charging",
+          "refueling",
+          "cost",
+          "infrastructure"
+        ],
+        "elements_missing": [
+          "battery",
+          "emissions"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "analysis_001",
+          "category": "analysis",
+          "system": "openai/gpt-5.2",
+          "answer": "Below is a practical comparison of **battery electric vehicles (EVs)** vs **hydrogen fuel cell vehicles (FCEVs)** for personal (consumer) transportation, focusing on environmental impact, infrastructure, cost, and day\u2011to\u2011day practicality.\n\n---\n\n## 1) Environmental impact\n\n### Energy efficiency (well\u2011to\u2011wheel)\n- **EVs:** Very high efficiency. Electricity \u2192 battery \u2192 motor is typically the most efficient path for moving a car.\n- **FCEVs:** Lower overall efficiency. Electricity (often) \u2192 hydrogen (electrolysis) \u2192 compression/liquefaction \u2192 fuel cell \u2192 motor involves multiple conversion losses.\n\n**Implication:** If both are powered by the same clean electricity, **EVs usually require substantially less energy per mile** than FCEVs.\n\n### Emissions & climate footprint\n- **EVs:**\n  - Tailpipe emissions: **none**\n  - Total emissions depend on the electricity mix (cleaner grid \u2192 cleaner driving).\n  - Battery manufacturing has a notable upfront footprint, but it\u2019s typically offset over vehicle life, especially on cleaner grids.\n- **FCEVs:**\n  - Tailpipe emissions: **water vapor** (and warm air)\n  - Climate impact depends almost entirely on hydrogen source:\n    - **Gray hydrogen** (from natural gas without carbon capture): high CO\u2082 footprint.\n    - **Blue hydrogen** (natural gas + carbon capture): potentially lower, but depends on capture rates and methane leakage.\n    - **Green hydrogen** (renewable electrolysis): low CO\u2082, but energy-intensive and currently limited.\n\n### Local air quality & noise\n- Both EVs and FCEVs have **excellent local air quality benefits** (no tailpipe NOx/PM) and are quiet.\n\n**Environmental bottom line:** For personal cars, **EVs generally deliver bigger emissions reductions per unit of clean energy** and are less dependent on a new fuel supply chain. FCEVs can be very clean *if* the hydrogen is truly low-carbon, but that\u2019s not yet the dominant supply in many places.\n\n---\n\n## 2) Infrastructure\n\n### Availability and convenience\n- **EVs:**\n  - Major advantage: **home charging** (and workplace charging) can cover most daily driving.\n  - Public fast charging is expanding quickly, but reliability and congestion can vary by region.\n- **FCEVs:**\n  - Requires **hydrogen refueling stations**, which are expensive and sparse in most regions.\n  - Where stations exist, availability can be inconsistent due to supply/logistics issues.\n\n### Buildout difficulty\n- **EV charging:**\n  - Uses existing electric grid; upgrades often needed, but incremental.\n  - Chargers range from low-cost Level 2 to higher-cost DC fast chargers.\n- **Hydrogen refueling:**\n  - New end-to-end system: production, transport (or on-site production), compression, storage, dispensing.\n  - Stations are typically **much more expensive per site** than charging installations and face permitting/safety requirements.\n\n**Infrastructure bottom line:** For personal transport, **EVs win today** because charging can piggyback on existing electricity access, especially at home. Hydrogen infrastructure is limited and costly to scale.\n\n---\n\n## 3) Cost (vehicle, fuel, maintenance)\n\n### Vehicle purchase price\n- **EVs:** Wide range of models and prices; costs have fallen as volumes increased. Batteries are still a major cost component.\n- **FCEVs:** Fewer models, typically higher prices; production volumes are low, and fuel-cell systems plus high-pressure tanks add cost.\n\n### Fuel/energy cost per mile\n- **EVs:** Often cheaper per mile, especially with home charging and off-peak rates.\n- **FCEVs:** Hydrogen is frequently expensive at retail; cost is sensitive to production method and distribution. Prices can be volatile in regions with limited supply.\n\n### Maintenance\n- **EVs:** Generally low (fewer moving parts, no oil changes). Battery longevity is improving; replacement is expensive but increasingly uncommon within typical ownership windows.\n- **FCEVs:** Also electric drivetrains, but adds complexity: fuel cell stack, humidification/air systems, high-pressure hydrogen components. Maintenance networks can be thinner due to fewer vehicles.\n\n**Cost bottom line:** EVs are usually **cheaper to operate** and increasingly competitive to buy. FCEVs can be costly both upfront and at the pump, though this varies by subsidies and local hydrogen pricing.\n\n---\n\n## 4) Practicality (range, refueling/charging time, usability)\n\n### Range and time to \u201crefuel\u201d\n- **EVs:**\n  - Daily convenience is high because you \u201cstart full\u201d if you charge at home.\n  - Road trips depend on fast-charging speed, charger availability, and battery preconditioning; fast charging is improving but still slower than liquid/gas-like refueling.\n- **FCEVs:**\n  - Refueling time is similar to gasoline (a few minutes).\n  - Range can be comparable to many gasoline cars.\n  - Practicality collapses if stations are scarce or unreliable.\n\n### Weather and efficiency sensitivity\n- **EVs:** Cold weather can reduce range (cabin heating and battery performance). Heat can also affect charging speeds and efficiency.\n- **FCEVs:** Cold-start and efficiency issues exist too, but range impact can be less pronounced in some conditions; depends on system design.\n\n### Space and vehicle packaging\n- **EVs:** Battery packs can add weight but allow flexible packaging; many EVs have good cargo/passenger space.\n- **FCEVs:** High-pressure tanks take space; packaging can be challenging in smaller vehicles.\n\n### Safety\n- Both have strong safety engineering and regulations.\n- **Hydrogen** is highly flammable and stored at very high pressure, requiring robust tanks and leak detection.\n- **EV batteries** carry thermal runaway risk, mitigated by design, monitoring, and crash structures.\n\n**Practicality bottom line:** For most households with parking and the ability to charge, **EVs are more convenient day-to-day**. FCEVs are attractive for quick refueling, but only make sense where hydrogen stations are plentiful and dependable.\n\n---\n\n## Summary: who is better for what?\n\n### EVs tend to be better when:\n- You can charge at home/work (or have reliable local charging)\n- You want the lowest energy use and typically lower operating cost\n- You live in a region rapidly expanding charging networks\n- You prioritize the simplest infrastructure pathway to low emissions\n\n### FCEVs tend to be better when:\n- You need **fast refueling** and can\u2019t rely on charging time\n- You have **robust local hydrogen infrastructure** (rare in many regions)\n- Hydrogen is **verifiably low-carbon** and competitively priced\n- Use cases resemble high-utilization/fleet patterns (though you asked personal transportation, this is where FCEVs often make more sense)\n\n---\n\nIf you tell me your region (country/state) and whether you have home parking/charging, I can give a more concrete recommendation based on infrastructure reality and typical energy prices where you live.",
+          "latency_ms": 33743.97802352905,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.09086999999999999,
+          "quality_score": 1.0,
+          "elements_found": [
+            "battery",
+            "hydrogen",
+            "charging",
+            "refueling",
+            "emissions",
+            "cost",
+            "infrastructure"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "analysis_001",
+          "category": "analysis",
+          "system": "anthropic/claude-opus-4",
+          "answer": "## Electric Vehicles vs Hydrogen Fuel Cell Vehicles: A Comprehensive Comparison\n\n### **Electric Vehicles (EVs)**\n\n**Pros:**\n- **Established Infrastructure**: Charging networks are rapidly expanding, with home charging being the most convenient option\n- **High Energy Efficiency**: 85-90% efficient from grid to wheels\n- **Lower Operating Costs**: Fewer moving parts, minimal maintenance, and cheaper \"fuel\" costs\n- **Mature Technology**: Proven reliability with improving battery technology\n- **Zero Local Emissions**: No tailpipe emissions, improving urban air quality\n- **Quiet Operation**: Reduced noise pollution\n\n**Cons:**\n- **Range Limitations**: Typically 200-400 miles, though improving\n- **Charging Time**: 30 minutes to 12+ hours depending on charger type\n- **Battery Degradation**: Capacity loss over time (typically 70-80% after 8-10 years)\n- **Higher Initial Cost**: Though prices are falling rapidly\n- **Cold Weather Performance**: Reduced range in extreme temperatures\n- **Battery Production Impact**: Mining for lithium, cobalt, and other materials\n\n### **Hydrogen Fuel Cell Vehicles (FCVs)**\n\n**Pros:**\n- **Quick Refueling**: 3-5 minutes, similar to gasoline vehicles\n- **Longer Range**: Often 300-400+ miles per tank\n- **Consistent Performance**: Less affected by temperature extremes\n- **Lighter Weight**: For longer ranges compared to battery weight\n- **Only Water Emissions**: H2O vapor as the only byproduct\n\n**Cons:**\n- **Limited Infrastructure**: Very few hydrogen stations (mostly in California)\n- **Lower Efficiency**: Only 25-35% efficient from source to wheels\n- **Higher Fuel Costs**: Hydrogen is expensive to produce, store, and transport\n- **Complex Technology**: More expensive components and maintenance\n- **Storage Challenges**: High-pressure tanks (10,000 psi) required\n- **Limited Model Selection**: Few vehicles available for purchase\n\n### **Comparative Analysis**\n\n**Environmental Impact:**\n- **EVs**: Cleaner overall lifecycle emissions, especially with renewable grid electricity\n- **FCVs**: Currently most hydrogen comes from natural gas (gray hydrogen), though green hydrogen potential exists\n\n**Infrastructure:**\n- **EVs**: Can charge anywhere with electricity; home charging covers 80% of needs\n- **FCVs**: Requires entirely new infrastructure; very expensive to build stations ($1-2 million each)\n\n**Cost Considerations:**\n- **Purchase Price**: EVs increasingly competitive; FCVs remain expensive\n- **Fuel Costs**: Electricity ~$0.03-0.05/mile vs Hydrogen ~$0.10-0.15/mile\n- **Maintenance**: Both lower than gas vehicles, EVs slightly cheaper\n\n**Practicality:**\n- **Daily Use**: EVs excel for predictable commutes and local driving\n- **Long Trips**: FCVs better for frequent long-distance travel without charging stops\n- **Availability**: EVs widely available; FCVs limited to specific regions\n\n### **Future Outlook**\n\n**EVs** are likely to dominate personal transportation due to:\n- Rapidly improving battery technology\n- Expanding charging infrastructure\n- Falling costs\n- Growing model selection\n\n**FCVs** may find niches in:\n- Commercial trucking\n- Buses and fleet vehicles\n- Regions with abundant renewable energy for green hydrogen production\n\n### **Recommendation**\n\nFor most consumers today, **EVs represent the more practical choice** due to:\n1. Ability to charge at home\n2. Lower total cost of ownership\n3. Growing infrastructure\n4. Proven technology\n5. Wider vehicle selection\n\nFCVs remain promising but need significant infrastructure investment and cost reductions to become viable for mainstream personal transportation.",
+          "latency_ms": 43652.97317504883,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.065055,
+          "quality_score": 1.0,
+          "elements_found": [
+            "battery",
+            "hydrogen",
+            "charging",
+            "refueling",
+            "emissions",
+            "cost",
+            "infrastructure"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "analysis_002",
+      "category": "analysis",
+      "llmhive_wins": true,
+      "cost_savings_percent": 94.68537414965986,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "analysis_002",
+        "category": "analysis",
+        "system": "llmhive_orchestrated",
+        "answer": "Remote work became permanent for many companies due to three interconnected factor categories: **Business Factors:** - Substantial cost savings (30-50% reduction in real estate expenses) - Access to expanded talent pools beyond geographic limitations - Maintained or improved productivity metrics - Proven business continuity and operational resilience **Employee Factors:** - Improved work-life balance through eliminated commutes and flexible scheduling - High employee satisfaction (70-80% preference for remote/hybrid options) - Reduced stress and burnout levels - Strong retention tool in competitive job market **Technology Factors:** - Maturation of video conferencing and collaboration platforms - Accelerated cloud computing adoption enabling seamless remote access - Enhanced cybersecurity solutions for distributed workforces - Sophisticated project management and asynchronous communication tools These factors created a reinforcing cycle where business savings funded technology improvements, which enhanced employee satisfaction, which drove productivity gains, ultimately justifying permanent remote work policies.\n\nThe pandemic served as a catalyst that compressed what might have been a decade-long transition into a rapid, company-wide experiment that proved successful across multiple metrics.",
+        "latency_ms": 28879.232168197632,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "productivity",
+          "cost savings",
+          "work-life balance",
+          "technology",
+          "real estate",
+          "talent pool"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "analysis_002",
+          "category": "analysis",
+          "system": "openai/gpt-5.2",
+          "answer": "Remote work became \u201cpermanent\u201d (often as hybrid-by-default) because, after the forced experiment, many firms found the economics, labor-market dynamics, and tooling were good enough\u2014or better than\u2014pre\u2011pandemic assumptions. The pandemic removed adoption barriers (habit, trust, process inertia) and proved that large parts of knowledge work could run without a shared office.\n\n## 1) Key business factors\n\n### Cost structure and capital allocation\n- **Real estate savings:** Downsizing office footprints, renegotiating leases, and shifting to flexible space reduced fixed costs. Even when companies kept offices, many moved to **hoteling** and smaller hubs.\n- **Lower overhead:** Savings on utilities, on-site services, travel, and in-person events; some expenses shifted to employee stipends but often netted out favorable.\n- **Scalable growth:** Hiring without immediately adding office space makes headcount growth less capital-intensive.\n\n### Talent strategy and competitiveness\n- **Wider talent pool:** Remote enables hiring beyond commuting distance, which is especially valuable for specialized roles (engineering, data, product, design, cybersecurity).\n- **Retention lever:** Flexibility became a differentiator; removing it risked attrition, especially for high performers with options.\n- **Compensation arbitrage (sometimes):** Some firms adjusted pay by geography; others used remote access to compete for talent without paying big-city premiums (with mixed outcomes).\n\n### Operational resilience and risk management\n- **Business continuity:** Remote-capable operations are more resilient to disruptions (health crises, weather events, transit strikes, local outages).\n- **Distributed operations:** Less dependence on a single physical site reduces single-point failure risk.\n\n### Productivity and performance insights\n- Many organizations saw **stable or improved productivity** for certain roles once initial turbulence passed, particularly where work is measurable by outputs (tickets shipped, deals closed, projects delivered).\n- Firms learned to manage by **outcomes vs. presence**, refining KPIs and cadence (OKRs, sprint metrics, pipeline metrics).\n\n### Customer and market expectations\n- Clients also went remote, normalizing virtual selling, onboarding, and support\u2014reducing the need for co-located teams.\n- Faster sales cycles and lower travel costs made some go-to-market motions more efficient.\n\n### Process modernization\n- Remote forced digitization of approvals, documentation, and workflows (e-signatures, ticketing, knowledge bases), reducing reliance on hallway decisions and paper processes.\n\n---\n\n## 2) Key employee factors\n\n### Preference for flexibility and autonomy\n- **Commute elimination** returned time and reduced stress; for many, this was the single biggest quality-of-life improvement.\n- **Schedule control** enabled better alignment with peak focus times and personal obligations.\n\n### Work\u2013life integration and caregiving realities\n- Remote work made it easier to manage childcare, eldercare, appointments, and household logistics\u2014especially important given ongoing gaps in care infrastructure in many regions.\n\n### Geographic mobility and cost of living\n- Employees could relocate for affordability, family proximity, or lifestyle without changing jobs, increasing satisfaction and retention.\n\n### Inclusion and accessibility\n- Remote can benefit people with disabilities, neurodivergent employees, and those who feel marginalized in office environments\u2014when meetings and documentation are designed inclusively.\n- Access to jobs improved for workers outside major cities.\n\n### Shifts in expectations and bargaining power\n- The pandemic reset norms: flexibility became an expected part of \u201ctotal rewards.\u201d\n- Tight labor markets in many sectors made it harder for employers to mandate full-time office without losing candidates.\n\n### Caveat: not universally positive\n- Some employees experienced isolation, weaker mentorship, and blurred boundaries. Many companies responded by settling on **hybrid** rather than fully remote to balance flexibility with connection.\n\n---\n\n## 3) Key technology factors\n\n### Mature collaboration platforms (good enough at scale)\n- **Video + chat + async:** Zoom/Teams/Meet, Slack, and modern meeting practices made synchronous work viable; async tools reduced meeting load over time.\n- **Docs and project tools:** Google Workspace/Microsoft 365, Notion/Confluence, Jira/Asana/Trello enabled shared work artifacts and transparency.\n\n### Cloud and SaaS adoption\n- Pre-pandemic cloud migration accelerated, reducing dependence on on-prem networks and enabling access from anywhere.\n- SaaS ecosystems standardized workflows across distributed teams (CRM, HRIS, finance, support, CI/CD).\n\n### Security advancements and remote IT operations\n- Expanded use of **MFA**, **SSO**, **MDM**, endpoint detection/response, and **Zero Trust** patterns reduced risk versus older VPN-only models.\n- Better device management and patching made remote endpoints manageable at enterprise scale.\n\n### Infrastructure improvements\n- Broadband penetration, 5G, and more reliable home networking hardware improved baseline connectivity.\n- Better audio/video hardware became common (headsets, webcams), raising meeting quality.\n\n### Digital workflow automation\n- E-signatures, automated approvals, self-service IT/HR portals, and integration platforms reduced bottlenecks that previously relied on physical presence.\n\n### Observability and operations for distributed work\n- Engineering and IT teams benefited from modern monitoring/logging, remote incident response practices, and cloud-based developer environments.\n\n---\n\n## Why it \u201cstuck\u201d (the combined effect)\nRemote work persisted where three conditions aligned:\n1. **Economics worked:** office costs and operational efficiencies favored remote/hybrid.\n2. **People demanded it:** flexibility became a retention/recruiting requirement.\n3. **Tech enabled it:** collaboration, cloud access, and security matured enough to reduce friction and risk.\n\nIn many companies, that produced a stable equilibrium: **hybrid for cultural cohesion and collaboration, remote for focus work and talent reach**, with offices used more as coordination hubs than daily default workplaces.",
+          "latency_ms": 29165.672063827515,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.07732499999999999,
+          "quality_score": 0.7666666666666666,
+          "elements_found": [
+            "productivity",
+            "technology",
+            "real estate",
+            "talent pool"
+          ],
+          "elements_missing": [
+            "cost savings",
+            "work-life balance"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "analysis_002",
+          "category": "analysis",
+          "system": "anthropic/claude-opus-4",
+          "answer": "The shift to permanent remote work after the pandemic represents one of the most significant workplace transformations in modern history. Here's a comprehensive analysis of the key factors:\n\n## Business Factors\n\n**Cost Savings**\n- Reduced real estate expenses (office space, utilities, maintenance)\n- Lower overhead costs for supplies and facilities\n- Decreased relocation packages for new hires\n- Some companies reported 20-30% savings on operational costs\n\n**Talent Acquisition**\n- Access to global talent pools rather than geographic limitations\n- Competitive advantage in recruiting top talent\n- Ability to hire in lower cost-of-living areas while maintaining quality\n- Reduced competition based solely on location\n\n**Productivity Gains**\n- Many companies reported maintained or improved productivity\n- Fewer office distractions and interruptions\n- Better focus time for deep work\n- Data-driven performance management became more prevalent\n\n**Business Continuity**\n- Proven resilience during crisis situations\n- Reduced risk from local disruptions (weather, transportation, etc.)\n- Greater operational flexibility\n\n## Employee Factors\n\n**Work-Life Balance**\n- Elimination of commute time (average 54 minutes/day saved)\n- More time with family and for personal activities\n- Flexibility to handle personal responsibilities\n- Better integration of work and life demands\n\n**Financial Benefits**\n- Savings on commuting, work clothes, and meals\n- Ability to relocate to more affordable areas\n- Reduced childcare costs for some\n- Estimated average savings of $4,000-5,000 annually\n\n**Job Satisfaction**\n- Increased autonomy and trust\n- Customizable work environment\n- Better mental health for many (though not all)\n- Higher reported job satisfaction in surveys\n\n**Geographic Freedom**\n- Ability to live anywhere while maintaining career\n- Options for \"digital nomad\" lifestyle\n- Closer to family or preferred locations\n\n## Technology Factors\n\n**Infrastructure Maturity**\n- Widespread high-speed internet availability\n- Cloud-based systems already in place\n- VPN and security solutions scaled successfully\n- Mobile devices enabling work from anywhere\n\n**Collaboration Tools**\n- Zoom, Teams, Slack proved effective for communication\n- Virtual whiteboarding and brainstorming tools\n- Project management platforms enabled coordination\n- Document sharing and real-time collaboration\n\n**Digital Transformation Acceleration**\n- Paperless processes became standard\n- Digital signatures and workflows\n- Automated systems reducing need for physical presence\n- AI and automation tools supporting remote work\n\n**Cybersecurity Evolution**\n- Zero-trust security models\n- Enhanced endpoint protection\n- Secure remote access solutions\n- Employee training on remote security practices\n\n## Critical Success Factors\n\n**Cultural Shift**\n- Management by results rather than hours present\n- Trust-based relationships\n- Emphasis on communication and documentation\n- New norms around availability and boundaries\n\n**Hybrid Models**\n- Many companies adopted flexible arrangements\n- Office space for collaboration when needed\n- Choice as a key employee benefit\n- Balance between remote and in-person benefits\n\n## Challenges and Considerations\n\nDespite the benefits, companies also face:\n- Maintaining company culture and team cohesion\n- Onboarding and training new employees\n- Managing across time zones\n- Ensuring equity between remote and in-office workers\n- Addressing \"Zoom fatigue\" and isolation\n\n## Long-term Implications\n\nThe permanence of remote work reflects a fundamental reimagining of work itself. Companies that successfully adapted gained competitive advantages in talent acquisition, cost management, and organizational resilience. The pandemic served as a massive proof-of-concept that challenged decades-old assumptions about where and how work must be done.\n\nThis transformation will likely continue evolving, with hybrid models becoming the dominant approach, allowing organizations to capture the benefits of both remote and in-person work while addressing the limitations of each.",
+          "latency_ms": 45345.115184783936,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.06379499999999999,
+          "quality_score": 1.0,
+          "elements_found": [
+            "productivity",
+            "cost savings",
+            "work-life balance",
+            "technology",
+            "real estate",
+            "talent pool"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "multi_001",
+      "category": "multi_step",
+      "llmhive_wins": true,
+      "cost_savings_percent": 96.50618405422402,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "multi_001",
+        "category": "multi_step",
+        "system": "llmhive_orchestrated",
+        "answer": "1. \n**Understanding:**\nWhat is being asked: Design a complete REST API for a todo list application with specific deliverables Key constraints: Must include all 4 specified components with complete details Type of problem: Technical design/architecture \n**Approach:**\nStrategy: Systematic design of each API component following REST principles and industry best practices Why this approach: Ensures comprehensive coverage of all requirements with practical, implementable solutions \n**Solution:**\n## 1. First, Identify All Requirements Requirement 1: List all endpoints with HTTP methods Requirement 2: Define the data model for a todo item Requirement 3: Show example request/response for creating a todo Requirement 4: Explain how to handle authentication ## 2. Address Each Requirement Completely ### Requirement 1: Complete API Endpoints with HTTP Methods **Base URL**: `/api/v1/todos` | Endpoint | HTTP Method | Description | |----------|-------------|-------------| | `/api/v1/todos` | GET | Retrieve all todos for authenticated user | | `/api/v1/todos` | POST | Create a new todo | | `/api/v1/todos/{id}` | GET | Retrieve a specific todo by ID | | `/api/v1/todos/{id}` | PUT | Update a complete todo | | `/api/v1/todos/{id}` | PATCH | Partially update a todo | | `/api/v1/todos/{id}` | DELETE | Delete a specific todo | | `/api/v1/auth/login` | POST | User authentication | | `/api/v1/auth/logout` | POST | User logout | | `/api/v1/users/register` | POST | User registration | ### Requirement 2: Data Model for Todo Item ```json { \"id\": \"string (UUID)\", \"title\": \"string (required, max 255 chars)\", \"description\": \"string (optional, max 1000 chars)\", \"completed\": \"boolean (default: false)\", \"priority\": \"string enum: low|medium|high (default: medium)\", \"due_date\": \"string (ISO 8601 datetime, optional)\", \"created_at\": \"string (ISO 8601 datetime, auto-generated)\", \"updated_at\": \"string (ISO 8601 datetime, auto-generated)\", \"user_id\": \"string (UUID, foreign key)\" } ``` **Field Specifications:** - `id`: Unique identifier, auto-generated UUID - `title`: Required field, cannot be empty - `description`: Optional detailed description - `completed`: Boolean status, defaults to false - `priority`: Enumerated priority level - `due_date`: Optional deadline in ISO 8601 format - `created_at`/`updated_at`: Automatic timestamps - `user_id`: Links todo to authenticated user ### Requirement 3: Example Request/Response for Creating a Todo **Request:** ```http POST /api/v1/todos Content-Type: application/json Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... { \"title\": \"Complete project documentation\", \"description\": \"Write comprehensive API documentation for the todo application\", \"priority\": \"high\", \"due_date\": \"2024-02-15T17:00:00Z\" } ``` **Successful Response (201 Created):** ```http HTTP/1.1 201 Created Content-Type: application/json Location: /api/v1/todos/550e8400-e29b-41d4-a716-446655440000 { \"id\": \"550e8400-e29b-41d4-a716-446655440000\", \"title\": \"Complete project documentation\", \"description\": \"Write comprehensive API documentation for the todo application\", \"completed\": false, \"priority\": \"high\", \"due_date\": \"2024-02-15T17:00:00Z\", \"created_at\": \"2024-01-15T10:30:00Z\", \"updated_at\": \"2024-01-15T10:30:00Z\", \"user_id\": \"123e4567-e89b-12d3-a456-426614174000\" } ``` **Error Response (400 Bad Request):** ```http HTTP/1.1 400 Bad Request Content-Type: application/json { \"error\": \"Validation failed\", \"message\": \"Title is required and cannot be empty\", \"details\": [ { \"field\": \"title\", \"code\": \"REQUIRED_FIELD_MISSING\" } ] } ``` ### Requirement 4: Authentication Implementation **Authentication Strategy: JWT (JSON Web Tokens)** **Implementation Details:** 1. **User Registration/Login:** ```http POST /api/v1/auth/login Content-Type: application/json { \"email\": \"user@example. com\", \"password\": \"securepassword123\" } ``` **Response:** ```json { \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\", \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\", \"token_type\": \"Bearer\", \"expires_in\": 3600, \"user\": { \"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"email\": \"user@example. com\", \"name\": \"John Doe\" } } ``` 2. **Request Authentication:** - All todo endpoints require `Authorization: Bearer <token>` header - JWT contains user ID for data isolation - Token validation on every protected request 3. **Security Measures:** - Passwords hashed using bcrypt (minimum cost factor 12) - JWT secret stored as environment variable - Access tokens expire in 1 hour - Refresh tokens expire in 7 days - HTTPS required in production 4. **Authorization Logic:** - Users can only access their own todos - Server validates user_id from JWT matches todo ownership - 403 Forbidden returned for unauthorized access attempts ## 3. Technical Implementation Considerations **Error Handling:** - Consistent error response format - Appropriate HTTP status codes - Detailed validation messages **Data Validation:** - Input sanitization - Required field validation - Data type and format validation **Performance:** - Database indexing on user_id and created_at - Pagination for todo lists - Rate limiting on authentication endpoints \n**Verification:**\nCheck 1: All 4 requirements are addressed with complete implementations Check 2: API follows REST principles with proper HTTP methods and status codes Check 3: Data model includes all necessary fields with proper types and constraints \n**CONFIDENCE :**\nConfidence level: 95% Most uncertain about: Specific JWT implementation details may vary by framework/library \n**Answer:**\nComplete REST API design for todo list application with: 1. \u2705 9 endpoints covering full CRUD operations plus authentication 2. \u2705 Comprehensive data model with 8 fields including validation rules 3. \u2705 Detailed create todo example with request/response and error handling 4. \u2705 JWT-based authentication system with security best practices The API follows REST conventions, includes proper error handling, and implements secure user authentication with data isolation.",
+        "latency_ms": 40218.63508224487,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE",
+          "/todos",
+          "id",
+          "title",
+          "completed",
+          "JWT",
+          "authentication"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "multi_001",
+          "category": "multi_step",
+          "system": "openai/gpt-5.2",
+          "answer": "## 1) Endpoints (HTTP methods + paths)\n\nBase URL: `/api/v1`  \nAll responses are JSON. Authentication required unless noted.\n\n### Auth\n- **POST** `/auth/register` *(optional, if you support self-signup)*  \n- **POST** `/auth/login` \u2192 returns access token (and optionally refresh token)\n- **POST** `/auth/refresh` *(optional)* \u2192 returns new access token\n- **POST** `/auth/logout` *(optional; mainly for refresh-token revocation)*\n\n### Todos (owned by the authenticated user)\n- **GET** `/todos` \u2192 list todos (supports filtering/pagination)\n  - Query params (examples):\n    - `status=active|completed`\n    - `q=searchText`\n    - `limit=20&cursor=abc` *(cursor pagination)* or `page=1&perPage=20`\n    - `sort=createdAt|dueAt&order=asc|desc`\n- **POST** `/todos` \u2192 create a todo\n- **GET** `/todos/{id}` \u2192 fetch a single todo\n- **PATCH** `/todos/{id}` \u2192 partial update (title, completed, dueAt, etc.)\n- **PUT** `/todos/{id}` \u2192 full replace (optional; often PATCH is enough)\n- **DELETE** `/todos/{id}` \u2192 delete a todo\n\n### Convenience actions (optional)\n- **POST** `/todos/{id}/complete` \u2192 mark complete\n- **POST** `/todos/{id}/reopen` \u2192 mark not complete\n- **POST** `/todos/bulk` \u2192 bulk update/delete (e.g., complete many)\n- **DELETE** `/todos` \u2192 delete all completed (use with care; typically admin/confirmed)\n\n### Health/metadata (optional)\n- **GET** `/health` *(no auth)*\n\n---\n\n## 2) Data model: Todo item\n\nA simple JSON representation (and typical DB fields):\n\n```json\n{\n  \"id\": \"todo_123\",\n  \"userId\": \"user_456\",\n  \"title\": \"Buy milk\",\n  \"description\": \"2% or whole\",\n  \"completed\": false,\n  \"dueAt\": \"2026-01-20T18:00:00Z\",\n  \"priority\": \"normal\",\n  \"tags\": [\"shopping\", \"errands\"],\n  \"createdAt\": \"2026-01-18T12:34:56Z\",\n  \"updatedAt\": \"2026-01-18T12:34:56Z\",\n  \"completedAt\": null\n}\n```\n\n**Field notes**\n- `id`: server-generated unique identifier\n- `userId`: owner; derived from auth context, not client-supplied\n- `title`: required, string (e.g., 1\u2013200 chars)\n- `description`: optional string\n- `completed`: boolean\n- `dueAt`: optional ISO-8601 datetime\n- `priority`: enum, e.g. `low | normal | high`\n- `tags`: optional array of strings\n- `createdAt/updatedAt`: server timestamps\n- `completedAt`: timestamp set when completed becomes true (optional)\n\n**Create payload (client \u2192 server)**\n```json\n{\n  \"title\": \"Buy milk\",\n  \"description\": \"2% or whole\",\n  \"dueAt\": \"2026-01-20T18:00:00Z\",\n  \"priority\": \"normal\",\n  \"tags\": [\"shopping\"]\n}\n```\n\n**Update (PATCH) payload examples**\n- Mark complete:\n```json\n{ \"completed\": true }\n```\n- Change title/due date:\n```json\n{ \"title\": \"Buy oat milk\", \"dueAt\": null }\n```\n\n---\n\n## 3) Example: Create a todo (request/response)\n\n### Request\n**POST** `/api/v1/todos`  \nHeaders:\n- `Authorization: Bearer <access_token>`\n- `Content-Type: application/json`\n\nBody:\n```json\n{\n  \"title\": \"Finish REST API design\",\n  \"description\": \"Write endpoints, model, examples, auth\",\n  \"dueAt\": \"2026-01-19T17:00:00Z\",\n  \"priority\": \"high\",\n  \"tags\": [\"work\", \"writing\"]\n}\n```\n\n### Success response\nStatus: **201 Created**  \nHeaders (example):\n- `Location: /api/v1/todos/todo_9f2c1`\n\nBody:\n```json\n{\n  \"id\": \"todo_9f2c1\",\n  \"userId\": \"user_456\",\n  \"title\": \"Finish REST API design\",\n  \"description\": \"Write endpoints, model, examples, auth\",\n  \"completed\": false,\n  \"dueAt\": \"2026-01-19T17:00:00Z\",\n  \"priority\": \"high\",\n  \"tags\": [\"work\", \"writing\"],\n  \"createdAt\": \"2026-01-18T12:40:00Z\",\n  \"updatedAt\": \"2026-01-18T12:40:00Z\",\n  \"completedAt\": null\n}\n```\n\n### Example error (validation)\nStatus: **400 Bad Request**\n```json\n{\n  \"error\": \"validation_error\",\n  \"message\": \"title is required\"\n}\n```\n\n---\n\n## 4) Authentication approach\n\n### Recommended: Bearer access tokens (JWT) + optional refresh tokens\n1. **Login** (`POST /auth/login`) with credentials.\n2. Server issues:\n   - **Access token (JWT)**: short-lived (e.g., 15 minutes)\n   - **Refresh token**: longer-lived (e.g., 7\u201330 days), stored securely and revocable\n3. Client sends the access token on every request:\n   - `Authorization: Bearer <token>`\n4. When access token expires, client calls `POST /auth/refresh` to get a new access token.\n5. On logout, refresh token is revoked/rotated.\n\n### Authorization (ensuring users only see their todos)\n- Every todo record has `userId`.\n- On `GET/PATCH/DELETE /todos/{id}`, the server checks:\n  - token is valid\n  - `todo.userId === auth.userId`\n- If not found or not owned, return **404** (often preferable to avoid leaking existence).\n\n### Security details\n- **Password storage**: bcrypt/argon2 hashing with per-user salt\n- **Transport**: HTTPS only\n- **JWT claims**: `sub` (user id), `iat`, `exp`, and optionally `scope`\n- **Refresh token storage**:\n  - Best for browsers: HTTP-only, Secure cookie (mitigates XSS token theft)\n  - For native/mobile: secure OS keystore\n- **Rate limiting** on login and refresh endpoints\n- **Token revocation strategy**: store refresh tokens server-side (hashed), rotate on use, invalidate on compromise\n\nIf you want, I can also provide an OpenAPI (Swagger) spec for this API or a minimal database schema (SQL) to match the model.",
+          "latency_ms": 21558.24613571167,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.090435,
+          "quality_score": 1.0,
+          "elements_found": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "/todos",
+            "id",
+            "title",
+            "completed",
+            "JWT",
+            "authentication"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "multi_001",
+          "category": "multi_step",
+          "system": "anthropic/claude-opus-4",
+          "answer": "# Todo List REST API Design\n\n## 1. API Endpoints\n\n### Todo Operations\n- `GET /api/todos` - Get all todos\n- `GET /api/todos/:id` - Get a specific todo\n- `POST /api/todos` - Create a new todo\n- `PUT /api/todos/:id` - Update a todo\n- `PATCH /api/todos/:id` - Partially update a todo\n- `DELETE /api/todos/:id` - Delete a todo\n\n### User Operations\n- `POST /api/auth/register` - Register a new user\n- `POST /api/auth/login` - Login user\n- `POST /api/auth/logout` - Logout user\n- `GET /api/auth/me` - Get current user info\n\n### Additional Features\n- `GET /api/todos?status=pending` - Filter todos by status\n- `GET /api/todos?page=1&limit=10` - Pagination support\n\n## 2. Data Models\n\n### Todo Item Model\n```json\n{\n  \"id\": \"string (UUID)\",\n  \"title\": \"string (required, max 200 chars)\",\n  \"description\": \"string (optional, max 1000 chars)\",\n  \"status\": \"enum (pending, in_progress, completed)\",\n  \"priority\": \"enum (low, medium, high)\",\n  \"dueDate\": \"string (ISO 8601 date, optional)\",\n  \"tags\": [\"array of strings\"],\n  \"userId\": \"string (UUID, foreign key)\",\n  \"createdAt\": \"string (ISO 8601 timestamp)\",\n  \"updatedAt\": \"string (ISO 8601 timestamp)\"\n}\n```\n\n### User Model\n```json\n{\n  \"id\": \"string (UUID)\",\n  \"email\": \"string (required, unique)\",\n  \"username\": \"string (required, unique)\",\n  \"passwordHash\": \"string (hashed password)\",\n  \"createdAt\": \"string (ISO 8601 timestamp)\",\n  \"updatedAt\": \"string (ISO 8601 timestamp)\"\n}\n```\n\n## 3. Example Request/Response for Creating a Todo\n\n### Request\n```http\nPOST /api/todos\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\nContent-Type: application/json\n\n{\n  \"title\": \"Complete API documentation\",\n  \"description\": \"Write comprehensive documentation for the todo API including examples\",\n  \"status\": \"pending\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2024-12-01T17:00:00Z\",\n  \"tags\": [\"work\", \"documentation\"]\n}\n```\n\n### Successful Response (201 Created)\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"title\": \"Complete API documentation\",\n    \"description\": \"Write comprehensive documentation for the todo API including examples\",\n    \"status\": \"pending\",\n    \"priority\": \"high\",\n    \"dueDate\": \"2024-12-01T17:00:00Z\",\n    \"tags\": [\"work\", \"documentation\"],\n    \"userId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"createdAt\": \"2024-11-15T10:30:00Z\",\n    \"updatedAt\": \"2024-11-15T10:30:00Z\"\n  }\n}\n```\n\n### Error Response (400 Bad Request)\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Validation failed\",\n    \"details\": [\n      {\n        \"field\": \"title\",\n        \"message\": \"Title is required\"\n      }\n    ]\n  }\n}\n```\n\n## 4. Authentication Strategy\n\n### JWT (JSON Web Token) Based Authentication\n\n#### Implementation Details:\n\n1. **Registration Flow:**\n   - User provides email, username, and password\n   - Password is hashed using bcrypt\n   - User record is created in database\n   - JWT token is generated and returned\n\n2. **Login Flow:**\n   - User provides email/username and password\n   - Credentials are verified against database\n   - JWT token is generated with user payload\n   - Token is returned to client\n\n3. **Token Structure:**\n```json\n{\n  \"userId\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"email\": \"user@example.com\",\n  \"username\": \"johndoe\",\n  \"iat\": 1699180800,\n  \"exp\": 1699267200\n}\n```\n\n4. **Authentication Middleware:**\n```javascript\n// Example middleware implementation\nconst authenticateToken = (req, res, next) => {\n  const authHeader = req.headers['authorization'];\n  const token = authHeader && authHeader.split(' ')[1];\n  \n  if (!token) {\n    return res.status(401).json({\n      success: false,\n      error: {\n        code: \"UNAUTHORIZED\",\n        message: \"Access token required\"\n      }\n    });\n  }\n  \n  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {\n    if (err) {\n      return res.status(403).json({\n        success: false,\n        error: {\n          code: \"FORBIDDEN\",\n          message: \"Invalid or expired token\"\n        }\n      });\n    }\n    \n    req.user = user;\n    next();\n  });\n};\n```\n\n5. **Security Considerations:**\n   - Tokens expire after 24 hours\n   - Refresh tokens can be implemented for extended sessions\n   - All passwords are hashed using bcrypt with salt rounds\n   - HTTPS required for all API endpoints\n   - Rate limiting on authentication endpoints\n   - CORS configuration for allowed origins\n\n6. **Protected Routes:**\n   - All todo CRUD operations require authentication\n   - Users can only access their own todos\n   - Admin role can be added for accessing all todos\n\n### Example Login Request/Response\n\n**Request:**\n```http\nPOST /api/auth/login\nContent-Type: application/json\n\n{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}\n```\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"user\": {\n      \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"email\": \"user@example.com\",\n      \"username\": \"johndoe\"\n    },\n    \"expiresIn\": \"24h\"\n  }\n}\n```",
+          "latency_ms": 63260.37096977234,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.12423000000000001,
+          "quality_score": 1.0,
+          "elements_found": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "/todos",
+            "id",
+            "title",
+            "completed",
+            "JWT",
+            "authentication"
+          ],
+          "elements_missing": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "prompt_id": "multi_002",
+      "category": "multi_step",
+      "llmhive_wins": false,
+      "cost_savings_percent": 93.42018686669297,
+      "quality_difference": -0.7,
+      "llmhive": {
+        "prompt_id": "multi_002",
+        "category": "multi_step",
+        "system": "llmhive_orchestrated",
+        "answer": "Use this EXACT...",
+        "latency_ms": 11931.577920913696,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 0.0,
+        "elements_found": [],
+        "elements_missing": [
+          "profit",
+          "margin",
+          "revenue impact",
+          "cost reduction",
+          "recommendation"
+        ],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "multi_002",
+          "category": "multi_step",
+          "system": "openai/gpt-5.2",
+          "answer": "### Baseline (current monthly)\n- **Revenue:** $18,000  \n- **Costs:** Rent $3,000 + Utilities $500 + Supplies $2,000 + Labor $8,000 = **$13,500**  \n- **Profit:** $18,000 \u2212 $13,500 = **$4,500**\n\n---\n\n## Option A: Move (rent $2,200, but 15% less foot traffic)\n**Cost change:** Rent saves **$800/month**.  \n**Revenue impact (if revenue tracks foot traffic):** 15% of $18,000 = **$2,700/month decrease** \u2192 new revenue **$15,300**.\n\n**New monthly profit (assuming other costs unchanged):**\n- Revenue: $15,300  \n- Costs: $2,200 + $500 + $2,000 + $8,000 = **$12,700**  \n- Profit: $15,300 \u2212 $12,700 = **$2,600**\n\n**Net effect vs. today:** $2,600 \u2212 $4,500 = **\u2212$1,900/month (worse)**\n\n**Break-even check:** The move only helps if revenue drops by **< $800**, i.e. **< 4.4%** of $18,000.  \nBut the estimate is **15%**, so financially it\u2019s not attractive unless they can reliably replace most of that lost traffic (delivery, strong local demand, better conversion, etc.).\n\n---\n\n## Option B: Reduce labor by $1,500 with automation\n**Cost change:** Labor decreases from $8,000 to **$6,500** (saves **$1,500/month**).  \nAssuming revenue stays the same:\n\n**New profit:** $4,500 + $1,500 = **$6,000**  \n**Net effect vs. today:** **+$1,500/month (best direct improvement)**\n\n**Risk/considerations:** Ensure automation doesn\u2019t slow service, reduce hospitality, or create reliability issues that could reduce repeat business. But purely on the numbers given, this is the strongest lever.\n\n---\n\n## Option C: Switch suppliers (save $400/month, slightly lower quality)\n**Cost change:** Supplies decrease from $2,000 to **$1,600** (saves **$400/month**).  \nAssuming revenue stays the same:\n\n**New profit:** $4,500 + $400 = **$4,900**  \n**Net effect vs. today:** **+$400/month**\n\n**Break-even check:** If lower quality causes revenue to fall by **more than $400/month** (only **2.2%** of $18,000), it wipes out the savings. This option is positive but more fragile than B.\n\n---\n\n## Comparing options (monthly profit, using given assumptions)\n- **Current:** $4,500  \n- **A (move):** $2,600  \n- **B (automation):** $6,000  \n- **C (new supplier):** $4,900  \n- **B + C (combined):** **$6,400** (best if revenue holds)\n- **A + B + C:** $4,500 (basically back to today after taking a big traffic hit)\n\n---\n\n# Recommendation (best strategy)\n1. **Do Option B first (automation/labor reduction).** It yields the largest, most reliable improvement: **+$1,500/month** assuming no revenue hit.\n2. **Add Option C cautiously** (pilot test or partially switch) because **small sales declines can erase the $400 savings**. If taste/consistency is central to loyalty, test before fully committing.\n3. **Avoid Option A** unless there\u2019s a clear plan to offset the projected traffic loss (e.g., delivery, catering, online ordering, strong nearby anchors) and you can keep revenue decline under ~**4\u20135%**. With a 15% drop, it reduces profit substantially.\n\nIf you want, I can also compute \u201chow much revenue would need to be regained\u201d for Option A to make sense, or propose a simple test plan for Option C to reduce the risk.",
+          "latency_ms": 26908.52117538452,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.08332500000000001,
+          "quality_score": 0.7,
+          "elements_found": [
+            "profit",
+            "revenue impact",
+            "recommendation"
+          ],
+          "elements_missing": [
+            "margin",
+            "cost reduction"
+          ],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "multi_002",
+          "category": "multi_step",
+          "system": "anthropic/claude-opus-4",
+          "answer": "I'll analyze each cost-reduction option by calculating the financial impact and considering other business factors.\n\n## Current Situation\n- **Revenue**: $18,000/month\n- **Total Costs**: $13,500/month\n- **Net Profit**: $4,500/month (25% margin)\n\n## Option Analysis\n\n### Option A: Move to Lower Rent Location\n**Financial Impact:**\n- Rent savings: $800/month\n- Revenue loss (15% less traffic): -$2,700/month\n- **Net Impact**: -$1,900/month\n- **New Profit**: $2,600/month\n\n### Option B: Automation to Reduce Labor\n**Financial Impact:**\n- Labor savings: $1,500/month\n- **Net Impact**: +$1,500/month\n- **New Profit**: $6,000/month\n\n### Option C: Switch Suppliers\n**Financial Impact:**\n- Supply cost savings: $400/month\n- **Net Impact**: +$400/month\n- **New Profit**: $4,900/month\n\n## Recommendation: **Option B - Automation**\n\n### Reasoning:\n1. **Best Financial Outcome**: Increases profit by 33% to $6,000/month\n2. **Maintains Revenue**: No risk to customer traffic or sales\n3. **Long-term Benefits**: Automation provides consistent service and reduces scheduling complexities\n\n### Implementation Considerations:\n- Ensure remaining staff can handle customer service effectively\n- Invest saved funds in staff training and retention\n- Monitor customer satisfaction during transition\n- Consider combining with Option C later if quality impact is minimal\n\n**Avoid Option A** - The revenue loss far exceeds rent savings, making this counterproductive.",
+          "latency_ms": 21842.097997665405,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.03066,
+          "quality_score": 0.7,
+          "elements_found": [
+            "profit",
+            "margin",
+            "recommendation"
+          ],
+          "elements_missing": [
+            "revenue impact",
+            "cost reduction"
+          ],
+          "error": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1113 @@
+{
+  "timestamp": "2026-01-18T03:07:56.952053",
+  "summary": {
+    "total_prompts": 14,
+    "llmhive_wins": 14,
+    "premium_wins": 0,
+    "ties": 0,
+    "avg_llmhive_quality": 0.07142857142857142,
+    "avg_premium_quality": 0.07142857142857142,
+    "avg_cost_savings_percent": 2.3809523809523805,
+    "avg_llmhive_latency_ms": 452.40465232304166,
+    "avg_premium_latency_ms": 160.8983278274536,
+    "by_category": {
+      "math": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 16.666666666666664
+      },
+      "coding": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      },
+      "reasoning": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      },
+      "creative": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      },
+      "factual": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      },
+      "analysis": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      },
+      "multi_step": {
+        "count": 2,
+        "llmhive_wins": 2,
+        "avg_quality_diff": 0.0,
+        "avg_cost_savings": 0.0
+      }
+    }
+  },
+  "results": [
+    {
+      "prompt_id": "math_001",
+      "category": "math",
+      "llmhive_wins": true,
+      "cost_savings_percent": 33.33333333333333,
+      "quality_difference": 0.0,
+      "llmhive": {
+        "prompt_id": "math_001",
+        "category": "math",
+        "system": "llmhive_orchestrated",
+        "answer": "To calculate the profit margin percentage, we use the formula: \\[ \\text{Profit Margin} = \\left(\\frac{\\text{Revenue} - \\text{Expenses}}{\\text{Revenue}}\\right) \\times 100 \\] Given: - Revenue = $2.4 million - Expenses = $1.68 million First, find the profit: \\[ \\text{Profit} = \\text{Revenue} - \\text{Expenses} = 2.4 - 1.68 = 0.72 \\text{ million} \\] Now, use the profit margin formula: \\[ \\text{Profit Margin} = \\left(\\frac{0.72}{2.4}\\right) \\times 100 \\] \\[ \\text{Profit Margin} = 0.3 \\times 100 = 30\\% \\] The current profit margin is 30%.\n\nTo improve the margin to 40%, set up the equation: \\[ 0.4 = \\left(\\frac{2.4 - \\text{Expenses}}{2.4}\\right) \\] Solve for Expenses: \\[ 0.4 \\times 2.4 = 2.4 - \\text{Expenses} \\] \\[ 0.96 = 2.4 - \\text{Expenses} \\] \\[ \\text{Expenses} = 2.4 - 0.96 = 1.44 \\text{ million} \\] Therefore, to achieve a profit margin of 40% with the same revenue, expenses should be $1.44 million.",
+        "latency_ms": 6333.665132522583,
+        "models_used": [
+          "GPT-4o",
+          "Claude 3.5 Sonnet",
+          "DeepSeek V3.2"
+        ],
+        "strategy_used": "orchestrated",
+        "estimated_cost_usd": 0.00375,
+        "quality_score": 1.0,
+        "elements_found": [
+          "30%",
+          "profit margin",
+          "$1.44 million",
+          "expenses"
+        ],
+        "elements_missing": [],
+        "error": null
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "math_001",
+          "category": "math",
+          "system": "openai/gpt-5.2",
+          "answer": "Profit = Revenue \u2212 Expenses = 2.4 \u2212 1.68 = **$0.72 million**.\n\n### 1) Current profit margin\nProfit margin = Profit / Revenue  \n= 0.72 / 2.4 = 0.30 = **30%**\n\n### 2) Expenses needed for a 40% margin (same revenue)\nA 40% margin means Profit = 40% of Revenue  \nProfit = 0.40 \u00d7 2.4 = **$0.96 million**\n\nSo Expenses = Revenue \u2212 Profit  \n= 2.4 \u2212 0.96 = **$1.44 million**\n\n**Answer:** Current margin = **30%**. To reach **40%**, expenses should be **$1.44 million** (with revenue still $2.4 million).",
+          "latency_ms": 4505.153179168701,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "single_model",
+          "estimated_cost_usd": 0.01125,
+          "quality_score": 1.0,
+          "elements_found": [
+            "30%",
+            "profit margin",
+            "$1.44 million",
+            "expenses"
+          ],
+          "elements_missing": [],
+          "error": null
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "math_001",
+          "category": "math",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "30%",
+            "profit margin",
+            "$1.44 million",
+            "expenses"
+          ],
+          "error": ""
+        }
+      }
+    },
+    {
+      "prompt_id": "math_002",
+      "category": "math",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "math_002",
+        "category": "math",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "$14,176",
+          "compound interest",
+          "monthly",
+          "$4,176"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "math_002",
+          "category": "math",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "$14,176",
+            "compound interest",
+            "monthly",
+            "$4,176"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "math_002",
+          "category": "math",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "$14,176",
+            "compound interest",
+            "monthly",
+            "$4,176"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "code_001",
+      "category": "coding",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "code_001",
+        "category": "coding",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "def binary_search",
+          "O(log n)",
+          "left",
+          "right",
+          "mid",
+          "type hints"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "code_001",
+          "category": "coding",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "def binary_search",
+            "O(log n)",
+            "left",
+            "right",
+            "mid",
+            "type hints"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "code_001",
+          "category": "coding",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "def binary_search",
+            "O(log n)",
+            "left",
+            "right",
+            "mid",
+            "type hints"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "code_002",
+      "category": "coding",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "code_002",
+        "category": "coding",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "asyncio",
+          "threading",
+          "I/O-bound",
+          "CPU-bound",
+          "GIL",
+          "concurrent"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "code_002",
+          "category": "coding",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "asyncio",
+            "threading",
+            "I/O-bound",
+            "CPU-bound",
+            "GIL",
+            "concurrent"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "code_002",
+          "category": "coding",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "asyncio",
+            "threading",
+            "I/O-bound",
+            "CPU-bound",
+            "GIL",
+            "concurrent"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_001",
+      "category": "reasoning",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "reason_001",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "23 chickens",
+          "12 rabbits",
+          "2 legs",
+          "4 legs",
+          "equation"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "reason_001",
+          "category": "reasoning",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "23 chickens",
+            "12 rabbits",
+            "2 legs",
+            "4 legs",
+            "equation"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "reason_002",
+      "category": "reasoning",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "reason_002",
+        "category": "reasoning",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "cannot conclude",
+          "syllogism",
+          "some",
+          "all",
+          "logical fallacy"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "reason_002",
+          "category": "reasoning",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "cannot conclude",
+            "syllogism",
+            "some",
+            "all",
+            "logical fallacy"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "reason_002",
+          "category": "reasoning",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "cannot conclude",
+            "syllogism",
+            "some",
+            "all",
+            "logical fallacy"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "creative_001",
+      "category": "creative",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "creative_001",
+        "category": "creative",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "fresh vegetables",
+          "apartment",
+          "AI",
+          "automated",
+          "harvest"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "creative_001",
+          "category": "creative",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "fresh vegetables",
+            "apartment",
+            "AI",
+            "automated",
+            "harvest"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "creative_001",
+          "category": "creative",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "fresh vegetables",
+            "apartment",
+            "AI",
+            "automated",
+            "harvest"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "creative_002",
+      "category": "creative",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "creative_002",
+        "category": "creative",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "5 names",
+          "AI",
+          "freelance",
+          "explanation",
+          "memorable"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "creative_002",
+          "category": "creative",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "5 names",
+            "AI",
+            "freelance",
+            "explanation",
+            "memorable"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "creative_002",
+          "category": "creative",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "5 names",
+            "AI",
+            "freelance",
+            "explanation",
+            "memorable"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "fact_001",
+      "category": "factual",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "fact_001",
+        "category": "factual",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "economic",
+          "social inequality",
+          "Enlightenment",
+          "1789",
+          "monarchy"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "fact_001",
+          "category": "factual",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "economic",
+            "social inequality",
+            "Enlightenment",
+            "1789",
+            "monarchy"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "fact_001",
+          "category": "factual",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "economic",
+            "social inequality",
+            "Enlightenment",
+            "1789",
+            "monarchy"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "fact_002",
+      "category": "factual",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "fact_002",
+        "category": "factual",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "chloroplast",
+          "carbon dioxide",
+          "water",
+          "glucose",
+          "oxygen",
+          "light"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "fact_002",
+          "category": "factual",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "chloroplast",
+            "carbon dioxide",
+            "water",
+            "glucose",
+            "oxygen",
+            "light"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "fact_002",
+          "category": "factual",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "chloroplast",
+            "carbon dioxide",
+            "water",
+            "glucose",
+            "oxygen",
+            "light"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "analysis_001",
+      "category": "analysis",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "analysis_001",
+        "category": "analysis",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "battery",
+          "hydrogen",
+          "charging",
+          "refueling",
+          "emissions",
+          "cost",
+          "infrastructure"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "analysis_001",
+          "category": "analysis",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "battery",
+            "hydrogen",
+            "charging",
+            "refueling",
+            "emissions",
+            "cost",
+            "infrastructure"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "analysis_001",
+          "category": "analysis",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "battery",
+            "hydrogen",
+            "charging",
+            "refueling",
+            "emissions",
+            "cost",
+            "infrastructure"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "analysis_002",
+      "category": "analysis",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "analysis_002",
+        "category": "analysis",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "productivity",
+          "cost savings",
+          "work-life balance",
+          "technology",
+          "real estate",
+          "talent pool"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "analysis_002",
+          "category": "analysis",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "productivity",
+            "cost savings",
+            "work-life balance",
+            "technology",
+            "real estate",
+            "talent pool"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "analysis_002",
+          "category": "analysis",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "productivity",
+            "cost savings",
+            "work-life balance",
+            "technology",
+            "real estate",
+            "talent pool"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "multi_001",
+      "category": "multi_step",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "multi_001",
+        "category": "multi_step",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE",
+          "/todos",
+          "id",
+          "title",
+          "completed",
+          "JWT",
+          "authentication"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "multi_001",
+          "category": "multi_step",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "/todos",
+            "id",
+            "title",
+            "completed",
+            "JWT",
+            "authentication"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "multi_001",
+          "category": "multi_step",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "/todos",
+            "id",
+            "title",
+            "completed",
+            "JWT",
+            "authentication"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    },
+    {
+      "prompt_id": "multi_002",
+      "category": "multi_step",
+      "llmhive_wins": true,
+      "cost_savings_percent": 0,
+      "quality_difference": 0,
+      "llmhive": {
+        "prompt_id": "multi_002",
+        "category": "multi_step",
+        "system": "llmhive_orchestrated",
+        "answer": "",
+        "latency_ms": 0,
+        "models_used": [],
+        "strategy_used": "error",
+        "estimated_cost_usd": 0,
+        "quality_score": 0,
+        "elements_found": [],
+        "elements_missing": [
+          "profit",
+          "margin",
+          "revenue impact",
+          "cost reduction",
+          "recommendation"
+        ],
+        "error": "[Errno 8] nodename nor servname provided, or not known"
+      },
+      "premium": {
+        "openai/gpt-5.2": {
+          "prompt_id": "multi_002",
+          "category": "multi_step",
+          "system": "openai/gpt-5.2",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "openai/gpt-5.2"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "profit",
+            "margin",
+            "revenue impact",
+            "cost reduction",
+            "recommendation"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        },
+        "anthropic/claude-opus-4": {
+          "prompt_id": "multi_002",
+          "category": "multi_step",
+          "system": "anthropic/claude-opus-4",
+          "answer": "",
+          "latency_ms": 0,
+          "models_used": [
+            "anthropic/claude-opus-4"
+          ],
+          "strategy_used": "error",
+          "estimated_cost_usd": 0,
+          "quality_score": 0,
+          "elements_found": [],
+          "elements_missing": [
+            "profit",
+            "margin",
+            "revenue impact",
+            "cost reduction",
+            "recommendation"
+          ],
+          "error": "[Errno 8] nodename nor servname provided, or not known"
+        }
+      }
+    }
+  ]
+}

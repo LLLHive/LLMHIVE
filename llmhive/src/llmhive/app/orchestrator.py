@@ -702,6 +702,7 @@ class Orchestrator:
                         'use_prompt_diffusion', 'use_memory', 'accuracy_level',
                         'session_id', 'user_id', 'user_tier', 'enable_tools',
                         'knowledge_snippets', 'context', 'plan', 'db_session',
+                        'skip_injection_check', 'history',  # Internal orchestration params
                     }
                     
                     def __init__(self, client: OpenRouterClient):
@@ -808,6 +809,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                         'use_prompt_diffusion', 'use_memory', 'accuracy_level',
                         'session_id', 'user_id', 'user_tier', 'enable_tools',
                         'knowledge_snippets', 'context', 'plan', 'db_session',
+                        'skip_injection_check', 'history',  # Internal orchestration params
                     }
                     
                     # System prompt to prevent models from asking clarifying questions
@@ -883,6 +885,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                         'use_prompt_diffusion', 'use_memory', 'accuracy_level',
                         'session_id', 'user_id', 'user_tier', 'enable_tools',
                         'knowledge_snippets', 'context', 'plan', 'db_session',
+                        'skip_injection_check', 'history',  # Internal orchestration params
                     }
                     
                     # System prompt to prevent models from asking clarifying questions
@@ -1005,6 +1008,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                         'use_prompt_diffusion', 'use_memory', 'accuracy_level',
                         'session_id', 'user_id', 'user_tier', 'enable_tools',
                         'knowledge_snippets', 'context', 'plan', 'db_session',
+                        'skip_injection_check', 'history',  # Internal orchestration params
                     }
                     
                     # System prompt to prevent models from asking clarifying questions
@@ -1113,6 +1117,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                         'use_prompt_diffusion', 'use_memory', 'accuracy_level',
                         'session_id', 'user_id', 'user_tier', 'enable_tools',
                         'knowledge_snippets', 'context', 'plan', 'db_session',
+                        'skip_injection_check', 'history',  # Internal orchestration params
                     }
                     
                     # System prompt to prevent models from asking clarifying questions
