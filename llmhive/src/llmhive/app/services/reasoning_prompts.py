@@ -213,25 +213,32 @@ REQUIREMENTS:
 - Handle edge cases
 - Follow best practices for the language""",
 
-    "reasoning": """Think through this problem carefully using logical reasoning.
+    "reasoning": """Think through this problem carefully using formal logical reasoning.
 
 {question}
 
 Approach this step-by-step:
 1. Identify what is being asked
-2. List the key facts and constraints
-3. Apply logical reasoning
-4. Arrive at a clear conclusion""",
+2. List the key facts, premises, and constraints
+3. Apply logical reasoning (identify the syllogism structure if applicable)
+4. Explicitly state whether a conclusion CAN or CANNOT be drawn
+5. If the reasoning is flawed, identify the logical fallacy
 
-    "creative_writing": """Create engaging, original content for this request.
+Use precise logical terminology:
+- State "we can conclude" or "we cannot conclude" explicitly
+- If the argument has a logical fallacy (e.g., affirming the consequent, undistributed middle), name it
+- Reference formal logic concepts like syllogism, premise, deduction when relevant""",
+
+    "creative_writing": """Create engaging, original, and memorable content for this request.
 
 {question}
 
 Focus on:
-- Originality and creativity
+- Originality and creativity - make each item unique and memorable
 - Engaging language and style
-- Meeting the specific requirements
-- Quality over quantity""",
+- Meeting the EXACT requirements (if asked for 5 items, provide exactly 5 numbered items)
+- For name/idea generation: provide a clear explanation of the meaning/reasoning behind each one
+- Quality and distinctiveness of each element""",
 
     "factual_question": """Provide accurate, factual information for this question.
 

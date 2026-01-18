@@ -2167,7 +2167,21 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # Check if live research is explicitly enabled (from frontend temporal detection)
         force_web_search = getattr(request.orchestration, 'enable_live_research', False)
         
-        if TOOL_BROKER_AVAILABLE and (prompt_spec is None or prompt_spec.analysis.requires_tools or force_web_search):
+        # ========================================================================
+        # FIX 5.1: Pre-check for math queries BEFORE gating condition
+        # This ensures calculator is invoked even when prompt_spec.requires_tools is False
+        # ========================================================================
+        force_calculator = False
+        if TOOL_BROKER_AVAILABLE:
+            try:
+                from ..orchestration.tool_broker import should_use_calculator
+                force_calculator = should_use_calculator(base_prompt)
+                if force_calculator:
+                    logger.info("FIX 5.1: Math query detected - forcing tool broker entry")
+            except Exception as e:
+                logger.debug("Could not check should_use_calculator: %s", e)
+        
+        if TOOL_BROKER_AVAILABLE and (prompt_spec is None or prompt_spec.analysis.requires_tools or force_web_search or force_calculator):
             try:
                 broker = get_tool_broker()
                 
