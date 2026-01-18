@@ -405,9 +405,9 @@ async def run_llmhive_http(prompt: TestPrompt) -> TestResult:
                 "temperature": 0.7,
                 "max_tokens": 2000,
                 "top_p": 0.95,
-                "accuracy_level": 3,  # Medium-high accuracy (4 causes reasoning hack issues)
-                "enable_hrm": False,  # HRM currently has issues with high accuracy
-                "enable_deep_consensus": False,  # Disabled to avoid template leakage
+                "accuracy_level": 3,  # Optimal level - level 4 causes regressions (verified Phase 8)
+                "enable_hrm": False,  # HRM disabled - causes template leakage
+                "enable_deep_consensus": False,  # Disabled - causes output corruption
                 "enable_tool_broker": prompt.requires_tools,
                 "enable_verification": True,
                 "prefer_cheaper_models": True,  # Use budget models
