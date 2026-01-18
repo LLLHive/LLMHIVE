@@ -306,6 +306,11 @@ def _strip_internal_scaffolding(text: str) -> str:
         r'^Let me think through this step by step',  # basic_cot template start
         r'^=== Step 1: Understand the Problem ===',  # structured_reasoning template
         r'^I\'ll analyze this from multiple perspectives',  # self_debate template
+        # Multi-step task templates (accuracy_level 4)
+        r'^.*?\*\*Problem:\*\*\s*IMPORTANT:',  # multi-step template start
+        r'^Sure,?\s*let\'s address.*?step-by-step',  # common template response pattern
+        r'^Complete this multi-part task',  # multi_step category prompt
+        r'^Think through this problem carefully',  # reasoning category prompt
     ]
     for pattern in reasoning_hack_patterns:
         if re.match(pattern, text, re.IGNORECASE | re.MULTILINE):
@@ -412,6 +417,11 @@ def _strip_internal_scaffolding(text: str) -> str:
         r"^NEVER refuse to answer.*?(?:specialty\.)\s*",
         r"^For any question.*?(?:outside your scope\.)\s*",
         r"^You have expertise in.*?(?:knowledge base\.)\s*",
+        # Multi-step template patterns (accuracy_level 4)
+        r'\*\*Problem:\*\*\s*IMPORTANT:\s*This is a complex request.*?completely\.\s*',
+        r'IMPORTANT:\s*This is a complex request.*?(?:completely|part)\.\s*',
+        r'You MUST address EVERY part.*?(?:completely|\.)\s*',
+        r'## The Request:\s*',
     ]
     for pattern in system_prompt_patterns:
         text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
@@ -446,6 +456,13 @@ def _strip_internal_scaffolding(text: str) -> str:
         'clearly marked as',
         'provide a concise',
         'after reasoning',
+        # Multi-step template fragments
+        'this is a complex request',
+        'you must address every part',
+        'address each requirement',
+        'complete this multi-part task',
+        'think through this problem',
+        '## the request:',
     ]
     result_lower = result.lower()
     
@@ -1401,7 +1418,11 @@ def _select_elite_strategy(
     
     # Code and math ALWAYS need verification (non-negotiable)
     if task_type in ["code_generation", "debugging", "math_problem"]:
-        # But speed-optimize if user explicitly wants fast
+        # Math problems benefit from self-consistency at high accuracy
+        if task_type == "math_problem" and num_models >= 3 and accuracy_level >= 3:
+            logger.info("Strategy: Math problem with 3+ models -> best_of_n (self-consistency for numerical accuracy)")
+            return "best_of_n"  # Generate multiple solutions, vote on answer
+        # Speed-optimize if user explicitly wants fast
         if speed_priority >= 80 and accuracy_level <= 2:
             logger.info("Strategy: Code/math with high speed priority -> best_of_n")
             return "best_of_n"  # Skip challenge loop but still compare
@@ -1439,9 +1460,12 @@ def _select_elite_strategy(
     # PHASE 1.5: REASONING AND MULTI-STEP TASKS (Need special handling)
     # ========================================================================
     
-    # Reasoning tasks need chain-of-thought and verification
+    # Reasoning tasks benefit from self-consistency (sample N, vote on answer)
     if task_type == "reasoning":
-        logger.info("Strategy: Reasoning task detected -> challenge_and_refine (forces verification)")
+        if num_models >= 3 and accuracy_level >= 3:
+            logger.info("Strategy: Reasoning task with 3+ models -> best_of_n (self-consistency voting)")
+            return "best_of_n"  # Generate multiple reasoning paths, vote on best
+        logger.info("Strategy: Reasoning task -> challenge_and_refine (forces verification)")
         return "challenge_and_refine"  # Always verify reasoning
     
     # Multi-step tasks need decomposition and synthesis

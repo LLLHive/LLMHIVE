@@ -87,8 +87,8 @@ TEST_PROMPTS = [
         id="math_002",
         category=PromptCategory.MATH,
         prompt="Calculate the compound interest on $10,000 invested at 7% annual interest, compounded monthly, for 5 years. What is the total amount and the interest earned?",
-        # Fixed: Accept reasonable rounding variations ($14,176-$14,180, $4,176-$4,180)
-        expected_elements=["14,1", "compound interest", "monthly", "4,1"],
+        # Fixed: Focus on correct numerical answers - the most important aspect of math
+        expected_elements=["14,176", "4,176", "total", "interest"],
         difficulty="medium",
         requires_tools=True,
     ),
@@ -406,7 +406,7 @@ async def run_llmhive_http(prompt: TestPrompt) -> TestResult:
                 "temperature": 0.7,
                 "max_tokens": 2000,
                 "top_p": 0.95,
-                "accuracy_level": 3,  # Optimal level - level 4 causes regressions (verified Phase 8)
+                "accuracy_level": 3,  # Optimal level (4 still causes issues even with improved stripping)
                 "enable_hrm": False,  # HRM disabled - causes template leakage
                 "enable_deep_consensus": False,  # Disabled - causes output corruption
                 "enable_tool_broker": prompt.requires_tools,
