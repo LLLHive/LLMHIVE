@@ -1,0 +1,8 @@
+Tier,Monthly Price,Annual Price,Queries/Month,Tokens/Month,Tokens/Query,Models/Request,Concurrent Requests,Storage,Team Members
+Free Trial,$0,-,50,150000,10000,3,1,100 MB,1
+Lite,$9.99,$99.99,800,1000000,25000,5,2,500 MB,1
+Pro,$29.99,$299.99,2000,5000000,100000,5,5,5 GB,1
+Team,$49.99,$499.99,5000,10000000,100000,5,10,20 GB,3
+Enterprise,$25/seat,$250/seat,1000/seat,2000000/seat,Unlimited,10,20,Unlimited,Unlimited
+Enterprise+,$45/seat,$450/seat,2500/seat,5000000/seat,Unlimited,10,50,Unlimited,Unlimited
+Maximum,$499,$4990,1000,50000000,Unlimited,10,20,100 GB,10

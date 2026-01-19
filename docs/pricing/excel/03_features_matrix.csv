@@ -1,0 +1,37 @@
+Feature,Free,Lite,Pro,Team,Enterprise,Enterprise+,Maximum
+Basic Orchestration,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+Calculator (Authoritative),Yes,Yes,Yes,Yes,Yes,Yes,Yes
+Pinecone Reranker,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+Session Memory,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+Persistent Memory,No,7 days,30 days,90 days,365 days,Unlimited,365 days
+Knowledge Base,No,Yes,Yes,Yes,Yes,Yes,Yes
+Elite Orchestration,No,Yes,Yes,Yes,Yes,Yes,Yes
+Maximum Orchestration,No,No,No,No,No,No,Yes
+API Access,No,No,Yes,Yes,Yes,Yes,Yes
+DeepConf Debate,No,No,Yes,Yes,Yes,Yes,Yes
+Prompt Diffusion,No,No,Yes,Yes,Yes,Yes,Yes
+HRM (Hierarchical),No,Light,Full,Full,Full,Full,Full
+Loopback Refinement,No,No,Yes,Yes,Yes,Yes,Yes
+Parallel Retrieval,No,Yes,Yes,Yes,Yes,Yes,Yes
+Adaptive Ensemble,No,Yes,Yes,Yes,Yes,Yes,Yes
+Consensus Voting,No,Yes,Yes,Yes,Yes,Yes,Yes
+Web Research,No,No,Yes,Yes,Yes,Yes,Yes
+Fact Checking,No,No,Yes,Yes,Yes,Yes,Yes
+Vector Storage,No,No,Yes,Yes,Yes,Yes,Yes
+Team Workspace,No,No,No,Yes,Yes,Yes,Yes
+Shared Memory,No,No,No,Yes,Yes,Yes,Yes
+Team Projects,No,No,No,Yes,Yes,Yes,Yes
+Admin Dashboard,No,No,No,Yes,Yes,Yes,Yes
+SSO Integration,No,No,No,No,Yes,Yes,Yes
+Audit Logs,No,No,No,No,Yes,Yes,Yes
+Compliance (SOC 2),No,No,No,No,Yes,Yes,Yes
+SLA,None,None,None,None,99.5%,99.9%,99.9%
+Custom Routing,No,No,No,No,No,Yes,Yes
+Dedicated Support,No,No,No,No,No,Yes,Yes
+Custom Integrations,No,No,No,No,No,Yes,Yes
+Webhooks,No,No,No,No,No,Yes,Yes
+Priority Routing,No,No,No,No,No,Yes,Yes
+5-Model Consensus,No,No,No,No,No,No,Yes
+Verification Loops,No,No,No,No,No,No,Yes
+Reflection Chains,No,No,No,No,No,No,Yes
+Mission Critical Support,No,No,No,No,No,No,Yes

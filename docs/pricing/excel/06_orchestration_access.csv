@@ -1,0 +1,8 @@
+Tier,Default Orchestration,Budget Queries,Standard Queries,Premium Queries,Elite Queries,Maximum Queries,Deep Reasoning Passes,Memory Retention
+Free Trial,Premium,0,0,50,10,0,5,Session only
+Lite,Elite,Unlimited,Unlimited,200,100,0,50,7 days
+Pro,Standard,Unlimited,Unlimited,500,100,0,200,30 days
+Team,Standard,Unlimited,Unlimited,1000,200,0,500,90 days
+Enterprise,Premium,Unlimited,Unlimited,Unlimited,200/seat,0,Unlimited,365 days
+Enterprise+,Elite,Unlimited,Unlimited,Unlimited,Unlimited,0,Unlimited,Unlimited
+Maximum,Maximum,Unlimited,Unlimited,Unlimited,Unlimited,1000,Unlimited,365 days

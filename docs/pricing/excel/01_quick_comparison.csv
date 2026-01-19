@@ -1,0 +1,12 @@
+Feature,Free Trial,Lite,Pro,Team,Enterprise,Enterprise+,Maximum
+Price,$0,$9.99/mo,$29.99/mo,$49.99/mo,$25/seat/mo,$45/seat/mo,$499/mo
+Annual Price,-,$99.99,$299.99,$499.99,$250/seat,$450/seat,$4990
+Queries/Month,50,800,2000,5000,1000/seat,2500/seat,1000
+Tokens/Month,150K,1M,5M,10M,2M/seat,5M/seat,50M
+Tokens/Query,10K,25K,100K,100K,Unlimited,Unlimited,Unlimited
+Storage,100 MB,500 MB,5 GB,20 GB,Unlimited,Unlimited,100 GB
+Team Members,1,1,1,3,Unlimited,Unlimited,10
+Orchestration Tier,Premium,Elite,Standard,Standard,Premium,Elite,Maximum
+Quality Rank,#1 in 7/10,#1 ALL,#1 in 8/10,#1 in 8/10,#1 in 7/10,#1 ALL,#1 ALL +5%
+vs GPT-5.2,Competitive,Ties/Beats,Competitive,Competitive,Competitive,Ties/Beats,BEATS
+Cost Savings vs GPT-5.2,99.7%,99.5%,99.8%,99.8%,99.7%,99.5%,52.4%

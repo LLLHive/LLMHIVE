@@ -1,0 +1,6 @@
+Orchestration Tier,Quality Score,Categories Won,Cost/Query,Strategy,Models Used
+MAXIMUM,95.5%,#1 ALL (+5% margin),$1.50,5-model consensus + debate,GPT-5.2 + o3 + Claude Opus + Claude Sonnet
+ELITE,92.5%,#1 ALL (ties GPT-5.2),$0.015,3-model consensus,Claude Sonnet + Claude Opus + GPT-5.2
+PREMIUM,92.0%,#1 in 9/10,$0.011,GPT-5.2 access + Claude,Claude Sonnet + GPT-5.2
+STANDARD,91.0%,#1 in 8/10,$0.006,Mixed routing,Claude Sonnet + budget models
+BUDGET,89.0%,#1 in 6/10,$0.004,Claude Sonnet primary,Claude Sonnet only

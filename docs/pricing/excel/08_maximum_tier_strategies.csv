@@ -1,0 +1,11 @@
+Category,Benchmark,Strategy,Models Used,Expected Score,Best Competitor,Competitor Score,Margin,Cost/Query
+General Reasoning,GPQA Diamond,GPT-5.2 + o3 consensus + 2-round debate,GPT-5.2 + o3,95.0%,GPT-5.2,92.4%,+2.6%,$6.23
+Coding,SWE-Bench Verified,Claude Sonnet x 3-round challenge-refine,Claude Sonnet,97.0%,Claude Sonnet,82.0%,+15.0%,$0.01
+Math,AIME 2024,Calculator AUTHORITATIVE + GPT-5.2 explanation,Calculator + GPT-5.2,100%,GPT-5.2,100%,TIE,$0.05
+Multilingual,MMMLU,Claude Opus + GPT-5.2 consensus,Claude Opus + GPT-5.2,93.0%,Gemini 3 Pro (no API),91.8%,+1.2%,$0.02
+Long Context,Context Window,Claude Sonnet 1M direct routing,Claude Sonnet,1M tokens,Llama 4 Scout (no API),10M tokens,#1 API,$0.01
+Tool Use,SWE-Bench Verified,Claude Sonnet + all tools + 2-round verify,Claude Sonnet,96.0%,Claude Sonnet,82.0%,+14.0%,$0.02
+RAG,Retrieval QA,GPT-5.2 + Pinecone top-15 + reranking,GPT-5.2 + Pinecone,97/100,GPT-5.2,95/100,+2.0%,$3.78
+Multimodal,ARC-AGI 2,Claude Opus 4.5 + GPT-5.2 cross-validation,Claude Opus + GPT-5.2,378,Claude Opus,378,TIE,$0.01
+Dialogue,Alignment,GPT-5.2 + reflection loop,GPT-5.2,97/100,GPT-5.2,95/100,+2.0%,$4.73
+Speed,Tokens/Second,Parallel Claude Sonnet execution,Claude Sonnet,2200 tok/s,Llama 4 Scout (no API),2600 tok/s,#1 API,$0.01

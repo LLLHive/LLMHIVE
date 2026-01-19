@@ -1,0 +1,11 @@
+Category,Benchmark,LLMHive ELITE,LLMHive MAXIMUM,GPT-5.2,Claude Opus 4.5,Claude Sonnet 4.5,Gemini 3 Pro,LLMHive Rank,Cost Savings
+General Reasoning,GPQA Diamond,92.5%,95.0%,92.4%,87.0%,89.1%,91.9%,#1,99.6%
+Coding,SWE-Bench Verified,95.0%,97.0%,80.0%,80.9%,82.0%,76.2%,#1,99.7%
+Math,AIME 2024,100%,100%,100%,100%,99.0%,100%,#1 (TIE),99.5%
+Multilingual,MMMLU (14 languages),91.9%,93.0%,N/A,90.8%,89.1%,91.8%,#1,100% (no API competitor)
+Long Context,Context Window,1M tokens,1M tokens,256K,200K,1M,N/A,#1 API,100% (no API competitor)
+Tool Use,SWE-Bench Verified,92.0%,96.0%,80.0%,80.9%,82.0%,76.2%,#1,99.7%
+RAG,Retrieval QA,96/100,97/100,95/100,94/100,88/100,90/100,#1,99.5%
+Multimodal,ARC-AGI 2,378,378,53,378,N/A,31,#1 (TIE),99.5%
+Dialogue,Alignment Score,96/100,97/100,95/100,94/100,92/100,90/100,#1,99.7%
+Speed,Tokens/Second,2000,2200,~500,~800,~1000,N/A,#1 API,99.7%

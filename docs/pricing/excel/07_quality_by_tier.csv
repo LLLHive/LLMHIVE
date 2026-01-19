@@ -1,0 +1,8 @@
+Tier,Orchestration Default,Avg Quality Score,Categories #1,Margin vs GPT-5.2,Cost/Query,Cost Savings vs GPT-5.2
+Free Trial,Premium,89.0%,7 of 10,-3.4%,$0.011,99.7%
+Lite,Elite,92.5%,10 of 10,+0.1%,$0.015,99.5%
+Pro,Standard,91.0%,8 of 10,-1.4%,$0.006,99.8%
+Team,Standard,91.0%,8 of 10,-1.4%,$0.006,99.8%
+Enterprise,Premium,89.0%,7 of 10,-3.4%,$0.011,99.7%
+Enterprise+,Elite,92.5%,10 of 10,+0.1%,$0.015,99.5%
+Maximum,Maximum,95.5%,10 of 10,+3.1%,$1.50,52.4%

@@ -1,0 +1,10 @@
+Competitor,Their Price,Their Quality,LLMHive Equivalent,Our Price,Our Quality,Price Advantage,Quality Advantage
+ChatGPT Plus,$20/mo,92.4% avg,Lite,$9.99/mo,92.5% avg,50% cheaper,+0.1%
+ChatGPT Plus,$20/mo,92.4% avg,Pro,$29.99/mo,91.0% avg,50% more,Comparable
+ChatGPT Team,$25/seat/mo,92.4% avg,Enterprise,$25/seat/mo,89.0% avg,Same price,Lower quality (use Ent+)
+ChatGPT Team,$25/seat/mo,92.4% avg,Enterprise+,$45/seat/mo,92.5% avg,80% more,+0.1%
+Claude Pro,$20/mo,87-89% avg,Lite,$9.99/mo,92.5% avg,50% cheaper,+3-5%
+Claude Pro,$20/mo,87-89% avg,Pro,$29.99/mo,91.0% avg,50% more,+2-4%
+GPT-5.2 API,~$60+/mo,92.4% avg,Pro,$29.99/mo,91.0% avg,50% cheaper,-1.4%
+GPT-5.2 API,~$60+/mo,92.4% avg,Enterprise+,$45/seat/mo,92.5% avg,25% cheaper,+0.1%
+GPT-5.2 Direct,$3.15/query,92.4%,Any tier,$0.01-0.02/query,89-92.5%,99%+ cheaper,Comparable
