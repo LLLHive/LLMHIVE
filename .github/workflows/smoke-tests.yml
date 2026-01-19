@@ -220,10 +220,100 @@ jobs:
             -v \
             -m "critical or smoke"
 
+  quality-benchmarks:
+    name: Quality Benchmark Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    # Only run if full smoke tests passed
+    needs: [smoke-tests]
+    if: |
+      needs.smoke-tests.result == 'success'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests python-dotenv
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Fetch secrets from GCP Secret Manager
+        id: fetch-secrets
+        if: steps.gcp-auth.outcome == 'success'
+        run: |
+          API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$API_KEY" ]; then
+            echo "✅ Retrieved api-key from Secret Manager"
+            echo "QUALITY_TEST_API_KEY=$API_KEY" >> $GITHUB_ENV
+          fi
+
+      - name: Determine production URL
+        id: url
+        run: |
+          if [ -n "${{ github.event.inputs.production_url }}" ]; then
+            echo "url=${{ github.event.inputs.production_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run quality benchmark tests
+        id: quality
+        env:
+          PRODUCTION_URL: ${{ steps.url.outputs.url }}
+          API_KEY: ${{ env.QUALITY_TEST_API_KEY }}
+        run: |
+          echo "Running quality benchmarks against: $PRODUCTION_URL"
+          pytest tests/smoke/test_quality_benchmark.py \
+            --production-url="$PRODUCTION_URL" \
+            --api-key="${API_KEY:-}" \
+            --smoke-timeout=120 \
+            -v \
+            --tb=short \
+            -m "quality" \
+            2>&1 | tee quality-test-output.txt
+          
+          exit_code=${PIPESTATUS[0]}
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+          exit $exit_code
+        continue-on-error: true
+
+      - name: Upload quality test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-test-results
+          path: quality-test-output.txt
+          retention-days: 30
+
+      - name: Check quality results
+        run: |
+          if [ "${{ steps.quality.outputs.exit_code }}" != "0" ]; then
+            echo "::warning::Quality benchmarks detected potential regressions"
+            echo "Review quality-test-output.txt for details"
+          else
+            echo "✅ Quality benchmarks passed"
+          fi
+
   summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [smoke-tests, critical-tests]
+    needs: [smoke-tests, critical-tests, quality-benchmarks]
     if: always()
     
     steps:
@@ -233,13 +323,21 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ needs.critical-tests.result }}" == "success" ]; then
-            echo "Critical Tests: Passed" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Critical Tests: Passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Critical Tests: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Critical Tests: Failed" >> $GITHUB_STEP_SUMMARY
           fi
           
           if [ "${{ needs.smoke-tests.result }}" == "success" ]; then
-            echo "Full Smoke Tests: Passed" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Full Smoke Tests: Passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Full Smoke Tests: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Full Smoke Tests: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.quality-benchmarks.result }}" == "success" ]; then
+            echo "✅ Quality Benchmarks: Passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.quality-benchmarks.result }}" == "skipped" ]; then
+            echo "⏭️ Quality Benchmarks: Skipped (smoke tests failed)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Quality Benchmarks: Failed - Review for regressions" >> $GITHUB_STEP_SUMMARY
           fi
