@@ -135,43 +135,44 @@ class PricingTierManager:
             description="7-day free trial - experience #1 AI quality",
         )
         
-        # Lite Tier ($9.99/mo) - Mass adoption, #1 in 6 categories at BUDGET
+        # Lite Tier ($9.99/mo) - #1 ELITE orchestration for everyone
         lite_tier = PricingTier(
             name=TierName.LITE,
             display_name="Lite",
             monthly_price_usd=9.99,
             annual_price_usd=99.99,  # ~17% discount
             limits=TierLimits(
-                max_requests_per_month=500,
-                max_tokens_per_month=500_000,
-                max_models_per_request=3,
+                max_requests_per_month=800,  # Total effective queries
+                max_tokens_per_month=1_000_000,
+                max_models_per_request=5,
                 max_concurrent_requests=2,
                 max_storage_mb=500,
                 enable_advanced_features=False,
                 enable_api_access=False,
                 enable_priority_support=False,
                 max_team_members=1,
-                allow_parallel_retrieval=False,
+                allow_parallel_retrieval=True,
                 allow_deep_conf=False,
                 allow_prompt_diffusion=False,
-                allow_adaptive_ensemble=True,  # Light swarm voting
-                allow_hrm=False,
+                allow_adaptive_ensemble=True,
+                allow_hrm=True,  # Light HRM
                 allow_loopback_refinement=False,
                 max_tokens_per_query=25_000,
-                # Orchestration: BUDGET default (#1 in 6 categories)
-                default_orchestration_tier="budget",
-                premium_escalation_budget=50,
-                elite_escalation_budget=10,
-                max_passes_per_month=25,
+                # NEW: ELITE orchestration available to Lite!
+                default_orchestration_tier="elite",  # #1 quality as DEFAULT
+                premium_escalation_budget=200,  # Additional PREMIUM queries
+                elite_escalation_budget=100,  # 100 full ELITE queries/month
+                max_passes_per_month=50,  # Deep reasoning passes
                 memory_retention_days=7,
                 calculator_enabled=True,
                 reranker_enabled=True,
             ),
             features={
                 "basic_orchestration", "memory", "knowledge_base",
-                "calculator", "reranker", "light_consensus"
+                "calculator", "reranker", "consensus_voting",
+                "elite_orchestration", "multi_model_routing"
             },
-            description="Best value AI - #1 quality in 6 categories for $9.99",
+            description="#1 AI quality for $9.99 - ELITE orchestration included",
         )
 
         # Pro Tier ($29.99/mo) - Full power, #1 in ALL categories

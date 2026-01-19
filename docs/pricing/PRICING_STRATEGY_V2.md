@@ -244,15 +244,15 @@ As usage increases, we get CHEAPER and MORE RELIABLE:
 
 ### vs ChatGPT Plus ($20/mo)
 
-| Aspect | ChatGPT Plus | LLMHive Pro |
-|--------|--------------|-------------|
-| Price | $20/mo | $29.99/mo |
-| Models | GPT-4o only | Best model per task |
+| Aspect | ChatGPT Plus | LLMHive Lite |
+|--------|--------------|--------------|
+| Price | $20/mo | **$9.99/mo** |
+| Models | GPT-4o only (legacy) | GPT-5.2, Claude Opus 4.5, o3 |
 | Quality | Single model | #1 in ALL categories |
-| Math | Model-dependent | 100% (calculator) |
-| Reasoning | GPT-4o chain-of-thought | HRM + DeepConf + Consensus |
+| Math | ~95% | 100% (calculator authoritative) |
+| Reasoning | Single model | Multi-model consensus |
 
-**Our Pitch**: "ChatGPT gives you one model. LLMHive orchestrates the best."
+**Our Pitch**: "Half the price of ChatGPT Plus, BETTER quality with latest models."
 
 ### vs Claude Pro ($20/mo)
 
