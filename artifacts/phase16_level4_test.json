@@ -1,0 +1,420 @@
+22:24:05 [INFO] 
+============================================================
+22:24:05 [INFO] Testing: math_001 (math)
+22:24:05 [INFO] Prompt: A company has revenue of $2.4 million and expenses of $1.68 million. Calculate t...
+22:24:05 [INFO] ============================================================
+22:24:05 [INFO] Running LLMHive orchestrated...
+22:24:18 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:24:18 [INFO]   Quality: 1.00
+22:24:18 [INFO]   Latency: 13121ms
+22:24:18 [INFO]   Cost: $0.0037
+22:24:18 [INFO]   Models: 3
+22:24:18 [INFO] Running openai/gpt-5.2...
+22:24:18 [ERROR] Premium model openai/gpt-5.2 failed for math_001: OPENROUTER_API_KEY not set
+22:24:18 [INFO]   Quality: 0.00
+22:24:18 [INFO]   Latency: 0ms
+22:24:18 [INFO]   Cost: $0.0000
+22:24:18 [INFO] Running anthropic/claude-opus-4...
+22:24:18 [ERROR] Premium model anthropic/claude-opus-4 failed for math_001: OPENROUTER_API_KEY not set
+22:24:18 [INFO]   Quality: 0.00
+22:24:18 [INFO]   Latency: 0ms
+22:24:18 [INFO]   Cost: $0.0000
+22:24:18 [INFO] 
+  Result: ✅ LLMHive wins
+22:24:18 [INFO]   Cost savings: 0.0%
+22:24:18 [INFO]   Quality diff: +1.00
+22:24:18 [INFO] 
+============================================================
+22:24:18 [INFO] Testing: math_002 (math)
+22:24:18 [INFO] Prompt: Calculate the compound interest on $10,000 invested at 7% annual interest, compo...
+22:24:18 [INFO] ============================================================
+22:24:18 [INFO] Running LLMHive orchestrated...
+22:24:28 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:24:28 [INFO]   Quality: 0.80
+22:24:28 [INFO]   Latency: 9660ms
+22:24:28 [INFO]   Cost: $0.0013
+22:24:28 [INFO]   Models: 1
+22:24:28 [INFO] Running openai/gpt-5.2...
+22:24:28 [ERROR] Premium model openai/gpt-5.2 failed for math_002: OPENROUTER_API_KEY not set
+22:24:28 [INFO]   Quality: 0.00
+22:24:28 [INFO]   Latency: 0ms
+22:24:28 [INFO]   Cost: $0.0000
+22:24:28 [INFO] Running anthropic/claude-opus-4...
+22:24:28 [ERROR] Premium model anthropic/claude-opus-4 failed for math_002: OPENROUTER_API_KEY not set
+22:24:28 [INFO]   Quality: 0.00
+22:24:28 [INFO]   Latency: 0ms
+22:24:28 [INFO]   Cost: $0.0000
+22:24:28 [INFO] 
+  Result: ✅ LLMHive wins
+22:24:28 [INFO]   Cost savings: 0.0%
+22:24:28 [INFO]   Quality diff: +0.80
+22:24:28 [INFO] 
+============================================================
+22:24:28 [INFO] Testing: code_001 (coding)
+22:24:28 [INFO] Prompt: Write a Python function that implements binary search on a sorted list. Include ...
+22:24:28 [INFO] ============================================================
+22:24:28 [INFO] Running LLMHive orchestrated...
+22:24:38 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:24:38 [INFO]   Quality: 1.00
+22:24:38 [INFO]   Latency: 10139ms
+22:24:38 [INFO]   Cost: $0.0037
+22:24:38 [INFO]   Models: 3
+22:24:38 [INFO] Running openai/gpt-5.2...
+22:24:38 [ERROR] Premium model openai/gpt-5.2 failed for code_001: OPENROUTER_API_KEY not set
+22:24:38 [INFO]   Quality: 0.00
+22:24:38 [INFO]   Latency: 0ms
+22:24:38 [INFO]   Cost: $0.0000
+22:24:38 [INFO] Running anthropic/claude-opus-4...
+22:24:38 [ERROR] Premium model anthropic/claude-opus-4 failed for code_001: OPENROUTER_API_KEY not set
+22:24:38 [INFO]   Quality: 0.00
+22:24:38 [INFO]   Latency: 0ms
+22:24:38 [INFO]   Cost: $0.0000
+22:24:38 [INFO] 
+  Result: ✅ LLMHive wins
+22:24:38 [INFO]   Cost savings: 0.0%
+22:24:38 [INFO]   Quality diff: +1.00
+22:24:38 [INFO] 
+============================================================
+22:24:38 [INFO] Testing: code_002 (coding)
+22:24:38 [INFO] Prompt: Explain the difference between async/await and threading in Python. When would y...
+22:24:38 [INFO] ============================================================
+22:24:38 [INFO] Running LLMHive orchestrated...
+22:24:50 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:24:50 [INFO]   Quality: 1.00
+22:24:50 [INFO]   Latency: 12598ms
+22:24:50 [INFO]   Cost: $0.0037
+22:24:50 [INFO]   Models: 3
+22:24:50 [INFO] Running openai/gpt-5.2...
+22:24:50 [ERROR] Premium model openai/gpt-5.2 failed for code_002: OPENROUTER_API_KEY not set
+22:24:50 [INFO]   Quality: 0.00
+22:24:50 [INFO]   Latency: 0ms
+22:24:50 [INFO]   Cost: $0.0000
+22:24:50 [INFO] Running anthropic/claude-opus-4...
+22:24:50 [ERROR] Premium model anthropic/claude-opus-4 failed for code_002: OPENROUTER_API_KEY not set
+22:24:50 [INFO]   Quality: 0.00
+22:24:50 [INFO]   Latency: 0ms
+22:24:50 [INFO]   Cost: $0.0000
+22:24:50 [INFO] 
+  Result: ✅ LLMHive wins
+22:24:50 [INFO]   Cost savings: 0.0%
+22:24:50 [INFO]   Quality diff: +1.00
+22:24:50 [INFO] 
+============================================================
+22:24:50 [INFO] Testing: reason_001 (reasoning)
+22:24:50 [INFO] Prompt: A farmer has chickens and rabbits. He counts 35 heads and 94 legs. How many chic...
+22:24:50 [INFO] ============================================================
+22:24:50 [INFO] Running LLMHive orchestrated...
+22:25:04 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:25:04 [INFO]   Quality: 1.00
+22:25:04 [INFO]   Latency: 13322ms
+22:25:04 [INFO]   Cost: $0.0037
+22:25:04 [INFO]   Models: 3
+22:25:04 [INFO] Running openai/gpt-5.2...
+22:25:04 [ERROR] Premium model openai/gpt-5.2 failed for reason_001: OPENROUTER_API_KEY not set
+22:25:04 [INFO]   Quality: 0.00
+22:25:04 [INFO]   Latency: 0ms
+22:25:04 [INFO]   Cost: $0.0000
+22:25:04 [INFO] Running anthropic/claude-opus-4...
+22:25:04 [ERROR] Premium model anthropic/claude-opus-4 failed for reason_001: OPENROUTER_API_KEY not set
+22:25:04 [INFO]   Quality: 0.00
+22:25:04 [INFO]   Latency: 0ms
+22:25:04 [INFO]   Cost: $0.0000
+22:25:04 [INFO] 
+  Result: ✅ LLMHive wins
+22:25:04 [INFO]   Cost savings: 0.0%
+22:25:04 [INFO]   Quality diff: +1.00
+22:25:04 [INFO] 
+============================================================
+22:25:04 [INFO] Testing: reason_002 (reasoning)
+22:25:04 [INFO] Prompt: If all roses are flowers, and some flowers fade quickly, can we conclude that so...
+22:25:04 [INFO] ============================================================
+22:25:04 [INFO] Running LLMHive orchestrated...
+22:25:24 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:25:24 [INFO]   Quality: 1.00
+22:25:24 [INFO]   Latency: 20099ms
+22:25:24 [INFO]   Cost: $0.0037
+22:25:24 [INFO]   Models: 3
+22:25:24 [INFO] Running openai/gpt-5.2...
+22:25:24 [ERROR] Premium model openai/gpt-5.2 failed for reason_002: OPENROUTER_API_KEY not set
+22:25:24 [INFO]   Quality: 0.00
+22:25:24 [INFO]   Latency: 0ms
+22:25:24 [INFO]   Cost: $0.0000
+22:25:24 [INFO] Running anthropic/claude-opus-4...
+22:25:24 [ERROR] Premium model anthropic/claude-opus-4 failed for reason_002: OPENROUTER_API_KEY not set
+22:25:24 [INFO]   Quality: 0.00
+22:25:24 [INFO]   Latency: 0ms
+22:25:24 [INFO]   Cost: $0.0000
+22:25:24 [INFO] 
+  Result: ✅ LLMHive wins
+22:25:24 [INFO]   Cost savings: 0.0%
+22:25:24 [INFO]   Quality diff: +1.00
+22:25:24 [INFO] 
+============================================================
+22:25:24 [INFO] Testing: creative_001 (creative)
+22:25:24 [INFO] Prompt: Write a compelling 150-word product description for an AI-powered smart garden s...
+22:25:24 [INFO] ============================================================
+22:25:24 [INFO] Running LLMHive orchestrated...
+22:25:40 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:25:40 [INFO]   Quality: 1.00
+22:25:40 [INFO]   Latency: 16433ms
+22:25:40 [INFO]   Cost: $0.0037
+22:25:40 [INFO]   Models: 3
+22:25:40 [INFO] Running openai/gpt-5.2...
+22:25:40 [ERROR] Premium model openai/gpt-5.2 failed for creative_001: OPENROUTER_API_KEY not set
+22:25:40 [INFO]   Quality: 0.00
+22:25:40 [INFO]   Latency: 0ms
+22:25:40 [INFO]   Cost: $0.0000
+22:25:40 [INFO] Running anthropic/claude-opus-4...
+22:25:40 [ERROR] Premium model anthropic/claude-opus-4 failed for creative_001: OPENROUTER_API_KEY not set
+22:25:40 [INFO]   Quality: 0.00
+22:25:40 [INFO]   Latency: 0ms
+22:25:40 [INFO]   Cost: $0.0000
+22:25:40 [INFO] 
+  Result: ✅ LLMHive wins
+22:25:40 [INFO]   Cost savings: 0.0%
+22:25:40 [INFO]   Quality diff: +1.00
+22:25:40 [INFO] 
+============================================================
+22:25:40 [INFO] Testing: creative_002 (creative)
+22:25:40 [INFO] Prompt: Generate 5 unique and memorable startup name ideas for a company that uses AI to...
+22:25:40 [INFO] ============================================================
+22:25:40 [INFO] Running LLMHive orchestrated...
+22:25:55 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:25:55 [INFO]   Quality: 1.00
+22:25:55 [INFO]   Latency: 15150ms
+22:25:55 [INFO]   Cost: $0.0037
+22:25:55 [INFO]   Models: 3
+22:25:55 [INFO] Running openai/gpt-5.2...
+22:25:55 [ERROR] Premium model openai/gpt-5.2 failed for creative_002: OPENROUTER_API_KEY not set
+22:25:55 [INFO]   Quality: 0.00
+22:25:55 [INFO]   Latency: 0ms
+22:25:55 [INFO]   Cost: $0.0000
+22:25:55 [INFO] Running anthropic/claude-opus-4...
+22:25:55 [ERROR] Premium model anthropic/claude-opus-4 failed for creative_002: OPENROUTER_API_KEY not set
+22:25:55 [INFO]   Quality: 0.00
+22:25:55 [INFO]   Latency: 0ms
+22:25:55 [INFO]   Cost: $0.0000
+22:25:55 [INFO] 
+  Result: ✅ LLMHive wins
+22:25:55 [INFO]   Cost savings: 0.0%
+22:25:55 [INFO]   Quality diff: +1.00
+22:25:55 [INFO] 
+============================================================
+22:25:55 [INFO] Testing: fact_001 (factual)
+22:25:55 [INFO] Prompt: What were the three main causes of the French Revolution? Provide a brief explan...
+22:25:55 [INFO] ============================================================
+22:25:55 [INFO] Running LLMHive orchestrated...
+22:26:17 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:26:17 [INFO]   Quality: 1.00
+22:26:17 [INFO]   Latency: 22233ms
+22:26:17 [INFO]   Cost: $0.0037
+22:26:17 [INFO]   Models: 3
+22:26:17 [INFO] Running openai/gpt-5.2...
+22:26:17 [ERROR] Premium model openai/gpt-5.2 failed for fact_001: OPENROUTER_API_KEY not set
+22:26:17 [INFO]   Quality: 0.00
+22:26:17 [INFO]   Latency: 0ms
+22:26:17 [INFO]   Cost: $0.0000
+22:26:17 [INFO] Running anthropic/claude-opus-4...
+22:26:17 [ERROR] Premium model anthropic/claude-opus-4 failed for fact_001: OPENROUTER_API_KEY not set
+22:26:17 [INFO]   Quality: 0.00
+22:26:17 [INFO]   Latency: 0ms
+22:26:17 [INFO]   Cost: $0.0000
+22:26:17 [INFO] 
+  Result: ✅ LLMHive wins
+22:26:17 [INFO]   Cost savings: 0.0%
+22:26:17 [INFO]   Quality diff: +1.00
+22:26:17 [INFO] 
+============================================================
+22:26:17 [INFO] Testing: fact_002 (factual)
+22:26:17 [INFO] Prompt: Explain the process of photosynthesis in plants. What are the inputs, outputs, a...
+22:26:17 [INFO] ============================================================
+22:26:17 [INFO] Running LLMHive orchestrated...
+22:26:36 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:26:36 [INFO]   Quality: 1.00
+22:26:36 [INFO]   Latency: 18810ms
+22:26:36 [INFO]   Cost: $0.0037
+22:26:36 [INFO]   Models: 3
+22:26:36 [INFO] Running openai/gpt-5.2...
+22:26:36 [ERROR] Premium model openai/gpt-5.2 failed for fact_002: OPENROUTER_API_KEY not set
+22:26:36 [INFO]   Quality: 0.00
+22:26:36 [INFO]   Latency: 0ms
+22:26:36 [INFO]   Cost: $0.0000
+22:26:36 [INFO] Running anthropic/claude-opus-4...
+22:26:36 [ERROR] Premium model anthropic/claude-opus-4 failed for fact_002: OPENROUTER_API_KEY not set
+22:26:36 [INFO]   Quality: 0.00
+22:26:36 [INFO]   Latency: 0ms
+22:26:36 [INFO]   Cost: $0.0000
+22:26:36 [INFO] 
+  Result: ✅ LLMHive wins
+22:26:36 [INFO]   Cost savings: 0.0%
+22:26:36 [INFO]   Quality diff: +1.00
+22:26:36 [INFO] 
+============================================================
+22:26:36 [INFO] Testing: analysis_001 (analysis)
+22:26:36 [INFO] Prompt: Compare the pros and cons of electric vehicles versus hydrogen fuel cell vehicle...
+22:26:36 [INFO] ============================================================
+22:26:36 [INFO] Running LLMHive orchestrated...
+22:26:59 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:26:59 [INFO]   Quality: 1.00
+22:26:59 [INFO]   Latency: 22585ms
+22:26:59 [INFO]   Cost: $0.0037
+22:26:59 [INFO]   Models: 3
+22:26:59 [INFO] Running openai/gpt-5.2...
+22:26:59 [ERROR] Premium model openai/gpt-5.2 failed for analysis_001: OPENROUTER_API_KEY not set
+22:26:59 [INFO]   Quality: 0.00
+22:26:59 [INFO]   Latency: 0ms
+22:26:59 [INFO]   Cost: $0.0000
+22:26:59 [INFO] Running anthropic/claude-opus-4...
+22:26:59 [ERROR] Premium model anthropic/claude-opus-4 failed for analysis_001: OPENROUTER_API_KEY not set
+22:26:59 [INFO]   Quality: 0.00
+22:26:59 [INFO]   Latency: 0ms
+22:26:59 [INFO]   Cost: $0.0000
+22:26:59 [INFO] 
+  Result: ✅ LLMHive wins
+22:26:59 [INFO]   Cost savings: 0.0%
+22:26:59 [INFO]   Quality diff: +1.00
+22:26:59 [INFO] 
+============================================================
+22:26:59 [INFO] Testing: analysis_002 (analysis)
+22:26:59 [INFO] Prompt: Analyze why remote work became permanent for many companies after the pandemic. ...
+22:26:59 [INFO] ============================================================
+22:26:59 [INFO] Running LLMHive orchestrated...
+22:27:18 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:27:18 [INFO]   Quality: 0.83
+22:27:18 [INFO]   Latency: 18924ms
+22:27:18 [INFO]   Cost: $0.0037
+22:27:18 [INFO]   Models: 3
+22:27:18 [INFO] Running openai/gpt-5.2...
+22:27:18 [ERROR] Premium model openai/gpt-5.2 failed for analysis_002: OPENROUTER_API_KEY not set
+22:27:18 [INFO]   Quality: 0.00
+22:27:18 [INFO]   Latency: 0ms
+22:27:18 [INFO]   Cost: $0.0000
+22:27:18 [INFO] Running anthropic/claude-opus-4...
+22:27:18 [ERROR] Premium model anthropic/claude-opus-4 failed for analysis_002: OPENROUTER_API_KEY not set
+22:27:18 [INFO]   Quality: 0.00
+22:27:18 [INFO]   Latency: 0ms
+22:27:18 [INFO]   Cost: $0.0000
+22:27:18 [INFO] 
+  Result: ✅ LLMHive wins
+22:27:18 [INFO]   Cost savings: 0.0%
+22:27:18 [INFO]   Quality diff: +0.83
+22:27:18 [INFO] 
+============================================================
+22:27:18 [INFO] Testing: multi_001 (multi_step)
+22:27:18 [INFO] Prompt: Design a complete REST API for a simple todo list application. Include: 1) List ...
+22:27:18 [INFO] ============================================================
+22:27:18 [INFO] Running LLMHive orchestrated...
+22:27:39 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:27:39 [INFO]   Quality: 1.00
+22:27:39 [INFO]   Latency: 20701ms
+22:27:39 [INFO]   Cost: $0.0037
+22:27:39 [INFO]   Models: 3
+22:27:39 [INFO] Running openai/gpt-5.2...
+22:27:39 [ERROR] Premium model openai/gpt-5.2 failed for multi_001: OPENROUTER_API_KEY not set
+22:27:39 [INFO]   Quality: 0.00
+22:27:39 [INFO]   Latency: 0ms
+22:27:39 [INFO]   Cost: $0.0000
+22:27:39 [INFO] Running anthropic/claude-opus-4...
+22:27:39 [ERROR] Premium model anthropic/claude-opus-4 failed for multi_001: OPENROUTER_API_KEY not set
+22:27:39 [INFO]   Quality: 0.00
+22:27:39 [INFO]   Latency: 0ms
+22:27:39 [INFO]   Cost: $0.0000
+22:27:39 [INFO] 
+  Result: ✅ LLMHive wins
+22:27:39 [INFO]   Cost savings: 0.0%
+22:27:39 [INFO]   Quality diff: +1.00
+22:27:39 [INFO] 
+============================================================
+22:27:39 [INFO] Testing: multi_002 (multi_step)
+22:27:39 [INFO] Prompt: A small coffee shop wants to reduce costs. Currently: Monthly rent $3,000, utili...
+22:27:39 [INFO] ============================================================
+22:27:39 [INFO] Running LLMHive orchestrated...
+22:27:56 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+22:27:56 [INFO]   Quality: 1.00
+22:27:56 [INFO]   Latency: 17846ms
+22:27:56 [INFO]   Cost: $0.0037
+22:27:56 [INFO]   Models: 3
+22:27:56 [INFO] Running openai/gpt-5.2...
+22:27:56 [ERROR] Premium model openai/gpt-5.2 failed for multi_002: OPENROUTER_API_KEY not set
+22:27:56 [INFO]   Quality: 0.00
+22:27:56 [INFO]   Latency: 0ms
+22:27:56 [INFO]   Cost: $0.0000
+22:27:56 [INFO] Running anthropic/claude-opus-4...
+22:27:56 [ERROR] Premium model anthropic/claude-opus-4 failed for multi_002: OPENROUTER_API_KEY not set
+22:27:56 [INFO]   Quality: 0.00
+22:27:56 [INFO]   Latency: 0ms
+22:27:56 [INFO]   Cost: $0.0000
+22:27:56 [INFO] 
+  Result: ✅ LLMHive wins
+22:27:56 [INFO]   Cost savings: 0.0%
+22:27:56 [INFO]   Quality diff: +1.00
+⚠️  WARNING: OPENROUTER_API_KEY not set
+   Premium model comparisons will fail.
+   Set it with: export OPENROUTER_API_KEY=your-key
+   Or run with --llmhive-only to skip premium comparisons.
+
+
+🚀 Starting LLMHive Orchestration Comparison Test
+   Mode: HTTP (https://llmhive-orchestrator-792354158895.us-east1.run.app)
+   Prompts: 14
+   Premium models: ['openai/gpt-5.2', 'anthropic/claude-opus-4']
+   Budget models: 15
+
+================================================================================
+           LLMHIVE ORCHESTRATION vs PREMIUM MODELS - COMPARISON REPORT
+================================================================================
+
+📊 EXECUTIVE SUMMARY
+────────────────────────────────────────
+Total prompts tested:     14
+LLMHive wins:             14 (100.0%)
+Premium wins:             0 (0.0%)
+Ties (within 10%):        0 (0.0%)
+
+💰 COST ANALYSIS
+────────────────────────────────────────
+Average cost savings:     0.0%
+LLMHive avg quality:      0.97
+Premium avg quality:      0.00
+
+⚡ PERFORMANCE
+────────────────────────────────────────
+LLMHive avg latency:      16544ms
+Premium avg latency:      0ms
+
+📈 BY CATEGORY
+────────────────────────────────────────
+  math            | Win rate: 100.0% | Quality diff: +0.90 | Cost savings: 0.0%
+  coding          | Win rate: 100.0% | Quality diff: +1.00 | Cost savings: 0.0%
+  reasoning       | Win rate: 100.0% | Quality diff: +1.00 | Cost savings: 0.0%
+  creative        | Win rate: 100.0% | Quality diff: +1.00 | Cost savings: 0.0%
+  factual         | Win rate: 100.0% | Quality diff: +1.00 | Cost savings: 0.0%
+  analysis        | Win rate: 100.0% | Quality diff: +0.92 | Cost savings: 0.0%
+  multi_step      | Win rate: 100.0% | Quality diff: +1.00 | Cost savings: 0.0%
+
+📋 DETAILED RESULTS
+────────────────────────────────────────────────────────────────────────────────
+ID           Category     LLMHive  Premium  Winner     Cost Savings
+────────────────────────────────────────────────────────────────────────────────
+math_001     math         1.00     0.00     LLMHive    0.0%
+math_002     math         0.80     0.00     LLMHive    0.0%
+code_001     coding       1.00     0.00     LLMHive    0.0%
+code_002     coding       1.00     0.00     LLMHive    0.0%
+reason_001   reasoning    1.00     0.00     LLMHive    0.0%
+reason_002   reasoning    1.00     0.00     LLMHive    0.0%
+creative_001 creative     1.00     0.00     LLMHive    0.0%
+creative_002 creative     1.00     0.00     LLMHive    0.0%
+fact_001     factual      1.00     0.00     LLMHive    0.0%
+fact_002     factual      1.00     0.00     LLMHive    0.0%
+analysis_001 analysis     1.00     0.00     LLMHive    0.0%
+analysis_002 analysis     0.83     0.00     LLMHive    0.0%
+multi_001    multi_step   1.00     0.00     LLMHive    0.0%
+multi_002    multi_step   1.00     0.00     LLMHive    0.0%
+
+================================================================================
+CONCLUSION
+================================================================================
+✅ LLMHive orchestration OUTPERFORMS single premium models!
+   - Wins 14/14 comparisons (100.0%)
+   - Saves 0.0% on average
+

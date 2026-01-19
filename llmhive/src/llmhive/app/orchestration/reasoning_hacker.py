@@ -967,3 +967,193 @@ def get_optimal_team_for_task(task_type: str) -> List[TeamMember]:
         ),
     ]
 
+
+# =============================================================================
+# PHASE 16: WORLD-CLASS REASONING - SYSTEM/USER SEPARATION
+# Fix template leakage by properly separating system instructions from user content
+# =============================================================================
+
+# System instructions that tell the LLM HOW to think (never shown to user)
+REASONING_SYSTEM_PROMPTS = {
+    "light": """You are an expert problem solver. Think step by step before answering.
+Always:
+1. Identify what's being asked
+2. Consider the key facts
+3. Work through the logic
+4. Verify your answer
+Provide a clear, direct final answer at the end.""",
+
+    "medium": """You are an expert problem solver with structured reasoning capabilities.
+For every question:
+1. UNDERSTAND: Restate the core problem
+2. PLAN: Outline your approach
+3. EXECUTE: Work through step by step
+4. VERIFY: Check your work
+5. ANSWER: State your final answer clearly
+
+Your response should flow naturally but include all reasoning steps.
+End with a clear statement of your final answer.""",
+
+    "heavy": """You are an expert problem solver with deep analytical capabilities.
+Apply rigorous reasoning:
+1. Carefully understand what's being asked
+2. Consider multiple approaches
+3. Work through the problem systematically
+4. Verify your logic and calculations
+5. Express confidence in your answer
+
+If uncertain, explain why. Always end with a clear, definitive answer.
+Format your final answer as: "The answer is [X]" or "My conclusion is [X]".""",
+
+    "maximum": """You are a world-class expert solving a challenging problem.
+Use multi-perspective analysis:
+1. First attempt: Solve directly
+2. Alternative approach: Solve a different way
+3. Critique: What could be wrong?
+4. Synthesis: Combine insights
+5. Final answer: State with confidence
+
+Reason thoroughly but present your final answer clearly at the end.
+Always conclude with: "Therefore, the answer is [X]" or "In conclusion, [X]".""",
+}
+
+
+@dataclass
+class SeparatedPrompt:
+    """Prompt with system and user messages properly separated."""
+    system_message: str
+    user_message: str
+    extraction_pattern: Optional[str] = None
+
+
+def get_separated_reasoning_prompt(
+    level: ReasoningHackLevel,
+    question: str,
+    task_type: Optional[str] = None,
+) -> SeparatedPrompt:
+    """Get reasoning prompt with system and user messages properly separated.
+    
+    This prevents template leakage by putting instructions in system message
+    and keeping the user message clean (just the question).
+    
+    Args:
+        level: How aggressive the reasoning approach should be
+        question: The user's question (kept clean, no scaffolding)
+        task_type: Optional task type for specialized handling
+        
+    Returns:
+        SeparatedPrompt with system_message, user_message, and extraction_pattern
+    """
+    # Get the appropriate system prompt
+    level_key = level.value if isinstance(level, ReasoningHackLevel) else "medium"
+    system_prompt = REASONING_SYSTEM_PROMPTS.get(level_key, REASONING_SYSTEM_PROMPTS["medium"])
+    
+    # Add task-specific guidance to system prompt
+    task_guidance = ""
+    if task_type:
+        if "math" in task_type.lower():
+            task_guidance = "\n\nFor math problems: Show all calculations clearly and state numerical answers explicitly."
+        elif "code" in task_type.lower():
+            task_guidance = "\n\nFor coding: Write clean, working code with comments. Test mentally for edge cases."
+        elif "reason" in task_type.lower():
+            task_guidance = "\n\nFor logic problems: Use formal reasoning. State explicitly if a conclusion can or cannot be drawn."
+        elif "creative" in task_type.lower():
+            task_guidance = "\n\nFor creative tasks: Be original and engaging. Meet all requirements precisely."
+        elif "analysis" in task_type.lower():
+            task_guidance = "\n\nFor analysis: Consider multiple perspectives. Support conclusions with evidence."
+    
+    # Extraction pattern for parsing the response
+    extraction_pattern = r"(?:The answer is|My conclusion is|Therefore,|In conclusion,|Final answer:)[:\s]*(.+?)(?:\n\n|$)"
+    
+    return SeparatedPrompt(
+        system_message=system_prompt + task_guidance,
+        user_message=question,  # Clean question, no scaffolding!
+        extraction_pattern=extraction_pattern,
+    )
+
+
+def extract_final_answer(response: str, extraction_pattern: Optional[str] = None) -> str:
+    """Extract the final answer from a reasoning response.
+    
+    Uses patterns to find the actual answer, removing any reasoning scaffolding.
+    Falls back to the full response if no clear answer marker is found.
+    
+    Args:
+        response: The LLM's full response
+        extraction_pattern: Optional regex pattern for extraction
+        
+    Returns:
+        The extracted answer, or the full response if no clear answer found
+    """
+    if not response:
+        return response
+    
+    # Try the provided pattern first
+    if extraction_pattern:
+        match = re.search(extraction_pattern, response, re.IGNORECASE | re.DOTALL)
+        if match:
+            extracted = match.group(1).strip()
+            if len(extracted) > 10:  # Ensure it's substantial
+                return extracted
+    
+    # Standard patterns for finding answers
+    answer_patterns = [
+        r"(?:The answer is|Therefore,? the answer is)[:\s]*(.+?)(?:\n\n|$)",
+        r"(?:My conclusion is|In conclusion,?)[:\s]*(.+?)(?:\n\n|$)",
+        r"(?:Final answer|FINAL ANSWER)[:\s]*(.+?)(?:\n\n|$)",
+        r"(?:The result is|The solution is)[:\s]*(.+?)(?:\n\n|$)",
+        # For math - extract numerical result
+        r"(?:=|equals|is)\s*\$?([\d,]+\.?\d*)",
+    ]
+    
+    for pattern in answer_patterns:
+        match = re.search(pattern, response, re.IGNORECASE | re.DOTALL)
+        if match:
+            extracted = match.group(1).strip()
+            # Validate extraction - must be substantial and not a fragment
+            if len(extracted) > 5 and not extracted.startswith(('is ', 'are ', 'was ')):
+                return extracted
+    
+    # No clear answer marker found - check if scaffolding is present
+    scaffolding_markers = [
+        "=== PROBLEM ===",
+        "=== UNDERSTANDING ===",
+        "=== APPROACH ===",
+        "=== STEP-BY-STEP",
+        "=== VERIFICATION ===",
+        "=== FINAL ANSWER ===",
+    ]
+    
+    if any(marker in response for marker in scaffolding_markers):
+        # Try to extract from structured response
+        final_match = re.search(r"=== FINAL ANSWER ===\s*(.+?)(?:$|===)", response, re.DOTALL)
+        if final_match:
+            return final_match.group(1).strip()
+    
+    # Return the full response if no scaffolding detected
+    return response
+
+
+def is_response_leaked_template(response: str) -> bool:
+    """Check if a response appears to be a leaked template.
+    
+    Returns True if the response contains template scaffolding that should
+    have been used internally but not returned to the user.
+    """
+    leaked_patterns = [
+        "=== PROBLEM ===",
+        "=== UNDERSTANDING ===",
+        "[restate the core question]",
+        "[list any constraints]",
+        "[describe your approach]",
+        "Step 1: [first step",
+        "Confidence level: [0-100%]",
+        "=== ATTEMPT 1 ===",
+        "[IF CONFIDENCE < 80%",
+        "=== PROPOSER ===",
+        "=== CRITIC ===",
+        "=== DEFENDER ===",
+    ]
+    
+    return any(pattern in response for pattern in leaked_patterns)
+

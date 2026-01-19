@@ -2618,6 +2618,9 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             from ..orchestration.reasoning_hacker import (
                 get_hack_prompt,
                 get_recommended_hack_level,
+                get_separated_reasoning_prompt,
+                extract_final_answer,
+                is_response_leaked_template,
                 ReasoningHackLevel,
                 REASONING_HACK_PROMPTS,
             )
@@ -2637,8 +2640,8 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     # Model can benefit from reasoning hacks
                     accuracy_lvl = orchestration_config.get("accuracy_level", 3)
                     
-                    # Use reasoning hacker module if available
-                    # NOTE: Only apply reasoning hacks at accuracy_level >= 4 to avoid template leakage
+                    # PHASE 16: Use SEPARATED reasoning prompts to prevent template leakage
+                    # System instructions go in system message, question stays clean
                     if REASONING_HACKER_AVAILABLE and accuracy_lvl >= 4:
                         # Determine hack level based on task and accuracy
                         if accuracy_lvl >= 5:
@@ -2651,32 +2654,31 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                         if detected_task_type in high_stakes and accuracy_lvl >= 3:
                             reasoning_hack_level = ReasoningHackLevel.MAXIMUM
                         
-                        # Apply the hack prompt
-                        enhanced_prompt = get_hack_prompt(
+                        # PHASE 16: Use separated prompts to avoid template leakage
+                        separated = get_separated_reasoning_prompt(
                             level=reasoning_hack_level,
                             question=enhanced_prompt,
                             task_type=detected_task_type,
                         )
+                        
+                        # Store the system message for the orchestrator to use
+                        # The enhanced_prompt stays clean (just the question)
+                        orchestration_config["reasoning_system_message"] = separated.system_message
+                        orchestration_config["reasoning_extraction_pattern"] = separated.extraction_pattern
+                        
+                        # Keep enhanced_prompt clean - no scaffolding!
+                        # The system message contains the reasoning instructions
+                        enhanced_prompt = separated.user_message
                         reasoning_hack_applied = True
                         
                         logger.info(
-                            "Applied reasoning hack level=%s for %s (reasoning_score=%d, task=%s)",
+                            "PHASE 16: Applied separated reasoning (level=%s) for %s - no template leakage",
                             reasoning_hack_level.value,
                             profile.display_name,
-                            profile.reasoning_score,
-                            detected_task_type,
                         )
                     else:
-                        # Fallback to basic hack
-                        if accuracy_lvl >= 4:
-                            reasoning_hack = get_reasoning_hack(primary_model, detected_task_type)
-                            if reasoning_hack and "{question}" in reasoning_hack:
-                                enhanced_prompt = reasoning_hack.replace("{question}", enhanced_prompt)
-                                reasoning_hack_applied = True
-                                logger.info(
-                                    "Applied fallback reasoning hack for %s",
-                                    profile.display_name,
-                                )
+                        # For accuracy_level < 4, use simple category prompts (already working well)
+                        pass  # Category prompts are applied earlier in the flow
                     
                     # Log model's native hack capability
                     if profile.reasoning_hack_method and not reasoning_hack_applied:
@@ -3263,6 +3265,33 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # Last chance to detect and remove any template leakage before returning
         # This is a non-breaking safeguard - falls back to original if extraction fails
         # ========================================================================
+        
+        # PHASE 16: Use reasoning_hacker extraction if available
+        extraction_pattern = orchestration_config.get("reasoning_extraction_pattern")
+        
+        # Try to use the advanced extraction from reasoning_hacker module first
+        try:
+            from ..orchestration.reasoning_hacker import (
+                is_response_leaked_template,
+                extract_final_answer,
+            )
+            HAS_ADVANCED_EXTRACTION = True
+        except ImportError:
+            HAS_ADVANCED_EXTRACTION = False
+        
+        if HAS_ADVANCED_EXTRACTION and is_response_leaked_template(final_text):
+            logger.warning("PHASE 16: Template leakage detected, applying advanced extraction")
+            original_length = len(final_text)
+            extracted = extract_final_answer(final_text, extraction_pattern)
+            
+            # Validate extraction - must be substantial and different from original
+            if extracted and len(extracted) > 30 and extracted != final_text:
+                logger.info("PHASE 16: Extracted clean content (%d -> %d chars)", original_length, len(extracted))
+                final_text = extracted
+            else:
+                logger.info("PHASE 16: Advanced extraction insufficient, trying fallback")
+        
+        # Fallback: Local detection and extraction (for backwards compatibility)
         def _detect_template_leakage(text: str) -> bool:
             """Detect if response contains obvious template leakage."""
             leakage_indicators = [
@@ -3278,6 +3307,9 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 "**Problem:**\n\nIMPORTANT:",
                 "Rate your confidence from 1-10",
                 "thinking step by step as requested",
+                "[restate the core question]",
+                "[list any constraints]",
+                "=== ATTEMPT 1 ===",
             ]
             return any(indicator in text for indicator in leakage_indicators)
         
@@ -3313,9 +3345,9 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             
             return cleaned.strip() if cleaned.strip() else text
         
-        # Apply final safeguard only if leakage detected
+        # Apply fallback safeguard if leakage still detected
         if _detect_template_leakage(final_text):
-            logger.warning("PHASE 4: Template leakage detected in final response")
+            logger.warning("PHASE 4: Template leakage still detected, applying fallback extraction")
             original_length = len(final_text)
             extracted = _extract_actual_content(final_text)
             

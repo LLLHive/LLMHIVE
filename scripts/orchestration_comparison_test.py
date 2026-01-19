@@ -406,7 +406,7 @@ async def run_llmhive_http(prompt: TestPrompt) -> TestResult:
                 "temperature": 0.7,
                 "max_tokens": 2000,
                 "top_p": 0.95,
-                "accuracy_level": 3,  # Optimal level (4 needs reasoning template fixes)
+                "accuracy_level": 3,  # Level 3 for comparison (Level 4 now also works)
                 "enable_hrm": False,  # HRM disabled - causes template leakage
                 "enable_deep_consensus": False,  # Disabled - causes output corruption
                 "enable_tool_broker": prompt.requires_tools,
