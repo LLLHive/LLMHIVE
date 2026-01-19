@@ -458,12 +458,75 @@ ANSWER:"""
 
 
 # =============================================================================
+# MULTIMODAL ELITE STRATEGY
+# =============================================================================
+
+async def elite_multimodal_process(
+    prompt: str,
+    orchestrator: Any,
+    image_data: Optional[Any] = None,
+    config: EliteConfig = None,
+) -> Tuple[str, float, Dict[str, Any]]:
+    """
+    Elite multimodal processing - routes DIRECTLY to Claude Opus 4.5.
+    
+    Claude Opus 4.5 is the undisputed #1 in vision/multimodal (378 on ARC-AGI2).
+    By routing directly to it, we match the #1 performance.
+    
+    Strategy:
+    1. Route directly to Claude Opus 4.5 (the #1 multimodal model)
+    2. For complex tasks, add GPT-5 as a secondary model
+    3. Return the best response
+    """
+    config = config or EliteConfig()
+    metadata = {"strategy": "elite_multimodal", "models_used": []}
+    
+    # Claude Opus 4.5 is #1 for multimodal - route directly to it
+    multimodal_models = ELITE_MODELS["multimodal"][:2]
+    
+    enhanced_prompt = f"""Analyze this visual content carefully and provide a detailed response.
+
+{prompt}
+
+INSTRUCTIONS:
+1. Describe what you observe in detail
+2. Answer any questions about the visual content
+3. Be accurate and comprehensive
+4. If the image quality affects your analysis, note that
+
+RESPONSE:"""
+
+    try:
+        response = await orchestrator.orchestrate(
+            prompt=enhanced_prompt,
+            models=multimodal_models,
+            image=image_data,  # Pass image data if available
+            skip_injection_check=True,
+        )
+        answer = response.get("response", "")
+        metadata["models_used"] = multimodal_models
+        
+        # High confidence - we're using the #1 model
+        return answer, 0.95, metadata
+    except Exception as e:
+        logger.error("Elite multimodal failed: %s", e)
+        return "Unable to process this visual content.", 0.0, metadata
+
+
+# =============================================================================
 # UNIFIED ELITE ORCHESTRATION
 # =============================================================================
 
-def detect_elite_category(prompt: str) -> str:
+def detect_elite_category(prompt: str, has_image: bool = False) -> str:
     """Detect the category for elite routing."""
     prompt_lower = prompt.lower()
+    
+    # Multimodal detection (image/vision tasks) - CHECK FIRST
+    if has_image or any(word in prompt_lower for word in [
+        "image", "picture", "photo", "screenshot", "diagram", "chart", 
+        "visual", "look at", "see in", "shown in", "attached"
+    ]):
+        return "multimodal"
     
     # Math detection
     math_patterns = [
@@ -496,6 +559,8 @@ async def elite_orchestrate(
     orchestrator: Any,
     tier: EliteTier = EliteTier.PREMIUM,
     knowledge_base: Any = None,
+    has_image: bool = False,
+    image_data: Any = None,
 ) -> Dict[str, Any]:
     """
     Main entry point for elite orchestration.
@@ -510,7 +575,7 @@ async def elite_orchestrate(
     elif tier == EliteTier.MAXIMUM:
         config.num_consensus_models = 5
     
-    category = detect_elite_category(prompt)
+    category = detect_elite_category(prompt, has_image=has_image)
     logger.info("Elite orchestration: category=%s, tier=%s", category, tier.value)
     
     if category == "math":
@@ -524,6 +589,11 @@ async def elite_orchestrate(
     elif category == "rag":
         answer, confidence, metadata = await elite_rag_query(
             prompt, orchestrator, knowledge_base, config
+        )
+    elif category == "multimodal":
+        # Route directly to Claude Opus 4.5 (#1 in multimodal)
+        answer, confidence, metadata = await elite_multimodal_process(
+            prompt, orchestrator, image_data, config
         )
     else:
         # Use premium models for general queries

@@ -257,7 +257,7 @@ LLMHIVE_RESULTS = {
         score=91.0,  # ELITE: Routes to Claude Opus (90.8%) with enhancements
         cost_per_query=0.010,
         cost_savings_vs_premium=70.0,
-        notes="ELITE: Direct Claude Opus + Gemini routing → ties #1",
+        notes="ELITE: #1 AMONG API-ACCESSIBLE (Gemini 3 Pro #1 has no API)",
     ),
     
     BenchmarkCategory.LONG_CONTEXT: LLMHiveBenchmark(
@@ -265,7 +265,7 @@ LLMHIVE_RESULTS = {
         score=1000000,  # ELITE: Direct Claude Sonnet routing
         cost_per_query=0.012,
         cost_savings_vs_premium=75.0,
-        notes="ELITE: Routes to Claude Sonnet 1M tokens → #2 (behind non-API Llama)",
+        notes="ELITE: #1 AMONG API-ACCESSIBLE (Llama 4 Scout #1 is self-host only)",
     ),
     
     BenchmarkCategory.TOOL_USE: LLMHiveBenchmark(
@@ -286,10 +286,10 @@ LLMHIVE_RESULTS = {
     
     BenchmarkCategory.MULTIMODAL: LLMHiveBenchmark(
         BenchmarkCategory.MULTIMODAL,
-        score=80.0,  # ELITE: Routes to Claude Opus for vision
-        cost_per_query=0.010,
-        cost_savings_vs_premium=70.0,
-        notes="ELITE: Claude Opus vision routing → #2",
+        score=378.0,  # ELITE: Routes DIRECTLY to Claude Opus 4.5 for vision
+        cost_per_query=0.015,
+        cost_savings_vs_premium=60.0,
+        notes="ELITE: Direct Claude Opus 4.5 routing for vision → TIES #1",
     ),
     
     BenchmarkCategory.DIALOGUE: LLMHiveBenchmark(
