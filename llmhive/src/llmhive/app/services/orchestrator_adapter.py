@@ -137,6 +137,24 @@ except ImportError:
     ELITE_AVAILABLE = False
     EliteOrchestrator = None
 
+# Import Elite Orchestration Module (Phase 18 - Top Position Strategy)
+try:
+    from ..orchestration.elite_orchestration import (
+        elite_orchestrate,
+        elite_math_solve,
+        elite_reasoning_solve,
+        elite_rag_query,
+        detect_elite_category,
+        EliteTier,
+        EliteConfig,
+        ELITE_MODELS,
+    )
+    ELITE_ORCHESTRATION_AVAILABLE = True
+except ImportError:
+    ELITE_ORCHESTRATION_AVAILABLE = False
+    elite_orchestrate = None
+    EliteTier = None
+
 try:
     from ..orchestration.quality_booster import (
         QualityBooster,
@@ -1866,21 +1884,41 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 category_override = True
                 logger.info("Speed routing -> %s", speed_models)
             
-            # 5d: Math Problem Routing (#9 -> #3)
-            # Use math specialists for complex calculations
+            # 5d: Math Problem Routing - ELITE MODE for top position
+            # Use PREMIUM models (o3, GPT-5.2, Claude Opus) for math
             elif _detect_task_type(request.prompt) == "math_problem":
-                math_models = get_math_specialist_models(num_models=2)
-                selected_models = math_models + [m for m in selected_models if m not in math_models]
+                # Phase 18: Use elite models for math to achieve #1 ranking
+                if ELITE_ORCHESTRATION_AVAILABLE and accuracy_level >= 3:
+                    # Use the actual top math models
+                    selected_models = ELITE_MODELS.get("math", [])[:3]
+                    logger.info("ELITE Math routing (Phase 18) -> %s", selected_models)
+                else:
+                    math_models = get_math_specialist_models(num_models=2)
+                    selected_models = math_models + [m for m in selected_models if m not in math_models]
+                    logger.info("Math routing -> %s", math_models)
                 category_override = True
-                logger.info("Math routing -> %s", math_models)
             
-            # 5e: RAG Routing (#4 -> #3)
-            # Use RAG-optimized models when knowledge retrieval is needed
+            # 5e: RAG Routing - ELITE MODE for top position
+            # Use PREMIUM models (GPT-5.2, Claude Opus) for RAG
             elif getattr(request.orchestration, 'enable_rag', False) or "search" in request.prompt.lower() or "find information" in request.prompt.lower():
-                rag_models = get_rag_optimized_models(num_models=2)
-                selected_models = rag_models + [m for m in selected_models if m not in rag_models]
+                # Phase 18: Use elite models for RAG to achieve #1 ranking
+                if ELITE_ORCHESTRATION_AVAILABLE and accuracy_level >= 3:
+                    selected_models = ELITE_MODELS.get("rag", [])[:2]
+                    logger.info("ELITE RAG routing (Phase 18) -> %s", selected_models)
+                else:
+                    rag_models = get_rag_optimized_models(num_models=2)
+                    selected_models = rag_models + [m for m in selected_models if m not in rag_models]
+                    logger.info("RAG routing -> %s", rag_models)
                 category_override = True
-                logger.info("RAG routing -> %s", rag_models)
+            
+            # 5f: Reasoning Routing - ELITE MODE for top position
+            elif _detect_task_type(request.prompt) in ("reasoning", "multi_step"):
+                if ELITE_ORCHESTRATION_AVAILABLE and accuracy_level >= 3:
+                    selected_models = ELITE_MODELS.get("reasoning", [])[:3]
+                    logger.info("ELITE Reasoning routing (Phase 18) -> %s", selected_models)
+                else:
+                    selected_models = [FALLBACK_O3, FALLBACK_GPT_5] + selected_models
+                category_override = True
             
             # Map to actual model names
             actual_models = []
