@@ -50,24 +50,25 @@ class EliteConfig:
 # =============================================================================
 
 # These are the TOP models per category - use when quality is paramount
+# NOTE: Model IDs must match the constants in model_router.py for consistency
 ELITE_MODELS = {
     "math": [
         "openai/o3",               # 98.4% AIME - reasoning specialist
-        "openai/gpt-5.2",          # 100% AIME - best overall
+        "openai/gpt-5",            # 100% AIME - best overall (gpt-5 is latest)
         "anthropic/claude-opus-4", # 100% AIME with tools
     ],
     "reasoning": [
-        "openai/gpt-5.2",          # 92.4% GPQA
+        "openai/gpt-5",            # 92.4% GPQA
         "openai/o3",               # Native reasoning
         "anthropic/claude-opus-4", # 87% GPQA
     ],
     "coding": [
         "anthropic/claude-sonnet-4", # 82% SWE-Bench
         "anthropic/claude-opus-4",   # 80.9% SWE-Bench
-        "openai/gpt-5.2",            # 80% SWE-Bench
+        "openai/gpt-5",              # 80% SWE-Bench
     ],
     "rag": [
-        "openai/gpt-5.2",          # 95% RAG-Eval
+        "openai/gpt-5",            # 95% RAG-Eval
         "anthropic/claude-opus-4", # 94% RAG-Eval
         "google/gemini-2.5-pro",   # 90% RAG-Eval
     ],
@@ -78,7 +79,7 @@ ELITE_MODELS = {
     ],
     "long_context": [
         "anthropic/claude-sonnet-4", # 1M tokens
-        "openai/gpt-5.2",            # 256K tokens
+        "openai/gpt-5",              # 256K tokens
         "anthropic/claude-opus-4",   # 200K tokens
     ],
     "speed": [
@@ -87,13 +88,13 @@ ELITE_MODELS = {
         "anthropic/claude-3-haiku", # Fast variant
     ],
     "dialogue": [
-        "openai/gpt-5.2",          # 95% alignment
+        "openai/gpt-5",            # 95% alignment
         "anthropic/claude-opus-4", # 94% alignment
         "anthropic/claude-sonnet-4", # 92% alignment
     ],
     "multimodal": [
         "anthropic/claude-opus-4", # 378 ARC-AGI2
-        "openai/gpt-5.2",          # 53 ARC-AGI2
+        "openai/gpt-5",            # 53 ARC-AGI2
         "openai/gpt-4o",           # Vision capable
     ],
 }
