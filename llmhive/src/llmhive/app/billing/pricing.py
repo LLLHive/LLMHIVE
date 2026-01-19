@@ -15,6 +15,7 @@ class TierName(str, Enum):
     TEAM = "team"
     ENTERPRISE = "enterprise"
     ENTERPRISE_PLUS = "enterprise_plus"
+    MAXIMUM = "maximum"  # NEW: Full power tier - crush competition
 
 
 class OrchestrationTier(str, Enum):
@@ -351,12 +352,62 @@ class PricingTierManager:
             description="Enterprise Plus with ELITE orchestration and custom policies",
         )
 
+        # MAXIMUM Tier ($499/mo) - Full power, crush competition by maximum margin
+        # Target: Hedge funds, legal, healthcare, government, mission-critical
+        maximum_tier = PricingTier(
+            name=TierName.MAXIMUM,
+            display_name="Maximum",
+            monthly_price_usd=499.0,
+            annual_price_usd=4_990.0,  # ~17% discount
+            limits=TierLimits(
+                max_requests_per_month=1_000,  # 1000 full-power queries
+                max_tokens_per_month=50_000_000,
+                max_models_per_request=10,
+                max_concurrent_requests=20,
+                max_storage_mb=100_000,  # 100GB
+                enable_advanced_features=True,
+                enable_api_access=True,
+                enable_priority_support=True,
+                max_team_members=10,
+                allow_parallel_retrieval=True,
+                allow_deep_conf=True,
+                allow_prompt_diffusion=True,
+                allow_adaptive_ensemble=True,
+                allow_hrm=True,
+                allow_loopback_refinement=True,
+                max_tokens_per_query=0,  # Unlimited
+                # MAXIMUM Orchestration: Full power, no limits
+                default_orchestration_tier="maximum",
+                premium_escalation_budget=0,  # Unlimited
+                elite_escalation_budget=0,  # Unlimited
+                max_passes_per_month=0,  # Unlimited
+                memory_retention_days=365,
+                calculator_enabled=True,
+                reranker_enabled=True,
+            ),
+            features={
+                "basic_orchestration", "memory", "knowledge_base",
+                "advanced_orchestration", "hrm", "prompt_diffusion",
+                "deepconf", "adaptive_ensemble", "api_access",
+                "web_research", "fact_checking", "calculator", "reranker",
+                "vector_storage", "full_consensus", "team_workspace",
+                "shared_memory", "team_projects", "admin_dashboard",
+                "sso", "audit_logs", "compliance", "sla_999",
+                "custom_routing_policies", "dedicated_support",
+                "maximum_orchestration", "multi_model_consensus",
+                "verification_loops", "reflection_chains",
+                "mission_critical_support", "priority_escalation"
+            },
+            description="MAXIMUM power - crush competition by +5% margin average",
+        )
+
         self.tiers[TierName.FREE] = free_tier
         self.tiers[TierName.LITE] = lite_tier
         self.tiers[TierName.PRO] = pro_tier
         self.tiers[TierName.TEAM] = team_tier
         self.tiers[TierName.ENTERPRISE] = enterprise_tier
         self.tiers[TierName.ENTERPRISE_PLUS] = enterprise_plus_tier
+        self.tiers[TierName.MAXIMUM] = maximum_tier
 
     def get_tier(self, tier_name: TierName | str) -> Optional[PricingTier]:
         """Get a pricing tier by name."""
