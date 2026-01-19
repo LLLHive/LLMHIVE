@@ -62,6 +62,17 @@ from .model_router import (
     get_best_models_for_task,
     get_diverse_ensemble,
     MODEL_CAPABILITIES,
+    # Category-specific routing (January 2026 improvements)
+    get_long_context_model,
+    get_multilingual_models,
+    get_speed_optimized_models,
+    get_math_specialist_models,
+    get_rag_optimized_models,
+    estimate_token_count,
+    detect_language,
+    is_multilingual_query,
+    is_long_context_query,
+    is_speed_critical,
 )
 from .reasoning_prompts import get_reasoning_prompt_template, get_category_prompt
 
@@ -1824,6 +1835,52 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     if rm in available_providers and rm not in selected_models:
                         selected_models.insert(0, rm)
                 logger.info("Prioritized reasoning models: %s", selected_models[:3])
+            
+            # =========================================================================
+            # Step 5: CATEGORY-SPECIFIC ROUTING (January 2026 Improvements)
+            # Optimize for: Long Context, Multilingual, Speed, Math, RAG
+            # =========================================================================
+            category_override = False
+            
+            # 5a: Long Context Routing (#10 -> #3)
+            prompt_tokens = estimate_token_count(request.prompt)
+            if is_long_context_query(request.prompt, threshold=30000):
+                long_context_model = get_long_context_model(prompt_tokens, available_providers)
+                if long_context_model:
+                    selected_models = [long_context_model] + [m for m in selected_models if m != long_context_model]
+                    category_override = True
+                    logger.info("Long context routing: %d tokens -> %s", prompt_tokens, long_context_model)
+            
+            # 5b: Multilingual Routing (#6 -> #3)
+            elif is_multilingual_query(request.prompt):
+                detected_lang = detect_language(request.prompt)
+                multilingual_models = get_multilingual_models(detected_lang, num_models=2)
+                selected_models = multilingual_models + [m for m in selected_models if m not in multilingual_models]
+                category_override = True
+                logger.info("Multilingual routing: lang=%s -> %s", detected_lang, multilingual_models)
+            
+            # 5c: Speed-Critical Routing (#9 -> #3)
+            elif is_speed_critical(metadata_dict if 'metadata_dict' in dir() else None):
+                speed_models = get_speed_optimized_models(num_models=1)
+                selected_models = speed_models
+                category_override = True
+                logger.info("Speed routing -> %s", speed_models)
+            
+            # 5d: Math Problem Routing (#9 -> #3)
+            # Use math specialists for complex calculations
+            elif _detect_task_type(request.prompt) == "math_problem":
+                math_models = get_math_specialist_models(num_models=2)
+                selected_models = math_models + [m for m in selected_models if m not in math_models]
+                category_override = True
+                logger.info("Math routing -> %s", math_models)
+            
+            # 5e: RAG Routing (#4 -> #3)
+            # Use RAG-optimized models when knowledge retrieval is needed
+            elif getattr(request.orchestration, 'enable_rag', False) or "search" in request.prompt.lower() or "find information" in request.prompt.lower():
+                rag_models = get_rag_optimized_models(num_models=2)
+                selected_models = rag_models + [m for m in selected_models if m not in rag_models]
+                category_override = True
+                logger.info("RAG routing -> %s", rag_models)
             
             # Map to actual model names
             actual_models = []

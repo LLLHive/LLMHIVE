@@ -588,3 +588,216 @@ def get_diverse_ensemble(
     
     return ensemble
 
+
+# =============================================================================
+# CATEGORY-SPECIFIC ROUTING (January 2026 Improvements)
+# =============================================================================
+
+# Models with large context windows (for Long Context ranking)
+LONG_CONTEXT_MODELS = {
+    FALLBACK_CLAUDE_SONNET_4: 1000000,  # 1M tokens
+    FALLBACK_CLAUDE_OPUS_4: 200000,      # 200K tokens
+    FALLBACK_GPT_5: 256000,              # 256K tokens
+    FALLBACK_GPT_4O: 128000,             # 128K tokens
+    FALLBACK_GEMINI_2_5: 128000,         # 128K tokens
+}
+
+# Models strong in multilingual (for Multilingual ranking)
+MULTILINGUAL_MODELS = [
+    FALLBACK_CLAUDE_OPUS_4,    # 90.8% MMMLU
+    FALLBACK_CLAUDE_SONNET_4,  # 89.1% MMMLU
+    FALLBACK_GEMINI_2_5,       # 89.2% MMMLU
+    FALLBACK_GPT_5,            # Strong multilingual
+]
+
+# Models optimized for speed (for Speed ranking)
+SPEED_OPTIMIZED_MODELS = [
+    FALLBACK_GPT_4O_MINI,      # 0.35s TTFT
+    FALLBACK_GEMINI_2_5_FLASH, # Fast
+    FALLBACK_CLAUDE_3_HAIKU,   # Fast variant
+    FALLBACK_DEEPSEEK,         # Fast
+]
+
+# Models strong in math (for Math ranking)
+MATH_SPECIALIST_MODELS = [
+    FALLBACK_O3,               # 98.4% AIME
+    FALLBACK_O1,               # Native reasoning
+    FALLBACK_GPT_5,            # 100% AIME
+    FALLBACK_DEEPSEEK_R1,      # Strong math
+    FALLBACK_CLAUDE_OPUS_4,    # 100% with tools
+]
+
+# Models strong in RAG (for RAG ranking)
+RAG_OPTIMIZED_MODELS = [
+    FALLBACK_GPT_5,            # 95% RAG-Eval
+    FALLBACK_CLAUDE_OPUS_4,    # 94% RAG-Eval
+    FALLBACK_CLAUDE_SONNET_4,  # 88% RAG-Eval
+    FALLBACK_GPT_4O,           # 82% RAG-Eval
+]
+
+
+def get_long_context_model(
+    prompt_length: int,
+    available_models: Optional[List[str]] = None,
+) -> str:
+    """Select best model for long context based on prompt length.
+    
+    Args:
+        prompt_length: Estimated token count of prompt
+        available_models: Available models to choose from
+        
+    Returns:
+        Best model for the context length
+    """
+    # Find models that can handle the length
+    suitable = []
+    for model, context_size in LONG_CONTEXT_MODELS.items():
+        if context_size >= prompt_length * 1.5:  # 1.5x buffer for output
+            if available_models is None or model in available_models:
+                suitable.append((model, context_size))
+    
+    if not suitable:
+        # Fallback to largest available
+        logger.warning("No model can handle %d tokens, using largest available", prompt_length)
+        return FALLBACK_CLAUDE_SONNET_4  # 1M tokens
+    
+    # Sort by context size (prefer larger for safety)
+    suitable.sort(key=lambda x: x[1], reverse=True)
+    selected = suitable[0][0]
+    
+    logger.info("Long context routing: %d tokens -> %s", prompt_length, selected)
+    return selected
+
+
+def get_multilingual_models(
+    language_hint: Optional[str] = None,
+    num_models: int = 2,
+) -> List[str]:
+    """Get models optimized for multilingual tasks.
+    
+    Args:
+        language_hint: Optional detected language
+        num_models: Number of models to return
+        
+    Returns:
+        List of multilingual-optimized models
+    """
+    # Claude and Gemini lead MMMLU benchmarks
+    models = MULTILINGUAL_MODELS[:num_models]
+    logger.info("Multilingual routing: language=%s -> %s", language_hint, models)
+    return models
+
+
+def get_speed_optimized_models(
+    num_models: int = 1,
+) -> List[str]:
+    """Get models optimized for speed/latency.
+    
+    Args:
+        num_models: Number of models to return
+        
+    Returns:
+        List of speed-optimized models
+    """
+    models = SPEED_OPTIMIZED_MODELS[:num_models]
+    logger.info("Speed routing -> %s", models)
+    return models
+
+
+def get_math_specialist_models(
+    num_models: int = 2,
+) -> List[str]:
+    """Get models specialized for math problems.
+    
+    Args:
+        num_models: Number of models to return
+        
+    Returns:
+        List of math-specialized models
+    """
+    models = MATH_SPECIALIST_MODELS[:num_models]
+    logger.info("Math routing -> %s", models)
+    return models
+
+
+def get_rag_optimized_models(
+    num_models: int = 2,
+) -> List[str]:
+    """Get models optimized for RAG tasks.
+    
+    Args:
+        num_models: Number of models to return
+        
+    Returns:
+        List of RAG-optimized models
+    """
+    models = RAG_OPTIMIZED_MODELS[:num_models]
+    logger.info("RAG routing -> %s", models)
+    return models
+
+
+def estimate_token_count(text: str) -> int:
+    """Estimate token count from text length.
+    
+    Rough estimate: ~4 characters per token for English.
+    """
+    return len(text) // 4
+
+
+def detect_language(text: str) -> Optional[str]:
+    """Detect language from text (simple heuristic).
+    
+    Returns language code or None if unclear.
+    """
+    # Simple detection based on character ranges
+    text_sample = text[:500].lower()
+    
+    # CJK characters
+    if any('\u4e00' <= c <= '\u9fff' for c in text_sample):
+        return "zh"  # Chinese
+    if any('\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' for c in text_sample):
+        return "ja"  # Japanese
+    if any('\uac00' <= c <= '\ud7af' for c in text_sample):
+        return "ko"  # Korean
+    
+    # Cyrillic
+    if any('\u0400' <= c <= '\u04ff' for c in text_sample):
+        return "ru"  # Russian
+    
+    # Arabic
+    if any('\u0600' <= c <= '\u06ff' for c in text_sample):
+        return "ar"  # Arabic
+    
+    # Common Spanish/French/German keywords
+    spanish = ["que", "de", "es", "en", "como", "está"]
+    french = ["que", "est", "les", "dans", "pour", "avec"]
+    german = ["der", "die", "das", "und", "ist", "für"]
+    
+    words = text_sample.split()
+    if any(w in spanish for w in words):
+        return "es"
+    if any(w in french for w in words):
+        return "fr"
+    if any(w in german for w in words):
+        return "de"
+    
+    return "en"  # Default to English
+
+
+def is_multilingual_query(text: str) -> bool:
+    """Check if query requires multilingual handling."""
+    lang = detect_language(text)
+    return lang != "en"
+
+
+def is_long_context_query(text: str, threshold: int = 50000) -> bool:
+    """Check if query needs long context handling."""
+    return estimate_token_count(text) > threshold
+
+
+def is_speed_critical(request_metadata: Optional[dict] = None) -> bool:
+    """Check if request is speed-critical."""
+    if request_metadata:
+        return request_metadata.get("speed_priority", False)
+    return False
+
