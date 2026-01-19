@@ -69,12 +69,14 @@
 - ❌ Advanced features
 
 ### Competitive Position
-| Category | LLMHive Free | GPT-5.2 | Savings |
-|----------|--------------|---------|---------|
-| Reasoning | 92.0% | 92.4% | 99%+ |
-| Coding | 82.0% | 80.0% | 99%+ |
-| Math | 100% | 100% | 99%+ |
-| All 10 | **#1 or #2** | #1-2 | **99%+** |
+| Category | LLMHive Free | GPT-5.2 | Result | Cost Savings* |
+|----------|--------------|---------|--------|---------------|
+| Reasoning | 89.1% | 92.4% | -3.3% | 99.7% |
+| Coding | **82.0%** | 80.0% | **+2.0%** ✅ | 99.7% |
+| Math | **100%** | 100% | **TIE** ✅ | 99.7% |
+| Overall | **#1 in 7/10** | #1-2 | Competitive | **99.7%** |
+
+*Cost savings = (GPT-5.2 $3.15/query - LLMHive $0.011/query) / GPT-5.2 cost
 
 ### Best For
 - Evaluating LLMHive
@@ -486,15 +488,18 @@
 
 ## Quality by Tier
 
-| Tier | Avg Quality | Categories #1 | Margin vs GPT-5.2 | Margin vs Claude |
-|------|-------------|---------------|-------------------|------------------|
-| Free (Premium) | 92.0% | 10/10 | Ties | +3-5% |
-| Lite (Elite) | 92.5% | 10/10 | Ties/+0.1% | +3-5% |
-| Pro (Standard) | 91.0% | 8/10 | -1.4% | +2-3% |
-| Team (Standard) | 91.0% | 8/10 | -1.4% | +2-3% |
-| Ent (Premium) | 92.0% | 10/10 | Ties | +3-5% |
-| Ent+ (Elite) | 92.5% | 10/10 | Ties/+0.1% | +3-5% |
-| **Maximum** | **95.5%** | **10/10** | **+3.1%** | **+6-8%** |
+| Tier | Avg Quality | Categories #1 | Margin vs GPT-5.2 | Cost Savings |
+|------|-------------|---------------|-------------------|--------------|
+| Free (Premium) | 89.0% | 7/10 | -3.4% (but beats in Coding!) | 99.7% |
+| Lite (Elite) | 92.5% | 10/10 | +0.1% | 99.5% |
+| Pro (Standard) | 91.0% | 8/10 | -1.4% | 99.8% |
+| Team (Standard) | 91.0% | 8/10 | -1.4% | 99.8% |
+| Ent (Premium) | 89.0% | 7/10 | -3.4% | 99.7% |
+| Ent+ (Elite) | 92.5% | 10/10 | +0.1% | 99.5% |
+| **Maximum** | **95.5%** | **10/10** | **+3.1%** | **52.4%** |
+
+**Note**: "Avg Quality" is the average across all 10 benchmark categories (Reasoning, Coding, Math, etc.).
+GPT-5.2's average is 92.4%. Even tiers that score slightly lower still provide massive cost savings.
 
 ---
 
