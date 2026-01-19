@@ -3250,6 +3250,74 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             # Instead, ensure the original response quality is maintained.
             logger.info("PHASE 3: Skipping retry to avoid stub fallback issues")
         
+        # ========================================================================
+        # PHASE 4: FINAL TEMPLATE LEAKAGE SAFEGUARD
+        # Last chance to detect and remove any template leakage before returning
+        # This is a non-breaking safeguard - falls back to original if extraction fails
+        # ========================================================================
+        def _detect_template_leakage(text: str) -> bool:
+            """Detect if response contains obvious template leakage."""
+            leakage_indicators = [
+                "=== Step 1:",
+                "=== PROBLEM ===",
+                "=== UNDERSTANDING ===",
+                "Phase 1 - Planning:",
+                "Phase 2 - Solution:",
+                "IMPORTANT: This is a complex request",
+                "You MUST address EVERY part",
+                "Solve this problem. You MUST express confidence",
+                "## The Request:",
+                "**Problem:**\n\nIMPORTANT:",
+                "Rate your confidence from 1-10",
+                "thinking step by step as requested",
+            ]
+            return any(indicator in text for indicator in leakage_indicators)
+        
+        def _extract_actual_content(text: str) -> str:
+            """Try to extract the actual answer from a leaked template response."""
+            # Try to find content after common template markers
+            extraction_patterns = [
+                (r'(?:Final Answer|ANSWER|Solution):\s*\n*(.*?)(?:$|\n\n---)', re.DOTALL | re.IGNORECASE),
+                (r'(?:In conclusion|Therefore|Thus|The answer is)[:,]?\s*(.*?)(?:$|\n\n)', re.DOTALL | re.IGNORECASE),
+                (r'\*\*(?:Answer|Result|Solution)\*\*:?\s*(.*?)(?:$|\n\n)', re.DOTALL),
+                # For multi-step, try to get the recommendation/conclusion section
+                (r'(?:Recommend(?:ation)?|Conclusion):\s*\n*(.*?)$', re.DOTALL | re.IGNORECASE),
+            ]
+            
+            for pattern, flags in extraction_patterns:
+                match = re.search(pattern, text, flags)
+                if match:
+                    extracted = match.group(1).strip()
+                    # Only use if substantial content
+                    if len(extracted) > 50:
+                        return extracted
+            
+            # Fallback: remove known template prefixes
+            cleaned = text
+            prefix_removals = [
+                r'^.*?=== Step \d+:.*?===\s*\n*',
+                r'^.*?Phase \d+ - \w+:\s*\n*',
+                r'^Sure,?\s*let\'s address.*?step-by-step\.\s*\n*',
+                r'^.*?IMPORTANT:.*?completely\.\s*\n*',
+            ]
+            for pattern in prefix_removals:
+                cleaned = re.sub(pattern, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
+            
+            return cleaned.strip() if cleaned.strip() else text
+        
+        # Apply final safeguard only if leakage detected
+        if _detect_template_leakage(final_text):
+            logger.warning("PHASE 4: Template leakage detected in final response")
+            original_length = len(final_text)
+            extracted = _extract_actual_content(final_text)
+            
+            # Only use extraction if it's substantial (at least 30% of original)
+            if len(extracted) > 50 and len(extracted) >= original_length * 0.3:
+                logger.info("PHASE 4: Extracted clean content (%d -> %d chars)", original_length, len(extracted))
+                final_text = extracted
+            else:
+                logger.info("PHASE 4: Extraction insufficient, keeping original")
+        
         # Build response with models_used
         response = ChatResponse(
             message=final_text,

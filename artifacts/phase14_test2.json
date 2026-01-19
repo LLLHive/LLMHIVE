@@ -1,0 +1,421 @@
+20:37:09 [INFO] 
+============================================================
+20:37:09 [INFO] Testing: math_001 (math)
+20:37:09 [INFO] Prompt: A company has revenue of $2.4 million and expenses of $1.68 million. Calculate t...
+20:37:09 [INFO] ============================================================
+20:37:09 [INFO] Running LLMHive orchestrated...
+20:37:16 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:37:16 [INFO]   Quality: 1.00
+20:37:16 [INFO]   Latency: 7282ms
+20:37:16 [INFO]   Cost: $0.0037
+20:37:16 [INFO]   Models: 3
+20:37:16 [INFO] Running openai/gpt-5.2...
+20:37:17 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:37:19 [INFO]   Quality: 1.00
+20:37:19 [INFO]   Latency: 2621ms
+20:37:19 [INFO]   Cost: $0.0149
+20:37:19 [INFO] Running anthropic/claude-opus-4...
+20:37:22 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:37:33 [INFO]   Quality: 0.85
+20:37:33 [INFO]   Latency: 14082ms
+20:37:33 [INFO]   Cost: $0.0219
+20:37:33 [INFO] 
+  Result: ✅ LLMHive wins
+20:37:33 [INFO]   Cost savings: 79.6%
+20:37:33 [INFO]   Quality diff: +0.00
+20:37:33 [INFO] 
+============================================================
+20:37:33 [INFO] Testing: math_002 (math)
+20:37:33 [INFO] Prompt: Calculate the compound interest on $10,000 invested at 7% annual interest, compo...
+20:37:33 [INFO] ============================================================
+20:37:33 [INFO] Running LLMHive orchestrated...
+20:37:39 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:37:39 [INFO]   Quality: 1.00
+20:37:39 [INFO]   Latency: 6212ms
+20:37:39 [INFO]   Cost: $0.0013
+20:37:39 [INFO]   Models: 1
+20:37:39 [INFO] Running openai/gpt-5.2...
+20:37:40 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:37:54 [INFO]   Quality: 0.50
+20:37:54 [INFO]   Latency: 14864ms
+20:37:54 [INFO]   Cost: $0.0801
+20:37:54 [INFO] Running anthropic/claude-opus-4...
+20:37:57 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:38:09 [INFO]   Quality: 0.50
+20:38:09 [INFO]   Latency: 14760ms
+20:38:09 [INFO]   Cost: $0.0229
+20:38:09 [INFO] 
+  Result: ✅ LLMHive wins
+20:38:09 [INFO]   Cost savings: 97.6%
+20:38:09 [INFO]   Quality diff: +0.50
+20:38:09 [INFO] 
+============================================================
+20:38:09 [INFO] Testing: code_001 (coding)
+20:38:09 [INFO] Prompt: Write a Python function that implements binary search on a sorted list. Include ...
+20:38:09 [INFO] ============================================================
+20:38:09 [INFO] Running LLMHive orchestrated...
+20:38:15 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:38:15 [INFO]   Quality: 1.00
+20:38:15 [INFO]   Latency: 6598ms
+20:38:15 [INFO]   Cost: $0.0037
+20:38:15 [INFO]   Models: 3
+20:38:15 [INFO] Running openai/gpt-5.2...
+20:38:16 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:38:21 [INFO]   Quality: 0.93
+20:38:21 [INFO]   Latency: 5343ms
+20:38:21 [INFO]   Cost: $0.0297
+20:38:21 [INFO] Running anthropic/claude-opus-4...
+20:38:24 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:39:31 [INFO]   Quality: 1.00
+20:39:31 [INFO]   Latency: 69780ms
+20:39:31 [INFO]   Cost: $0.1264
+20:39:31 [INFO] 
+  Result: ✅ LLMHive wins
+20:39:31 [INFO]   Cost savings: 95.2%
+20:39:31 [INFO]   Quality diff: +0.00
+20:39:31 [INFO] 
+============================================================
+20:39:31 [INFO] Testing: code_002 (coding)
+20:39:31 [INFO] Prompt: Explain the difference between async/await and threading in Python. When would y...
+20:39:31 [INFO] ============================================================
+20:39:31 [INFO] Running LLMHive orchestrated...
+20:39:39 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:39:39 [INFO]   Quality: 1.00
+20:39:39 [INFO]   Latency: 7940ms
+20:39:39 [INFO]   Cost: $0.0037
+20:39:39 [INFO]   Models: 3
+20:39:39 [INFO] Running openai/gpt-5.2...
+20:39:39 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:39:52 [INFO]   Quality: 1.00
+20:39:52 [INFO]   Latency: 13745ms
+20:39:52 [INFO]   Cost: $0.0420
+20:39:52 [INFO] Running anthropic/claude-opus-4...
+20:39:56 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:40:50 [INFO]   Quality: 1.00
+20:40:50 [INFO]   Latency: 58200ms
+20:40:50 [INFO]   Cost: $0.1034
+20:40:50 [INFO] 
+  Result: ✅ LLMHive wins
+20:40:50 [INFO]   Cost savings: 94.8%
+20:40:50 [INFO]   Quality diff: +0.00
+20:40:50 [INFO] 
+============================================================
+20:40:50 [INFO] Testing: reason_001 (reasoning)
+20:40:50 [INFO] Prompt: A farmer has chickens and rabbits. He counts 35 heads and 94 legs. How many chic...
+20:40:50 [INFO] ============================================================
+20:40:50 [INFO] Running LLMHive orchestrated...
+20:40:59 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:40:59 [INFO]   Quality: 1.00
+20:40:59 [INFO]   Latency: 8559ms
+20:40:59 [INFO]   Cost: $0.0037
+20:40:59 [INFO]   Models: 3
+20:40:59 [INFO] Running openai/gpt-5.2...
+20:40:59 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:41:02 [INFO]   Quality: 1.00
+20:41:02 [INFO]   Latency: 2478ms
+20:41:02 [INFO]   Cost: $0.0141
+20:41:02 [INFO] Running anthropic/claude-opus-4...
+20:41:05 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:41:17 [INFO]   Quality: 1.00
+20:41:17 [INFO]   Latency: 15557ms
+20:41:17 [INFO]   Cost: $0.0257
+20:41:17 [INFO] 
+  Result: ✅ LLMHive wins
+20:41:17 [INFO]   Cost savings: 81.2%
+20:41:17 [INFO]   Quality diff: +0.00
+20:41:17 [INFO] 
+============================================================
+20:41:17 [INFO] Testing: reason_002 (reasoning)
+20:41:17 [INFO] Prompt: If all roses are flowers, and some flowers fade quickly, can we conclude that so...
+20:41:17 [INFO] ============================================================
+20:41:17 [INFO] Running LLMHive orchestrated...
+20:41:24 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:41:24 [INFO]   Quality: 1.00
+20:41:24 [INFO]   Latency: 7398ms
+20:41:24 [INFO]   Cost: $0.0037
+20:41:24 [INFO]   Models: 3
+20:41:24 [INFO] Running openai/gpt-5.2...
+20:41:25 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:41:30 [INFO]   Quality: 0.70
+20:41:30 [INFO]   Latency: 5082ms
+20:41:30 [INFO]   Cost: $0.0214
+20:41:30 [INFO] Running anthropic/claude-opus-4...
+20:41:33 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:41:47 [INFO]   Quality: 1.00
+20:41:47 [INFO]   Latency: 17614ms
+20:41:47 [INFO]   Cost: $0.0228
+20:41:47 [INFO] 
+  Result: ✅ LLMHive wins
+20:41:47 [INFO]   Cost savings: 83.0%
+20:41:47 [INFO]   Quality diff: +0.00
+20:41:47 [INFO] 
+============================================================
+20:41:47 [INFO] Testing: creative_001 (creative)
+20:41:47 [INFO] Prompt: Write a compelling 150-word product description for an AI-powered smart garden s...
+20:41:47 [INFO] ============================================================
+20:41:47 [INFO] Running LLMHive orchestrated...
+20:41:52 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:41:52 [INFO]   Quality: 0.90
+20:41:52 [INFO]   Latency: 4937ms
+20:41:52 [INFO]   Cost: $0.0037
+20:41:52 [INFO]   Models: 3
+20:41:52 [INFO] Running openai/gpt-5.2...
+20:41:53 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:41:56 [INFO]   Quality: 1.00
+20:41:56 [INFO]   Latency: 4071ms
+20:41:56 [INFO]   Cost: $0.0117
+20:41:56 [INFO] Running anthropic/claude-opus-4...
+20:42:00 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:42:13 [INFO]   Quality: 0.90
+20:42:13 [INFO]   Latency: 16313ms
+20:42:13 [INFO]   Cost: $0.0167
+20:42:13 [INFO] 
+  Result: ❌ Premium wins
+20:42:13 [INFO]   Cost savings: 73.6%
+20:42:13 [INFO]   Quality diff: -0.10
+20:42:13 [INFO] 
+============================================================
+20:42:13 [INFO] Testing: creative_002 (creative)
+20:42:13 [INFO] Prompt: Generate 5 unique and memorable startup name ideas for a company that uses AI to...
+20:42:13 [INFO] ============================================================
+20:42:13 [INFO] Running LLMHive orchestrated...
+20:42:19 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:42:19 [INFO]   Quality: 1.00
+20:42:19 [INFO]   Latency: 6830ms
+20:42:19 [INFO]   Cost: $0.0037
+20:42:19 [INFO]   Models: 3
+20:42:19 [INFO] Running openai/gpt-5.2...
+20:42:20 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:42:24 [INFO]   Quality: 1.00
+20:42:24 [INFO]   Latency: 4299ms
+20:42:24 [INFO]   Cost: $0.0136
+20:42:24 [INFO] Running anthropic/claude-opus-4...
+20:42:27 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:42:52 [INFO]   Quality: 1.00
+20:42:52 [INFO]   Latency: 28125ms
+20:42:52 [INFO]   Cost: $0.0320
+20:42:52 [INFO] 
+  Result: ✅ LLMHive wins
+20:42:52 [INFO]   Cost savings: 83.6%
+20:42:52 [INFO]   Quality diff: +0.00
+20:42:52 [INFO] 
+============================================================
+20:42:52 [INFO] Testing: fact_001 (factual)
+20:42:52 [INFO] Prompt: What were the three main causes of the French Revolution? Provide a brief explan...
+20:42:52 [INFO] ============================================================
+20:42:52 [INFO] Running LLMHive orchestrated...
+20:42:58 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:42:58 [INFO]   Quality: 0.90
+20:42:58 [INFO]   Latency: 6626ms
+20:42:58 [INFO]   Cost: $0.0037
+20:42:58 [INFO]   Models: 3
+20:42:58 [INFO] Running openai/gpt-5.2...
+20:42:59 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:43:05 [INFO]   Quality: 1.00
+20:43:05 [INFO]   Latency: 6626ms
+20:43:05 [INFO]   Cost: $0.0206
+20:43:05 [INFO] Running anthropic/claude-opus-4...
+20:43:08 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:43:25 [INFO]   Quality: 0.90
+20:43:25 [INFO]   Latency: 19758ms
+20:43:25 [INFO]   Cost: $0.0293
+20:43:25 [INFO] 
+  Result: ❌ Premium wins
+20:43:25 [INFO]   Cost savings: 85.0%
+20:43:25 [INFO]   Quality diff: -0.10
+20:43:25 [INFO] 
+============================================================
+20:43:25 [INFO] Testing: fact_002 (factual)
+20:43:25 [INFO] Prompt: Explain the process of photosynthesis in plants. What are the inputs, outputs, a...
+20:43:25 [INFO] ============================================================
+20:43:25 [INFO] Running LLMHive orchestrated...
+20:43:33 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:43:33 [INFO]   Quality: 1.00
+20:43:33 [INFO]   Latency: 8409ms
+20:43:33 [INFO]   Cost: $0.0037
+20:43:33 [INFO]   Models: 3
+20:43:33 [INFO] Running openai/gpt-5.2...
+20:43:34 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:43:41 [INFO]   Quality: 1.00
+20:43:41 [INFO]   Latency: 7665ms
+20:43:41 [INFO]   Cost: $0.0290
+20:43:41 [INFO] Running anthropic/claude-opus-4...
+20:43:44 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:44:01 [INFO]   Quality: 1.00
+20:44:01 [INFO]   Latency: 20526ms
+20:44:01 [INFO]   Cost: $0.0311
+20:44:01 [INFO] 
+  Result: ✅ LLMHive wins
+20:44:01 [INFO]   Cost savings: 87.5%
+20:44:01 [INFO]   Quality diff: +0.00
+20:44:01 [INFO] 
+============================================================
+20:44:01 [INFO] Testing: analysis_001 (analysis)
+20:44:01 [INFO] Prompt: Compare the pros and cons of electric vehicles versus hydrogen fuel cell vehicle...
+20:44:01 [INFO] ============================================================
+20:44:01 [INFO] Running LLMHive orchestrated...
+20:44:14 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:44:14 [INFO]   Quality: 1.00
+20:44:14 [INFO]   Latency: 12959ms
+20:44:14 [INFO]   Cost: $0.0037
+20:44:14 [INFO]   Models: 3
+20:44:14 [INFO] Running openai/gpt-5.2...
+20:44:15 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:44:51 [INFO]   Quality: 1.00
+20:44:51 [INFO]   Latency: 36730ms
+20:44:51 [INFO]   Cost: $0.1125
+20:44:51 [INFO] Running anthropic/claude-opus-4...
+20:44:54 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:45:26 [INFO]   Quality: 1.00
+20:45:26 [INFO]   Latency: 34857ms
+20:45:26 [INFO]   Cost: $0.0459
+20:45:26 [INFO] 
+  Result: ✅ LLMHive wins
+20:45:26 [INFO]   Cost savings: 95.3%
+20:45:26 [INFO]   Quality diff: +0.00
+20:45:26 [INFO] 
+============================================================
+20:45:26 [INFO] Testing: analysis_002 (analysis)
+20:45:26 [INFO] Prompt: Analyze why remote work became permanent for many companies after the pandemic. ...
+20:45:26 [INFO] ============================================================
+20:45:26 [INFO] Running LLMHive orchestrated...
+20:45:33 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:45:33 [INFO]   Quality: 1.00
+20:45:33 [INFO]   Latency: 6752ms
+20:45:33 [INFO]   Cost: $0.0037
+20:45:33 [INFO]   Models: 3
+20:45:33 [INFO] Running openai/gpt-5.2...
+20:45:33 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:45:53 [INFO]   Quality: 0.77
+20:45:53 [INFO]   Latency: 20610ms
+20:45:53 [INFO]   Cost: $0.0588
+20:45:53 [INFO] Running anthropic/claude-opus-4...
+20:45:57 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:46:32 [INFO]   Quality: 1.00
+20:46:32 [INFO]   Latency: 38903ms
+20:46:32 [INFO]   Cost: $0.0507
+20:46:32 [INFO] 
+  Result: ✅ LLMHive wins
+20:46:32 [INFO]   Cost savings: 93.1%
+20:46:32 [INFO]   Quality diff: +0.00
+20:46:32 [INFO] 
+============================================================
+20:46:32 [INFO] Testing: multi_001 (multi_step)
+20:46:32 [INFO] Prompt: Design a complete REST API for a simple todo list application. Include: 1) List ...
+20:46:32 [INFO] ============================================================
+20:46:32 [INFO] Running LLMHive orchestrated...
+20:46:42 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:46:42 [INFO]   Quality: 1.00
+20:46:42 [INFO]   Latency: 9452ms
+20:46:42 [INFO]   Cost: $0.0037
+20:46:42 [INFO]   Models: 3
+20:46:42 [INFO] Running openai/gpt-5.2...
+20:46:42 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+20:47:01 [INFO]   Quality: 1.00
+20:47:01 [INFO]   Latency: 19196ms
+20:47:01 [INFO]   Cost: $0.0875
+20:47:01 [INFO] Running anthropic/claude-opus-4...
+20:47:01 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+20:47:01 [ERROR] Premium model anthropic/claude-opus-4 failed for multi_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+20:47:01 [INFO]   Quality: 0.00
+20:47:01 [INFO]   Latency: 0ms
+20:47:01 [INFO]   Cost: $0.0000
+20:47:01 [INFO] 
+  Result: ✅ LLMHive wins
+20:47:01 [INFO]   Cost savings: 91.4%
+20:47:01 [INFO]   Quality diff: +0.00
+20:47:01 [INFO] 
+============================================================
+20:47:01 [INFO] Testing: multi_002 (multi_step)
+20:47:01 [INFO] Prompt: A small coffee shop wants to reduce costs. Currently: Monthly rent $3,000, utili...
+20:47:01 [INFO] ============================================================
+20:47:01 [INFO] Running LLMHive orchestrated...
+20:47:15 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+20:47:15 [INFO]   Quality: 1.00
+20:47:15 [INFO]   Latency: 13774ms
+20:47:15 [INFO]   Cost: $0.0037
+20:47:15 [INFO]   Models: 3
+20:47:15 [INFO] Running openai/gpt-5.2...
+20:47:15 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+20:47:15 [ERROR] Premium model openai/gpt-5.2 failed for multi_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+20:47:15 [INFO]   Quality: 0.00
+20:47:15 [INFO]   Latency: 0ms
+20:47:15 [INFO]   Cost: $0.0000
+20:47:15 [INFO] Running anthropic/claude-opus-4...
+20:47:16 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+20:47:16 [ERROR] Premium model anthropic/claude-opus-4 failed for multi_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+20:47:16 [INFO]   Quality: 0.00
+20:47:16 [INFO]   Latency: 0ms
+20:47:16 [INFO]   Cost: $0.0000
+20:47:16 [INFO] 
+  Result: ✅ LLMHive wins
+20:47:16 [INFO]   Cost savings: 0.0%
+20:47:16 [INFO]   Quality diff: +1.00
+
+🚀 Starting LLMHive Orchestration Comparison Test
+   Mode: HTTP (https://llmhive-orchestrator-792354158895.us-east1.run.app)
+   Prompts: 14
+   Premium models: ['openai/gpt-5.2', 'anthropic/claude-opus-4']
+   Budget models: 15
+
+================================================================================
+           LLMHIVE ORCHESTRATION vs PREMIUM MODELS - COMPARISON REPORT
+================================================================================
+
+📊 EXECUTIVE SUMMARY
+────────────────────────────────────────
+Total prompts tested:     14
+LLMHive wins:             12 (85.7%)
+Premium wins:             0 (0.0%)
+Ties (within 10%):        2 (14.3%)
+
+💰 COST ANALYSIS
+────────────────────────────────────────
+Average cost savings:     81.5%
+LLMHive avg quality:      0.99
+Premium avg quality:      0.89
+
+⚡ PERFORMANCE
+────────────────────────────────────────
+LLMHive avg latency:      8123ms
+Premium avg latency:      17565ms
+
+📈 BY CATEGORY
+────────────────────────────────────────
+  math            | Win rate: 100.0% | Quality diff: +0.25 | Cost savings: 88.6%
+  coding          | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 95.0%
+  reasoning       | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 82.1%
+  creative        | Win rate:  50.0% | Quality diff: -0.05 | Cost savings: 78.6%
+  factual         | Win rate:  50.0% | Quality diff: -0.05 | Cost savings: 86.3%
+  analysis        | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 94.2%
+  multi_step      | Win rate: 100.0% | Quality diff: +0.50 | Cost savings: 45.7%
+
+📋 DETAILED RESULTS
+────────────────────────────────────────────────────────────────────────────────
+ID           Category     LLMHive  Premium  Winner     Cost Savings
+────────────────────────────────────────────────────────────────────────────────
+math_001     math         1.00     1.00     LLMHive    79.6%
+math_002     math         1.00     0.50     LLMHive    97.6%
+code_001     coding       1.00     1.00     LLMHive    95.2%
+code_002     coding       1.00     1.00     LLMHive    94.8%
+reason_001   reasoning    1.00     1.00     LLMHive    81.2%
+reason_002   reasoning    1.00     1.00     LLMHive    83.0%
+creative_001 creative     0.90     1.00     Premium    73.6%
+creative_002 creative     1.00     1.00     LLMHive    83.6%
+fact_001     factual      0.90     1.00     Premium    85.0%
+fact_002     factual      1.00     1.00     LLMHive    87.5%
+analysis_001 analysis     1.00     1.00     LLMHive    95.3%
+analysis_002 analysis     1.00     1.00     LLMHive    93.1%
+multi_001    multi_step   1.00     1.00     LLMHive    91.4%
+multi_002    multi_step   1.00     0.00     LLMHive    0.0%
+
+================================================================================
+CONCLUSION
+================================================================================
+✅ LLMHive orchestration OUTPERFORMS single premium models!
+   - Wins 12/14 comparisons (85.7%)
+   - Saves 81.5% on average
+
