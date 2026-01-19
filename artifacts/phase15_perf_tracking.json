@@ -1,0 +1,471 @@
+21:11:18 [INFO] 
+============================================================
+21:11:18 [INFO] Testing: math_001 (math)
+21:11:18 [INFO] Prompt: A company has revenue of $2.4 million and expenses of $1.68 million. Calculate t...
+21:11:18 [INFO] ============================================================
+21:11:18 [INFO] Running LLMHive orchestrated...
+21:11:22 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:22 [INFO]   Quality: 0.00
+21:11:22 [INFO]   Latency: 4013ms
+21:11:22 [INFO]   Cost: $0.0037
+21:11:22 [INFO]   Models: 3
+21:11:22 [INFO] Running openai/gpt-5.2...
+21:11:22 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:22 [ERROR] Premium model openai/gpt-5.2 failed for math_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:22 [INFO]   Quality: 0.00
+21:11:22 [INFO]   Latency: 0ms
+21:11:22 [INFO]   Cost: $0.0000
+21:11:22 [INFO] Running anthropic/claude-opus-4...
+21:11:23 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:23 [ERROR] Premium model anthropic/claude-opus-4 failed for math_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:23 [INFO]   Quality: 0.00
+21:11:23 [INFO]   Latency: 0ms
+21:11:23 [INFO]   Cost: $0.0000
+21:11:23 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:23 [INFO]   Cost savings: 0.0%
+21:11:23 [INFO]   Quality diff: +0.00
+21:11:23 [INFO] 
+============================================================
+21:11:23 [INFO] Testing: math_002 (math)
+21:11:23 [INFO] Prompt: Calculate the compound interest on $10,000 invested at 7% annual interest, compo...
+21:11:23 [INFO] ============================================================
+21:11:23 [INFO] Running LLMHive orchestrated...
+21:11:28 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:28 [INFO]   Quality: 0.00
+21:11:28 [INFO]   Latency: 5023ms
+21:11:28 [INFO]   Cost: $0.0013
+21:11:28 [INFO]   Models: 1
+21:11:28 [INFO] Running openai/gpt-5.2...
+21:11:28 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:28 [ERROR] Premium model openai/gpt-5.2 failed for math_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:28 [INFO]   Quality: 0.00
+21:11:28 [INFO]   Latency: 0ms
+21:11:28 [INFO]   Cost: $0.0000
+21:11:28 [INFO] Running anthropic/claude-opus-4...
+21:11:28 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:28 [ERROR] Premium model anthropic/claude-opus-4 failed for math_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:28 [INFO]   Quality: 0.00
+21:11:28 [INFO]   Latency: 0ms
+21:11:28 [INFO]   Cost: $0.0000
+21:11:28 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:28 [INFO]   Cost savings: 0.0%
+21:11:28 [INFO]   Quality diff: +0.00
+21:11:28 [INFO] 
+============================================================
+21:11:28 [INFO] Testing: code_001 (coding)
+21:11:28 [INFO] Prompt: Write a Python function that implements binary search on a sorted list. Include ...
+21:11:28 [INFO] ============================================================
+21:11:28 [INFO] Running LLMHive orchestrated...
+21:11:30 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:30 [INFO]   Quality: 0.17
+21:11:30 [INFO]   Latency: 2142ms
+21:11:30 [INFO]   Cost: $0.0037
+21:11:30 [INFO]   Models: 3
+21:11:30 [INFO] Running openai/gpt-5.2...
+21:11:31 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:31 [ERROR] Premium model openai/gpt-5.2 failed for code_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:31 [INFO]   Quality: 0.00
+21:11:31 [INFO]   Latency: 0ms
+21:11:31 [INFO]   Cost: $0.0000
+21:11:31 [INFO] Running anthropic/claude-opus-4...
+21:11:31 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:31 [ERROR] Premium model anthropic/claude-opus-4 failed for code_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:31 [INFO]   Quality: 0.00
+21:11:31 [INFO]   Latency: 0ms
+21:11:31 [INFO]   Cost: $0.0000
+21:11:31 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:31 [INFO]   Cost savings: 0.0%
+21:11:31 [INFO]   Quality diff: +0.17
+21:11:31 [INFO] 
+============================================================
+21:11:31 [INFO] Testing: code_002 (coding)
+21:11:31 [INFO] Prompt: Explain the difference between async/await and threading in Python. When would y...
+21:11:31 [INFO] ============================================================
+21:11:31 [INFO] Running LLMHive orchestrated...
+21:11:34 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:34 [INFO]   Quality: 0.00
+21:11:34 [INFO]   Latency: 2972ms
+21:11:34 [INFO]   Cost: $0.0037
+21:11:34 [INFO]   Models: 3
+21:11:34 [INFO] Running openai/gpt-5.2...
+21:11:34 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:34 [ERROR] Premium model openai/gpt-5.2 failed for code_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:34 [INFO]   Quality: 0.00
+21:11:34 [INFO]   Latency: 0ms
+21:11:34 [INFO]   Cost: $0.0000
+21:11:34 [INFO] Running anthropic/claude-opus-4...
+21:11:35 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:35 [ERROR] Premium model anthropic/claude-opus-4 failed for code_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:35 [INFO]   Quality: 0.00
+21:11:35 [INFO]   Latency: 0ms
+21:11:35 [INFO]   Cost: $0.0000
+21:11:35 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:35 [INFO]   Cost savings: 0.0%
+21:11:35 [INFO]   Quality diff: +0.00
+21:11:35 [INFO] 
+============================================================
+21:11:35 [INFO] Testing: reason_001 (reasoning)
+21:11:35 [INFO] Prompt: A farmer has chickens and rabbits. He counts 35 heads and 94 legs. How many chic...
+21:11:35 [INFO] ============================================================
+21:11:35 [INFO] Running LLMHive orchestrated...
+21:11:38 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:38 [INFO]   Quality: 0.00
+21:11:38 [INFO]   Latency: 2801ms
+21:11:38 [INFO]   Cost: $0.0037
+21:11:38 [INFO]   Models: 3
+21:11:38 [INFO] Running openai/gpt-5.2...
+21:11:38 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:38 [ERROR] Premium model openai/gpt-5.2 failed for reason_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:38 [INFO]   Quality: 0.00
+21:11:38 [INFO]   Latency: 0ms
+21:11:38 [INFO]   Cost: $0.0000
+21:11:38 [INFO] Running anthropic/claude-opus-4...
+21:11:38 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:38 [ERROR] Premium model anthropic/claude-opus-4 failed for reason_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:38 [INFO]   Quality: 0.00
+21:11:38 [INFO]   Latency: 0ms
+21:11:38 [INFO]   Cost: $0.0000
+21:11:38 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:38 [INFO]   Cost savings: 0.0%
+21:11:38 [INFO]   Quality diff: +0.00
+21:11:38 [INFO] 
+============================================================
+21:11:38 [INFO] Testing: reason_002 (reasoning)
+21:11:38 [INFO] Prompt: If all roses are flowers, and some flowers fade quickly, can we conclude that so...
+21:11:38 [INFO] ============================================================
+21:11:38 [INFO] Running LLMHive orchestrated...
+21:11:41 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:41 [INFO]   Quality: 0.00
+21:11:41 [INFO]   Latency: 2184ms
+21:11:41 [INFO]   Cost: $0.0037
+21:11:41 [INFO]   Models: 3
+21:11:41 [INFO] Running openai/gpt-5.2...
+21:11:41 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:41 [ERROR] Premium model openai/gpt-5.2 failed for reason_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:41 [INFO]   Quality: 0.00
+21:11:41 [INFO]   Latency: 0ms
+21:11:41 [INFO]   Cost: $0.0000
+21:11:41 [INFO] Running anthropic/claude-opus-4...
+21:11:41 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:41 [ERROR] Premium model anthropic/claude-opus-4 failed for reason_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:41 [INFO]   Quality: 0.00
+21:11:41 [INFO]   Latency: 0ms
+21:11:41 [INFO]   Cost: $0.0000
+21:11:41 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:41 [INFO]   Cost savings: 0.0%
+21:11:41 [INFO]   Quality diff: +0.00
+21:11:41 [INFO] 
+============================================================
+21:11:41 [INFO] Testing: creative_001 (creative)
+21:11:41 [INFO] Prompt: Write a compelling 150-word product description for an AI-powered smart garden s...
+21:11:41 [INFO] ============================================================
+21:11:41 [INFO] Running LLMHive orchestrated...
+21:11:43 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:43 [INFO]   Quality: 0.20
+21:11:43 [INFO]   Latency: 2111ms
+21:11:43 [INFO]   Cost: $0.0013
+21:11:43 [INFO]   Models: 1
+21:11:43 [INFO] Running openai/gpt-5.2...
+21:11:44 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:44 [ERROR] Premium model openai/gpt-5.2 failed for creative_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:44 [INFO]   Quality: 0.00
+21:11:44 [INFO]   Latency: 0ms
+21:11:44 [INFO]   Cost: $0.0000
+21:11:44 [INFO] Running anthropic/claude-opus-4...
+21:11:44 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:44 [ERROR] Premium model anthropic/claude-opus-4 failed for creative_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:44 [INFO]   Quality: 0.00
+21:11:44 [INFO]   Latency: 0ms
+21:11:44 [INFO]   Cost: $0.0000
+21:11:44 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:44 [INFO]   Cost savings: 0.0%
+21:11:44 [INFO]   Quality diff: +0.20
+21:11:44 [INFO] 
+============================================================
+21:11:44 [INFO] Testing: creative_002 (creative)
+21:11:44 [INFO] Prompt: Generate 5 unique and memorable startup name ideas for a company that uses AI to...
+21:11:44 [INFO] ============================================================
+21:11:44 [INFO] Running LLMHive orchestrated...
+21:11:46 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:46 [INFO]   Quality: 0.29
+21:11:46 [INFO]   Latency: 1924ms
+21:11:46 [INFO]   Cost: $0.0037
+21:11:46 [INFO]   Models: 3
+21:11:46 [INFO] Running openai/gpt-5.2...
+21:11:46 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:46 [ERROR] Premium model openai/gpt-5.2 failed for creative_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:46 [INFO]   Quality: 0.00
+21:11:46 [INFO]   Latency: 0ms
+21:11:46 [INFO]   Cost: $0.0000
+21:11:46 [INFO] Running anthropic/claude-opus-4...
+21:11:47 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:47 [ERROR] Premium model anthropic/claude-opus-4 failed for creative_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:47 [INFO]   Quality: 0.00
+21:11:47 [INFO]   Latency: 0ms
+21:11:47 [INFO]   Cost: $0.0000
+21:11:47 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:47 [INFO]   Cost savings: 0.0%
+21:11:47 [INFO]   Quality diff: +0.29
+21:11:47 [INFO] 
+============================================================
+21:11:47 [INFO] Testing: fact_001 (factual)
+21:11:47 [INFO] Prompt: What were the three main causes of the French Revolution? Provide a brief explan...
+21:11:47 [INFO] ============================================================
+21:11:47 [INFO] Running LLMHive orchestrated...
+21:11:50 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:50 [INFO]   Quality: 0.00
+21:11:50 [INFO]   Latency: 2601ms
+21:11:50 [INFO]   Cost: $0.0037
+21:11:50 [INFO]   Models: 3
+21:11:50 [INFO] Running openai/gpt-5.2...
+21:11:50 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:50 [ERROR] Premium model openai/gpt-5.2 failed for fact_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:50 [INFO]   Quality: 0.00
+21:11:50 [INFO]   Latency: 0ms
+21:11:50 [INFO]   Cost: $0.0000
+21:11:50 [INFO] Running anthropic/claude-opus-4...
+21:11:50 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:50 [ERROR] Premium model anthropic/claude-opus-4 failed for fact_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:50 [INFO]   Quality: 0.00
+21:11:50 [INFO]   Latency: 0ms
+21:11:50 [INFO]   Cost: $0.0000
+21:11:50 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:50 [INFO]   Cost savings: 0.0%
+21:11:50 [INFO]   Quality diff: +0.00
+21:11:50 [INFO] 
+============================================================
+21:11:50 [INFO] Testing: fact_002 (factual)
+21:11:50 [INFO] Prompt: Explain the process of photosynthesis in plants. What are the inputs, outputs, a...
+21:11:50 [INFO] ============================================================
+21:11:50 [INFO] Running LLMHive orchestrated...
+21:11:53 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:53 [INFO]   Quality: 0.00
+21:11:53 [INFO]   Latency: 2212ms
+21:11:53 [INFO]   Cost: $0.0037
+21:11:53 [INFO]   Models: 3
+21:11:53 [INFO] Running openai/gpt-5.2...
+21:11:53 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:53 [ERROR] Premium model openai/gpt-5.2 failed for fact_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:53 [INFO]   Quality: 0.00
+21:11:53 [INFO]   Latency: 0ms
+21:11:53 [INFO]   Cost: $0.0000
+21:11:53 [INFO] Running anthropic/claude-opus-4...
+21:11:53 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:53 [ERROR] Premium model anthropic/claude-opus-4 failed for fact_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:53 [INFO]   Quality: 0.00
+21:11:53 [INFO]   Latency: 0ms
+21:11:53 [INFO]   Cost: $0.0000
+21:11:53 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:53 [INFO]   Cost savings: 0.0%
+21:11:53 [INFO]   Quality diff: +0.00
+21:11:53 [INFO] 
+============================================================
+21:11:53 [INFO] Testing: analysis_001 (analysis)
+21:11:53 [INFO] Prompt: Compare the pros and cons of electric vehicles versus hydrogen fuel cell vehicle...
+21:11:53 [INFO] ============================================================
+21:11:53 [INFO] Running LLMHive orchestrated...
+21:11:55 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:55 [INFO]   Quality: 0.00
+21:11:55 [INFO]   Latency: 1781ms
+21:11:55 [INFO]   Cost: $0.0037
+21:11:55 [INFO]   Models: 3
+21:11:55 [INFO] Running openai/gpt-5.2...
+21:11:55 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:55 [ERROR] Premium model openai/gpt-5.2 failed for analysis_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:55 [INFO]   Quality: 0.00
+21:11:55 [INFO]   Latency: 0ms
+21:11:55 [INFO]   Cost: $0.0000
+21:11:55 [INFO] Running anthropic/claude-opus-4...
+21:11:56 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:56 [ERROR] Premium model anthropic/claude-opus-4 failed for analysis_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:56 [INFO]   Quality: 0.00
+21:11:56 [INFO]   Latency: 0ms
+21:11:56 [INFO]   Cost: $0.0000
+21:11:56 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:56 [INFO]   Cost savings: 0.0%
+21:11:56 [INFO]   Quality diff: +0.00
+21:11:56 [INFO] 
+============================================================
+21:11:56 [INFO] Testing: analysis_002 (analysis)
+21:11:56 [INFO] Prompt: Analyze why remote work became permanent for many companies after the pandemic. ...
+21:11:56 [INFO] ============================================================
+21:11:56 [INFO] Running LLMHive orchestrated...
+21:11:58 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:11:58 [INFO]   Quality: 0.00
+21:11:58 [INFO]   Latency: 1989ms
+21:11:58 [INFO]   Cost: $0.0037
+21:11:58 [INFO]   Models: 3
+21:11:58 [INFO] Running openai/gpt-5.2...
+21:11:58 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:58 [ERROR] Premium model openai/gpt-5.2 failed for analysis_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:58 [INFO]   Quality: 0.00
+21:11:58 [INFO]   Latency: 0ms
+21:11:58 [INFO]   Cost: $0.0000
+21:11:58 [INFO] Running anthropic/claude-opus-4...
+21:11:59 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:11:59 [ERROR] Premium model anthropic/claude-opus-4 failed for analysis_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:11:59 [INFO]   Quality: 0.00
+21:11:59 [INFO]   Latency: 0ms
+21:11:59 [INFO]   Cost: $0.0000
+21:11:59 [INFO] 
+  Result: ✅ LLMHive wins
+21:11:59 [INFO]   Cost savings: 0.0%
+21:11:59 [INFO]   Quality diff: +0.00
+21:11:59 [INFO] 
+============================================================
+21:11:59 [INFO] Testing: multi_001 (multi_step)
+21:11:59 [INFO] Prompt: Design a complete REST API for a simple todo list application. Include: 1) List ...
+21:11:59 [INFO] ============================================================
+21:11:59 [INFO] Running LLMHive orchestrated...
+21:12:02 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:12:02 [INFO]   Quality: 0.00
+21:12:02 [INFO]   Latency: 2589ms
+21:12:02 [INFO]   Cost: $0.0037
+21:12:02 [INFO]   Models: 3
+21:12:02 [INFO] Running openai/gpt-5.2...
+21:12:02 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:12:02 [ERROR] Premium model openai/gpt-5.2 failed for multi_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:12:02 [INFO]   Quality: 0.00
+21:12:02 [INFO]   Latency: 0ms
+21:12:02 [INFO]   Cost: $0.0000
+21:12:02 [INFO] Running anthropic/claude-opus-4...
+21:12:02 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:12:02 [ERROR] Premium model anthropic/claude-opus-4 failed for multi_001: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:12:02 [INFO]   Quality: 0.00
+21:12:02 [INFO]   Latency: 0ms
+21:12:02 [INFO]   Cost: $0.0000
+21:12:02 [INFO] 
+  Result: ✅ LLMHive wins
+21:12:02 [INFO]   Cost savings: 0.0%
+21:12:02 [INFO]   Quality diff: +0.00
+21:12:02 [INFO] 
+============================================================
+21:12:02 [INFO] Testing: multi_002 (multi_step)
+21:12:02 [INFO] Prompt: A small coffee shop wants to reduce costs. Currently: Monthly rent $3,000, utili...
+21:12:02 [INFO] ============================================================
+21:12:02 [INFO] Running LLMHive orchestrated...
+21:12:06 [INFO] HTTP Request: POST https://llmhive-orchestrator-792354158895.us-east1.run.app/v1/chat "HTTP/1.1 200 OK"
+21:12:06 [INFO]   Quality: 0.00
+21:12:06 [INFO]   Latency: 3393ms
+21:12:06 [INFO]   Cost: $0.0037
+21:12:06 [INFO]   Models: 3
+21:12:06 [INFO] Running openai/gpt-5.2...
+21:12:06 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:12:06 [ERROR] Premium model openai/gpt-5.2 failed for multi_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:12:06 [INFO]   Quality: 0.00
+21:12:06 [INFO]   Latency: 0ms
+21:12:06 [INFO]   Cost: $0.0000
+21:12:06 [INFO] Running anthropic/claude-opus-4...
+21:12:06 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+21:12:06 [ERROR] Premium model anthropic/claude-opus-4 failed for multi_002: Client error '402 Payment Required' for url 'https://openrouter.ai/api/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+21:12:06 [INFO]   Quality: 0.00
+21:12:06 [INFO]   Latency: 0ms
+21:12:06 [INFO]   Cost: $0.0000
+21:12:06 [INFO] 
+  Result: ✅ LLMHive wins
+21:12:06 [INFO]   Cost savings: 0.0%
+21:12:06 [INFO]   Quality diff: +0.00
+
+🚀 Starting LLMHive Orchestration Comparison Test
+   Mode: HTTP (https://llmhive-orchestrator-792354158895.us-east1.run.app)
+   Prompts: 14
+   Premium models: ['openai/gpt-5.2', 'anthropic/claude-opus-4']
+   Budget models: 15
+
+================================================================================
+           LLMHIVE ORCHESTRATION vs PREMIUM MODELS - COMPARISON REPORT
+================================================================================
+
+📊 EXECUTIVE SUMMARY
+────────────────────────────────────────
+Total prompts tested:     14
+LLMHive wins:             14 (100.0%)
+Premium wins:             0 (0.0%)
+Ties (within 10%):        0 (0.0%)
+
+💰 COST ANALYSIS
+────────────────────────────────────────
+Average cost savings:     0.0%
+LLMHive avg quality:      0.05
+Premium avg quality:      0.00
+
+⚡ PERFORMANCE
+────────────────────────────────────────
+LLMHive avg latency:      2695ms
+Premium avg latency:      0ms
+
+📈 BY CATEGORY
+────────────────────────────────────────
+  math            | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 0.0%
+  coding          | Win rate: 100.0% | Quality diff: +0.08 | Cost savings: 0.0%
+  reasoning       | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 0.0%
+  creative        | Win rate: 100.0% | Quality diff: +0.24 | Cost savings: 0.0%
+  factual         | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 0.0%
+  analysis        | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 0.0%
+  multi_step      | Win rate: 100.0% | Quality diff: +0.00 | Cost savings: 0.0%
+
+📋 DETAILED RESULTS
+────────────────────────────────────────────────────────────────────────────────
+ID           Category     LLMHive  Premium  Winner     Cost Savings
+────────────────────────────────────────────────────────────────────────────────
+math_001     math         0.00     0.00     LLMHive    0.0%
+math_002     math         0.00     0.00     LLMHive    0.0%
+code_001     coding       0.17     0.00     LLMHive    0.0%
+code_002     coding       0.00     0.00     LLMHive    0.0%
+reason_001   reasoning    0.00     0.00     LLMHive    0.0%
+reason_002   reasoning    0.00     0.00     LLMHive    0.0%
+creative_001 creative     0.20     0.00     LLMHive    0.0%
+creative_002 creative     0.29     0.00     LLMHive    0.0%
+fact_001     factual      0.00     0.00     LLMHive    0.0%
+fact_002     factual      0.00     0.00     LLMHive    0.0%
+analysis_001 analysis     0.00     0.00     LLMHive    0.0%
+analysis_002 analysis     0.00     0.00     LLMHive    0.0%
+multi_001    multi_step   0.00     0.00     LLMHive    0.0%
+multi_002    multi_step   0.00     0.00     LLMHive    0.0%
+
+================================================================================
+CONCLUSION
+================================================================================
+✅ LLMHive orchestration OUTPERFORMS single premium models!
+   - Wins 14/14 comparisons (100.0%)
+   - Saves 0.0% on average
+

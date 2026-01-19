@@ -136,6 +136,14 @@ except ImportError:
     QUALITY_BOOSTER_AVAILABLE = False
     QualityBooster = None
 
+# Import Performance Tracker for learning from query outcomes
+try:
+    from ..performance_tracker import PerformanceTracker, performance_tracker
+    PERFORMANCE_TRACKER_AVAILABLE = True
+except ImportError:
+    PERFORMANCE_TRACKER_AVAILABLE = False
+    performance_tracker = None
+
 # Import PromptOps for always-on preprocessing
 try:
     from ..orchestration.prompt_ops import PromptOps, PromptSpecification
@@ -3378,6 +3386,25 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 
             except Exception as e:
                 logger.warning(f"Failed to store answer for learning: {e}")
+        
+        # ========================================================================
+        # PHASE 5: LOG PERFORMANCE FOR ADAPTIVE ROUTING
+        # Feed performance data to tracker for future model selection
+        # ========================================================================
+        if PERFORMANCE_TRACKER_AVAILABLE and performance_tracker:
+            try:
+                performance_tracker.log_run(
+                    models_used=actual_models,
+                    success_flag=True,  # Got a response
+                    latency_ms=latency_ms,
+                    domain=task_type,
+                    strategy=selected_strategy if 'selected_strategy' in locals() else None,
+                    task_type=task_type,
+                    quality_score=quality_score if 'quality_score' in locals() else 0.8,
+                )
+                logger.debug("Logged performance for %d models", len(actual_models))
+            except Exception as e:
+                logger.debug("Performance logging failed (non-critical): %s", e)
         
         return response
         
