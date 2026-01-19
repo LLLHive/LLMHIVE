@@ -148,8 +148,28 @@ async def elite_math_solve(
     # Step 2: Generate multiple solutions using TOP math models
     math_models = ELITE_MODELS["math"][:config.num_consensus_models]
     
-    # Enhanced math prompt with explicit instructions
-    enhanced_prompt = f"""Solve this math problem with COMPLETE step-by-step work.
+    # CRITICAL: If calculator succeeded, make it AUTHORITATIVE (not just a hint)
+    # This ensures 100% accuracy for calculable problems
+    if calculator_answer is not None:
+        # Calculator is AUTHORITATIVE - LLM explains, doesn't recalculate
+        enhanced_prompt = f"""Explain the solution to this math problem. The correct answer has been verified.
+
+PROBLEM: {problem}
+
+VERIFIED ANSWER: {calculator_answer}
+
+Your task:
+1. Explain step-by-step HOW to arrive at this answer
+2. Show the mathematical reasoning
+3. End with: **Final Answer: {calculator_answer}**
+
+IMPORTANT: The answer {calculator_answer} is CORRECT. Your job is to EXPLAIN it, not recalculate.
+
+Explanation:"""
+        metadata["calculator_authoritative"] = True
+    else:
+        # No calculator result - LLM must solve
+        enhanced_prompt = f"""Solve this math problem with COMPLETE step-by-step work.
 
 PROBLEM: {problem}
 
@@ -158,8 +178,6 @@ REQUIREMENTS:
 2. State your final numerical answer clearly
 3. Format your final answer as: **Final Answer: [number]**
 4. Double-check your arithmetic before answering
-
-{f"HINT: A calculator computed the answer as approximately {calculator_answer}. Verify this is correct and explain the solution." if calculator_answer else ""}
 
 Solve step by step:"""
 
@@ -233,15 +251,16 @@ Solve step by step:"""
             consensus_answer, vote_count, len(extracted_answers), confidence
         )
         
-        # Step 5: Verify with calculator if mismatch
-        if calculator_answer and str(calculator_answer) != consensus_answer:
-            logger.warning(
-                "Calculator (%s) and consensus (%s) mismatch - using calculator as authoritative",
-                calculator_answer, consensus_answer
-            )
-            metadata["verification_override"] = True
+        # Step 5: Calculator is ALWAYS authoritative when available
+        if calculator_answer is not None:
+            if str(calculator_answer) != consensus_answer:
+                logger.info(
+                    "Calculator (%s) overrides consensus (%s) - calculator is authoritative",
+                    calculator_answer, consensus_answer
+                )
+                metadata["verification_override"] = True
             consensus_answer = str(calculator_answer)
-            confidence = 0.95  # High confidence in calculator
+            confidence = 1.0  # 100% confidence in calculator - it's mathematically correct
         
         # Return best solution with the consensus answer
         best_solution = solutions[0]["solution"] if solutions else ""
@@ -253,9 +272,9 @@ Solve step by step:"""
         
         return final_response, confidence, metadata
     
-    # Fallback to calculator answer if no consensus
-    if calculator_answer:
-        return f"The answer is **{calculator_answer}**.", 0.9, metadata
+    # Fallback to calculator answer if no consensus - calculator is AUTHORITATIVE
+    if calculator_answer is not None:
+        return f"The answer is **{calculator_answer}**.", 1.0, metadata  # 100% confidence
     
     # Last resort: return first solution
     if solutions:
