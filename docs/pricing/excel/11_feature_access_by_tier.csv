@@ -1,0 +1,38 @@
+Feature Category,Feature,Free,Lite,Pro,Team,Enterprise,Enterprise+,Maximum
+Orchestration,ELITE Queries (best quality),50,100,400,500 pooled,300/seat,800/seat,500
+Orchestration,MAXIMUM Queries (beats competition),0,0,0,0,0,0,200
+Orchestration,After-quota tier,Ends,BUDGET,STANDARD,STANDARD,STANDARD,STANDARD,ELITE
+Orchestration,Total queries/month,50,500,1000,2000,500/seat,1500/seat,700
+Quality,Categories #1 (ELITE mode),10/10,10/10,10/10,10/10,10/10,10/10,10/10
+Quality,Categories #1 (throttled mode),N/A,6/10,8/10,8/10,8/10,8/10,10/10
+Quality,Beats GPT-5.2 (MAXIMUM only),No,No,No,No,No,No,Yes (+5%)
+Tools,Calculator (authoritative 100%),Yes,Yes,Yes,Yes,Yes,Yes,Yes
+Tools,Pinecone Reranker,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+Tools,Web Search,No,No,Yes,Yes,Yes,Yes,Yes
+Tools,Code Execution,No,No,Yes,Yes,Yes,Yes,Yes
+Memory,Session Memory,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+Memory,Persistent Memory (days),0,7,30,90,365,Unlimited,365
+Memory,Shared Team Memory,No,No,No,Yes,Yes,Yes,Yes
+Knowledge,Knowledge Base Access,No,Yes,Yes,Yes,Yes,Yes,Yes
+Knowledge,Vector Storage (MB),0,100,500,1000,Unlimited,Unlimited,10000
+Advanced,API Access,No,No,Yes,Yes,Yes,Yes,Yes
+Advanced,DeepConf Debate,No,No,Yes,Yes,Yes,Yes,Yes
+Advanced,Prompt Diffusion,No,No,Yes,Yes,Yes,Yes,Yes
+Advanced,HRM (Hierarchical Roles),No,Light,Full,Full,Full,Full,Full
+Advanced,Loopback Refinement,No,No,Yes,Yes,Yes,Yes,Yes
+Advanced,Adaptive Ensemble,No,Yes,Yes,Yes,Yes,Yes,Yes
+Team,Team Workspace,No,No,No,Yes,Yes,Yes,Yes
+Team,Team Projects,No,No,No,Yes,Yes,Yes,Yes
+Team,Admin Dashboard,No,No,No,Yes,Yes,Yes,Yes
+Team,Team Members,1,1,1,3,Unlimited,Unlimited,10
+Enterprise,SSO Integration,No,No,No,No,Yes,Yes,Yes
+Enterprise,Audit Logs,No,No,No,No,Yes,Yes,Yes
+Enterprise,Compliance (SOC 2),No,No,No,No,Yes,Yes,Yes
+Enterprise,SLA,None,None,None,None,99.5%,99.9%,99.9%
+Premium,Custom Routing Policies,No,No,No,No,No,Yes,Yes
+Premium,Dedicated Support,No,No,No,No,No,Yes,Yes
+Premium,Webhooks,No,No,No,No,No,Yes,Yes
+Maximum Only,5-Model Consensus,No,No,No,No,No,No,Yes
+Maximum Only,Verification Loops,No,No,No,No,No,No,Yes
+Maximum Only,Reflection Chains,No,No,No,No,No,No,Yes
+Maximum Only,Mission Critical Support,No,No,No,No,No,No,Yes

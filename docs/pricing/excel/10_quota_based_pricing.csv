@@ -1,0 +1,8 @@
+Tier,Price,ELITE Queries,After-Quota Tier,After-Quota Queries,Total Queries,ELITE Quality,Throttled Quality,Revenue,Cost,Profit,Margin
+Free Trial,$0,50,N/A (ends),0,50,#1 ALL,N/A,$0.00,$0.75,-$0.75,N/A (marketing)
+Lite,$9.99,100,BUDGET,400,500,#1 ALL (10/10),#1 in 6,$9.99,$3.10,$6.89,69%
+Pro,$29.99,400,STANDARD,600,1000,#1 ALL (10/10),#1 in 8,$29.99,$9.60,$20.39,68%
+Team,$49.99,500 pooled,STANDARD,1500,2000,#1 ALL (10/10),#1 in 8,$49.99,$16.50,$33.49,67%
+Enterprise,$25/seat,300/seat,STANDARD,200/seat,500/seat,#1 ALL (10/10),#1 in 8,$25.00,$5.70,$19.30,77%
+Enterprise+,$45/seat,800/seat,STANDARD,700/seat,1500/seat,#1 ALL (10/10),#1 in 8,$45.00,$16.20,$28.80,64%
+Maximum,$499,200 MAXIMUM + 500 ELITE,N/A,N/A,700,BEATS by +5%,#1 ALL,$499.00,$107.50,$391.50,78%

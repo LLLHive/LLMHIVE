@@ -136,16 +136,18 @@ class PricingTierManager:
             description="7-day free trial - experience #1 AI quality",
         )
         
-        # Lite Tier ($9.99/mo) - #1 ELITE orchestration for everyone
+        # Lite Tier ($9.99/mo) - #1 ELITE quality with quota + BUDGET fallback
+        # Guardrails: 100 ELITE queries, then 400 BUDGET queries
+        # Profit: $9.99 - $3.10 = $6.89 (69% margin)
         lite_tier = PricingTier(
             name=TierName.LITE,
             display_name="Lite",
             monthly_price_usd=9.99,
             annual_price_usd=99.99,  # ~17% discount
             limits=TierLimits(
-                max_requests_per_month=800,  # Total effective queries
-                max_tokens_per_month=1_000_000,
-                max_models_per_request=5,
+                max_requests_per_month=500,  # 100 ELITE + 400 BUDGET
+                max_tokens_per_month=500_000,
+                max_models_per_request=3,
                 max_concurrent_requests=2,
                 max_storage_mb=500,
                 enable_advanced_features=False,
@@ -159,11 +161,11 @@ class PricingTierManager:
                 allow_hrm=True,  # Light HRM
                 allow_loopback_refinement=False,
                 max_tokens_per_query=25_000,
-                # NEW: ELITE orchestration available to Lite!
-                default_orchestration_tier="elite",  # #1 quality as DEFAULT
-                premium_escalation_budget=200,  # Additional PREMIUM queries
-                elite_escalation_budget=100,  # 100 full ELITE queries/month
-                max_passes_per_month=50,  # Deep reasoning passes
+                # QUOTA SYSTEM: 100 ELITE, then throttle to BUDGET
+                default_orchestration_tier="elite",  # Start with #1 quality
+                premium_escalation_budget=0,
+                elite_escalation_budget=100,  # 100 ELITE queries/month
+                max_passes_per_month=50,
                 memory_retention_days=7,
                 calculator_enabled=True,
                 reranker_enabled=True,
@@ -171,20 +173,22 @@ class PricingTierManager:
             features={
                 "basic_orchestration", "memory", "knowledge_base",
                 "calculator", "reranker", "consensus_voting",
-                "elite_orchestration", "multi_model_routing"
+                "elite_orchestration", "quota_tracking"
             },
-            description="#1 AI quality for $9.99 - ELITE orchestration included",
+            description="#1 quality (100 queries), then good quality (400 queries)",
         )
 
-        # Pro Tier ($29.99/mo) - Full power, #1 in ALL categories
+        # Pro Tier ($29.99/mo) - 400 ELITE + 600 STANDARD + API access
+        # Guardrails: 400 ELITE queries, then 600 STANDARD queries
+        # Profit: $29.99 - $9.60 = $20.39 (68% margin)
         pro_tier = PricingTier(
             name=TierName.PRO,
             display_name="Pro",
             monthly_price_usd=29.99,
             annual_price_usd=299.99,  # ~17% discount
             limits=TierLimits(
-                max_requests_per_month=2_000,
-                max_tokens_per_month=5_000_000,
+                max_requests_per_month=1_000,  # 400 ELITE + 600 STANDARD
+                max_tokens_per_month=2_000_000,
                 max_models_per_request=5,
                 max_concurrent_requests=5,
                 max_storage_mb=5_000,
@@ -200,10 +204,10 @@ class PricingTierManager:
                 allow_hrm=True,
                 allow_loopback_refinement=True,
                 max_tokens_per_query=100_000,
-                # Orchestration: STANDARD default with PREMIUM/ELITE escalation
-                default_orchestration_tier="standard",
-                premium_escalation_budget=500,
-                elite_escalation_budget=100,
+                # QUOTA SYSTEM: 400 ELITE, then throttle to STANDARD
+                default_orchestration_tier="elite",  # Start with #1
+                premium_escalation_budget=0,
+                elite_escalation_budget=400,  # 400 ELITE queries/month
                 max_passes_per_month=200,
                 memory_retention_days=30,
                 calculator_enabled=True,
@@ -214,20 +218,22 @@ class PricingTierManager:
                 "advanced_orchestration", "hrm", "prompt_diffusion",
                 "deepconf", "adaptive_ensemble", "api_access",
                 "web_research", "fact_checking", "calculator", "reranker",
-                "vector_storage", "full_consensus"
+                "vector_storage", "full_consensus", "quota_tracking"
             },
-            description="AI command center - #1 in ALL 10 categories",
+            description="#1 quality (400 queries) + API access + advanced features",
         )
         
-        # Team Tier ($49.99/mo, 3 seats) - Collaborative workspace
+        # Team Tier ($49.99/mo, 3 seats) - 500 ELITE pooled + 1500 STANDARD
+        # Guardrails: 500 ELITE pooled, then 1500 STANDARD
+        # Profit: $49.99 - $16.50 = $33.49 (67% margin)
         team_tier = PricingTier(
             name=TierName.TEAM,
             display_name="Team",
             monthly_price_usd=49.99,
             annual_price_usd=499.99,  # ~17% discount
             limits=TierLimits(
-                max_requests_per_month=5_000,  # Pooled
-                max_tokens_per_month=10_000_000,  # Pooled
+                max_requests_per_month=2_000,  # 500 ELITE + 1500 STANDARD pooled
+                max_tokens_per_month=4_000_000,
                 max_models_per_request=5,
                 max_concurrent_requests=10,
                 max_storage_mb=20_000,
@@ -242,10 +248,10 @@ class PricingTierManager:
                 allow_hrm=True,
                 allow_loopback_refinement=True,
                 max_tokens_per_query=100_000,
-                # Orchestration: STANDARD default, pooled budgets
-                default_orchestration_tier="standard",
-                premium_escalation_budget=1_000,
-                elite_escalation_budget=200,
+                # QUOTA SYSTEM: 500 ELITE pooled, then STANDARD
+                default_orchestration_tier="elite",
+                premium_escalation_budget=0,
+                elite_escalation_budget=500,  # 500 ELITE pooled/month
                 max_passes_per_month=500,
                 memory_retention_days=90,
                 calculator_enabled=True,
@@ -257,20 +263,23 @@ class PricingTierManager:
                 "deepconf", "adaptive_ensemble", "api_access",
                 "web_research", "fact_checking", "calculator", "reranker",
                 "vector_storage", "full_consensus", "team_workspace",
-                "shared_memory", "team_projects", "admin_dashboard"
+                "shared_memory", "team_projects", "admin_dashboard",
+                "quota_tracking", "pooled_usage"
             },
-            description="Team workspace with pooled intelligence",
+            description="#1 quality (500 pooled) + team workspace",
         )
 
-        # Enterprise Standard ($25/seat/mo, min 5 seats)
+        # Enterprise Standard ($25/seat/mo) - 300 ELITE + 200 STANDARD per seat
+        # Guardrails: 300 ELITE/seat, then 200 STANDARD/seat
+        # Profit: $25 - $5.70 = $19.30 (77% margin)
         enterprise_tier = PricingTier(
             name=TierName.ENTERPRISE,
             display_name="Enterprise",
             monthly_price_usd=25.0,  # Per seat
             annual_price_usd=250.0,  # Per seat, ~17% discount
             limits=TierLimits(
-                max_requests_per_month=1_000,  # Per seat
-                max_tokens_per_month=2_000_000,  # Per seat
+                max_requests_per_month=500,  # 300 ELITE + 200 STANDARD per seat
+                max_tokens_per_month=1_000_000,
                 max_models_per_request=10,
                 max_concurrent_requests=20,
                 max_storage_mb=0,  # Unlimited org-wide
@@ -285,12 +294,12 @@ class PricingTierManager:
                 allow_hrm=True,
                 allow_loopback_refinement=True,
                 max_tokens_per_query=0,  # Unlimited
-                # Orchestration: PREMIUM default for enterprise
-                default_orchestration_tier="premium",
-                premium_escalation_budget=0,  # Unlimited premium
-                elite_escalation_budget=200,  # Per seat
+                # QUOTA SYSTEM: 300 ELITE/seat, then STANDARD
+                default_orchestration_tier="elite",
+                premium_escalation_budget=0,
+                elite_escalation_budget=300,  # 300 ELITE per seat
                 max_passes_per_month=0,  # Unlimited
-                memory_retention_days=365,  # 1 year
+                memory_retention_days=365,
                 calculator_enabled=True,
                 reranker_enabled=True,
             ),
@@ -301,20 +310,22 @@ class PricingTierManager:
                 "web_research", "fact_checking", "calculator", "reranker",
                 "vector_storage", "full_consensus", "team_workspace",
                 "shared_memory", "team_projects", "admin_dashboard",
-                "sso", "audit_logs", "compliance", "sla_995"
+                "sso", "audit_logs", "compliance", "sla_995", "quota_tracking"
             },
-            description="Enterprise with SSO, compliance, and SLA",
+            description="#1 quality (300/seat) + SSO + compliance",
         )
         
-        # Enterprise Plus ($45/seat/mo, min 5 seats)
+        # Enterprise Plus ($45/seat/mo) - 800 ELITE + 700 STANDARD per seat
+        # Guardrails: 800 ELITE/seat, then 700 STANDARD/seat
+        # Profit: $45 - $16.20 = $28.80 (64% margin)
         enterprise_plus_tier = PricingTier(
             name=TierName.ENTERPRISE_PLUS,
             display_name="Enterprise Plus",
             monthly_price_usd=45.0,  # Per seat
             annual_price_usd=450.0,  # Per seat, ~17% discount
             limits=TierLimits(
-                max_requests_per_month=2_500,  # Per seat
-                max_tokens_per_month=5_000_000,  # Per seat
+                max_requests_per_month=1_500,  # 800 ELITE + 700 STANDARD per seat
+                max_tokens_per_month=3_000_000,
                 max_models_per_request=10,
                 max_concurrent_requests=50,
                 max_storage_mb=0,  # Unlimited
@@ -329,10 +340,10 @@ class PricingTierManager:
                 allow_hrm=True,
                 allow_loopback_refinement=True,
                 max_tokens_per_query=0,  # Unlimited
-                # Orchestration: ELITE default for enterprise plus
+                # QUOTA SYSTEM: 800 ELITE/seat, then STANDARD
                 default_orchestration_tier="elite",
-                premium_escalation_budget=0,  # Unlimited
-                elite_escalation_budget=0,  # Unlimited elite
+                premium_escalation_budget=0,
+                elite_escalation_budget=800,  # 800 ELITE per seat
                 max_passes_per_month=0,  # Unlimited
                 memory_retention_days=0,  # Unlimited (compliance-defined)
                 calculator_enabled=True,
@@ -347,21 +358,24 @@ class PricingTierManager:
                 "shared_memory", "team_projects", "admin_dashboard",
                 "sso", "audit_logs", "compliance", "sla_999",
                 "custom_routing_policies", "dedicated_support",
-                "custom_integrations", "webhooks", "priority_routing"
+                "custom_integrations", "webhooks", "priority_routing",
+                "quota_tracking"
             },
-            description="Enterprise Plus with ELITE orchestration and custom policies",
+            description="#1 quality (800/seat) + custom routing + 99.9% SLA",
         )
 
-        # MAXIMUM Tier ($499/mo) - Full power, crush competition by maximum margin
-        # Target: Hedge funds, legal, healthcare, government, mission-critical
+        # MAXIMUM Tier ($499/mo) - 200 MAXIMUM + 500 ELITE (beats competition)
+        # Guardrails: 200 MAXIMUM queries + 500 ELITE queries
+        # Profit: $499 - $107.50 = $391.50 (78% margin)
+        # Target: Hedge funds, legal, healthcare, government
         maximum_tier = PricingTier(
             name=TierName.MAXIMUM,
             display_name="Maximum",
             monthly_price_usd=499.0,
             annual_price_usd=4_990.0,  # ~17% discount
             limits=TierLimits(
-                max_requests_per_month=1_000,  # 1000 full-power queries
-                max_tokens_per_month=50_000_000,
+                max_requests_per_month=700,  # 200 MAXIMUM + 500 ELITE
+                max_tokens_per_month=10_000_000,
                 max_models_per_request=10,
                 max_concurrent_requests=20,
                 max_storage_mb=100_000,  # 100GB
@@ -376,10 +390,10 @@ class PricingTierManager:
                 allow_hrm=True,
                 allow_loopback_refinement=True,
                 max_tokens_per_query=0,  # Unlimited
-                # MAXIMUM Orchestration: Full power, no limits
+                # QUOTA SYSTEM: 200 MAXIMUM, then unlimited ELITE
                 default_orchestration_tier="maximum",
-                premium_escalation_budget=0,  # Unlimited
-                elite_escalation_budget=0,  # Unlimited
+                premium_escalation_budget=0,  # Uses ELITE after MAXIMUM
+                elite_escalation_budget=500,  # 500 ELITE after MAXIMUM quota
                 max_passes_per_month=0,  # Unlimited
                 memory_retention_days=365,
                 calculator_enabled=True,
@@ -396,9 +410,10 @@ class PricingTierManager:
                 "custom_routing_policies", "dedicated_support",
                 "maximum_orchestration", "multi_model_consensus",
                 "verification_loops", "reflection_chains",
-                "mission_critical_support", "priority_escalation"
+                "mission_critical_support", "priority_escalation",
+                "quota_tracking"
             },
-            description="MAXIMUM power - crush competition by +5% margin average",
+            description="BEATS competition (200 queries) + #1 quality (500 queries)",
         )
 
         self.tiers[TierName.FREE] = free_tier
