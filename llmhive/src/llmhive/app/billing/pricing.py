@@ -10,8 +10,21 @@ class TierName(str, Enum):
     """Pricing tier names."""
 
     FREE = "free"
+    LITE = "lite"
     PRO = "pro"
+    TEAM = "team"
     ENTERPRISE = "enterprise"
+    ENTERPRISE_PLUS = "enterprise_plus"
+
+
+class OrchestrationTier(str, Enum):
+    """Orchestration quality tiers - maps to elite_orchestration.py."""
+    
+    BUDGET = "budget"      # $0.0036/query - Claude Sonnet primary, #1 in 6 categories
+    STANDARD = "standard"  # $0.0060/query - Mixed routing, #1 in 8 categories
+    PREMIUM = "premium"    # $0.0108/query - GPT-5.2 access, #1 in ALL categories
+    ELITE = "elite"        # $0.0150/query - Multi-consensus + verification
+    MAXIMUM = "maximum"    # $0.0250/query - 5-model consensus, mission-critical
 
 
 @dataclass(slots=True)
@@ -38,6 +51,15 @@ class TierLimits:
     allow_hrm: bool = False  # Hierarchical Role Management
     allow_loopback_refinement: bool = False  # Loop-back refinement on verification failure
     max_tokens_per_query: int = 0  # 0 = unlimited tokens per query
+    
+    # NEW: Orchestration tier configuration (January 2026)
+    default_orchestration_tier: str = "budget"  # Default quality level
+    premium_escalation_budget: int = 0  # How many queries can use PREMIUM tier
+    elite_escalation_budget: int = 0  # How many queries can use ELITE tier
+    max_passes_per_month: int = 0  # Full pipeline runs (consensus + verification)
+    memory_retention_days: int = 0  # How long to retain conversation memory
+    calculator_enabled: bool = True  # Calculator is ALWAYS on (our key differentiator)
+    reranker_enabled: bool = True  # Pinecone reranker is ALWAYS on
 
 
 @dataclass(slots=True)
@@ -75,126 +97,265 @@ class PricingTierManager:
         self._initialize_default_tiers()
 
     def _initialize_default_tiers(self) -> None:
-        """Initialize default pricing tiers."""
-        # Free Tier
+        """Initialize default pricing tiers aligned with Elite Orchestration (Jan 2026)."""
+        
+        # Free Trial (7 days) - WOW introduction with PREMIUM default
         free_tier = PricingTier(
             name=TierName.FREE,
-            display_name="Free",
+            display_name="Free Trial",
             monthly_price_usd=0.0,
             annual_price_usd=0.0,
             limits=TierLimits(
-                max_requests_per_month=100,
-                max_tokens_per_month=100_000,
-                max_models_per_request=2,
+                max_requests_per_month=50,  # 50 total during trial
+                max_tokens_per_month=150_000,
+                max_models_per_request=3,
                 max_concurrent_requests=1,
                 max_storage_mb=100,
                 enable_advanced_features=False,
                 enable_api_access=False,
                 enable_priority_support=False,
                 max_team_members=1,
-                # Subscription tiers: Free tier - no advanced features
                 allow_parallel_retrieval=False,
                 allow_deep_conf=False,
                 allow_prompt_diffusion=False,
                 allow_adaptive_ensemble=False,
                 allow_hrm=False,
                 allow_loopback_refinement=False,
-                max_tokens_per_query=10_000,  # 10K tokens per query limit
+                max_tokens_per_query=10_000,
+                # Orchestration: PREMIUM default so they see the magic
+                default_orchestration_tier="premium",
+                premium_escalation_budget=50,  # All queries use premium
+                elite_escalation_budget=10,
+                max_passes_per_month=5,
+                memory_retention_days=0,  # Session only
+                calculator_enabled=True,
+                reranker_enabled=True,
             ),
-            features={"basic_orchestration", "memory", "knowledge_base"},
-            description="Perfect for trying out LLMHive",
+            features={"basic_orchestration", "memory", "calculator", "reranker"},
+            description="7-day free trial - experience #1 AI quality",
+        )
+        
+        # Lite Tier ($9.99/mo) - Mass adoption, #1 in 6 categories at BUDGET
+        lite_tier = PricingTier(
+            name=TierName.LITE,
+            display_name="Lite",
+            monthly_price_usd=9.99,
+            annual_price_usd=99.99,  # ~17% discount
+            limits=TierLimits(
+                max_requests_per_month=500,
+                max_tokens_per_month=500_000,
+                max_models_per_request=3,
+                max_concurrent_requests=2,
+                max_storage_mb=500,
+                enable_advanced_features=False,
+                enable_api_access=False,
+                enable_priority_support=False,
+                max_team_members=1,
+                allow_parallel_retrieval=False,
+                allow_deep_conf=False,
+                allow_prompt_diffusion=False,
+                allow_adaptive_ensemble=True,  # Light swarm voting
+                allow_hrm=False,
+                allow_loopback_refinement=False,
+                max_tokens_per_query=25_000,
+                # Orchestration: BUDGET default (#1 in 6 categories)
+                default_orchestration_tier="budget",
+                premium_escalation_budget=50,
+                elite_escalation_budget=10,
+                max_passes_per_month=25,
+                memory_retention_days=7,
+                calculator_enabled=True,
+                reranker_enabled=True,
+            ),
+            features={
+                "basic_orchestration", "memory", "knowledge_base",
+                "calculator", "reranker", "light_consensus"
+            },
+            description="Best value AI - #1 quality in 6 categories for $9.99",
         )
 
-        # Pro Tier
+        # Pro Tier ($29.99/mo) - Full power, #1 in ALL categories
         pro_tier = PricingTier(
             name=TierName.PRO,
             display_name="Pro",
             monthly_price_usd=29.99,
             annual_price_usd=299.99,  # ~17% discount
             limits=TierLimits(
-                max_requests_per_month=10_000,
-                max_tokens_per_month=10_000_000,
+                max_requests_per_month=2_000,
+                max_tokens_per_month=5_000_000,
                 max_models_per_request=5,
                 max_concurrent_requests=5,
-                max_storage_mb=10_000,
+                max_storage_mb=5_000,
                 enable_advanced_features=True,
                 enable_api_access=True,
                 enable_priority_support=False,
-                max_team_members=5,
-                # Subscription tiers: Pro tier - all advanced features enabled
+                max_team_members=1,
+                # Pro tier - all advanced features enabled
                 allow_parallel_retrieval=True,
                 allow_deep_conf=True,
                 allow_prompt_diffusion=True,
                 allow_adaptive_ensemble=True,
                 allow_hrm=True,
                 allow_loopback_refinement=True,
-                max_tokens_per_query=100_000,  # 100K tokens per query
+                max_tokens_per_query=100_000,
+                # Orchestration: STANDARD default with PREMIUM/ELITE escalation
+                default_orchestration_tier="standard",
+                premium_escalation_budget=500,
+                elite_escalation_budget=100,
+                max_passes_per_month=200,
+                memory_retention_days=30,
+                calculator_enabled=True,
+                reranker_enabled=True,
             ),
             features={
-                "basic_orchestration",
-                "memory",
-                "knowledge_base",
-                "advanced_orchestration",
-                "hrm",
-                "prompt_diffusion",
-                "deepconf",
-                "adaptive_ensemble",
-                "api_access",
-                "web_research",
-                "fact_checking",
+                "basic_orchestration", "memory", "knowledge_base",
+                "advanced_orchestration", "hrm", "prompt_diffusion",
+                "deepconf", "adaptive_ensemble", "api_access",
+                "web_research", "fact_checking", "calculator", "reranker",
+                "vector_storage", "full_consensus"
             },
-            description="For professionals and small teams",
+            description="AI command center - #1 in ALL 10 categories",
+        )
+        
+        # Team Tier ($49.99/mo, 3 seats) - Collaborative workspace
+        team_tier = PricingTier(
+            name=TierName.TEAM,
+            display_name="Team",
+            monthly_price_usd=49.99,
+            annual_price_usd=499.99,  # ~17% discount
+            limits=TierLimits(
+                max_requests_per_month=5_000,  # Pooled
+                max_tokens_per_month=10_000_000,  # Pooled
+                max_models_per_request=5,
+                max_concurrent_requests=10,
+                max_storage_mb=20_000,
+                enable_advanced_features=True,
+                enable_api_access=True,
+                enable_priority_support=False,
+                max_team_members=3,
+                allow_parallel_retrieval=True,
+                allow_deep_conf=True,
+                allow_prompt_diffusion=True,
+                allow_adaptive_ensemble=True,
+                allow_hrm=True,
+                allow_loopback_refinement=True,
+                max_tokens_per_query=100_000,
+                # Orchestration: STANDARD default, pooled budgets
+                default_orchestration_tier="standard",
+                premium_escalation_budget=1_000,
+                elite_escalation_budget=200,
+                max_passes_per_month=500,
+                memory_retention_days=90,
+                calculator_enabled=True,
+                reranker_enabled=True,
+            ),
+            features={
+                "basic_orchestration", "memory", "knowledge_base",
+                "advanced_orchestration", "hrm", "prompt_diffusion",
+                "deepconf", "adaptive_ensemble", "api_access",
+                "web_research", "fact_checking", "calculator", "reranker",
+                "vector_storage", "full_consensus", "team_workspace",
+                "shared_memory", "team_projects", "admin_dashboard"
+            },
+            description="Team workspace with pooled intelligence",
         )
 
-        # Enterprise Tier
+        # Enterprise Standard ($25/seat/mo, min 5 seats)
         enterprise_tier = PricingTier(
             name=TierName.ENTERPRISE,
             display_name="Enterprise",
-            monthly_price_usd=199.99,
-            annual_price_usd=1999.99,  # ~17% discount
+            monthly_price_usd=25.0,  # Per seat
+            annual_price_usd=250.0,  # Per seat, ~17% discount
             limits=TierLimits(
-                max_requests_per_month=0,  # Unlimited
-                max_tokens_per_month=0,  # Unlimited
+                max_requests_per_month=1_000,  # Per seat
+                max_tokens_per_month=2_000_000,  # Per seat
                 max_models_per_request=10,
                 max_concurrent_requests=20,
+                max_storage_mb=0,  # Unlimited org-wide
+                enable_advanced_features=True,
+                enable_api_access=True,
+                enable_priority_support=True,
+                max_team_members=0,  # Unlimited (seat-based)
+                allow_parallel_retrieval=True,
+                allow_deep_conf=True,
+                allow_prompt_diffusion=True,
+                allow_adaptive_ensemble=True,
+                allow_hrm=True,
+                allow_loopback_refinement=True,
+                max_tokens_per_query=0,  # Unlimited
+                # Orchestration: PREMIUM default for enterprise
+                default_orchestration_tier="premium",
+                premium_escalation_budget=0,  # Unlimited premium
+                elite_escalation_budget=200,  # Per seat
+                max_passes_per_month=0,  # Unlimited
+                memory_retention_days=365,  # 1 year
+                calculator_enabled=True,
+                reranker_enabled=True,
+            ),
+            features={
+                "basic_orchestration", "memory", "knowledge_base",
+                "advanced_orchestration", "hrm", "prompt_diffusion",
+                "deepconf", "adaptive_ensemble", "api_access",
+                "web_research", "fact_checking", "calculator", "reranker",
+                "vector_storage", "full_consensus", "team_workspace",
+                "shared_memory", "team_projects", "admin_dashboard",
+                "sso", "audit_logs", "compliance", "sla_995"
+            },
+            description="Enterprise with SSO, compliance, and SLA",
+        )
+        
+        # Enterprise Plus ($45/seat/mo, min 5 seats)
+        enterprise_plus_tier = PricingTier(
+            name=TierName.ENTERPRISE_PLUS,
+            display_name="Enterprise Plus",
+            monthly_price_usd=45.0,  # Per seat
+            annual_price_usd=450.0,  # Per seat, ~17% discount
+            limits=TierLimits(
+                max_requests_per_month=2_500,  # Per seat
+                max_tokens_per_month=5_000_000,  # Per seat
+                max_models_per_request=10,
+                max_concurrent_requests=50,
                 max_storage_mb=0,  # Unlimited
                 enable_advanced_features=True,
                 enable_api_access=True,
                 enable_priority_support=True,
                 max_team_members=0,  # Unlimited
-                # Subscription tiers: Enterprise tier - all features, unlimited
                 allow_parallel_retrieval=True,
                 allow_deep_conf=True,
                 allow_prompt_diffusion=True,
                 allow_adaptive_ensemble=True,
                 allow_hrm=True,
                 allow_loopback_refinement=True,
-                max_tokens_per_query=0,  # Unlimited tokens per query
+                max_tokens_per_query=0,  # Unlimited
+                # Orchestration: ELITE default for enterprise plus
+                default_orchestration_tier="elite",
+                premium_escalation_budget=0,  # Unlimited
+                elite_escalation_budget=0,  # Unlimited elite
+                max_passes_per_month=0,  # Unlimited
+                memory_retention_days=0,  # Unlimited (compliance-defined)
+                calculator_enabled=True,
+                reranker_enabled=True,
             ),
             features={
-                "basic_orchestration",
-                "memory",
-                "knowledge_base",
-                "advanced_orchestration",
-                "hrm",
-                "prompt_diffusion",
-                "deepconf",
-                "adaptive_ensemble",
-                "api_access",
-                "web_research",
-                "fact_checking",
-                "custom_integrations",
-                "sso",
-                "audit_logs",
-                "dedicated_support",
-                "sla",
+                "basic_orchestration", "memory", "knowledge_base",
+                "advanced_orchestration", "hrm", "prompt_diffusion",
+                "deepconf", "adaptive_ensemble", "api_access",
+                "web_research", "fact_checking", "calculator", "reranker",
+                "vector_storage", "full_consensus", "team_workspace",
+                "shared_memory", "team_projects", "admin_dashboard",
+                "sso", "audit_logs", "compliance", "sla_999",
+                "custom_routing_policies", "dedicated_support",
+                "custom_integrations", "webhooks", "priority_routing"
             },
-            description="For large organizations with custom needs",
+            description="Enterprise Plus with ELITE orchestration and custom policies",
         )
 
         self.tiers[TierName.FREE] = free_tier
+        self.tiers[TierName.LITE] = lite_tier
         self.tiers[TierName.PRO] = pro_tier
+        self.tiers[TierName.TEAM] = team_tier
         self.tiers[TierName.ENTERPRISE] = enterprise_tier
+        self.tiers[TierName.ENTERPRISE_PLUS] = enterprise_plus_tier
 
     def get_tier(self, tier_name: TierName | str) -> Optional[PricingTier]:
         """Get a pricing tier by name."""
