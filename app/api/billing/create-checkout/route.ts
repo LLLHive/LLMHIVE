@@ -161,6 +161,14 @@ export async function POST(request: NextRequest) {
         {
           price: priceId,
           quantity: finalQuantity,
+          // For Enterprise: Allow quantity adjustment with minimum 5 seats
+          ...(tierConfig.isPerSeat && {
+            adjustable_quantity: {
+              enabled: true,
+              minimum: tierConfig.minSeats,  // 5 for Enterprise
+              maximum: 500,
+            },
+          }),
         },
       ],
       client_reference_id: userId,
