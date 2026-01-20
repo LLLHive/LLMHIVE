@@ -56,12 +56,12 @@ class RateLimitConfig:
     default_requests_per_minute: int = 60
     default_tokens_per_minute: int = 100000
     
-    # Tier-based limits (per minute)
+    # Tier-based limits (per minute) - SIMPLIFIED 4-TIER STRUCTURE (January 2026)
     tier_limits: Dict[str, Dict[str, int]] = field(default_factory=lambda: {
-        "free": {
-            "requests_per_minute": 10,
-            "tokens_per_minute": 10000,
-            "requests_per_hour": 100,
+        "lite": {
+            "requests_per_minute": 15,
+            "tokens_per_minute": 50000,
+            "requests_per_hour": 200,
         },
         "pro": {
             "requests_per_minute": 100,
@@ -69,9 +69,19 @@ class RateLimitConfig:
             "requests_per_hour": 1000,
         },
         "enterprise": {
+            "requests_per_minute": 500,
+            "tokens_per_minute": 2000000,
+            "requests_per_hour": 5000,
+        },
+        "maximum": {
             "requests_per_minute": 1000,
-            "tokens_per_minute": 5000000,
-            "requests_per_hour": 10000,
+            "tokens_per_minute": 10000000,
+            "requests_per_hour": 20000,
+        },
+        "free": {
+            "requests_per_minute": 10,
+            "tokens_per_minute": 10000,
+            "requests_per_hour": 100,
         },
     })
     

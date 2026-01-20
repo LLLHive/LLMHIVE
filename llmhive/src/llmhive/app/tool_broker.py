@@ -273,13 +273,20 @@ class ToolBroker:
         # Register built-in tools
         self._register_builtin_tools()
         
-        # Allowed tools per tier
+        # Allowed tools per tier - SIMPLIFIED 4-TIER STRUCTURE (January 2026)
         self.tier_tools: Dict[str, Set[str]] = {
-            "free": {"calculator", "web_search", "spell_check", "datetime", "convert"},
+            "lite": {"calculator", "web_search", "spell_check", "datetime", "convert", 
+                    "knowledge_lookup"},
             "pro": {"calculator", "web_search", "spell_check", "datetime", "convert", 
-                   "knowledge_lookup", "python_exec"},
+                   "knowledge_lookup", "python_exec", "analyze_image", "transcribe_audio"},
             "enterprise": {"calculator", "web_search", "spell_check", "datetime", "convert",
-                          "knowledge_lookup", "python_exec", "api_call", "advanced_search"},
+                          "knowledge_lookup", "python_exec", "api_call", "advanced_search",
+                          "analyze_image", "transcribe_audio", "generate_image"},
+            "maximum": {"calculator", "web_search", "spell_check", "datetime", "convert",
+                       "knowledge_lookup", "python_exec", "api_call", "advanced_search",
+                       "analyze_image", "transcribe_audio", "generate_image", "synthesize_speech",
+                       "custom_integrations"},
+            "free": {"calculator", "web_search", "spell_check", "datetime", "convert"},
         }
     
     def _register_builtin_tools(self) -> None:

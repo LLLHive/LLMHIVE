@@ -793,35 +793,76 @@ class ExecutionSandbox:
 class TierAccessController:
     """Controls access to features based on user tier."""
     
+    # SIMPLIFIED 4-TIER STRUCTURE (January 2026): Lite, Pro, Enterprise, Maximum
     TIER_FEATURES: Dict[str, Set[str]] = {
-        "free": {
+        "lite": {
             "basic_orchestration",
             "standard_models",
+            "elite_orchestration",  # All tiers get ELITE
+            "enhanced_memory",
+            "calculator",
+            "reranker",
         },
         "pro": {
             "basic_orchestration",
             "standard_models",
+            "elite_orchestration",
             "advanced_orchestration",
             "deep_verification",
             "enhanced_memory",
+            "api_access",
+            "deep_conf",
+            "prompt_diffusion",
         },
         "enterprise": {
             "basic_orchestration",
             "standard_models",
+            "elite_orchestration",
             "advanced_orchestration",
             "deep_verification",
             "enhanced_memory",
+            "api_access",
+            "deep_conf",
+            "prompt_diffusion",
             "custom_models",
             "priority_support",
+            "sso",
+            "audit_logs",
             "medical_domain",
             "legal_domain",
+        },
+        "maximum": {
+            "basic_orchestration",
+            "standard_models",
+            "elite_orchestration",
+            "maximum_orchestration",
+            "advanced_orchestration",
+            "deep_verification",
+            "enhanced_memory",
+            "api_access",
+            "deep_conf",
+            "prompt_diffusion",
+            "custom_models",
+            "priority_support",
+            "sso",
+            "audit_logs",
+            "medical_domain",
+            "legal_domain",
+            "never_throttle",
+            "dedicated_support",
+        },
+        "free": {
+            "basic_orchestration",
+            "standard_models",
         },
     }
     
     TIER_RATE_LIMITS: Dict[str, Dict[str, int]] = {
-        "free": {"requests_per_minute": 5, "requests_per_day": 100},
-        "pro": {"requests_per_minute": 20, "requests_per_day": 1000},
+        "lite": {"requests_per_minute": 10, "requests_per_day": 50},
+        "pro": {"requests_per_minute": 30, "requests_per_day": 200},
         "enterprise": {"requests_per_minute": 60, "requests_per_day": -1},  # -1 = unlimited
+        "maximum": {"requests_per_minute": 120, "requests_per_day": -1},
+        "free": {"requests_per_minute": 5, "requests_per_day": 20},
     }
     
     def __init__(self):

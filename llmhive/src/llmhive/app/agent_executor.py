@@ -98,13 +98,14 @@ class AgentExecutionResult:
 
 
 # Tier-based limits for agent execution
+# SIMPLIFIED 4-TIER STRUCTURE (January 2026): Lite, Pro, Enterprise, Maximum
 AGENT_TIER_LIMITS = {
-    "free": {
-        "max_iterations": 3,
-        "max_tool_calls": 2,
-        "max_tokens_per_step": 1000,
-        "allowed_tools": {"calculator", "web_search"},
-        "timeout_seconds": 30,
+    "lite": {
+        "max_iterations": 5,
+        "max_tool_calls": 3,
+        "max_tokens_per_step": 1500,
+        "allowed_tools": {"calculator", "web_search", "knowledge_lookup"},
+        "timeout_seconds": 60,
     },
     "pro": {
         "max_iterations": 10,
@@ -122,6 +123,22 @@ AGENT_TIER_LIMITS = {
                          "api_call", "advanced_search", "analyze_image", "generate_image",
                          "transcribe_audio", "synthesize_speech"},
         "timeout_seconds": 300,
+    },
+    "maximum": {
+        "max_iterations": 50,
+        "max_tool_calls": 40,
+        "max_tokens_per_step": 8000,
+        "allowed_tools": {"calculator", "web_search", "knowledge_lookup", "python_exec",
+                         "api_call", "advanced_search", "analyze_image", "generate_image",
+                         "transcribe_audio", "synthesize_speech", "custom_integrations"},
+        "timeout_seconds": 600,
+    },
+    "free": {
+        "max_iterations": 3,
+        "max_tool_calls": 2,
+        "max_tokens_per_step": 1000,
+        "allowed_tools": {"calculator", "web_search"},
+        "timeout_seconds": 30,
     },
 }
 

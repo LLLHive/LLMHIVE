@@ -23,52 +23,64 @@ class TierLimits:
 
 
 # Tier Limits: Define limits for each tier
+# SIMPLIFIED 4-TIER STRUCTURE (January 2026): Lite, Pro, Enterprise, Maximum
 # Stage 3: Added multimodal features (image_analysis, audio_transcription, etc.)
 TIER_LIMITS: Dict[str, TierLimits] = {
-    "free": TierLimits(
-        requests_per_minute=5,
-        requests_per_day=100,  # 100 requests per day for Free tier
-        enabled_features={"basic_orchestration", "standard_models"},
-        allowed_domain_presets={"general", "coding", "creative"},
-    ),
-    "basic": TierLimits(
+    # Lite tier ($9.99/mo) - Entry level, 500 queries/mo
+    "lite": TierLimits(
         requests_per_minute=10,
-        requests_per_day=300,  # 300 requests per day for Basic tier
+        requests_per_day=50,  # ~500 per month
         enabled_features={
             "basic_orchestration",
             "standard_models",
+            "elite_orchestration",  # All tiers get ELITE quality
             "enhanced_memory",
+            "calculator",
+            "reranker",
         },
         allowed_domain_presets={"general", "coding", "creative"},
     ),
+    # Pro tier ($29.99/mo) - Power users, 2000 queries/mo
     "pro": TierLimits(
-        requests_per_minute=20,
-        requests_per_day=1000,  # 1000 requests per day for Pro tier
+        requests_per_minute=30,
+        requests_per_day=200,  # ~2000 per month
         enabled_features={
             "basic_orchestration",
             "standard_models",
+            "elite_orchestration",
             "advanced_orchestration",
             "deep_verification",
             "enhanced_memory",
-            # Stage 3: Multimodal features for Pro tier
+            "api_access",
+            "deep_conf",
+            "prompt_diffusion",
+            # Multimodal features for Pro tier
             "image_analysis",
             "audio_transcription",
             "document_ocr",
         },
         allowed_domain_presets={"general", "coding", "creative", "research"},
     ),
+    # Enterprise tier ($35/seat/mo, min 5 seats) - Organizations
     "enterprise": TierLimits(
         requests_per_minute=60,
-        requests_per_day=None,  # Unlimited daily requests for Enterprise
+        requests_per_day=None,  # Unlimited (seat-based limits apply)
         enabled_features={
             "basic_orchestration",
             "standard_models",
+            "elite_orchestration",
             "advanced_orchestration",
             "deep_verification",
             "enhanced_memory",
+            "api_access",
+            "deep_conf",
+            "prompt_diffusion",
             "custom_models",
             "priority_support",
-            # Stage 3: All multimodal features for Enterprise tier
+            "sso",
+            "audit_logs",
+            "compliance",
+            # All multimodal features for Enterprise tier
             "image_analysis",
             "audio_transcription",
             "document_ocr",
@@ -76,6 +88,44 @@ TIER_LIMITS: Dict[str, TierLimits] = {
             "video_analysis",
         },
         allowed_domain_presets={"general", "coding", "creative", "research", "medical", "legal"},
+    ),
+    # Maximum tier ($499/mo) - Mission-critical, never throttle
+    "maximum": TierLimits(
+        requests_per_minute=120,
+        requests_per_day=None,  # Unlimited
+        enabled_features={
+            "basic_orchestration",
+            "standard_models",
+            "elite_orchestration",
+            "maximum_orchestration",
+            "advanced_orchestration",
+            "deep_verification",
+            "enhanced_memory",
+            "api_access",
+            "deep_conf",
+            "prompt_diffusion",
+            "custom_models",
+            "priority_support",
+            "sso",
+            "audit_logs",
+            "compliance",
+            "never_throttle",
+            "dedicated_support",
+            # All multimodal features
+            "image_analysis",
+            "audio_transcription",
+            "document_ocr",
+            "image_generation",
+            "video_analysis",
+        },
+        allowed_domain_presets={"general", "coding", "creative", "research", "medical", "legal", "custom"},
+    ),
+    # Legacy "free" tier - maps to Lite for backwards compatibility
+    "free": TierLimits(
+        requests_per_minute=5,
+        requests_per_day=20,  # Very limited for trial users
+        enabled_features={"basic_orchestration", "standard_models", "calculator", "reranker"},
+        allowed_domain_presets={"general", "coding", "creative"},
     ),
 }
 

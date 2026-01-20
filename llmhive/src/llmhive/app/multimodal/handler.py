@@ -132,15 +132,15 @@ class MultimodalOutput:
         }
 
 
-# Tier-based feature access
+# Tier-based feature access - SIMPLIFIED 4-TIER STRUCTURE (January 2026)
 MULTIMODAL_TIER_ACCESS = {
-    "free": {
+    "lite": {
         "image_analysis": True,
         "image_generation": False,
         "audio_transcription": True,
         "audio_synthesis": False,
-        "max_images_per_request": 1,
-        "max_audio_duration_seconds": 60,
+        "max_images_per_request": 2,
+        "max_audio_duration_seconds": 120,
     },
     "pro": {
         "image_analysis": True,
@@ -157,6 +157,22 @@ MULTIMODAL_TIER_ACCESS = {
         "audio_synthesis": True,
         "max_images_per_request": 10,
         "max_audio_duration_seconds": 3600,
+    },
+    "maximum": {
+        "image_analysis": True,
+        "image_generation": True,
+        "audio_transcription": True,
+        "audio_synthesis": True,
+        "max_images_per_request": 25,
+        "max_audio_duration_seconds": 7200,  # 2 hours
+    },
+    "free": {
+        "image_analysis": True,
+        "image_generation": False,
+        "audio_transcription": True,
+        "audio_synthesis": False,
+        "max_images_per_request": 1,
+        "max_audio_duration_seconds": 60,
     },
 }
 
