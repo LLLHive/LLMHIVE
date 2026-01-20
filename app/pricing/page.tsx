@@ -130,13 +130,14 @@ const pricingTiers: PricingTier[] = [
     annualPrice: 250,
     tier: "enterprise",
     icon: <Building2 className="h-5 w-5 text-emerald-500" />,
-    badge: "Per Seat",
+    badge: "Min 5 Seats",
     quotas: {
       eliteQueries: "300 ELITE/seat",
       afterQuota: "200 STANDARD",
       totalQueries: "500/seat",
     },
     features: [
+      "Minimum 5 seats ($125+/mo)",
       "300 ELITE per seat/month",
       "SSO / SAML authentication",
       "SOC 2 compliance",
@@ -154,13 +155,14 @@ const pricingTiers: PricingTier[] = [
     annualPrice: 450,
     tier: "enterprise_plus",
     icon: <Star className="h-5 w-5 text-yellow-500" />,
-    badge: "Per Seat",
+    badge: "Min 5 Seats",
     quotas: {
       eliteQueries: "800 ELITE/seat",
       afterQuota: "700 STANDARD",
       totalQueries: "1,500/seat",
     },
     features: [
+      "Minimum 5 seats ($225+/mo)",
       "800 ELITE per seat/month",
       "Custom routing policies",
       "Dedicated support manager",

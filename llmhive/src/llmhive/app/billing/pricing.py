@@ -61,6 +61,10 @@ class TierLimits:
     memory_retention_days: int = 0  # How long to retain conversation memory
     calculator_enabled: bool = True  # Calculator is ALWAYS on (our key differentiator)
     reranker_enabled: bool = True  # Pinecone reranker is ALWAYS on
+    
+    # Seat-based pricing (Enterprise tiers)
+    min_seats: int = 0  # Minimum seats required (0 = not seat-based)
+    is_per_seat: bool = False  # Whether pricing is per-seat
 
 
 @dataclass(slots=True)
@@ -302,6 +306,9 @@ class PricingTierManager:
                 memory_retention_days=365,
                 calculator_enabled=True,
                 reranker_enabled=True,
+                # SEAT-BASED PRICING: Minimum 5 seats required
+                min_seats=5,
+                is_per_seat=True,
             ),
             features={
                 "basic_orchestration", "memory", "knowledge_base",
@@ -348,6 +355,9 @@ class PricingTierManager:
                 memory_retention_days=0,  # Unlimited (compliance-defined)
                 calculator_enabled=True,
                 reranker_enabled=True,
+                # SEAT-BASED PRICING: Minimum 5 seats required
+                min_seats=5,
+                is_per_seat=True,
             ),
             features={
                 "basic_orchestration", "memory", "knowledge_base",

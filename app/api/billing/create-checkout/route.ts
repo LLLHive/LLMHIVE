@@ -43,14 +43,20 @@ const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
   },
 }
 
-// Tier quotas for metadata
-const TIER_QUOTAS: Record<string, { eliteQueries: number; afterQuotaTier: string; totalQueries: number }> = {
-  lite: { eliteQueries: 100, afterQuotaTier: "budget", totalQueries: 500 },
-  pro: { eliteQueries: 400, afterQuotaTier: "standard", totalQueries: 1000 },
-  team: { eliteQueries: 500, afterQuotaTier: "standard", totalQueries: 2000 },
-  enterprise: { eliteQueries: 300, afterQuotaTier: "standard", totalQueries: 500 },
-  enterprise_plus: { eliteQueries: 800, afterQuotaTier: "standard", totalQueries: 1500 },
-  maximum: { eliteQueries: 500, afterQuotaTier: "elite", totalQueries: 700 },
+// Tier quotas and constraints
+const TIER_CONFIG: Record<string, { 
+  eliteQueries: number
+  afterQuotaTier: string
+  totalQueries: number
+  minSeats: number  // 0 = not seat-based
+  isPerSeat: boolean
+}> = {
+  lite: { eliteQueries: 100, afterQuotaTier: "budget", totalQueries: 500, minSeats: 0, isPerSeat: false },
+  pro: { eliteQueries: 400, afterQuotaTier: "standard", totalQueries: 1000, minSeats: 0, isPerSeat: false },
+  team: { eliteQueries: 500, afterQuotaTier: "standard", totalQueries: 2000, minSeats: 0, isPerSeat: false },
+  enterprise: { eliteQueries: 300, afterQuotaTier: "standard", totalQueries: 500, minSeats: 5, isPerSeat: true },
+  enterprise_plus: { eliteQueries: 800, afterQuotaTier: "standard", totalQueries: 1500, minSeats: 5, isPerSeat: true },
+  maximum: { eliteQueries: 500, afterQuotaTier: "elite", totalQueries: 700, minSeats: 0, isPerSeat: false },
 }
 
 export async function POST(request: NextRequest) {
@@ -112,11 +118,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get quota info for this tier
-    const quotaInfo = TIER_QUOTAS[tierLower] || { eliteQueries: 0, afterQuotaTier: "budget", totalQueries: 0 }
+    // Get tier configuration
+    const tierConfig = TIER_CONFIG[tierLower] || { 
+      eliteQueries: 0, 
+      afterQuotaTier: "budget", 
+      totalQueries: 0,
+      minSeats: 0,
+      isPerSeat: false
+    }
 
-    // Determine if this is a per-seat tier
-    const isPerSeat = ["enterprise", "enterprise_plus"].includes(tierLower)
+    // Enforce minimum seats for seat-based tiers (Enterprise, Enterprise+)
+    const seatQuantity = quantity || 1
+    if (tierConfig.minSeats > 0 && seatQuantity < tierConfig.minSeats) {
+      return NextResponse.json(
+        { 
+          error: `${tier} requires a minimum of ${tierConfig.minSeats} seats. You selected ${seatQuantity}.`,
+          minSeats: tierConfig.minSeats,
+          isPerSeat: tierConfig.isPerSeat
+        },
+        { status: 400 }
+      )
+    }
+
+    // Calculate final seat count (already validated above)
+    const finalQuantity = tierConfig.isPerSeat 
+      ? Math.max(tierConfig.minSeats, seatQuantity) 
+      : 1
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -126,7 +153,7 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price: priceId,
-          quantity: isPerSeat ? Math.max(5, quantity) : 1, // Enterprise has min 5 seats
+          quantity: finalQuantity,
         },
       ],
       client_reference_id: userId,
@@ -134,9 +161,12 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         tier: tierLower,
         billing_cycle: billingCycle.toLowerCase(),
-        elite_queries: String(quotaInfo.eliteQueries),
-        after_quota_tier: quotaInfo.afterQuotaTier,
-        total_queries: String(quotaInfo.totalQueries),
+        elite_queries: String(tierConfig.eliteQueries * finalQuantity),  // Scale with seats
+        after_quota_tier: tierConfig.afterQuotaTier,
+        total_queries: String(tierConfig.totalQueries * finalQuantity),  // Scale with seats
+        seats: String(finalQuantity),
+        is_per_seat: String(tierConfig.isPerSeat),
+        min_seats_required: String(tierConfig.minSeats),
         pricing_version: "quota_based_jan2026",
       },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai"}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -146,8 +176,10 @@ export async function POST(request: NextRequest) {
         metadata: {
           user_id: userId,
           tier: tierLower,
-          elite_queries: String(quotaInfo.eliteQueries),
-          after_quota_tier: quotaInfo.afterQuotaTier,
+          elite_queries: String(tierConfig.eliteQueries * finalQuantity),
+          after_quota_tier: tierConfig.afterQuotaTier,
+          total_queries: String(tierConfig.totalQueries * finalQuantity),
+          seats: String(finalQuantity),
           pricing_version: "quota_based_jan2026",
         },
       },
