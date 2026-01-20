@@ -15,8 +15,9 @@ function getStripe(): Stripe | null {
 // ═══════════════════════════════════════════════════════════════════════════════
 const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
   lite: {
-    monthly: process.env.STRIPE_PRICE_ID_LITE_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_LITE_ANNUAL,
+    // Note: "Lite" tier uses BASIC env vars for backwards compatibility
+    monthly: process.env.STRIPE_PRICE_ID_BASIC_MONTHLY,
+    annual: process.env.STRIPE_PRICE_ID_BASIC_ANNUAL,
   },
   pro: {
     monthly: process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
@@ -110,8 +111,8 @@ export async function POST(request: NextRequest) {
       console.error(`Price ID not found for tier: ${tier}, cycle: ${billingCycle}`)
       console.error("Available PRICE_IDS:", Object.keys(PRICE_IDS))
       console.error("Stripe env vars configured:", {
-        lite_monthly: !!process.env.STRIPE_PRICE_ID_LITE_MONTHLY,
-        lite_annual: !!process.env.STRIPE_PRICE_ID_LITE_ANNUAL,
+        lite_monthly: !!process.env.STRIPE_PRICE_ID_BASIC_MONTHLY,  // Uses BASIC for backwards compat
+        lite_annual: !!process.env.STRIPE_PRICE_ID_BASIC_ANNUAL,    // Uses BASIC for backwards compat
         pro_monthly: !!process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
         pro_annual: !!process.env.STRIPE_PRICE_ID_PRO_ANNUAL,
         enterprise_monthly: !!process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY,

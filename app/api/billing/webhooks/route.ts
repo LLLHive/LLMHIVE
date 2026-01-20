@@ -12,9 +12,10 @@ function getStripe(): Stripe | null {
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 // Subscription tier mapping from Stripe price IDs
+// Note: "Lite" tier uses BASIC env vars for backwards compatibility
 const PRICE_TO_TIER: Record<string, string> = {
-  [process.env.STRIPE_PRICE_ID_LITE_MONTHLY || ""]: "lite",
-  [process.env.STRIPE_PRICE_ID_LITE_ANNUAL || ""]: "lite",
+  [process.env.STRIPE_PRICE_ID_BASIC_MONTHLY || ""]: "lite",
+  [process.env.STRIPE_PRICE_ID_BASIC_ANNUAL || ""]: "lite",
   [process.env.STRIPE_PRICE_ID_PRO_MONTHLY || ""]: "pro",
   [process.env.STRIPE_PRICE_ID_PRO_ANNUAL || ""]: "pro",
   [process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY || ""]: "enterprise",

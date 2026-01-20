@@ -20,9 +20,10 @@ function getStripe(): Stripe | null {
 }
 
 // Expected environment variables for 4-tier pricing
+// Note: "Lite" tier uses BASIC env vars for backwards compatibility with existing secrets
 const EXPECTED_PRICE_IDS = {
-  STRIPE_PRICE_ID_LITE_MONTHLY: "Lite Monthly",
-  STRIPE_PRICE_ID_LITE_ANNUAL: "Lite Annual",
+  STRIPE_PRICE_ID_BASIC_MONTHLY: "Lite Monthly (uses BASIC)",
+  STRIPE_PRICE_ID_BASIC_ANNUAL: "Lite Annual (uses BASIC)",
   STRIPE_PRICE_ID_PRO_MONTHLY: "Pro Monthly",
   STRIPE_PRICE_ID_PRO_ANNUAL: "Pro Annual",
   STRIPE_PRICE_ID_ENTERPRISE_MONTHLY: "Enterprise Monthly",

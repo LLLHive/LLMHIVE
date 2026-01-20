@@ -46,14 +46,14 @@ PRODUCTS = [
                 "unit_amount": 999,  # $9.99 in cents
                 "currency": "usd",
                 "recurring": {"interval": "month"},
-                "env_var": "STRIPE_PRICE_ID_LITE_MONTHLY",
+                "env_var": "STRIPE_PRICE_ID_BASIC_MONTHLY",  # Uses BASIC for backwards compatibility
             },
             {
                 "nickname": "Lite Annual",
                 "unit_amount": 9999,  # $99.99 in cents
                 "currency": "usd",
                 "recurring": {"interval": "year"},
-                "env_var": "STRIPE_PRICE_ID_LITE_ANNUAL",
+                "env_var": "STRIPE_PRICE_ID_BASIC_ANNUAL",  # Uses BASIC for backwards compatibility
             },
         ],
     },

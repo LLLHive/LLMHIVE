@@ -58,6 +58,8 @@ This document lists all secrets required for the application to function correct
 | `STRIPE_PRICE_ID_PRO_ANNUAL` | `stripe-price-id-pro-annual` | Yes | Pricing |
 | `STRIPE_PRICE_ID_ENTERPRISE_MONTHLY` | `stripe-price-id-enterprise-monthly` | Yes | Pricing |
 | `STRIPE_PRICE_ID_ENTERPRISE_ANNUAL` | `stripe-price-id-enterprise-annual` | Yes | Pricing |
+| `STRIPE_PRICE_ID_MAXIMUM_MONTHLY` | `stripe-price-id-maximum-monthly` | Yes | Pricing |
+| `STRIPE_PRICE_ID_MAXIMUM_ANNUAL` | `stripe-price-id-maximum-annual` | Yes | Pricing |
 
 ### Authentication
 
