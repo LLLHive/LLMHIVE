@@ -7,7 +7,18 @@ const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "http://localhost:8
 // SIMPLIFIED 4-TIER QUOTA SYSTEM (January 2026)
 // Lite, Pro, Enterprise, Maximum
 // =============================================================================
-const TIER_QUOTAS = {
+interface TierQuota {
+  eliteQueries: number
+  afterQuotaTier: string
+  totalQueries: number
+  tokens: number
+  standardQueries?: number
+  budgetQueries?: number
+  perSeat?: boolean
+  neverThrottle?: boolean
+}
+
+const TIER_QUOTAS: Record<string, TierQuota> = {
   lite: {
     eliteQueries: 100,
     budgetQueries: 400,
