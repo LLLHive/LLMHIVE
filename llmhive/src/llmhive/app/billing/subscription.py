@@ -414,8 +414,8 @@ class SubscriptionService:
         """
         subscription = self.get_user_subscription(user_id)
         if subscription is None:
-            # No subscription = free tier
-            return self.pricing_manager.can_access_feature(TierName.FREE, feature)
+            # No subscription = Lite tier (default)
+            return self.pricing_manager.can_access_feature(TierName.LITE, feature)
 
         tier = self.pricing_manager.get_tier(subscription.tier_name)
         if tier is None:
@@ -439,8 +439,8 @@ class SubscriptionService:
         """
         subscription = self.get_user_subscription(user_id)
         if subscription is None:
-            # No subscription = free tier
-            tier_name = TierName.FREE
+            # No subscription = Lite tier (default)
+            tier_name = TierName.LITE
         else:
             tier_name = subscription.tier_name
 

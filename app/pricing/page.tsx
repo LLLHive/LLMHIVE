@@ -24,176 +24,114 @@ interface PricingTier {
   }
   popular?: boolean
   cta: string
-  tier: "free" | "lite" | "pro" | "team" | "enterprise" | "enterprise_plus" | "maximum"
+  tier: "lite" | "pro" | "enterprise" | "maximum"
   badge?: string
   icon: React.ReactNode
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIMPLIFIED 4-TIER PRICING STRUCTURE (January 2026)
+// ═══════════════════════════════════════════════════════════════════════════════
 const pricingTiers: PricingTier[] = [
   {
-    name: "Free Trial",
-    description: "Experience #1 AI quality free",
-    monthlyPrice: 0,
-    annualPrice: 0,
-    tier: "free",
-    icon: <Sparkles className="h-5 w-5 text-muted-foreground" />,
-    quotas: {
-      eliteQueries: "50 ELITE",
-      afterQuota: "Trial ends",
-      totalQueries: "50 total",
-    },
-    features: [
-      "50 ELITE queries (best quality)",
-      "#1 ranking in ALL 10 categories",
-      "Basic orchestration",
-      "Session memory",
-      "Calculator & Reranker tools",
-      "Community support",
-    ],
-    cta: "Start Free",
-  },
-  {
     name: "Lite",
-    description: "#1 quality at just $9.99/month",
+    description: "Get started with #1 quality AI",
     monthlyPrice: 9.99,
     annualPrice: 99.99,
     tier: "lite",
     icon: <Zap className="h-5 w-5 text-blue-500" />,
     quotas: {
       eliteQueries: "100 ELITE",
-      afterQuota: "400 BUDGET",
+      afterQuota: "→ 400 BUDGET",
       totalQueries: "500 total",
     },
     features: [
-      "100 ELITE queries (#1 in ALL)",
-      "400 BUDGET queries (#1 in 6)",
+      "100 ELITE queries (#1 in ALL categories)",
+      "400 BUDGET queries after quota",
       "Knowledge Base access",
-      "Persistent memory (7 days)",
+      "7-day memory retention",
       "Consensus voting",
+      "Calculator & Reranker tools",
       "Email support",
     ],
-    cta: "Get Lite",
+    cta: "Get Started",
   },
   {
     name: "Pro",
-    description: "Power user with API access",
+    description: "Full power for professionals",
     monthlyPrice: 29.99,
     annualPrice: 299.99,
     tier: "pro",
     popular: true,
-    icon: <Zap className="h-5 w-5 text-[var(--bronze)]" />,
+    icon: <Rocket className="h-5 w-5 text-[var(--bronze)]" />,
     badge: "Most Popular",
     quotas: {
-      eliteQueries: "400 ELITE",
-      afterQuota: "600 STANDARD",
-      totalQueries: "1,000 total",
+      eliteQueries: "500 ELITE",
+      afterQuota: "→ 1,500 STANDARD",
+      totalQueries: "2,000 total",
     },
     features: [
-      "400 ELITE queries (#1 in ALL)",
-      "600 STANDARD queries (#1 in 8)",
+      "500 ELITE queries (#1 in ALL)",
+      "1,500 STANDARD queries (#1 in 8)",
       "Full API access",
+      "All advanced features",
       "DeepConf debate system",
       "Prompt Diffusion",
-      "Web research",
-      "30-day memory",
+      "Web research & fact-checking",
+      "30-day memory retention",
       "Priority support",
     ],
     cta: "Upgrade to Pro",
   },
   {
-    name: "Team",
-    description: "Collaborative workspace for teams",
-    monthlyPrice: 49.99,
-    annualPrice: 499.99,
-    tier: "team",
-    icon: <Users className="h-5 w-5 text-purple-500" />,
-    quotas: {
-      eliteQueries: "500 ELITE pooled",
-      afterQuota: "1,500 STANDARD",
-      totalQueries: "2,000 total",
-    },
-    features: [
-      "500 ELITE pooled for team",
-      "1,500 STANDARD queries",
-      "3 team members included",
-      "Shared team workspace",
-      "Team projects & memory",
-      "Admin dashboard",
-      "90-day memory retention",
-    ],
-    cta: "Get Team",
-  },
-  {
     name: "Enterprise",
     description: "For organizations with compliance needs",
-    monthlyPrice: 25,
-    annualPrice: 250,
+    monthlyPrice: 35,
+    annualPrice: 350,
     tier: "enterprise",
     icon: <Building2 className="h-5 w-5 text-emerald-500" />,
     badge: "Min 5 Seats",
     quotas: {
-      eliteQueries: "300 ELITE/seat",
-      afterQuota: "200 STANDARD",
-      totalQueries: "500/seat",
+      eliteQueries: "400 ELITE/seat",
+      afterQuota: "→ 400 STANDARD/seat",
+      totalQueries: "800/seat",
     },
     features: [
-      "Minimum 5 seats ($125+/mo)",
-      "300 ELITE per seat/month",
+      "Minimum 5 seats ($175+/mo)",
+      "400 ELITE per seat/month",
       "SSO / SAML authentication",
-      "SOC 2 compliance",
-      "Audit logs",
+      "SOC 2 Type II compliance",
+      "Audit logs & admin dashboard",
       "99.5% SLA guarantee",
       "1-year memory retention",
-      "Priority queue",
-    ],
-    cta: "Contact Sales",
-  },
-  {
-    name: "Enterprise+",
-    description: "Custom policies & dedicated support",
-    monthlyPrice: 45,
-    annualPrice: 450,
-    tier: "enterprise_plus",
-    icon: <Star className="h-5 w-5 text-yellow-500" />,
-    badge: "Min 5 Seats",
-    quotas: {
-      eliteQueries: "800 ELITE/seat",
-      afterQuota: "700 STANDARD",
-      totalQueries: "1,500/seat",
-    },
-    features: [
-      "Minimum 5 seats ($225+/mo)",
-      "800 ELITE per seat/month",
-      "Custom routing policies",
-      "Dedicated support manager",
-      "99.9% SLA guarantee",
-      "Custom integrations",
-      "Webhooks",
-      "Unlimited memory",
+      "Team workspace & projects",
+      "Priority support queue",
     ],
     cta: "Contact Sales",
   },
   {
     name: "Maximum",
-    description: "BEATS competition by +5%",
+    description: "NEVER throttle - Always #1 quality",
     monthlyPrice: 499,
     annualPrice: 4990,
     tier: "maximum",
     icon: <Crown className="h-5 w-5 text-amber-500" />,
     badge: "Mission Critical",
     quotas: {
-      eliteQueries: "200 MAXIMUM + 500 ELITE",
+      eliteQueries: "UNLIMITED",
       afterQuota: "Never throttled",
-      totalQueries: "700 total",
+      totalQueries: "Unlimited",
     },
     features: [
-      "200 MAXIMUM queries (beats GPT-5.2!)",
-      "500 ELITE queries (#1 in ALL)",
-      "5-model consensus",
-      "Verification loops",
-      "Reflection chains",
-      "All Enterprise+ features",
-      "Mission-critical support",
+      "NEVER THROTTLE - always #1 quality",
+      "BEATS ChatGPT Pro by 5%",
+      "5-model consensus verification",
+      "All Enterprise features included",
+      "25 team members included",
+      "Custom integrations & webhooks",
+      "99.9% SLA guarantee",
+      "Dedicated support manager",
+      "Mission-critical priority",
     ],
     cta: "Get Maximum Power",
   },
@@ -206,18 +144,9 @@ export default function PricingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
 
   const handleSubscribe = async (tier: PricingTier) => {
-    if (tier.tier === "free") {
-      if (isSignedIn) {
-        window.location.href = "/"
-      } else {
-        window.location.href = "/sign-up"
-      }
-      return
-    }
-
-    // Enterprise tiers go to contact
-    if (tier.tier === "enterprise" || tier.tier === "enterprise_plus") {
-      window.location.href = "mailto:sales@llmhive.ai?subject=Enterprise Inquiry"
+    // Enterprise goes to contact sales
+    if (tier.tier === "enterprise") {
+      window.location.href = "mailto:sales@llmhive.ai?subject=Enterprise Inquiry - LLMHive"
       return
     }
 

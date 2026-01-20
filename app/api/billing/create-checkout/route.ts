@@ -10,7 +10,9 @@ function getStripe(): Stripe | null {
   return new Stripe(process.env.STRIPE_SECRET_KEY)
 }
 
-// Price ID mapping for all quota-based tiers
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIMPLIFIED 4-TIER PRICING (January 2026)
+// ═══════════════════════════════════════════════════════════════════════════════
 const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
   lite: {
     monthly: process.env.STRIPE_PRICE_ID_LITE_MONTHLY,
@@ -20,30 +22,17 @@ const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
     monthly: process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
     annual: process.env.STRIPE_PRICE_ID_PRO_ANNUAL,
   },
-  team: {
-    monthly: process.env.STRIPE_PRICE_ID_TEAM_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_TEAM_ANNUAL,
-  },
   enterprise: {
     monthly: process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY,
     annual: process.env.STRIPE_PRICE_ID_ENTERPRISE_ANNUAL,
-  },
-  enterprise_plus: {
-    monthly: process.env.STRIPE_PRICE_ID_ENTERPRISE_PLUS_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_ENTERPRISE_PLUS_ANNUAL,
   },
   maximum: {
     monthly: process.env.STRIPE_PRICE_ID_MAXIMUM_MONTHLY,
     annual: process.env.STRIPE_PRICE_ID_MAXIMUM_ANNUAL,
   },
-  // Legacy mappings for backward compatibility
-  basic: {
-    monthly: process.env.STRIPE_PRICE_ID_LITE_MONTHLY || process.env.STRIPE_PRICE_ID_BASIC_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_LITE_ANNUAL || process.env.STRIPE_PRICE_ID_BASIC_ANNUAL,
-  },
 }
 
-// Tier quotas and constraints
+// Tier quotas and constraints - SIMPLIFIED 4 TIERS
 const TIER_CONFIG: Record<string, { 
   eliteQueries: number
   afterQuotaTier: string
@@ -51,12 +40,34 @@ const TIER_CONFIG: Record<string, {
   minSeats: number  // 0 = not seat-based
   isPerSeat: boolean
 }> = {
-  lite: { eliteQueries: 100, afterQuotaTier: "budget", totalQueries: 500, minSeats: 0, isPerSeat: false },
-  pro: { eliteQueries: 400, afterQuotaTier: "standard", totalQueries: 1000, minSeats: 0, isPerSeat: false },
-  team: { eliteQueries: 500, afterQuotaTier: "standard", totalQueries: 2000, minSeats: 0, isPerSeat: false },
-  enterprise: { eliteQueries: 300, afterQuotaTier: "standard", totalQueries: 500, minSeats: 5, isPerSeat: true },
-  enterprise_plus: { eliteQueries: 800, afterQuotaTier: "standard", totalQueries: 1500, minSeats: 5, isPerSeat: true },
-  maximum: { eliteQueries: 500, afterQuotaTier: "elite", totalQueries: 700, minSeats: 0, isPerSeat: false },
+  lite: { 
+    eliteQueries: 100, 
+    afterQuotaTier: "budget", 
+    totalQueries: 500, 
+    minSeats: 0, 
+    isPerSeat: false 
+  },
+  pro: { 
+    eliteQueries: 500, 
+    afterQuotaTier: "standard", 
+    totalQueries: 2000, 
+    minSeats: 0, 
+    isPerSeat: false 
+  },
+  enterprise: { 
+    eliteQueries: 400,  // Per seat
+    afterQuotaTier: "standard", 
+    totalQueries: 800,  // Per seat
+    minSeats: 5, 
+    isPerSeat: true 
+  },
+  maximum: { 
+    eliteQueries: 0,  // Unlimited (never throttle)
+    afterQuotaTier: "maximum",  // Never drops below maximum
+    totalQueries: 0,  // Unlimited
+    minSeats: 0, 
+    isPerSeat: false 
+  },
 }
 
 export async function POST(request: NextRequest) {
@@ -98,17 +109,13 @@ export async function POST(request: NextRequest) {
     if (!priceId) {
       console.error(`Price ID not found for tier: ${tier}, cycle: ${billingCycle}`)
       console.error("Available PRICE_IDS:", Object.keys(PRICE_IDS))
-      console.error("Available env vars:", {
+      console.error("Stripe env vars configured:", {
         lite_monthly: !!process.env.STRIPE_PRICE_ID_LITE_MONTHLY,
         lite_annual: !!process.env.STRIPE_PRICE_ID_LITE_ANNUAL,
         pro_monthly: !!process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
         pro_annual: !!process.env.STRIPE_PRICE_ID_PRO_ANNUAL,
-        team_monthly: !!process.env.STRIPE_PRICE_ID_TEAM_MONTHLY,
-        team_annual: !!process.env.STRIPE_PRICE_ID_TEAM_ANNUAL,
         enterprise_monthly: !!process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY,
         enterprise_annual: !!process.env.STRIPE_PRICE_ID_ENTERPRISE_ANNUAL,
-        enterprise_plus_monthly: !!process.env.STRIPE_PRICE_ID_ENTERPRISE_PLUS_MONTHLY,
-        enterprise_plus_annual: !!process.env.STRIPE_PRICE_ID_ENTERPRISE_PLUS_ANNUAL,
         maximum_monthly: !!process.env.STRIPE_PRICE_ID_MAXIMUM_MONTHLY,
         maximum_annual: !!process.env.STRIPE_PRICE_ID_MAXIMUM_ANNUAL,
       })

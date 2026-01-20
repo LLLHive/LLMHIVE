@@ -70,14 +70,14 @@ class SubscriptionEnforcer:
         # Get user's subscription
         subscription = self.subscription_service.get_user_subscription(user_id)
         if subscription is None:
-            tier_name = TierName.FREE.value
+            tier_name = TierName.LITE.value
         else:
             tier_name = subscription.tier_name.lower()
         
         tier = self.pricing_manager.get_tier(tier_name)
         if tier is None:
-            tier = self.pricing_manager.get_tier(TierName.FREE)
-            tier_name = TierName.FREE.value
+            tier = self.pricing_manager.get_tier(TierName.LITE)
+            tier_name = TierName.LITE.value
         
         # Get current usage
         current_usage = self.usage_tracker.get_current_period_usage(user_id)
@@ -233,19 +233,19 @@ class SubscriptionEnforcer:
         # Get user's subscription
         subscription = self.subscription_service.get_user_subscription(user_id)
         if subscription is None:
-            tier_name = TierName.FREE.value
+            tier_name = TierName.LITE.value
         else:
             tier_name = subscription.tier_name.lower()
         
         tier = self.pricing_manager.get_tier(tier_name)
         if tier is None:
-            tier = self.pricing_manager.get_tier(TierName.FREE)
-            tier_name = TierName.FREE.value
+            tier = self.pricing_manager.get_tier(TierName.LITE)
+            tier_name = TierName.LITE.value
         
         # Calculate daily limit (monthly limit / 30, or fixed daily limit)
         # For Free tier: 100/month ≈ 3/day, but we'll use a fixed 5/day for better UX
         daily_limits = {
-            TierName.FREE.value: 5,  # 5 requests per day for free tier
+            TierName.LITE.value: 5,  # 5 requests per day for free tier
             TierName.PRO.value: 500,  # 500 requests per day for pro tier
             TierName.ENTERPRISE.value: 0,  # Unlimited for enterprise
         }
@@ -303,7 +303,7 @@ class SubscriptionEnforcer:
         """Get user's tier name."""
         subscription = self.subscription_service.get_user_subscription(user_id)
         if subscription is None:
-            return TierName.FREE.value
+            return TierName.LITE.value
         return subscription.tier_name.lower()
     
     def can_access_feature(self, user_id: str, feature: str) -> bool:

@@ -115,11 +115,16 @@ MODEL_PRICING = {
     "default": {"input": 0.002, "output": 0.006},
 }
 
-# Overage rates per tier (price per 1K tokens above limit)
+# Overage rates per tier (price per 1K tokens above limit) - SIMPLIFIED 4 TIERS
 OVERAGE_RATES = {
-    TierName.FREE.value: 0.0,  # No overage for free tier (hard limit)
+    TierName.LITE.value: 0.0,  # No overage for Lite (throttle instead)
     TierName.PRO.value: 0.01,  # $0.01 per 1K tokens
     TierName.ENTERPRISE.value: 0.005,  # $0.005 per 1K tokens (discounted)
+    TierName.MAXIMUM.value: 0.0,  # No overage (unlimited)
+    "lite": 0.0,
+    "pro": 0.01,
+    "enterprise": 0.005,
+    "maximum": 0.0,
 }
 
 
@@ -241,8 +246,8 @@ class UsageMeter:
         """
         tier = self.pricing_manager.get_tier(tier_name)
         if tier is None:
-            tier = self.pricing_manager.get_tier(TierName.FREE)
-            tier_name = TierName.FREE.value
+            tier = self.pricing_manager.get_tier(TierName.LITE)
+            tier_name = TierName.LITE.value
         
         # Get current usage from cache
         with self._lock:
@@ -273,8 +278,8 @@ class UsageMeter:
                     "message": f"Token usage at {token_quota.percentage_used:.1f}% of limit",
                 })
             
-            if tier_name == TierName.FREE.value and token_quota.is_exceeded:
-                allowed = False
+            if tier_name == TierName.LITE.value and token_quota.is_exceeded:
+                allowed = False  # Lite tier throttles when exceeded
         
         # Check request quota
         if tier.limits.max_requests_per_month > 0:
@@ -295,8 +300,8 @@ class UsageMeter:
                     "message": f"Request usage at {request_quota.percentage_used:.1f}% of limit",
                 })
             
-            if tier_name == TierName.FREE.value and request_quota.is_exceeded:
-                allowed = False
+            if tier_name == TierName.LITE.value and request_quota.is_exceeded:
+                allowed = False  # Lite tier throttles when exceeded
         
         # Calculate cost estimate
         cost_estimate = self._calculate_cost(UsageType.TOKEN_INPUT, requested_tokens // 2)

@@ -30,14 +30,11 @@ logger = logging.getLogger(__name__)
 
 
 class TierName(str, Enum):
-    """Subscription tier names."""
-    FREE = "free"
-    LITE = "lite"
-    PRO = "pro"
-    TEAM = "team"
-    ENTERPRISE = "enterprise"
-    ENTERPRISE_PLUS = "enterprise_plus"
-    MAXIMUM = "maximum"
+    """Subscription tier names - Simplified 4-tier structure (January 2026)."""
+    LITE = "lite"           # Entry-level: $9.99/mo
+    PRO = "pro"             # Power users: $29.99/mo
+    ENTERPRISE = "enterprise"  # Organizations: $35/seat/mo (min 5 seats)
+    MAXIMUM = "maximum"     # Mission-critical: $499/mo (never throttle)
 
 
 class OrchestrationTier(str, Enum):
@@ -50,12 +47,9 @@ class OrchestrationTier(str, Enum):
 
 # Tier hierarchy (higher index = more permissions)
 TIER_HIERARCHY = [
-    TierName.FREE,
     TierName.LITE,
     TierName.PRO,
-    TierName.TEAM,
     TierName.ENTERPRISE,
-    TierName.ENTERPRISE_PLUS,
     TierName.MAXIMUM,
 ]
 
@@ -63,93 +57,47 @@ TIER_HIERARCHY = [
 @dataclass
 class TierQuota:
     """Quota configuration for a subscription tier."""
-    elite_queries: int          # Number of ELITE queries per month
-    maximum_queries: int        # Number of MAXIMUM queries per month (Maximum tier only)
-    after_quota_tier: str       # "standard", "budget", or "elite"
-    total_queries: int          # Total queries per month
-    team_members: int           # Number of team members (for Team tier)
-    is_pooled: bool             # Whether quota is pooled across team
+    elite_queries: int          # Number of ELITE queries per month (0 = unlimited)
+    after_quota_tier: str       # "standard", "budget", or "maximum" (for never throttle)
+    total_queries: int          # Total queries per month (0 = unlimited)
+    team_members: int           # Number of team members included
+    never_throttle: bool = False  # Whether this tier never throttles
 
 
-# Tier quota definitions
+# Tier quota definitions - SIMPLIFIED 4 TIERS
 TIER_QUOTAS: Dict[TierName, TierQuota] = {
-    TierName.FREE: TierQuota(
-        elite_queries=50,
-        maximum_queries=0,
-        after_quota_tier="end",  # Trial ends
-        total_queries=50,
-        team_members=1,
-        is_pooled=False,
-    ),
     TierName.LITE: TierQuota(
         elite_queries=100,
-        maximum_queries=0,
         after_quota_tier="budget",
         total_queries=500,
         team_members=1,
-        is_pooled=False,
     ),
     TierName.PRO: TierQuota(
-        elite_queries=400,
-        maximum_queries=0,
-        after_quota_tier="standard",
-        total_queries=1000,
-        team_members=1,
-        is_pooled=False,
-    ),
-    TierName.TEAM: TierQuota(
         elite_queries=500,
-        maximum_queries=0,
         after_quota_tier="standard",
         total_queries=2000,
-        team_members=3,
-        is_pooled=True,
+        team_members=1,
     ),
     TierName.ENTERPRISE: TierQuota(
-        elite_queries=300,  # Per seat
-        maximum_queries=0,
+        elite_queries=400,  # Per seat
         after_quota_tier="standard",
-        total_queries=500,  # Per seat
+        total_queries=800,  # Per seat
         team_members=0,  # Unlimited (seat-based)
-        is_pooled=False,
-    ),
-    TierName.ENTERPRISE_PLUS: TierQuota(
-        elite_queries=800,  # Per seat
-        maximum_queries=0,
-        after_quota_tier="standard",
-        total_queries=1500,  # Per seat
-        team_members=0,  # Unlimited
-        is_pooled=False,
     ),
     TierName.MAXIMUM: TierQuota(
-        elite_queries=500,
-        maximum_queries=200,
-        after_quota_tier="elite",  # Falls back to ELITE (still #1 in ALL)
-        total_queries=700,
-        team_members=10,
-        is_pooled=False,
+        elite_queries=0,  # Unlimited
+        after_quota_tier="maximum",  # Never drops
+        total_queries=0,  # Unlimited
+        team_members=25,  # Team included
+        never_throttle=True,
     ),
 }
 
 
 class TierConfig:
-    """Configuration for each tier with quota-based limits."""
+    """Configuration for each tier with quota-based limits - SIMPLIFIED 4 TIERS."""
     
     LIMITS = {
-        TierName.FREE: {
-            "queries_per_month": 50,
-            "tokens_per_request": 25000,
-            "max_models": 3,
-            "elite_queries": 50,
-            "image_generation": False,
-            "audio_processing": False,
-            "fine_tuning": False,
-            "priority_support": False,
-            "api_access": False,
-            "knowledge_base": False,
-            "deep_conf": False,
-            "rlhf_feedback": True,
-        },
         TierName.LITE: {
             "queries_per_month": 500,
             "tokens_per_request": 25000,
@@ -165,20 +113,6 @@ class TierConfig:
             "rlhf_feedback": True,
         },
         TierName.PRO: {
-            "queries_per_month": 1000,
-            "tokens_per_request": 100000,
-            "max_models": 5,
-            "elite_queries": 400,
-            "image_generation": True,
-            "audio_processing": True,
-            "fine_tuning": False,
-            "priority_support": True,
-            "api_access": True,
-            "knowledge_base": True,
-            "deep_conf": True,
-            "rlhf_feedback": True,
-        },
-        TierName.TEAM: {
             "queries_per_month": 2000,
             "tokens_per_request": 100000,
             "max_models": 5,
@@ -196,7 +130,7 @@ class TierConfig:
             "queries_per_month": -1,  # Unlimited (per seat limits)
             "tokens_per_request": -1,  # Unlimited
             "max_models": 10,
-            "elite_queries": 300,  # Per seat
+            "elite_queries": 400,  # Per seat
             "image_generation": True,
             "audio_processing": True,
             "fine_tuning": True,
@@ -205,27 +139,15 @@ class TierConfig:
             "knowledge_base": True,
             "deep_conf": True,
             "rlhf_feedback": True,
-        },
-        TierName.ENTERPRISE_PLUS: {
-            "queries_per_month": -1,
-            "tokens_per_request": -1,
-            "max_models": 10,
-            "elite_queries": 800,  # Per seat
-            "image_generation": True,
-            "audio_processing": True,
-            "fine_tuning": True,
-            "priority_support": True,
-            "api_access": True,
-            "knowledge_base": True,
-            "deep_conf": True,
-            "rlhf_feedback": True,
+            "sso": True,
+            "audit_logs": True,
+            "compliance": True,
         },
         TierName.MAXIMUM: {
-            "queries_per_month": 700,
-            "tokens_per_request": -1,
+            "queries_per_month": -1,  # Unlimited
+            "tokens_per_request": -1,  # Unlimited
             "max_models": 10,
-            "elite_queries": 500,
-            "maximum_queries": 200,
+            "elite_queries": -1,  # Unlimited (never throttle)
             "image_generation": True,
             "audio_processing": True,
             "fine_tuning": True,
@@ -234,13 +156,17 @@ class TierConfig:
             "knowledge_base": True,
             "deep_conf": True,
             "rlhf_feedback": True,
+            "sso": True,
+            "audit_logs": True,
+            "compliance": True,
+            "never_throttle": True,
         },
     }
     
     @classmethod
     def get_limit(cls, tier: TierName, feature: str) -> Any:
         """Get limit for a feature at a given tier."""
-        return cls.LIMITS.get(tier, cls.LIMITS[TierName.FREE]).get(feature)
+        return cls.LIMITS.get(tier, cls.LIMITS[TierName.LITE]).get(feature)
     
     @classmethod
     def has_feature(cls, tier: TierName, feature: str) -> bool:
@@ -253,7 +179,7 @@ class TierConfig:
     @classmethod
     def get_quota(cls, tier: TierName) -> TierQuota:
         """Get quota configuration for a tier."""
-        return TIER_QUOTAS.get(tier, TIER_QUOTAS[TierName.FREE])
+        return TIER_QUOTAS.get(tier, TIER_QUOTAS[TierName.LITE])
 
 
 class QuotaTracker:
@@ -274,10 +200,10 @@ class QuotaTracker:
         """Get current usage for this billing period.
         
         Returns:
-            Dict with elite_used, standard_used, budget_used, maximum_used
+            Dict with elite_used, standard_used, budget_used
         """
         if not self.subscription_service:
-            return {"elite_used": 0, "standard_used": 0, "budget_used": 0, "maximum_used": 0}
+            return {"elite_used": 0, "standard_used": 0, "budget_used": 0}
         
         try:
             usage = self.subscription_service.get_user_usage(self.user_id)
@@ -285,25 +211,25 @@ class QuotaTracker:
                 "elite_used": usage.get("elite_queries_used", 0),
                 "standard_used": usage.get("standard_queries_used", 0),
                 "budget_used": usage.get("budget_queries_used", 0),
-                "maximum_used": usage.get("maximum_queries_used", 0),
             }
         except Exception as e:
             logger.error("Failed to get usage for user %s: %s", self.user_id, e)
-            return {"elite_used": 0, "standard_used": 0, "budget_used": 0, "maximum_used": 0}
+            return {"elite_used": 0, "standard_used": 0, "budget_used": 0}
     
     def get_remaining_elite(self) -> int:
-        """Get remaining ELITE queries for this period."""
+        """Get remaining ELITE queries for this period.
+        
+        Returns -1 for unlimited (Maximum tier).
+        """
         tier = get_user_tier(self.user_id)
         quota = TierConfig.get_quota(tier)
+        
+        # Maximum tier has unlimited ELITE
+        if quota.never_throttle or quota.elite_queries == 0:
+            return -1  # Unlimited
+        
         usage = self.get_usage()
         return max(0, quota.elite_queries - usage["elite_used"])
-    
-    def get_remaining_maximum(self) -> int:
-        """Get remaining MAXIMUM queries for this period."""
-        tier = get_user_tier(self.user_id)
-        quota = TierConfig.get_quota(tier)
-        usage = self.get_usage()
-        return max(0, quota.maximum_queries - usage["maximum_used"])
     
     def record_query(self, orchestration_tier: str) -> bool:
         """Record a query at the given orchestration tier.
@@ -336,21 +262,18 @@ class QuotaTracker:
         quota = TierConfig.get_quota(tier)
         usage = self.get_usage()
         
+        is_unlimited = quota.never_throttle or quota.elite_queries == 0
+        
         return {
             "tier": tier.value,
             "elite": {
-                "limit": quota.elite_queries,
+                "limit": -1 if is_unlimited else quota.elite_queries,
                 "used": usage["elite_used"],
-                "remaining": max(0, quota.elite_queries - usage["elite_used"]),
-            },
-            "maximum": {
-                "limit": quota.maximum_queries,
-                "used": usage["maximum_used"],
-                "remaining": max(0, quota.maximum_queries - usage["maximum_used"]),
+                "remaining": -1 if is_unlimited else max(0, quota.elite_queries - usage["elite_used"]),
             },
             "after_quota_tier": quota.after_quota_tier,
-            "total_queries": quota.total_queries,
-            "is_pooled": quota.is_pooled,
+            "total_queries": -1 if is_unlimited else quota.total_queries,
+            "never_throttle": quota.never_throttle,
         }
 
 
@@ -361,29 +284,29 @@ def get_user_tier(user_id: str) -> TierName:
         user_id: User identifier
         
     Returns:
-        TierName (defaults to FREE if not found)
+        TierName (defaults to LITE if not found)
     """
     if not is_firestore_available():
-        logger.warning("Firestore not available, defaulting to FREE tier")
-        return TierName.FREE
+        logger.warning("Firestore not available, defaulting to LITE tier")
+        return TierName.LITE
     
     try:
         service = FirestoreSubscriptionService()
         subscription = service.get_user_subscription(user_id)
         
         if subscription and subscription.get("status") == "active":
-            tier_name = subscription.get("tier_name", "free").lower()
+            tier_name = subscription.get("tier_name", "lite").lower()
             try:
                 return TierName(tier_name)
             except ValueError:
-                logger.warning("Unknown tier name: %s, defaulting to FREE", tier_name)
-                return TierName.FREE
+                logger.warning("Unknown tier name: %s, defaulting to LITE", tier_name)
+                return TierName.LITE
         
-        return TierName.FREE
+        return TierName.LITE
         
     except Exception as e:
         logger.error("Failed to get user tier: %s", e)
-        return TierName.FREE
+        return TierName.LITE
 
 
 def get_orchestration_tier(user_id: str) -> str:
@@ -399,33 +322,20 @@ def get_orchestration_tier(user_id: str) -> str:
     """
     tier = get_user_tier(user_id)
     quota = TierConfig.get_quota(tier)
-    tracker = QuotaTracker(user_id)
     
-    # Maximum tier users: check MAXIMUM quota first
-    if tier == TierName.MAXIMUM:
-        if tracker.get_remaining_maximum() > 0:
-            return "maximum"
-        # Fall through to ELITE check
+    # Maximum tier: NEVER throttle
+    if quota.never_throttle or tier == TierName.MAXIMUM:
+        return "maximum"
     
     # Check ELITE quota
-    if tracker.get_remaining_elite() > 0:
+    tracker = QuotaTracker(user_id)
+    remaining = tracker.get_remaining_elite()
+    
+    if remaining == -1 or remaining > 0:  # -1 = unlimited
         return "elite"
     
     # ELITE exhausted - use after-quota tier
-    after_tier = quota.after_quota_tier
-    
-    if after_tier == "end":
-        # Free trial ended
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "error": "Free trial ended",
-                "message": "Your 50 free ELITE queries have been used. Upgrade to continue!",
-                "upgrade_url": "/pricing",
-            },
-        )
-    
-    return after_tier
+    return quota.after_quota_tier
 
 
 def tier_has_access(user_tier: TierName, required_tier: TierName) -> bool:
@@ -606,12 +516,10 @@ class FeatureCheckDependency:
             )
 
 
-# Convenience dependencies
+# Convenience dependencies - SIMPLIFIED 4 TIERS
 RequireLite = TierCheckDependency(TierName.LITE)
 RequirePro = TierCheckDependency(TierName.PRO)
-RequireTeam = TierCheckDependency(TierName.TEAM)
 RequireEnterprise = TierCheckDependency(TierName.ENTERPRISE)
-RequireEnterprisePlus = TierCheckDependency(TierName.ENTERPRISE_PLUS)
 RequireMaximum = TierCheckDependency(TierName.MAXIMUM)
 
 RequireAPIAccess = FeatureCheckDependency("api_access")
@@ -620,3 +528,5 @@ RequireDeepConf = FeatureCheckDependency("deep_conf")
 RequireImageGeneration = FeatureCheckDependency("image_generation")
 RequireAudioProcessing = FeatureCheckDependency("audio_processing")
 RequireFineTuning = FeatureCheckDependency("fine_tuning")
+RequireSSO = FeatureCheckDependency("sso")
+RequireCompliance = FeatureCheckDependency("compliance")
