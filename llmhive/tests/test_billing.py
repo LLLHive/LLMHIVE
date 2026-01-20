@@ -40,13 +40,18 @@ class TestPricingTierManager:
     """Tests for PricingTierManager class."""
     
     def test_default_tiers(self):
-        """Test default tiers are initialized."""
+        """Test default tiers are initialized (quota-based pricing Jan 2026)."""
         manager = PricingTierManager()
         
-        assert len(manager.tiers) == 3
+        # 7 tiers: FREE, LITE, PRO, TEAM, ENTERPRISE, ENTERPRISE_PLUS, MAXIMUM
+        assert len(manager.tiers) == 7
         assert TierName.FREE in manager.tiers
+        assert TierName.LITE in manager.tiers
         assert TierName.PRO in manager.tiers
+        assert TierName.TEAM in manager.tiers
         assert TierName.ENTERPRISE in manager.tiers
+        assert TierName.ENTERPRISE_PLUS in manager.tiers
+        assert TierName.MAXIMUM in manager.tiers
     
     def test_get_tier_by_enum(self):
         """Test getting tier by TierName enum."""
@@ -76,41 +81,44 @@ class TestPricingTierManager:
         manager = PricingTierManager()
         
         tiers = manager.list_tiers()
-        assert len(tiers) == 3
+        assert len(tiers) == 7  # All quota-based tiers
     
     def test_free_tier_limits(self):
-        """Test free tier has correct limits."""
+        """Test free tier has correct limits (quota-based)."""
         manager = PricingTierManager()
         tier = manager.get_tier(TierName.FREE)
         
-        assert tier.limits.max_requests_per_month == 100
-        assert tier.limits.max_tokens_per_month == 100_000
-        assert tier.limits.max_models_per_request == 2
+        # Free trial: 50 ELITE queries
+        assert tier.limits.max_requests_per_month == 50
+        assert tier.limits.max_tokens_per_month == 150_000
+        assert tier.limits.max_models_per_request == 3
         assert tier.limits.enable_advanced_features is False
         assert tier.limits.allow_hrm is False
         assert tier.limits.allow_deep_conf is False
     
     def test_pro_tier_limits(self):
-        """Test pro tier has correct limits."""
+        """Test pro tier has correct limits (quota-based)."""
         manager = PricingTierManager()
         tier = manager.get_tier(TierName.PRO)
         
-        assert tier.limits.max_requests_per_month == 10_000
-        assert tier.limits.max_tokens_per_month == 10_000_000
+        # Pro: 400 ELITE + 600 STANDARD = 1000 total
+        assert tier.limits.max_requests_per_month == 1_000
+        assert tier.limits.max_tokens_per_month == 2_000_000
         assert tier.limits.max_models_per_request == 5
         assert tier.limits.enable_advanced_features is True
         assert tier.limits.allow_hrm is True
         assert tier.limits.allow_deep_conf is True
         assert tier.limits.allow_prompt_diffusion is True
     
-    def test_enterprise_tier_unlimited(self):
-        """Test enterprise tier has unlimited limits."""
+    def test_enterprise_tier_limits(self):
+        """Test enterprise tier has per-seat limits (quota-based)."""
         manager = PricingTierManager()
         tier = manager.get_tier(TierName.ENTERPRISE)
         
-        assert tier.limits.max_requests_per_month == 0  # 0 = unlimited
-        assert tier.limits.max_tokens_per_month == 0
-        assert tier.limits.max_tokens_per_query == 0
+        # Enterprise: 300 ELITE/seat + 200 STANDARD/seat = 500/seat
+        assert tier.limits.max_requests_per_month == 500  # Per seat
+        assert tier.limits.max_tokens_per_month == 1_000_000  # Per seat
+        assert tier.limits.max_tokens_per_query == 0  # Unlimited per query
         assert tier.limits.enable_priority_support is True
     
     def test_can_access_feature(self):
@@ -127,14 +135,15 @@ class TestPricingTierManager:
         assert manager.can_access_feature(TierName.ENTERPRISE, "sso") is True
     
     def test_check_limits_within_limits(self):
-        """Test check_limits returns True when within limits."""
+        """Test check_limits returns True when within limits (quota-based)."""
         manager = PricingTierManager()
         
+        # Free trial has 50 queries, 150K tokens, 3 models
         result = manager.check_limits(
             TierName.FREE,
-            requests_this_month=50,
-            tokens_this_month=50_000,
-            models_in_request=2,
+            requests_this_month=25,  # Within 50 limit
+            tokens_this_month=50_000,  # Within 150K limit
+            models_in_request=2,  # Within 3 limit
         )
         
         assert result["within_limits"] is True
@@ -157,18 +166,27 @@ class TestPricingTierManager:
         assert result["tokens_ok"] is True
     
     def test_pricing_amounts(self):
-        """Test pricing amounts are correct."""
+        """Test pricing amounts are correct (quota-based Jan 2026)."""
         manager = PricingTierManager()
         
         free = manager.get_tier(TierName.FREE)
         assert free.monthly_price_usd == 0.0
         
+        lite = manager.get_tier(TierName.LITE)
+        assert lite.monthly_price_usd == 9.99
+        assert lite.annual_price_usd == 99.99
+        
         pro = manager.get_tier(TierName.PRO)
         assert pro.monthly_price_usd == 29.99
         assert pro.annual_price_usd == 299.99
         
+        # Enterprise is now $25/seat
         enterprise = manager.get_tier(TierName.ENTERPRISE)
-        assert enterprise.monthly_price_usd == 199.99
+        assert enterprise.monthly_price_usd == 25.0
+        
+        # Maximum tier
+        maximum = manager.get_tier(TierName.MAXIMUM)
+        assert maximum.monthly_price_usd == 499.0
 
 
 class TestUsageMeter:

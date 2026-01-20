@@ -14,13 +14,14 @@ import {
   Loader2,
   ExternalLink,
   Settings,
-  Receipt
+  Receipt,
+  Crown,
+  TrendingUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
 
 interface Subscription {
@@ -31,16 +32,56 @@ interface Subscription {
   cancelAtPeriodEnd: boolean
 }
 
-interface UsageData {
-  requests: { used: number; limit: number }
-  tokens: { used: number; limit: number }
+interface QuotaUsage {
+  tier: string
+  orchestrationMode: "maximum" | "elite" | "standard" | "budget"
+  elite: {
+    used: number
+    limit: number
+    remaining: number
+    percentUsed: number
+  }
+  maximum?: {
+    used: number
+    limit: number
+    remaining: number
+    percentUsed: number
+  }
+  afterQuotaTier: string
+  afterQuotaQueries?: number
+  tokens: {
+    used: number
+    limit: number
+  }
+  status: "normal" | "warning" | "throttled" | "trial_ended"
+  statusMessage?: string
+  daysUntilReset: number
+  showUpgradePrompt: boolean
+  upgradeMessage?: string
+}
+
+const ORCHESTRATION_MODE_LABELS = {
+  maximum: { label: "MAXIMUM", color: "text-amber-500", bg: "bg-amber-500/10", icon: Crown, desc: "Beats competition by +5%" },
+  elite: { label: "ELITE", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "#1 in ALL 10 categories" },
+  standard: { label: "STANDARD", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "#1 in 8 categories" },
+  budget: { label: "BUDGET", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "#1 in 6 categories" },
+}
+
+const TIER_DISPLAY_NAMES: Record<string, string> = {
+  free: "Free Trial",
+  lite: "Lite",
+  pro: "Pro",
+  team: "Team",
+  enterprise: "Enterprise",
+  enterprise_plus: "Enterprise Plus",
+  maximum: "Maximum",
 }
 
 export default function BillingPage() {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
-  const [usage, setUsage] = useState<UsageData | null>(null)
+  const [usage, setUsage] = useState<QuotaUsage | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
@@ -65,7 +106,7 @@ export default function BillingPage() {
         setSubscription(subData.subscription)
       }
 
-      // Load usage data
+      // Load quota usage
       const usageRes = await fetch("/api/billing/usage")
       if (usageRes.ok) {
         const usageData = await usageRes.json()
@@ -123,12 +164,10 @@ export default function BillingPage() {
     )
   }
 
-  const currentTier = subscription?.tier || "free"
+  const currentTier = usage?.tier || subscription?.tier || "free"
   const isFreeTier = currentTier === "free"
-
-  // Calculate usage percentages
-  const requestsPercent = usage ? (usage.requests.used / usage.requests.limit) * 100 : 0
-  const tokensPercent = usage ? (usage.tokens.used / usage.tokens.limit) * 100 : 0
+  const modeInfo = ORCHESTRATION_MODE_LABELS[usage?.orchestrationMode || "elite"]
+  const ModeIcon = modeInfo.icon
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,11 +190,147 @@ export default function BillingPage() {
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold mb-2">Billing & Subscription</h1>
+          <h1 className="text-3xl font-display font-bold mb-2">Billing & Quota</h1>
           <p className="text-muted-foreground">
-            Manage your subscription, view usage, and update payment methods.
+            Track your ELITE queries, manage subscription, and upgrade for more.
           </p>
         </div>
+
+        {/* Current Orchestration Mode Banner */}
+        <Card className={`mb-6 ${modeInfo.bg} border-none`}>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${modeInfo.bg}`}>
+                  <ModeIcon className={`h-5 w-5 ${modeInfo.color}`} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-bold ${modeInfo.color}`}>{modeInfo.label}</span>
+                    <span className="text-sm text-muted-foreground">Mode Active</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{modeInfo.desc}</p>
+                </div>
+              </div>
+              {usage?.statusMessage && (
+                <Badge variant="outline" className={modeInfo.color}>
+                  {usage.daysUntilReset} days until reset
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quota Status Card */}
+        <Card className="mb-8 bg-card/50 backdrop-blur-sm border-border/50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-green-500" />
+                  ELITE Quota
+                </CardTitle>
+                <CardDescription>
+                  Your best-quality queries (#1 in ALL categories)
+                </CardDescription>
+              </div>
+              {usage?.showUpgradePrompt && (
+                <Link href="/pricing">
+                  <Button size="sm" className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
+                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                    Upgrade
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* ELITE Progress */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  🟢 ELITE Queries
+                  <Badge variant="outline" className="text-green-500 text-xs">#1 in ALL</Badge>
+                </span>
+                <span className="text-sm font-mono">
+                  {usage?.elite.remaining || 0} / {usage?.elite.limit || 0} remaining
+                </span>
+              </div>
+              <Progress 
+                value={Math.min((usage?.elite.percentUsed || 0) * 100, 100)} 
+                className="h-3"
+              />
+              {usage && usage.elite.percentUsed >= 0.8 && (
+                <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {usage.elite.remaining} ELITE queries left this month
+                </p>
+              )}
+            </div>
+
+            {/* MAXIMUM Progress (if applicable) */}
+            {usage?.maximum && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    👑 MAXIMUM Queries
+                    <Badge variant="outline" className="text-amber-500 text-xs">Beats GPT-5.2</Badge>
+                  </span>
+                  <span className="text-sm font-mono">
+                    {usage.maximum.remaining} / {usage.maximum.limit} remaining
+                  </span>
+                </div>
+                <Progress 
+                  value={Math.min(usage.maximum.percentUsed * 100, 100)} 
+                  className="h-3"
+                />
+              </div>
+            )}
+
+            {/* After-Quota Info */}
+            {usage && usage.elite.remaining === 0 && usage.afterQuotaTier !== "end" && (
+              <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                <div className="flex items-start gap-3">
+                  <div className={`p-1.5 rounded-md ${ORCHESTRATION_MODE_LABELS[usage.afterQuotaTier as keyof typeof ORCHESTRATION_MODE_LABELS]?.bg || 'bg-muted'}`}>
+                    <Zap className={`h-4 w-4 ${ORCHESTRATION_MODE_LABELS[usage.afterQuotaTier as keyof typeof ORCHESTRATION_MODE_LABELS]?.color || ''}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Using {usage.afterQuotaTier.toUpperCase()} mode</p>
+                    <p className="text-xs text-muted-foreground">
+                      ELITE quota exhausted. Still getting great quality — 
+                      {usage.afterQuotaTier === "standard" ? " #1 in 8 categories!" : " #1 in 6 categories!"}
+                    </p>
+                    {usage.afterQuotaQueries && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {usage.afterQuotaQueries} {usage.afterQuotaTier.toUpperCase()} queries available
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Trial Ended Warning */}
+            {usage?.status === "trial_ended" && (
+              <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-red-500">Free Trial Ended</p>
+                    <p className="text-sm text-muted-foreground">
+                      {usage.statusMessage}
+                    </p>
+                    <Link href="/pricing" className="inline-block mt-2">
+                      <Button size="sm" className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
+                        Upgrade to Continue
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Current Plan Card */}
         <Card className="mb-8 bg-card/50 backdrop-blur-sm border-border/50">
@@ -163,11 +338,11 @@ export default function BillingPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-[var(--bronze)]" />
+                  <CreditCard className="h-5 w-5 text-[var(--bronze)]" />
                   Current Plan
                 </CardTitle>
                 <CardDescription>
-                  Your active subscription details
+                  Your subscription details
                 </CardDescription>
               </div>
               <Badge 
@@ -188,10 +363,10 @@ export default function BillingPage() {
           <CardContent>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-2xl font-bold capitalize">{currentTier}</h3>
+                <h3 className="text-2xl font-bold">{TIER_DISPLAY_NAMES[currentTier] || currentTier}</h3>
                 <p className="text-muted-foreground">
                   {isFreeTier 
-                    ? "Limited features • Upgrade anytime"
+                    ? "50 ELITE queries • Upgrade anytime"
                     : `${subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing`
                   }
                 </p>
@@ -254,55 +429,6 @@ export default function BillingPage() {
                     </Button>
                   </Link>
                 </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Usage Card */}
-        <Card className="mb-8 bg-card/50 backdrop-blur-sm border-border/50">
-          <CardHeader>
-            <CardTitle>Usage This Period</CardTitle>
-            <CardDescription>
-              Track your API requests and token consumption
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Requests */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">API Requests</span>
-                <span className="text-sm text-muted-foreground">
-                  {usage?.requests.used.toLocaleString() || 0} / {usage?.requests.limit === 0 ? "∞" : usage?.requests.limit.toLocaleString() || 100}
-                </span>
-              </div>
-              <Progress 
-                value={Math.min(requestsPercent, 100)} 
-                className="h-2"
-              />
-              {requestsPercent > 80 && (
-                <p className="text-xs text-yellow-500 mt-1">
-                  You've used {requestsPercent.toFixed(0)}% of your request limit
-                </p>
-              )}
-            </div>
-
-            {/* Tokens */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Tokens</span>
-                <span className="text-sm text-muted-foreground">
-                  {((usage?.tokens.used || 0) / 1000).toFixed(1)}K / {usage?.tokens.limit === 0 ? "∞" : `${((usage?.tokens.limit || 100000) / 1000).toFixed(0)}K`}
-                </span>
-              </div>
-              <Progress 
-                value={Math.min(tokensPercent, 100)} 
-                className="h-2"
-              />
-              {tokensPercent > 80 && (
-                <p className="text-xs text-yellow-500 mt-1">
-                  You've used {tokensPercent.toFixed(0)}% of your token limit
-                </p>
               )}
             </div>
           </CardContent>
@@ -377,4 +503,3 @@ export default function BillingPage() {
     </div>
   )
 }
-

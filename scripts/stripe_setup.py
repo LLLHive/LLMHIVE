@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """
-Stripe Setup Script for LLMHive
+Stripe Setup Script for LLMHive - Quota-Based Pricing (Jan 2026)
 
 This script creates all necessary Stripe products and prices for LLMHive subscriptions.
 Run this once to set up your Stripe account, then copy the price IDs to your environment variables.
 
+PRICING STRUCTURE (All tiers get #1 ELITE quality with quota):
+- Free Trial: 50 ELITE queries (marketing cost)
+- Lite ($9.99): 100 ELITE + 400 BUDGET = 500 total
+- Pro ($29.99): 400 ELITE + 600 STANDARD = 1,000 total
+- Team ($49.99): 500 ELITE + 1,500 STANDARD = 2,000 total (pooled)
+- Enterprise ($25/seat): 300 ELITE + 200 STANDARD = 500/seat
+- Enterprise+ ($45/seat): 800 ELITE + 700 STANDARD = 1,500/seat
+- Maximum ($499): 200 MAXIMUM + 500 ELITE = 700 total
+
 Usage:
-    # Set your Stripe secret key first
-    export STRIPE_SECRET_KEY=sk_live_...  # or sk_test_... for testing
-    
-    # Run the script
+    export STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
     python scripts/stripe_setup.py
 
 Requirements:
@@ -26,11 +32,43 @@ except ImportError:
     sys.exit(1)
 
 
-# Configuration - these match the pricing in pricing.py
+# Quota-based pricing structure
 PRODUCTS = [
     {
+        "name": "LLMHive Lite",
+        "description": "#1 AI quality at $9.99/month. 100 ELITE queries (#1 in ALL), then 400 BUDGET queries (#1 in 6).",
+        "metadata": {
+            "tier": "lite",
+            "elite_queries": "100",
+            "budget_queries": "400",
+            "total_queries": "500",
+        },
+        "prices": [
+            {
+                "nickname": "Lite Monthly",
+                "unit_amount": 999,  # $9.99 in cents
+                "currency": "usd",
+                "recurring": {"interval": "month"},
+                "env_var": "STRIPE_PRICE_ID_LITE_MONTHLY",
+            },
+            {
+                "nickname": "Lite Annual",
+                "unit_amount": 9999,  # $99.99 in cents
+                "currency": "usd",
+                "recurring": {"interval": "year"},
+                "env_var": "STRIPE_PRICE_ID_LITE_ANNUAL",
+            },
+        ],
+    },
+    {
         "name": "LLMHive Pro",
-        "description": "For professionals and small teams. 10,000 requests/month, 10M tokens, advanced orchestration features.",
+        "description": "Power user plan with API access. 400 ELITE queries (#1 in ALL), then 600 STANDARD queries (#1 in 8).",
+        "metadata": {
+            "tier": "pro",
+            "elite_queries": "400",
+            "standard_queries": "600",
+            "total_queries": "1000",
+        },
         "prices": [
             {
                 "nickname": "Pro Monthly",
@@ -49,22 +87,109 @@ PRODUCTS = [
         ],
     },
     {
-        "name": "LLMHive Enterprise",
-        "description": "For large organizations. Unlimited requests and tokens, SSO, SLA, dedicated support.",
+        "name": "LLMHive Team",
+        "description": "Team workspace with pooled queries. 500 ELITE pooled, then 1,500 STANDARD queries.",
+        "metadata": {
+            "tier": "team",
+            "elite_queries": "500",
+            "standard_queries": "1500",
+            "total_queries": "2000",
+            "team_members": "3",
+        },
         "prices": [
             {
-                "nickname": "Enterprise Monthly",
-                "unit_amount": 19999,  # $199.99 in cents
+                "nickname": "Team Monthly",
+                "unit_amount": 4999,  # $49.99 in cents
+                "currency": "usd",
+                "recurring": {"interval": "month"},
+                "env_var": "STRIPE_PRICE_ID_TEAM_MONTHLY",
+            },
+            {
+                "nickname": "Team Annual",
+                "unit_amount": 49999,  # $499.99 in cents
+                "currency": "usd",
+                "recurring": {"interval": "year"},
+                "env_var": "STRIPE_PRICE_ID_TEAM_ANNUAL",
+            },
+        ],
+    },
+    {
+        "name": "LLMHive Enterprise",
+        "description": "Enterprise with SSO & compliance. 300 ELITE per seat, then 200 STANDARD per seat.",
+        "metadata": {
+            "tier": "enterprise",
+            "elite_queries_per_seat": "300",
+            "standard_queries_per_seat": "200",
+            "total_queries_per_seat": "500",
+            "min_seats": "5",
+        },
+        "prices": [
+            {
+                "nickname": "Enterprise Monthly (per seat)",
+                "unit_amount": 2500,  # $25.00 per seat in cents
                 "currency": "usd",
                 "recurring": {"interval": "month"},
                 "env_var": "STRIPE_PRICE_ID_ENTERPRISE_MONTHLY",
             },
             {
-                "nickname": "Enterprise Annual",
-                "unit_amount": 199999,  # $1,999.99 in cents
+                "nickname": "Enterprise Annual (per seat)",
+                "unit_amount": 25000,  # $250.00 per seat in cents
                 "currency": "usd",
                 "recurring": {"interval": "year"},
                 "env_var": "STRIPE_PRICE_ID_ENTERPRISE_ANNUAL",
+            },
+        ],
+    },
+    {
+        "name": "LLMHive Enterprise Plus",
+        "description": "Enterprise Plus with custom routing & dedicated support. 800 ELITE per seat.",
+        "metadata": {
+            "tier": "enterprise_plus",
+            "elite_queries_per_seat": "800",
+            "standard_queries_per_seat": "700",
+            "total_queries_per_seat": "1500",
+            "min_seats": "5",
+        },
+        "prices": [
+            {
+                "nickname": "Enterprise Plus Monthly (per seat)",
+                "unit_amount": 4500,  # $45.00 per seat in cents
+                "currency": "usd",
+                "recurring": {"interval": "month"},
+                "env_var": "STRIPE_PRICE_ID_ENTERPRISE_PLUS_MONTHLY",
+            },
+            {
+                "nickname": "Enterprise Plus Annual (per seat)",
+                "unit_amount": 45000,  # $450.00 per seat in cents
+                "currency": "usd",
+                "recurring": {"interval": "year"},
+                "env_var": "STRIPE_PRICE_ID_ENTERPRISE_PLUS_ANNUAL",
+            },
+        ],
+    },
+    {
+        "name": "LLMHive Maximum",
+        "description": "BEATS competition by +5%. 200 MAXIMUM queries + 500 ELITE. Mission-critical support.",
+        "metadata": {
+            "tier": "maximum",
+            "maximum_queries": "200",
+            "elite_queries": "500",
+            "total_queries": "700",
+        },
+        "prices": [
+            {
+                "nickname": "Maximum Monthly",
+                "unit_amount": 49900,  # $499.00 in cents
+                "currency": "usd",
+                "recurring": {"interval": "month"},
+                "env_var": "STRIPE_PRICE_ID_MAXIMUM_MONTHLY",
+            },
+            {
+                "nickname": "Maximum Annual",
+                "unit_amount": 499000,  # $4,990.00 in cents
+                "currency": "usd",
+                "recurring": {"interval": "year"},
+                "env_var": "STRIPE_PRICE_ID_MAXIMUM_ANNUAL",
             },
         ],
     },
@@ -74,7 +199,6 @@ PRODUCTS = [
 def setup_stripe():
     """Set up Stripe products and prices."""
     
-    # Check for API key
     api_key = os.getenv("STRIPE_SECRET_KEY")
     if not api_key:
         print("Error: STRIPE_SECRET_KEY environment variable not set.")
@@ -83,13 +207,13 @@ def setup_stripe():
     
     stripe.api_key = api_key
     
-    # Determine environment
     is_test = api_key.startswith("sk_test_")
     env_type = "TEST" if is_test else "PRODUCTION"
     
-    print(f"\n{'='*60}")
+    print(f"\n{'='*70}")
     print(f"  LLMHive Stripe Setup - {env_type} Environment")
-    print(f"{'='*60}\n")
+    print(f"  Quota-Based Pricing (Jan 2026)")
+    print(f"{'='*70}\n")
     
     if not is_test:
         print("⚠️  WARNING: You are using PRODUCTION keys!")
@@ -103,7 +227,6 @@ def setup_stripe():
     for product_config in PRODUCTS:
         print(f"\n📦 Creating product: {product_config['name']}")
         
-        # Check if product already exists
         existing_products = stripe.Product.search(
             query=f"name:'{product_config['name']}'",
             limit=1,
@@ -112,30 +235,35 @@ def setup_stripe():
         if existing_products.data:
             product = existing_products.data[0]
             print(f"   ✓ Product already exists: {product.id}")
+            # Update metadata
+            stripe.Product.modify(
+                product.id,
+                description=product_config["description"],
+                metadata=product_config.get("metadata", {}),
+            )
+            print(f"   ✓ Updated product metadata")
         else:
-            # Create the product
             product = stripe.Product.create(
                 name=product_config["name"],
                 description=product_config["description"],
                 metadata={
+                    **product_config.get("metadata", {}),
                     "app": "llmhive",
                     "created_by": "stripe_setup.py",
+                    "pricing_version": "quota_based_jan2026",
                 },
             )
             print(f"   ✓ Created product: {product.id}")
         
-        # Create prices for this product
         for price_config in product_config["prices"]:
             print(f"\n   💰 Creating price: {price_config['nickname']}")
             
-            # Check if price already exists for this product
             existing_prices = stripe.Price.list(
                 product=product.id,
                 active=True,
                 limit=100,
             )
             
-            # Find matching price
             matching_price = None
             for p in existing_prices.data:
                 if (p.unit_amount == price_config["unit_amount"] and 
@@ -148,7 +276,6 @@ def setup_stripe():
                 print(f"      ✓ Price already exists: {matching_price.id}")
                 created_prices[price_config["env_var"]] = matching_price.id
             else:
-                # Create the price
                 price = stripe.Price.create(
                     product=product.id,
                     nickname=price_config["nickname"],
@@ -157,26 +284,26 @@ def setup_stripe():
                     recurring=price_config["recurring"],
                     metadata={
                         "app": "llmhive",
-                        "tier": price_config["nickname"].split()[0].lower(),  # "pro" or "enterprise"
+                        "tier": product_config.get("metadata", {}).get("tier", "unknown"),
                         "interval": price_config["recurring"]["interval"],
+                        "pricing_version": "quota_based_jan2026",
                     },
                 )
                 print(f"      ✓ Created price: {price.id}")
                 created_prices[price_config["env_var"]] = price.id
     
-    # Create webhook endpoint suggestion
-    print(f"\n{'='*60}")
+    print(f"\n{'='*70}")
     print("  Setup Complete!")
-    print(f"{'='*60}\n")
+    print(f"{'='*70}\n")
     
-    print("📋 Add these environment variables to Vercel:\n")
-    print("-" * 50)
-    for env_var, price_id in created_prices.items():
+    print("📋 Add these environment variables to Vercel/Cloud Run:\n")
+    print("-" * 60)
+    for env_var, price_id in sorted(created_prices.items()):
         print(f"{env_var}={price_id}")
-    print("-" * 50)
+    print("-" * 60)
     
     print("\n\n🔗 Webhook Setup Required:")
-    print("-" * 50)
+    print("-" * 60)
     print("1. Go to: https://dashboard.stripe.com/webhooks")
     print("2. Click '+ Add endpoint'")
     print("3. Endpoint URL: https://YOUR_BACKEND_URL/api/v1/webhooks/stripe-webhook")
@@ -189,13 +316,13 @@ def setup_stripe():
     print("   - invoice.payment_failed")
     print("5. Copy the 'Signing secret' and add to Vercel:")
     print("   STRIPE_WEBHOOK_SECRET=whsec_...")
-    print("-" * 50)
+    print("-" * 60)
     
-    print("\n\n🔐 Also add your Stripe API keys to Vercel:")
-    print("-" * 50)
+    print("\n\n🔐 Also ensure these Stripe API keys are set:")
+    print("-" * 60)
     print(f"STRIPE_SECRET_KEY={api_key[:12]}...")
     print(f"STRIPE_PUBLISHABLE_KEY=pk_{'test' if is_test else 'live'}_...")
-    print("-" * 50)
+    print("-" * 60)
     
     print("\n✅ Stripe setup complete! Copy the above values to your environment.\n")
 
@@ -215,6 +342,8 @@ def list_existing_products():
     
     for product in products.data:
         print(f"Product: {product.name} ({product.id})")
+        if product.metadata:
+            print(f"  Metadata: {dict(product.metadata)}")
         
         prices = stripe.Price.list(product=product.id, active=True, limit=100)
         for price in prices.data:
@@ -229,4 +358,3 @@ if __name__ == "__main__":
         list_existing_products()
     else:
         setup_stripe()
-

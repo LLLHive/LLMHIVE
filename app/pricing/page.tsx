@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useUser, useClerk } from "@clerk/nextjs"
-import { Check, Zap, Building2, Sparkles, ArrowRight, Loader2, Home } from "lucide-react"
+import { Check, Zap, Building2, Sparkles, ArrowRight, Loader2, Home, Crown, Users, Rocket, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -17,115 +17,183 @@ interface PricingTier {
   monthlyPrice: number
   annualPrice: number
   features: string[]
-  limits: {
-    requests: string
-    tokens: string
-    models: string
-    storage: string
+  quotas: {
+    eliteQueries: string
+    afterQuota: string
+    totalQueries: string
   }
   popular?: boolean
   cta: string
-  tier: "free" | "basic" | "pro" | "enterprise"
+  tier: "free" | "lite" | "pro" | "team" | "enterprise" | "enterprise_plus" | "maximum"
+  badge?: string
+  icon: React.ReactNode
 }
 
 const pricingTiers: PricingTier[] = [
   {
-    name: "Free",
-    description: "Perfect for trying out LLMHive",
+    name: "Free Trial",
+    description: "Experience #1 AI quality free",
     monthlyPrice: 0,
     annualPrice: 0,
     tier: "free",
+    icon: <Sparkles className="h-5 w-5 text-muted-foreground" />,
+    quotas: {
+      eliteQueries: "50 ELITE",
+      afterQuota: "Trial ends",
+      totalQueries: "50 total",
+    },
     features: [
-      "50 messages/month",
-      "Budget models (Llama, DeepSeek, Gemini Flash)",
-      "2 projects",
-      "7 days chat history",
-      "1 Industry Pack",
+      "50 ELITE queries (best quality)",
+      "#1 ranking in ALL 10 categories",
+      "Basic orchestration",
+      "Session memory",
+      "Calculator & Reranker tools",
       "Community support",
     ],
-    limits: {
-      requests: "50/month",
-      tokens: "50K/month",
-      models: "Budget tier",
-      storage: "50 MB",
-    },
-    cta: "Get Started Free",
+    cta: "Start Free",
   },
   {
-    name: "LLMHive",
-    description: "Essential AI access for individuals",
-    monthlyPrice: 15,
-    annualPrice: 155.99,
-    tier: "basic",
-    features: [
-      "500 messages/month",
-      "Standard models (GPT-4o Mini, Claude Haiku)",
-      "10 projects",
-      "90 days chat history",
-      "5 Industry Packs",
-      "Vision & image support",
-      "Email support (48hr)",
-    ],
-    limits: {
-      requests: "500/month",
-      tokens: "500K/month",
-      models: "Standard tier",
-      storage: "1 GB",
+    name: "Lite",
+    description: "#1 quality at just $9.99/month",
+    monthlyPrice: 9.99,
+    annualPrice: 99.99,
+    tier: "lite",
+    icon: <Zap className="h-5 w-5 text-blue-500" />,
+    quotas: {
+      eliteQueries: "100 ELITE",
+      afterQuota: "400 BUDGET",
+      totalQueries: "500 total",
     },
-    cta: "Subscribe",
+    features: [
+      "100 ELITE queries (#1 in ALL)",
+      "400 BUDGET queries (#1 in 6)",
+      "Knowledge Base access",
+      "Persistent memory (7 days)",
+      "Consensus voting",
+      "Email support",
+    ],
+    cta: "Get Lite",
   },
   {
     name: "Pro",
-    description: "For professionals and small teams",
+    description: "Power user with API access",
     monthlyPrice: 29.99,
     annualPrice: 299.99,
     tier: "pro",
     popular: true,
-    features: [
-      "1,000 messages/month",
-      "Premium models (GPT-4o, Claude Sonnet 4.5)",
-      "Unlimited projects",
-      "Unlimited chat history",
-      "All Industry Packs",
-      "Code interpreter",
-      "API access (1,000 calls/mo)",
-      "5 team members",
-      "Priority queue",
-      "Priority email support (24hr)",
-    ],
-    limits: {
-      requests: "1,000/month",
-      tokens: "1M/month",
-      models: "Premium tier",
-      storage: "10 GB",
+    icon: <Zap className="h-5 w-5 text-[var(--bronze)]" />,
+    badge: "Most Popular",
+    quotas: {
+      eliteQueries: "400 ELITE",
+      afterQuota: "600 STANDARD",
+      totalQueries: "1,000 total",
     },
+    features: [
+      "400 ELITE queries (#1 in ALL)",
+      "600 STANDARD queries (#1 in 8)",
+      "Full API access",
+      "DeepConf debate system",
+      "Prompt Diffusion",
+      "Web research",
+      "30-day memory",
+      "Priority support",
+    ],
     cta: "Upgrade to Pro",
   },
   {
-    name: "Enterprise",
-    description: "For large organizations with custom needs",
-    monthlyPrice: 199.99,
-    annualPrice: 1999.99,
-    tier: "enterprise",
-    features: [
-      "5,000 messages/month",
-      "Flagship models (GPT-5.2 Pro, Claude Opus 4.5)",
-      "5M tokens + $0.02/1K overage",
-      "Custom orchestration rules",
-      "SSO / SAML authentication",
-      "Unlimited team members",
-      "Admin controls & audit logs",
-      "API access (unlimited calls)",
-      "Webhooks",
-      "Dedicated support (4hr SLA)",
-    ],
-    limits: {
-      requests: "5,000/month",
-      tokens: "5M/month",
-      models: "All tiers",
-      storage: "100 GB",
+    name: "Team",
+    description: "Collaborative workspace for teams",
+    monthlyPrice: 49.99,
+    annualPrice: 499.99,
+    tier: "team",
+    icon: <Users className="h-5 w-5 text-purple-500" />,
+    quotas: {
+      eliteQueries: "500 ELITE pooled",
+      afterQuota: "1,500 STANDARD",
+      totalQueries: "2,000 total",
     },
-    cta: "Upgrade to Enterprise",
+    features: [
+      "500 ELITE pooled for team",
+      "1,500 STANDARD queries",
+      "3 team members included",
+      "Shared team workspace",
+      "Team projects & memory",
+      "Admin dashboard",
+      "90-day memory retention",
+    ],
+    cta: "Get Team",
+  },
+  {
+    name: "Enterprise",
+    description: "For organizations with compliance needs",
+    monthlyPrice: 25,
+    annualPrice: 250,
+    tier: "enterprise",
+    icon: <Building2 className="h-5 w-5 text-emerald-500" />,
+    badge: "Per Seat",
+    quotas: {
+      eliteQueries: "300 ELITE/seat",
+      afterQuota: "200 STANDARD",
+      totalQueries: "500/seat",
+    },
+    features: [
+      "300 ELITE per seat/month",
+      "SSO / SAML authentication",
+      "SOC 2 compliance",
+      "Audit logs",
+      "99.5% SLA guarantee",
+      "1-year memory retention",
+      "Priority queue",
+    ],
+    cta: "Contact Sales",
+  },
+  {
+    name: "Enterprise+",
+    description: "Custom policies & dedicated support",
+    monthlyPrice: 45,
+    annualPrice: 450,
+    tier: "enterprise_plus",
+    icon: <Star className="h-5 w-5 text-yellow-500" />,
+    badge: "Per Seat",
+    quotas: {
+      eliteQueries: "800 ELITE/seat",
+      afterQuota: "700 STANDARD",
+      totalQueries: "1,500/seat",
+    },
+    features: [
+      "800 ELITE per seat/month",
+      "Custom routing policies",
+      "Dedicated support manager",
+      "99.9% SLA guarantee",
+      "Custom integrations",
+      "Webhooks",
+      "Unlimited memory",
+    ],
+    cta: "Contact Sales",
+  },
+  {
+    name: "Maximum",
+    description: "BEATS competition by +5%",
+    monthlyPrice: 499,
+    annualPrice: 4990,
+    tier: "maximum",
+    icon: <Crown className="h-5 w-5 text-amber-500" />,
+    badge: "Mission Critical",
+    quotas: {
+      eliteQueries: "200 MAXIMUM + 500 ELITE",
+      afterQuota: "Never throttled",
+      totalQueries: "700 total",
+    },
+    features: [
+      "200 MAXIMUM queries (beats GPT-5.2!)",
+      "500 ELITE queries (#1 in ALL)",
+      "5-model consensus",
+      "Verification loops",
+      "Reflection chains",
+      "All Enterprise+ features",
+      "Mission-critical support",
+    ],
+    cta: "Get Maximum Power",
   },
 ]
 
@@ -138,16 +206,19 @@ export default function PricingPage() {
   const handleSubscribe = async (tier: PricingTier) => {
     if (tier.tier === "free") {
       if (isSignedIn) {
-        // Already signed in, go to app
         window.location.href = "/"
       } else {
-        // Redirect to sign up
         window.location.href = "/sign-up"
       }
       return
     }
 
-    // If not signed in, prompt sign in first
+    // Enterprise tiers go to contact
+    if (tier.tier === "enterprise" || tier.tier === "enterprise_plus") {
+      window.location.href = "mailto:sales@llmhive.ai?subject=Enterprise Inquiry"
+      return
+    }
+
     if (!isSignedIn) {
       openSignIn({
         redirectUrl: `/pricing?subscribe=${tier.tier}&cycle=${isAnnual ? "annual" : "monthly"}`,
@@ -155,7 +226,6 @@ export default function PricingPage() {
       return
     }
 
-    // Create checkout session
     setLoadingTier(tier.tier)
     try {
       const response = await fetch("/api/billing/create-checkout", {
@@ -182,6 +252,10 @@ export default function PricingPage() {
       setLoadingTier(null)
     }
   }
+
+  // Split tiers for display - main 4 + enterprise section
+  const mainTiers = pricingTiers.slice(0, 4)
+  const enterpriseTiers = pricingTiers.slice(4)
 
   return (
     <div className="min-h-screen bg-background">
@@ -221,16 +295,38 @@ export default function PricingPage() {
       <main className="container mx-auto px-4 py-16">
         {/* Hero */}
         <div className="text-center mb-16">
-          <Badge className="mb-4 bg-[var(--bronze)]/10 text-[var(--bronze)] border-[var(--bronze)]/20">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Simple, transparent pricing
+          <Badge className="mb-4 bg-green-500/10 text-green-500 border-green-500/20">
+            <Crown className="h-3 w-3 mr-1" />
+            #1 in ALL 10 AI Categories
           </Badge>
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            Choose Your Plan
+            All Tiers Get #1 Quality
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Start free and scale as you grow. All plans include access to our powerful AI orchestration platform.
+            Every paid plan starts with ELITE orchestration — #1 ranking in all categories.
+            Differs only by quota. When ELITE runs out, you're throttled to still-great quality.
           </p>
+        </div>
+
+        {/* Quality Explanation */}
+        <div className="max-w-4xl mx-auto mb-12 p-6 rounded-xl bg-gradient-to-r from-[var(--bronze)]/10 to-purple-500/10 border border-[var(--bronze)]/20">
+          <div className="grid md:grid-cols-3 gap-6 text-center">
+            <div>
+              <div className="text-2xl font-bold text-green-500 mb-1">🟢 ELITE</div>
+              <div className="text-sm font-medium">#1 in ALL 10 Categories</div>
+              <div className="text-xs text-muted-foreground mt-1">3-model consensus, best quality</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-yellow-500 mb-1">🟡 STANDARD</div>
+              <div className="text-sm font-medium">#1 in 8 Categories</div>
+              <div className="text-xs text-muted-foreground mt-1">Mixed routing, great quality</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-orange-500 mb-1">🟠 BUDGET</div>
+              <div className="text-sm font-medium">#1 in 6 Categories</div>
+              <div className="text-xs text-muted-foreground mt-1">Claude Sonnet, good quality</div>
+            </div>
+          </div>
         </div>
 
         {/* Billing Toggle */}
@@ -254,9 +350,9 @@ export default function PricingPage() {
           )}
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {pricingTiers.map((tier) => {
+        {/* Main Pricing Cards (Free, Lite, Pro, Team) */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-16">
+          {mainTiers.map((tier) => {
             const price = isAnnual ? tier.annualPrice : tier.monthlyPrice
             const period = isAnnual ? "/year" : "/month"
 
@@ -265,25 +361,24 @@ export default function PricingPage() {
                 key={tier.name}
                 className={cn(
                   "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300",
-                  "h-[620px]", // Fixed height for all cards
-                  "border-2 border-[var(--bronze)]/50 hover:border-[var(--bronze)]" // Dimmed border, bright on hover
+                  "h-[580px]",
+                  tier.popular 
+                    ? "border-2 border-[var(--bronze)] shadow-lg shadow-[var(--bronze)]/10" 
+                    : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
                 )}
               >
                 {tier.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge className="bg-[var(--bronze)] text-white border-0 px-4 py-1">
                       <Zap className="h-3 w-3 mr-1" />
-                      Most Popular
+                      {tier.badge}
                     </Badge>
                   </div>
                 )}
 
                 <CardHeader className="pb-2 flex-shrink-0">
                   <div className="flex items-center gap-2 mb-1">
-                    {tier.tier === "free" && <Sparkles className="h-5 w-5 text-muted-foreground" />}
-                    {tier.tier === "basic" && <Zap className="h-5 w-5 text-blue-500" />}
-                    {tier.tier === "pro" && <Zap className="h-5 w-5 text-[var(--bronze)]" />}
-                    {tier.tier === "enterprise" && <Building2 className="h-5 w-5 text-purple-500" />}
+                    {tier.icon}
                     <CardTitle className="text-xl">{tier.name}</CardTitle>
                   </div>
                   <CardDescription className="text-xs">{tier.description}</CardDescription>
@@ -302,23 +397,16 @@ export default function PricingPage() {
                     </div>
                   </div>
 
-                  {/* Limits */}
-                  <div className="grid grid-cols-2 gap-2 mb-4 p-3 rounded-lg bg-muted/30 flex-shrink-0">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Requests</p>
-                      <p className="font-medium text-xs">{tier.limits.requests}</p>
+                  {/* Quotas */}
+                  <div className="mb-4 p-3 rounded-lg bg-muted/30 flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-green-500 font-semibold text-sm">🟢 {tier.quotas.eliteQueries}</span>
                     </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Tokens</p>
-                      <p className="font-medium text-xs">{tier.limits.tokens}</p>
+                    <div className="text-xs text-muted-foreground">
+                      Then: {tier.quotas.afterQuota}
                     </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Models</p>
-                      <p className="font-medium text-xs">{tier.limits.models}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Storage</p>
-                      <p className="font-medium text-xs">{tier.limits.storage}</p>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {tier.quotas.totalQueries}
                     </div>
                   </div>
 
@@ -337,7 +425,12 @@ export default function PricingPage() {
 
                 <CardFooter className="pt-3 pb-4 flex-shrink-0">
                   <Button
-                    className="w-full font-semibold bg-[var(--bronze)]/50 group-hover:bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white transition-all duration-300"
+                    className={cn(
+                      "w-full font-semibold transition-all duration-300",
+                      tier.popular
+                        ? "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
+                        : "bg-[var(--bronze)]/50 group-hover:bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
+                    )}
                     onClick={() => handleSubscribe(tier)}
                     disabled={loadingTier === tier.tier}
                   >
@@ -348,7 +441,7 @@ export default function PricingPage() {
                       </>
                     ) : (
                       <>
-                        {tier.tier === "free" && isSignedIn ? "Current Plan" : tier.cta}
+                        {tier.cta}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </>
                     )}
@@ -359,34 +452,182 @@ export default function PricingPage() {
           })}
         </div>
 
+        {/* Enterprise & Maximum Section */}
+        <div className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-display font-bold mb-2">Enterprise & Maximum Power</h2>
+            <p className="text-muted-foreground">For organizations and mission-critical applications</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {enterpriseTiers.map((tier) => {
+              const price = isAnnual ? tier.annualPrice : tier.monthlyPrice
+              const period = isAnnual ? "/year" : "/month"
+
+              return (
+                <Card
+                  key={tier.name}
+                  className={cn(
+                    "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300",
+                    tier.tier === "maximum" 
+                      ? "border-2 border-amber-500 shadow-lg shadow-amber-500/10"
+                      : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
+                  )}
+                >
+                  {tier.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className={cn(
+                        "border-0 px-3 py-0.5 text-xs",
+                        tier.tier === "maximum" 
+                          ? "bg-amber-500 text-black"
+                          : "bg-emerald-500/80 text-white"
+                      )}>
+                        {tier.badge}
+                      </Badge>
+                    </div>
+                  )}
+
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      {tier.icon}
+                      <CardTitle className="text-lg">{tier.name}</CardTitle>
+                    </div>
+                    <CardDescription className="text-xs">{tier.description}</CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="flex-1 py-2">
+                    {/* Price */}
+                    <div className="mb-3">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold">${price.toFixed(2)}</span>
+                        <span className="text-muted-foreground text-xs">{period}</span>
+                      </div>
+                    </div>
+
+                    {/* Quotas */}
+                    <div className="mb-3 p-2 rounded-lg bg-muted/30 text-xs">
+                      <div className="text-green-500 font-semibold mb-1">🟢 {tier.quotas.eliteQueries}</div>
+                      <div className="text-muted-foreground">Then: {tier.quotas.afterQuota}</div>
+                    </div>
+
+                    {/* Features */}
+                    <ul className="space-y-1">
+                      {tier.features.slice(0, 5).map((feature, index) => (
+                        <li key={index} className="flex items-start gap-1.5">
+                          <Check className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span className="text-xs">{feature}</span>
+                        </li>
+                      ))}
+                      {tier.features.length > 5 && (
+                        <li className="text-xs text-muted-foreground pl-4">
+                          +{tier.features.length - 5} more features
+                        </li>
+                      )}
+                    </ul>
+                  </CardContent>
+
+                  <CardFooter className="pt-2 pb-4">
+                    <Button
+                      className={cn(
+                        "w-full text-sm",
+                        tier.tier === "maximum"
+                          ? "bg-amber-500 hover:bg-amber-600 text-black font-semibold"
+                          : "bg-[var(--bronze)]/50 hover:bg-[var(--bronze)] text-white"
+                      )}
+                      onClick={() => handleSubscribe(tier)}
+                      disabled={loadingTier === tier.tier}
+                    >
+                      {loadingTier === tier.tier ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          {tier.cta}
+                          <ArrowRight className="h-4 w-4 ml-1" />
+                        </>
+                      )}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* How Quota Works */}
+        <div className="max-w-3xl mx-auto mb-16 p-8 rounded-2xl bg-card/50 border border-border/50">
+          <h2 className="text-2xl font-display font-bold text-center mb-6">
+            How Quota Works
+          </h2>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-green-500 font-bold">1</span>
+              </div>
+              <div>
+                <h3 className="font-semibold">Start with ELITE quality</h3>
+                <p className="text-sm text-muted-foreground">
+                  Every query uses ELITE orchestration (#1 in ALL 10 categories) until your quota runs out.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-yellow-500 font-bold">2</span>
+              </div>
+              <div>
+                <h3 className="font-semibold">See your remaining quota</h3>
+                <p className="text-sm text-muted-foreground">
+                  Dashboard shows "ELITE queries remaining: 45/100" with warnings at 20%.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-orange-500 font-bold">3</span>
+              </div>
+              <div>
+                <h3 className="font-semibold">Throttle to still-great quality</h3>
+                <p className="text-sm text-muted-foreground">
+                  When ELITE runs out, you automatically switch to STANDARD or BUDGET (still excellent!). 
+                  Or upgrade anytime for more ELITE queries.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* FAQ Section */}
-        <div className="mt-24 max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-display font-bold text-center mb-8">
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">Can I switch plans anytime?</h3>
+              <h3 className="font-semibold mb-2">What's the difference between ELITE, STANDARD, and BUDGET?</h3>
               <p className="text-muted-foreground text-sm">
-                Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll be charged the prorated difference. When downgrading, your new rate will apply at the next billing cycle.
+                All three deliver excellent quality, but differ in how many AI categories they're #1 in.
+                ELITE uses 3-model consensus and ranks #1 in all 10 benchmark categories.
+                STANDARD ranks #1 in 8 categories. BUDGET (Claude Sonnet) ranks #1 in 6 categories.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">What happens if I exceed my limits?</h3>
+              <h3 className="font-semibold mb-2">What happens when I run out of ELITE queries?</h3>
               <p className="text-muted-foreground text-sm">
-                We'll notify you when you're approaching your limits. Free tier users will need to wait until the next billing cycle or upgrade. Pro users can continue with overage charges at $0.01 per 1K tokens.
+                You're automatically throttled to STANDARD or BUDGET (depending on your plan) for the rest of the month.
+                You still get great quality! You can also upgrade mid-month for more ELITE queries.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
+              <h3 className="font-semibold mb-2">Can I see how many ELITE queries I have left?</h3>
               <p className="text-muted-foreground text-sm">
-                Yes, we offer a 14-day money-back guarantee for new subscriptions. If you're not satisfied, contact us within 14 days for a full refund.
+                Yes! Your dashboard shows exactly how many ELITE queries remain. We also send warnings at 20% remaining.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
+              <h3 className="font-semibold mb-2">What is MAXIMUM tier?</h3>
               <p className="text-muted-foreground text-sm">
-                We accept all major credit cards (Visa, Mastercard, American Express) through our secure payment processor, Stripe.
+                MAXIMUM uses 5-model consensus with GPT-5.2 + o3 + Claude Opus to actually BEAT competition by +5%.
+                It's for mission-critical applications where you need the absolute best quality, like legal, healthcare, or finance.
               </p>
             </div>
           </div>
@@ -396,10 +637,10 @@ export default function PricingPage() {
         <div className="mt-24 text-center">
           <div className="p-8 rounded-2xl bg-gradient-to-r from-[var(--bronze)]/10 to-purple-500/10 border border-[var(--bronze)]/20">
             <h2 className="text-2xl font-display font-bold mb-4">
-              Ready to supercharge your AI workflow?
+              Ready to experience #1 AI quality?
             </h2>
             <p className="text-muted-foreground mb-6">
-              Start with our free tier and experience the power of AI orchestration.
+              Start with 50 free ELITE queries and see the difference for yourself.
             </p>
             <Link href="/sign-up">
               <Button size="lg" className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
@@ -420,4 +661,3 @@ export default function PricingPage() {
     </div>
   )
 }
-
