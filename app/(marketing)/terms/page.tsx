@@ -70,12 +70,26 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-2xl font-semibold mb-4">5. Subscription and Payments</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              We offer four subscription tiers designed to meet different needs:
+            </p>
+            <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+              <li><strong>Lite ($9.99/mo):</strong> 100 ELITE queries, 400 BUDGET queries after quota</li>
+              <li><strong>Pro ($29.99/mo):</strong> 500 ELITE queries, 1,500 STANDARD queries after quota</li>
+              <li><strong>Enterprise ($35/seat/mo, min 5 seats):</strong> 400 ELITE/seat, 400 STANDARD/seat, SSO &amp; compliance</li>
+              <li><strong>Maximum ($99/mo):</strong> 1,000 MAXIMUM queries (never throttled), premium orchestration</li>
+            </ul>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Payment terms:
+            </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
               <li>Paid subscriptions are billed in advance on a monthly or annual basis</li>
+              <li>Annual subscriptions receive approximately 17% discount</li>
               <li>You may cancel your subscription at any time</li>
               <li>Refunds are provided at our discretion</li>
               <li>Prices may change with 30 days notice</li>
-              <li>Usage limits apply based on your subscription tier</li>
+              <li>ELITE query quotas reset monthly; unused queries do not roll over</li>
+              <li>Enterprise seats can be adjusted with billing prorated accordingly</li>
             </ul>
           </section>
 

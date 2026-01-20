@@ -71,9 +71,7 @@ const TIER_DISPLAY_NAMES: Record<string, string> = {
   free: "Free Trial",
   lite: "Lite",
   pro: "Pro",
-  team: "Team",
   enterprise: "Enterprise",
-  enterprise_plus: "Enterprise Plus",
   maximum: "Maximum",
 }
 

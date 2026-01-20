@@ -52,14 +52,15 @@ const features = [
 
 const tiers = [
   {
-    name: "Starter",
-    price: "Free",
-    description: "Perfect for trying out LLMHive",
+    name: "Lite",
+    price: "$9.99",
+    period: "/month",
+    description: "Get started with #1 quality AI",
     features: [
-      "50 messages/month",
-      "Budget models (Llama, DeepSeek)",
-      "Basic orchestration",
-      "Community support"
+      "100 ELITE queries (#1 in ALL)",
+      "400 BUDGET queries after quota",
+      "Knowledge Base access",
+      "Email support"
     ],
     cta: "Get Started",
     href: "/sign-up",
@@ -69,14 +70,13 @@ const tiers = [
     name: "Pro",
     price: "$29.99",
     period: "/month",
-    description: "For professionals and small teams",
+    description: "Full power for professionals",
     features: [
-      "1,000 messages/month",
-      "Premium models (GPT-4o, Claude Sonnet 4.5)",
-      "Advanced orchestration (HRM, DeepConf)",
-      "Priority support",
-      "Custom system prompts",
-      "API access"
+      "500 ELITE queries (#1 in ALL)",
+      "1,500 STANDARD queries (#1 in 8)",
+      "Full API access",
+      "DeepConf & Prompt Diffusion",
+      "Priority support"
     ],
     cta: "Start Free Trial",
     href: "/sign-up",
@@ -84,19 +84,34 @@ const tiers = [
   },
   {
     name: "Enterprise",
-    price: "$199.99",
-    period: "/month",
-    description: "For organizations with advanced needs",
+    price: "$35",
+    period: "/seat/mo",
+    description: "For teams with compliance needs",
     features: [
-      "5,000 messages + overage",
-      "Flagship models (GPT-5.2 Pro, Claude Opus 4.5)",
-      "SLA guarantees",
-      "Dedicated support",
-      "SSO & SAML",
-      "Custom integrations"
+      "Min 5 seats ($175+/mo)",
+      "400 ELITE/seat + 400 STANDARD/seat",
+      "SSO & SAML integration",
+      "SOC 2 compliance",
+      "Dedicated support"
     ],
     cta: "Contact Sales",
     href: "/contact",
+    highlighted: false
+  },
+  {
+    name: "Maximum",
+    price: "$99",
+    period: "/month",
+    description: "Never throttled, always best",
+    features: [
+      "1,000 MAXIMUM queries",
+      "Beats GPT-5.2 & Claude 4.5",
+      "Never throttled",
+      "Premium orchestration",
+      "Concierge support"
+    ],
+    cta: "Go Maximum",
+    href: "/sign-up",
     highlighted: false
   }
 ]
