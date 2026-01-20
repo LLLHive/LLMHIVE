@@ -100,15 +100,15 @@ const tiers = [
   },
   {
     name: "Maximum",
-    price: "$99",
+    price: "$499",
     period: "/month",
-    description: "Never throttled, always best",
+    description: "Mission-critical, never throttled",
     features: [
-      "1,000 MAXIMUM queries",
-      "Beats GPT-5.2 & Claude 4.5",
-      "Never throttled",
-      "Premium orchestration",
-      "Concierge support"
+      "UNLIMITED MAXIMUM queries",
+      "Beats GPT-5.2 & Claude 4.5 by 5%",
+      "Never throttled (always #1)",
+      "25 team members included",
+      "Dedicated support manager"
     ],
     cta: "Go Maximum",
     href: "/sign-up",

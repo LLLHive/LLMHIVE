@@ -77,7 +77,7 @@ export default function TermsOfServicePage() {
               <li><strong>Lite ($9.99/mo):</strong> 100 ELITE queries, 400 BUDGET queries after quota</li>
               <li><strong>Pro ($29.99/mo):</strong> 500 ELITE queries, 1,500 STANDARD queries after quota</li>
               <li><strong>Enterprise ($35/seat/mo, min 5 seats):</strong> 400 ELITE/seat, 400 STANDARD/seat, SSO &amp; compliance</li>
-              <li><strong>Maximum ($99/mo):</strong> 1,000 MAXIMUM queries (never throttled), premium orchestration</li>
+              <li><strong>Maximum ($499/mo):</strong> UNLIMITED queries (never throttled), beats competition by 5%, 25 team members</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-4">
               Payment terms:
