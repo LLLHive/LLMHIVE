@@ -55,10 +55,10 @@ interface AdminStats {
 function generateMockStats(): AdminStats {
   const tiers: TierStats[] = [
     { tier: "free", count: 847, mrr: 0, eliteQueriesUsed: 31250, eliteQueriesLimit: 42350 },
-    { tier: "lite", count: 234, mrr: 234 * 9, eliteQueriesUsed: 18720, eliteQueriesLimit: 23400 },
-    { tier: "pro", count: 156, mrr: 156 * 29, eliteQueriesUsed: 62400, eliteQueriesLimit: 78000 },
+    { tier: "lite", count: 234, mrr: Math.round(234 * 9.99), eliteQueriesUsed: 18720, eliteQueriesLimit: 23400 },
+    { tier: "pro", count: 156, mrr: Math.round(156 * 29.99), eliteQueriesUsed: 62400, eliteQueriesLimit: 78000 },
     { tier: "enterprise", count: 23, mrr: 23 * 5 * 25, eliteQueriesUsed: 115000, eliteQueriesLimit: 184000 },
-    { tier: "maximum", count: 8, mrr: 8 * 99, eliteQueriesUsed: 80000, eliteQueriesLimit: 80000 },
+    { tier: "maximum", count: 8, mrr: 8 * 499, eliteQueriesUsed: 80000, eliteQueriesLimit: -1 },  // -1 = unlimited
   ];
 
   const totalMrr = tiers.reduce((sum, t) => sum + t.mrr, 0);

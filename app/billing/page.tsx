@@ -163,7 +163,8 @@ export default function BillingPage() {
   }
 
   const currentTier = usage?.tier || subscription?.tier || "free"
-  const isFreeTier = currentTier === "free"
+  // "free" = trial/unsubscribed, "lite" = paid Lite tier
+  const isFreeTier = currentTier === "free" || currentTier === "trial"
   const modeInfo = ORCHESTRATION_MODE_LABELS[usage?.orchestrationMode || "elite"]
   const ModeIcon = modeInfo.icon
 

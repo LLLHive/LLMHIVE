@@ -595,9 +595,10 @@ def admin_get_config() -> dict:
         "stripe_available": bool(settings.stripe_api_key),
         "stripe_webhook_configured": bool(settings.stripe_webhook_secret),
         "rate_limits": {
-            "free": 5,
-            "pro": 20,
-            "enterprise": 100,
+            "lite": 10,
+            "pro": 30,
+            "enterprise": 60,
+            "maximum": 120,
         },
         "default_billing_cycle": "monthly",
         "trial_days": 14,

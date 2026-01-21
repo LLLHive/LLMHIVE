@@ -25,7 +25,7 @@ router = APIRouter()
 class CreateCheckoutRequest(BaseModel):
     """Request to create a Stripe checkout session."""
     
-    tier: str = Field(..., description="Pricing tier name (free, basic, pro, enterprise)")
+    tier: str = Field(..., description="Pricing tier name (lite, pro, enterprise, maximum)")
     billing_cycle: str = Field(default="monthly", description="Billing cycle: 'monthly' or 'annual'")
     user_email: Optional[str] = Field(default=None, description="User email for Stripe customer")
     user_id: str = Field(..., description="Internal user ID to link subscription")
@@ -84,28 +84,36 @@ def create_checkout_session(
             )
         
         # Stripe webhook handling: Get Stripe Price ID for the tier
+        # SIMPLIFIED 4-TIER STRUCTURE (January 2026)
+        tier_lower = request.tier.lower()
         price_id = None
-        if request.tier.lower() == "free":
-            # Free tier doesn't require payment
+        
+        if tier_lower in ("free", "trial"):
+            # Free/trial tier doesn't require payment
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Free tier does not require payment. Use subscription creation endpoint instead.",
+                detail="Free/trial tier does not require payment. Use subscription creation endpoint instead.",
             )
-        elif request.tier.lower() == "basic":
+        elif tier_lower in ("lite", "basic"):  # "basic" for backwards compatibility
             if request.billing_cycle == "monthly":
                 price_id = settings.stripe_price_id_basic_monthly
             else:
                 price_id = settings.stripe_price_id_basic_annual
-        elif request.tier.lower() == "pro":
+        elif tier_lower == "pro":
             if request.billing_cycle == "monthly":
                 price_id = settings.stripe_price_id_pro_monthly
             else:
                 price_id = settings.stripe_price_id_pro_annual
-        elif request.tier.lower() == "enterprise":
+        elif tier_lower == "enterprise":
             if request.billing_cycle == "monthly":
                 price_id = settings.stripe_price_id_enterprise_monthly
             else:
                 price_id = settings.stripe_price_id_enterprise_annual
+        elif tier_lower == "maximum":
+            if request.billing_cycle == "monthly":
+                price_id = settings.stripe_price_id_maximum_monthly
+            else:
+                price_id = settings.stripe_price_id_maximum_annual
         
         if not price_id:
             raise HTTPException(

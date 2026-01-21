@@ -24,7 +24,7 @@ router = APIRouter()
 class CreateSubscriptionRequest(BaseModel):
     """Request to create a subscription."""
 
-    tier_name: str = Field(..., description="Pricing tier name (free, pro, enterprise)")
+    tier_name: str = Field(..., description="Pricing tier name (lite, pro, enterprise, maximum)")
     billing_cycle: str = Field(default="monthly", description="Billing cycle: 'monthly' or 'annual'")
     stripe_customer_id: str | None = Field(default=None, description="Stripe customer ID (if available)")
     stripe_subscription_id: str | None = Field(default=None, description="Stripe subscription ID (if available)")
@@ -172,12 +172,12 @@ def get_subscription_info(
         pricing_manager = service.pricing_manager
         
         if subscription is None:
-            # No subscription = free tier
-            tier = pricing_manager.get_tier("free")
+            # No subscription = Lite tier (free trial mode)
+            tier = pricing_manager.get_tier("lite")
             return {
                 "user_id": user_id,
-                "tier": "free",
-                "status": "active",
+                "tier": "lite",  # Maps to trial mode with Lite limits
+                "status": "trial",
                 "is_active": True,
                 "features": list(tier.features) if tier else [],
                 "limits": {

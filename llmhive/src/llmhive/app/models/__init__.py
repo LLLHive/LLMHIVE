@@ -43,10 +43,13 @@ class SubscriptionStatus(str, enum.Enum):
 
 
 class AccountTier(str, enum.Enum):
-    """User account tier levels."""
-    FREE = "free"
-    PRO = "pro"
-    ENTERPRISE = "enterprise"
+    """User account tier levels - SIMPLIFIED 4-TIER STRUCTURE (January 2026)."""
+    LITE = "lite"           # Entry-level: $9.99/mo
+    PRO = "pro"             # Power users: $29.99/mo
+    ENTERPRISE = "enterprise"  # Organizations: $35/seat/mo (min 5 seats)
+    MAXIMUM = "maximum"     # Mission-critical: $499/mo
+    # Legacy fallback for unsubscribed users
+    FREE = "free"           # Maps to LITE with trial limits
 
 
 class FeedbackOutcome(str, enum.Enum):
@@ -66,7 +69,7 @@ if SQLALCHEMY_AVAILABLE:
         id = Column(Integer, primary_key=True, index=True)
         user_id = Column(String(255), unique=True, nullable=False, index=True)
         email = Column(String(255), nullable=True)
-        account_tier = Column(Enum(AccountTier), nullable=False, default=AccountTier.FREE)
+        account_tier = Column(Enum(AccountTier), nullable=False, default=AccountTier.LITE)
         created_at = Column(DateTime, default=datetime.datetime.utcnow)
         updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
         
@@ -180,7 +183,7 @@ if SQLALCHEMY_AVAILABLE:
         
         id = Column(Integer, primary_key=True, index=True)
         user_id = Column(String(255), nullable=False, index=True)
-        tier_name = Column(String(50), nullable=False, default="free")
+        tier_name = Column(String(50), nullable=False, default="lite")
         status = Column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.ACTIVE)
         billing_cycle = Column(String(20), default="monthly")  # monthly, yearly
         

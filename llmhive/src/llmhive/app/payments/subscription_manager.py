@@ -264,7 +264,7 @@ class UserSubscription:
     user_id: str
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
-    tier: str = "free"
+    tier: str = "lite"  # Default to Lite tier (January 2026 simplified structure)
     status: SubscriptionStatus = SubscriptionStatus.FREE
     current_period_end: Optional[datetime] = None
     grace_period_end: Optional[datetime] = None
@@ -767,11 +767,14 @@ class SubscriptionManager:
     Implements Stage 4 Section 9: Payments & Subscription System.
     """
     
-    # Tier to Stripe price ID mapping
+    # Tier to Stripe price ID mapping - SIMPLIFIED 4-TIER (January 2026)
     TIER_PRICES = {
-        "basic": os.getenv("STRIPE_PRICE_ID_BASIC_MONTHLY"),
+        "lite": os.getenv("STRIPE_PRICE_ID_BASIC_MONTHLY"),  # Lite uses BASIC env for backwards compat
         "pro": os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY"),
         "enterprise": os.getenv("STRIPE_PRICE_ID_ENTERPRISE_MONTHLY"),
+        "maximum": os.getenv("STRIPE_PRICE_ID_MAXIMUM_MONTHLY"),
+        # Legacy mapping
+        "basic": os.getenv("STRIPE_PRICE_ID_BASIC_MONTHLY"),
     }
     
     GRACE_PERIOD_DAYS = 7

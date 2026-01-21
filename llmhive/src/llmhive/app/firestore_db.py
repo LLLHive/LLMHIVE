@@ -67,7 +67,7 @@ class FirestoreSubscriptionService:
     def create_subscription(
         self,
         user_id: str,
-        tier_name: str = "free",
+        tier_name: str = "lite",  # Default to Lite tier for new subscriptions
         billing_cycle: str = "monthly",
         stripe_customer_id: Optional[str] = None,
         stripe_subscription_id: Optional[str] = None,
