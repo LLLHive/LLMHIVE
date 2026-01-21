@@ -11,6 +11,7 @@ import { ConversationsProvider } from "@/lib/conversations-context"
 import { AppearanceSettingsLoader } from "@/components/appearance-settings-loader"
 import AppBackground from "@/components/branding/AppBackground"
 import { ForestBackgroundWrapper } from "@/components/forest-background-wrapper"
+import { SupportWidget } from "@/components/support-widget"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -111,6 +112,7 @@ export default function RootLayout({
                   }}
                 />
                 <AnalyticsWrapper />
+                <SupportWidget />
               </ConversationsProvider>
             </AuthProvider>
           </ThemeProvider>

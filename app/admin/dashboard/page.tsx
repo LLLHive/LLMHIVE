@@ -657,6 +657,12 @@ export default function AdminDashboardPage() {
                     Run Benchmarks
                   </Button>
                 </Link>
+                <Link href="/admin/support" className="block">
+                  <Button variant="outline" className="w-full justify-start">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    Support Tickets
+                  </Button>
+                </Link>
                 <a 
                   href="https://dashboard.stripe.com" 
                   target="_blank" 

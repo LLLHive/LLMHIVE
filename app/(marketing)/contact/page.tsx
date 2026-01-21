@@ -18,13 +18,43 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const [ticketId, setTicketId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setSubmitted(true)
-    setLoading(false)
+    setError(null)
+    
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    
+    try {
+      const response = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          email: formData.get("email"),
+          subject: formData.get("subject"),
+          message: formData.get("message"),
+          type: "general",
+        }),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        setTicketId(data.ticketId)
+        setSubmitted(true)
+      } else {
+        setError(data.error || "Failed to send message. Please try again.")
+      }
+    } catch (err) {
+      setError("Network error. Please check your connection and try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -99,16 +129,27 @@ export default function ContactPage() {
 
           {/* Contact Form */}
           <div className="md:col-span-2">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                <p className="text-red-500 text-sm">{error}</p>
+              </div>
+            )}
             {submitted ? (
               <div className="bg-card border border-border rounded-xl p-8 text-center">
                 <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle2 className="h-8 w-8 text-green-500" />
                 </div>
                 <h2 className="text-2xl font-semibold mb-2">Message Sent!</h2>
+                {ticketId && (
+                  <p className="text-sm font-mono bg-muted px-3 py-1 rounded inline-block mb-4">
+                    Ticket ID: {ticketId}
+                  </p>
+                )}
                 <p className="text-muted-foreground mb-6">
                   Thank you for reaching out. We&apos;ll get back to you within 24 hours.
+                  Save your ticket ID for reference.
                 </p>
-                <Button variant="outline" onClick={() => setSubmitted(false)}>
+                <Button variant="outline" onClick={() => { setSubmitted(false); setTicketId(null); }}>
                   Send Another Message
                 </Button>
               </div>
@@ -121,6 +162,7 @@ export default function ContactPage() {
                     </label>
                     <Input 
                       id="name" 
+                      name="name"
                       placeholder="Your name" 
                       required 
                       className="bg-background"
@@ -132,6 +174,7 @@ export default function ContactPage() {
                     </label>
                     <Input 
                       id="email" 
+                      name="email"
                       type="email" 
                       placeholder="you@example.com" 
                       required 
@@ -146,6 +189,7 @@ export default function ContactPage() {
                   </label>
                   <Input 
                     id="subject" 
+                    name="subject"
                     placeholder="How can we help?" 
                     required 
                     className="bg-background"
@@ -158,6 +202,7 @@ export default function ContactPage() {
                   </label>
                   <Textarea 
                     id="message" 
+                    name="message"
                     placeholder="Tell us more about your inquiry..." 
                     rows={6}
                     required 

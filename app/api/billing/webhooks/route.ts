@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { sendSubscriptionNotification } from "@/lib/slack";
 
 // Lazy initialize Stripe
 function getStripe(): Stripe | null {
@@ -128,6 +129,13 @@ async function handleCheckoutCompleted(
   });
   
   console.log(`Subscription created for user ${userId}: ${tier} (${billingCycle})`);
+  
+  // Send Slack notification for new subscription
+  sendSubscriptionNotification({
+    type: "new",
+    email: session.customer_email || session.customer_details?.email || userId,
+    tier,
+  }).catch((err) => console.error("[Webhook] Slack notification error:", err));
 }
 
 /**
@@ -212,6 +220,15 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
   });
   
   console.log(`Subscription cancelled for user ${userId}`);
+  
+  // Send Slack notification for cancellation
+  const priceId = subscription.items.data[0]?.price.id;
+  const previousTier = subscription.metadata?.tier || PRICE_TO_TIER[priceId] || "unknown";
+  sendSubscriptionNotification({
+    type: "cancel",
+    email: userId, // Would need customer email lookup in production
+    tier: previousTier,
+  }).catch((err) => console.error("[Webhook] Slack notification error:", err));
 }
 
 /**
