@@ -1888,7 +1888,9 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             # Use PREMIUM models (o3, GPT-5.2, Claude Opus) for math
             elif _detect_task_type(request.prompt) == "math_problem":
                 # Phase 18: Use elite models for math to achieve #1 ranking
-                if ELITE_ORCHESTRATION_AVAILABLE and accuracy_level >= 3:
+                # Get accuracy_level from request (defined later in orchestration_config)
+                early_accuracy_level = getattr(request.orchestration, 'accuracy_level', 3)
+                if ELITE_ORCHESTRATION_AVAILABLE and early_accuracy_level >= 3:
                     # Use the actual top math models
                     selected_models = ELITE_MODELS.get("math", [])[:3]
                     logger.info("ELITE Math routing (Phase 18) -> %s", selected_models)
@@ -1902,7 +1904,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             # Use PREMIUM models (GPT-5.2, Claude Opus) for RAG
             elif getattr(request.orchestration, 'enable_rag', False) or "search" in request.prompt.lower() or "find information" in request.prompt.lower():
                 # Phase 18: Use elite models for RAG to achieve #1 ranking
-                if ELITE_ORCHESTRATION_AVAILABLE and accuracy_level >= 3:
+                early_accuracy_level = getattr(request.orchestration, 'accuracy_level', 3)
+                if ELITE_ORCHESTRATION_AVAILABLE and early_accuracy_level >= 3:
                     selected_models = ELITE_MODELS.get("rag", [])[:2]
                     logger.info("ELITE RAG routing (Phase 18) -> %s", selected_models)
                 else:
@@ -1913,7 +1916,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             
             # 5f: Reasoning Routing - ELITE MODE for top position
             elif _detect_task_type(request.prompt) in ("reasoning", "multi_step"):
-                if ELITE_ORCHESTRATION_AVAILABLE and accuracy_level >= 3:
+                early_accuracy_level = getattr(request.orchestration, 'accuracy_level', 3)
+                if ELITE_ORCHESTRATION_AVAILABLE and early_accuracy_level >= 3:
                     selected_models = ELITE_MODELS.get("reasoning", [])[:3]
                     logger.info("ELITE Reasoning routing (Phase 18) -> %s", selected_models)
                 else:
