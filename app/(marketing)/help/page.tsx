@@ -342,18 +342,18 @@ export default function HelpCenterPage() {
         {/* Quick Links */}
         <div className="mt-12 grid md:grid-cols-3 gap-6">
           <Link 
-            href="/docs" 
+            href="/demo" 
             className="group bg-card border border-border rounded-xl p-6 hover:border-[var(--bronze)]/50 transition-colors"
           >
             <BookOpen className="h-8 w-8 text-[var(--bronze)] mb-4" />
             <h3 className="font-semibold mb-2 group-hover:text-[var(--bronze)] transition-colors">
-              Documentation
+              Watch Demo
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Technical docs, API reference, and integration guides.
+              See LLMHive in action with our product walkthrough.
             </p>
             <span className="text-sm text-[var(--bronze)] flex items-center gap-1">
-              View Docs <ArrowRight className="h-4 w-4" />
+              Watch Now <ArrowRight className="h-4 w-4" />
             </span>
           </Link>
 

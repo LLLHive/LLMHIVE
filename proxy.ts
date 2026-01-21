@@ -22,6 +22,8 @@ const isPublicRoute = createRouteMatcher([
   "/cookies(.*)",
   "/contact(.*)",
   "/discover(.*)",
+  "/demo(.*)",
+  "/help(.*)",
   
   // API routes that should be public
   "/api/webhooks(.*)",
