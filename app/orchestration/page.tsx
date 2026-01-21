@@ -19,7 +19,8 @@ import { loadOrchestratorSettings, saveOrchestratorSettings } from "@/lib/settin
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 import { useConversationsContext } from "@/lib/conversations-context"
-import { STORAGE_KEYS, type SelectedModelConfig, type UserTier, TIER_CONFIGS, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, canAccessModel } from "@/lib/openrouter/tiers"
+import { STORAGE_KEYS, type SelectedModelConfig, TIER_CONFIGS, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, canAccessModel } from "@/lib/openrouter/tiers"
+import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { 
   useOpenRouterCategories, 
   useCategoryRankings, 
@@ -267,8 +268,8 @@ export default function OrchestrationPage() {
   const [selectedDomain, setSelectedDomain] = useState<string>("default")
   const [selectedFormat, setSelectedFormat] = useState<string>("default")
   
-  // TODO: Get from auth context
-  const userTier: UserTier = 'pro'
+  // Get user tier from subscription
+  const { userTier, isLoading: tierLoading } = useUserTier()
   const tierConfig = TIER_CONFIGS[userTier]
   
   // Category-based model selection state

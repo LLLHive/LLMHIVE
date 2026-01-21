@@ -519,11 +519,7 @@ export function ChatArea({
       // Combine original question with clarification answers
       enhancedInput = `${pendingInput}\n\n[User preferences: ${input}]`
       
-      console.log('🔍 Enhanced query with clarification:', { 
-        original: pendingInput, 
-        preferences: input,
-        enableLiveResearch 
-      })
+      // Enhanced query with clarification preferences applied
     }
     
     // Clear any pending clarification
@@ -1212,7 +1208,7 @@ export function ChatArea({
               answerA={comparisonData.answerA}
               answerB={comparisonData.answerB}
               onPreferenceSelected={(preference, reason) => {
-                console.log("User preference:", preference, reason)
+                // Preference recorded - could be sent to analytics
                 hideComparison()
               }}
               onSkip={hideComparison}

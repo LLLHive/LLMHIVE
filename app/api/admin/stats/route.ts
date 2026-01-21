@@ -120,18 +120,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // In production, fetch real data from:
-    // - Firestore for user/subscription counts
-    // - Stripe for revenue data
-    // - Your usage tracking system for query counts
+    // Generate dashboard statistics
+    // NOTE: Currently using mock data for demo purposes.
+    // For production, integrate with:
+    // - Firestore: user/subscription counts
+    // - Stripe API: revenue data (MRR, ARR)
+    // - Backend: usage tracking (query counts)
     const stats = generateMockStats();
-
-    // TODO: Replace with real database queries
-    // Example:
-    // const firestore = getFirestore();
-    // const usersSnapshot = await firestore.collection('users').get();
-    // const subscriptionsSnapshot = await firestore.collection('subscriptions').where('status', '==', 'active').get();
-    // const stripeBalance = await stripe.balance.retrieve();
 
     return NextResponse.json(stats);
   } catch (error) {

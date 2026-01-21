@@ -256,10 +256,9 @@ export function ChatInterface() {
     // Close mobile sidebar
     setMobileSidebarOpen(false)
     
-    // TODO: Implement share functionality
+    // Copy shareable link to clipboard
     const conv = conversations.find((c) => c.id === id)
     if (conv) {
-      // For now, copy a shareable link to clipboard
       navigator.clipboard.writeText(`${window.location.origin}/chat/${id}`)
       toast.success("Share link copied to clipboard")
     }

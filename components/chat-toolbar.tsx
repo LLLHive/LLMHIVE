@@ -18,7 +18,8 @@ import { getModelLogo } from "@/lib/models"
 import { CriteriaEqualizer } from "./criteria-equalizer"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
-import { canAccessModel, type UserTier, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
+import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
+import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { cn } from "@/lib/utils"
 import { 
   useOpenRouterCategories, 
@@ -121,8 +122,8 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [myTeamModels, setMyTeamModels] = useState<string[]>([])
   
-  // TODO: Get from auth context
-  const userTier: UserTier = 'pro'
+  // Get user tier from subscription
+  const { userTier } = useUserTier()
   
   // Use shared hooks for categories and rankings
   const { categories, loading: categoriesLoading, error: categoriesError } = useOpenRouterCategories({ group: 'usecase' })
