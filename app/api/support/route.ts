@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { sendSupportTicketNotification } from "@/lib/slack"
+import { sendTicketConfirmationEmail } from "@/lib/email"
 
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "http://localhost:8000"
 
@@ -141,6 +142,22 @@ export async function POST(req: NextRequest) {
       priority: ticket.priority!,
     }).catch((err) => {
       console.error("[Support] Failed to send Slack notification:", err)
+    })
+    
+    // Determine estimated response time
+    const estimatedResponse = ticket.priority === "urgent" ? "2 hours" : 
+                              ticket.priority === "high" ? "4 hours" :
+                              ticket.priority === "medium" ? "24 hours" : "48 hours"
+    
+    // Send email confirmation to user (fire and forget)
+    sendTicketConfirmationEmail({
+      to: email,
+      name,
+      ticketId: ticket.id!,
+      subject,
+      estimatedResponse,
+    }).catch((err) => {
+      console.error("[Support] Failed to send confirmation email:", err)
     })
     
     return NextResponse.json({

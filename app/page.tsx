@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { ChatInterface } from "@/components/chat-interface"
 import { Skeleton } from "@/components/loading-skeleton"
+import { OnboardingWrapper } from "@/components/onboarding-wrapper"
 
 // Loading skeleton for the chat interface
 function ChatInterfaceLoading() {
@@ -26,6 +27,8 @@ export default function Home() {
       <Suspense fallback={<ChatInterfaceLoading />}>
         <ChatInterface />
       </Suspense>
+      {/* Onboarding modal for first-time users */}
+      <OnboardingWrapper />
     </main>
   )
 }
