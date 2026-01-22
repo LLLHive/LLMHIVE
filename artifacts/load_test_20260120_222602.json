@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-01-20T22:26:02.299438",
+  "target": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+  "results": [
+    {
+      "name": "100 users",
+      "concurrent_users": 100,
+      "total_requests": 200,
+      "successful": 0,
+      "failed": 200,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "p95_latency_ms": 0,
+      "duration_seconds": 11.764268,
+      "slo_passed": false
+    },
+    {
+      "name": "250 users",
+      "concurrent_users": 250,
+      "total_requests": 500,
+      "successful": 0,
+      "failed": 500,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "p95_latency_ms": 0,
+      "duration_seconds": 24.484599,
+      "slo_passed": false
+    },
+    {
+      "name": "500 users",
+      "concurrent_users": 500,
+      "total_requests": 1000,
+      "successful": 0,
+      "failed": 1000,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "p95_latency_ms": 0,
+      "duration_seconds": 56.127484,
+      "slo_passed": false
+    },
+    {
+      "name": "1000 users",
+      "concurrent_users": 1000,
+      "total_requests": 1000,
+      "successful": 0,
+      "failed": 1000,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "p95_latency_ms": 0,
+      "duration_seconds": 50.995964,
+      "slo_passed": false
+    }
+  ]
+}

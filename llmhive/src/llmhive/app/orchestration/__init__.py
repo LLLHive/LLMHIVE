@@ -192,6 +192,30 @@ from .stage4_integration import (
     get_orchestrator,
 )
 
+# Category-Specific Optimization (January 2026)
+from .category_optimization import (
+    CategoryOptimizationEngine,
+    QueryAnalyzer,
+    OptimizationMode,
+    OptimizationCategory,
+    QueryComplexity,
+    category_optimize,
+    get_optimization_engine,
+)
+
+# Elite Orchestration
+from .elite_orchestration import (
+    EliteTier,
+    EliteConfig,
+    elite_orchestrate,
+    elite_math_solve,
+    elite_reasoning_solve,
+    elite_rag_query,
+    elite_multimodal_process,
+    detect_elite_category,
+    estimate_elite_cost,
+)
+
 __all__ = [
     # Stage 4 Core
     "TransformerCorefResolver",
@@ -299,4 +323,22 @@ __all__ = [
     "create_serper_provider",
     "create_resilient_search",
     "create_connectivity_monitor",
+    # Category Optimization (January 2026)
+    "CategoryOptimizationEngine",
+    "QueryAnalyzer",
+    "OptimizationMode",
+    "OptimizationCategory",
+    "QueryComplexity",
+    "category_optimize",
+    "get_optimization_engine",
+    # Elite Orchestration
+    "EliteTier",
+    "EliteConfig",
+    "elite_orchestrate",
+    "elite_math_solve",
+    "elite_reasoning_solve",
+    "elite_rag_query",
+    "elite_multimodal_process",
+    "detect_elite_category",
+    "estimate_elite_cost",
 ]
