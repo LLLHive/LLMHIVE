@@ -390,20 +390,27 @@ class QueryAnalyzer:
         r'\bcalculate\b', r'\bcompute\b', r'\bsolve\b',
         r'\bequation\b', r'\bformula\b', r'\bintegral\b', r'\bderivative\b',
         r'\bpercent\b', r'\binterest\b', r'\btotal\b', r'\bsum\b',
+        r'\bmph\b', r'\bkmh\b', r'\bkm/h\b',  # Speed units
+        r'\d+\s*(mph|kmh|km/h|m/s)',  # Speed with numbers
+        r'how (far|long|much|many).*\d',  # Distance/quantity with numbers
+        r'travel.*\d+.*hours?',  # Travel time calculations
     ]
     
-    # Code indicators
+    # Code indicators (avoid short words that could match other contexts)
     CODE_INDICATORS = [
-        "code", "function", "implement", "debug", "fix", "refactor",
-        "python", "javascript", "typescript", "java", "rust", "go",
-        "api", "endpoint", "class", "method", "algorithm",
+        "code", "function", "implement", "debug", "fix bug", "refactor",
+        "python", "javascript", "typescript", "java ", "rust ", "golang",
+        "api endpoint", "class method", "algorithm", "programming",
+        "write a function", "write code", "syntax error",
     ]
     
-    # Reasoning indicators
+    # Reasoning indicators (more comprehensive)
     REASONING_INDICATORS = [
         "why does", "why do", "because", "therefore", "thus", "hence",
         "conclude", "deduce", "infer", "implies", "logically",
         "if all", "syllogism", "fallacy", "premise", "what can we conclude",
+        "logical fallacy", "logical reasoning", "reason why", "reasoning",
+        "argument", "valid argument", "invalid argument",
     ]
     
     # Dialogue indicators (casual conversation)
@@ -463,21 +470,21 @@ class QueryAnalyzer:
         has_reasoning = any(ind in query_lower for ind in self.REASONING_INDICATORS)
         has_dialogue = any(ind in query_lower for ind in self.DIALOGUE_INDICATORS)
         
-        # Determine category (priority order)
+        # Determine category (priority order - more specific categories first)
         if has_image:
             category = OptimizationCategory.MULTIMODAL
         elif has_math:
             category = OptimizationCategory.MATH
         elif has_code and not has_dialogue:  # Don't confuse "code" with dialogue
             category = OptimizationCategory.CODING
+        elif has_reasoning:  # Check reasoning BEFORE RAG (reasoning is more specific)
+            category = OptimizationCategory.REASONING
         elif has_tool and not has_rag and not has_dialogue:
             category = OptimizationCategory.TOOL_USE
-        elif has_dialogue:  # Check dialogue before RAG
+        elif has_dialogue:  # Check dialogue before generic RAG
             category = OptimizationCategory.DIALOGUE
         elif has_rag or context_length > 0:
             category = OptimizationCategory.RAG
-        elif has_reasoning:
-            category = OptimizationCategory.REASONING
         elif context_length > 50000:
             category = OptimizationCategory.LONG_CONTEXT
         elif mode == OptimizationMode.SPEED:

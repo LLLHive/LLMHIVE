@@ -10,7 +10,7 @@
 
 // Email configuration
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const EMAIL_FROM = process.env.EMAIL_FROM || "LLMHive <noreply@llmhive.ai>"
+const EMAIL_FROM = process.env.EMAIL_FROM || "LLMHive <noreply@contact.llmhive.ai>"
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai"
 
 export interface EmailResult {
