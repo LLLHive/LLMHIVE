@@ -6,9 +6,9 @@
 torch>=2.0.0
 
 # Core API framework
-fastapi>=0.111
-uvicorn[standard]>=0.24
-gunicorn>=21.2.0
+fastapi>=0.111,<0.116
+uvicorn[standard]==0.30.6
+gunicorn>=21.2.0,<23.0.0
 pydantic>=2.6
 pydantic-settings>=2.1
 
