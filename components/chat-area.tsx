@@ -92,6 +92,7 @@ export function ChatArea({
   const [loadingStartTime, setLoadingStartTime] = useState<number | undefined>(undefined)
   const [retryStatus, setRetryStatus] = useState<RetryStatus | null>(null)
   const [errorState, setErrorState] = useState<ErrorState>({ hasError: false, message: "", canRetry: false })
+  const abortControllerRef = useRef<AbortController | null>(null)
   
   // Clarification questions state
   const [pendingClarification, setPendingClarification] = useState<ClarificationDecision | null>(null)
@@ -968,7 +969,19 @@ export function ChatArea({
           })}
           {isLoading && (
             <>
-              <AIProcessingIndicator startTime={loadingStartTime} />
+              <AIProcessingIndicator 
+                startTime={loadingStartTime} 
+                onCancel={() => {
+                  // Cancel the current request
+                  if (abortControllerRef.current) {
+                    abortControllerRef.current.abort()
+                  }
+                  setIsLoading(false)
+                  setLoadingStartTime(undefined)
+                  setOrchestrationStatus((prev) => ({ ...prev, isActive: false }))
+                  toast.info("Query cancelled. Try a simpler question for faster results.")
+                }}
+              />
               {/* Retry Status Indicator */}
               {retryStatus?.isRetrying && (
                 <div className="flex items-center gap-2 ml-11 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm animate-pulse">
