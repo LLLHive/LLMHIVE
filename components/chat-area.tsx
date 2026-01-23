@@ -16,7 +16,7 @@ import { toast } from "@/lib/toast"
 import { processImageForOCR } from "@/lib/ocr"
 import { voiceRecognition } from "@/lib/voice"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { Skeleton } from "@/components/loading-skeleton"
+import { Skeleton, AIProcessingIndicator } from "@/components/loading-skeleton"
 import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType, ClarificationQuestion } from "@/lib/types"
 import { shouldAskClarification, formatClarificationMessage, type ClarificationDecision } from "@/lib/answer-quality/clarification-detector"
 import { analyzeQuery } from "@/lib/answer-quality/prompt-optimizer"
@@ -89,6 +89,7 @@ export function ChatArea({
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
   const [incognitoMode, setIncognitoMode] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingStartTime, setLoadingStartTime] = useState<number | undefined>(undefined)
   const [retryStatus, setRetryStatus] = useState<RetryStatus | null>(null)
   const [errorState, setErrorState] = useState<ErrorState>({ hasError: false, message: "", canRetry: false })
   
@@ -541,6 +542,7 @@ export function ChatArea({
     setInput("")
     setAttachments([])
     setIsLoading(true)
+    setLoadingStartTime(Date.now())
     
     // Ensure scroll to show user message + loading indicator immediately
     setTimeout(() => {
@@ -765,6 +767,7 @@ export function ChatArea({
       }))
     } finally {
       setIsLoading(false)
+      setLoadingStartTime(undefined)
       setRetryStatus(null)
     }
   }
@@ -775,6 +778,7 @@ export function ChatArea({
     
     setRegeneratingMessageId(messageId)
     setIsLoading(true)
+    setLoadingStartTime(Date.now())
     
     // Start orchestration status
     setOrchestrationStatus({
@@ -862,6 +866,7 @@ export function ChatArea({
       }))
     } finally {
       setIsLoading(false)
+      setLoadingStartTime(undefined)
       setRegeneratingMessageId(null)
     }
   }, [isLoading, regeneratingMessageId, orchestratorSettings, conversation?.id, onSendMessage])
@@ -962,29 +967,16 @@ export function ChatArea({
             )
           })}
           {isLoading && (
-            <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--bronze)] to-[var(--gold)] flex items-center justify-center">
-                <span className="text-xs font-bold text-background">AI</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-1.5 p-4">
-                  {[0, 200, 400].map((delay) => (
-                    <div
-                      key={delay}
-                      className="w-1.5 h-1.5 rounded-full bg-[var(--bronze)] animate-bounce"
-                      style={{ animationDelay: `${delay}ms`, animationDuration: "1s" }}
-                    />
-                  ))}
+            <>
+              <AIProcessingIndicator startTime={loadingStartTime} />
+              {/* Retry Status Indicator */}
+              {retryStatus?.isRetrying && (
+                <div className="flex items-center gap-2 ml-11 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm animate-pulse">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>{retryStatus.message}</span>
                 </div>
-                {/* Retry Status Indicator */}
-                {retryStatus?.isRetrying && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm animate-pulse">
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>{retryStatus.message}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+              )}
+            </>
           )}
 
           {/* Error Retry Button */}

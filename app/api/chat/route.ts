@@ -2,8 +2,98 @@ import { NextRequest, NextResponse } from "next/server"
 
 // Vercel serverless function configuration
 // Extend timeout for multi-model orchestration (Pro plan: up to 300s)
-export const maxDuration = 120 // 2 minutes max
+export const maxDuration = 300 // 5 minutes max - world-class AI needs time
 export const dynamic = "force-dynamic"
+
+// World-class retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 5,
+  initialDelayMs: 1000,
+  maxDelayMs: 30000,
+  backoffMultiplier: 2,
+  retryableStatuses: [502, 503, 504, 429],
+}
+
+// Utility: Sleep with exponential backoff
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// Utility: Calculate delay with jitter
+function getRetryDelay(attempt: number): number {
+  const delay = Math.min(
+    RETRY_CONFIG.initialDelayMs * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt),
+    RETRY_CONFIG.maxDelayMs
+  )
+  // Add jitter (±20%) to prevent thundering herd
+  const jitter = delay * 0.2 * (Math.random() - 0.5)
+  return Math.floor(delay + jitter)
+}
+
+// World-class fetch with retry
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number = 280000 // 4.5 minutes default
+): Promise<Response> {
+  let lastError: Error | null = null
+  
+  for (let attempt = 0; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      })
+      
+      clearTimeout(timeoutId)
+      
+      // If response is OK or not retryable, return it
+      if (response.ok || !RETRY_CONFIG.retryableStatuses.includes(response.status)) {
+        return response
+      }
+      
+      // Log retry attempt
+      console.log(`[Chat API] Attempt ${attempt + 1}/${RETRY_CONFIG.maxRetries + 1} failed with ${response.status}, retrying...`)
+      
+      // If we have retries left, wait and continue
+      if (attempt < RETRY_CONFIG.maxRetries) {
+        const delay = getRetryDelay(attempt)
+        console.log(`[Chat API] Waiting ${delay}ms before retry...`)
+        await sleep(delay)
+      } else {
+        return response // Return the failed response on last attempt
+      }
+    } catch (error: any) {
+      lastError = error
+      
+      // Check if it was an abort/timeout
+      if (error.name === 'AbortError') {
+        console.error(`[Chat API] Attempt ${attempt + 1} timed out after ${timeoutMs}ms`)
+        if (attempt < RETRY_CONFIG.maxRetries) {
+          const delay = getRetryDelay(attempt)
+          await sleep(delay)
+          continue
+        }
+        throw new Error(`Request timed out after ${RETRY_CONFIG.maxRetries + 1} attempts`)
+      }
+      
+      // For network errors, retry
+      if (attempt < RETRY_CONFIG.maxRetries) {
+        console.log(`[Chat API] Network error on attempt ${attempt + 1}, retrying...`, error.message)
+        const delay = getRetryDelay(attempt)
+        await sleep(delay)
+        continue
+      }
+      
+      throw error
+    }
+  }
+  
+  throw lastError || new Error('Max retries exceeded')
+}
 
 /**
  * Chat API route - Proxies frontend requests to FastAPI backend.
@@ -217,47 +307,41 @@ export async function POST(req: NextRequest) {
       headers["X-API-Key"] = apiKey
     }
 
-    // Forward request to FastAPI backend
+    // Forward request to FastAPI backend with world-class retry logic
     let response: Response
     try {
-      // Create AbortController for timeout (compatible with all runtimes)
-      // Extended timeout for multi-model orchestration
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 110000) // 110 second timeout (below maxDuration)
+      console.log("[Chat API] Initiating request with retry logic (max 5 retries, exponential backoff)")
       
-      try {
-        response = await fetch(`${apiBase}/v1/chat`, {
+      response = await fetchWithRetry(
+        `${apiBase}/v1/chat`,
+        {
           method: "POST",
           headers,
           body: JSON.stringify(payload),
-          signal: controller.signal,
-        })
-        clearTimeout(timeoutId)
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId)
-        // Check if it was a timeout/abort
-        if (fetchError.name === 'AbortError' || controller.signal.aborted) {
-          console.error("[Chat API] Request timeout after 60 seconds")
-          return NextResponse.json(
-            {
-              error: "Request timeout",
-              details: "The backend did not respond within 60 seconds",
-              backendUrl: apiBase,
-            },
-            { status: 504 }
-          )
-        }
-        throw fetchError // Re-throw other errors
-      }
+        },
+        280000 // 4.5 minute timeout per attempt
+      )
     } catch (fetchError: any) {
-      console.error("[Chat API] Fetch error:", fetchError)
+      console.error("[Chat API] All retry attempts failed:", fetchError)
+      
+      // Provide user-friendly error messages
+      const isTimeout = fetchError.message?.includes('timeout') || fetchError.name === 'AbortError'
+      const isNetworkError = fetchError.message?.includes('network') || fetchError.message?.includes('ECONNREFUSED')
+      
       return NextResponse.json(
         {
-          error: "Failed to connect to backend",
-          details: fetchError instanceof Error ? fetchError.message : String(fetchError),
-          backendUrl: apiBase,
+          error: isTimeout 
+            ? "Our AI is processing a complex request. Please try again in a moment."
+            : isNetworkError
+            ? "We're experiencing temporary connectivity issues. Please retry."
+            : "Failed to connect to our AI service",
+          details: process.env.NODE_ENV === 'development' 
+            ? fetchError instanceof Error ? fetchError.message : String(fetchError)
+            : undefined,
+          retryable: true,
+          suggestion: "Try simplifying your query or breaking it into smaller questions.",
         },
-        { status: 503 }
+        { status: isTimeout ? 504 : 503 }
       )
     }
 
@@ -276,11 +360,31 @@ export async function POST(req: NextRequest) {
         `Backend URL: ${apiBase}`
       )
 
+      // Map technical errors to user-friendly messages
+      const userFriendlyErrors: Record<number, string> = {
+        400: "There was an issue with your request. Please rephrase and try again.",
+        401: "Authentication required. Please sign in again.",
+        403: "You don't have access to this feature. Please upgrade your plan.",
+        404: "The requested service is temporarily unavailable.",
+        422: "Unable to process your request. Please check your input.",
+        429: "Our servers are busy. Please wait a moment and try again.",
+        500: "We encountered an unexpected error. Our team has been notified.",
+        502: "Our AI service is temporarily busy. Please retry in a moment.",
+        503: "Service temporarily unavailable. We're working on it.",
+        504: "Request took too long. Try a simpler question.",
+      }
+
       return NextResponse.json(
         {
-          error: errorData.detail || `Backend returned ${response.status}`,
+          error: userFriendlyErrors[response.status] || errorData.detail || "An unexpected error occurred",
+          technicalDetails: process.env.NODE_ENV === 'development' ? errorData : undefined,
           status: response.status,
-          backendUrl: apiBase,
+          retryable: [429, 502, 503, 504].includes(response.status),
+          suggestion: response.status === 429 
+            ? "Wait 30 seconds before trying again."
+            : response.status >= 500
+            ? "Try refreshing the page or contact support if the issue persists."
+            : undefined,
         },
         { status: response.status }
       )

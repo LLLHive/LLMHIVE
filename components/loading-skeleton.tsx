@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 interface SkeletonProps {
@@ -76,6 +77,113 @@ export function TypingIndicator() {
             }}
           />
         ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * World-class AI processing indicator with stage progression
+ * Shows users exactly what's happening during multi-model orchestration
+ */
+interface ProcessingStage {
+  id: string
+  label: string
+  icon: string
+  duration: number // Expected duration in ms
+}
+
+const PROCESSING_STAGES: ProcessingStage[] = [
+  { id: "analyzing", label: "Analyzing your question", icon: "🔍", duration: 2000 },
+  { id: "consulting", label: "Consulting AI models", icon: "🤖", duration: 8000 },
+  { id: "synthesizing", label: "Synthesizing response", icon: "⚡", duration: 5000 },
+  { id: "verifying", label: "Verifying accuracy", icon: "✅", duration: 3000 },
+]
+
+export function AIProcessingIndicator({ startTime }: { startTime?: number }) {
+  const [currentStage, setCurrentStage] = useState(0)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  
+  useEffect(() => {
+    const start = startTime || Date.now()
+    
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - start
+      setElapsedTime(elapsed)
+      
+      // Progress through stages based on elapsed time
+      let accumulatedTime = 0
+      for (let i = 0; i < PROCESSING_STAGES.length; i++) {
+        accumulatedTime += PROCESSING_STAGES[i].duration
+        if (elapsed < accumulatedTime) {
+          setCurrentStage(i)
+          break
+        }
+      }
+      // Stay on last stage if exceeded
+      if (elapsed >= accumulatedTime) {
+        setCurrentStage(PROCESSING_STAGES.length - 1)
+      }
+    }, 100)
+    
+    return () => clearInterval(timer)
+  }, [startTime])
+  
+  const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000)
+    return `${seconds}s`
+  }
+  
+  return (
+    <div className="flex gap-3 items-start">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--bronze)] to-[var(--gold)] flex items-center justify-center shrink-0 animate-pulse">
+        <span className="text-xs font-bold text-background">AI</span>
+      </div>
+      <div className="flex flex-col gap-2 p-4 rounded-2xl bg-secondary/50 min-w-[280px]">
+        {/* Stage progression */}
+        <div className="flex flex-col gap-1.5">
+          {PROCESSING_STAGES.map((stage, index) => (
+            <div
+              key={stage.id}
+              className={cn(
+                "flex items-center gap-2 text-sm transition-all duration-300",
+                index < currentStage && "text-muted-foreground opacity-60",
+                index === currentStage && "text-foreground font-medium",
+                index > currentStage && "text-muted-foreground/40"
+              )}
+            >
+              <span className={cn(
+                "text-base transition-transform duration-300",
+                index === currentStage && "animate-pulse scale-110"
+              )}>
+                {index < currentStage ? "✓" : stage.icon}
+              </span>
+              <span>{stage.label}</span>
+              {index === currentStage && (
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {formatTime(elapsedTime)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        {/* Progress bar */}
+        <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-[var(--bronze)] to-[var(--gold)] transition-all duration-300"
+            style={{
+              width: `${Math.min((currentStage / (PROCESSING_STAGES.length - 1)) * 100, 100)}%`,
+            }}
+          />
+        </div>
+        
+        {/* Elapsed time indicator */}
+        {elapsedTime > 15000 && (
+          <p className="text-xs text-muted-foreground mt-1 italic">
+            Complex queries take longer — we're ensuring the best response...
+          </p>
+        )}
       </div>
     </div>
   )

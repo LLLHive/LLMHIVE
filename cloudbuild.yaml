@@ -56,12 +56,15 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --port=8080 \
-          --memory=4Gi \
+          --memory=8Gi \
           --cpu=4 \
-          --min-instances=2 \
-          --max-instances=50 \
+          --min-instances=5 \
+          --max-instances=100 \
           --timeout=900 \
-          --concurrency=100 \
+          --concurrency=80 \
+          --cpu-boost \
+          --session-affinity \
+          --execution-environment=gen2 \
           --update-env-vars="ALLOW_STUB_PROVIDER=true,LOG_LEVEL=INFO,OTEL_USE_GCP_TRACE=true,GCP_PROJECT_ID=llmhive-orchestrator,ENVIRONMENT=production,EMAIL_FROM=LLMHive <noreply@contact.llmhive.ai>" \
           --update-secrets="OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,PINECONE_API_KEY=pinecone-api-key:latest,OPENROUTER_API_KEY=open-router-key:latest,API_KEY=api-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest,CLERK_SECRET_KEY=clerk-secret-key:latest,STRIPE_PRICE_ID_BASIC_ANNUAL=stripe-price-id-basic-annual:latest,STRIPE_PRICE_ID_BASIC_MONTHLY=stripe-price-id-basic-monthly:latest,STRIPE_PRICE_ID_ENTERPRISE_ANNUAL=stripe-price-id-enterprise-annual:latest,STRIPE_PRICE_ID_ENTERPRISE_MONTHLY=stripe-price-id-enterprise-monthly:latest,STRIPE_PRICE_ID_PRO_ANNUAL=stripe-price-id-pro-annual:latest,STRIPE_PRICE_ID_PRO_MONTHLY=stripe-price-id-pro-monthly:latest,STRIPE_PRICE_ID_MAXIMUM_MONTHLY=stripe-price-id-maximum-monthly:latest,STRIPE_PRICE_ID_MAXIMUM_ANNUAL=stripe-price-id-maximum-annual:latest,STRIPE_PUBLISHABLE_KEY=stripe-publishable-key:latest,PINECONE_HOST_ORCHESTRATOR_KB=pinecone-host-orchestrator-kb:latest,PINECONE_HOST_MODEL_KNOWLEDGE=pinecone-host-model-knowledge:latest,PINECONE_HOST_MEMORY=pinecone-host-memory:latest,PINECONE_HOST_RLHF_FEEDBACK=pinecone-host-rlhf-feedback:latest,PINECONE_HOST_AGENTIC_QUICKSTART_TEST=pinecone-host-agentic-quickstart-test:latest,SLACK_WEBHOOK_URL=slack-webhook-url:latest,RESEND_API_KEY=resend-api-key:latest"
         echo "Deploy complete."
