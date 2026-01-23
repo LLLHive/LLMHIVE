@@ -56,10 +56,10 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --port=8080 \
-          --memory=8Gi \
+          --memory=4Gi \
           --cpu=4 \
           --min-instances=5 \
-          --max-instances=100 \
+          --max-instances=50 \
           --timeout=900 \
           --concurrency=80 \
           --cpu-boost \
