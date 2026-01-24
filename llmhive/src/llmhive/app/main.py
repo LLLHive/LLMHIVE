@@ -43,11 +43,32 @@ except ImportError as e:
     logging.getLogger(__name__).warning("Error handling modules not available: %s", e)
 
 # Database imports are optional; some minimal deployments may not use the DB.
+# Initialize with defaults to prevent NameError
+engine = None
+Base = None
+OpenRouterBase = None
+
 try:
-    from .db import engine  # type: ignore
-    from .models import Base  # type: ignore
-    # IMPORTANT: Import rankings models to register them with Base.metadata
-    # This ensures their tables are created when create_all() is called
+    # Use the proper database module (not the stub db/)
+    from .database import get_engine, is_database_available
+    
+    # Import billing/subscription models from models package
+    from .models import (  # type: ignore
+        Base,
+        Subscription,
+        UsageRecord,
+        User,
+        Conversation,
+        MemoryEntry,
+        KnowledgeDocument,
+        Task,
+        ModelFeedback,
+        ModelMetric,
+        UserFeedback,
+    )
+    
+    # Also import OpenRouter models (they use a different Base)
+    from .openrouter.models import Base as OpenRouterBase  # type: ignore
     from .openrouter.rankings_models import (  # noqa: F401
         OpenRouterCategory,
         OpenRouterRankingSnapshot,
@@ -55,10 +76,15 @@ try:
         OpenRouterSyncStatus,
         OpenRouterModelAlert,
     )
-    logging.getLogger(__name__).info("Rankings models imported for database initialization")
+    
+    # Get the actual engine
+    engine = get_engine() if is_database_available() else None
+    
+    logging.getLogger(__name__).info(
+        "Database models imported - engine available: %s", 
+        engine is not None
+    )
 except Exception as exc:  # pragma: no cover - defensive logging only
-    engine = None  # type: ignore
-    Base = None  # type: ignore
     logging.getLogger(__name__).warning("Database imports failed: %s", exc)
 
 # OpenTelemetry tracing imports (optional)
@@ -412,10 +438,18 @@ if TRACING_AVAILABLE:
 
 
 # Create database tables (if DB is configured)
-if Base is not None and engine is not None:
+if engine is not None:
     try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables initialized successfully")
+        # Create billing/core model tables
+        if Base is not None:
+            Base.metadata.create_all(bind=engine)
+            logger.info("Core database tables (billing, users, etc.) initialized successfully")
+        
+        # Create OpenRouter model tables (separate Base)
+        if OpenRouterBase is not None:
+            OpenRouterBase.metadata.create_all(bind=engine)
+            logger.info("OpenRouter database tables initialized successfully")
+            
     except Exception as e:
         logger.warning(f"Database initialization failed: {e}")
         logger.warning("Application will continue but database operations may fail")
