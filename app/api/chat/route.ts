@@ -139,7 +139,22 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json()
+    // Parse request body with detailed error handling
+    let body: any
+    try {
+      body = await req.json()
+    } catch (parseError: any) {
+      console.error("[Chat API] Failed to parse request body:", parseError.message)
+      return NextResponse.json(
+        { 
+          error: "Invalid request body",
+          details: "Failed to parse JSON. Check that your message isn't too long.",
+          suggestion: "Try breaking your message into smaller parts."
+        },
+        { status: 400 }
+      )
+    }
+
     const {
       messages,
       models,  // User-selected models from the UI
@@ -150,17 +165,46 @@ export async function POST(req: NextRequest) {
       projectId,
     } = body
 
+    // Detailed logging for debugging
+    console.log("[Chat API] Request received:", {
+      messagesCount: messages?.length || 0,
+      hasModels: !!models,
+      hasSettings: !!orchestratorSettings,
+      chatId: chatId?.substring(0, 10) || "none",
+    })
+
     // Extract the latest user message as the prompt
     const userMessages = messages?.filter((m: any) => m.role === "user") || []
     const latestUserMessage = userMessages[userMessages.length - 1]
     const prompt = latestUserMessage?.content || ""
 
+    // Enhanced empty prompt debugging
     if (!prompt) {
+      console.error("[Chat API] Empty prompt received:", {
+        totalMessages: messages?.length || 0,
+        userMessages: userMessages.length,
+        latestHasContent: !!latestUserMessage?.content,
+        contentType: typeof latestUserMessage?.content,
+        contentLength: latestUserMessage?.content?.length || 0,
+      })
       return NextResponse.json(
-        { error: "No prompt provided" },
+        { 
+          error: "No prompt provided",
+          details: "Your message appears to be empty. Please enter a message and try again.",
+          debug: process.env.NODE_ENV === 'development' ? {
+            messagesReceived: messages?.length || 0,
+            userMessagesFound: userMessages.length,
+          } : undefined
+        },
         { status: 400 }
       )
     }
+
+    // Log prompt info (truncated for security)
+    console.log("[Chat API] Processing prompt:", {
+      length: prompt.length,
+      preview: prompt.substring(0, 50) + (prompt.length > 50 ? "..." : ""),
+    })
 
     // Build conversation history in the format expected by backend
     const history = (messages || []).map((m: any) => ({

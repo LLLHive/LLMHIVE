@@ -16,15 +16,34 @@ export async function GET() {
 
     // Call backend to get subscription status
     // Try the new endpoint first, fall back to the old one
-    const response = await fetch(`${BACKEND_URL}/api/v1/billing/subscription/${userId}`, {
-      headers: {
-        "X-API-Key": process.env.LLMHIVE_API_KEY || "",
-      },
-    })
+    let response: Response
+    try {
+      response = await fetch(`${BACKEND_URL}/api/v1/billing/subscription/${userId}`, {
+        headers: {
+          "X-API-Key": process.env.LLMHIVE_API_KEY || "",
+        },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(10000),
+      })
+    } catch (fetchError) {
+      // Network error or timeout - return free tier as fallback
+      console.warn("[Billing] Failed to reach backend, defaulting to free tier:", fetchError)
+      return NextResponse.json({
+        subscription: {
+          tier: "free",
+          status: "active",
+          billingCycle: null,
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+        }
+      })
+    }
 
     if (!response.ok) {
-      // If no subscription found, return free tier
-      if (response.status === 404) {
+      // If no subscription found OR backend error, return free tier
+      // This handles both 404 (not found) and 500 (database issues)
+      if (response.status === 404 || response.status >= 500) {
+        console.log(`[Billing] Backend returned ${response.status}, defaulting to free tier`)
         return NextResponse.json({
           subscription: {
             tier: "free",
