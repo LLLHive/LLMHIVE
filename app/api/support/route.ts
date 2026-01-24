@@ -12,7 +12,7 @@ import { auth } from "@clerk/nextjs/server"
 import { sendSupportTicketNotification } from "@/lib/slack"
 import { sendTicketConfirmationEmail } from "@/lib/email"
 
-const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "http://localhost:8000"
+const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 
 // Support ticket types
 type TicketType = "general" | "technical" | "billing" | "enterprise" | "bug" | "feature"

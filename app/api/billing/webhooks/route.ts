@@ -57,7 +57,7 @@ interface SubscriptionData {
 async function upsertSubscription(data: SubscriptionData): Promise<void> {
   // In production, this would update Firestore, your database, or Clerk metadata
   // For now, we'll make a call to the backend API
-  const backendUrl = process.env.LLMHIVE_BACKEND_URL || "http://localhost:8000";
+  const backendUrl = process.env.LLMHIVE_BACKEND_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app";
   
   try {
     const response = await fetch(`${backendUrl}/api/v1/billing/subscription/sync`, {

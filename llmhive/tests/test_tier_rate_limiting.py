@@ -230,7 +230,7 @@ class TestAccountTierModel:
     def test_account_tier_enum_members(self) -> None:
         """Test AccountTier enum has all expected members."""
         members = list(AccountTier)
-        assert len(members) == 5  # LITE, PRO, ENTERPRISE, MAXIMUM, FREE
+        assert len(members) == 5  # Updated: LITE, PRO, ENTERPRISE, MAXIMUM, FREE
         assert AccountTier.FREE in members
         assert AccountTier.PRO in members
         assert AccountTier.ENTERPRISE in members

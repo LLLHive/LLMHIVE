@@ -15,7 +15,7 @@
  */
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 const CRON_SECRET = process.env.CRON_SECRET
 
 export async function POST(req: NextRequest) {

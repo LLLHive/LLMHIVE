@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server"
 /**
  * Backend API URL for persistent storage (Firestore + Pinecone)
  */
-const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 
 /**
  * GET /api/projects - Get all projects for the current user

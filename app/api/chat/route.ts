@@ -112,7 +112,8 @@ async function fetchWithRetry(
 
 export async function POST(req: NextRequest) {
   // Debug: Log environment variable status at the start of every request
-  const apiBase = process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL
+  // Use fallback URL for Cloud Run backend
+  const apiBase = process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
   const apiKey = process.env.LLMHIVE_API_KEY
   
   console.log("[Chat API] Environment check:", {
