@@ -227,7 +227,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
             <Button 
               size="sm" 
               onClick={resetWidget}
-              className="bg-white text-black hover:bg-white/90 font-medium px-8 py-2 shadow-lg hover:shadow-xl transition-all border-2 border-white/20"
+              className="bg-white text-black hover:bg-white font-medium px-8 py-2 shadow-lg hover:shadow-2xl transition-shadow border-2 border-gray-200 hover:scale-105"
             >
               Close
             </Button>
