@@ -170,7 +170,7 @@ export function Sidebar({
     <>
       <aside
         className={cn(
-          "llmhive-glass-sidebar flex flex-col transition-all duration-300 relative h-full",
+          "llmhive-glass-sidebar flex flex-col transition-all duration-300 relative h-full overflow-visible",
           collapsed ? "w-16" : "w-52",
         )}
       >
@@ -824,9 +824,9 @@ function ConversationItem({
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="start" 
-          side="bottom"
-          sideOffset={4}
-          className="w-48 p-1 z-[200]"
+          side="left"
+          sideOffset={8}
+          className="w-48 p-1 z-[9999]"
         >
           {/* Share option */}
           <DropdownMenuItem
