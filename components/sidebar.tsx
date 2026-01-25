@@ -258,10 +258,10 @@ export function Sidebar({
               </div>
             )}
 
-            {/* Content - ChatGPT Style Layout */}
-            <ScrollArea className="flex-1 [&_[data-radix-scroll-area-scrollbar]]:opacity-100 [&_[data-radix-scroll-area-thumb]]:bg-white/30 [&_[data-radix-scroll-area-viewport]]:!overflow-visible">
-              {/* Inner wrapper - reduced padding to fit 3-dot menu */}
-              <div className="px-2 pb-4">
+            {/* Content - Simple scrollable div (replaced ScrollArea to fix 3-dot button clipping) */}
+            <div className="flex-1 overflow-y-auto overflow-x-visible px-2 pb-4" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.3) transparent' }}>
+              {/* Inner wrapper */}
+              <div>
               {/* Collaborate Section - Links to Settings/Collaboration */}
               <div className="py-2">
                 <button
@@ -457,7 +457,7 @@ export function Sidebar({
                 </div>
               )}
               </div>{/* Close inner wrapper */}
-            </ScrollArea>
+            </div>{/* Close scrollable container */}
             
             {/* Settings at the bottom */}
             <div className="px-3 py-3 border-t border-border/50 mt-auto">
