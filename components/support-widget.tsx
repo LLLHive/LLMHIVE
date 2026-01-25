@@ -211,7 +211,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
         )}
 
         {view === "success" && (
-          <div className="text-center py-4">
+          <div className="text-center py-4 pb-6">
             <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="h-8 w-8 text-green-500" />
             </div>
@@ -221,12 +221,19 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
                 {ticketId}
               </p>
             )}
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-6">
               We&apos;ll respond within 24 hours.
             </p>
-            <Button variant="outline" size="sm" onClick={resetWidget}>
-              Close
-            </Button>
+            <div className="flex justify-center items-center min-h-[40px]">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={resetWidget}
+                className="relative z-10 bg-background hover:bg-accent hover:text-accent-foreground border-2 transition-all shadow-sm hover:shadow"
+              >
+                Close
+              </Button>
+            </div>
           </div>
         )}
       </div>
