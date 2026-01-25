@@ -259,7 +259,7 @@ export function Sidebar({
             )}
 
             {/* Content - ChatGPT Style Layout */}
-            <ScrollArea className="flex-1 [&_[data-radix-scroll-area-scrollbar]]:opacity-100 [&_[data-radix-scroll-area-thumb]]:bg-white/30">
+            <ScrollArea className="flex-1 [&_[data-radix-scroll-area-scrollbar]]:opacity-100 [&_[data-radix-scroll-area-thumb]]:bg-white/30 [&_[data-radix-scroll-area-viewport]]:!overflow-visible">
               {/* Inner wrapper - reduced padding to fit 3-dot menu */}
               <div className="px-2 pb-4">
               {/* Collaborate Section - Links to Settings/Collaboration */}
@@ -809,14 +809,8 @@ function ConversationItem({
             variant="ghost" 
             size="icon" 
             onClick={(e) => e.stopPropagation()}
-            className={cn(
-              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
-              // Always visible - users reported menu disappearing in "see all" mode
-              "opacity-70 hover:opacity-100 focus:opacity-100",
-              "hover:bg-secondary-foreground/10",
-              // Ensure it's above the highlight background
-              "relative z-10"
-            )}
+            className="h-6 w-6 min-w-6 flex-shrink-0 rounded-md opacity-70 hover:opacity-100 focus:opacity-100 hover:bg-secondary-foreground/10 z-50"
+            style={{ position: 'relative', visibility: 'visible', display: 'flex' }}
             aria-label="Chat options"
           >
             <MoreHorizontal className="h-4 w-4" />
