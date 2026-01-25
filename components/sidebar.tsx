@@ -259,9 +259,9 @@ export function Sidebar({
             )}
 
             {/* Content - ChatGPT Style Layout */}
-            <ScrollArea className="flex-1 px-2 [&_[data-radix-scroll-area-scrollbar]]:opacity-100 [&_[data-radix-scroll-area-thumb]]:bg-white/30">
-              {/* Inner wrapper with padding to prevent clipping of rounded corners */}
-              <div className="px-1 pb-4">
+            <ScrollArea className="flex-1 [&_[data-radix-scroll-area-scrollbar]]:opacity-100 [&_[data-radix-scroll-area-thumb]]:bg-white/30">
+              {/* Inner wrapper - reduced padding to fit 3-dot menu */}
+              <div className="px-2 pb-4">
               {/* Collaborate Section - Links to Settings/Collaboration */}
               <div className="py-2">
                 <button
@@ -397,7 +397,7 @@ export function Sidebar({
                 </button>
                 
                 {chatsExpanded && (
-                  <div className="mt-1 space-y-0.5 pr-2">
+                  <div className="mt-1 space-y-0.5">
                     {visibleStandaloneChats.length === 0 ? (
                       <div className="py-4 text-center text-sm text-muted-foreground">
                         No chats yet. Start a new chat!
