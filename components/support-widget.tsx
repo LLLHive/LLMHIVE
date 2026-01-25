@@ -221,14 +221,13 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
                 {ticketId}
               </p>
             )}
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-6">
               We&apos;ll respond within 24 hours.
             </p>
             <Button 
-              variant="outline" 
               size="sm" 
               onClick={resetWidget}
-              className="bg-card hover:bg-accent hover:text-accent-foreground border-2 transition-all shadow hover:shadow-md"
+              className="bg-white text-black hover:bg-white/90 font-medium px-8 py-2 shadow-lg hover:shadow-xl transition-all border-2 border-white/20"
             >
               Close
             </Button>
