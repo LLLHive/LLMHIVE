@@ -116,7 +116,7 @@
   - Password reset (handled by Clerk)
 
 ### 9. Customer Support
-- [ ] Set up support email (support@llmhive.ai)
+- [ ] Set up support email (info@llmhive.ai)
 - [ ] Consider chat widget (Intercom, Crisp, or similar)
 - [ ] Create FAQ page
 - [ ] Set up help documentation site

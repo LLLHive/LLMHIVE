@@ -435,8 +435,8 @@ client = LLMHive(api_key="...", debug=True)
 
 - **Documentation**: [docs.llmhive.io](https://docs.llmhive.io)
 - **Community**: [community.llmhive.io](https://community.llmhive.io)
-- **Email**: support@llmhive.io
-- **Enterprise**: enterprise@llmhive.io
+- **Email**: info@llmhive.ai
+- **Enterprise**: info@llmhive.ai
 
 ---
 

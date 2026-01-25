@@ -229,7 +229,7 @@ export default function UserTicketsPage() {
           </Link>
 
           <a 
-            href="mailto:support@llmhive.ai" 
+            href="mailto:info@llmhive.ai" 
             className="group bg-card border border-border rounded-xl p-6 hover:border-[var(--bronze)]/50 transition-colors"
           >
             <ExternalLink className="h-8 w-8 text-[var(--bronze)] mb-4" />
@@ -237,7 +237,7 @@ export default function UserTicketsPage() {
               Email Support
             </h3>
             <p className="text-sm text-muted-foreground">
-              Reach us directly at support@llmhive.ai
+              Reach us directly at info@llmhive.ai
             </p>
           </a>
         </div>

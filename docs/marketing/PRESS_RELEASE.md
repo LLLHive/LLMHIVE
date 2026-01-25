@@ -82,7 +82,7 @@ LLMHive is redefining AI assistance through intelligent multi-model orchestratio
 **[NAME]**  
 [TITLE]  
 LLMHive  
-Email: press@llmhive.ai  
+Email: info@llmhive.ai  
 Phone: [PHONE]
 
 ---

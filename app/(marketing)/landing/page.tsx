@@ -411,7 +411,7 @@ export default function LandingPage() {
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-zinc-400">
                 <li><Link href="/contact" className="hover:text-white transition-colors">Help Center</Link></li>
-                <li><a href="mailto:support@llmhive.ai" className="hover:text-white transition-colors">support@llmhive.ai</a></li>
+                <li><a href="mailto:info@llmhive.ai" className="hover:text-white transition-colors">info@llmhive.ai</a></li>
               </ul>
             </div>
           </div>

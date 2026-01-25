@@ -98,7 +98,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: "Are you SOC 2 compliant?",
-        answer: "We're currently pursuing SOC 2 Type II certification. Enterprise customers can request our security documentation and compliance reports by contacting enterprise@llmhive.ai."
+        answer: "We're currently pursuing SOC 2 Type II certification. Enterprise customers can request our security documentation and compliance reports by contacting info@llmhive.ai."
       },
       {
         question: "Can I delete my data?",
@@ -144,7 +144,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: "Can we get a custom contract?",
-        answer: "Yes! Enterprise customers can negotiate custom terms, SLAs, pricing, and features. Contact enterprise@llmhive.ai to discuss your needs."
+        answer: "Yes! Enterprise customers can negotiate custom terms, SLAs, pricing, and features. Contact info@llmhive.ai to discuss your needs."
       },
       {
         question: "Do you offer on-premise deployment?",
@@ -330,7 +330,7 @@ export default function HelpCenterPage() {
                 Contact Support
               </Button>
             </Link>
-            <a href="mailto:support@llmhive.ai">
+            <a href="mailto:info@llmhive.ai">
               <Button variant="outline" className="gap-2">
                 <ExternalLink className="h-4 w-4" />
                 Email Us

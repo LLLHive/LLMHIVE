@@ -232,7 +232,7 @@ After comprehensive cost optimization on January 22, 2026, we reduced average qu
 ### Customer Support
 | Channel | Status | Response Time |
 |---------|:------:|:-------------:|
-| Email (support@llmhive.ai) | ✅ | <24 hours |
+| Email (info@llmhive.ai) | ✅ | <24 hours |
 | Slack notifications | ✅ | Real-time |
 | In-app chat | ⏳ | Phase 2 |
 | Phone support | ⏳ | Enterprise only |

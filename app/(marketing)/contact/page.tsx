@@ -90,8 +90,8 @@ export default function ContactPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 General inquiries<br />
-                <a href="mailto:hello@llmhive.ai" className="text-[var(--bronze)] hover:underline">
-                  hello@llmhive.ai
+                <a href="mailto:info@llmhive.ai" className="text-[var(--bronze)] hover:underline">
+                  info@llmhive.ai
                 </a>
               </p>
             </div>
@@ -105,8 +105,8 @@ export default function ContactPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 Technical support<br />
-                <a href="mailto:support@llmhive.ai" className="text-[var(--bronze)] hover:underline">
-                  support@llmhive.ai
+                <a href="mailto:info@llmhive.ai" className="text-[var(--bronze)] hover:underline">
+                  info@llmhive.ai
                 </a>
               </p>
             </div>
@@ -120,8 +120,8 @@ export default function ContactPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 Sales & partnerships<br />
-                <a href="mailto:enterprise@llmhive.ai" className="text-[var(--bronze)] hover:underline">
-                  enterprise@llmhive.ai
+                <a href="mailto:info@llmhive.ai" className="text-[var(--bronze)] hover:underline">
+                  info@llmhive.ai
                 </a>
               </p>
             </div>

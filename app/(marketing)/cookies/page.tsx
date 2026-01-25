@@ -130,7 +130,7 @@ export default function CookiePolicyPage() {
             <p className="text-muted-foreground leading-relaxed">
               If you have questions about our use of cookies, please contact us at:
               <br /><br />
-              <strong>Email:</strong> privacy@llmhive.ai
+              <strong>Email:</strong> info@llmhive.ai
             </p>
           </section>
         </div>

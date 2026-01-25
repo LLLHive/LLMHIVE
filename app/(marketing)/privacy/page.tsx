@@ -113,7 +113,7 @@ export default function PrivacyPolicyPage() {
             <p className="text-muted-foreground leading-relaxed">
               If you have questions about this Privacy Policy or your data, contact us at:
               <br /><br />
-              <strong>Email:</strong> privacy@llmhive.ai
+              <strong>Email:</strong> info@llmhive.ai
               <br />
               <strong>Address:</strong> [Your Business Address]
             </p>

@@ -146,7 +146,7 @@ export default function PricingPage() {
   const handleSubscribe = async (tier: PricingTier) => {
     // Enterprise goes to contact sales
     if (tier.tier === "enterprise") {
-      window.location.href = "mailto:sales@llmhive.ai?subject=Enterprise Inquiry - LLMHive"
+      window.location.href = "mailto:info@llmhive.ai?subject=Enterprise Inquiry - LLMHive"
       return
     }
 

@@ -144,7 +144,7 @@ export default function TermsOfServicePage() {
             <p className="text-muted-foreground leading-relaxed">
               For questions about these Terms, contact us at:
               <br /><br />
-              <strong>Email:</strong> legal@llmhive.ai
+              <strong>Email:</strong> info@llmhive.ai
               <br />
               <strong>Address:</strong> [Your Business Address]
             </p>

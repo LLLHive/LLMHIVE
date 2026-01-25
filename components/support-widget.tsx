@@ -133,7 +133,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
             </Link>
 
             <a
-              href="mailto:support@llmhive.ai"
+              href="mailto:info@llmhive.ai"
               className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[var(--bronze)]/50 hover:bg-muted/50 transition-all"
             >
               <div className="w-10 h-10 rounded-full bg-[var(--bronze)]/10 flex items-center justify-center">
@@ -141,7 +141,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
               </div>
               <div>
                 <div className="font-medium">Email Us</div>
-                <div className="text-xs text-muted-foreground">support@llmhive.ai</div>
+                <div className="text-xs text-muted-foreground">info@llmhive.ai</div>
               </div>
             </a>
           </div>

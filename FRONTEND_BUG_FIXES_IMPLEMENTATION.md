@@ -110,7 +110,7 @@ if (response.status === 403) {
       <strong>Subscription Limit:</strong> {subscriptionError.message}
     </p>
     <a
-      href="mailto:support@llmhive.com?subject=Upgrade Request"
+      href="mailto:info@llmhive.ai?subject=Upgrade Request"
       className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium"
     >
       Contact us to upgrade →
