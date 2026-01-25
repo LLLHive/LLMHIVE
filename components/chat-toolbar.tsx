@@ -82,6 +82,7 @@ const domainPacks: { value: DomainPack; label: string }[] = [
 
 // Response format options
 const responseFormats = [
+  { value: "automatic", label: "Automatic", description: "Let the orchestrator choose the best method" },
   { value: "default", label: "Default", description: "Natural conversational" },
   { value: "structured", label: "Structured", description: "Headers and sections" },
   { value: "bullet-points", label: "Bullets", description: "Concise bullet list" },
@@ -445,19 +446,38 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-48">
-          {responseFormats.map((format) => (
-            <DropdownMenuItem
-              key={format.value}
-              onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
-              className="flex flex-col items-start gap-0.5 cursor-pointer"
-            >
-              <div className="flex items-center w-full gap-2">
-                <span className="flex-1 font-medium">{format.label}</span>
-                {(settings as any).answerFormat === format.value && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-              </div>
-              <span className="text-[10px] text-muted-foreground">{format.description}</span>
-            </DropdownMenuItem>
+        <DropdownMenuContent align="start" className="w-56">
+          {responseFormats.map((format, index) => (
+            <div key={format.value}>
+              <DropdownMenuItem
+                onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
+                className="flex flex-col items-start gap-0.5 cursor-pointer"
+              >
+                {format.value === "automatic" ? (
+                  // Special styling for Automatic option
+                  <div className="flex items-center w-full gap-2">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-3 w-3 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium">{format.label}</span>
+                      <div className="text-[10px] text-muted-foreground">{format.description}</div>
+                    </div>
+                    {(settings as any).answerFormat === format.value && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                  </div>
+                ) : (
+                  // Standard styling for other options
+                  <>
+                    <div className="flex items-center w-full gap-2">
+                      <span className="flex-1 font-medium">{format.label}</span>
+                      {(settings as any).answerFormat === format.value && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{format.description}</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+              {format.value === "automatic" && <DropdownMenuSeparator />}
+            </div>
           ))}
         </DropdownMenuContent>
       </DropdownMenu>

@@ -41,6 +41,7 @@ const domainPacks = [
 
 // Response format options (same as chat toolbar)
 const responseFormats = [
+  { value: "automatic", label: "Automatic", description: "Let the orchestrator choose the best method" },
   { value: "default", label: "Default", description: "Natural conversational format" },
   { value: "structured", label: "Structured", description: "With headers and sections" },
   { value: "bullet-points", label: "Bullet Points", description: "Concise bullet list format" },

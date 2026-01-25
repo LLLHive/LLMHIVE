@@ -195,6 +195,7 @@ export interface StandardLLMSettings {
 }
 
 export type AnswerFormat = 
+  | "automatic"  // Automatically select best format based on prompt/answer
   | "default"
   | "structured"
   | "bullet-points"

@@ -49,7 +49,7 @@ export const DEFAULT_ORCHESTRATOR_SETTINGS: OrchestratorSettings = {
   },
   // UI/UX settings
   enableSpellCheck: true, // Spell check enabled by default
-  answerFormat: "default", // Natural conversational format
+  answerFormat: "automatic", // Automatically select best format
   enableClarificationQuestions: true, // Ask clarifying questions when needed
 }
 
