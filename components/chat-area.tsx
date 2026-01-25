@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { Send, Paperclip, Mic, MicOff, X, ImageIcon, FileText, RefreshCw, AlertCircle, Sparkles, Brain, Code, Briefcase, Camera, Volume2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ChevronDown, Check, Scale, Stethoscope, Megaphone, GraduationCap, Landmark, Building2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Check, Scale, Stethoscope, Megaphone, GraduationCap, Landmark, Building2, MessageSquare } from "lucide-react"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
 import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
 import { toast } from "@/lib/toast"
@@ -108,6 +108,10 @@ export function ChatArea({
   const [lastTokensUsed, setLastTokensUsed] = useState<number>(0)
   const [lastLatencyMs, setLastLatencyMs] = useState<number>(0)
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null)
+  
+  // Active prompt display - shows the current prompt being processed
+  const [activePrompt, setActivePrompt] = useState<string | null>(null)
+  const [isPromptExpanded, setIsPromptExpanded] = useState(false)
   
   // Answer comparison for A/B testing
   const { comparisonData, showComparison, hideComparison, isComparing } = useAnswerComparison()
@@ -540,6 +544,10 @@ export function ChatArea({
 
     onSendMessage(userMessage)
 
+    // Store the prompt for display while processing
+    setActivePrompt(enhancedInput)
+    setIsPromptExpanded(false)
+    
     setInput("")
     setAttachments([])
     setIsLoading(true)
@@ -770,6 +778,7 @@ export function ChatArea({
       setIsLoading(false)
       setLoadingStartTime(undefined)
       setRetryStatus(null)
+      setActivePrompt(null)
     }
   }
 
@@ -869,6 +878,7 @@ export function ChatArea({
       setIsLoading(false)
       setLoadingStartTime(undefined)
       setRegeneratingMessageId(null)
+      setActivePrompt(null)
     }
   }, [isLoading, regeneratingMessageId, orchestratorSettings, conversation?.id, onSendMessage])
 
@@ -942,6 +952,40 @@ export function ChatArea({
         </div>
       )}
 
+      {/* Active Prompt Display - Shows the current prompt being processed */}
+      {isLoading && activePrompt && (
+        <div className="px-4 py-2 border-b border-white/10 glass-content">
+          <div className="max-w-4xl mx-auto">
+            <button
+              onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+              className="w-full flex items-center gap-2 text-left group"
+            >
+              <MessageSquare className="h-4 w-4 text-[var(--bronze)] flex-shrink-0" />
+              <span className="text-xs text-muted-foreground">Your prompt:</span>
+              {isPromptExpanded ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground ml-auto" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto" />
+              )}
+            </button>
+            <div 
+              className={`mt-2 text-sm text-foreground/80 bg-white/5 rounded-lg p-3 border border-white/10 transition-all duration-200 ${
+                isPromptExpanded 
+                  ? 'max-h-[300px] overflow-y-auto' 
+                  : 'max-h-[60px] overflow-hidden'
+              }`}
+            >
+              <p className="whitespace-pre-wrap">{activePrompt}</p>
+            </div>
+            {!isPromptExpanded && activePrompt.length > 150 && (
+              <p className="text-xs text-muted-foreground mt-1 text-center">
+                Click to expand full prompt ({activePrompt.length} characters)
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       <ScrollArea className="flex-1 relative z-10" ref={scrollAreaRef} onScroll={handleScroll}>
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
           {displayMessages.map((message, index) => {
@@ -978,6 +1022,7 @@ export function ChatArea({
                   }
                   setIsLoading(false)
                   setLoadingStartTime(undefined)
+                  setActivePrompt(null)
                   setOrchestrationStatus((prev) => ({ ...prev, isActive: false }))
                   toast.info("Query cancelled. Try a simpler question for faster results.")
                 }}
@@ -1075,7 +1120,13 @@ export function ChatArea({
           <div className="relative">
             <Textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value)
+                // Auto-resize textarea based on content
+                const target = e.target as HTMLTextAreaElement
+                target.style.height = 'auto'
+                target.style.height = `${Math.min(target.scrollHeight, 300)}px`
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault()
@@ -1084,9 +1135,10 @@ export function ChatArea({
               }}
               placeholder={isListening ? "Listening... speak now" : "Ask the hive mind anything..."}
               aria-label="Chat message input"
-              className={`min-h-[56px] md:min-h-[72px] pr-28 md:pr-36 resize-none bg-white/5 border-white/10 focus:border-[var(--bronze)] text-sm md:text-base ${
+              className={`min-h-[56px] md:min-h-[72px] max-h-[300px] pr-28 md:pr-36 resize-none bg-white/5 border-white/10 focus:border-[var(--bronze)] text-sm md:text-base overflow-y-auto ${
                 isListening ? 'border-red-500/50 ring-1 ring-red-500/20' : ''
               }`}
+              style={{ height: 'auto' }}
               spellCheck={orchestratorSettings.enableSpellCheck ?? true}
               autoComplete="on"
               autoCorrect="on"

@@ -259,9 +259,9 @@ export function Sidebar({
             )}
 
             {/* Content - ChatGPT Style Layout */}
-            <ScrollArea className="flex-1 px-2 overflow-visible">
+            <ScrollArea className="flex-1 px-2">
               {/* Inner wrapper with padding to prevent clipping of rounded corners */}
-              <div className="px-1">
+              <div className="px-1 pb-4">
               {/* Collaborate Section - Links to Settings/Collaboration */}
               <div className="py-2">
                 <button
@@ -811,10 +811,9 @@ function ConversationItem({
             onClick={(e) => e.stopPropagation()}
             className={cn(
               "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
-              // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
-              "opacity-100 md:opacity-40 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
+              // Always visible - users reported menu disappearing in "see all" mode
+              "opacity-70 hover:opacity-100 focus:opacity-100",
               "hover:bg-secondary-foreground/10",
-              "focus:opacity-100 focus-visible:opacity-100",
               // Ensure it's above the highlight background
               "relative z-10"
             )}
