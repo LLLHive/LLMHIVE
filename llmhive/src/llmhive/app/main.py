@@ -662,3 +662,11 @@ try:
     logger.info("✓ Admin router enabled at /api/v1/admin/")
 except ImportError as e:
     logger.debug("Admin router not available: %s", e)
+
+# Include support router for customer support tickets
+try:
+    from .routers import support as support_router
+    app.include_router(support_router.router)
+    logger.info("✓ Support router enabled at /v1/support/")
+except ImportError as e:
+    logger.debug("Support router not available: %s", e)
