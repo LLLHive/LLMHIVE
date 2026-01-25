@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
     console.log(`  Subject: ${subject}`)
     
     // Send Slack notification (fire and forget)
-    sendSupportTicketNotification({
+    const slackPromise = sendSupportTicketNotification({
       id: ticket.id!,
       name,
       email,
@@ -140,8 +140,18 @@ export async function POST(req: NextRequest) {
       message,
       type: ticket.type,
       priority: ticket.priority!,
+    })
+    
+    slackPromise.then((success) => {
+      if (success) {
+        console.log(`[Support] ✅ Slack notification sent for ticket ${ticket.id}`)
+      } else {
+        console.warn(`[Support] ⚠️ Slack notification FAILED for ticket ${ticket.id}`)
+        console.warn(`[Support] Check SLACK_WEBHOOK_URL environment variable in Vercel`)
+      }
     }).catch((err) => {
-      console.error("[Support] Failed to send Slack notification:", err)
+      console.error(`[Support] ❌ Slack notification ERROR for ticket ${ticket.id}:`, err)
+      console.error(`[Support] Verify SLACK_WEBHOOK_URL is set: ${!!process.env.SLACK_WEBHOOK_URL}`)
     })
     
     // Determine estimated response time
