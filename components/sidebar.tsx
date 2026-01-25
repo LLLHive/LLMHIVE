@@ -171,7 +171,7 @@ export function Sidebar({
       <aside
         className={cn(
           "llmhive-glass-sidebar flex flex-col transition-all duration-300 relative h-full overflow-visible",
-          collapsed ? "w-16" : "w-52",
+          collapsed ? "w-16" : "w-60",
         )}
       >
         {/* Logo */}
