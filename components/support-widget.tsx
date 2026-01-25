@@ -82,9 +82,9 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[360px] max-h-[500px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-6 right-6 z-50 w-[360px] max-h-[500px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col">
       {/* Header */}
-      <div className="bg-[var(--bronze)] text-white px-4 py-3 flex items-center justify-between">
+      <div className="bg-[var(--bronze)] text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
           <span className="font-medium">Support</span>
@@ -98,7 +98,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 overflow-y-auto flex-1">
         {view === "menu" && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground mb-4">
@@ -211,35 +211,33 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
         )}
 
         {view === "success" && (
-          <div className="text-center py-4 pb-6">
-            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+          <div className="text-center py-2">
+            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
               <CheckCircle2 className="h-8 w-8 text-green-500" />
             </div>
             <h3 className="font-semibold mb-2">Message Sent!</h3>
             {ticketId && (
-              <p className="text-xs font-mono bg-muted px-2 py-1 rounded inline-block mb-3">
+              <p className="text-xs font-mono bg-muted px-2 py-1 rounded inline-block mb-2">
                 {ticketId}
               </p>
             )}
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-sm text-muted-foreground mb-4">
               We&apos;ll respond within 24 hours.
             </p>
-            <div className="flex justify-center items-center min-h-[40px]">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={resetWidget}
-                className="relative z-10 bg-background hover:bg-accent hover:text-accent-foreground border-2 transition-all shadow-sm hover:shadow"
-              >
-                Close
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={resetWidget}
+              className="bg-card hover:bg-accent hover:text-accent-foreground border-2 transition-all shadow hover:shadow-md"
+            >
+              Close
+            </Button>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-border bg-muted/30">
+      <div className="px-4 py-2 border-t border-border bg-muted/30 flex-shrink-0">
         <p className="text-xs text-center text-muted-foreground">
           Powered by LLMHive Support
         </p>
