@@ -258,10 +258,13 @@ export function Sidebar({
               </div>
             )}
 
-            {/* Content - Simple scrollable div (replaced ScrollArea to fix 3-dot button clipping) */}
-            <div className="flex-1 overflow-y-auto overflow-x-visible px-2 pb-4" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.3) transparent' }}>
-              {/* Inner wrapper */}
-              <div>
+            {/* Content - Scrollable container with extra right padding for 3-dot menu */}
+            <div 
+              className="flex-1 overflow-y-auto overflow-x-visible pl-2 pr-3 pb-4" 
+              style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.3) transparent' }}
+            >
+              {/* Inner wrapper with relative positioning for dropdown portal */}
+              <div className="relative">
               {/* Collaborate Section - Links to Settings/Collaboration */}
               <div className="py-2">
                 <button
@@ -653,31 +656,24 @@ function ProjectItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
       
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={(e) => e.stopPropagation()}
-            className={cn(
-              "h-6 w-6 min-w-6 flex-shrink-0 rounded-md transition-opacity duration-200",
-              // Mobile: fully visible; Desktop: subtle but visible, brighter on hover/focus
-              "opacity-100 md:opacity-40 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
-              "hover:bg-secondary-foreground/10",
-              "focus:opacity-100 focus-visible:opacity-100",
-              // Ensure it's above the highlight background
-              "relative z-10"
-            )}
+            className="h-6 w-6 min-w-[24px] flex-shrink-0 rounded-md bg-secondary/50 opacity-100 hover:bg-secondary-foreground/20 focus:bg-secondary-foreground/20"
             aria-label="Project options"
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
-          align="start" 
+          align="end" 
           side="bottom" 
           sideOffset={4} 
-          className="w-52 p-1 z-[200]"
+          className="w-52 p-1 z-[9999]"
+          forceMount
         >
           <DropdownMenuItem
             onClick={() => { onSelect() }}
@@ -803,24 +799,24 @@ function ConversationItem({
         <Pin className="h-3 w-3 text-[var(--bronze)] flex-shrink-0" />
       )}
 
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={(e) => e.stopPropagation()}
-            className="h-6 w-6 min-w-6 flex-shrink-0 rounded-md opacity-70 hover:opacity-100 focus:opacity-100 hover:bg-secondary-foreground/10 z-50"
-            style={{ position: 'relative', visibility: 'visible', display: 'flex' }}
+            className="h-6 w-6 min-w-[24px] flex-shrink-0 rounded-md bg-secondary/50 opacity-100 hover:bg-secondary-foreground/20 focus:bg-secondary-foreground/20"
             aria-label="Chat options"
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
-          align="start" 
-          side="left"
-          sideOffset={8}
+          align="end" 
+          side="bottom"
+          sideOffset={4}
           className="w-48 p-1 z-[9999]"
+          forceMount
         >
           {/* Share option */}
           <DropdownMenuItem

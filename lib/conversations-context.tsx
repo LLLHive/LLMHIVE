@@ -7,6 +7,8 @@ import type { Conversation, Project } from "@/lib/types"
 const CONVERSATIONS_KEY = "llmhive-conversations"
 const PROJECTS_KEY = "llmhive-projects"
 const SYNC_DEBOUNCE_MS = 2000
+const MAX_SYNC_RETRIES = 3
+const SYNC_RETRY_DELAY_MS = 1000
 
 interface ConversationsContextValue {
   conversations: Conversation[]
@@ -118,9 +120,10 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         // Try to load from API (if authenticated) and merge with localStorage
         if (auth?.isAuthenticated && auth?.user?.id) {
           try {
+            // Use retry logic for resilient API calls
             const [convRes, projRes] = await Promise.all([
-              fetch("/api/conversations"),
-              fetch("/api/projects"),
+              fetchWithRetry("/api/conversations", { method: "GET" }),
+              fetchWithRetry("/api/projects", { method: "GET" }),
             ])
 
             if (convRes.ok && projRes.ok) {
@@ -145,29 +148,34 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
 
               console.log(`[ConversationsContext] API returned: ${apiConvs.length} conversations, ${apiProjects.length} projects (storage: ${convData.storage})`)
               
-              // Merge strategy: Use the source with MORE data, or merge by ID
+              // Merge strategy: Combine local and remote, keeping the most recent version of each
               const mergedConvs = mergeByTimestamp(localConvs, apiConvs)
               const mergedProjects = mergeByTimestamp(localProjects, apiProjects)
               
-              if (mergedConvs.length !== localConvs.length || JSON.stringify(mergedConvs) !== JSON.stringify(localConvs)) {
-                setConversations(mergedConvs)
-                localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(mergedConvs))
-                console.log(`[ConversationsContext] Merged conversations: ${mergedConvs.length} total`)
-              }
+              // Update state and localStorage with merged data
+              setConversations(mergedConvs)
+              localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(mergedConvs))
+              console.log(`[ConversationsContext] Merged conversations: ${mergedConvs.length} total (local: ${localConvs.length}, remote: ${apiConvs.length})`)
               
-              if (mergedProjects.length !== localProjects.length || JSON.stringify(mergedProjects) !== JSON.stringify(localProjects)) {
-                setProjects(mergedProjects)
-                localStorage.setItem(PROJECTS_KEY, JSON.stringify(mergedProjects))
-                console.log(`[ConversationsContext] Merged projects: ${mergedProjects.length} total`)
+              setProjects(mergedProjects)
+              localStorage.setItem(PROJECTS_KEY, JSON.stringify(mergedProjects))
+              console.log(`[ConversationsContext] Merged projects: ${mergedProjects.length} total`)
+              
+              // Immediately sync merged data back to API to ensure consistency
+              if (mergedConvs.length > apiConvs.length || mergedProjects.length > apiProjects.length) {
+                console.log("[ConversationsContext] Local has more data, syncing to API...")
+                pendingChangesRef.current = { conversations: true, projects: true }
               }
               
               setLastSyncedAt(new Date())
               setIsInitialized(true)
               setIsLoading(false)
               return
+            } else {
+              console.warn(`[ConversationsContext] API returned non-OK: convRes=${convRes.status}, projRes=${projRes.status}`)
             }
           } catch (apiError) {
-            console.warn("[ConversationsContext] API load failed, using localStorage:", apiError)
+            console.warn("[ConversationsContext] API load failed after retries, using localStorage:", apiError)
           }
         }
 
@@ -208,7 +216,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     }
   }, [projects, isInitialized])
 
-  // Debounced sync to API when data changes
+  // Debounced sync to API when data changes - with retry logic
   useEffect(() => {
     if (!isInitialized || !auth?.isAuthenticated) return
 
@@ -224,7 +232,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         
         if (pendingChangesRef.current.conversations) {
           promises.push(
-            fetch("/api/conversations", {
+            fetchWithRetry("/api/conversations", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
@@ -245,7 +253,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         
         if (pendingChangesRef.current.projects) {
           promises.push(
-            fetch("/api/projects", {
+            fetchWithRetry("/api/projects", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
@@ -259,14 +267,22 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
           )
         }
         
-        await Promise.all(promises)
+        const results = await Promise.all(promises)
         
-        // Clear pending changes
-        pendingChangesRef.current = { conversations: false, projects: false }
-        setLastSyncedAt(new Date())
-        console.log("[ConversationsContext] Synced to API")
+        // Check if all syncs succeeded
+        const allSucceeded = results.every(r => r.ok)
+        
+        if (allSucceeded) {
+          // Clear pending changes only if sync succeeded
+          pendingChangesRef.current = { conversations: false, projects: false }
+          setLastSyncedAt(new Date())
+          console.log("[ConversationsContext] ✅ Synced to API successfully")
+        } else {
+          console.warn("[ConversationsContext] ⚠️ Some syncs failed, will retry on next change")
+        }
       } catch (e) {
-        console.error("[ConversationsContext] API sync failed:", e)
+        console.error("[ConversationsContext] ❌ API sync failed after retries:", e)
+        // Don't clear pending changes - will retry on next change
       } finally {
         setIsSyncing(false)
       }
@@ -360,8 +376,8 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     setIsSyncing(true)
     
     try {
-      await Promise.all([
-        fetch("/api/conversations", {
+      const results = await Promise.all([
+        fetchWithRetry("/api/conversations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
@@ -377,7 +393,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
             })),
           }),
         }),
-        fetch("/api/projects", {
+        fetchWithRetry("/api/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
@@ -390,11 +406,17 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         }),
       ])
       
-      pendingChangesRef.current = { conversations: false, projects: false }
-      setLastSyncedAt(new Date())
-      console.log("[ConversationsContext] Manual sync completed")
+      const allSucceeded = results.every(r => r.ok)
+      
+      if (allSucceeded) {
+        pendingChangesRef.current = { conversations: false, projects: false }
+        setLastSyncedAt(new Date())
+        console.log("[ConversationsContext] ✅ Manual sync completed successfully")
+      } else {
+        throw new Error("Some syncs failed")
+      }
     } catch (e) {
-      console.error("[ConversationsContext] Manual sync failed:", e)
+      console.error("[ConversationsContext] ❌ Manual sync failed:", e)
       throw e
     } finally {
       setIsSyncing(false)
@@ -426,6 +448,44 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       {children}
     </ConversationsContext.Provider>
   )
+}
+
+/**
+ * Fetch with retry logic for resilient API calls
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries: number = MAX_SYNC_RETRIES
+): Promise<Response> {
+  let lastError: Error | null = null
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options)
+      
+      // Success or client error (don't retry 4xx)
+      if (response.ok || (response.status >= 400 && response.status < 500)) {
+        return response
+      }
+      
+      // Server error (5xx) - retry
+      console.warn(`[ConversationsContext] API ${url} returned ${response.status}, retry ${attempt + 1}/${maxRetries}`)
+      lastError = new Error(`HTTP ${response.status}`)
+      
+    } catch (error) {
+      // Network error - retry
+      console.warn(`[ConversationsContext] Network error for ${url}, retry ${attempt + 1}/${maxRetries}:`, error)
+      lastError = error as Error
+    }
+    
+    // Wait before retry with exponential backoff
+    if (attempt < maxRetries - 1) {
+      await new Promise(resolve => setTimeout(resolve, SYNC_RETRY_DELAY_MS * Math.pow(2, attempt)))
+    }
+  }
+  
+  throw lastError || new Error("Max retries exceeded")
 }
 
 /**
