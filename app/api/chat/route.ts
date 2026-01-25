@@ -278,6 +278,20 @@ export async function POST(req: NextRequest) {
     // Supports: hrm, prompt-diffusion, deep-conf, adaptive-ensemble
     const protocol = orchestrationEngine || settings.orchestrationEngine || null
     
+    // Map frontend format to backend format_style
+    // Frontend: automatic, default, structured, bullet-points, step-by-step, academic, concise
+    // Backend: paragraph, bullet, numbered, markdown, structured, executive_summary, etc.
+    const formatMapping: Record<string, string> = {
+      "automatic": "automatic",  // Let backend choose best format
+      "default": "paragraph",    // Natural conversational = paragraph
+      "structured": "structured", // Headers and sections
+      "bullet-points": "bullet", // Bullet list
+      "step-by-step": "numbered", // Numbered steps
+      "academic": "markdown",     // Formal with citations = markdown
+      "concise": "executive_summary", // Brief = executive summary
+    }
+    const formatStyle = formatMapping[settings.answerFormat || "automatic"] || "automatic"
+    
     const payload = {
       prompt,
       models: selectedModels.length > 0 ? selectedModels : null,  // User-selected models for ensemble
@@ -286,6 +300,7 @@ export async function POST(req: NextRequest) {
       reasoning_method: selectedReasoningMethod, // Map from advancedReasoningMethods dropdown
       domain_pack: settings.domainPack || "default",
       agent_mode: settings.agentMode || "team",
+      format_style: formatStyle,  // Answer format: automatic, paragraph, bullet, numbered, structured, etc.
       tuning: {
         prompt_optimization: settings.promptOptimization !== false,
         output_validation: settings.outputValidation !== false,
@@ -338,6 +353,7 @@ export async function POST(req: NextRequest) {
       prompt: prompt.slice(0, 50) + "...",
       models: selectedModels,
       protocol,
+      format_style: formatStyle,
       orchestration: payload.orchestration,
       backendUrl: apiBase,
     })

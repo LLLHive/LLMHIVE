@@ -6,7 +6,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, Lock, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2, ListTree } from "lucide-react"
+import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, Lock, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2, ListTree, List, ListOrdered, LayoutGrid } from "lucide-react"
 import type {
   ReasoningMode,
   DomainPack,
@@ -80,15 +80,50 @@ const domainPacks: { value: DomainPack; label: string }[] = [
   { value: "finance", label: "Finance" },
 ]
 
-// Response format options
+// Response format options - Enhanced with clear descriptions
 const responseFormats = [
-  { value: "automatic", label: "Automatic", description: "Let the orchestrator choose the best method" },
-  { value: "default", label: "Default", description: "Natural conversational" },
-  { value: "structured", label: "Structured", description: "Headers and sections" },
-  { value: "bullet-points", label: "Bullets", description: "Concise bullet list" },
-  { value: "step-by-step", label: "Steps", description: "Numbered instructions" },
-  { value: "academic", label: "Academic", description: "Formal with citations" },
-  { value: "concise", label: "Concise", description: "Brief answers" },
+  { 
+    value: "automatic", 
+    label: "Automatic", 
+    description: "AI selects optimal format based on your query",
+    icon: "Sparkles"
+  },
+  { 
+    value: "default", 
+    label: "Conversational", 
+    description: "Natural flowing paragraphs with explanations",
+    icon: "MessageSquare"
+  },
+  { 
+    value: "structured", 
+    label: "Structured", 
+    description: "Organized with headers, sections & emphasis",
+    icon: "LayoutGrid"
+  },
+  { 
+    value: "bullet-points", 
+    label: "Bullet Points", 
+    description: "Quick-scan lists for easy reading",
+    icon: "List"
+  },
+  { 
+    value: "step-by-step", 
+    label: "Step-by-Step", 
+    description: "Numbered instructions for how-to tasks",
+    icon: "ListOrdered"
+  },
+  { 
+    value: "academic", 
+    label: "Academic", 
+    description: "Formal style with citations & references",
+    icon: "GraduationCap"
+  },
+  { 
+    value: "concise", 
+    label: "Concise", 
+    description: "Brief, direct answers — just the essentials",
+    icon: "Zap"
+  },
 ]
 
 const advancedReasoningMethods: { value: AdvancedReasoningMethod; label: string; description: string }[] = [
@@ -446,39 +481,58 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
-          {responseFormats.map((format, index) => (
-            <div key={format.value}>
-              <DropdownMenuItem
-                onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
-                className="flex flex-col items-start gap-0.5 cursor-pointer"
-              >
-                {format.value === "automatic" ? (
-                  // Special styling for Automatic option
-                  <div className="flex items-center w-full gap-2">
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center shrink-0">
-                      <Sparkles className="h-3 w-3 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium">{format.label}</span>
-                      <div className="text-[10px] text-muted-foreground">{format.description}</div>
-                    </div>
-                    {(settings as any).answerFormat === format.value && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+        <DropdownMenuContent align="start" className="w-64">
+          {responseFormats.map((format) => {
+            const isSelected = (settings as any).answerFormat === format.value || 
+              ((settings as any).answerFormat === undefined && format.value === "automatic")
+            const isAutomatic = format.value === "automatic"
+            
+            // Map icon names to components
+            const iconMap: Record<string, React.ElementType> = {
+              "Sparkles": Sparkles,
+              "MessageSquare": MessageSquare,
+              "LayoutGrid": LayoutGrid,
+              "List": List,
+              "ListOrdered": ListOrdered,
+              "GraduationCap": GraduationCap,
+              "Zap": Zap,
+            }
+            const IconComponent = iconMap[format.icon] || ListTree
+            
+            return (
+              <div key={format.value}>
+                <DropdownMenuItem
+                  onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
+                  className="flex items-center gap-2.5 py-2.5 cursor-pointer"
+                >
+                  {/* Icon with special styling for Automatic */}
+                  <div className={cn(
+                    "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
+                    isAutomatic 
+                      ? "bg-gradient-to-br from-[var(--bronze)] to-amber-600" 
+                      : "bg-muted"
+                  )}>
+                    <IconComponent className={cn(
+                      "h-3.5 w-3.5",
+                      isAutomatic ? "text-white" : "text-muted-foreground"
+                    )} />
                   </div>
-                ) : (
-                  // Standard styling for other options
-                  <>
-                    <div className="flex items-center w-full gap-2">
-                      <span className="flex-1 font-medium">{format.label}</span>
-                      {(settings as any).answerFormat === format.value && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{format.description}</span>
-                  </>
-                )}
-              </DropdownMenuItem>
-              {format.value === "automatic" && <DropdownMenuSeparator />}
-            </div>
-          ))}
+                  
+                  {/* Label and Description */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">{format.label}</div>
+                    <div className="text-[10px] text-muted-foreground leading-tight">{format.description}</div>
+                  </div>
+                  
+                  {/* Check mark for selected */}
+                  {isSelected && <Check className="h-4 w-4 text-[var(--bronze)] shrink-0" />}
+                </DropdownMenuItem>
+                
+                {/* Separator after Automatic */}
+                {isAutomatic && <DropdownMenuSeparator />}
+              </div>
+            )
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
 

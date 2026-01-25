@@ -39,15 +39,15 @@ const domainPacks = [
   { value: "finance", label: "Finance", description: "Financial analysis, compliance" },
 ]
 
-// Response format options (same as chat toolbar)
+// Response format options (same as chat toolbar) - Enhanced with icons
 const responseFormats = [
-  { value: "automatic", label: "Automatic", description: "Let the orchestrator choose the best method" },
-  { value: "default", label: "Default", description: "Natural conversational format" },
-  { value: "structured", label: "Structured", description: "With headers and sections" },
-  { value: "bullet-points", label: "Bullet Points", description: "Concise bullet list format" },
-  { value: "step-by-step", label: "Step by Step", description: "Numbered instructions" },
-  { value: "academic", label: "Academic", description: "Formal with citations" },
-  { value: "concise", label: "Concise", description: "Brief, to-the-point answers" },
+  { value: "automatic", label: "Automatic", description: "AI selects optimal format based on your query", icon: "✨" },
+  { value: "default", label: "Conversational", description: "Natural flowing paragraphs with explanations", icon: "💬" },
+  { value: "structured", label: "Structured", description: "Organized with headers, sections & emphasis", icon: "📊" },
+  { value: "bullet-points", label: "Bullet Points", description: "Quick-scan lists for easy reading", icon: "📝" },
+  { value: "step-by-step", label: "Step-by-Step", description: "Numbered instructions for how-to tasks", icon: "1️⃣" },
+  { value: "academic", label: "Academic", description: "Formal style with citations & references", icon: "🎓" },
+  { value: "concise", label: "Concise", description: "Brief, direct answers — just the essentials", icon: "⚡" },
 ]
 
 // Card data matching home page template card style exactly
