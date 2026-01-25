@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Maximize2, Code, Share2, Eye, EyeOff, Twitter, Link, MessageSquare, Info } from "lucide-react"
+import { Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Maximize2, Code, Share2, Eye, EyeOff, Twitter, Link, MessageSquare, Info, Sparkles } from "lucide-react"
+import { MarkdownRenderer } from "@/components/markdown-renderer"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -246,8 +247,9 @@ export function MessageBubble({
           </div>
         )}
 
-        <div className="rounded-2xl bg-card border border-border p-4">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+        <div className="rounded-2xl bg-card border border-border p-4 md:p-5 shadow-sm">
+          {/* World-class markdown rendering for AI responses */}
+          <MarkdownRenderer content={message.content} />
 
           {message.citations && message.citations.length > 0 && (
             <div className="mt-3 pt-3 border-t border-border space-y-2">

@@ -1054,3 +1054,184 @@ button[aria-label*="Hide"] svg path {
   color: white !important;
   stroke: white !important;
 }
+
+/* ============================================================================
+   WORLD-CLASS MARKDOWN RENDERER STYLES
+   Premium styling for AI responses that match the LLMHive brand
+   ============================================================================ */
+
+.llmhive-markdown {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+
+/* Code block syntax highlighting - GitHub Dark style */
+.llmhive-markdown pre code {
+  color: #e6edf3;
+  font-size: 0.8125rem;
+  tab-size: 2;
+}
+
+.llmhive-markdown pre code .hljs-keyword,
+.llmhive-markdown pre code .hljs-selector-tag,
+.llmhive-markdown pre code .hljs-built_in,
+.llmhive-markdown pre code .hljs-name,
+.llmhive-markdown pre code .hljs-tag {
+  color: #ff7b72;
+}
+
+.llmhive-markdown pre code .hljs-string,
+.llmhive-markdown pre code .hljs-title,
+.llmhive-markdown pre code .hljs-section,
+.llmhive-markdown pre code .hljs-attribute,
+.llmhive-markdown pre code .hljs-literal,
+.llmhive-markdown pre code .hljs-template-tag,
+.llmhive-markdown pre code .hljs-template-variable,
+.llmhive-markdown pre code .hljs-addition {
+  color: #a5d6ff;
+}
+
+.llmhive-markdown pre code .hljs-comment,
+.llmhive-markdown pre code .hljs-quote,
+.llmhive-markdown pre code .hljs-deletion,
+.llmhive-markdown pre code .hljs-meta {
+  color: #8b949e;
+}
+
+.llmhive-markdown pre code .hljs-number,
+.llmhive-markdown pre code .hljs-symbol,
+.llmhive-markdown pre code .hljs-bullet,
+.llmhive-markdown pre code .hljs-link {
+  color: #79c0ff;
+}
+
+.llmhive-markdown pre code .hljs-function,
+.llmhive-markdown pre code .hljs-class .hljs-title {
+  color: #d2a8ff;
+}
+
+.llmhive-markdown pre code .hljs-params,
+.llmhive-markdown pre code .hljs-variable {
+  color: #ffa657;
+}
+
+.llmhive-markdown pre code .hljs-regexp,
+.llmhive-markdown pre code .hljs-type {
+  color: #7ee787;
+}
+
+/* Ordered list counter styling */
+.llmhive-markdown ol {
+  counter-reset: list-counter;
+}
+
+.llmhive-markdown ol > li {
+  counter-increment: list-counter;
+}
+
+.llmhive-markdown ol > li::before {
+  content: none;
+}
+
+.llmhive-markdown ol > li > span:first-child::before {
+  content: counter(list-counter);
+}
+
+/* Smooth scrollbar for code blocks */
+.llmhive-markdown pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.llmhive-markdown pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.llmhive-markdown pre::-webkit-scrollbar-thumb {
+  background: var(--bronze);
+  border-radius: 3px;
+  opacity: 0.5;
+}
+
+.llmhive-markdown pre::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+/* Task list styling */
+.llmhive-markdown input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--bronze);
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  position: relative;
+  top: 2px;
+  cursor: pointer;
+}
+
+.llmhive-markdown input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, var(--bronze), var(--gold));
+}
+
+.llmhive-markdown input[type="checkbox"]:checked::after {
+  content: "✓";
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  font-size: 0.7rem;
+  color: white;
+  font-weight: bold;
+}
+
+/* Table alternating row colors */
+.llmhive-markdown tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark .llmhive-markdown tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Animated gradient border for focused elements */
+.llmhive-markdown blockquote {
+  position: relative;
+}
+
+.llmhive-markdown blockquote::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--bronze), var(--gold), var(--bronze));
+  background-size: 100% 200%;
+  animation: gradientShift 3s ease infinite;
+  border-radius: 2px;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 0% 100%; }
+}
+
+/* Selection highlighting */
+.llmhive-markdown ::selection {
+  background: var(--bronze);
+  color: white;
+}
+
+/* Print styles */
+@media print {
+  .llmhive-markdown pre {
+    background: #f6f8fa !important;
+    color: #24292e !important;
+    border: 1px solid #e1e4e8 !important;
+  }
+  
+  .llmhive-markdown code {
+    background: #f6f8fa !important;
+  }
+}
