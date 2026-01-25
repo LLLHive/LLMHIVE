@@ -9,6 +9,7 @@ const PROJECTS_KEY = "llmhive-projects"
 const SYNC_DEBOUNCE_MS = 2000
 const MAX_SYNC_RETRIES = 3
 const SYNC_RETRY_DELAY_MS = 1000
+const POLL_INTERVAL_MS = 10000 // Poll every 10 seconds for changes from other browsers
 
 interface ConversationsContextValue {
   conversations: Conversation[]
@@ -192,6 +193,74 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
 
     loadData()
   }, [auth?.isAuthenticated, auth?.user?.id])
+
+  // Poll for changes from API (to sync changes from other browsers/devices)
+  useEffect(() => {
+    if (!isInitialized || !auth?.isAuthenticated) return
+
+    const pollForUpdates = async () => {
+      try {
+        const [convRes, projRes] = await Promise.all([
+          fetchWithRetry("/api/conversations", { method: "GET" }, 1), // Only 1 retry for polling
+          fetchWithRetry("/api/projects", { method: "GET" }, 1),
+        ])
+
+        if (convRes.ok && projRes.ok) {
+          const convData = await convRes.json()
+          const projData = await projRes.json()
+          
+          // Restore Date objects
+          const apiConvs = (convData.conversations || []).map((c: any) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+            messages: (c.messages || []).map((m: any) => ({
+              ...m,
+              timestamp: new Date(m.timestamp),
+            })),
+          }))
+          
+          const apiProjects = (projData.projects || []).map((p: any) => ({
+            ...p,
+            createdAt: new Date(p.createdAt),
+          }))
+
+          // Merge with current state (API is source of truth for deletes)
+          const mergedConvs = mergeByTimestamp(conversations, apiConvs)
+          const mergedProjects = mergeByTimestamp(projects, apiProjects)
+          
+          // Only update if data actually changed
+          const convsChanged = JSON.stringify(mergedConvs.map(c => c.id).sort()) !== JSON.stringify(conversations.map(c => c.id).sort())
+          const projectsChanged = JSON.stringify(mergedProjects.map(p => p.id).sort()) !== JSON.stringify(projects.map(p => p.id).sort())
+          
+          if (convsChanged || projectsChanged) {
+            console.log(`[ConversationsContext] 🔄 Polling detected changes from API`)
+            
+            if (convsChanged) {
+              setConversations(mergedConvs)
+              localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(mergedConvs))
+              console.log(`[ConversationsContext] Updated conversations: ${mergedConvs.length} (was ${conversations.length})`)
+            }
+            
+            if (projectsChanged) {
+              setProjects(mergedProjects)
+              localStorage.setItem(PROJECTS_KEY, JSON.stringify(mergedProjects))
+              console.log(`[ConversationsContext] Updated projects: ${mergedProjects.length} (was ${projects.length})`)
+            }
+          }
+        }
+      } catch (error) {
+        // Silently fail polling - don't disrupt user experience
+        console.debug("[ConversationsContext] Polling failed (silent):", error)
+      }
+    }
+
+    // Start polling
+    const intervalId = setInterval(pollForUpdates, POLL_INTERVAL_MS)
+    
+    // Cleanup on unmount
+    return () => clearInterval(intervalId)
+  }, [isInitialized, auth?.isAuthenticated, conversations, projects])
 
   // Save to localStorage when data changes
   useEffect(() => {
@@ -489,29 +558,42 @@ async function fetchWithRetry(
 }
 
 /**
- * Merge two arrays of items by ID, preferring the more recently updated item
+ * Merge two arrays of items by ID, preferring the more recently updated item.
+ * 
+ * IMPORTANT: This merge strategy prioritizes the REMOTE (API) as the source of truth for deletions.
+ * - If an item exists in remote, it will be included (using the most recent version)
+ * - If an item exists ONLY in local (not in remote), it's considered deleted on the server
+ *   and will NOT be included in the result
+ * 
+ * This ensures that deletions in one browser sync to all other browsers.
  */
 function mergeByTimestamp<T extends { id: string; updatedAt?: Date }>(
   local: T[],
   remote: T[]
 ): T[] {
   const map = new Map<string, T>()
+  const remoteIds = new Set(remote.map(item => item.id))
   
-  // Add all local items
-  for (const item of local) {
+  // Start with remote items (API is source of truth)
+  for (const item of remote) {
     map.set(item.id, item)
   }
   
-  // Merge remote items - prefer more recent
-  for (const item of remote) {
-    const existing = map.get(item.id)
-    if (!existing) {
-      map.set(item.id, item)
-    } else if (item.updatedAt && existing.updatedAt) {
-      const itemTime = new Date(item.updatedAt).getTime()
-      const existingTime = new Date(existing.updatedAt).getTime()
-      if (itemTime > existingTime) {
-        map.set(item.id, item)
+  // Add local items that are also in remote (prefer more recent)
+  for (const localItem of local) {
+    if (!remoteIds.has(localItem.id)) {
+      // Item exists locally but not in remote - it was deleted, skip it
+      continue
+    }
+    
+    const remoteItem = map.get(localItem.id)
+    if (remoteItem && localItem.updatedAt && remoteItem.updatedAt) {
+      const localTime = new Date(localItem.updatedAt).getTime()
+      const remoteTime = new Date(remoteItem.updatedAt).getTime()
+      
+      // If local is more recent, use local version
+      if (localTime > remoteTime) {
+        map.set(localItem.id, localItem)
       }
     }
   }
