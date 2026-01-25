@@ -123,6 +123,7 @@ export function ChatArea({
   const [userHasScrolled, setUserHasScrolled] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const eventIdRef = useRef(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -489,6 +490,10 @@ export function ChatArea({
         
         // Clear input immediately so user sees their message was received
         setInput("")
+        // Reset textarea height to default
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto'
+        }
         
         // THEN: After a brief delay, show the clarification message (ensures user message renders first)
         setTimeout(() => {
@@ -549,6 +554,10 @@ export function ChatArea({
     setIsPromptExpanded(false)
     
     setInput("")
+    // Reset textarea height to default when clearing
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
     setAttachments([])
     setIsLoading(true)
     setLoadingStartTime(Date.now())
@@ -1119,6 +1128,7 @@ export function ChatArea({
 
           <div className="relative">
             <Textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
@@ -1138,7 +1148,6 @@ export function ChatArea({
               className={`min-h-[56px] md:min-h-[72px] max-h-[300px] pr-28 md:pr-36 resize-none bg-white/5 border-white/10 focus:border-[var(--bronze)] text-sm md:text-base overflow-y-auto ${
                 isListening ? 'border-red-500/50 ring-1 ring-red-500/20' : ''
               }`}
-              style={{ height: 'auto' }}
               spellCheck={orchestratorSettings.enableSpellCheck ?? true}
               autoComplete="on"
               autoCorrect="on"
