@@ -65,7 +65,7 @@ interface ChatAreaProps {
   onShowArtifact: (artifact: Artifact) => void
   orchestratorSettings: OrchestratorSettings
   onOrchestratorSettingsChange: (settings: Partial<OrchestratorSettings>) => void
-  onOpenAdvancedSettings: () => void
+  // onOpenAdvancedSettings removed - Advanced is now inline dropdown in ChatToolbar
   userAccountMenu?: React.ReactNode
   initialQuery?: string | null
   onInitialQueryProcessed?: () => void
@@ -77,7 +77,7 @@ export function ChatArea({
   onShowArtifact,
   orchestratorSettings,
   onOrchestratorSettingsChange,
-  onOpenAdvancedSettings,
+  // onOpenAdvancedSettings removed
   userAccountMenu,
   initialQuery,
   onInitialQueryProcessed,
@@ -940,7 +940,6 @@ export function ChatArea({
             <ChatToolbar
               settings={orchestratorSettings}
               onSettingsChange={onOrchestratorSettingsChange}
-              onOpenAdvanced={onOpenAdvancedSettings}
             />
           </div>
           {userAccountMenu}

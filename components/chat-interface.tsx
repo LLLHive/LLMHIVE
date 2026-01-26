@@ -8,7 +8,7 @@ import { ChatArea } from "./chat-area"
 import { HomeScreen } from "./home-screen"
 import { ArtifactPanel } from "./artifact-panel"
 import { UserAccountMenu } from "./user-account-menu"
-import { AdvancedSettingsDrawer } from "./advanced-settings-drawer"
+// AdvancedSettingsDrawer removed - now inline dropdown in ChatToolbar
 import { RenameChatModal } from "./rename-chat-modal"
 import { RenameProjectModal } from "./rename-project-modal"
 import { MoveToProjectModal } from "./move-to-project-modal"
@@ -50,7 +50,7 @@ export function ChatInterface() {
   const [showArtifact, setShowArtifact] = useState(false)
   const [currentArtifact, setCurrentArtifact] = useState<Artifact | null>(null)
   const [orchestratorSettings, setOrchestratorSettings] = useState<OrchestratorSettings>(DEFAULT_ORCHESTRATOR_SETTINGS)
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
+  // showAdvancedSettings state removed - now handled by AdvancedSettingsDropdown
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   
@@ -137,27 +137,19 @@ export function ChatInterface() {
           setShowMoveModal(false)
           return
         }
-        if (showAdvancedSettings) {
-          setShowAdvancedSettings(false)
-          return
-        }
+        // showAdvancedSettings removed - handled by dropdown
         if (showArtifact) {
           setShowArtifact(false)
           return
         }
       }
       
-      // Cmd/Ctrl + ,: Open settings
-      if (cmdKey && e.key === "," && !isInput) {
-        e.preventDefault()
-        setShowAdvancedSettings(true)
-        return
-      }
+      // Cmd/Ctrl + ,: Settings shortcut removed - use dropdown instead
     }
     
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [showShortcutsModal, showRenameModal, showMoveModal, showAdvancedSettings, showArtifact])
+  }, [showShortcutsModal, showRenameModal, showMoveModal, showArtifact])
 
   // Get current conversation from context or by ID
   const currentConv = currentConversation || conversations.find((c) => c.id === currentConversationId)
@@ -460,7 +452,6 @@ export function ChatInterface() {
               }}
               orchestratorSettings={orchestratorSettings}
               onOrchestratorSettingsChange={updateOrchestratorSettings}
-              onOpenAdvancedSettings={() => setShowAdvancedSettings(true)}
               initialQuery={initialQuery}
               onInitialQueryProcessed={() => setInitialQuery(null)}
             />
@@ -471,13 +462,7 @@ export function ChatInterface() {
         )}
       </div>
 
-      {/* Advanced Settings Drawer */}
-      <AdvancedSettingsDrawer
-        open={showAdvancedSettings}
-        onOpenChange={setShowAdvancedSettings}
-        settings={orchestratorSettings}
-        onSettingsChange={updateOrchestratorSettings}
-      />
+      {/* Advanced Settings - now handled by inline dropdown in ChatToolbar */}
 
       {/* Rename Chat Modal */}
       <RenameChatModal
