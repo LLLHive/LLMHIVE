@@ -158,9 +158,9 @@ export function OrchestrationStudioDropdown({
 
           <DropdownMenuSeparator />
 
-          {/* Tabs */}
+          {/* Tabs - Budget tab hidden for now (preserved for future tier levels) */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-7">
+            <TabsList className="grid w-full grid-cols-2 h-7">
               <TabsTrigger value="engines" className="text-[10px] gap-1 px-1">
                 <Layers className="h-3 w-3" />
                 Engines
@@ -169,10 +169,12 @@ export function OrchestrationStudioDropdown({
                 <Crown className="h-3 w-3" />
                 Strategy
               </TabsTrigger>
+              {/* Budget tab preserved but hidden - for future account tiers
               <TabsTrigger value="budget" className="text-[10px] gap-1 px-1">
                 <DollarSign className="h-3 w-3" />
                 Budget
               </TabsTrigger>
+              */}
             </TabsList>
 
             {/* Engines Tab */}
@@ -271,7 +273,7 @@ export function OrchestrationStudioDropdown({
               </div>
             </TabsContent>
 
-            {/* Budget Tab */}
+            {/* Budget Tab - HIDDEN for now, preserved for future account tiers
             <TabsContent value="budget" className="mt-2 space-y-2">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -306,6 +308,7 @@ export function OrchestrationStudioDropdown({
                 />
               </div>
             </TabsContent>
+            */}
           </Tabs>
         </div>
       </DropdownMenuContent>

@@ -271,8 +271,12 @@ export async function POST(req: NextRequest) {
     // PR6: Extract orchestration overrides from settings
     const orchestrationOverrides = settings.orchestrationOverrides || {}
     const modelTeam = settings.modelTeam || orchestrationOverrides.modelTeam || null
-    const maxCostUsd = settings.maxCostUsd || orchestrationOverrides.maxCostUsd || null
-    const preferCheaper = settings.preferCheaper || orchestrationOverrides.preferCheaper || false
+    // Budget constraints DISABLED for now - preserves benchmark orchestration
+    // Will be enabled for specific account tiers in the future
+    // const maxCostUsd = settings.maxCostUsd || orchestrationOverrides.maxCostUsd || null
+    // const preferCheaper = settings.preferCheaper || orchestrationOverrides.preferCheaper || false
+    const maxCostUsd = null  // Disabled
+    const preferCheaper = false  // Disabled
     
     // Map orchestration engine from UI to backend protocol
     // Supports: hrm, prompt-diffusion, deep-conf, adaptive-ensemble
