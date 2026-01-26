@@ -11,7 +11,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3 } from "lucide-react"
+import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3, Sliders, Target, Zap } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
+import { loadOrchestratorSettings, saveOrchestratorSettings, DEFAULT_ORCHESTRATOR_SETTINGS } from "@/lib/settings-storage"
+import type { CriteriaSettings } from "@/lib/types"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
@@ -78,6 +81,13 @@ const settingsCards = [
     icon: BarChart3,
     badgeClass: "icon-badge-purple",
   },
+  {
+    id: "tuning",
+    title: "Tuning",
+    description: "Accuracy, speed & creativity balance",
+    icon: Sliders,
+    badgeClass: "icon-badge-cyan",
+  },
 ]
 
 // Connections data
@@ -109,7 +119,7 @@ const appearanceOptions = [
   { id: "soundEffects", label: "Sound Effects", description: "Play sounds for notifications" },
 ]
 
-type DrawerId = "account" | "billing" | "connections" | "notifications" | "privacy" | "appearance" | null
+type DrawerId = "account" | "billing" | "connections" | "notifications" | "privacy" | "appearance" | "tuning" | null
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -135,6 +145,13 @@ export default function SettingsPage() {
   // Account form state
   const [displayName, setDisplayName] = useState("")
   const [isSavingAccount, setIsSavingAccount] = useState(false)
+  
+  // Tuning settings state
+  const [criteriaSettings, setCriteriaSettings] = useState<CriteriaSettings>({
+    accuracy: 70,
+    speed: 70,
+    creativity: 50,
+  })
   
   // Initialize account form with Clerk user data
   useEffect(() => {
@@ -189,6 +206,12 @@ export default function SettingsPage() {
       
       document.documentElement.classList.toggle('compact-mode', parsedAppearance.includes('compactMode'))
       document.documentElement.classList.toggle('no-animations', !parsedAppearance.includes('animations'))
+      
+      // Load tuning/criteria settings
+      const orchestratorSettings = loadOrchestratorSettings()
+      if (orchestratorSettings.criteria) {
+        setCriteriaSettings(orchestratorSettings.criteria)
+      }
     } catch (e) {
       console.error("Failed to load settings:", e)
       setAppearanceSettings(["animations"])
@@ -241,6 +264,22 @@ export default function SettingsPage() {
       return next
     })
   }, [])
+
+  // Handle criteria/tuning changes
+  const handleCriteriaChange = useCallback((newCriteria: CriteriaSettings) => {
+    setCriteriaSettings(newCriteria)
+    // Save to orchestrator settings
+    const currentSettings = loadOrchestratorSettings()
+    saveOrchestratorSettings({ ...currentSettings, criteria: newCriteria })
+  }, [])
+
+  // Tuning presets
+  const tuningPresets = [
+    { name: "Balanced", accuracy: 70, speed: 70, creativity: 50 },
+    { name: "Fast", accuracy: 50, speed: 100, creativity: 30 },
+    { name: "Precise", accuracy: 100, speed: 30, creativity: 40 },
+    { name: "Creative", accuracy: 60, speed: 60, creativity: 100 },
+  ]
 
   const getCount = (id: string) => {
     switch (id) {
@@ -741,6 +780,150 @@ export default function SettingsPage() {
                     </button>
                   )
                 })}
+              </div>
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Tuning Drawer */}
+      <Sheet open={activeDrawer === "tuning"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[320px] sm:w-[380px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="icon-badge icon-badge-cyan">
+                <Sliders className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <SheetTitle className="text-base font-semibold">Tuning</SheetTitle>
+                <p className="text-xs text-muted-foreground">Balance accuracy, speed & creativity</p>
+              </div>
+            </div>
+          </SheetHeader>
+          <ScrollArea className="h-[calc(100vh-100px)]">
+            <div className="p-4 space-y-6">
+              {/* Description */}
+              <div className="p-3 rounded-lg glass-card border border-[var(--bronze)]/20">
+                <h4 className="font-semibold text-sm mb-1 text-[var(--gold)]">Dynamic Criteria Equalizer</h4>
+                <p className="text-xs text-muted-foreground">
+                  Adjust how the AI hive balances accuracy, speed, and creativity for your responses.
+                </p>
+              </div>
+
+              {/* Presets */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Quick Presets</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {tuningPresets.map((preset) => {
+                    const isActive = 
+                      criteriaSettings.accuracy === preset.accuracy &&
+                      criteriaSettings.speed === preset.speed &&
+                      criteriaSettings.creativity === preset.creativity
+                    return (
+                      <Button
+                        key={preset.name}
+                        variant="outline"
+                        size="sm"
+                        className={`text-xs h-auto py-2 ${
+                          isActive 
+                            ? "border-[var(--bronze)] bg-[var(--bronze)]/15 text-[var(--gold)]" 
+                            : "bg-white/5 border-white/10"
+                        }`}
+                        onClick={() => handleCriteriaChange(preset)}
+                      >
+                        {preset.name}
+                      </Button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Accuracy Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                      <Target className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Accuracy</span>
+                      <p className="text-[10px] text-muted-foreground">Higher = more verification</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-blue-500">{criteriaSettings.accuracy}%</span>
+                </div>
+                <Slider
+                  value={[criteriaSettings.accuracy]}
+                  onValueChange={([value]) => handleCriteriaChange({ ...criteriaSettings, accuracy: value })}
+                  max={100}
+                  step={10}
+                  className="[&_[role=slider]]:bg-blue-500 [&_[role=slider]]:border-blue-500"
+                />
+              </div>
+
+              {/* Speed Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                      <Zap className="h-4 w-4 text-green-500" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Speed</span>
+                      <p className="text-[10px] text-muted-foreground">Higher = faster responses</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-green-500">{criteriaSettings.speed}%</span>
+                </div>
+                <Slider
+                  value={[criteriaSettings.speed]}
+                  onValueChange={([value]) => handleCriteriaChange({ ...criteriaSettings, speed: value })}
+                  max={100}
+                  step={10}
+                  className="[&_[role=slider]]:bg-green-500 [&_[role=slider]]:border-green-500"
+                />
+              </div>
+
+              {/* Creativity Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <Palette className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Creativity</span>
+                      <p className="text-[10px] text-muted-foreground">Higher = more inventive</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-purple-500">{criteriaSettings.creativity}%</span>
+                </div>
+                <Slider
+                  value={[criteriaSettings.creativity]}
+                  onValueChange={([value]) => handleCriteriaChange({ ...criteriaSettings, creativity: value })}
+                  max={100}
+                  step={10}
+                  className="[&_[role=slider]]:bg-purple-500 [&_[role=slider]]:border-purple-500"
+                />
+              </div>
+
+              {/* Current Settings Summary */}
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-xs text-muted-foreground mb-2">Current Configuration</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <span className="text-lg font-bold text-blue-500">{criteriaSettings.accuracy}%</span>
+                    <p className="text-[10px] text-muted-foreground">Accuracy</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <span className="text-lg font-bold text-green-500">{criteriaSettings.speed}%</span>
+                    <p className="text-[10px] text-muted-foreground">Speed</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <span className="text-lg font-bold text-purple-500">{criteriaSettings.creativity}%</span>
+                    <p className="text-[10px] text-muted-foreground">Creativity</p>
+                  </div>
+                </div>
               </div>
             </div>
           </ScrollArea>

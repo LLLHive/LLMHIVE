@@ -15,7 +15,7 @@ import type {
   AdvancedFeature,
 } from "@/lib/types"
 import { getModelLogo } from "@/lib/models"
-import { CriteriaEqualizer } from "./criteria-equalizer"
+// CriteriaEqualizer moved to Settings page
 import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
 // OrchestrationStudioDropdown removed - Accuracy vs Speed is in CriteriaEqualizer (Tuning)
 import { EnginesDropdown } from "./engines-dropdown"
@@ -552,11 +552,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Criteria Equalizer */}
-      <CriteriaEqualizer
-        settings={settings.criteria || { accuracy: 70, speed: 70, creativity: 50 }}
-        onChange={(criteria) => onSettingsChange({ criteria })}
-      />
+      {/* Tuning moved to Settings page */}
 
       {/* Advanced Settings - Now a dropdown menu like the others */}
       <AdvancedSettingsDropdown
