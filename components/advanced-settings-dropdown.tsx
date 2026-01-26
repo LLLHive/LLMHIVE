@@ -1,4 +1,6 @@
 "use client"
+
+import { useState } from "react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
@@ -7,9 +9,7 @@ import { Lightbulb, CheckCircle, ListTree, Database, GraduationCap, SpellCheck, 
 import type { OrchestratorSettings } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-interface AdvancedSettingsDrawerProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface AdvancedSettingsDropdownProps {
   settings: OrchestratorSettings
   onSettingsChange: (settings: Partial<OrchestratorSettings>) => void
 }
@@ -59,19 +59,19 @@ const toggleOptions = [
   },
 ]
 
-export function AdvancedSettingsDrawer({
-  open,
-  onOpenChange,
+export function AdvancedSettingsDropdown({
   settings,
   onSettingsChange,
-}: AdvancedSettingsDrawerProps) {
+}: AdvancedSettingsDropdownProps) {
+  const [open, setOpen] = useState(false)
+  
   // Count enabled settings
   const enabledCount = toggleOptions.filter(
     (option) => (settings as any)[option.key]
   ).length
 
   return (
-    <DropdownMenu open={open} onOpenChange={onOpenChange}>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"

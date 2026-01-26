@@ -16,6 +16,7 @@ import type {
 } from "@/lib/types"
 import { getModelLogo } from "@/lib/models"
 import { CriteriaEqualizer } from "./criteria-equalizer"
+import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
@@ -33,7 +34,7 @@ import type { OpenRouterRankingEntry } from "@/lib/openrouter/api"
 interface ChatToolbarProps {
   settings: OrchestratorSettings
   onSettingsChange: (settings: Partial<OrchestratorSettings>) => void
-  onOpenAdvanced: () => void
+  onOpenAdvanced?: () => void  // Optional - kept for backwards compatibility
 }
 
 // Category icon resolver using Lucide components
@@ -542,16 +543,11 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         onChange={(criteria) => onSettingsChange({ criteria })}
       />
 
-      {/* Advanced Settings */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onOpenAdvanced}
-        className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
-      >
-        <Settings2 className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Advanced</span>
-      </Button>
+      {/* Advanced Settings - Now a dropdown menu like the others */}
+      <AdvancedSettingsDropdown
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
     </div>
   )
 }
