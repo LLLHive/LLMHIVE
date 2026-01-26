@@ -130,20 +130,12 @@ const responseFormats = [
   },
 ]
 
+// Only showing reasoning methods that are fully implemented in the backend
 const advancedReasoningMethods: { value: AdvancedReasoningMethod; label: string; description: string }[] = [
   { value: "automatic", label: "Automatic", description: "Let the orchestrator choose the best method" },
   { value: "chain-of-thought", label: "Chain of Thought", description: "Step-by-step reasoning" },
-  { value: "tree-of-thought", label: "Tree of Thought", description: "Explore multiple paths" },
-  { value: "graph-of-thought", label: "Graph of Thought", description: "Non-linear reasoning graph" },
-  { value: "algorithm-of-thought", label: "Algorithm of Thought", description: "Algorithmic problem solving" },
-  { value: "skeleton-of-thought", label: "Skeleton of Thought", description: "Parallel skeleton expansion" },
-  { value: "self-consistency", label: "Self Consistency", description: "Multiple samples, vote" },
-  { value: "cumulative-reasoning", label: "Cumulative Reasoning", description: "Build on prior conclusions" },
-  { value: "meta-prompting", label: "Meta Prompting", description: "LLM orchestrates sub-LLMs" },
-  { value: "react", label: "ReAct", description: "Reason + Act iteratively" },
-  { value: "reflexion", label: "Reflexion", description: "Self-reflection loop" },
-  { value: "least-to-most", label: "Least to Most", description: "Decompose problems" },
-  { value: "plan-and-solve", label: "Plan and Solve", description: "Plan then execute" },
+  { value: "tree-of-thought", label: "Tree of Thought", description: "Explore multiple reasoning paths" },
+  { value: "self-consistency", label: "Self Consistency", description: "Sample multiple times, vote on best" },
 ]
 
 const advancedFeatures: { value: AdvancedFeature; label: string; description: string }[] = [

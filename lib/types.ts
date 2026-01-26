@@ -145,20 +145,12 @@ export interface Integration {
 export type ReasoningMode = "fast" | "standard" | "deep"
 export type DomainPack = "default" | "medical" | "legal" | "marketing" | "coding" | "research" | "finance" | "education" | "real_estate" | "creative"
 export type AgentMode = "single" | "team"
+// Only include reasoning methods that are fully implemented in the backend
 export type AdvancedReasoningMethod =
   | "automatic"
   | "chain-of-thought"
   | "tree-of-thought"
   | "self-consistency"
-  | "react"
-  | "reflexion"
-  | "least-to-most"
-  | "plan-and-solve"
-  | "graph-of-thought"
-  | "algorithm-of-thought"
-  | "skeleton-of-thought"
-  | "cumulative-reasoning"
-  | "meta-prompting"
 
 export type AdvancedFeature =
   | "vector-rag"
