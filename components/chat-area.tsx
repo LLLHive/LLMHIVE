@@ -466,8 +466,8 @@ export function ChatArea({
   const handleSend = async (skipClarification: boolean = false) => {
     if (!input.trim() && attachments.length === 0) return
 
-    // Check if clarification questions are enabled and not skipped
-    if (orchestratorSettings.enableClarificationQuestions && !skipClarification && !pendingClarification) {
+    // Check if clarification questions should be asked (always enabled - backend feature)
+    if (!skipClarification && !pendingClarification) {
       const clarificationDecision = shouldAskClarification(input)
       
       if (clarificationDecision.shouldAskClarification && clarificationDecision.questions.length > 0) {
@@ -1257,8 +1257,7 @@ export function ChatArea({
           )}
           
           <p className="text-[9px] md:text-[10px] text-muted-foreground mt-2 text-center opacity-60">
-            LLMHive uses multiple AI agents for enhanced accuracy
-            {orchestratorSettings.enableClarificationQuestions && " • Clarification questions enabled"}
+            LLMHive uses multiple AI agents for enhanced accuracy • Spell check active
           </p>
         </div>
       </div>

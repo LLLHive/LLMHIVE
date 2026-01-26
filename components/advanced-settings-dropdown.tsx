@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Lightbulb, CheckCircle, ListTree, Database, GraduationCap, SpellCheck, Type, Settings2, ChevronDown } from "lucide-react"
+import { Lightbulb, CheckCircle, ListTree, GraduationCap, SpellCheck, Settings2, ChevronDown } from "lucide-react"
 import type { OrchestratorSettings } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -14,6 +14,8 @@ interface AdvancedSettingsDropdownProps {
   onSettingsChange: (settings: Partial<OrchestratorSettings>) => void
 }
 
+// Note: Shared Memory and Clarification Questions are always enabled in the backend
+// so their toggles have been removed (they were non-functional UI toggles)
 const toggleOptions = [
   {
     key: "promptOptimization" as const,
@@ -34,12 +36,6 @@ const toggleOptions = [
     icon: ListTree,
   },
   {
-    key: "sharedMemory" as const,
-    label: "Shared Memory",
-    description: "Context from previous chats",
-    icon: Database,
-  },
-  {
     key: "learnFromChat" as const,
     label: "Learn from Chat",
     description: "Improve based on conversation",
@@ -48,14 +44,8 @@ const toggleOptions = [
   {
     key: "enableSpellCheck" as const,
     label: "Spell Check",
-    description: "Auto-correct spelling",
+    description: "Auto-correct spelling in prompts",
     icon: SpellCheck,
-  },
-  {
-    key: "enableClarificationQuestions" as const,
-    label: "Clarification Questions",
-    description: "AI asks follow-ups",
-    icon: Type,
   },
 ]
 

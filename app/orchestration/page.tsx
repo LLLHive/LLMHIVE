@@ -177,7 +177,7 @@ const tuningOptions = [
     icon: Check,
   },
   { key: "answerStructure", label: "Answer Structure", description: "Format with clear sections", icon: Layers },
-  { key: "sharedMemory", label: "Shared Memory", description: "Access previous conversations", icon: Hammer },
+  // Note: Shared Memory is always enabled in backend, toggle removed from UI
   {
     key: "learnFromChat",
     label: "Learn from Chat",

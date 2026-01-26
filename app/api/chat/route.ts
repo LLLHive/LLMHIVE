@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
       content: m.content,
     }))
 
-    // Get orchestrator settings with defaults
+    // Get orchestrator settings with defaults (must be before spell check)
     const settings = orchestratorSettings || {
       reasoningMode: "standard",
       domainPack: "default",
@@ -221,6 +221,46 @@ export async function POST(req: NextRequest) {
       outputValidation: true,
       answerStructure: true,
       learnFromChat: true,
+    }
+
+    // Apply spell check to user prompt if enabled (default: true)
+    let processedPrompt = prompt
+    const spellCheckEnabled = settings.enableSpellCheck !== false
+    
+    if (spellCheckEnabled && prompt.length > 0 && prompt.length < 5000) {
+      try {
+        console.log("[Chat API] Applying spell check to prompt...")
+        const spellCheckResponse = await fetch(`${apiBase}/v1/spellcheck/check`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(apiKey ? { "X-API-Key": apiKey } : {}),
+          },
+          body: JSON.stringify({
+            text: prompt,
+            mode: "auto_correct"
+          }),
+        })
+        
+        if (spellCheckResponse.ok) {
+          const spellCheckResult = await spellCheckResponse.json()
+          if (spellCheckResult.corrected && spellCheckResult.corrected !== prompt) {
+            processedPrompt = spellCheckResult.corrected
+            console.log("[Chat API] Spell check applied:", {
+              original: prompt.substring(0, 30) + "...",
+              corrected: processedPrompt.substring(0, 30) + "...",
+              errorCount: spellCheckResult.error_count || 0,
+            })
+          } else {
+            console.log("[Chat API] No spelling corrections needed")
+          }
+        } else {
+          console.warn("[Chat API] Spell check request failed, continuing with original prompt")
+        }
+      } catch (spellCheckError) {
+        console.warn("[Chat API] Spell check error (non-blocking):", spellCheckError)
+        // Continue with original prompt if spell check fails
+      }
     }
 
     // Detect if the query needs real-time data (temporal indicators)
@@ -297,7 +337,7 @@ export async function POST(req: NextRequest) {
     const formatStyle = formatMapping[settings.answerFormat || "automatic"] || "automatic"
     
     const payload = {
-      prompt,
+      prompt: processedPrompt,  // Use spell-checked prompt
       models: selectedModels.length > 0 ? selectedModels : null,  // User-selected models for ensemble
       protocol,  // Orchestration protocol/engine (HRM, Prompt Diffusion, DeepConf, Adaptive Ensemble)
       reasoning_mode: settings.reasoningMode || "standard",
