@@ -787,7 +787,9 @@ export function ChatArea({
       setIsLoading(false)
       setLoadingStartTime(undefined)
       setRetryStatus(null)
-      setActivePrompt(null)
+      // NOTE: We intentionally do NOT clear activePrompt here
+      // The prompt should remain visible (minimized) after response
+      // It will be replaced when user submits a new prompt
     }
   }
 
@@ -887,7 +889,7 @@ export function ChatArea({
       setIsLoading(false)
       setLoadingStartTime(undefined)
       setRegeneratingMessageId(null)
-      setActivePrompt(null)
+      // NOTE: Keep activePrompt visible after regeneration
     }
   }, [isLoading, regeneratingMessageId, orchestratorSettings, conversation?.id, onSendMessage])
 
@@ -961,35 +963,36 @@ export function ChatArea({
         </div>
       )}
 
-      {/* Active Prompt Display - Shows the current prompt being processed */}
-      {isLoading && activePrompt && (
-        <div className="px-4 py-2 border-b border-white/10 glass-content">
+      {/* Active Prompt Display - Shows the current/last prompt (persists after response) */}
+      {activePrompt && (
+        <div className={`px-4 py-2 border-b border-white/10 glass-content transition-all duration-300 ${
+          isLoading ? 'bg-[var(--bronze)]/5' : 'bg-transparent'
+        }`}>
           <div className="max-w-4xl mx-auto">
             <button
               onClick={() => setIsPromptExpanded(!isPromptExpanded)}
               className="w-full flex items-center gap-2 text-left group"
             >
-              <MessageSquare className="h-4 w-4 text-[var(--bronze)] flex-shrink-0" />
-              <span className="text-xs text-muted-foreground">Your prompt:</span>
+              <MessageSquare className={`h-4 w-4 flex-shrink-0 transition-colors ${
+                isLoading ? 'text-[var(--bronze)] animate-pulse' : 'text-muted-foreground'
+              }`} />
+              <span className="text-xs text-muted-foreground">
+                {isLoading ? 'Processing:' : 'Last prompt:'}
+              </span>
+              <span className="text-xs text-muted-foreground/60 truncate flex-1 max-w-[200px]">
+                {!isPromptExpanded && activePrompt.slice(0, 50)}
+                {!isPromptExpanded && activePrompt.length > 50 && '...'}
+              </span>
               {isPromptExpanded ? (
-                <ChevronUp className="h-4 w-4 text-muted-foreground ml-auto" />
+                <ChevronUp className="h-4 w-4 text-muted-foreground ml-auto flex-shrink-0" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto flex-shrink-0" />
               )}
             </button>
-            <div 
-              className={`mt-2 text-sm text-foreground/80 bg-white/5 rounded-lg p-3 border border-white/10 transition-all duration-200 ${
-                isPromptExpanded 
-                  ? 'max-h-[300px] overflow-y-auto' 
-                  : 'max-h-[60px] overflow-hidden'
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{activePrompt}</p>
-            </div>
-            {!isPromptExpanded && activePrompt.length > 150 && (
-              <p className="text-xs text-muted-foreground mt-1 text-center">
-                Click to expand full prompt ({activePrompt.length} characters)
-              </p>
+            {isPromptExpanded && (
+              <div className="mt-2 text-sm text-foreground/80 bg-white/5 rounded-lg p-3 border border-white/10 max-h-[200px] overflow-y-auto">
+                <p className="whitespace-pre-wrap">{activePrompt}</p>
+              </div>
             )}
           </div>
         </div>
@@ -1031,7 +1034,7 @@ export function ChatArea({
                   }
                   setIsLoading(false)
                   setLoadingStartTime(undefined)
-                  setActivePrompt(null)
+                  // Keep activePrompt visible even after cancel
                   setOrchestrationStatus((prev) => ({ ...prev, isActive: false }))
                   toast.info("Query cancelled. Try a simpler question for faster results.")
                 }}

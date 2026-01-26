@@ -15,22 +15,59 @@ import { toast } from "@/lib/toast"
 
 /**
  * Preprocesses content to ensure proper markdown formatting
+ * - Detects inline numbered/bullet lists and formats them properly
  * - Detects code patterns and wraps in code blocks
  * - Restores newlines that may have been stripped
- * - Formats inline code properly
  */
 function preprocessContent(content: string): string {
   if (!content) return content
   
   let processed = content
   
-  // If content already has proper code blocks, don't process
+  // STEP 1: Detect and format inline numbered lists
+  // Pattern: "1. Item one: description 2. Item two: description" etc.
+  const inlineListPattern = /(\d+)\.\s+\*?\*?([^:]+)\*?\*?:\s*([^0-9]+?)(?=\s*\d+\.|$)/g
+  const hasInlineList = /\d+\.\s+\*?\*?[A-Z][^:]+\*?\*?:/.test(processed)
+  
+  if (hasInlineList && !processed.includes("\n\n1.")) {
+    // Convert inline numbered list to proper markdown
+    const items: string[] = []
+    let match
+    const regex = /(\d+)\.\s+\*?\*?([^:]+)\*?\*?:\s*([^0-9]+?)(?=\s*\d+\.|$)/g
+    
+    while ((match = regex.exec(processed)) !== null) {
+      const num = match[1]
+      const title = match[2].trim()
+      const description = match[3].trim().replace(/\s+/g, ' ')
+      items.push(`${num}. **${title}**: ${description}`)
+    }
+    
+    if (items.length >= 2) {
+      // Find intro text (before first numbered item)
+      const firstItemIndex = processed.search(/\d+\.\s+\*?\*?[A-Z]/)
+      const intro = firstItemIndex > 0 ? processed.slice(0, firstItemIndex).trim() : ""
+      
+      // Build formatted output
+      processed = intro ? `${intro}\n\n${items.join('\n\n')}` : items.join('\n\n')
+      
+      return processed
+    }
+  }
+  
+  // STEP 2: Handle simpler inline bullet patterns like "• Item • Item"
+  if (processed.includes("•") && !processed.includes("\n•")) {
+    processed = processed.replace(/\s*•\s*/g, '\n• ').trim()
+    if (processed.startsWith('\n')) {
+      processed = processed.slice(1)
+    }
+  }
+  
+  // STEP 3: If content already has proper code blocks, don't process further
   if (processed.includes("```")) {
     return processed
   }
   
-  // Detect if this looks like code that was flattened to a single line
-  // Patterns: def func(), function name(), class Name, const/let/var, import statements
+  // STEP 4: Detect if this looks like code that was flattened to a single line
   const codePatterns = [
     // Python
     /def\s+\w+\s*\([^)]*\)\s*:/,
