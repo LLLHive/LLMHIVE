@@ -18,6 +18,8 @@ import { getModelLogo } from "@/lib/models"
 import { CriteriaEqualizer } from "./criteria-equalizer"
 import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
 import { OrchestrationStudioDropdown } from "./orchestration-studio-dropdown"
+import { EnginesDropdown } from "./engines-dropdown"
+import { StrategyDropdown } from "./strategy-dropdown"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
@@ -431,6 +433,18 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Engines Dropdown - Between Models and Reasoning */}
+      <EnginesDropdown
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
+
+      {/* Strategy Dropdown - Between Engines and Reasoning */}
+      <StrategyDropdown
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
 
       <DropdownMenu open={reasoningOpen} onOpenChange={setReasoningOpen}>
         <DropdownMenuTrigger asChild>
