@@ -1359,11 +1359,15 @@ def _detect_task_type(prompt: str) -> str:
     ]):
         return "math_problem"
     
-    # Health/Medical - Claude Opus 4, GPT-5, Med-PaLM 3 excel (requires accuracy)
+    # Health/Medical/Wellness - Claude Opus 4, GPT-5, Med-PaLM 3 excel (requires accuracy)
     elif any(kw in prompt_lower for kw in [
         "treatment", "symptom", "diagnosis", "medical", "health", "disease", "medication",
         "drug", "therapy", "clinical", "patient", "headache", "pain", "condition",
-        "doctor", "hospital", "illness", "chronic", "acute", "prognosis"
+        "doctor", "hospital", "illness", "chronic", "acute", "prognosis",
+        # Wellness & Fitness (added)
+        "exercise", "workout", "fitness", "nutrition", "diet", "weight loss", "muscle",
+        "cardio", "strength", "sleep", "stress", "mental health", "wellbeing", "wellness",
+        "benefits of", "healthy", "vitamin", "supplement", "lifestyle"
     ]):
         return "health_medical"
     
