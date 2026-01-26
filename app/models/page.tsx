@@ -77,7 +77,7 @@ interface RankedModelData {
   metrics: Record<string, number | string>
 }
 
-// Compact Model Card Component
+// Ultra-Compact Model Card Component
 function ModelCard({ 
   model, 
   rank, 
@@ -98,7 +98,6 @@ function ModelCard({
   const canAccess = canAccessModel(userTier, model.id)
   const requiredTier = getModelRequiredTier(model.id)
   const promptCost = model.pricing?.per_1m_prompt || model.pricing?.prompt || 0
-  const completionCost = model.pricing?.per_1m_completion || model.pricing?.completion || 0
   
   // Extract strengths/weaknesses from model data
   const strengths: string[] = []
@@ -113,35 +112,34 @@ function ModelCard({
   
   if (!model.capabilities?.supports_tools) weaknesses.push('No tools')
   if (!model.capabilities?.multimodal_input) weaknesses.push('Text only')
-  if (model.context_length && model.context_length < 32000) weaknesses.push('Limited context')
   
   return (
     <Card 
       className={cn(
-        "group transition-all duration-200 cursor-pointer",
-        isSelected && "ring-2 ring-[var(--bronze)]",
+        "group transition-all duration-150 cursor-pointer hover:bg-card/80",
+        isSelected && "ring-1 ring-[var(--bronze)]",
         !canAccess && "opacity-60"
       )}
       onClick={onViewDetails}
     >
-      <CardContent className="p-3">
-        <div className="flex items-start gap-3">
-          {/* Rank Badge */}
-          {rank && rank <= 10 && (
+      <CardContent className="p-2">
+        <div className="flex items-center gap-2">
+          {/* Rank Badge - smaller */}
+          {rank !== undefined && rank > 0 && (
             <div className={cn(
-              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-              rank === 1 ? "bg-yellow-400 text-yellow-900" :  // Gold
-              rank === 2 ? "bg-slate-300 text-slate-700" :    // Silver
-              rank === 3 ? "bg-amber-600 text-amber-100" :    // Bronze
+              "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
+              rank === 1 ? "bg-yellow-400 text-yellow-900" :
+              rank === 2 ? "bg-slate-300 text-slate-700" :
+              rank === 3 ? "bg-amber-600 text-amber-100" :
               "bg-muted text-muted-foreground"
             )}>
-              #{rank}
+              {rank}
             </div>
           )}
           
-          {/* Provider Logo */}
+          {/* Provider Logo - smaller */}
           {getModelLogo(model.id) && (
-            <div className="w-5 h-5 relative shrink-0">
+            <div className="w-4 h-4 relative shrink-0">
               <Image
                 src={getModelLogo(model.id)}
                 alt=""
@@ -152,57 +150,17 @@ function ModelCard({
             </div>
           )}
           
-          {/* Model Info */}
+          {/* Model Info - inline */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm truncate">{model.name}</span>
+            <div className="flex items-center gap-1">
+              <span className="font-medium text-xs truncate">{model.name}</span>
               {!canAccess && (
-                <Badge variant="outline" className={cn("text-[9px] px-1", getTierBadgeColor(requiredTier))}>
+                <Badge variant="outline" className={cn("text-[8px] px-0.5 h-3", getTierBadgeColor(requiredTier))}>
                   {getTierDisplayName(requiredTier)}
                 </Badge>
               )}
             </div>
-            <p className="text-[10px] text-muted-foreground truncate">{model.author || model.id.split('/')[0]}</p>
-            
-            {/* Cost info hidden from customer view - available in admin/orchestrator */}
-            
-            {/* Metrics from ranking */}
-            {metrics && Object.keys(metrics).length > 0 && (
-              <div className="flex items-center gap-2 mt-1">
-                {metrics.tokens && (
-                  <Badge variant="secondary" className="text-[9px] h-4 px-1">
-                    {metrics.tokens} tokens
-                  </Badge>
-                )}
-                {metrics.share && (
-                  <Badge variant="secondary" className="text-[9px] h-4 px-1">
-                    {metrics.share}
-                  </Badge>
-                )}
-                {metrics.change && (
-                  <Badge variant="secondary" className={cn(
-                    "text-[9px] h-4 px-1",
-                    String(metrics.change).includes('+') ? "text-green-600" : "text-red-600"
-                  )}>
-                    {metrics.change}%
-                  </Badge>
-                )}
-              </div>
-            )}
-            
-            {/* Compact Strengths/Weaknesses */}
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {strengths.slice(0, 3).map((s, i) => (
-                <span key={i} className="text-[9px] text-green-600 bg-green-500/10 px-1.5 rounded">
-                  +{s}
-                </span>
-              ))}
-              {weaknesses.slice(0, 2).map((w, i) => (
-                <span key={i} className="text-[9px] text-orange-600 bg-orange-500/10 px-1.5 rounded">
-                  -{w}
-                </span>
-              ))}
-            </div>
+            <p className="text-[9px] text-muted-foreground truncate">{model.author || model.id.split('/')[0]}</p>
           </div>
           
           {/* Selection Checkbox */}
@@ -211,9 +169,23 @@ function ModelCard({
               checked={isSelected}
               onCheckedChange={() => onToggleSelect()}
               onClick={(e) => e.stopPropagation()}
-              className="shrink-0 mt-1"
+              className="shrink-0 h-3.5 w-3.5"
             />
           )}
+        </div>
+        
+        {/* Tags row - ultra compact */}
+        <div className="flex flex-wrap gap-0.5 mt-1">
+          {strengths.slice(0, 4).map((s, i) => (
+            <span key={i} className="text-[8px] text-green-600 bg-green-500/10 px-1 py-0 rounded">
+              +{s}
+            </span>
+          ))}
+          {weaknesses.slice(0, 2).map((w, i) => (
+            <span key={i} className="text-[8px] text-orange-600 bg-orange-500/10 px-1 py-0 rounded">
+              -{w}
+            </span>
+          ))}
         </div>
       </CardContent>
     </Card>
@@ -467,15 +439,15 @@ export default function ModelsPage() {
               )}
               
               {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[...Array(6)].map((_, i) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                  {[...Array(12)].map((_, i) => (
                     <Card key={i} className="animate-pulse">
-                      <CardContent className="p-3 h-24 bg-muted/50" />
+                      <CardContent className="p-2 h-16 bg-muted/50" />
                     </Card>
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                   {displayModels.map((item) => {
                     const modelData = 'model' in item ? item.model : item
                     return (
