@@ -314,6 +314,8 @@ export async function POST(req: NextRequest) {
       // Orchestration Studio settings
       orchestration: {
         accuracy_level: settings.accuracyLevel || 3,
+        // Engine mode: "automatic" lets backend choose, "manual" uses explicit settings
+        engines_mode: settings.enginesMode || "automatic",
         enable_hrm: settings.enableHRM || false,
         enable_prompt_diffusion: settings.enablePromptDiffusion || false,
         enable_deep_consensus: settings.enableDeepConsensus || false,

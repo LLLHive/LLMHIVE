@@ -217,6 +217,7 @@ export interface OrchestratorSettings {
   advancedFeatures: AdvancedFeature[]
   // Orchestration Studio settings
   accuracyLevel: number // 1-5 slider (1=fastest, 5=most accurate)
+  enginesMode: "automatic" | "manual" // Automatic selects best engines based on prompt
   enableHRM: boolean // Hierarchical Role Management
   enablePromptDiffusion: boolean // Prompt Diffusion & Refinement
   enableDeepConsensus: boolean // Deep Consensus (multi-round debate)

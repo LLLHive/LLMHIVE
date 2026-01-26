@@ -2004,6 +2004,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             "history": request.history or [],
             # Orchestration Studio settings
             "accuracy_level": request.orchestration.accuracy_level,
+            # engines_mode: "automatic" = backend selects best engines, "manual" = use explicit settings
+            "engines_mode": getattr(request.orchestration, 'engines_mode', 'automatic'),
             "use_hrm": request.orchestration.enable_hrm,
             "use_prompt_diffusion": request.orchestration.enable_prompt_diffusion,
             "use_deep_consensus": request.orchestration.enable_deep_consensus,
@@ -2170,7 +2172,79 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # ========================================================================
         # Auto-activate Hierarchical Role Management (HRM) when PromptOps determines
         # the query is complex or research-level (requires_hrm=True).
+        # ========================================================================
+        # STEP 1.21: AUTOMATIC ENGINE SELECTION
+        # ========================================================================
+        # When engines_mode="automatic", intelligently select engines based on:
+        # - Query complexity (simple/moderate/complex/expert)
+        # - Task type (coding, math, reasoning, etc.)
+        # - Accuracy level setting
         #
+        engines_mode = orchestration_config.get("engines_mode", "automatic")
+        if engines_mode == "automatic":
+            accuracy_lvl = orchestration_config.get("accuracy_level", 3)
+            
+            # Reset all manual engine settings - we'll enable what's needed
+            orchestration_config["use_hrm"] = False
+            orchestration_config["use_prompt_diffusion"] = False
+            orchestration_config["use_deep_consensus"] = False
+            orchestration_config["use_adaptive_routing"] = False
+            
+            # Determine which engines to enable based on complexity and task
+            if detected_complexity in ("complex", "expert"):
+                # Complex queries benefit from HRM (hierarchical decomposition)
+                orchestration_config["use_hrm"] = True
+                # High accuracy also gets deep consensus
+                if accuracy_lvl >= 4:
+                    orchestration_config["use_deep_consensus"] = True
+                logger.info(
+                    "Auto-engines (complex): HRM=%s, DeepConsensus=%s",
+                    True, accuracy_lvl >= 4
+                )
+            elif detected_complexity == "moderate":
+                # Moderate queries: use adaptive routing for model selection
+                orchestration_config["use_adaptive_routing"] = True
+                # Higher accuracy gets prompt diffusion for refinement
+                if accuracy_lvl >= 3:
+                    orchestration_config["use_prompt_diffusion"] = True
+                logger.info(
+                    "Auto-engines (moderate): AdaptiveRouting=%s, PromptDiffusion=%s",
+                    True, accuracy_lvl >= 3
+                )
+            else:
+                # Simple queries: minimal overhead, just adaptive routing if accuracy > 2
+                if accuracy_lvl >= 3:
+                    orchestration_config["use_adaptive_routing"] = True
+                logger.info(
+                    "Auto-engines (simple): AdaptiveRouting=%s",
+                    accuracy_lvl >= 3
+                )
+            
+            # Task-specific engine overrides
+            if detected_task_type in ("coding", "code_generation", "debugging"):
+                # Coding benefits from prompt diffusion (iterative refinement)
+                orchestration_config["use_prompt_diffusion"] = True
+            elif detected_task_type in ("reasoning", "math", "science_research"):
+                # Reasoning/math benefits from deep consensus
+                if accuracy_lvl >= 3:
+                    orchestration_config["use_deep_consensus"] = True
+            elif detected_task_type in ("creative_writing", "marketing"):
+                # Creative tasks benefit from adaptive ensemble (diverse outputs)
+                orchestration_config["use_adaptive_routing"] = True
+            
+            logger.info(
+                "Automatic engine selection: HRM=%s, PromptDiffusion=%s, DeepConsensus=%s, AdaptiveEnsemble=%s",
+                orchestration_config.get("use_hrm"),
+                orchestration_config.get("use_prompt_diffusion"),
+                orchestration_config.get("use_deep_consensus"),
+                orchestration_config.get("use_adaptive_routing"),
+            )
+        else:
+            logger.info("Manual engine mode: using explicit settings from request")
+        
+        # ========================================================================
+        # STEP 1.22: AUTO-ENABLE HRM FOR COMPLEX QUERIES (Legacy + Override)
+        # ========================================================================
         # This allows complex queries to be automatically decomposed into sub-steps
         # without requiring manual enable_hrm flag in the request.
         #

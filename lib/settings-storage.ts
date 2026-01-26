@@ -23,6 +23,7 @@ export const DEFAULT_ORCHESTRATOR_SETTINGS: OrchestratorSettings = {
   advancedReasoningMethods: ["automatic"],
   advancedFeatures: [],
   accuracyLevel: 3,
+  enginesMode: "automatic", // Automatic engine selection by default
   enableHRM: false,
   enablePromptDiffusion: false,
   enableDeepConsensus: false,
