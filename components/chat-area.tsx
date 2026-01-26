@@ -24,7 +24,7 @@ import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
 import { ChatToolbar } from "./chat-toolbar"
-import { OrchestrationStudio } from "./orchestration-studio"
+// OrchestrationStudio moved to toolbar dropdown (OrchestrationStudioDropdown)
 import { LiveStatusPanel } from "./live-status-panel"
 import { ModelsUsedDisplay } from "./models-used-display"
 import { AnswerComparison, useAnswerComparison } from "./answer-comparison"
@@ -944,11 +944,7 @@ export function ChatArea({
           </div>
           {userAccountMenu}
         </div>
-        {/* Orchestration Studio - Collapsible */}
-        <OrchestrationStudio
-          settings={orchestratorSettings}
-          onSettingsChange={onOrchestratorSettingsChange}
-        />
+        {/* Orchestration Studio moved to toolbar dropdown */}
       </header>
 
       <HiveActivityIndicator active={isLoading} agentCount={6} />

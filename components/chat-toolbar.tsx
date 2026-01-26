@@ -17,6 +17,7 @@ import type {
 import { getModelLogo } from "@/lib/models"
 import { CriteriaEqualizer } from "./criteria-equalizer"
 import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
+import { OrchestrationStudioDropdown } from "./orchestration-studio-dropdown"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
@@ -236,6 +237,12 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         {settings.agentMode === "team" ? <Users className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
         <span className="hidden sm:inline">{settings.agentMode === "team" ? "Team" : "Single"}</span>
       </Button>
+
+      {/* Orchestration Studio Dropdown - Before Models */}
+      <OrchestrationStudioDropdown
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
 
       {/* Models Dropdown with Ranking Categories */}
       <DropdownMenu open={modelsOpen} onOpenChange={(open) => {
