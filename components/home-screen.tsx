@@ -402,12 +402,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
             onClick={closeDrawer}
           />
           
-          {/* Drawer Panel - Glassmorphism - auto height for models to avoid scroll */}
-          <div className={`fixed right-0 llmhive-glass border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col ${
-            activeDrawer === "models" 
-              ? "top-1/2 -translate-y-1/2 w-[320px] sm:w-[360px] max-h-[90vh]" 
-              : "inset-y-0 w-[320px] sm:w-[380px]"
-          }`}>
+          {/* Drawer Panel - Glassmorphism */}
+          <div className="fixed inset-y-0 right-0 w-[320px] sm:w-[380px] llmhive-glass border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col">
             {/* Header - Different for Technology vs Others */}
             {activeDrawer === "technology" ? (
               <div className="p-4 pb-3 border-b border-white/10">
@@ -557,103 +553,129 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                 </div>
               )}
 
-              {/* Models Options - Compact version without scroll */}
+              {/* Models Options - Accordion style matching LLMHive Technology */}
               {activeDrawer === "models" && (
-                <div className="space-y-1.5">
-                  {/* Automatic Option - Always at top */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedModel("automatic")}
-                    className={`w-full p-2 rounded-lg border transition-all text-left ${
-                      selectedModel === "automatic"
-                        ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
-                        : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center shrink-0">
-                        <Sparkles className="h-3 w-3 text-white" />
-                      </div>
-                      <span className="flex-1 font-medium text-sm">Automatic</span>
-                      <span className="text-[10px] text-muted-foreground">Best model per task</span>
-                      {selectedModel === "automatic" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                    </div>
-                  </button>
-                  
-                  {/* Agent Mode Section - Compact */}
-                  <div className="border-t border-white/10 pt-1.5 mt-1.5">
-                    <p className="text-[10px] font-medium text-muted-foreground mb-1 px-1">Agent Mode</p>
+                <div className="space-y-1">
+                  {/* Model Selection Sections - Accordion style */}
+                  {[
+                    {
+                      id: "automatic",
+                      title: "Automatic Selection",
+                      icon: Sparkles,
+                      iconColor: "text-amber-400",
+                      description: "AI picks the best model for each task"
+                    },
+                    {
+                      id: "agent-mode",
+                      title: "Agent Mode",
+                      icon: Users,
+                      iconColor: "text-blue-400",
+                      options: [
+                        { id: "team", label: "Team Mode", desc: "Multi-model ensemble (recommended)" },
+                        { id: "single", label: "Single Mode", desc: "Use one model only" },
+                      ]
+                    },
+                    {
+                      id: "categories",
+                      title: "Browse by Category",
+                      icon: LayoutGrid,
+                      iconColor: "text-purple-400",
+                      categories: modelCategories
+                    },
+                  ].map((section, idx) => {
+                    const Icon = section.icon
+                    const isExpanded = expandedSection === section.id
                     
-                    {/* Team Mode Option */}
-                    <button
-                      type="button"
-                      onClick={() => setAgentMode("team")}
-                      className={`w-full px-2 py-1.5 rounded-lg transition-all text-left ${
-                        agentMode === "team"
-                          ? "bg-[var(--bronze)]/15"
-                          : "hover:bg-white/5"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                          agentMode === "team" ? "bg-[var(--bronze)]/20" : "bg-white/10"
-                        }`}>
-                          <Users className={`h-2.5 w-2.5 ${agentMode === "team" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
-                        </div>
-                        <span className={`font-medium text-xs ${agentMode === "team" ? "text-[var(--bronze)]" : ""}`}>
-                          Team Mode
-                        </span>
-                        <span className="text-[9px] text-muted-foreground">(recommended)</span>
-                        {agentMode === "team" && <Check className="h-3 w-3 text-[var(--bronze)] ml-auto" />}
+                    return (
+                      <div key={section.id}>
+                        {/* Section Header - Clickable to expand */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (section.id === "automatic") {
+                              setSelectedModel("automatic")
+                            } else {
+                              setExpandedSection(isExpanded ? null : section.id)
+                            }
+                          }}
+                          className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md cursor-pointer transition-all text-left ${
+                            isExpanded || (section.id === "automatic" && selectedModel === "automatic")
+                              ? "bg-white/10" 
+                              : "hover:bg-white/5"
+                          }`}
+                        >
+                          <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
+                            isExpanded || (section.id === "automatic" && selectedModel === "automatic") 
+                              ? "bg-[var(--bronze)]/20" 
+                              : "bg-white/10"
+                          }`}>
+                            <Icon className={`h-3.5 w-3.5 ${section.iconColor}`} />
+                          </div>
+                          <span className="flex-1 text-sm font-medium">{section.title}</span>
+                          {section.id === "automatic" ? (
+                            selectedModel === "automatic" && <Check className="h-4 w-4 text-[var(--bronze)]" />
+                          ) : (
+                            isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                        </button>
+                        
+                        {/* Expanded Content */}
+                        {isExpanded && section.id === "agent-mode" && section.options && (
+                          <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-1">
+                            {section.options.map((option) => (
+                              <button
+                                key={option.id}
+                                type="button"
+                                onClick={() => setAgentMode(option.id as "team" | "single")}
+                                className={`w-full flex items-start gap-2 py-1.5 px-2 rounded text-xs text-left transition-all ${
+                                  agentMode === option.id ? "bg-[var(--bronze)]/10" : "hover:bg-white/5"
+                                }`}
+                              >
+                                <Check className={`h-3 w-3 mt-0.5 shrink-0 ${
+                                  agentMode === option.id ? "text-[var(--bronze)]" : "text-transparent"
+                                }`} />
+                                <div>
+                                  <span className={`font-medium ${agentMode === option.id ? "text-[var(--bronze)]" : ""}`}>
+                                    {option.label}
+                                  </span>
+                                  <span className="text-muted-foreground ml-1">— {option.desc}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {isExpanded && section.id === "categories" && section.categories && (
+                          <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-1">
+                            {section.categories.map((cat) => {
+                              const CatIcon = cat.icon
+                              const isSelected = selectedModel === cat.slug
+                              return (
+                                <button
+                                  key={cat.slug}
+                                  type="button"
+                                  onClick={() => setSelectedModel(cat.slug)}
+                                  className={`w-full flex items-center gap-2 py-1.5 px-2 rounded text-xs text-left transition-all ${
+                                    isSelected ? "bg-[var(--bronze)]/10" : "hover:bg-white/5"
+                                  }`}
+                                >
+                                  <CatIcon className={`h-3.5 w-3.5 ${cat.color}`} />
+                                  <span className={`font-medium ${isSelected ? "text-[var(--bronze)]" : ""}`}>
+                                    {cat.label}
+                                  </span>
+                                  {isSelected && <Check className="h-3 w-3 text-[var(--bronze)] ml-auto" />}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                        
+                        {idx < 2 && !isExpanded && (
+                          <div className="my-0.5" />
+                        )}
                       </div>
-                    </button>
-                    
-                    {/* Single Mode Option */}
-                    <button
-                      type="button"
-                      onClick={() => setAgentMode("single")}
-                      className={`w-full px-2 py-1.5 rounded-lg transition-all text-left ${
-                        agentMode === "single"
-                          ? "bg-[var(--bronze)]/15"
-                          : "hover:bg-white/5"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                          agentMode === "single" ? "bg-[var(--bronze)]/20" : "bg-white/10"
-                        }`}>
-                          <User className={`h-2.5 w-2.5 ${agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
-                        </div>
-                        <span className={`font-medium text-xs ${agentMode === "single" ? "text-[var(--bronze)]" : ""}`}>
-                          Single Mode
-                        </span>
-                        {agentMode === "single" && <Check className="h-3 w-3 text-[var(--bronze)] ml-auto" />}
-                      </div>
-                    </button>
-                  </div>
-                  
-                  {/* Browse by Category Section - Compact 2 columns */}
-                  <div className="border-t border-white/10 pt-1.5 mt-1.5">
-                    <p className="text-[10px] font-medium text-muted-foreground mb-1 px-1">Browse by Category</p>
-                    <div className="grid grid-cols-2 gap-0.5">
-                      {modelCategories.map((cat) => {
-                        const Icon = cat.icon
-                        return (
-                          <button
-                            key={cat.slug}
-                            type="button"
-                            onClick={() => setSelectedModel(cat.slug)}
-                            className={`px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all text-left flex items-center gap-1.5 ${
-                              selectedModel === cat.slug ? "bg-[var(--bronze)]/15" : ""
-                            }`}
-                          >
-                            <Icon className={`h-3.5 w-3.5 ${cat.color}`} />
-                            <span className="text-xs truncate">{cat.label}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
+                    )
+                  })}
                 </div>
               )}
 
