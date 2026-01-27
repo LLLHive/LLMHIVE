@@ -387,8 +387,12 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
             onClick={closeDrawer}
           />
           
-          {/* Drawer Panel - Glassmorphism */}
-          <div className="fixed inset-y-0 right-0 w-[320px] sm:w-[380px] llmhive-glass border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col">
+          {/* Drawer Panel - Glassmorphism - auto height for models to avoid scroll */}
+          <div className={`fixed right-0 llmhive-glass border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col ${
+            activeDrawer === "models" 
+              ? "top-1/2 -translate-y-1/2 w-[320px] sm:w-[360px] max-h-[90vh]" 
+              : "inset-y-0 w-[320px] sm:w-[380px]"
+          }`}>
             {/* Header - Different for Technology vs Others */}
             {activeDrawer === "technology" ? (
               <div className="p-4 pb-3 border-b border-white/10">
@@ -437,7 +441,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
             )}
 
             {/* Content */}
-            <ScrollArea className="flex-1 p-4">
+            <div className={`flex-1 p-4 ${activeDrawer === "models" ? "" : "overflow-y-auto"}`}>
               {/* LLMHive Technology - Read-only showcase - MATCHES powered-by-dropdown.tsx */}
               {activeDrawer === "technology" && (
                 <div className="space-y-1">
@@ -538,9 +542,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                 </div>
               )}
 
-              {/* Models Options - Matches chat-toolbar.tsx dropdown exactly */}
+              {/* Models Options - Compact version without scroll */}
               {activeDrawer === "models" && (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {/* Automatic Option - Always at top */}
                   <button
                     type="button"
@@ -561,33 +565,31 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     </div>
                   </button>
                   
-                  {/* Agent Mode Section */}
-                  <div className="border-t border-white/10 pt-2 mt-2">
-                    <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Agent Mode</p>
+                  {/* Agent Mode Section - Compact */}
+                  <div className="border-t border-white/10 pt-1.5 mt-1.5">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1 px-1">Agent Mode</p>
                     
                     {/* Team Mode Option */}
                     <button
                       type="button"
                       onClick={() => setAgentMode("team")}
-                      className={`w-full p-2 rounded-lg transition-all text-left mb-1 ${
+                      className={`w-full px-2 py-1.5 rounded-lg transition-all text-left ${
                         agentMode === "team"
                           ? "bg-[var(--bronze)]/15"
                           : "hover:bg-white/5"
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
                           agentMode === "team" ? "bg-[var(--bronze)]/20" : "bg-white/10"
                         }`}>
-                          <Users className={`h-3 w-3 ${agentMode === "team" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
+                          <Users className={`h-2.5 w-2.5 ${agentMode === "team" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
                         </div>
-                        <div className="flex-1">
-                          <span className={`font-medium text-sm ${agentMode === "team" ? "text-[var(--bronze)]" : ""}`}>
-                            Team Mode
-                          </span>
-                          <p className="text-[10px] text-muted-foreground">Multi-model ensemble (recommended)</p>
-                        </div>
-                        {agentMode === "team" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                        <span className={`font-medium text-xs ${agentMode === "team" ? "text-[var(--bronze)]" : ""}`}>
+                          Team Mode
+                        </span>
+                        <span className="text-[9px] text-muted-foreground">(recommended)</span>
+                        {agentMode === "team" && <Check className="h-3 w-3 text-[var(--bronze)] ml-auto" />}
                       </div>
                     </button>
                     
@@ -595,48 +597,43 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     <button
                       type="button"
                       onClick={() => setAgentMode("single")}
-                      className={`w-full p-2 rounded-lg transition-all text-left ${
+                      className={`w-full px-2 py-1.5 rounded-lg transition-all text-left ${
                         agentMode === "single"
                           ? "bg-[var(--bronze)]/15"
                           : "hover:bg-white/5"
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
                           agentMode === "single" ? "bg-[var(--bronze)]/20" : "bg-white/10"
                         }`}>
-                          <User className={`h-3 w-3 ${agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
+                          <User className={`h-2.5 w-2.5 ${agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
                         </div>
-                        <div className="flex-1">
-                          <span className={`font-medium text-sm ${agentMode === "single" ? "text-[var(--bronze)]" : ""}`}>
-                            Single Mode
-                          </span>
-                          <p className="text-[10px] text-muted-foreground">Use one model only</p>
-                        </div>
-                        {agentMode === "single" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                        <span className={`font-medium text-xs ${agentMode === "single" ? "text-[var(--bronze)]" : ""}`}>
+                          Single Mode
+                        </span>
+                        {agentMode === "single" && <Check className="h-3 w-3 text-[var(--bronze)] ml-auto" />}
                       </div>
                     </button>
                   </div>
                   
-                  {/* Browse by Category Section */}
-                  <div className="border-t border-white/10 pt-2 mt-2">
-                    <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Browse by Category</p>
-                    <div className="space-y-0.5">
+                  {/* Browse by Category Section - Compact 2 columns */}
+                  <div className="border-t border-white/10 pt-1.5 mt-1.5">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1 px-1">Browse by Category</p>
+                    <div className="grid grid-cols-2 gap-0.5">
                       {modelCategories.map((cat) => {
                         const Icon = cat.icon
                         return (
                           <button
                             key={cat.slug}
                             type="button"
-                            onClick={() => {
-                              // When a category is selected, store it and start chat
-                              setSelectedModel(cat.slug)
-                            }}
-                            className="w-full p-2 rounded-lg hover:bg-white/5 transition-all text-left flex items-center gap-2"
+                            onClick={() => setSelectedModel(cat.slug)}
+                            className={`px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all text-left flex items-center gap-1.5 ${
+                              selectedModel === cat.slug ? "bg-[var(--bronze)]/15" : ""
+                            }`}
                           >
-                            <Icon className={`h-4 w-4 ${cat.color}`} />
-                            <span className="flex-1 text-sm">{cat.label}</span>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            <Icon className={`h-3.5 w-3.5 ${cat.color}`} />
+                            <span className="text-xs truncate">{cat.label}</span>
                           </button>
                         )
                       })}
@@ -690,7 +687,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                   </div>
                 </div>
               )}
-            </ScrollArea>
+            </div>
 
             {/* Footer */}
             <div className="p-4 border-t border-white/10">
