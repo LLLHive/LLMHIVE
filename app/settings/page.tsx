@@ -78,13 +78,6 @@ const settingsCards = [
     badgeClass: "icon-badge-orange",
   },
   {
-    id: "analytics",
-    title: "Analytics",
-    description: "View feedback and quality metrics",
-    icon: BarChart3,
-    badgeClass: "icon-badge-purple",
-  },
-  {
     id: "tuning",
     title: "Tuning",
     description: "Accuracy, speed & creativity balance",
@@ -413,11 +406,7 @@ export default function SettingsPage() {
                     <button
                       key={card.id}
                       onClick={() => {
-                        if (card.id === "analytics") {
-                          router.push("/analytics")
-                        } else {
-                          setActiveDrawer(card.id as DrawerId)
-                        }
+                        setActiveDrawer(card.id as DrawerId)
                       }}
                       className="settings-card group llmhive-fade-in"
                       style={{ animationDelay: `${0.1 + index * 0.05}s` }}
