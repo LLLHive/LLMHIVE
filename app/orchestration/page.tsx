@@ -425,7 +425,7 @@ export default function OrchestrationPage() {
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        conversations={conversations}
+        conversations={conversations.filter((c) => !c.archived)}
         currentConversationId={null}
         onSelectConversation={(id) => router.push(`${ROUTES.HOME}?chat=${id}`)}
         onNewChat={() => router.push(ROUTES.HOME)}

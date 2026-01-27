@@ -237,7 +237,7 @@ export default function DiscoverPage() {
       {/* Glassmorphism Sidebar */}
       <div className="llmhive-glass-sidebar h-full">
       <Sidebar
-        conversations={conversations}
+        conversations={conversations.filter((c) => !c.archived)}
         currentConversationId={null}
         onNewChat={() => router.push(ROUTES.HOME)}
         onSelectConversation={(id) => router.push(`${ROUTES.HOME}?chat=${id}`)}
