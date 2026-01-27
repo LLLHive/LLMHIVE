@@ -209,21 +209,7 @@ export function Sidebar({
 
             {/* Navigation Links */}
             <div className="px-3 pb-2 space-y-1">
-              {/* Models / OpenRouter */}
-              <Link href={ROUTES.MODELS} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.MODELS) && "bg-secondary text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
-                  <Boxes className="h-4 w-4 mr-2" />
-                  Models
-                </Button>
-              </Link>
+              {/* Models moved to Settings page */}
               {/* Orchestration link */}
               <Link href={ROUTES.ORCHESTRATION} className="w-full">
                 <Button
@@ -538,23 +524,7 @@ export function Sidebar({
                   <TooltipContent side="right">Discover</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {/* Collapsed Models icon */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href={ROUTES.MODELS}>
-                      <Button 
-                        variant={isActiveRoute(ROUTES.MODELS) ? "secondary" : "ghost"} 
-                        size="icon" 
-                        className={cn("w-10 h-10", isActiveRoute(ROUTES.MODELS) && "text-[var(--bronze)]")}
-                      >
-                        <Boxes className="h-5 w-5" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">Models</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {/* Collapsed Models icon moved to Settings page */}
               {/* Collapsed Orchestration icon */}
               <TooltipProvider>
                 <Tooltip>

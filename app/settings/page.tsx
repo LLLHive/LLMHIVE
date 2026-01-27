@@ -11,7 +11,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3, Sliders, Target, Zap, Settings2, Lightbulb, CheckCircle, ListTree, GraduationCap, SpellCheck } from "lucide-react"
+import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3, Sliders, Target, Zap, Settings2, Lightbulb, CheckCircle, ListTree, GraduationCap, SpellCheck, Boxes } from "lucide-react"
+import Link from "next/link"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { loadOrchestratorSettings, saveOrchestratorSettings, DEFAULT_ORCHESTRATOR_SETTINGS } from "@/lib/settings-storage"
@@ -96,6 +97,15 @@ const settingsCards = [
     description: "Prompt optimization & AI behavior",
     icon: Settings2,
     badgeClass: "icon-badge-rose",
+  },
+  {
+    id: "models",
+    title: "Models",
+    description: "Browse and select AI models",
+    icon: Boxes,
+    badgeClass: "icon-badge-emerald",
+    isLink: true,
+    href: "/models",
   },
 ]
 
@@ -356,23 +366,12 @@ export default function SettingsPage() {
 
             {/* Settings Grid */}
             <div className="w-full max-w-4xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
                 {settingsCards.map((card, index) => {
                   const Icon = card.icon
                   const count = getCount(card.id)
-                  return (
-                    <button
-                      key={card.id}
-                      onClick={() => {
-                        if (card.id === "analytics") {
-                          router.push("/admin/analytics")
-                        } else {
-                          setActiveDrawer(card.id as DrawerId)
-                        }
-                      }}
-                      className="settings-card group llmhive-fade-in"
-                      style={{ animationDelay: `${0.1 + index * 0.05}s` }}
-                    >
+                  const cardContent = (
+                    <>
                       {count > 0 && (
                         <Badge className="absolute top-2 right-2 bronze-gradient text-xs px-1.5 py-0.5 text-black font-semibold">
                           {count}
@@ -393,6 +392,37 @@ export default function SettingsPage() {
                           {card.description}
                         </p>
                       </div>
+                    </>
+                  )
+                  
+                  // If card has a link, render as Link
+                  if ((card as any).isLink && (card as any).href) {
+                    return (
+                      <Link
+                        key={card.id}
+                        href={(card as any).href}
+                        className="settings-card group llmhive-fade-in"
+                        style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                      >
+                        {cardContent}
+                      </Link>
+                    )
+                  }
+                  
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => {
+                        if (card.id === "analytics") {
+                          router.push("/admin/analytics")
+                        } else {
+                          setActiveDrawer(card.id as DrawerId)
+                        }
+                      }}
+                      className="settings-card group llmhive-fade-in"
+                      style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                    >
+                      {cardContent}
                     </button>
                   )
                 })}
