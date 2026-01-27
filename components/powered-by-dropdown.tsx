@@ -271,7 +271,7 @@ export function PoweredByDropdown() {
         {/* Footer */}
         <div className="px-4 py-2.5 bg-gradient-to-r from-purple-500/5 to-amber-500/5 border-t border-border/50">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-[10px] text-yellow-400 font-medium">
               Patented orchestration technology
             </span>
             <div className="flex items-center gap-1 text-[10px] text-[var(--bronze)]">
