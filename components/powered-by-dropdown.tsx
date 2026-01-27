@@ -37,8 +37,9 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Feature sections data
+// Feature sections data - Ordered for marketing impact
 const featureSections = [
+  // 1. Intelligent Orchestration
   {
     id: "orchestration",
     title: "Intelligent Orchestration",
@@ -52,6 +53,7 @@ const featureSections = [
       { name: "Prompt Diffusion", desc: "Iterative refinement" },
     ]
   },
+  // 2. Strategy & Coordination
   {
     id: "strategy",
     title: "Strategy & Coordination",
@@ -66,6 +68,20 @@ const featureSections = [
       { name: "Challenge & Refine", desc: "Generate → Critique → Improve" },
     ]
   },
+  // 3. Advanced Reasoning
+  {
+    id: "reasoning",
+    title: "Advanced Reasoning",
+    icon: Sparkles,
+    iconColor: "text-yellow-400",
+    features: [
+      { name: "Chain of Thought", desc: "Step-by-step logic" },
+      { name: "Tree of Thoughts", desc: "Multiple solution paths" },
+      { name: "Self-Consistency", desc: "Samples & votes on best" },
+      { name: "Challenge & Refine", desc: "Models critique each other" },
+    ]
+  },
+  // 4. Accuracy & Verification
   {
     id: "accuracy",
     title: "Accuracy & Verification",
@@ -79,6 +95,7 @@ const featureSections = [
       { name: "Self-Consistency Voting", desc: "Best answer wins" },
     ]
   },
+  // 5. Smart Formatting
   {
     id: "formatting",
     title: "Smart Formatting",
@@ -91,11 +108,12 @@ const featureSections = [
       { name: "Spell Check", desc: "Auto-corrects prompts" },
     ]
   },
+  // 6. Industry Packs
   {
     id: "industry",
     title: "Industry Packs",
     icon: Building2,
-    iconColor: "text-amber-400",
+    iconColor: "text-orange-400",
     features: [
       { name: "Medical", desc: "Clinical terminology, research", icon: Heart },
       { name: "Legal", desc: "Case law, contracts, compliance", icon: Scale },
@@ -108,18 +126,7 @@ const featureSections = [
       { name: "Creative", desc: "Writing, ideation", icon: Palette },
     ]
   },
-  {
-    id: "reasoning",
-    title: "Advanced Reasoning",
-    icon: Sparkles,
-    iconColor: "text-yellow-400",
-    features: [
-      { name: "Chain of Thought", desc: "Step-by-step logic" },
-      { name: "Tree of Thoughts", desc: "Multiple solution paths" },
-      { name: "Self-Consistency", desc: "Samples & votes on best" },
-      { name: "Challenge & Refine", desc: "Models critique each other" },
-    ]
-  },
+  // 7. Memory & Context
   {
     id: "memory",
     title: "Memory & Context",
@@ -132,6 +139,7 @@ const featureSections = [
       { name: "RAG Integration", desc: "Your data, augmented" },
     ]
   },
+  // 8. Always Up-to-Date
   {
     id: "uptodate",
     title: "Always Up-to-Date",
@@ -144,6 +152,7 @@ const featureSections = [
       { name: "Cost Optimization", desc: "Best performance, lowest cost" },
     ]
   },
+  // 9. Enterprise-Grade
   {
     id: "enterprise",
     title: "Enterprise-Grade",
