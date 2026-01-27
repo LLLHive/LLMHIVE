@@ -49,15 +49,15 @@ interface ErrorState {
   lastInput?: string
 }
 
-// Domain pack options with icons
+// Domain pack options with icons and colors
 const domainPacks = [
-  { value: "default", label: "General Assistant", icon: Sparkles },
-  { value: "medical", label: "Medical Pack", icon: Stethoscope },
-  { value: "legal", label: "Legal Pack", icon: Scale },
-  { value: "marketing", label: "Marketing Pack", icon: Megaphone },
-  { value: "coding", label: "Coding Pack", icon: Code },
-  { value: "research", label: "Research Mode", icon: Brain },
-  { value: "finance", label: "Finance Pack", icon: Landmark },
+  { value: "default", label: "General Assistant", icon: Sparkles, color: "text-amber-400" },
+  { value: "medical", label: "Medical Pack", icon: Stethoscope, color: "text-red-400" },
+  { value: "legal", label: "Legal Pack", icon: Scale, color: "text-purple-400" },
+  { value: "marketing", label: "Marketing Pack", icon: Megaphone, color: "text-pink-400" },
+  { value: "coding", label: "Coding Pack", icon: Code, color: "text-emerald-400" },
+  { value: "research", label: "Research Mode", icon: Brain, color: "text-blue-400" },
+  { value: "finance", label: "Finance Pack", icon: Landmark, color: "text-yellow-400" },
 ]
 
 interface ChatAreaProps {
@@ -936,7 +936,7 @@ export function ChatArea({
                     onClick={() => onOrchestratorSettingsChange({ domainPack: pack.value as any })}
                     className="gap-2 cursor-pointer"
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className={`h-4 w-4 ${pack.color}`} />
                     <span className="flex-1">{pack.label}</span>
                     {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
                   </DropdownMenuItem>
