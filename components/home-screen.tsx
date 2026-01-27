@@ -319,9 +319,24 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         <LogoText height={92} className="hidden md:block lg:hidden mb-2 mx-auto" />
         <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
         
-        <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto mb-4 whitespace-nowrap">
+        <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto mb-3 whitespace-nowrap">
           Multi-agent AI orchestration for enhanced accuracy and deeper insights
         </p>
+        
+        {/* #1 Benchmark Badge */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-[var(--bronze)]/20 border border-yellow-500/30">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
+              <span className="text-xs font-bold text-white">#1</span>
+            </div>
+            <div className="text-left">
+              <p className="text-xs md:text-sm font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                #1 in ALL 10 Industry Benchmarks
+              </p>
+              <p className="text-[9px] md:text-[10px] text-muted-foreground">January 2026 Rankings</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main CTA Button */}
