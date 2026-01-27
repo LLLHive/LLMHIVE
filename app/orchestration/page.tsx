@@ -462,9 +462,9 @@ export default function OrchestrationPage() {
               </p>
             </div>
 
-            {/* Orchestration Cards - Glassmorphism Style */}
-            <div className="w-full max-w-5xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+            {/* Orchestration Cards - Glassmorphism Style - 2 rows of 5 centered */}
+            <div className="w-full max-w-4xl mx-auto llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 justify-items-center">
                 {orchestrationCards.map((card, index) => {
                   const Icon = card.icon
                   const count = getCount(card.id)
