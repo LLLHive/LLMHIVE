@@ -17,8 +17,7 @@ import type {
 import { getModelLogo } from "@/lib/models"
 // CriteriaEqualizer moved to Settings page
 // AdvancedSettingsDropdown moved to Settings page
-// Engines, Strategy, Reasoning now combined into single OrchestrationDropdown
-import { OrchestrationDropdown } from "./orchestration-dropdown"
+// OrchestrationDropdown moved to Settings page
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
@@ -445,11 +444,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Combined Orchestration Dropdown - Engines, Strategy, Reasoning */}
-      <OrchestrationDropdown
-        settings={settings}
-        onSettingsChange={onSettingsChange}
-      />
+      {/* Orchestration settings moved to Settings page */}
 
       {/* Features dropdown removed from chat page - available in Orchestration page */}
       {/* Speed dropdown removed from chat page - available in Orchestration page */}
