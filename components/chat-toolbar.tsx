@@ -88,43 +88,50 @@ const responseFormats = [
     value: "automatic", 
     label: "Automatic", 
     description: "AI selects optimal format based on your query",
-    icon: "Sparkles"
+    icon: "Sparkles",
+    iconColor: "text-amber-400"
   },
   { 
     value: "default", 
     label: "Conversational", 
     description: "Natural flowing paragraphs with explanations",
-    icon: "MessageSquare"
+    icon: "MessageSquare",
+    iconColor: "text-blue-400"
   },
   { 
     value: "structured", 
     label: "Structured", 
     description: "Organized with headers, sections & emphasis",
-    icon: "LayoutGrid"
+    icon: "LayoutGrid",
+    iconColor: "text-purple-400"
   },
   { 
     value: "bullet-points", 
     label: "Bullet Points", 
     description: "Quick-scan lists for easy reading",
-    icon: "List"
+    icon: "List",
+    iconColor: "text-green-400"
   },
   { 
     value: "step-by-step", 
     label: "Step-by-Step", 
     description: "Numbered instructions for how-to tasks",
-    icon: "ListOrdered"
+    icon: "ListOrdered",
+    iconColor: "text-orange-400"
   },
   { 
     value: "academic", 
     label: "Academic", 
     description: "Formal style with citations & references",
-    icon: "GraduationCap"
+    icon: "GraduationCap",
+    iconColor: "text-cyan-400"
   },
   { 
     value: "concise", 
     label: "Concise", 
     description: "Brief, direct answers — just the essentials",
-    icon: "Zap"
+    icon: "Zap",
+    iconColor: "text-yellow-400"
   },
 ]
 
@@ -203,11 +210,11 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
+            className="gap-1.5 h-8 px-3 text-xs bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all"
           >
-            <Cpu className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Models ({selectedModels.length})</span>
-            <span className="sm:hidden">{selectedModels.length}</span>
+            <Cpu className="h-3.5 w-3.5 text-blue-400" />
+            <span className="hidden sm:inline font-medium bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">Models ({selectedModels.length})</span>
+            <span className="sm:hidden text-blue-300">{selectedModels.length}</span>
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
@@ -456,10 +463,10 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
+            className="gap-1.5 h-8 px-3 text-xs bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all"
           >
-            <ListTree className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Format</span>
+            <ListTree className="h-3.5 w-3.5 text-purple-400" />
+            <span className="hidden sm:inline font-medium bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">Format</span>
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
@@ -487,16 +494,16 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                   onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
                   className="flex items-center gap-2.5 py-2.5 cursor-pointer"
                 >
-                  {/* Icon with special styling for Automatic */}
+                  {/* Icon with color styling */}
                   <div className={cn(
                     "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
                     isAutomatic 
                       ? "bg-gradient-to-br from-[var(--bronze)] to-amber-600" 
-                      : "bg-muted"
+                      : "bg-muted/50"
                   )}>
                     <IconComponent className={cn(
                       "h-3.5 w-3.5",
-                      isAutomatic ? "text-white" : "text-muted-foreground"
+                      isAutomatic ? "text-white" : format.iconColor
                     )} />
                   </div>
                   

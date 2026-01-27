@@ -946,12 +946,15 @@ export function ChatArea({
               })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="flex items-center gap-4 flex-wrap flex-1 justify-center">
-            <ChatToolbar
-              settings={orchestratorSettings}
-              onSettingsChange={onOrchestratorSettingsChange}
-            />
-          </div>
+          
+          {/* Models and Format dropdowns - right next to Industry Pack */}
+          <ChatToolbar
+            settings={orchestratorSettings}
+            onSettingsChange={onOrchestratorSettingsChange}
+          />
+          
+          {/* Spacer to push account menu to right */}
+          <div className="flex-1" />
           {userAccountMenu}
         </div>
         {/* Orchestration Studio moved to toolbar dropdown */}
