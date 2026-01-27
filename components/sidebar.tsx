@@ -207,27 +207,7 @@ export function Sidebar({
               </Button>
             </div>
 
-            {/* Navigation Links */}
-            <div className="px-3 pb-2 space-y-1">
-              {/* Models moved to Settings page */}
-              {/* Orchestration link */}
-              <Link href={ROUTES.ORCHESTRATION} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.ORCHESTRATION) 
-                      ? "bg-secondary text-[var(--bronze)]" 
-                      : "text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
-                  <Workflow className="h-4 w-4 mr-2" />
-                  Orchestration
-                </Button>
-              </Link>
-            </div>
+            {/* Navigation Links - Models moved to Settings page, Orchestration moved to bottom */}
 
             {/* Search */}
             {activeTab === "chats" && (
@@ -450,8 +430,25 @@ export function Sidebar({
               </div>{/* Close inner wrapper */}
             </div>{/* Close scrollable container */}
             
-            {/* Settings at the bottom */}
-            <div className="px-3 py-3 border-t border-border/50 mt-auto">
+            {/* Orchestration and Settings at the bottom */}
+            <div className="px-3 py-3 border-t border-border/50 mt-auto space-y-1">
+              {/* Orchestration link */}
+              <Link href={ROUTES.ORCHESTRATION} className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.ORCHESTRATION) && "bg-secondary text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
+                >
+                  <Workflow className="h-4 w-4 mr-2" />
+                  Orchestration
+                </Button>
+              </Link>
+              
+              {/* Settings link */}
               <Link href={ROUTES.SETTINGS} className="w-full">
                 <Button
                   variant="ghost"
@@ -527,7 +524,15 @@ export function Sidebar({
                 </Tooltip>
               </TooltipProvider>
               {/* Collapsed Models icon moved to Settings page */}
-              {/* Collapsed Orchestration icon */}
+              {/* Collapsed Orchestration icon moved to bottom */}
+            </div>
+            
+            {/* Spacer to push Settings to bottom */}
+            <div className="flex-1" />
+            
+            {/* Orchestration and Settings at bottom */}
+            <div className="border-t border-border/50 pt-4 flex flex-col gap-2">
+              {/* Orchestration icon */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -535,7 +540,7 @@ export function Sidebar({
                       <Button 
                         variant={isActiveRoute(ROUTES.ORCHESTRATION) ? "secondary" : "ghost"} 
                         size="icon" 
-                        className={cn("w-10 h-10 text-[var(--bronze)]")}
+                        className={cn("w-10 h-10", isActiveRoute(ROUTES.ORCHESTRATION) && "text-[var(--bronze)]")}
                       >
                         <Workflow className="h-5 w-5" />
                       </Button>
@@ -544,13 +549,8 @@ export function Sidebar({
                   <TooltipContent side="right">Orchestration</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </div>
-            
-            {/* Spacer to push Settings to bottom */}
-            <div className="flex-1" />
-            
-            {/* Settings at bottom */}
-            <div className="border-t border-border/50 pt-4 flex flex-col gap-2">
+              
+              {/* Settings icon */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
