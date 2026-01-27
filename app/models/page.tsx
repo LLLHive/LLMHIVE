@@ -365,7 +365,7 @@ export default function ModelsPage() {
               <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Models
               </h2>
-              <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+              <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto whitespace-nowrap">
                 Browse {allModels.length}+ models by ranking category
               </p>
             </div>
@@ -391,7 +391,7 @@ export default function ModelsPage() {
 
             {/* Ranking Categories - Wrapped grid to prevent overflow */}
             <div className="w-full max-w-5xl mb-6">
-              <p className="text-sm text-muted-foreground text-center mb-3">Select a ranking category</p>
+              <p className="llmhive-subtitle-3d text-sm text-center mb-3">Select a ranking category</p>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
                 {RANKING_CATEGORIES.map((cat) => {
                   const Icon = cat.icon
@@ -467,7 +467,7 @@ export default function ModelsPage() {
               )}
               
               {!activeCategory && !loading && (
-                <p className="text-center text-muted-foreground mt-4 text-sm">
+                <p className="text-center llmhive-subtitle-3d mt-4 text-sm">
                   Select a ranking category above to see top models
                 </p>
               )}
