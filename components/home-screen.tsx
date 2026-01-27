@@ -567,221 +567,184 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                 </div>
               )}
 
-              {/* Models Options - Accordion style matching LLMHive Technology */}
+              {/* Models Options - Always show Agent Mode and Categories */}
               {activeDrawer === "models" && (
-                <div className="space-y-1">
-                  {/* Model Selection Sections - Accordion style */}
-                  {[
-                    {
-                      id: "automatic",
-                      title: "Automatic Selection",
-                      icon: Sparkles,
-                      iconColor: "text-amber-400",
-                      description: "AI picks the best model for each task"
-                    },
-                    {
-                      id: "agent-mode",
-                      title: "Agent Mode",
-                      icon: Users,
-                      iconColor: "text-blue-400",
-                      options: [
+                <div className="space-y-2">
+                  {/* Automatic Selection - Selectable option */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedModel("automatic")}
+                    className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md cursor-pointer transition-all text-left ${
+                      selectedModel === "automatic" ? "bg-white/10" : "hover:bg-white/5"
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
+                      selectedModel === "automatic" ? "bg-[var(--bronze)]/20" : "bg-white/10"
+                    }`}>
+                      <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                    </div>
+                    <span className="flex-1 text-sm font-medium">Automatic Selection</span>
+                    {selectedModel === "automatic" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                  </button>
+
+                  {/* Agent Mode - Always visible */}
+                  <div>
+                    <div className="flex items-center gap-2.5 px-2 py-1.5">
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/10">
+                        <Users className="h-3.5 w-3.5 text-blue-400" />
+                      </div>
+                      <span className="text-sm font-medium">Agent Mode</span>
+                    </div>
+                    <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-1">
+                      {[
                         { id: "team", label: "Team Mode", desc: "Multi-model ensemble (recommended)" },
                         { id: "single", label: "Single Mode", desc: "Use one model only" },
-                      ]
-                    },
-                    {
-                      id: "categories",
-                      title: "Browse by Category",
-                      icon: LayoutGrid,
-                      iconColor: "text-purple-400",
-                      categories: modelCategories
-                    },
-                  ].map((section, idx) => {
-                    const Icon = section.icon
-                    const isExpanded = expandedSection === section.id
-                    
-                    return (
-                      <div key={section.id}>
-                        {/* Section Header - Clickable to expand */}
+                      ].map((option) => (
                         <button
+                          key={option.id}
                           type="button"
-                          onClick={() => {
-                            if (section.id === "automatic") {
-                              setSelectedModel("automatic")
-                            } else {
-                              setExpandedSection(isExpanded ? null : section.id)
-                            }
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md cursor-pointer transition-all text-left ${
-                            isExpanded || (section.id === "automatic" && selectedModel === "automatic")
-                              ? "bg-white/10" 
-                              : "hover:bg-white/5"
+                          onClick={() => setAgentMode(option.id as "team" | "single")}
+                          className={`w-full flex items-start gap-2 py-1.5 px-2 rounded text-xs text-left transition-all ${
+                            agentMode === option.id ? "bg-[var(--bronze)]/10" : "hover:bg-white/5"
                           }`}
                         >
-                          <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
-                            isExpanded || (section.id === "automatic" && selectedModel === "automatic") 
-                              ? "bg-[var(--bronze)]/20" 
-                              : "bg-white/10"
-                          }`}>
-                            <Icon className={`h-3.5 w-3.5 ${section.iconColor}`} />
+                          <Check className={`h-3 w-3 mt-0.5 shrink-0 ${
+                            agentMode === option.id ? "text-[var(--bronze)]" : "text-transparent"
+                          }`} />
+                          <div>
+                            <span className={`font-medium ${agentMode === option.id ? "text-[var(--bronze)]" : ""}`}>
+                              {option.label}
+                            </span>
+                            <span className="text-muted-foreground ml-1">— {option.desc}</span>
                           </div>
-                          <span className="flex-1 text-sm font-medium">{section.title}</span>
-                          {section.id === "automatic" ? (
-                            selectedModel === "automatic" && <Check className="h-4 w-4 text-[var(--bronze)]" />
-                          ) : (
-                            isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                          )}
                         </button>
-                        
-                        {/* Expanded Content */}
-                        {isExpanded && section.id === "agent-mode" && section.options && (
-                          <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-1">
-                            {section.options.map((option) => (
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Browse by Category - Always visible */}
+                  <div>
+                    <div className="flex items-center gap-2.5 px-2 py-1.5">
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/10">
+                        <LayoutGrid className="h-3.5 w-3.5 text-purple-400" />
+                      </div>
+                      <span className="text-sm font-medium">Browse by Category</span>
+                    </div>
+                    <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-0.5">
+                      {categoriesLoading ? (
+                        <div className="py-2 text-center text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin mx-auto mb-1" />
+                          Loading categories...
+                        </div>
+                      ) : categoriesError ? (
+                        <div className="py-2 text-center text-xs text-destructive">
+                          Failed to load categories
+                        </div>
+                      ) : (
+                        categories.map((cat) => {
+                          const CatIcon = modelCategories.find(m => m.slug === cat.slug)?.icon || BarChart3
+                          const catColor = CATEGORY_COLOR_MAP[cat.slug] || "text-muted-foreground"
+                          const isCatExpanded = expandedCategory === cat.slug
+                          
+                          return (
+                            <div key={cat.slug}>
+                              {/* Category Header */}
                               <button
-                                key={option.id}
                                 type="button"
-                                onClick={() => setAgentMode(option.id as "team" | "single")}
-                                className={`w-full flex items-start gap-2 py-1.5 px-2 rounded text-xs text-left transition-all ${
-                                  agentMode === option.id ? "bg-[var(--bronze)]/10" : "hover:bg-white/5"
+                                onClick={() => setExpandedCategory(isCatExpanded ? null : cat.slug)}
+                                className={`w-full flex items-center gap-2 py-1.5 px-2 rounded text-xs text-left transition-all ${
+                                  isCatExpanded ? "bg-white/10" : "hover:bg-white/5"
                                 }`}
                               >
-                                <Check className={`h-3 w-3 mt-0.5 shrink-0 ${
-                                  agentMode === option.id ? "text-[var(--bronze)]" : "text-transparent"
-                                }`} />
-                                <div>
-                                  <span className={`font-medium ${agentMode === option.id ? "text-[var(--bronze)]" : ""}`}>
-                                    {option.label}
-                                  </span>
-                                  <span className="text-muted-foreground ml-1">— {option.desc}</span>
-                                </div>
+                                <CatIcon className={`h-3.5 w-3.5 ${catColor}`} />
+                                <span className="flex-1 font-medium">{cat.displayName}</span>
+                                {isCatExpanded ? (
+                                  <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                )}
                               </button>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {isExpanded && section.id === "categories" && (
-                          <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-0.5">
-                            {categoriesLoading ? (
-                              <div className="py-2 text-center text-xs text-muted-foreground">
-                                <Loader2 className="h-3 w-3 animate-spin mx-auto mb-1" />
-                                Loading categories...
-                              </div>
-                            ) : categoriesError ? (
-                              <div className="py-2 text-center text-xs text-destructive">
-                                Failed to load categories
-                              </div>
-                            ) : (
-                              categories.map((cat) => {
-                                const CatIcon = modelCategories.find(m => m.slug === cat.slug)?.icon || BarChart3
-                                const catColor = CATEGORY_COLOR_MAP[cat.slug] || "text-muted-foreground"
-                                const isCatExpanded = expandedCategory === cat.slug
-                                
-                                return (
-                                  <div key={cat.slug}>
-                                    {/* Category Header */}
-                                    <button
-                                      type="button"
-                                      onClick={() => setExpandedCategory(isCatExpanded ? null : cat.slug)}
-                                      className={`w-full flex items-center gap-2 py-1.5 px-2 rounded text-xs text-left transition-all ${
-                                        isCatExpanded ? "bg-white/10" : "hover:bg-white/5"
-                                      }`}
-                                    >
-                                      <CatIcon className={`h-3.5 w-3.5 ${catColor}`} />
-                                      <span className="flex-1 font-medium">{cat.displayName}</span>
-                                      {isCatExpanded ? (
-                                        <ChevronUp className="h-3 w-3 text-muted-foreground" />
-                                      ) : (
-                                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                                      )}
-                                    </button>
-                                    
-                                    {/* Top 10 Models for this category */}
-                                    {isCatExpanded && (
-                                      <div className="ml-4 pl-3 border-l border-white/10 py-1 space-y-0.5">
-                                        {loadingRankings ? (
-                                          <div className="py-2 text-center text-[10px] text-muted-foreground">
-                                            <Loader2 className="h-2.5 w-2.5 animate-spin mx-auto mb-0.5" />
-                                            Loading...
+                              
+                              {/* Top 10 Models for this category */}
+                              {isCatExpanded && (
+                                <div className="ml-4 pl-3 border-l border-white/10 py-1 space-y-0.5">
+                                  {loadingRankings ? (
+                                    <div className="py-2 text-center text-[10px] text-muted-foreground">
+                                      <Loader2 className="h-2.5 w-2.5 animate-spin mx-auto mb-0.5" />
+                                      Loading...
+                                    </div>
+                                  ) : rankingsError ? (
+                                    <div className="py-2 text-center text-[10px] text-destructive">
+                                      Failed to load
+                                    </div>
+                                  ) : rankedEntries.length > 0 ? (
+                                    rankedEntries.slice(0, 10).map((entry) => {
+                                      const modelId = entry.model_id || ''
+                                      const hasAccess = canAccessModel(userTier, modelId)
+                                      const requiredTier = getModelRequiredTier(modelId)
+                                      const isSelected = selectedModel === modelId
+                                      
+                                      return (
+                                        <button
+                                          key={modelId}
+                                          type="button"
+                                          onClick={() => hasAccess && setSelectedModel(modelId)}
+                                          disabled={!hasAccess}
+                                          className={cn(
+                                            "w-full flex items-center gap-1.5 py-1 px-1.5 rounded text-[10px] text-left transition-all",
+                                            isSelected ? "bg-[var(--bronze)]/10" : "hover:bg-white/5",
+                                            !hasAccess && "opacity-50 cursor-not-allowed"
+                                          )}
+                                        >
+                                          {/* Rank Badge */}
+                                          <div className={cn(
+                                            "w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0",
+                                            entry.rank === 1 ? "bg-yellow-400 text-yellow-900" :
+                                            entry.rank === 2 ? "bg-slate-300 text-slate-700" :
+                                            entry.rank === 3 ? "bg-amber-600 text-amber-100" :
+                                            "bg-muted text-muted-foreground"
+                                          )}>
+                                            {entry.rank}
                                           </div>
-                                        ) : rankingsError ? (
-                                          <div className="py-2 text-center text-[10px] text-destructive">
-                                            Failed to load
+                                          {/* Provider Logo */}
+                                          <div className="w-4 h-4 relative shrink-0">
+                                            <Image
+                                              src={getModelLogo(modelId)}
+                                              alt=""
+                                              fill
+                                              className="object-contain"
+                                              unoptimized
+                                            />
                                           </div>
-                                        ) : rankedEntries.length > 0 ? (
-                                          rankedEntries.slice(0, 10).map((entry) => {
-                                            const modelId = entry.model_id || ''
-                                            const hasAccess = canAccessModel(userTier, modelId)
-                                            const requiredTier = getModelRequiredTier(modelId)
-                                            const isSelected = selectedModel === modelId
-                                            
-                                            return (
-                                              <button
-                                                key={modelId}
-                                                type="button"
-                                                onClick={() => hasAccess && setSelectedModel(modelId)}
-                                                disabled={!hasAccess}
-                                                className={cn(
-                                                  "w-full flex items-center gap-1.5 py-1 px-1.5 rounded text-[10px] text-left transition-all",
-                                                  isSelected ? "bg-[var(--bronze)]/10" : "hover:bg-white/5",
-                                                  !hasAccess && "opacity-50 cursor-not-allowed"
-                                                )}
-                                              >
-                                                {/* Rank Badge */}
-                                                <div className={cn(
-                                                  "w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0",
-                                                  entry.rank === 1 ? "bg-yellow-400 text-yellow-900" :
-                                                  entry.rank === 2 ? "bg-slate-300 text-slate-700" :
-                                                  entry.rank === 3 ? "bg-amber-600 text-amber-100" :
-                                                  "bg-muted text-muted-foreground"
-                                                )}>
-                                                  {entry.rank}
-                                                </div>
-                                                {/* Provider Logo */}
-                                                <div className="w-4 h-4 relative shrink-0">
-                                                  <Image
-                                                    src={getModelLogo(modelId)}
-                                                    alt=""
-                                                    fill
-                                                    className="object-contain"
-                                                    unoptimized
-                                                  />
-                                                </div>
-                                                {/* Model Name */}
-                                                <div className="flex-1 min-w-0 flex items-center gap-1">
-                                                  <span className={cn("truncate", isSelected && "text-[var(--bronze)]")}>
-                                                    {entry.model_name}
-                                                  </span>
-                                                  {!hasAccess && (
-                                                    <Badge variant="outline" className={cn("text-[6px] px-0.5 h-3", getTierBadgeColor(requiredTier))}>
-                                                      <Lock className="w-1.5 h-1.5 mr-0.5" />
-                                                      {getTierDisplayName(requiredTier)}
-                                                    </Badge>
-                                                  )}
-                                                </div>
-                                                {isSelected && <Check className="h-2.5 w-2.5 text-[var(--bronze)] shrink-0" />}
-                                              </button>
-                                            )
-                                          })
-                                        ) : (
-                                          <div className="py-2 text-center text-[10px] text-muted-foreground">
-                                            No models found
+                                          {/* Model Name */}
+                                          <div className="flex-1 min-w-0 flex items-center gap-1">
+                                            <span className={cn("truncate", isSelected && "text-[var(--bronze)]")}>
+                                              {entry.model_name}
+                                            </span>
+                                            {!hasAccess && (
+                                              <Badge variant="outline" className={cn("text-[6px] px-0.5 h-3", getTierBadgeColor(requiredTier))}>
+                                                <Lock className="w-1.5 h-1.5 mr-0.5" />
+                                                {getTierDisplayName(requiredTier)}
+                                              </Badge>
+                                            )}
                                           </div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })
-                            )}
-                          </div>
-                        )}
-                        
-                        {idx < 2 && !isExpanded && (
-                          <div className="my-0.5" />
-                        )}
-                      </div>
-                    )
-                  })}
+                                          {isSelected && <Check className="h-2.5 w-2.5 text-[var(--bronze)] shrink-0" />}
+                                        </button>
+                                      )
+                                    })
+                                  ) : (
+                                    <div className="py-2 text-center text-[10px] text-muted-foreground">
+                                      No models found
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
