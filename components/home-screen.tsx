@@ -61,8 +61,9 @@ const industryPacks: Array<{
   { id: "real_estate", label: "Real Estate Pack", description: "Listings, valuations, contracts", icon: Home, color: "text-orange-400" },
 ]
 
-// LLMHive Technology feature sections
+// LLMHive Technology feature sections - MUST MATCH powered-by-dropdown.tsx
 const featureSections = [
+  // 1. Intelligent Orchestration
   {
     id: "orchestration",
     title: "Intelligent Orchestration",
@@ -72,19 +73,39 @@ const featureSections = [
       { name: "Multi-Model Ensemble", desc: "Routes to optimal AI models" },
       { name: "Hierarchical Role Management", desc: "Decomposes complex tasks" },
       { name: "Deep Consensus", desc: "Models debate for accuracy" },
+      { name: "Adaptive Ensemble", desc: "Dynamic model weighting" },
+      { name: "Prompt Diffusion", desc: "Iterative refinement" },
     ]
   },
+  // 2. Strategy & Coordination
   {
     id: "strategy",
     title: "Strategy & Coordination",
     icon: Crown,
     iconColor: "text-amber-400",
     features: [
+      { name: "Single Best", desc: "Top-ranked model (fastest)" },
       { name: "Parallel Race", desc: "Multiple models, first good answer wins" },
       { name: "Best of N", desc: "Generate N responses, pick the best" },
+      { name: "Quality Fusion", desc: "Combine with quality weighting" },
       { name: "Expert Panel", desc: "Specialists synthesize insights" },
+      { name: "Challenge & Refine", desc: "Generate → Critique → Improve" },
     ]
   },
+  // 3. Advanced Reasoning
+  {
+    id: "reasoning",
+    title: "Advanced Reasoning",
+    icon: Sparkles,
+    iconColor: "text-yellow-400",
+    features: [
+      { name: "Chain of Thought", desc: "Step-by-step logic" },
+      { name: "Tree of Thoughts", desc: "Multiple solution paths" },
+      { name: "Self-Consistency", desc: "Samples & votes on best" },
+      { name: "Challenge & Refine", desc: "Models critique each other" },
+    ]
+  },
+  // 4. Accuracy & Verification
   {
     id: "accuracy",
     title: "Accuracy & Verification",
@@ -93,9 +114,43 @@ const featureSections = [
     features: [
       { name: "Tool-Based Verification", desc: "Catches hallucinations" },
       { name: "Calculator-Authoritative Math", desc: "100% accurate calculations" },
+      { name: "Code Syntax Verification", desc: "Multi-language validation" },
       { name: "Fact-Check Pipeline", desc: "Web search for claims" },
+      { name: "Self-Consistency Voting", desc: "Best answer wins" },
     ]
   },
+  // 5. Smart Formatting
+  {
+    id: "formatting",
+    title: "Smart Formatting",
+    icon: ListOrdered,
+    iconColor: "text-blue-400",
+    features: [
+      { name: "Automatic Format Detection", desc: "AI selects optimal structure" },
+      { name: "7 Output Formats", desc: "Bullet, Step-by-Step, Academic..." },
+      { name: "Answer Refinement Engine", desc: "Always-on polishing" },
+      { name: "Spell Check", desc: "Auto-corrects prompts" },
+    ]
+  },
+  // 6. Industry Packs
+  {
+    id: "industry-section",
+    title: "Industry Packs",
+    icon: Briefcase,
+    iconColor: "text-orange-400",
+    features: [
+      { name: "Medical", desc: "Clinical terminology, research" },
+      { name: "Legal", desc: "Case law, contracts, compliance" },
+      { name: "Finance", desc: "Risk analysis, regulations" },
+      { name: "Coding", desc: "Multi-language, debugging" },
+      { name: "Research", desc: "Academic sources, citations" },
+      { name: "Marketing", desc: "Campaigns, copywriting" },
+      { name: "Education", desc: "Curriculum, tutoring" },
+      { name: "Real Estate", desc: "Market analysis, contracts" },
+      { name: "Creative", desc: "Writing, ideation" },
+    ]
+  },
+  // 7. Memory & Context
   {
     id: "memory",
     title: "Memory & Context",
@@ -103,9 +158,12 @@ const featureSections = [
     iconColor: "text-cyan-400",
     features: [
       { name: "Shared Memory", desc: "Remembers across sessions" },
+      { name: "Cross-Session Learning", desc: "Insights persist" },
       { name: "1M Token Context", desc: "Largest API context window" },
+      { name: "RAG Integration", desc: "Your data, augmented" },
     ]
   },
+  // 8. Always Up-to-Date
   {
     id: "uptodate",
     title: "Always Up-to-Date",
@@ -113,9 +171,12 @@ const featureSections = [
     iconColor: "text-emerald-400",
     features: [
       { name: "Live Model Rankings", desc: "Real-time benchmarks" },
-      { name: "Auto-Optimization", desc: "Best models selected" },
+      { name: "Auto-Optimization Engine", desc: "Best models selected" },
+      { name: "New Model Integration", desc: "Latest models added" },
+      { name: "Cost Optimization", desc: "Best performance, lowest cost" },
     ]
   },
+  // 9. Enterprise-Grade
   {
     id: "enterprise",
     title: "Enterprise-Grade",
@@ -123,6 +184,8 @@ const featureSections = [
     iconColor: "text-rose-400",
     features: [
       { name: "Multi-Tenant Isolation", desc: "Your data stays yours" },
+      { name: "Guardrails & Safety", desc: "Content filtering" },
+      { name: "Audit Logging", desc: "Full traceability" },
       { name: "99.9% Uptime", desc: "Redundant infrastructure" },
     ]
   },
@@ -309,72 +372,106 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           
           {/* Drawer Panel - Glassmorphism */}
           <div className="fixed inset-y-0 right-0 w-[320px] sm:w-[380px] llmhive-glass border-l-0 rounded-l-2xl z-[101] animate-in slide-in-from-right duration-300 flex flex-col">
-            {/* Header */}
-            <div className="p-4 pb-3 border-b border-white/10 flex items-center gap-3">
-              {currentTemplate && (
-                <>
-                  <div className={`icon-badge ${currentTemplate.badgeClass}`}>
-                    <currentTemplate.icon className="h-5 w-5 text-white" />
+            {/* Header - Different for Technology vs Others */}
+            {activeDrawer === "technology" ? (
+              <div className="p-4 pb-3 border-b border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
+                      <span className="text-lg font-bold text-white">#1</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                        #1 in ALL 10 Industry Benchmarks
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground">January 2026 Rankings</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold">{currentTemplate.title}</h2>
-                    <p className="text-sm text-muted-foreground">Configure your settings</p>
-                  </div>
-                </>
-              )}
-              <button 
-                onClick={closeDrawer}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                aria-label="Close drawer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+                  <button 
+                    onClick={closeDrawer}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    aria-label="Close drawer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 pb-3 border-b border-white/10 flex items-center gap-3">
+                {currentTemplate && (
+                  <>
+                    <div className={`icon-badge ${currentTemplate.badgeClass}`}>
+                      <currentTemplate.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-lg font-semibold">{currentTemplate.title}</h2>
+                      <p className="text-sm text-muted-foreground">Select an option</p>
+                    </div>
+                  </>
+                )}
+                <button 
+                  onClick={closeDrawer}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Close drawer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            )}
 
             {/* Content */}
             <ScrollArea className="flex-1 p-4">
-              {/* LLMHive Technology - Read-only showcase */}
+              {/* LLMHive Technology - Read-only showcase - MATCHES powered-by-dropdown.tsx */}
               {activeDrawer === "technology" && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Patented orchestration technology</p>
-                  <div className="space-y-1">
-                    {featureSections.map((section) => {
-                      const Icon = section.icon
-                      const isExpanded = expandedSection === section.id
-                      return (
-                        <div key={section.id}>
-                          <button
-                            type="button"
-                            onClick={() => setExpandedSection(isExpanded ? null : section.id)}
-                            className="w-full p-2 rounded-lg border border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10 transition-all text-left"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-md flex items-center justify-center bg-white/10 shrink-0">
-                                <Icon className={`h-3.5 w-3.5 ${section.iconColor}`} />
-                              </div>
-                              <span className="text-xs font-medium flex-1">{section.title}</span>
-                              {isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}
-                            </div>
-                          </button>
-                          {isExpanded && (
-                            <div className="ml-9 mt-1 space-y-1">
-                              {section.features.map((feature, idx) => (
-                                <div key={idx} className="p-1.5 text-[10px]">
-                                  <span className="font-medium text-[var(--gold)]">{feature.name}</span>
-                                  <span className="text-muted-foreground"> — {feature.desc}</span>
+                <div className="space-y-1">
+                  {featureSections.map((section, idx) => {
+                    const Icon = section.icon
+                    const isExpanded = expandedSection === section.id
+                    return (
+                      <div key={section.id}>
+                        {/* Section Header - Clickable to expand */}
+                        <button
+                          type="button"
+                          onClick={() => setExpandedSection(isExpanded ? null : section.id)}
+                          className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md cursor-pointer transition-all text-left ${
+                            isExpanded 
+                              ? "bg-white/10" 
+                              : "hover:bg-white/5"
+                          }`}
+                        >
+                          <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
+                            isExpanded ? "bg-[var(--bronze)]/20" : "bg-white/10"
+                          }`}>
+                            <Icon className={`h-3.5 w-3.5 ${section.iconColor}`} />
+                          </div>
+                          <span className="flex-1 text-sm font-medium">{section.title}</span>
+                          {isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+                        </button>
+                        
+                        {/* Expanded Features */}
+                        {isExpanded && (
+                          <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-1">
+                            {section.features.map((feature, fIdx) => (
+                              <div 
+                                key={fIdx}
+                                className="flex items-start gap-2 py-1.5 px-2 rounded text-xs"
+                              >
+                                <Check className="h-3 w-3 text-[var(--bronze)] mt-0.5 shrink-0" />
+                                <div>
+                                  <span className="font-medium">{feature.name}</span>
+                                  <span className="text-muted-foreground ml-1">— {feature.desc}</span>
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="mt-3 p-2 rounded-lg bg-[var(--bronze)]/10 border border-[var(--bronze)]/30">
-                    <p className="text-[10px] text-yellow-400 font-medium text-center">
-                      #1 in ALL 10 Industry Benchmarks
-                    </p>
-                  </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {idx < featureSections.length - 1 && !isExpanded && (
+                          <div className="my-0.5" />
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 
@@ -520,12 +617,24 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
             {/* Footer */}
             <div className="p-4 border-t border-white/10">
               {activeDrawer === "technology" ? (
-                <Button 
-                  className="w-full bronze-gradient gap-2" 
-                  onClick={closeDrawer}
-                >
-                  Close
-                </Button>
+                <div className="space-y-3">
+                  {/* Patented tech footer - matches dropdown */}
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-[10px] text-yellow-400 font-medium">
+                      Patented orchestration technology
+                    </span>
+                    <div className="flex items-center gap-1 text-[10px] text-[var(--bronze)]">
+                      <RefreshCw className="h-3 w-3" />
+                      <span>Always optimizing</span>
+                    </div>
+                  </div>
+                  <Button 
+                    className="w-full bronze-gradient gap-2" 
+                    onClick={closeDrawer}
+                  >
+                    Close
+                  </Button>
+                </div>
               ) : (
                 <Button 
                   className="w-full bronze-gradient gap-2" 
