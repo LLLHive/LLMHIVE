@@ -79,6 +79,15 @@ jobs:
           else
             echo "::warning::api-key not found in Secret Manager"
           fi
+          
+          # Slack webhook URL for failure notifications
+          SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$SLACK_URL" ]; then
+            echo "✅ Retrieved slack-webhook-url from Secret Manager"
+            echo "SLACK_WEBHOOK_URL=$SLACK_URL" >> $GITHUB_ENV
+          else
+            echo "::warning::slack-webhook-url not found in Secret Manager (Slack notifications disabled)"
+          fi
 
       - name: Determine production URL
         id: url
@@ -129,11 +138,11 @@ jobs:
           check_name: "Smoke Test Results"
           comment_mode: "off"
 
-      # Slack notifications are OPTIONAL - only run if webhook is configured
-      # This step uses continue-on-error: true so it fails silently if no webhook
+      # Slack notifications - only run if webhook is configured
       - name: Send Slack notification on failure
         if: |
           failure() && 
+          env.SLACK_WEBHOOK_URL != '' &&
           github.event_name != 'workflow_dispatch' &&
           github.repository_owner == 'LLMHive'
         uses: slackapi/slack-github-action@v1.25.0
@@ -176,7 +185,6 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-        continue-on-error: true
 
   critical-tests:
     name: Critical Health Checks
