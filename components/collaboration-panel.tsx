@@ -140,65 +140,52 @@ export function CollaborationPanel() {
     }
   }
 
-  // Not connected - show join/create options
+  // Not connected - show compact join/create options
   if (!isConnected && !isConnecting) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6" />
-            Collaboration
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Real-time collaboration with your team
+      <div className="p-3 space-y-3">
+        <div className="flex items-center gap-2 text-center">
+          <WifiOff className="h-4 w-4 text-muted-foreground shrink-0" />
+          <p className="text-[10px] text-muted-foreground">
+            Create or join a session
           </p>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
-          <div className="text-center space-y-2">
-            <WifiOff className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="font-semibold">Not Connected</h3>
-            <p className="text-sm text-muted-foreground">
-              Create or join a session to collaborate in real-time
-            </p>
+        <Button onClick={handleCreateSession} size="sm" className="w-full bronze-gradient text-xs h-7">
+          <Users className="h-3 w-3 mr-1.5" />
+          Create Session
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-white/10" />
           </div>
-
-          <div className="w-full max-w-xs space-y-4">
-            <Button onClick={handleCreateSession} className="w-full bronze-gradient">
-              <Users className="h-4 w-4 mr-2" />
-              Create New Session
-            </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">or</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Input
-                placeholder="Enter session ID"
-                value={joinSessionId}
-                onChange={(e) => setJoinSessionId(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleJoinSession()}
-              />
-              <Button 
-                variant="outline" 
-                className="w-full bg-transparent"
-                onClick={handleJoinSession}
-              >
-                Join Session
-              </Button>
-            </div>
+          <div className="relative flex justify-center text-[10px] uppercase">
+            <span className="bg-card px-2 text-muted-foreground">or</span>
           </div>
-
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
         </div>
+
+        <div className="flex gap-1.5">
+          <Input
+            placeholder="Session ID"
+            value={joinSessionId}
+            onChange={(e) => setJoinSessionId(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleJoinSession()}
+            className="h-7 text-xs"
+          />
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-7 text-xs px-2 shrink-0"
+            onClick={handleJoinSession}
+          >
+            Join
+          </Button>
+        </div>
+
+        {error && (
+          <p className="text-[10px] text-destructive">{error}</p>
+        )}
       </div>
     )
   }

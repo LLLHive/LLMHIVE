@@ -262,9 +262,11 @@ export function Sidebar({
                   <span className="font-medium flex items-center gap-2">
                     <Users className="h-4 w-4 flex-shrink-0" />
                     Collaborate
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-semibold">
+                      Soon
+                    </span>
                   </span>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
                     {collaborateExpanded ? (
                       <ChevronUp className="h-4 w-4 text-foreground" />
                     ) : (
