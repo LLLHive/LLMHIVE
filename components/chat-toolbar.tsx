@@ -20,7 +20,6 @@ import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
 // OrchestrationStudioDropdown removed - Accuracy vs Speed is in CriteriaEqualizer (Tuning)
 import { EnginesDropdown } from "./engines-dropdown"
 import { StrategyDropdown } from "./strategy-dropdown"
-import { PoweredByDropdown } from "./powered-by-dropdown"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
@@ -214,28 +213,6 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* Powered By LLMHive - Marketing showcase dropdown */}
-      <PoweredByDropdown />
-
-      {/* Agent Mode Toggle */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() =>
-          onSettingsChange({
-            agentMode: settings.agentMode === "single" ? "team" : "single",
-          })
-        }
-        className={`gap-1.5 h-8 px-3 text-xs border rounded-lg transition-colors ${
-          settings.agentMode === "team"
-            ? "bg-[var(--bronze)]/20 border-[var(--bronze)] text-[var(--bronze)]"
-            : "bg-secondary/50 border-border hover:bg-secondary hover:border-[var(--bronze)]"
-        }`}
-      >
-        {settings.agentMode === "team" ? <Users className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
-        <span className="hidden sm:inline">{settings.agentMode === "team" ? "Team" : "Single"}</span>
-      </Button>
-
       {/* Models Dropdown with Ranking Categories */}
       <DropdownMenu open={modelsOpen} onOpenChange={(open) => {
         setModelsOpen(open)
@@ -355,6 +332,35 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                 <span className="flex-1 font-medium">Automatic</span>
                 <span className="text-[10px] text-muted-foreground">Best model per task</span>
                 {selectedModels.includes("automatic") && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+              </DropdownMenuItem>
+              
+              {/* Team/Single Mode Toggle - Right after Automatic */}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault()
+                  onSettingsChange({
+                    agentMode: settings.agentMode === "single" ? "team" : "single",
+                  })
+                }}
+                className="gap-2 cursor-pointer"
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded-full flex items-center justify-center",
+                  settings.agentMode === "team" 
+                    ? "bg-[var(--bronze)]/20" 
+                    : "bg-muted"
+                )}>
+                  {settings.agentMode === "team" 
+                    ? <Users className="h-3 w-3 text-[var(--bronze)]" /> 
+                    : <User className="h-3 w-3 text-muted-foreground" />
+                  }
+                </div>
+                <span className="flex-1 font-medium">
+                  {settings.agentMode === "team" ? "Team Mode" : "Single Mode"}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {settings.agentMode === "team" ? "Multi-model ensemble" : "Single model"}
+                </span>
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />

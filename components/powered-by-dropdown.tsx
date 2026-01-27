@@ -157,7 +157,10 @@ export function PoweredByDropdown() {
         >
           <Cpu className="h-3.5 w-3.5 text-purple-400" />
           <span className="hidden sm:inline font-medium bg-gradient-to-r from-purple-300 to-amber-300 bg-clip-text text-transparent">
-            Powered By
+            LLMHive Technology
+          </span>
+          <span className="sm:hidden font-medium bg-gradient-to-r from-purple-300 to-amber-300 bg-clip-text text-transparent">
+            Tech
           </span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
@@ -168,13 +171,15 @@ export function PoweredByDropdown() {
       >
         {/* Header */}
         <div className="px-4 py-3 bg-gradient-to-r from-purple-500/10 to-amber-500/10 border-b border-border/50">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
+              <span className="text-lg font-bold text-white">#1</span>
             </div>
             <div>
-              <h3 className="font-semibold text-sm">LLMHive Technology</h3>
-              <p className="text-[10px] text-muted-foreground">#1 in ALL 10 Industry Benchmarks</p>
+              <h3 className="font-bold text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                #1 in ALL 10 Industry Benchmarks
+              </h3>
+              <p className="text-[10px] text-muted-foreground">January 2026 Rankings</p>
             </div>
           </div>
         </div>
@@ -243,7 +248,7 @@ export function PoweredByDropdown() {
         <div className="px-4 py-2.5 bg-gradient-to-r from-purple-500/5 to-amber-500/5 border-t border-border/50">
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-muted-foreground">
-              Patent-pending orchestration technology
+              Patented orchestration technology
             </span>
             <div className="flex items-center gap-1 text-[10px] text-[var(--bronze)]">
               <TrendingUp className="h-3 w-3" />

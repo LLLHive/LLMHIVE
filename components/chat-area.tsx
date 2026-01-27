@@ -24,6 +24,7 @@ import { MessageBubble } from "./message-bubble"
 import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
 import { ChatToolbar } from "./chat-toolbar"
+import { PoweredByDropdown } from "./powered-by-dropdown"
 // OrchestrationStudio moved to toolbar dropdown (OrchestrationStudioDropdown)
 import { LiveStatusPanel } from "./live-status-panel"
 import { ModelsUsedDisplay } from "./models-used-display"
@@ -908,6 +909,9 @@ export function ChatArea({
 
       <header className="border-b border-white/10 p-3 glass-content sticky top-0 z-40 space-y-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
+          {/* Powered By LLMHive - Marketing showcase dropdown - FIRST */}
+          <PoweredByDropdown />
+          
           {/* Domain Pack Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
