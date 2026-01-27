@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { Send, Paperclip, Mic, MicOff, X, ImageIcon, FileText, RefreshCw, AlertCircle, Sparkles, Brain, Code, Briefcase, Camera, Volume2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ChevronDown, ChevronUp, Check, Scale, Stethoscope, Megaphone, GraduationCap, Landmark, Building2, MessageSquare } from "lucide-react"
+import { ChevronDown, ChevronUp, Check, Scale, Stethoscope, Megaphone, GraduationCap, Landmark, Building2, MessageSquare, Home } from "lucide-react"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
 import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
 import { toast } from "@/lib/toast"
@@ -58,6 +58,8 @@ const domainPacks = [
   { value: "coding", label: "Coding Pack", icon: Code, color: "text-emerald-400" },
   { value: "research", label: "Research Mode", icon: Brain, color: "text-blue-400" },
   { value: "finance", label: "Finance Pack", icon: Landmark, color: "text-yellow-400" },
+  { value: "education", label: "Education Pack", icon: GraduationCap, color: "text-cyan-400" },
+  { value: "real_estate", label: "Real Estate Pack", icon: Home, color: "text-orange-400" },
 ]
 
 interface ChatAreaProps {

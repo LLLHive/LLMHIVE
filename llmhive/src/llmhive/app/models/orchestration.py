@@ -46,6 +46,8 @@ class DomainPack(str, Enum):
     coding = "coding"
     research = "research"
     finance = "finance"
+    education = "education"
+    real_estate = "real_estate"
 
 
 class AgentMode(str, Enum):
