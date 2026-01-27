@@ -61,26 +61,26 @@ const industryPacks: Array<{
 
 // Research features
 const researchFeatures = [
-  { id: "deep_reasoning", label: "Deep Reasoning", description: "Extended chain-of-thought", icon: Brain },
-  { id: "multi_perspective", label: "Multi-Perspective", description: "Multiple agent viewpoints", icon: Users },
-  { id: "fact_verification", label: "Fact Verification", description: "Cross-reference claims", icon: Check },
-  { id: "source_citation", label: "Source Citation", description: "Include references", icon: BookOpen },
+  { id: "deep_reasoning", label: "Deep Reasoning", description: "Extended chain-of-thought", icon: Brain, color: "text-purple-400" },
+  { id: "multi_perspective", label: "Multi-Perspective", description: "Multiple agent viewpoints", icon: Users, color: "text-blue-400" },
+  { id: "fact_verification", label: "Fact Verification", description: "Cross-reference claims", icon: Check, color: "text-green-400" },
+  { id: "source_citation", label: "Source Citation", description: "Include references", icon: BookOpen, color: "text-cyan-400" },
 ]
 
 // Code features  
 const codeFeatures = [
-  { id: "code_review", label: "Code Review", description: "Analyze code quality", icon: FileCode },
-  { id: "debugging", label: "Debugging", description: "Find and fix bugs", icon: Bug },
-  { id: "optimization", label: "Optimization", description: "Performance improvements", icon: Zap },
-  { id: "best_practices", label: "Best Practices", description: "Industry standards", icon: Shield },
+  { id: "code_review", label: "Code Review", description: "Analyze code quality", icon: FileCode, color: "text-emerald-400" },
+  { id: "debugging", label: "Debugging", description: "Find and fix bugs", icon: Bug, color: "text-red-400" },
+  { id: "optimization", label: "Optimization", description: "Performance improvements", icon: Zap, color: "text-yellow-400" },
+  { id: "best_practices", label: "Best Practices", description: "Industry standards", icon: Shield, color: "text-blue-400" },
 ]
 
 // General assistant modes
 const generalModes = [
-  { id: "quick", label: "Quick Response", description: "Fast, concise answers", icon: Zap },
-  { id: "detailed", label: "Detailed", description: "Comprehensive explanations", icon: BookOpen },
-  { id: "creative", label: "Creative", description: "Brainstorming and ideas", icon: Lightbulb },
-  { id: "focused", label: "Focused", description: "Task-specific assistance", icon: Target },
+  { id: "quick", label: "Quick Response", description: "Fast, concise answers", icon: Zap, color: "text-amber-400" },
+  { id: "detailed", label: "Detailed", description: "Comprehensive explanations", icon: BookOpen, color: "text-blue-400" },
+  { id: "creative", label: "Creative", description: "Brainstorming and ideas", icon: Lightbulb, color: "text-yellow-400" },
+  { id: "focused", label: "Focused", description: "Task-specific assistance", icon: Target, color: "text-pink-400" },
 ]
 
 const templates = [
@@ -351,7 +351,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                             >
                               {isSelected && <Check className="h-3 w-3 text-black" />}
                             </div>
-                            <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--gold)]" : "text-muted-foreground"}`} />
+                            <Icon className={`h-5 w-5 ${mode.color}`} />
                             <div>
                               <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
                                 {mode.label}
@@ -387,7 +387,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--gold)]" : "text-muted-foreground"}`} />
+                              <Icon className={`h-5 w-5 ${feature.color}`} />
                               <div>
                                 <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
                                   {feature.label}
@@ -432,7 +432,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <Icon className={`h-5 w-5 ${isSelected ? "text-[var(--gold)]" : "text-muted-foreground"}`} />
+                              <Icon className={`h-5 w-5 ${feature.color}`} />
                               <div>
                                 <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
                                   {feature.label}
