@@ -20,8 +20,22 @@ import {
   Landmark,
   Home,
   X,
+  Cpu,
+  ListTree,
+  Crown,
+  Shield,
+  Database,
+  RefreshCw,
+  Lock,
+  MessageSquare,
+  LayoutGrid,
+  List,
+  ListOrdered,
+  Zap,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
-import type { OrchestratorSettings, DomainPack } from "@/lib/types"
+import type { OrchestratorSettings, DomainPack, AnswerFormat } from "@/lib/types"
 
 interface HomeScreenProps {
   onNewChat: () => void
@@ -47,46 +61,157 @@ const industryPacks: Array<{
   { id: "real_estate", label: "Real Estate Pack", description: "Listings, valuations, contracts", icon: Home, color: "text-orange-400" },
 ]
 
+// LLMHive Technology feature sections
+const featureSections = [
+  {
+    id: "orchestration",
+    title: "Intelligent Orchestration",
+    icon: Brain,
+    iconColor: "text-purple-400",
+    features: [
+      { name: "Multi-Model Ensemble", desc: "Routes to optimal AI models" },
+      { name: "Hierarchical Role Management", desc: "Decomposes complex tasks" },
+      { name: "Deep Consensus", desc: "Models debate for accuracy" },
+    ]
+  },
+  {
+    id: "strategy",
+    title: "Strategy & Coordination",
+    icon: Crown,
+    iconColor: "text-amber-400",
+    features: [
+      { name: "Parallel Race", desc: "Multiple models, first good answer wins" },
+      { name: "Best of N", desc: "Generate N responses, pick the best" },
+      { name: "Expert Panel", desc: "Specialists synthesize insights" },
+    ]
+  },
+  {
+    id: "accuracy",
+    title: "Accuracy & Verification",
+    icon: Shield,
+    iconColor: "text-green-400",
+    features: [
+      { name: "Tool-Based Verification", desc: "Catches hallucinations" },
+      { name: "Calculator-Authoritative Math", desc: "100% accurate calculations" },
+      { name: "Fact-Check Pipeline", desc: "Web search for claims" },
+    ]
+  },
+  {
+    id: "memory",
+    title: "Memory & Context",
+    icon: Database,
+    iconColor: "text-cyan-400",
+    features: [
+      { name: "Shared Memory", desc: "Remembers across sessions" },
+      { name: "1M Token Context", desc: "Largest API context window" },
+    ]
+  },
+  {
+    id: "uptodate",
+    title: "Always Up-to-Date",
+    icon: RefreshCw,
+    iconColor: "text-emerald-400",
+    features: [
+      { name: "Live Model Rankings", desc: "Real-time benchmarks" },
+      { name: "Auto-Optimization", desc: "Best models selected" },
+    ]
+  },
+  {
+    id: "enterprise",
+    title: "Enterprise-Grade",
+    icon: Lock,
+    iconColor: "text-rose-400",
+    features: [
+      { name: "Multi-Tenant Isolation", desc: "Your data stays yours" },
+      { name: "99.9% Uptime", desc: "Redundant infrastructure" },
+    ]
+  },
+]
+
+// Model options
+const modelOptions = [
+  { id: "automatic", label: "Automatic", description: "Best model per task", icon: Sparkles, color: "text-amber-400" },
+  { id: "gpt-4", label: "GPT-4", description: "OpenAI's flagship model", icon: Cpu, color: "text-green-400" },
+  { id: "claude-3", label: "Claude 3", description: "Anthropic's latest", icon: Cpu, color: "text-orange-400" },
+  { id: "gemini", label: "Gemini", description: "Google's multimodal AI", icon: Cpu, color: "text-blue-400" },
+  { id: "llama", label: "Llama 3", description: "Meta's open model", icon: Cpu, color: "text-purple-400" },
+]
+
+// Format options
+const formatOptions = [
+  { id: "automatic", label: "Automatic", description: "AI selects optimal format", icon: Sparkles, color: "text-amber-400" },
+  { id: "conversational", label: "Conversational", description: "Natural flowing paragraphs", icon: MessageSquare, color: "text-blue-400" },
+  { id: "structured", label: "Structured", description: "Headers, sections & emphasis", icon: LayoutGrid, color: "text-purple-400" },
+  { id: "bullet-points", label: "Bullet Points", description: "Quick-scan lists", icon: List, color: "text-green-400" },
+  { id: "step-by-step", label: "Step-by-Step", description: "Numbered instructions", icon: ListOrdered, color: "text-orange-400" },
+  { id: "academic", label: "Academic", description: "Formal with citations", icon: GraduationCap, color: "text-cyan-400" },
+  { id: "concise", label: "Concise", description: "Brief, direct answers", icon: Zap, color: "text-yellow-400" },
+]
+
 
 const templates = [
+  {
+    id: "technology",
+    title: "LLMHive Technology",
+    description: "Our patented orchestration features",
+    icon: Cpu,
+    badgeClass: "icon-badge-purple",
+  },
   {
     id: "industry",
     title: "Industry Packs",
     description: "Legal, Medical, Marketing & more",
     icon: Briefcase,
-    badgeClass: "icon-badge-blue",
-    preset: {
-      reasoningMode: "deep" as const,
-      agentMode: "team" as const,
-      outputValidation: true,
-      answerStructure: true,
-    },
+    badgeClass: "icon-badge-orange",
+  },
+  {
+    id: "models",
+    title: "Models",
+    description: "Choose AI models for your tasks",
+    icon: Cpu,
+    badgeClass: "icon-badge-cyan",
+  },
+  {
+    id: "format",
+    title: "Format",
+    description: "How your answers are structured",
+    icon: ListTree,
+    badgeClass: "icon-badge-pink",
   },
 ]
 
-type DrawerId = "industry" | null
+type DrawerId = "technology" | "industry" | "models" | "format" | null
 
 export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [selectedIndustry, setSelectedIndustry] = useState<DomainPack | null>(null)
+  const [selectedModel, setSelectedModel] = useState<string>("automatic")
+  const [selectedFormat, setSelectedFormat] = useState<string>("automatic")
+  const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
   const openDrawer = (templateId: string) => {
     setActiveDrawer(templateId as DrawerId)
-    setSelectedIndustry(null)
+    if (templateId === "industry") setSelectedIndustry(null)
   }
 
   const closeDrawer = () => {
     setActiveDrawer(null)
+    setExpandedSection(null)
   }
 
   const handleStartChat = () => {
-    const template = templates.find(t => t.id === activeDrawer)
-    if (!template) return
+    let finalPreset: Partial<OrchestratorSettings> = {}
     
-    let finalPreset: Partial<OrchestratorSettings> = { ...template.preset }
-    
-    if (selectedIndustry) {
+    if (activeDrawer === "industry" && selectedIndustry) {
       finalPreset.domainPack = selectedIndustry
+    }
+    
+    if (activeDrawer === "models") {
+      finalPreset.selectedModels = selectedModel === "automatic" ? ["automatic"] : [selectedModel]
+    }
+    
+    if (activeDrawer === "format") {
+      finalPreset.answerFormat = selectedFormat as AnswerFormat
     }
     
     closeDrawer()
@@ -208,6 +333,51 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
 
             {/* Content */}
             <ScrollArea className="flex-1 p-4">
+              {/* LLMHive Technology - Read-only showcase */}
+              {activeDrawer === "technology" && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Patented orchestration technology</p>
+                  <div className="space-y-1">
+                    {featureSections.map((section) => {
+                      const Icon = section.icon
+                      const isExpanded = expandedSection === section.id
+                      return (
+                        <div key={section.id}>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedSection(isExpanded ? null : section.id)}
+                            className="w-full p-2 rounded-lg border border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10 transition-all text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-md flex items-center justify-center bg-white/10 shrink-0">
+                                <Icon className={`h-3.5 w-3.5 ${section.iconColor}`} />
+                              </div>
+                              <span className="text-xs font-medium flex-1">{section.title}</span>
+                              {isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="ml-9 mt-1 space-y-1">
+                              {section.features.map((feature, idx) => (
+                                <div key={idx} className="p-1.5 text-[10px]">
+                                  <span className="font-medium text-[var(--gold)]">{feature.name}</span>
+                                  <span className="text-muted-foreground"> — {feature.desc}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-3 p-2 rounded-lg bg-[var(--bronze)]/10 border border-[var(--bronze)]/30">
+                    <p className="text-[10px] text-yellow-400 font-medium text-center">
+                      #1 in ALL 10 Industry Benchmarks
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Industry Options */}
               {activeDrawer === "industry" && (
                 <div className="space-y-2">
@@ -253,18 +423,121 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                   </div>
                 </div>
               )}
+
+              {/* Models Options */}
+              {activeDrawer === "models" && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Select AI model</p>
+                  <div className="space-y-1">
+                    {modelOptions.map((model) => {
+                      const Icon = model.icon
+                      const isSelected = selectedModel === model.id
+                      return (
+                        <button
+                          key={model.id}
+                          type="button"
+                          onClick={() => setSelectedModel(model.id)}
+                          className={`w-full p-2 rounded-lg border transition-all text-left ${
+                            isSelected
+                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-7 h-7 rounded-md flex items-center justify-center transition-all shrink-0 ${
+                                isSelected 
+                                  ? "bg-[var(--bronze)]/20 border border-[var(--bronze)]/50" 
+                                  : "bg-white/10"
+                              }`}
+                            >
+                              <Icon className={`h-3.5 w-3.5 ${model.color}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className={`text-xs font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
+                                {model.label}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground truncate block">{model.description}</span>
+                            </div>
+                            {isSelected && (
+                              <Check className="h-4 w-4 text-[var(--bronze)] shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Format Options */}
+              {activeDrawer === "format" && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Choose answer format</p>
+                  <div className="space-y-1">
+                    {formatOptions.map((format) => {
+                      const Icon = format.icon
+                      const isSelected = selectedFormat === format.id
+                      return (
+                        <button
+                          key={format.id}
+                          type="button"
+                          onClick={() => setSelectedFormat(format.id)}
+                          className={`w-full p-2 rounded-lg border transition-all text-left ${
+                            isSelected
+                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-7 h-7 rounded-md flex items-center justify-center transition-all shrink-0 ${
+                                isSelected 
+                                  ? "bg-[var(--bronze)]/20 border border-[var(--bronze)]/50" 
+                                  : "bg-white/10"
+                              }`}
+                            >
+                              <Icon className={`h-3.5 w-3.5 ${format.color}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className={`text-xs font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
+                                {format.label}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground truncate block">{format.description}</span>
+                            </div>
+                            {isSelected && (
+                              <Check className="h-4 w-4 text-[var(--bronze)] shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </ScrollArea>
 
             {/* Footer */}
             <div className="p-4 border-t border-white/10">
-              <Button 
-                className="w-full bronze-gradient gap-2" 
-                onClick={handleStartChat}
-                disabled={!selectedIndustry}
-              >
-                {selectedIndustry ? `Start ${industryPacks.find(p => p.id === selectedIndustry)?.label} Chat` : "Select an Industry"}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              {activeDrawer === "technology" ? (
+                <Button 
+                  className="w-full bronze-gradient gap-2" 
+                  onClick={closeDrawer}
+                >
+                  Close
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full bronze-gradient gap-2" 
+                  onClick={handleStartChat}
+                  disabled={activeDrawer === "industry" && !selectedIndustry}
+                >
+                  {activeDrawer === "industry" && (selectedIndustry ? `Start ${industryPacks.find(p => p.id === selectedIndustry)?.label} Chat` : "Select an Industry")}
+                  {activeDrawer === "models" && `Start with ${modelOptions.find(m => m.id === selectedModel)?.label}`}
+                  {activeDrawer === "format" && `Start with ${formatOptions.find(f => f.id === selectedFormat)?.label} Format`}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </>
