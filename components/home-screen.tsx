@@ -458,9 +458,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
 
               {/* Industry Options */}
               {activeDrawer === "industry" && (
-                <div className="space-y-4">
-                  <p className="text-sm font-medium text-muted-foreground">Choose an industry pack</p>
-                  <div className="space-y-2">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Choose an industry pack</p>
+                  <div className="space-y-1">
                     {industryPacks.map((pack) => {
                       const Icon = pack.icon
                       const isSelected = selectedIndustry === pack.id
@@ -469,45 +469,36 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                           key={pack.id}
                           type="button"
                           onClick={() => setSelectedIndustry(pack.id)}
-                          className={`w-full p-4 rounded-lg border transition-all text-left ${
+                          className={`w-full p-2 rounded-lg border transition-all text-left ${
                             isSelected
                               ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
                               : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
                           }`}
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <div
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+                              className={`w-7 h-7 rounded-md flex items-center justify-center transition-all shrink-0 ${
                                 isSelected 
                                   ? "bg-[var(--bronze)]/20 border border-[var(--bronze)]/50" 
                                   : "bg-white/10"
                               }`}
                             >
-                              <Icon className={`h-5 w-5 ${pack.color}`} />
+                              <Icon className={`h-3.5 w-3.5 ${pack.color}`} />
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
-                                  {pack.label}
-                                </span>
-                                {isSelected && (
-                                  <Badge className="bronze-gradient text-black text-xs font-semibold">Selected</Badge>
-                                )}
-                              </div>
-                              <span className="text-xs text-muted-foreground">{pack.description}</span>
+                            <div className="flex-1 min-w-0">
+                              <span className={`text-xs font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
+                                {pack.label}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground truncate block">{pack.description}</span>
                             </div>
+                            {isSelected && (
+                              <Check className="h-4 w-4 text-[var(--bronze)] shrink-0" />
+                            )}
                           </div>
                         </button>
                       )
                     })}
                   </div>
-                  {selectedIndustry && (
-                    <div className="p-3 rounded-lg glass-card border-blue-500/20">
-                      <p className="text-xs text-blue-400">
-                        {industryPacks.find(p => p.id === selectedIndustry)?.label} pack selected with specialized prompts and terminology
-                      </p>
-                    </div>
-                  )}
                 </div>
               )}
             </ScrollArea>
