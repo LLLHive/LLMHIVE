@@ -2,12 +2,9 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { LogoText } from "@/components/branding"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Switch } from "@/components/ui/switch"
 import { 
   MessageSquarePlus, 
   Brain, 
@@ -20,17 +17,8 @@ import {
   Stethoscope,
   Megaphone,
   GraduationCap,
-  Building2,
   Landmark,
-  Lightbulb,
-  Shield,
-  Zap,
-  Bug,
-  FileCode,
-  BookOpen,
   Home,
-  Users,
-  Target,
   X,
 } from "lucide-react"
 import type { OrchestratorSettings, DomainPack } from "@/lib/types"
@@ -59,69 +47,8 @@ const industryPacks: Array<{
   { id: "real_estate", label: "Real Estate Pack", description: "Listings, valuations, contracts", icon: Home, color: "text-orange-400" },
 ]
 
-// Research features
-const researchFeatures = [
-  { id: "deep_reasoning", label: "Deep Reasoning", description: "Extended chain-of-thought", icon: Brain, color: "text-purple-400" },
-  { id: "multi_perspective", label: "Multi-Perspective", description: "Multiple agent viewpoints", icon: Users, color: "text-blue-400" },
-  { id: "fact_verification", label: "Fact Verification", description: "Cross-reference claims", icon: Check, color: "text-green-400" },
-  { id: "source_citation", label: "Source Citation", description: "Include references", icon: BookOpen, color: "text-cyan-400" },
-]
-
-// Code features  
-const codeFeatures = [
-  { id: "code_review", label: "Code Review", description: "Analyze code quality", icon: FileCode, color: "text-emerald-400" },
-  { id: "debugging", label: "Debugging", description: "Find and fix bugs", icon: Bug, color: "text-red-400" },
-  { id: "optimization", label: "Optimization", description: "Performance improvements", icon: Zap, color: "text-yellow-400" },
-  { id: "best_practices", label: "Best Practices", description: "Industry standards", icon: Shield, color: "text-blue-400" },
-]
-
-// General assistant modes
-const generalModes = [
-  { id: "quick", label: "Quick Response", description: "Fast, concise answers", icon: Zap, color: "text-amber-400" },
-  { id: "detailed", label: "Detailed", description: "Comprehensive explanations", icon: BookOpen, color: "text-blue-400" },
-  { id: "creative", label: "Creative", description: "Brainstorming and ideas", icon: Lightbulb, color: "text-yellow-400" },
-  { id: "focused", label: "Focused", description: "Task-specific assistance", icon: Target, color: "text-pink-400" },
-]
 
 const templates = [
-  {
-    id: "general",
-    title: "General Assistant",
-    description: "Versatile AI helper for everyday tasks",
-    icon: Sparkles,
-    badgeClass: "icon-badge-orange",
-    preset: {
-      reasoningMode: "standard" as const,
-      domainPack: "default" as const,
-      agentMode: "single" as const,
-    },
-  },
-  {
-    id: "research",
-    title: "Research & Deep Reasoning",
-    description: "In-depth analysis with multiple perspectives",
-    icon: Brain,
-    badgeClass: "icon-badge-purple",
-    preset: {
-      reasoningMode: "deep" as const,
-      domainPack: "research" as const,
-      agentMode: "team" as const,
-      outputValidation: true,
-    },
-  },
-  {
-    id: "code",
-    title: "Code & Debug",
-    description: "Expert coding assistance and debugging",
-    icon: Code,
-    badgeClass: "icon-badge-emerald",
-    preset: {
-      reasoningMode: "standard" as const,
-      domainPack: "coding" as const,
-      agentMode: "team" as const,
-      promptOptimization: true,
-    },
-  },
   {
     id: "industry",
     title: "Industry Packs",
@@ -137,31 +64,19 @@ const templates = [
   },
 ]
 
-type DrawerId = "general" | "research" | "code" | "industry" | null
+type DrawerId = "industry" | null
 
 export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [selectedIndustry, setSelectedIndustry] = useState<DomainPack | null>(null)
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
-  const [selectedMode, setSelectedMode] = useState<string>("quick")
 
   const openDrawer = (templateId: string) => {
     setActiveDrawer(templateId as DrawerId)
-    setSelectedFeatures([])
-    setSelectedMode("quick")
     setSelectedIndustry(null)
   }
 
   const closeDrawer = () => {
     setActiveDrawer(null)
-  }
-
-  const toggleFeature = (featureId: string) => {
-    setSelectedFeatures(prev => 
-      prev.includes(featureId) 
-        ? prev.filter(f => f !== featureId) 
-        : [...prev, featureId]
-    )
   }
 
   const handleStartChat = () => {
@@ -170,39 +85,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
     
     let finalPreset: Partial<OrchestratorSettings> = { ...template.preset }
     
-    if (activeDrawer === "industry" && selectedIndustry) {
+    if (selectedIndustry) {
       finalPreset.domainPack = selectedIndustry
-    }
-    
-    if (activeDrawer === "research") {
-      if (selectedFeatures.includes("deep_reasoning")) {
-        finalPreset.reasoningMode = "deep"
-      }
-      if (selectedFeatures.includes("multi_perspective")) {
-        finalPreset.agentMode = "team"
-        finalPreset.enableDeepConsensus = true
-      }
-      if (selectedFeatures.includes("fact_verification")) {
-        finalPreset.outputValidation = true
-      }
-    }
-    
-    if (activeDrawer === "code") {
-      finalPreset.domainPack = "coding"
-      if (selectedFeatures.includes("optimization")) {
-        finalPreset.promptOptimization = true
-      }
-      if (selectedFeatures.includes("code_review")) {
-        finalPreset.outputValidation = true
-      }
-    }
-    
-    if (activeDrawer === "general") {
-      if (selectedMode === "detailed") {
-        finalPreset.reasoningMode = "deep"
-      } else if (selectedMode === "creative") {
-        finalPreset.domainPack = "creative" as DomainPack
-      }
     }
     
     closeDrawer()
@@ -324,138 +208,6 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
 
             {/* Content */}
             <ScrollArea className="flex-1 p-4">
-              {/* General Assistant Options */}
-              {activeDrawer === "general" && (
-                <div className="space-y-4">
-                  <p className="text-sm font-medium text-muted-foreground">Select response style</p>
-                  <div className="space-y-2">
-                    {generalModes.map((mode) => {
-                      const Icon = mode.icon
-                      const isSelected = selectedMode === mode.id
-                      return (
-                        <button
-                          key={mode.id}
-                          type="button"
-                          onClick={() => setSelectedMode(mode.id)}
-                          className={`w-full p-4 rounded-lg border transition-all text-left ${
-                            isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
-                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                                isSelected ? "border-[var(--bronze)] bg-[var(--bronze)]" : "border-muted-foreground/50"
-                              }`}
-                            >
-                              {isSelected && <Check className="h-3 w-3 text-black" />}
-                            </div>
-                            <Icon className={`h-5 w-5 ${mode.color}`} />
-                            <div>
-                              <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
-                                {mode.label}
-                              </span>
-                              <span className="text-xs text-muted-foreground">{mode.description}</span>
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Research Options */}
-              {activeDrawer === "research" && (
-                <div className="space-y-4">
-                  <p className="text-sm font-medium text-muted-foreground">Enable features</p>
-                  <div className="space-y-2">
-                    {researchFeatures.map((feature) => {
-                      const Icon = feature.icon
-                      const isSelected = selectedFeatures.includes(feature.id)
-                      return (
-                        <button
-                          key={feature.id}
-                          type="button"
-                          onClick={() => toggleFeature(feature.id)}
-                          className={`w-full p-4 rounded-lg border transition-all text-left ${
-                            isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
-                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Icon className={`h-5 w-5 ${feature.color}`} />
-                              <div>
-                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
-                                  {feature.label}
-                                </span>
-                                <span className="text-xs text-muted-foreground">{feature.description}</span>
-                              </div>
-                            </div>
-                            <Switch checked={isSelected} onCheckedChange={() => toggleFeature(feature.id)} />
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {selectedFeatures.length > 0 && (
-                    <div className="p-3 rounded-lg glass-card border-purple-500/20">
-                      <p className="text-xs text-purple-400">
-                        {selectedFeatures.length} feature{selectedFeatures.length > 1 ? 's' : ''} enabled for deeper analysis
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Code Options */}
-              {activeDrawer === "code" && (
-                <div className="space-y-4">
-                  <p className="text-sm font-medium text-muted-foreground">Enable features</p>
-                  <div className="space-y-2">
-                    {codeFeatures.map((feature) => {
-                      const Icon = feature.icon
-                      const isSelected = selectedFeatures.includes(feature.id)
-                      return (
-                        <button
-                          key={feature.id}
-                          type="button"
-                          onClick={() => toggleFeature(feature.id)}
-                          className={`w-full p-4 rounded-lg border transition-all text-left ${
-                            isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
-                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Icon className={`h-5 w-5 ${feature.color}`} />
-                              <div>
-                                <span className={`text-sm font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
-                                  {feature.label}
-                                </span>
-                                <span className="text-xs text-muted-foreground">{feature.description}</span>
-                              </div>
-                            </div>
-                            <Switch checked={isSelected} onCheckedChange={() => toggleFeature(feature.id)} />
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {selectedFeatures.length > 0 && (
-                    <div className="p-3 rounded-lg glass-card border-emerald-500/20">
-                      <p className="text-xs text-emerald-400">
-                        {selectedFeatures.length} coding feature{selectedFeatures.length > 1 ? 's' : ''} enabled
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Industry Options */}
               {activeDrawer === "industry" && (
                 <div className="space-y-2">
@@ -508,12 +260,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
               <Button 
                 className="w-full bronze-gradient gap-2" 
                 onClick={handleStartChat}
-                disabled={activeDrawer === "industry" && !selectedIndustry}
+                disabled={!selectedIndustry}
               >
-                {activeDrawer === "general" && "Start Chat"}
-                {activeDrawer === "research" && "Start Research"}
-                {activeDrawer === "code" && "Start Coding"}
-                {activeDrawer === "industry" && (selectedIndustry ? `Start ${industryPacks.find(p => p.id === selectedIndustry)?.label} Chat` : "Select an Industry")}
+                {selectedIndustry ? `Start ${industryPacks.find(p => p.id === selectedIndustry)?.label} Chat` : "Select an Industry"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
