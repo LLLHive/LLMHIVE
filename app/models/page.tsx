@@ -365,7 +365,7 @@ export default function ModelsPage() {
               <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Models
               </h2>
-              <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto whitespace-nowrap">
+              <p className="llmhive-subtitle-3d text-sm md:text-base max-w-md mx-auto">
                 Browse {allModels.length}+ models by ranking category
               </p>
             </div>
