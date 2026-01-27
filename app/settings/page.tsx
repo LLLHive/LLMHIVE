@@ -414,7 +414,7 @@ export default function SettingsPage() {
                       key={card.id}
                       onClick={() => {
                         if (card.id === "analytics") {
-                          router.push("/admin/analytics")
+                          router.push("/analytics")
                         } else {
                           setActiveDrawer(card.id as DrawerId)
                         }

@@ -344,7 +344,7 @@ export default function AdminDashboardPage() {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Link href="/admin/analytics">
+            <Link href="/analytics">
               <Button variant="outline" size="sm">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Analytics
@@ -645,7 +645,7 @@ export default function AdminDashboardPage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Link href="/admin/analytics" className="block">
+                <Link href="/analytics" className="block">
                   <Button variant="outline" className="w-full justify-start">
                     <BarChart3 className="h-4 w-4 mr-2" />
                     View Detailed Analytics
