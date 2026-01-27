@@ -32,7 +32,8 @@ import {
   Globe,
   Lock,
   FileText,
-  Cpu
+  Cpu,
+  Crown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -49,6 +50,20 @@ const featureSections = [
       { name: "Deep Consensus", desc: "Models debate for accuracy" },
       { name: "Adaptive Ensemble", desc: "Dynamic model weighting" },
       { name: "Prompt Diffusion", desc: "Iterative refinement" },
+    ]
+  },
+  {
+    id: "strategy",
+    title: "Strategy & Coordination",
+    icon: Crown,
+    iconColor: "text-amber-400",
+    features: [
+      { name: "Single Best", desc: "Top-ranked model (fastest)" },
+      { name: "Parallel Race", desc: "Multiple models, first good answer wins" },
+      { name: "Best of N", desc: "Generate N responses, pick the best" },
+      { name: "Quality Fusion", desc: "Combine with quality weighting" },
+      { name: "Expert Panel", desc: "Specialists synthesize insights" },
+      { name: "Challenge & Refine", desc: "Generate → Critique → Improve" },
     ]
   },
   {
