@@ -533,7 +533,7 @@ class TestPydanticModelContracts:
     
     def test_domain_pack_enum_values(self):
         """DomainPack enum has expected values."""
-        expected_values = {"default", "medical", "legal", "marketing", "coding", "research", "finance"}
+        expected_values = {"default", "medical", "legal", "marketing", "coding", "research", "finance", "education", "real_estate"}
         actual_values = {pack.value for pack in DomainPack}
         
         assert expected_values == actual_values, f"DomainPack values mismatch"
