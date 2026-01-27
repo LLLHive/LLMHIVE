@@ -16,7 +16,7 @@ import type {
 } from "@/lib/types"
 import { getModelLogo } from "@/lib/models"
 // CriteriaEqualizer moved to Settings page
-import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
+// AdvancedSettingsDropdown moved to Settings page
 // Engines, Strategy, Reasoning now combined into single OrchestrationDropdown
 import { OrchestrationDropdown } from "./orchestration-dropdown"
 import Image from "next/image"
@@ -524,12 +524,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
       </DropdownMenu>
 
       {/* Tuning moved to Settings page */}
-
-      {/* Advanced Settings - Now a dropdown menu like the others */}
-      <AdvancedSettingsDropdown
-        settings={settings}
-        onSettingsChange={onSettingsChange}
-      />
+      {/* Advanced Settings moved to Settings page */}
     </div>
   )
 }

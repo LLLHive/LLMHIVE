@@ -11,9 +11,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3, Sliders, Target, Zap } from "lucide-react"
+import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3, Sliders, Target, Zap, Settings2, Lightbulb, CheckCircle, ListTree, GraduationCap, SpellCheck } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 import { loadOrchestratorSettings, saveOrchestratorSettings, DEFAULT_ORCHESTRATOR_SETTINGS } from "@/lib/settings-storage"
+import type { OrchestratorSettings } from "@/lib/types"
 import type { CriteriaSettings } from "@/lib/types"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
@@ -88,6 +90,13 @@ const settingsCards = [
     icon: Sliders,
     badgeClass: "icon-badge-cyan",
   },
+  {
+    id: "advanced",
+    title: "Advanced",
+    description: "Prompt optimization & AI behavior",
+    icon: Settings2,
+    badgeClass: "icon-badge-rose",
+  },
 ]
 
 // Connections data
@@ -119,7 +128,7 @@ const appearanceOptions = [
   { id: "soundEffects", label: "Sound Effects", description: "Play sounds for notifications" },
 ]
 
-type DrawerId = "account" | "billing" | "connections" | "notifications" | "privacy" | "appearance" | "tuning" | null
+type DrawerId = "account" | "billing" | "connections" | "notifications" | "privacy" | "appearance" | "tuning" | "advanced" | null
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -152,6 +161,9 @@ export default function SettingsPage() {
     speed: 70,
     creativity: 50,
   })
+  
+  // Advanced/Orchestrator settings state
+  const [orchestratorSettings, setOrchestratorSettings] = useState<OrchestratorSettings>(DEFAULT_ORCHESTRATOR_SETTINGS)
   
   // Initialize account form with Clerk user data
   useEffect(() => {
@@ -207,10 +219,11 @@ export default function SettingsPage() {
       document.documentElement.classList.toggle('compact-mode', parsedAppearance.includes('compactMode'))
       document.documentElement.classList.toggle('no-animations', !parsedAppearance.includes('animations'))
       
-      // Load tuning/criteria settings
-      const orchestratorSettings = loadOrchestratorSettings()
-      if (orchestratorSettings.criteria) {
-        setCriteriaSettings(orchestratorSettings.criteria)
+      // Load tuning/criteria settings and orchestrator settings
+      const loadedSettings = loadOrchestratorSettings()
+      setOrchestratorSettings(loadedSettings)
+      if (loadedSettings.criteria) {
+        setCriteriaSettings(loadedSettings.criteria)
       }
     } catch (e) {
       console.error("Failed to load settings:", e)
@@ -924,6 +937,148 @@ export default function SettingsPage() {
                     <p className="text-[10px] text-muted-foreground">Creativity</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Advanced Drawer */}
+      <Sheet open={activeDrawer === "advanced"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="w-[320px] sm:w-[380px] glass-card border-l-0 p-0">
+          <SheetHeader className="p-4 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="icon-badge icon-badge-rose">
+                <Settings2 className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <SheetTitle className="text-lg font-semibold">Advanced Tuning</SheetTitle>
+                <p className="text-xs text-muted-foreground">Fine-tune orchestration behavior</p>
+              </div>
+            </div>
+          </SheetHeader>
+          <ScrollArea className="h-[calc(100vh-100px)]">
+            <div className="p-4 space-y-4">
+              {/* Prompt Optimization */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <Lightbulb className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Prompt Optimization</Label>
+                    <p className="text-[10px] text-muted-foreground">Enhance prompts for better results</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={orchestratorSettings.promptOptimization !== false}
+                  onCheckedChange={(checked) => {
+                    const newSettings = { ...orchestratorSettings, promptOptimization: checked }
+                    setOrchestratorSettings(newSettings)
+                    saveOrchestratorSettings(newSettings)
+                    toast.success("Prompt Optimization " + (checked ? "enabled" : "disabled"))
+                  }}
+                  className="data-[state=checked]:bg-[var(--bronze)]"
+                />
+              </div>
+
+              {/* Output Validation */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Output Validation</Label>
+                    <p className="text-[10px] text-muted-foreground">Verify and fact-check responses</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={orchestratorSettings.outputValidation !== false}
+                  onCheckedChange={(checked) => {
+                    const newSettings = { ...orchestratorSettings, outputValidation: checked }
+                    setOrchestratorSettings(newSettings)
+                    saveOrchestratorSettings(newSettings)
+                    toast.success("Output Validation " + (checked ? "enabled" : "disabled"))
+                  }}
+                  className="data-[state=checked]:bg-[var(--bronze)]"
+                />
+              </div>
+
+              {/* Answer Structure */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <ListTree className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Answer Structure</Label>
+                    <p className="text-[10px] text-muted-foreground">Format with clear sections</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={orchestratorSettings.answerStructure !== false}
+                  onCheckedChange={(checked) => {
+                    const newSettings = { ...orchestratorSettings, answerStructure: checked }
+                    setOrchestratorSettings(newSettings)
+                    saveOrchestratorSettings(newSettings)
+                    toast.success("Answer Structure " + (checked ? "enabled" : "disabled"))
+                  }}
+                  className="data-[state=checked]:bg-[var(--bronze)]"
+                />
+              </div>
+
+              {/* Learn from Chat */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <GraduationCap className="h-5 w-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Learn from Chat</Label>
+                    <p className="text-[10px] text-muted-foreground">Improve based on conversation</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={orchestratorSettings.learnFromChat !== false}
+                  onCheckedChange={(checked) => {
+                    const newSettings = { ...orchestratorSettings, learnFromChat: checked }
+                    setOrchestratorSettings(newSettings)
+                    saveOrchestratorSettings(newSettings)
+                    toast.success("Learn from Chat " + (checked ? "enabled" : "disabled"))
+                  }}
+                  className="data-[state=checked]:bg-[var(--bronze)]"
+                />
+              </div>
+
+              {/* Spell Check */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                    <SpellCheck className="h-5 w-5 text-cyan-500" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Spell Check</Label>
+                    <p className="text-[10px] text-muted-foreground">Auto-correct spelling in prompts</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={orchestratorSettings.enableSpellCheck !== false}
+                  onCheckedChange={(checked) => {
+                    const newSettings = { ...orchestratorSettings, enableSpellCheck: checked }
+                    setOrchestratorSettings(newSettings)
+                    saveOrchestratorSettings(newSettings)
+                    toast.success("Spell Check " + (checked ? "enabled" : "disabled"))
+                  }}
+                  className="data-[state=checked]:bg-[var(--bronze)]"
+                />
+              </div>
+
+              {/* Info Footer */}
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-xs text-muted-foreground text-center">
+                  These settings are applied automatically to all chats
+                </p>
               </div>
             </div>
           </ScrollArea>
