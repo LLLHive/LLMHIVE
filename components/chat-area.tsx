@@ -912,16 +912,16 @@ export function ChatArea({
           {/* Powered By LLMHive - Marketing showcase dropdown - FIRST */}
           <PoweredByDropdown />
           
-          {/* Industry Pack Dropdown - Styled like other dropdowns */}
+          {/* Industry Pack Dropdown - Styled with orange/amber gradient */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
+                className="gap-1.5 h-8 px-3 text-xs bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-lg hover:from-orange-500/30 hover:to-amber-500/30 hover:border-orange-400/50 transition-all"
               >
-                <activeModeInfo.icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Industry Pack</span>
+                <activeModeInfo.icon className="h-3.5 w-3.5 text-orange-400" />
+                <span className="hidden sm:inline font-medium bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent">Industry Pack</span>
                 <ChevronDown className="h-3 w-3 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
