@@ -17,9 +17,8 @@ import type {
 import { getModelLogo } from "@/lib/models"
 // CriteriaEqualizer moved to Settings page
 import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
-// OrchestrationStudioDropdown removed - Accuracy vs Speed is in CriteriaEqualizer (Tuning)
-import { EnginesDropdown } from "./engines-dropdown"
-import { StrategyDropdown } from "./strategy-dropdown"
+// Engines, Strategy, Reasoning now combined into single OrchestrationDropdown
+import { OrchestrationDropdown } from "./orchestration-dropdown"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
@@ -130,13 +129,7 @@ const responseFormats = [
   },
 ]
 
-// Only showing reasoning methods that are fully implemented in the backend
-const advancedReasoningMethods: { value: AdvancedReasoningMethod; label: string; description: string }[] = [
-  { value: "automatic", label: "Automatic", description: "Let the orchestrator choose the best method" },
-  { value: "chain-of-thought", label: "Chain of Thought", description: "Step-by-step reasoning" },
-  { value: "tree-of-thought", label: "Tree of Thought", description: "Explore multiple reasoning paths" },
-  { value: "self-consistency", label: "Self Consistency", description: "Sample multiple times, vote on best" },
-]
+// advancedReasoningMethods moved to OrchestrationDropdown
 
 const advancedFeatures: { value: AdvancedFeature; label: string; description: string }[] = [
   { value: "vector-rag", label: "Vector DB + RAG", description: "Retrieval augmented generation" },
@@ -150,7 +143,6 @@ const advancedFeatures: { value: AdvancedFeature; label: string; description: st
 
 export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: ChatToolbarProps) {
   const [modelsOpen, setModelsOpen] = useState(false)
-  const [reasoningOpen, setReasoningOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [myTeamModels, setMyTeamModels] = useState<string[]>([])
   
@@ -199,17 +191,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
     }
   }
 
-  const toggleReasoningMethod = (method: AdvancedReasoningMethod) => {
-    const currentMethods = settings.advancedReasoningMethods || []
-    if (currentMethods.includes(method)) {
-      onSettingsChange({ advancedReasoningMethods: currentMethods.filter((m) => m !== method) })
-    } else {
-      onSettingsChange({ advancedReasoningMethods: [...currentMethods, method] })
-    }
-  }
-
   const selectedModels = settings.selectedModels || ["automatic"]
-  const selectedReasoningMethods = settings.advancedReasoningMethods || []
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -334,13 +316,17 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                 {selectedModels.includes("automatic") && <Check className="h-4 w-4 text-[var(--bronze)]" />}
               </DropdownMenuItem>
               
-              {/* Team/Single Mode Toggle - Right after Automatic */}
+              {/* Agent Mode Selection - Clear choice between Team and Single */}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1">
+                Agent Mode
+              </DropdownMenuLabel>
+              
+              {/* Team Mode Option */}
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault()
-                  onSettingsChange({
-                    agentMode: settings.agentMode === "single" ? "team" : "single",
-                  })
+                  onSettingsChange({ agentMode: "team" })
                 }}
                 className="gap-2 cursor-pointer"
               >
@@ -350,17 +336,46 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                     ? "bg-[var(--bronze)]/20" 
                     : "bg-muted"
                 )}>
-                  {settings.agentMode === "team" 
-                    ? <Users className="h-3 w-3 text-[var(--bronze)]" /> 
-                    : <User className="h-3 w-3 text-muted-foreground" />
-                  }
+                  <Users className={cn(
+                    "h-3 w-3",
+                    settings.agentMode === "team" ? "text-[var(--bronze)]" : "text-muted-foreground"
+                  )} />
                 </div>
-                <span className="flex-1 font-medium">
-                  {settings.agentMode === "team" ? "Team Mode" : "Single Mode"}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {settings.agentMode === "team" ? "Multi-model ensemble" : "Single model"}
-                </span>
+                <div className="flex-1">
+                  <span className={cn("font-medium", settings.agentMode === "team" && "text-[var(--bronze)]")}>
+                    Team Mode
+                  </span>
+                  <p className="text-[10px] text-muted-foreground">Multi-model ensemble (recommended)</p>
+                </div>
+                {settings.agentMode === "team" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+              </DropdownMenuItem>
+              
+              {/* Single Mode Option */}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault()
+                  onSettingsChange({ agentMode: "single" })
+                }}
+                className="gap-2 cursor-pointer"
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded-full flex items-center justify-center",
+                  settings.agentMode === "single" 
+                    ? "bg-[var(--bronze)]/20" 
+                    : "bg-muted"
+                )}>
+                  <User className={cn(
+                    "h-3 w-3",
+                    settings.agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"
+                  )} />
+                </div>
+                <div className="flex-1">
+                  <span className={cn("font-medium", settings.agentMode === "single" && "text-[var(--bronze)]")}>
+                    Single Mode
+                  </span>
+                  <p className="text-[10px] text-muted-foreground">Use one model only</p>
+                </div>
+                {settings.agentMode === "single" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
@@ -430,57 +445,11 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Engines Dropdown - Between Models and Reasoning */}
-      <EnginesDropdown
+      {/* Combined Orchestration Dropdown - Engines, Strategy, Reasoning */}
+      <OrchestrationDropdown
         settings={settings}
         onSettingsChange={onSettingsChange}
       />
-
-      {/* Strategy Dropdown - Between Engines and Reasoning */}
-      <StrategyDropdown
-        settings={settings}
-        onSettingsChange={onSettingsChange}
-      />
-
-      <DropdownMenu open={reasoningOpen} onOpenChange={setReasoningOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">
-              Reasoning {selectedReasoningMethods.length > 0 ? `(${selectedReasoningMethods.length})` : ""}
-            </span>
-            <span className="sm:hidden">
-              {selectedReasoningMethods.length > 0 ? selectedReasoningMethods.length : "R"}
-            </span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56 max-h-80 overflow-y-auto">
-          {advancedReasoningMethods.map((method) => {
-            const isSelected = selectedReasoningMethods.includes(method.value)
-            return (
-              <DropdownMenuItem
-                key={method.value}
-                onSelect={(e) => {
-                  e.preventDefault()
-                  toggleReasoningMethod(method.value)
-                }}
-                className="flex flex-col items-start gap-0.5 cursor-pointer"
-              >
-                <div className="flex items-center w-full gap-2">
-                  <span className="flex-1 font-medium">{method.label}</span>
-                  {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                </div>
-                <span className="text-[10px] text-muted-foreground">{method.description}</span>
-              </DropdownMenuItem>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
 
       {/* Features dropdown removed from chat page - available in Orchestration page */}
       {/* Speed dropdown removed from chat page - available in Orchestration page */}

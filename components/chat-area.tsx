@@ -912,14 +912,18 @@ export function ChatArea({
           {/* Powered By LLMHive - Marketing showcase dropdown - FIRST */}
           <PoweredByDropdown />
           
-          {/* Domain Pack Dropdown */}
+          {/* Industry Pack Dropdown - Styled like other dropdowns */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-0 bg-gradient-to-r ${activeModeInfo.color} text-white font-medium text-sm cursor-pointer hover:opacity-90 transition-opacity`}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 h-8 px-3 text-xs bg-secondary/50 border border-border rounded-lg hover:bg-secondary hover:border-[var(--bronze)]"
+              >
                 <activeModeInfo.icon className="h-3.5 w-3.5" />
-                {activeModeInfo.label}
-                <ChevronDown className="h-3 w-3 opacity-70" />
-              </button>
+                <span className="hidden sm:inline">Industry Pack</span>
+                <ChevronDown className="h-3 w-3 opacity-50" />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-52">
               {domainPacks.map((pack) => {
