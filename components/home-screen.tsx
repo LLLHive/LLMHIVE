@@ -28,10 +28,10 @@ import {
   Bug,
   FileCode,
   BookOpen,
+  Home,
   Users,
   Target,
   X,
-  Compass,
 } from "lucide-react"
 import type { OrchestratorSettings, DomainPack } from "@/lib/types"
 
@@ -40,19 +40,23 @@ interface HomeScreenProps {
   onStartFromTemplate: (preset: Partial<OrchestratorSettings>) => void
 }
 
-// Industry pack options
+// Industry pack options - matches chat-area.tsx domainPacks
 const industryPacks: Array<{
   id: DomainPack
   label: string
   description: string
   icon: typeof Scale
+  color: string
 }> = [
-  { id: "legal", label: "Legal", description: "Contract analysis, case research", icon: Scale },
-  { id: "medical", label: "Medical", description: "Clinical documentation, research", icon: Stethoscope },
-  { id: "marketing", label: "Marketing", description: "Campaigns, copywriting, SEO", icon: Megaphone },
-  { id: "education", label: "Education", description: "Curriculum, tutoring, grading", icon: GraduationCap },
-  { id: "finance", label: "Finance", description: "Analysis, reports, compliance", icon: Landmark },
-  { id: "real_estate", label: "Real Estate", description: "Listings, valuations, contracts", icon: Building2 },
+  { id: "default", label: "General Assistant", description: "Versatile AI for everyday tasks", icon: Sparkles, color: "text-amber-400" },
+  { id: "medical", label: "Medical Pack", description: "Clinical documentation, research", icon: Stethoscope, color: "text-red-400" },
+  { id: "legal", label: "Legal Pack", description: "Contract analysis, case research", icon: Scale, color: "text-purple-400" },
+  { id: "marketing", label: "Marketing Pack", description: "Campaigns, copywriting, SEO", icon: Megaphone, color: "text-pink-400" },
+  { id: "coding", label: "Coding Pack", description: "Development, debugging, reviews", icon: Code, color: "text-emerald-400" },
+  { id: "research", label: "Research Mode", description: "Deep analysis, citations", icon: Brain, color: "text-blue-400" },
+  { id: "finance", label: "Finance Pack", description: "Analysis, reports, compliance", icon: Landmark, color: "text-yellow-400" },
+  { id: "education", label: "Education Pack", description: "Curriculum, tutoring, grading", icon: GraduationCap, color: "text-cyan-400" },
+  { id: "real_estate", label: "Real Estate Pack", description: "Listings, valuations, contracts", icon: Home, color: "text-orange-400" },
 ]
 
 // Research features
@@ -131,23 +135,9 @@ const templates = [
       answerStructure: true,
     },
   },
-  {
-    id: "discover",
-    title: "Discover",
-    description: "Explore AI prompts, guides & templates",
-    icon: Compass,
-    badgeClass: "icon-badge-cyan",
-    preset: {
-      reasoningMode: "standard" as const,
-      domainPack: "default" as const,
-      agentMode: "single" as const,
-    },
-    isLink: true,
-    href: "/discover",
-  },
 ]
 
-type DrawerId = "general" | "research" | "code" | "industry" | "discover" | null
+type DrawerId = "general" | "research" | "code" | "industry" | null
 
 export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) {
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
@@ -279,21 +269,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
               </>
             )
             
-            // If template has a link, render as Link
-            if (template.isLink && template.href) {
-              return (
-                <Link
-                  key={template.id}
-                  href={template.href}
-                  className="settings-card group llmhive-fade-in"
-                  style={{ animationDelay: `${0.15 + index * 0.05}s` }}
-                >
-                  {cardContent}
-                </Link>
-              )
-            }
-            
-            // Otherwise render as button that opens drawer
+            // Render as button that opens drawer
             return (
               <button
                 key={template.id}
@@ -503,11 +479,11 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                             <div
                               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
                                 isSelected 
-                                  ? "icon-badge icon-badge-blue" 
+                                  ? "bg-[var(--bronze)]/20 border border-[var(--bronze)]/50" 
                                   : "bg-white/10"
                               }`}
                             >
-                              <Icon className={`h-5 w-5 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
+                              <Icon className={`h-5 w-5 ${pack.color}`} />
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
