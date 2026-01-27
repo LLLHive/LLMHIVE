@@ -246,8 +246,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
       </Button>
 
       {/* Template Cards - Glass Cards */}
-      <div className="w-full max-w-4xl llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="w-full max-w-3xl mx-auto llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {templates.map((template, index) => {
             const Icon = template.icon
             const cardContent = (
