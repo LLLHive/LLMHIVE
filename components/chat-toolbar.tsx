@@ -20,6 +20,7 @@ import { AdvancedSettingsDropdown } from "./advanced-settings-dropdown"
 // OrchestrationStudioDropdown removed - Accuracy vs Speed is in CriteriaEqualizer (Tuning)
 import { EnginesDropdown } from "./engines-dropdown"
 import { StrategyDropdown } from "./strategy-dropdown"
+import { PoweredByDropdown } from "./powered-by-dropdown"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
@@ -213,6 +214,9 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
+      {/* Powered By LLMHive - Marketing showcase dropdown */}
+      <PoweredByDropdown />
+
       {/* Agent Mode Toggle */}
       <Button
         variant="ghost"
