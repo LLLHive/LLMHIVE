@@ -34,6 +34,14 @@ import {
   Zap,
   ChevronDown,
   ChevronUp,
+  Users,
+  User,
+  ChevronRight,
+  FlaskConical,
+  Heart,
+  Search,
+  BarChart3,
+  Languages,
 } from "lucide-react"
 import type { OrchestratorSettings, DomainPack, AnswerFormat } from "@/lib/types"
 
@@ -191,13 +199,20 @@ const featureSections = [
   },
 ]
 
-// Model options
-const modelOptions = [
-  { id: "automatic", label: "Automatic", description: "Best model per task", icon: Sparkles, color: "text-amber-400" },
-  { id: "gpt-4", label: "GPT-4", description: "OpenAI's flagship model", icon: Cpu, color: "text-green-400" },
-  { id: "claude-3", label: "Claude 3", description: "Anthropic's latest", icon: Cpu, color: "text-orange-400" },
-  { id: "gemini", label: "Gemini", description: "Google's multimodal AI", icon: Cpu, color: "text-blue-400" },
-  { id: "llama", label: "Llama 3", description: "Meta's open model", icon: Cpu, color: "text-purple-400" },
+// Model categories - matches chat-toolbar.tsx Browse by Category
+const modelCategories = [
+  { slug: "programming", label: "Programming", icon: Code, color: "text-violet-500" },
+  { slug: "science", label: "Science", icon: FlaskConical, color: "text-cyan-500" },
+  { slug: "health", label: "Health", icon: Heart, color: "text-red-500" },
+  { slug: "legal", label: "Legal", icon: Scale, color: "text-gray-500" },
+  { slug: "marketing", label: "Marketing", icon: Megaphone, color: "text-orange-500" },
+  { slug: "technology", label: "Technology", icon: Cpu, color: "text-slate-500" },
+  { slug: "finance", label: "Finance", icon: Landmark, color: "text-emerald-500" },
+  { slug: "academia", label: "Academia", icon: GraduationCap, color: "text-amber-600" },
+  { slug: "roleplay", label: "Roleplay", icon: Users, color: "text-pink-500" },
+  { slug: "creative-writing", label: "Creative Writing", icon: MessageSquare, color: "text-purple-500" },
+  { slug: "translation", label: "Translation", icon: Languages, color: "text-sky-500" },
+  { slug: "reasoning", label: "Reasoning", icon: Brain, color: "text-indigo-500" },
 ]
 
 // Format options
@@ -251,6 +266,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   const [selectedModel, setSelectedModel] = useState<string>("automatic")
   const [selectedFormat, setSelectedFormat] = useState<string>("automatic")
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
+  const [agentMode, setAgentMode] = useState<"team" | "single">("team")
 
   const openDrawer = (templateId: string) => {
     setActiveDrawer(templateId as DrawerId)
@@ -271,6 +287,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
     
     if (activeDrawer === "models") {
       finalPreset.selectedModels = selectedModel === "automatic" ? ["automatic"] : [selectedModel]
+      finalPreset.agentMode = agentMode
     }
     
     if (activeDrawer === "format") {
@@ -521,48 +538,109 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                 </div>
               )}
 
-              {/* Models Options */}
+              {/* Models Options - Matches chat-toolbar.tsx dropdown exactly */}
               {activeDrawer === "models" && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Select AI model</p>
-                  <div className="space-y-1">
-                    {modelOptions.map((model) => {
-                      const Icon = model.icon
-                      const isSelected = selectedModel === model.id
-                      return (
-                        <button
-                          key={model.id}
-                          type="button"
-                          onClick={() => setSelectedModel(model.id)}
-                          className={`w-full p-2 rounded-lg border transition-all text-left ${
-                            isSelected
-                              ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
-                              : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-7 h-7 rounded-md flex items-center justify-center transition-all shrink-0 ${
-                                isSelected 
-                                  ? "bg-[var(--bronze)]/20 border border-[var(--bronze)]/50" 
-                                  : "bg-white/10"
-                              }`}
-                            >
-                              <Icon className={`h-3.5 w-3.5 ${model.color}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <span className={`text-xs font-medium block ${isSelected ? "text-[var(--gold)]" : ""}`}>
-                                {model.label}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground truncate block">{model.description}</span>
-                            </div>
-                            {isSelected && (
-                              <Check className="h-4 w-4 text-[var(--bronze)] shrink-0" />
-                            )}
-                          </div>
-                        </button>
-                      )
-                    })}
+                  {/* Automatic Option - Always at top */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedModel("automatic")}
+                    className={`w-full p-2 rounded-lg border transition-all text-left ${
+                      selectedModel === "automatic"
+                        ? "border-[var(--bronze)] bg-[var(--bronze)]/15"
+                        : "border-white/10 hover:border-[var(--bronze)]/50 bg-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center shrink-0">
+                        <Sparkles className="h-3 w-3 text-white" />
+                      </div>
+                      <span className="flex-1 font-medium text-sm">Automatic</span>
+                      <span className="text-[10px] text-muted-foreground">Best model per task</span>
+                      {selectedModel === "automatic" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                    </div>
+                  </button>
+                  
+                  {/* Agent Mode Section */}
+                  <div className="border-t border-white/10 pt-2 mt-2">
+                    <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Agent Mode</p>
+                    
+                    {/* Team Mode Option */}
+                    <button
+                      type="button"
+                      onClick={() => setAgentMode("team")}
+                      className={`w-full p-2 rounded-lg transition-all text-left mb-1 ${
+                        agentMode === "team"
+                          ? "bg-[var(--bronze)]/15"
+                          : "hover:bg-white/5"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          agentMode === "team" ? "bg-[var(--bronze)]/20" : "bg-white/10"
+                        }`}>
+                          <Users className={`h-3 w-3 ${agentMode === "team" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
+                        </div>
+                        <div className="flex-1">
+                          <span className={`font-medium text-sm ${agentMode === "team" ? "text-[var(--bronze)]" : ""}`}>
+                            Team Mode
+                          </span>
+                          <p className="text-[10px] text-muted-foreground">Multi-model ensemble (recommended)</p>
+                        </div>
+                        {agentMode === "team" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                      </div>
+                    </button>
+                    
+                    {/* Single Mode Option */}
+                    <button
+                      type="button"
+                      onClick={() => setAgentMode("single")}
+                      className={`w-full p-2 rounded-lg transition-all text-left ${
+                        agentMode === "single"
+                          ? "bg-[var(--bronze)]/15"
+                          : "hover:bg-white/5"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          agentMode === "single" ? "bg-[var(--bronze)]/20" : "bg-white/10"
+                        }`}>
+                          <User className={`h-3 w-3 ${agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"}`} />
+                        </div>
+                        <div className="flex-1">
+                          <span className={`font-medium text-sm ${agentMode === "single" ? "text-[var(--bronze)]" : ""}`}>
+                            Single Mode
+                          </span>
+                          <p className="text-[10px] text-muted-foreground">Use one model only</p>
+                        </div>
+                        {agentMode === "single" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                      </div>
+                    </button>
+                  </div>
+                  
+                  {/* Browse by Category Section */}
+                  <div className="border-t border-white/10 pt-2 mt-2">
+                    <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Browse by Category</p>
+                    <div className="space-y-0.5">
+                      {modelCategories.map((cat) => {
+                        const Icon = cat.icon
+                        return (
+                          <button
+                            key={cat.slug}
+                            type="button"
+                            onClick={() => {
+                              // When a category is selected, store it and start chat
+                              setSelectedModel(cat.slug)
+                            }}
+                            className="w-full p-2 rounded-lg hover:bg-white/5 transition-all text-left flex items-center gap-2"
+                          >
+                            <Icon className={`h-4 w-4 ${cat.color}`} />
+                            <span className="flex-1 text-sm">{cat.label}</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -642,7 +720,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                   disabled={activeDrawer === "industry" && !selectedIndustry}
                 >
                   {activeDrawer === "industry" && (selectedIndustry ? `Start ${industryPacks.find(p => p.id === selectedIndustry)?.label} Chat` : "Select an Industry")}
-                  {activeDrawer === "models" && `Start with ${modelOptions.find(m => m.id === selectedModel)?.label}`}
+                  {activeDrawer === "models" && `Start Chat (${agentMode === "team" ? "Team Mode" : "Single Mode"})`}
                   {activeDrawer === "format" && `Start with ${formatOptions.find(f => f.id === selectedFormat)?.label} Format`}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
