@@ -41,7 +41,7 @@ const pricingTiers: PricingTier[] = [
     monthlyPrice: 0,
     annualPrice: 0,
     tier: "free",
-    icon: <Star className="h-5 w-5 text-muted-foreground" />,
+    icon: <Star className="h-5 w-5 text-[var(--bronze)]" />,
     quotas: {
       eliteQueries: "FREE Orchestration",
       afterQuota: "50 queries/month",
@@ -87,7 +87,7 @@ const pricingTiers: PricingTier[] = [
     annualPrice: 299.99,
     tier: "pro",
     popular: true,
-    icon: <Rocket className="h-5 w-5 text-yellow-400" />,
+    icon: <Rocket className="h-5 w-5 text-amber-500" />,
     badge: "BEST VALUE",
     quotas: {
       eliteQueries: "500 ELITE queries",
@@ -305,9 +305,7 @@ export default function PricingPage() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════════
-            PRICING CARDS - PRO IS THE HERO
-            - Pro: Biggest, brightest, most prominent
-            - Free: Smallest, subtle, entry point only
+            PRICING CARDS - All same size, Pro highlighted with subtle amber
         ══════════════════════════════════════════════════════════════════════ */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mb-16">
           {mainTiers.map((tier) => {
@@ -320,21 +318,19 @@ export default function PricingPage() {
               <Card
                 key={tier.name}
                 className={cn(
-                  "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300",
+                  "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300 h-[580px]",
                   isPro 
-                    ? "border-3 border-yellow-400 shadow-2xl shadow-yellow-500/30 scale-105 z-10 h-[620px]" 
-                    : isFree
-                    ? "border border-white/10 hover:border-white/20 h-[580px] opacity-90"
-                    : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)] h-[580px]"
+                    ? "border-2 border-amber-600/70 shadow-lg shadow-amber-500/20" 
+                    : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
                 )}
               >
-                {/* Badge - PRO gets huge yellow badge */}
+                {/* Badge */}
                 {tier.badge && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge className={cn(
                       "border-0 px-4 py-1.5 font-bold",
                       isPro 
-                        ? "bg-yellow-400 text-black text-sm" 
+                        ? "bg-amber-600 text-white text-sm" 
                         : tier.tier === "enterprise"
                         ? "bg-emerald-500 text-white"
                         : "bg-[var(--bronze)] text-white"
@@ -348,68 +344,48 @@ export default function PricingPage() {
                 <CardHeader className="pb-2 flex-shrink-0">
                   <div className="flex items-center gap-2 mb-1">
                     {tier.icon}
-                    <CardTitle className={cn(
-                      "text-xl",
-                      isPro && "text-yellow-400"
-                    )}>{tier.name}</CardTitle>
+                    <CardTitle className="text-xl">{tier.name}</CardTitle>
                     {isPro && (
-                      <Badge className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-xs">
+                      <Badge className="bg-amber-600/20 text-amber-500 border-amber-600/30 text-xs">
                         RECOMMENDED
                       </Badge>
                     )}
                   </div>
-                  <CardDescription className={cn(
-                    "text-xs",
-                    isPro && "text-yellow-200/70"
-                  )}>{tier.description}</CardDescription>
+                  <CardDescription className="text-xs">{tier.description}</CardDescription>
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-hidden flex flex-col py-2">
-                  {/* Price - PRO is bigger */}
+                  {/* Price - All same style */}
                   <div className="mb-4 flex-shrink-0">
                     <div className="flex items-baseline gap-1">
-                      <span className={cn(
-                        "font-bold",
-                        isPro ? "text-4xl text-yellow-400" : "text-3xl"
-                      )}>
+                      <span className="font-bold text-3xl">
                         {price === 0 ? "Free" : `$${price.toFixed(2)}`}
                       </span>
                       {price > 0 && (
-                        <span className={cn(
-                          "text-sm",
-                          isPro ? "text-yellow-200/70" : "text-muted-foreground"
-                        )}>{period}</span>
+                        <span className="text-sm text-muted-foreground">{period}</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Quotas - Updated messaging */}
+                  {/* Quotas */}
                   <div className={cn(
                     "mb-4 p-3 rounded-lg flex-shrink-0",
                     isPro 
-                      ? "bg-yellow-500/20 border border-yellow-500/30" 
-                      : isFree
-                      ? "bg-white/5 border border-white/10"
+                      ? "bg-amber-500/10 border border-amber-600/30" 
                       : "bg-muted/30"
                   )}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className={cn(
                         "font-bold text-sm",
-                        isPro ? "text-yellow-400" : isFree ? "text-green-400" : "text-[var(--bronze)]"
+                        isPro ? "text-amber-500" : isFree ? "text-green-400" : "text-[var(--bronze)]"
                       )}>
                         {isPro ? "🏆" : isFree ? "🆓" : "⚡"} {tier.quotas.eliteQueries}
                       </span>
                     </div>
-                    <div className={cn(
-                      "text-xs font-semibold",
-                      isFree ? "text-muted-foreground" : "text-green-400"
-                    )}>
+                    <div className="text-xs font-semibold text-green-400">
                       {tier.quotas.afterQuota}
                     </div>
-                    <div className={cn(
-                      "text-xs mt-1",
-                      isPro ? "text-yellow-200/70" : "text-muted-foreground"
-                    )}>
+                    <div className="text-xs mt-1 text-muted-foreground">
                       {tier.quotas.totalQueries}
                     </div>
                   </div>
@@ -419,14 +395,8 @@ export default function PricingPage() {
                     <ul className="space-y-1.5 pr-1">
                       {tier.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-1.5">
-                          <Check className={cn(
-                            "h-3.5 w-3.5 mt-0.5 flex-shrink-0",
-                            isPro ? "text-yellow-400" : "text-green-500"
-                          )} />
-                          <span className={cn(
-                            "text-xs",
-                            isPro && feature.includes("ELITE") && "text-yellow-300 font-semibold"
-                          )}>{feature}</span>
+                          <Check className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-green-500" />
+                          <span className="text-xs">{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -438,9 +408,7 @@ export default function PricingPage() {
                     className={cn(
                       "w-full font-bold transition-all duration-300",
                       isPro
-                        ? "bg-yellow-400 hover:bg-yellow-500 text-black text-base py-6"
-                        : isFree
-                        ? "bg-white/10 hover:bg-white/20 text-white"
+                        ? "bg-amber-600 hover:bg-amber-700 text-white"
                         : "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
                     )}
                     onClick={() => handleSubscribe(tier)}
@@ -572,9 +540,9 @@ export default function PricingPage() {
 
         {/* CTA - SELL PRO */}
         <div className="text-center">
-          <div className="p-8 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border-2 border-yellow-500/50">
-            <Trophy className="h-10 w-10 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-3xl font-display font-bold mb-4 text-yellow-400">
+          <div className="p-8 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/10 to-amber-500/10 border border-amber-600/40">
+            <Trophy className="h-10 w-10 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-3xl font-display font-bold mb-4 text-amber-500">
               Get #1 AI Quality Today
             </h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
@@ -584,7 +552,7 @@ export default function PricingPage() {
             <div className="flex gap-4 justify-center flex-wrap">
               <Button 
                 size="lg" 
-                className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-lg px-8"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-lg px-8"
                 onClick={() => handleSubscribe(pricingTiers[2])} // Pro tier
               >
                 <Trophy className="h-5 w-5 mr-2" />
