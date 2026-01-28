@@ -87,7 +87,7 @@ const pricingTiers: PricingTier[] = [
     annualPrice: 299.99,
     tier: "pro",
     popular: true,
-    icon: <Rocket className="h-5 w-5 text-amber-500" />,
+    icon: <Rocket className="h-5 w-5 text-yellow-500" />,
     badge: "BEST VALUE",
     quotas: {
       eliteQueries: "500 ELITE queries",
@@ -320,7 +320,7 @@ export default function PricingPage() {
                 className={cn(
                   "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300 h-[580px]",
                   isPro 
-                    ? "border-2 border-amber-600/70 shadow-lg shadow-amber-500/20" 
+                    ? "border-2 border-yellow-500 shadow-lg shadow-yellow-500/20" 
                     : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
                 )}
               >
@@ -346,7 +346,7 @@ export default function PricingPage() {
                     {tier.icon}
                     <CardTitle className="text-xl">{tier.name}</CardTitle>
                     {isPro && (
-                      <Badge className="bg-amber-600/20 text-amber-500 border-amber-600/30 text-xs">
+                      <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-xs">
                         RECOMMENDED
                       </Badge>
                     )}
@@ -371,13 +371,13 @@ export default function PricingPage() {
                   <div className={cn(
                     "mb-4 p-3 rounded-lg flex-shrink-0",
                     isPro 
-                      ? "bg-amber-500/10 border border-amber-600/30" 
+                      ? "bg-yellow-500/10 border border-yellow-500/30" 
                       : "bg-muted/30"
                   )}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className={cn(
                         "font-bold text-sm",
-                        isPro ? "text-amber-500" : isFree ? "text-green-400" : "text-[var(--bronze)]"
+                        isPro ? "text-yellow-500" : isFree ? "text-green-400" : "text-[var(--bronze)]"
                       )}>
                         {isPro ? "🏆" : isFree ? "🆓" : "⚡"} {tier.quotas.eliteQueries}
                       </span>
