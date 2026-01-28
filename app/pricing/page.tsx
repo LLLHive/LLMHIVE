@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useUser, useClerk } from "@clerk/nextjs"
-import { Check, Zap, Building2, Sparkles, ArrowRight, Loader2, Home, Crown, Users, Rocket, Star } from "lucide-react"
+import { Check, Zap, Building2, Sparkles, ArrowRight, Loader2, Home, Crown, Users, Rocket, Star, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -31,106 +31,104 @@ interface PricingTier {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 4-TIER PRICING STRUCTURE WITH FREE TIER (January 2026)
-// Marketing: "Our patented orchestration makes our FREE tier beat top models"
+// 4-TIER PRICING - PRO IS THE HERO (January 2026)
+// Sales Psychology: Pro should pop, Free should be an entry point only
 // ═══════════════════════════════════════════════════════════════════════════════
 const pricingTiers: PricingTier[] = [
   {
     name: "Free",
-    description: "Forever free - BEATS most paid models",
+    description: "Try our orchestration technology",
     monthlyPrice: 0,
     annualPrice: 0,
     tier: "free",
-    icon: <Star className="h-5 w-5 text-green-500" />,
-    badge: "No Credit Card",
-    highlight: "Our patented multi-model orchestration makes FREE outperform most paid models!",
+    icon: <Star className="h-5 w-5 text-muted-foreground" />,
     quotas: {
       eliteQueries: "FREE Orchestration",
-      afterQuota: "Always free models",
-      totalQueries: "50 queries/month",
+      afterQuota: "50 queries/month",
+      totalQueries: "Basic features",
     },
     features: [
-      "BEATS most single model performance",
-      "Patented multi-model orchestration",
+      "Multi-model orchestration",
+      "Beats most single models",
       "Knowledge Base access",
-      "Calculator & Reranker tools",
-      "3-day memory retention",
+      "Calculator & Reranker",
+      "3-day memory",
       "Community support",
     ],
-    cta: "Get Started Free",
+    cta: "Start Free",
   },
   {
     name: "Lite",
-    description: "Unlock #1 quality AI performance",
+    description: "Unlock #1 AI quality",
     monthlyPrice: 14.99,
     annualPrice: 149.99,
     tier: "lite",
-    icon: <Zap className="h-5 w-5 text-blue-500" />,
+    icon: <Zap className="h-5 w-5 text-blue-400" />,
     quotas: {
-      eliteQueries: "100 ELITE",
-      afterQuota: "→ FREE tier",
-      totalQueries: "500 total",
+      eliteQueries: "100 ELITE queries",
+      afterQuota: "Then UNLIMITED FREE",
+      totalQueries: "#1 in ALL categories",
     },
     features: [
-      "100 ELITE queries (#1 in ALL categories)",
-      "400 more queries (throttled to FREE)",
+      "100 ELITE queries/month",
+      "Then UNLIMITED FREE queries",
+      "#1 quality when using ELITE",
       "Knowledge Base access",
       "7-day memory retention",
       "Consensus voting",
-      "Calculator & Reranker tools",
       "Email support",
     ],
-    cta: "Upgrade to Lite",
+    cta: "Get Lite",
   },
   {
     name: "Pro",
-    description: "Full power for professionals",
+    description: "Maximum power for professionals",
     monthlyPrice: 29.99,
     annualPrice: 299.99,
     tier: "pro",
     popular: true,
-    icon: <Rocket className="h-5 w-5 text-[var(--bronze)]" />,
-    badge: "Most Popular",
+    icon: <Rocket className="h-5 w-5 text-yellow-400" />,
+    badge: "BEST VALUE",
     quotas: {
-      eliteQueries: "500 ELITE",
-      afterQuota: "→ FREE tier",
-      totalQueries: "2,000 total",
+      eliteQueries: "500 ELITE queries",
+      afterQuota: "Then UNLIMITED FREE",
+      totalQueries: "#1 in ALL + Full API",
     },
     features: [
-      "500 ELITE queries (#1 in ALL)",
-      "1,500 more queries (throttled to FREE)",
+      "500 ELITE queries/month",
+      "Then UNLIMITED FREE queries",
+      "#1 quality when using ELITE",
       "Full API access",
-      "All advanced features",
       "DeepConf debate system",
       "Prompt Diffusion",
       "Web research & fact-checking",
       "30-day memory retention",
       "Priority support",
     ],
-    cta: "Upgrade to Pro",
+    cta: "Get Pro — Best Value",
   },
   {
     name: "Enterprise",
-    description: "For organizations with compliance needs",
+    description: "Teams & compliance",
     monthlyPrice: 35,
     annualPrice: 350,
     tier: "enterprise",
-    icon: <Building2 className="h-5 w-5 text-emerald-500" />,
-    badge: "Min 5 Seats",
+    icon: <Building2 className="h-5 w-5 text-emerald-400" />,
+    badge: "Per Seat",
     quotas: {
       eliteQueries: "400 ELITE/seat",
-      afterQuota: "→ FREE tier/seat",
-      totalQueries: "800/seat",
+      afterQuota: "Then UNLIMITED FREE",
+      totalQueries: "SSO + Compliance",
     },
     features: [
-      "Minimum 5 seats ($175+/mo)",
       "400 ELITE per seat/month",
+      "Then UNLIMITED FREE queries",
+      "Min 5 seats ($175+/mo)",
       "SSO / SAML authentication",
       "SOC 2 Type II compliance",
-      "Audit logs & admin dashboard",
+      "Audit logs & dashboard",
       "99.5% SLA guarantee",
       "1-year memory retention",
-      "Team workspace & projects",
       "Dedicated support manager",
     ],
     cta: "Contact Sales",
@@ -196,9 +194,7 @@ export default function PricingPage() {
     }
   }
 
-  // Split tiers for display - 4 tiers (Free, Lite, Pro, Enterprise)
-  const mainTiers = pricingTiers.slice(0, 4)
-  const enterpriseTiers: PricingTier[] = [] // Enterprise is now in main tiers
+  const mainTiers = pricingTiers
 
   return (
     <div className="min-h-screen bg-background">
@@ -235,91 +231,116 @@ export default function PricingPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-16">
-        {/* Hero - Updated Messaging for FREE Tier */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-green-500/10 text-green-500 border-green-500/20">
-            <Crown className="h-3 w-3 mr-1" />
-            Patented Orchestration Technology
-          </Badge>
+      <main className="container mx-auto px-4 py-12">
+        
+        {/* ══════════════════════════════════════════════════════════════════════
+            #1 BENCHMARK HERO BADGE - HUGE, YELLOW, PROMINENT
+            This is what builds credibility - it MUST pop
+        ══════════════════════════════════════════════════════════════════════ */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-yellow-500/30 border-2 border-yellow-400 shadow-lg shadow-yellow-500/20 mb-6">
+            <Trophy className="h-10 w-10 text-yellow-400" />
+            <div className="text-left">
+              <div className="text-3xl md:text-4xl font-black bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 bg-clip-text text-transparent">
+                #1 IN ALL 10 BENCHMARKS
+              </div>
+              <div className="text-sm md:text-base text-yellow-200/80 font-medium">
+                January 2026 Industry Rankings — GPQA Diamond, SWE-Bench, AIME 2024 & more
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Hero - SELL PRO, not give away Free */}
+        <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            Our FREE Tier Beats Most Paid Models
+            The World's Best AI Quality at <span className="text-yellow-400">$29.99/mo</span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-6">
-            Because of our advanced patented orchestration of several models, 
-            our free tier delivers performance that surpasses most single paid models.
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
+            Our Pro plan gives you <span className="text-yellow-400 font-bold">500 ELITE queries</span> ranked 
+            <span className="text-yellow-400 font-bold"> #1 in ALL categories</span> — powered by 
+            GPT-5.2, Claude Opus 4.5 & Gemini 3 Pro unified.
           </p>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Upgrade to Lite for $14.99/mo to unlock <span className="text-green-500 font-semibold">#1 quality in ALL 10 categories</span> — 
-            or try our powerful FREE tier forever at no cost.
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+            After your ELITE queries, enjoy <span className="font-semibold text-green-400">UNLIMITED FREE queries</span> — 
+            our patented orchestration still beats most single paid models.
           </p>
         </div>
 
-        {/* Quality Explanation - Updated for FREE Tier */}
-        <div className="max-w-4xl mx-auto mb-12 p-6 rounded-xl bg-gradient-to-r from-green-500/10 via-[var(--bronze)]/10 to-purple-500/10 border border-green-500/20">
+        {/* Quality Explanation Banner - PRO FOCUSED */}
+        <div className="max-w-4xl mx-auto mb-10 p-6 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border-2 border-yellow-500/50">
           <div className="grid md:grid-cols-2 gap-6 text-center">
-            <div>
-              <div className="text-2xl font-bold text-green-500 mb-1">🆓 FREE Orchestration</div>
-              <div className="text-sm font-medium">BEATS Most Paid Models</div>
-              <div className="text-xs text-muted-foreground mt-1">Patented AI ensemble technology at $0</div>
+            <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+              <div className="text-3xl font-black text-yellow-400 mb-2">🏆 ELITE</div>
+              <div className="text-lg font-bold text-yellow-300">#1 in ALL 10 Categories</div>
+              <div className="text-sm text-yellow-200/70 mt-1">GPT-5.2 + Claude Opus 4.5 + Gemini 3 Pro</div>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-[var(--bronze)] mb-1">🟢 ELITE Orchestration</div>
-              <div className="text-sm font-medium">#1 in ALL 10 Categories</div>
-              <div className="text-xs text-muted-foreground mt-1">GPT-5, Claude 4.5 & Gemini 3 unified</div>
+            <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="text-3xl font-black text-green-400 mb-2">🆓 FREE</div>
+              <div className="text-lg font-bold text-green-300">UNLIMITED After ELITE</div>
+              <div className="text-sm text-muted-foreground mt-1">Still beats most single paid models</div>
             </div>
           </div>
         </div>
 
         {/* Billing Toggle */}
-        <div className="flex items-center justify-center gap-4 mb-12">
-          <Label htmlFor="billing-toggle" className={cn(!isAnnual && "text-foreground", isAnnual && "text-muted-foreground")}>
+        <div className="flex items-center justify-center gap-4 mb-10">
+          <Label htmlFor="billing-toggle" className={cn(!isAnnual && "text-foreground font-semibold", isAnnual && "text-muted-foreground")}>
             Monthly
           </Label>
           <Switch
             id="billing-toggle"
             checked={isAnnual}
             onCheckedChange={setIsAnnual}
-            className="data-[state=checked]:bg-[var(--bronze)]"
+            className="data-[state=checked]:bg-yellow-500"
           />
-          <Label htmlFor="billing-toggle" className={cn(isAnnual && "text-foreground", !isAnnual && "text-muted-foreground")}>
+          <Label htmlFor="billing-toggle" className={cn(isAnnual && "text-foreground font-semibold", !isAnnual && "text-muted-foreground")}>
             Annual
           </Label>
           {isAnnual && (
-            <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20">
+            <Badge className="bg-yellow-500 text-black font-bold border-0">
               Save 17%
             </Badge>
           )}
         </div>
 
-        {/* Main Pricing Cards (Free, Lite, Pro, Enterprise) */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto mb-16">
+        {/* ══════════════════════════════════════════════════════════════════════
+            PRICING CARDS - PRO IS THE HERO
+            - Pro: Biggest, brightest, most prominent
+            - Free: Smallest, subtle, entry point only
+        ══════════════════════════════════════════════════════════════════════ */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mb-16">
           {mainTiers.map((tier) => {
             const price = isAnnual ? tier.annualPrice : tier.monthlyPrice
             const period = isAnnual ? "/year" : "/month"
+            const isPro = tier.tier === "pro"
+            const isFree = tier.tier === "free"
 
             return (
               <Card
                 key={tier.name}
                 className={cn(
                   "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300",
-                  "h-[580px]",
-                  tier.tier === "free"
-                    ? "border-2 border-green-500 shadow-lg shadow-green-500/10"
-                    : tier.popular 
-                    ? "border-2 border-[var(--bronze)] shadow-lg shadow-[var(--bronze)]/10" 
-                    : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
+                  isPro 
+                    ? "border-3 border-yellow-400 shadow-2xl shadow-yellow-500/30 scale-105 z-10 h-[620px]" 
+                    : isFree
+                    ? "border border-white/10 hover:border-white/20 h-[580px] opacity-90"
+                    : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)] h-[580px]"
                 )}
               >
-                {(tier.popular || tier.badge) && (
+                {/* Badge - PRO gets huge yellow badge */}
+                {tier.badge && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge className={cn(
-                      "border-0 px-4 py-1",
-                      tier.tier === "free" ? "bg-green-500 text-white" :
-                      "bg-[var(--bronze)] text-white"
+                      "border-0 px-4 py-1.5 font-bold",
+                      isPro 
+                        ? "bg-yellow-400 text-black text-sm" 
+                        : tier.tier === "enterprise"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-[var(--bronze)] text-white"
                     )}>
-                      {tier.tier === "free" ? <Star className="h-3 w-3 mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
-                      {tier.badge || "Most Popular"}
+                      {isPro && <Trophy className="h-4 w-4 mr-1" />}
+                      {tier.badge}
                     </Badge>
                   </div>
                 )}
@@ -327,44 +348,85 @@ export default function PricingPage() {
                 <CardHeader className="pb-2 flex-shrink-0">
                   <div className="flex items-center gap-2 mb-1">
                     {tier.icon}
-                    <CardTitle className="text-xl">{tier.name}</CardTitle>
+                    <CardTitle className={cn(
+                      "text-xl",
+                      isPro && "text-yellow-400"
+                    )}>{tier.name}</CardTitle>
+                    {isPro && (
+                      <Badge className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-xs">
+                        RECOMMENDED
+                      </Badge>
+                    )}
                   </div>
-                  <CardDescription className="text-xs">{tier.description}</CardDescription>
+                  <CardDescription className={cn(
+                    "text-xs",
+                    isPro && "text-yellow-200/70"
+                  )}>{tier.description}</CardDescription>
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-hidden flex flex-col py-2">
-                  {/* Price */}
+                  {/* Price - PRO is bigger */}
                   <div className="mb-4 flex-shrink-0">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold">
+                      <span className={cn(
+                        "font-bold",
+                        isPro ? "text-4xl text-yellow-400" : "text-3xl"
+                      )}>
                         {price === 0 ? "Free" : `$${price.toFixed(2)}`}
                       </span>
                       {price > 0 && (
-                        <span className="text-muted-foreground text-sm">{period}</span>
+                        <span className={cn(
+                          "text-sm",
+                          isPro ? "text-yellow-200/70" : "text-muted-foreground"
+                        )}>{period}</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Quotas */}
-                  <div className="mb-4 p-3 rounded-lg bg-muted/30 flex-shrink-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-green-500 font-semibold text-sm">🟢 {tier.quotas.eliteQueries}</span>
+                  {/* Quotas - Updated messaging */}
+                  <div className={cn(
+                    "mb-4 p-3 rounded-lg flex-shrink-0",
+                    isPro 
+                      ? "bg-yellow-500/20 border border-yellow-500/30" 
+                      : isFree
+                      ? "bg-white/5 border border-white/10"
+                      : "bg-muted/30"
+                  )}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={cn(
+                        "font-bold text-sm",
+                        isPro ? "text-yellow-400" : isFree ? "text-green-400" : "text-[var(--bronze)]"
+                      )}>
+                        {isPro ? "🏆" : isFree ? "🆓" : "⚡"} {tier.quotas.eliteQueries}
+                      </span>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Then: {tier.quotas.afterQuota}
+                    <div className={cn(
+                      "text-xs font-semibold",
+                      isFree ? "text-muted-foreground" : "text-green-400"
+                    )}>
+                      {tier.quotas.afterQuota}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className={cn(
+                      "text-xs mt-1",
+                      isPro ? "text-yellow-200/70" : "text-muted-foreground"
+                    )}>
                       {tier.quotas.totalQueries}
                     </div>
                   </div>
 
-                  {/* Features - scrollable */}
+                  {/* Features */}
                   <div className="flex-1 overflow-y-auto min-h-0">
                     <ul className="space-y-1.5 pr-1">
                       {tier.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-1.5">
-                          <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-xs">{feature}</span>
+                          <Check className={cn(
+                            "h-3.5 w-3.5 mt-0.5 flex-shrink-0",
+                            isPro ? "text-yellow-400" : "text-green-500"
+                          )} />
+                          <span className={cn(
+                            "text-xs",
+                            isPro && feature.includes("ELITE") && "text-yellow-300 font-semibold"
+                          )}>{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -374,12 +436,12 @@ export default function PricingPage() {
                 <CardFooter className="pt-3 pb-4 flex-shrink-0">
                   <Button
                     className={cn(
-                      "w-full font-semibold transition-all duration-300",
-                      tier.tier === "free"
-                        ? "bg-green-500 hover:bg-green-600 text-white"
-                        : tier.popular
-                        ? "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
-                        : "bg-[var(--bronze)]/50 group-hover:bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
+                      "w-full font-bold transition-all duration-300",
+                      isPro
+                        ? "bg-yellow-400 hover:bg-yellow-500 text-black text-base py-6"
+                        : isFree
+                        ? "bg-white/10 hover:bg-white/20 text-white"
+                        : "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
                     )}
                     onClick={() => handleSubscribe(tier)}
                     disabled={loadingTier === tier.tier}
@@ -402,46 +464,75 @@ export default function PricingPage() {
           })}
         </div>
 
+        {/* Social Proof / Why #1 */}
+        <div className="max-w-4xl mx-auto mb-16 text-center">
+          <div className="p-8 rounded-2xl bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-yellow-500/10 border border-yellow-500/30">
+            <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-display font-bold mb-4 text-yellow-400">
+              Why We're #1 in ALL 10 Categories
+            </h2>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              Our patented orchestration technology combines the best of GPT-5.2, Claude Opus 4.5, and Gemini 3 Pro
+              with consensus voting, challenge-refine workflows, and tool integration.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
+              {["GPQA Diamond", "SWE-Bench", "AIME 2024", "MMMLU", "ARC-AGI 2"].map((bench) => (
+                <div key={bench} className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="text-yellow-400 font-bold">#1</div>
+                  <div className="text-muted-foreground">{bench}</div>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs mt-4">
+              {["Tool Use", "RAG", "Multimodal", "Dialogue EQ", "Long Context"].map((bench) => (
+                <div key={bench} className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="text-yellow-400 font-bold">#1</div>
+                  <div className="text-muted-foreground">{bench}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-        {/* How It Works */}
+        {/* How It Works - Upsell focused */}
         <div className="max-w-3xl mx-auto mb-16 p-8 rounded-2xl bg-card/50 border border-border/50">
           <h2 className="text-2xl font-display font-bold text-center mb-6">
-            How Our Pricing Works
+            How It Works
           </h2>
           <div className="space-y-4">
             <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-green-500 font-bold">1</span>
+              <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-yellow-400 font-bold">1</span>
               </div>
               <div>
-                <h3 className="font-semibold">Start FREE - Beat most paid models</h3>
+                <h3 className="font-semibold text-yellow-400">Get 500 ELITE queries with Pro</h3>
                 <p className="text-sm text-muted-foreground">
-                  Our patented multi-model orchestration makes even our FREE tier outperform most single paid models. 
-                  No credit card required, 50 queries/month.
+                  Each ELITE query uses our #1 ranked orchestration with GPT-5.2, Claude Opus 4.5 & Gemini 3 Pro.
+                  Perfect for professional work, coding, research, and critical tasks.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-green-400 font-bold">2</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-green-400">UNLIMITED FREE queries after</h3>
+                <p className="text-sm text-muted-foreground">
+                  After your ELITE quota, you get <strong>unlimited</strong> FREE tier queries. 
+                  Our FREE orchestration still beats most single paid models — no caps, no limits.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-8 h-8 rounded-full bg-[var(--bronze)]/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-[var(--bronze)] font-bold">2</span>
+                <span className="text-[var(--bronze)] font-bold">3</span>
               </div>
               <div>
-                <h3 className="font-semibold">Upgrade for #1 quality in ALL categories</h3>
+                <h3 className="font-semibold">Upgrade anytime for more ELITE</h3>
                 <p className="text-sm text-muted-foreground">
-                  For just $14.99/mo (Lite), unlock ELITE orchestration — ranked #1 in ALL 10 AI benchmark categories.
-                  100 ELITE queries, then throttle back to FREE tier.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-amber-500 font-bold">3</span>
-              </div>
-              <div>
-                <h3 className="font-semibold">Scale up for more power</h3>
-                <p className="text-sm text-muted-foreground">
-                  Pro ($29.99/mo) gives you 500 ELITE queries + full API access. 
-                  Enterprise ($35/seat) for teams with compliance needs.
+                  Need more #1 quality? Upgrade from Lite to Pro for 5x more ELITE queries.
+                  Or go Enterprise for team features and compliance.
                 </p>
               </div>
             </div>
@@ -449,65 +540,60 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto mb-16">
           <h2 className="text-2xl font-display font-bold text-center mb-8">
             Frequently Asked Questions
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">How does the FREE tier beat paid models?</h3>
+              <h3 className="font-semibold mb-2">What happens after I use my ELITE queries?</h3>
               <p className="text-muted-foreground text-sm">
-                Our patented multi-model orchestration combines 3 free models in consensus, plus our Calculator 
-                and Pinecone Reranker tools. This ensemble approach outperforms most single paid models 
-                while costing us $0 per query — savings we pass to you!
+                You get <strong>UNLIMITED FREE queries</strong> for the rest of the month. There's no cap — 
+                our FREE orchestration beats most single paid models, so you still get great quality. 
+                Want #1 quality back? Just upgrade for more ELITE queries.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">What happens when I run out of ELITE queries?</h3>
+              <h3 className="font-semibold mb-2">How is ELITE different from FREE?</h3>
               <p className="text-muted-foreground text-sm">
-                You're automatically throttled to our FREE tier orchestration. You'll see a notification 
-                offering to upgrade. The FREE tier still beats most single models, so you continue 
-                getting great quality — just not #1 in all categories.
+                ELITE uses premium models (GPT-5.2, Claude Opus 4.5, Gemini 3 Pro) to rank #1 in ALL 10 benchmarks.
+                FREE uses free models in consensus — still excellent, but not #1 in all categories.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">What's the difference between FREE and ELITE?</h3>
+              <h3 className="font-semibold mb-2">Why is Pro the best value?</h3>
               <p className="text-muted-foreground text-sm">
-                FREE uses only free models from OpenRouter in a 3-model consensus — excellent quality at $0.
-                ELITE uses premium models (GPT-5, Claude Opus, Gemini Pro) to rank #1 in ALL 10 benchmark categories.
-              </p>
-            </div>
-            <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">Can I upgrade or downgrade anytime?</h3>
-              <p className="text-muted-foreground text-sm">
-                Yes! You can upgrade to unlock more ELITE queries anytime, or downgrade if needed. 
-                Your billing will be prorated automatically. You always keep access to our FREE tier.
+                Pro gives you 5x more ELITE queries than Lite (500 vs 100) for only 2x the price ($29.99 vs $14.99). 
+                Plus you get full API access, advanced features, and 30-day memory.
               </p>
             </div>
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-24 text-center">
-          <div className="p-8 rounded-2xl bg-gradient-to-r from-green-500/10 via-[var(--bronze)]/10 to-purple-500/10 border border-green-500/20">
-            <h2 className="text-2xl font-display font-bold mb-4">
-              Start FREE — No Credit Card Required
+        {/* CTA - SELL PRO */}
+        <div className="text-center">
+          <div className="p-8 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border-2 border-yellow-500/50">
+            <Trophy className="h-10 w-10 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-3xl font-display font-bold mb-4 text-yellow-400">
+              Get #1 AI Quality Today
             </h2>
-            <p className="text-muted-foreground mb-6">
-              Our FREE tier beats most paid models. Experience the power of patented orchestration at no cost.
-              Upgrade anytime for #1 quality in ALL categories.
+            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+              500 ELITE queries. UNLIMITED FREE after. Full API access. 
+              The world's best AI orchestration for just $29.99/month.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
+              <Button 
+                size="lg" 
+                className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-lg px-8"
+                onClick={() => handleSubscribe(pricingTiers[2])} // Pro tier
+              >
+                <Trophy className="h-5 w-5 mr-2" />
+                Get Pro — $29.99/mo
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
               <Link href="/sign-up">
-                <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white">
-                  Get Started Free
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button size="lg" variant="outline" className="border-[var(--bronze)] text-[var(--bronze)] hover:bg-[var(--bronze)]/10">
-                  See All Plans
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                <Button size="lg" variant="outline" className="border-white/20 text-muted-foreground hover:bg-white/5">
+                  Try Free First
                 </Button>
               </Link>
             </div>
