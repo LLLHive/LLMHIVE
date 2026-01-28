@@ -30,27 +30,27 @@ logger = logging.getLogger(__name__)
 
 
 class TierName(str, Enum):
-    """Subscription tier names - Simplified 4-tier structure (January 2026)."""
-    LITE = "lite"           # Entry-level: $9.99/mo
+    """Subscription tier names - 4-tier structure with FREE tier (January 2026)."""
+    FREE = "free"           # Forever free: $0/mo - Free model orchestration
+    LITE = "lite"           # Entry-level: $14.99/mo
     PRO = "pro"             # Power users: $29.99/mo
     ENTERPRISE = "enterprise"  # Organizations: $35/seat/mo (min 5 seats)
-    MAXIMUM = "maximum"     # Mission-critical: $499/mo (never throttle)
 
 
 class OrchestrationTier(str, Enum):
     """Orchestration quality tiers."""
-    MAXIMUM = "maximum"    # Beats competition by +5%
-    ELITE = "elite"        # #1 in ALL 10 categories
-    STANDARD = "standard"  # #1 in 8 categories
-    BUDGET = "budget"      # #1 in 6 categories
+    ELITE = "elite"        # GPT-5, Claude & Gemini unified — #1 in ALL 10 categories
+    STANDARD = "standard"  # Premium routing & verification — Top 3 quality
+    BUDGET = "budget"      # Claude Sonnet optimized — Excellent quality
+    FREE = "free"          # Patented AI ensemble — BEATS most paid models!
 
 
 # Tier hierarchy (higher index = more permissions)
 TIER_HIERARCHY = [
+    TierName.FREE,
     TierName.LITE,
     TierName.PRO,
     TierName.ENTERPRISE,
-    TierName.MAXIMUM,
 ]
 
 
@@ -58,46 +58,60 @@ TIER_HIERARCHY = [
 class TierQuota:
     """Quota configuration for a subscription tier."""
     elite_queries: int          # Number of ELITE queries per month (0 = unlimited)
-    after_quota_tier: str       # "standard", "budget", or "maximum" (for never throttle)
+    after_quota_tier: str       # "standard", "budget", or "free"
     total_queries: int          # Total queries per month (0 = unlimited)
     team_members: int           # Number of team members included
-    never_throttle: bool = False  # Whether this tier never throttles
 
 
-# Tier quota definitions - SIMPLIFIED 4 TIERS
+# Tier quota definitions - 4 TIERS with FREE tier
+# IMPORTANT: All paid tiers throttle to FREE when quota exceeded
 TIER_QUOTAS: Dict[TierName, TierQuota] = {
+    TierName.FREE: TierQuota(
+        elite_queries=0,  # No ELITE, always FREE orchestration
+        after_quota_tier="free",  # Always free
+        total_queries=50,  # 50 queries per month
+        team_members=1,
+    ),
     TierName.LITE: TierQuota(
         elite_queries=100,
-        after_quota_tier="budget",
+        after_quota_tier="free",  # Throttle to FREE when exhausted
         total_queries=500,
         team_members=1,
     ),
     TierName.PRO: TierQuota(
         elite_queries=500,
-        after_quota_tier="standard",
+        after_quota_tier="free",  # Throttle to FREE when exhausted
         total_queries=2000,
         team_members=1,
     ),
     TierName.ENTERPRISE: TierQuota(
         elite_queries=400,  # Per seat
-        after_quota_tier="standard",
+        after_quota_tier="free",  # Throttle to FREE when exhausted
         total_queries=800,  # Per seat
         team_members=0,  # Unlimited (seat-based)
-    ),
-    TierName.MAXIMUM: TierQuota(
-        elite_queries=0,  # Unlimited
-        after_quota_tier="maximum",  # Never drops
-        total_queries=0,  # Unlimited
-        team_members=25,  # Team included
-        never_throttle=True,
     ),
 }
 
 
 class TierConfig:
-    """Configuration for each tier with quota-based limits - SIMPLIFIED 4 TIERS."""
+    """Configuration for each tier with quota-based limits - 4 TIERS with FREE."""
     
     LIMITS = {
+        TierName.FREE: {
+            "queries_per_month": 50,
+            "tokens_per_request": 8000,
+            "max_models": 3,  # Multi-model orchestration still works!
+            "elite_queries": 0,  # No ELITE, always FREE orchestration
+            "image_generation": False,
+            "audio_processing": False,
+            "fine_tuning": False,
+            "priority_support": False,
+            "api_access": False,
+            "knowledge_base": True,  # Knowledge base access
+            "deep_conf": False,
+            "rlhf_feedback": True,  # Still collect feedback
+            "free_models_only": True,  # NEW: Flag for free-only models
+        },
         TierName.LITE: {
             "queries_per_month": 500,
             "tokens_per_request": 25000,
@@ -142,24 +156,6 @@ class TierConfig:
             "sso": True,
             "audit_logs": True,
             "compliance": True,
-        },
-        TierName.MAXIMUM: {
-            "queries_per_month": -1,  # Unlimited
-            "tokens_per_request": -1,  # Unlimited
-            "max_models": 10,
-            "elite_queries": -1,  # Unlimited (never throttle)
-            "image_generation": True,
-            "audio_processing": True,
-            "fine_tuning": True,
-            "priority_support": True,
-            "api_access": True,
-            "knowledge_base": True,
-            "deep_conf": True,
-            "rlhf_feedback": True,
-            "sso": True,
-            "audit_logs": True,
-            "compliance": True,
-            "never_throttle": True,
         },
     }
     
@@ -284,48 +280,51 @@ def get_user_tier(user_id: str) -> TierName:
         user_id: User identifier
         
     Returns:
-        TierName (defaults to LITE if not found)
+        TierName (defaults to FREE if not found - no more trials!)
     """
     if not is_firestore_available():
-        logger.warning("Firestore not available, defaulting to LITE tier")
-        return TierName.LITE
+        logger.warning("Firestore not available, defaulting to FREE tier")
+        return TierName.FREE
     
     try:
         service = FirestoreSubscriptionService()
         subscription = service.get_user_subscription(user_id)
         
         if subscription and subscription.get("status") == "active":
-            tier_name = subscription.get("tier_name", "lite").lower()
+            tier_name = subscription.get("tier_name", "free").lower()
             try:
                 return TierName(tier_name)
             except ValueError:
-                logger.warning("Unknown tier name: %s, defaulting to LITE", tier_name)
-                return TierName.LITE
+                logger.warning("Unknown tier name: %s, defaulting to FREE", tier_name)
+                return TierName.FREE
         
-        return TierName.LITE
+        # No subscription or inactive = FREE tier (not LITE!)
+        return TierName.FREE
         
     except Exception as e:
         logger.error("Failed to get user tier: %s", e)
-        return TierName.LITE
+        return TierName.FREE
 
 
 def get_orchestration_tier(user_id: str) -> str:
     """Get the appropriate orchestration tier based on user's quota.
     
-    This determines whether to use MAXIMUM, ELITE, STANDARD, or BUDGET orchestration.
+    This determines whether to use MAXIMUM, ELITE, or FREE orchestration.
+    
+    IMPORTANT: Paid tiers now throttle to FREE (not BUDGET/STANDARD) when quota exceeded.
+    This means they use only free models from OpenRouter.
     
     Args:
         user_id: User identifier
         
     Returns:
-        Orchestration tier: "maximum", "elite", "standard", or "budget"
+        Orchestration tier: "elite" or "free"
     """
     tier = get_user_tier(user_id)
-    quota = TierConfig.get_quota(tier)
     
-    # Maximum tier: NEVER throttle
-    if quota.never_throttle or tier == TierName.MAXIMUM:
-        return "maximum"
+    # FREE tier: Always use FREE orchestration
+    if tier == TierName.FREE:
+        return "free"
     
     # Check ELITE quota
     tracker = QuotaTracker(user_id)
@@ -334,8 +333,64 @@ def get_orchestration_tier(user_id: str) -> str:
     if remaining == -1 or remaining > 0:  # -1 = unlimited
         return "elite"
     
-    # ELITE exhausted - use after-quota tier
-    return quota.after_quota_tier
+    # ELITE exhausted - throttle to FREE (uses only free models)
+    return "free"
+
+
+def is_user_throttled(user_id: str) -> bool:
+    """Check if user is currently throttled (using FREE orchestration).
+    
+    Args:
+        user_id: User identifier
+        
+    Returns:
+        True if user is throttled to FREE tier
+    """
+    tier = get_user_tier(user_id)
+    
+    # FREE tier users are not "throttled" - they're just on FREE tier
+    if tier == TierName.FREE:
+        return False
+    
+    # Check if ELITE quota is exhausted
+    tracker = QuotaTracker(user_id)
+    remaining = tracker.get_remaining_elite()
+    
+    return remaining == 0  # Throttled if no ELITE queries remaining
+
+
+def get_throttle_status(user_id: str) -> dict:
+    """Get detailed throttle status for UI display.
+    
+    Args:
+        user_id: User identifier
+        
+    Returns:
+        Dict with throttle status information
+    """
+    tier = get_user_tier(user_id)
+    quota = TierConfig.get_quota(tier)
+    tracker = QuotaTracker(user_id)
+    
+    is_throttled = is_user_throttled(user_id)
+    remaining_elite = tracker.get_remaining_elite()
+    usage = tracker.get_usage()
+    
+    return {
+        "is_throttled": is_throttled,
+        "subscription_tier": tier.value,
+        "current_orchestration": get_orchestration_tier(user_id),
+        "elite_queries": {
+            "limit": quota.elite_queries if quota.elite_queries > 0 else -1,
+            "used": usage.get("elite_used", 0),
+            "remaining": remaining_elite if remaining_elite >= 0 else -1,
+        },
+        "throttle_message": (
+            "Your ELITE quota is exhausted. You're now using FREE orchestration. "
+            "Upgrade to restore full power."
+        ) if is_throttled else None,
+        "upgrade_url": "/pricing",
+    }
 
 
 def tier_has_access(user_tier: TierName, required_tier: TierName) -> bool:
@@ -520,7 +575,6 @@ class FeatureCheckDependency:
 RequireLite = TierCheckDependency(TierName.LITE)
 RequirePro = TierCheckDependency(TierName.PRO)
 RequireEnterprise = TierCheckDependency(TierName.ENTERPRISE)
-RequireMaximum = TierCheckDependency(TierName.MAXIMUM)
 
 RequireAPIAccess = FeatureCheckDependency("api_access")
 RequireKnowledgeBase = FeatureCheckDependency("knowledge_base")

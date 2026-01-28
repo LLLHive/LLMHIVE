@@ -106,7 +106,7 @@ const TIER_COLORS: Record<string, string> = {
 }
 
 const TIER_LABELS: Record<string, string> = {
-  free: "Free Trial",
+  free: "Free",
   lite: "Lite",
   pro: "Pro",
   enterprise: "Enterprise",

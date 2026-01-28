@@ -52,13 +52,29 @@ const features = [
 
 const tiers = [
   {
+    name: "Free",
+    price: "$0",
+    period: "/forever",
+    description: "BEATS most paid models",
+    features: [
+      "Patented AI orchestration tech",
+      "Outperforms single models",
+      "Knowledge Base access",
+      "No credit card required"
+    ],
+    cta: "Start Free",
+    href: "/sign-up",
+    highlighted: false,
+    isFree: true
+  },
+  {
     name: "Lite",
-    price: "$9.99",
+    price: "$14.99",
     period: "/month",
-    description: "Get started with #1 quality AI",
+    description: "#1 quality in ALL categories",
     features: [
       "100 ELITE queries (#1 in ALL)",
-      "400 BUDGET queries after quota",
+      "Premium AI orchestration",
       "Knowledge Base access",
       "Email support"
     ],
@@ -73,12 +89,11 @@ const tiers = [
     description: "Full power for professionals",
     features: [
       "500 ELITE queries (#1 in ALL)",
-      "1,500 STANDARD queries (#1 in 8)",
       "Full API access",
       "DeepConf & Prompt Diffusion",
       "Priority support"
     ],
-    cta: "Start Free Trial",
+    cta: "Upgrade to Pro",
     href: "/sign-up",
     highlighted: true
   },
@@ -89,29 +104,12 @@ const tiers = [
     description: "For teams with compliance needs",
     features: [
       "Min 5 seats ($175+/mo)",
-      "400 ELITE/seat + 400 STANDARD/seat",
+      "400 ELITE/seat",
       "SSO & SAML integration",
-      "SOC 2 compliance",
-      "Dedicated support"
+      "Dedicated support manager"
     ],
     cta: "Contact Sales",
     href: "/contact",
-    highlighted: false
-  },
-  {
-    name: "Maximum",
-    price: "$499",
-    period: "/month",
-    description: "Mission-critical, never throttled",
-    features: [
-      "UNLIMITED MAXIMUM queries",
-      "Beats GPT-5.2 & Claude 4.5 by 5%",
-      "Never throttled (always #1)",
-      "25 team members included",
-      "Dedicated support manager"
-    ],
-    cta: "Go Maximum",
-    href: "/sign-up",
     highlighted: false
   }
 ]
@@ -293,13 +291,15 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {tiers.map((tier) => (
               <div 
                 key={tier.name}
-                className={`relative p-8 rounded-2xl ${
+                className={`relative p-6 rounded-2xl ${
                   tier.highlighted 
                     ? "bg-gradient-to-b from-amber-500/10 to-orange-600/5 border-2 border-amber-500/50" 
+                    : (tier as any).isFree
+                    ? "bg-gradient-to-b from-green-500/10 to-emerald-600/5 border-2 border-green-500/50"
                     : "bg-zinc-900/50 border border-zinc-800"
                 }`}
               >
@@ -308,18 +308,23 @@ export default function LandingPage() {
                     Most Popular
                   </div>
                 )}
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold mb-2">{tier.name}</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold">{tier.price}</span>
-                    {tier.period && <span className="text-zinc-400">{tier.period}</span>}
+                {(tier as any).isFree && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full text-sm font-medium text-white">
+                    Forever Free
                   </div>
-                  <p className="text-sm text-zinc-400 mt-2">{tier.description}</p>
+                )}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">{tier.name}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold">{tier.price}</span>
+                    {tier.period && <span className="text-zinc-400 text-sm">{tier.period}</span>}
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-2">{tier.description}</p>
                 </div>
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2 mb-6">
                   {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-sm">
-                      <Check className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <li key={feature} className="flex items-center gap-2 text-xs">
+                      <Check className={`h-3 w-3 flex-shrink-0 ${(tier as any).isFree ? "text-green-500" : "text-amber-500"}`} />
                       <span className="text-zinc-300">{feature}</span>
                     </li>
                   ))}
@@ -329,6 +334,8 @@ export default function LandingPage() {
                     className={`w-full ${
                       tier.highlighted 
                         ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" 
+                        : (tier as any).isFree
+                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0"
                         : "bg-zinc-800 hover:bg-zinc-700 text-white"
                     }`}
                   >

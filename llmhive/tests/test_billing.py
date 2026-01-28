@@ -37,18 +37,18 @@ from llmhive.app.billing.metering import (
 
 
 class TestPricingTierManager:
-    """Tests for PricingTierManager class - SIMPLIFIED 4 TIERS (Jan 2026)."""
+    """Tests for PricingTierManager class - 4 TIERS with FREE (Jan 2026)."""
     
     def test_default_tiers(self):
-        """Test default tiers are initialized (simplified 4-tier pricing Jan 2026)."""
+        """Test default tiers are initialized (4-tier pricing with FREE tier Jan 2026)."""
         manager = PricingTierManager()
         
-        # 4 tiers: LITE, PRO, ENTERPRISE, MAXIMUM
+        # 4 tiers: FREE, LITE, PRO, ENTERPRISE
         assert len(manager.tiers) == 4
+        assert TierName.FREE in manager.tiers
         assert TierName.LITE in manager.tiers
         assert TierName.PRO in manager.tiers
         assert TierName.ENTERPRISE in manager.tiers
-        assert TierName.MAXIMUM in manager.tiers
     
     def test_get_tier_by_enum(self):
         """Test getting tier by TierName enum."""
@@ -78,7 +78,7 @@ class TestPricingTierManager:
         manager = PricingTierManager()
         
         tiers = manager.list_tiers()
-        assert len(tiers) == 4  # Simplified 4 tiers
+        assert len(tiers) == 4  # 4 tiers with FREE tier
     
     def test_lite_tier_limits(self):
         """Test Lite tier has correct limits (quota-based)."""
@@ -119,17 +119,6 @@ class TestPricingTierManager:
         assert tier.limits.enable_priority_support is True
         assert tier.limits.min_seats == 5  # Min 5 seats required
         assert tier.limits.is_per_seat is True
-    
-    def test_maximum_tier_never_throttle(self):
-        """Test Maximum tier has unlimited and never throttles."""
-        manager = PricingTierManager()
-        tier = manager.get_tier(TierName.MAXIMUM)
-        
-        # Maximum: Unlimited, never throttle
-        assert tier.limits.max_requests_per_month == 0  # 0 = unlimited
-        assert tier.limits.max_tokens_per_month == 0  # 0 = unlimited
-        assert tier.limits.enable_priority_support is True
-        assert tier.limits.default_orchestration_tier == "maximum"
     
     def test_can_access_feature(self):
         """Test feature access check."""
@@ -181,8 +170,8 @@ class TestPricingTierManager:
         manager = PricingTierManager()
         
         lite = manager.get_tier(TierName.LITE)
-        assert lite.monthly_price_usd == 9.99
-        assert lite.annual_price_usd == 99.99
+        assert lite.monthly_price_usd == 14.99
+        assert lite.annual_price_usd == 149.99
         
         pro = manager.get_tier(TierName.PRO)
         assert pro.monthly_price_usd == 29.99
@@ -192,11 +181,6 @@ class TestPricingTierManager:
         enterprise = manager.get_tier(TierName.ENTERPRISE)
         assert enterprise.monthly_price_usd == 35.0
         assert enterprise.annual_price_usd == 350.0
-        
-        # Maximum tier
-        maximum = manager.get_tier(TierName.MAXIMUM)
-        assert maximum.monthly_price_usd == 499.0
-        assert maximum.annual_price_usd == 4_990.0
 
 
 class TestUsageMeter:
@@ -395,8 +379,8 @@ class TestCostEstimator:
             avg_tokens_per_request=500,
         )
         
-        # Lite tier costs $9.99/mo
-        assert result.get("subscription_cost", result.get("base_cost", 9.99)) == pytest.approx(9.99, rel=0.01)
+        # Lite tier costs $14.99/mo
+        assert result.get("subscription_cost", result.get("base_cost", 14.99)) == pytest.approx(14.99, rel=0.01)
         assert result.get("tier", "lite") == "lite"
     
     def test_estimate_monthly_cost_pro(self):

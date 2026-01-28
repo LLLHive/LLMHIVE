@@ -986,6 +986,924 @@ MODEL_PROFILES: Dict[str, ModelProfile] = {
         factual_score=85,  # Real-time helps
         instruction_following=80,
     ),
+    
+    # =========================================================================
+    # FREE TIER MODELS (January 2026 - Critical for FREE orchestration tier)
+    # =========================================================================
+    
+    "deepseek/deepseek-r1-0528:free": ModelProfile(
+        model_id="deepseek/deepseek-r1-0528:free",
+        display_name="DeepSeek R1 (Free)",
+        provider="DeepSeek",
+        tier=ModelTier.REASONING,
+        
+        architecture="MoE Transformer with native reasoning",
+        parameter_count="671B (37B active)",
+        context_window=163840,
+        max_output_tokens=16384,
+        training_cutoff="May 2025",
+        
+        strengths=[
+            "BEST free model for reasoning and math",
+            "Native chain-of-thought (like o1)",
+            "163K context - excellent for documents",
+            "Strong coding capabilities",
+            "Self-verification built-in",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Slower than non-reasoning models",
+            "Chinese provider (some restrictions)",
+            "Less polished for creative tasks",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "Complex mathematical problems",
+            "Logic puzzles and proofs",
+            "Code debugging and analysis",
+            "Scientific reasoning",
+            "FREE tier primary reasoning model",
+        ],
+        avoid_for=[
+            "Creative writing",
+            "Time-critical applications",
+            "Sensitive/regulated domains",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.NATIVE_COT,
+            ReasoningCapability.SELF_VERIFICATION,
+            ReasoningCapability.MULTI_STEP,
+            ReasoningCapability.REFLECTION,
+        },
+        reasoning_score=88,
+        can_be_hacked_to_reason=False,  # Already native
+        reasoning_hack_method=None,
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=3000,
+            tokens_per_second=50,
+            reasoning_overhead_ms=5000,
+        ),
+        
+        supports_vision=False,
+        
+        complements_well_with=["google/gemini-2.0-flash-exp:free", "qwen/qwen3-coder:free"],
+        conflicts_with=[],
+        
+        coding_score=90,
+        creative_score=65,
+        factual_score=85,
+        instruction_following=82,
+    ),
+    
+    "google/gemini-2.0-flash-exp:free": ModelProfile(
+        model_id="google/gemini-2.0-flash-exp:free",
+        display_name="Gemini 2.0 Flash Exp (Free)",
+        provider="Google",
+        tier=ModelTier.FAST,
+        
+        architecture="Gemini Transformer (multimodal)",
+        parameter_count="Unknown",
+        context_window=1048576,  # 1M tokens!
+        max_output_tokens=8192,
+        training_cutoff="2024",
+        
+        strengths=[
+            "1 MILLION token context - LONGEST free context!",
+            "Excellent for RAG and document analysis",
+            "Fast inference",
+            "Multimodal (vision support)",
+            "Strong general capabilities",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Experimental - may have edge cases",
+            "Not as strong in deep reasoning",
+            "Limited output tokens",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "Very long document analysis",
+            "RAG with extensive context",
+            "Multi-document synthesis",
+            "FREE tier context monster",
+            "Vision tasks in free tier",
+        ],
+        avoid_for=[
+            "Complex mathematical proofs",
+            "Deep multi-step reasoning",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+            ReasoningCapability.MULTI_STEP,
+        },
+        reasoning_score=78,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Standard CoT works. Use explicit step-by-step for complex tasks.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=150,
+            tokens_per_second=120,
+        ),
+        
+        supports_vision=True,
+        
+        complements_well_with=["deepseek/deepseek-r1-0528:free", "qwen/qwen3-coder:free"],
+        conflicts_with=[],
+        
+        coding_score=78,
+        creative_score=80,
+        factual_score=82,
+        instruction_following=85,
+    ),
+    
+    "qwen/qwen3-coder:free": ModelProfile(
+        model_id="qwen/qwen3-coder:free",
+        display_name="Qwen3 Coder (Free)",
+        provider="Alibaba Qwen",
+        tier=ModelTier.SPECIALIZED,
+        
+        architecture="Transformer (code-specialized)",
+        parameter_count="32B",
+        context_window=262000,
+        max_output_tokens=16384,
+        training_cutoff="2024",
+        
+        strengths=[
+            "BEST free model for coding tasks",
+            "262K context - excellent for codebases",
+            "Strong code generation and debugging",
+            "Good understanding of complex code patterns",
+            "Supports many programming languages",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Specialized for code - less general",
+            "Less strong for non-coding tasks",
+            "Chinese provider",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "Code generation",
+            "Code review and debugging",
+            "Technical documentation",
+            "FREE tier primary coding model",
+            "Large codebase analysis",
+        ],
+        avoid_for=[
+            "Creative writing",
+            "General conversation",
+            "Non-technical queries",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+            ReasoningCapability.MULTI_STEP,
+        },
+        reasoning_score=82,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Use code-style structured thinking with comments.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=200,
+            tokens_per_second=100,
+        ),
+        
+        complements_well_with=["deepseek/deepseek-r1-0528:free", "meta-llama/llama-3.3-70b-instruct:free"],
+        conflicts_with=[],
+        
+        coding_score=94,  # Very high for code
+        creative_score=60,
+        factual_score=75,
+        instruction_following=85,
+    ),
+    
+    "meta-llama/llama-3.3-70b-instruct:free": ModelProfile(
+        model_id="meta-llama/llama-3.3-70b-instruct:free",
+        display_name="Llama 3.3 70B Instruct (Free)",
+        provider="Meta",
+        tier=ModelTier.BALANCED,
+        
+        architecture="Transformer",
+        parameter_count="70B",
+        context_window=131072,
+        max_output_tokens=8192,
+        training_cutoff="2024",
+        
+        strengths=[
+            "Well-balanced general model",
+            "Strong instruction following",
+            "Good for diverse tasks",
+            "131K context window",
+            "70+ language support",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Not specialized for any domain",
+            "Less strong than DeepSeek R1 for reasoning",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "General-purpose tasks",
+            "Multilingual applications",
+            "Diverse task handling",
+            "FREE tier general assistant",
+            "Balanced quality/availability",
+        ],
+        avoid_for=[
+            "Tasks needing specialized expertise",
+            "Maximum accuracy requirements",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+            ReasoningCapability.MULTI_STEP,
+        },
+        reasoning_score=80,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Standard CoT prompting works well.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=200,
+            tokens_per_second=90,
+        ),
+        
+        complements_well_with=["deepseek/deepseek-r1-0528:free", "qwen/qwen3-coder:free"],
+        conflicts_with=[],
+        
+        coding_score=80,
+        creative_score=78,
+        factual_score=80,
+        instruction_following=85,
+    ),
+    
+    "qwen/qwen3-next-80b-a3b-instruct:free": ModelProfile(
+        model_id="qwen/qwen3-next-80b-a3b-instruct:free",
+        display_name="Qwen3 Next 80B (Free)",
+        provider="Alibaba Qwen",
+        tier=ModelTier.BALANCED,
+        
+        architecture="MoE Transformer (80B, 3B active)",
+        parameter_count="80B (3B active)",
+        context_window=262144,
+        max_output_tokens=16384,
+        training_cutoff="2024",
+        
+        strengths=[
+            "262K context - second longest free",
+            "Strong math and reasoning",
+            "Good multilingual support (Chinese excellent)",
+            "Efficient MoE architecture",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Chinese provider",
+            "Less tested in Western applications",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "Long document processing",
+            "Mathematical tasks",
+            "Multilingual (especially Chinese)",
+            "FREE tier long-context alternative",
+        ],
+        avoid_for=[
+            "Cultural-specific Western content",
+            "Real-time applications",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+            ReasoningCapability.MULTI_STEP,
+        },
+        reasoning_score=83,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Systematic step-by-step prompting works well.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=250,
+            tokens_per_second=80,
+        ),
+        
+        complements_well_with=["deepseek/deepseek-r1-0528:free", "google/gemini-2.0-flash-exp:free"],
+        conflicts_with=[],
+        
+        coding_score=82,
+        creative_score=75,
+        factual_score=82,
+        instruction_following=85,
+    ),
+    
+    "meta-llama/llama-3.1-405b-instruct:free": ModelProfile(
+        model_id="meta-llama/llama-3.1-405b-instruct:free",
+        display_name="Llama 3.1 405B Instruct (Free)",
+        provider="Meta",
+        tier=ModelTier.FLAGSHIP,
+        
+        architecture="Transformer",
+        parameter_count="405B",
+        context_window=131072,
+        max_output_tokens=8192,
+        training_cutoff="2024",
+        
+        strengths=[
+            "LARGEST free model available (405B parameters)",
+            "Near-frontier performance",
+            "Strong across all tasks",
+            "Excellent instruction following",
+            "131K context window",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Slower due to massive size",
+            "Higher latency than smaller models",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "Complex tasks requiring maximum capability",
+            "FREE tier flagship model",
+            "Tasks where quality matters most",
+            "Research and analysis",
+        ],
+        avoid_for=[
+            "Time-critical applications",
+            "High-volume simple tasks",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+            ReasoningCapability.MULTI_STEP,
+            ReasoningCapability.REFLECTION,
+        },
+        reasoning_score=85,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Responds well to detailed CoT prompting.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=500,
+            tokens_per_second=50,
+        ),
+        
+        complements_well_with=["deepseek/deepseek-r1-0528:free", "google/gemini-2.0-flash-exp:free"],
+        conflicts_with=[],
+        
+        coding_score=88,
+        creative_score=85,
+        factual_score=88,
+        instruction_following=90,
+    ),
+    
+    "google/gemma-3-27b-it:free": ModelProfile(
+        model_id="google/gemma-3-27b-it:free",
+        display_name="Gemma 3 27B IT (Free)",
+        provider="Google",
+        tier=ModelTier.BALANCED,
+        
+        architecture="Transformer",
+        parameter_count="27B",
+        context_window=131072,
+        max_output_tokens=8192,
+        training_cutoff="2024",
+        
+        strengths=[
+            "Good balance of speed and quality",
+            "Strong multilingual support",
+            "Solid math capabilities",
+            "131K context window",
+            "Fast inference",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Not as capable as larger models",
+            "Less strong in specialized domains",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "General tasks with speed needs",
+            "Multilingual applications",
+            "Medium-complexity tasks",
+            "FREE tier fast alternative",
+        ],
+        avoid_for=[
+            "Maximum accuracy requirements",
+            "Complex reasoning chains",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+        },
+        reasoning_score=75,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Basic CoT prompting works.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=150,
+            tokens_per_second=110,
+        ),
+        
+        complements_well_with=["deepseek/deepseek-r1-0528:free", "meta-llama/llama-3.3-70b-instruct:free"],
+        conflicts_with=[],
+        
+        coding_score=75,
+        creative_score=78,
+        factual_score=78,
+        instruction_following=82,
+    ),
+    
+    "arcee-ai/trinity-large-preview:free": ModelProfile(
+        model_id="arcee-ai/trinity-large-preview:free",
+        display_name="Trinity Large (Free)",
+        provider="Arcee AI",
+        tier=ModelTier.SPECIALIZED,
+        
+        architecture="Transformer (agentic-focused)",
+        parameter_count="Unknown",
+        context_window=131000,
+        max_output_tokens=8192,
+        training_cutoff="2024",
+        
+        strengths=[
+            "Optimized for agentic workflows",
+            "Strong tool use capabilities",
+            "Good for multi-step tasks",
+            "131K context window",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Newer, less battle-tested",
+            "Preview/experimental status",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "Agentic applications",
+            "Tool-heavy workflows",
+            "Multi-step automated tasks",
+            "FREE tier agent model",
+        ],
+        avoid_for=[
+            "Simple Q&A",
+            "Creative writing",
+            "Maximum reliability requirements",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+            ReasoningCapability.MULTI_STEP,
+            ReasoningCapability.PLANNING,
+        },
+        reasoning_score=80,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Structured task decomposition works well.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=200,
+            tokens_per_second=90,
+        ),
+        
+        supports_tools=True,
+        
+        complements_well_with=["deepseek/deepseek-r1-0528:free", "qwen/qwen3-coder:free"],
+        conflicts_with=[],
+        
+        coding_score=82,
+        creative_score=70,
+        factual_score=78,
+        instruction_following=85,
+    ),
+    
+    "z-ai/glm-4.5-air:free": ModelProfile(
+        model_id="z-ai/glm-4.5-air:free",
+        display_name="GLM 4.5 Air (Free)",
+        provider="Zhipu AI",
+        tier=ModelTier.BALANCED,
+        
+        architecture="Transformer",
+        parameter_count="Unknown",
+        context_window=131072,
+        max_output_tokens=8192,
+        training_cutoff="2024",
+        
+        strengths=[
+            "Excellent multilingual support",
+            "Strong in Chinese/Asian languages",
+            "131K context window",
+            "Good general capabilities",
+            "COMPLETELY FREE via OpenRouter",
+        ],
+        weaknesses=[
+            "Chinese provider",
+            "Less known in Western markets",
+            "Rate limits on free tier",
+        ],
+        best_for=[
+            "Multilingual applications",
+            "Chinese language tasks",
+            "Asian market applications",
+            "FREE tier multilingual model",
+        ],
+        avoid_for=[
+            "Western culture-specific content",
+            "Maximum reliability requirements",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+        },
+        reasoning_score=78,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Standard CoT prompting works.",
+        
+        costs=ModelCosts(
+            input_per_million=0.00,
+            output_per_million=0.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=200,
+            tokens_per_second=90,
+        ),
+        
+        complements_well_with=["meta-llama/llama-3.3-70b-instruct:free", "google/gemma-3-27b-it:free"],
+        conflicts_with=[],
+        
+        coding_score=75,
+        creative_score=78,
+        factual_score=80,
+        instruction_following=82,
+    ),
+    
+    # =========================================================================
+    # ADDITIONAL TOP-10 BENCHMARK MODELS (Paid but critical for orchestration)
+    # =========================================================================
+    
+    "openai/o3": ModelProfile(
+        model_id="openai/o3",
+        display_name="o3",
+        provider="OpenAI",
+        tier=ModelTier.REASONING,
+        
+        architecture="Advanced Reasoning Transformer (o3 generation)",
+        parameter_count="Unknown",
+        context_window=200000,
+        max_output_tokens=100000,
+        training_cutoff="2025",
+        
+        strengths=[
+            "BEST reasoning model available (exceeds o1)",
+            "Native chain-of-thought at unprecedented level",
+            "Can solve PhD-level problems reliably",
+            "Exceptional at competitive programming",
+            "Best for agentic/planning tasks",
+        ],
+        weaknesses=[
+            "VERY expensive",
+            "VERY slow (extensive internal reasoning)",
+            "Overkill for simple tasks",
+            "Cannot be streamed",
+        ],
+        best_for=[
+            "Most complex reasoning tasks",
+            "Competitive programming",
+            "PhD-level science problems",
+            "Critical accuracy requirements",
+        ],
+        avoid_for=[
+            "Simple Q&A",
+            "Cost-sensitive applications",
+            "Time-critical applications",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.NATIVE_COT,
+            ReasoningCapability.SELF_VERIFICATION,
+            ReasoningCapability.MULTI_STEP,
+            ReasoningCapability.REFLECTION,
+            ReasoningCapability.PLANNING,
+        },
+        reasoning_score=99,  # Highest
+        can_be_hacked_to_reason=False,
+        reasoning_hack_method=None,
+        
+        costs=ModelCosts(
+            input_per_million=30.00,
+            output_per_million=120.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=10000,
+            tokens_per_second=30,
+            is_streaming=False,
+            reasoning_overhead_ms=20000,
+        ),
+        
+        supports_vision=True,
+        supports_tools=False,
+        
+        complements_well_with=["openai/gpt-5", "anthropic/claude-opus-4-20250514"],
+        conflicts_with=[],
+        
+        coding_score=98,
+        creative_score=65,
+        factual_score=95,
+        instruction_following=90,
+    ),
+    
+    "openai/o3-mini": ModelProfile(
+        model_id="openai/o3-mini",
+        display_name="o3 Mini",
+        provider="OpenAI",
+        tier=ModelTier.REASONING,
+        
+        architecture="Optimized Reasoning Transformer",
+        parameter_count="Unknown",
+        context_window=200000,
+        max_output_tokens=65536,
+        training_cutoff="2025",
+        
+        strengths=[
+            "Strong reasoning at lower cost than o3",
+            "Native chain-of-thought",
+            "Faster than full o3",
+            "Good for medium-complexity reasoning",
+            "More accessible price point",
+        ],
+        weaknesses=[
+            "Less capable than full o3",
+            "Still slower than non-reasoning models",
+            "Higher cost than standard models",
+        ],
+        best_for=[
+            "Medium-complexity reasoning",
+            "Math and logic problems",
+            "Cost-effective reasoning tier",
+        ],
+        avoid_for=[
+            "Simple tasks",
+            "Maximum speed requirements",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.NATIVE_COT,
+            ReasoningCapability.SELF_VERIFICATION,
+            ReasoningCapability.MULTI_STEP,
+        },
+        reasoning_score=92,
+        can_be_hacked_to_reason=False,
+        reasoning_hack_method=None,
+        
+        costs=ModelCosts(
+            input_per_million=5.00,
+            output_per_million=20.00,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=3000,
+            tokens_per_second=50,
+            is_streaming=False,
+            reasoning_overhead_ms=8000,
+        ),
+        
+        supports_vision=True,
+        supports_tools=False,
+        
+        complements_well_with=["openai/gpt-4o", "anthropic/claude-sonnet-4-20250514"],
+        conflicts_with=[],
+        
+        coding_score=92,
+        creative_score=60,
+        factual_score=88,
+        instruction_following=85,
+    ),
+    
+    "anthropic/claude-sonnet-4": ModelProfile(
+        model_id="anthropic/claude-sonnet-4",
+        display_name="Claude Sonnet 4",
+        provider="Anthropic",
+        tier=ModelTier.BALANCED,
+        
+        architecture="Constitutional AI Transformer",
+        parameter_count="Unknown",
+        context_window=200000,
+        max_output_tokens=16384,
+        training_cutoff="April 2025",
+        
+        strengths=[
+            "Best balance of quality and speed in Claude family",
+            "Excellent coding and analysis",
+            "Strong creative writing",
+            "Extended thinking mode available",
+            "Good tool use",
+        ],
+        weaknesses=[
+            "Not as deep as Opus for complex tasks",
+            "Can be verbose",
+        ],
+        best_for=[
+            "Daily driver for quality tasks",
+            "Coding and analysis",
+            "Balanced cost/quality needs",
+        ],
+        avoid_for=[
+            "Maximum depth reasoning",
+            "Budget-sensitive applications",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+            ReasoningCapability.SELF_VERIFICATION,
+            ReasoningCapability.MULTI_STEP,
+        },
+        reasoning_score=88,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Extended thinking with <thinking> tags. Budget parameter for deeper reasoning.",
+        
+        costs=ModelCosts(
+            input_per_million=3.00,
+            output_per_million=15.00,
+            cached_input=0.30,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=200,
+            tokens_per_second=80,
+        ),
+        
+        supports_vision=True,
+        
+        complements_well_with=["openai/gpt-4o", "anthropic/claude-opus-4-20250514"],
+        conflicts_with=[],
+        
+        coding_score=92,
+        creative_score=90,
+        factual_score=88,
+        instruction_following=92,
+    ),
+    
+    "deepseek/deepseek-r1": ModelProfile(
+        model_id="deepseek/deepseek-r1",
+        display_name="DeepSeek R1",
+        provider="DeepSeek",
+        tier=ModelTier.REASONING,
+        
+        architecture="MoE Transformer with native reasoning",
+        parameter_count="671B (37B active)",
+        context_window=163840,
+        max_output_tokens=16384,
+        training_cutoff="January 2025",
+        
+        strengths=[
+            "Excellent reasoning at very low cost",
+            "Native chain-of-thought",
+            "Strong math and coding",
+            "163K context window",
+            "Extremely cost-effective",
+        ],
+        weaknesses=[
+            "Chinese provider",
+            "Less polished for creative tasks",
+            "Slower due to reasoning overhead",
+        ],
+        best_for=[
+            "Cost-effective reasoning",
+            "Math and coding tasks",
+            "Scientific reasoning",
+        ],
+        avoid_for=[
+            "Creative writing",
+            "Sensitive applications",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.NATIVE_COT,
+            ReasoningCapability.SELF_VERIFICATION,
+            ReasoningCapability.MULTI_STEP,
+        },
+        reasoning_score=90,
+        can_be_hacked_to_reason=False,
+        reasoning_hack_method=None,
+        
+        costs=ModelCosts(
+            input_per_million=0.55,
+            output_per_million=2.19,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=2500,
+            tokens_per_second=60,
+            reasoning_overhead_ms=5000,
+        ),
+        
+        complements_well_with=["anthropic/claude-sonnet-4", "openai/gpt-4o"],
+        conflicts_with=[],
+        
+        coding_score=92,
+        creative_score=65,
+        factual_score=85,
+        instruction_following=82,
+    ),
+    
+    "google/gemini-2.0-flash": ModelProfile(
+        model_id="google/gemini-2.0-flash",
+        display_name="Gemini 2.0 Flash",
+        provider="Google",
+        tier=ModelTier.FAST,
+        
+        architecture="Gemini Transformer",
+        parameter_count="Unknown",
+        context_window=1048576,  # 1M
+        max_output_tokens=8192,
+        training_cutoff="2024",
+        
+        strengths=[
+            "1M context window",
+            "Very fast inference",
+            "Good multimodal support",
+            "Excellent for large documents",
+            "Competitive pricing",
+        ],
+        weaknesses=[
+            "Not as deep as Pro for complex tasks",
+            "Limited output tokens",
+        ],
+        best_for=[
+            "Large document processing",
+            "Speed-critical applications",
+            "RAG with extensive context",
+        ],
+        avoid_for=[
+            "Maximum accuracy requirements",
+            "Deep reasoning chains",
+        ],
+        
+        reasoning_capabilities={
+            ReasoningCapability.PROMPTED_COT,
+        },
+        reasoning_score=80,
+        can_be_hacked_to_reason=True,
+        reasoning_hack_method="Standard CoT prompting.",
+        
+        costs=ModelCosts(
+            input_per_million=0.10,
+            output_per_million=0.40,
+        ),
+        
+        latency=LatencyProfile(
+            time_to_first_token_ms=100,
+            tokens_per_second=150,
+        ),
+        
+        supports_vision=True,
+        
+        complements_well_with=["openai/gpt-4o", "anthropic/claude-sonnet-4"],
+        conflicts_with=[],
+        
+        coding_score=82,
+        creative_score=80,
+        factual_score=85,
+        instruction_following=88,
+    ),
 }
 
 
@@ -1443,6 +2361,82 @@ TEAM_STRATEGIES: Dict[str, TeamStrategy] = {
         best_for=["Medical Q&A", "Clinical support", "Health research"],
         cost_tier="premium",
     ),
+    
+    # =========================================================================
+    # FREE TIER TEAM STRATEGIES (January 2026)
+    # =========================================================================
+    
+    "free_tier_general": TeamStrategy(
+        name="Free Tier General",
+        description="Best free models for general tasks - zero cost",
+        models=[
+            "deepseek/deepseek-r1-0528:free",
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "google/gemini-2.0-flash-exp:free",
+        ],
+        roles={
+            "deepseek/deepseek-r1-0528:free": "Primary reasoning (deep thinking)",
+            "meta-llama/llama-3.3-70b-instruct:free": "General assistant (balanced)",
+            "google/gemini-2.0-flash-exp:free": "Fast responses and long context",
+        },
+        orchestration="single_best",
+        best_for=["Free tier users", "Cost-zero applications", "Testing"],
+        cost_tier="free",
+    ),
+    
+    "free_tier_coding": TeamStrategy(
+        name="Free Tier Coding",
+        description="Best free models for coding tasks - zero cost",
+        models=[
+            "qwen/qwen3-coder:free",
+            "deepseek/deepseek-r1-0528:free",
+            "arcee-ai/trinity-large-preview:free",
+        ],
+        roles={
+            "qwen/qwen3-coder:free": "Primary coder (code generation)",
+            "deepseek/deepseek-r1-0528:free": "Code reasoning and debugging",
+            "arcee-ai/trinity-large-preview:free": "Agentic coding workflows",
+        },
+        orchestration="single_best",
+        best_for=["Free tier coding", "Development on budget", "Code review"],
+        cost_tier="free",
+    ),
+    
+    "free_tier_reasoning": TeamStrategy(
+        name="Free Tier Reasoning",
+        description="Maximum free reasoning capability - zero cost",
+        models=[
+            "deepseek/deepseek-r1-0528:free",
+            "meta-llama/llama-3.1-405b-instruct:free",
+            "qwen/qwen3-next-80b-a3b-instruct:free",
+        ],
+        roles={
+            "deepseek/deepseek-r1-0528:free": "Primary reasoner (native CoT)",
+            "meta-llama/llama-3.1-405b-instruct:free": "Massive model verification",
+            "qwen/qwen3-next-80b-a3b-instruct:free": "Math and logic backup",
+        },
+        orchestration="consensus",
+        best_for=["Free tier complex reasoning", "Math problems", "Analysis"],
+        cost_tier="free",
+    ),
+    
+    "free_tier_long_context": TeamStrategy(
+        name="Free Tier Long Context",
+        description="Best free models for long documents - zero cost",
+        models=[
+            "google/gemini-2.0-flash-exp:free",
+            "qwen/qwen3-next-80b-a3b-instruct:free",
+            "qwen/qwen3-coder:free",
+        ],
+        roles={
+            "google/gemini-2.0-flash-exp:free": "Primary (1M context)",
+            "qwen/qwen3-next-80b-a3b-instruct:free": "262K context backup",
+            "qwen/qwen3-coder:free": "Code-focused long context",
+        },
+        orchestration="single_best",
+        best_for=["Free tier RAG", "Document analysis", "Large codebases"],
+        cost_tier="free",
+    ),
 }
 
 
@@ -1503,10 +2497,27 @@ def get_best_models_for_task(
     return [model_id for model_id, _ in candidates[:num_models]]
 
 
-def get_team_for_task(task_type: str) -> Optional[TeamStrategy]:
-    """Get the best team strategy for a task."""
+def get_team_for_task(task_type: str, free_only: bool = False) -> Optional[TeamStrategy]:
+    """Get the best team strategy for a task.
+    
+    Args:
+        task_type: The type of task to get a team for
+        free_only: If True, only return free tier team strategies
+    """
     task_lower = task_type.lower()
     
+    # Free tier strategies
+    if free_only:
+        if any(x in task_lower for x in ["code", "debug", "programming"]):
+            return TEAM_STRATEGIES["free_tier_coding"]
+        elif any(x in task_lower for x in ["reason", "math", "logic", "analysis"]):
+            return TEAM_STRATEGIES["free_tier_reasoning"]
+        elif any(x in task_lower for x in ["long", "document", "rag", "context"]):
+            return TEAM_STRATEGIES["free_tier_long_context"]
+        else:
+            return TEAM_STRATEGIES["free_tier_general"]
+    
+    # Premium strategies
     if any(x in task_lower for x in ["medical", "health", "clinical"]):
         return TEAM_STRATEGIES["medical_specialist"]
     elif any(x in task_lower for x in ["code", "debug", "programming"]):

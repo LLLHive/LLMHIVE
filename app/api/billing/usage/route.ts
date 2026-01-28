@@ -4,8 +4,8 @@ import { auth } from "@clerk/nextjs/server"
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 
 // =============================================================================
-// SIMPLIFIED 4-TIER QUOTA SYSTEM (January 2026)
-// Lite, Pro, Enterprise, Maximum
+// 5-TIER QUOTA SYSTEM (January 2026)
+// Free, Lite, Pro, Enterprise
 // =============================================================================
 interface TierQuota {
   eliteQueries: number
@@ -19,34 +19,30 @@ interface TierQuota {
 }
 
 const TIER_QUOTAS: Record<string, TierQuota> = {
+  free: {
+    eliteQueries: 0,
+    afterQuotaTier: "free",
+    totalQueries: 50,
+    tokens: 100_000,
+  },
   lite: {
     eliteQueries: 100,
-    budgetQueries: 400,
-    afterQuotaTier: "budget",
+    afterQuotaTier: "free",
     totalQueries: 500,
     tokens: 500_000,
   },
   pro: {
     eliteQueries: 500,
-    standardQueries: 1500,
-    afterQuotaTier: "standard",
+    afterQuotaTier: "free",
     totalQueries: 2000,
     tokens: 4_000_000,
   },
   enterprise: {
     eliteQueries: 400,  // Per seat
-    standardQueries: 400,
-    afterQuotaTier: "standard",
+    afterQuotaTier: "free",
     totalQueries: 800,  // Per seat
     tokens: 2_000_000,  // Per seat
     perSeat: true,
-  },
-  maximum: {
-    eliteQueries: 0,  // Unlimited
-    afterQuotaTier: "maximum",  // Never throttle
-    totalQueries: 0,  // Unlimited
-    tokens: 0,  // Unlimited
-    neverThrottle: true,
   },
 }
 
@@ -55,18 +51,10 @@ type TierKey = keyof typeof TIER_QUOTAS
 export interface QuotaUsageResponse {
   // Core quota info
   tier: string
-  orchestrationMode: "maximum" | "elite" | "standard" | "budget"
+  orchestrationMode: "elite" | "standard" | "budget" | "free"
   
   // ELITE quota (main quota for most tiers)
   elite: {
-    used: number
-    limit: number
-    remaining: number
-    percentUsed: number
-  }
-  
-  // MAXIMUM quota (Maximum tier only)
-  maximum?: {
     used: number
     limit: number
     remaining: number
@@ -84,7 +72,7 @@ export interface QuotaUsageResponse {
   }
   
   // Status messaging
-  status: "normal" | "warning" | "throttled" | "trial_ended"
+  status: "normal" | "warning" | "throttled"
   statusMessage?: string
   daysUntilReset: number
   
@@ -103,12 +91,12 @@ function getDaysUntilReset(): number {
 function getOrchestrationMode(
   tier: TierKey,
   eliteUsed: number
-): "maximum" | "elite" | "standard" | "budget" {
+): "elite" | "standard" | "budget" | "free" {
   const quotas = TIER_QUOTAS[tier]
-  
-  // Maximum tier: NEVER throttle
-  if (tier === "maximum" || quotas.neverThrottle) {
-    return "maximum"
+
+  // Free tier: Always free orchestration
+  if (tier === "free") {
+    return "free"
   }
   
   // Check ELITE quota
@@ -117,7 +105,7 @@ function getOrchestrationMode(
   }
   
   // ELITE exhausted - use after-quota tier
-  return quotas.afterQuotaTier as "standard" | "budget"
+  return quotas.afterQuotaTier as "standard" | "budget" | "free"
 }
 
 export async function GET() {
@@ -148,9 +136,9 @@ export async function GET() {
       console.warn("Could not fetch usage from backend, using defaults:", fetchError)
     }
     
-    // Extract tier name (default to lite for new signups)
-    const tierName = ((data.tier_name || data.tier || "lite") as string).toLowerCase() as TierKey
-    const quotas = TIER_QUOTAS[tierName] || TIER_QUOTAS.lite
+    // Extract tier name (default to free for new signups)
+    const tierName = ((data.tier_name || data.tier || "free") as string).toLowerCase() as TierKey
+    const quotas = TIER_QUOTAS[tierName] || TIER_QUOTAS.free
     
     // Extract usage counts
     const eliteUsed = (data.elite_queries_used ?? data.elite_used ?? 0) as number
@@ -159,8 +147,8 @@ export async function GET() {
     // Calculate current orchestration mode
     const orchestrationMode = getOrchestrationMode(tierName, eliteUsed)
     
-    // Calculate quotas (Maximum tier has unlimited)
-    const isUnlimited = quotas.eliteQueries === 0 || quotas.neverThrottle
+    // Calculate quotas
+    const isUnlimited = quotas.neverThrottle
     const eliteRemaining = isUnlimited ? Infinity : Math.max(0, quotas.eliteQueries - eliteUsed)
     const elitePercentUsed = isUnlimited ? 0 : (quotas.eliteQueries > 0 ? eliteUsed / quotas.eliteQueries : 0)
     
@@ -170,16 +158,21 @@ export async function GET() {
     let showUpgradePrompt = false
     let upgradeMessage: string | undefined
     
-    // Maximum tier never shows warnings
-    if (tierName === "maximum" || isUnlimited) {
+    // Enterprise tier with perSeat quotas
+    if (isUnlimited) {
       status = "normal"
-      statusMessage = "Unlimited ELITE queries - Always #1 quality!"
+      statusMessage = "Enterprise tier - ELITE orchestration active"
+    } else if (tierName === "free") {
+      status = "normal"
+      statusMessage = "Free tier active - upgrade for ELITE queries"
+      showUpgradePrompt = true
+      upgradeMessage = "Upgrade to Lite for ELITE queries and higher limits"
     } else if (eliteRemaining === 0) {
       status = "throttled"
       const afterTier = quotas.afterQuotaTier
       statusMessage = `ELITE quota exhausted. Using ${afterTier.toUpperCase()} mode (still great quality!)`
       showUpgradePrompt = true
-      upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more ELITE queries" : "Upgrade to Maximum for unlimited ELITE"
+      upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more ELITE queries" : "Upgrade to Enterprise for team features"
     } else if (elitePercentUsed >= 0.8) {
       status = "warning"
       statusMessage = `${eliteRemaining} ELITE queries remaining. They'll reset in ${getDaysUntilReset()} days.`
@@ -215,20 +208,20 @@ export async function GET() {
     return NextResponse.json(usageResponse)
   } catch (error) {
     console.error("Error getting usage:", error)
-    // Return default Lite response as fallback
+    // Return default Free response as fallback
     return NextResponse.json({
-      tier: "lite",
-      orchestrationMode: "elite",
+      tier: "free",
+      orchestrationMode: "free",
       elite: {
         used: 0,
-        limit: 100,
-        remaining: 100,
+        limit: 0,
+        remaining: 0,
         percentUsed: 0,
       },
-      afterQuotaTier: "budget",
+      afterQuotaTier: "free",
       tokens: {
         used: 0,
-        limit: 500_000,
+        limit: 100_000,
       },
       status: "normal",
       daysUntilReset: getDaysUntilReset(),

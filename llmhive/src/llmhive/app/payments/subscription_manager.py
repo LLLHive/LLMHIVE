@@ -206,8 +206,8 @@ class SubscriptionStatus(Enum):
     """Status of a subscription.
     
     State machine transitions:
-    - FREE -> TRIALING (start trial) -> ACTIVE (payment confirmed)
     - FREE -> ACTIVE (direct purchase)
+    - FREE -> TRIALING (legacy Stripe trial flows only)
     - ACTIVE -> PAST_DUE (payment failed) -> UNPAID (grace period expired)
     - ACTIVE -> CANCELED (user cancels)
     - PAST_DUE -> ACTIVE (payment retry success)

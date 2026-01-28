@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """
-Stripe Setup Script for LLMHive - SIMPLIFIED 4-TIER PRICING (January 2026)
+Stripe Setup Script for LLMHive - PAID TIERS ONLY (January 2026)
 
 This script creates all necessary Stripe products and prices for LLMHive subscriptions.
 Run this once to set up your Stripe account, then copy the price IDs to your environment variables.
 
-SIMPLIFIED PRICING STRUCTURE:
+PAID PRICING STRUCTURE:
 - Lite ($9.99): 100 ELITE + 400 BUDGET = 500 total
 - Pro ($29.99): 500 ELITE + 1,500 STANDARD = 2,000 total
 - Enterprise ($35/seat, min 5): 400 ELITE + 400 STANDARD = 800/seat
 - Maximum ($499): UNLIMITED (never throttle)
+
+NOTE: The FREE tier is permanent and handled outside Stripe.
 
 Usage:
     export STRIPE_SECRET_KEY=sk_live_... (or sk_test_... for testing)
@@ -29,28 +31,28 @@ except ImportError:
     sys.exit(1)
 
 
-# SIMPLIFIED 4-TIER PRICING STRUCTURE
+# PAID TIERS ONLY (FREE tier is not billed)
 PRODUCTS = [
     {
         "name": "LLMHive Lite",
-        "description": "#1 AI quality at $9.99/month. 100 ELITE queries (#1 in ALL), then 400 BUDGET queries.",
+        "description": "#1 AI quality at $14.99/month. 100 ELITE queries (#1 in ALL), then FREE tier.",
         "metadata": {
             "tier": "lite",
             "elite_queries": "100",
-            "budget_queries": "400",
+            "after_quota": "free",
             "total_queries": "500",
         },
         "prices": [
             {
                 "nickname": "Lite Monthly",
-                "unit_amount": 999,  # $9.99 in cents
+                "unit_amount": 1499,  # $14.99 in cents
                 "currency": "usd",
                 "recurring": {"interval": "month"},
                 "env_var": "STRIPE_PRICE_ID_BASIC_MONTHLY",  # Uses BASIC for backwards compatibility
             },
             {
                 "nickname": "Lite Annual",
-                "unit_amount": 9999,  # $99.99 in cents
+                "unit_amount": 14999,  # $149.99 in cents
                 "currency": "usd",
                 "recurring": {"interval": "year"},
                 "env_var": "STRIPE_PRICE_ID_BASIC_ANNUAL",  # Uses BASIC for backwards compatibility
@@ -110,32 +112,6 @@ PRODUCTS = [
             },
         ],
     },
-    {
-        "name": "LLMHive Maximum",
-        "description": "Mission-critical AI. UNLIMITED queries, NEVER throttle. Always #1 quality. BEATS competition by 5%.",
-        "metadata": {
-            "tier": "maximum",
-            "elite_queries": "unlimited",
-            "never_throttle": "true",
-            "team_members": "25",
-        },
-        "prices": [
-            {
-                "nickname": "Maximum Monthly",
-                "unit_amount": 49900,  # $499.00 in cents
-                "currency": "usd",
-                "recurring": {"interval": "month"},
-                "env_var": "STRIPE_PRICE_ID_MAXIMUM_MONTHLY",
-            },
-            {
-                "nickname": "Maximum Annual",
-                "unit_amount": 499000,  # $4,990.00 in cents (~17% discount)
-                "currency": "usd",
-                "recurring": {"interval": "year"},
-                "env_var": "STRIPE_PRICE_ID_MAXIMUM_ANNUAL",
-            },
-        ],
-    },
 ]
 
 
@@ -150,7 +126,7 @@ def setup_stripe():
     stripe.api_key = api_key
     
     print("=" * 70)
-    print("LLMHive Stripe Setup - SIMPLIFIED 4-TIER PRICING (January 2026)")
+    print("LLMHive Stripe Setup - PAID TIERS ONLY (January 2026)")
     print("=" * 70)
     print()
     
@@ -203,17 +179,17 @@ def setup_stripe():
     
     print()
     print("=" * 70)
-    print("SIMPLIFIED 4-TIER PRICING SUMMARY:")
+    print("PAID TIERS PRICING SUMMARY:")
     print("=" * 70)
     print("""
-| Tier       | Monthly | Annual   | ELITE Queries | After Quota  | Features            |
-|------------|---------|----------|---------------|--------------|---------------------|
-| Lite       | $9.99   | $99.99   | 100           | → BUDGET     | Knowledge base      |
-| Pro        | $29.99  | $299.99  | 500           | → STANDARD   | API + All features  |
-| Enterprise | $35/seat| $350/seat| 400/seat      | → STANDARD   | SSO + Compliance    |
-| Maximum    | $499    | $4,990   | UNLIMITED     | Never        | Mission-critical    |
+| Tier       | Monthly  | Annual    | ELITE Queries | After Quota  | Features            |
+|------------|----------|-----------|---------------|--------------|---------------------|
+| Lite       | $14.99   | $149.99   | 100           | → FREE       | Knowledge base      |
+| Pro        | $29.99   | $299.99   | 500           | → FREE       | API + All features  |
+| Enterprise | $35/seat | $350/seat | 400/seat      | → FREE       | SSO + Compliance    |
 
 Enterprise requires minimum 5 seats ($175/mo minimum).
+FREE tier is permanent (no Stripe product) with 50 queries/month using free models.
     """)
 
 

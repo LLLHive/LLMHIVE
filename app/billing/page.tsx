@@ -15,7 +15,6 @@ import {
   ExternalLink,
   Settings,
   Receipt,
-  Crown,
   TrendingUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -34,14 +33,8 @@ interface Subscription {
 
 interface QuotaUsage {
   tier: string
-  orchestrationMode: "maximum" | "elite" | "standard" | "budget"
+  orchestrationMode: "elite" | "standard" | "budget" | "free"
   elite: {
-    used: number
-    limit: number
-    remaining: number
-    percentUsed: number
-  }
-  maximum?: {
     used: number
     limit: number
     remaining: number
@@ -53,7 +46,7 @@ interface QuotaUsage {
     used: number
     limit: number
   }
-  status: "normal" | "warning" | "throttled" | "trial_ended"
+  status: "normal" | "warning" | "throttled"
   statusMessage?: string
   daysUntilReset: number
   showUpgradePrompt: boolean
@@ -61,18 +54,17 @@ interface QuotaUsage {
 }
 
 const ORCHESTRATION_MODE_LABELS = {
-  maximum: { label: "MAXIMUM", color: "text-amber-500", bg: "bg-amber-500/10", icon: Crown, desc: "Beats competition by +5%" },
-  elite: { label: "ELITE", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "#1 in ALL 10 categories" },
-  standard: { label: "STANDARD", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "#1 in 8 categories" },
-  budget: { label: "BUDGET", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "#1 in 6 categories" },
+  elite: { label: "ELITE", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "GPT-5, Claude & Gemini unified — #1 in ALL categories" },
+  standard: { label: "STANDARD", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "Premium routing & verification — Top 3 quality" },
+  budget: { label: "BUDGET", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "Claude Sonnet optimized — Excellent quality" },
+  free: { label: "FREE", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patented AI ensemble — BEATS most paid models" },
 }
 
 const TIER_DISPLAY_NAMES: Record<string, string> = {
-  free: "Free Trial",
+  free: "Free",
   lite: "Lite",
   pro: "Pro",
   enterprise: "Enterprise",
-  maximum: "Maximum",
 }
 
 export default function BillingPage() {
@@ -163,10 +155,11 @@ export default function BillingPage() {
   }
 
   const currentTier = usage?.tier || subscription?.tier || "free"
-  // "free" = trial/unsubscribed, "lite" = paid Lite tier
-  const isFreeTier = currentTier === "free" || currentTier === "trial"
+  // "free" = free tier/unsubscribed, "lite" = paid Lite tier
+  const isFreeTier = currentTier === "free"
   const modeInfo = ORCHESTRATION_MODE_LABELS[usage?.orchestrationMode || "elite"]
   const ModeIcon = modeInfo.icon
+  const statusLabel = subscription?.status === "trialing" ? "active" : subscription?.status
 
   return (
     <div className="min-h-screen bg-background">
@@ -230,7 +223,10 @@ export default function BillingPage() {
                   ELITE Quota
                 </CardTitle>
                 <CardDescription>
-                  Your best-quality queries (#1 in ALL categories)
+                  {isFreeTier
+                    ? "Upgrade to unlock ELITE queries (#1 in ALL categories)"
+                    : "Your best-quality queries (#1 in ALL categories)"
+                  }
                 </CardDescription>
               </div>
               {usage?.showUpgradePrompt && (
@@ -259,7 +255,7 @@ export default function BillingPage() {
                 value={Math.min((usage?.elite.percentUsed || 0) * 100, 100)} 
                 className="h-3"
               />
-              {usage && usage.elite.percentUsed >= 0.8 && (
+              {!isFreeTier && usage && usage.elite.percentUsed >= 0.8 && (
                 <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {usage.elite.remaining} ELITE queries left this month
@@ -267,27 +263,8 @@ export default function BillingPage() {
               )}
             </div>
 
-            {/* MAXIMUM Progress (if applicable) */}
-            {usage?.maximum && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium flex items-center gap-2">
-                    👑 MAXIMUM Queries
-                    <Badge variant="outline" className="text-amber-500 text-xs">Beats GPT-5.2</Badge>
-                  </span>
-                  <span className="text-sm font-mono">
-                    {usage.maximum.remaining} / {usage.maximum.limit} remaining
-                  </span>
-                </div>
-                <Progress 
-                  value={Math.min(usage.maximum.percentUsed * 100, 100)} 
-                  className="h-3"
-                />
-              </div>
-            )}
-
             {/* After-Quota Info */}
-            {usage && usage.elite.remaining === 0 && usage.afterQuotaTier !== "end" && (
+            {usage && !isFreeTier && usage.elite.remaining === 0 && usage.afterQuotaTier !== "end" && (
               <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
                 <div className="flex items-start gap-3">
                   <div className={`p-1.5 rounded-md ${ORCHESTRATION_MODE_LABELS[usage.afterQuotaTier as keyof typeof ORCHESTRATION_MODE_LABELS]?.bg || 'bg-muted'}`}>
@@ -297,33 +274,17 @@ export default function BillingPage() {
                     <p className="font-medium text-sm">Using {usage.afterQuotaTier.toUpperCase()} mode</p>
                     <p className="text-xs text-muted-foreground">
                       ELITE quota exhausted. Still getting great quality — 
-                      {usage.afterQuotaTier === "standard" ? " #1 in 8 categories!" : " #1 in 6 categories!"}
+                      {usage.afterQuotaTier === "standard"
+                        ? " #1 in 8 categories!"
+                        : usage.afterQuotaTier === "budget"
+                        ? " #1 in 6 categories!"
+                        : " Free model orchestration"}
                     </p>
                     {usage.afterQuotaQueries && (
                       <p className="text-xs text-muted-foreground mt-1">
                         {usage.afterQuotaQueries} {usage.afterQuotaTier.toUpperCase()} queries available
                       </p>
                     )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Trial Ended Warning */}
-            {usage?.status === "trial_ended" && (
-              <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-red-500">Free Trial Ended</p>
-                    <p className="text-sm text-muted-foreground">
-                      {usage.statusMessage}
-                    </p>
-                    <Link href="/pricing" className="inline-block mt-2">
-                      <Button size="sm" className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
-                        Upgrade to Continue
-                      </Button>
-                    </Link>
                   </div>
                 </div>
               </div>
@@ -353,9 +314,9 @@ export default function BillingPage() {
                     : "bg-red-500/10 text-red-500 border-red-500/20"
                 }
               >
-                {subscription?.status === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
-                {subscription?.status === "cancelled" && <AlertCircle className="h-3 w-3 mr-1" />}
-                {subscription?.status || "Active"}
+                {statusLabel === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
+                {statusLabel === "cancelled" && <AlertCircle className="h-3 w-3 mr-1" />}
+                {statusLabel || "Active"}
               </Badge>
             </div>
           </CardHeader>
@@ -365,7 +326,7 @@ export default function BillingPage() {
                 <h3 className="text-2xl font-bold">{TIER_DISPLAY_NAMES[currentTier] || currentTier}</h3>
                 <p className="text-muted-foreground">
                   {isFreeTier 
-                    ? "50 ELITE queries • Upgrade anytime"
+                    ? "Free tier • Upgrade anytime"
                     : `${subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing`
                   }
                 </p>

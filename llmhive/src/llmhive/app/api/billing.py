@@ -172,18 +172,18 @@ def get_subscription_info(
         pricing_manager = service.pricing_manager
         
         if subscription is None:
-            # No subscription = Lite tier (free trial mode)
-            tier = pricing_manager.get_tier("lite")
+            # No subscription = FREE tier
+            tier = pricing_manager.get_tier("free")
             return {
                 "user_id": user_id,
-                "tier": "lite",  # Maps to trial mode with Lite limits
-                "status": "trial",
+                "tier": "free",
+                "status": "active",
                 "is_active": True,
                 "features": list(tier.features) if tier else [],
                 "limits": {
-                    "max_requests_per_month": tier.limits.max_requests_per_month if tier else 100,
+                    "max_requests_per_month": tier.limits.max_requests_per_month if tier else 50,
                     "max_tokens_per_month": tier.limits.max_tokens_per_month if tier else 100_000,
-                    "max_models_per_request": tier.limits.max_models_per_request if tier else 2,
+                    "max_models_per_request": tier.limits.max_models_per_request if tier else 3,
                     "allow_parallel_retrieval": tier.limits.allow_parallel_retrieval if tier else False,
                     "allow_deep_conf": tier.limits.allow_deep_conf if tier else False,
                     "allow_prompt_diffusion": tier.limits.allow_prompt_diffusion if tier else False,
@@ -752,4 +752,61 @@ def cancel_subscription_by_user_id(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to cancel subscription",
         ) from exc
+
+
+# =============================================================================
+# THROTTLE STATUS ENDPOINT (January 2026)
+# =============================================================================
+
+class ThrottleStatusResponse(BaseModel):
+    """Response model for throttle status."""
+    is_throttled: bool
+    subscription_tier: str
+    current_orchestration: str
+    elite_queries_limit: int  # -1 for unlimited
+    elite_queries_used: int
+    elite_queries_remaining: int  # -1 for unlimited
+    throttle_message: str | None
+    upgrade_url: str
+
+
+@router.get("/throttle-status/{user_id}", response_model=ThrottleStatusResponse)
+def get_throttle_status_endpoint(
+    user_id: str,
+) -> ThrottleStatusResponse:
+    """Get user's throttle status for UI display.
+    
+    Returns whether the user is currently throttled to FREE orchestration
+    and provides upgrade messaging.
+    
+    Final path: /api/v1/billing/throttle-status/{user_id}
+    """
+    try:
+        from ..middleware.tier_check import get_throttle_status
+        
+        status = get_throttle_status(user_id)
+        
+        return ThrottleStatusResponse(
+            is_throttled=status["is_throttled"],
+            subscription_tier=status["subscription_tier"],
+            current_orchestration=status["current_orchestration"],
+            elite_queries_limit=status["elite_queries"]["limit"],
+            elite_queries_used=status["elite_queries"]["used"],
+            elite_queries_remaining=status["elite_queries"]["remaining"],
+            throttle_message=status["throttle_message"],
+            upgrade_url=status["upgrade_url"],
+        )
+    except Exception as exc:
+        logger.exception("Failed to get throttle status for user %s: %s", user_id, exc)
+        # Return safe defaults
+        return ThrottleStatusResponse(
+            is_throttled=False,
+            subscription_tier="free",
+            current_orchestration="free",
+            elite_queries_limit=0,
+            elite_queries_used=0,
+            elite_queries_remaining=0,
+            throttle_message=None,
+            upgrade_url="/pricing",
+        )
 

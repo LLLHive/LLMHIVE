@@ -115,16 +115,16 @@ MODEL_PRICING = {
     "default": {"input": 0.002, "output": 0.006},
 }
 
-# Overage rates per tier (price per 1K tokens above limit) - SIMPLIFIED 4 TIERS
+# Overage rates per tier (price per 1K tokens above limit) - 4 TIERS (Jan 2026)
 OVERAGE_RATES = {
-    TierName.LITE.value: 0.0,  # No overage for Lite (throttle instead)
+    TierName.FREE.value: 0.0,  # No overage for Free (throttle to free models)
+    TierName.LITE.value: 0.0,  # No overage for Lite (throttle to free)
     TierName.PRO.value: 0.01,  # $0.01 per 1K tokens
     TierName.ENTERPRISE.value: 0.005,  # $0.005 per 1K tokens (discounted)
-    TierName.MAXIMUM.value: 0.0,  # No overage (unlimited)
+    "free": 0.0,
     "lite": 0.0,
     "pro": 0.01,
     "enterprise": 0.005,
-    "maximum": 0.0,
 }
 
 

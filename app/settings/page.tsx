@@ -530,7 +530,20 @@ export default function SettingsPage() {
               <div className="p-4 rounded-lg glass-card border border-[var(--bronze)]/30">
                 <p className="text-xs text-muted-foreground mb-1">Current Plan</p>
                 <p className="text-lg font-semibold text-[var(--gold)]">Free</p>
-                <p className="text-xs text-muted-foreground">50 messages/month</p>
+                <p className="text-xs text-muted-foreground">Forever free with multi-model orchestration</p>
+              </div>
+
+              {/* FREE Tier Marketing */}
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-green-400">FREE tier BEATS most paid models</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Our patented multi-model orchestration delivers exceptional quality at no cost.
+                </p>
               </div>
 
               {/* Upgrade Button */}
@@ -541,8 +554,8 @@ export default function SettingsPage() {
                   router.push("/pricing")
                 }}
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Upgrade Plan
+                <Zap className="h-4 w-4 mr-2" />
+                Upgrade to ELITE (#1 in ALL Categories)
               </Button>
 
               {/* Manage Billing */}
@@ -574,8 +587,31 @@ export default function SettingsPage() {
                     <span>0 / 50</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tokens</span>
-                    <span>0 / 50K</span>
+                    <span className="text-muted-foreground">Orchestration</span>
+                    <span className="text-green-400">FREE</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing Tiers Summary */}
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-xs text-muted-foreground mb-3">Available Plans</p>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-green-400 font-medium">Free</span>
+                    <span className="text-muted-foreground">$0/mo</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Lite</span>
+                    <span className="text-muted-foreground">$14.99/mo</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--bronze)] font-medium">Pro</span>
+                    <span className="text-muted-foreground">$29.99/mo</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Enterprise</span>
+                    <span className="text-muted-foreground">$35/seat</span>
                   </div>
                 </div>
               </div>

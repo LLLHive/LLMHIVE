@@ -601,7 +601,7 @@ def admin_get_config() -> dict:
             "maximum": 120,
         },
         "default_billing_cycle": "monthly",
-        "trial_days": 14,
+        "trial_days": 0,
         "grace_period_days": 7,
     }
 

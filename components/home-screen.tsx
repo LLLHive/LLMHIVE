@@ -334,21 +334,32 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
         
         <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto mb-3 whitespace-nowrap">
-          Multi-agent AI orchestration for enhanced accuracy and deeper insights
+          Patented multi-agent orchestration for enhanced accuracy
         </p>
         
-        {/* #1 Benchmark Badge */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-[var(--bronze)]/20 border border-yellow-500/30">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
-              <span className="text-xs font-bold text-white">#1</span>
+        {/* FREE Tier Marketing Badge */}
+        <div className="flex flex-col items-center gap-2 mb-4">
+          {/* Main value prop */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-teal-500/20 border border-green-500/30">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
+              <span className="text-xs font-bold text-white">🆓</span>
             </div>
             <div className="text-left">
-              <p className="text-xs md:text-sm font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
-                #1 in ALL 10 Industry Benchmarks
+              <p className="text-xs md:text-sm font-bold bg-gradient-to-r from-green-300 to-emerald-400 bg-clip-text text-transparent">
+                FREE tier BEATS most paid models
               </p>
-              <p className="text-[9px] md:text-[10px] text-muted-foreground">January 2026 Rankings</p>
+              <p className="text-[9px] md:text-[10px] text-muted-foreground">Patented orchestration technology</p>
             </div>
+          </div>
+          
+          {/* #1 Benchmark Badge */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-[var(--bronze)]/10 border border-yellow-500/20">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-md">
+              <span className="text-[10px] font-bold text-white">#1</span>
+            </div>
+            <p className="text-[10px] md:text-xs font-medium bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+              #1 in ALL 10 Industry Benchmarks · January 2026
+            </p>
           </div>
         </div>
       </div>

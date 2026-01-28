@@ -21,8 +21,6 @@ const PRICE_TO_TIER: Record<string, string> = {
   [process.env.STRIPE_PRICE_ID_PRO_ANNUAL || ""]: "pro",
   [process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY || ""]: "enterprise",
   [process.env.STRIPE_PRICE_ID_ENTERPRISE_ANNUAL || ""]: "enterprise",
-  [process.env.STRIPE_PRICE_ID_MAXIMUM_MONTHLY || ""]: "maximum",
-  [process.env.STRIPE_PRICE_ID_MAXIMUM_ANNUAL || ""]: "maximum",
 };
 
 // Map Stripe status to our status

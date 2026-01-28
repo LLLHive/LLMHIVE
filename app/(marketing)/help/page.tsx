@@ -44,7 +44,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: "How do I get started with LLMHive?",
-        answer: "Simply sign up for a free Lite account, which gives you 25 ELITE orchestrated queries per month. Once logged in, you can start chatting immediately. For higher usage, upgrade to Pro, Enterprise, or Maximum plans."
+        answer: "Simply sign up for a FREE account, which gives you 50 queries per month using our patented orchestration that beats most paid models. Once logged in, you can start chatting immediately. For #1 quality in ALL categories, upgrade to Lite ($14.99/mo), Pro ($29.99/mo), or Enterprise."
       },
       {
         question: "What makes LLMHive different from using ChatGPT or Claude directly?",
@@ -63,11 +63,11 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: "What plans are available?",
-        answer: "We offer four plans: Lite (Free, 25 ELITE queries/month), Pro ($29/month, 500 ELITE queries), Enterprise ($25/seat/month, min 5 seats, 300 ELITE queries per seat), and Maximum ($499/month, unlimited queries with priority support)."
+        answer: "We offer FREE (forever, 50 queries/month with patented orchestration that beats most paid models), Lite ($14.99/month, 100 ELITE queries #1 in ALL categories), Pro ($29.99/month, 500 ELITE queries + API access), and Enterprise ($35/seat/month, min 5 seats, SSO & compliance)."
       },
       {
         question: "What happens when I reach my ELITE query limit?",
-        answer: "When you exhaust your ELITE queries, you'll automatically be throttled to STANDARD tier models. These still provide excellent results but use more cost-effective models. You can upgrade your plan anytime to get more ELITE queries."
+        answer: "When you exhaust your ELITE queries, you'll automatically be throttled to our FREE tier orchestration. Our FREE tier still beats most single paid models thanks to our patented multi-model orchestration. You can upgrade your plan anytime to get more ELITE queries."
       },
       {
         question: "Can I upgrade or downgrade my plan at any time?",
@@ -129,7 +129,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: "What's the maximum context length?",
-        answer: "Context limits vary by plan: Lite (8K tokens), Pro (32K tokens), Enterprise (128K tokens), Maximum (200K+ tokens with extended context models)."
+        answer: "Context limits vary by plan: Free (8K tokens), Lite (25K tokens), Pro (100K tokens), Enterprise (200K+ tokens with extended context models)."
       }
     ]
   },

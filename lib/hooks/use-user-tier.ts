@@ -26,7 +26,7 @@ interface UseUserTierReturn {
 /**
  * Map subscription tier to UserTier for model access control
  * 
- * Subscription tiers: free, trial, lite, pro, enterprise, maximum
+ * Subscription tiers: free, lite, pro, enterprise, maximum
  * UserTier (openrouter): free, starter, pro, enterprise
  */
 function mapToUserTier(subscriptionTier: string): UserTier {

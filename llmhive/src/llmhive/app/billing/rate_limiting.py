@@ -20,13 +20,12 @@ from ..billing.subscription import SubscriptionService
 logger = logging.getLogger(__name__)
 
 # Rate limiting: Per-tier rate limits (requests per 60 seconds)
-# SIMPLIFIED 4-TIER STRUCTURE (January 2026)
+# 4-TIER STRUCTURE (January 2026)
 RATE_LIMITS: Dict[str, int] = {
     "lite": 10,      # Lite tier: 10 req/min
     "pro": 30,       # Pro tier: 30 req/min
     "enterprise": 60, # Enterprise: 60 req/min (per seat limits also apply)
-    "maximum": 120,   # Maximum: 120 req/min
-    "free": 5,       # Free trial: 5 req/min (very limited)
+    "free": 5,       # Free tier: 5 req/min (very limited)
 }
 
 

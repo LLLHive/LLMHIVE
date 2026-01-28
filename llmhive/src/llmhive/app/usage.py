@@ -222,9 +222,9 @@ def check_usage_limit(
         pricing_manager = get_pricing_manager()
         
         # Usage tracking: Determine tier
-        # Note: No FREE tier exists - unsubscribed users get LITE (free trial mode)
+        # Unsubscribed users default to FREE tier
         if subscription is None:
-            tier_name = TierName.LITE  # Default to LITE for free trial users
+            tier_name = TierName.FREE
         else:
             tier_name = subscription.tier_name
         

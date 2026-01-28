@@ -7,22 +7,22 @@ from typing import Dict, List, Optional, Set
 
 
 class TierName(str, Enum):
-    """Pricing tier names - Simplified 4-tier structure (January 2026)."""
+    """Pricing tier names - 4-tier structure with FREE tier (January 2026)."""
 
-    LITE = "lite"           # Entry-level: $9.99/mo
+    FREE = "free"           # Forever free: $0/mo - Free model orchestration
+    LITE = "lite"           # Entry-level: $14.99/mo
     PRO = "pro"             # Power users: $29.99/mo  
     ENTERPRISE = "enterprise"  # Organizations: $35/seat/mo (min 5 seats)
-    MAXIMUM = "maximum"     # Mission-critical: $499/mo
 
 
 class OrchestrationTier(str, Enum):
     """Orchestration quality tiers - maps to elite_orchestration.py."""
     
-    BUDGET = "budget"      # $0.0036/query - Claude Sonnet primary, #1 in 6 categories
-    STANDARD = "standard"  # $0.0060/query - Mixed routing, #1 in 8 categories
-    PREMIUM = "premium"    # $0.0108/query - GPT-5.2 access, #1 in ALL categories
-    ELITE = "elite"        # $0.0150/query - Multi-consensus + verification
-    MAXIMUM = "maximum"    # $0.0250/query - 5-model consensus, mission-critical
+    FREE = "free"          # $0.00/query - Free models only, still beats most single models!
+    BUDGET = "budget"      # $0.0005/query - Claude Sonnet primary, good quality
+    STANDARD = "standard"  # $0.001/query - DeepSeek V3 + routing, great quality
+    PREMIUM = "premium"    # $0.008/query - GPT-5.2 access, #1 in most categories
+    ELITE = "elite"        # $0.012/query - Multi-consensus + verification, #1 in ALL
 
 
 @dataclass(slots=True)
@@ -99,27 +99,77 @@ class PricingTierManager:
         self._initialize_default_tiers()
 
     def _initialize_default_tiers(self) -> None:
-        """Initialize simplified 4-tier pricing structure (January 2026).
+        """Initialize 5-tier pricing structure with FREE tier (January 2026).
         
-        SIMPLIFIED STRUCTURE:
+        NEW STRUCTURE:
+        - Free ($0) - Forever free with free-model orchestration
         - Lite ($9.99) - Entry-level individuals
         - Pro ($29.99) - Power users & freelancers  
         - Enterprise ($35/seat, min 5) - Organizations with SSO/compliance
         - Maximum ($499) - Mission-critical, never throttle
+        
+        KEY CHANGE: No more 7-day trial. Instead, FREE tier is permanent.
+        Paid tiers throttle to FREE (not BUDGET) when quota exceeded.
         """
         
         # ═══════════════════════════════════════════════════════════════════════════
-        # LITE TIER ($9.99/mo) - Entry Level
+        # FREE TIER ($0/mo) - Forever Free with Free Model Orchestration
+        # ═══════════════════════════════════════════════════════════════════════════
+        # Target: Anyone, no credit card required
+        # Uses: ONLY free models from OpenRouter (DeepSeek, Gemma, Llama, etc.)
+        # Value prop: "Our free tier BEATS most single model performance"
+        # Cost to us: $0 (free models only)
+        free_tier = PricingTier(
+            name=TierName.FREE,
+            display_name="Free",
+            monthly_price_usd=0.0,
+            annual_price_usd=0.0,
+            limits=TierLimits(
+                max_requests_per_month=50,  # 50 queries per month
+                max_tokens_per_month=100_000,
+                max_models_per_request=3,  # Multi-model orchestration still works!
+                max_concurrent_requests=1,
+                max_storage_mb=100,
+                enable_advanced_features=False,
+                enable_api_access=False,
+                enable_priority_support=False,
+                max_team_members=1,
+                allow_parallel_retrieval=True,  # Still get our orchestration magic
+                allow_deep_conf=False,
+                allow_prompt_diffusion=False,
+                allow_adaptive_ensemble=True,  # Ensemble of free models
+                allow_hrm=True,  # Role management works with free models
+                allow_loopback_refinement=False,
+                max_tokens_per_query=8_000,
+                # FREE tier: Always use FREE orchestration (free models only)
+                default_orchestration_tier="free",
+                premium_escalation_budget=0,
+                elite_escalation_budget=0,
+                max_passes_per_month=25,
+                memory_retention_days=3,  # Short retention
+                calculator_enabled=True,  # Calculator is free!
+                reranker_enabled=True,  # Pinecone reranker is our cost, still enabled
+            ),
+            features={
+                "basic_orchestration", "memory", "knowledge_base",
+                "calculator", "reranker", "consensus_voting",
+                "free_model_orchestration", "multi_model_ensemble",
+            },
+            description="Forever free - Beats most single models with free-only orchestration",
+        )
+        
+        # ═══════════════════════════════════════════════════════════════════════════
+        # LITE TIER ($14.99/mo) - Entry Level
         # ═══════════════════════════════════════════════════════════════════════════
         # Target: Casual users, trying out paid features
-        # Quota: 100 ELITE → throttle to BUDGET (400 more)
-        # Cost: 100×$0.015 + 400×$0.0036 = $1.50 + $1.44 = $2.94
-        # Profit: $9.99 - $2.94 = $7.05 (71% margin) ✅
+        # Quota: 100 ELITE → throttle to FREE (400 more)
+        # Cost: 100×$0.012 + 400×$0.00 = $1.20 + $0 = $1.20
+        # Profit: $14.99 - $1.20 = $13.79 (92% margin) ✅
         lite_tier = PricingTier(
             name=TierName.LITE,
             display_name="Lite",
-            monthly_price_usd=9.99,
-            annual_price_usd=99.99,  # ~17% discount
+            monthly_price_usd=14.99,
+            annual_price_usd=149.99,  # ~17% discount
             limits=TierLimits(
                 max_requests_per_month=500,  # 100 ELITE + 400 BUDGET
                 max_tokens_per_month=500_000,
@@ -259,68 +309,11 @@ class PricingTierManager:
             description="400 #1-quality/seat + SSO + SOC 2 compliance + 99.5% SLA",
         )
 
-        # ═══════════════════════════════════════════════════════════════════════════
-        # MAXIMUM TIER ($499/mo) - Mission Critical, Never Throttle
-        # ═══════════════════════════════════════════════════════════════════════════
-        # Target: Hedge funds, legal, healthcare, government
-        # Quota: UNLIMITED ELITE (never throttle, always #1 quality)
-        # Estimated usage: ~1000 queries at ELITE = $15
-        # Profit: $499 - $15 = $484 (97% margin) ✅
-        # Value prop: BEATS ChatGPT Pro by 5% on benchmarks
-        maximum_tier = PricingTier(
-            name=TierName.MAXIMUM,
-            display_name="Maximum",
-            monthly_price_usd=499.0,
-            annual_price_usd=4_990.0,  # ~17% discount
-            limits=TierLimits(
-                max_requests_per_month=0,  # Unlimited
-                max_tokens_per_month=0,  # Unlimited
-                max_models_per_request=10,
-                max_concurrent_requests=50,
-                max_storage_mb=0,  # Unlimited
-                enable_advanced_features=True,
-                enable_api_access=True,
-                enable_priority_support=True,
-                max_team_members=25,  # Team included
-                allow_parallel_retrieval=True,
-                allow_deep_conf=True,
-                allow_prompt_diffusion=True,
-                allow_adaptive_ensemble=True,
-                allow_hrm=True,
-                allow_loopback_refinement=True,
-                max_tokens_per_query=0,  # Unlimited
-                # NEVER THROTTLE: Always use MAXIMUM orchestration
-                default_orchestration_tier="maximum",
-                premium_escalation_budget=0,
-                elite_escalation_budget=0,  # Irrelevant - never throttle
-                max_passes_per_month=0,  # Unlimited
-                memory_retention_days=0,  # Unlimited
-                calculator_enabled=True,
-                reranker_enabled=True,
-            ),
-            features={
-                "basic_orchestration", "memory", "knowledge_base",
-                "advanced_orchestration", "hrm", "prompt_diffusion",
-                "deepconf", "adaptive_ensemble", "api_access",
-                "web_research", "fact_checking", "calculator", "reranker",
-                "vector_storage", "full_consensus", "team_workspace",
-                "shared_memory", "team_projects", "admin_dashboard",
-                "sso", "audit_logs", "compliance", "sla_999",
-                "custom_routing_policies", "dedicated_support",
-                "maximum_orchestration", "multi_model_consensus",
-                "verification_loops", "reflection_chains",
-                "mission_critical_support", "priority_escalation",
-                "custom_integrations", "webhooks", "never_throttle",
-                "quota_tracking"
-            },
-            description="NEVER THROTTLE - Always #1 quality, BEATS competition by 5%",
-        )
-
         # Register all 4 tiers
+        self.tiers[TierName.FREE] = free_tier
         self.tiers[TierName.LITE] = lite_tier
         self.tiers[TierName.PRO] = pro_tier
         self.tiers[TierName.ENTERPRISE] = enterprise_tier
-        self.tiers[TierName.MAXIMUM] = maximum_tier
 
     def get_tier(self, tier_name: TierName | str) -> Optional[PricingTier]:
         """Get a pricing tier by name."""

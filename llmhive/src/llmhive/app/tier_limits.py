@@ -23,10 +23,10 @@ class TierLimits:
 
 
 # Tier Limits: Define limits for each tier
-# SIMPLIFIED 4-TIER STRUCTURE (January 2026): Lite, Pro, Enterprise, Maximum
+# 4-TIER STRUCTURE (January 2026): Free, Lite, Pro, Enterprise
 # Stage 3: Added multimodal features (image_analysis, audio_transcription, etc.)
 TIER_LIMITS: Dict[str, TierLimits] = {
-    # Lite tier ($9.99/mo) - Entry level, 500 queries/mo
+    # Lite tier ($14.99/mo) - Entry level, 500 queries/mo
     "lite": TierLimits(
         requests_per_minute=10,
         requests_per_day=50,  # ~500 per month
@@ -89,41 +89,10 @@ TIER_LIMITS: Dict[str, TierLimits] = {
         },
         allowed_domain_presets={"general", "coding", "creative", "research", "medical", "legal"},
     ),
-    # Maximum tier ($499/mo) - Mission-critical, never throttle
-    "maximum": TierLimits(
-        requests_per_minute=120,
-        requests_per_day=None,  # Unlimited
-        enabled_features={
-            "basic_orchestration",
-            "standard_models",
-            "elite_orchestration",
-            "maximum_orchestration",
-            "advanced_orchestration",
-            "deep_verification",
-            "enhanced_memory",
-            "api_access",
-            "deep_conf",
-            "prompt_diffusion",
-            "custom_models",
-            "priority_support",
-            "sso",
-            "audit_logs",
-            "compliance",
-            "never_throttle",
-            "dedicated_support",
-            # All multimodal features
-            "image_analysis",
-            "audio_transcription",
-            "document_ocr",
-            "image_generation",
-            "video_analysis",
-        },
-        allowed_domain_presets={"general", "coding", "creative", "research", "medical", "legal", "custom"},
-    ),
-    # Legacy "free" tier - maps to Lite for backwards compatibility
+    # Free tier limits
     "free": TierLimits(
         requests_per_minute=5,
-        requests_per_day=20,  # Very limited for trial users
+        requests_per_day=20,  # Very limited for free tier
         enabled_features={"basic_orchestration", "standard_models", "calculator", "reranker"},
         allowed_domain_presets={"general", "coding", "creative"},
     ),

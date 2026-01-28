@@ -88,11 +88,11 @@ def create_checkout_session(
         tier_lower = request.tier.lower()
         price_id = None
         
-        if tier_lower in ("free", "trial"):
-            # Free/trial tier doesn't require payment
+        if tier_lower == "free":
+            # Free tier doesn't require payment
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Free/trial tier does not require payment. Use subscription creation endpoint instead.",
+                detail="Free tier does not require payment. Use subscription creation endpoint instead.",
             )
         elif tier_lower in ("lite", "basic"):  # "basic" for backwards compatibility
             if request.billing_cycle == "monthly":
