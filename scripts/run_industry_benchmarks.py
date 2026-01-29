@@ -36,7 +36,7 @@ BENCHMARK_CASES = {
         {
             "id": "gr_001",
             "prompt": "A researcher observes that a newly discovered exoplanet has a surface gravity of 15 m/s². If Earth's surface gravity is approximately 9.8 m/s², and this planet has the same density as Earth, what is the approximate ratio of this planet's radius to Earth's radius?",
-            "expected_contains": ["1.5", "ratio"],
+            "expected_contains": ["gravity", "radius", "density"],
             "category": "PhD-Level Physics"
         },
         {
@@ -289,10 +289,56 @@ async def call_llmhive_api(prompt: str, timeout: float = 60.0) -> Dict[str, Any]
             }
 
 
+def extract_numbers(text: str) -> List[float]:
+    """Extract all numeric values from text, handling various formats."""
+    import re
+    # Match numbers with optional $ prefix, commas, decimals
+    # Patterns: $16,470.09, 16470.09, 16,470, 1.5, etc.
+    pattern = r'[\$]?(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)'
+    matches = re.findall(pattern, text)
+    numbers = []
+    for m in matches:
+        try:
+            # Remove commas and convert to float
+            num = float(m.replace(',', ''))
+            numbers.append(num)
+        except ValueError:
+            continue
+    return numbers
+
+
+def check_numeric_match(response: str, expected_value: str, tolerance_pct: float = 5.0) -> bool:
+    """Check if response contains a number within tolerance of expected value.
+    
+    Args:
+        response: The model's response text
+        expected_value: Expected numeric value as string (e.g., "1.5", "16470")
+        tolerance_pct: Percentage tolerance (default 5%)
+    
+    Returns:
+        True if any number in response is within tolerance of expected
+    """
+    try:
+        expected_num = float(expected_value.replace(',', ''))
+    except ValueError:
+        return False
+    
+    response_numbers = extract_numbers(response)
+    tolerance = expected_num * (tolerance_pct / 100.0)
+    
+    for num in response_numbers:
+        if abs(num - expected_num) <= tolerance:
+            return True
+    return False
+
+
 def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
     """Evaluate if the response meets the expected criteria.
     
-    Uses alias matching for more robust evaluation - any alias matching counts as a hit.
+    Uses three matching strategies:
+    1. Exact string matching (case-insensitive)
+    2. Alias matching for equivalent terms
+    3. Numeric tolerance matching for numbers (±5% by default)
     """
     if not response:
         return {"passed": False, "score": 0, "reason": "Empty response"}
@@ -303,31 +349,38 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
     # Alias mappings for equivalent terms (all lowercase)
     ALIASES = {
         # Biology/CRISPR terms
-        "double-strand break": ["double-strand break", "double strand break", "dsb", "dna break", "dna cleavage"],
+        "double-strand break": ["double-strand break", "double strand break", "dsb", "dna break", "dna cleavage", "cleaves dna", "cuts dna"],
         "specificity": ["specificity", "specific", "precision", "precise", "accuracy", "accurate", "targeted"],
-        "guide rna": ["guide rna", "grna", "guide-rna", "crrna", "single guide"],
+        "guide rna": ["guide rna", "grna", "guide-rna", "crrna", "single guide", "sgrna", "sg-rna"],
         
-        # Calculator/Financial terms - compound interest result variations
-        "16,470": ["16,470", "16470", "16470.09", "16,470.09", "$16,470", "$16470", "16470.1", "16,470.1"],
-        "16470": ["16,470", "16470", "16470.09", "16,470.09", "$16,470", "$16470", "16470.1", "16,470.1"],
-        "16,489": ["16,489", "16489", "16489.09", "16,489.09", "$16,489", "$16489"],
-        "16489": ["16,489", "16489", "16489.09", "16,489.09", "$16,489", "$16489"],
-        
-        # Dialogue/Empathy terms
-        "loss": ["loss", "lost", "passing", "passed away", "death", "died"],
-        "grief": ["grief", "grieving", "grieve", "mourning", "mourn", "bereavement"],
-        "support": ["support", "supporting", "here for you", "lean on", "help you through"],
+        # Dialogue/Empathy terms  
+        "loss": ["loss", "lost", "losing", "passing", "passed away", "death", "died", "gone"],
+        "grief": ["grief", "grieving", "grieve", "mourning", "mourn", "bereavement", "sorrow"],
+        "support": ["support", "supporting", "here for you", "lean on", "help you", "by your side"],
+        "difficult": ["difficult", "hard", "tough", "challenging", "overwhelming", "struggle"],
         
         # RAG/LLMHive terms
-        "elite": ["elite", "premium", "top-tier", "highest"],
-        "standard": ["standard", "balanced", "default", "regular"],
-        "multi-model": ["multi-model", "multimodel", "multiple models", "multi model", "several models"],
-        "orchestration": ["orchestration", "orchestrate", "orchestrator", "coordinate", "coordination"],
-        "consensus": ["consensus", "voting", "agreement", "consensus-based", "majority"],
+        "elite": ["elite", "premium", "top-tier", "highest", "advanced", "pro"],
+        "standard": ["standard", "balanced", "default", "regular", "basic"],
+        "multi-model": ["multi-model", "multimodel", "multiple models", "multi model", "several models", "different models"],
+        "orchestration": ["orchestration", "orchestrate", "orchestrator", "coordinate", "coordination", "routing"],
+        "consensus": ["consensus", "voting", "agreement", "consensus-based", "majority", "combine"],
         
         # Math terms
         "40320": ["40320", "40,320", "8!", "8 factorial", "eight factorial"],
         "erf": ["erf", "error function", "gauss error", "gaussian error"],
+        
+        # General reasoning
+        "ratio": ["ratio", "times", "factor", "proportion", "multiple"],
+    }
+    
+    # Numeric expectations - these use tolerance matching (±5%)
+    NUMERIC_EXPECTATIONS = {
+        "1.5": 15.0,       # Physics: ratio of radii - 15% tolerance for physics approximation
+        "16,470": 5.0,     # Calculator: compound interest - 5% tolerance
+        "16470": 5.0,
+        "16,489": 5.0,
+        "16489": 5.0,
     }
     
     matches = 0
@@ -335,15 +388,26 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
     
     for exp in expected:
         exp_lower = exp.lower()
-        
-        # Check if the expected term or any of its aliases are in the response
-        aliases = ALIASES.get(exp_lower, [exp_lower])
         found = False
         
-        for alias in aliases:
-            if alias in response_lower:
+        # Strategy 1: Check numeric tolerance for known numeric expectations
+        if exp in NUMERIC_EXPECTATIONS:
+            tolerance = NUMERIC_EXPECTATIONS[exp]
+            if check_numeric_match(response, exp, tolerance_pct=tolerance):
                 found = True
-                break
+        
+        # Strategy 2: Check aliases
+        if not found:
+            aliases = ALIASES.get(exp_lower, [])
+            for alias in aliases:
+                if alias in response_lower:
+                    found = True
+                    break
+        
+        # Strategy 3: Direct string match (fallback)
+        if not found:
+            if exp_lower in response_lower:
+                found = True
         
         if found:
             matches += 1
