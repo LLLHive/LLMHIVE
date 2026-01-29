@@ -662,7 +662,8 @@ class AgentExecutor:
             provider = self.providers.get(model)
         
         if not provider:
-            provider = self.providers.get("stub") or next(iter(self.providers.values()), None)
+            # Try openrouter first (NEVER stub), then first non-stub provider
+            provider = self.providers.get("openrouter") or next((p for n, p in self.providers.items() if n != "stub"), None)
         
         if not provider:
             raise ValueError(f"No provider available for model: {model}")

@@ -556,7 +556,8 @@ class HierarchicalPlanExecutor:
         if self._available_models:
             return self._available_models[0]
         
-        return "stub"
+        # NEVER return stub - use a real model
+        return "openai/gpt-4o-mini"
     
     def _build_step_prompt(
         self,
@@ -628,8 +629,8 @@ class HierarchicalPlanExecutor:
             provider = self.providers.get(model)
         
         if not provider:
-            # Try stub or first available
-            provider = self.providers.get("stub") or next(iter(self.providers.values()), None)
+            # Try openrouter first (NEVER stub), then first available
+            provider = self.providers.get("openrouter") or next((p for n, p in self.providers.items() if n != "stub"), None)
         
         if not provider:
             raise ValueError(f"No provider available for model: {model}")

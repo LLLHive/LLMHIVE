@@ -672,5 +672,6 @@ class DeepConf:
             return self.providers["gemini"]
         if model_lower.startswith("deepseek") and "deepseek" in self.providers:
             return self.providers["deepseek"]
-        return self.providers.get("stub", self.providers.get(list(self.providers.keys())[0]))
+        # NEVER use stub - get openrouter or first non-stub provider
+        return self.providers.get("openrouter") or next((p for n, p in self.providers.items() if n != "stub"), self.providers.get(list(self.providers.keys())[0]))
 

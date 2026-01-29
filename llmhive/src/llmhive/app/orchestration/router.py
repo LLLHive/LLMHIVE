@@ -475,8 +475,8 @@ class ModelRouter:
             if provider_name.lower() in model.lower():
                 return provider
         
-        # Default to first provider or stub
-        return self.providers.get("stub") or next(iter(self.providers.values()))
+        # Default to openrouter or first non-stub provider (NEVER stub)
+        return self.providers.get("openrouter") or next((p for n, p in self.providers.items() if n != "stub"), next(iter(self.providers.values())))
     
     def _select_fallback_models(
         self,

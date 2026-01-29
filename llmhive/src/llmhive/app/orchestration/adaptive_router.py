@@ -839,7 +839,8 @@ class AdaptiveModelRouter:
             candidates = list(self.profiles.keys())
         
         if not candidates:
-            candidates = ["stub"]
+            # NEVER use stub - use a real model as fallback
+            candidates = ["openai/gpt-4o-mini"]
         
         # Score all models with budget awareness
         model_scores: List[ModelScore] = []
@@ -877,8 +878,8 @@ class AdaptiveModelRouter:
         if max_models:
             ensemble_size = min(ensemble_size, max_models)
         
-        # Select primary and secondary models
-        primary_model = model_scores[0].model if model_scores else "stub"
+        # Select primary and secondary models (NEVER use stub - it's not a real model)
+        primary_model = model_scores[0].model if model_scores else "openai/gpt-4o-mini"
         secondary_models = [s.model for s in model_scores[1:ensemble_size]]
         
         # Assign models to roles
@@ -1052,7 +1053,8 @@ class AdaptiveModelRouter:
         assignments: Dict[str, str] = {}
         
         if not model_scores:
-            return {role: "stub" for role in roles}
+            # NEVER use stub - use a real model as fallback
+            return {role: "openai/gpt-4o-mini" for role in roles}
         
         # Role-to-capability mapping (DYNAMIC: uses catalog when available)
         role_preferences = self._get_dynamic_role_preferences()
@@ -1089,7 +1091,7 @@ class AdaptiveModelRouter:
                 # For max accuracy, try to use the best model for key roles
                 assigned = model_scores[0].model
             
-            assignments[role] = assigned or "stub"
+            assignments[role] = assigned or "openai/gpt-4o-mini"  # NEVER use stub
             
             # For high accuracy, assign secondary model for cross-checking
             if accuracy_level == 5:

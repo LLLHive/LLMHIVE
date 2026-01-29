@@ -750,16 +750,15 @@ Output each sub-question on a new line, prefixed with "Q:"."""
         if "/" in model_lower and "openrouter" in self.providers:
             return self.providers["openrouter"]
         
-        # Last resort: skip stub, try first non-stub provider
+        # Last resort: try first non-stub provider (NEVER use stub for real API calls)
         for name, provider in self.providers.items():
             if name != "stub":
                 return provider
         
-        if "stub" in self.providers:
-            return self.providers["stub"]
-        
+        # If only stub exists, return None to trigger proper error handling
         if self.providers:
-            return next(iter(self.providers.values()))
+            non_stub = next((p for n, p in self.providers.items() if n != "stub"), None)
+            return non_stub
         
         return None
 

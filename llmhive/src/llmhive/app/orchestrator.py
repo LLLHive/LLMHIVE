@@ -2785,10 +2785,11 @@ Please provide an accurate, well-verified response."""
             # Get the provider for the first model
             first_model = models_to_use[0]
             provider_name = model_to_provider.get(first_model, first_model)
-            # Try to get the provider, fallback to openrouter if available (not stub)
+            # Try to get the provider, fallback to openrouter if available (NEVER fall back to stub)
             provider = self.providers.get(provider_name)
             if not provider:
-                provider = self.providers.get("openrouter") or self.providers.get("openai") or self.providers.get("stub")
+                # Try real providers only - stub should NEVER be used for actual API calls
+                provider = self.providers.get("openrouter") or self.providers.get("openai") or self.providers.get("anthropic") or self.providers.get("google")
             if not provider:
                 # Create minimal stub response
                 result = LLMResult(

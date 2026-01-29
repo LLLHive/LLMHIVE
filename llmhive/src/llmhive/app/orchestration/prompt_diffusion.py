@@ -918,11 +918,11 @@ Respond with ONLY a decimal number between 0.0 and 1.0."""
             if model_lower.startswith(prefix) and provider_name in self.providers:
                 return self.providers[provider_name]
         
-        # Fallback
-        if "stub" in self.providers:
-            return self.providers["stub"]
+        # Fallback - prefer openrouter, then first non-stub provider (NEVER stub)
+        if "openrouter" in self.providers:
+            return self.providers["openrouter"]
         
-        return next(iter(self.providers.values()))
+        return next((p for n, p in self.providers.items() if n != "stub"), next(iter(self.providers.values())))
 
 
 # ==============================================================================

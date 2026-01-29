@@ -1,0 +1,395 @@
+{
+  "timestamp": "2026-01-29T11:07:10.056295",
+  "api_url": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+  "total_cases": 29,
+  "total_passed": 9,
+  "overall_pass_rate": 0.3103448275862069,
+  "categories": {
+    "general_reasoning": {
+      "category": "general_reasoning",
+      "total_cases": 5,
+      "passed": 2,
+      "pass_rate": 0.4,
+      "avg_score": 0.6666666666666666,
+      "avg_latency_ms": 4870.789527893066,
+      "results": [
+        {
+          "case_id": "gr_001",
+          "category": "PhD-Level Physics",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":4333,\"recoverable\":true}}",
+          "latency_ms": 5547.457218170166
+        },
+        {
+          "case_id": "gr_002",
+          "category": "PhD-Level Chemistry",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":3111,\"recoverable\":true}}",
+          "latency_ms": 3587.5580310821533
+        },
+        {
+          "case_id": "gr_003",
+          "category": "PhD-Level Mathematics",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":4349,\"recoverable\":true}}",
+          "latency_ms": 4617.808818817139
+        },
+        {
+          "case_id": "gr_004",
+          "category": "PhD-Level Biology",
+          "success": true,
+          "passed": true,
+          "score": 0.6666666666666666,
+          "latency_ms": 14342.307806015015,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "CRISPR-Cas9 is a revolutionary genome editing technology that allows for precise modifications to DNA sequences within living organisms.\n\nThe CRISPR-Cas9 system consists of two key components: the Cas..."
+        },
+        {
+          "case_id": "gr_005",
+          "category": "PhD-Level Computer Science",
+          "success": true,
+          "passed": true,
+          "score": 0.6666666666666666,
+          "latency_ms": 10011.639833450317,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Shor's algorithm is a quantum algorithm that can efficiently factor large integers, which poses a threat to RSA encryption.\n\nRSA encryption relies on the difficulty of factoring large numbers, typical..."
+        }
+      ]
+    },
+    "coding": {
+      "category": "coding",
+      "total_cases": 5,
+      "passed": 5,
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "avg_latency_ms": 17506.92982673645,
+      "results": [
+        {
+          "case_id": "code_001",
+          "category": "Algorithm Implementation",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 18623.40998649597,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```python\nHere is a Python implementation of the Aho-Corasick algorithm for multiple pattern string matching. This implementation includes type hints and handles various edge cases: from collections i..."
+        },
+        {
+          "case_id": "code_002",
+          "category": "Data Structures",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 15065.751075744629,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "To implement a thread-safe LRU (Least Recently Used) cache in Python with O(1) time complexity for both get and put operations, you can utilize the `collections.\n\nOrderedDict` to maintain the order of..."
+        },
+        {
+          "case_id": "code_003",
+          "category": "Database",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 17712.889909744263,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "To address the task using SQL, we need to write a query that retrieves the second highest salary in each department, taking into account potential ties and departments with only a single employee.\n\nHe..."
+        },
+        {
+          "case_id": "code_004",
+          "category": "Frontend",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 17750.307083129883,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```python\nHere's a React component in TypeScript that implements an infinite scroll list with virtualization, loading states, and error handling. It leverages the `react-window` library for virtualiza..."
+        },
+        {
+          "case_id": "code_005",
+          "category": "DevOps",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 18382.291078567505,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Below is a YAML configuration for a Kubernetes deployment that includes health checks, resource limits, horizontal pod autoscaling, and a rolling update strategy.\n\nThis configuration should be placed ..."
+        }
+      ]
+    },
+    "math": {
+      "category": "math",
+      "total_cases": 5,
+      "passed": 2,
+      "pass_rate": 0.4,
+      "avg_score": 1.0,
+      "avg_latency_ms": 8015.751600265503,
+      "results": [
+        {
+          "case_id": "math_001",
+          "category": "Number Theory",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 20551.692962646484,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "## 1.\n\nIdentify All Requirements Requirement 1: Calculate the sum of all positive integers \\( n \\) less than 1000 for which \\( n^2 + 1 \\) is divisible by 101. ## 2.\n\nAddress Each Requirement Completel..."
+        },
+        {
+          "case_id": "math_002",
+          "category": "Geometry",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":3281,\"recoverable\":true}}",
+          "latency_ms": 3726.303815841675
+        },
+        {
+          "case_id": "math_003",
+          "category": "Calculus",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 19527.06503868103,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```javascript\nTo compute the integral of \\( e^{x^2} \\) from 0 to 1, we can express it in terms of the error function, which is related to integrals of exponential functions involving squares. The inte..."
+        },
+        {
+          "case_id": "math_004",
+          "category": "Combinatorics",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":6550,\"recoverable\":true}}",
+          "latency_ms": 6864.09592628479
+        },
+        {
+          "case_id": "math_005",
+          "category": "Algebra",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2581,\"recoverable\":true}}",
+          "latency_ms": 2810.01615524292
+        }
+      ]
+    },
+    "multilingual": {
+      "category": "multilingual",
+      "total_cases": 5,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0,
+      "avg_latency_ms": 0.0,
+      "results": [
+        {
+          "case_id": "ml_001",
+          "category": "Translation",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2647,\"recoverable\":true}}",
+          "latency_ms": 2918.370008468628
+        },
+        {
+          "case_id": "ml_002",
+          "category": "Chinese Comprehension",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2259,\"recoverable\":true}}",
+          "latency_ms": 2508.4190368652344
+        },
+        {
+          "case_id": "ml_003",
+          "category": "French Comprehension",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2351,\"recoverable\":true}}",
+          "latency_ms": 2614.9611473083496
+        },
+        {
+          "case_id": "ml_004",
+          "category": "Japanese Generation",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2566,\"recoverable\":true}}",
+          "latency_ms": 2805.7327270507812
+        },
+        {
+          "case_id": "ml_005",
+          "category": "German Generation",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":3240,\"recoverable\":true}}",
+          "latency_ms": 3486.895799636841
+        }
+      ]
+    },
+    "long_context": {
+      "category": "long_context",
+      "total_cases": 2,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0,
+      "avg_latency_ms": 0.0,
+      "results": [
+        {
+          "case_id": "lc_001",
+          "category": "Memory Recall",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":3226,\"recoverable\":true}}",
+          "latency_ms": 4044.703960418701
+        },
+        {
+          "case_id": "lc_002",
+          "category": "Code Analysis",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2632,\"recoverable\":true}}",
+          "latency_ms": 4193.860054016113
+        }
+      ]
+    },
+    "tool_use": {
+      "category": "tool_use",
+      "total_cases": 3,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0,
+      "avg_latency_ms": 0.0,
+      "results": [
+        {
+          "case_id": "tu_001",
+          "category": "Web Search",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":3785,\"recoverable\":true}}",
+          "latency_ms": 4027.6877880096436
+        },
+        {
+          "case_id": "tu_002",
+          "category": "Calculator",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":6695,\"recoverable\":true}}",
+          "latency_ms": 6931.803941726685
+        },
+        {
+          "case_id": "tu_003",
+          "category": "Code Execution",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2132,\"recoverable\":true}}",
+          "latency_ms": 2455.2109241485596
+        }
+      ]
+    },
+    "rag": {
+      "category": "rag",
+      "total_cases": 2,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0,
+      "avg_latency_ms": 0.0,
+      "results": [
+        {
+          "case_id": "rag_001",
+          "category": "Documentation QA",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2558,\"recoverable\":true}}",
+          "latency_ms": 2868.366003036499
+        },
+        {
+          "case_id": "rag_002",
+          "category": "Product Knowledge",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2838,\"recoverable\":true}}",
+          "latency_ms": 3075.3469467163086
+        }
+      ]
+    },
+    "dialogue": {
+      "category": "dialogue",
+      "total_cases": 2,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0,
+      "avg_latency_ms": 0.0,
+      "results": [
+        {
+          "case_id": "dl_001",
+          "category": "Empathetic Response",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":2565,\"recoverable\":true}}",
+          "latency_ms": 2807.9049587249756
+        },
+        {
+          "case_id": "dl_002",
+          "category": "Emotional Intelligence",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400\",\"error_code\":\"E2004\",\"provider\":\"openrouter\",\"model\":\"stub\",\"details\":{\"models_attempted\":[\"stub\"]},\"latency_ms\":3353,\"recoverable\":true}}",
+          "latency_ms": 3638.108015060425
+        }
+      ]
+    }
+  }
+}
