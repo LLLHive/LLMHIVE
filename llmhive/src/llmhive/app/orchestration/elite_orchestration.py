@@ -68,6 +68,21 @@ class EliteConfig:
     enable_calculator: bool = True
     num_consensus_models: int = 3
     verification_threshold: float = 0.8
+    use_free_models: bool = False  # When True, use FREE_MODELS instead of ELITE_MODELS
+
+
+def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
+    """Get the appropriate models for a category based on tier.
+    
+    Args:
+        category: The task category (math, reasoning, coding, etc.)
+        use_free: If True, return FREE_MODELS; otherwise return ELITE_MODELS
+    
+    Returns:
+        List of model identifiers for the category
+    """
+    models_source = FREE_MODELS if use_free else ELITE_MODELS
+    return models_source.get(category, models_source.get("reasoning", []))
 
 
 # =============================================================================
@@ -312,7 +327,8 @@ async def elite_math_solve(
         logger.warning("Calculator pre-computation failed: %s", e)
     
     # Step 2: Generate multiple solutions using TOP math models
-    math_models = ELITE_MODELS["math"][:config.num_consensus_models]
+    # Use free models if configured, otherwise elite models
+    math_models = get_models_for_category("math", config.use_free_models)[:config.num_consensus_models]
     
     # CRITICAL: If calculator succeeded, make it AUTHORITATIVE (not just a hint)
     # This ensures 100% accuracy for calculable problems
@@ -471,7 +487,8 @@ async def elite_reasoning_solve(
     config = config or EliteConfig()
     metadata = {"strategy": "elite_reasoning", "models_used": []}
     
-    reasoning_models = ELITE_MODELS["reasoning"][:config.num_consensus_models]
+    # Use free models if configured, otherwise elite models
+    reasoning_models = get_models_for_category("reasoning", config.use_free_models)[:config.num_consensus_models]
     
     enhanced_prompt = f"""Analyze this problem using formal logical reasoning.
 
@@ -577,7 +594,8 @@ async def elite_rag_query(
     config = config or EliteConfig()
     metadata = {"strategy": "elite_rag", "models_used": []}
     
-    rag_models = ELITE_MODELS["rag"][:2]
+    # Use free models if configured, otherwise elite models
+    rag_models = get_models_for_category("rag", config.use_free_models)[:2]
     
     # Enhanced retrieval
     context = ""
@@ -941,8 +959,8 @@ async def elite_multimodal_process(
     config = config or EliteConfig()
     metadata = {"strategy": "elite_multimodal", "models_used": []}
     
-    # Claude Opus 4.5 is #1 for multimodal - route directly to it
-    multimodal_models = ELITE_MODELS["multimodal"][:2]
+    # Use free models if configured, otherwise elite models (Claude Opus 4.5 is #1 for paid)
+    multimodal_models = get_models_for_category("multimodal", config.use_free_models)[:2]
     
     enhanced_prompt = f"""Analyze this visual content carefully and provide a detailed response.
 
@@ -1101,15 +1119,20 @@ async def elite_orchestrate(
             # Fall through to legacy implementation
     
     # =========================================================================
-    # LEGACY IMPLEMENTATION (for FREE/BUDGET/MAXIMUM tiers and fallback)
+    # TIER-BASED CONFIGURATION
     # =========================================================================
     
     # Adjust settings based on tier
     if tier == EliteTier.FREE:
-        # Free tier: use only free models, multi-model consensus for quality
+        # FREE TIER UPGRADE: Full orchestration with FREE models only!
+        # User insight: The orchestration logic runs on our servers (free), 
+        # only model API calls cost money. So we should use FULL orchestration
+        # with free models to maximize quality at $0 cost.
         config.num_consensus_models = 3  # 3 free models for consensus
-        config.enable_self_consistency = False  # Simpler for speed
-        config.enable_verification = False  # No paid verification
+        config.enable_self_consistency = True  # ENABLED: Full orchestration!
+        config.enable_verification = True  # ENABLED: Verification with free models!
+        config.use_free_models = True  # Use FREE_MODELS for all strategies
+        logger.info("FREE tier: Full orchestration enabled with free models")
     elif tier == EliteTier.BUDGET:
         # Cost-optimized: single model, no consensus, still #1 due to calculator/reranker
         config.num_consensus_models = 1
@@ -1121,11 +1144,8 @@ async def elite_orchestrate(
         config.num_consensus_models = 5
     
     category = detect_elite_category(prompt, has_image=has_image)
-    logger.info("Elite orchestration: category=%s, tier=%s", category, tier.value)
-    
-    # FREE tier uses only free models from OpenRouter
-    if tier == EliteTier.FREE:
-        return await _free_orchestrate(prompt, orchestrator, category, config, knowledge_base, image_data)
+    logger.info("Elite orchestration: category=%s, tier=%s, use_free_models=%s", 
+                category, tier.value, config.use_free_models)
     
     # BUDGET tier uses simplified routing with Claude Sonnet as primary
     if tier == EliteTier.BUDGET:
@@ -1153,16 +1173,17 @@ async def elite_orchestrate(
             prompt, orchestrator, image_data, config
         )
     else:
-        # Use premium models for general queries
+        # Use appropriate models for general queries (free or elite based on config)
         try:
+            models = get_models_for_category(category, config.use_free_models)[:2]
             response = await orchestrator.orchestrate(
                 prompt=prompt,
-                models=ELITE_MODELS.get(category, ELITE_MODELS["reasoning"])[:2],
+                models=models,
                 skip_injection_check=True,
             )
             answer = response.get("response", "")
             confidence = 0.85
-            metadata = {"strategy": "elite_general", "category": category}
+            metadata = {"strategy": "elite_general", "category": category, "models_used": models}
         except Exception as e:
             logger.error("Elite orchestration failed: %s", e)
             answer = "Unable to process request."
