@@ -2489,8 +2489,8 @@ Please provide an accurate, well-verified response."""
                 else:
                     roles = ["executor"]
                 
-                # Run adaptive selection
-                available_models = list(self.providers.keys())
+                # Run adaptive selection (exclude stub - it's only a last resort fallback)
+                available_models = [p for p in self.providers.keys() if p != "stub"]
                 routing_result = self.adaptive_router.select_models_adaptive(
                     prompt,
                     roles,
