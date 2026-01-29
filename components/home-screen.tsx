@@ -334,7 +334,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
         
         <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto mb-3 whitespace-nowrap">
-          Patented multi-agent orchestration for enhanced accuracy
+          Patented multi-agent orchestration for enhanced accuracy and performance.
         </p>
         
         {/* #1 Benchmark Badge - Large & Centered */}
