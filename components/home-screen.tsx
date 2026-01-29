@@ -337,12 +337,12 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           Patented multi-agent orchestration for enhanced accuracy
         </p>
         
-        {/* #1 Benchmark Badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-[var(--bronze)]/10 border border-yellow-500/20 mb-4">
-          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-md">
-            <span className="text-[10px] font-bold text-white">#1</span>
+        {/* #1 Benchmark Badge - Large & Centered */}
+        <div className="flex items-center justify-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 border-2 border-yellow-500/40 mb-6 shadow-lg shadow-yellow-500/10">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
+            <span className="text-base md:text-lg font-bold text-white">#1</span>
           </div>
-          <p className="text-[10px] md:text-xs font-medium bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+          <p className="text-sm md:text-lg font-semibold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
             #1 in ALL 10 Industry Benchmarks · January 2026
           </p>
         </div>
