@@ -448,27 +448,43 @@ export function canAccessModel(userTier: UserTier, modelId: string): boolean {
 
 /**
  * Get tier badge color for display
+ * 
+ * NOTE: We now only display 2 tiers to users: "Elite" and "Free"
+ * - Free: Green badge (free models)
+ * - Elite: Gold/amber badge (all paid tier models - starter, pro, enterprise)
  */
 export function getTierBadgeColor(tier: ModelAccessLevel): string {
   switch (tier) {
-    case 'free': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-    case 'starter': return 'bg-blue-500/10 text-blue-600 border-blue-500/20'
-    case 'pro': return 'bg-purple-500/10 text-purple-600 border-purple-500/20'
-    case 'enterprise': return 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-    default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20'
+    case 'free': 
+      return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+    case 'starter':
+    case 'pro':
+    case 'enterprise':
+      // All paid tiers display as "Elite" with gold/amber styling
+      return 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+    default: 
+      return 'bg-gray-500/10 text-gray-600 border-gray-500/20'
   }
 }
 
 /**
  * Get tier display name
+ * 
+ * NOTE: We now only display 2 tiers to users: "Elite" and "Free"
+ * - Free tier models → "Free"
+ * - All other tiers (starter, pro, enterprise) → "Elite"
  */
 export function getTierDisplayName(tier: ModelAccessLevel): string {
   switch (tier) {
-    case 'free': return 'Free'
-    case 'starter': return 'Starter'
-    case 'pro': return 'Pro'
-    case 'enterprise': return 'Enterprise'
-    default: return 'Unknown'
+    case 'free': 
+      return 'Free'
+    case 'starter':
+    case 'pro':
+    case 'enterprise':
+      // All paid tiers display as "Elite"
+      return 'Elite'
+    default: 
+      return 'Unknown'
   }
 }
 
