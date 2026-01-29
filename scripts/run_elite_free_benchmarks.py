@@ -429,6 +429,10 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
             if api_result["success"]:
                 eval_result = evaluate_response(api_result["response"], case)
                 
+                # Extract actual cost from API response
+                cost_info = api_result.get("cost_info", {})
+                actual_cost = cost_info.get("total_cost", 0.0)
+                
                 result = {
                     "case_id": case["id"],
                     "category": case.get("category", "General"),
@@ -437,11 +441,14 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
                     "score": eval_result["score"],
                     "latency_ms": api_result["latency_ms"],
                     "models_used": api_result.get("models_used", []),
+                    "actual_cost": actual_cost,
+                    "cost_info": cost_info,
                 }
                 
                 if eval_result["passed"]:
                     category_passed += 1
-                    print(f"✅ {eval_result['score']:.0%} ({api_result['latency_ms']:.0f}ms)")
+                    cost_str = f", ${actual_cost:.4f}" if actual_cost > 0 else ""
+                    print(f"✅ {eval_result['score']:.0%} ({api_result['latency_ms']:.0f}ms{cost_str})")
                 else:
                     print(f"⚠️ {eval_result['score']:.0%} (missing: {eval_result.get('missing', [])})")
             else:
@@ -453,6 +460,8 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
                     "score": 0,
                     "error": api_result["error"],
                     "latency_ms": api_result["latency_ms"],
+                    "actual_cost": 0.0,
+                    "cost_info": {},
                 }
                 print(f"❌ Error")
             
@@ -461,12 +470,20 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
             if result["passed"]:
                 total_passed += 1
         
+        # Calculate category total cost
+        category_cost = sum(c.get("actual_cost", 0) for c in category_results)
+        
         all_results[category] = {
             "cases": category_results,
             "passed": category_passed,
             "total": len(cases),
             "pass_rate": category_passed / len(cases) if cases else 0,
+            "total_cost": category_cost,
         }
+    
+    # Calculate total actual cost across all tests
+    total_cost = sum(cat["total_cost"] for cat in all_results.values())
+    avg_cost = total_cost / total_cases if total_cases > 0 else 0
     
     return {
         "tier": tier_key,
@@ -475,6 +492,8 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
         "total_passed": total_passed,
         "total_cases": total_cases,
         "overall_pass_rate": total_passed / total_cases if total_cases else 0,
+        "total_cost": total_cost,
+        "avg_cost_per_query": avg_cost,
     }
 
 
@@ -495,10 +514,17 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
 
 ## 📊 Executive Summary
 
-| Tier | Pass Rate | Tests Passed | Cost/Query |
-|------|-----------|--------------|------------|
-| 🐝 **ELITE** | **{elite_results['overall_pass_rate']:.1%}** | {elite_results['total_passed']}/{elite_results['total_cases']} | $0.012 |
-| 🆓 **FREE** | **{free_results['overall_pass_rate']:.1%}** | {free_results['total_passed']}/{free_results['total_cases']} | $0.00 |
+| Tier | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
+|------|-----------|--------------|-------------------|----------------|
+| 🐝 **ELITE** | **{elite_results['overall_pass_rate']:.1%}** | {elite_results['total_passed']}/{elite_results['total_cases']} | ${elite_results.get('total_cost', 0):.4f} | ${elite_results.get('avg_cost_per_query', 0):.6f} |
+| 🆓 **FREE** | **{free_results['overall_pass_rate']:.1%}** | {free_results['total_passed']}/{free_results['total_cases']} | ${free_results.get('total_cost', 0):.4f} | ${free_results.get('avg_cost_per_query', 0):.6f} |
+
+### 💰 Actual Cost Analysis (from API responses)
+
+- **ELITE Total Cost:** ${elite_results.get('total_cost', 0):.4f} for {elite_results['total_cases']} queries
+- **FREE Total Cost:** ${free_results.get('total_cost', 0):.4f} for {free_results['total_cases']} queries  
+- **Cost Savings with FREE:** ${elite_results.get('total_cost', 0) - free_results.get('total_cost', 0):.4f}
+- **Quality Gap:** {abs(elite_results['overall_pass_rate'] - free_results['overall_pass_rate']):.1%} pass rate difference
 
 ---
 
@@ -542,11 +568,15 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
         elite_score = sum(c['score'] for c in elite_cat['cases']) / len(elite_cat['cases']) if elite_cat['cases'] else 0
         free_score = sum(c['score'] for c in free_cat['cases']) / len(free_cat['cases']) if free_cat['cases'] else 0
         
+        elite_cost = elite_cat.get('total_cost', 0)
+        free_cost = free_cat.get('total_cost', 0)
+        
         report += f"""## {cat_name}
 
 | Metric | ELITE | FREE |
 |--------|-------|------|
 | Pass Rate | {elite_cat['pass_rate']:.1%} ({elite_cat['passed']}/{elite_cat['total']}) | {free_cat['pass_rate']:.1%} ({free_cat['passed']}/{free_cat['total']}) |
+| Actual Cost | ${elite_cost:.4f} | ${free_cost:.4f} |
 | Avg Score | {elite_score:.1%} | {free_score:.1%} |
 
 <details>
@@ -654,8 +684,20 @@ async def main():
     print(f"\n{'='*70}")
     print("📊 FINAL RESULTS SUMMARY")
     print(f"{'='*70}")
+    
+    elite_cost = elite_results.get('total_cost', 0)
+    free_cost = free_results.get('total_cost', 0)
+    elite_avg = elite_results.get('avg_cost_per_query', 0)
+    free_avg = free_results.get('avg_cost_per_query', 0)
+    
     print(f"\n🐝 ELITE Tier: {elite_results['total_passed']}/{elite_results['total_cases']} passed ({elite_results['overall_pass_rate']:.1%})")
-    print(f"🆓 FREE Tier:  {free_results['total_passed']}/{free_results['total_cases']} passed ({free_results['overall_pass_rate']:.1%})")
+    print(f"   💰 Actual Cost: ${elite_cost:.4f} total | ${elite_avg:.6f}/query")
+    print(f"\n🆓 FREE Tier:  {free_results['total_passed']}/{free_results['total_cases']} passed ({free_results['overall_pass_rate']:.1%})")
+    print(f"   💰 Actual Cost: ${free_cost:.4f} total | ${free_avg:.6f}/query")
+    
+    print(f"\n💵 COST SAVINGS: ${elite_cost - free_cost:.4f} saved with FREE tier")
+    if elite_cost > 0:
+        print(f"   That's {((elite_cost - free_cost) / elite_cost * 100):.1f}% savings!")
     
     # Generate and save report
     report = generate_markdown_report(elite_results, free_results)
