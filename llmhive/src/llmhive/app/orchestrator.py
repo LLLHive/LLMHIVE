@@ -436,14 +436,18 @@ class LLMResult:
         model: str,
         tokens: int = 0,
         metadata: Optional[Dict[str, Any]] = None,
+        cost_info: Optional[Dict[str, Any]] = None,
+        generation_id: Optional[str] = None,
     ):
         self.content = content
         self.model = model
         self.tokens_used = tokens
         self.metadata = metadata or {}
+        self.cost_info = cost_info or {}
+        self.generation_id = generation_id
     
     def __repr__(self):
-        return f"LLMResult(model={self.model}, tokens={self.tokens_used}, content_len={len(self.content)})"
+        return f"LLMResult(model={self.model}, tokens={self.tokens_used}, content_len={len(self.content)}, cost_info={bool(self.cost_info)})"
 
 
 class Orchestrator:
@@ -750,11 +754,13 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                             )
                             
                             class Result:
-                                def __init__(self, text, model_name, tokens):
+                                def __init__(self, text, model_name, tokens, cost_info=None, generation_id=None):
                                     self.content = text
                                     self.text = text
                                     self.model = model_name
                                     self.tokens_used = tokens
+                                    self.cost_info = cost_info or {}
+                                    self.generation_id = generation_id
                             
                             content = ""
                             if response.get("choices") and len(response["choices"]) > 0:
@@ -766,13 +772,35 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                             
                             usage = response.get("usage", {})
                             total_tokens = usage.get("total_tokens", 0)
+                            prompt_tokens = usage.get("prompt_tokens", 0)
+                            completion_tokens = usage.get("completion_tokens", 0)
                             if not total_tokens:
-                                total_tokens = usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
+                                total_tokens = prompt_tokens + completion_tokens
+                            
+                            # Extract cost tracking information from OpenRouter response
+                            # OpenRouter includes cost in the usage section
+                            generation_id = response.get("id")
+                            cost_info = {
+                                "generation_id": generation_id,
+                                "prompt_tokens": prompt_tokens,
+                                "completion_tokens": completion_tokens,
+                                "total_tokens": total_tokens,
+                                "model_used": response.get("model", model),
+                                "provider": "openrouter",
+                            }
+                            
+                            # OpenRouter may include direct cost data
+                            if "native_tokens_prompt" in usage:
+                                cost_info["native_prompt_tokens"] = usage.get("native_tokens_prompt", 0)
+                            if "native_tokens_completion" in usage:
+                                cost_info["native_completion_tokens"] = usage.get("native_tokens_completion", 0)
                             
                             return Result(
                                 text=content,
                                 model_name=response.get("model", model),
-                                tokens=total_tokens
+                                tokens=total_tokens,
+                                cost_info=cost_info,
+                                generation_id=generation_id
                             )
                             
                         except Exception as e:
@@ -2794,30 +2822,46 @@ Please provide an accurate, well-verified response."""
                         
                         model_name = getattr(provider_result, 'model', models_to_use[0])
                         tokens = getattr(provider_result, 'tokens_used', 0)
+                        # Extract cost tracking info if available
+                        cost_info = getattr(provider_result, 'cost_info', None)
+                        generation_id = getattr(provider_result, 'generation_id', None)
                     else:
                         # Fallback for providers without generate method
                         content = f"Stub response: {augmented_prompt[:100]}..."
                         model_name = "stub"
                         tokens = 0
+                        cost_info = None
+                        generation_id = None
                     
                     result = LLMResult(
                         content=content,
                         model=model_name,
-                        tokens=tokens
+                        tokens=tokens,
+                        cost_info=cost_info,
+                        generation_id=generation_id,
                     )
                     
-                    # Store model output in scratchpad
+                    # Store model output and cost info in scratchpad
                     if scratchpad:
                         scratchpad.write("model_output", content)
                         scratchpad.write("model_name", model_name)
+                        if cost_info:
+                            scratchpad.write("cost_info", cost_info)
                         
                 except Exception as e:
                     logger.error(f"Error generating response from provider: {e}")
-                    result = LLMResult(
-                        content=f"I apologize, but I encountered an error while processing your request: {str(e)}. Please try again.",
-                        model=models_to_use[0] if models_to_use else "stub",
-                        tokens=0
-                    )
+                    # Re-raise provider errors so they can be handled properly upstream
+                    # instead of embedding error messages in 200 OK responses
+                    from .errors import ProviderError, ErrorCode
+                    raise ProviderError(
+                        message=f"Provider error: {str(e)}",
+                        provider=provider_name,
+                        model=first_model,
+                        code=ErrorCode.PROVIDER_ERROR,
+                        original_error=e,
+                        details={"models_attempted": models_to_use},
+                        recoverable=True,
+                    ) from e
         
         # Infer domain for later use
         domain = None

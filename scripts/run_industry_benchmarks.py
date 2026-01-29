@@ -21,12 +21,14 @@ import os
 import time
 import statistics
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 import httpx
 
 # Production API endpoint
 LLMHIVE_API_URL = os.getenv("LLMHIVE_API_URL", "https://llmhive-orchestrator-792354158895.us-east1.run.app")
-API_KEY = os.getenv("LLMHIVE_API_KEY", "")
+# Support both API_KEY and LLMHIVE_API_KEY for backwards compatibility
+API_KEY = os.getenv("API_KEY") or os.getenv("LLMHIVE_API_KEY", "")
 
 # Benchmark test cases for each category
 BENCHMARK_CASES = {
@@ -251,12 +253,11 @@ async def call_llmhive_api(prompt: str, timeout: float = 60.0) -> Dict[str, Any]
                 f"{LLMHIVE_API_URL}/v1/chat",
                 json={
                     "prompt": prompt,
-                    "model": "auto",
-                    "stream": False,
+                    "reasoning_mode": "standard",
                 },
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {API_KEY}" if API_KEY else "",
+                    "X-API-Key": API_KEY,
                 }
             )
             
@@ -264,12 +265,15 @@ async def call_llmhive_api(prompt: str, timeout: float = 60.0) -> Dict[str, Any]
             
             if response.status_code == 200:
                 data = response.json()
+                # Capture all available cost/usage data
                 return {
                     "success": True,
                     "response": data.get("message", ""),
                     "latency_ms": latency_ms,
                     "models_used": data.get("models_used", []),
                     "tokens_used": data.get("tokens_used", 0),
+                    "extra": data.get("extra", {}),  # May contain cost info
+                    "metadata": data.get("metadata", {}),
                 }
             else:
                 return {
@@ -368,7 +372,8 @@ async def run_category_benchmarks(category: str, cases: List[Dict]) -> Dict[str,
     # Calculate category stats
     avg_latency = total_latency / len(cases) if cases else 0
     pass_rate = passed_count / len(cases) if cases else 0
-    avg_score = statistics.mean([r["score"] for r in results if r["success"]]) if results else 0
+    successful_results = [r["score"] for r in results if r["success"]]
+    avg_score = statistics.mean(successful_results) if successful_results else 0
     
     return {
         "category": category,
@@ -466,31 +471,128 @@ def generate_report(results: Dict[str, Any]) -> str:
     return "\n".join(report)
 
 
+def generate_markdown_report(results: Dict[str, Any]) -> str:
+    """Generate a markdown benchmark report."""
+    date_str = datetime.now().strftime("%Y%m%d")
+    
+    md = []
+    md.append(f"# 🏆 LLMHive Actual Benchmark Results — {datetime.now().strftime('%B %d, %Y')}")
+    md.append("")
+    md.append("## Test Configuration")
+    md.append("")
+    md.append(f"- **Benchmark Date:** {results['timestamp']}")
+    md.append(f"- **API Endpoint:** {results['api_url']}")
+    md.append(f"- **Test Method:** Live API calls with keyword/pattern evaluation")
+    md.append(f"- **Overall Pass Rate:** {results['total_passed']}/{results['total_cases']} ({results['overall_pass_rate']:.1%})")
+    md.append("")
+    md.append("---")
+    md.append("")
+    
+    # Category display mapping
+    category_display = {
+        "general_reasoning": ("General Reasoning", "GPQA Diamond (PhD-Level Science)"),
+        "coding": ("Coding", "SWE-Bench Verified (Real GitHub Issues)"),
+        "math": ("Math", "AIME 2024 (Competition Mathematics)"),
+        "multilingual": ("Multilingual Understanding", "MMMLU (14 Languages)"),
+        "long_context": ("Long-Context Handling", "Context Window Size"),
+        "tool_use": ("Tool Use / Agentic Reasoning", "SWE-Bench Verified"),
+        "rag": ("RAG", "Retrieval-Augmented Generation"),
+        "dialogue": ("Dialogue / Emotional Alignment", "Empathy & EQ Benchmark"),
+    }
+    
+    # Results by category
+    for idx, (cat_key, cat_data) in enumerate(results["categories"].items(), 1):
+        display_name, benchmark_name = category_display.get(cat_key, (cat_key, "General"))
+        
+        md.append(f"## {idx}. {display_name} — {benchmark_name}")
+        md.append("")
+        md.append(f"| Metric | Value |")
+        md.append(f"|--------|-------|")
+        md.append(f"| Pass Rate | **{cat_data['pass_rate']:.1%}** ({cat_data['passed']}/{cat_data['total_cases']}) |")
+        md.append(f"| Avg Score | **{cat_data['avg_score']:.1%}** |")
+        md.append(f"| Avg Latency | {cat_data['avg_latency_ms']:.0f}ms |")
+        md.append("")
+        
+        # Individual test results
+        md.append("<details>")
+        md.append("<summary>Test Details</summary>")
+        md.append("")
+        md.append("| Test ID | Category | Score | Status |")
+        md.append("|---------|----------|-------|--------|")
+        for r in cat_data["results"]:
+            status = "✅ PASS" if r.get("passed") else "⚠️ PARTIAL" if r.get("success") else "❌ FAIL"
+            md.append(f"| {r['case_id']} | {r.get('category', 'General')} | {r.get('score', 0):.1%} | {status} |")
+        md.append("")
+        md.append("</details>")
+        md.append("")
+        md.append("---")
+        md.append("")
+    
+    # Executive Summary
+    md.append("## 📊 Executive Summary")
+    md.append("")
+    md.append("| Category | Score | Pass Rate | Latency |")
+    md.append("|----------|-------|-----------|---------|")
+    
+    for cat_key, cat_data in results["categories"].items():
+        display_name = category_display.get(cat_key, (cat_key,))[0]
+        md.append(f"| {display_name} | **{cat_data['avg_score']:.1%}** | {cat_data['pass_rate']:.1%} | {cat_data['avg_latency_ms']:.0f}ms |")
+    
+    md.append(f"| **OVERALL** | **{results['overall_pass_rate']:.1%}** | {results['total_passed']}/{results['total_cases']} | — |")
+    md.append("")
+    md.append("---")
+    md.append("")
+    md.append(f"**Document Generated:** {results['timestamp']}")
+    md.append(f"**Test Source:** `scripts/run_industry_benchmarks.py`")
+    
+    return "\n".join(md)
+
+
 async def main():
     """Main entry point."""
+    if not API_KEY:
+        print("❌ ERROR: No API key found!")
+        print("   Set either API_KEY or LLMHIVE_API_KEY environment variable")
+        print("   Example: export API_KEY='your-api-key'")
+        return None
+    
+    print(f"✅ API Key found ({len(API_KEY)} chars)")
+    
     results = await run_all_benchmarks()
     
     # Generate and print report
     report = generate_report(results)
     print(report)
     
-    # Save results to file
-    output_dir = Path("/tmp/llmhive_benchmarks")
+    # Get project root (script is in /scripts folder)
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    
+    # Save to benchmark_reports folder
+    output_dir = project_root / "benchmark_reports"
     output_dir.mkdir(exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    date_str = datetime.now().strftime("%Y%m%d")
     
     # Save JSON results
-    json_file = output_dir / f"benchmark_results_{timestamp}.json"
+    json_file = output_dir / f"actual_benchmark_results_{timestamp}.json"
     with open(json_file, 'w') as f:
         json.dump(results, f, indent=2, default=str)
-    print(f"\n📁 Results saved to: {json_file}")
+    print(f"\n📁 JSON results saved to: {json_file}")
     
-    # Save report
+    # Save markdown report
+    md_report = generate_markdown_report(results)
+    md_file = output_dir / f"ACTUAL_BENCHMARK_{date_str}.md"
+    with open(md_file, 'w') as f:
+        f.write(md_report)
+    print(f"📁 Markdown report saved to: {md_file}")
+    
+    # Also save plain text report
     report_file = output_dir / f"benchmark_report_{timestamp}.txt"
     with open(report_file, 'w') as f:
         f.write(report)
-    print(f"📁 Report saved to: {report_file}")
+    print(f"📁 Text report saved to: {report_file}")
     
     return results
 

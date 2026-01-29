@@ -3294,6 +3294,34 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 "estimated_tokens": budget_constraints.estimated_tokens,
             }
         
+        # Add cost tracking information if available
+        cost_info = None
+        generation_id = None
+        if 'artifacts' in dir() and artifacts and hasattr(artifacts, 'final_response'):
+            cost_info = getattr(artifacts.final_response, 'cost_info', None)
+            generation_id = getattr(artifacts.final_response, 'generation_id', None)
+        
+        if cost_info:
+            extra["cost_tracking"] = {
+                "generation_id": generation_id,
+                "prompt_tokens": cost_info.get("prompt_tokens", 0),
+                "completion_tokens": cost_info.get("completion_tokens", 0),
+                "total_tokens": cost_info.get("total_tokens", 0),
+                "model_used": cost_info.get("model_used", "unknown"),
+                "provider": cost_info.get("provider", "unknown"),
+            }
+            # Include native token counts if available (from OpenRouter)
+            if "native_prompt_tokens" in cost_info:
+                extra["cost_tracking"]["native_prompt_tokens"] = cost_info["native_prompt_tokens"]
+            if "native_completion_tokens" in cost_info:
+                extra["cost_tracking"]["native_completion_tokens"] = cost_info["native_completion_tokens"]
+        elif token_usage:
+            # Basic cost tracking from token_usage when cost_info not available
+            extra["cost_tracking"] = {
+                "total_tokens": token_usage if isinstance(token_usage, int) else 0,
+                "provider": "unknown",
+            }
+        
         # CRITICAL SAFEGUARD: Never return empty message
         # If final_text is empty after all processing, provide a fallback
         if not final_text or not final_text.strip():
@@ -3621,20 +3649,51 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         logger.exception("Orchestration failed: %s", exc)
         
-        # Return error response
-        return ChatResponse(
-            message=f"I apologize, but I encountered an error processing your request: {str(exc)}",
-            models_used=request.models or [],
-            reasoning_mode=request.reasoning_mode,
-            reasoning_method=request.reasoning_method,
-            domain_pack=request.domain_pack,
-            agent_mode=request.agent_mode,
-            used_tuning=request.tuning,
-            metadata=request.metadata,
-            latency_ms=latency_ms,
-            agent_traces=[],
-            extra={"error": str(exc)},
-        )
+        # Raise proper HTTP exceptions instead of returning error in 200 OK
+        from fastapi import HTTPException, status
+        
+        # Import error types for proper handling
+        try:
+            from ..errors import ProviderError, ErrorCode, LLMHiveError
+            
+            if isinstance(exc, ProviderError):
+                # Provider-specific errors - surface with details
+                error_detail = {
+                    "error": str(exc.message),
+                    "error_code": exc.code.value,
+                    "provider": exc.provider,
+                    "model": exc.model,
+                    "details": exc.details,
+                    "latency_ms": latency_ms,
+                    "recoverable": exc.recoverable,
+                }
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=error_detail,
+                ) from exc
+            elif isinstance(exc, LLMHiveError):
+                # Other LLMHive errors
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail={
+                        "error": exc.message,
+                        "error_code": exc.code.value,
+                        "latency_ms": latency_ms,
+                        "recoverable": exc.recoverable,
+                    },
+                ) from exc
+        except ImportError:
+            pass  # Error types not available, fall through
+        
+        # Generic errors
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": f"Orchestration failed: {str(exc)}",
+                "error_type": type(exc).__name__,
+                "latency_ms": latency_ms,
+            },
+        ) from exc
     finally:
         # Audit logging (best-effort)
         try:
