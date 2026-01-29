@@ -2,7 +2,7 @@
 
 ## Test Configuration
 
-- **Benchmark Date:** 2026-01-29T15:53:57.509421
+- **Benchmark Date:** 2026-01-29T16:49:16.317560
 - **API Endpoint:** https://llmhive-orchestrator-792354158895.us-east1.run.app
 - **Test Method:** Live API calls with keyword/pattern evaluation
 - **Overall Pass Rate:** 27/29 (93.1%)
@@ -13,20 +13,20 @@
 
 | Metric | Value |
 |--------|-------|
-| Pass Rate | **80.0%** (4/5) |
-| Avg Score | **80.0%** |
-| Avg Latency | 12414ms |
+| Pass Rate | **100.0%** (5/5) |
+| Avg Score | **88.3%** |
+| Avg Latency | 10912ms |
 
 <details>
 <summary>Test Details</summary>
 
 | Test ID | Category | Score | Status |
 |---------|----------|-------|--------|
-| gr_001 | PhD-Level Physics | 0.0% | ⚠️ PARTIAL |
-| gr_002 | PhD-Level Chemistry | 100.0% | ✅ PASS |
+| gr_001 | PhD-Level Physics | 100.0% | ✅ PASS |
+| gr_002 | PhD-Level Chemistry | 75.0% | ✅ PASS |
 | gr_003 | PhD-Level Mathematics | 100.0% | ✅ PASS |
 | gr_004 | PhD-Level Biology | 100.0% | ✅ PASS |
-| gr_005 | PhD-Level Computer Science | 100.0% | ✅ PASS |
+| gr_005 | PhD-Level Computer Science | 66.7% | ✅ PASS |
 
 </details>
 
@@ -37,8 +37,8 @@
 | Metric | Value |
 |--------|-------|
 | Pass Rate | **100.0%** (5/5) |
-| Avg Score | **95.0%** |
-| Avg Latency | 15512ms |
+| Avg Score | **100.0%** |
+| Avg Latency | 18325ms |
 
 <details>
 <summary>Test Details</summary>
@@ -48,7 +48,7 @@
 | code_001 | Algorithm Implementation | 100.0% | ✅ PASS |
 | code_002 | Data Structures | 100.0% | ✅ PASS |
 | code_003 | Database | 100.0% | ✅ PASS |
-| code_004 | Frontend | 75.0% | ✅ PASS |
+| code_004 | Frontend | 100.0% | ✅ PASS |
 | code_005 | DevOps | 100.0% | ✅ PASS |
 
 </details>
@@ -61,7 +61,7 @@
 |--------|-------|
 | Pass Rate | **100.0%** (5/5) |
 | Avg Score | **100.0%** |
-| Avg Latency | 14062ms |
+| Avg Latency | 11963ms |
 
 <details>
 <summary>Test Details</summary>
@@ -82,17 +82,17 @@
 
 | Metric | Value |
 |--------|-------|
-| Pass Rate | **100.0%** (5/5) |
-| Avg Score | **93.3%** |
-| Avg Latency | 6647ms |
+| Pass Rate | **60.0%** (3/5) |
+| Avg Score | **75.0%** |
+| Avg Latency | 12855ms |
 
 <details>
 <summary>Test Details</summary>
 
 | Test ID | Category | Score | Status |
 |---------|----------|-------|--------|
-| ml_001 | Translation | 66.7% | ✅ PASS |
-| ml_002 | Chinese Comprehension | 100.0% | ✅ PASS |
+| ml_001 | Translation | 0.0% | ⚠️ PARTIAL |
+| ml_002 | Chinese Comprehension | 0.0% | ❌ FAIL |
 | ml_003 | French Comprehension | 100.0% | ✅ PASS |
 | ml_004 | Japanese Generation | 100.0% | ✅ PASS |
 | ml_005 | German Generation | 100.0% | ✅ PASS |
@@ -107,7 +107,7 @@
 |--------|-------|
 | Pass Rate | **100.0%** (2/2) |
 | Avg Score | **100.0%** |
-| Avg Latency | 8708ms |
+| Avg Latency | 36236ms |
 
 <details>
 <summary>Test Details</summary>
@@ -125,9 +125,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Pass Rate | **66.7%** (2/3) |
-| Avg Score | **66.7%** |
-| Avg Latency | 10480ms |
+| Pass Rate | **100.0%** (3/3) |
+| Avg Score | **88.9%** |
+| Avg Latency | 9277ms |
 
 <details>
 <summary>Test Details</summary>
@@ -135,8 +135,8 @@
 | Test ID | Category | Score | Status |
 |---------|----------|-------|--------|
 | tu_001 | Web Search | 100.0% | ✅ PASS |
-| tu_002 | Calculator | 0.0% | ⚠️ PARTIAL |
-| tu_003 | Code Execution | 100.0% | ✅ PASS |
+| tu_002 | Calculator | 100.0% | ✅ PASS |
+| tu_003 | Code Execution | 66.7% | ✅ PASS |
 
 </details>
 
@@ -148,7 +148,7 @@
 |--------|-------|
 | Pass Rate | **100.0%** (2/2) |
 | Avg Score | **100.0%** |
-| Avg Latency | 15237ms |
+| Avg Latency | 17482ms |
 
 <details>
 <summary>Test Details</summary>
@@ -167,8 +167,8 @@
 | Metric | Value |
 |--------|-------|
 | Pass Rate | **100.0%** (2/2) |
-| Avg Score | **83.3%** |
-| Avg Latency | 8241ms |
+| Avg Score | **100.0%** |
+| Avg Latency | 8615ms |
 
 <details>
 <summary>Test Details</summary>
@@ -176,7 +176,7 @@
 | Test ID | Category | Score | Status |
 |---------|----------|-------|--------|
 | dl_001 | Empathetic Response | 100.0% | ✅ PASS |
-| dl_002 | Emotional Intelligence | 66.7% | ✅ PASS |
+| dl_002 | Emotional Intelligence | 100.0% | ✅ PASS |
 
 </details>
 
@@ -186,17 +186,17 @@
 
 | Category | Score | Pass Rate | Latency |
 |----------|-------|-----------|---------|
-| General Reasoning | **80.0%** | 80.0% | 12414ms |
-| Coding | **95.0%** | 100.0% | 15512ms |
-| Math | **100.0%** | 100.0% | 14062ms |
-| Multilingual Understanding | **93.3%** | 100.0% | 6647ms |
-| Long-Context Handling | **100.0%** | 100.0% | 8708ms |
-| Tool Use / Agentic Reasoning | **66.7%** | 66.7% | 10480ms |
-| RAG | **100.0%** | 100.0% | 15237ms |
-| Dialogue / Emotional Alignment | **83.3%** | 100.0% | 8241ms |
+| General Reasoning | **88.3%** | 100.0% | 10912ms |
+| Coding | **100.0%** | 100.0% | 18325ms |
+| Math | **100.0%** | 100.0% | 11963ms |
+| Multilingual Understanding | **75.0%** | 60.0% | 12855ms |
+| Long-Context Handling | **100.0%** | 100.0% | 36236ms |
+| Tool Use / Agentic Reasoning | **88.9%** | 100.0% | 9277ms |
+| RAG | **100.0%** | 100.0% | 17482ms |
+| Dialogue / Emotional Alignment | **100.0%** | 100.0% | 8615ms |
 | **OVERALL** | **93.1%** | 27/29 | — |
 
 ---
 
-**Document Generated:** 2026-01-29T15:53:57.509421
+**Document Generated:** 2026-01-29T16:49:16.317560
 **Test Source:** `scripts/run_industry_benchmarks.py`

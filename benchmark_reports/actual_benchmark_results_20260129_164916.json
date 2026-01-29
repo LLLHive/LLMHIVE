@@ -1,0 +1,478 @@
+{
+  "timestamp": "2026-01-29T16:49:16.317560",
+  "api_url": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+  "total_cases": 29,
+  "total_passed": 27,
+  "overall_pass_rate": 0.9310344827586207,
+  "categories": {
+    "general_reasoning": {
+      "category": "general_reasoning",
+      "total_cases": 5,
+      "passed": 5,
+      "pass_rate": 1.0,
+      "avg_score": 0.8833333333333333,
+      "avg_latency_ms": 10911.987829208374,
+      "results": [
+        {
+          "case_id": "gr_001",
+          "category": "PhD-Level Physics",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 13114.430904388428,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "To find the ratio of the radius of the newly discovered exoplanet to Earth's radius, given that both have the same density, we can use the formula that relates gravity, density, and radius: The formul..."
+        },
+        {
+          "case_id": "gr_002",
+          "category": "PhD-Level Chemistry",
+          "success": true,
+          "passed": true,
+          "score": 0.75,
+          "latency_ms": 8985.59308052063,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Benzene undergoes electrophilic aromatic substitution rather than addition reactions primarily due to its stable aromatic structure and the fact that it preserves this stability during substitution.\n\n..."
+        },
+        {
+          "case_id": "gr_003",
+          "category": "PhD-Level Mathematics",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 7889.333009719849,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "The Riemann Hypothesis is a conjecture in number theory that posits that all non-trivial zeros of the Riemann zeta function, a complex function defined for complex numbers, have a real part of 0.5.\n\nT..."
+        },
+        {
+          "case_id": "gr_004",
+          "category": "PhD-Level Biology",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 15303.039073944092,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "CRISPR-Cas9 is a revolutionary technology for genome editing, leveraging the natural defense mechanism found in bacteria to precisely modify DNA within organisms.\n\nThe CRISPR-Cas9 system primarily con..."
+        },
+        {
+          "case_id": "gr_005",
+          "category": "PhD-Level Computer Science",
+          "success": true,
+          "passed": true,
+          "score": 0.6666666666666666,
+          "latency_ms": 9267.543077468872,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Shor's algorithm is a quantum algorithm that can efficiently factor large integers, which is a problem at the heart of RSA encryption's security.\n\nRSA encryption relies on the difficulty of factoring ..."
+        }
+      ]
+    },
+    "coding": {
+      "category": "coding",
+      "total_cases": 5,
+      "passed": 5,
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "avg_latency_ms": 18325.130128860474,
+      "results": [
+        {
+          "case_id": "code_001",
+          "category": "Algorithm Implementation",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 15154.809713363647,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```python\nCertainly! Below is a Python implementation of the Aho-Corasick algorithm for multiple pattern string matching, complete with type hints and handling of edge cases. from collections import d..."
+        },
+        {
+          "case_id": "code_002",
+          "category": "Data Structures",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 12272.473812103271,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "To implement a thread-safe LRU (Least Recently Used) cache in Python that supports concurrent read/write operations with O(1) time complexity, you can use a combination of a dictionary for O(1) access..."
+        },
+        {
+          "case_id": "code_003",
+          "category": "Database",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 8825.947046279907,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Here is a SQL query that addresses the task of finding the second highest salary within each department, including handling cases where there might be ties or departments with only one employee.\n\nThe ..."
+        },
+        {
+          "case_id": "code_004",
+          "category": "Frontend",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 45090.31009674072,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```python\nCertainly! Below is a TypeScript implementation of a React component that features an infinite scroll list with virtualization, loading states, and error handling. This example uses `react-v..."
+        },
+        {
+          "case_id": "code_005",
+          "category": "DevOps",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 10282.10997581482,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Below is a sample Kubernetes deployment YAML for a microservice that includes health checks, resource limits, horizontal pod autoscaling, and a rolling update strategy. apiVersion: apps/v1 kind: Deplo..."
+        }
+      ]
+    },
+    "math": {
+      "category": "math",
+      "total_cases": 5,
+      "passed": 5,
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "avg_latency_ms": 11962.784051895142,
+      "results": [
+        {
+          "case_id": "math_001",
+          "category": "Number Theory",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 15865.49687385559,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "## 1.\n\nIdentify All Requirements **Requirement 1:** Calculate the sum of all positive integers \\( n \\) less than 1000 for which \\( n^2 + 1 \\) is divisible by 101.\n\nUse authoritative data from either l..."
+        },
+        {
+          "case_id": "math_002",
+          "category": "Geometry",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 9980.556011199951,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "The radius of the inscribed circle is \\( \\boxed{4} \\)."
+        },
+        {
+          "case_id": "math_003",
+          "category": "Calculus",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 8503.003120422363,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```javascript\nTo solve the integral of \\( e^{x^2} \\) from 0 to 1 and express it in terms of the error function or as a numerical approximation: The integral \\(\\int_0^1 e^{x^2} \\, dx\\) cannot be expres..."
+        },
+        {
+          "case_id": "math_004",
+          "category": "Combinatorics",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 14300.699949264526,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "## 1.\n\nIdentify All Requirements Requirement 1: In how many ways can 8 rooks be placed on an 8x8 chessboard so that no two rooks attack each other? ## 2.\n\nAddress Each Requirement Completely ### Requi..."
+        },
+        {
+          "case_id": "math_005",
+          "category": "Algebra",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 11164.164304733276,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "To solve the equation \\( x^4 - 10x^2 + 9 = 0 \\), we can make a substitution to simplify the equation.\n\nLet \\( y = x^2 \\).\n\nThen, the original equation becomes: \\[ y^2 - 10y + 9 = 0 \\] This is a quadra..."
+        }
+      ]
+    },
+    "multilingual": {
+      "category": "multilingual",
+      "total_cases": 5,
+      "passed": 3,
+      "pass_rate": 0.6,
+      "avg_score": 0.75,
+      "avg_latency_ms": 12855.116415023804,
+      "results": [
+        {
+          "case_id": "ml_001",
+          "category": "Translation",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 12086.217880249023,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "Here is a well-documented Python code that translates the sentence 'The quantum computer achieved a breakthrough in solving optimization problems.' into Spanish, French, and German using the Google Tr..."
+        },
+        {
+          "case_id": "ml_002",
+          "category": "Chinese Comprehension",
+          "success": false,
+          "passed": false,
+          "score": 0,
+          "error": "",
+          "latency_ms": 60138.35287094116
+        },
+        {
+          "case_id": "ml_003",
+          "category": "French Comprehension",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 4206.913948059082,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "The global economy is facing unprecedented challenges, with inflation reaching historic levels in many developed countries."
+        },
+        {
+          "case_id": "ml_004",
+          "category": "Japanese Generation",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 33433.32123756409,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "\u91cf\u5b50\u30b3\u30f3\u30d4\u30e5\u30fc\u30c6\u30a3\u30f3\u30b0\u306e\u4e3b\u306a\u5229\u70b9\u306f\u4ee5\u4e0b\u306e\u901a\u308a\u3067\u3059\u3002 1. **\u4e26\u5217\u51e6\u7406**: \u91cf\u5b50\u30d3\u30c3\u30c8\uff08\u30ad\u30e5\u30fc\u30d3\u30c3\u30c8\uff09\u306f\u540c\u6642\u306b\u8907\u6570\u306e\u72b6\u614b\u3092\u6301\u3064\u3053\u3068\u304c\u3067\u304d\u308b\u305f\u3081\u3001\u81a8\u5927\u306a\u8a08\u7b97\u3092\u4e26\u5217\u3067\u884c\u3046\u3053\u3068\u304c\u53ef\u80fd\u3067\u3059\u3002 2. **\u901f\u5ea6**: \u4e00\u90e8\u306e\u7279\u5b9a\u306e\u554f\u984c\u306b\u304a\u3044\u3066\u3001\u91cf\u5b50\u30b3\u30f3\u30d4\u30e5\u30fc\u30bf\u306f\u53e4\u5178\u7684\u30b3\u30f3\u30d4\u30e5\u30fc\u30bf\u3088\u308a\u3082\u306f\u308b\u304b\u306b\u9ad8\u901f\u306b\u8a08\u7b97\u3092\u884c\u3046\u3053\u3068\u304c\u3067\u304d\u307e\u3059\u3002\u4f8b\u3048\u3070\u3001\u56e0\u6570\u5206\u89e3\u3084\u91cf\u5b50\u30b7\u30df\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3\u306b\u304a\u3044\u3066\u9855\u8457\u3067\u3059\u3002 3. **\u8907\u96d1\u306a\u554f\u984c\u306e\u89e3\u6c7a..."
+        },
+        {
+          "case_id": "ml_005",
+          "category": "German Generation",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 14549.129009246826,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Die Grundprinzipien der k\u00fcnstlichen Intelligenz (KI) umfassen: 1. **Lernen**: KI-Systeme nutzen Algorithmen, um aus Daten zu lernen und Muster zu erkennen.\n\nDies geschieht h\u00e4ufig durch maschinelles Le..."
+        }
+      ]
+    },
+    "long_context": {
+      "category": "long_context",
+      "total_cases": 2,
+      "passed": 2,
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "avg_latency_ms": 36235.56840419769,
+      "results": [
+        {
+          "case_id": "lc_001",
+          "category": "Memory Recall",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 52720.62301635742,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "The value associated with KEY_25 is VALUE_175."
+        },
+        {
+          "case_id": "lc_002",
+          "category": "Code Analysis",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 19750.513792037964,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```python\nThe provided code has several potential security vulnerabilities. Below is the analysis and explanation of these vulnerabilities, along with suggestions for improvement using Python syntax: ..."
+        }
+      ]
+    },
+    "tool_use": {
+      "category": "tool_use",
+      "total_cases": 3,
+      "passed": 3,
+      "pass_rate": 1.0,
+      "avg_score": 0.8888888888888888,
+      "avg_latency_ms": 9276.836713155111,
+      "results": [
+        {
+          "case_id": "tu_001",
+          "category": "Web Search",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 7806.865215301514,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "The current weather in Tokyo, Japan, as of January 29, 2026, is not explicitly available in the provided data sources.\n\nHowever, based on recent forecasts, it is suggested that the weather patterns in..."
+        },
+        {
+          "case_id": "tu_002",
+          "category": "Calculator",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 15977.067947387695,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "To calculate the compound interest on $10,000 invested at a 5% annual interest rate, compounded monthly for 10 years, we can use the formula for compound interest: \\[ FV = P \\times (1 + \\frac{r}{n})^{..."
+        },
+        {
+          "case_id": "tu_003",
+          "category": "Code Execution",
+          "success": true,
+          "passed": true,
+          "score": 0.6666666666666666,
+          "latency_ms": 4046.576976776123,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "```python\nHere is the Python code to find all prime numbers between 1 and 100: def is_prime(num): if num <= 1: return False for i in range(2, int(num**0.5) + 1): if num % i == 0: return False return T..."
+        }
+      ]
+    },
+    "rag": {
+      "category": "rag",
+      "total_cases": 2,
+      "passed": 2,
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "avg_latency_ms": 17482.42938518524,
+      "results": [
+        {
+          "case_id": "rag_001",
+          "category": "Documentation QA",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 15268.7349319458,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Multi-model orchestration in AI systems refers to the process of managing and coordinating multiple AI models to work together seamlessly.\n\nThis orchestration involves deploying, scaling, and managing..."
+        },
+        {
+          "case_id": "rag_002",
+          "category": "Product Knowledge",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 19696.123838424683,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "**Comparison of Multi-Model AI Orchestration Platform vs.\n\nSingle AI Model:** **Key Similarities:** - Both are used to perform AI-driven tasks and solve complex problems. - Both require data input and..."
+        }
+      ]
+    },
+    "dialogue": {
+      "category": "dialogue",
+      "total_cases": 2,
+      "passed": 2,
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "avg_latency_ms": 8614.71951007843,
+      "results": [
+        {
+          "case_id": "dl_001",
+          "category": "Empathetic Response",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 7572.676181793213,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "It's important to set boundaries to maintain your well-being and productivity.\n\nHere are some strategies to consider: 1. **Prioritize Your Tasks**: Assess your current workload and identify which proj..."
+        },
+        {
+          "case_id": "dl_002",
+          "category": "Emotional Intelligence",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 9656.762838363647,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I'm sorry to hear about your loss.\n\nHere are some tips to help you focus on your presentation: 1. **Set a Time Limit**: Break your preparation into short, manageable segments with specific time limits..."
+        }
+      ]
+    }
+  }
+}
