@@ -252,21 +252,9 @@ export default function PromoLandingPage() {
         </div>
       </section>
 
-      {/* Benchmarks + Technology Section */}
+      {/* Technology Section */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
-          {/* Benchmark Grid */}
-          <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-12">
-            {benchmarkCategories.map((benchmark) => (
-              <div key={benchmark} className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mx-auto mb-1">
-                  <span className="text-xs font-bold text-white">#1</span>
-                </div>
-                <p className="text-[10px] font-medium text-white/80 truncate">{benchmark}</p>
-              </div>
-            ))}
-          </div>
-
           {/* Technology Grid - Rows expand together */}
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Patented Technology</h2>
@@ -527,6 +515,18 @@ export default function PromoLandingPage() {
                 Try Free
               </Button>
             </Link>
+          </div>
+
+          {/* Benchmark Grid - #1 in ALL 10 Categories */}
+          <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mt-12">
+            {benchmarkCategories.map((benchmark) => (
+              <div key={benchmark} className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mx-auto mb-1">
+                  <span className="text-xs font-bold text-white">#1</span>
+                </div>
+                <p className="text-[10px] font-medium text-white/80 truncate">{benchmark}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
