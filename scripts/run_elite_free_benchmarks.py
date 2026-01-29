@@ -25,20 +25,26 @@ LLMHIVE_API_URL = os.getenv("LLMHIVE_API_URL", "https://llmhive-orchestrator-792
 API_KEY = os.getenv("API_KEY") or os.getenv("LLMHIVE_API_KEY", "")
 
 # Orchestration modes to test
+# Note: API only accepts reasoning_mode: fast/standard/deep
+# - "deep" = maximum quality with deep consensus and verification
+# - "standard" = balanced quality and speed
+# - "fast" = quick responses with single model
+#
+# IMPORTANT: The backend determines model selection based on user subscription tier.
+# Both tests below use the same API but with different reasoning modes to show 
+# orchestration capability range.
 ORCHESTRATION_MODES = {
-    "elite": {
-        "name": "ELITE",
-        "reasoning_mode": "elite",
-        "tier": "elite",
-        "description": "Full orchestration with premium models (GPT-5, Claude Opus, etc.)",
-        "cost_per_query": "$0.012"
+    "deep": {
+        "name": "DEEP (Premium Quality)",
+        "reasoning_mode": "deep",  # Deep consensus + verification
+        "description": "Maximum quality with multi-model consensus and verification loops",
+        "cost_per_query": "Variable (depends on models used)"
     },
-    "free": {
-        "name": "FREE", 
-        "reasoning_mode": "elite",  # NOW uses FULL elite orchestration!
-        "tier": "free",             # But with FREE models only
-        "description": "Full orchestration with FREE models (DeepSeek R1, Qwen3, Gemini Flash, etc.)",
-        "cost_per_query": "$0.00"
+    "standard": {
+        "name": "STANDARD (Balanced)", 
+        "reasoning_mode": "standard",  # Balanced orchestration
+        "description": "Balanced quality and speed with standard orchestration",
+        "cost_per_query": "Variable (depends on models used)"
     }
 }
 
@@ -348,8 +354,8 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def call_llmhive_api(prompt: str, reasoning_mode: str, tier: str = None, timeout: float = 90.0) -> Dict[str, Any]:
-    """Call the LLMHive API with specified reasoning mode and tier."""
+async def call_llmhive_api(prompt: str, reasoning_mode: str, timeout: float = 90.0) -> Dict[str, Any]:
+    """Call the LLMHive API with specified reasoning mode."""
     start_time = time.time()
     
     async with httpx.AsyncClient(timeout=timeout) as client:
@@ -358,9 +364,6 @@ async def call_llmhive_api(prompt: str, reasoning_mode: str, tier: str = None, t
                 "prompt": prompt,
                 "reasoning_mode": reasoning_mode,
             }
-            # Add tier parameter if specified (controls free vs premium models)
-            if tier:
-                payload["tier"] = tier
                 
             response = await client.post(
                 f"{LLMHIVE_API_URL}/v1/chat",
@@ -422,8 +425,7 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
             
             api_result = await call_llmhive_api(
                 case["prompt"], 
-                tier_config["reasoning_mode"],
-                tier_config.get("tier")
+                tier_config["reasoning_mode"]
             )
             
             if api_result["success"]:
@@ -497,41 +499,41 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
     }
 
 
-def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
+def generate_markdown_report(deep_results: Dict, standard_results: Dict) -> str:
     """Generate comprehensive markdown benchmark report."""
     timestamp = datetime.now().isoformat()
     
-    report = f"""# 🏆 LLMHive Industry Benchmark Rankings — January 2026
+    report = f"""# 🏆 LLMHive Orchestration Benchmark — January 2026
 
 ## Test Configuration
 
 - **Benchmark Date:** {timestamp}
 - **API Endpoint:** {LLMHIVE_API_URL}
 - **Test Method:** Live API calls with keyword/pattern evaluation
-- **Orchestration Tiers Tested:** ELITE, FREE
+- **Orchestration Modes Tested:** DEEP (max quality), STANDARD (balanced)
 
 ---
 
 ## 📊 Executive Summary
 
-| Tier | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
+| Mode | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
 |------|-----------|--------------|-------------------|----------------|
-| 🐝 **ELITE** | **{elite_results['overall_pass_rate']:.1%}** | {elite_results['total_passed']}/{elite_results['total_cases']} | ${elite_results.get('total_cost', 0):.4f} | ${elite_results.get('avg_cost_per_query', 0):.6f} |
-| 🆓 **FREE** | **{free_results['overall_pass_rate']:.1%}** | {free_results['total_passed']}/{free_results['total_cases']} | ${free_results.get('total_cost', 0):.4f} | ${free_results.get('avg_cost_per_query', 0):.6f} |
+| 🐝 **DEEP** | **{deep_results['overall_pass_rate']:.1%}** | {deep_results['total_passed']}/{deep_results['total_cases']} | ${deep_results.get('total_cost', 0):.4f} | ${deep_results.get('avg_cost_per_query', 0):.6f} |
+| ⚡ **STANDARD** | **{standard_results['overall_pass_rate']:.1%}** | {standard_results['total_passed']}/{standard_results['total_cases']} | ${standard_results.get('total_cost', 0):.4f} | ${standard_results.get('avg_cost_per_query', 0):.6f} |
 
 ### 💰 Actual Cost Analysis (from API responses)
 
-- **ELITE Total Cost:** ${elite_results.get('total_cost', 0):.4f} for {elite_results['total_cases']} queries
-- **FREE Total Cost:** ${free_results.get('total_cost', 0):.4f} for {free_results['total_cases']} queries  
-- **Cost Savings with FREE:** ${elite_results.get('total_cost', 0) - free_results.get('total_cost', 0):.4f}
-- **Quality Gap:** {abs(elite_results['overall_pass_rate'] - free_results['overall_pass_rate']):.1%} pass rate difference
+- **DEEP Total Cost:** ${deep_results.get('total_cost', 0):.4f} for {deep_results['total_cases']} queries
+- **STANDARD Total Cost:** ${standard_results.get('total_cost', 0):.4f} for {standard_results['total_cases']} queries  
+- **Cost Difference:** ${abs(deep_results.get('total_cost', 0) - standard_results.get('total_cost', 0)):.4f}
+- **Quality Gap:** {abs(deep_results['overall_pass_rate'] - standard_results['overall_pass_rate']):.1%} pass rate difference
 
 ---
 
 ## Category Comparison
 
-| Category | ELITE Score | ELITE Pass | FREE Score | FREE Pass |
-|----------|-------------|------------|------------|-----------|
+| Category | DEEP Score | DEEP Pass | STANDARD Score | STANDARD Pass |
+|----------|------------|-----------|----------------|---------------|
 """
     
     category_names = {
@@ -546,55 +548,55 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
     }
     
     for cat_key, cat_name in category_names.items():
-        if cat_key in elite_results['results'] and cat_key in free_results['results']:
-            elite_cat = elite_results['results'][cat_key]
-            free_cat = free_results['results'][cat_key]
+        if cat_key in deep_results['results'] and cat_key in standard_results['results']:
+            deep_cat = deep_results['results'][cat_key]
+            standard_cat = standard_results['results'][cat_key]
             
-            elite_score = sum(c['score'] for c in elite_cat['cases']) / len(elite_cat['cases']) if elite_cat['cases'] else 0
-            free_score = sum(c['score'] for c in free_cat['cases']) / len(free_cat['cases']) if free_cat['cases'] else 0
+            deep_score = sum(c['score'] for c in deep_cat['cases']) / len(deep_cat['cases']) if deep_cat['cases'] else 0
+            standard_score = sum(c['score'] for c in standard_cat['cases']) / len(standard_cat['cases']) if standard_cat['cases'] else 0
             
-            report += f"| {cat_name} | {elite_score:.1%} | {elite_cat['passed']}/{elite_cat['total']} | {free_score:.1%} | {free_cat['passed']}/{free_cat['total']} |\n"
+            report += f"| {cat_name} | {deep_score:.1%} | {deep_cat['passed']}/{deep_cat['total']} | {standard_score:.1%} | {standard_cat['passed']}/{standard_cat['total']} |\n"
     
     report += "\n---\n\n"
     
     # Detailed results for each category
     for cat_key, cat_name in category_names.items():
-        if cat_key not in elite_results['results']:
+        if cat_key not in deep_results['results']:
             continue
             
-        elite_cat = elite_results['results'][cat_key]
-        free_cat = free_results['results'][cat_key]
+        deep_cat = deep_results['results'][cat_key]
+        standard_cat = standard_results['results'][cat_key]
         
-        elite_score = sum(c['score'] for c in elite_cat['cases']) / len(elite_cat['cases']) if elite_cat['cases'] else 0
-        free_score = sum(c['score'] for c in free_cat['cases']) / len(free_cat['cases']) if free_cat['cases'] else 0
+        deep_score = sum(c['score'] for c in deep_cat['cases']) / len(deep_cat['cases']) if deep_cat['cases'] else 0
+        standard_score = sum(c['score'] for c in standard_cat['cases']) / len(standard_cat['cases']) if standard_cat['cases'] else 0
         
-        elite_cost = elite_cat.get('total_cost', 0)
-        free_cost = free_cat.get('total_cost', 0)
+        deep_cost = deep_cat.get('total_cost', 0)
+        standard_cost = standard_cat.get('total_cost', 0)
         
         report += f"""## {cat_name}
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
-| Pass Rate | {elite_cat['pass_rate']:.1%} ({elite_cat['passed']}/{elite_cat['total']}) | {free_cat['pass_rate']:.1%} ({free_cat['passed']}/{free_cat['total']}) |
-| Actual Cost | ${elite_cost:.4f} | ${free_cost:.4f} |
-| Avg Score | {elite_score:.1%} | {free_score:.1%} |
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
+| Pass Rate | {deep_cat['pass_rate']:.1%} ({deep_cat['passed']}/{deep_cat['total']}) | {standard_cat['pass_rate']:.1%} ({standard_cat['passed']}/{standard_cat['total']}) |
+| Actual Cost | ${deep_cost:.4f} | ${standard_cost:.4f} |
+| Avg Score | {deep_score:.1%} | {standard_score:.1%} |
 
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 """
         
-        for i, (elite_case, free_case) in enumerate(zip(elite_cat['cases'], free_cat['cases'])):
-            elite_status = "✅" if elite_case['passed'] else "⚠️"
-            free_status = "✅" if free_case['passed'] else "⚠️"
-            report += f"| {elite_case['case_id']} | {elite_case['category']} | {elite_status} {elite_case['score']:.0%} | {free_status} {free_case['score']:.0%} |\n"
+        for i, (deep_case, standard_case) in enumerate(zip(deep_cat['cases'], standard_cat['cases'])):
+            deep_status = "✅" if deep_case['passed'] else "⚠️"
+            standard_status = "✅" if standard_case['passed'] else "⚠️"
+            report += f"| {deep_case['case_id']} | {deep_case['category']} | {deep_status} {deep_case['score']:.0%} | {standard_status} {standard_case['score']:.0%} |\n"
         
         report += "\n</details>\n\n---\n\n"
     
-    # Marketing claims verification
-    report += """## 🎯 Key Marketing Claims (VERIFIED)
+    # Performance claims verification
+    report += """## 🎯 Key Performance Claims
 
 | Claim | Status | Evidence |
 |-------|--------|----------|
@@ -604,26 +606,26 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
     claims = []
     
     # Math claim
-    elite_math = elite_results['results'].get('math', {})
-    free_math = free_results['results'].get('math', {})
-    if elite_math.get('pass_rate', 0) == 1.0 and free_math.get('pass_rate', 0) == 1.0:
-        claims.append(("BOTH tiers achieve 100% in Math", "✅ VERIFIED", f"ELITE: {elite_math['pass_rate']:.0%}, FREE: {free_math['pass_rate']:.0%}"))
+    deep_math = deep_results['results'].get('math', {})
+    standard_math = standard_results['results'].get('math', {})
+    if deep_math.get('pass_rate', 0) == 1.0 and standard_math.get('pass_rate', 0) == 1.0:
+        claims.append(("BOTH modes achieve 100% in Math", "✅ VERIFIED", f"DEEP: {deep_math['pass_rate']:.0%}, STANDARD: {standard_math['pass_rate']:.0%}"))
     
     # Coding claim
-    elite_coding = elite_results['results'].get('coding', {})
-    free_coding = free_results['results'].get('coding', {})
-    if elite_coding.get('pass_rate', 0) >= 0.8:
-        claims.append(("ELITE achieves 80%+ in Coding", "✅ VERIFIED", f"ELITE: {elite_coding['pass_rate']:.0%}"))
+    deep_coding = deep_results['results'].get('coding', {})
+    standard_coding = standard_results['results'].get('coding', {})
+    if deep_coding.get('pass_rate', 0) >= 0.8:
+        claims.append(("DEEP achieves 80%+ in Coding", "✅ VERIFIED", f"DEEP: {deep_coding['pass_rate']:.0%}"))
     
     # RAG claim
-    elite_rag = elite_results['results'].get('rag', {})
-    free_rag = free_results['results'].get('rag', {})
-    if elite_rag.get('pass_rate', 0) == 1.0:
-        claims.append(("ELITE achieves 100% in RAG", "✅ VERIFIED", f"ELITE: {elite_rag['pass_rate']:.0%}"))
+    deep_rag = deep_results['results'].get('rag', {})
+    standard_rag = standard_results['results'].get('rag', {})
+    if deep_rag.get('pass_rate', 0) == 1.0:
+        claims.append(("DEEP achieves 100% in RAG", "✅ VERIFIED", f"DEEP: {deep_rag['pass_rate']:.0%}"))
     
-    # Free tier value
-    if free_results['overall_pass_rate'] >= 0.8:
-        claims.append(("FREE tier delivers 80%+ overall quality", "✅ VERIFIED", f"FREE: {free_results['overall_pass_rate']:.0%}"))
+    # Standard mode quality
+    if standard_results['overall_pass_rate'] >= 0.8:
+        claims.append(("STANDARD mode delivers 80%+ overall quality", "✅ VERIFIED", f"STANDARD: {standard_results['overall_pass_rate']:.0%}"))
     
     for claim, status, evidence in claims:
         report += f"| {claim} | {status} | {evidence} |\n"
@@ -640,16 +642,15 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
 4. **Pass Threshold**: 60% of expected keywords must be present
 5. **Timeout**: 90 seconds per request
 
-## Tier Configurations
+## Orchestration Modes
 
-| Tier | Orchestration | Models | Description |
-|------|---------------|--------|-------------|
-| 🐝 ELITE | Full (consensus, verification, self-consistency) | Premium (GPT-5, Claude Opus, etc.) | Maximum quality with premium models |
-| 🆓 FREE | Full (consensus, verification, self-consistency) | FREE (DeepSeek R1, Qwen3, Gemini Flash, etc.) | Same orchestration, $0 cost with free models |
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| 🐝 DEEP | Multi-model consensus with verification loops and deep reasoning | Maximum quality for critical tasks |
+| ⚡ STANDARD | Balanced orchestration with single-model responses | Faster responses for everyday tasks |
 
-**Key Architecture Decision:** Both tiers use FULL orchestration because the orchestration logic
-(verification loops, consensus voting, self-consistency checks) runs on LLMHive servers at no cost.
-Only the model API calls cost money. This means FREE tier users get world-class orchestration at $0!
+**Note:** The models used depend on the user's subscription tier (FREE vs ELITE).
+Both modes apply the same orchestration logic - the difference is the reasoning depth.
 
 ---
 
@@ -669,51 +670,50 @@ async def main():
     
     print(f"✅ API Key found ({len(API_KEY)} chars)")
     print(f"\n{'='*70}")
-    print("🐝 LLMHive Elite & Free Orchestration Benchmark Suite")
+    print("🐝 LLMHive Orchestration Benchmark Suite")
     print(f"   Target: {LLMHIVE_API_URL}")
     print(f"   Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*70}")
     
-    # Run ELITE benchmarks
-    elite_results = await run_tier_benchmarks("elite", ORCHESTRATION_MODES["elite"])
+    # Run DEEP benchmarks (maximum quality)
+    deep_results = await run_tier_benchmarks("deep", ORCHESTRATION_MODES["deep"])
     
-    # Run FREE benchmarks
-    free_results = await run_tier_benchmarks("free", ORCHESTRATION_MODES["free"])
+    # Run STANDARD benchmarks (balanced)
+    standard_results = await run_tier_benchmarks("standard", ORCHESTRATION_MODES["standard"])
     
     # Print summary
     print(f"\n{'='*70}")
     print("📊 FINAL RESULTS SUMMARY")
     print(f"{'='*70}")
     
-    elite_cost = elite_results.get('total_cost', 0)
-    free_cost = free_results.get('total_cost', 0)
-    elite_avg = elite_results.get('avg_cost_per_query', 0)
-    free_avg = free_results.get('avg_cost_per_query', 0)
+    deep_cost = deep_results.get('total_cost', 0)
+    standard_cost = standard_results.get('total_cost', 0)
+    deep_avg = deep_results.get('avg_cost_per_query', 0)
+    standard_avg = standard_results.get('avg_cost_per_query', 0)
     
-    print(f"\n🐝 ELITE Tier: {elite_results['total_passed']}/{elite_results['total_cases']} passed ({elite_results['overall_pass_rate']:.1%})")
-    print(f"   💰 Actual Cost: ${elite_cost:.4f} total | ${elite_avg:.6f}/query")
-    print(f"\n🆓 FREE Tier:  {free_results['total_passed']}/{free_results['total_cases']} passed ({free_results['overall_pass_rate']:.1%})")
-    print(f"   💰 Actual Cost: ${free_cost:.4f} total | ${free_avg:.6f}/query")
+    print(f"\n🐝 DEEP Mode: {deep_results['total_passed']}/{deep_results['total_cases']} passed ({deep_results['overall_pass_rate']:.1%})")
+    print(f"   💰 Actual Cost: ${deep_cost:.4f} total | ${deep_avg:.6f}/query")
+    print(f"\n⚡ STANDARD Mode:  {standard_results['total_passed']}/{standard_results['total_cases']} passed ({standard_results['overall_pass_rate']:.1%})")
+    print(f"   💰 Actual Cost: ${standard_cost:.4f} total | ${standard_avg:.6f}/query")
     
-    print(f"\n💵 COST SAVINGS: ${elite_cost - free_cost:.4f} saved with FREE tier")
-    if elite_cost > 0:
-        print(f"   That's {((elite_cost - free_cost) / elite_cost * 100):.1f}% savings!")
+    if deep_cost > 0 or standard_cost > 0:
+        print(f"\n💵 COST DIFFERENCE: ${abs(deep_cost - standard_cost):.4f}")
     
     # Generate and save report
-    report = generate_markdown_report(elite_results, free_results)
+    report = generate_markdown_report(deep_results, standard_results)
     
     timestamp = datetime.now().strftime("%Y%m%d")
-    report_path = Path(f"benchmark_reports/ELITE_FREE_BENCHMARK_{timestamp}.md")
+    report_path = Path(f"benchmark_reports/ORCHESTRATION_BENCHMARK_{timestamp}.md")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report)
     print(f"\n📁 Report saved to: {report_path}")
     
     # Save JSON results
-    json_path = Path(f"benchmark_reports/elite_free_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    json_path = Path(f"benchmark_reports/orchestration_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
     json_data = {
         "timestamp": datetime.now().isoformat(),
-        "elite": elite_results,
-        "free": free_results,
+        "deep": deep_results,
+        "standard": standard_results,
     }
     json_path.write_text(json.dumps(json_data, indent=2, default=str))
     print(f"📁 JSON results saved to: {json_path}")
