@@ -1786,8 +1786,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             request.reasoning_mode.value,
         )
         
-        # Get available providers from orchestrator
-        available_providers = list(_orchestrator.providers.keys())
+        # Get available providers from orchestrator (EXCLUDE stub - it's only a fallback)
+        available_providers = [p for p in _orchestrator.providers.keys() if p != "stub"]
         
         # Use user-selected models if provided, otherwise auto-select
         if request.models and len(request.models) > 0:
