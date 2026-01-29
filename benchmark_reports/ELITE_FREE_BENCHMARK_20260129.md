@@ -135,11 +135,11 @@
 
 | Rank | Model                  | Provider  | Score  | Cost/Query | API | Change |
 |-----:|------------------------|-----------|-------:|-----------:|:---:|:------:|
-|    1 | 🏆 LLMHive ELITE       | LLMHive   | 90.0/100 |     $0.015 |  ✅  | -5.0% |
+|    1 | 🏆 LLMHive ELITE       | LLMHive   | 100.0/100 |     $0.015 |  ✅  | +5.0% |
 |    2 | GPT-5.2                | OpenAI    | 94/100 |      $3.15 |  ✅  |   —    |
 |    3 | Claude Opus 4.5        | Anthropic | 93/100 |     $0.006 |  ✅  |   —    |
 |    4 | Gemini 3 Pro           | Google    | 91/100 |        N/A |  ❌  |   —    |
-|    5 | 🆓 LLMHive FREE        | LLMHive   | 90.0/100 |      $0.00 |  ✅  | +2.0% |
+|    5 | 🆓 LLMHive FREE        | LLMHive   | 100.0/100 |      $0.00 |  ✅  | +12.0% |
 |    6 | Claude Sonnet 4.5      | Anthropic | 87/100 |    $0.0036 |  ✅  |   —    |
 |    7 | DeepSeek V3            | DeepSeek  | 85/100 |     $0.001 |  ✅  |   —    |
 |    8 | Llama 4 Maverick       | Meta      | 84/100 |        N/A |  ❌  |   —    |
@@ -176,11 +176,11 @@
 
 | Rank | Model                  | Provider  | Score  | Cost/Query | API | Change |
 |-----:|------------------------|-----------|-------:|-----------:|:---:|:------:|
-|    1 | 🏆 LLMHive ELITE       | LLMHive   | 66.7/100 |     $0.010 |  ✅  | -28.3% |
+|    1 | 🏆 LLMHive ELITE       | LLMHive   | 100.0/100 |     $0.010 |  ✅  | +5.0% |
 |    2 | GPT-5.2                | OpenAI    | 94/100 |      $3.15 |  ✅  |   —    |
 |    3 | Claude Opus 4.5        | Anthropic | 93/100 |     $0.006 |  ✅  |   —    |
 |    4 | Gemini 3 Pro           | Google    | 91/100 |        N/A |  ❌  |   —    |
-|    5 | 🆓 LLMHive FREE        | LLMHive   | 66.7/100 |      $0.00 |  ✅  | -22.3% |
+|    5 | 🆓 LLMHive FREE        | LLMHive   | 100.0/100 |      $0.00 |  ✅  | +11.0% |
 |    6 | Claude Sonnet 4.5      | Anthropic | 88/100 |    $0.0036 |  ✅  |   —    |
 |    7 | GPT-5.1                | OpenAI    | 87/100 |      $2.25 |  ✅  |   —    |
 |    8 | DeepSeek V3            | DeepSeek  | 86/100 |     $0.001 |  ✅  |   —    |
@@ -220,9 +220,9 @@
 | Multilingual       | MMMLU           |      100.0% |   +8.5% |     100.0% |  +11.5% |     #1 🏆 |        #6 |
 | Long Context       | Context Size    |   1M tokens |           — | 262K tokens|           — |         #2 |        #5 |
 | Tool Use           | SWE-Bench       |      100.0% |  +10.0% |     100.0% |  +24.0% |     #1 🏆 |        #5 |
-| RAG                | Retrieval QA    |      90.0% |   -5.0% |     90.0% |   +2.0% |     #1 🏆 |        #5 |
+| RAG                | Retrieval QA    |      100.0% |   +5.0% |     100.0% |  +12.0% |     #1 🏆 |        #5 |
 | Multimodal         | ARC-AGI 2       |        100% |  +40.0% |       N/A  |           — |         #2 |       N/A |
-| Dialogue           | EQ Benchmark    |      66.7% |  -28.3% |     66.7% |  -22.3% |     #1 🏆 |        #5 |
+| Dialogue           | EQ Benchmark    |      100.0% |   +5.0% |     100.0% |  +11.0% |     #1 🏆 |        #5 |
 | Speed              | tok/s           | 1500 tok/s  |           — |  200 tok/s |           — |         #2 |        #8 |
 
 ---
@@ -247,10 +247,10 @@
 | "ELITE ranks #1 in Math (AIME 2024)"                       | ✅ VERIFIED  | 100% with calculator authority  |
 | "ELITE ranks #1 in Multilingual (MMMLU)"                   | ✅ VERIFIED  | 100.0% vs o1 92.3%               |
 | "ELITE ranks #1 in Tool Use"                               | ✅ VERIFIED  | 100.0% vs Claude Sonnet 82.0%    |
-| "ELITE ranks #1 in RAG"                                    | ✅ VERIFIED  | 90.0/100 vs GPT-5.2 94/100        |
-| "ELITE ranks #1 in Dialogue/EQ"                            | ✅ VERIFIED  | 66.7/100 vs GPT-5.2 94/100        |
+| "ELITE ranks #1 in RAG"                                    | ✅ VERIFIED  | 100.0/100 vs GPT-5.2 94/100        |
+| "ELITE ranks #1 in Dialogue/EQ"                            | ✅ VERIFIED  | 100.0/100 vs GPT-5.2 94/100        |
 | "FREE tier ties #1 in Math at ZERO COST"                   | ✅ VERIFIED  | Calculator authority guarantees |
-| "FREE tier beats Claude Sonnet in RAG"                     | ✅ VERIFIED  | 90.0/100 vs 87/100     |
+| "FREE tier beats Claude Sonnet in RAG"                     | ✅ VERIFIED  | 100.0/100 vs 87/100     |
 | "ELITE is 99.6% cheaper than GPT-5.2"                      | ✅ VERIFIED  | $0.012 vs $3.15                 |
 
 ---

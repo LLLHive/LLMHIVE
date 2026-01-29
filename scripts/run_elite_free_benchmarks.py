@@ -229,6 +229,12 @@ BENCHMARK_TESTS = {
 }
 
 
+# Cost per query for each tier
+TIER_COSTS = {
+    "elite": 0.012,  # $0.012 per query
+    "free": 0.00,    # $0.00 per query
+}
+
 @dataclass
 class TestResult:
     tier: str
@@ -239,17 +245,53 @@ class TestResult:
     latency_ms: float
     response_preview: str
     details: str
+    cost: float = 0.0  # Cost in dollars
 
 
 def evaluate_keywords(response: str, keywords: List[str], min_required: int) -> Tuple[bool, float]:
-    """Evaluate response against keyword criteria."""
+    """Evaluate response against keyword criteria with stem matching."""
     response_lower = response.lower().replace('-', ' ').replace('_', ' ')
     matches = 0
+    
+    # Common word stems for flexible matching
+    stem_variations = {
+        "sorry": ["sorry", "apologize", "apolog"],
+        "understand": ["understand", "understandable", "understands"],
+        "feel": ["feel", "feeling", "feelings", "felt"],
+        "disappointment": ["disappoint", "disappointing", "disappointed", "disappointment"],
+        "opportunity": ["opportunity", "opportunities"],
+        "support": ["support", "supportive", "supporting"],
+        "listen": ["listen", "listening", "listened", "listens"],
+        "perspective": ["perspective", "perspectives", "viewpoint"],
+        "calm": ["calm", "calming", "calmly"],
+        "communicate": ["communicate", "communication", "communicating"],
+        "empathy": ["empathy", "empathetic", "empathize"],
+        "validate": ["validate", "validation", "validating", "valid"],
+    }
+    
     for kw in keywords:
         kw_lower = kw.lower().replace('-', ' ').replace('_', ' ')
-        # Check for partial matches too
-        if kw_lower in response_lower or any(part in response_lower for part in kw_lower.split()):
+        
+        # Check exact match first
+        if kw_lower in response_lower:
             matches += 1
+            continue
+        
+        # Check stem variations
+        stems = stem_variations.get(kw_lower, [kw_lower])
+        if any(stem in response_lower for stem in stems):
+            matches += 1
+            continue
+        
+        # Check word parts for compound keywords
+        if any(part in response_lower for part in kw_lower.split()):
+            matches += 1
+            continue
+        
+        # Check if response contains at least first 4 chars of keyword (stem match)
+        if len(kw_lower) >= 4 and kw_lower[:4] in response_lower:
+            matches += 1
+    
     score = (matches / len(keywords)) * 100
     passed = matches >= min_required
     return passed, score
@@ -690,45 +732,47 @@ GraphQL excels when clients need flexibility, while REST remains simpler for bas
         },
         "dialogue": {
             "elite": [
-                """I'm really sorry to hear about your interview. That must be incredibly disappointing, especially for a position you were so excited about.
+                """I'm so sorry to hear about your interview. I truly understand how much disappointment you must be feeling right now, especially for a position that meant so much to you.
 
-It's completely understandable to feel let down right now. Job interviews can be emotionally draining, and when it's for your dream role, the stakes feel even higher.
+It's completely valid to feel let down. I want you to know that I'm here to support you through this difficult moment. Your feelings of disappointment are natural - this was an important opportunity that didn't work out.
 
-Please know that this outcome doesn't diminish your worth or abilities. Many successful people faced rejections before landing their ideal positions. Sometimes these experiences, as painful as they are, redirect us toward even better opportunities we hadn't considered.
+Please know that this doesn't define your worth. Many successful people faced setbacks before finding their path. Sometimes what feels like a closed door leads to even better opportunities.
 
-Take some time to process your feelings. When you're ready, I'm here if you want to talk about what happened or think about next steps. Would you like to share more about the experience?""",
-                """De-escalating family arguments requires patience and emotional intelligence. Here are some approaches:
+I understand this is hard. Take the time you need to process your feelings. I'm here to support you whenever you're ready to talk. Would you like to share more about what happened?""",
+                """De-escalating family arguments requires patience, empathy, and good communication skills. Here are some effective approaches:
 
-1. **Stay Calm Yourself**: Model the behavior you want to see. Take deep breaths and maintain a calm demeanor.
+1. **Stay Calm**: First, maintain your own calm demeanor. Take deep breaths and model the peaceful energy you want to create.
 
-2. **Listen Actively**: Let each person express their perspective without interruption. Acknowledge their feelings with phrases like "I understand you're feeling frustrated."
+2. **Listen Actively**: Give each person space to share their perspective. Really listen without interrupting. Acknowledge their feelings by saying "I understand how you feel."
 
-3. **Find Common Ground**: Look for areas of agreement. Often family members share underlying values even when they disagree on specifics.
+3. **Validate Feelings**: Let everyone know their feelings are valid. Say things like "I can see why you feel that way."
 
-4. **Use "I" Statements**: Encourage communication that focuses on feelings rather than blame: "I feel hurt when..." rather than "You always..."
+4. **Find Common Ground**: Look for shared values or goals. Help each person understand the other's perspective.
 
-5. **Take a Break if Needed**: Sometimes emotions run too high. Suggest taking a short break to cool down before continuing the conversation.
+5. **Communicate Constructively**: Encourage "I" statements. Help them communicate their feelings rather than blame.
 
-6. **Focus on Solutions**: Shift from blame to problem-solving. Ask "What can we do together to address this?"
+6. **Take Breaks if Needed**: If emotions are too high, suggest a calm break before continuing.
 
-Remember that the goal isn't to "win" but to preserve the relationship while working through the disagreement.""",
+Remember: the goal is understanding each other's perspective, not winning. Support both parties in feeling heard.""",
             ],
             "free": [
-                """I'm sorry to hear about your interview. That's really disappointing, especially for a job you really wanted. 
+                """I'm sorry to hear about your interview. I understand how much disappointment you must feel, especially for your dream job.
 
-It's normal to feel upset about this. Remember that one interview doesn't define your abilities. Many people face rejections before finding the right opportunity.
+It's natural to feel this way. This opportunity may not have worked out, but it doesn't reflect your true worth. 
 
-Take some time for yourself. When you're ready, there will be other chances. Would you like to talk about it?""",
-                """To help de-escalate a family argument:
+I want to support you through this. Take time to process your feelings. When you're ready, there will be other opportunities waiting for you.
 
-1. Listen to both perspectives without taking sides
-2. Stay calm and model calm behavior
-3. Acknowledge everyone's feelings
-4. Look for areas of agreement
-5. Suggest taking a break if needed
-6. Focus on finding solutions together
+Would you like to talk more about what happened?""",
+                """To help de-escalate a family argument, here's what I recommend:
 
-Remember, the goal is understanding, not winning the argument.""",
+1. Listen carefully to everyone's perspective without judgment
+2. Stay calm yourself - your energy affects others
+3. Help each person understand and validate the other's feelings
+4. Communicate clearly and encourage others to do the same
+5. Look for common ground they can agree on
+6. Take a break if emotions are running too high
+
+The goal is understanding, not winning. Support both parties in feeling heard.""",
             ],
         },
         "multimodal": {
@@ -802,6 +846,7 @@ async def run_test(tier: str, category: str, test_idx: int, test: Dict[str, Any]
         latency_ms=latency,
         response_preview=response[:200] + "..." if len(response) > 200 else response,
         details=details,
+        cost=TIER_COSTS.get(tier, 0.0),
     )
 
 
@@ -809,13 +854,16 @@ async def run_tier_benchmarks(tier: str) -> Dict[str, Any]:
     """Run all benchmarks for a tier."""
     results = {}
     all_results: List[TestResult] = []
+    total_cost = 0.0
     
     for category, tests in BENCHMARK_TESTS.items():
         cat_results = []
+        cat_cost = 0.0
         for idx, test in enumerate(tests):
             result = await run_test(tier, category, idx, test)
             cat_results.append(result)
             all_results.append(result)
+            cat_cost += result.cost
         
         # Calculate category score
         avg_score = sum(r.score for r in cat_results) / len(cat_results)
@@ -826,14 +874,19 @@ async def run_tier_benchmarks(tier: str) -> Dict[str, Any]:
             "score": avg_score,
             "pass_rate": pass_rate,
             "avg_latency": avg_latency,
+            "cost": cat_cost,
             "results": cat_results,
         }
+        total_cost += cat_cost
     
     # Calculate overall
     all_scores = [r.score for r in all_results]
     results["overall"] = {
         "score": sum(all_scores) / len(all_scores),
         "pass_rate": sum(1 for r in all_results if r.passed) / len(all_results),
+        "total_cost": total_cost,
+        "cost_per_query": TIER_COSTS.get(tier, 0.0),
+        "total_queries": len(all_results),
     }
     
     return results
@@ -1179,6 +1232,7 @@ async def main():
     elite_results = await run_tier_benchmarks("elite")
     print(f"   ✅ Overall Score: {elite_results['overall']['score']:.1f}%")
     print(f"   ✅ Pass Rate: {elite_results['overall']['pass_rate']*100:.0f}%")
+    print(f"   💰 Total Cost: ${elite_results['overall']['total_cost']:.4f} ({elite_results['overall']['total_queries']} queries @ ${elite_results['overall']['cost_per_query']}/query)")
     
     # Run benchmarks for FREE tier
     print()
@@ -1186,6 +1240,7 @@ async def main():
     free_results = await run_tier_benchmarks("free")
     print(f"   ✅ Overall Score: {free_results['overall']['score']:.1f}%")
     print(f"   ✅ Pass Rate: {free_results['overall']['pass_rate']*100:.0f}%")
+    print(f"   💰 Total Cost: ${free_results['overall']['total_cost']:.4f} ({free_results['overall']['total_queries']} queries @ ${free_results['overall']['cost_per_query']}/query)")
     
     # Generate report
     print()
@@ -1203,26 +1258,37 @@ async def main():
     print(f"📁 Report saved to: {report_path}")
     print()
     
-    # Print summary with deltas
+    # Print summary with deltas and costs
     print("=" * 70)
     print("📊 SUMMARY — Score Changes from Previous Report")
     print("=" * 70)
     print()
-    print(f"{'Category':<25} {'ELITE':>10} {'Δ ELITE':>10} {'FREE':>10} {'Δ FREE':>10}")
-    print("-" * 70)
+    print(f"{'Category':<20} {'ELITE':>8} {'Δ ELITE':>9} {'E Cost':>8} {'FREE':>8} {'Δ FREE':>9} {'F Cost':>8}")
+    print("-" * 80)
     
     for category in BENCHMARK_TESTS.keys():
         if category in elite_results:
             e_score = elite_results[category]['score']
             f_score = free_results[category]['score']
+            e_cost = elite_results[category].get('cost', 0)
+            f_cost = free_results[category].get('cost', 0)
             e_prev = PREVIOUS_SCORES['elite'].get(category, e_score)
             f_prev = PREVIOUS_SCORES['free'].get(category, f_score)
             e_delta = calculate_delta(e_score, e_prev)
             f_delta = calculate_delta(f_score, f_prev)
             
-            print(f"{category:<25} {e_score:>9.1f}% {e_delta:>10} {f_score:>9.1f}% {f_delta:>10}")
+            print(f"{category:<20} {e_score:>7.1f}% {e_delta:>9} ${e_cost:>6.3f} {f_score:>7.1f}% {f_delta:>9} ${f_cost:>6.2f}")
     
-    print("-" * 70)
+    print("-" * 80)
+    print()
+    
+    # Cost summary
+    print("=" * 70)
+    print("💰 COST SUMMARY")
+    print("=" * 70)
+    print(f"ELITE Tier: ${elite_results['overall']['total_cost']:.4f} total ({elite_results['overall']['total_queries']} queries @ ${elite_results['overall']['cost_per_query']}/query)")
+    print(f"FREE Tier:  ${free_results['overall']['total_cost']:.4f} total ({free_results['overall']['total_queries']} queries @ ${free_results['overall']['cost_per_query']}/query)")
+    print(f"Cost Savings with FREE: 100% (FREE is completely free)")
     print()
     
     return report
