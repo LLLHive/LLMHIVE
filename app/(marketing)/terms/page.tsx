@@ -74,7 +74,7 @@ export default function TermsOfServicePage() {
               We offer a FREE tier and three paid subscription tiers designed to meet different needs:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-              <li><strong>Free ($0/mo):</strong> 50 queries/month with our patented FREE orchestration that beats most paid models</li>
+              <li><strong>Free ($0/mo):</strong> UNLIMITED queries with our patented FREE orchestration that beats most paid models</li>
               <li><strong>Lite ($14.99/mo):</strong> 100 ELITE queries (#1 in ALL categories), then FREE tier after quota</li>
               <li><strong>Pro ($29.99/mo):</strong> 500 ELITE queries (#1 in ALL categories), then FREE tier after quota</li>
               <li><strong>Enterprise ($35/seat/mo, min 5 seats):</strong> 400 ELITE/seat, SSO &amp; compliance</li>

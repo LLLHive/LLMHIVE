@@ -57,10 +57,10 @@ const tiers = [
     period: "/forever",
     description: "BEATS most paid models",
     features: [
-      "Patented AI orchestration tech",
+      "UNLIMITED FREE queries",
+      "Patented AI orchestration",
       "Outperforms single models",
-      "Knowledge Base access",
-      "No credit card required"
+      "Knowledge Base access"
     ],
     cta: "Start Free",
     href: "/sign-up",

@@ -42,7 +42,7 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
     description: 'Basic access to get started',
     maxModelsInTeam: 2,
     maxConcurrentRequests: 1,
-    monthlyTokenLimit: DEV_MODE ? null : 50_000,  // 50K tokens
+    monthlyTokenLimit: null,  // UNLIMITED for Free tier (Jan 2026)
     features: {
       canUseTeams: false,
       canUseAdvancedReasoning: false,

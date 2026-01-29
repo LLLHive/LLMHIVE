@@ -43,8 +43,8 @@ const pricingTiers: PricingTier[] = [
     tier: "free",
     icon: <Star className="h-5 w-5 text-[var(--bronze)]" />,
     quotas: {
-      eliteQueries: "FREE Orchestration",
-      afterQuota: "50 queries/month",
+      eliteQueries: "🆓 FREE Orchestration",
+      afterQuota: "UNLIMITED queries",
       totalQueries: "Basic features",
     },
     features: [

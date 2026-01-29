@@ -44,7 +44,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: "How do I get started with LLMHive?",
-        answer: "Simply sign up for a FREE account, which gives you 50 queries per month using our patented orchestration that beats most paid models. Once logged in, you can start chatting immediately. For #1 quality in ALL categories, upgrade to Lite ($14.99/mo), Pro ($29.99/mo), or Enterprise."
+        answer: "Simply sign up for a FREE account, which gives you UNLIMITED queries using our patented orchestration that beats most paid models. Once logged in, you can start chatting immediately. For #1 quality in ALL categories, upgrade to Lite ($14.99/mo), Pro ($29.99/mo), or Enterprise."
       },
       {
         question: "What makes LLMHive different from using ChatGPT or Claude directly?",
@@ -63,7 +63,7 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: "What plans are available?",
-        answer: "We offer FREE (forever, 50 queries/month with patented orchestration that beats most paid models), Lite ($14.99/month, 100 ELITE queries #1 in ALL categories), Pro ($29.99/month, 500 ELITE queries + API access), and Enterprise ($35/seat/month, min 5 seats, SSO & compliance)."
+        answer: "We offer FREE (forever, UNLIMITED queries with patented orchestration that beats most paid models), Lite ($14.99/month, 100 ELITE queries #1 in ALL categories), Pro ($29.99/month, 500 ELITE queries + API access), and Enterprise ($35/seat/month, min 5 seats, SSO & compliance)."
       },
       {
         question: "What happens when I reach my ELITE query limit?",
