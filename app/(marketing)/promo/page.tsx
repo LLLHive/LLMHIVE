@@ -319,87 +319,120 @@ export default function PromoLandingPage() {
         </div>
       </section>
 
-      {/* Pricing - Ultra Compact */}
+      {/* Pricing - All 4 Tiers */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Free */}
-            <div className="p-5 rounded-xl llmhive-glass border border-green-500/30">
-              <div className="flex items-center gap-2 mb-3">
-                <Star className="h-5 w-5 text-green-400" />
-                <h3 className="text-lg font-bold text-white">Free</h3>
+            <div className="p-4 rounded-xl llmhive-glass border border-[var(--bronze)]/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 text-[var(--bronze)]" />
+                <h3 className="text-base font-bold text-white">Free</h3>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">$0</div>
-              <p className="text-xs text-white/60 mb-3">Forever free</p>
-              <ul className="space-y-1.5 mb-4 text-xs">
-                <li className="flex items-center gap-2 text-white/80">
-                  <Check className="h-3 w-3 text-green-400" />
+              <div className="text-xl font-bold text-white mb-0.5">$0</div>
+              <p className="text-[10px] text-white/60 mb-2">Forever free</p>
+              <ul className="space-y-1 mb-3 text-[11px]">
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-green-400" />
                   50 FREE queries/month
                 </li>
-                <li className="flex items-center gap-2 text-white/80">
-                  <Check className="h-3 w-3 text-green-400" />
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-green-400" />
                   Beats most single models
                 </li>
               </ul>
               <Link href="/sign-up">
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white text-sm h-9">
+                <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white text-xs h-8">
                   Start Free
                 </Button>
               </Link>
             </div>
 
+            {/* Lite */}
+            <div className="p-4 rounded-xl llmhive-glass border border-[var(--bronze)]/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="h-4 w-4 text-blue-400" />
+                <h3 className="text-base font-bold text-white">Lite</h3>
+              </div>
+              <div className="text-xl font-bold text-white mb-0.5">$14.99</div>
+              <p className="text-[10px] text-white/60 mb-2">/month</p>
+              <ul className="space-y-1 mb-3 text-[11px]">
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Zap className="h-2.5 w-2.5 text-blue-400" />
+                  <strong>100 ELITE queries</strong>
+                </li>
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-green-400" />
+                  UNLIMITED FREE after
+                </li>
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-blue-400" />
+                  7-day memory
+                </li>
+              </ul>
+              <Link href="/sign-up">
+                <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white text-xs h-8">
+                  Get Lite
+                </Button>
+              </Link>
+            </div>
+
             {/* Pro - Featured */}
-            <div className="p-5 rounded-xl llmhive-glass border-2 border-yellow-500/50 relative shadow-xl shadow-yellow-500/10">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full text-xs font-bold text-white">
+            <div className="p-4 rounded-xl llmhive-glass border-2 border-yellow-500/50 relative shadow-lg shadow-yellow-500/10">
+              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full text-[10px] font-bold text-white">
                 BEST VALUE
               </div>
-              <div className="flex items-center gap-2 mb-3">
-                <Rocket className="h-5 w-5 text-yellow-400" />
-                <h3 className="text-lg font-bold text-white">Pro</h3>
+              <div className="flex items-center gap-2 mb-2 mt-1">
+                <Rocket className="h-4 w-4 text-yellow-400" />
+                <h3 className="text-base font-bold text-white">Pro</h3>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">$29.99</div>
-              <p className="text-xs text-white/60 mb-3">/month</p>
-              <ul className="space-y-1.5 mb-4 text-xs">
-                <li className="flex items-center gap-2 text-white/80">
-                  <Trophy className="h-3 w-3 text-yellow-400" />
+              <div className="text-xl font-bold text-white mb-0.5">$29.99</div>
+              <p className="text-[10px] text-white/60 mb-2">/month</p>
+              <ul className="space-y-1 mb-3 text-[11px]">
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Trophy className="h-2.5 w-2.5 text-yellow-400" />
                   <strong>500 ELITE queries</strong>
                 </li>
-                <li className="flex items-center gap-2 text-white/80">
-                  <Check className="h-3 w-3 text-yellow-400" />
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-yellow-400" />
                   #1 in ALL 10 benchmarks
                 </li>
-                <li className="flex items-center gap-2 text-white/80">
-                  <Check className="h-3 w-3 text-green-400" />
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-green-400" />
                   UNLIMITED FREE after
                 </li>
               </ul>
               <Link href="/sign-up">
-                <Button className="w-full bronze-gradient text-white text-sm h-9 font-bold">
+                <Button className="w-full bronze-gradient text-white text-xs h-8 font-bold">
                   Get Pro Now
                 </Button>
               </Link>
             </div>
 
             {/* Enterprise */}
-            <div className="p-5 rounded-xl llmhive-glass border border-purple-500/30">
-              <div className="flex items-center gap-2 mb-3">
-                <Briefcase className="h-5 w-5 text-purple-400" />
-                <h3 className="text-lg font-bold text-white">Enterprise</h3>
+            <div className="p-4 rounded-xl llmhive-glass border border-emerald-500/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Briefcase className="h-4 w-4 text-emerald-400" />
+                <h3 className="text-base font-bold text-white">Enterprise</h3>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">$35</div>
-              <p className="text-xs text-white/60 mb-3">/seat/month</p>
-              <ul className="space-y-1.5 mb-4 text-xs">
-                <li className="flex items-center gap-2 text-white/80">
-                  <Check className="h-3 w-3 text-purple-400" />
+              <div className="text-xl font-bold text-white mb-0.5">$35</div>
+              <p className="text-[10px] text-white/60 mb-2">/seat/month</p>
+              <ul className="space-y-1 mb-3 text-[11px]">
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-emerald-400" />
                   400 ELITE/seat
                 </li>
-                <li className="flex items-center gap-2 text-white/80">
-                  <Check className="h-3 w-3 text-purple-400" />
-                  SSO & SOC 2
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-emerald-400" />
+                  SSO & SOC 2 compliance
+                </li>
+                <li className="flex items-center gap-1.5 text-white/80">
+                  <Check className="h-2.5 w-2.5 text-green-400" />
+                  UNLIMITED FREE after
                 </li>
               </ul>
               <Link href="/contact">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm h-9">
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8">
                   Contact Sales
                 </Button>
               </Link>
