@@ -2177,42 +2177,6 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 logger.warning("PromptOps failed, using raw prompt: %s", e)
         
         # ========================================================================
-        # STEP 1.05: CONTEXT INJECTION FOR SPECIFIC QUERY TYPES
-        # Add targeted context AFTER PromptOps to ensure it's preserved
-        # ========================================================================
-        original_prompt_lower = request.prompt.lower()
-        
-        # RAG: LLMHive product knowledge for platform questions
-        if "llmhive" in original_prompt_lower and any(kw in original_prompt_lower for kw in ["feature", "mode", "tier", "orchestrat", "differ", "platform"]):
-            llmhive_context = """[LLMHive Product Info: ELITE tier (premium multi-model consensus), STANDARD tier (DeepSeek V3 + Claude), FREE tier (5 free models). Key features: multi-model orchestration, consensus voting, patented technology, adaptive routing, verification loops.]\n\n"""
-            base_prompt = llmhive_context + base_prompt
-            logger.info("Injected LLMHive product context")
-        
-        # Dialogue: Empathy keywords for emotional responses
-        elif any(kw in original_prompt_lower for kw in ["passed away", "died", "grieving", "loss", "grief"]):
-            empathy_context = """[Respond with deep empathy. Use words like: sorry for your loss, grief, support, understand, here for you. Acknowledge their pain before offering advice.]\n\n"""
-            base_prompt = empathy_context + base_prompt
-            logger.info("Injected empathy context")
-        
-        # Math: Explicit numeric answers
-        elif any(kw in original_prompt_lower for kw in ["how many ways", "factorial", "8 rooks", "permutation"]):
-            math_context = """[IMPORTANT: State the explicit numeric answer. For factorial: 8! = 40320. Show calculation AND final number.]\n\n"""
-            base_prompt = math_context + base_prompt
-            logger.info("Injected math context")
-        
-        # Calculator: Explicit financial answers - MUST output the exact number
-        elif "compound interest" in original_prompt_lower:
-            calc_context = """[CRITICAL: You MUST compute and state the EXACT final amount. For $10,000 at 5% compounded monthly for 10 years: FV = 10000 × (1 + 0.05/12)^120 = $16,470.09. State this number explicitly: "The final amount is $16,470.09" or "16470".]\n\n"""
-            base_prompt = calc_context + base_prompt
-            logger.info("Injected calculator context")
-        
-        # Biology: CRISPR mechanism - must include key technical terms
-        elif "crispr" in original_prompt_lower and any(kw in original_prompt_lower for kw in ["mechanism", "how", "explain"]):
-            bio_context = """[When explaining CRISPR-Cas9, include these key terms: guide RNA, double-strand break (DSB), specificity, PAM sequence. Explain that Cas9 creates a double-strand break at the target site, and mention its improved specificity over ZFNs/TALENs.]\n\n"""
-            base_prompt = bio_context + base_prompt
-            logger.info("Injected biology/CRISPR context")
-        
-        # ========================================================================
         # STEP 1.1: AUTO-ENABLE HRM FOR COMPLEX QUERIES
         # ========================================================================
         # Auto-activate Hierarchical Role Management (HRM) when PromptOps determines
