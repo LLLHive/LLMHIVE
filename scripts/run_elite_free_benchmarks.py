@@ -29,13 +29,15 @@ ORCHESTRATION_MODES = {
     "elite": {
         "name": "ELITE",
         "reasoning_mode": "elite",
-        "description": "Premium multi-model consensus with verification loops",
+        "tier": "elite",
+        "description": "Full orchestration with premium models (GPT-5, Claude Opus, etc.)",
         "cost_per_query": "$0.012"
     },
     "free": {
         "name": "FREE", 
-        "reasoning_mode": "standard",  # Free tier uses standard mode
-        "description": "5 free models with consensus voting",
+        "reasoning_mode": "elite",  # NOW uses FULL elite orchestration!
+        "tier": "free",             # But with FREE models only
+        "description": "Full orchestration with FREE models (DeepSeek R1, Qwen3, Gemini Flash, etc.)",
         "cost_per_query": "$0.00"
     }
 }
@@ -346,18 +348,23 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def call_llmhive_api(prompt: str, reasoning_mode: str, timeout: float = 90.0) -> Dict[str, Any]:
-    """Call the LLMHive API with specified reasoning mode."""
+async def call_llmhive_api(prompt: str, reasoning_mode: str, tier: str = None, timeout: float = 90.0) -> Dict[str, Any]:
+    """Call the LLMHive API with specified reasoning mode and tier."""
     start_time = time.time()
     
     async with httpx.AsyncClient(timeout=timeout) as client:
         try:
+            payload = {
+                "prompt": prompt,
+                "reasoning_mode": reasoning_mode,
+            }
+            # Add tier parameter if specified (controls free vs premium models)
+            if tier:
+                payload["tier"] = tier
+                
             response = await client.post(
                 f"{LLMHIVE_API_URL}/v1/chat",
-                json={
-                    "prompt": prompt,
-                    "reasoning_mode": reasoning_mode,
-                },
+                json=payload,
                 headers={
                     "Content-Type": "application/json",
                     "X-API-Key": API_KEY,
@@ -413,7 +420,11 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
         for i, case in enumerate(cases):
             print(f"  [{i+1}/{len(cases)}] {case['id']}: {case.get('category', 'General')}...", end=" ", flush=True)
             
-            api_result = await call_llmhive_api(case["prompt"], tier_config["reasoning_mode"])
+            api_result = await call_llmhive_api(
+                case["prompt"], 
+                tier_config["reasoning_mode"],
+                tier_config.get("tier")
+            )
             
             if api_result["success"]:
                 eval_result = evaluate_response(api_result["response"], case)
@@ -601,10 +612,14 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
 
 ## Tier Configurations
 
-| Tier | Reasoning Mode | Description |
-|------|----------------|-------------|
-| 🐝 ELITE | `elite` | Premium multi-model consensus with verification loops |
-| 🆓 FREE | `standard` | Standard orchestration with free model routing |
+| Tier | Orchestration | Models | Description |
+|------|---------------|--------|-------------|
+| 🐝 ELITE | Full (consensus, verification, self-consistency) | Premium (GPT-5, Claude Opus, etc.) | Maximum quality with premium models |
+| 🆓 FREE | Full (consensus, verification, self-consistency) | FREE (DeepSeek R1, Qwen3, Gemini Flash, etc.) | Same orchestration, $0 cost with free models |
+
+**Key Architecture Decision:** Both tiers use FULL orchestration because the orchestration logic
+(verification loops, consensus voting, self-consistency checks) runs on LLMHive servers at no cost.
+Only the model API calls cost money. This means FREE tier users get world-class orchestration at $0!
 
 ---
 
