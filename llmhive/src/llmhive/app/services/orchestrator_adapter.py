@@ -26,6 +26,7 @@ from ..models.orchestration import (
     ReasoningMethod,
     DomainPack,
     AgentMode,
+    ModelTier,
 )
 from ..orchestrator import Orchestrator
 # profiles_firestore requires google-cloud-firestore which may not be available
@@ -148,12 +149,16 @@ try:
         EliteTier,
         EliteConfig,
         ELITE_MODELS,
+        FREE_MODELS,
+        get_models_for_category,
     )
     ELITE_ORCHESTRATION_AVAILABLE = True
 except ImportError:
     ELITE_ORCHESTRATION_AVAILABLE = False
     elite_orchestrate = None
     EliteTier = None
+    FREE_MODELS = {}
+    get_models_for_category = lambda cat, use_free: []
 
 try:
     from ..orchestration.quality_booster import (
@@ -1798,6 +1803,22 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # Get available providers from orchestrator (EXCLUDE stub - it's only a fallback)
         available_providers = [p for p in _orchestrator.providers.keys() if p != "stub"]
         
+        # =========================================================================
+        # TIER-BASED MODEL SELECTION
+        # All tiers get FULL orchestration (consensus, verification, tools).
+        # The ONLY difference is the models used.
+        # =========================================================================
+        use_free_models = False  # Default to premium models
+        
+        if hasattr(request, 'tier') and request.tier:
+            if request.tier == ModelTier.free:
+                use_free_models = True
+                logger.info("Tier-based routing: FREE tier -> using FREE models only")
+            elif request.tier == ModelTier.elite:
+                use_free_models = False
+                logger.info("Tier-based routing: ELITE tier -> using premium models")
+            # ModelTier.auto - determine from user's subscription (default behavior)
+        
         # Use user-selected models if provided, otherwise auto-select
         if request.models and len(request.models) > 0:
             logger.info("User selected models: %s", request.models)
@@ -1897,42 +1918,45 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 category_override = True
                 logger.info("Speed routing -> %s", speed_models)
             
-            # 5d: Math Problem Routing - ELITE MODE for top position
-            # Use PREMIUM models (o3, GPT-5.2, Claude Opus) for math
+            # 5d: Math Problem Routing - FULL orchestration, tier-based models
+            # All tiers get FULL orchestration (consensus, verification, calculator)
+            # Only the MODELS differ based on tier
             elif _detect_task_type(request.prompt) == "math_problem":
-                # Phase 18: Use elite models for math to achieve #1 ranking
-                # Get accuracy_level from request (defined later in orchestration_config)
                 early_accuracy_level = getattr(request.orchestration, 'accuracy_level', 3)
                 if ELITE_ORCHESTRATION_AVAILABLE and early_accuracy_level >= 3:
-                    # Use the actual top math models
-                    selected_models = ELITE_MODELS.get("math", [])[:3]
-                    logger.info("ELITE Math routing (Phase 18) -> %s", selected_models)
+                    # Use tier-appropriate models (FREE or ELITE)
+                    selected_models = get_models_for_category("math", use_free_models)[:3]
+                    logger.info("Math routing (tier=%s) -> %s", "FREE" if use_free_models else "ELITE", selected_models)
                 else:
                     math_models = get_math_specialist_models(num_models=2)
                     selected_models = math_models + [m for m in selected_models if m not in math_models]
                     logger.info("Math routing -> %s", math_models)
                 category_override = True
             
-            # 5e: RAG Routing - ELITE MODE for top position
-            # Use PREMIUM models (GPT-5.2, Claude Opus) for RAG
+            # 5e: RAG Routing - FULL orchestration, tier-based models
+            # All tiers get FULL orchestration (reranking, context, verification)
+            # Only the MODELS differ based on tier
             elif getattr(request.orchestration, 'enable_rag', False) or "search" in request.prompt.lower() or "find information" in request.prompt.lower():
-                # Phase 18: Use elite models for RAG to achieve #1 ranking
                 early_accuracy_level = getattr(request.orchestration, 'accuracy_level', 3)
                 if ELITE_ORCHESTRATION_AVAILABLE and early_accuracy_level >= 3:
-                    selected_models = ELITE_MODELS.get("rag", [])[:2]
-                    logger.info("ELITE RAG routing (Phase 18) -> %s", selected_models)
+                    # Use tier-appropriate models (FREE or ELITE)
+                    selected_models = get_models_for_category("rag", use_free_models)[:2]
+                    logger.info("RAG routing (tier=%s) -> %s", "FREE" if use_free_models else "ELITE", selected_models)
                 else:
                     rag_models = get_rag_optimized_models(num_models=2)
                     selected_models = rag_models + [m for m in selected_models if m not in rag_models]
                     logger.info("RAG routing -> %s", rag_models)
                 category_override = True
             
-            # 5f: Reasoning Routing - ELITE MODE for top position
+            # 5f: Reasoning Routing - FULL orchestration, tier-based models
+            # All tiers get FULL orchestration (consensus, verification, self-consistency)
+            # Only the MODELS differ based on tier
             elif _detect_task_type(request.prompt) in ("reasoning", "multi_step"):
                 early_accuracy_level = getattr(request.orchestration, 'accuracy_level', 3)
                 if ELITE_ORCHESTRATION_AVAILABLE and early_accuracy_level >= 3:
-                    selected_models = ELITE_MODELS.get("reasoning", [])[:3]
-                    logger.info("ELITE Reasoning routing (Phase 18) -> %s", selected_models)
+                    # Use tier-appropriate models (FREE or ELITE)
+                    selected_models = get_models_for_category("reasoning", use_free_models)[:3]
+                    logger.info("Reasoning routing (tier=%s) -> %s", "FREE" if use_free_models else "ELITE", selected_models)
                 else:
                     selected_models = [FALLBACK_O3, FALLBACK_GPT_5] + selected_models
                 category_override = True

@@ -17,6 +17,18 @@ class ReasoningMode(str, Enum):
     deep = "deep"
 
 
+class ModelTier(str, Enum):
+    """Model tier for orchestration.
+    
+    Determines which models are used for orchestration.
+    All tiers get the SAME full orchestration (consensus, verification, tools).
+    The ONLY difference is the models used.
+    """
+    auto = "auto"          # Auto-detect from user subscription (default)
+    free = "free"          # FREE models only (DeepSeek R1, Qwen3, Gemini Flash, etc.)
+    elite = "elite"        # Premium models (GPT-5, Claude Opus, etc.)
+
+
 class ReasoningMethod(str, Enum):
     """Advanced reasoning methods for LLM orchestration.
     
@@ -252,6 +264,10 @@ class ChatRequest(BaseModel):
     reasoning_method: Optional[ReasoningMethod] = Field(
         default=None,
         description="Advanced reasoning method (chain-of-thought, tree-of-thought, react, plan-and-solve, self-consistency, reflexion). If not provided, will be inferred from reasoning_mode."
+    )
+    tier: ModelTier = Field(
+        default=ModelTier.auto,
+        description="Model tier: 'auto' (from subscription), 'free' (free models only), 'elite' (premium models). All tiers get FULL orchestration - only the models differ."
     )
     domain_pack: DomainPack = Field(default=DomainPack.default, description="Domain specialization pack")
     agent_mode: AgentMode = Field(default=AgentMode.team, description="Agent collaboration mode")
