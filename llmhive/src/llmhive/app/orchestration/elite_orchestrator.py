@@ -1173,6 +1173,8 @@ class EliteOrchestrator:
             # OpenRouter-only models
             "meta-llama/llama-4-maverick", "mistralai/mistral-large-2512",
             # FREE tier models (all :free variants from OpenRouter)
+            # CRITICAL: These MUST match exactly the model IDs in elite_orchestration.py FREE_MODELS
+            # Synced: January 30, 2026
             "deepseek/deepseek-r1-0528:free",
             "qwen/qwen3-next-80b-a3b-instruct:free",
             "tngtech/deepseek-r1t-chimera:free",
@@ -1186,8 +1188,16 @@ class EliteOrchestrator:
             "arcee-ai/trinity-large-preview:free",
             "arcee-ai/trinity-mini:free",
             "meta-llama/llama-3.3-70b-instruct:free",
-            "google/gemini-2.0-flash-001:free",
+            # FIXED: Correct model ID (was google/gemini-2.0-flash-001:free)
+            "google/gemini-2.0-flash-exp:free",
             "google/gemini-flash-1.5-8b:free",
+            # ADDED: Missing FREE_MODELS from elite_orchestration.py
+            "nvidia/nemotron-3-nano-30b-a3b:free",
+            "z-ai/glm-4.5-air:free",
+            "upstage/solar-pro-3:free",
+            "meta-llama/llama-3.2-3b-instruct:free",
+            "openai/gpt-oss-20b:free",
+            "nvidia/nemotron-nano-12b-v2-vl:free",
         ]
         
         if openrouter_available:
