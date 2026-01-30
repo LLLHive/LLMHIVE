@@ -795,6 +795,28 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                             if "native_tokens_completion" in usage:
                                 cost_info["native_completion_tokens"] = usage.get("native_tokens_completion", 0)
                             
+                            # Calculate estimated cost in USD using OpenRouter pricing
+                            # Typical rates (per 1M tokens):
+                            # - Premium models: $2-15 prompt, $5-30 completion
+                            # - Free models: $0 (subsidized)
+                            # For accurate costs, we estimate based on model tier
+                            model_lower = model.lower()
+                            if any(x in model_lower for x in ["deepseek", "qwen", "gemma", "llama", "gemini-flash"]):
+                                # Free tier models - $0 cost
+                                estimated_cost_usd = 0.0
+                            elif any(x in model_lower for x in ["gpt-5", "claude-opus", "o3", "gpt-4"]):
+                                # Premium models - estimate ~$10/1M average
+                                estimated_cost_usd = (prompt_tokens * 5 + completion_tokens * 15) / 1_000_000
+                            elif any(x in model_lower for x in ["claude-sonnet", "gpt-4o"]):
+                                # Mid-tier models - estimate ~$3/1M average
+                                estimated_cost_usd = (prompt_tokens * 1 + completion_tokens * 3) / 1_000_000
+                            else:
+                                # Default estimate
+                                estimated_cost_usd = (prompt_tokens * 2 + completion_tokens * 8) / 1_000_000
+                            
+                            cost_info["total_cost"] = estimated_cost_usd
+                            cost_info["cost_usd"] = estimated_cost_usd
+                            
                             return Result(
                                 text=content,
                                 model_name=response.get("model", model),

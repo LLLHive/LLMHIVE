@@ -3342,6 +3342,9 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 "total_tokens": cost_info.get("total_tokens", 0),
                 "model_used": cost_info.get("model_used", "unknown"),
                 "provider": cost_info.get("provider", "unknown"),
+                # Include actual cost in USD
+                "total_cost": cost_info.get("total_cost", 0.0),
+                "cost_usd": cost_info.get("cost_usd", 0.0),
             }
             # Include native token counts if available (from OpenRouter)
             if "native_prompt_tokens" in cost_info:
@@ -3353,6 +3356,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             extra["cost_tracking"] = {
                 "total_tokens": token_usage if isinstance(token_usage, int) else 0,
                 "provider": "unknown",
+                "total_cost": 0.0,
             }
         
         # CRITICAL SAFEGUARD: Never return empty message
