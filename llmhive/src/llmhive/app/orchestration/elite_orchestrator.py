@@ -1172,6 +1172,22 @@ class EliteOrchestrator:
             "grok-2", "grok-4", "x-ai/grok-2", "x-ai/grok-4",
             # OpenRouter-only models
             "meta-llama/llama-4-maverick", "mistralai/mistral-large-2512",
+            # FREE tier models (all :free variants from OpenRouter)
+            "deepseek/deepseek-r1-0528:free",
+            "qwen/qwen3-next-80b-a3b-instruct:free",
+            "tngtech/deepseek-r1t-chimera:free",
+            "google/gemma-3-27b-it:free",
+            "nousresearch/hermes-3-llama-3.1-405b:free",
+            "tngtech/tng-r1t-chimera:free",
+            "tngtech/deepseek-r1t2-chimera:free",
+            "meta-llama/llama-3.1-405b-instruct:free",
+            "qwen/qwen3-coder:free",
+            "openai/gpt-oss-120b:free",
+            "arcee-ai/trinity-large-preview:free",
+            "arcee-ai/trinity-mini:free",
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "google/gemini-2.0-flash-001:free",
+            "google/gemini-flash-1.5-8b:free",
         ]
         
         if openrouter_available:
