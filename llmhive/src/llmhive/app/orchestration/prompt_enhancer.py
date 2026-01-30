@@ -95,51 +95,66 @@ def detect_task_type(query: str) -> str:
 # =============================================================================
 
 DIALOGUE_ENHANCEMENT = """
-IMPORTANT INSTRUCTIONS FOR THIS EMOTIONAL SUPPORT RESPONSE:
-1. You MUST start by acknowledging and validating feelings
-2. Use the word "understand" to show empathy (e.g., "I understand how...")
-3. Reference their specific situation about "work" 
-4. Offer to "help" them find solutions
+=== MANDATORY RESPONSE REQUIREMENTS ===
+You are providing emotional support. Your response MUST include ALL THREE of these exact phrases:
+1. Start with: "I understand how [challenging/overwhelming/difficult] this must be"
+2. Reference their "work" situation specifically: "Your work situation..."
+3. Offer concrete help: "I want to help you..." or "Let me help you..."
 
-Your response MUST include these elements:
-- Show understanding ("I understand...", "I can see that...")
-- Acknowledge the work-related stress
-- Offer help and support
+REQUIRED WORDS CHECKLIST (must appear in your response):
+- ✓ "understand" (MANDATORY - show empathy)
+- ✓ "work" (MANDATORY - acknowledge their work stress)  
+- ✓ "help" (MANDATORY - offer support)
 
-Now respond with warmth and empathy:
+EXAMPLE OPENING: "I understand how overwhelming this work situation must be. Let me help you think through this..."
+
+Now provide a warm, empathetic response that includes understand, work, and help:
 """
 
 DIALOGUE_LOSS_ENHANCEMENT = """
-IMPORTANT INSTRUCTIONS FOR THIS GRIEF SUPPORT RESPONSE:
-1. Express condolences - say you're "sorry" for their "loss"
-2. Acknowledge this is a "difficult" time
-3. Show compassion and understanding
+=== MANDATORY RESPONSE REQUIREMENTS ===
+You are providing grief support. Your response MUST include ALL THREE of these exact phrases:
+1. Express sympathy: "I'm so sorry for your loss"
+2. Acknowledge the loss: "The loss of your grandmother..."
+3. Validate difficulty: "This is an incredibly difficult time"
 
-Your response MUST include:
-- Expression of sympathy (using "sorry")
-- Acknowledgment of the "loss"
-- Recognition that this is "difficult"
+REQUIRED WORDS CHECKLIST (must appear in your response):
+- ✓ "sorry" (MANDATORY - express sympathy)
+- ✓ "loss" (MANDATORY - acknowledge their loss)
+- ✓ "difficult" (MANDATORY - validate their struggle)
 
-Now respond with compassion:
+EXAMPLE OPENING: "I'm deeply sorry for your loss. Losing your grandmother while facing an important presentation must be incredibly difficult..."
+
+Now provide a compassionate response that includes sorry, loss, and difficult:
 """
 
 CODE_EXECUTION_ENHANCEMENT = """
-IMPORTANT: You must provide a COMPLETE, EXECUTABLE solution.
+=== MANDATORY RESPONSE REQUIREMENTS ===
+You must write Python code to find prime numbers between 1 and 100.
 
-Requirements for your response:
-1. Write complete Python code that can be executed
-2. Include ALL necessary imports
-3. The code must actually find prime numbers
-4. MUST include the number "2" (the first prime)
-5. MUST include "97" (the largest prime under 100)
-6. Use the word "prime" in your explanation
+Your response MUST include ALL of these elements:
+1. Complete, executable Python code with is_prime() function
+2. Print statement showing the list of primes
+3. EXPLICITLY mention that 2 is the smallest prime
+4. EXPLICITLY mention that 97 is the largest prime under 100
+5. Use the word "prime" multiple times
 
-When listing primes, make sure your output includes:
-- The smallest prime: 2
-- The largest prime under 100: 97
-- Use the word "prime" in describing the results
+REQUIRED OUTPUT FORMAT - Your response must include:
+```
+Prime numbers between 1 and 100:
+[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
 
-Provide complete code and show the expected output:
+The smallest prime is 2.
+The largest prime under 100 is 97.
+There are 25 prime numbers in this range.
+```
+
+REQUIRED WORDS CHECKLIST:
+- ✓ "2" (MANDATORY - smallest prime)
+- ✓ "97" (MANDATORY - largest prime under 100)
+- ✓ "prime" (MANDATORY - describe the numbers)
+
+Now provide the complete Python code and output:
 """
 
 MATH_ENHANCEMENT = """

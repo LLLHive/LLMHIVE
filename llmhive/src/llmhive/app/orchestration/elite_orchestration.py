@@ -93,81 +93,87 @@ def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
 # Marketing: "Our patented orchestration makes FREE models beat most single paid models"
 # Key insight: Multi-model consensus + calculator + reranker = great quality even with free models
 # UPDATED: January 27, 2026 - Weekly optimization sync from OpenRouter API
+# =============================================================================
+# VERIFIED FREE MODELS from OpenRouter API (January 30, 2026)
+# =============================================================================
+# IMPORTANT: These model IDs are VERIFIED to exist on OpenRouter.
+# Previous IDs like "google/gemma-3-27b-it:free" returned 404 errors!
+# Verified by fetching https://openrouter.ai/api/v1/models
+# =============================================================================
 FREE_MODELS = {
-    # Best free models per category from OpenRouter (synced January 27, 2026)
+    # All categories use the SAME verified free models
+    # Best models ranked by capability:
+    # 1. arcee-ai/trinity-large-preview:free - 131K, best quality, agentic
+    # 2. nvidia/nemotron-3-nano-30b-a3b:free - 256K, reasoning/tools
+    # 3. tngtech/tng-r1t-chimera:free - 163K, creative/reasoning
+    # 4. arcee-ai/trinity-mini:free - 131K, fast, function calling
+    # 5. upstage/solar-pro-3:free - 128K, multilingual
+    
     "math": [
-        # Fast models first for speed
-        "google/gemma-3-27b-it:free",                  # Fast - solid math
-        "meta-llama/llama-3.3-70b-instruct:free",      # Fast - good at math
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # Medium - strong math, 262K context
-        # Slow reasoning models for complex math
-        "deepseek/deepseek-r1-0528:free",              # Slow but best for complex math
-        "nousresearch/hermes-3-llama-3.1-405b:free",   # 131K - massive model
+        "arcee-ai/trinity-large-preview:free",         # Best quality free model
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - strong reasoning
+        "tngtech/tng-r1t-chimera:free",                # 163K - good reasoning
+        "arcee-ai/trinity-mini:free",                  # Fast fallback
     ],
     "reasoning": [
-        # Fast models first for parallel_race strategy (returns first good response)
-        "google/gemma-3-27b-it:free",                  # Fast - 131K context, solid quality
-        "meta-llama/llama-3.3-70b-instruct:free",      # Fast - versatile
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # Medium speed - 262K context
-        # Slow reasoning models for deep thinking tasks (will be used if fast models fail)
-        "deepseek/deepseek-r1-0528:free",              # Slow but best reasoning
-        "meta-llama/llama-3.1-405b-instruct:free",     # 131K - largest free Llama
+        "arcee-ai/trinity-large-preview:free",         # Best quality free model
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - strong reasoning
+        "tngtech/tng-r1t-chimera:free",                # 163K - good reasoning
+        "liquid/lfm-2.5-1.2b-thinking:free",           # 32K - thinking model
     ],
     "coding": [
-        # Fast models first
-        "meta-llama/llama-3.3-70b-instruct:free",      # Fast, good at code
-        "google/gemma-3-27b-it:free",                  # Fast, decent coding
-        "qwen/qwen3-coder:free",                       # 262K context - BEST free for coding
-        "arcee-ai/trinity-mini:free",                  # Fast coding
-        "deepseek/deepseek-r1-0528:free",              # Slow but thorough
+        "arcee-ai/trinity-large-preview:free",         # Agentic/coding optimized
+        "arcee-ai/trinity-mini:free",                  # Fast, function calling
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - tool support
+        "tngtech/tng-r1t-chimera:free",                # Good at coding
     ],
     "rag": [
-        "google/gemini-2.0-flash-exp:free",            # 1M context - BEST for RAG!
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K context
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K context
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - solid context
-        "nousresearch/hermes-3-llama-3.1-405b:free",   # 131K - massive comprehension
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - LONGEST context!
+        "tngtech/tng-r1t-chimera:free",                # 163K context
+        "arcee-ai/trinity-large-preview:free",         # 131K context
+        "arcee-ai/trinity-mini:free",                  # Fast fallback
     ],
     "multilingual": [
-        "z-ai/glm-4.5-air:free",                       # 131K - strong multilingual
-        "google/gemma-3-27b-it:free",                  # Strong multilingual support
-        "meta-llama/llama-3.3-70b-instruct:free",      # 70+ languages
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # Excellent Chinese + others
-        "upstage/solar-pro-3:free",                    # 128K - Korean optimized
+        "upstage/solar-pro-3:free",                    # 128K - Korean/multilingual
+        "arcee-ai/trinity-large-preview:free",         # Good multilingual
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # Broad language support
+        "arcee-ai/trinity-mini:free",                  # Fast fallback
     ],
     "long_context": [
-        "google/gemini-2.0-flash-exp:free",            # 1M tokens - LONGEST free context!
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K context
-        "qwen/qwen3-coder:free",                       # 262K context
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K context
-        "tngtech/deepseek-r1t-chimera:free",           # 163K context
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - LONGEST!
+        "tngtech/tng-r1t-chimera:free",                # 163K context
+        "arcee-ai/trinity-large-preview:free",         # 131K context
+        "arcee-ai/trinity-mini:free",                  # 131K context
     ],
     "speed": [
-        "meta-llama/llama-3.2-3b-instruct:free",       # 131K - fastest quality
-        "openai/gpt-oss-20b:free",                     # 131K - fast OSS GPT
-        "nvidia/nemotron-nano-12b-v2-vl:free",         # 128K - fast nano
-        "arcee-ai/trinity-mini:free",                  # 131K - fast and capable
-        "google/gemma-3-27b-it:free",                  # Fast inference
+        "arcee-ai/trinity-mini:free",                  # FASTEST free model
+        "liquid/lfm-2.5-1.2b-instruct:free",           # Very fast, small
+        "nvidia/nemotron-nano-12b-v2-vl:free",         # Fast nano
+        "arcee-ai/trinity-large-preview:free",         # Quality fallback
     ],
     "dialogue": [
-        "meta-llama/llama-3.3-70b-instruct:free",      # Excellent conversational
-        "arcee-ai/trinity-large-preview:free",         # Designed for chat/roleplay
-        "z-ai/glm-4.5-air:free",                       # Good alignment
-        "google/gemma-3-27b-it:free",                  # Good dialogue
-        "upstage/solar-pro-3:free",                    # Strong dialogue
+        "arcee-ai/trinity-large-preview:free",         # BEST for chat/roleplay
+        "tngtech/tng-r1t-chimera:free",                # Creative/storytelling
+        "upstage/solar-pro-3:free",                    # Good dialogue
+        "arcee-ai/trinity-mini:free",                  # Fast fallback
     ],
     "multimodal": [
-        "nvidia/nemotron-nano-12b-v2-vl:free",         # 128K - vision-language
-        "google/gemma-3-27b-it:free",                  # Vision capable
-        "google/gemini-2.0-flash-exp:free",            # 1M - multimodal flash
-        "meta-llama/llama-3.2-3b-instruct:free",       # Lightweight multimodal
+        "nvidia/nemotron-nano-12b-v2-vl:free",         # ONLY vision-capable free model
+        "allenai/molmo-2-8b:free",                     # Vision model
+        "arcee-ai/trinity-large-preview:free",         # Text fallback
+        "arcee-ai/trinity-mini:free",                  # Fast fallback
     ],
     "tool_use": [
         "arcee-ai/trinity-large-preview:free",         # Agentic harness optimized
-        "qwen/qwen3-coder:free",                       # 262K - good tool calling
-        "deepseek/deepseek-r1-0528:free",              # Function calling
-        "openai/gpt-oss-120b:free",                    # Tool capable
-        "meta-llama/llama-3.3-70b-instruct:free",      # Tool capable
+        "arcee-ai/trinity-mini:free",                  # Function calling support
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # Tool capable
+        "tngtech/tng-r1t-chimera:free",                # Tool calling
+    ],
+    "general": [
+        "arcee-ai/trinity-large-preview:free",         # Best overall quality
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # Strong reasoning
+        "tngtech/tng-r1t-chimera:free",                # Good quality
+        "arcee-ai/trinity-mini:free",                  # Fast fallback
     ],
 }
 
