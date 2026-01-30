@@ -96,25 +96,30 @@ def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
 FREE_MODELS = {
     # Best free models per category from OpenRouter (synced January 27, 2026)
     "math": [
-        "deepseek/deepseek-r1-0528:free",              # Latest DeepSeek R1 - 163K context, best reasoning
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K context - strong math
-        "tngtech/deepseek-r1t-chimera:free",           # 163K context - reasoning focused
-        "google/gemma-3-27b-it:free",                  # 131K context - solid math
+        # Fast models first for speed
+        "google/gemma-3-27b-it:free",                  # Fast - solid math
+        "meta-llama/llama-3.3-70b-instruct:free",      # Fast - good at math
+        "qwen/qwen3-next-80b-a3b-instruct:free",       # Medium - strong math, 262K context
+        # Slow reasoning models for complex math
+        "deepseek/deepseek-r1-0528:free",              # Slow but best for complex math
         "nousresearch/hermes-3-llama-3.1-405b:free",   # 131K - massive model
     ],
     "reasoning": [
-        "deepseek/deepseek-r1-0528:free",              # Best reasoning among free
-        "tngtech/tng-r1t-chimera:free",                # 163K context - reasoning chimera
-        "tngtech/deepseek-r1t2-chimera:free",          # 163K - second gen chimera
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - deep reasoning
+        # Fast models first for parallel_race strategy (returns first good response)
+        "google/gemma-3-27b-it:free",                  # Fast - 131K context, solid quality
+        "meta-llama/llama-3.3-70b-instruct:free",      # Fast - versatile
+        "qwen/qwen3-next-80b-a3b-instruct:free",       # Medium speed - 262K context
+        # Slow reasoning models for deep thinking tasks (will be used if fast models fail)
+        "deepseek/deepseek-r1-0528:free",              # Slow but best reasoning
         "meta-llama/llama-3.1-405b-instruct:free",     # 131K - largest free Llama
     ],
     "coding": [
-        "qwen/qwen3-coder:free",                       # 262K context - BEST free for coding!
-        "openai/gpt-oss-120b:free",                    # 131K - open source GPT for code
-        "arcee-ai/trinity-large-preview:free",         # 131K - agentic coding focus
-        "arcee-ai/trinity-mini:free",                  # 131K - fast coding
-        "deepseek/deepseek-r1-0528:free",              # Strong at code generation
+        # Fast models first
+        "meta-llama/llama-3.3-70b-instruct:free",      # Fast, good at code
+        "google/gemma-3-27b-it:free",                  # Fast, decent coding
+        "qwen/qwen3-coder:free",                       # 262K context - BEST free for coding
+        "arcee-ai/trinity-mini:free",                  # Fast coding
+        "deepseek/deepseek-r1-0528:free",              # Slow but thorough
     ],
     "rag": [
         "google/gemini-2.0-flash-exp:free",            # 1M context - BEST for RAG!

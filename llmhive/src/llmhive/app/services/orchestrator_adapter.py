@@ -3041,12 +3041,14 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     )
                     selected_strategy = strategy
                     
-                    # For FREE tier: force "static" strategy to prevent OpenRouter dynamic selection
-                    # from overriding our free model selection
+                    # For FREE tier: use "parallel_race" for speed, or let normal strategy work
+                    # The tier filtering already ensures we use free models, so we can use
+                    # normal orchestration strategies. Just avoid "auto/dynamic" which would
+                    # try to fetch models from OpenRouter.
                     elite_strategy = strategy
-                    if use_free_models:
-                        elite_strategy = "single_best"  # Use static model selection
-                        logger.info("FREE tier: forcing static strategy to preserve free model selection")
+                    if use_free_models and strategy in ("auto", "automatic", "dynamic"):
+                        elite_strategy = "parallel_race"  # Fast multi-model, avoids dynamic selection
+                        logger.info("FREE tier: using parallel_race to avoid dynamic model selection")
                     
                     elite_result = await elite.orchestrate(
                         enhanced_prompt,
