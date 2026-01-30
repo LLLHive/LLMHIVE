@@ -1173,20 +1173,30 @@ class EliteOrchestrator:
             # OpenRouter-only models
             "meta-llama/llama-4-maverick", "mistralai/mistral-large-2512",
             # =============================================================
-            # FREE tier models - VERIFIED from OpenRouter API Jan 30, 2026
+            # FREE tier models - From OpenRouter free-models collection
+            # Source: https://openrouter.ai/collections/free-models
+            # Updated: January 30, 2026
             # =============================================================
-            # ONLY these model IDs are confirmed to exist and return 200 OK
-            # Previous IDs returned 404 errors (model not found)
-            # =============================================================
-            "arcee-ai/trinity-large-preview:free",      # 131K - BEST quality
-            "arcee-ai/trinity-mini:free",               # 131K - Fast, function calling
-            "nvidia/nemotron-3-nano-30b-a3b:free",      # 256K - Reasoning/tools
-            "nvidia/nemotron-nano-12b-v2-vl:free",      # 128K - Vision-language
-            "tngtech/tng-r1t-chimera:free",             # 163K - Creative/reasoning
-            "upstage/solar-pro-3:free",                 # 128K - Multilingual
-            "liquid/lfm-2.5-1.2b-thinking:free",        # 32K - Thinking model
-            "liquid/lfm-2.5-1.2b-instruct:free",        # 32K - Fast instruct
-            "allenai/molmo-2-8b:free",                  # 36K - Vision model
+            # TOP TIER FREE MODELS
+            "deepseek/deepseek-r1-0528:free",           # 164K - BEST reasoning (o1-level!)
+            "tngtech/deepseek-r1t2-chimera:free",       # 164K - DeepSeek-based, 20% faster
+            "tngtech/deepseek-r1t-chimera:free",        # 164K - DeepSeek-based
+            "meta-llama/llama-3.3-70b-instruct:free",   # 131K - GPT-4 level
+            "google/gemma-3-27b-it:free",               # 131K - Multimodal, 140+ languages
+            "qwen/qwen3-coder:free",                    # 262K - BEST for coding
+            "qwen/qwen3-next-80b-a3b-instruct:free",    # 262K - Strong reasoning
+            "openai/gpt-oss-120b:free",                 # 131K - Tool use
+            "openai/gpt-oss-20b:free",                  # 131K - Fast
+            "z-ai/glm-4.5-air:free",                    # 131K - Multilingual
+            "nvidia/nemotron-3-nano-30b-a3b:free",      # 256K - Agentic
+            "nvidia/nemotron-nano-12b-v2-vl:free",      # 128K - Vision
+            "arcee-ai/trinity-large-preview:free",      # 131K - Creative/agentic
+            "arcee-ai/trinity-mini:free",               # 131K - Fast
+            "upstage/solar-pro-3:free",                 # 128K - Korean/multilingual
+            "tngtech/tng-r1t-chimera:free",             # 164K - Creative
+            "liquid/lfm-2.5-1.2b-thinking:free",        # 32K - Thinking
+            "liquid/lfm-2.5-1.2b-instruct:free",        # 32K - Fast
+            "allenai/molmo-2-8b:free",                  # 36K - Vision
         ]
         
         if openrouter_available:
