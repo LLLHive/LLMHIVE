@@ -1974,6 +1974,29 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             actual_models = ["gpt-4o-mini"]
             user_model_names = ["GPT-4o Mini"]
         
+        # =========================================================================
+        # TIER-BASED MODEL FILTERING
+        # When use_free_models is True, replace premium models with free alternatives
+        # =========================================================================
+        if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+            # Get all available free models
+            all_free_models = []
+            for category_models in FREE_MODELS.values():
+                all_free_models.extend(category_models)
+            all_free_models = list(set(all_free_models))  # Remove duplicates
+            
+            # Filter to only use free models
+            filtered_models = [m for m in actual_models if m in all_free_models]
+            
+            if not filtered_models:
+                # If no overlap, use default free models
+                filtered_models = FREE_MODELS.get("reasoning", [])[:3]
+                logger.info("No matching free models, using defaults: %s", filtered_models)
+            
+            actual_models = filtered_models
+            user_model_names = [m.split("/")[-1] if "/" in m else m for m in actual_models]
+            logger.info("Tier filtering: FREE -> using free models only: %s", actual_models)
+        
         logger.info(
             "Final models for orchestration: %s (display: %s)",
             actual_models,
