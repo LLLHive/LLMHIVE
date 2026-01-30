@@ -1,0 +1,791 @@
+{
+  "timestamp": "2026-01-29T19:58:26.171518",
+  "elite": {
+    "tier": "elite",
+    "tier_name": "ELITE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 783.4420204162598,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 190.4890537261963,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 190.60301780700684,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 189.7411346435547,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 185.81080436706543,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 226.00102424621582,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 268.996000289917,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 264.03307914733887,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 198.03118705749512,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 221.2989330291748,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 184.24296379089355,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 199.57375526428223,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 197.24607467651367,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 193.8021183013916,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 183.11190605163574,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 175.22215843200684,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 190.57798385620117,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 186.10095977783203,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 205.8708667755127,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 200.13713836669922,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 192.90494918823242,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 187.0591640472412,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 390.1221752166748,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 272.94111251831055,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 208.88805389404297,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 3,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 185.3470802307129,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 184.63373184204102,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 219.04516220092773,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 206.65216445922852,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      }
+    },
+    "total_passed": 0,
+    "total_cases": 29,
+    "overall_pass_rate": 0.0,
+    "total_cost": 0.0,
+    "avg_cost_per_query": 0.0
+  },
+  "free": {
+    "tier": "free",
+    "tier_name": "FREE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 187.10875511169434,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 193.2661533355713,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 259.746789932251,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 193.8800811767578,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 189.93520736694336,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 166.66102409362793,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 183.54105949401855,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 217.39912033081055,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 189.03112411499023,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 211.6401195526123,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 268.6600685119629,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 220.9470272064209,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 217.87095069885254,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 178.47394943237305,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 180.8493137359619,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 182.4028491973877,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 183.9609146118164,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 193.85218620300293,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 259.87815856933594,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 174.7000217437744,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 177.2298812866211,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 211.91692352294922,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 308.0759048461914,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 199.89776611328125,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 185.20808219909668,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 3,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 186.9180202484131,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 175.89211463928223,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 175.37808418273926,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 500: {\"detail\":{\"error\":\"Orchestration failed: free\",\"error_type\":\"AttributeError\",\"latency_ms\":0}}",
+            "latency_ms": 194.83208656311035,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      }
+    },
+    "total_passed": 0,
+    "total_cases": 29,
+    "overall_pass_rate": 0.0,
+    "total_cost": 0.0,
+    "avg_cost_per_query": 0.0
+  }
+}

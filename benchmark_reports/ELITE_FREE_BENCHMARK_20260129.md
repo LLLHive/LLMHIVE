@@ -1,34 +1,34 @@
-# 🏆 LLMHive Industry Benchmark Rankings — January 2026
+# 🏆 LLMHive Orchestration Benchmark — January 2026
 
 ## Test Configuration
 
-- **Benchmark Date:** 2026-01-29T18:48:35.674766
+- **Benchmark Date:** 2026-01-29T20:00:24.862964
 - **API Endpoint:** https://llmhive-orchestrator-792354158895.us-east1.run.app
 - **Test Method:** Live API calls with keyword/pattern evaluation
-- **Orchestration Tiers Tested:** ELITE, FREE
+- **Orchestration Modes Tested:** DEEP (max quality), STANDARD (balanced)
 
 ---
 
 ## 📊 Executive Summary
 
-| Tier | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
+| Mode | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
 |------|-----------|--------------|-------------------|----------------|
-| 🐝 **ELITE** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
-| 🆓 **FREE** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
+| 🐝 **DEEP** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
+| ⚡ **STANDARD** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
 
 ### 💰 Actual Cost Analysis (from API responses)
 
-- **ELITE Total Cost:** $0.0000 for 29 queries
-- **FREE Total Cost:** $0.0000 for 29 queries  
-- **Cost Savings with FREE:** $0.0000
+- **DEEP Total Cost:** $0.0000 for 29 queries
+- **STANDARD Total Cost:** $0.0000 for 29 queries  
+- **Cost Difference:** $0.0000
 - **Quality Gap:** 0.0% pass rate difference
 
 ---
 
 ## Category Comparison
 
-| Category | ELITE Score | ELITE Pass | FREE Score | FREE Pass |
-|----------|-------------|------------|------------|-----------|
+| Category | DEEP Score | DEEP Pass | STANDARD Score | STANDARD Pass |
+|----------|------------|-----------|----------------|---------------|
 | General Reasoning | 0.0% | 0/5 | 0.0% | 0/5 |
 | Coding | 0.0% | 0/5 | 0.0% | 0/5 |
 | Math | 0.0% | 0/5 | 0.0% | 0/5 |
@@ -42,8 +42,8 @@
 
 ## General Reasoning
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -51,8 +51,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | gr_001 | PhD-Level Physics | ⚠️ 0% | ⚠️ 0% |
 | gr_002 | PhD-Level Chemistry | ⚠️ 0% | ⚠️ 0% |
 | gr_003 | PhD-Level Mathematics | ⚠️ 0% | ⚠️ 0% |
@@ -65,8 +65,8 @@
 
 ## Coding
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -74,8 +74,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | code_001 | Algorithm Implementation | ⚠️ 0% | ⚠️ 0% |
 | code_002 | Data Structures | ⚠️ 0% | ⚠️ 0% |
 | code_003 | Database | ⚠️ 0% | ⚠️ 0% |
@@ -88,8 +88,8 @@
 
 ## Math
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -97,8 +97,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | math_001 | Number Theory | ⚠️ 0% | ⚠️ 0% |
 | math_002 | Geometry | ⚠️ 0% | ⚠️ 0% |
 | math_003 | Calculus | ⚠️ 0% | ⚠️ 0% |
@@ -111,8 +111,8 @@
 
 ## Multilingual
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -120,8 +120,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | ml_001 | Translation | ⚠️ 0% | ⚠️ 0% |
 | ml_002 | Chinese Comprehension | ⚠️ 0% | ⚠️ 0% |
 | ml_003 | French Comprehension | ⚠️ 0% | ⚠️ 0% |
@@ -134,8 +134,8 @@
 
 ## Long-Context
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/2) | 0.0% (0/2) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -143,8 +143,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | lc_001 | Memory Recall | ⚠️ 0% | ⚠️ 0% |
 | lc_002 | Code Analysis | ⚠️ 0% | ⚠️ 0% |
 
@@ -154,8 +154,8 @@
 
 ## Tool Use
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/3) | 0.0% (0/3) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -163,8 +163,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | tu_001 | Web Search | ⚠️ 0% | ⚠️ 0% |
 | tu_002 | Calculator | ⚠️ 0% | ⚠️ 0% |
 | tu_003 | Code Execution | ⚠️ 0% | ⚠️ 0% |
@@ -175,8 +175,8 @@
 
 ## RAG
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/2) | 0.0% (0/2) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -184,8 +184,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | rag_001 | Documentation QA | ⚠️ 0% | ⚠️ 0% |
 | rag_002 | Product Knowledge | ⚠️ 0% | ⚠️ 0% |
 
@@ -195,8 +195,8 @@
 
 ## Dialogue
 
-| Metric | ELITE | FREE |
-|--------|-------|------|
+| Metric | DEEP | STANDARD |
+|--------|------|----------|
 | Pass Rate | 0.0% (0/2) | 0.0% (0/2) |
 | Actual Cost | $0.0000 | $0.0000 |
 | Avg Score | 0.0% | 0.0% |
@@ -204,8 +204,8 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | ELITE | FREE |
-|---------|----------|-------|------|
+| Test ID | Category | DEEP | STANDARD |
+|---------|----------|------|----------|
 | dl_001 | Empathetic Response | ⚠️ 0% | ⚠️ 0% |
 | dl_002 | Emotional Intelligence | ⚠️ 0% | ⚠️ 0% |
 
@@ -213,7 +213,7 @@
 
 ---
 
-## 🎯 Key Marketing Claims (VERIFIED)
+## 🎯 Key Performance Claims
 
 | Claim | Status | Evidence |
 |-------|--------|----------|
@@ -229,18 +229,17 @@
 4. **Pass Threshold**: 60% of expected keywords must be present
 5. **Timeout**: 90 seconds per request
 
-## Tier Configurations
+## Orchestration Modes
 
-| Tier | Orchestration | Models | Description |
-|------|---------------|--------|-------------|
-| 🐝 ELITE | Full (consensus, verification, self-consistency) | Premium (GPT-5, Claude Opus, etc.) | Maximum quality with premium models |
-| 🆓 FREE | Full (consensus, verification, self-consistency) | FREE (DeepSeek R1, Qwen3, Gemini Flash, etc.) | Same orchestration, $0 cost with free models |
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| 🐝 DEEP | Multi-model consensus with verification loops and deep reasoning | Maximum quality for critical tasks |
+| ⚡ STANDARD | Balanced orchestration with single-model responses | Faster responses for everyday tasks |
 
-**Key Architecture Decision:** Both tiers use FULL orchestration because the orchestration logic
-(verification loops, consensus voting, self-consistency checks) runs on LLMHive servers at no cost.
-Only the model API calls cost money. This means FREE tier users get world-class orchestration at $0!
+**Note:** The models used depend on the user's subscription tier (FREE vs ELITE).
+Both modes apply the same orchestration logic - the difference is the reasoning depth.
 
 ---
 
-**Document Generated:** 2026-01-29T18:48:35.674766
+**Document Generated:** 2026-01-29T20:00:24.862964
 **Test Source:** `scripts/run_elite_free_benchmarks.py`

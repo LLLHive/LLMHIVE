@@ -26,7 +26,7 @@ from ..models.orchestration import (
     ReasoningMethod,
     DomainPack,
     AgentMode,
-    ModelTier,
+    ModelTier as RequestModelTier,  # Renamed to avoid conflict with model_intelligence.ModelTier
 )
 from ..orchestrator import Orchestrator
 # profiles_firestore requires google-cloud-firestore which may not be available
@@ -1811,13 +1811,13 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         use_free_models = False  # Default to premium models
         
         if hasattr(request, 'tier') and request.tier:
-            if request.tier == ModelTier.free:
+            if request.tier == RequestModelTier.free:
                 use_free_models = True
                 logger.info("Tier-based routing: FREE tier -> using FREE models only")
-            elif request.tier == ModelTier.elite:
+            elif request.tier == RequestModelTier.elite:
                 use_free_models = False
                 logger.info("Tier-based routing: ELITE tier -> using premium models")
-            # ModelTier.auto - determine from user's subscription (default behavior)
+            # RequestModelTier.auto - determine from user's subscription (default behavior)
         
         # Use user-selected models if provided, otherwise auto-select
         if request.models and len(request.models) > 0:
