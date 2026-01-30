@@ -414,7 +414,29 @@ class WebSearchTool(BaseTool):
 
 
 class CalculatorTool(BaseTool):
-    """Calculator tool for mathematical computations."""
+    """
+    Advanced Scientific Calculator tool for mathematical computations.
+    
+    This calculator is AUTHORITATIVE for all math operations.
+    It supports:
+    - Basic arithmetic
+    - Trigonometry (radians and degrees)
+    - Special functions (erf, gamma, factorial, etc.)
+    - Financial calculations (compound interest, NPV, etc.)
+    - Numerical integration
+    - Statistics
+    - Unit conversions
+    """
+    
+    def __init__(self):
+        """Initialize with advanced scientific calculator."""
+        try:
+            from .scientific_calculator import get_calculator
+            self._calculator = get_calculator()
+            logger.info("Scientific calculator initialized with advanced functions")
+        except ImportError:
+            self._calculator = None
+            logger.warning("Scientific calculator not available, using basic eval")
     
     @property
     def tool_type(self) -> ToolType:
@@ -424,12 +446,41 @@ class CalculatorTool(BaseTool):
         return True  # Always available
     
     async def execute(self, query: str, **kwargs) -> ToolResult:
-        """Execute calculation."""
+        """Execute calculation using advanced scientific calculator."""
         start_time = time.time()
         
         try:
-            # Sanitize input - only allow safe math operations
-            sanitized = self._sanitize_expression(query)
+            # Check for variable substitution from context
+            context_values = kwargs.get("context_values", {})
+            expression = query
+            for var, val in context_values.items():
+                expression = expression.replace(var, str(val))
+            
+            # Use advanced scientific calculator if available
+            if self._calculator:
+                result = self._calculator.evaluate(expression)
+                
+                if result.get("success"):
+                    return ToolResult(
+                        tool_type=self.tool_type,
+                        success=True,
+                        data={
+                            "expression": result.get("expression", expression),
+                            "result": result.get("result"),
+                            "formatted": result.get("formatted"),
+                            "note": result.get("note", ""),
+                        },
+                        latency_ms=(time.time() - start_time) * 1000,
+                        source="scientific_calculator",
+                        status=ToolStatus.SUCCESS,
+                    )
+                else:
+                    # Fall back to basic eval on failure
+                    logger.warning("Scientific calc failed: %s, trying basic eval", 
+                                 result.get("error"))
+            
+            # Fallback: basic evaluation
+            sanitized = self._sanitize_expression(expression)
             
             if not sanitized:
                 return ToolResult(
@@ -440,11 +491,6 @@ class CalculatorTool(BaseTool):
                     latency_ms=(time.time() - start_time) * 1000,
                     status=ToolStatus.FAILED,
                 )
-            
-            # Check for variable substitution from context
-            context_values = kwargs.get("context_values", {})
-            for var, val in context_values.items():
-                sanitized = sanitized.replace(var, str(val))
             
             # Evaluate safely
             result = self._safe_eval(sanitized)
@@ -473,10 +519,18 @@ class CalculatorTool(BaseTool):
         # Remove all whitespace
         expr = expr.replace(" ", "")
         
+        # Extended list of allowed functions for scientific calculations
+        allowed_funcs = [
+            'sqrt', 'sin', 'cos', 'tan', 'log', 'exp', 'abs', 'pow',
+            'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh',
+            'log10', 'log2', 'ceil', 'floor', 'factorial',
+            'erf', 'erfc', 'gamma', 'lgamma',  # Special functions
+            'gcd', 'lcm', 'degrees', 'radians',
+        ]
+        
         # Only allow: numbers, operators, parentheses, decimal points
         if not re.match(r'^[\d\+\-\*\/\.\(\)\%\^]+$', expr):
-            # Check for common math functions
-            allowed_funcs = ['sqrt', 'sin', 'cos', 'tan', 'log', 'exp', 'abs', 'pow']
+            # Check for math functions
             for func in allowed_funcs:
                 expr = expr.replace(func, f'__{func}__')
             
@@ -491,24 +545,57 @@ class CalculatorTool(BaseTool):
         return expr
     
     def _safe_eval(self, expr: str) -> float:
-        """Safely evaluate a mathematical expression."""
+        """Safely evaluate a mathematical expression with extended functions."""
         import math
         
         # Replace ^ with ** for exponentiation
         expr = expr.replace('^', '**')
         
-        # Safe namespace for evaluation
+        # Safe namespace for evaluation - extended with scientific functions
         safe_dict = {
+            # Basic
             'sqrt': math.sqrt,
+            'abs': abs,
+            'pow': pow,
+            'round': round,
+            
+            # Trigonometric
             'sin': math.sin,
             'cos': math.cos,
             'tan': math.tan,
+            'asin': math.asin,
+            'acos': math.acos,
+            'atan': math.atan,
+            
+            # Hyperbolic
+            'sinh': math.sinh,
+            'cosh': math.cosh,
+            'tanh': math.tanh,
+            
+            # Logarithmic
             'log': math.log,
+            'log10': math.log10,
+            'log2': math.log2,
             'exp': math.exp,
-            'abs': abs,
-            'pow': pow,
+            
+            # Special functions
+            'erf': math.erf,
+            'erfc': math.erfc,
+            'gamma': math.gamma,
+            'lgamma': math.lgamma,
+            'factorial': math.factorial,
+            
+            # Utility
+            'ceil': math.ceil,
+            'floor': math.floor,
+            'gcd': math.gcd,
+            'degrees': math.degrees,
+            'radians': math.radians,
+            
+            # Constants
             'pi': math.pi,
             'e': math.e,
+            'tau': math.tau,
         }
         
         return eval(expr, {"__builtins__": {}}, safe_dict)
