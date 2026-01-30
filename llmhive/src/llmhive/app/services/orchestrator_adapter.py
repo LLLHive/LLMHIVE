@@ -1810,13 +1810,29 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # =========================================================================
         use_free_models = False  # Default to premium models
         
+        # DEBUG: Log tier detection
+        logger.info(
+            "TIER DETECTION: hasattr(tier)=%s, tier=%s, tier_type=%s, RequestModelTier.free=%s",
+            hasattr(request, 'tier'),
+            getattr(request, 'tier', None),
+            type(getattr(request, 'tier', None)),
+            RequestModelTier.free,
+        )
+        
         if hasattr(request, 'tier') and request.tier:
-            if request.tier == RequestModelTier.free:
+            tier_value = request.tier
+            # Handle both string and enum comparisons
+            is_free = (tier_value == RequestModelTier.free) or (str(tier_value).lower() == "free")
+            is_elite = (tier_value == RequestModelTier.elite) or (str(tier_value).lower() == "elite")
+            
+            if is_free:
                 use_free_models = True
-                logger.info("Tier-based routing: FREE tier -> using FREE models only")
-            elif request.tier == RequestModelTier.elite:
+                logger.info("Tier-based routing: FREE tier -> using FREE models only (tier_value=%s)", tier_value)
+            elif is_elite:
                 use_free_models = False
-                logger.info("Tier-based routing: ELITE tier -> using premium models")
+                logger.info("Tier-based routing: ELITE tier -> using premium models (tier_value=%s)", tier_value)
+            else:
+                logger.info("Tier-based routing: AUTO tier -> using default behavior (tier_value=%s)", tier_value)
             # RequestModelTier.auto - determine from user's subscription (default behavior)
         
         # Use user-selected models if provided, otherwise auto-select
@@ -1978,6 +1994,11 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # TIER-BASED MODEL FILTERING
         # When use_free_models is True, replace premium models with free alternatives
         # =========================================================================
+        logger.info(
+            "TIER FILTERING CHECK: use_free_models=%s, ELITE_ORCHESTRATION_AVAILABLE=%s, actual_models=%s",
+            use_free_models, ELITE_ORCHESTRATION_AVAILABLE, actual_models[:5],
+        )
+        
         if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
             # Get all available free models
             all_free_models = []
@@ -1985,17 +2006,23 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 all_free_models.extend(category_models)
             all_free_models = list(set(all_free_models))  # Remove duplicates
             
+            logger.info("FREE_MODELS available: %s (total %d)", all_free_models[:5], len(all_free_models))
+            
             # Filter to only use free models
             filtered_models = [m for m in actual_models if m in all_free_models]
             
             if not filtered_models:
                 # If no overlap, use default free models
                 filtered_models = FREE_MODELS.get("reasoning", [])[:3]
-                logger.info("No matching free models, using defaults: %s", filtered_models)
+                logger.info("No matching free models in actual_models, using FREE_MODELS['reasoning'] defaults: %s", filtered_models)
+            else:
+                logger.info("Found matching free models: %s", filtered_models)
             
             actual_models = filtered_models
             user_model_names = [m.split("/")[-1] if "/" in m else m for m in actual_models]
-            logger.info("Tier filtering: FREE -> using free models only: %s", actual_models)
+            logger.info("TIER FILTERING APPLIED: FREE tier -> models=%s", actual_models)
+        elif use_free_models and not ELITE_ORCHESTRATION_AVAILABLE:
+            logger.warning("TIER FILTERING SKIPPED: use_free_models=True but ELITE_ORCHESTRATION_AVAILABLE=False!")
         
         logger.info(
             "Final models for orchestration: %s (display: %s)",
