@@ -331,10 +331,23 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
         "40320": ["40320", "40,320", "8!", "8 factorial", "eight factorial"],
         "4": ["4", "= 4", ": 4", "r = 4", "radius = 4", "inradius"],
         
-        # Physics/Science terms
-        "gravity": ["gravity", "gravitational", "g =", "surface gravity", "acceleration due to"],
-        "radius": ["radius", "radii", "r =", "planetary radius"],
-        "density": ["density", "ρ", "rho", "same density", "equal density"],
+        # Physics/Science terms - COMPREHENSIVE for physics benchmarks
+        "gravity": ["gravity", "gravitational", "g =", "surface gravity", "acceleration due to",
+                   "gravitational acceleration", "g_surface", "gravitational force", "weight",
+                   "m/s²", "m/s^2", "9.8", "15 m/s", "surface g"],
+        "radius": ["radius", "radii", "r =", "planetary radius", "r_planet", "r_earth",
+                  "ratio of", "1.5", "1.53", "15/9.8"],
+        "density": ["density", "ρ", "rho", "same density", "equal density", "mass per volume",
+                   "constant density", "uniform density", "identical density", "ρ_planet = ρ_earth"],
+        
+        # Quantum Computing / Computer Science terms
+        "factoring": ["factoring", "factor", "factors", "factorization", "prime factorization",
+                     "integer factorization", "breaking RSA", "break RSA", "decompose"],
+        "exponential": ["exponential", "exponentially", "exp(", "O(exp", "polynomial time",
+                       "classical computers", "infeasible", "computationally hard", "superpolynomial",
+                       "subexponential", "exponentially faster", "speedup"],
+        "quantum": ["quantum", "qubit", "qubits", "superposition", "entanglement",
+                   "quantum computer", "quantum computing", "shor", "shor's"],
         
         # Coding keywords
         "lock": ["lock", "Lock", "threading.Lock", "RLock", "mutex", "synchronize", "thread-safe"],

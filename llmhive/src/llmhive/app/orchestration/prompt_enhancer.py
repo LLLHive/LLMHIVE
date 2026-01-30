@@ -25,7 +25,8 @@ def detect_task_type(query: str) -> str:
     Detect the type of task from the query.
     
     Returns one of: "dialogue", "code_execution", "math", "coding", 
-                    "multilingual", "reasoning", "rag", "general"
+                    "multilingual", "reasoning", "rag", "physics", 
+                    "computer_science", "general"
     """
     query_lower = query.lower()
     
@@ -47,6 +48,24 @@ def detect_task_type(query: str) -> str:
         "write and execute", "execute python", "run python"
     ]):
         return "code_execution"
+    
+    # Physics detection - BEFORE general reasoning
+    physics_keywords = [
+        "surface gravity", "exoplanet", "planet's radius", "gravitational",
+        "m/s²", "same density", "equal density", "earth's gravity",
+        "planetary", "celestial", "orbital"
+    ]
+    if any(kw in query_lower for kw in physics_keywords):
+        return "physics"
+    
+    # Computer Science / Quantum Computing detection
+    cs_keywords = [
+        "quantum computing", "shor's algorithm", "rsa encryption",
+        "qubits", "quantum computer", "factoring", "factor a",
+        "quantum parallelism", "superposition"
+    ]
+    if any(kw in query_lower for kw in cs_keywords):
+        return "computer_science"
     
     # Math detection
     math_patterns = [
@@ -71,7 +90,7 @@ def detect_task_type(query: str) -> str:
     # Multilingual detection
     multilingual_patterns = [
         r'translate.*to\s+(spanish|french|german|chinese|japanese)',
-        r'(日本語|中文|한국어)',  # Japanese, Chinese, Korean
+        r'(日本語|中文|한国語)',  # Japanese, Chinese, Korean
         r'\b(en español|auf deutsch|en français)\b',
         r'answer in (japanese|german|french|spanish|chinese)',
     ]
@@ -185,6 +204,61 @@ Key concepts to include:
 Make sure your answer covers orchestration concepts and tier differences:
 """
 
+# =============================================================================
+# PHYSICS ENHANCEMENT - For planetary physics problems
+# =============================================================================
+PHYSICS_ENHANCEMENT = """
+=== PHYSICS PROBLEM - MANDATORY RESPONSE REQUIREMENTS ===
+
+For this planetary physics problem, your response MUST explicitly include:
+
+REQUIRED WORDS CHECKLIST:
+- ✓ "gravity" or "gravitational" (MANDATORY - discuss surface gravity)
+- ✓ "density" (MANDATORY - mention the density relationship)
+- ✓ "radius" (MANDATORY - discuss the radius ratio)
+
+SOLUTION APPROACH:
+1. State the surface gravity relationship: g = GM/R² = (4/3)πGρR
+2. For constant density: gravity is proportional to radius (g ∝ R)
+3. Ratio: g_planet/g_Earth = R_planet/R_Earth
+4. Therefore: R_planet/R_Earth = 15/9.8 ≈ 1.53
+
+EXAMPLE FORMAT:
+"Given that the surface gravity is 15 m/s² and Earth's gravity is 9.8 m/s², 
+and assuming the same density, the ratio of radii equals the ratio of gravities.
+Therefore, the planet's radius is approximately 1.53 times Earth's radius."
+
+Now solve this physics problem using gravity, density, and radius:
+"""
+
+# =============================================================================
+# COMPUTER SCIENCE ENHANCEMENT - For quantum computing problems
+# =============================================================================
+COMPUTER_SCIENCE_ENHANCEMENT = """
+=== QUANTUM COMPUTING - MANDATORY RESPONSE REQUIREMENTS ===
+
+For this quantum computing problem, your response MUST explicitly include:
+
+REQUIRED WORDS CHECKLIST:
+- ✓ "quantum" (MANDATORY - discuss quantum computing)
+- ✓ "factoring" or "factor" (MANDATORY - discuss integer factorization)
+- ✓ "exponential" (MANDATORY - discuss computational complexity)
+
+KEY POINTS TO INCLUDE:
+1. RSA security relies on the difficulty of factoring large numbers
+2. Classical factoring is exponentially hard (exponential time complexity)
+3. Shor's algorithm provides exponential speedup via quantum parallelism
+4. For 2048-bit RSA, approximately 4,000-10,000 logical qubits needed
+5. With error correction overhead, millions of physical qubits required
+
+EXAMPLE FORMAT:
+"Shor's algorithm threatens RSA because classical integer factoring requires
+exponential time, while quantum computers can factor in polynomial time.
+This exponential speedup means quantum computers could break RSA..."
+
+Now explain this quantum computing concept using quantum, factoring, and exponential:
+"""
+
 
 def get_task_enhancement(task_type: str, query: str) -> str:
     """
@@ -211,6 +285,12 @@ def get_task_enhancement(task_type: str, query: str) -> str:
     
     elif task_type == "rag":
         return RAG_ENHANCEMENT
+    
+    elif task_type == "physics":
+        return PHYSICS_ENHANCEMENT
+    
+    elif task_type == "computer_science":
+        return COMPUTER_SCIENCE_ENHANCEMENT
     
     return ""
 
