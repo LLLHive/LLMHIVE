@@ -392,9 +392,9 @@ async def call_llmhive_api(prompt: str, reasoning_mode: str, tier: str = None, t
                 data = response.json()
                 return {
                     "success": True,
-                    "response": data.get("response", ""),
+                    "response": data.get("message", ""),  # ChatResponse uses "message" field
                     "latency_ms": latency_ms,
-                    "models_used": data.get("metadata", {}).get("models_used", []),
+                    "models_used": data.get("models_used", []),  # Top-level field in ChatResponse
                     "cost_info": data.get("extra", {}).get("cost_tracking", {}),
                 }
             else:

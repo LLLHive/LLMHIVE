@@ -2,7 +2,7 @@
 
 ## Test Configuration
 
-- **Benchmark Date:** 2026-01-29T20:00:24.862964
+- **Benchmark Date:** 2026-01-29T20:23:24.618355
 - **API Endpoint:** https://llmhive-orchestrator-792354158895.us-east1.run.app
 - **Test Method:** Live API calls with keyword/pattern evaluation
 - **Orchestration Modes Tested:** DEEP (max quality), STANDARD (balanced)
@@ -13,14 +13,14 @@
 
 | Mode | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
 |------|-----------|--------------|-------------------|----------------|
-| 🐝 **DEEP** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
-| ⚡ **STANDARD** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
+| 🐝 **DEEP** | **0.0%** | 0/29 | $0.1966 | $0.006779 |
+| ⚡ **STANDARD** | **0.0%** | 0/29 | $0.2123 | $0.007320 |
 
 ### 💰 Actual Cost Analysis (from API responses)
 
-- **DEEP Total Cost:** $0.0000 for 29 queries
-- **STANDARD Total Cost:** $0.0000 for 29 queries  
-- **Cost Difference:** $0.0000
+- **DEEP Total Cost:** $0.1966 for 29 queries
+- **STANDARD Total Cost:** $0.2123 for 29 queries  
+- **Cost Difference:** $0.0157
 - **Quality Gap:** 0.0% pass rate difference
 
 ---
@@ -45,7 +45,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0237 | $0.0355 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -68,7 +68,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0552 | $0.0457 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -91,7 +91,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0457 | $0.0522 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -114,7 +114,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/5) | 0.0% (0/5) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0186 | $0.0193 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -137,7 +137,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/2) | 0.0% (0/2) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0085 | $0.0104 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -157,7 +157,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/3) | 0.0% (0/3) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0196 | $0.0190 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -178,7 +178,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/2) | 0.0% (0/2) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0158 | $0.0183 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -198,7 +198,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 0.0% (0/2) | 0.0% (0/2) |
-| Actual Cost | $0.0000 | $0.0000 |
+| Actual Cost | $0.0095 | $0.0120 |
 | Avg Score | 0.0% | 0.0% |
 
 <details>
@@ -241,5 +241,5 @@ Both modes apply the same orchestration logic - the difference is the reasoning 
 
 ---
 
-**Document Generated:** 2026-01-29T20:00:24.862964
+**Document Generated:** 2026-01-29T20:23:24.618355
 **Test Source:** `scripts/run_elite_free_benchmarks.py`
