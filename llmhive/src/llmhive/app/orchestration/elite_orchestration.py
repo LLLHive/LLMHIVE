@@ -896,6 +896,39 @@ Respond with warmth, understanding, and genuine support:"""
             }
     
     # =========================================================================
+    # CODING: Use specialized coding models
+    # =========================================================================
+    if category == "coding":
+        coding_prompt = f"""Write clean, well-structured code with the following requirements:
+
+IMPORTANT CODE REQUIREMENTS:
+1. Include proper function definitions using 'def' keyword
+2. Include class definitions using 'class' keyword where appropriate
+3. Add type hints and docstrings
+4. Handle edge cases
+5. Output ONLY the code with minimal explanation
+
+CODING TASK: {prompt}
+
+```python
+"""
+        
+        # Use qwen3-coder as primary for coding tasks
+        coding_models = FREE_MODELS.get("coding", ensemble_models)[:3]
+        responses = await _parallel_generate(orchestrator, coding_prompt, coding_models)
+        
+        if responses:
+            # For coding, prefer the response with most code-like content
+            best_response = max(responses, key=lambda r: r.count('def ') + r.count('class '))
+            return {
+                "response": best_response,
+                "confidence": 0.85,
+                "category": category,
+                "tier": "free",
+                "metadata": {**metadata, "coding_enhanced": True, "models_used": coding_models},
+            }
+    
+    # =========================================================================
     # GENERAL: Full ensemble with majority voting
     # =========================================================================
     try:
