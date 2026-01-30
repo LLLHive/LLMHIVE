@@ -3014,6 +3014,22 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                                 if kb_strategy[1]:
                                     actual_models = kb_strategy[1]
                     
+                    # =========================================================================
+                    # TIER FILTERING - FINAL PASS (after KB strategy override)
+                    # This ensures FREE tier ALWAYS uses free models, even after KB overrides
+                    # =========================================================================
+                    if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+                        all_free_models = []
+                        for cat_models in FREE_MODELS.values():
+                            all_free_models.extend(cat_models)
+                        all_free_models = list(set(all_free_models))
+                        
+                        filtered = [m for m in actual_models if m in all_free_models]
+                        if not filtered:
+                            filtered = FREE_MODELS.get("reasoning", [])[:3]
+                        actual_models = filtered
+                        logger.info("TIER FILTERING (post-KB): FREE tier -> models=%s", actual_models)
+                    
                     # Select strategy based on accuracy, task, complexity, and user criteria
                     strategy = selected_strategy or _select_elite_strategy(
                         accuracy_level=accuracy_level,
@@ -3025,11 +3041,18 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     )
                     selected_strategy = strategy
                     
+                    # For FREE tier: force "static" strategy to prevent OpenRouter dynamic selection
+                    # from overriding our free model selection
+                    elite_strategy = strategy
+                    if use_free_models:
+                        elite_strategy = "single_best"  # Use static model selection
+                        logger.info("FREE tier: forcing static strategy to preserve free model selection")
+                    
                     elite_result = await elite.orchestrate(
                         enhanced_prompt,
                         task_type=task_type,
                         available_models=actual_models,
-                        strategy=strategy,
+                        strategy=elite_strategy,
                         quality_threshold=0.7,
                         max_parallel=min(3, len(actual_models)),
                     )
@@ -3051,11 +3074,29 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             # Note: skip_injection_check=True because we already did the check on the raw user prompt
             # in STEP -1 above. The enhanced_prompt contains system instructions which would
             # falsely trigger injection detection (e.g., "act as a planner").
+            
+            # =========================================================================
+            # TIER FILTERING - FINAL PASS (for standard orchestrator)
+            # This ensures FREE tier ALWAYS uses free models
+            # =========================================================================
+            orchestrator_models = actual_models
+            if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+                all_free_models = []
+                for cat_models in FREE_MODELS.values():
+                    all_free_models.extend(cat_models)
+                all_free_models = list(set(all_free_models))
+                
+                filtered = [m for m in actual_models if m in all_free_models]
+                if not filtered:
+                    filtered = FREE_MODELS.get("reasoning", [])[:3]
+                orchestrator_models = filtered
+                logger.info("TIER FILTERING (pre-orchestrator): FREE tier -> models=%s", orchestrator_models)
+            
             artifacts = await _orchestrator.orchestrate(
                 enhanced_prompt,
-                actual_models,
+                orchestrator_models,
                 use_hrm=orchestration_config.get("use_hrm", False),
-                use_adaptive_routing=orchestration_config.get("use_adaptive_routing", False),
+                use_adaptive_routing=False if use_free_models else orchestration_config.get("use_adaptive_routing", False),  # Disable adaptive routing for FREE tier - it overrides models
                 use_deep_consensus=orchestration_config.get("use_deep_consensus", False),
                 use_prompt_diffusion=orchestration_config.get("use_prompt_diffusion", False),
                 accuracy_level=accuracy_level,

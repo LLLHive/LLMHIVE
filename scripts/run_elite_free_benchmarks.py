@@ -376,6 +376,9 @@ async def call_llmhive_api(prompt: str, reasoning_mode: str, tier: str = None, t
             # Add tier if specified (controls FREE vs ELITE models)
             if tier:
                 payload["tier"] = tier
+            
+            # DEBUG: Log the actual payload being sent
+            # print(f"    [DEBUG] Sending: tier={tier}, reasoning_mode={reasoning_mode}")
                 
             response = await client.post(
                 f"{LLMHIVE_API_URL}/v1/chat",
