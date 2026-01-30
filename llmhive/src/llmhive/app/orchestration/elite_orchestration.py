@@ -1255,6 +1255,19 @@ def detect_elite_category(prompt: str, has_image: bool = False) -> str:
     if any(word in prompt_lower for word in ["code", "function", "implement", "program", "debug", "python", "javascript"]):
         return "coding"
     
+    # Dialogue/Empathy detection - CRITICAL for emotional support benchmarks
+    dialogue_keywords = [
+        "feeling", "overwhelmed", "stressed", "anxious", "sad", "upset",
+        "frustrated", "angry", "worried", "scared", "lonely", "depressed",
+        "help me cope", "support", "advice", "lost someone", "grief",
+        "struggling", "hard time", "going through", "don't know what to do",
+        "burned out", "exhausted", "emotional", "difficult time", "tough time",
+        "need someone to talk", "just need to vent", "confide in",
+        "lost my", "passed away", "died", "miss them", "grieving",
+    ]
+    if any(word in prompt_lower for word in dialogue_keywords):
+        return "dialogue"
+    
     # RAG detection (knowledge queries)
     if any(word in prompt_lower for word in ["what is", "explain", "describe", "tell me about", "search", "find"]):
         return "rag"
@@ -1403,6 +1416,10 @@ async def elite_orchestrate(
     category = detect_elite_category(prompt, has_image=has_image)
     logger.info("Elite orchestration: category=%s, tier=%s, use_free_models=%s", 
                 category, tier.value, config.use_free_models)
+    
+    # FREE tier uses FULL orchestration with larger ensembles of free models
+    if tier == EliteTier.FREE:
+        return await _free_orchestrate(prompt, orchestrator, category, config, knowledge_base, image_data)
     
     # BUDGET tier uses simplified routing with Claude Sonnet as primary
     if tier == EliteTier.BUDGET:

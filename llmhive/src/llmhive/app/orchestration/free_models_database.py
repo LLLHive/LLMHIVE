@@ -371,6 +371,38 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         notes="DeepSeek variant with extended context",
         verified_working=True,
     ),
+    
+    "tngtech/deepseek-r1t2-chimera:free": FreeModelInfo(
+        model_id="tngtech/deepseek-r1t2-chimera:free",
+        display_name="DeepSeek R1T2 Chimera",
+        provider="TNG Technology",
+        context_window=163840,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.LONG_CONTEXT,
+            ModelStrength.DIALOGUE,
+        ],
+        best_for=["Reasoning", "Long context analysis", "Roleplay"],
+        notes="Second gen Chimera - 20% faster than original R1, strong reasoning",
+        verified_working=True,
+    ),
+    
+    "tngtech/tng-r1t-chimera:free": FreeModelInfo(
+        model_id="tngtech/tng-r1t-chimera:free",
+        display_name="TNG R1T Chimera",
+        provider="TNG Technology",
+        context_window=163840,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.CREATIVE,
+            ModelStrength.DIALOGUE,
+            ModelStrength.TOOL_USE,
+        ],
+        best_for=["Creative writing", "Storytelling", "Tool calling"],
+        notes="Creative/storytelling focused, improved EQ",
+        verified_working=True,
+    ),
 }
 
 

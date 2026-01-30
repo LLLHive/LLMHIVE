@@ -2,7 +2,7 @@
 
 ## Test Configuration
 
-- **Benchmark Date:** 2026-01-29T23:56:33.140653
+- **Benchmark Date:** 2026-01-30T09:57:47.330852
 - **API Endpoint:** https://llmhive-orchestrator-792354158895.us-east1.run.app
 - **Test Method:** Live API calls with keyword/pattern evaluation
 - **Orchestration Modes Tested:** DEEP (max quality), STANDARD (balanced)
@@ -13,15 +13,15 @@
 
 | Mode | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
 |------|-----------|--------------|-------------------|----------------|
-| 🐝 **DEEP** | **93.1%** | 27/29 | $0.1895 | $0.006533 |
+| 🐝 **DEEP** | **96.6%** | 28/29 | $0.2032 | $0.007006 |
 | ⚡ **STANDARD** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
 
 ### 💰 Actual Cost Analysis (from API responses)
 
-- **DEEP Total Cost:** $0.1895 for 29 queries
+- **DEEP Total Cost:** $0.2032 for 29 queries
 - **STANDARD Total Cost:** $0.0000 for 29 queries  
-- **Cost Difference:** $0.1895
-- **Quality Gap:** 93.1% pass rate difference
+- **Cost Difference:** $0.2032
+- **Quality Gap:** 96.6% pass rate difference
 
 ---
 
@@ -29,12 +29,12 @@
 
 | Category | DEEP Score | DEEP Pass | STANDARD Score | STANDARD Pass |
 |----------|------------|-----------|----------------|---------------|
-| General Reasoning | 88.3% | 5/5 | 0.0% | 0/5 |
-| Coding | 100.0% | 5/5 | 0.0% | 0/5 |
-| Math | 90.0% | 4/5 | 0.0% | 0/5 |
+| General Reasoning | 80.0% | 4/5 | 0.0% | 0/5 |
+| Coding | 95.0% | 5/5 | 0.0% | 0/5 |
+| Math | 100.0% | 5/5 | 0.0% | 0/5 |
 | Multilingual | 100.0% | 5/5 | 0.0% | 0/5 |
-| Long-Context | 75.0% | 1/2 | 0.0% | 0/2 |
-| Tool Use | 100.0% | 3/3 | 0.0% | 0/3 |
+| Long-Context | 100.0% | 2/2 | 0.0% | 0/2 |
+| Tool Use | 88.9% | 3/3 | 0.0% | 0/3 |
 | RAG | 100.0% | 2/2 | 0.0% | 0/2 |
 | Dialogue | 83.3% | 2/2 | 0.0% | 0/2 |
 
@@ -44,20 +44,20 @@
 
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
-| Pass Rate | 100.0% (5/5) | 0.0% (0/5) |
-| Actual Cost | $0.0246 | $0.0000 |
-| Avg Score | 88.3% | 0.0% |
+| Pass Rate | 80.0% (4/5) | 0.0% (0/5) |
+| Actual Cost | $0.0226 | $0.0000 |
+| Avg Score | 80.0% | 0.0% |
 
 <details>
 <summary>Test Details</summary>
 
 | Test ID | Category | DEEP | STANDARD |
 |---------|----------|------|----------|
-| gr_001 | PhD-Level Physics | ✅ 100% | ⚠️ 0% |
-| gr_002 | PhD-Level Chemistry | ✅ 75% | ⚠️ 0% |
+| gr_001 | PhD-Level Physics | ⚠️ 0% | ⚠️ 0% |
+| gr_002 | PhD-Level Chemistry | ✅ 100% | ⚠️ 0% |
 | gr_003 | PhD-Level Mathematics | ✅ 100% | ⚠️ 0% |
 | gr_004 | PhD-Level Biology | ✅ 100% | ⚠️ 0% |
-| gr_005 | PhD-Level Computer Science | ✅ 67% | ⚠️ 0% |
+| gr_005 | PhD-Level Computer Science | ✅ 100% | ⚠️ 0% |
 
 </details>
 
@@ -68,8 +68,8 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 0.0% (0/5) |
-| Actual Cost | $0.0504 | $0.0000 |
-| Avg Score | 100.0% | 0.0% |
+| Actual Cost | $0.0472 | $0.0000 |
+| Avg Score | 95.0% | 0.0% |
 
 <details>
 <summary>Test Details</summary>
@@ -79,7 +79,7 @@
 | code_001 | Algorithm Implementation | ✅ 100% | ⚠️ 0% |
 | code_002 | Data Structures | ✅ 100% | ⚠️ 0% |
 | code_003 | Database | ✅ 100% | ⚠️ 0% |
-| code_004 | Frontend | ✅ 100% | ⚠️ 0% |
+| code_004 | Frontend | ✅ 75% | ⚠️ 0% |
 | code_005 | DevOps | ✅ 100% | ⚠️ 0% |
 
 </details>
@@ -90,9 +90,9 @@
 
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
-| Pass Rate | 80.0% (4/5) | 0.0% (0/5) |
-| Actual Cost | $0.0454 | $0.0000 |
-| Avg Score | 90.0% | 0.0% |
+| Pass Rate | 100.0% (5/5) | 0.0% (0/5) |
+| Actual Cost | $0.0575 | $0.0000 |
+| Avg Score | 100.0% | 0.0% |
 
 <details>
 <summary>Test Details</summary>
@@ -101,7 +101,7 @@
 |---------|----------|------|----------|
 | math_001 | Number Theory | ✅ 100% | ⚠️ 0% |
 | math_002 | Geometry | ✅ 100% | ⚠️ 0% |
-| math_003 | Calculus | ⚠️ 50% | ⚠️ 0% |
+| math_003 | Calculus | ✅ 100% | ⚠️ 0% |
 | math_004 | Combinatorics | ✅ 100% | ⚠️ 0% |
 | math_005 | Algebra | ✅ 100% | ⚠️ 0% |
 
@@ -114,7 +114,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 0.0% (0/5) |
-| Actual Cost | $0.0209 | $0.0000 |
+| Actual Cost | $0.0178 | $0.0000 |
 | Avg Score | 100.0% | 0.0% |
 
 <details>
@@ -136,9 +136,9 @@
 
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
-| Pass Rate | 50.0% (1/2) | 0.0% (0/2) |
-| Actual Cost | $0.0090 | $0.0000 |
-| Avg Score | 75.0% | 0.0% |
+| Pass Rate | 100.0% (2/2) | 0.0% (0/2) |
+| Actual Cost | $0.0119 | $0.0000 |
+| Avg Score | 100.0% | 0.0% |
 
 <details>
 <summary>Test Details</summary>
@@ -146,7 +146,7 @@
 | Test ID | Category | DEEP | STANDARD |
 |---------|----------|------|----------|
 | lc_001 | Memory Recall | ✅ 100% | ⚠️ 0% |
-| lc_002 | Code Analysis | ⚠️ 50% | ⚠️ 0% |
+| lc_002 | Code Analysis | ✅ 100% | ⚠️ 0% |
 
 </details>
 
@@ -157,8 +157,8 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (3/3) | 0.0% (0/3) |
-| Actual Cost | $0.0090 | $0.0000 |
-| Avg Score | 100.0% | 0.0% |
+| Actual Cost | $0.0185 | $0.0000 |
+| Avg Score | 88.9% | 0.0% |
 
 <details>
 <summary>Test Details</summary>
@@ -167,7 +167,7 @@
 |---------|----------|------|----------|
 | tu_001 | Web Search | ✅ 100% | ⚠️ 0% |
 | tu_002 | Calculator | ✅ 100% | ⚠️ 0% |
-| tu_003 | Code Execution | ✅ 100% | ⚠️ 0% |
+| tu_003 | Code Execution | ✅ 67% | ⚠️ 0% |
 
 </details>
 
@@ -178,7 +178,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (2/2) | 0.0% (0/2) |
-| Actual Cost | $0.0196 | $0.0000 |
+| Actual Cost | $0.0181 | $0.0000 |
 | Avg Score | 100.0% | 0.0% |
 
 <details>
@@ -198,7 +198,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (2/2) | 0.0% (0/2) |
-| Actual Cost | $0.0107 | $0.0000 |
+| Actual Cost | $0.0096 | $0.0000 |
 | Avg Score | 83.3% | 0.0% |
 
 <details>
@@ -243,5 +243,5 @@ Both modes apply the same orchestration logic - the difference is the reasoning 
 
 ---
 
-**Document Generated:** 2026-01-29T23:56:33.140653
+**Document Generated:** 2026-01-30T09:57:47.330852
 **Test Source:** `scripts/run_elite_free_benchmarks.py`
