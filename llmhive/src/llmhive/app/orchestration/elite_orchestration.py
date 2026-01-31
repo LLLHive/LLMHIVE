@@ -735,20 +735,12 @@ async def _free_orchestrate(
     metadata["ensemble_size"] = len(ensemble_models)
     
     # =========================================================================
-    # KNOWLEDGE INJECTION: Add relevant cheatsheets to prompt
+    # USE PROMPT AS-IS (already enhanced by elite_orchestrate)
     # =========================================================================
+    # NOTE: The prompt has already been enhanced by enhance_prompt() in elite_orchestrate.
+    # Adding more enhancements here caused confusion and regressions.
+    # Keep the original prompt for clean, focused responses.
     enhanced_prompt = prompt
-    
-    if cheatsheets_available:
-        cheatsheet = get_cheatsheets_for_query(prompt)
-        if cheatsheet:
-            enhanced_prompt = f"""Reference Information:
-{cheatsheet[:2000]}
-
----
-
-{prompt}"""
-            metadata["cheatsheet_injected"] = True
     
     # =========================================================================
     # MATH: Scientific Calculator is AUTHORITATIVE
@@ -862,30 +854,15 @@ ANSWER:"""
             logger.warning("Free RAG orchestration failed: %s", e)
     
     # =========================================================================
-    # DIALOGUE/EMPATHY: Enhanced prompting for emotional intelligence
+    # DIALOGUE/EMPATHY: Use prompt as-is (already enhanced)
     # =========================================================================
     if category in ("dialogue", "empathy", "emotional_intelligence"):
-        empathy_prompt = f"""You are responding to someone who needs emotional support.
-
-GUIDELINES:
-1. START by acknowledging and validating their feelings
-2. Use phrases like "I understand", "That must be difficult"
-3. Show genuine empathy BEFORE offering solutions
-4. Be warm, supportive, and compassionate
-5. Don't minimize or rush to fix things
-
-{DIALOGUE_CHEATSHEET[:1000] if cheatsheets_available else ""}
-
-USER'S MESSAGE: {prompt}
-
-Respond with warmth, understanding, and genuine support:"""
-        
-        # Use dialogue-optimized models
+        # Prompt already has enhancement from elite_orchestrate
+        # Just run through ensemble for best response
         dialogue_models = ensemble_models[:3]
-        responses = await _parallel_generate(orchestrator, empathy_prompt, dialogue_models)
+        responses = await _parallel_generate(orchestrator, enhanced_prompt, dialogue_models)
         
         if responses:
-            # For dialogue, prefer the most empathetic response (longest often = most thoughtful)
             best_response = max(responses, key=len)
             return {
                 "response": best_response,
@@ -896,26 +873,12 @@ Respond with warmth, understanding, and genuine support:"""
             }
     
     # =========================================================================
-    # CODING: Use specialized coding models
+    # CODING: Use specialized coding models (prompt already enhanced)
     # =========================================================================
     if category == "coding":
-        coding_prompt = f"""Write clean, well-structured code with the following requirements:
-
-IMPORTANT CODE REQUIREMENTS:
-1. Include proper function definitions using 'def' keyword
-2. Include class definitions using 'class' keyword where appropriate
-3. Add type hints and docstrings
-4. Handle edge cases
-5. Output ONLY the code with minimal explanation
-
-CODING TASK: {prompt}
-
-```python
-"""
-        
-        # Use qwen3-coder as primary for coding tasks
+        # Prompt already enhanced - use coding-optimized models
         coding_models = FREE_MODELS.get("coding", ensemble_models)[:3]
-        responses = await _parallel_generate(orchestrator, coding_prompt, coding_models)
+        responses = await _parallel_generate(orchestrator, enhanced_prompt, coding_models)
         
         if responses:
             # For coding, prefer the response with most code-like content
