@@ -57,12 +57,17 @@ class GoogleAIClient:
         Initialize Google AI client.
         
         Args:
-            api_key: Google AI API key (or will use GOOGLE_AI_API_KEY env var)
+            api_key: Google AI API key (or will use GOOGLE_AI_API_KEY/GEMINI_API_KEY env var)
         """
-        self.api_key = api_key or os.getenv("GOOGLE_AI_API_KEY")
+        # Check both GOOGLE_AI_API_KEY and GEMINI_API_KEY (for backward compatibility)
+        self.api_key = (
+            api_key 
+            or os.getenv("GOOGLE_AI_API_KEY") 
+            or os.getenv("GEMINI_API_KEY")
+        )
         if not self.api_key:
             raise ValueError(
-                "GOOGLE_AI_API_KEY not set. "
+                "GOOGLE_AI_API_KEY or GEMINI_API_KEY not set. "
                 "Get your free key at: https://aistudio.google.com"
             )
         
