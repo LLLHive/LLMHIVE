@@ -301,17 +301,26 @@ def enhance_prompt(query: str, tier: str = "elite") -> Tuple[str, str, Dict]:
     # Detect task type
     task_type = detect_task_type(query)
     
-    # Get enhancement
-    enhancement = get_task_enhancement(task_type, query)
-    
     metadata = {
         "task_type": task_type,
-        "enhancement_applied": bool(enhancement),
+        "enhancement_applied": False,
         "tier": tier,
     }
     
+    # CRITICAL FIX: Only apply enhancements for ELITE tier
+    # FREE tier models perform BETTER without prompt modifications
+    # The 65.5% performance was achieved with natural, unmodified prompts
+    if tier == "free":
+        logger.debug("Skipping enhancement for FREE tier (tier=%s, task=%s)", tier, task_type)
+        return query, task_type, metadata
+    
+    # Get enhancement for ELITE tier only
+    enhancement = get_task_enhancement(task_type, query)
+    
     if enhancement:
-        enhanced_prompt = f"{enhancement}\n\n{query}"
+        # Put enhancement AFTER the query for better model understanding
+        enhanced_prompt = f"{query}\n\n{enhancement}"
+        metadata["enhancement_applied"] = True
         logger.info("Applied %s enhancement to prompt (tier=%s)", task_type, tier)
     else:
         enhanced_prompt = query

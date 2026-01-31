@@ -2,7 +2,7 @@
 
 ## Test Configuration
 
-- **Benchmark Date:** 2026-01-30T20:30:15.364417
+- **Benchmark Date:** 2026-01-30T21:41:06.635762
 - **API Endpoint:** https://llmhive-orchestrator-792354158895.us-east1.run.app
 - **Test Method:** Live API calls with keyword/pattern evaluation
 - **Orchestration Modes Tested:** DEEP (max quality), STANDARD (balanced)
@@ -13,15 +13,15 @@
 
 | Mode | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
 |------|-----------|--------------|-------------------|----------------|
-| 🐝 **DEEP** | **96.6%** | 28/29 | $0.2038 | $0.007026 |
-| ⚡ **STANDARD** | **10.3%** | 3/29 | $0.0000 | $0.000000 |
+| 🐝 **DEEP** | **96.6%** | 28/29 | $0.1808 | $0.006234 |
+| ⚡ **STANDARD** | **0.0%** | 0/29 | $0.0000 | $0.000000 |
 
 ### 💰 Actual Cost Analysis (from API responses)
 
-- **DEEP Total Cost:** $0.2038 for 29 queries
+- **DEEP Total Cost:** $0.1808 for 29 queries
 - **STANDARD Total Cost:** $0.0000 for 29 queries  
-- **Cost Difference:** $0.2038
-- **Quality Gap:** 86.2% pass rate difference
+- **Cost Difference:** $0.1808
+- **Quality Gap:** 96.6% pass rate difference
 
 ---
 
@@ -29,7 +29,7 @@
 
 | Category | DEEP Score | DEEP Pass | STANDARD Score | STANDARD Pass |
 |----------|------------|-----------|----------------|---------------|
-| General Reasoning | 86.7% | 4/5 | 60.0% | 3/5 |
+| General Reasoning | 86.7% | 4/5 | 0.0% | 0/5 |
 | Coding | 100.0% | 5/5 | 0.0% | 0/5 |
 | Math | 100.0% | 5/5 | 0.0% | 0/5 |
 | Multilingual | 100.0% | 5/5 | 10.0% | 0/5 |
@@ -44,9 +44,9 @@
 
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
-| Pass Rate | 80.0% (4/5) | 60.0% (3/5) |
-| Actual Cost | $0.0365 | $0.0000 |
-| Avg Score | 86.7% | 60.0% |
+| Pass Rate | 80.0% (4/5) | 0.0% (0/5) |
+| Actual Cost | $0.0196 | $0.0000 |
+| Avg Score | 86.7% | 0.0% |
 
 <details>
 <summary>Test Details</summary>
@@ -54,9 +54,9 @@
 | Test ID | Category | DEEP | STANDARD |
 |---------|----------|------|----------|
 | gr_001 | PhD-Level Physics | ⚠️ 33% | ⚠️ 0% |
-| gr_002 | PhD-Level Chemistry | ✅ 100% | ✅ 100% |
-| gr_003 | PhD-Level Mathematics | ✅ 100% | ✅ 100% |
-| gr_004 | PhD-Level Biology | ✅ 100% | ✅ 100% |
+| gr_002 | PhD-Level Chemistry | ✅ 100% | ⚠️ 0% |
+| gr_003 | PhD-Level Mathematics | ✅ 100% | ⚠️ 0% |
+| gr_004 | PhD-Level Biology | ✅ 100% | ⚠️ 0% |
 | gr_005 | PhD-Level Computer Science | ✅ 100% | ⚠️ 0% |
 
 </details>
@@ -68,7 +68,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 0.0% (0/5) |
-| Actual Cost | $0.0516 | $0.0000 |
+| Actual Cost | $0.0480 | $0.0000 |
 | Avg Score | 100.0% | 0.0% |
 
 <details>
@@ -91,7 +91,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 0.0% (0/5) |
-| Actual Cost | $0.0455 | $0.0000 |
+| Actual Cost | $0.0479 | $0.0000 |
 | Avg Score | 100.0% | 0.0% |
 
 <details>
@@ -114,7 +114,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 0.0% (0/5) |
-| Actual Cost | $0.0206 | $0.0000 |
+| Actual Cost | $0.0184 | $0.0000 |
 | Avg Score | 100.0% | 10.0% |
 
 <details>
@@ -137,7 +137,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (2/2) | 0.0% (0/2) |
-| Actual Cost | $0.0139 | $0.0000 |
+| Actual Cost | $0.0123 | $0.0000 |
 | Avg Score | 100.0% | 0.0% |
 
 <details>
@@ -157,7 +157,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (3/3) | 0.0% (0/3) |
-| Actual Cost | $0.0073 | $0.0000 |
+| Actual Cost | $0.0075 | $0.0000 |
 | Avg Score | 88.9% | 0.0% |
 
 <details>
@@ -178,7 +178,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (2/2) | 0.0% (0/2) |
-| Actual Cost | $0.0201 | $0.0000 |
+| Actual Cost | $0.0164 | $0.0000 |
 | Avg Score | 100.0% | 0.0% |
 
 <details>
@@ -198,7 +198,7 @@
 | Metric | DEEP | STANDARD |
 |--------|------|----------|
 | Pass Rate | 100.0% (2/2) | 0.0% (0/2) |
-| Actual Cost | $0.0084 | $0.0000 |
+| Actual Cost | $0.0107 | $0.0000 |
 | Avg Score | 100.0% | 16.7% |
 
 <details>
@@ -243,5 +243,5 @@ Both modes apply the same orchestration logic - the difference is the reasoning 
 
 ---
 
-**Document Generated:** 2026-01-30T20:30:15.364417
+**Document Generated:** 2026-01-30T21:41:06.635762
 **Test Source:** `scripts/run_elite_free_benchmarks.py`

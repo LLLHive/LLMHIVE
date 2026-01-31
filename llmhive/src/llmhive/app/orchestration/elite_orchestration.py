@@ -854,13 +854,25 @@ ANSWER:"""
             logger.warning("Free RAG orchestration failed: %s", e)
     
     # =========================================================================
-    # DIALOGUE/EMPATHY: Use prompt as-is (already enhanced)
+    # DIALOGUE/EMPATHY: Enhanced prompting for emotional intelligence
     # =========================================================================
     if category in ("dialogue", "empathy", "emotional_intelligence"):
-        # Prompt already has enhancement from elite_orchestrate
-        # Just run through ensemble for best response
+        # Create empathetic prompt wrapper for FREE models
+        empathy_prompt = f"""You are responding to someone who needs emotional support.
+
+GUIDELINES:
+1. START by acknowledging and validating their feelings
+2. Use phrases like "I understand", "That must be difficult"  
+3. Show genuine empathy BEFORE offering solutions
+4. Be warm, supportive, and compassionate
+5. Reference their specific situation (work, loss, etc.)
+
+USER'S MESSAGE: {enhanced_prompt}
+
+Respond with warmth, understanding, and genuine support:"""
+        
         dialogue_models = ensemble_models[:3]
-        responses = await _parallel_generate(orchestrator, enhanced_prompt, dialogue_models)
+        responses = await _parallel_generate(orchestrator, empathy_prompt, dialogue_models)
         
         if responses:
             best_response = max(responses, key=len)
@@ -873,16 +885,31 @@ ANSWER:"""
             }
     
     # =========================================================================
-    # CODING: Use specialized coding models (prompt already enhanced)
+    # CODING: Use specialized coding models with code-focused prompting
     # =========================================================================
     if category == "coding":
-        # Prompt already enhanced - use coding-optimized models
+        # Create coding-focused prompt for FREE models
+        coding_prompt = f"""Write clean, well-structured code for the following task.
+
+REQUIREMENTS:
+1. Include proper function definitions using 'def' keyword
+2. Include class definitions using 'class' keyword where appropriate
+3. Add proper imports at the top
+4. Include code comments explaining the logic
+5. Handle edge cases
+
+TASK: {enhanced_prompt}
+
+Provide the complete code solution:
+
+```python"""
+        
         coding_models = FREE_MODELS.get("coding", ensemble_models)[:3]
-        responses = await _parallel_generate(orchestrator, enhanced_prompt, coding_models)
+        responses = await _parallel_generate(orchestrator, coding_prompt, coding_models)
         
         if responses:
             # For coding, prefer the response with most code-like content
-            best_response = max(responses, key=lambda r: r.count('def ') + r.count('class '))
+            best_response = max(responses, key=lambda r: r.count('def ') + r.count('class ') + r.count('import '))
             return {
                 "response": best_response,
                 "confidence": 0.85,
