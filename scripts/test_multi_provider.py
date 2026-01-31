@@ -58,7 +58,7 @@ async def test_providers():
     
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     google_key = os.getenv("GOOGLE_AI_API_KEY") or os.getenv("GEMINI_API_KEY")
-    groq_key = os.getenv("GROQ_API_KEY")
+    groq_key = os.getenv("GROQ_API_KEY") or os.getenv("GROK_API_KEY")
     deepseek_key = os.getenv("DEEPSEEK_API_KEY")
     
     providers_available = 0
@@ -80,11 +80,12 @@ async def test_providers():
         print("⚠️  GOOGLE_AI_API_KEY or GEMINI_API_KEY: Not set (optional)")
     
     if groq_key:
-        print(f"✅ GROQ_API_KEY: Set ({len(groq_key)} chars)")
+        key_name = "GROQ_API_KEY" if os.getenv("GROQ_API_KEY") else "GROK_API_KEY"
+        print(f"✅ {key_name}: Set ({len(groq_key)} chars)")
         providers_available += 1
         total_rpm += 50
     else:
-        print("⚠️  GROQ_API_KEY: Not set (optional)")
+        print("⚠️  GROQ_API_KEY or GROK_API_KEY: Not set (optional)")
     
     if deepseek_key:
         print(f"✅ DEEPSEEK_API_KEY: Set ({len(deepseek_key)} chars)")

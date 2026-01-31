@@ -59,12 +59,17 @@ class GroqClient:
         Initialize Groq client.
         
         Args:
-            api_key: Groq API key (or will use GROQ_API_KEY env var)
+            api_key: Groq API key (or will use GROQ_API_KEY/GROK_API_KEY env var)
         """
-        self.api_key = api_key or os.getenv("GROQ_API_KEY")
+        # Check both GROQ_API_KEY and GROK_API_KEY (common typo/confusion)
+        self.api_key = (
+            api_key 
+            or os.getenv("GROQ_API_KEY") 
+            or os.getenv("GROK_API_KEY")
+        )
         if not self.api_key:
             raise ValueError(
-                "GROQ_API_KEY not set. "
+                "GROQ_API_KEY or GROK_API_KEY not set. "
                 "Get your free key at: https://console.groq.com"
             )
         
