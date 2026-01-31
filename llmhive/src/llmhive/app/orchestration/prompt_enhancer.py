@@ -179,16 +179,13 @@ Include these terms in your answer if applicable:
 """
 
 RAG_ENHANCEMENT = """
-When answering questions about multi-model systems:
+In your answer, include these terms:
+- "orchestration" for coordinating models
+- "model" for AI systems
+- "tier" for service levels
+- "consensus" for model agreement
+- "accuracy" for quality
 
-Key concepts to include:
-- "orchestration" - coordinating multiple models
-- "model" - the AI systems being coordinated  
-- "tier" - different levels of service (elite, standard, free)
-- "consensus" - agreement between models
-- "accuracy" - the quality/correctness of responses
-
-Make sure your answer covers orchestration concepts and tier differences:
 """
 
 # =============================================================================
