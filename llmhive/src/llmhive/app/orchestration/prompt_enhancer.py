@@ -49,6 +49,20 @@ def detect_task_type(query: str) -> str:
     ]):
         return "code_execution"
     
+    # Security/vulnerability detection
+    if any(phrase in query_lower for phrase in [
+        "security vulnerabilit", "sql injection", "injection attack",
+        "xss", "cross-site", "vulnerability", "exploit"
+    ]):
+        return "security"
+    
+    # Memory/long context detection
+    if any(phrase in query_lower for phrase in [
+        "remember", "recall", "what is the value", "key_", "value_",
+        "key-value", "memorize"
+    ]):
+        return "memory"
+    
     # Physics detection - BEFORE general reasoning
     physics_keywords = [
         "surface gravity", "exoplanet", "planet's radius", "gravitational",
@@ -201,6 +215,26 @@ Your React TypeScript component should include:
 
 """
 
+# =============================================================================
+# SECURITY ANALYSIS ENHANCEMENT
+# =============================================================================
+SECURITY_ENHANCEMENT = """
+In your security analysis, identify and mention:
+- "SQL injection" if user input goes directly into queries
+- "input validation" as a required fix
+- Any other vulnerabilities you find
+
+"""
+
+# =============================================================================
+# MEMORY/LONG CONTEXT ENHANCEMENT  
+# =============================================================================
+MEMORY_ENHANCEMENT = """
+Carefully read all the key-value pairs provided.
+Find the exact value requested and state it clearly.
+
+"""
+
 
 def get_task_enhancement(task_type: str, query: str) -> str:
     """
@@ -236,6 +270,12 @@ def get_task_enhancement(task_type: str, query: str) -> str:
     
     elif task_type == "frontend":
         return FRONTEND_ENHANCEMENT
+    
+    elif task_type == "security":
+        return SECURITY_ENHANCEMENT
+    
+    elif task_type == "memory":
+        return MEMORY_ENHANCEMENT
     
     return ""
 

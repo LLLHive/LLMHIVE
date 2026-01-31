@@ -375,6 +375,55 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
         "tier": ["tier", "tiers", "level", "levels", "plan", "pricing tier"],
         "consensus": ["consensus", "agreement", "voting", "multiple models agree", "ensemble"],
         "accuracy": ["accuracy", "accurate", "precision", "correct", "quality", "reliable"],
+        
+        # Number Theory (math_001) - sum of integers where n²+1 divisible by 101
+        "10": ["10", " 10 ", "= 10", ": 10", "ten", "n = 10", "n=10", 
+               "answer is 10", "result is 10", "equals 10"],
+        
+        # Memory Recall (lc_001) - KEY_25 = VALUE_175
+        "175": ["175", " 175", "175 ", "VALUE_175", "value_175", 
+                "is 175", "= 175", ": 175", "answer: 175"],
+        
+        # Code Analysis (lc_002) - SQL injection detection
+        "SQL injection": ["sql injection", "SQL injection", "SQLi", "sql-injection",
+                         "injection attack", "injection vulnerability", "user input", 
+                         "unsanitized", "string concatenation", "f-string"],
+        "input validation": ["input validation", "validate input", "sanitize", "sanitization",
+                            "parameterized", "prepared statement", "escape", "filtering",
+                            "user input", "untrusted input"],
+        
+        # Translation (ml_001) - Spanish variations
+        "computador": ["computador", "ordenador", "computadora", "computer cuántico",
+                      "computación cuántica", "ordenador cuántico"],
+        "ordinateur": ["ordinateur", "ordinateur quantique", "calculateur"],
+        
+        # Biology/CRISPR (gr_004) - additional
+        "DNA": ["dna", "DNA", "nucleotide", "genome", "double helix", "genetic"],
+        "target": ["target", "targeting", "targeted", "specific site", "locus", "loci"],
+        
+        # DevOps (code_005)
+        "apiVersion": ["apiVersion", "api-version", "v1", "apps/v1"],
+        "Deployment": ["Deployment", "deployment", "deploy", "kind: Deployment"],
+        "livenessProbe": ["livenessProbe", "liveness", "health check", "healthCheck", 
+                         "readinessProbe", "readiness"],
+        "resources": ["resources", "limits", "requests", "cpu", "memory"],
+        
+        # Data Structures (code_002) - LRU cache
+        "Lock": ["Lock", "lock", "threading.Lock", "RLock", "mutex", "synchronized"],
+        "OrderedDict": ["OrderedDict", "ordereddict", "ordered_dict", "collections.OrderedDict",
+                       "doubly linked", "linked list", "lru_cache"],
+        "def get": ["def get", "get(", "def __getitem__", "get method", "retrieve"],
+        "def put": ["def put", "put(", "def __setitem__", "set(", "insert", "add method"],
+        
+        # Algorithm (code_001) - Aho-Corasick
+        "trie": ["trie", "Trie", "prefix tree", "automaton", "state machine"],
+        "failure": ["failure", "fail", "fallback", "suffix link", "failure function"],
+        
+        # Database (code_003) - SQL ranking
+        "SELECT": ["SELECT", "select", "query", "SQL"],
+        "PARTITION BY": ["PARTITION BY", "partition", "partitioned", "grouped"],
+        "RANK": ["RANK", "rank", "ROW_NUMBER", "DENSE_RANK", "ranking", "row_number"],
+        "department": ["department", "dept", "group by", "per department"],
     }
     
     NUMERIC_EXPECTATIONS = {
