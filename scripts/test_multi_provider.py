@@ -20,9 +20,24 @@ import os
 import sys
 import asyncio
 import time
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+# Load .env.local if it exists
+env_file = Path(__file__).parent.parent / '.env.local'
+if env_file.exists():
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+                # Only set if not already in environment
+                if key not in os.environ:
+                    os.environ[key] = value
 
 
 async def test_providers():
