@@ -719,8 +719,10 @@ async def _free_orchestrate(
         cheatsheets_available = False
         logger.warning("Free models database or cheatsheets not available")
     
-    # Get optimal ensemble for this task (5-7 models since they're FREE)
-    ENSEMBLE_SIZE = 5  # Larger than ELITE since models are free!
+    # Get optimal ensemble for this task
+    # Use 3 models for speed (parallel time = slowest model time)
+    # More models = slower total time due to waiting for all
+    ENSEMBLE_SIZE = 3  # Balanced: 3 fast models for quick consensus
     
     if cheatsheets_available:
         try:
@@ -1011,11 +1013,12 @@ async def _parallel_generate(
             logger.error("Fallback orchestrator failed: %s", e)
             return []
     
-    async def get_response(model: str) -> Optional[str]:
-        """Direct OpenRouter API call - FAST!"""
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
+    # Create a SINGLE shared client for all parallel calls (much faster!)
+    async with httpx.AsyncClient(timeout=60.0) as shared_client:
+        async def get_response(model: str) -> Optional[str]:
+            """Direct OpenRouter API call using shared client - FAST!"""
+            try:
+                response = await shared_client.post(
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {api_key}",
@@ -1034,17 +1037,22 @@ async def _parallel_generate(
                     data = response.json()
                     choices = data.get("choices", [])
                     if choices:
-                        return choices[0].get("message", {}).get("content", "")
+                        content = choices[0].get("message", {}).get("content", "")
+                        logger.debug("Model %s returned %d chars", model, len(content) if content else 0)
+                        return content
                 else:
                     logger.warning("Model %s returned %d: %s", model, response.status_code, response.text[:100])
                     return None
-        except Exception as e:
-            logger.warning("Model %s failed: %s", model, e)
-            return None
-    
-    # Run all models in parallel - this is now FAST!
-    tasks = [get_response(model) for model in models]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+            except httpx.TimeoutException:
+                logger.warning("Model %s timed out", model)
+                return None
+            except Exception as e:
+                logger.warning("Model %s failed: %s", model, e)
+                return None
+        
+        # Run all models in parallel using the shared client
+        tasks = [get_response(model) for model in models]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
     
     # Filter successful responses
     valid_responses = [
