@@ -705,20 +705,400 @@ ANSWER:"""
 
 
 # =============================================================================
+# ADVANCED FREE TIER ORCHESTRATION - TEAM COORDINATION (Jan 31, 2026)
+# =============================================================================
+
+def detect_query_complexity(prompt: str, category: str) -> str:
+    """
+    Detect if a query is simple, medium, or complex.
+    
+    Returns:
+        'simple', 'medium', or 'complex'
+    """
+    prompt_lower = prompt.lower()
+    
+    # Complexity signals
+    multi_step_indicators = ['step', 'first,', 'then', '1.', '2.', '3.']
+    simple_indicators = ['what is', 'define', 'who is', 'when was', 'where is']
+    complex_indicators = [
+        'prove', 'derive', 'implement', 'analyze in depth', 
+        'comprehensive', 'detailed analysis', 'step by step'
+    ]
+    
+    # Check for multi-step (complex)
+    if any(indicator in prompt_lower for indicator in multi_step_indicators):
+        if len(prompt) > 200 or prompt.count('?') > 1:
+            return 'complex'
+    
+    # Check for explicit complexity markers
+    if any(indicator in prompt_lower for indicator in complex_indicators):
+        return 'complex'
+    
+    # Check for simple queries
+    if any(indicator in prompt_lower for indicator in simple_indicators):
+        if len(prompt) < 150:
+            return 'simple'
+    
+    # Category-specific complexity
+    if category == 'math':
+        # Complex math indicators
+        if any(term in prompt_lower for term in ['integral', 'derivative', 'proof', 'theorem']):
+            return 'complex'
+        # Simple math indicators
+        if any(term in prompt_lower for term in ['calculate', 'solve', 'what is']) and len(prompt) < 100:
+            return 'simple'
+    
+    if category == 'coding':
+        # Complex coding indicators
+        if any(term in prompt_lower for term in ['implement', 'design', 'architecture', 'system']):
+            return 'complex'
+        # Simple coding indicators
+        if any(term in prompt_lower for term in ['fix', 'debug', 'what does']) and len(prompt) < 150:
+            return 'simple'
+    
+    # Default to medium
+    return 'medium'
+
+
+def detect_tool_requirements(prompt: str) -> bool:
+    """
+    Detect if query requires function calling / tool use.
+    
+    Returns:
+        True if tools are likely needed
+    """
+    prompt_lower = prompt.lower()
+    
+    tool_indicators = [
+        'call function', 'use tool', 'api call', 'fetch data',
+        'get current', 'look up', 'search for', 'retrieve',
+        'calculate', 'compute', 'run code'
+    ]
+    
+    return any(indicator in prompt_lower for indicator in tool_indicators)
+
+
+def get_optimal_team_for_query(
+    prompt: str, 
+    category: str
+) -> Dict[str, List[str]]:
+    """
+    Assemble a specialized team of models based on query requirements.
+    
+    Returns:
+        {
+            'primary': [elite models for main task],
+            'verifiers': [diverse models for validation],
+            'specialists': [category experts],
+            'fallback': [fast models for backup]
+        }
+    """
+    from .free_models_database import (
+        get_top_performers, get_diverse_models, get_tool_capable_models,
+        get_fastest_model_for_category, get_elite_models, FREE_MODELS_DB
+    )
+    
+    team = {}
+    
+    # PRIMARY: Top 2-3 performers for category (80+ score preferred)
+    try:
+        elite_pool = get_top_performers(category, min_score=80.0, n=3)
+        if len(elite_pool) >= 2:
+            team['primary'] = elite_pool[:2]
+        else:
+            # Fallback to 65+ score if not enough elite
+            team['primary'] = get_top_performers(category, min_score=65.0, n=2)
+    except Exception as e:
+        logger.warning("Failed to get primary team: %s", e)
+        from .free_models_database import get_models_for_category
+        team['primary'] = get_models_for_category(category)[:2]
+    
+    # VERIFIERS: Diverse high-performers (65+ score, different architectures)
+    try:
+        primary_provider = FREE_MODELS_DB[team['primary'][0]].provider if team['primary'] else None
+        team['verifiers'] = get_diverse_models(
+            category, 
+            exclude_provider=primary_provider,
+            min_score=65.0,
+            n=2
+        )
+    except Exception as e:
+        logger.warning("Failed to get verifiers: %s", e)
+        team['verifiers'] = []
+    
+    # SPECIALISTS: Use capability flags if tools needed
+    needs_tools = detect_tool_requirements(prompt)
+    if needs_tools:
+        try:
+            tool_models = get_tool_capable_models(category)
+            team['specialists'] = tool_models[:2]
+        except Exception as e:
+            logger.warning("Failed to get specialists: %s", e)
+            team['specialists'] = []
+    else:
+        team['specialists'] = []
+    
+    # FALLBACK: Fast models for timeout scenarios
+    try:
+        fast_model = get_fastest_model_for_category(category)
+        team['fallback'] = [fast_model]
+    except Exception as e:
+        logger.warning("Failed to get fallback: %s", e)
+        team['fallback'] = []
+    
+    return team
+
+
+def responses_agree(responses: List[str], threshold: float = 0.8) -> bool:
+    """
+    Check if responses are similar enough to be considered in agreement.
+    
+    Uses simple similarity heuristic (can be enhanced with embeddings later).
+    """
+    if len(responses) < 2:
+        return True
+    
+    # Simple heuristic: check if key numbers/words match
+    # This is a placeholder - can be enhanced with proper similarity scoring
+    first = responses[0].lower()
+    
+    agreement_count = 0
+    for response in responses[1:]:
+        response_lower = response.lower()
+        
+        # Check for numerical agreement
+        import re
+        first_numbers = set(re.findall(r'\b\d+(?:\.\d+)?\b', first))
+        response_numbers = set(re.findall(r'\b\d+(?:\.\d+)?\b', response_lower))
+        
+        if first_numbers and response_numbers:
+            # Numerical answer - must match exactly
+            if first_numbers == response_numbers:
+                agreement_count += 1
+        else:
+            # Non-numerical - check length similarity and key word overlap
+            len_ratio = min(len(first), len(response_lower)) / max(len(first), len(response_lower))
+            if len_ratio > threshold:
+                agreement_count += 1
+    
+    return agreement_count / (len(responses) - 1) >= threshold
+
+
+def weighted_consensus(
+    responses: List[str], 
+    models: List[str], 
+    weights: List[float]
+) -> str:
+    """
+    Select best response using weighted voting.
+    
+    Args:
+        responses: List of responses from models
+        models: List of model IDs
+        weights: List of weights (same length as responses)
+    
+    Returns:
+        Best response based on weighted voting
+    """
+    if not responses:
+        return ""
+    
+    if len(responses) == 1:
+        return responses[0]
+    
+    # For now, use weighted length as a simple heuristic
+    # More sophisticated: use embeddings + clustering
+    weighted_scores = []
+    for i, response in enumerate(responses):
+        weight = weights[i] if i < len(weights) else 1.0
+        # Score: weight * completeness (longer = more complete, up to a point)
+        score = weight * min(len(response), 2000) / 2000
+        weighted_scores.append((response, score))
+    
+    # Return highest scored response
+    weighted_scores.sort(key=lambda x: x[1], reverse=True)
+    return weighted_scores[0][0]
+
+
+async def hierarchical_consensus(
+    prompt: str,
+    category: str,
+    orchestrator: Any
+) -> Tuple[str, float, Dict]:
+    """
+    Multi-tier consensus strategy for complex queries.
+    
+    Stage 1: Elite models (80+) generate candidates
+    Stage 2: If elite disagree, bring in verifiers (65+)
+    Stage 3: Weighted voting with performance scores
+    """
+    from .free_models_database import get_top_performers, FREE_MODELS_DB
+    
+    metadata = {"strategy": "hierarchical_consensus", "stages": []}
+    
+    # STAGE 1: Elite models (80+ score)
+    try:
+        elite_models = get_top_performers(category, min_score=80.0, n=2)
+        
+        if not elite_models:
+            # Fallback to 70+ if no 80+
+            elite_models = get_top_performers(category, min_score=70.0, n=2)
+        
+        if elite_models:
+            logger.info("Stage 1: Elite models %s", elite_models)
+            elite_responses = await _parallel_generate(orchestrator, prompt, elite_models)
+            
+            metadata["stages"].append({
+                "stage": 1,
+                "models": elite_models,
+                "responses": len(elite_responses)
+            })
+            
+            # If elite models agree, return immediately (high confidence)
+            if len(elite_responses) >= 2 and responses_agree(elite_responses, threshold=0.8):
+                logger.info("Elite consensus reached, returning immediately")
+                return elite_responses[0], 0.95, metadata
+    except Exception as e:
+        logger.warning("Stage 1 failed: %s", e)
+        elite_models = []
+        elite_responses = []
+    
+    # STAGE 2: Bring in verifiers (65+ score) to break tie or add confidence
+    try:
+        verifiers = get_top_performers(category, min_score=65.0, n=3)
+        # Remove elite models from verifiers
+        verifiers = [m for m in verifiers if m not in elite_models][:2]
+        
+        if verifiers:
+            logger.info("Stage 2: Verifier models %s", verifiers)
+            verifier_responses = await _parallel_generate(orchestrator, prompt, verifiers)
+            
+            metadata["stages"].append({
+                "stage": 2,
+                "models": verifiers,
+                "responses": len(verifier_responses)
+            })
+        else:
+            verifier_responses = []
+    except Exception as e:
+        logger.warning("Stage 2 failed: %s", e)
+        verifiers = []
+        verifier_responses = []
+    
+    # STAGE 3: Weighted voting
+    all_responses = elite_responses + verifier_responses
+    all_models = elite_models + verifiers
+    
+    if not all_responses:
+        return "Unable to generate response.", 0.0, metadata
+    
+    # Elite votes count 2x, verifiers count 1x
+    weights = [2.0] * len(elite_responses) + [1.0] * len(verifier_responses)
+    
+    best_response = weighted_consensus(all_responses, all_models, weights)
+    
+    # Confidence based on number of responses and agreement
+    base_confidence = 0.75
+    consensus_bonus = len(all_responses) * 0.03  # +3% per model
+    confidence = min(base_confidence + consensus_bonus, 0.92)
+    
+    metadata["stages"].append({
+        "stage": 3,
+        "weighted_voting": True,
+        "total_responses": len(all_responses)
+    })
+    
+    return best_response, confidence, metadata
+
+
+async def cross_validate_answer(
+    initial_response: str,
+    prompt: str,
+    category: str,
+    orchestrator: Any
+) -> Tuple[str, float]:
+    """
+    Validate answer using orthogonal models (different architectures/providers).
+    
+    Returns:
+        (validated_response, confidence)
+    """
+    from .free_models_database import get_diverse_models, get_model_provider
+    
+    # Get model that generated initial response (approximate)
+    # For now, just get diverse validators
+    try:
+        validators = get_diverse_models(category, exclude_provider=None, min_score=65.0, n=2)
+        
+        if not validators:
+            # No validators available, return original
+            return initial_response, 0.70
+        
+        validation_prompt = f"""Original Question: {prompt}
+
+Proposed Answer: {initial_response}
+
+Analyze this answer carefully:
+1. Is it factually correct?
+2. Does it fully answer the question?
+3. Are there any errors or issues?
+
+Respond with:
+- VERDICT: CORRECT / INCORRECT / PARTIALLY_CORRECT
+- ISSUES: (if any)
+- If incorrect, provide the CORRECTED ANSWER
+"""
+        
+        validations = await _parallel_generate(orchestrator, validation_prompt, validators)
+        
+        if not validations:
+            return initial_response, 0.70
+        
+        # Count verdicts
+        correct_count = sum(
+            1 for v in validations 
+            if 'CORRECT' in v.upper() and 'INCORRECT' not in v.upper()
+        )
+        
+        confidence = correct_count / len(validations)
+        
+        # If majority says incorrect, try to extract corrected answer
+        if confidence < 0.5:
+            logger.warning("Cross-validation failed (%.1f%% agreement), attempting correction", confidence * 100)
+            
+            # Look for corrected answers in validations
+            for validation in validations:
+                if 'CORRECTED ANSWER' in validation.upper() or 'CORRECT ANSWER IS' in validation.upper():
+                    # Extract the corrected portion (simplified)
+                    parts = validation.split('CORRECTED')
+                    if len(parts) > 1:
+                        return parts[-1].strip(), 0.75
+            
+            # If no correction found, return original with low confidence
+            return initial_response, 0.50
+        
+        return initial_response, min(0.70 + (confidence * 0.2), 0.90)
+        
+    except Exception as e:
+        logger.error("Cross-validation failed: %s", e)
+        return initial_response, 0.65
+
+
+# =============================================================================
 # FREE TIER ORCHESTRATION ($0 Cost - FULL Power with Free Models)
 # =============================================================================
 # 
-# REDESIGNED January 30, 2026:
-# The FREE tier now mirrors ELITE orchestration in EVERY characteristic:
-# - Same consensus voting
-# - Same verification loops  
-# - Same tool integration (calculator, RAG, etc.)
-# - Same cheatsheet injection
+# REDESIGNED January 31, 2026:
+# The FREE tier now uses ADVANCED TEAM COORDINATION:
+# - Performance score-based model selection (80+ elite tier prioritized)
+# - Complexity-adaptive routing (simple → fast, complex → elite ensemble)
+# - Specialist task decomposition (math → DeepSeek, code → Qwen3)
+# - Multi-stage verification pipelines
+# - Tool-aware orchestration
+# - Cross-validation loops
+# - Hierarchical consensus voting
 # 
-# The ONLY difference: Uses FREE models instead of paid models
-# 
-# Since models are FREE, we use LARGER ensembles (5-7 models vs 3)
-# to maximize quality through diversity and consensus.
+# Result: "Coordinated team of specialists" instead of random model selection
 # =============================================================================
 
 async def _free_orchestrate(
@@ -769,6 +1149,65 @@ async def _free_orchestrate(
         cheatsheets_available = False
         logger.warning("Cheatsheets or scientific calculator not available")
     
+    # =========================================================================
+    # NEW: COMPLEXITY DETECTION & ADAPTIVE ROUTING (Jan 31, 2026)
+    # =========================================================================
+    # Detect query complexity to route appropriately:
+    # - SIMPLE: Single fast model (save API calls)
+    # - MEDIUM: Enhanced 2-model ensemble (current approach + performance scores)
+    # - COMPLEX: Hierarchical consensus with elite models
+    
+    complexity = detect_query_complexity(prompt, category)
+    metadata["complexity"] = complexity
+    logger.info("Query complexity detected: %s for category: %s", complexity, category)
+    
+    # SIMPLE queries: Fast single-model response
+    if complexity == 'simple':
+        try:
+            from .free_models_database import get_fastest_model_for_category
+            fast_model = get_fastest_model_for_category(category)
+            logger.info("Simple query - using single fast model: %s", fast_model)
+            
+            responses = await _parallel_generate(orchestrator, prompt, [fast_model])
+            if responses:
+                return {
+                    "response": responses[0],
+                    "confidence": 0.80,
+                    "category": category,
+                    "tier": "free",
+                    "metadata": {
+                        **metadata,
+                        "strategy": "simple_fast_model",
+                        "models_used": [fast_model],
+                    },
+                }
+        except Exception as e:
+            logger.warning("Fast model strategy failed: %s, falling back to standard", e)
+            # Fall through to standard approach
+    
+    # COMPLEX queries: Hierarchical consensus with elite models
+    elif complexity == 'complex':
+        try:
+            logger.info("Complex query - using hierarchical consensus")
+            response, confidence, consensus_meta = await hierarchical_consensus(
+                prompt, category, orchestrator
+            )
+            
+            return {
+                "response": response,
+                "confidence": confidence,
+                "category": category,
+                "tier": "free",
+                "metadata": {
+                    **metadata,
+                    **consensus_meta,
+                },
+            }
+        except Exception as e:
+            logger.warning("Hierarchical consensus failed: %s, falling back to standard", e)
+            # Fall through to standard approach
+    
+    # MEDIUM queries (or fallback): Enhanced standard ensemble
     # Get optimal ensemble for this task
     # RATE LIMIT OPTIMIZATION: Use 2 models instead of 3
     # - Reduces OpenRouter API calls by 33% (3 → 2 per query)

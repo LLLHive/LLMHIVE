@@ -155,9 +155,12 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.CODING,
         ],
         best_for=["Complex reasoning", "Hard math", "Detailed analysis"],
-        notes="Largest Llama model, powerful but slower via OpenRouter",
+        notes="🏆 RANK #8 - Largest Llama (62.0), powerful reasoning",
         verified_working=True,
         preferred_api="openrouter",
+        performance_score=62.0,
+        capability_score=0.0,
+        supports_tools=False,
     ),
     
     "meta-llama/llama-3.2-3b-instruct:free": FreeModelInfo(
@@ -190,10 +193,13 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.TOOL_USE,
         ],
         best_for=["Complex reasoning", "Math problems", "Step-by-step analysis"],
-        notes="96% AIME 2025, 2701 Codeforces - elite math/reasoning via direct API",
+        notes="🏆 RANK #2 - Elite reasoning (81.3), 96% AIME 2025",
         verified_working=True,
         preferred_api="deepseek",  # Route to DeepSeek Direct
         native_model_id="deepseek-reasoner",
+        performance_score=81.3,
+        capability_score=57.9,
+        supports_tools=False,
     ),
     
     "deepseek/deepseek-chat": FreeModelInfo(
@@ -246,8 +252,11 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.LONG_CONTEXT,
         ],
         best_for=["Code generation", "Code review", "Tool calling"],
-        notes="BEST free coding model - specialized for programming",
+        notes="🏆 RANK #3 - Best free coding model (74.2), specialized for programming",
         verified_working=True,
+        performance_score=74.2,
+        capability_score=67.9,
+        supports_tools=True,
     ),
     
     # =========================================================================
@@ -265,8 +274,11 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.CREATIVE,
         ],
         best_for=["Conversation", "Roleplay", "Tool use"],
-        notes="Optimized for agentic/chat use cases",
+        notes="🏆 RANK #9 - Excellent agentic model (61.9) with tool support",
         verified_working=True,
+        performance_score=61.9,
+        capability_score=71.0,
+        supports_tools=True,
     ),
     
     "arcee-ai/trinity-mini:free": FreeModelInfo(
@@ -330,8 +342,11 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.DIALOGUE,
         ],
         best_for=["Complex reasoning", "Extended dialogue"],
-        notes="Massive model, slower but thorough",
+        notes="🏆 RANK #7 - Massive model (62.0), thorough reasoning",
         verified_working=True,
+        performance_score=62.0,
+        capability_score=0.0,
+        supports_tools=False,
     ),
     
     "z-ai/glm-4.5-air:free": FreeModelInfo(
@@ -360,8 +375,11 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.DIALOGUE,
         ],
         best_for=["Korean language", "Dialogue"],
-        notes="Korean-optimized model, good dialogue",
+        notes="🏆 RANK #6 - Strong multilingual model (66.0)",
         verified_working=True,
+        performance_score=66.0,
+        capability_score=77.0,
+        supports_tools=True,
     ),
     
     "openai/gpt-oss-20b:free": FreeModelInfo(
@@ -389,8 +407,11 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.REASONING,
         ],
         best_for=["Tool calling", "General tasks"],
-        notes="Larger OSS variant with tool support",
+        notes="🏆 RANK #5 - Strong general model (67.3) with tool support",
         verified_working=True,
+        performance_score=67.3,
+        capability_score=72.5,
+        supports_tools=True,
     ),
     
     "tngtech/deepseek-r1t-chimera:free": FreeModelInfo(
@@ -545,22 +566,35 @@ def get_models_for_category(category: str) -> List[str]:
         if not info.verified_working:
             continue
         
-        score = 0
+        # Calculate strength match score
+        strength_score = 0
         for strength in target_strengths:
             if strength in info.strengths:
-                score += 2
+                strength_score += 2
         
         # Bonus for fast models (useful in parallel strategies)
         if info.is_fast:
-            score += 1
+            strength_score += 1
         
-        scored_models.append((model_id, score, info.speed_tier.value))
+        # Use performance score as primary ranking (if available)
+        # Formula: Performance score is weighted 10x more than strength matching
+        # This ensures elite models (80+) are prioritized over lower performers
+        performance_score = info.performance_score if info.performance_score > 0 else 50.0
+        combined_score = (performance_score * 10) + strength_score
+        
+        scored_models.append((
+            model_id, 
+            combined_score,
+            performance_score,
+            strength_score,
+            info.speed_tier.value
+        ))
     
-    # Sort by score (descending), then by speed (fast first)
+    # Sort by combined score (descending), then by speed (fast first)
     speed_order = {"fast": 0, "medium": 1, "slow": 2}
-    scored_models.sort(key=lambda x: (-x[1], speed_order.get(x[2], 2)))
+    scored_models.sort(key=lambda x: (-x[1], speed_order.get(x[4], 2)))
     
-    return [model_id for model_id, _, _ in scored_models]
+    return [model_id for model_id, _, _, _, _ in scored_models]
 
 
 def get_ensemble_for_task(task_type: str, ensemble_size: int = 5) -> List[str]:
@@ -619,6 +653,220 @@ def get_all_verified_free_model_ids() -> List[str]:
         model_id for model_id, info in FREE_MODELS_DB.items()
         if info.verified_working
     ]
+
+
+# =============================================================================
+# ADVANCED ORCHESTRATION HELPERS (Jan 31, 2026)
+# =============================================================================
+
+def get_top_performers(
+    category: str, 
+    min_score: float = 0.0, 
+    n: int = 5
+) -> List[str]:
+    """
+    Get top N performing models for a category by performance score.
+    
+    Args:
+        category: Task category (e.g., "math", "coding", "reasoning")
+        min_score: Minimum performance score threshold (0-100)
+        n: Number of models to return
+    
+    Returns:
+        List of model IDs sorted by performance score (descending)
+    """
+    suitable_models = get_models_for_category(category)
+    
+    # Filter by minimum score
+    high_performers = [
+        model_id for model_id in suitable_models
+        if FREE_MODELS_DB[model_id].performance_score >= min_score
+    ]
+    
+    # Sort by performance score (descending)
+    high_performers.sort(
+        key=lambda m: FREE_MODELS_DB[m].performance_score, 
+        reverse=True
+    )
+    
+    return high_performers[:n]
+
+
+def get_diverse_models(
+    category: str,
+    exclude_provider: Optional[str] = None,
+    min_score: float = 0.0,
+    n: int = 3
+) -> List[str]:
+    """
+    Get diverse models from different providers for cross-validation.
+    
+    Args:
+        category: Task category
+        exclude_provider: Provider to exclude (e.g., "TNG Technology")
+        min_score: Minimum performance score
+        n: Number of models to return
+    
+    Returns:
+        List of model IDs from different providers
+    """
+    suitable_models = get_models_for_category(category)
+    
+    # Filter by score
+    qualified = [
+        m for m in suitable_models
+        if FREE_MODELS_DB[m].performance_score >= min_score
+    ]
+    
+    # Group by provider
+    by_provider: Dict[str, List[str]] = {}
+    for model_id in qualified:
+        provider = FREE_MODELS_DB[model_id].provider
+        if exclude_provider and provider == exclude_provider:
+            continue
+        if provider not in by_provider:
+            by_provider[provider] = []
+        by_provider[provider].append(model_id)
+    
+    # Pick one from each provider (round-robin for diversity)
+    diverse_selection = []
+    providers = list(by_provider.keys())
+    idx = 0
+    
+    while len(diverse_selection) < n and providers:
+        provider = providers[idx % len(providers)]
+        if by_provider[provider]:
+            diverse_selection.append(by_provider[provider].pop(0))
+            if not by_provider[provider]:
+                providers.remove(provider)
+        idx += 1
+        
+        # Safety: break if we've cycled through all
+        if idx > len(providers) * 10:
+            break
+    
+    return diverse_selection[:n]
+
+
+def get_tool_capable_models(category: str = "reasoning") -> List[str]:
+    """
+    Get models that support function calling / tool use.
+    
+    Args:
+        category: Task category for additional filtering
+    
+    Returns:
+        List of tool-capable model IDs
+    """
+    tool_models = [
+        model_id for model_id, info in FREE_MODELS_DB.items()
+        if info.supports_tools and info.verified_working
+    ]
+    
+    # Sort by performance score if available
+    tool_models.sort(
+        key=lambda m: FREE_MODELS_DB[m].performance_score,
+        reverse=True
+    )
+    
+    return tool_models
+
+
+def get_fastest_model_for_category(category: str) -> str:
+    """
+    Get the single fastest model for a category.
+    
+    Prioritizes FAST speed tier, then performance score.
+    
+    Args:
+        category: Task category
+    
+    Returns:
+        Model ID of fastest suitable model
+    """
+    suitable_models = get_models_for_category(category)
+    
+    # Filter to FAST tier only
+    fast_models = [
+        m for m in suitable_models
+        if FREE_MODELS_DB[m].speed_tier == SpeedTier.FAST
+    ]
+    
+    if not fast_models:
+        # Fallback to MEDIUM if no FAST available
+        fast_models = [
+            m for m in suitable_models
+            if FREE_MODELS_DB[m].speed_tier == SpeedTier.MEDIUM
+        ]
+    
+    if not fast_models:
+        # Last resort: any model
+        fast_models = suitable_models
+    
+    # Among fast models, pick highest performer
+    if fast_models:
+        fast_models.sort(
+            key=lambda m: FREE_MODELS_DB[m].performance_score,
+            reverse=True
+        )
+        return fast_models[0]
+    
+    # Ultimate fallback
+    return list(FREE_MODELS_DB.keys())[0]
+
+
+def get_elite_models(min_score: float = 80.0) -> List[str]:
+    """
+    Get all elite-tier models (80+ performance score).
+    
+    Args:
+        min_score: Minimum score threshold for elite status
+    
+    Returns:
+        List of elite model IDs sorted by score
+    """
+    elite = [
+        model_id for model_id, info in FREE_MODELS_DB.items()
+        if info.performance_score >= min_score and info.verified_working
+    ]
+    
+    elite.sort(
+        key=lambda m: FREE_MODELS_DB[m].performance_score,
+        reverse=True
+    )
+    
+    return elite
+
+
+def get_model_provider(model_id: str) -> str:
+    """Get the provider name for a model."""
+    info = FREE_MODELS_DB.get(model_id)
+    return info.provider if info else "Unknown"
+
+
+def estimate_model_latency(model_id: str) -> float:
+    """
+    Estimate response latency in seconds for a model.
+    
+    Based on speed tier and provider routing.
+    """
+    info = FREE_MODELS_DB.get(model_id)
+    if not info:
+        return 30.0  # Default estimate
+    
+    # Base latency by speed tier
+    if info.speed_tier == SpeedTier.FAST:
+        base = 5.0
+    elif info.speed_tier == SpeedTier.MEDIUM:
+        base = 15.0
+    else:  # SLOW
+        base = 30.0
+    
+    # Direct API routing is faster
+    if info.uses_direct_api:
+        base *= 0.7  # 30% faster via direct API
+    
+    return base
 
 
 # Print verification on import (for debugging)
