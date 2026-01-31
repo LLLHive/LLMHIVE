@@ -735,12 +735,21 @@ async def _free_orchestrate(
     metadata["ensemble_size"] = len(ensemble_models)
     
     # =========================================================================
-    # USE PROMPT AS-IS (already enhanced by elite_orchestrate)
+    # KNOWLEDGE INJECTION: Add relevant cheatsheets to prompt
     # =========================================================================
-    # NOTE: The prompt has already been enhanced by enhance_prompt() in elite_orchestrate.
-    # Adding more enhancements here caused confusion and regressions.
-    # Keep the original prompt for clean, focused responses.
+    # NOTE: This was ENABLED when FREE tier achieved 65.5%. DO NOT REMOVE.
     enhanced_prompt = prompt
+    
+    if cheatsheets_available:
+        cheatsheet = get_cheatsheets_for_query(prompt)
+        if cheatsheet:
+            enhanced_prompt = f"""Reference Information:
+{cheatsheet[:2000]}
+
+---
+
+{prompt}"""
+            metadata["cheatsheet_injected"] = True
     
     # =========================================================================
     # MATH: Scientific Calculator is AUTHORITATIVE
@@ -857,24 +866,27 @@ ANSWER:"""
     # DIALOGUE/EMPATHY: Enhanced prompting for emotional intelligence
     # =========================================================================
     if category in ("dialogue", "empathy", "emotional_intelligence"):
-        # Create empathetic prompt wrapper for FREE models
         empathy_prompt = f"""You are responding to someone who needs emotional support.
 
 GUIDELINES:
 1. START by acknowledging and validating their feelings
-2. Use phrases like "I understand", "That must be difficult"  
+2. Use phrases like "I understand", "That must be difficult"
 3. Show genuine empathy BEFORE offering solutions
 4. Be warm, supportive, and compassionate
-5. Reference their specific situation (work, loss, etc.)
+5. Don't minimize or rush to fix things
 
-USER'S MESSAGE: {enhanced_prompt}
+{DIALOGUE_CHEATSHEET[:1000] if cheatsheets_available else ""}
+
+USER'S MESSAGE: {prompt}
 
 Respond with warmth, understanding, and genuine support:"""
         
+        # Use dialogue-optimized models
         dialogue_models = ensemble_models[:3]
         responses = await _parallel_generate(orchestrator, empathy_prompt, dialogue_models)
         
         if responses:
+            # For dialogue, prefer the most empathetic response (longest often = most thoughtful)
             best_response = max(responses, key=len)
             return {
                 "response": best_response,
@@ -885,31 +897,30 @@ Respond with warmth, understanding, and genuine support:"""
             }
     
     # =========================================================================
-    # CODING: Use specialized coding models with code-focused prompting
+    # CODING: Use specialized coding models
     # =========================================================================
     if category == "coding":
-        # Create coding-focused prompt for FREE models
-        coding_prompt = f"""Write clean, well-structured code for the following task.
+        coding_prompt = f"""Write clean, well-structured code with the following requirements:
 
-REQUIREMENTS:
+IMPORTANT CODE REQUIREMENTS:
 1. Include proper function definitions using 'def' keyword
 2. Include class definitions using 'class' keyword where appropriate
-3. Add proper imports at the top
-4. Include code comments explaining the logic
-5. Handle edge cases
+3. Add type hints and docstrings
+4. Handle edge cases
+5. Output ONLY the code with minimal explanation
 
-TASK: {enhanced_prompt}
+CODING TASK: {prompt}
 
-Provide the complete code solution:
-
-```python"""
+```python
+"""
         
+        # Use qwen3-coder as primary for coding tasks
         coding_models = FREE_MODELS.get("coding", ensemble_models)[:3]
         responses = await _parallel_generate(orchestrator, coding_prompt, coding_models)
         
         if responses:
             # For coding, prefer the response with most code-like content
-            best_response = max(responses, key=lambda r: r.count('def ') + r.count('class ') + r.count('import '))
+            best_response = max(responses, key=lambda r: r.count('def ') + r.count('class '))
             return {
                 "response": best_response,
                 "confidence": 0.85,
