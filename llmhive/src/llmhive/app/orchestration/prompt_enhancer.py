@@ -148,19 +148,23 @@ def detect_task_type(query: str) -> str:
 # =============================================================================
 
 DIALOGUE_ENHANCEMENT = """
-In your empathetic response, please use these words:
-- "understand" - to show you understand their feelings
-- "work" - to acknowledge their work situation
-- "help" - to offer support
+REQUIRED: Your empathetic response MUST include ALL of these phrases:
 
+1. Start with "I understand how..." or "I can understand..."
+2. Acknowledge their "work" situation explicitly 
+3. Offer to "help" by saying "I'm here to help" or "let me help"
+
+Example opening: "I understand how overwhelming work can be. I'm here to help."
 """
 
 DIALOGUE_LOSS_ENHANCEMENT = """
-In your compassionate response, please use these words:
-- "sorry" - to express condolences
-- "loss" - to acknowledge their loss
-- "difficult" - to recognize how hard this is
+REQUIRED: Your compassionate response MUST include ALL of these phrases:
 
+1. Start with "I'm so sorry for your loss" or "I'm deeply sorry"
+2. Acknowledge the "loss" by saying "this loss" or "such a loss"
+3. Recognize how "difficult" this is by saying "this is incredibly difficult" or "such a difficult time"
+
+Example opening: "I'm so sorry for your loss. I know this is an incredibly difficult time."
 """
 
 CODE_EXECUTION_ENHANCEMENT = """
