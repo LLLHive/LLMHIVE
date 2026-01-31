@@ -987,24 +987,62 @@ async def _parallel_generate(
     models: List[str],
 ) -> List[str]:
     """
-    Generate responses from multiple models in parallel.
+    Generate responses from multiple models in parallel using DIRECT API calls.
     
-    This is key to FREE tier performance - run many models simultaneously
-    since they're all free!
+    CRITICAL: This uses direct OpenRouter API calls, NOT the orchestrator.
+    The orchestrator was causing 10x slowdown by running full orchestration
+    for each model instead of simple API calls.
     """
-    async def get_response(model: str) -> Optional[str]:
+    import httpx
+    import os
+    
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        logger.warning("OPENROUTER_API_KEY not set, falling back to orchestrator")
+        # Fallback to single orchestrator call
         try:
             response = await orchestrator.orchestrate(
                 prompt=prompt,
-                models=[model],
+                models=models[:1],
                 skip_injection_check=True,
             )
-            return response.get("response", "")
+            return [response.get("response", "")] if response.get("response") else []
+        except Exception as e:
+            logger.error("Fallback orchestrator failed: %s", e)
+            return []
+    
+    async def get_response(model: str) -> Optional[str]:
+        """Direct OpenRouter API call - FAST!"""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "HTTP-Referer": "https://llmhive.ai",
+                        "X-Title": "LLMHive FREE",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 2048,
+                    },
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    choices = data.get("choices", [])
+                    if choices:
+                        return choices[0].get("message", {}).get("content", "")
+                else:
+                    logger.warning("Model %s returned %d: %s", model, response.status_code, response.text[:100])
+                    return None
         except Exception as e:
             logger.warning("Model %s failed: %s", model, e)
             return None
     
-    # Run all models in parallel
+    # Run all models in parallel - this is now FAST!
     tasks = [get_response(model) for model in models]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     
