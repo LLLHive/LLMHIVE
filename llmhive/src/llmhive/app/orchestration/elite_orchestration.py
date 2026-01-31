@@ -1055,16 +1055,71 @@ async def _parallel_generate(
     models: List[str],
 ) -> List[str]:
     """
-    Generate responses from multiple models in parallel using DIRECT API calls.
+    Generate responses from multiple models in parallel using MULTI-PROVIDER routing.
     
-    CRITICAL: This uses direct OpenRouter API calls, NOT the orchestrator.
-    The orchestrator was causing 10x slowdown by running full orchestration
-    for each model instead of simple API calls.
+    NEW (Jan 31, 2026): Routes across OpenRouter, Google AI, and Groq for:
+    - 2-3x capacity increase (20 → 40+ RPM)
+    - Ultra-fast Llama inference via Groq LPU
+    - Independent rate limits per provider
+    - Still $0/query cost (all FREE)
+    
+    Provider Selection:
+    - Gemini models → Google AI (15 RPM)
+    - Llama models → Groq (50+ RPM, ultra-fast)
+    - Others → OpenRouter (20 RPM)
+    - Automatic fallback on rate limits
     """
     import httpx
     import os
     import random
     
+    # Try to use multi-provider router first
+    try:
+        from ..providers import get_provider_router
+        
+        router = get_provider_router()
+        
+        async def get_response_via_router(model: str) -> Optional[str]:
+            """Route through multi-provider system."""
+            try:
+                # Try provider router
+                result = await router.generate(model, prompt, orchestrator)
+                
+                # If router returns None, fallback to OpenRouter
+                if result is None:
+                    return await _openrouter_fallback(model, prompt)
+                
+                return result
+            except Exception as e:
+                logger.warning("Router failed for %s: %s, falling back to OpenRouter", model, e)
+                return await _openrouter_fallback(model, prompt)
+        
+        # Run all models in parallel through router
+        tasks = [get_response_via_router(model) for model in models]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filter valid responses
+        valid_responses = [
+            r for r in results 
+            if isinstance(r, str) and r and len(r) > 10
+        ]
+        
+        if valid_responses:
+            logger.info(
+                "Multi-provider success: %d/%d models responded", 
+                len(valid_responses), len(models)
+            )
+            return valid_responses
+        
+        # If no valid responses, fall through to legacy OpenRouter
+        logger.warning("Multi-provider returned no valid responses, using legacy OpenRouter")
+    
+    except ImportError:
+        logger.warning("Multi-provider router not available, using legacy OpenRouter")
+    except Exception as e:
+        logger.error("Multi-provider router error: %s, using legacy OpenRouter", e)
+    
+    # LEGACY OPENROUTER PATH (fallback)
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
         logger.warning("OPENROUTER_API_KEY not set, falling back to orchestrator")
@@ -1079,6 +1134,38 @@ async def _parallel_generate(
         except Exception as e:
             logger.error("Fallback orchestrator failed: %s", e)
             return []
+    
+    # Helper function for OpenRouter fallback
+    async def _openrouter_fallback(model: str, query: str) -> Optional[str]:
+        """Direct OpenRouter API call (used when router returns None)."""
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "HTTP-Referer": "https://llmhive.ai",
+                        "X-Title": "LLMHive FREE",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": query}],
+                        "max_tokens": 2048,
+                    },
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    choices = data.get("choices", [])
+                    if choices:
+                        return choices[0].get("message", {}).get("content", "")
+                
+                logger.warning("OpenRouter fallback failed for %s: %d", model, response.status_code)
+                return None
+        except Exception as e:
+            logger.error("OpenRouter fallback error for %s: %s", model, e)
+            return None
     
     def _model_timeout_seconds(model_id: str) -> float:
         """Adaptive timeout based on model speed tier."""

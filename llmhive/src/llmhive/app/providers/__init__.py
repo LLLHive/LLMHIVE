@@ -1,83 +1,37 @@
-"""LLM Providers for LLMHive.
-
-This module provides various LLM provider implementations:
-- LocalModelProvider: HuggingFace/local models
-- OpenAIProvider: OpenAI API models
-- AnthropicProvider: Anthropic Claude models
-- Custom fine-tuned model support
 """
-from __future__ import annotations
+Multi-Provider Integration Package
+==================================
 
-# Local model provider
-try:
-    from .local_model import (
-        LocalModelProvider,
-        LocalModelConfig,
-        ModelLoadError,
-        get_local_provider,
-    )
-    LOCAL_MODEL_AVAILABLE = True
-except ImportError:
-    LOCAL_MODEL_AVAILABLE = False
-    LocalModelProvider = None  # type: ignore
-    LocalModelConfig = None  # type: ignore
+Direct API integrations for FREE tier capacity distribution:
+- Google AI (Gemini models): 15 RPM independent
+- Groq (Llama models): Ultra-fast LPU, generous limits  
+- OpenRouter (all others): Fallback, 20 RPM
 
-# Fine-tuning module
-try:
-    from .fine_tuning import (
-        FineTuner,
-        FineTuneConfig,
-        FineTuneResult,
-        fine_tune_model,
-    )
-    FINE_TUNING_AVAILABLE = True
-except ImportError:
-    FINE_TUNING_AVAILABLE = False
-    FineTuner = None  # type: ignore
-    FineTuneConfig = None  # type: ignore
+Total capacity: ~40+ RPM (2-3x increase over OpenRouter alone)
 
-# Model registry
-try:
-    from .model_registry import (
-        ModelRegistry,
-        ModelInfo,
-        register_model,
-        get_model_registry,
-    )
-    MODEL_REGISTRY_AVAILABLE = True
-except ImportError:
-    MODEL_REGISTRY_AVAILABLE = False
-    ModelRegistry = None  # type: ignore
-    ModelInfo = None  # type: ignore
+Usage:
+    from llmhive.app.providers import get_provider_router
+    
+    router = get_provider_router()
+    response = await router.generate("meta-llama/llama-3.1-405b-instruct:free", "Hello")
+"""
 
+from .google_ai_client import GoogleAIClient, get_google_client
+from .groq_client import GroqClient, get_groq_client
+from .provider_router import (
+    ProviderRouter,
+    Provider,
+    get_provider_router,
+    reset_provider_router,
+)
 
 __all__ = [
-    "LOCAL_MODEL_AVAILABLE",
-    "FINE_TUNING_AVAILABLE",
-    "MODEL_REGISTRY_AVAILABLE",
+    "GoogleAIClient",
+    "get_google_client",
+    "GroqClient",
+    "get_groq_client",
+    "ProviderRouter",
+    "Provider",
+    "get_provider_router",
+    "reset_provider_router",
 ]
-
-if LOCAL_MODEL_AVAILABLE:
-    __all__.extend([
-        "LocalModelProvider",
-        "LocalModelConfig",
-        "ModelLoadError",
-        "get_local_provider",
-    ])
-
-if FINE_TUNING_AVAILABLE:
-    __all__.extend([
-        "FineTuner",
-        "FineTuneConfig",
-        "FineTuneResult",
-        "fine_tune_model",
-    ])
-
-if MODEL_REGISTRY_AVAILABLE:
-    __all__.extend([
-        "ModelRegistry",
-        "ModelInfo",
-        "register_model",
-        "get_model_registry",
-    ])
-
