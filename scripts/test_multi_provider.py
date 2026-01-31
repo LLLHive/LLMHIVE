@@ -35,6 +35,11 @@ if env_file.exists():
                 key, value = line.split('=', 1)
                 key = key.strip()
                 value = value.strip()
+                # Strip quotes if present
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                elif value.startswith("'") and value.endswith("'"):
+                    value = value[1:-1]
                 # Only set if not already in environment
                 if key not in os.environ:
                     os.environ[key] = value
