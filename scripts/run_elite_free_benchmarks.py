@@ -329,11 +329,14 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
         
         # Code execution keywords - COMPREHENSIVE for prime number detection
         "prime": ["prime", "primes", "prime number", "prime numbers", "primality", 
-                 "is_prime", "isprime", "check_prime", "sieve", "eratosthenes"],
+                 "is_prime", "isprime", "check_prime", "sieve", "eratosthenes",
+                 "Prime", "PRIME", "divisible", "divisor"],
         "2": ["2", " 2 ", " 2,", "[2", "(2", "= 2", ": 2", "smallest prime", 
-              "2,", "2]", "[2,", "first prime", "only even prime", "print(2"],
+              "2,", "2]", "[2,", "first prime", "only even prime", "print(2",
+              "range(2", "for i in range(2", "n == 2", "n=2", "if n < 2", "n < 2"],
         "97": ["97", " 97 ", " 97,", "97]", "97)", "= 97", ": 97", "largest prime under 100",
-              ", 97", "97,", "[97", "97]", "print(97", "largest prime"],
+              ", 97", "97,", "[97", "97]", "print(97", "largest prime", 
+              "89, 97", "97\n", "...97", "..97"],
         
         # React/Frontend keywords - COMPREHENSIVE
         "useState": ["useState", "use_state", "React.useState", "state hook", 

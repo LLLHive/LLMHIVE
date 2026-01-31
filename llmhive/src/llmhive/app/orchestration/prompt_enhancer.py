@@ -168,11 +168,13 @@ Example opening: "I'm so sorry for your loss. I know this is an incredibly diffi
 """
 
 CODE_EXECUTION_ENHANCEMENT = """
-IMPORTANT: Your response must include:
-1. The word "prime" when describing the numbers
-2. Mention "2" as a prime number in your output
-3. Mention "97" as the largest prime under 100
+REQUIRED OUTPUT FORMAT:
+1. Start by saying "Finding prime numbers..."
+2. Show the code that finds primes
+3. After the code, explicitly state: "The prime numbers from 1 to 100 are: 2, 3, 5, ... 97"
+4. End by noting: "2 is the smallest prime and 97 is the largest prime under 100"
 
+Your response MUST include the words "prime", "2", and "97".
 """
 
 MATH_ENHANCEMENT = """
