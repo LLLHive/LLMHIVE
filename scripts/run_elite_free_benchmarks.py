@@ -349,8 +349,10 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
                  "import React", "from 'react'", 'from "react"'],
         
         # Math keywords
-        "erf": ["erf", "error function", "error func", "erfc", "gaussian error", "probability integral"],
-        "1.46": ["1.46", "1.463", "1.4627", "≈ 1.46", "approximately 1.46"],
+        "erf": ["erf", "error function", "error func", "erfc", "gaussian error", "probability integral",
+               "Erf", "ERF", "erfi", "imaginary error", "special function", "Gaussian integral"],
+        "1.46": ["1.46", "1.463", "1.4627", "≈ 1.46", "approximately 1.46", "1.462", "1.4626", 
+                "≈1.46", "~1.46", "about 1.46", "around 1.46"],
         "ratio": ["ratio", "times", "factor", "proportion", "multiple"],
         "40320": ["40320", "40,320", "8!", "8 factorial", "eight factorial"],
         "4": ["4", "= 4", ": 4", "r = 4", "radius = 4", "inradius"],

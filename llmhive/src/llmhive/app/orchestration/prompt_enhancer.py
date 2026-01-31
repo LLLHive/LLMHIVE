@@ -168,20 +168,27 @@ Example opening: "I'm so sorry for your loss. I know this is an incredibly diffi
 """
 
 CODE_EXECUTION_ENHANCEMENT = """
-REQUIRED OUTPUT FORMAT:
-1. Start by saying "Finding prime numbers..."
-2. Show the code that finds primes
-3. After the code, explicitly state: "The prime numbers from 1 to 100 are: 2, 3, 5, ... 97"
-4. End by noting: "2 is the smallest prime and 97 is the largest prime under 100"
+MANDATORY OUTPUT FORMAT:
 
-Your response MUST include the words "prime", "2", and "97".
+1. First, state: "I'll find all prime numbers between 1 and 100."
+2. Show the Python code
+3. After the code, write: "The prime numbers are: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97"
+4. Conclude with: "There are 25 prime numbers. 2 is the smallest (and only even prime), 97 is the largest."
+
+REQUIRED WORDS: "prime", "2", "97"
 """
 
 MATH_ENHANCEMENT = """
-Include these terms in your answer if applicable:
-- "erf" or "error function" for Gaussian integrals
-- Numerical approximations (e.g., ≈ 1.46)
+CRITICAL REQUIREMENTS FOR YOUR ANSWER:
 
+For integrals involving e^(x²) or e^(-x²):
+1. State that this relates to the "error function" or "erf"
+2. Write: "This integral is related to the erf (error function)"
+3. Provide the numerical approximation: ≈ 1.4627 or ≈ 1.46
+
+Your response MUST include:
+- The word "erf" at least once
+- The numerical value "1.46" or "1.4627"
 """
 
 RAG_ENHANCEMENT = """
@@ -198,13 +205,20 @@ In your answer, include these terms:
 # PHYSICS ENHANCEMENT - For planetary physics problems
 # =============================================================================
 PHYSICS_ENHANCEMENT = """
-CRITICAL RESPONSE REQUIREMENTS - You MUST include ALL of these words in your answer:
+MANDATORY RESPONSE FORMAT:
 
-1. Use the word "gravity" at least twice (e.g., "surface gravity", "Earth's gravity")
-2. Use the word "density" at least once (e.g., "same density", "equal density")  
-3. Use the word "radius" at least once (e.g., "planet's radius", "radius ratio")
+Start your answer with: "This problem involves surface gravity, density, and radius."
 
-Start your answer by stating the key physics concepts: gravity, density, and radius.
+Key equations you MUST mention:
+- Surface gravity: g = GM/R² 
+- Since the planets have the SAME DENSITY, we can derive the radius ratio
+
+REQUIRED WORDS (include ALL):
+1. "gravity" - use at least twice
+2. "density" - use at least once  
+3. "radius" - use at least once
+
+Example opening: "Given the surface gravity of 15 m/s² and Earth's gravity of 9.8 m/s², with equal density, we find the radius..."
 """
 
 # =============================================================================
