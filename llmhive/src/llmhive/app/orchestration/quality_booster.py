@@ -301,8 +301,8 @@ Mark your final answer clearly with "FINAL ANSWER:"
         """Generate by decomposing complex question into simpler parts."""
         model = model or self.default_model
         
-        # Decompose
-        decomp_prompt = DECOMPOSITION_PROMPT.format(question=prompt)
+        # Decompose (use replace for question which may contain curly braces)
+        decomp_prompt = DECOMPOSITION_PROMPT.replace("{question}", prompt)
         decomp_response = await self._call_model(model, decomp_prompt)
         
         # Extract sub-questions
@@ -318,11 +318,8 @@ Mark your final answer clearly with "FINAL ANSWER:"
             answer = await self._call_model(model, sq)
             sub_answers.append(f"Q{i}: {sq}\nA{i}: {answer}")
         
-        # Synthesize
-        synth_prompt = SYNTHESIS_PROMPT.format(
-            question=prompt,
-            sub_answers="\n\n".join(sub_answers),
-        )
+        # Synthesize (use replace for question and sub_answers which may contain curly braces)
+        synth_prompt = SYNTHESIS_PROMPT.replace("{question}", prompt).replace("{sub_answers}", "\n\n".join(sub_answers))
         
         final = await self._call_model(model, synth_prompt)
         return final
@@ -334,7 +331,8 @@ Mark your final answer clearly with "FINAL ANSWER:"
         model: str,
     ) -> Tuple[str, bool]:
         """Apply self-reflection to improve response."""
-        reflect_prompt = SELF_REFLECTION_PROMPT.format(response=response)
+        # Use replace for response which may contain curly braces
+        reflect_prompt = SELF_REFLECTION_PROMPT.replace("{response}", response)
         
         reflection = await self._call_model(model, reflect_prompt)
         
@@ -351,10 +349,8 @@ Mark your final answer clearly with "FINAL ANSWER:"
         model: str,
     ) -> Tuple[str, bool, float]:
         """Apply verification and correction."""
-        verify_prompt = VERIFICATION_PROMPT.format(
-            question=prompt,
-            answer=response,
-        )
+        # Use replace for question and answer which may contain curly braces
+        verify_prompt = VERIFICATION_PROMPT.replace("{question}", prompt).replace("{answer}", response)
         
         verification = await self._call_model(model, verify_prompt)
         

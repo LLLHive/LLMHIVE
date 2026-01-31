@@ -565,7 +565,8 @@ class PromptOps:
             if not provider:
                 return self._analyze_query(query, domain_hint)
             
-            prompt = TASK_CLASSIFICATION_PROMPT.format(query=query)
+            # Use replace instead of format to handle queries with curly braces
+            prompt = TASK_CLASSIFICATION_PROMPT.replace("{query}", query)
             
             # Use fast model for classification
             result = await provider.complete(prompt, model="gpt-4o-mini")

@@ -649,7 +649,8 @@ class ClarificationManager:
         if not provider:
             return self._rule_based_detect_ambiguity(query, context, history)
         
-        prompt = CLARIFICATION_DETECTION_PROMPT.format(query=query)
+        # Use replace instead of format to handle queries with curly braces
+        prompt = CLARIFICATION_DETECTION_PROMPT.replace("{query}", query)
         
         try:
             result = await provider.complete(prompt, model="gpt-4o-mini")
@@ -895,10 +896,8 @@ class ClarificationManager:
             try:
                 provider = self.providers.get("openai") or next(iter(self.providers.values()))
                 
-                prompt = QUERY_REFINEMENT_PROMPT.format(
-                    query=original_query,
-                    clarifications=clarification_context,
-                )
+                # Use replace for query and clarifications which may contain curly braces
+                prompt = QUERY_REFINEMENT_PROMPT.replace("{query}", original_query).replace("{clarifications}", clarification_context)
                 
                 result = await provider.complete(prompt, model="gpt-4o-mini")
                 content = getattr(result, 'content', '') or getattr(result, 'text', '')

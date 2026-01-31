@@ -635,7 +635,7 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
                     "actual_cost": 0.0,
                     "cost_info": {},
                 }
-                print(f"❌ Error")
+                print(f"❌ Error: {api_result['error'][:100]}")
             
             category_results.append(result)
             total_cases += 1

@@ -253,8 +253,8 @@ class ConsensusManager:
             for i, resp in enumerate(responses[2:], 3):
                 additional += f"\nResponse {chr(64+i)} ({resp.model}):\n{resp.content[:1000]}\n"
         
-        prompt = FUSION_PROMPT.format(
-            query=query,
+        # Use replace for query first (may contain curly braces), then format for safe values
+        prompt = FUSION_PROMPT.replace("{query}", query).format(
             model_a=responses[0].model,
             response_a=responses[0].content[:1500],
             model_b=responses[1].model,
@@ -355,10 +355,8 @@ class ConsensusManager:
         critic_model: str,
     ) -> str:
         """Get critique from a model."""
-        prompt = DEBATE_PROMPT.format(
-            query=query,
-            answer=answer[:2000],
-        )
+        # Use replace for query and answer (may contain curly braces)
+        prompt = DEBATE_PROMPT.replace("{query}", query).replace("{answer}", answer[:2000])
         
         provider = self._get_provider_for_model(critic_model)
         if not provider:
@@ -453,10 +451,8 @@ Output only the improved answer."""
         for i, resp in enumerate(responses, 1):
             responses_text += f"\nResponse {i} ({resp.model}):\n{resp.content[:1000]}\n"
         
-        prompt = ARBITER_PROMPT.format(
-            query=query,
-            responses=responses_text,
-        )
+        # Use replace for query and responses (may contain curly braces)
+        prompt = ARBITER_PROMPT.replace("{query}", query).replace("{responses}", responses_text)
         
         provider = self._get_provider()
         if not provider:

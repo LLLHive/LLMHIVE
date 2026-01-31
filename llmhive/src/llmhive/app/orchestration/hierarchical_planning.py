@@ -232,7 +232,8 @@ class HierarchicalPlanner:
         if not provider:
             raise ValueError("No LLM provider available for planning")
         
-        prompt = PLANNING_PROMPT.format(query=query)
+        # Use replace instead of format to handle queries with curly braces
+        prompt = PLANNING_PROMPT.replace("{query}", query)
         
         result = await provider.complete(prompt, model=self.planning_model)
         content = getattr(result, 'content', '') or getattr(result, 'text', '')
