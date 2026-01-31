@@ -9,10 +9,10 @@
 |----------|---------------------|-------------|----------------------|-------------------|-------|
 | **OpenRouter** | ✅ SET (75 chars) | ✅ **YES** | ❌ NO | ❌ NO | 25+ free models, 50 req/day |
 | **Google Gemini** | ✅ SET (41 chars) | ✅ **YES** | ❌ NO | ❌ NO | 15 RPM, 1M context, 1000/day |
-| **Groq** | ✅ SET (52 chars)* | ✅ **YES** | ❌ NO | ❌ NO | 50+ RPM, ultra-fast LPU |
-| **OpenAI** | ✅ SET (166 chars) | ⚠️ **NO** | ✅ YES | 💰 **$5 minimum** | Free tier = $100 credit (limited models) |
-| **Anthropic** | ❌ NOT SET | ⚠️ **NO** | ✅ YES | 💰 **$5 minimum** | Web free, API requires payment |
-| **DeepSeek** | ❌ NOT SET | ✅ **YES** | ❌ NO | ❌ NO | 5M tokens on signup, then paid |
+| **Groq** | ✅ SET (52 chars) | ✅ **YES** | ❌ NO | ❌ NO | 50+ RPM, ultra-fast LPU |
+| **DeepSeek** | ✅ SET | ⚠️ **PAID** | ❌ NO | ✅ **$19.99 balance** | 96% AIME, 2701 Codeforces, elite math |
+| **OpenAI** | ✅ SET (166 chars) | ⚠️ **PAID** | ✅ YES | 💰 **$5 minimum** | Free tier = $100 credit (limited models) |
+| **Anthropic** | ❌ NOT SET | ⚠️ **PAID** | ✅ YES | 💰 **$5 minimum** | Web free, API requires payment |
 
 \* **Note**: You have this stored as `GROK_API_KEY` (typo) — should be `GROQ_API_KEY`
 

@@ -18,6 +18,7 @@ Usage:
 
 from .google_ai_client import GoogleAIClient, get_google_client
 from .groq_client import GroqClient, get_groq_client
+from .deepseek_client import DeepSeekClient, get_deepseek_client
 from .provider_router import (
     ProviderRouter,
     Provider,
@@ -30,6 +31,8 @@ __all__ = [
     "get_google_client",
     "GroqClient",
     "get_groq_client",
+    "DeepSeekClient",
+    "get_deepseek_client",
     "ProviderRouter",
     "Provider",
     "get_provider_router",

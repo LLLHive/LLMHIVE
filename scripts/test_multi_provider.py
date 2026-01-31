@@ -39,6 +39,7 @@ async def test_providers():
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     google_key = os.getenv("GOOGLE_AI_API_KEY")
     groq_key = os.getenv("GROQ_API_KEY")
+    deepseek_key = os.getenv("DEEPSEEK_API_KEY")
     
     providers_available = 0
     total_rpm = 0
@@ -63,6 +64,13 @@ async def test_providers():
         total_rpm += 50
     else:
         print("⚠️  GROQ_API_KEY: Not set (optional)")
+    
+    if deepseek_key:
+        print(f"✅ DEEPSEEK_API_KEY: Set ({len(deepseek_key)} chars)")
+        providers_available += 1
+        total_rpm += 30
+    else:
+        print("⚠️  DEEPSEEK_API_KEY: Not set (optional)")
     
     print()
     print(f"📊 Providers Available: {providers_available}/3")
@@ -147,6 +155,44 @@ async def test_providers():
     
     print()
     
+    # Test DeepSeek client
+    print("=" * 60)
+    print("🟣 Testing DeepSeek Client...")
+    print("-" * 60)
+    
+    if deepseek_key:
+        try:
+            from llmhive.src.llmhive.app.providers import get_deepseek_client
+            
+            client = get_deepseek_client()
+            if client:
+                print("✅ DeepSeek client initialized ($19.99 balance)")
+                
+                # Test API call
+                print("   Testing DeepSeek Chat (V3.2)...")
+                start = time.time()
+                response = await client.generate(
+                    "Say 'Hello' in one word",
+                    model="deepseek-chat"
+                )
+                elapsed = time.time() - start
+                
+                if response:
+                    print(f"   ✅ Response: \"{response[:50]}...\" ({elapsed:.2f}s)")
+                    print(f"   💡 Elite math/reasoning: 96% AIME, 2701 Codeforces")
+                else:
+                    print("   ❌ Empty response")
+            else:
+                print("❌ Failed to initialize client")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+    else:
+        print("⏭️  Skipped (no API key)")
+        print("   Get FREE account: https://platform.deepseek.com")
+        print("   ($19.99 balance = ~70M tokens)")
+    
+    print()
+    
     # Test provider router
     print("=" * 60)
     print("🔀 Testing Provider Router...")
@@ -166,7 +212,8 @@ async def test_providers():
             ("google/gemini-2.0-flash-exp:free", Provider.GOOGLE if google_key else Provider.OPENROUTER),
             ("meta-llama/llama-3.1-405b-instruct:free", Provider.GROQ if groq_key else Provider.OPENROUTER),
             ("meta-llama/llama-3.3-70b-instruct:free", Provider.GROQ if groq_key else Provider.OPENROUTER),
-            ("deepseek/deepseek-r1-0528:free", Provider.OPENROUTER),
+            ("deepseek/deepseek-r1-0528:free", Provider.DEEPSEEK if deepseek_key else Provider.OPENROUTER),
+            ("deepseek/deepseek-chat", Provider.DEEPSEEK if deepseek_key else Provider.OPENROUTER),
             ("qwen/qwen3-coder:free", Provider.OPENROUTER),
         ]
         
@@ -234,8 +281,12 @@ async def test_providers():
     print("=" * 60)
     
     # Summary
-    if providers_available == 3:
-        print("🎉 EXCELLENT! All providers active.")
+    if providers_available == 4:
+        print("🎉 PERFECT! All providers active (including DeepSeek).")
+        print(f"   Expected capacity: ~{total_rpm} RPM")
+        print(f"   Expected speedup: 4-5x faster, elite math/reasoning")
+    elif providers_available == 3:
+        print("🎉 EXCELLENT! Core providers active.")
         print(f"   Expected capacity: ~{total_rpm} RPM")
         print(f"   Expected speedup: 3-4x faster FREE tier")
     elif providers_available == 2:
@@ -249,7 +300,8 @@ async def test_providers():
         print("   To activate multi-provider:")
         print("   1. Get Google AI key: https://aistudio.google.com")
         print("   2. Get Groq key: https://console.groq.com")
-        print("   3. Export as environment variables")
+        print("   3. Get DeepSeek key: https://platform.deepseek.com")
+        print("   4. Export as environment variables")
     
     print()
     print("📝 Next Steps:")

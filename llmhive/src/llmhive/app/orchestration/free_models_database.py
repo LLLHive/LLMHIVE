@@ -177,10 +177,10 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # =========================================================================
     "deepseek/deepseek-r1-0528:free": FreeModelInfo(
         model_id="deepseek/deepseek-r1-0528:free",
-        display_name="DeepSeek R1 (0528)",
+        display_name="DeepSeek R1 (V3.2-Thinking)",
         provider="DeepSeek",
         context_window=163840,
-        speed_tier=SpeedTier.SLOW,
+        speed_tier=SpeedTier.MEDIUM,  # Faster via direct API
         strengths=[
             ModelStrength.REASONING,
             ModelStrength.MATH,
@@ -188,8 +188,28 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.TOOL_USE,
         ],
         best_for=["Complex reasoning", "Math problems", "Step-by-step analysis"],
-        notes="BEST free reasoning model - uses chain-of-thought, slower but thorough",
+        notes="96% AIME 2025, 2701 Codeforces - elite math/reasoning via direct API",
         verified_working=True,
+        preferred_api="deepseek",  # Route to DeepSeek Direct
+        native_model_id="deepseek-reasoner",
+    ),
+    
+    "deepseek/deepseek-chat": FreeModelInfo(
+        model_id="deepseek/deepseek-chat",
+        display_name="DeepSeek Chat (V3.2-Speciale)",
+        provider="DeepSeek",
+        context_window=163840,
+        speed_tier=SpeedTier.FAST,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.CODING,
+            ModelStrength.SPEED,
+        ],
+        best_for=["Fast reasoning", "Code generation", "General tasks"],
+        notes="Fast general-purpose model, 90% on HMMT 2025, routes to direct API",
+        verified_working=True,
+        preferred_api="deepseek",  # Route to DeepSeek Direct
+        native_model_id="deepseek-chat",
     ),
     
     # =========================================================================

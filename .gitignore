@@ -123,3 +123,4 @@ test-results/
 # BACKUPS (contains sensitive env files)
 # ===========================================
 backups/
+.env.local.backup
