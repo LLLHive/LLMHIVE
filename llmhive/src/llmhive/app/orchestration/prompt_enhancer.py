@@ -82,13 +82,23 @@ def detect_task_type(query: str) -> str:
     if any(kw in query_lower for kw in cs_keywords):
         return "computer_science"
     
-    # Math detection
+    # Math detection - COMPREHENSIVE
     math_patterns = [
         r'\b(calculate|compute|solve|integral|derivative)\b',
         r'\b(equation|formula|expression)\b',
         r'\b\d+\s*[\+\-\*\/\^]\s*\d+',
         r'\b(sum|product|factorial|prime)\b',
         r'\b(compound interest|percentage|ratio)\b',
+        # Geometry
+        r'\b(circle|triangle|radius|inscribed|circumscribed)\b',
+        r'\b(area|perimeter|volume|angle|degrees)\b',
+        # Combinatorics
+        r'\b(how many ways|permutations?|combinations?)\b',
+        r'\b(chessboard|rooks?|queens?|knights?|placed)\b',
+        # Number Theory
+        r'\b(divisible|integers?|divisors?)\b',
+        # Algebra
+        r'\b(solutions?|roots?|polynomial)\b',
     ]
     for pattern in math_patterns:
         if re.search(pattern, query_lower):

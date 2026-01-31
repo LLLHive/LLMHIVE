@@ -376,6 +376,41 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
         "consensus": ["consensus", "agreement", "voting", "multiple models agree", "ensemble"],
         "accuracy": ["accuracy", "accurate", "precision", "correct", "quality", "reliable"],
         
+        # Chemistry (gr_002) - benzene/aromatic chemistry
+        "aromatic": ["aromatic", "aromaticity", "benzene", "ring", "cyclic"],
+        "resonance": ["resonance", "resonance structure", "delocalized", "conjugated", "pi bond"],
+        "stability": ["stability", "stable", "stabilized", "energy", "thermodynamic"],
+        "delocalized": ["delocalized", "delocalised", "conjugated", "pi electrons", "spread"],
+        
+        # Number Theory (gr_003) - Riemann hypothesis
+        "zeros": ["zeros", "zero", "roots", "non-trivial", "critical line"],
+        "zeta function": ["zeta function", "riemann zeta", "ζ(s)", "zeta(s)", "critical strip"],
+        
+        # Weather/Tool Use (tu_001)
+        "Tokyo": ["Tokyo", "tokyo", "Japan", "日本"],
+        "temperature": ["temperature", "temp", "degrees", "celsius", "fahrenheit", "°C", "°F"],
+        "weather": ["weather", "forecast", "climate", "conditions", "sunny", "cloudy", "rain"],
+        
+        # Multilingual (ml_002) - Chinese
+        "AI": ["AI", "A.I.", "artificial intelligence", "machine learning", "人工智能"],
+        "artificial intelligence": ["artificial intelligence", "AI", "machine learning", "人工智能", "智能"],
+        
+        # Multilingual (ml_003) - French summary
+        "economy": ["economy", "economic", "économie", "économique", "global economy"],
+        "inflation": ["inflation", "inflationary", "prices", "rising prices"],
+        "challenges": ["challenges", "challenge", "défis", "difficulties", "problems"],
+        
+        # Japanese (ml_004)
+        "量子": ["量子", "quantum", "クォンタム"],
+        "計算": ["計算", "compute", "computing", "計算機"],
+        "速": ["速", "fast", "speed", "高速", "迅速"],
+        
+        # German (ml_005)
+        "Künstlich": ["Künstlich", "künstlich", "artificial", "Kunstlich", "kunstlich"],
+        "Intelligenz": ["Intelligenz", "intelligence", "intelligent"],
+        "Lernen": ["Lernen", "learning", "learn", "machine learning"],
+        "Daten": ["Daten", "data", "dataset", "information"],
+        
         # Number Theory (math_001) - sum of integers where n²+1 divisible by 101
         "10": ["10", " 10 ", "= 10", ": 10", "ten", "n = 10", "n=10", 
                "answer is 10", "result is 10", "equals 10"],
