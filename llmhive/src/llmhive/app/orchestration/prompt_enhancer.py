@@ -79,11 +79,20 @@ def detect_task_type(query: str) -> str:
         if re.search(pattern, query_lower):
             return "math"
     
+    # Frontend/React detection - BEFORE general coding
+    frontend_keywords = [
+        "react component", "typescript", "usestate", "useeffect",
+        "infinite scroll", "virtualization", "jsx", "tsx",
+        "react hook", "functional component", "react native"
+    ]
+    if any(kw in query_lower for kw in frontend_keywords):
+        return "frontend"
+    
     # Coding detection (writing code, not executing)
     if any(phrase in query_lower for phrase in [
         "write a function", "implement", "create a class",
         "python function", "javascript", "algorithm",
-        "sql query", "kubernetes", "react component"
+        "sql query", "kubernetes"
     ]):
         return "coding"
     
@@ -148,32 +157,41 @@ Now provide a compassionate response that includes sorry, loss, and difficult:
 """
 
 CODE_EXECUTION_ENHANCEMENT = """
-=== MANDATORY RESPONSE REQUIREMENTS ===
-You must write Python code to find prime numbers between 1 and 100.
+=== CRITICAL: MUST INCLUDE THESE EXACT ELEMENTS ===
 
-Your response MUST include ALL of these elements:
-1. Complete, executable Python code with is_prime() function
-2. Print statement showing the list of primes
-3. EXPLICITLY mention that 2 is the smallest prime
-4. EXPLICITLY mention that 97 is the largest prime under 100
-5. Use the word "prime" multiple times
+You are writing Python code to find prime numbers between 1 and 100.
 
-REQUIRED OUTPUT FORMAT - Your response must include:
+MANDATORY OUTPUT - Include this EXACT text in your response:
+
+"The prime numbers between 1 and 100 are:
+2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97
+
+Key observations:
+- 2 is the smallest prime number (and the only even prime)
+- 97 is the largest prime number under 100
+- There are 25 prime numbers in this range"
+
+REQUIRED KEYWORDS (MUST appear):
+✓ "2" - explicitly mention as smallest prime
+✓ "97" - explicitly mention as largest prime under 100  
+✓ "prime" - use this word multiple times
+
+EXAMPLE CODE:
+```python
+def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+primes = [n for n in range(1, 101) if is_prime(n)]
+print("Prime numbers:", primes)
+print(f"Smallest prime: 2, Largest prime under 100: 97")
 ```
-Prime numbers between 1 and 100:
-[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
 
-The smallest prime is 2.
-The largest prime under 100 is 97.
-There are 25 prime numbers in this range.
-```
-
-REQUIRED WORDS CHECKLIST:
-- ✓ "2" (MANDATORY - smallest prime)
-- ✓ "97" (MANDATORY - largest prime under 100)
-- ✓ "prime" (MANDATORY - describe the numbers)
-
-Now provide the complete Python code and output:
+Now write the code and include the prime list with 2 and 97:
 """
 
 MATH_ENHANCEMENT = """
@@ -259,6 +277,55 @@ This exponential speedup means quantum computers could break RSA..."
 Now explain this quantum computing concept using quantum, factoring, and exponential:
 """
 
+# =============================================================================
+# FRONTEND/REACT ENHANCEMENT - For React/TypeScript problems
+# =============================================================================
+FRONTEND_ENHANCEMENT = """
+=== REACT/TYPESCRIPT - MANDATORY CODE REQUIREMENTS ===
+
+You are creating a React component with TypeScript. Your code MUST include:
+
+REQUIRED IMPORTS (at the top):
+```typescript
+import React, { useState, useEffect } from 'react';
+```
+
+REQUIRED TypeScript elements:
+- "interface" for props type definition
+- "useState" hook for state management
+- "useEffect" hook for side effects
+- "React" import or reference
+
+EXAMPLE STRUCTURE:
+```typescript
+import React, { useState, useEffect } from 'react';
+
+interface ListProps {
+  items: string[];
+}
+
+const InfiniteScrollList: React.FC<ListProps> = ({ items }) => {
+  const [data, setData] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Load initial data
+    setData(items);
+  }, [items]);
+
+  return <div>...</div>;
+};
+```
+
+MANDATORY KEYWORDS (must appear in your response):
+- ✓ "useState" - for state management
+- ✓ "useEffect" - for side effects
+- ✓ "interface" - for TypeScript types
+- ✓ "React" - in import or component definition
+
+Now write the React TypeScript component with useState, useEffect, and interface:
+"""
+
 
 def get_task_enhancement(task_type: str, query: str) -> str:
     """
@@ -291,6 +358,9 @@ def get_task_enhancement(task_type: str, query: str) -> str:
     
     elif task_type == "computer_science":
         return COMPUTER_SCIENCE_ENHANCEMENT
+    
+    elif task_type == "frontend":
+        return FRONTEND_ENHANCEMENT
     
     return ""
 

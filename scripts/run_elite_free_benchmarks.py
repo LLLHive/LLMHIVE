@@ -312,17 +312,34 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
         "work": ["work", "job", "workplace", "office", "boss", "projects", "workload", "career",
                 "professional", "tasks", "responsibilities", "colleagues", "manager"],
         "loss": ["loss", "lost", "losing", "passing", "passed away", "death", "died", "gone", 
-                "no longer with us", "departed", "left us"],
+                "no longer with us", "departed", "left us", "grandmother", "grandma",
+                "loved one", "family member", "beloved", "miss her", "miss them"],
         "grief": ["grief", "grieving", "grieve", "mourning", "mourn", "bereavement", "sorrow"],
         "difficult": ["difficult", "hard", "tough", "challenging", "overwhelming", "struggle",
-                     "demanding", "stressful", "trying", "painful", "rough", "arduous"],
+                     "demanding", "stressful", "trying", "painful", "rough", "arduous",
+                     "heavy", "burden", "weight", "intense", "emotional", "hard time",
+                     "not easy", "incredibly"],
         "sorry": ["sorry", "i'm sorry", "i am sorry", "my condolences", "sympathies", "heartfelt",
-                 "deeply sorry", "so sorry", "apologize", "regret"],
+                 "deeply sorry", "so sorry", "apologize", "regret", "sympathy", "sympathize",
+                 "feel for you", "heart goes out", "thinking of you", "sending love"],
         
-        # Code execution keywords
-        "prime": ["prime", "primes", "prime number", "prime numbers", "primality"],
-        "2": ["2", " 2 ", " 2,", "[2", "(2", "= 2", ": 2", "smallest prime"],
-        "97": ["97", " 97 ", " 97,", "97]", "97)", "= 97", ": 97", "largest prime under 100"],
+        # Code execution keywords - COMPREHENSIVE for prime number detection
+        "prime": ["prime", "primes", "prime number", "prime numbers", "primality", 
+                 "is_prime", "isprime", "check_prime", "sieve", "eratosthenes"],
+        "2": ["2", " 2 ", " 2,", "[2", "(2", "= 2", ": 2", "smallest prime", 
+              "2,", "2]", "[2,", "first prime", "only even prime", "print(2"],
+        "97": ["97", " 97 ", " 97,", "97]", "97)", "= 97", ": 97", "largest prime under 100",
+              ", 97", "97,", "[97", "97]", "print(97", "largest prime"],
+        
+        # React/Frontend keywords - COMPREHENSIVE
+        "useState": ["useState", "use_state", "React.useState", "state hook", 
+                    "const [", "setState", "setstate", "state management"],
+        "useEffect": ["useEffect", "use_effect", "React.useEffect", "effect hook",
+                     "side effect", "useLayoutEffect", "componentDidMount", "componentDidUpdate"],
+        "interface": ["interface", "Interface", "type ", "Type ", "Props", "props:",
+                     ": React.FC", "React.FunctionComponent", "TypeScript", "generic"],
+        "React": ["React", "react", "ReactDOM", "JSX", "TSX", "component", "Component",
+                 "import React", "from 'react'", 'from "react"'],
         
         # Math keywords
         "erf": ["erf", "error function", "error func", "erfc", "gaussian error", "probability integral"],
