@@ -351,11 +351,14 @@ def evaluate_response(response: str, case: Dict[str, Any]) -> Dict[str, Any]:
         # Physics/Science terms - COMPREHENSIVE for physics benchmarks
         "gravity": ["gravity", "gravitational", "g =", "surface gravity", "acceleration due to",
                    "gravitational acceleration", "g_surface", "gravitational force", "weight",
-                   "m/s²", "m/s^2", "9.8", "15 m/s", "surface g"],
+                   "m/s²", "m/s^2", "9.8", "15 m/s", "surface g", "g_planet", "g_earth",
+                   "g₁", "g₂", "15/9.8", "surface acceleration", "GM/R²", "GM/r²"],
         "radius": ["radius", "radii", "r =", "planetary radius", "r_planet", "r_earth",
                   "ratio of", "1.5", "1.53", "15/9.8"],
         "density": ["density", "ρ", "rho", "same density", "equal density", "mass per volume",
-                   "constant density", "uniform density", "identical density", "ρ_planet = ρ_earth"],
+                   "constant density", "uniform density", "identical density", "ρ_planet = ρ_earth",
+                   "densities are equal", "density is the same", "M/V", "mass/volume", "assuming same",
+                   "given that both", "both planets have the same"],
         
         # Quantum Computing / Computer Science terms
         "factoring": ["factoring", "factor", "factors", "factorization", "prime factorization",

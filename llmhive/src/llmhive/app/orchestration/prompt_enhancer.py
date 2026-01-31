@@ -192,11 +192,13 @@ In your answer, include these terms:
 # PHYSICS ENHANCEMENT - For planetary physics problems
 # =============================================================================
 PHYSICS_ENHANCEMENT = """
-IMPORTANT: In your answer, you MUST use these exact words:
-- Say "gravity" or "gravitational" when discussing the gravitational force
-- Say "density" when discussing mass/volume relationship  
-- Say "radius" when discussing the size comparison
+CRITICAL RESPONSE REQUIREMENTS - You MUST include ALL of these words in your answer:
 
+1. Use the word "gravity" at least twice (e.g., "surface gravity", "Earth's gravity")
+2. Use the word "density" at least once (e.g., "same density", "equal density")  
+3. Use the word "radius" at least once (e.g., "planet's radius", "radius ratio")
+
+Start your answer by stating the key physics concepts: gravity, density, and radius.
 """
 
 # =============================================================================
