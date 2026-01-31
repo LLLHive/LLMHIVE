@@ -770,13 +770,29 @@ async def _free_orchestrate(
         logger.warning("Cheatsheets or scientific calculator not available")
     
     # Get optimal ensemble for this task
-    # Use 3 models for speed (parallel time = slowest model time)
-    # More models = slower total time due to waiting for all
-    ENSEMBLE_SIZE = 3  # Balanced: 3 fast models for quick consensus
+    # RATE LIMIT OPTIMIZATION: Use 2 models instead of 3
+    # - Reduces OpenRouter API calls by 33% (3 → 2 per query)
+    # - Still provides consensus voting (2 models)
+    # - Saves 10 requests/minute on free tier (20 RPM limit)
+    ENSEMBLE_SIZE = 2  # Optimized: 2 models for rate limit efficiency
     
     if free_db_available:
         try:
-            ensemble_models = get_ensemble_for_task(category, ENSEMBLE_SIZE)
+            # Get larger pool for rotation (4 models)
+            candidate_pool = get_ensemble_for_task(category, ENSEMBLE_SIZE + 2)
+            
+            # MODEL ROTATION: Distribute load across different models
+            # Uses query hash to select different pairs, avoiding per-model rate limits
+            import hashlib
+            query_hash = int(hashlib.md5(prompt.encode()).hexdigest(), 16)
+            rotation_offset = query_hash % len(candidate_pool)
+            
+            # Rotate and select first ENSEMBLE_SIZE models
+            rotated = candidate_pool[rotation_offset:] + candidate_pool[:rotation_offset]
+            ensemble_models = rotated[:ENSEMBLE_SIZE]
+            
+            logger.debug("Model rotation: offset=%d, pool=%s, selected=%s", 
+                        rotation_offset, candidate_pool, ensemble_models)
         except Exception as e:
             logger.warning("Failed to get optimal ensemble: %s", e)
             ensemble_models = list(FREE_MODELS_DB.keys())[:ENSEMBLE_SIZE]
@@ -1064,14 +1080,6 @@ async def _parallel_generate(
             logger.error("Fallback orchestrator failed: %s", e)
             return []
     
-<<<<<<< HEAD
-    # Create a SINGLE shared client for all parallel calls (much faster!)
-    async with httpx.AsyncClient(timeout=60.0) as shared_client:
-        async def get_response(model: str) -> Optional[str]:
-            """Direct OpenRouter API call using shared client - FAST!"""
-            try:
-                response = await shared_client.post(
-=======
     def _model_timeout_seconds(model_id: str) -> float:
         """Adaptive timeout based on model speed tier."""
         try:
@@ -1096,7 +1104,6 @@ async def _parallel_generate(
         for attempt in range(max_retries):
             try:
                 response = await client.post(
->>>>>>> ed351316f (fix(FREE tier): Stabilize model selection and reduce latency)
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {api_key}",
@@ -1116,23 +1123,6 @@ async def _parallel_generate(
                     data = response.json()
                     choices = data.get("choices", [])
                     if choices:
-<<<<<<< HEAD
-                        content = choices[0].get("message", {}).get("content", "")
-                        logger.debug("Model %s returned %d chars", model, len(content) if content else 0)
-                        return content
-                else:
-                    logger.warning("Model %s returned %d: %s", model, response.status_code, response.text[:100])
-                    return None
-            except httpx.TimeoutException:
-                logger.warning("Model %s timed out", model)
-                return None
-            except Exception as e:
-                logger.warning("Model %s failed: %s", model, e)
-                return None
-        
-        # Run all models in parallel using the shared client
-        tasks = [get_response(model) for model in models]
-=======
                         return choices[0].get("message", {}).get("content", "")
                     return None
 
@@ -1173,7 +1163,6 @@ async def _parallel_generate(
     # Run all models in parallel with a shared HTTP client
     async with httpx.AsyncClient() as client:
         tasks = [get_response(client, model) for model in eligible_models]
->>>>>>> ed351316f (fix(FREE tier): Stabilize model selection and reduce latency)
         results = await asyncio.gather(*tasks, return_exceptions=True)
     
     # Filter successful responses
