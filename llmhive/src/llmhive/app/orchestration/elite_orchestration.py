@@ -25,11 +25,55 @@ Integration Notes (January 2026):
 import asyncio
 import logging
 import re
+import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# FREE TIER HEALTH TRACKING
+# ============================================================================
+# Track recently failing models to avoid repeated slow failures.
+_FREE_MODEL_FAILURES: Dict[str, Dict[str, float]] = {}
+_FREE_FAILURE_TTL_SECONDS = 600.0  # 10 minutes
+_FREE_FAILURE_THRESHOLD = 3
+
+
+def _mark_free_model_failure(model_id: str) -> None:
+    now = time.time()
+    entry = _FREE_MODEL_FAILURES.get(model_id)
+    if not entry or now - entry.get("last_failure", 0) > _FREE_FAILURE_TTL_SECONDS:
+        _FREE_MODEL_FAILURES[model_id] = {"count": 1, "last_failure": now}
+        return
+    entry["count"] = float(entry.get("count", 0)) + 1
+    entry["last_failure"] = now
+
+
+def _should_skip_free_model(model_id: str) -> bool:
+    entry = _FREE_MODEL_FAILURES.get(model_id)
+    if not entry:
+        return False
+    if time.time() - entry.get("last_failure", 0) > _FREE_FAILURE_TTL_SECONDS:
+        return False
+    return entry.get("count", 0) >= _FREE_FAILURE_THRESHOLD
+
+
+def _is_valid_free_response(text: Optional[str]) -> bool:
+    if not text or not isinstance(text, str):
+        return False
+    stripped = text.strip()
+    if len(stripped) < 20:
+        return False
+    # Filter common error placeholders or refusals
+    lower = stripped.lower()
+    if any(phrase in lower for phrase in [
+        "error", "rate limit", "try again", "as an ai", "i cannot", "i can't", "unable to",
+        "not available", "content policy", "safety policy"
+    ]):
+        return False
+    return True
 
 
 # Import category optimization for advanced routing
@@ -709,27 +753,33 @@ async def _free_orchestrate(
         "ensemble_size": 0,
     }
     
-    # Import the free models database for intelligent selection
+    # Import free models database (selection) and cheatsheets independently
     try:
         from .free_models_database import get_ensemble_for_task, FREE_MODELS_DB
+        free_db_available = True
+    except ImportError:
+        free_db_available = False
+        logger.warning("Free models database not available")
+
+    try:
         from .knowledge_cheatsheets import get_cheatsheets_for_query, DIALOGUE_CHEATSHEET
         from .scientific_calculator import execute_calculation, MATH_CHEAT_SHEET
         cheatsheets_available = True
     except ImportError:
         cheatsheets_available = False
-        logger.warning("Free models database or cheatsheets not available")
+        logger.warning("Cheatsheets or scientific calculator not available")
     
     # Get optimal ensemble for this task
     # Use 3 models for speed (parallel time = slowest model time)
     # More models = slower total time due to waiting for all
     ENSEMBLE_SIZE = 3  # Balanced: 3 fast models for quick consensus
     
-    if cheatsheets_available:
+    if free_db_available:
         try:
             ensemble_models = get_ensemble_for_task(category, ENSEMBLE_SIZE)
         except Exception as e:
             logger.warning("Failed to get optimal ensemble: %s", e)
-            ensemble_models = FREE_MODELS.get(category, FREE_MODELS["reasoning"])[:ENSEMBLE_SIZE]
+            ensemble_models = list(FREE_MODELS_DB.keys())[:ENSEMBLE_SIZE]
     else:
         ensemble_models = FREE_MODELS.get(category, FREE_MODELS["reasoning"])[:ENSEMBLE_SIZE]
     
@@ -997,6 +1047,7 @@ async def _parallel_generate(
     """
     import httpx
     import os
+    import random
     
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
@@ -1013,12 +1064,39 @@ async def _parallel_generate(
             logger.error("Fallback orchestrator failed: %s", e)
             return []
     
+<<<<<<< HEAD
     # Create a SINGLE shared client for all parallel calls (much faster!)
     async with httpx.AsyncClient(timeout=60.0) as shared_client:
         async def get_response(model: str) -> Optional[str]:
             """Direct OpenRouter API call using shared client - FAST!"""
             try:
                 response = await shared_client.post(
+=======
+    def _model_timeout_seconds(model_id: str) -> float:
+        """Adaptive timeout based on model speed tier."""
+        try:
+            from .free_models_database import FREE_MODELS_DB, SpeedTier
+            model_info = FREE_MODELS_DB.get(model_id)
+            if model_info:
+                if model_info.speed_tier == SpeedTier.FAST:
+                    return 20.0
+                if model_info.speed_tier == SpeedTier.MEDIUM:
+                    return 35.0
+                if model_info.speed_tier == SpeedTier.SLOW:
+                    return 55.0
+        except Exception:
+            pass
+        return 40.0
+
+    async def get_response(client: httpx.AsyncClient, model: str) -> Optional[str]:
+        """Direct OpenRouter API call with retries/backoff."""
+        max_retries = 3
+        base_delay = 1.0
+        timeout_seconds = _model_timeout_seconds(model)
+        for attempt in range(max_retries):
+            try:
+                response = await client.post(
+>>>>>>> ed351316f (fix(FREE tier): Stabilize model selection and reduce latency)
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {api_key}",
@@ -1031,12 +1109,14 @@ async def _parallel_generate(
                         "messages": [{"role": "user", "content": prompt}],
                         "max_tokens": 2048,
                     },
+                    timeout=httpx.Timeout(connect=10.0, read=timeout_seconds),
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     choices = data.get("choices", [])
                     if choices:
+<<<<<<< HEAD
                         content = choices[0].get("message", {}).get("content", "")
                         logger.debug("Model %s returned %d chars", model, len(content) if content else 0)
                         return content
@@ -1052,15 +1132,76 @@ async def _parallel_generate(
         
         # Run all models in parallel using the shared client
         tasks = [get_response(model) for model in models]
+=======
+                        return choices[0].get("message", {}).get("content", "")
+                    return None
+
+                # Retry on rate-limit or transient server errors
+                if response.status_code == 429 or response.status_code >= 500:
+                    retry_after = response.headers.get("Retry-After")
+                    if retry_after:
+                        delay = float(retry_after)
+                    else:
+                        delay = min(base_delay * (2 ** attempt), 8.0)
+                        delay += random.uniform(0, 0.5)
+                    logger.warning(
+                        "Model %s rate-limited/server error (%d), retrying in %.2fs",
+                        model,
+                        response.status_code,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+
+                # Non-retryable errors
+                logger.warning("Model %s returned %d: %s", model, response.status_code, response.text[:100])
+                return None
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    delay = min(base_delay * (2 ** attempt), 8.0) + random.uniform(0, 0.5)
+                    logger.warning("Model %s failed (%s), retrying in %.2fs", model, e, delay)
+                    await asyncio.sleep(delay)
+                    continue
+                logger.warning("Model %s failed after retries: %s", model, e)
+                return None
+    
+    # Skip known-failing models to reduce latency
+    eligible_models = [m for m in models if not _should_skip_free_model(m)]
+    if not eligible_models:
+        eligible_models = models[:]
+
+    # Run all models in parallel with a shared HTTP client
+    async with httpx.AsyncClient() as client:
+        tasks = [get_response(client, model) for model in eligible_models]
+>>>>>>> ed351316f (fix(FREE tier): Stabilize model selection and reduce latency)
         results = await asyncio.gather(*tasks, return_exceptions=True)
     
     # Filter successful responses
-    valid_responses = [
-        r for r in results 
-        if isinstance(r, str) and r and len(r) > 10
-    ]
+    valid_responses: List[str] = []
+    for model_id, result in zip(eligible_models, results):
+        if isinstance(result, Exception):
+            _mark_free_model_failure(model_id)
+            continue
+        if _is_valid_free_response(result):
+            valid_responses.append(result)
+        else:
+            _mark_free_model_failure(model_id)
     
-    return valid_responses
+    if valid_responses:
+        return valid_responses
+
+    # Fallback: try a single orchestrator call if all direct calls failed
+    try:
+        logger.warning("All direct FREE model calls failed, falling back to orchestrator")
+        response = await orchestrator.orchestrate(
+            prompt=prompt,
+            models=models[:1],
+            skip_injection_check=True,
+        )
+        return [response.get("response", "")] if response.get("response") else []
+    except Exception as e:
+        logger.error("Fallback orchestrator failed: %s", e)
+        return []
 
 
 def _select_best_response(responses: List[str], original_query: str) -> str:

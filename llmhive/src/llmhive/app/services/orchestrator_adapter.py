@@ -161,6 +161,13 @@ except ImportError:
     get_models_for_category = lambda cat, use_free: []
 
 try:
+    from ..orchestration.free_models_database import FREE_MODELS_DB
+    FREE_MODELS_DB_AVAILABLE = True
+except ImportError:
+    FREE_MODELS_DB_AVAILABLE = False
+    FREE_MODELS_DB = {}
+
+try:
     from ..orchestration.quality_booster import (
         QualityBooster,
         boost_response,
@@ -1740,6 +1747,28 @@ def _get_display_name(model_id: str) -> str:
     return display_names.get(model_id, model_id)
 
 
+def _get_all_free_models() -> List[str]:
+    """Get canonical list of free models for FREE tier filtering."""
+    if FREE_MODELS_DB_AVAILABLE and FREE_MODELS_DB:
+        return list(FREE_MODELS_DB.keys())
+    all_free_models: List[str] = []
+    for category_models in FREE_MODELS.values():
+        all_free_models.extend(category_models)
+    return list(set(all_free_models))
+
+
+def _filter_free_models(actual_models: List[str]) -> List[str]:
+    """Filter to FREE models using a single canonical source."""
+    all_free_models = _get_all_free_models()
+    filtered = [m for m in actual_models if m in all_free_models]
+    if not filtered:
+        if FREE_MODELS_DB_AVAILABLE and FREE_MODELS_DB:
+            filtered = list(FREE_MODELS_DB.keys())[:3]
+        else:
+            filtered = FREE_MODELS.get("reasoning", [])[:3]
+    return filtered
+
+
 def _auto_select_reasoning_method(prompt: str, domain_pack: str) -> RouterReasoningMethod | None:
     """Heuristic selection of reasoning strategy when none provided."""
     plower = prompt.lower()
@@ -2000,25 +2029,11 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         )
         
         if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
-            # Get all available free models
-            all_free_models = []
-            for category_models in FREE_MODELS.values():
-                all_free_models.extend(category_models)
-            all_free_models = list(set(all_free_models))  # Remove duplicates
-            
-            logger.info("FREE_MODELS available: %s (total %d)", all_free_models[:5], len(all_free_models))
-            
-            # Filter to only use free models
-            filtered_models = [m for m in actual_models if m in all_free_models]
-            
-            if not filtered_models:
-                # If no overlap, use default free models
-                filtered_models = FREE_MODELS.get("reasoning", [])[:3]
-                logger.info("No matching free models in actual_models, using FREE_MODELS['reasoning'] defaults: %s", filtered_models)
-            else:
-                logger.info("Found matching free models: %s", filtered_models)
-            
-            actual_models = filtered_models
+            all_free_models = _get_all_free_models()
+            logger.info("FREE models available: %s (total %d)", all_free_models[:5], len(all_free_models))
+
+            actual_models = _filter_free_models(actual_models)
+            logger.info("Filtered FREE models: %s", actual_models)
             user_model_names = [m.split("/")[-1] if "/" in m else m for m in actual_models]
             logger.info("TIER FILTERING APPLIED: FREE tier -> models=%s", actual_models)
         elif use_free_models and not ELITE_ORCHESTRATION_AVAILABLE:
@@ -3019,15 +3034,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     # This ensures FREE tier ALWAYS uses free models, even after KB overrides
                     # =========================================================================
                     if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
-                        all_free_models = []
-                        for cat_models in FREE_MODELS.values():
-                            all_free_models.extend(cat_models)
-                        all_free_models = list(set(all_free_models))
-                        
-                        filtered = [m for m in actual_models if m in all_free_models]
-                        if not filtered:
-                            filtered = FREE_MODELS.get("reasoning", [])[:3]
-                        actual_models = filtered
+                        actual_models = _filter_free_models(actual_models)
                         logger.info("TIER FILTERING (post-KB): FREE tier -> models=%s", actual_models)
                     
                     # Select strategy based on accuracy, task, complexity, and user criteria
@@ -3083,15 +3090,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             # =========================================================================
             orchestrator_models = actual_models
             if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
-                all_free_models = []
-                for cat_models in FREE_MODELS.values():
-                    all_free_models.extend(cat_models)
-                all_free_models = list(set(all_free_models))
-                
-                filtered = [m for m in actual_models if m in all_free_models]
-                if not filtered:
-                    filtered = FREE_MODELS.get("reasoning", [])[:3]
-                orchestrator_models = filtered
+                orchestrator_models = _filter_free_models(actual_models)
                 logger.info("TIER FILTERING (pre-orchestrator): FREE tier -> models=%s", orchestrator_models)
             
             artifacts = await _orchestrator.orchestrate(
