@@ -42,14 +42,18 @@ class GoogleAIClient:
     """
     
     # Default model for FREE tier (fastest, best limits)
-    DEFAULT_MODEL = "gemini-2.0-flash-exp"
+    # Updated Jan 31, 2026: Gemini 3 models now available
+    DEFAULT_MODEL = "gemini-3-flash-preview"
     
     # Model mapping from OpenRouter IDs to Google AI IDs
     MODEL_MAP = {
-        "google/gemini-2.0-flash-exp:free": "gemini-2.0-flash-exp",
-        "gemini-2.0-flash": "gemini-2.0-flash-exp",
-        "gemini-2.5-flash": "gemini-2.5-flash-latest",
-        "gemini-2.5-pro": "gemini-2.5-pro-latest",
+        "google/gemini-2.0-flash-exp:free": "gemini-3-flash-preview",  # Latest fast model
+        "google/gemini-3-flash-preview:free": "gemini-3-flash-preview",
+        "gemini-2.0-flash": "gemini-3-flash-preview",
+        "gemini-2.5-flash": "gemini-3-flash-preview",
+        "gemini-3-flash": "gemini-3-flash-preview",
+        "gemini-3-pro": "gemini-3-pro-preview",
+        "gemini-2.5-pro": "gemini-3-pro-preview",
     }
     
     def __init__(self, api_key: Optional[str] = None):
