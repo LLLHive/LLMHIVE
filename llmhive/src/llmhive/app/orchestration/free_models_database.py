@@ -54,8 +54,12 @@ class FreeModelInfo:
     notes: str = ""                  # Additional notes
     verified_working: bool = True    # Has been tested and works
     # NEW (Jan 31, 2026): Multi-provider routing
-    preferred_api: str = "openrouter"  # "google" | "groq" | "openrouter"
+    preferred_api: str = "openrouter"  # "google" | "deepseek" | "openrouter"
     native_model_id: Optional[str] = None  # ID for direct API (if different)
+    # NEW (Jan 31, 2026): OpenRouter benchmark scores
+    performance_score: float = 0.0   # OpenRouter performance score (0-100)
+    capability_score: float = 0.0    # OpenRouter capability score (0-100)
+    supports_tools: bool = False     # Function calling support
     
     @property
     def is_fast(self) -> bool:
@@ -72,7 +76,7 @@ class FreeModelInfo:
     @property
     def uses_direct_api(self) -> bool:
         """Whether this model routes to a direct API (not OpenRouter)."""
-        return self.preferred_api in ("google", "groq")
+        return self.preferred_api in ("google", "deepseek")
 
 
 # =============================================================================
@@ -123,10 +127,10 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # =========================================================================
     "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
         model_id="meta-llama/llama-3.3-70b-instruct:free",
-        display_name="Llama 3.3 70B Instruct (Groq LPU)",
+        display_name="Llama 3.3 70B Instruct",
         provider="Meta",
         context_window=131072,
-        speed_tier=SpeedTier.FAST,
+        speed_tier=SpeedTier.MEDIUM,
         strengths=[
             ModelStrength.REASONING,
             ModelStrength.CODING,
@@ -134,28 +138,26 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.MULTILINGUAL,
         ],
         best_for=["General reasoning", "Code generation", "Conversation"],
-        notes="Ultra-fast via Groq LPU (1-2s responses), routes to Groq direct API",
+        notes="Strong general-purpose model via OpenRouter",
         verified_working=True,
-        preferred_api="groq",  # Route to Groq for ultra-speed
-        native_model_id="llama-3.3-70b-versatile",
+        preferred_api="openrouter",
     ),
     
     "meta-llama/llama-3.1-405b-instruct:free": FreeModelInfo(
         model_id="meta-llama/llama-3.1-405b-instruct:free",
-        display_name="Llama 3.1 405B Instruct (Groq LPU)",
+        display_name="Llama 3.1 405B Instruct",
         provider="Meta",
         context_window=131072,
-        speed_tier=SpeedTier.FAST,  # NOW FAST via Groq LPU!
+        speed_tier=SpeedTier.SLOW,
         strengths=[
             ModelStrength.REASONING,
             ModelStrength.MATH,
             ModelStrength.CODING,
         ],
         best_for=["Complex reasoning", "Hard math", "Detailed analysis"],
-        notes="Largest Llama, ultra-fast via Groq LPU (2-5s vs 15-30s), routes to Groq",
+        notes="Largest Llama model, powerful but slower via OpenRouter",
         verified_working=True,
-        preferred_api="groq",  # Route to Groq for ultra-speed
-        native_model_id="llama-3.1-405b-reasoning",
+        preferred_api="openrouter",
     ),
     
     "meta-llama/llama-3.2-3b-instruct:free": FreeModelInfo(
@@ -418,8 +420,29 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.DIALOGUE,
         ],
         best_for=["Reasoning", "Long context analysis", "Roleplay"],
-        notes="Second gen Chimera - 20% faster than original R1, strong reasoning",
+        notes="🏆 RANK #1 - Highest performance score (81.3) among free models",
         verified_working=True,
+        performance_score=81.3,
+        capability_score=57.9,
+        supports_tools=False,
+    ),
+    
+    "moonshotai/kimi-k2:free": FreeModelInfo(
+        model_id="moonshotai/kimi-k2:free",
+        display_name="Moonshot AI Kimi K2",
+        provider="Moonshot AI",
+        context_window=32768,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.MULTILINGUAL,
+        ],
+        best_for=["Reasoning", "Chinese language tasks"],
+        notes="🏆 RANK #4 - Strong performance (67.5), good reasoning model",
+        verified_working=True,
+        performance_score=67.5,
+        capability_score=0.0,  # Not in capability top 20
+        supports_tools=False,
     ),
     
     "tngtech/tng-r1t-chimera:free": FreeModelInfo(

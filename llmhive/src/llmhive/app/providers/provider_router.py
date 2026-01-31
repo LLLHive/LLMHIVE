@@ -5,12 +5,10 @@ Multi-Provider Router
 Intelligently routes model requests across multiple providers:
 - OpenRouter (20 RPM, 20+ free models)
 - Google AI (15 RPM, Gemini models - FREE)
-- Groq (50+ RPM, Llama models - FREE)
 - DeepSeek (30 RPM, V3.2 models - paid credits)
 
 Benefits:
-- 3-4x capacity increase (20 → 115+ RPM total)
-- Ultra-fast Llama inference via Groq LPU
+- 2x capacity increase (20 → 65+ RPM total)
 - Elite math/reasoning via DeepSeek V3.2 (96% AIME)
 - Automatic fallback on rate limits
 - Load distribution across providers
@@ -18,11 +16,10 @@ Benefits:
 
 Strategy:
 1. Route Gemini → Google AI (15 RPM, FREE)
-2. Route Llama → Groq (50+ RPM ultra-fast LPU, FREE)
-3. Route DeepSeek → DeepSeek Direct (30 RPM, for math/reasoning)
-4. Route others → OpenRouter (fallback)
-5. Track capacity per provider
-6. Fallback to OpenRouter if primary exhausted
+2. Route DeepSeek → DeepSeek Direct (30 RPM, for math/reasoning)
+3. Route others → OpenRouter (fallback)
+4. Track capacity per provider
+5. Fallback to OpenRouter if primary exhausted
 
 Last Updated: January 31, 2026
 """
@@ -40,7 +37,6 @@ class Provider(str, Enum):
     """Available LLM providers."""
     OPENROUTER = "openrouter"
     GOOGLE = "google"
-    GROQ = "groq"
     DEEPSEEK = "deepseek"
 
 
@@ -82,17 +78,12 @@ PROVIDER_ROUTING = {
     "google/gemini-2.0-flash-exp:free": (Provider.GOOGLE, "gemini-2.0-flash-exp"),
     "google/gemini-2.5-flash:free": (Provider.GOOGLE, "gemini-2.5-flash-latest"),
     
-    # Meta Llama models → Groq (ultra-fast LPU, generous limits)
-    "meta-llama/llama-3.1-405b-instruct:free": (Provider.GROQ, "llama-3.1-405b-reasoning"),
-    "meta-llama/llama-3.3-70b-instruct:free": (Provider.GROQ, "llama-3.3-70b-versatile"),
-    "meta-llama/llama-3.2-3b-instruct:free": (Provider.GROQ, "llama-3.2-3b-preview"),
-    
     # DeepSeek models → DeepSeek Direct (30 RPM, excellent for math/reasoning)
     "deepseek/deepseek-r1-0528:free": (Provider.DEEPSEEK, "deepseek-reasoner"),
     "deepseek/deepseek-chat": (Provider.DEEPSEEK, "deepseek-chat"),
     
-    # Everything else → OpenRouter (fallback, diverse models)
-    # Qwen and other models remain on OpenRouter
+    # Everything else → OpenRouter (includes Llama, Qwen, and all other models)
+    # Llama models now remain on OpenRouter
 }
 
 
@@ -101,7 +92,7 @@ class ProviderRouter:
     Intelligent router for multi-provider FREE tier orchestration.
     
     Routes model requests to optimal provider based on:
-    1. Model family (Gemini → Google, Llama → Groq)
+    1. Model family (Gemini → Google, DeepSeek → DeepSeek)
     2. Provider capacity (rate limits)
     3. Automatic fallback to OpenRouter if primary exhausted
     """
@@ -110,11 +101,9 @@ class ProviderRouter:
         """Initialize router with capacity tracking."""
         # Initialize provider clients
         from .google_ai_client import get_google_client
-        from .groq_client import get_groq_client
         from .deepseek_client import get_deepseek_client
         
         self.google_client = get_google_client()
-        self.groq_client = get_groq_client()
         self.deepseek_client = get_deepseek_client()
         
         # Initialize capacity tracking
@@ -129,11 +118,6 @@ class ProviderRouter:
                 window_start=time.time(),
                 requests_in_window=0
             ),
-            Provider.GROQ: ProviderCapacity(
-                rpm_limit=50,  # Groq: Conservative estimate (actual may be higher)
-                window_start=time.time(),
-                requests_in_window=0
-            ),
             Provider.DEEPSEEK: ProviderCapacity(
                 rpm_limit=30,  # DeepSeek: 30 RPM with credits
                 window_start=time.time(),
@@ -145,8 +129,6 @@ class ProviderRouter:
         providers_available = []
         if self.google_client:
             providers_available.append("Google AI (15 RPM)")
-        if self.groq_client:
-            providers_available.append("Groq (50+ RPM)")
         if self.deepseek_client:
             providers_available.append("DeepSeek (30 RPM)")
         providers_available.append("OpenRouter (20 RPM)")
@@ -229,10 +211,6 @@ class ProviderRouter:
             if provider == Provider.GOOGLE and self.google_client:
                 logger.debug("Routing %s → Google AI (native: %s)", model_id, native_model)
                 return await self.google_client.generate_with_retry(prompt, native_model)
-            
-            elif provider == Provider.GROQ and self.groq_client:
-                logger.debug("Routing %s → Groq LPU (native: %s)", model_id, native_model)
-                return await self.groq_client.generate_with_retry(prompt, native_model)
             
             elif provider == Provider.DEEPSEEK and self.deepseek_client:
                 logger.debug("Routing %s → DeepSeek API (native: %s)", model_id, native_model)

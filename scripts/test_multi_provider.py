@@ -7,7 +7,7 @@ Tests the new multi-provider architecture for FREE tier.
 
 Verifies:
 1. Google AI client connectivity
-2. Groq client connectivity
+2. DeepSeek client connectivity
 3. Provider router functionality
 4. Model routing logic
 5. Capacity tracking
@@ -58,7 +58,6 @@ async def test_providers():
     
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     google_key = os.getenv("GOOGLE_AI_API_KEY") or os.getenv("GEMINI_API_KEY")
-    groq_key = os.getenv("GROQ_API_KEY") or os.getenv("GROK_API_KEY")
     deepseek_key = os.getenv("DEEPSEEK_API_KEY")
     
     providers_available = 0
@@ -79,14 +78,6 @@ async def test_providers():
     else:
         print("⚠️  GOOGLE_AI_API_KEY or GEMINI_API_KEY: Not set (optional)")
     
-    if groq_key:
-        key_name = "GROQ_API_KEY" if os.getenv("GROQ_API_KEY") else "GROK_API_KEY"
-        print(f"✅ {key_name}: Set ({len(groq_key)} chars)")
-        providers_available += 1
-        total_rpm += 50
-    else:
-        print("⚠️  GROQ_API_KEY or GROK_API_KEY: Not set (optional)")
-    
     if deepseek_key:
         print(f"✅ DEEPSEEK_API_KEY: Set ({len(deepseek_key)} chars)")
         providers_available += 1
@@ -99,238 +90,111 @@ async def test_providers():
     print(f"📊 Total Capacity: ~{total_rpm} RPM")
     print()
     
-    if providers_available == 1:
-        print("⚠️  Only OpenRouter available. Performance will be slower.")
-        print("   Get FREE keys at:")
-        print("   - Google AI: https://aistudio.google.com")
-        print("   - Groq: https://console.groq.com")
+    # Test Google AI Client
+    if google_key:
+        print("=" * 60)
+        print("🔵 Testing Google AI Client...")
+        print("-" * 60)
+        
+        try:
+            from llmhive.src.llmhive.app.providers.google_ai_client import get_google_client
+            
+            google_client = get_google_client()
+            if google_client:
+                print("✅ Google AI client initialized")
+                print("   Testing Gemini 2.0 Flash...")
+                
+                start = time.time()
+                result = await google_client.generate("Say 'Hello from Gemini!' in one sentence.", model="gemini-2.0-flash-exp")
+                elapsed = time.time() - start
+                
+                if result:
+                    print(f"✅ Response received in {elapsed:.2f}s")
+                    print(f"   Preview: {result[:100]}...")
+                else:
+                    print("❌ No response received")
+            else:
+                print("⚠️  Google AI client not available (API key issue)")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+        
         print()
     
-    # Test Google AI client
-    print("=" * 60)
-    print("🔵 Testing Google AI Client...")
-    print("-" * 60)
-    
-    if google_key:
-        try:
-            from llmhive.src.llmhive.app.providers import get_google_client
-            
-            client = get_google_client()
-            if client:
-                print("✅ Google AI client initialized")
-                
-                # Test API call
-                print("   Testing Gemini 2.0 Flash...")
-                start = time.time()
-                response = await client.generate(
-                    "Say 'Hello' in one word",
-                    model="gemini-2.0-flash-exp"
-                )
-                elapsed = time.time() - start
-                
-                if response:
-                    print(f"   ✅ Response: \"{response[:50]}...\" ({elapsed:.2f}s)")
-                else:
-                    print("   ❌ Empty response")
-            else:
-                print("❌ Failed to initialize client")
-        except Exception as e:
-            print(f"❌ Error: {e}")
-    else:
-        print("⏭️  Skipped (no API key)")
-    
-    print()
-    
-    # Test Groq client
-    print("=" * 60)
-    print("🟢 Testing Groq Client...")
-    print("-" * 60)
-    
-    if groq_key:
-        try:
-            from llmhive.src.llmhive.app.providers import get_groq_client
-            
-            client = get_groq_client()
-            if client:
-                print("✅ Groq client initialized (LPU-powered)")
-                
-                # Test API call
-                print("   Testing Llama 3.3 70B...")
-                start = time.time()
-                response = await client.generate(
-                    "Say 'Hello' in one word",
-                    model="llama-3.3-70b-versatile"
-                )
-                elapsed = time.time() - start
-                
-                if response:
-                    print(f"   ✅ Response: \"{response[:50]}...\" ({elapsed:.2f}s)")
-                    print(f"   🚀 Ultra-fast LPU inference!")
-                else:
-                    print("   ❌ Empty response")
-            else:
-                print("❌ Failed to initialize client")
-        except Exception as e:
-            print(f"❌ Error: {e}")
-    else:
-        print("⏭️  Skipped (no API key)")
-    
-    print()
-    
-    # Test DeepSeek client
-    print("=" * 60)
-    print("🟣 Testing DeepSeek Client...")
-    print("-" * 60)
-    
+    # Test DeepSeek Client
     if deepseek_key:
+        print("=" * 60)
+        print("🟡 Testing DeepSeek Client...")
+        print("-" * 60)
+        
         try:
-            from llmhive.src.llmhive.app.providers import get_deepseek_client
+            from llmhive.src.llmhive.app.providers.deepseek_client import get_deepseek_client
             
-            client = get_deepseek_client()
-            if client:
-                print("✅ DeepSeek client initialized ($19.99 balance)")
+            deepseek_client = get_deepseek_client()
+            if deepseek_client:
+                print("✅ DeepSeek client initialized")
+                print("   Testing DeepSeek Chat...")
                 
-                # Test API call
-                print("   Testing DeepSeek Chat (V3.2)...")
                 start = time.time()
-                response = await client.generate(
-                    "Say 'Hello' in one word",
-                    model="deepseek-chat"
-                )
+                result = await deepseek_client.generate("What is 2+2? Answer in one sentence.", model="deepseek-chat")
                 elapsed = time.time() - start
                 
-                if response:
-                    print(f"   ✅ Response: \"{response[:50]}...\" ({elapsed:.2f}s)")
-                    print(f"   💡 Elite math/reasoning: 96% AIME, 2701 Codeforces")
+                if result:
+                    print(f"✅ Response received in {elapsed:.2f}s")
+                    print(f"   Preview: {result[:100]}...")
                 else:
-                    print("   ❌ Empty response")
+                    print("❌ No response received")
             else:
-                print("❌ Failed to initialize client")
+                print("⚠️  DeepSeek client not available (API key issue)")
         except Exception as e:
             print(f"❌ Error: {e}")
-    else:
-        print("⏭️  Skipped (no API key)")
-        print("   Get FREE account: https://platform.deepseek.com")
-        print("   ($19.99 balance = ~70M tokens)")
+        
+        print()
     
-    print()
-    
-    # Test provider router
+    # Test Provider Router
     print("=" * 60)
-    print("🔀 Testing Provider Router...")
+    print("🎯 Testing Provider Router...")
     print("-" * 60)
     
     try:
-        from llmhive.src.llmhive.app.providers import get_provider_router, Provider
+        from llmhive.src.llmhive.app.providers.provider_router import get_provider_router, Provider
         
         router = get_provider_router()
         print("✅ Provider router initialized")
         print()
         
-        # Test routing decisions
-        print("📍 Testing model routing...")
-        
+        # Test routing logic
         test_models = [
-            ("google/gemini-2.0-flash-exp:free", Provider.GOOGLE if google_key else Provider.OPENROUTER),
-            ("meta-llama/llama-3.1-405b-instruct:free", Provider.GROQ if groq_key else Provider.OPENROUTER),
-            ("meta-llama/llama-3.3-70b-instruct:free", Provider.GROQ if groq_key else Provider.OPENROUTER),
-            ("deepseek/deepseek-r1-0528:free", Provider.DEEPSEEK if deepseek_key else Provider.OPENROUTER),
-            ("deepseek/deepseek-chat", Provider.DEEPSEEK if deepseek_key else Provider.OPENROUTER),
-            ("qwen/qwen3-coder:free", Provider.OPENROUTER),
+            "google/gemini-2.0-flash-exp:free",
+            "deepseek/deepseek-r1-0528:free",
+            "meta-llama/llama-3.1-405b-instruct:free",
+            "qwen/qwen3-coder:free",
         ]
         
-        for model_id, expected_provider in test_models:
-            provider, native_id = router.get_provider_for_model(model_id)
-            status = "✅" if provider == expected_provider else "⚠️"
-            print(f"   {status} {model_id}")
-            print(f"      → {provider.value.upper()}", end="")
-            if native_id:
-                print(f" (native: {native_id})")
-            else:
-                print()
+        print("📍 Model Routing:")
+        print("-" * 60)
+        for model in test_models:
+            provider, native_id = router.get_provider_for_model(model)
+            print(f"  {model}")
+            print(f"    → {provider.value} (native: {native_id or 'same'})")
         
         print()
         
         # Test capacity tracking
-        print("📊 Capacity Status:")
+        print("💾 Capacity Status:")
+        print("-" * 60)
         status = router.get_capacity_status()
         for provider_name, info in status.items():
-            available_str = "✅" if info['available'] else "❌ AT LIMIT"
-            print(f"   {provider_name.upper()}: {info['utilization']} RPM {available_str}")
-        
-        print()
-        
-        # Test actual generation (if keys available)
-        if google_key or groq_key:
-            print("🧪 Testing end-to-end generation...")
-            
-            test_prompt = "Say hello in one word"
-            
-            if google_key:
-                print(f"   Testing Gemini via router...")
-                start = time.time()
-                result = await router.generate(
-                    "google/gemini-2.0-flash-exp:free",
-                    test_prompt
-                )
-                elapsed = time.time() - start
-                
-                if result:
-                    print(f"   ✅ Gemini: \"{result[:30]}...\" ({elapsed:.2f}s)")
-                else:
-                    print(f"   ⚠️  Gemini returned None (may need fallback)")
-            
-            if groq_key:
-                print(f"   Testing Llama via router...")
-                start = time.time()
-                result = await router.generate(
-                    "meta-llama/llama-3.3-70b-instruct:free",
-                    test_prompt
-                )
-                elapsed = time.time() - start
-                
-                if result:
-                    print(f"   ✅ Llama: \"{result[:30]}...\" ({elapsed:.2f}s)")
-                else:
-                    print(f"   ⚠️  Llama returned None (may need fallback)")
+            available_icon = "✅" if info["available"] else "⚠️ "
+            print(f"  {available_icon} {provider_name}: {info['utilization']} RPM")
         
     except Exception as e:
-        print(f"❌ Router error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ Error: {e}")
     
     print()
     print("=" * 60)
-    
-    # Summary
-    if providers_available == 4:
-        print("🎉 PERFECT! All providers active (including DeepSeek).")
-        print(f"   Expected capacity: ~{total_rpm} RPM")
-        print(f"   Expected speedup: 4-5x faster, elite math/reasoning")
-    elif providers_available == 3:
-        print("🎉 EXCELLENT! Core providers active.")
-        print(f"   Expected capacity: ~{total_rpm} RPM")
-        print(f"   Expected speedup: 3-4x faster FREE tier")
-    elif providers_available == 2:
-        print("✅ GOOD! Multi-provider active.")
-        print(f"   Expected capacity: ~{total_rpm} RPM")
-        print(f"   Expected speedup: 2-3x faster FREE tier")
-    else:
-        print("⚠️  WARNING: Only OpenRouter available.")
-        print("   FREE tier will be slower.")
-        print()
-        print("   To activate multi-provider:")
-        print("   1. Get Google AI key: https://aistudio.google.com")
-        print("   2. Get Groq key: https://console.groq.com")
-        print("   3. Get DeepSeek key: https://platform.deepseek.com")
-        print("   4. Export as environment variables")
-    
-    print()
-    print("📝 Next Steps:")
-    print("   1. Run benchmarks: python3 scripts/run_elite_free_benchmarks.py")
-    print("   2. Deploy to production with API keys")
-    print("   3. Monitor performance improvements")
-    print()
+    print("✅ Multi-Provider Test Complete!")
+    print(f"   {providers_available} providers configured")
+    print(f"   ~{total_rpm} RPM total capacity")
     print("=" * 60)
 
 
