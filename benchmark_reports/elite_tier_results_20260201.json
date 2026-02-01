@@ -1,0 +1,61 @@
+{
+  "report_metadata": {
+    "generated_at": "2026-02-01T17:55:00Z",
+    "api_endpoint": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+    "reasoning_mode": "deep",
+    "tier": "elite",
+    "benchmark_suite": "Real Industry Standards"
+  },
+  "summary": {
+    "gsm8k_score": 82.0,
+    "mmlu_score": 70.2,
+    "average_latency_ms": 8102,
+    "average_cost_per_query": 0.005152,
+    "reliability": 99.3
+  },
+  "gsm8k": {
+    "dataset": "openai/gsm8k",
+    "sample_size": 200,
+    "total_questions": 1319,
+    "correct": 164,
+    "incorrect": 34,
+    "api_errors": 2,
+    "accuracy": 82.0,
+    "average_latency_ms": 11634,
+    "average_cost": 0.007507,
+    "frontier_comparison": {
+      "gpt52_pro": {"score": 99.2, "gap": -17.2},
+      "claude_opus_45": {"score": 95.0, "gap": -13.0},
+      "deepseek_r1": {"score": 89.3, "gap": -7.3}
+    }
+  },
+  "mmlu": {
+    "dataset": "lighteval/mmlu",
+    "sample_size": 500,
+    "total_questions": 14042,
+    "subjects": 57,
+    "correct": 351,
+    "incorrect": 146,
+    "api_errors": 3,
+    "accuracy": 70.2,
+    "average_latency_ms": 4569,
+    "average_cost": 0.002796,
+    "frontier_comparison": {
+      "gemini_3_pro": {"score": 91.8, "gap": -21.6},
+      "claude_opus_45": {"score": 90.8, "gap": -20.6},
+      "gpt52_pro": {"score": 89.6, "gap": -19.4}
+    }
+  },
+  "approved_marketing_claims": [
+    "Industry-Standard Benchmarked using GSM8K and MMLU",
+    "82% Accuracy on Grade School Math Problems (GSM8K)",
+    "70% Accuracy on Professional Knowledge Tasks (MMLU)",
+    "Sub-12 Second Response Time for Complex Math",
+    "Cost-Effective Enterprise AI at $0.005 per query"
+  ],
+  "rejected_marketing_claims": [
+    "Outperforms GPT-5.2 Pro (FALSE: -17.2% on GSM8K)",
+    "Best-in-class reasoning (FALSE: Gemini 3 Pro is +21.6% on MMLU)",
+    "State-of-the-art performance (FALSE: multiple models perform better)"
+  ]
+}
