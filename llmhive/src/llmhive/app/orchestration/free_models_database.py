@@ -85,63 +85,37 @@ class FreeModelInfo:
 
 FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # =========================================================================
-    # GOOGLE MODELS
+    # TOP-TIER FREE MODELS (January 2026)
     # =========================================================================
-    "google/gemma-3-27b-it:free": FreeModelInfo(
-        model_id="google/gemma-3-27b-it:free",
-        display_name="Gemma 3 27B Instruct",
-        provider="Google",
-        context_window=131072,
+    "tngtech/deepseek-r1t2-chimera:free": FreeModelInfo(
+        model_id="tngtech/deepseek-r1t2-chimera:free",
+        display_name="DeepSeek R1T2 Chimera",
+        provider="TNG",
+        context_window=60000,
         speed_tier=SpeedTier.FAST,
         strengths=[
             ModelStrength.REASONING,
+            ModelStrength.MATH,
             ModelStrength.CODING,
             ModelStrength.SPEED,
-            ModelStrength.MULTILINGUAL,
         ],
-        best_for=["General tasks", "Fast responses", "Coding assistance"],
-        notes="Excellent all-around model, very fast inference",
+        best_for=["Math", "Coding", "Fast reasoning", "General tasks"],
+        notes="Top FREE model - 671B MoE, 20% faster than R1, verified working Feb 1 2026",
         verified_working=True,
+        preferred_api="openrouter",
+        performance_score=81.3,
+        capability_score=85.0,
+        supports_tools=True,
     ),
     
-    "google/gemini-2.0-flash-exp:free": FreeModelInfo(
-        model_id="google/gemini-2.0-flash-exp:free",
-        display_name="Gemini 2.0 Flash Experimental",
-        provider="Google",
-        context_window=1000000,  # 1M tokens!
-        speed_tier=SpeedTier.FAST,
-        strengths=[
-            ModelStrength.LONG_CONTEXT,
-            ModelStrength.RAG,
-            ModelStrength.REASONING,
-        ],
-        best_for=["Long documents", "RAG", "Multi-document analysis"],
-        notes="LONGEST context window, routes to Google AI direct API (15 RPM)",
-        verified_working=True,
-        preferred_api="google",  # Route to Google AI
-        native_model_id="gemini-2.0-flash-exp",
-    ),
+    # REMOVED: google/gemini-2.0-flash-exp:free - Returns 404 on OpenRouter (Feb 1, 2026)
+    # Gemini models should be accessed via Google AI API directly, not OpenRouter
     
     # =========================================================================
     # META/LLAMA MODELS
     # =========================================================================
-    "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
-        model_id="meta-llama/llama-3.3-70b-instruct:free",
-        display_name="Llama 3.3 70B Instruct",
-        provider="Meta",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.CODING,
-            ModelStrength.DIALOGUE,
-            ModelStrength.MULTILINGUAL,
-        ],
-        best_for=["General reasoning", "Code generation", "Conversation"],
-        notes="Strong general-purpose model via OpenRouter",
-        verified_working=True,
-        preferred_api="openrouter",
-    ),
+    # REMOVED: meta-llama/llama-3.3-70b-instruct:free - Returns 404 on OpenRouter (Feb 1, 2026)
+    # Model may have been removed or renamed by OpenRouter
     
     "meta-llama/llama-3.1-405b-instruct:free": FreeModelInfo(
         model_id="meta-llama/llama-3.1-405b-instruct:free",
