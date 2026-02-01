@@ -36,6 +36,7 @@ API_KEY = os.getenv("API_KEY") or os.getenv("LLMHIVE_API_KEY", "")
 # Benchmark sample sizes (start conservative for launch)
 GSM8K_SAMPLE_SIZE = int(os.getenv("GSM8K_SAMPLE_SIZE", "200"))  # Out of 1,319 test samples
 MMLU_SAMPLE_SIZE = int(os.getenv("MMLU_SAMPLE_SIZE", "500"))    # Out of ~15,908 total
+HUMANEVAL_ENABLED = os.getenv("HUMANEVAL_ENABLED", "true").lower() == "true"  # All 164 problems
 
 # CRITICAL: Industry comparison data (January 2026)
 INDUSTRY_BENCHMARKS = {
@@ -60,6 +61,17 @@ INDUSTRY_BENCHMARKS = {
             "GPT-4": 86.4,  # Historical reference
         },
         "evaluation": "Multiple choice (A/B/C/D) exact match",
+    },
+    "humaneval": {
+        "name": "HumanEval (Python Code Generation)",
+        "total_questions": 164,
+        "frontier_models": {
+            "DeepSeek R1": 96.1,
+            "Gemini 3 Pro": 94.5,
+            "Claude Opus 4.5": 84.9,
+            "GPT-4": 67.0,  # Historical reference
+        },
+        "evaluation": "Code execution with unit tests (Pass@1)",
     },
 }
 
@@ -441,8 +453,142 @@ async def evaluate_mmlu(tier_config: Dict, sample_size: int = 500) -> Dict[str, 
     }
 
 
+async def evaluate_humaneval(tier_config: Dict) -> Dict[str, Any]:
+    """Run HumanEval benchmark with REAL dataset and code execution.
+    
+    NOTE: This requires the `human-eval` package and is more complex than
+    GSM8K/MMLU because it requires code execution. For launch, this is OPTIONAL.
+    """
+    try:
+        from human_eval.data import read_problems
+        from human_eval.execution import check_correctness
+    except ImportError:
+        return {
+            "error": "human-eval library not installed. Run: pip install human-eval",
+            "benchmark": "humaneval",
+            "samples_evaluated": 0,
+            "note": "HumanEval is optional for launch. GSM8K + MMLU are sufficient.",
+        }
+    
+    print(f"\n{'='*70}")
+    print(f"💻 HumanEval Benchmark - {tier_config['name']} Tier")
+    print(f"   Loading REAL HumanEval dataset...")
+    print(f"{'='*70}")
+    
+    # Load actual HumanEval problems
+    try:
+        problems = read_problems()
+        print(f"   ✅ Loaded {len(problems)} HumanEval programming problems")
+    except Exception as e:
+        return {
+            "error": f"Failed to load HumanEval: {e}",
+            "benchmark": "humaneval",
+            "samples_evaluated": 0,
+        }
+    
+    print(f"   📊 Evaluating all {len(problems)} problems...")
+    print(f"   🎯 Comparison: DeepSeek R1 (96.1%), Gemini 3 Pro (94.5%), Claude Opus 4.5 (84.9%)")
+    print(f"   ⚠️  Note: Code execution may take 30-60 minutes")
+    print()
+    
+    passed = 0
+    results = []
+    total_latency = 0
+    total_cost = 0
+    
+    for i, (task_id, problem) in enumerate(problems.items()):
+        prompt = problem["prompt"]
+        test = problem["test"]
+        entry_point = problem["entry_point"]
+        
+        print(f"   [{i+1}/{len(problems)}] {task_id}...", end=" ", flush=True)
+        
+        # Call API with coding-specific prompt
+        coding_prompt = f"{prompt}\n\n# Complete the function above. Return ONLY the Python code, no explanation."
+        
+        api_result = await call_llmhive_api(
+            coding_prompt,
+            tier_config["reasoning_mode"],
+            tier_config.get("tier"),
+            timeout=180.0  # Longer timeout for coding
+        )
+        
+        if not api_result["success"]:
+            print(f"❌ API Error: {api_result['error'][:50]}")
+            results.append({
+                "task_id": task_id,
+                "passed": False,
+                "error": api_result["error"],
+            })
+            continue
+        
+        # Extract code from response
+        response_text = api_result["response"]
+        
+        # Try to extract code block
+        code_match = re.search(r'```python\n(.*?)\n```', response_text, re.DOTALL)
+        if code_match:
+            completion = code_match.group(1)
+        else:
+            # Use full response if no code block
+            completion = response_text
+        
+        # Execute code and check correctness
+        try:
+            check_program = f"{prompt}{completion}\n{test}\ncheck({entry_point})"
+            result = check_correctness(task_id, check_program, timeout=10.0)
+            
+            if result["passed"]:
+                passed += 1
+                print(f"✅ Passed ({api_result['latency_ms']:.0f}ms)")
+            else:
+                error = result.get("result", "Unknown error")[:50]
+                print(f"❌ Failed: {error}")
+            
+            results.append({
+                "task_id": task_id,
+                "passed": result["passed"],
+                "latency_ms": api_result["latency_ms"],
+            })
+        except Exception as e:
+            print(f"❌ Execution error: {str(e)[:50]}")
+            results.append({
+                "task_id": task_id,
+                "passed": False,
+                "error": str(e),
+            })
+        
+        total_latency += api_result["latency_ms"]
+        cost_info = api_result.get("cost_info", {})
+        total_cost += cost_info.get("total_cost", 0)
+    
+    accuracy = (passed / len(problems)) * 100 if problems else 0
+    avg_latency = total_latency / len(problems) if problems else 0
+    avg_cost = total_cost / len(problems) if problems else 0
+    
+    print(f"\n   {'─'*66}")
+    print(f"   📊 HumanEval Results: {passed}/{len(problems)} passed ({accuracy:.1f}%)")
+    print(f"   ⏱️  Avg Latency: {avg_latency:.0f}ms")
+    print(f"   💰 Avg Cost: ${avg_cost:.6f}/query")
+    print(f"   {'─'*66}")
+    
+    return {
+        "benchmark": "humaneval",
+        "tier": tier_config['name'],
+        "samples_evaluated": len(problems),
+        "passed": passed,
+        "accuracy": accuracy,
+        "avg_latency_ms": avg_latency,
+        "total_cost": total_cost,
+        "avg_cost_per_query": avg_cost,
+        "results": results,
+        "industry_comparison": INDUSTRY_BENCHMARKS["humaneval"]["frontier_models"],
+    }
+
+
 def generate_industry_comparison_report(elite_gsm8k: Dict, elite_mmlu: Dict, 
-                                        free_gsm8k: Dict, free_mmlu: Dict) -> str:
+                                        free_gsm8k: Dict, free_mmlu: Dict,
+                                        elite_humaneval: Dict = None, free_humaneval: Dict = None) -> str:
     """Generate markdown report with industry comparisons."""
     timestamp = datetime.now().isoformat()
     
@@ -484,17 +630,60 @@ def generate_industry_comparison_report(elite_gsm8k: Dict, elite_mmlu: Dict,
 - Gemini 3 Pro: 91.8%
 - Claude Opus 4.5: 90.8%
 - GPT-5.2 Pro: 89.6%
+"""
+    
+    # Add HumanEval section if available
+    if elite_humaneval and free_humaneval and not elite_humaneval.get('error'):
+        report += f"""
+### HumanEval (Python Code Generation)
+
+| Tier | Pass@1 | Problems | vs DeepSeek R1 | vs Gemini 3 Pro | vs Claude Opus 4.5 |
+|------|--------|----------|----------------|-----------------|-------------------|
+| **ELITE** | **{elite_humaneval.get('accuracy', 0):.1f}%** | {elite_humaneval.get('samples_evaluated', 0)} | {elite_humaneval.get('accuracy', 0) - 96.1:+.1f}% | {elite_humaneval.get('accuracy', 0) - 94.5:+.1f}% | {elite_humaneval.get('accuracy', 0) - 84.9:+.1f}% |
+| **FREE** | **{free_humaneval.get('accuracy', 0):.1f}%** | {free_humaneval.get('samples_evaluated', 0)} | {free_humaneval.get('accuracy', 0) - 96.1:+.1f}% | {free_humaneval.get('accuracy', 0) - 94.5:+.1f}% | {free_humaneval.get('accuracy', 0) - 84.9:+.1f}% |
+
+**Industry Leaders:**
+- DeepSeek R1: 96.1%
+- Gemini 3 Pro: 94.5%
+- Claude Opus 4.5: 84.9%
+"""
+    
+    report += """
 
 ---
 
 ## 💰 Cost Analysis
 
-| Tier | GSM8K Avg Cost | MMLU Avg Cost | Total Cost |
-|------|----------------|---------------|------------|
-| **ELITE** | ${elite_gsm8k.get('avg_cost_per_query', 0):.6f} | ${elite_mmlu.get('avg_cost_per_query', 0):.6f} | ${elite_gsm8k.get('total_cost', 0) + elite_mmlu.get('total_cost', 0):.4f} |
-| **FREE** | ${free_gsm8k.get('avg_cost_per_query', 0):.6f} | ${free_mmlu.get('avg_cost_per_query', 0):.6f} | ${free_gsm8k.get('total_cost', 0) + free_mmlu.get('total_cost', 0):.4f} |
-
----
+"""
+    
+    # Calculate total costs
+    elite_total = elite_gsm8k.get('total_cost', 0) + elite_mmlu.get('total_cost', 0)
+    free_total = free_gsm8k.get('total_cost', 0) + free_mmlu.get('total_cost', 0)
+    
+    if elite_humaneval and not elite_humaneval.get('error'):
+        elite_total += elite_humaneval.get('total_cost', 0)
+    if free_humaneval and not free_humaneval.get('error'):
+        free_total += free_humaneval.get('total_cost', 0)
+    
+    cost_table = f"""| Tier | GSM8K Avg | MMLU Avg |"""
+    if elite_humaneval and not elite_humaneval.get('error'):
+        cost_table += f""" HumanEval Avg |"""
+    cost_table += f""" Total Cost |
+|------|-----------|----------|"""
+    if elite_humaneval and not elite_humaneval.get('error'):
+        cost_table += f"""----------------|"""
+    cost_table += f"""------------|
+| **ELITE** | ${elite_gsm8k.get('avg_cost_per_query', 0):.6f} | ${elite_mmlu.get('avg_cost_per_query', 0):.6f} |"""
+    if elite_humaneval and not elite_humaneval.get('error'):
+        cost_table += f""" ${elite_humaneval.get('avg_cost_per_query', 0):.6f} |"""
+    cost_table += f""" ${elite_total:.4f} |
+| **FREE** | ${free_gsm8k.get('avg_cost_per_query', 0):.6f} | ${free_mmlu.get('avg_cost_per_query', 0):.6f} |"""
+    if free_humaneval and not free_humaneval.get('error'):
+        cost_table += f""" ${free_humaneval.get('avg_cost_per_query', 0):.6f} |"""
+    cost_table += f""" ${free_total:.4f} |
+"""
+    
+    report += cost_table + "\n---
 
 ## 🎯 Key Marketing Claims (VERIFIED)
 
@@ -520,8 +709,24 @@ def generate_industry_comparison_report(elite_gsm8k: Dict, elite_mmlu: Dict,
     if free_mmlu_acc >= 70:
         report += f"| FREE tier achieves 70%+ on MMLU | ✅ VERIFIED | {free_mmlu_acc:.1f}% on {MMLU_SAMPLE_SIZE}-sample evaluation |\n"
     
-    if free_gsm8k.get('total_cost', 0) == 0 and free_mmlu.get('total_cost', 0) == 0:
-        report += f"| FREE tier costs $0 | ✅ VERIFIED | Total cost: ${free_gsm8k.get('total_cost', 0) + free_mmlu.get('total_cost', 0):.4f} |\n"
+    # HumanEval claims
+    if elite_humaneval and not elite_humaneval.get('error'):
+        elite_he_acc = elite_humaneval.get('accuracy', 0)
+        free_he_acc = free_humaneval.get('accuracy', 0) if free_humaneval else 0
+        
+        if elite_he_acc >= 80:
+            report += f"| ELITE achieves 80%+ on HumanEval | ✅ VERIFIED | {elite_he_acc:.1f}% on 164-problem evaluation |\n"
+        
+        if free_he_acc >= 70:
+            report += f"| FREE tier achieves 70%+ on HumanEval | ✅ VERIFIED | {free_he_acc:.1f}% on 164-problem evaluation |\n"
+    
+    # Cost verification
+    free_total = free_gsm8k.get('total_cost', 0) + free_mmlu.get('total_cost', 0)
+    if free_humaneval and not free_humaneval.get('error'):
+        free_total += free_humaneval.get('total_cost', 0)
+    
+    if free_total == 0:
+        report += f"| FREE tier costs $0 | ✅ VERIFIED | Total cost: ${free_total:.4f} |\n"
     
     report += f"""
 
@@ -631,6 +836,15 @@ async def main():
     elite_gsm8k = await evaluate_gsm8k(elite_config, GSM8K_SAMPLE_SIZE)
     elite_mmlu = await evaluate_mmlu(elite_config, MMLU_SAMPLE_SIZE)
     
+    # Optionally run HumanEval (takes longer, requires human-eval package)
+    elite_humaneval = None
+    free_humaneval = None
+    if HUMANEVAL_ENABLED:
+        print(f"\n{'─'*70}")
+        print("⚠️  HumanEval enabled - this will add 30-60 minutes to evaluation")
+        print(f"{'─'*70}")
+        elite_humaneval = await evaluate_humaneval(elite_config)
+    
     # Run benchmarks for FREE tier
     print(f"\n{'#'*70}")
     print("# FREE TIER EVALUATION")
@@ -638,10 +852,14 @@ async def main():
     free_gsm8k = await evaluate_gsm8k(free_config, GSM8K_SAMPLE_SIZE)
     free_mmlu = await evaluate_mmlu(free_config, MMLU_SAMPLE_SIZE)
     
+    if HUMANEVAL_ENABLED:
+        free_humaneval = await evaluate_humaneval(free_config)
+    
     # Generate report
     report = generate_industry_comparison_report(
         elite_gsm8k, elite_mmlu,
-        free_gsm8k, free_mmlu
+        free_gsm8k, free_mmlu,
+        elite_humaneval, free_humaneval
     )
     
     # Save report
@@ -664,6 +882,13 @@ async def main():
         },
         "industry_benchmarks": INDUSTRY_BENCHMARKS,
     }
+    
+    # Add HumanEval results if available
+    if elite_humaneval:
+        json_data["elite"]["humaneval"] = elite_humaneval
+    if free_humaneval:
+        json_data["free"]["humaneval"] = free_humaneval
+    
     json_path.write_text(json.dumps(json_data, indent=2, default=str))
     
     # Print summary
@@ -673,9 +898,13 @@ async def main():
     print(f"\n🎯 ELITE Tier:")
     print(f"   GSM8K: {elite_gsm8k.get('accuracy', 0):.1f}% (vs GPT-5.2 Pro: 99.2%)")
     print(f"   MMLU:  {elite_mmlu.get('accuracy', 0):.1f}% (vs Gemini 3 Pro: 91.8%)")
+    if elite_humaneval and not elite_humaneval.get('error'):
+        print(f"   HumanEval: {elite_humaneval.get('accuracy', 0):.1f}% (vs Gemini 3 Pro: 94.5%)")
     print(f"\n🆓 FREE Tier:")
     print(f"   GSM8K: {free_gsm8k.get('accuracy', 0):.1f}% (vs DeepSeek R1: 89.3%)")
     print(f"   MMLU:  {free_mmlu.get('accuracy', 0):.1f}% (vs GPT-5.2 Pro: 89.6%)")
+    if free_humaneval and not free_humaneval.get('error'):
+        print(f"   HumanEval: {free_humaneval.get('accuracy', 0):.1f}% (vs Claude Opus 4.5: 84.9%)")
     
     print(f"\n📁 Report saved to: {report_path}")
     print(f"📁 JSON results saved to: {json_path}")
