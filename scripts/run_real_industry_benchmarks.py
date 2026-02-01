@@ -683,7 +683,9 @@ def generate_industry_comparison_report(elite_gsm8k: Dict, elite_mmlu: Dict,
     cost_table += f""" ${free_total:.4f} |
 """
     
-    report += cost_table + "\n---
+    report += cost_table + """
+
+---
 
 ## 🎯 Key Marketing Claims (VERIFIED)
 
