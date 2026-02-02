@@ -2067,72 +2067,15 @@ async def elite_orchestrate(
         logger.warning("Prompt enhancement failed: %s", e)
     
     # =========================================================================
-    # ELITE ENHANCEMENTS (February 1, 2026 - Critical Performance Fixes)
+    # ELITE ENHANCEMENTS (February 1, 2026 - TEMPORARILY DISABLED)
     # =========================================================================
-    # Apply category-specific enhancements for problem categories:
-    # - Long Context (0% → 90%+): Gemini routing with proper detection
-    # - MMLU Reasoning (66% → 90%+): Chain-of-Thought prompting
-    # - Math (93% → 98%+): Multi-step decomposition with calculator
+    # NOTE: Enhancements caused regressions in Tool Use (93% → 67%) and MMLU (66% → 63%)
+    # Root cause: Early returns bypassed working orchestration logic
+    # Status: Disabled pending deeper integration into category handlers
+    # TODO: Re-enable after proper integration without early returns
     # =========================================================================
-    try:
-        from .elite_enhancements import (
-            detect_long_context_query,
-            apply_elite_enhancement,
-        )
-        
-        # Check if we should use elite enhancements for this query
-        context = ""  # Context can come from knowledge_base or be extracted
-        
-        # Detect long-context scenario EARLY
-        if detect_long_context_query(prompt, len(context)):
-            logger.info("🎯 Long-context query detected, routing to Gemini")
-            enhancement_result = await apply_elite_enhancement(
-                prompt=prompt,
-                category="long_context",
-                orchestrator=orchestrator,
-                context=context,
-            )
-            if enhancement_result.get("response"):
-                return {
-                    "response": enhancement_result["response"],
-                    "confidence": enhancement_result.get("confidence", 0.95),
-                    "category": "long_context",
-                    "tier": tier.value,
-                    "metadata": {
-                        **enhancement_metadata,
-                        **enhancement_result.get("metadata", {}),
-                        "enhancement": "gemini_long_context",
-                    },
-                }
-        
-        # Detect category for potential enhancements
-        detected_category = detect_elite_category(prompt, has_image)
-        
-        # Apply enhancements for reasoning/math based on category
-        if detected_category in ["reasoning", "general", "math"]:
-            logger.info("🎯 Applying %s enhancements", detected_category)
-            enhancement_result = await apply_elite_enhancement(
-                prompt=prompt,
-                category=detected_category,
-                orchestrator=orchestrator,
-            )
-            # If enhancement returns a response, use it; otherwise continue to normal flow
-            if enhancement_result.get("response") and enhancement_result.get("confidence", 0) > 0.5:
-                return {
-                    "response": enhancement_result["response"],
-                    "confidence": enhancement_result.get("confidence", 0.9),
-                    "category": detected_category,
-                    "tier": tier.value,
-                    "metadata": {
-                        **enhancement_metadata,
-                        **enhancement_result.get("metadata", {}),
-                        "enhancement": f"{detected_category}_enhanced",
-                    },
-                }
-    except ImportError:
-        logger.info("⚠️  elite_enhancements not available, using standard orchestration")
-    except Exception as e:
-        logger.warning("Enhancement application failed: %s, falling back to standard", e)
+    # Enhancement code available in elite_enhancements.py but not applied here
+    # to preserve existing working orchestration (RAG 100%, Dialogue 100%, etc.)
     
     # =========================================================================
     # CATEGORY OPTIMIZATION ENGINE (January 2026 Upgrade)
