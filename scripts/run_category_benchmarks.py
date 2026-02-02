@@ -479,10 +479,10 @@ async def evaluate_long_context(tier: str = "elite") -> Dict[str, Any]:
         # Create a long document with needle at random position
         needle = f"SECRET_CODE_{i:03d}_ALPHA"
         
-        # Generate ~5K tokens (working size that avoids API limits)
-        # Note: With direct Gemini API, we could handle much more (1M tokens)
-        # but keeping reasonable for testing purposes
-        haystack = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " * 300
+        # Generate document that fits API's 10K character limit
+        # Note: API has 10,000 char limit, so ~150 repetitions = ~8K chars with prompt
+        # This still tests long-context capabilities while staying within limits
+        haystack = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " * 150
         
         # Random position (not always middle)
         position = random.randint(len(haystack) // 4, 3 * len(haystack) // 4)
