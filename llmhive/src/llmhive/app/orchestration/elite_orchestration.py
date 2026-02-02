@@ -237,7 +237,10 @@ BUDGET_MODELS = {
     "coding": ["anthropic/claude-sonnet-4"],     # 82% SWE-Bench - ALREADY #1!
     "rag": ["anthropic/claude-sonnet-4"],        # Pinecone reranker does the heavy lifting
     "multilingual": ["anthropic/claude-sonnet-4"], # 89.1% MMMLU - #2 among API
-    "long_context": ["anthropic/claude-sonnet-4"], # 1M tokens - ALREADY #1 API!
+    "long_context": [
+        "google/gemini-3-flash-preview",  # 1M tokens - Direct Gemini API, FREE!
+        "anthropic/claude-sonnet-4"       # 1M tokens - Fallback if Gemini fails
+    ],
     "speed": ["openai/gpt-4o-mini"],              # Fast and cheap
     "dialogue": ["anthropic/claude-sonnet-4"],   # 89.1% - excellent
     "multimodal": ["anthropic/claude-sonnet-4"], # Vision capable
@@ -1971,6 +1974,17 @@ def detect_elite_category(prompt: str, has_image: bool = False) -> str:
         "visual", "look at", "see in", "shown in", "attached"
     ]):
         return "multimodal"
+    
+    # Long Context detection - CHECK BEFORE RAG (takes precedence)
+    # Detect by keywords AND by actual prompt length
+    long_context_keywords = [
+        "document start", "document end", "read it completely", "read carefully",
+        "long document", "entire document", "hidden somewhere", "needle",
+        "haystack", "throughout the document", "somewhere in this document"
+    ]
+    # Check for long-context patterns or very long prompts (>2000 chars)
+    if any(keyword in prompt_lower for keyword in long_context_keywords) or len(prompt) > 2000:
+        return "long_context"
     
     # Math detection
     math_patterns = [

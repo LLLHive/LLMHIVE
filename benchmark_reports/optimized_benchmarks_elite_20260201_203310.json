@@ -1,0 +1,55 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU) - Optimized",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 200,
+      "correct": 44,
+      "incorrect": 156,
+      "errors": 0,
+      "accuracy": 22.0,
+      "avg_latency_ms": 21162,
+      "avg_cost": 0.020135,
+      "total_cost": 4.027,
+      "self_consistency_used": 67
+    },
+    {
+      "category": "Coding (HumanEval) - Optimized",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 0,
+      "incorrect": 50,
+      "errors": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0
+    },
+    {
+      "category": "Math (GSM8K) - Optimized",
+      "dataset": "openai/gsm8k",
+      "sample_size": 150,
+      "correct": 117,
+      "incorrect": 33,
+      "errors": 0,
+      "accuracy": 78.0,
+      "avg_latency_ms": 13472,
+      "avg_cost": 0.012189,
+      "total_cost": 1.8283
+    },
+    {
+      "category": "Long Context - Optimized",
+      "dataset": "Custom needle-in-haystack (progressive difficulty)",
+      "sample_size": 30,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 30,
+      "accuracy": 0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0,
+      "total_cost": 0
+    }
+  ],
+  "timestamp": "2026-02-01T20:33:10.817348"
+}
