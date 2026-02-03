@@ -2049,6 +2049,15 @@ def detect_elite_category(prompt: str, has_image: bool = False) -> str:
         "visual", "look at", "see in", "shown in", "attached"
     ]):
         return "multimodal"
+
+    # Physics detection - before math to avoid misclassification
+    physics_keywords = [
+        "surface gravity", "exoplanet", "planet's radius", "gravitational",
+        "m/s²", "same density", "equal density", "earth's gravity",
+        "planetary", "celestial", "orbital"
+    ]
+    if any(kw in prompt_lower for kw in physics_keywords):
+        return "reasoning"
     
     # Long Context detection - CHECK BEFORE RAG (takes precedence)
     # Detect by keywords AND by actual prompt length
