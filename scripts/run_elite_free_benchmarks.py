@@ -692,21 +692,21 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
 - **Benchmark Date:** {timestamp}
 - **API Endpoint:** {LLMHIVE_API_URL}
 - **Test Method:** Live API calls with keyword/pattern evaluation
-- **Orchestration Modes Tested:** DEEP (max quality), STANDARD (balanced)
+- **Orchestration Tiers Tested:** ELITE (max quality), FREE (free models)
 
 ---
 
 ## 📊 Executive Summary
 
-| Mode | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
+| Tier | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
 |------|-----------|--------------|-------------------|----------------|
-| 🐝 **DEEP** | **{elite_results['overall_pass_rate']:.1%}** | {elite_results['total_passed']}/{elite_results['total_cases']} | ${elite_results.get('total_cost', 0):.4f} | ${elite_results.get('avg_cost_per_query', 0):.6f} |
-| ⚡ **STANDARD** | **{free_results['overall_pass_rate']:.1%}** | {free_results['total_passed']}/{free_results['total_cases']} | ${free_results.get('total_cost', 0):.4f} | ${free_results.get('avg_cost_per_query', 0):.6f} |
+| 🐝 **ELITE** | **{elite_results['overall_pass_rate']:.1%}** | {elite_results['total_passed']}/{elite_results['total_cases']} | ${elite_results.get('total_cost', 0):.4f} | ${elite_results.get('avg_cost_per_query', 0):.6f} |
+| 🆓 **FREE** | **{free_results['overall_pass_rate']:.1%}** | {free_results['total_passed']}/{free_results['total_cases']} | ${free_results.get('total_cost', 0):.4f} | ${free_results.get('avg_cost_per_query', 0):.6f} |
 
 ### 💰 Actual Cost Analysis (from API responses)
 
-- **DEEP Total Cost:** ${elite_results.get('total_cost', 0):.4f} for {elite_results['total_cases']} queries
-- **STANDARD Total Cost:** ${free_results.get('total_cost', 0):.4f} for {free_results['total_cases']} queries  
+- **ELITE Total Cost:** ${elite_results.get('total_cost', 0):.4f} for {elite_results['total_cases']} queries
+- **FREE Total Cost:** ${free_results.get('total_cost', 0):.4f} for {free_results['total_cases']} queries  
 - **Cost Difference:** ${abs(elite_results.get('total_cost', 0) - free_results.get('total_cost', 0)):.4f}
 - **Quality Gap:** {abs(elite_results['overall_pass_rate'] - free_results['overall_pass_rate']):.1%} pass rate difference
 
@@ -714,8 +714,8 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
 
 ## Category Comparison
 
-| Category | DEEP Score | DEEP Pass | STANDARD Score | STANDARD Pass |
-|----------|------------|-----------|----------------|---------------|
+| Category | ELITE Score | ELITE Pass | FREE Score | FREE Pass |
+|----------|------------|-----------|------------|----------|
 """
     
     category_names = {
@@ -757,8 +757,8 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
         
         report += f"""## {cat_name}
 
-| Metric | DEEP | STANDARD |
-|--------|------|----------|
+| Metric | ELITE | FREE |
+|--------|------|------|
 | Pass Rate | {elite_cat['pass_rate']:.1%} ({elite_cat['passed']}/{elite_cat['total']}) | {free_cat['pass_rate']:.1%} ({free_cat['passed']}/{free_cat['total']}) |
 | Actual Cost | ${deep_cost:.4f} | ${standard_cost:.4f} |
 | Avg Score | {elite_score:.1%} | {free_score:.1%} |
@@ -766,8 +766,8 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
-|---------|----------|------|----------|
+| Test ID | Category | ELITE | FREE |
+|---------|----------|-------|------|
 """
         
         for i, (elite_case, free_case) in enumerate(zip(elite_cat['cases'], free_cat['cases'])):
@@ -791,23 +791,23 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
     elite_math = elite_results['results'].get('math', {})
     free_math = free_results['results'].get('math', {})
     if elite_math.get('pass_rate', 0) == 1.0 and free_math.get('pass_rate', 0) == 1.0:
-        claims.append(("BOTH modes achieve 100% in Math", "✅ VERIFIED", f"DEEP: {elite_math['pass_rate']:.0%}, STANDARD: {free_math['pass_rate']:.0%}"))
+        claims.append(("BOTH tiers achieve 100% in Math", "✅ VERIFIED", f"ELITE: {elite_math['pass_rate']:.0%}, FREE: {free_math['pass_rate']:.0%}"))
     
     # Coding claim
     elite_coding = elite_results['results'].get('coding', {})
     free_coding = free_results['results'].get('coding', {})
     if elite_coding.get('pass_rate', 0) >= 0.8:
-        claims.append(("DEEP achieves 80%+ in Coding", "✅ VERIFIED", f"DEEP: {elite_coding['pass_rate']:.0%}"))
+        claims.append(("ELITE achieves 80%+ in Coding", "✅ VERIFIED", f"ELITE: {elite_coding['pass_rate']:.0%}"))
     
     # RAG claim
     elite_rag = elite_results['results'].get('rag', {})
     free_rag = free_results['results'].get('rag', {})
     if elite_rag.get('pass_rate', 0) == 1.0:
-        claims.append(("DEEP achieves 100% in RAG", "✅ VERIFIED", f"DEEP: {elite_rag['pass_rate']:.0%}"))
+        claims.append(("ELITE achieves 100% in RAG", "✅ VERIFIED", f"ELITE: {elite_rag['pass_rate']:.0%}"))
     
     # Standard mode quality
     if free_results['overall_pass_rate'] >= 0.8:
-        claims.append(("STANDARD mode delivers 80%+ overall quality", "✅ VERIFIED", f"STANDARD: {free_results['overall_pass_rate']:.0%}"))
+        claims.append(("FREE tier delivers 80%+ overall quality", "✅ VERIFIED", f"FREE: {free_results['overall_pass_rate']:.0%}"))
     
     for claim, status, evidence in claims:
         report += f"| {claim} | {status} | {evidence} |\n"
@@ -824,15 +824,15 @@ def generate_markdown_report(elite_results: Dict, free_results: Dict) -> str:
 4. **Pass Threshold**: 60% of expected keywords must be present
 5. **Timeout**: 90 seconds per request
 
-## Orchestration Modes
+## Orchestration Tiers
 
-| Mode | Description | Use Case |
+| Tier | Description | Use Case |
 |------|-------------|----------|
-| 🐝 DEEP | Multi-model consensus with verification loops and deep reasoning | Maximum quality for critical tasks |
-| ⚡ STANDARD | Balanced orchestration with single-model responses | Faster responses for everyday tasks |
+| 🐝 ELITE | Multi-model consensus with verification loops and deep reasoning | Maximum quality for critical tasks |
+| 🆓 FREE | Free-model orchestration with consensus and tool support | Zero-cost responses |
 
 **Note:** The models used depend on the user's subscription tier (FREE vs ELITE).
-Both modes apply the same orchestration logic - the difference is the reasoning depth.
+Both tiers apply the same orchestration logic; the difference is model access and cost.
 
 ---
 

@@ -5,21 +5,21 @@
 - **Benchmark Date:** 2026-02-02T17:41:28.280919
 - **API Endpoint:** https://llmhive-orchestrator-792354158895.us-east1.run.app
 - **Test Method:** Live API calls with keyword/pattern evaluation
-- **Orchestration Modes Tested:** DEEP (max quality), STANDARD (balanced)
+- **Orchestration Tiers Tested:** ELITE (max quality), FREE (free models)
 
 ---
 
 ## 📊 Executive Summary
 
-| Mode | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
+| Tier | Pass Rate | Tests Passed | Actual Total Cost | Avg Cost/Query |
 |------|-----------|--------------|-------------------|----------------|
-| 🐝 **DEEP** | **96.6%** | 28/29 | $0.2124 | $0.007325 |
-| ⚡ **STANDARD** | **96.6%** | 28/29 | $0.0000 | $0.000000 |
+| 🐝 **ELITE** | **96.6%** | 28/29 | $0.2124 | $0.007325 |
+| 🆓 **FREE** | **96.6%** | 28/29 | $0.0000 | $0.000000 |
 
 ### 💰 Actual Cost Analysis (from API responses)
 
-- **DEEP Total Cost:** $0.2124 for 29 queries
-- **STANDARD Total Cost:** $0.0000 for 29 queries  
+- **ELITE Total Cost:** $0.2124 for 29 queries
+- **FREE Total Cost:** $0.0000 for 29 queries  
 - **Cost Difference:** $0.2124
 - **Quality Gap:** 0.0% pass rate difference
 
@@ -27,8 +27,8 @@
 
 ## Category Comparison
 
-| Category | DEEP Score | DEEP Pass | STANDARD Score | STANDARD Pass |
-|----------|------------|-----------|----------------|---------------|
+| Category | ELITE Score | ELITE Pass | FREE Score | FREE Pass |
+|----------|------------|-----------|------------|----------|
 | General Reasoning | 81.7% | 4/5 | 100.0% | 5/5 |
 | Coding | 100.0% | 5/5 | 100.0% | 5/5 |
 | Math | 100.0% | 5/5 | 100.0% | 5/5 |
@@ -42,7 +42,7 @@
 
 ## General Reasoning
 
-| Metric | DEEP | STANDARD |
+| Metric | ELITE | FREE |
 |--------|------|----------|
 | Pass Rate | 80.0% (4/5) | 100.0% (5/5) |
 | Actual Cost | $0.0235 | $0.0000 |
@@ -51,7 +51,7 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
+| Test ID | Category | ELITE | FREE |
 |---------|----------|------|----------|
 | gr_001 | PhD-Level Physics | ⚠️ 33% | ✅ 100% |
 | gr_002 | PhD-Level Chemistry | ✅ 75% | ✅ 100% |
@@ -65,7 +65,7 @@
 
 ## Coding
 
-| Metric | DEEP | STANDARD |
+| Metric | ELITE | FREE |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 100.0% (5/5) |
 | Actual Cost | $0.0545 | $0.0000 |
@@ -74,7 +74,7 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
+| Test ID | Category | ELITE | FREE |
 |---------|----------|------|----------|
 | code_001 | Algorithm Implementation | ✅ 100% | ✅ 100% |
 | code_002 | Data Structures | ✅ 100% | ✅ 100% |
@@ -88,7 +88,7 @@
 
 ## Math
 
-| Metric | DEEP | STANDARD |
+| Metric | ELITE | FREE |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 100.0% (5/5) |
 | Actual Cost | $0.0552 | $0.0000 |
@@ -97,7 +97,7 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
+| Test ID | Category | ELITE | FREE |
 |---------|----------|------|----------|
 | math_001 | Number Theory | ✅ 100% | ✅ 100% |
 | math_002 | Geometry | ✅ 100% | ✅ 100% |
@@ -111,7 +111,7 @@
 
 ## Multilingual
 
-| Metric | DEEP | STANDARD |
+| Metric | ELITE | FREE |
 |--------|------|----------|
 | Pass Rate | 100.0% (5/5) | 100.0% (5/5) |
 | Actual Cost | $0.0204 | $0.0000 |
@@ -120,7 +120,7 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
+| Test ID | Category | ELITE | FREE |
 |---------|----------|------|----------|
 | ml_001 | Translation | ✅ 100% | ✅ 100% |
 | ml_002 | Chinese Comprehension | ✅ 100% | ✅ 100% |
@@ -134,7 +134,7 @@
 
 ## Long-Context
 
-| Metric | DEEP | STANDARD |
+| Metric | ELITE | FREE |
 |--------|------|----------|
 | Pass Rate | 100.0% (2/2) | 100.0% (2/2) |
 | Actual Cost | $0.0098 | $0.0000 |
@@ -143,7 +143,7 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
+| Test ID | Category | ELITE | FREE |
 |---------|----------|------|----------|
 | lc_001 | Memory Recall | ✅ 100% | ✅ 100% |
 | lc_002 | Code Analysis | ✅ 100% | ✅ 100% |
@@ -154,7 +154,7 @@
 
 ## Tool Use
 
-| Metric | DEEP | STANDARD |
+| Metric | ELITE | FREE |
 |--------|------|----------|
 | Pass Rate | 100.0% (3/3) | 100.0% (3/3) |
 | Actual Cost | $0.0208 | $0.0000 |
@@ -163,7 +163,7 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
+| Test ID | Category | ELITE | FREE |
 |---------|----------|------|----------|
 | tu_001 | Web Search | ✅ 67% | ✅ 100% |
 | tu_002 | Calculator | ✅ 100% | ✅ 100% |
@@ -175,7 +175,7 @@
 
 ## RAG
 
-| Metric | DEEP | STANDARD |
+| Metric | ELITE | FREE |
 |--------|------|----------|
 | Pass Rate | 100.0% (2/2) | 100.0% (2/2) |
 | Actual Cost | $0.0180 | $0.0000 |
@@ -184,7 +184,7 @@
 <details>
 <summary>Test Details</summary>
 
-| Test ID | Category | DEEP | STANDARD |
+| Test ID | Category | ELITE | FREE |
 |---------|----------|------|----------|
 | rag_001 | Documentation QA | ✅ 100% | ✅ 100% |
 | rag_002 | Product Knowledge | ✅ 100% | ✅ 100% |
@@ -217,10 +217,10 @@
 
 | Claim | Status | Evidence |
 |-------|--------|----------|
-| BOTH modes achieve 100% in Math | ✅ VERIFIED | DEEP: 100%, STANDARD: 100% |
-| DEEP achieves 80%+ in Coding | ✅ VERIFIED | DEEP: 100% |
-| DEEP achieves 100% in RAG | ✅ VERIFIED | DEEP: 100% |
-| STANDARD mode delivers 80%+ overall quality | ✅ VERIFIED | STANDARD: 97% |
+| BOTH tiers achieve 100% in Math | ✅ VERIFIED | ELITE: 100%, FREE: 100% |
+| ELITE achieves 80%+ in Coding | ✅ VERIFIED | ELITE: 100% |
+| ELITE achieves 100% in RAG | ✅ VERIFIED | ELITE: 100% |
+| FREE tier delivers 80%+ overall quality | ✅ VERIFIED | FREE: 97% |
 
 
 ---
@@ -235,13 +235,13 @@
 
 ## Orchestration Modes
 
-| Mode | Description | Use Case |
+| Tier | Description | Use Case |
 |------|-------------|----------|
-| 🐝 DEEP | Multi-model consensus with verification loops and deep reasoning | Maximum quality for critical tasks |
-| ⚡ STANDARD | Balanced orchestration with single-model responses | Faster responses for everyday tasks |
+| 🐝 ELITE | Multi-model consensus with verification loops and deep reasoning | Maximum quality for critical tasks |
+| 🆓 FREE | Free-model orchestration with consensus and tool support | Zero-cost responses |
 
 **Note:** The models used depend on the user's subscription tier (FREE vs ELITE).
-Both modes apply the same orchestration logic - the difference is the reasoning depth.
+Both tiers apply the same orchestration logic; the difference is model access and cost.
 
 ---
 
