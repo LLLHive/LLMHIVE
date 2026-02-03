@@ -29,7 +29,8 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
+import ssl
 
 # Colors
 GREEN = '\033[92m'
@@ -54,6 +55,10 @@ class SmokeTestSuite:
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key
         self.results: List[TestResult] = []
+        self.verify_ssl = not (
+            os.environ.get("NO_SSL_VERIFY", "").lower() in {"1", "true", "yes"}
+            or os.environ.get("PYTHONHTTPSVERIFY", "") == "0"
+        )
         
     def _request(self, method: str, endpoint: str, data: Optional[dict] = None, 
                  timeout: int = 30, headers: Optional[dict] = None) -> tuple:
@@ -76,7 +81,10 @@ class SmokeTestSuite:
             
         start = time.time()
         try:
-            with urlopen(req, timeout=timeout) as response:
+            context = None
+            if not self.verify_ssl and urlparse(url).scheme == "https":
+                context = ssl._create_unverified_context()
+            with urlopen(req, timeout=timeout, context=context) as response:
                 latency_ms = (time.time() - start) * 1000
                 body = response.read().decode('utf-8')
                 try:
@@ -120,8 +128,8 @@ class SmokeTestSuite:
         ))
         
     def test_readiness_endpoint(self):
-        """Test /ready or /healthz endpoint."""
-        for endpoint in ['/ready', '/healthz', '/api/health']:
+        """Test readiness endpoint."""
+        for endpoint in ['/health/ready', '/ready', '/healthz', '/api/health']:
             status, body, latency = self._request('GET', endpoint)
             if status == 200:
                 self.add_result(TestResult(
@@ -170,6 +178,7 @@ class SmokeTestSuite:
     def test_chat_endpoint(self):
         """Test basic chat/orchestration endpoint."""
         endpoints_to_try = [
+            ('/v1/chat', {'prompt': 'Hello, this is a smoke test', 'model': 'auto'}),
             ('/api/v1/chat', {'message': 'Hello, this is a smoke test', 'accuracy_level': 'standard'}),
             ('/orchestrate', {'query': 'Hello, this is a smoke test'}),
             ('/v1/orchestrate', {'query': 'Hello, this is a smoke test'}),
@@ -210,7 +219,7 @@ class SmokeTestSuite:
 
     def test_models_endpoint(self):
         """Test models listing endpoint."""
-        for endpoint in ['/api/v1/models', '/models', '/v1/models']:
+        for endpoint in ['/api/v1/openrouter/models', '/api/v1/models', '/models', '/v1/models']:
             status, body, latency = self._request('GET', endpoint)
             if status in [200, 401]:  # 401 means endpoint exists
                 self.add_result(TestResult(
@@ -326,11 +335,12 @@ class SmokeTestSuite:
     # Run All Tests
     # =========================================================================
     
-    def run_all(self) -> bool:
-        """Run all smoke tests and return True if all critical tests pass."""
+    def run_all(self, profile: str = "full") -> bool:
+        """Run smoke tests and return True if all critical tests pass."""
         print(f"\n{BOLD}🐝 LLMHive Production Smoke Tests{RESET}")
         print(f"Target: {self.base_url}")
         print(f"Timestamp: {datetime.now().isoformat()}\n")
+        print(f"Profile: {profile}\n")
         
         # Infrastructure tests
         print(f"\n{BOLD}Infrastructure Tests:{RESET}")
@@ -342,19 +352,21 @@ class SmokeTestSuite:
         print(f"\n{BOLD}Orchestration Tests:{RESET}")
         self.test_chat_endpoint()
         self.test_models_endpoint()
-        
-        # Billing tests
-        print(f"\n{BOLD}Billing Tests:{RESET}")
-        self.test_billing_config()
-        self.test_stripe_webhook()
-        
-        # Support tests
-        print(f"\n{BOLD}Support System Tests:{RESET}")
-        self.test_support_endpoint()
-        
-        # Admin tests
-        print(f"\n{BOLD}Admin Tests:{RESET}")
-        self.test_admin_stats()
+        if profile == "full":
+            # Billing tests
+            print(f"\n{BOLD}Billing Tests:{RESET}")
+            self.test_billing_config()
+            self.test_stripe_webhook()
+            
+            # Support tests
+            print(f"\n{BOLD}Support System Tests:{RESET}")
+            self.test_support_endpoint()
+            
+            # Admin tests
+            print(f"\n{BOLD}Admin Tests:{RESET}")
+            self.test_admin_stats()
+        else:
+            print(f"\n{YELLOW}Skipping Billing/Support/Admin for orchestrator profile{RESET}")
         
         # Summary
         return self._print_summary()
@@ -414,6 +426,9 @@ def main():
     parser.add_argument('--production-url', '-u', 
                         default=os.environ.get('PRODUCTION_URL', 'https://llmhive-orchestrator-867263134607.us-east1.run.app'),
                         help='Production backend URL')
+    parser.add_argument('--profile', choices=['orchestrator', 'full'],
+                        default=None,
+                        help='Test profile (default: auto-detect)')
     parser.add_argument('--api-key', '-k',
                         default=os.environ.get('API_KEY'),
                         help='API key for authenticated requests')
@@ -421,7 +436,8 @@ def main():
     args = parser.parse_args()
     
     suite = SmokeTestSuite(args.production_url, args.api_key)
-    success = suite.run_all()
+    profile = args.profile or ("orchestrator" if "orchestrator" in suite.base_url else "full")
+    success = suite.run_all(profile=profile)
     
     sys.exit(0 if success else 1)
 

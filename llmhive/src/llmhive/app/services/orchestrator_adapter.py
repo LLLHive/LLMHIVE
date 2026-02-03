@@ -1656,6 +1656,13 @@ def _map_model_to_provider(model_id: str, available_providers: list) -> str:
     - xAI: grok-4
     - DeepSeek: deepseek-v3.2, deepseek-r1-0528
     """
+    # Never allow stub to be selected as a real model
+    if model_id and "stub" in model_id.lower():
+        free_models = _get_all_free_models()
+        fallback = free_models[0] if free_models else FALLBACK_GPT_4O_MINI
+        logger.warning("Stub model requested ('%s'); falling back to free model '%s'", model_id, fallback)
+        return fallback
+
     # If it's already a full OpenRouter model ID (contains "/"), return as-is
     if "/" in model_id:
         return model_id
@@ -1831,6 +1838,10 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         # Get available providers from orchestrator (EXCLUDE stub - it's only a fallback)
         available_providers = [p for p in _orchestrator.providers.keys() if p != "stub"]
+        # If OpenRouter is available, do NOT restrict model selection to provider names.
+        # OpenRouter can serve any model ID, and filtering by provider names
+        # would incorrectly eliminate all model candidates.
+        available_models = None if "openrouter" in available_providers else available_providers
         
         # =========================================================================
         # TIER-BASED MODEL SELECTION
@@ -1866,13 +1877,17 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         # Use user-selected models if provided, otherwise auto-select
         if request.models and len(request.models) > 0:
-            logger.info("User selected models: %s", request.models)
+            # Guard against invalid "stub" selections
+            requested_models = [m for m in request.models if "stub" not in str(m).lower()]
+            if len(requested_models) != len(request.models):
+                logger.warning("Removed stub from requested models: %s", request.models)
+            logger.info("User selected models: %s", requested_models)
             
             # Map user-selected model names to actual provider models
             actual_models = []
             user_model_names = []  # Track what the user selected for response
             
-            for model_id in request.models:
+            for model_id in requested_models:
                 mapped_model = _map_model_to_provider(model_id, available_providers)
                 if mapped_model not in actual_models:  # Avoid duplicates
                     actual_models.append(mapped_model)
@@ -1921,7 +1936,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             # Step 3: Select models based on reasoning method (fallback)
             selected_models = get_models_for_reasoning_method(
                 reasoning_method,
-                available_models=available_providers,
+                available_models=available_models,
             )
             
             # Step 4: If reasoning model needed, prioritize reasoning-capable models
@@ -1929,7 +1944,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 # Prioritize o1, o3-mini, or other reasoning models
                 reasoning_models = ["gpt-4o", "claude-sonnet-4-20250514"]  # Best reasoning
                 for rm in reasoning_models:
-                    if rm in available_providers and rm not in selected_models:
+                    if (available_models is None or rm in available_models) and rm not in selected_models:
                         selected_models.insert(0, rm)
                 logger.info("Prioritized reasoning models: %s", selected_models[:3])
             
@@ -1942,7 +1957,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             # 5a: Long Context Routing (#10 -> #3)
             prompt_tokens = estimate_token_count(request.prompt)
             if is_long_context_query(request.prompt, threshold=30000):
-                long_context_model = get_long_context_model(prompt_tokens, available_providers)
+                long_context_model = get_long_context_model(prompt_tokens, available_models)
                 if long_context_model:
                     selected_models = [long_context_model] + [m for m in selected_models if m != long_context_model]
                     category_override = True
@@ -2009,6 +2024,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             # Map to actual model names
             actual_models = []
             user_model_names = []
+            # Ensure stub never appears in selected models
+            selected_models = [m for m in selected_models if "stub" not in str(m).lower()]
             for model_id in selected_models:
                 mapped = _map_model_to_provider(model_id, available_providers)
                 if mapped not in actual_models:
@@ -2685,7 +2702,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     task_type=detected_task_type,
                     num_models=num_team_models,
                     require_tools=tools_needed,
-                    available_models=available_providers,
+                    available_models=available_models,
                     accuracy_priority=accuracy_priority,
                 )
                 
@@ -2693,7 +2710,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 if len(auto_selected) < num_team_models:
                     auto_selected = get_diverse_ensemble(
                         detected_task_type,
-                        available_models=available_providers,
+                        available_models=available_models,
                         num_models=num_team_models,
                     )
                 
@@ -2708,7 +2725,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     task_type=detected_task_type,
                     num_models=1,
                     require_tools=tools_needed,
-                    available_models=available_providers,
+                    available_models=available_models,
                     accuracy_priority=True,
                 )
                 
@@ -2716,7 +2733,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 if not auto_selected:
                     auto_selected = get_best_models_for_task(
                         detected_task_type,
-                        available_models=available_providers,
+                        available_models=available_models,
                         num_models=1,
                         criteria=criteria_settings,
                     )
