@@ -1,0 +1,105 @@
+{
+  "report_date": "2026-02-08T04:02:51.289707+00:00",
+  "week_start": "2026-02-01T04:02:51.289707+00:00",
+  "week_end": "2026-02-08T04:02:51.289707+00:00",
+  "models": {
+    "added": [],
+    "removed": [],
+    "updated": 0
+  },
+  "categories": {
+    "changes": []
+  },
+  "rankings": {
+    "highlights": []
+  },
+  "research": {
+    "findings_count": 0,
+    "high_impact_proposals": []
+  },
+  "benchmarks": {
+    "before": {
+      "overall_score": 0.156,
+      "pass_rate": 0.0,
+      "category_scores": {
+        "coding": 0.111,
+        "reasoning": 0.2,
+        "math": 0.0,
+        "factual": 0.15,
+        "multi_hop": 0.3,
+        "creative": 0.5
+      },
+      "regressions": [],
+      "improvements": []
+    },
+    "after": null,
+    "regressions": [
+      {
+        "category": "coding",
+        "current_score": 0.111,
+        "baseline_score": 0.85,
+        "delta": -0.739,
+        "severity": "critical",
+        "timestamp": "2026-02-08T04:02:51.734626"
+      },
+      {
+        "category": "reasoning",
+        "current_score": 0.2,
+        "baseline_score": 0.85,
+        "delta": -0.65,
+        "severity": "critical",
+        "timestamp": "2026-02-08T04:02:51.734629"
+      },
+      {
+        "category": "math",
+        "current_score": 0.0,
+        "baseline_score": 0.85,
+        "delta": -0.85,
+        "severity": "critical",
+        "timestamp": "2026-02-08T04:02:51.734630"
+      },
+      {
+        "category": "factual",
+        "current_score": 0.15,
+        "baseline_score": 0.85,
+        "delta": -0.7,
+        "severity": "critical",
+        "timestamp": "2026-02-08T04:02:51.734631"
+      },
+      {
+        "category": "multi_hop",
+        "current_score": 0.3,
+        "baseline_score": 0.85,
+        "delta": -0.55,
+        "severity": "critical",
+        "timestamp": "2026-02-08T04:02:51.734632"
+      },
+      {
+        "category": "creative",
+        "current_score": 0.5,
+        "baseline_score": 0.85,
+        "delta": -0.35,
+        "severity": "critical",
+        "timestamp": "2026-02-08T04:02:51.734634"
+      }
+    ]
+  },
+  "upgrades": {
+    "applied": [],
+    "gated": [],
+    "failed": []
+  },
+  "safety": {
+    "all_tests_passed": true,
+    "safe_to_deploy": true,
+    "notes": [
+      "Pre-existing regressions detected: 6"
+    ]
+  },
+  "duration": {
+    "total_seconds": 0,
+    "sync_seconds": 0.003752,
+    "research_seconds": 0.118852,
+    "benchmark_seconds": 0.322378
+  }
+}
