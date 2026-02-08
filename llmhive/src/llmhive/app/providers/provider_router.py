@@ -38,6 +38,7 @@ class Provider(str, Enum):
     OPENROUTER = "openrouter"
     GOOGLE = "google"
     DEEPSEEK = "deepseek"
+    TOGETHER = "together"
 
 
 @dataclass
@@ -81,6 +82,28 @@ PROVIDER_ROUTING = {
     # DeepSeek models → DeepSeek Direct (30 RPM, excellent for math/reasoning)
     "deepseek/deepseek-r1-0528:free": (Provider.DEEPSEEK, "deepseek-reasoner"),
     "deepseek/deepseek-chat": (Provider.DEEPSEEK, "deepseek-chat"),
+
+    # Together.ai models → Together Direct (backup/complement)
+    "together/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo": (
+        Provider.TOGETHER,
+        "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    ),
+    "together/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo": (
+        Provider.TOGETHER,
+        "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+    ),
+    "together/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo": (
+        Provider.TOGETHER,
+        "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    ),
+    "together/Qwen/Qwen2.5-72B-Instruct-Turbo": (
+        Provider.TOGETHER,
+        "Qwen/Qwen2.5-72B-Instruct-Turbo",
+    ),
+    "together/Qwen/Qwen2.5-7B-Instruct-Turbo": (
+        Provider.TOGETHER,
+        "Qwen/Qwen2.5-7B-Instruct-Turbo",
+    ),
     
     # Everything else → OpenRouter (includes Llama, Qwen, and all other models)
     # Llama models now remain on OpenRouter
@@ -102,9 +125,11 @@ class ProviderRouter:
         # Initialize provider clients
         from .google_ai_client import get_google_client
         from .deepseek_client import get_deepseek_client
+        from .together_client import get_together_client
         
         self.google_client = get_google_client()
         self.deepseek_client = get_deepseek_client()
+        self.together_client = get_together_client()
         
         # Initialize capacity tracking
         self.capacity = {
@@ -123,6 +148,11 @@ class ProviderRouter:
                 window_start=time.time(),
                 requests_in_window=0
             ),
+            Provider.TOGETHER: ProviderCapacity(
+                rpm_limit=20,  # Together.ai: conservative default
+                window_start=time.time(),
+                requests_in_window=0
+            ),
         }
         
         # Log availability
@@ -131,6 +161,8 @@ class ProviderRouter:
             providers_available.append("Google AI (15 RPM)")
         if self.deepseek_client:
             providers_available.append("DeepSeek (30 RPM)")
+        if self.together_client:
+            providers_available.append("Together.ai (20 RPM)")
         providers_available.append("OpenRouter (20 RPM)")
         
         logger.info(
@@ -170,6 +202,10 @@ class ProviderRouter:
             elif provider == Provider.DEEPSEEK:
                 if self.deepseek_client and self.capacity[Provider.DEEPSEEK].can_proceed():
                     return (Provider.DEEPSEEK, native_id)
+            
+            elif provider == Provider.TOGETHER:
+                if self.together_client and self.capacity[Provider.TOGETHER].can_proceed():
+                    return (Provider.TOGETHER, native_id)
         
         # Fallback to OpenRouter
         # Check OpenRouter capacity
@@ -215,6 +251,10 @@ class ProviderRouter:
             elif provider == Provider.DEEPSEEK and self.deepseek_client:
                 logger.debug("Routing %s → DeepSeek API (native: %s)", model_id, native_model)
                 return await self.deepseek_client.generate_with_retry(prompt, native_model)
+            
+            elif provider == Provider.TOGETHER and self.together_client:
+                logger.debug("Routing %s → Together.ai (native: %s)", model_id, native_model)
+                return await self.together_client.generate_with_retry(prompt, native_model)
             
             else:
                 # OpenRouter fallback

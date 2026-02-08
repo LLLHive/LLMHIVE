@@ -24,6 +24,7 @@ PROVIDER_KEYS: List[str] = [
     "GEMINI_API_KEY",
     "DEEPSEEK_API_KEY",
     "MANUS_API_KEY",
+    "TOGETHERAI_API_KEY",
 ]
 
 # Optional service keys for extended functionality

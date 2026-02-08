@@ -1148,6 +1148,7 @@ class EliteOrchestrator:
         """
         mapping = {}
         openrouter_available = "openrouter" in self.providers
+        together_available = "together" in self.providers
         
         # All supported models
         all_models = [
@@ -1199,11 +1200,22 @@ class EliteOrchestrator:
             "allenai/molmo-2-8b:free",                  # 36K - Vision
         ]
         
+        together_models = [
+            "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            "Qwen/Qwen2.5-72B-Instruct-Turbo",
+        ]
+        
         if openrouter_available:
             # Route ALL models through OpenRouter (PRIMARY)
             for model in all_models:
                 mapping[model] = "openrouter"
             logger.info("OpenRouter is PRIMARY - routing all models through it")
+            
+            # Route Together.ai models directly when available
+            if together_available:
+                for model in together_models:
+                    mapping[model] = "together"
         else:
             # FALLBACK to direct providers
             provider_models = {
@@ -1221,6 +1233,7 @@ class EliteOrchestrator:
                             "deepseek/deepseek-chat", "deepseek/deepseek-v3.2",
                             "deepseek/deepseek-r1-0528"],
                 "grok": ["grok-2", "grok-4", "x-ai/grok-2", "x-ai/grok-4"],
+                "together": together_models,
             }
             for provider, models in provider_models.items():
                 if provider in self.providers:

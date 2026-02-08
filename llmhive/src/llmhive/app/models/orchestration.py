@@ -260,6 +260,10 @@ class ChatRequest(BaseModel):
         default=None,
         description="List of model IDs to use for orchestration (e.g., ['gpt-5', 'claude-sonnet-4.5', 'grok-4']). If not provided, models will be auto-selected."
     )
+    model: Optional[str] = Field(
+        default=None,
+        description="Single model ID alias for 'models' (backward compatible).",
+    )
     reasoning_mode: ReasoningMode = Field(default=ReasoningMode.standard, description="Reasoning depth mode (fast/standard/deep)")
     reasoning_method: Optional[ReasoningMethod] = Field(
         default=None,

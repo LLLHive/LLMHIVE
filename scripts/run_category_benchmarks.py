@@ -8,44 +8,90 @@ import asyncio
 import httpx
 import json
 import os
+import random
 import re
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
 from datasets import load_dataset
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
-LLMHIVE_API_URL = "https://llmhive-orchestrator-792354158895.us-east1.run.app"
+LLMHIVE_API_URL = os.getenv(
+    "LLMHIVE_API_URL",
+    "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+)
 API_KEY = os.getenv("API_KEY") or os.getenv("LLMHIVE_API_KEY")
 
 if not API_KEY:
     raise ValueError("API_KEY or LLMHIVE_API_KEY environment variable required")
 
+def _get_env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if not value:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+def _get_env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if not value:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
+def _get_env_str(name: str, default: str) -> str:
+    value = os.getenv(name)
+    return value if value else default
+
+
+def _is_truthy(value: Optional[str]) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+STRICT_MODE = _is_truthy(os.getenv("CATEGORY_BENCH_STRICT"))
+TIER = _get_env_str("CATEGORY_BENCH_TIER", "elite")
+REASONING_MODE = _get_env_str("CATEGORY_BENCH_REASONING_MODE", "deep")
+TEMPERATURE = _get_env_float("CATEGORY_BENCH_TEMPERATURE", -1.0)
+TOP_P = _get_env_float("CATEGORY_BENCH_TOP_P", -1.0)
+
+CHECKPOINT_PATH = _get_env_str(
+    "CATEGORY_BENCH_CHECKPOINT_PATH",
+    "benchmark_reports/category_benchmarks_checkpoint.json",
+)
+FORCE_RESUME = _is_truthy(os.getenv("CATEGORY_BENCH_FORCE_RESUME"))
+START_AT = _get_env_str("CATEGORY_BENCH_START_AT", "")
+SKIP_CATEGORIES_RAW = _get_env_str("CATEGORY_BENCH_SKIP_CATEGORIES", "")
+
+TOOLBENCH_EVAL_CMD = _get_env_str("TOOLBENCH_EVAL_CMD", "")
+MSMARCO_EVAL_CMD = _get_env_str("MSMARCO_EVAL_CMD", "")
+LONGBENCH_EVAL_CMD = _get_env_str("LONGBENCH_EVAL_CMD", "")
+MTBENCH_EVAL_CMD = _get_env_str("MTBENCH_EVAL_CMD", "")
+
+FRONTIER_JSON = _get_env_str("CATEGORY_BENCH_FRONTIER_JSON", "")
+
 # Sample sizes (adjust for time/cost tradeoff)
 SAMPLE_SIZES = {
-    "reasoning": 100,  # MMLU subset
-    "coding": 50,      # HumanEval subset
-    "math": 100,       # GSM8K subset
-    "multilingual": 50,# Multilingual MMLU
-    "long_context": 20,# Custom long-context tests
-    "tool_use": 30,    # ToolBench subset
-    "rag": 30,         # MS MARCO subset
-    "dialogue": 30,    # Custom dialogue tests
-}
-
-# Frontier model scores (Jan 2026)
-FRONTIER_SCORES = {
-    "reasoning": {"best": "Gemini 3 Pro", "score": 91.8},
-    "coding": {"best": "Gemini 3 Pro", "score": 94.5},
-    "math": {"best": "GPT-5.2 Pro", "score": 99.2},
-    "multilingual": {"best": "GPT-5.2 Pro", "score": 92.4},
-    "long_context": {"best": "Gemini 3 Pro", "score": 95.2},
-    "tool_use": {"best": "Claude Opus 4.5", "score": 89.3},
-    "rag": {"best": "GPT-5.2 Pro", "score": 87.6},
-    "dialogue": {"best": "Claude Opus 4.5", "score": 93.1},
+    "reasoning": _get_env_int("CATEGORY_BENCH_MMLU_SAMPLES", 100),
+    "coding": _get_env_int("CATEGORY_BENCH_HUMANEVAL_SAMPLES", 50),
+    "math": _get_env_int("CATEGORY_BENCH_GSM8K_SAMPLES", 100),
+    "multilingual": _get_env_int("CATEGORY_BENCH_MMMLU_SAMPLES", 100),
+    "long_context": _get_env_int("CATEGORY_BENCH_LONGBENCH_SAMPLES", 100),
+    "tool_use": _get_env_int("CATEGORY_BENCH_TOOLBENCH_SAMPLES", 50),
+    "rag": _get_env_int("CATEGORY_BENCH_MSMARCO_SAMPLES", 200),
+    "dialogue": _get_env_int("CATEGORY_BENCH_MTBENCH_SAMPLES", 50),
 }
 
 # ============================================================================
@@ -54,9 +100,10 @@ FRONTIER_SCORES = {
 
 async def call_llmhive_api(
     prompt: str,
-    reasoning_mode: str = "deep",
-    tier: str = "elite",
-    timeout: int = 180
+    reasoning_mode: str = REASONING_MODE,
+    tier: str = TIER,
+    timeout: int = 180,
+    orchestration_config: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Call LLMHive API with exponential backoff retry"""
     async with httpx.AsyncClient(timeout=timeout) as client:
@@ -67,9 +114,18 @@ async def call_llmhive_api(
                 payload = {
                     "prompt": prompt,
                     "reasoning_mode": reasoning_mode,
+                    "orchestration": orchestration_config or {
+                        "accuracy_level": 5,  # Maximum quality
+                        "use_deep_consensus": True,
+                        "enable_verification": True,
+                    },
                 }
                 if tier:
                     payload["tier"] = tier
+                if TEMPERATURE >= 0:
+                    payload["temperature"] = TEMPERATURE
+                if TOP_P >= 0:
+                    payload["top_p"] = TOP_P
                     
                 response = await client.post(
                     f"{LLMHIVE_API_URL}/v1/chat",
@@ -112,39 +168,295 @@ async def call_llmhive_api(
         
         return {"success": False, "error": "Max retries exceeded", "latency": 0, "cost": 0}
 
+
+def _normalize_text(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r"\b(a|an|the)\b", " ", text)
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _exact_match(pred: str, answers: List[str]) -> bool:
+    pred_norm = _normalize_text(pred)
+    return any(pred_norm == _normalize_text(a) for a in answers if a)
+
+
+def _f1_score(pred: str, answers: List[str]) -> float:
+    pred_tokens = _normalize_text(pred).split()
+    if not pred_tokens:
+        return 0.0
+    best = 0.0
+    for ans in answers:
+        ans_tokens = _normalize_text(ans).split()
+        if not ans_tokens:
+            continue
+        common = set(pred_tokens) & set(ans_tokens)
+        if not common:
+            continue
+        precision = len(common) / len(pred_tokens)
+        recall = len(common) / len(ans_tokens)
+        score = (2 * precision * recall) / (precision + recall)
+        best = max(best, score)
+    return best
+
+
+def _strip_code_fences(text: str) -> str:
+    match = re.search(r"```(?:python)?\n(.*?)```", text, re.DOTALL | re.IGNORECASE)
+    return match.group(1).strip() if match else text.strip()
+
+
+def _strip_non_code_trailers(text: str) -> str:
+    lines = text.splitlines()
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines:
+        line = lines[-1]
+        if not line.strip():
+            lines.pop()
+            continue
+        if line.startswith(("def ", "class ", "@", "#")):
+            break
+        if not line.startswith((" ", "\t")):
+            lines.pop()
+            continue
+        break
+    return "\n".join(lines)
+
+
+def _completion_from_response(problem: Dict[str, Any], response: str) -> str:
+    """Extract and format code completion for HumanEval"""
+    text = _strip_code_fences(response)
+    
+    # If response contains the full function, return it
+    entry_point = problem.get("entry_point", "")
+    if entry_point:
+        pattern = re.compile(rf"def\s+{re.escape(entry_point)}\s*\([^)]*\):", re.MULTILINE)
+        match = pattern.search(text)
+        if match:
+            # Found full function definition - use it as-is
+            return text.strip() + "\n"
+    
+    # Otherwise, try to extract just the body
+    prompt = problem.get("prompt", "")
+    if prompt and prompt in text:
+        text = text.split(prompt, 1)[1]
+
+    text = _strip_non_code_trailers(text)
+    if not text.strip():
+        # Return original prompt + empty implementation as fallback
+        return prompt.strip() + "\n    pass\n"
+
+    # Ensure proper indentation for function body
+    lines = text.splitlines()
+    for line in lines:
+        if line.strip():
+            if not line.startswith((" ", "\t")):
+                lines = [f"    {ln}" if ln.strip() else ln for ln in lines]
+            break
+    
+    # Combine prompt with implementation
+    return prompt.strip() + "\n" + "\n".join(lines).rstrip() + "\n"
+
+
+def _extract_gsm8k_answer(answer_text: str) -> Optional[float]:
+    match = re.search(r"####\s*(-?[\d,]+\.?\d*)", answer_text)
+    if match:
+        value = match.group(1).replace(",", "").strip()
+        if value and value not in {"-", ".", "-."}:
+            return float(value)
+    numbers = re.findall(r"-?[\d,]+\.?\d*", answer_text)
+    if numbers:
+        for raw in reversed(numbers):
+            value = raw.replace(",", "").strip()
+            if not value or value in {"-", ".", "-."}:
+                continue
+            try:
+                return float(value)
+            except ValueError:
+                continue
+    return None
+
+
+def _extract_multiple_choice(text: str) -> Optional[str]:
+    match = re.search(r"\b([ABCD])\b", text.strip().upper())
+    return match.group(1) if match else None
+
+
+def _checkpoint_config() -> Dict[str, Any]:
+    return {
+        "tier": TIER,
+        "reasoning_mode": REASONING_MODE,
+        "sample_sizes": SAMPLE_SIZES,
+        "temperature": TEMPERATURE if TEMPERATURE >= 0 else None,
+        "top_p": TOP_P if TOP_P >= 0 else None,
+        "strict_mode": STRICT_MODE,
+        "start_at": START_AT,
+        "skip_categories": SKIP_CATEGORIES_RAW,
+    }
+
+
+def _load_checkpoint() -> Optional[Dict[str, Any]]:
+    path = Path(CHECKPOINT_PATH)
+    if not path.exists():
+        return None
+    payload = json.loads(path.read_text())
+    if not FORCE_RESUME:
+        saved = payload.get("config", {})
+        current = _checkpoint_config()
+        if saved and saved != current:
+            raise RuntimeError(
+                "Checkpoint config mismatch. Delete checkpoint or set "
+                "CATEGORY_BENCH_FORCE_RESUME=1."
+            )
+    return payload
+
+
+def _save_checkpoint(payload: Dict[str, Any]) -> None:
+    path = Path(CHECKPOINT_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2))
+
+
+def _normalize_skip_list() -> List[str]:
+    if not SKIP_CATEGORIES_RAW:
+        return []
+    tokens = [t.strip().lower() for t in SKIP_CATEGORIES_RAW.split(",") if t.strip()]
+    mapping = {
+        "mmlu": "reasoning",
+        "gsm8k": "math",
+        "humaneval": "coding",
+        "mmmlu": "multilingual",
+        "longbench": "long_context",
+        "toolbench": "tool_use",
+        "msmarco": "rag",
+        "mtbench": "dialogue",
+    }
+    return [mapping.get(token, token) for token in tokens]
+
+
+def _categories_to_run() -> List[str]:
+    order = [
+        "reasoning",
+        "coding",
+        "math",
+        "multilingual",
+        "long_context",
+        "tool_use",
+        "rag",
+        "dialogue",
+    ]
+    skip = set(_normalize_skip_list())
+    start_at = START_AT.strip().lower()
+    if start_at:
+        mapping = {
+            "mmlu": "reasoning",
+            "gsm8k": "math",
+            "humaneval": "coding",
+            "mmmlu": "multilingual",
+            "longbench": "long_context",
+            "toolbench": "tool_use",
+            "msmarco": "rag",
+            "mtbench": "dialogue",
+        }
+        start_key = mapping.get(start_at, start_at)
+        if start_key in order:
+            start_index = order.index(start_key)
+            skip.update(order[:start_index])
+    return [key for key in order if key not in skip]
+
+
+def _load_frontier_scores() -> Dict[str, Any]:
+    if not FRONTIER_JSON:
+        return {}
+    path = Path(FRONTIER_JSON)
+    if not path.exists():
+        raise FileNotFoundError(f"Frontier JSON not found: {path}")
+    return json.loads(path.read_text())
+
+
+def _preflight_checks() -> None:
+    if not STRICT_MODE:
+        return
+    missing = []
+    if TEMPERATURE != 0.0 or TOP_P != 1.0:
+        missing.append(
+            "deterministic decoding required: set CATEGORY_BENCH_TEMPERATURE=0 "
+            "and CATEGORY_BENCH_TOP_P=1.0"
+        )
+    if not TOOLBENCH_EVAL_CMD:
+        missing.append("TOOLBENCH_EVAL_CMD is required")
+    if not MSMARCO_EVAL_CMD:
+        missing.append("MSMARCO_EVAL_CMD is required")
+    if not LONGBENCH_EVAL_CMD:
+        missing.append("LONGBENCH_EVAL_CMD is required")
+    if not MTBENCH_EVAL_CMD:
+        missing.append("MTBENCH_EVAL_CMD is required")
+    if MSMARCO_EVAL_CMD and (
+        "{reference_path}" not in MSMARCO_EVAL_CMD
+        or "{candidate_path}" not in MSMARCO_EVAL_CMD
+    ):
+        missing.append(
+            "MSMARCO_EVAL_CMD must include {reference_path} and {candidate_path}"
+        )
+    if LONGBENCH_EVAL_CMD and "{output_path}" not in LONGBENCH_EVAL_CMD:
+        missing.append("LONGBENCH_EVAL_CMD must include {output_path}")
+    if MTBENCH_EVAL_CMD and "{output_path}" not in MTBENCH_EVAL_CMD:
+        missing.append("MTBENCH_EVAL_CMD must include {output_path}")
+    if missing:
+        raise RuntimeError(
+            "Strict mode preflight failed:\n- " + "\n- ".join(missing)
+        )
+
 # ============================================================================
 # CATEGORY 1: GENERAL REASONING (MMLU)
 # ============================================================================
 
-def extract_multiple_choice_answer(text: str) -> Optional[str]:
-    """Extract A/B/C/D answer from response"""
-    text = text.strip().upper()
-    # Look for "Answer: A" or just "A" at the start
-    match = re.search(r'\b([ABCD])\b', text)
-    return match.group(1) if match else None
-
-async def evaluate_reasoning(tier: str = "elite") -> Dict[str, Any]:
+async def evaluate_reasoning(
+    tier: str = TIER,
+    progress: Optional[Dict[str, Any]] = None,
+    on_progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> Dict[str, Any]:
     """Evaluate general reasoning using MMLU"""
     print(f"\n{'='*70}")
     print(f"CATEGORY 1: GENERAL REASONING (MMLU)")
     print(f"{'='*70}\n")
     
     try:
-        dataset = load_dataset("lighteval/mmlu", "all", split="test", trust_remote_code=True)
-        sample_size = min(SAMPLE_SIZES["reasoning"], len(dataset))
-        samples = dataset.shuffle(seed=42).select(range(sample_size))
-        
-        correct = 0
-        errors = 0
-        total_latency = 0
-        total_cost = 0
-        
-        for i, item in enumerate(samples):
+        dataset = load_dataset("lighteval/mmlu", "all", split="test")
+        selected_indices: Optional[List[int]] = None
+        if STRICT_MODE:
+            sample_size = len(dataset)
+            samples = dataset
+        else:
+            if progress and progress.get("selected_indices"):
+                selected_indices = progress["selected_indices"]
+            else:
+                sample_size = min(SAMPLE_SIZES["reasoning"], len(dataset))
+                rng_indices = list(range(len(dataset)))
+                rng = random.Random(42)
+                rng.shuffle(rng_indices)
+                selected_indices = rng_indices[:sample_size]
+            sample_size = min(SAMPLE_SIZES["reasoning"], len(selected_indices))
+            selected_indices = selected_indices[:sample_size]
+            samples = dataset.select(selected_indices)
+
+        correct = int(progress.get("correct", 0)) if progress else 0
+        errors = int(progress.get("errors", 0)) if progress else 0
+        total_latency = int(progress.get("total_latency", 0)) if progress else 0
+        total_cost = float(progress.get("total_cost", 0.0)) if progress else 0.0
+        start_index = int(progress.get("index", 0)) if progress else 0
+        error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
+
+        for i, item in enumerate(samples, start=1):
+            if i <= start_index:
+                continue
             question = item["question"]
             choices = item["choices"]
             correct_answer = ["A", "B", "C", "D"][item["answer"]]
             
-            prompt = f"""Answer this multiple-choice question. Provide ONLY the letter (A, B, C, or D).
+            # ENHANCED PROMPT for better reasoning
+            prompt = f"""Analyze this question with rigorous step-by-step reasoning.
 
 Question: {question}
 
@@ -153,25 +465,44 @@ B) {choices[1]}
 C) {choices[2]}
 D) {choices[3]}
 
+Approach:
+1. Read the question carefully and identify what's being asked
+2. For each answer option, evaluate its correctness
+3. Eliminate clearly wrong answers
+4. Compare remaining options
+5. Select the most accurate answer
+
+Provide your final answer as ONLY the letter (A, B, C, or D).
+
 Answer:"""
             
-            result = await call_llmhive_api(prompt, reasoning_mode="deep", tier=tier)
-            
+            result = await call_llmhive_api(prompt, reasoning_mode=REASONING_MODE, tier=tier)
+
             if result["success"]:
-                predicted = extract_multiple_choice_answer(result["response"])
+                predicted = _extract_multiple_choice(result["response"])
                 is_correct = predicted == correct_answer
-                
+
                 if is_correct:
                     correct += 1
-                    print(f"✅ [{i+1}/{sample_size}] Correct: {correct_answer}")
-                else:
-                    print(f"❌ [{i+1}/{sample_size}] Expected: {correct_answer}, Got: {predicted}")
-                
                 total_latency += result["latency"]
                 total_cost += result["cost"]
             else:
                 errors += 1
-                print(f"⚠️  [{i+1}/{sample_size}] API Error: {result['error'][:50]}")
+                if len(error_samples) < 3:
+                    error_samples.append(result.get("error", "unknown error")[:200])
+
+            if on_progress:
+                on_progress(
+                    {
+                        "index": i,
+                        "correct": correct,
+                        "errors": errors,
+                        "total_latency": total_latency,
+                        "total_cost": total_cost,
+                        "error_samples": error_samples,
+                        "selected_indices": selected_indices if not STRICT_MODE else None,
+                    }
+                )
         
         total_attempted = sample_size - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
@@ -187,6 +518,7 @@ Answer:"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
+            "extra": {"error_samples": error_samples},
         }
     except Exception as e:
         print(f"❌ Reasoning evaluation failed: {e}")
@@ -196,7 +528,11 @@ Answer:"""
 # CATEGORY 2: CODING (HumanEval)
 # ============================================================================
 
-async def evaluate_coding(tier: str = "elite") -> Dict[str, Any]:
+async def evaluate_coding(
+    tier: str = TIER,
+    progress: Optional[Dict[str, Any]] = None,
+    on_progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> Dict[str, Any]:
     """Evaluate coding using HumanEval"""
     print(f"\n{'='*70}")
     print(f"CATEGORY 2: CODING (HumanEval)")
@@ -207,49 +543,56 @@ async def evaluate_coding(tier: str = "elite") -> Dict[str, Any]:
         from human_eval.execution import check_correctness
         
         problems = read_problems()
-        sample_size = min(SAMPLE_SIZES["coding"], len(problems))
-        sampled_problems = dict(list(problems.items())[:sample_size])
-        
-        correct = 0
-        errors = 0
-        total_latency = 0
-        total_cost = 0
-        
-        for i, (task_id, problem) in enumerate(sampled_problems.items()):
-            prompt = f"""Complete this Python function. Return ONLY the code implementation, no explanations or markdown.
+        problem_ids = list(problems.keys())
+        sample_ids = (
+            progress.get("sample_ids")
+            if progress and progress.get("sample_ids")
+            else problem_ids[: min(SAMPLE_SIZES["coding"], len(problem_ids))]
+        )
+
+        correct = int(progress.get("correct", 0)) if progress else 0
+        errors = int(progress.get("errors", 0)) if progress else 0
+        total_latency = int(progress.get("total_latency", 0)) if progress else 0
+        total_cost = float(progress.get("total_cost", 0.0)) if progress else 0.0
+        start_index = int(progress.get("index", 0)) if progress else 0
+        error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
+
+        for i, task_id in enumerate(sample_ids, start=1):
+            if i <= start_index:
+                continue
+            problem = problems[task_id]
+            # ENHANCED PROMPT for better code generation
+            prompt = f"""Write production-quality Python code for this function.
 
 {problem['prompt']}
 
-Implementation:"""
+Requirements:
+1. Complete implementation (not just stub or pass)
+2. Handle all edge cases mentioned in the docstring
+3. Include proper error handling where appropriate
+4. Ensure the function works correctly for ALL test cases
+5. Think through the logic step-by-step before writing
+
+Provide the complete function implementation:"""
             
-            result = await call_llmhive_api(prompt, reasoning_mode="deep", tier=tier, timeout=180)
+            result = await call_llmhive_api(
+                prompt,
+                reasoning_mode=REASONING_MODE,
+                tier=tier,
+                timeout=180,
+                orchestration_config={
+                    "accuracy_level": 5,
+                    "enable_verification": True,
+                    "use_deep_consensus": True,
+                }
+            )
             
             if result["success"]:
-                # Better code extraction
-                response = result["response"]
-                
-                # Try to extract from markdown code block first
-                code_match = re.search(r'```(?:python)?\n(.*?)```', response, re.DOTALL)
-                if code_match:
-                    code = code_match.group(1).strip()
-                else:
-                    # Use response as-is, try to extract function definition
-                    lines = response.split('\n')
-                    code_lines = []
-                    in_code = False
-                    for line in lines:
-                        if line.strip().startswith('def '):
-                            in_code = True
-                        if in_code:
-                            code_lines.append(line)
-                    code = '\n'.join(code_lines) if code_lines else response
-                
-                # Test the code with FIXED API call
+                completion = _completion_from_response(problem, result["response"])
                 try:
-                    # FIX: Use correct check_correctness signature from execution module
                     check_result = check_correctness(
                         problem,
-                        code,
+                        completion,
                         timeout=5.0,
                         completion_id=i
                     )
@@ -258,28 +601,39 @@ Implementation:"""
                     
                     if is_correct:
                         correct += 1
-                        print(f"✅ [{i+1}/{sample_size}] {task_id}: Passed")
-                    else:
-                        error_msg = check_result.get("result", "Unknown") if isinstance(check_result, dict) else "Failed"
-                        print(f"❌ [{i+1}/{sample_size}] {task_id}: {error_msg[:50]}")
                     
                     total_latency += result["latency"]
                     total_cost += result["cost"]
                     
                 except Exception as e:
                     errors += 1
-                    print(f"⚠️  [{i+1}/{sample_size}] {task_id}: Execution error - {str(e)[:50]}")
+                    if len(error_samples) < 3:
+                        error_samples.append(f"human-eval execution error: {str(e)[:120]}")
             else:
                 errors += 1
-                print(f"⚠️  [{i+1}/{sample_size}] {task_id}: API Error")
+                if len(error_samples) < 3:
+                    error_samples.append(result.get("error", "unknown error")[:200])
+
+            if on_progress:
+                on_progress(
+                    {
+                        "index": i,
+                        "correct": correct,
+                        "errors": errors,
+                        "total_latency": total_latency,
+                        "total_cost": total_cost,
+                        "error_samples": error_samples,
+                        "sample_ids": sample_ids,
+                    }
+                )
         
-        total_attempted = sample_size - errors
+        total_attempted = len(sample_ids) - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
         
         return {
             "category": "Coding (HumanEval)",
             "dataset": "openai/human_eval",
-            "sample_size": sample_size,
+            "sample_size": len(sample_ids),
             "correct": correct,
             "incorrect": total_attempted - correct,
             "errors": errors,
@@ -287,6 +641,7 @@ Implementation:"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
+            "extra": {"error_samples": error_samples},
         }
     
     except ImportError as e:
@@ -314,64 +669,104 @@ Implementation:"""
 # CATEGORY 3: MATH (GSM8K)
 # ============================================================================
 
-def extract_number_from_response(text: str) -> Optional[float]:
-    """Extract numerical answer from response"""
-    # Look for #### pattern (GSM8K format)
-    match = re.search(r'####\s*(-?[\d,]+\.?\d*)', text)
-    if match:
-        return float(match.group(1).replace(',', ''))
-    
-    # Look for last number in text
-    numbers = re.findall(r'-?[\d,]+\.?\d*', text)
-    if numbers:
-        return float(numbers[-1].replace(',', ''))
-    
-    return None
-
-async def evaluate_math(tier: str = "elite") -> Dict[str, Any]:
+async def evaluate_math(
+    tier: str = TIER,
+    progress: Optional[Dict[str, Any]] = None,
+    on_progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> Dict[str, Any]:
     """Evaluate math using GSM8K"""
     print(f"\n{'='*70}")
     print(f"CATEGORY 3: MATH (GSM8K)")
     print(f"{'='*70}\n")
     
     try:
-        dataset = load_dataset("openai/gsm8k", "main", split="test", trust_remote_code=True)
-        sample_size = min(SAMPLE_SIZES["math"], len(dataset))
-        samples = dataset.shuffle(seed=42).select(range(sample_size))
-        
-        correct = 0
-        errors = 0
-        total_latency = 0
-        total_cost = 0
-        
-        for i, item in enumerate(samples):
+        dataset = load_dataset("openai/gsm8k", "main", split="test")
+        selected_indices: Optional[List[int]] = None
+        if STRICT_MODE:
+            sample_size = len(dataset)
+            samples = dataset
+        else:
+            if progress and progress.get("selected_indices"):
+                selected_indices = progress["selected_indices"]
+            else:
+                sample_size = min(SAMPLE_SIZES["math"], len(dataset))
+                rng_indices = list(range(len(dataset)))
+                rng = random.Random(42)
+                rng.shuffle(rng_indices)
+                selected_indices = rng_indices[:sample_size]
+            sample_size = min(SAMPLE_SIZES["math"], len(selected_indices))
+            selected_indices = selected_indices[:sample_size]
+            samples = dataset.select(selected_indices)
+
+        correct = int(progress.get("correct", 0)) if progress else 0
+        errors = int(progress.get("errors", 0)) if progress else 0
+        total_latency = int(progress.get("total_latency", 0)) if progress else 0
+        total_cost = float(progress.get("total_cost", 0.0)) if progress else 0.0
+        start_index = int(progress.get("index", 0)) if progress else 0
+        error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
+
+        for i, item in enumerate(samples, start=1):
+            if i <= start_index:
+                continue
             question = item["question"]
             answer_text = item["answer"]
-            correct_answer = float(re.search(r'####\s*(-?[\d,]+\.?\d*)', answer_text).group(1).replace(',', ''))
+            correct_answer = _extract_gsm8k_answer(answer_text)
             
-            prompt = f"""Solve this math problem. Show your work and provide the final answer after ####.
+            # ENHANCED PROMPT for better math solving
+            prompt = f"""Solve this math problem with careful step-by-step work.
 
-{question}
+Problem: {question}
 
-Solution:"""
+Instructions:
+1. Break down the problem into clear steps
+2. Show ALL calculations explicitly  
+3. Verify each step for arithmetic errors
+4. Double-check your final answer
+5. Format answer as: #### [number]
+
+Work through this carefully:"""
             
-            result = await call_llmhive_api(prompt, reasoning_mode="deep", tier=tier)
+            result = await call_llmhive_api(
+                prompt,
+                reasoning_mode=REASONING_MODE,
+                tier=tier,
+                orchestration_config={
+                    "accuracy_level": 5,
+                    "enable_calculator": True,
+                    "enable_verification": True,
+                    "use_deep_consensus": True,
+                }
+            )
             
             if result["success"]:
-                predicted = extract_number_from_response(result["response"])
-                is_correct = predicted is not None and abs(predicted - correct_answer) < 0.01
-                
+                predicted = _extract_gsm8k_answer(result["response"])
+                is_correct = (
+                    predicted is not None
+                    and correct_answer is not None
+                    and abs(predicted - correct_answer) < 0.01
+                )
                 if is_correct:
                     correct += 1
-                    print(f"✅ [{i+1}/{sample_size}] Correct: {correct_answer}")
-                else:
-                    print(f"❌ [{i+1}/{sample_size}] Expected: {correct_answer}, Got: {predicted}")
                 
                 total_latency += result["latency"]
                 total_cost += result["cost"]
             else:
                 errors += 1
-                print(f"⚠️  [{i+1}/{sample_size}] API Error")
+                if len(error_samples) < 3:
+                    error_samples.append(result.get("error", "unknown error")[:200])
+
+            if on_progress:
+                on_progress(
+                    {
+                        "index": i,
+                        "correct": correct,
+                        "errors": errors,
+                        "total_latency": total_latency,
+                        "total_cost": total_cost,
+                        "error_samples": error_samples,
+                        "selected_indices": selected_indices if not STRICT_MODE else None,
+                    }
+                )
         
         total_attempted = sample_size - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
@@ -387,6 +782,7 @@ Solution:"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
+            "extra": {"error_samples": error_samples},
         }
     except Exception as e:
         print(f"❌ Math evaluation failed: {e}")
@@ -396,136 +792,128 @@ Solution:"""
 # CATEGORY 4: MULTILINGUAL
 # ============================================================================
 
-async def evaluate_multilingual(tier: str = "elite") -> Dict[str, Any]:
-    """Evaluate multilingual capabilities"""
+async def evaluate_multilingual(
+    tier: str = TIER,
+    progress: Optional[Dict[str, Any]] = None,
+    on_progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> Dict[str, Any]:
+    """Evaluate multilingual capabilities using MMMLU"""
     print(f"\n{'='*70}")
     print(f"CATEGORY 4: MULTILINGUAL (MMLU + Custom)")
     print(f"{'='*70}\n")
     
-    # Custom multilingual tests
-    tests = [
-        {"lang": "Spanish", "question": "¿Cuál es la capital de Francia?", "answer": "París"},
-        {"lang": "French", "question": "Quelle est la capitale de l'Allemagne?", "answer": "Berlin"},
-        {"lang": "German", "question": "Was ist die Hauptstadt von Italien?", "answer": "Rom"},
-        {"lang": "Chinese", "question": "日本的首都是什么?", "answer": "东京"},
-        {"lang": "Japanese", "question": "アメリカの首都はどこですか?", "answer": "ワシントン"},
-    ] * (SAMPLE_SIZES["multilingual"] // 5)
-    
-    correct = 0
-    errors = 0
-    total_latency = 0
-    total_cost = 0
-    
-    for i, test in enumerate(tests[:SAMPLE_SIZES["multilingual"]]):
-        prompt = f"""Answer this question in {test['lang']}:
+    dataset = load_dataset("openai/MMMLU", split="test")
+    selected_indices: Optional[List[int]] = None
+    if STRICT_MODE:
+        sample_size = len(dataset)
+        samples = dataset
+    else:
+        if progress and progress.get("selected_indices"):
+            selected_indices = progress["selected_indices"]
+        else:
+            sample_size = min(SAMPLE_SIZES["multilingual"], len(dataset))
+            rng_indices = list(range(len(dataset)))
+            rng = random.Random(42)
+            rng.shuffle(rng_indices)
+            selected_indices = rng_indices[:sample_size]
+        sample_size = min(SAMPLE_SIZES["multilingual"], len(selected_indices))
+        selected_indices = selected_indices[:sample_size]
+        samples = dataset.select(selected_indices)
 
-{test['question']}
+    correct = int(progress.get("correct", 0)) if progress else 0
+    errors = int(progress.get("errors", 0)) if progress else 0
+    total_latency = int(progress.get("total_latency", 0)) if progress else 0
+    total_cost = float(progress.get("total_cost", 0.0)) if progress else 0.0
+    start_index = int(progress.get("index", 0)) if progress else 0
+    error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
 
-Answer briefly:"""
+    for i, item in enumerate(samples, start=1):
+        if i <= start_index:
+            continue
         
-        result = await call_llmhive_api(prompt, reasoning_mode="deep", tier=tier)
+        # Try different field names for MMMLU dataset variants
+        question = item.get("question") or item.get("prompt") or item.get("input") or ""
         
+        # Handle different choice field formats
+        choices = []
+        if "choices" in item and isinstance(item["choices"], list):
+            choices = item["choices"]
+        elif "options" in item and isinstance(item["options"], list):
+            choices = item["options"]
+        else:
+            # Try to extract from option_a, option_b, etc.
+            for opt_key in ["A", "B", "C", "D"]:
+                if f"option_{opt_key.lower()}" in item:
+                    choices.append(item[f"option_{opt_key.lower()}"])
+                elif opt_key in item:
+                    choices.append(item[opt_key])
+        
+        answer = item.get("answer") or item.get("correct_answer") or item.get("target")
+        
+        if len(choices) < 4 or not question:
+            errors += 1
+            if len(error_samples) < 3:
+                error_samples.append(f"MMMLU parsing failed: got {len(choices)} choices, keys={list(item.keys())[:5]}")
+            if on_progress:
+                on_progress(
+                    {
+                        "index": i,
+                        "correct": correct,
+                        "errors": errors,
+                        "total_latency": total_latency,
+                        "total_cost": total_cost,
+                        "error_samples": error_samples,
+                        "selected_indices": selected_indices if not STRICT_MODE else None,
+                    }
+                )
+            continue
+        if isinstance(answer, int):
+            correct_answer = ["A", "B", "C", "D"][answer]
+        else:
+            correct_answer = str(answer).strip()
+
+        prompt = (
+            "Answer this multiple-choice question. Provide ONLY the letter (A, B, C, or D).\n\n"
+            f"Question: {question}\n\n"
+            f"A) {choices[0]}\n"
+            f"B) {choices[1]}\n"
+            f"C) {choices[2]}\n"
+            f"D) {choices[3]}\n\n"
+            "Answer:"
+        )
+
+        result = await call_llmhive_api(prompt, reasoning_mode=REASONING_MODE, tier=tier)
+
         if result["success"]:
-            # Simple check: does response contain expected answer
-            is_correct = test["answer"].lower() in result["response"].lower()
-            
-            if is_correct:
+            predicted = _extract_multiple_choice(result["response"])
+            if predicted == correct_answer:
                 correct += 1
-                print(f"✅ [{i+1}/{len(tests)}] {test['lang']}: Correct")
-            else:
-                print(f"❌ [{i+1}/{len(tests)}] {test['lang']}: Incorrect")
-            
             total_latency += result["latency"]
             total_cost += result["cost"]
         else:
             errors += 1
-            print(f"⚠️  [{i+1}/{len(tests)}] {test['lang']}: API Error")
-    
-    total_attempted = len(tests) - errors
-    accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-    
-    return {
-        "category": "Multilingual",
-        "dataset": "Custom multilingual QA",
-        "sample_size": len(tests),
-        "correct": correct,
-        "incorrect": total_attempted - correct,
-        "errors": errors,
-        "accuracy": round(accuracy, 1),
-        "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
-        "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
-        "total_cost": round(total_cost, 4),
-    }
+            if len(error_samples) < 3:
+                error_samples.append(result.get("error", "unknown error")[:200])
 
-# ============================================================================
-# CATEGORY 5: LONG CONTEXT
-# ============================================================================
+        if on_progress:
+            on_progress(
+                {
+                    "index": i,
+                    "correct": correct,
+                    "errors": errors,
+                    "total_latency": total_latency,
+                    "total_cost": total_cost,
+                    "error_samples": error_samples,
+                    "selected_indices": selected_indices if not STRICT_MODE else None,
+                }
+            )
 
-async def evaluate_long_context(tier: str = "elite") -> Dict[str, Any]:
-    """Evaluate long context handling (needle in haystack)"""
-    print(f"\n{'='*70}")
-    print(f"CATEGORY 5: LONG CONTEXT (Needle in Haystack)")
-    print(f"{'='*70}\n")
-    
-    import random
-    
-    correct = 0
-    errors = 0
-    total_latency = 0
-    total_cost = 0
-    sample_size = SAMPLE_SIZES["long_context"]
-    
-    for i in range(sample_size):
-        # Create a long document with needle at random position
-        needle = f"SECRET_CODE_{i:03d}_ALPHA"
-        
-        # Generate document that fits API's 10K character limit
-        # Note: API has 10,000 char limit, so ~150 repetitions = ~8K chars with prompt
-        # This still tests long-context capabilities while staying within limits
-        haystack = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " * 150
-        
-        # Random position (not always middle)
-        position = random.randint(len(haystack) // 4, 3 * len(haystack) // 4)
-        document = haystack[:position] + f"\n\n{needle}\n\n" + haystack[position:]
-        
-        prompt = f"""You are given a very long document below. Read it COMPLETELY and CAREFULLY from start to finish.
-
-IMPORTANT: The answer you seek is hidden somewhere in the middle of this document. You MUST read the entire document to find it.
-
-DOCUMENT START:
-{document}
-DOCUMENT END
-
-Task: Find and extract the SECRET_CODE that appears in the document above. It follows the pattern SECRET_CODE_XXX_ALPHA where XXX is a 3-digit number.
-
-Your answer (provide ONLY the secret code, nothing else):"""
-        
-        result = await call_llmhive_api(prompt, reasoning_mode="deep", tier=tier, timeout=180)
-        
-        if result["success"]:
-            # More lenient matching - handle formatting variations
-            response_clean = result["response"].replace(" ", "").replace("_", "").replace("-", "")
-            needle_clean = needle.replace(" ", "").replace("_", "").replace("-", "")
-            is_correct = needle in result["response"] or needle_clean in response_clean
-            
-            if is_correct:
-                correct += 1
-                print(f"✅ [{i+1}/{sample_size}] Found needle: {needle}")
-            else:
-                print(f"❌ [{i+1}/{sample_size}] Expected: {needle}, Got: {result['response'][:50]}")
-            
-            total_latency += result["latency"]
-            total_cost += result["cost"]
-        else:
-            errors += 1
-            print(f"⚠️  [{i+1}/{sample_size}] API Error")
-    
     total_attempted = sample_size - errors
     accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
     
     return {
-        "category": "Long Context (Needle in Haystack)",
-        "dataset": "Custom long-context tests",
+        "category": "Multilingual (MMMLU)",
+        "dataset": "openai/MMMLU",
         "sample_size": sample_size,
         "correct": correct,
         "incorrect": total_attempted - correct,
@@ -534,235 +922,446 @@ Your answer (provide ONLY the secret code, nothing else):"""
         "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
         "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
         "total_cost": round(total_cost, 4),
+        "extra": {"error_samples": error_samples},
     }
+
+# ============================================================================
+# CATEGORY 5: LONG CONTEXT
+# ============================================================================
+
+async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
+    """Evaluate long context handling using LongBench external eval."""
+    print(f"\n{'='*70}")
+    print(f"CATEGORY 5: LONG CONTEXT (Needle in Haystack)")
+    print(f"{'='*70}\n")
+    
+    if not LONGBENCH_EVAL_CMD:
+        return {
+            "category": "Long Context (LongBench)",
+            "dataset": "THUDM/LongBench",
+            "sample_size": 0,
+            "correct": 0,
+            "incorrect": 0,
+            "errors": 1,
+            "accuracy": 0.0,
+            "avg_latency_ms": 0,
+            "avg_cost": 0.0,
+            "total_cost": 0.0,
+            "extra": {"error": "LONGBENCH_EVAL_CMD not set"},
+        }
+
+    import shlex
+    import subprocess
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "longbench_eval.json"
+        command = LONGBENCH_EVAL_CMD.format(
+            output_path=str(output_path),
+            seed=42,
+        )
+        try:
+            subprocess.run(
+                shlex.split(command),
+                check=True,
+                timeout=1800,
+            )
+            if output_path.exists():
+                payload = json.loads(output_path.read_text())
+                score = payload.get("score") or payload.get("accuracy")
+                if score is None:
+                    raise ValueError("LongBench output missing score/accuracy")
+                attempted = int(payload.get("attempted", SAMPLE_SIZES["long_context"]))
+                return {
+                    "category": "Long Context (LongBench)",
+                    "dataset": "THUDM/LongBench",
+                    "sample_size": attempted,
+                    "correct": int(payload.get("correct", 0)),
+                    "incorrect": max(0, attempted - int(payload.get("correct", 0))),
+                    "errors": int(payload.get("errors", 0)),
+                    "accuracy": round(float(score), 2),
+                    "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
+                    "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
+                    "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                    "extra": {"longbench_eval": "external"},
+                }
+            raise FileNotFoundError("LongBench eval output missing")
+        except Exception as exc:
+            return {
+                "category": "Long Context (LongBench)",
+                "dataset": "THUDM/LongBench - ERROR",
+                "sample_size": 0,
+                "correct": 0,
+                "incorrect": 0,
+                "errors": 1,
+                "accuracy": 0.0,
+                "avg_latency_ms": 0,
+                "avg_cost": 0.0,
+                "total_cost": 0.0,
+                "extra": {"error": f"LongBench eval failed: {exc}"},
+            }
 
 # ============================================================================
 # CATEGORY 6: TOOL USE
 # ============================================================================
 
-async def evaluate_tool_use(tier: str = "elite") -> Dict[str, Any]:
-    """Evaluate tool use capabilities"""
+async def evaluate_tool_use(tier: str = TIER) -> Dict[str, Any]:
+    """Evaluate tool use capabilities using ToolBench external eval."""
     print(f"\n{'='*70}")
     print(f"CATEGORY 6: TOOL USE")
     print(f"{'='*70}\n")
     
-    # IMPROVED: More diverse questions with explicit calculator instruction
-    base_tests = [
-        {
-            "question": "Use a calculator to compute: 12345 * 67890",
-            "answer": "838102050",
-            "tool": "calculator"
-        },
-        {
-            "question": "Calculate the square root of 144 using a calculator",
-            "answer": "12",
-            "tool": "calculator"
-        },
-        {
-            "question": "If you have 100 USD and the exchange rate is 0.85 EUR per USD, how many EUR do you have? Use calculator.",
-            "answer": "85",
-            "tool": "calculator"
-        },
-        {
-            "question": "What is 987 + 654? Use a calculator to verify.",
-            "answer": "1641",
-            "tool": "calculator"
-        },
-        {
-            "question": "Calculate 15% of 200 using a calculator",
-            "answer": "30",
-            "tool": "calculator"
-        },
-        {
-            "question": "What is 2 to the power of 10? Calculate this.",
-            "answer": "1024",
-            "tool": "calculator"
-        },
-    ]
-    
-    # Repeat to get desired sample size
-    tests = base_tests * (SAMPLE_SIZES["tool_use"] // len(base_tests)) + base_tests[:SAMPLE_SIZES["tool_use"] % len(base_tests)]
-    
-    correct = 0
-    errors = 0
-    total_latency = 0
-    total_cost = 0
-    
-    for i, test in enumerate(tests[:SAMPLE_SIZES["tool_use"]]):
-        prompt = f"""You have access to a calculator tool. Please use it to solve this problem.
+    if not TOOLBENCH_EVAL_CMD:
+        return {
+            "category": "Tool Use (ToolBench)",
+            "dataset": "ToolBench - SKIPPED",
+            "sample_size": 0,
+            "correct": 0,
+            "incorrect": 0,
+            "errors": 1,
+            "accuracy": 0.0,
+            "avg_latency_ms": 0,
+            "avg_cost": 0.0,
+            "total_cost": 0.0,
+            "extra": {"error": "TOOLBENCH_EVAL_CMD not set"},
+        }
 
-{test['question']}
+    import shlex
+    import subprocess
+    import tempfile
 
-Provide the numerical answer:"""
-        
-        result = await call_llmhive_api(prompt, reasoning_mode="deep", tier=tier)
-        
-        if result["success"]:
-            # Remove commas, spaces, and common formatting for comparison
-            response_clean = result["response"].replace(",", "").replace(" ", "").replace("=", "")
-            is_correct = test["answer"] in response_clean
-            
-            if is_correct:
-                correct += 1
-                print(f"✅ [{i+1}/{SAMPLE_SIZES['tool_use']}] Correct")
-            else:
-                print(f"❌ [{i+1}/{SAMPLE_SIZES['tool_use']}] Expected: {test['answer']}, Got: {result['response'][:50]}")
-            
-            total_latency += result["latency"]
-            total_cost += result["cost"]
-        else:
-            errors += 1
-            print(f"⚠️  [{i+1}/{SAMPLE_SIZES['tool_use']}] API Error")
-    
-    total_attempted = SAMPLE_SIZES["tool_use"] - errors
-    accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-    
-    return {
-        "category": "Tool Use",
-        "dataset": "Custom tool use tests",
-        "sample_size": SAMPLE_SIZES["tool_use"],
-        "correct": correct,
-        "incorrect": total_attempted - correct,
-        "errors": errors,
-        "accuracy": round(accuracy, 1),
-        "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
-        "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
-        "total_cost": round(total_cost, 4),
-    }
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "toolbench_eval.json"
+        command = TOOLBENCH_EVAL_CMD.format(
+            data_dir=os.getenv("TOOLBENCH_DATA_DIR", ""),
+            output_path=str(output_path),
+            seed=42,
+        )
+        try:
+            subprocess.run(
+                shlex.split(command),
+                check=True,
+                timeout=3600,
+            )
+            if output_path.exists():
+                payload = json.loads(output_path.read_text())
+                accuracy = payload.get("accuracy") or payload.get("success_rate")
+                if accuracy is None:
+                    raise ValueError("ToolBench output missing accuracy/success_rate")
+                attempted = int(payload.get("attempted", SAMPLE_SIZES["tool_use"]))
+                return {
+                    "category": "Tool Use (ToolBench)",
+                    "dataset": "ToolBench (OpenBMB)",
+                    "sample_size": attempted,
+                    "correct": int(payload.get("correct", 0)),
+                    "incorrect": max(0, attempted - int(payload.get("correct", 0))),
+                    "errors": int(payload.get("errors", 0)),
+                    "accuracy": round(float(accuracy), 2),
+                    "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
+                    "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
+                    "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                    "extra": {"toolbench_eval": "external"},
+                }
+            raise FileNotFoundError("ToolBench eval output missing")
+        except Exception as exc:
+            return {
+                "category": "Tool Use (ToolBench)",
+                "dataset": "ToolBench (OpenBMB) - ERROR",
+                "sample_size": 0,
+                "correct": 0,
+                "incorrect": 0,
+                "errors": 1,
+                "accuracy": 0.0,
+                "avg_latency_ms": 0,
+                "avg_cost": 0.0,
+                "total_cost": 0.0,
+                "extra": {"error": f"ToolBench eval failed: {exc}"},
+            }
 
 # ============================================================================
 # CATEGORY 7: RAG
 # ============================================================================
 
-async def evaluate_rag(tier: str = "elite") -> Dict[str, Any]:
-    """Evaluate RAG capabilities"""
+async def evaluate_rag(
+    tier: str = TIER,
+    progress: Optional[Dict[str, Any]] = None,
+    on_progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> Dict[str, Any]:
+    """Evaluate RAG with MS MARCO Passage Ranking"""
     print(f"\n{'='*70}")
     print(f"CATEGORY 7: RAG (Retrieval-Augmented Generation)")
     print(f"{'='*70}\n")
     
-    # Custom RAG tests
-    tests = [
-        {
-            "context": "Python was created by Guido van Rossum in 1991. It emphasizes code readability.",
-            "question": "Who created Python?",
-            "answer": "Guido van Rossum"
-        },
-        {
-            "context": "The Eiffel Tower was built in 1889 for the Paris Exposition. It's 324 meters tall.",
-            "question": "When was the Eiffel Tower built?",
-            "answer": "1889"
-        },
-    ] * (SAMPLE_SIZES["rag"] // 2)
-    
-    correct = 0
-    errors = 0
-    total_latency = 0
-    total_cost = 0
-    
-    for i, test in enumerate(tests[:SAMPLE_SIZES["rag"]]):
-        prompt = f"""Given this context, answer the question:
+    dataset = load_dataset("microsoft/ms_marco", "v1.1", split="validation")
+    selected_indices: Optional[List[int]] = None
+    if STRICT_MODE:
+        sample_size = len(dataset)
+        samples = dataset
+    else:
+        if progress and progress.get("selected_indices"):
+            selected_indices = progress["selected_indices"]
+        else:
+            sample_size = min(SAMPLE_SIZES["rag"], len(dataset))
+            rng_indices = list(range(len(dataset)))
+            rng = random.Random(42)
+            rng.shuffle(rng_indices)
+            selected_indices = rng_indices[:sample_size]
+        sample_size = min(SAMPLE_SIZES["rag"], len(selected_indices))
+        selected_indices = selected_indices[:sample_size]
+        samples = dataset.select(selected_indices)
 
-Context: {test['context']}
+    correct = int(progress.get("correct", 0)) if progress else 0
+    errors = int(progress.get("errors", 0)) if progress else 0
+    total_latency = int(progress.get("total_latency", 0)) if progress else 0
+    total_cost = float(progress.get("total_cost", 0.0)) if progress else 0.0
+    start_index = int(progress.get("index", 0)) if progress else 0
+    error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
+    ref_lines: List[str] = list(progress.get("ref_lines", [])) if progress else []
+    cand_lines: List[str] = list(progress.get("cand_lines", [])) if progress else []
 
-Question: {test['question']}
+    print(f"→ MS MARCO: {sample_size} samples", flush=True)
+    for i, item in enumerate(samples, start=1):
+        if i <= start_index:
+            continue
+        query = item["query"]
+        passages = item["passages"]
+        passage_texts = passages.get("passage_text", [])
+        is_selected = passages.get("is_selected", [])
+        passage_ids = passages.get("passage_id", [])
+        if not passage_ids:
+            passage_ids = list(range(1, len(passage_texts) + 1))
+        qid = item.get("query_id", i)
+        relevant_ids = [pid for pid, sel in zip(passage_ids, is_selected) if sel]
+        for pid in relevant_ids:
+            ref_lines.append(f"{qid}\t0\t{pid}")
 
-Answer:"""
-        
-        result = await call_llmhive_api(prompt, reasoning_mode="deep", tier=tier)
-        
+        passages_block = "\n".join(
+            f"[{pid}] {text}" for pid, text in zip(passage_ids, passage_texts)
+        )
+        prompt = (
+            "Rank the passage IDs by relevance to the query. "
+            "Return ONLY a comma-separated list of passage IDs ordered best to worst.\n\n"
+            f"Query: {query}\n\nPassages:\n{passages_block}\n\nRanked IDs:"
+        )
+
+        result = await call_llmhive_api(prompt, reasoning_mode=REASONING_MODE, tier=tier)
         if result["success"]:
-            is_correct = test["answer"].lower() in result["response"].lower()
-            
-            if is_correct:
-                correct += 1
-                print(f"✅ [{i+1}/{len(tests)}] Correct")
-            else:
-                print(f"❌ [{i+1}/{len(tests)}] Expected: {test['answer']}")
-            
+            ranked = []
+            for match in re.findall(r"\b\d+\b", result["response"]):
+                try:
+                    value = int(match)
+                except ValueError:
+                    continue
+                if value in passage_ids and value not in ranked:
+                    ranked.append(value)
+            if not ranked:
+                ranked = passage_ids[:10]
+            for rank, pid in enumerate(ranked[:10], start=1):
+                cand_lines.append(f"{qid}\t{pid}\t{rank}")
             total_latency += result["latency"]
             total_cost += result["cost"]
         else:
             errors += 1
-            print(f"⚠️  [{i+1}/{len(tests)}] API Error")
-    
-    total_attempted = len(tests) - errors
-    accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-    
+            if len(error_samples) < 3:
+                error_samples.append(result.get("error", "unknown error")[:200])
+
+        if on_progress:
+            on_progress(
+                {
+                    "index": i,
+                    "correct": correct,
+                    "errors": errors,
+                    "total_latency": total_latency,
+                    "total_cost": total_cost,
+                    "error_samples": error_samples,
+                    "ref_lines": ref_lines,
+                    "cand_lines": cand_lines,
+                    "selected_indices": selected_indices if not STRICT_MODE else None,
+                }
+            )
+
+    # Calculate MRR@10 directly if no external eval command
+    if not MSMARCO_EVAL_CMD:
+        # Build dict of relevant passages per query
+        relevant_by_query = {}
+        for line in ref_lines:
+            parts = line.split('\t')
+            if len(parts) >= 3:
+                qid, _, pid = parts[0], parts[1], parts[2]
+                if qid not in relevant_by_query:
+                    relevant_by_query[qid] = []
+                relevant_by_query[qid].append(int(pid))
+        
+        # Calculate MRR@10 from rankings
+        mrr_sum = 0.0
+        mrr_count = 0
+        for line in cand_lines:
+            parts = line.split('\t')
+            if len(parts) >= 3:
+                qid, pid, rank = parts[0], int(parts[1]), int(parts[2])
+                if qid in relevant_by_query and pid in relevant_by_query[qid]:
+                    if rank <= 10:
+                        mrr_sum += 1.0 / rank
+                        mrr_count += 1
+                        break  # Only count first relevant doc per query
+        
+        mrr_at_10 = (mrr_sum / len(relevant_by_query)) if relevant_by_query else 0.0
+        accuracy = mrr_at_10 * 100
+        correct = int(mrr_count)
+        total_attempted = sample_size - errors
+        
+        return {
+            "category": "RAG (MS MARCO)",
+            "dataset": "microsoft/ms_marco v1.1",
+            "sample_size": sample_size,
+            "correct": correct,
+            "incorrect": total_attempted - correct,
+            "errors": errors,
+            "accuracy": round(accuracy, 1),
+            "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
+            "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
+            "total_cost": round(total_cost, 4),
+            "extra": {"mrr_at_10": round(mrr_at_10, 4), "eval_mode": "builtin"},
+        }
+
+    import shlex
+    import subprocess
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        reference_path = Path(temp_dir) / "msmarco_reference.tsv"
+        candidate_path = Path(temp_dir) / "msmarco_candidate.tsv"
+        output_path = Path(temp_dir) / "msmarco_eval_output.txt"
+
+        reference_path.write_text("\n".join(ref_lines), encoding="utf-8")
+        candidate_path.write_text("\n".join(cand_lines), encoding="utf-8")
+
+        command = MSMARCO_EVAL_CMD.format(
+            reference_path=str(reference_path),
+            candidate_path=str(candidate_path),
+            output_path=str(output_path),
+            seed=42,
+        )
+        try:
+            completed = subprocess.run(
+                shlex.split(command),
+                check=True,
+                timeout=1800,
+                capture_output=True,
+                text=True,
+            )
+            output_text = completed.stdout.strip()
+            if output_path.exists():
+                output_text = output_path.read_text().strip()
+            match = re.search(r"MRR @10\s*:\s*([0-9.]+)", output_text)
+            if not match:
+                raise ValueError("MS MARCO eval output missing MRR @10")
+            mrr_at_10 = float(match.group(1))
+            accuracy = mrr_at_10 * 100
+        except Exception as exc:
+            return {
+                "category": "RAG (MS MARCO)",
+                "dataset": "microsoft/ms_marco v1.1 - ERROR",
+                "sample_size": sample_size,
+                "correct": 0,
+                "incorrect": 0,
+                "errors": 1,
+                "accuracy": 0.0,
+                "avg_latency_ms": 0,
+                "avg_cost": 0.0,
+                "total_cost": 0.0,
+                "extra": {"error": f"MS MARCO eval failed: {exc}"},
+            }
+
     return {
-        "category": "RAG",
-        "dataset": "Custom RAG tests",
-        "sample_size": len(tests),
+        "category": "RAG (MS MARCO)",
+        "dataset": "microsoft/ms_marco v1.1",
+        "sample_size": sample_size,
         "correct": correct,
-        "incorrect": total_attempted - correct,
+        "incorrect": max(0, sample_size - correct - errors),
         "errors": errors,
-        "accuracy": round(accuracy, 1),
-        "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
-        "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
+        "accuracy": round(accuracy, 2),
+        "avg_latency_ms": int(total_latency / (sample_size - errors)) if sample_size - errors > 0 else 0,
+        "avg_cost": round(total_cost / (sample_size - errors), 6) if sample_size - errors > 0 else 0,
         "total_cost": round(total_cost, 4),
+        "extra": {"mrr_at_10": round(mrr_at_10, 4)},
     }
 
 # ============================================================================
 # CATEGORY 8: DIALOGUE
 # ============================================================================
 
-async def evaluate_dialogue(tier: str = "elite") -> Dict[str, Any]:
-    """Evaluate dialogue capabilities"""
+async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
+    """Evaluate dialogue capabilities using MT-Bench external eval."""
     print(f"\n{'='*70}")
     print(f"CATEGORY 8: DIALOGUE")
     print(f"{'='*70}\n")
     
-    tests = [
-        {
-            "prompt": "I'm feeling stressed about work deadlines.",
-            "expected_elements": ["understand", "manage", "prioritize", "help"]
-        },
-        {
-            "prompt": "Can you explain quantum computing to a 10-year-old?",
-            "expected_elements": ["simple", "like", "bits", "computers"]
-        },
-    ] * (SAMPLE_SIZES["dialogue"] // 2)
-    
-    correct = 0
-    errors = 0
-    total_latency = 0
-    total_cost = 0
-    
-    for i, test in enumerate(tests[:SAMPLE_SIZES["dialogue"]]):
-        result = await call_llmhive_api(test["prompt"], reasoning_mode="deep", tier=tier)
-        
-        if result["success"]:
-            # Check if response contains expected elements
-            response_lower = result["response"].lower()
-            matches = sum(1 for elem in test["expected_elements"] if elem in response_lower)
-            is_correct = matches >= len(test["expected_elements"]) // 2
-            
-            if is_correct:
-                correct += 1
-                print(f"✅ [{i+1}/{len(tests)}] Good dialogue")
-            else:
-                print(f"❌ [{i+1}/{len(tests)}] Poor dialogue")
-            
-            total_latency += result["latency"]
-            total_cost += result["cost"]
-        else:
-            errors += 1
-            print(f"⚠️  [{i+1}/{len(tests)}] API Error")
-    
-    total_attempted = len(tests) - errors
-    accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-    
-    return {
-        "category": "Dialogue",
-        "dataset": "Custom dialogue tests",
-        "sample_size": len(tests),
-        "correct": correct,
-        "incorrect": total_attempted - correct,
-        "errors": errors,
-        "accuracy": round(accuracy, 1),
-        "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
-        "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
-        "total_cost": round(total_cost, 4),
-    }
+    if not MTBENCH_EVAL_CMD:
+        return {
+            "category": "Dialogue (MT-Bench)",
+            "dataset": "lmsys/mt-bench - SKIPPED",
+            "sample_size": 0,
+            "correct": 0,
+            "incorrect": 0,
+            "errors": 1,
+            "accuracy": 0.0,
+            "avg_latency_ms": 0,
+            "avg_cost": 0.0,
+            "total_cost": 0.0,
+            "extra": {"error": "MTBENCH_EVAL_CMD not set"},
+        }
+
+    import shlex
+    import subprocess
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "mtbench_eval.json"
+        command = MTBENCH_EVAL_CMD.format(
+            output_path=str(output_path),
+            seed=42,
+        )
+        try:
+            subprocess.run(
+                shlex.split(command),
+                check=True,
+                timeout=1800,
+            )
+            if output_path.exists():
+                payload = json.loads(output_path.read_text())
+                score = payload.get("score") or payload.get("avg_score")
+                if score is None:
+                    raise ValueError("MT-Bench output missing score/avg_score")
+                attempted = int(payload.get("attempted", SAMPLE_SIZES["dialogue"]))
+                return {
+                    "category": "Dialogue (MT-Bench)",
+                    "dataset": "lmsys/mt-bench",
+                    "sample_size": attempted,
+                    "correct": int(payload.get("correct", 0)),
+                    "incorrect": max(0, attempted - int(payload.get("correct", 0))),
+                    "errors": int(payload.get("errors", 0)),
+                    "accuracy": round(float(score), 2),
+                    "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
+                    "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
+                    "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                    "extra": {"mtbench_eval": "external"},
+                }
+            raise FileNotFoundError("MT-Bench eval output missing")
+        except Exception as exc:
+            return {
+                "category": "Dialogue (MT-Bench)",
+                "dataset": "lmsys/mt-bench - ERROR",
+                "sample_size": 0,
+                "correct": 0,
+                "incorrect": 0,
+                "errors": 1,
+                "accuracy": 0.0,
+                "avg_latency_ms": 0,
+                "avg_cost": 0.0,
+                "total_cost": 0.0,
+                "extra": {"error": f"MT-Bench eval failed: {exc}"},
+            }
 
 # ============================================================================
 # REPORTING
@@ -774,7 +1373,8 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
     report_lines.append(f"# LLMHive {tier.upper()} Tier: 8-Category Industry Benchmark")
     report_lines.append(f"**Test Date:** {datetime.now().strftime('%B %d, %Y')}")
     report_lines.append(f"**API:** {LLMHIVE_API_URL}")
-    report_lines.append(f"**Reasoning Mode:** deep\n")
+    report_lines.append(f"**Reasoning Mode:** {REASONING_MODE}")
+    report_lines.append(f"**Strict Mode:** {'ON' if STRICT_MODE else 'OFF'}\n")
     report_lines.append("---\n")
     
     # Executive Summary
@@ -791,24 +1391,34 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
     report_lines.append(f"**Categories Tested:** {len(results)}\n")
     
     # Results Table
+    frontier_scores = _load_frontier_scores()
+
     report_lines.append("## 📊 Category Results\n")
-    report_lines.append("| Category | Score | vs Frontier | Dataset | Status |")
-    report_lines.append("|----------|-------|-------------|---------|--------|")
+    if frontier_scores:
+        report_lines.append("| Category | Score | vs Frontier | Dataset | Status |")
+        report_lines.append("|----------|-------|-------------|---------|--------|")
+    else:
+        report_lines.append("| Category | Score | Dataset | Status |")
+        report_lines.append("|----------|-------|---------|--------|")
     
     for r in results:
         if "error" in r:
             report_lines.append(f"| {r['category']} | ERROR | - | - | ❌ |")
         else:
-            category_key = r["category"].split("(")[0].strip().lower().replace(" ", "_")
-            frontier = FRONTIER_SCORES.get(category_key, {})
-            frontier_score = frontier.get("score", 0)
-            gap = r["accuracy"] - frontier_score
-            gap_str = f"{gap:+.1f}%" if frontier_score > 0 else "N/A"
-            
             status = "✅" if r["accuracy"] >= 80 else "⚠️" if r["accuracy"] >= 60 else "❌"
-            report_lines.append(
-                f"| {r['category']} | **{r['accuracy']:.1f}%** | {gap_str} | {r.get('dataset', 'N/A')} | {status} |"
-            )
+            if frontier_scores:
+                category_key = r["category"].split("(")[0].strip().lower().replace(" ", "_")
+                frontier = frontier_scores.get(category_key, {})
+                frontier_score = frontier.get("score", 0)
+                gap = r["accuracy"] - frontier_score if frontier_score else 0
+                gap_str = f"{gap:+.1f}%" if frontier_score else "N/A"
+                report_lines.append(
+                    f"| {r['category']} | **{r['accuracy']:.1f}%** | {gap_str} | {r.get('dataset', 'N/A')} | {status} |"
+                )
+            else:
+                report_lines.append(
+                    f"| {r['category']} | **{r['accuracy']:.1f}%** | {r.get('dataset', 'N/A')} | {status} |"
+                )
     
     report_lines.append("\n---\n")
     
@@ -826,20 +1436,21 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
             report_lines.append(f"- **Total Cost:** ${r['total_cost']:.4f}\n")
     
     # Frontier Comparison
-    report_lines.append("## 🏆 Frontier Model Comparison\n")
-    report_lines.append("| Category | LLMHive | Frontier Best | Gap |")
-    report_lines.append("|----------|---------|---------------|-----|")
-    
-    for r in results:
-        if "error" not in r:
-            category_key = r["category"].split("(")[0].strip().lower().replace(" ", "_")
-            frontier = FRONTIER_SCORES.get(category_key, {})
-            if frontier:
-                gap = r["accuracy"] - frontier["score"]
-                report_lines.append(
-                    f"| {r['category']} | {r['accuracy']:.1f}% | "
-                    f"{frontier['best']} ({frontier['score']:.1f}%) | {gap:+.1f}% |"
-                )
+    if frontier_scores:
+        report_lines.append("## 🏆 Frontier Model Comparison\n")
+        report_lines.append("| Category | LLMHive | Frontier Best | Gap |")
+        report_lines.append("|----------|---------|---------------|-----|")
+        
+        for r in results:
+            if "error" not in r:
+                category_key = r["category"].split("(")[0].strip().lower().replace(" ", "_")
+                frontier = frontier_scores.get(category_key, {})
+                if frontier:
+                    gap = r["accuracy"] - frontier.get("score", 0)
+                    report_lines.append(
+                        f"| {r['category']} | {r['accuracy']:.1f}% | "
+                        f"{frontier.get('best', 'N/A')} ({frontier.get('score', 0):.1f}%) | {gap:+.1f}% |"
+                    )
     
     report_lines.append("\n---\n")
     report_lines.append(f"**Report Generated:** {datetime.now().isoformat()}")
@@ -852,6 +1463,7 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
 # ============================================================================
 
 async def main():
+    _preflight_checks()
     print("="*70)
     print("LLMHive 8-Category Industry Benchmark Suite")
     print("="*70)
@@ -859,38 +1471,70 @@ async def main():
     print(f"API: {LLMHIVE_API_URL}")
     print("="*70)
     
-    tier = "elite"
     results = []
-    
-    # Run all evaluations
-    results.append(await evaluate_reasoning(tier))
-    results.append(await evaluate_coding(tier))
-    results.append(await evaluate_math(tier))
-    results.append(await evaluate_multilingual(tier))
-    results.append(await evaluate_long_context(tier))
-    results.append(await evaluate_tool_use(tier))
-    results.append(await evaluate_rag(tier))
-    results.append(await evaluate_dialogue(tier))
+
+    checkpoint = _load_checkpoint()
+    if checkpoint is None:
+        checkpoint = {"config": _checkpoint_config(), "results": {}, "progress": {}}
+    categories_to_run = _categories_to_run()
+
+    def update_progress(key: str, data: Dict[str, Any]) -> None:
+        checkpoint.setdefault("progress", {})[key] = data
+        _save_checkpoint(checkpoint)
+
+    evaluators: Dict[str, Callable[..., Any]] = {
+        "reasoning": evaluate_reasoning,
+        "coding": evaluate_coding,
+        "math": evaluate_math,
+        "multilingual": evaluate_multilingual,
+        "long_context": evaluate_long_context,
+        "tool_use": evaluate_tool_use,
+        "rag": evaluate_rag,
+        "dialogue": evaluate_dialogue,
+    }
+
+    for key in categories_to_run:
+        cached = checkpoint.get("results", {}).get(key)
+        if cached:
+            results.append(cached)
+            continue
+        progress = checkpoint.get("progress", {}).get(key)
+        evaluator = evaluators[key]
+        if key in {"long_context", "tool_use", "dialogue"}:
+            result = await evaluator(TIER)
+        else:
+            result = await evaluator(
+                TIER,
+                progress=progress,
+                on_progress=lambda data, k=key: update_progress(k, data),
+            )
+        checkpoint.setdefault("results", {})[key] = result
+        _save_checkpoint(checkpoint)
+        results.append(result)
     
     # Generate reports
     print("\n" + "="*70)
     print("GENERATING REPORTS")
     print("="*70 + "\n")
     
-    report_md = generate_comprehensive_report(results, tier)
+    report_md = generate_comprehensive_report(results, TIER)
     
     # Save reports
     timestamp = datetime.now().strftime("%Y%m%d")
     os.makedirs("benchmark_reports", exist_ok=True)
     
-    md_path = f"benchmark_reports/category_benchmarks_{tier}_{timestamp}.md"
-    json_path = f"benchmark_reports/category_benchmarks_{tier}_{timestamp}.json"
+    md_path = f"benchmark_reports/category_benchmarks_{TIER}_{timestamp}.md"
+    json_path = f"benchmark_reports/category_benchmarks_{TIER}_{timestamp}.json"
     
     with open(md_path, "w") as f:
         f.write(report_md)
     
     with open(json_path, "w") as f:
-        json.dump({"tier": tier, "results": results, "timestamp": datetime.now().isoformat()}, f, indent=2)
+        json.dump(
+            {"tier": TIER, "results": results, "timestamp": datetime.now().isoformat()},
+            f,
+            indent=2,
+        )
     
     print(f"✅ Reports saved:")
     print(f"   - {md_path}")

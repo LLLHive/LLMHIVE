@@ -1,0 +1,131 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 100,
+      "correct": 70,
+      "incorrect": 30,
+      "errors": 0,
+      "accuracy": 70.0,
+      "avg_latency_ms": 2143,
+      "avg_cost": 0.002306,
+      "total_cost": 0.2306,
+      "extra": {
+        "error_samples": []
+      }
+    },
+    {
+      "category": "Coding (HumanEval)",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 3,
+      "incorrect": 47,
+      "errors": 0,
+      "accuracy": 6.0,
+      "avg_latency_ms": 2772,
+      "avg_cost": 0.003084,
+      "total_cost": 0.1542,
+      "extra": {
+        "error_samples": []
+      }
+    },
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 100,
+      "correct": 94,
+      "incorrect": 6,
+      "errors": 0,
+      "accuracy": 94.0,
+      "avg_latency_ms": 4538,
+      "avg_cost": 0.007149,
+      "total_cost": 0.7149,
+      "extra": {
+        "error_samples": []
+      }
+    },
+    {
+      "category": "Multilingual (MMMLU)",
+      "dataset": "openai/MMMLU",
+      "sample_size": 100,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 100,
+      "accuracy": 0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": [
+          "MMMLU parsing failed: got 4 choices, keys=['Unnamed: 0', 'Question', 'A', 'B', 'C']",
+          "MMMLU parsing failed: got 4 choices, keys=['Unnamed: 0', 'Question', 'A', 'B', 'C']",
+          "MMMLU parsing failed: got 4 choices, keys=['Unnamed: 0', 'Question', 'A', 'B', 'C']"
+        ]
+      }
+    },
+    {
+      "category": "Long Context (LongBench)",
+      "dataset": "THUDM/LongBench",
+      "sample_size": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 1,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error": "LONGBENCH_EVAL_CMD not set"
+      }
+    },
+    {
+      "category": "Tool Use (ToolBench)",
+      "dataset": "ToolBench - SKIPPED",
+      "sample_size": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 1,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error": "TOOLBENCH_EVAL_CMD not set"
+      }
+    },
+    {
+      "category": "RAG (MS MARCO)",
+      "dataset": "microsoft/ms_marco v1.1",
+      "sample_size": 200,
+      "correct": 1,
+      "incorrect": 199,
+      "errors": 0,
+      "accuracy": 0.5,
+      "avg_latency_ms": 3498,
+      "avg_cost": 0.009788,
+      "total_cost": 1.9576,
+      "extra": {
+        "mrr_at_10": 0.0053,
+        "eval_mode": "builtin"
+      }
+    },
+    {
+      "category": "Dialogue (MT-Bench)",
+      "dataset": "lmsys/mt-bench - SKIPPED",
+      "sample_size": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 1,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error": "MTBENCH_EVAL_CMD not set"
+      }
+    }
+  ],
+  "timestamp": "2026-02-08T16:23:19.237082"
+}

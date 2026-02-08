@@ -24,6 +24,19 @@ import httpx
 LLMHIVE_API_URL = os.getenv("LLMHIVE_API_URL", "https://llmhive-orchestrator-792354158895.us-east1.run.app")
 API_KEY = os.getenv("API_KEY") or os.getenv("LLMHIVE_API_KEY", "")
 
+# Optional benchmark tuning (does not change default behavior)
+def _get_env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if not value:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+BENCHMARK_LIMIT_PER_CATEGORY = _get_env_int("BENCHMARK_LIMIT_PER_CATEGORY", 0)
+BENCHMARK_CONCURRENCY = max(1, _get_env_int("BENCHMARK_CONCURRENCY", 1))
+
 # Orchestration tiers to test
 # 
 # Both tiers get FULL orchestration (consensus, verification, tools, all tactics).
@@ -533,52 +546,64 @@ async def call_llmhive_api(prompt: str, reasoning_mode: str, tier: str = None, t
     start_time = time.time()
     
     async with httpx.AsyncClient(timeout=timeout) as client:
-        try:
-            payload = {
-                "prompt": prompt,
-                "reasoning_mode": reasoning_mode,
-            }
-            
-            # Add tier if specified (controls FREE vs ELITE models)
-            if tier:
-                payload["tier"] = tier
-            
-            # DEBUG: Log the actual payload being sent
-            # print(f"    [DEBUG] Sending: tier={tier}, reasoning_mode={reasoning_mode}")
+        payload = {
+            "prompt": prompt,
+            "reasoning_mode": reasoning_mode,
+        }
+        
+        # Add tier if specified (controls FREE vs ELITE models)
+        if tier:
+            payload["tier"] = tier
+        
+        # DEBUG: Log the actual payload being sent
+        # print(f"    [DEBUG] Sending: tier={tier}, reasoning_mode={reasoning_mode}")
+        
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = await client.post(
+                    f"{LLMHIVE_API_URL}/v1/chat",
+                    json=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-API-Key": API_KEY,
+                    },
+                )
                 
-            response = await client.post(
-                f"{LLMHIVE_API_URL}/v1/chat",
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "X-API-Key": API_KEY,
-                },
-            )
-            
-            latency_ms = (time.time() - start_time) * 1000
-            
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    "success": True,
-                    "response": data.get("message", ""),  # ChatResponse uses "message" field
-                    "latency_ms": latency_ms,
-                    "models_used": data.get("models_used", []),  # Top-level field in ChatResponse
-                    "cost_info": data.get("extra", {}).get("cost_tracking", {}),
-                }
-            else:
+                latency_ms = (time.time() - start_time) * 1000
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "success": True,
+                        "response": data.get("message", "") or data.get("response", ""),
+                        "latency_ms": latency_ms,
+                        "models_used": data.get("models_used", []),
+                        "cost_info": data.get("extra", {}).get("cost_tracking", {}),
+                    }
+                
+                if response.status_code == 429 or response.status_code >= 500:
+                    if attempt < max_retries - 1:
+                        delay = min(2 ** attempt, 10)
+                        await asyncio.sleep(delay)
+                        continue
+                
                 return {
                     "success": False,
                     "error": f"HTTP {response.status_code}: {response.text[:200]}",
                     "latency_ms": latency_ms,
                 }
-                
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "latency_ms": (time.time() - start_time) * 1000,
-            }
+                    
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    delay = min(2 ** attempt, 10)
+                    await asyncio.sleep(delay)
+                    continue
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "latency_ms": (time.time() - start_time) * 1000,
+                }
 
 
 async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any]:
@@ -598,25 +623,33 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
         print(f"Category: {category.upper().replace('_', ' ')}")
         print(f"{'─'*60}")
         
-        category_results = []
+        if BENCHMARK_LIMIT_PER_CATEGORY > 0:
+            cases = cases[:BENCHMARK_LIMIT_PER_CATEGORY]
+            print(f"  Limiting to {len(cases)} cases (BENCHMARK_LIMIT_PER_CATEGORY)")
+
+        if BENCHMARK_CONCURRENCY > 1:
+            print(f"  Concurrency: {BENCHMARK_CONCURRENCY}")
+
+        category_results = [None] * len(cases)
         category_passed = 0
         
-        for i, case in enumerate(cases):
-            print(f"  [{i+1}/{len(cases)}] {case['id']}: {case.get('category', 'General')}...", end=" ", flush=True)
-            
-            api_result = await call_llmhive_api(
-                case["prompt"], 
-                tier_config["reasoning_mode"],
-                tier_config.get("tier")  # Pass tier for model selection
-            )
-            
+        semaphore = asyncio.Semaphore(BENCHMARK_CONCURRENCY)
+
+        async def run_case(index: int, case: Dict[str, Any]) -> Dict[str, Any]:
+            async with semaphore:
+                api_result = await call_llmhive_api(
+                    case["prompt"],
+                    tier_config["reasoning_mode"],
+                    tier_config.get("tier")  # Pass tier for model selection
+                )
+
             if api_result["success"]:
                 eval_result = evaluate_response(api_result["response"], case)
-                
+
                 # Extract actual cost from API response
                 cost_info = api_result.get("cost_info", {})
                 actual_cost = cost_info.get("total_cost", 0.0)
-                
+
                 result = {
                     "case_id": case["id"],
                     "category": case.get("category", "General"),
@@ -628,13 +661,13 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
                     "actual_cost": actual_cost,
                     "cost_info": cost_info,
                 }
-                
-                if eval_result["passed"]:
-                    category_passed += 1
-                    cost_str = f", ${actual_cost:.4f}" if actual_cost > 0 else ""
-                    print(f"✅ {eval_result['score']:.0%} ({api_result['latency_ms']:.0f}ms{cost_str})")
-                else:
-                    print(f"⚠️ {eval_result['score']:.0%} (missing: {eval_result.get('missing', [])})")
+                display = {
+                    "status": "passed" if eval_result["passed"] else "failed",
+                    "score": eval_result["score"],
+                    "missing": eval_result.get("missing", []),
+                    "latency_ms": api_result["latency_ms"],
+                    "actual_cost": actual_cost,
+                }
             else:
                 result = {
                     "case_id": case["id"],
@@ -647,15 +680,46 @@ async def run_tier_benchmarks(tier_key: str, tier_config: Dict) -> Dict[str, Any
                     "actual_cost": 0.0,
                     "cost_info": {},
                 }
-                print(f"❌ Error: {api_result['error'][:100]}")
-            
-            category_results.append(result)
+                display = {
+                    "status": "error",
+                    "error": api_result["error"],
+                }
+
+            category_results[index] = result
+            total_status = {
+                "index": index,
+                "case": case,
+                "display": display,
+            }
+            return total_status
+
+        tasks = [
+            asyncio.create_task(run_case(i, case))
+            for i, case in enumerate(cases)
+        ]
+
+        for task in asyncio.as_completed(tasks):
+            result_status = await task
+            case = result_status["case"]
+            display = result_status["display"]
+            index = result_status["index"]
+            print(f"  [{index+1}/{len(cases)}] {case['id']}: {case.get('category', 'General')}...", end=" ", flush=True)
+
+            if display["status"] == "passed":
+                category_passed += 1
+                cost_str = f", ${display['actual_cost']:.4f}" if display["actual_cost"] > 0 else ""
+                print(f"✅ {display['score']:.0%} ({display['latency_ms']:.0f}ms{cost_str})")
+            elif display["status"] == "failed":
+                print(f"⚠️ {display['score']:.0%} (missing: {display.get('missing', [])})")
+            else:
+                print(f"❌ Error: {display['error'][:100]}")
+
             total_cases += 1
-            if result["passed"]:
+            if category_results[index]["passed"]:
                 total_passed += 1
         
         # Calculate category total cost
-        category_cost = sum(c.get("actual_cost", 0) for c in category_results)
+        category_cost = sum(c.get("actual_cost", 0) for c in category_results if c)
         
         all_results[category] = {
             "cases": category_results,

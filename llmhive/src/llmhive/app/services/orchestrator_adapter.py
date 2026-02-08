@@ -1745,6 +1745,15 @@ def _get_display_name(model_id: str) -> str:
         OPENROUTER_LLAMA_4: "Llama 4 Maverick",
         OPENROUTER_MISTRAL_LARGE: "Mistral Large",
         OPENROUTER_GEMINI_2_5_FLASH: "Gemini 2.5 Flash",
+        "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo": "Llama 3.1 70B Turbo",
+        "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo": "Llama 3.1 405B Turbo",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo": "Llama 3.1 8B Turbo",
+        "Qwen/Qwen2.5-72B-Instruct-Turbo": "Qwen 2.5 72B Turbo",
+        "together/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo": "Llama 3.1 70B Turbo (Together)",
+        "together/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo": "Llama 3.1 405B Turbo (Together)",
+        "together/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo": "Llama 3.1 8B Turbo (Together)",
+        "together/Qwen/Qwen2.5-72B-Instruct-Turbo": "Qwen 2.5 72B Turbo (Together)",
+        "together/Qwen/Qwen2.5-7B-Instruct-Turbo": "Qwen 2.5 7B Turbo (Together)",
         # Legacy fallbacks
         OPENROUTER_GPT_4O: "GPT-4o",
         FALLBACK_GPT_4O_MINI: "GPT-4o Mini",
@@ -1875,6 +1884,10 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 logger.info("Tier-based routing: AUTO tier -> using default behavior (tier_value=%s)", tier_value)
             # RequestModelTier.auto - determine from user's subscription (default behavior)
         
+        # Backward-compatible alias: allow single "model" to map to "models"
+        if getattr(request, "model", None) and not request.models:
+            request.models = [request.model]
+
         # Use user-selected models if provided, otherwise auto-select
         if request.models and len(request.models) > 0:
             # Guard against invalid "stub" selections

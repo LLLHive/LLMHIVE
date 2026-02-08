@@ -826,7 +826,49 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                             )
                             
                         except Exception as e:
+                            error_str = str(e).lower()
+                            is_rate_limit = (
+                                "429" in error_str
+                                or "rate limit" in error_str
+                                or "rate limited" in error_str
+                                or "request failed after retries" in error_str
+                            )
                             logger.error(f"OpenRouter API error for model {model}: {e}")
+                            # Fallback to Together.ai only on rate limit (backup path)
+                            if is_rate_limit:
+                                try:
+                                    from .providers.together_client import get_together_client
+                                    together_client = get_together_client()
+                                    if together_client:
+                                        model_lower = model.lower()
+                                        if "qwen" in model_lower:
+                                            together_model = "together/Qwen/Qwen2.5-72B-Instruct-Turbo"
+                                        elif "405" in model_lower:
+                                            together_model = "together/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+                                        elif "8b" in model_lower:
+                                            together_model = "together/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+                                        else:
+                                            together_model = "together/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+                                        logger.warning(
+                                            "OpenRouter rate limit; falling back to Together.ai model %s",
+                                            together_model,
+                                        )
+                                        fallback_text = await together_client.generate_with_retry(
+                                            prompt,
+                                            model=together_model,
+                                            temperature=kwargs.get("temperature", 0.7),
+                                            max_tokens=kwargs.get("max_tokens", 2048),
+                                        )
+                                        if fallback_text:
+                                            return Result(
+                                                text=fallback_text,
+                                                model_name=together_model,
+                                                tokens=0,
+                                                cost_info={"provider": "together", "fallback": True},
+                                                generation_id=None,
+                                            )
+                                except Exception as fallback_error:
+                                    logger.warning("Together.ai fallback failed: %s", fallback_error)
                             raise
                     
                     async def complete(self, prompt: str, model: str = "openai/gpt-4o", **kwargs):
@@ -1244,6 +1286,53 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                 logger.info("DeepSeek provider initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize DeepSeek provider: {e}")
+
+        # Initialize Together.ai provider
+        if os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY"):
+            try:
+                from .providers.together_client import get_together_client, TogetherClient
+                together_client = get_together_client()
+
+                if together_client:
+                    class TogetherProvider:
+                        """Together.ai direct provider (backup/complement)."""
+
+                        ORCHESTRATION_KWARGS = {
+                            'use_hrm', 'use_adaptive_routing', 'use_deep_consensus',
+                            'use_prompt_diffusion', 'use_memory', 'accuracy_level',
+                            'session_id', 'user_id', 'user_tier', 'enable_tools',
+                            'knowledge_snippets', 'context', 'plan', 'db_session',
+                            'skip_injection_check', 'history',
+                        }
+
+                        def __init__(self, client: TogetherClient):
+                            self.name = 'together'
+                            self.client = client
+
+                        async def generate(self, prompt: str, model: str = TogetherClient.DEFAULT_MODEL, **kwargs):
+                            api_kwargs = {
+                                k: v for k, v in kwargs.items()
+                                if k not in self.ORCHESTRATION_KWARGS
+                            }
+                            text = await self.client.generate(prompt, model=model, **api_kwargs)
+                            class Result:
+                                def __init__(self, text, model_name):
+                                    self.content = text
+                                    self.text = text
+                                    self.model = model_name
+                                    self.tokens_used = 0
+                            return Result(text=text, model_name=model)
+
+                        async def complete(self, prompt: str, model: str = TogetherClient.DEFAULT_MODEL, **kwargs):
+                            return await self.generate(prompt, model=model, **kwargs)
+
+                        def supports_model(self, model_id: str) -> bool:
+                            return "meta-llama/" in model_id or "Qwen/" in model_id
+
+                    self.providers["together"] = TogetherProvider(together_client)
+                    logger.info("Together.ai provider initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Together.ai provider: {e}")
         
         # Always add stub provider as fallback
         if STUB_AVAILABLE and StubProvider:

@@ -108,6 +108,48 @@ KNOWN_MODELS = {
             capabilities={"vision": False, "codeExecution": True, "webSearch": False, "reasoning": True},
         ),
     ],
+    "together": [
+        AgentInfo(
+            id="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            name="Llama 3.1 70B Turbo",
+            provider="together",
+            available=True,
+            description="Together.ai Llama 3.1 70B Turbo",
+            capabilities={"vision": False, "codeExecution": True, "webSearch": False, "reasoning": True},
+        ),
+        AgentInfo(
+            id="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+            name="Llama 3.1 405B Turbo",
+            provider="together",
+            available=True,
+            description="Together.ai Llama 3.1 405B Turbo",
+            capabilities={"vision": False, "codeExecution": True, "webSearch": False, "reasoning": True},
+        ),
+        AgentInfo(
+            id="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            name="Llama 3.1 8B Turbo",
+            provider="together",
+            available=True,
+            description="Together.ai fast Llama 3.1 8B",
+            capabilities={"vision": False, "codeExecution": False, "webSearch": False, "reasoning": False},
+        ),
+        AgentInfo(
+            id="Qwen/Qwen2.5-72B-Instruct-Turbo",
+            name="Qwen 2.5 72B Turbo",
+            provider="together",
+            available=True,
+            description="Together.ai Qwen 2.5 72B Turbo",
+            capabilities={"vision": False, "codeExecution": True, "webSearch": False, "reasoning": True},
+        ),
+        AgentInfo(
+            id="Qwen/Qwen2.5-7B-Instruct-Turbo",
+            name="Qwen 2.5 7B Turbo",
+            provider="together",
+            available=True,
+            description="Together.ai Qwen 2.5 7B Turbo",
+            capabilities={"vision": False, "codeExecution": False, "webSearch": False, "reasoning": False},
+        ),
+    ],
 }
 
 # Map environment variable names to provider keys
@@ -117,6 +159,7 @@ PROVIDER_ENV_VARS = {
     "google": "GEMINI_API_KEY",
     "xai": "GROK_API_KEY",
     "deepseek": "DEEPSEEK_API_KEY",
+    "together": ["TOGETHERAI_API_KEY", "TOGETHER_API_KEY"],
 }
 
 

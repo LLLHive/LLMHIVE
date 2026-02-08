@@ -1,1 +1,183 @@
-[]
+[
+  {
+    "id": "route_error_Home",
+    "severity": "P0",
+    "type": "ux",
+    "title": "Error banner visible on Home",
+    "description": "Error indicator found on page load",
+    "route": "/",
+    "reproSteps": [
+      "Navigate to /",
+      "Observe error banner"
+    ],
+    "suspectedFiles": [
+      "app//page.tsx"
+    ],
+    "suggestedFix": "Check component error handling and API responses"
+  },
+  {
+    "id": "route_error_Discover",
+    "severity": "P0",
+    "type": "ux",
+    "title": "Error banner visible on Discover",
+    "description": "Error indicator found on page load",
+    "route": "/discover",
+    "reproSteps": [
+      "Navigate to /discover",
+      "Observe error banner"
+    ],
+    "suspectedFiles": [
+      "app/discover/page.tsx"
+    ],
+    "suggestedFix": "Check component error handling and API responses"
+  },
+  {
+    "id": "route_error_Models",
+    "severity": "P0",
+    "type": "ux",
+    "title": "Error banner visible on Models",
+    "description": "Error indicator found on page load",
+    "route": "/models",
+    "reproSteps": [
+      "Navigate to /models",
+      "Observe error banner"
+    ],
+    "suspectedFiles": [
+      "app/models/page.tsx"
+    ],
+    "suggestedFix": "Check component error handling and API responses"
+  },
+  {
+    "id": "route_error_Orchestration",
+    "severity": "P0",
+    "type": "ux",
+    "title": "Error banner visible on Orchestration",
+    "description": "Error indicator found on page load",
+    "route": "/orchestration",
+    "reproSteps": [
+      "Navigate to /orchestration",
+      "Observe error banner"
+    ],
+    "suspectedFiles": [
+      "app/orchestration/page.tsx"
+    ],
+    "suggestedFix": "Check component error handling and API responses"
+  },
+  {
+    "id": "route_error_Settings",
+    "severity": "P0",
+    "type": "ux",
+    "title": "Error banner visible on Settings",
+    "description": "Error indicator found on page load",
+    "route": "/settings",
+    "reproSteps": [
+      "Navigate to /settings",
+      "Observe error banner"
+    ],
+    "suspectedFiles": [
+      "app/settings/page.tsx"
+    ],
+    "suggestedFix": "Check component error handling and API responses"
+  },
+  {
+    "id": "models_missing_categories",
+    "severity": "P0",
+    "type": "correctness",
+    "title": "Missing categories on Models page",
+    "description": "Categories not found: programming, science, health, legal, marketing, technology, finance, academia, roleplay, creative writing, translation, customer support, data analysis",
+    "route": "/models",
+    "reproSteps": [
+      "Navigate to /models",
+      "Check category tabs/dropdown",
+      "Compare with OpenRouter categories"
+    ],
+    "suspectedFiles": [
+      "components/openrouter/rankings-insights.tsx",
+      "app/models/page.tsx"
+    ],
+    "suggestedFix": "Ensure categories are fetched from /api/openrouter/categories and rendered"
+  },
+  {
+    "id": "models_no_nested_categories",
+    "severity": "P1",
+    "type": "correctness",
+    "title": "Nested categories not visible",
+    "description": "marketing/seo and similar nested categories not found",
+    "route": "/models",
+    "reproSteps": [
+      "Navigate to /models",
+      "Look for nested categories like Marketing > SEO"
+    ],
+    "suspectedFiles": [
+      "components/openrouter/rankings-insights.tsx"
+    ],
+    "suggestedFix": "Add support for rendering nested category hierarchy"
+  },
+  {
+    "id": "models_no_rankings",
+    "severity": "P0",
+    "type": "correctness",
+    "title": "No ranking entries displayed",
+    "description": "Rankings list appears empty on Models page",
+    "route": "/models",
+    "reproSteps": [
+      "Navigate to /models",
+      "Select Programming category"
+    ],
+    "suspectedFiles": [
+      "components/openrouter/rankings-insights.tsx"
+    ],
+    "suggestedFix": "Check if rankings API is being called and data rendered"
+  },
+  {
+    "id": "models_no_timestamp",
+    "severity": "P2",
+    "type": "ux",
+    "title": "No last synced timestamp displayed",
+    "description": "Rankings should show when data was last synced",
+    "route": "/models",
+    "reproSteps": [
+      "Navigate to /models",
+      "Look for timestamp indicator"
+    ],
+    "suspectedFiles": [
+      "components/openrouter/rankings-insights.tsx"
+    ],
+    "suggestedFix": "Add last_synced timestamp display from API response"
+  },
+  {
+    "id": "parity_rankings_order_mismatch",
+    "severity": "P1",
+    "type": "correctness",
+    "title": "Rankings order does not match API",
+    "description": "Displayed model order differs from API ranking order",
+    "route": "/models",
+    "reproSteps": [
+      "Navigate to /models",
+      "Select Programming category",
+      "Compare displayed order with API response"
+    ],
+    "suspectedFiles": [
+      "components/openrouter/rankings-insights.tsx"
+    ],
+    "suggestedFix": "Ensure rankings are rendered in exact API order without re-sorting"
+  },
+  {
+    "id": "chat_no_categories_dropdown",
+    "severity": "P1",
+    "type": "correctness",
+    "title": "Chat model dropdown missing categories",
+    "description": "Model selector should show categories matching Models page",
+    "route": "/",
+    "reproSteps": [
+      "Navigate to /",
+      "Click model selector dropdown",
+      "Check for category list"
+    ],
+    "suspectedFiles": [
+      "components/chat-area.tsx",
+      "components/model-selector.tsx"
+    ],
+    "suggestedFix": "Add category-based model selection to chat dropdown"
+  }
+]

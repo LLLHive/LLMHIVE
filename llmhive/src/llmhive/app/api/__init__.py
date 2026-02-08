@@ -127,3 +127,12 @@ try:
 except Exception as exc:
     logger.warning("Failed to import Pinecone models router: %s", exc)
 
+# Lightweight models endpoint (fallback for smoke tests/health checks)
+try:
+    from . import models as lightweight_models  # type: ignore
+    if hasattr(lightweight_models, "router"):
+        api_router.include_router(lightweight_models.router, tags=["models-light"])
+        logger.info("Lightweight models route registered at /api/v1/models")
+except Exception as exc:
+    logger.warning("Failed to import lightweight models router: %s", exc)
+

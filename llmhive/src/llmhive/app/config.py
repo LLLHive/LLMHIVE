@@ -47,6 +47,7 @@ class Settings:
     gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
     deepseek_api_key: str | None = os.getenv("DEEPSEEK_API_KEY")
     manus_api_key: str | None = os.getenv("MANUS_API_KEY")
+    together_api_key: str | None = os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY")
     
     # Provider timeouts (optional)
     openai_timeout_seconds: int | None = None
@@ -55,6 +56,7 @@ class Settings:
     gemini_timeout_seconds: int | None = None
     deepseek_timeout_seconds: int | None = None
     manus_timeout_seconds: int | None = None
+    together_timeout_seconds: int | None = None
     
     # Vector Database Configuration (Pinecone)
     pinecone_api_key: str | None = os.getenv("PINECONE_API_KEY")
@@ -122,6 +124,7 @@ class Settings:
             ("grok", cls.grok_api_key, "GROK_API_KEY"),
             ("gemini", cls.gemini_api_key, "GEMINI_API_KEY"),
             ("deepseek", cls.deepseek_api_key, "DEEPSEEK_API_KEY"),
+            ("together", cls.together_api_key, "TOGETHERAI_API_KEY"),
         ]
         
         for provider_name, api_key, env_var in provider_keys:
@@ -213,6 +216,10 @@ class Settings:
             "deepseek": {
                 "configured": bool(cls.deepseek_api_key),
                 "timeout": cls.deepseek_timeout_seconds,
+            },
+            "together": {
+                "configured": bool(cls.together_api_key),
+                "timeout": cls.together_timeout_seconds,
             },
             "pinecone": {
                 "configured": bool(cls.pinecone_api_key),
