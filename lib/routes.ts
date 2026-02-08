@@ -11,6 +11,7 @@ export const ROUTES = {
   MODELS: "/models",
   ORCHESTRATION: "/orchestration",
   SETTINGS: "/settings",
+  BUSINESS_OPS: "/business-ops",
 } as const
 
 export const API_ROUTES = {

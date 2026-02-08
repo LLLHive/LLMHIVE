@@ -73,7 +73,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target"
         aria-label="Open support"
       >
         <MessageCircle className="h-6 w-6" />
@@ -91,7 +91,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
         </div>
         <button
           onClick={() => { setIsOpen(false); resetWidget(); }}
-          className="hover:bg-white/10 rounded-lg p-1 transition-colors"
+          className="hover:bg-white/10 rounded-lg p-1 transition-colors premium-tap touch-target"
         >
           <X className="h-5 w-5" />
         </button>
@@ -107,7 +107,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
 
             <button
               onClick={() => setView("form")}
-              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[var(--bronze)]/50 hover:bg-muted/50 transition-all text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[var(--bronze)]/50 hover:bg-muted/50 transition-all text-left premium-tap"
             >
               <div className="w-10 h-10 rounded-full bg-[var(--bronze)]/10 flex items-center justify-center">
                 <Send className="h-5 w-5 text-[var(--bronze)]" />
@@ -152,7 +152,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
             <button
               type="button"
               onClick={() => setView("menu")}
-              className="text-sm text-[var(--bronze)] hover:underline mb-2"
+              className="text-sm text-[var(--bronze)] hover:underline mb-2 premium-tap touch-target"
             >
               ← Back
             </button>

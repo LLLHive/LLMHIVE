@@ -10,6 +10,7 @@ import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import type { CriteriaSettings } from "@/lib/types"
 import { CriteriaEqualizer } from "./criteria-equalizer"
 import { Checkbox } from "@/components/ui/checkbox"
+import Link from "next/link"
 
 type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-ensemble"
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
@@ -21,7 +22,7 @@ const HeaderDropdownButton = forwardRef<HTMLButtonElement, React.ComponentPropsW
         ref={ref}
         variant="ghost"
         size="sm"
-        className="gap-1.5 h-7 px-2.5 text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black"
+        className="gap-1.5 h-6 px-2 text-[10px] sm:h-7 sm:px-2.5 sm:text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 premium-tap touch-target [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black"
         {...props}
       >
         {children}
@@ -55,8 +56,8 @@ export function ChatHeader({
   onCriteriaChange: (settings: CriteriaSettings) => void
 }) {
   return (
-    <header className="border-b border-border p-3 flex items-center justify-between bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-      <div className="flex items-center justify-between gap-4 flex-1 px-8">
+    <header className="border-b border-border p-2 sm:p-3 flex items-center justify-between bg-card/50 backdrop-blur-xl sticky top-0 z-50">
+      <div className="flex items-center justify-between gap-2 sm:gap-4 flex-1 px-3 sm:px-8">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <HeaderDropdownButton>
@@ -66,7 +67,7 @@ export function ChatHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
-            className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
+            className="w-[90vw] sm:w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
           >
             {AVAILABLE_MODELS.map((model) => (
               <DropdownMenuItem
@@ -75,18 +76,30 @@ export function ChatHeader({
                   e.preventDefault()
                   onToggleModel(model.id)
                 }}
-                className="gap-2 py-1.5 hover-lift hover:text-foreground"
+                className="gap-2 py-1 hover-lift hover:text-foreground"
               >
                 <Checkbox
                   checked={selectedModels.includes(model.id)}
                   className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
                 />
                 <img src={getModelLogo(model.provider) || "/placeholder.svg"} alt="" className="w-3.5 h-3.5" />
-                <span className="text-[11px]">{model.name}</span>
+                <span className="text-[10px] sm:text-[11px]">{model.name}</span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Link href="/business-ops">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[10px] sm:h-7 sm:px-3 sm:text-[11px] border border-border rounded-md text-foreground transition-all duration-300 premium-tap touch-target hover:bg-[var(--bronze)] hover:text-black"
+            >
+              Business Ops
+            </Button>
+          </Link>
+        </div>
 
         {/* ... existing code for other dropdowns ... */}
         <DropdownMenu>
@@ -98,37 +111,37 @@ export function ChatHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
-            className="w-44 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
+            className="w-[90vw] sm:w-44 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
           >
             <DropdownMenuItem
               onClick={() => onReasoningModeChange("deep")}
-              className="gap-2 py-1.5 hover-lift hover:text-foreground"
+              className="gap-2 py-1 hover-lift hover:text-foreground"
             >
               <Checkbox
                 checked={reasoningMode === "deep"}
                 className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
-              <span className="text-[11px]">Deep Reasoning</span>
+              <span className="text-[10px] sm:text-[11px]">Deep Reasoning</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onReasoningModeChange("standard")}
-              className="gap-2 py-1.5 hover-lift hover:text-foreground"
+              className="gap-2 py-1 hover-lift hover:text-foreground"
             >
               <Checkbox
                 checked={reasoningMode === "standard"}
                 className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
-              <span className="text-[11px]">Standard</span>
+              <span className="text-[10px] sm:text-[11px]">Standard</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onReasoningModeChange("fast")}
-              className="gap-2 py-1.5 hover-lift hover:text-foreground"
+              className="gap-2 py-1 hover-lift hover:text-foreground"
             >
               <Checkbox
                 checked={reasoningMode === "fast"}
                 className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
               />
-              <span className="text-[11px]">Fast</span>
+              <span className="text-[10px] sm:text-[11px]">Fast</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -140,10 +153,10 @@ export function ChatHeader({
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </HeaderDropdownButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-60 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
+          <DropdownMenuContent className="w-[90vw] sm:w-60 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
             <DropdownMenuItem
               onClick={() => onOrchestrationChange("hrm")}
-              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
+              className="gap-2 py-1 hover-lift hover:text-foreground text-[10px] sm:text-xs"
             >
               <Checkbox
                 checked={orchestrationEngine === "hrm"}
@@ -153,7 +166,7 @@ export function ChatHeader({
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onOrchestrationChange("prompt-diffusion")}
-              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
+              className="gap-2 py-1 hover-lift hover:text-foreground text-[10px] sm:text-xs"
             >
               <Checkbox
                 checked={orchestrationEngine === "prompt-diffusion"}
@@ -163,7 +176,7 @@ export function ChatHeader({
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onOrchestrationChange("deep-conf")}
-              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
+              className="gap-2 py-1 hover-lift hover:text-foreground text-[10px] sm:text-xs"
             >
               <Checkbox
                 checked={orchestrationEngine === "deep-conf"}
@@ -173,7 +186,7 @@ export function ChatHeader({
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onOrchestrationChange("adaptive-ensemble")}
-              className="gap-2 py-2 hover-lift hover:text-foreground text-xs"
+              className="gap-2 py-1 hover-lift hover:text-foreground text-[10px] sm:text-xs"
             >
               <Checkbox
                 checked={orchestrationEngine === "adaptive-ensemble"}
@@ -191,18 +204,18 @@ export function ChatHeader({
               <ChevronDown className="h-2.5 w-2.5 opacity-50" />
             </HeaderDropdownButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
+          <DropdownMenuContent className="w-[90vw] sm:w-48 z-[600] glass-effect animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300">
             {(["vector-db", "rag", "shared-memory", "loop-back", "live-data"] as AdvancedFeature[]).map((feature) => (
               <DropdownMenuItem
                 key={feature}
                 onClick={() => onToggleFeature(feature)}
-                className="gap-2 py-2 hover-lift hover:text-foreground"
+                className="gap-2 py-1 hover-lift hover:text-foreground"
               >
                 <Checkbox
                   checked={advancedFeatures.includes(feature)}
                   className="pointer-events-none border-[var(--bronze)] data-[state=checked]:bg-[var(--bronze)] data-[state=checked]:border-[var(--bronze)]"
                 />
-                <span className="text-xs">
+                <span className="text-[10px] sm:text-xs">
                   {feature
                     .split("-")
                     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))

@@ -5,6 +5,7 @@ import type React from "react"
 
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, Lock, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2, ListTree, List, ListOrdered, LayoutGrid } from "lucide-react"
 import type {
@@ -199,257 +200,351 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
 
   const selectedModels = settings.selectedModels || ["automatic"]
 
+  const modelsContent = (
+    <>
+      {activeCategory ? (
+        // Show top 10 models for selected ranking category
+        <>
+          <div className="flex items-center gap-2 px-2 py-1.5 border-b">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-5 w-5 sm:h-6 sm:w-6 p-0"
+              onClick={() => setActiveCategory(null)}
+            >
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
+            <span className="font-medium text-[13px] sm:text-sm">
+              Top 10 - {categories.find(c => c.slug === activeCategory)?.displayName || activeCategory}
+            </span>
+          </div>
+          {loadingRankings ? (
+            <div className="p-4 text-center text-muted-foreground text-sm">
+              <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
+              Loading...
+            </div>
+          ) : rankingsError ? (
+            <div className="p-4 text-center text-sm text-destructive">
+              Failed to load rankings
+            </div>
+          ) : rankedEntries.length > 0 ? (
+            rankedEntries.map((entry) => {
+              const modelId = entry.model_id || ''
+              const isSelected = selectedModels.includes(modelId)
+              const hasAccess = canAccessModel(userTier, modelId)
+              const requiredTier = getModelRequiredTier(modelId)
+              
+              return (
+                <DropdownMenuItem
+                  key={modelId}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    if (hasAccess) toggleModel(modelId)
+                  }}
+                  disabled={!hasAccess}
+                  className={cn("gap-2 cursor-pointer py-1.5 sm:py-2", !hasAccess && "opacity-50")}
+                >
+                  <div className={cn(
+                    "w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] font-bold shrink-0",
+                    entry.rank === 1 ? "bg-yellow-400 text-yellow-900" :  // Gold
+                    entry.rank === 2 ? "bg-slate-300 text-slate-700" :    // Silver
+                    entry.rank === 3 ? "bg-amber-600 text-amber-100" :    // Bronze
+                    "bg-muted text-muted-foreground"
+                  )}>
+                    {entry.rank}
+                  </div>
+                  {/* Provider Logo */}
+                  <div className="w-4.5 h-4.5 sm:w-5 sm:h-5 relative shrink-0">
+                    <Image
+                      src={getModelLogo(modelId)}
+                      alt=""
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[13px] sm:text-sm truncate leading-tight">{entry.model_name}</span>
+                      {!hasAccess && (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[7px] sm:text-[8px] px-1 h-3.5 sm:h-4",
+                            getTierBadgeColor(requiredTier)
+                          )}
+                        >
+                          <Lock className="w-2 h-2 mr-0.5" />
+                          {getTierDisplayName(requiredTier)}
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight">
+                      {entry.author || entry.model_id?.split('/')[0]}
+                    </span>
+                  </div>
+                  {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                </DropdownMenuItem>
+              )
+            })
+          ) : (
+            <div className="p-4 text-center text-muted-foreground text-sm">No models found</div>
+          )}
+        </>
+      ) : (
+        // Show ranking categories
+        <>
+          {/* Automatic Option - Always at top */}
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault()
+              // Set to automatic mode
+              onSettingsChange({ selectedModels: ["automatic"] })
+            }}
+            className="gap-2 cursor-pointer py-1.5 sm:py-2"
+          >
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center">
+              <Sparkles className="h-3 w-3 text-white" />
+            </div>
+            <span className="flex-1 font-medium">Automatic</span>
+            <span className="text-[10px] text-muted-foreground">Best model per task</span>
+            {selectedModels.includes("automatic") && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+          </DropdownMenuItem>
+          
+          {/* Agent Mode Selection - Clear choice between Team and Single */}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1">
+            Agent Mode
+          </DropdownMenuLabel>
+          
+          {/* Team Mode Option */}
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault()
+              onSettingsChange({ agentMode: "team" })
+            }}
+            className="gap-2 cursor-pointer py-1.5 sm:py-2"
+          >
+            <div className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center",
+              settings.agentMode === "team" 
+                ? "bg-[var(--bronze)]/20" 
+                : "bg-muted"
+            )}>
+              <Users className={cn(
+                "h-3 w-3",
+                settings.agentMode === "team" ? "text-[var(--bronze)]" : "text-muted-foreground"
+              )} />
+            </div>
+            <div className="flex-1">
+              <span className={cn("font-medium", settings.agentMode === "team" && "text-[var(--bronze)]")}>
+                Team Mode
+              </span>
+              <p className="text-[10px] text-muted-foreground">Multi-model ensemble (recommended)</p>
+            </div>
+            {settings.agentMode === "team" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+          </DropdownMenuItem>
+          
+          {/* Single Mode Option */}
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault()
+              onSettingsChange({ agentMode: "single" })
+            }}
+            className="gap-2 cursor-pointer py-1.5 sm:py-2"
+          >
+            <div className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center",
+              settings.agentMode === "single" 
+                ? "bg-[var(--bronze)]/20" 
+                : "bg-muted"
+            )}>
+              <User className={cn(
+                "h-3 w-3",
+                settings.agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"
+              )} />
+            </div>
+            <div className="flex-1">
+              <span className={cn("font-medium", settings.agentMode === "single" && "text-[var(--bronze)]")}>
+                Single Mode
+              </span>
+              <p className="text-[10px] text-muted-foreground">Use one model only</p>
+            </div>
+            {settings.agentMode === "single" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* My Team Section */}
+          {myTeamModels.length > 0 && (
+            <>
+              <DropdownMenuLabel className="flex items-center gap-2 text-[var(--bronze)]">
+                <Crown className="h-3.5 w-3.5" />
+                My Team ({myTeamModels.length})
+              </DropdownMenuLabel>
+              {myTeamModels.slice(0, 5).map((modelId) => {
+                const isSelected = selectedModels.includes(modelId)
+                return (
+                  <DropdownMenuItem
+                    key={modelId}
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      toggleModel(modelId)
+                    }}
+                    className="gap-2 cursor-pointer pl-6 py-1.5 sm:py-2"
+                  >
+                    <span className="flex-1 text-[13px] sm:text-sm truncate">{modelId.split('/')[1] || modelId}</span>
+                    {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+                  </DropdownMenuItem>
+                )
+              })}
+              <DropdownMenuSeparator />
+            </>
+          )}
+          
+          {/* OpenRouter Categories (dynamic from API) */}
+          <DropdownMenuLabel className="text-muted-foreground text-xs">
+            Browse by Category
+          </DropdownMenuLabel>
+          {categoriesLoading ? (
+            <div className="p-4 text-center text-muted-foreground text-sm">
+              <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
+              Loading categories...
+            </div>
+          ) : categoriesError ? (
+            <div className="p-4 text-center text-sm text-destructive">
+              Failed to load categories
+            </div>
+          ) : (
+            categories.map((cat) => {
+              const Icon = getCategoryIcon(cat.slug)
+              return (
+                <DropdownMenuItem
+                  key={cat.slug}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    setActiveCategory(cat.slug)
+                  }}
+                  className="gap-2 cursor-pointer py-1.5 sm:py-2"
+                >
+                  <Icon className={cn("h-4 w-4", CATEGORY_COLOR_MAP[cat.slug] || "text-muted-foreground")} />
+                  <span className="flex-1">{cat.displayName}</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </DropdownMenuItem>
+              )
+            })
+          )}
+          
+        </>
+      )}
+    </>
+  )
+
+  const formatContent = (
+    <>
+      {responseFormats.map((format) => {
+        const isSelected = (settings as any).answerFormat === format.value || 
+          ((settings as any).answerFormat === undefined && format.value === "automatic")
+        const isAutomatic = format.value === "automatic"
+        
+        // Map icon names to components
+        const iconMap: Record<string, React.ElementType> = {
+          "Sparkles": Sparkles,
+          "MessageSquare": MessageSquare,
+          "LayoutGrid": LayoutGrid,
+          "List": List,
+          "ListOrdered": ListOrdered,
+          "GraduationCap": GraduationCap,
+          "Zap": Zap,
+        }
+        const IconComponent = iconMap[format.icon] || ListTree
+        
+        return (
+          <div key={format.value}>
+            <DropdownMenuItem
+              onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
+              className="flex items-center gap-2.5 py-2 sm:py-2.5 cursor-pointer"
+            >
+              {/* Icon with color styling */}
+              <div className={cn(
+                "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
+                isAutomatic 
+                  ? "bg-gradient-to-br from-[var(--bronze)] to-amber-600" 
+                  : "bg-muted/50"
+              )}>
+                <IconComponent className={cn(
+                  "h-3.5 w-3.5",
+                  isAutomatic ? "text-white" : format.iconColor
+                )} />
+              </div>
+              
+              {/* Label and Description */}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-[13px] sm:text-sm">{format.label}</div>
+                <div className="text-[11px] sm:text-[10px] text-muted-foreground leading-tight">{format.description}</div>
+              </div>
+              
+              {/* Check mark for selected */}
+              {isSelected && <Check className="h-4 w-4 text-[var(--bronze)] shrink-0" />}
+            </DropdownMenuItem>
+            
+            {/* Separator after Automatic */}
+            {isAutomatic && <DropdownMenuSeparator />}
+          </div>
+        )
+      })}
+    </>
+  )
+
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {/* Models Dropdown with Ranking Categories */}
-      <DropdownMenu open={modelsOpen} onOpenChange={(open) => {
-        setModelsOpen(open)
-        if (!open) setActiveCategory(null)
-      }}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all"
-          >
-            <Cpu className="h-3.5 w-3.5 text-blue-400" />
-            <span className="hidden sm:inline font-medium bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">Models ({selectedModels.length})</span>
-            <span className="sm:hidden text-blue-300">{selectedModels.length}</span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-72 max-h-[70vh] overflow-y-auto">
-          {activeCategory ? (
-            // Show top 10 models for selected ranking category
-            <>
-              <div className="flex items-center gap-2 px-2 py-1.5 border-b">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 w-6 p-0"
-                  onClick={() => setActiveCategory(null)}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <span className="font-medium text-sm">
-                  Top 10 - {categories.find(c => c.slug === activeCategory)?.displayName || activeCategory}
-                </span>
-              </div>
-              {loadingRankings ? (
-                <div className="p-4 text-center text-muted-foreground text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
-                  Loading...
-                </div>
-              ) : rankingsError ? (
-                <div className="p-4 text-center text-sm text-destructive">
-                  Failed to load rankings
-                </div>
-              ) : rankedEntries.length > 0 ? (
-                rankedEntries.map((entry) => {
-                  const modelId = entry.model_id || ''
-                  const isSelected = selectedModels.includes(modelId)
-                  const hasAccess = canAccessModel(userTier, modelId)
-                  const requiredTier = getModelRequiredTier(modelId)
-                  
-                  return (
-                    <DropdownMenuItem
-                      key={modelId}
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        if (hasAccess) toggleModel(modelId)
-                      }}
-                      disabled={!hasAccess}
-                      className={cn("gap-2 cursor-pointer", !hasAccess && "opacity-50")}
-                    >
-                      <div className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
-                        entry.rank === 1 ? "bg-yellow-400 text-yellow-900" :  // Gold
-                        entry.rank === 2 ? "bg-slate-300 text-slate-700" :    // Silver
-                        entry.rank === 3 ? "bg-amber-600 text-amber-100" :    // Bronze
-                        "bg-muted text-muted-foreground"
-                      )}>
-                        {entry.rank}
-                      </div>
-                      {/* Provider Logo */}
-                      <div className="w-5 h-5 relative shrink-0">
-                        <Image
-                          src={getModelLogo(modelId)}
-                          alt=""
-                          fill
-                          className="object-contain"
-                          unoptimized
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm truncate">{entry.model_name}</span>
-                          {!hasAccess && (
-                            <Badge variant="outline" className={cn("text-[8px] px-1 h-4", getTierBadgeColor(requiredTier))}>
-                              <Lock className="w-2 h-2 mr-0.5" />
-                              {getTierDisplayName(requiredTier)}
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">
-                          {entry.author || entry.model_id?.split('/')[0]}
-                        </span>
-                      </div>
-                      {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                    </DropdownMenuItem>
-                  )
-                })
-              ) : (
-                <div className="p-4 text-center text-muted-foreground text-sm">No models found</div>
-              )}
-            </>
-          ) : (
-            // Show ranking categories
-            <>
-              {/* Automatic Option - Always at top */}
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault()
-                  // Set to automatic mode
-                  onSettingsChange({ selectedModels: ["automatic"] })
-                }}
-                className="gap-2 cursor-pointer"
-              >
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--bronze)] to-amber-600 flex items-center justify-center">
-                  <Sparkles className="h-3 w-3 text-white" />
-                </div>
-                <span className="flex-1 font-medium">Automatic</span>
-                <span className="text-[10px] text-muted-foreground">Best model per task</span>
-                {selectedModels.includes("automatic") && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-              </DropdownMenuItem>
-              
-              {/* Agent Mode Selection - Clear choice between Team and Single */}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1">
-                Agent Mode
-              </DropdownMenuLabel>
-              
-              {/* Team Mode Option */}
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault()
-                  onSettingsChange({ agentMode: "team" })
-                }}
-                className="gap-2 cursor-pointer"
-              >
-                <div className={cn(
-                  "w-5 h-5 rounded-full flex items-center justify-center",
-                  settings.agentMode === "team" 
-                    ? "bg-[var(--bronze)]/20" 
-                    : "bg-muted"
-                )}>
-                  <Users className={cn(
-                    "h-3 w-3",
-                    settings.agentMode === "team" ? "text-[var(--bronze)]" : "text-muted-foreground"
-                  )} />
-                </div>
-                <div className="flex-1">
-                  <span className={cn("font-medium", settings.agentMode === "team" && "text-[var(--bronze)]")}>
-                    Team Mode
-                  </span>
-                  <p className="text-[10px] text-muted-foreground">Multi-model ensemble (recommended)</p>
-                </div>
-                {settings.agentMode === "team" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-              </DropdownMenuItem>
-              
-              {/* Single Mode Option */}
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault()
-                  onSettingsChange({ agentMode: "single" })
-                }}
-                className="gap-2 cursor-pointer"
-              >
-                <div className={cn(
-                  "w-5 h-5 rounded-full flex items-center justify-center",
-                  settings.agentMode === "single" 
-                    ? "bg-[var(--bronze)]/20" 
-                    : "bg-muted"
-                )}>
-                  <User className={cn(
-                    "h-3 w-3",
-                    settings.agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"
-                  )} />
-                </div>
-                <div className="flex-1">
-                  <span className={cn("font-medium", settings.agentMode === "single" && "text-[var(--bronze)]")}>
-                    Single Mode
-                  </span>
-                  <p className="text-[10px] text-muted-foreground">Use one model only</p>
-                </div>
-                {settings.agentMode === "single" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-              </DropdownMenuItem>
-              
-              <DropdownMenuSeparator />
-              
-              {/* My Team Section */}
-              {myTeamModels.length > 0 && (
-                <>
-                  <DropdownMenuLabel className="flex items-center gap-2 text-[var(--bronze)]">
-                    <Crown className="h-3.5 w-3.5" />
-                    My Team ({myTeamModels.length})
-                  </DropdownMenuLabel>
-                  {myTeamModels.slice(0, 5).map((modelId) => {
-                    const isSelected = selectedModels.includes(modelId)
-                    return (
-                      <DropdownMenuItem
-                        key={modelId}
-                        onSelect={(e) => {
-                          e.preventDefault()
-                          toggleModel(modelId)
-                        }}
-                        className="gap-2 cursor-pointer pl-6"
-                      >
-                        <span className="flex-1 text-sm truncate">{modelId.split('/')[1] || modelId}</span>
-                        {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                      </DropdownMenuItem>
-                    )
-                  })}
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              
-              {/* OpenRouter Categories (dynamic from API) */}
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                Browse by Category
-              </DropdownMenuLabel>
-              {categoriesLoading ? (
-                <div className="p-4 text-center text-muted-foreground text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
-                  Loading categories...
-                </div>
-              ) : categoriesError ? (
-                <div className="p-4 text-center text-sm text-destructive">
-                  Failed to load categories
-                </div>
-              ) : (
-                categories.map((cat) => {
-                  const Icon = getCategoryIcon(cat.slug)
-                  return (
-                    <DropdownMenuItem
-                      key={cat.slug}
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        setActiveCategory(cat.slug)
-                      }}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Icon className={cn("h-4 w-4", CATEGORY_COLOR_MAP[cat.slug] || "text-muted-foreground")} />
-                      <span className="flex-1">{cat.displayName}</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </DropdownMenuItem>
-                  )
-                })
-              )}
-              
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="sm:hidden">
+        <Sheet onOpenChange={(open) => {
+          setModelsOpen(open)
+          if (!open) setActiveCategory(null)
+        }}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 h-7 px-2 text-[11px] bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
+            >
+              <Cpu className="h-3.5 w-3.5 text-blue-400" />
+              <span className="text-blue-300/80">{selectedModels.length}</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[85vh] p-0">
+            <SheetHeader className="px-4 py-3 border-b">
+              <SheetTitle className="text-sm font-semibold">Models</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto">{modelsContent}</div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      <div className="hidden sm:block">
+        <DropdownMenu open={modelsOpen} onOpenChange={(open) => {
+          setModelsOpen(open)
+          if (!open) setActiveCategory(null)
+        }}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 h-7 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
+            >
+              <Cpu className="h-3.5 w-3.5 text-blue-400" />
+              <span className="hidden sm:inline font-medium bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">Models ({selectedModels.length})</span>
+              <span className="sm:hidden text-blue-300/80">{selectedModels.length}</span>
+              <ChevronDown className="h-3 w-3 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[90vw] sm:w-72 max-h-[70vh] overflow-y-auto">
+            {modelsContent}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {/* Orchestration settings moved to Settings page */}
 
@@ -458,72 +553,45 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
       {/* Domain Pack moved to lit-up badge in chat-area.tsx */}
 
       {/* Response Format */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all"
-          >
-            <ListTree className="h-3.5 w-3.5 text-purple-400" />
-            <span className="hidden sm:inline font-medium bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">Format</span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-64">
-          {responseFormats.map((format) => {
-            const isSelected = (settings as any).answerFormat === format.value || 
-              ((settings as any).answerFormat === undefined && format.value === "automatic")
-            const isAutomatic = format.value === "automatic"
-            
-            // Map icon names to components
-            const iconMap: Record<string, React.ElementType> = {
-              "Sparkles": Sparkles,
-              "MessageSquare": MessageSquare,
-              "LayoutGrid": LayoutGrid,
-              "List": List,
-              "ListOrdered": ListOrdered,
-              "GraduationCap": GraduationCap,
-              "Zap": Zap,
-            }
-            const IconComponent = iconMap[format.icon] || ListTree
-            
-            return (
-              <div key={format.value}>
-                <DropdownMenuItem
-                  onClick={() => onSettingsChange({ answerFormat: format.value } as any)}
-                  className="flex items-center gap-2.5 py-2.5 cursor-pointer"
-                >
-                  {/* Icon with color styling */}
-                  <div className={cn(
-                    "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
-                    isAutomatic 
-                      ? "bg-gradient-to-br from-[var(--bronze)] to-amber-600" 
-                      : "bg-muted/50"
-                  )}>
-                    <IconComponent className={cn(
-                      "h-3.5 w-3.5",
-                      isAutomatic ? "text-white" : format.iconColor
-                    )} />
-                  </div>
-                  
-                  {/* Label and Description */}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">{format.label}</div>
-                    <div className="text-[10px] text-muted-foreground leading-tight">{format.description}</div>
-                  </div>
-                  
-                  {/* Check mark for selected */}
-                  {isSelected && <Check className="h-4 w-4 text-[var(--bronze)] shrink-0" />}
-                </DropdownMenuItem>
-                
-                {/* Separator after Automatic */}
-                {isAutomatic && <DropdownMenuSeparator />}
-              </div>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="sm:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 h-7 px-2 text-[11px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
+            >
+              <ListTree className="h-3.5 w-3.5 text-purple-400" />
+              <span className="text-purple-300/80">Format</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[70vh] p-0">
+            <SheetHeader className="px-4 py-3 border-b">
+              <SheetTitle className="text-sm font-semibold">Response Format</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto">{formatContent}</div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      <div className="hidden sm:block">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 h-7 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
+            >
+              <ListTree className="h-3.5 w-3.5 text-purple-400" />
+              <span className="hidden sm:inline font-medium bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">Format</span>
+              <ChevronDown className="h-3 w-3 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[90vw] sm:w-64">
+            {formatContent}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {/* Tuning moved to Settings page */}
       {/* Advanced Settings moved to Settings page */}

@@ -1,6 +1,5 @@
-"use client"
-
 import Link from "next/link"
+import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
 import { 
   Sparkles, 
@@ -16,6 +15,27 @@ import {
   Clock,
   Lock
 } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "LLMHive - Multi-Model AI Orchestration Platform",
+  description:
+    "LLMHive routes every request to the best AI model for accuracy, speed, and cost. One interface for 400+ models with enterprise security.",
+  alternates: {
+    canonical: "https://www.llmhive.ai/landing",
+  },
+  openGraph: {
+    title: "LLMHive - Multi-Model AI Orchestration Platform",
+    description:
+      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 400+ models with enterprise security.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LLMHive - Multi-Model AI Orchestration Platform",
+    description:
+      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 400+ models with enterprise security.",
+  },
+}
 
 const features = [
   {
@@ -121,9 +141,86 @@ const stats = [
   { value: "400+", label: "AI Models" },
 ]
 
+const faqItems = [
+  {
+    question: "What is LLMHive?",
+    answer:
+      "LLMHive is a multi-model AI orchestration platform that routes each request to the best AI model for accuracy, speed, and cost. Teams get one interface to access 400+ models with enterprise security, usage controls, and cost optimization.",
+  },
+  {
+    question: "How does multi-model routing work?",
+    answer:
+      "LLMHive analyzes your request, selects the optimal model, and can run parallel evaluations to deliver the best answer. This ensures higher quality than single-model workflows while keeping latency and cost predictable.",
+  },
+  {
+    question: "Which AI models does LLMHive support?",
+    answer:
+      "LLMHive supports leading models across major providers, including OpenAI, Anthropic, Google, Meta, Mistral, and more. You get unified access through a single interface and API.",
+  },
+  {
+    question: "Is LLMHive secure for enterprise use?",
+    answer:
+      "Yes. LLMHive is built with enterprise-grade security, encryption, and privacy controls. Your data is protected, and you maintain governance over model usage and access.",
+  },
+  {
+    question: "What business outcomes does LLMHive improve?",
+    answer:
+      "LLMHive improves answer quality, reduces AI spend, and boosts team productivity by automatically selecting the best model per task. It eliminates tool switching and gives leaders clear visibility into usage and performance.",
+  },
+]
+
+function renderStructuredData() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "LLMHive",
+        url: "https://www.llmhive.ai",
+        logo: "https://www.llmhive.ai/logo.png",
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: "LLMHive",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        description:
+          "Multi-model AI orchestration platform that routes every request to the best model for accuracy, speed, and cost.",
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "USD",
+          price: "0",
+          category: "Free",
+          url: "https://www.llmhive.ai/pricing",
+        },
+        featureList: features.map((feature) => feature.title),
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      },
+    ],
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+    />
+  )
+}
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-white">
+      {renderStructuredData()}
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -140,6 +237,15 @@ export default function LandingPage() {
               </Link>
               <Link href="#pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 Pricing
+              </Link>
+              <Link href="/comparisons" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                Comparisons
+              </Link>
+              <Link href="/case-studies" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                Case Studies
+              </Link>
+              <Link href="/business-ops" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                Business Ops
               </Link>
               <Link href="/about" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 About
@@ -203,6 +309,17 @@ export default function LandingPage() {
                 <div className="text-sm text-zinc-500">{stat.label}</div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-14 max-w-4xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-semibold text-white">
+              What is LLMHive?
+            </h2>
+            <p className="mt-3 text-base md:text-lg text-zinc-400 leading-relaxed">
+              LLMHive is a multi-model AI orchestration platform that routes each request to the
+              best model for accuracy, speed, and cost. Teams get one interface to 400+ models
+              with enterprise security, usage controls, and cost optimization.
+            </p>
           </div>
         </div>
       </section>
@@ -348,6 +465,29 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">FAQ</h2>
+            <p className="mt-3 text-zinc-400">
+              Clear answers to the most important questions about LLMHive.
+            </p>
+          </div>
+          <div className="grid gap-6">
+            {faqItems.map((item) => (
+              <div
+                key={item.question}
+                className="rounded-2xl border border-white/10 bg-white/5 p-6"
+              >
+                <h3 className="text-lg font-semibold text-white">{item.question}</h3>
+                <p className="mt-3 text-sm text-zinc-300 leading-relaxed">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Trust Badges */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -397,6 +537,7 @@ export default function LandingPage() {
                 <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/models" className="hover:text-white transition-colors">Models</Link></li>
                 <li><Link href="/discover" className="hover:text-white transition-colors">Discover</Link></li>
+                <li><Link href="/comparisons" className="hover:text-white transition-colors">Comparisons</Link></li>
               </ul>
             </div>
             <div>
@@ -405,6 +546,8 @@ export default function LandingPage() {
                 <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
                 <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
                 <li><Link href="/demo" className="hover:text-white transition-colors">Demo</Link></li>
+                <li><Link href="/business-ops" className="hover:text-white transition-colors">Business Ops</Link></li>
+                <li><Link href="/case-studies" className="hover:text-white transition-colors">Case Studies</Link></li>
               </ul>
             </div>
             <div>

@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3, Sliders, Target, Zap, Settings2, Lightbulb, CheckCircle, ListTree, GraduationCap, SpellCheck, Boxes } from "lucide-react"
+import { User, Link2, Bell, Shield, Palette, Check, Github, Trash2, Save, CreditCard, ExternalLink, Loader2, BarChart3, Sliders, Target, Zap, Settings2, Lightbulb, CheckCircle, ListTree, GraduationCap, SpellCheck, Boxes, Building2 } from "lucide-react"
 import Link from "next/link"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
@@ -99,6 +99,15 @@ const settingsCards = [
     badgeClass: "icon-badge-emerald",
     isLink: true,
     href: "/models",
+  },
+  {
+    id: "business-ops",
+    title: "Business Ops",
+    description: "Trust, billing, org, and integrations hub",
+    icon: Building2,
+    badgeClass: "icon-badge-bronze",
+    isLink: true,
+    href: "/business-ops",
   },
 ]
 

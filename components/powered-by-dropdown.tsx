@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { 
   ChevronDown, 
@@ -167,120 +168,165 @@ const featureSections = [
   },
 ]
 
-export function PoweredByDropdown() {
+type PoweredByDropdownProps = {
+  compact?: boolean
+}
+
+export function PoweredByDropdown({ compact = false }: PoweredByDropdownProps) {
   const [open, setOpen] = useState(false)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
-  return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 h-8 px-3 text-xs bg-gradient-to-r from-purple-500/20 to-amber-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-amber-500/30 hover:border-purple-400/50 transition-all"
-        >
-          <Cpu className="h-3.5 w-3.5 text-purple-400" />
-          <span className="hidden sm:inline font-medium bg-gradient-to-r from-purple-300 to-amber-300 bg-clip-text text-transparent">
-            LLMHive Technology
-          </span>
-          <span className="sm:hidden font-medium bg-gradient-to-r from-purple-300 to-amber-300 bg-clip-text text-transparent">
-            Tech
-          </span>
-          <ChevronDown className="h-3 w-3 opacity-50" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="start" 
-        className="w-80 max-h-[80vh] overflow-y-auto p-0 bg-gradient-to-b from-background to-background/95"
-      >
-        {/* Header */}
-        <div className="px-4 py-3 bg-gradient-to-r from-purple-500/10 to-amber-500/10 border-b border-border/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
-              <span className="text-lg font-bold text-white">#1</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
-                #1 in ALL 10 Industry Benchmarks
-              </h3>
-              <p className="text-[10px] text-muted-foreground">January 2026 Rankings</p>
-            </div>
+  const content = (
+    <>
+      {/* Header */}
+      <div className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-r from-purple-500/10 to-amber-500/10 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
+            <span className="text-lg font-bold text-white">#1</span>
+          </div>
+          <div>
+            <h3 className="font-bold text-sm sm:text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+              #1 in ALL 10 Industry Benchmarks
+            </h3>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">January 2026 Rankings</p>
           </div>
         </div>
+      </div>
 
-        {/* Feature Sections */}
-        <div className="p-2">
-          {featureSections.map((section, idx) => {
-            const SectionIcon = section.icon
-            const isExpanded = expandedSection === section.id
-            
-            return (
-              <div key={section.id}>
-                {/* Section Header - Clickable to expand */}
-                <div
-                  className={cn(
-                    "flex items-center gap-2.5 px-2 py-2 rounded-md cursor-pointer transition-all",
-                    isExpanded 
-                      ? "bg-secondary/80" 
-                      : "hover:bg-secondary/50"
-                  )}
-                  onClick={() => setExpandedSection(isExpanded ? null : section.id)}
-                >
-                  <div className={cn(
-                    "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
-                    isExpanded ? "bg-[var(--bronze)]/20" : "bg-muted"
-                  )}>
-                    <SectionIcon className={cn("h-3.5 w-3.5", section.iconColor)} />
-                  </div>
-                  <span className="flex-1 text-sm font-medium">{section.title}</span>
-                  <ChevronDown className={cn(
-                    "h-3.5 w-3.5 text-muted-foreground transition-transform",
-                    isExpanded && "rotate-180"
-                  )} />
+      {/* Feature Sections */}
+      <div className="p-2 sm:p-3">
+        {featureSections.map((section, idx) => {
+          const SectionIcon = section.icon
+          const isExpanded = expandedSection === section.id
+          
+          return (
+            <div key={section.id}>
+              {/* Section Header - Clickable to expand */}
+              <div
+                className={cn(
+                  "flex items-center gap-2.5 px-2 py-1.5 sm:py-2 rounded-md cursor-pointer transition-all",
+                  isExpanded 
+                    ? "bg-secondary/80" 
+                    : "hover:bg-secondary/50"
+                )}
+                onClick={() => setExpandedSection(isExpanded ? null : section.id)}
+              >
+                <div className={cn(
+                  "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
+                  isExpanded ? "bg-[var(--bronze)]/20" : "bg-muted"
+                )}>
+                  <SectionIcon className={cn("h-3.5 w-3.5", section.iconColor)} />
                 </div>
-                
-                {/* Expanded Features */}
-                {isExpanded && (
-                  <div className="ml-4 pl-4 border-l border-border/50 py-1 space-y-1">
-                    {section.features.map((feature, fIdx) => {
-                      const FeatureIcon = (feature as any).icon || CheckCircle
-                      return (
-                        <div 
-                          key={fIdx}
-                          className="flex items-start gap-2 py-1.5 px-2 rounded text-xs"
-                        >
-                          <FeatureIcon className="h-3 w-3 text-[var(--bronze)] mt-0.5 shrink-0" />
-                          <div>
-                            <span className="font-medium">{feature.name}</span>
-                            <span className="text-muted-foreground ml-1">— {feature.desc}</span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-                
-                {idx < featureSections.length - 1 && !isExpanded && (
-                  <div className="my-1" />
-                )}
+                <span className="flex-1 text-[13px] sm:text-sm font-medium">{section.title}</span>
+                <ChevronDown className={cn(
+                  "h-3.5 w-3.5 text-muted-foreground transition-transform",
+                  isExpanded && "rotate-180"
+                )} />
               </div>
-            )
-          })}
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 py-2.5 bg-gradient-to-r from-purple-500/5 to-amber-500/5 border-t border-border/50">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-yellow-400 font-medium">
-              Patented orchestration technology
-            </span>
-            <div className="flex items-center gap-1 text-[10px] text-[var(--bronze)]">
-              <TrendingUp className="h-3 w-3" />
-              <span>Always optimizing</span>
+              
+              {/* Expanded Features */}
+              {isExpanded && (
+                <div className="ml-3 sm:ml-4 pl-3 sm:pl-4 border-l border-border/50 py-1 space-y-1">
+                  {section.features.map((feature, fIdx) => {
+                    const FeatureIcon = (feature as any).icon || CheckCircle
+                    return (
+                      <div 
+                        key={fIdx}
+                        className="flex items-start gap-2 py-1 px-2 rounded text-[11px] sm:text-xs"
+                      >
+                        <FeatureIcon className="h-3 w-3 text-[var(--bronze)] mt-0.5 shrink-0" />
+                        <div>
+                          <span className="font-medium">{feature.name}</span>
+                          <span className="text-muted-foreground ml-1">— {feature.desc}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              
+              {idx < featureSections.length - 1 && !isExpanded && (
+                <div className="my-1" />
+              )}
             </div>
+          )
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-purple-500/5 to-amber-500/5 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-yellow-400 font-medium">
+            Patented orchestration technology
+          </span>
+          <div className="flex items-center gap-1 text-[10px] text-[var(--bronze)]">
+            <TrendingUp className="h-3 w-3" />
+            <span>Always optimizing</span>
           </div>
         </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </div>
+    </>
+  )
+
+  return (
+    <>
+      <div className="sm:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "gap-1.5 bg-gradient-to-r from-purple-500/20 to-amber-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-amber-500/30 hover:border-purple-400/50 transition-all duration-150 active:scale-[0.98] touch-target",
+                compact ? "h-7 px-2 text-[11px]" : "h-8 px-3 text-xs"
+              )}
+            >
+              <Cpu className="h-3.5 w-3.5 text-purple-400" />
+              <span className="font-medium bg-gradient-to-r from-purple-300 to-amber-300 bg-clip-text text-transparent">
+                Tech
+              </span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[85vh] p-0">
+            <SheetHeader className="px-4 py-3 border-b">
+              <SheetTitle className="text-sm font-semibold">LLMHive Technology</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto">{content}</div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      <div className="hidden sm:block">
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "gap-1.5 bg-gradient-to-r from-purple-500/20 to-amber-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-amber-500/30 hover:border-purple-400/50 transition-all duration-150 active:scale-[0.98]",
+                compact ? "h-7 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs" : "h-8 px-3 text-xs"
+              )}
+            >
+              <Cpu className="h-3.5 w-3.5 text-purple-400" />
+              <span className="hidden sm:inline font-medium bg-gradient-to-r from-purple-300 to-amber-300 bg-clip-text text-transparent">
+                LLMHive Technology
+              </span>
+              {!compact && (
+                <span className="sm:hidden font-medium bg-gradient-to-r from-purple-300 to-amber-300 bg-clip-text text-transparent">
+                  Tech
+                </span>
+              )}
+              <ChevronDown className="h-3 w-3 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="start" 
+            className="w-[90vw] sm:w-80 max-h-[80vh] overflow-y-auto p-1 sm:p-2 bg-gradient-to-b from-background to-background/95"
+          >
+            {content}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   )
 }

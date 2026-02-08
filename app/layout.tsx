@@ -21,10 +21,65 @@ const orbitron = Orbitron({
   weight: ["400", "500", "600", "700", "800", "900"]
 })
 
+const verification = (() => {
+  const other: Record<string, string> = {}
+  if (process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION) {
+    other["msvalidate.01"] = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+  }
+  if (process.env.NEXT_PUBLIC_BAIDU_SITE_VERIFICATION) {
+    other["baidu-site-verification"] = process.env.NEXT_PUBLIC_BAIDU_SITE_VERIFICATION
+  }
+
+  const verificationData: Metadata["verification"] = {}
+  if (process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION) {
+    verificationData.google = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+  }
+  if (process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION) {
+    verificationData.yandex = process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION
+  }
+  if (Object.keys(other).length > 0) {
+    verificationData.other = other
+  }
+
+  return Object.keys(verificationData).length > 0 ? verificationData : undefined
+})()
+
 export const metadata: Metadata = {
-  title: "LLMHive - Next-Generation AI Assistant",
-  description: "Premium AI assistant interface powered by advanced language models",
+  metadataBase: new URL("https://www.llmhive.ai"),
+  title: "LLMHive - Multi-Model AI Orchestration Platform",
+  description:
+    "LLMHive is a multi-model AI orchestration platform that routes every request to the best model for accuracy, speed, and cost. Built for teams and enterprises.",
+  applicationName: "LLMHive",
   generator: "v0.app",
+  alternates: {
+    canonical: "https://www.llmhive.ai",
+  },
+  keywords: [
+    "AI orchestration",
+    "multi-model AI",
+    "AI model router",
+    "AI assistant platform",
+    "enterprise AI",
+    "LLM routing",
+    "agentic AI",
+    "AI productivity",
+    "RAG platform",
+    "AI model marketplace",
+  ],
+  openGraph: {
+    title: "LLMHive - Multi-Model AI Orchestration Platform",
+    description:
+      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 400+ models in one interface.",
+    url: "https://www.llmhive.ai",
+    siteName: "LLMHive",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LLMHive - Multi-Model AI Orchestration Platform",
+    description:
+      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 400+ models in one interface.",
+  },
   icons: {
     icon: [
       {
@@ -32,6 +87,14 @@ export const metadata: Metadata = {
       },
     ],
   },
+  verification,
+}
+
+const websiteStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "LLMHive",
+  url: "https://www.llmhive.ai",
 }
 
 export default function RootLayout({
@@ -71,6 +134,49 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
+          />
+          {process.env.NEXT_PUBLIC_GA_ID ? (
+            <>
+              <script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} />
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                      anonymize_ip: true,
+                    });
+                  `,
+                }}
+              />
+            </>
+          ) : null}
+          {process.env.NEXT_PUBLIC_META_PIXEL_ID ? (
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  !function(f,b,e,v,n,t,s)
+                  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                  n.queue=[];t=b.createElement(e);t.async=!0;
+                  t.src=v;s=b.getElementsByTagName(e)[0];
+                  s.parentNode.insertBefore(t,s)}(window, document,'script',
+                  'https://connect.facebook.net/en_US/fbevents.js');
+                  fbq('init', '${process.env.NEXT_PUBLIC_META_PIXEL_ID}');
+                  fbq('track', 'PageView');
+                `,
+              }}
+            />
+          ) : null}
           <script
             dangerouslySetInnerHTML={{
               __html: `

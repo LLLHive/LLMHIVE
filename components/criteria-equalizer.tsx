@@ -30,19 +30,19 @@ export function CriteriaEqualizer({ settings, onChange }: CriteriaEqualizerProps
           variant="ghost"
           size="sm"
           className={cn(
-            "gap-2 h-7 px-2.5 text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black",
+            "gap-2 h-6 px-2 text-[10px] sm:h-7 sm:px-2.5 sm:text-[11px] bg-transparent border border-border rounded-md text-foreground transition-all duration-300 [&:hover]:bg-[#cd7f32] [&:hover]:border-[#cd7f32] [&:hover]:text-black touch-target",
             open && "bg-[#cd7f32] border-[#cd7f32] text-black",
           )}
         >
           <Sliders className="h-3.5 w-3.5" />
-          <span className="text-[11px]">Tuning</span>
+          <span className="text-[10px] sm:text-[11px] font-display text-white/80">Tuning</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 z-[600]" align="start">
-        <div className="space-y-4">
+      <PopoverContent className="w-[90vw] sm:w-80 z-[600]" align="start">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <h4 className="font-semibold text-sm mb-1">Dynamic Criteria Equalizer</h4>
-            <p className="text-xs text-muted-foreground">
+            <h4 className="font-semibold text-[13px] sm:text-sm mb-1">Dynamic Criteria Equalizer</h4>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">
               Adjust how the AI hive balances accuracy, speed, and creativity
             </p>
           </div>
@@ -54,7 +54,7 @@ export function CriteriaEqualizer({ settings, onChange }: CriteriaEqualizerProps
                 key={preset.name}
                 variant="outline"
                 size="sm"
-                className="text-xs h-auto py-2 bg-transparent"
+                className="text-[10px] sm:text-xs h-auto py-2 bg-transparent"
                 onClick={() => onChange(preset)}
               >
                 {preset.name}
@@ -69,9 +69,9 @@ export function CriteriaEqualizer({ settings, onChange }: CriteriaEqualizerProps
                 <div className="w-6 h-6 rounded bg-blue-500/20 flex items-center justify-center">
                   <Target className="h-3 w-3 text-blue-500" />
                 </div>
-                <span className="text-sm font-medium">Accuracy</span>
+                <span className="text-[12px] sm:text-sm font-medium">Accuracy</span>
               </div>
-              <span className="text-xs text-muted-foreground">{settings.accuracy}%</span>
+              <span className="text-[11px] sm:text-xs text-muted-foreground">{settings.accuracy}%</span>
             </div>
             <Slider
               value={[settings.accuracy]}
@@ -89,9 +89,9 @@ export function CriteriaEqualizer({ settings, onChange }: CriteriaEqualizerProps
                 <div className="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center">
                   <Zap className="h-3 w-3 text-green-500" />
                 </div>
-                <span className="text-sm font-medium">Speed</span>
+                <span className="text-[12px] sm:text-sm font-medium">Speed</span>
               </div>
-              <span className="text-xs text-muted-foreground">{settings.speed}%</span>
+              <span className="text-[11px] sm:text-xs text-muted-foreground">{settings.speed}%</span>
             </div>
             <Slider
               value={[settings.speed]}
@@ -109,9 +109,9 @@ export function CriteriaEqualizer({ settings, onChange }: CriteriaEqualizerProps
                 <div className="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center">
                   <Palette className="h-3 w-3 text-purple-500" />
                 </div>
-                <span className="text-sm font-medium">Creativity</span>
+                <span className="text-[12px] sm:text-sm font-medium">Creativity</span>
               </div>
-              <span className="text-xs text-muted-foreground">{settings.creativity}%</span>
+              <span className="text-[11px] sm:text-xs text-muted-foreground">{settings.creativity}%</span>
             </div>
             <Slider
               value={[settings.creativity]}

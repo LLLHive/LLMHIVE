@@ -397,11 +397,11 @@ export function ChatInterface() {
       <div className="hidden md:block h-full">{sidebarContent}</div>
 
       {/* Mobile Header with Hamburger - Glassmorphism */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/10 llmhive-glass-sidebar flex items-center justify-between px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] border-b border-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.25)] llmhive-glass-sidebar glass-header flex items-center justify-between px-3">
         <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open navigation menu">
-              <Menu className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 premium-tap touch-target" aria-label="Open navigation menu">
+              <Menu className="h-4 w-4" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-72 llmhive-glass-sidebar border-r-0">
@@ -430,11 +430,12 @@ export function ChatInterface() {
 
         <LogoText height={28} />
 
-        <UserAccountMenu />
+        <UserAccountMenu compact />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent sm:hidden" />
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden md:pt-0 pt-14">
+      <div className="flex flex-1 overflow-x-hidden overflow-y-auto md:pt-0 pt-14">
         {!currentConversationId && !initialQuery ? (
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex-1 h-full overflow-auto">

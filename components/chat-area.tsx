@@ -111,6 +111,7 @@ export function ChatArea({
   const [lastTokensUsed, setLastTokensUsed] = useState<number>(0)
   const [lastLatencyMs, setLastLatencyMs] = useState<number>(0)
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null)
+  const [showMobileToolbar, setShowMobileToolbar] = useState(false)
   
   // Active prompt display - shows the current prompt being processed
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
@@ -909,10 +910,12 @@ export function ChatArea({
         }}
       />
 
-      <header className="border-b border-white/10 p-3 glass-content sticky top-0 z-40 space-y-3">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+      <header className="border-b border-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.25)] sm:shadow-none p-2 sm:p-3 glass-content glass-header sticky top-0 z-40 space-y-2 sm:space-y-3">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap w-full">
           {/* Powered By LLMHive - Marketing showcase dropdown - FIRST */}
-          <PoweredByDropdown />
+          <div className="shrink-0">
+            <PoweredByDropdown compact />
+          </div>
           
           {/* Industry Pack Dropdown - Styled with orange/amber gradient */}
           <DropdownMenu>
@@ -920,14 +923,16 @@ export function ChatArea({
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 h-8 px-3 text-xs bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-lg hover:from-orange-500/30 hover:to-amber-500/30 hover:border-orange-400/50 transition-all"
+                className="gap-1.5 h-7 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-lg hover:from-orange-500/30 hover:to-amber-500/30 hover:border-orange-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
               >
                 <activeModeInfo.icon className="h-3.5 w-3.5 text-orange-400" />
-                <span className="hidden sm:inline font-medium bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent">Industry Pack</span>
+                <span className="hidden sm:inline font-medium bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent">
+                  Industry Pack
+                </span>
                 <ChevronDown className="h-3 w-3 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-52">
+            <DropdownMenuContent align="start" className="w-48 sm:w-52 p-1 sm:p-2">
               {domainPacks.map((pack) => {
                 const Icon = pack.icon
                 const isSelected = orchestratorSettings.domainPack === pack.value || 
@@ -948,15 +953,41 @@ export function ChatArea({
           </DropdownMenu>
           
           {/* Models and Format dropdowns - right next to Industry Pack */}
-          <ChatToolbar
-            settings={orchestratorSettings}
-            onSettingsChange={onOrchestratorSettingsChange}
-          />
+          <div className="hidden sm:flex">
+            <ChatToolbar
+              settings={orchestratorSettings}
+              onSettingsChange={onOrchestratorSettingsChange}
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="sm:hidden h-7 px-2 text-[11px] transition-transform duration-150 active:scale-[0.98] font-display touch-target"
+            onClick={() => setShowMobileToolbar((prev) => !prev)}
+          >
+            <span className="text-white/80">Controls</span>
+            {showMobileToolbar ? (
+              <ChevronUp className="ml-2 h-3 w-3" />
+            ) : (
+              <ChevronDown className="ml-2 h-3 w-3" />
+            )}
+          </Button>
           
-          {/* Spacer to push account menu to right */}
-          <div className="flex-1" />
-          {userAccountMenu}
+          <div className="ml-auto flex items-center">
+            {userAccountMenu}
+          </div>
         </div>
+        {showMobileToolbar && (
+          <div className="sm:hidden w-full rounded-lg border border-white/10 bg-white/5 p-2">
+            <div className="overflow-x-auto pb-1">
+              <ChatToolbar
+                settings={orchestratorSettings}
+                onSettingsChange={onOrchestratorSettingsChange}
+              />
+            </div>
+          </div>
+        )}
+        <div className="sm:hidden h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         {/* Orchestration Studio moved to toolbar dropdown */}
       </header>
 
@@ -1137,33 +1168,35 @@ export function ChatArea({
             </div>
           )}
 
-          <div className="relative">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value)
-                // Auto-resize textarea based on content
-                const target = e.target as HTMLTextAreaElement
-                target.style.height = 'auto'
-                target.style.height = `${Math.min(target.scrollHeight, 300)}px`
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              placeholder={isListening ? "Listening... speak now" : "Ask the hive mind anything..."}
-              aria-label="Chat message input"
-              className={`min-h-[56px] md:min-h-[72px] max-h-[300px] pr-28 md:pr-36 resize-none bg-white/5 border-white/10 focus:border-[var(--bronze)] text-sm md:text-base overflow-y-auto ${
-                isListening ? 'border-red-500/50 ring-1 ring-red-500/20' : ''
-              }`}
-              spellCheck={orchestratorSettings.enableSpellCheck ?? true}
-              autoComplete="on"
-              autoCorrect="on"
-            />
-            <div className="absolute bottom-2 md:bottom-2.5 right-2 md:right-2.5 flex items-center gap-1 md:gap-1.5">
+          <div className="relative chat-input-container rounded-2xl bg-gradient-to-r from-white/10 via-white/5 to-white/10 p-[1px]">
+            <div className="rounded-2xl bg-white/5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),inset_0_-8px_24px_rgba(0,0,0,0.35)]">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value)
+                  // Auto-resize textarea based on content
+                  const target = e.target as HTMLTextAreaElement
+                  target.style.height = 'auto'
+                  target.style.height = `${Math.min(target.scrollHeight, 300)}px`
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                placeholder={isListening ? "Listening... speak now" : "Ask the hive mind anything..."}
+                aria-label="Chat message input"
+                className={`min-h-[60px] md:min-h-[72px] max-h-[300px] pr-[140px] md:pr-36 pl-4 py-3 resize-none bg-transparent border-transparent focus:border-transparent focus:ring-0 text-sm md:text-base overflow-y-auto ${
+                  isListening ? 'ring-1 ring-red-500/20' : ''
+                }`}
+                spellCheck={orchestratorSettings.enableSpellCheck ?? true}
+                autoComplete="on"
+                autoCorrect="on"
+              />
+            </div>
+            <div className="absolute bottom-2 md:bottom-2.5 right-1 md:right-2.5 flex items-center gap-0.5 md:gap-1.5">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1183,7 +1216,7 @@ export function ChatArea({
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-7 w-7 md:h-8 md:w-8"
+                className="h-6 w-6 md:h-8 md:w-8 touch-target transition-transform duration-150 active:scale-[0.98]"
                 onClick={() => fileInputRef.current?.click()}
                 title="Attach file"
               >
@@ -1192,7 +1225,7 @@ export function ChatArea({
               <Button 
                 size="icon" 
                 variant="ghost" 
-                className="h-7 w-7 md:h-8 md:w-8"
+                className="h-6 w-6 md:h-8 md:w-8 touch-target transition-transform duration-150 active:scale-[0.98]"
                 onClick={() => cameraInputRef.current?.click()}
                 title="Capture image for OCR"
               >
@@ -1203,7 +1236,7 @@ export function ChatArea({
                 <Button 
                   size="icon" 
                   variant="ghost" 
-                  className={`h-7 w-7 md:h-8 md:w-8 transition-all duration-200 ${
+                  className={`h-6 w-6 md:h-8 md:w-8 touch-target transition-all duration-200 active:scale-[0.98] ${
                     isListening 
                       ? 'bg-red-500/20 text-red-500' 
                       : ''
@@ -1234,7 +1267,7 @@ export function ChatArea({
                 data-send-button
                 onClick={() => handleSend()}
                 disabled={(!input.trim() && attachments.length === 0) || isLoading}
-                className="h-7 w-7 md:h-8 md:w-8 bronze-gradient disabled:opacity-50"
+                className="h-6 w-6 md:h-8 md:w-8 bronze-gradient touch-target transition-transform duration-150 active:scale-[0.98] disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>

@@ -8,6 +8,21 @@
 import { test, expect } from '@playwright/test'
 import { setupOpenRouterMocks, setupClarifyingQuestionsMock } from './openrouter-mock'
 
+async function ensureChatInputReady(page: import('@playwright/test').Page) {
+  const chatInput = page.locator('textarea, input[type="text"]').first()
+  const isVisible = await chatInput.isVisible().catch(() => false)
+
+  if (!isVisible) {
+    const startButton = page.getByRole('button', { name: /start chatting/i })
+    if (await startButton.isVisible().catch(() => false)) {
+      await startButton.click()
+    }
+  }
+
+  await expect(chatInput).toBeVisible({ timeout: 10000 })
+  return chatInput
+}
+
 test.describe('Clarifying Questions Flow', () => {
   test.beforeEach(async ({ page }) => {
     await setupOpenRouterMocks(page)
@@ -20,8 +35,7 @@ test.describe('Clarifying Questions Flow', () => {
     await page.goto('/', { waitUntil: 'networkidle' })
     
     // Wait for chat to be ready
-    const chatInput = page.locator('textarea, input[type="text"]').first()
-    await expect(chatInput).toBeVisible({ timeout: 10000 })
+    const chatInput = await ensureChatInputReady(page)
     
     // Send ambiguous message
     await chatInput.fill('Tell me about this ambiguous topic that needs clarification')
@@ -43,8 +57,7 @@ test.describe('Clarifying Questions Flow', () => {
     
     await page.goto('/', { waitUntil: 'networkidle' })
     
-    const chatInput = page.locator('textarea, input[type="text"]').first()
-    await expect(chatInput).toBeVisible({ timeout: 10000 })
+    const chatInput = await ensureChatInputReady(page)
     
     // Send ambiguous message
     await chatInput.fill('Tell me about this ambiguous topic')
@@ -79,8 +92,7 @@ test.describe('Clarifying Questions Flow', () => {
     
     await page.goto('/', { waitUntil: 'networkidle' })
     
-    const chatInput = page.locator('textarea, input[type="text"]').first()
-    await expect(chatInput).toBeVisible({ timeout: 10000 })
+    const chatInput = await ensureChatInputReady(page)
     
     // Send clear, unambiguous message
     await chatInput.fill('What is the capital of France?')
@@ -105,8 +117,7 @@ test.describe('Clarifying Questions UI Elements', () => {
   test('clarifying question has proper formatting', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
     
-    const chatInput = page.locator('textarea, input[type="text"]').first()
-    await expect(chatInput).toBeVisible({ timeout: 10000 })
+    const chatInput = await ensureChatInputReady(page)
     
     await chatInput.fill('Ambiguous question here')
     await chatInput.press('Enter')
@@ -126,8 +137,7 @@ test.describe('Clarifying Questions UI Elements', () => {
   test('chat input remains functional after clarifying question', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
     
-    const chatInput = page.locator('textarea, input[type="text"]').first()
-    await expect(chatInput).toBeVisible({ timeout: 10000 })
+    const chatInput = await ensureChatInputReady(page)
     
     // Send first message
     await chatInput.fill('Ambiguous topic')

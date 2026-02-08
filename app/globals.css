@@ -627,6 +627,42 @@
   }
 }
 
+/* Safe-area support for iPhone notches/home indicators */
+@supports (padding: max(0px)) {
+  .chat-input-container {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+}
+
+@layer utilities {
+  .touch-target {
+    position: relative;
+  }
+
+  .touch-target::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 9999px;
+    pointer-events: auto;
+  }
+
+  .premium-tap {
+    transition: transform 150ms ease, color 150ms ease, background-color 150ms ease;
+  }
+
+  .premium-tap:active {
+    transform: scale(0.98);
+  }
+
+  .glass-header {
+    background-color: rgba(8, 8, 8, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+}
+
 /* ============================================
    SCROLLBAR STYLING
    ============================================ */

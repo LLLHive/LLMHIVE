@@ -1,12 +1,56 @@
-"use client"
-
 import Link from "next/link"
+import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Terms of Service - LLMHive",
+  description: "Review the LLMHive terms of service and acceptable use guidelines.",
+  alternates: {
+    canonical: "https://www.llmhive.ai/terms",
+  },
+  openGraph: {
+    title: "LLMHive Terms of Service",
+    description: "Review the LLMHive terms of service and acceptable use guidelines.",
+    type: "article",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LLMHive Terms of Service",
+    description: "Review the LLMHive terms of service and acceptable use guidelines.",
+  },
+}
+
+function renderStructuredData() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Terms of Service",
+            item: "https://www.llmhive.ai/terms",
+          },
+        ],
+      },
+    ],
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+    />
+  )
+}
 
 export default function TermsOfServicePage() {
   return (
     <div className="min-h-screen bg-background">
+      {renderStructuredData()}
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
@@ -14,6 +58,11 @@ export default function TermsOfServicePage() {
             <Button variant="ghost" size="sm" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
+            </Button>
+          </Link>
+          <Link href="/business-ops">
+            <Button variant="outline" size="sm">
+              Business Ops
             </Button>
           </Link>
         </div>
@@ -151,6 +200,15 @@ export default function TermsOfServicePage() {
           </section>
         </div>
       </main>
+      <footer className="border-t border-border/60 py-6">
+        <div className="max-w-4xl mx-auto px-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <Link href="/business-ops" className="hover:text-foreground">Business Ops</Link>
+          <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+          <Link href="/terms" className="hover:text-foreground">Terms</Link>
+          <Link href="/cookies" className="hover:text-foreground">Cookies</Link>
+          <Link href="/contact" className="hover:text-foreground">Contact</Link>
+        </div>
+      </footer>
     </div>
   )
 }

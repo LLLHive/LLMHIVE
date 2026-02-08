@@ -33,6 +33,7 @@ import {
   CheckCircle,
   UserPlus,
   UserMinus,
+  Building2,
 } from "lucide-react"
 import {
   BarChart,
@@ -661,6 +662,12 @@ export default function AdminDashboardPage() {
                   <Button variant="outline" className="w-full justify-start">
                     <AlertCircle className="h-4 w-4 mr-2" />
                     Support Tickets
+                  </Button>
+                </Link>
+                <Link href="/business-ops" className="block">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Business Ops Hub
                   </Button>
                 </Link>
                 <a 

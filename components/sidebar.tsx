@@ -39,6 +39,7 @@ import {
   Share,
   Archive,
   UserPlus,
+  Building2,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -432,6 +433,20 @@ export function Sidebar({
             
             {/* Orchestration and Settings at the bottom */}
             <div className="px-3 py-3 border-t border-border/50 mt-auto space-y-1">
+              <Link href={ROUTES.BUSINESS_OPS} className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.BUSINESS_OPS) && "bg-secondary text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
+                >
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Business Ops
+                </Button>
+              </Link>
               {/* Orchestration link */}
               <Link href={ROUTES.ORCHESTRATION} className="w-full">
                 <Button
@@ -523,6 +538,22 @@ export function Sidebar({
                   <TooltipContent side="right">Discover</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={ROUTES.BUSINESS_OPS}>
+                      <Button
+                        variant={isActiveRoute(ROUTES.BUSINESS_OPS) ? "secondary" : "ghost"}
+                        size="icon"
+                        className={cn("w-10 h-10", isActiveRoute(ROUTES.BUSINESS_OPS) && "text-[var(--bronze)]")}
+                      >
+                        <Building2 className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Business Ops</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {/* Collapsed Models icon moved to Settings page */}
               {/* Collapsed Orchestration icon moved to bottom */}
             </div>
@@ -558,7 +589,7 @@ export function Sidebar({
                       <Button 
                         variant={isActiveRoute(ROUTES.SETTINGS) ? "secondary" : "ghost"} 
                         size="icon" 
-                        className={cn("w-10 h-10", isActiveRoute(ROUTES.SETTINGS) && "text-[var(--bronze)]")}
+                        className={cn("w-10 h-10 touch-target premium-tap", isActiveRoute(ROUTES.SETTINGS) && "text-[var(--bronze)]")}
                       >
                         <Settings className="h-5 w-5" />
                       </Button>
@@ -576,7 +607,7 @@ export function Sidebar({
           variant="ghost"
           size="icon"
           onClick={onToggleCollapse}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-border bg-sidebar hover:bg-secondary shadow-md z-50"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-border bg-sidebar hover:bg-secondary shadow-md z-50 touch-target premium-tap"
         >
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
         </Button>
@@ -634,7 +665,7 @@ function ProjectItem({
             variant="ghost" 
             size="icon" 
             onClick={(e) => e.stopPropagation()}
-            className="h-6 w-6 min-w-[24px] flex-shrink-0 rounded-md bg-secondary/50 opacity-100 hover:bg-secondary-foreground/20 focus:bg-secondary-foreground/20"
+            className="h-6 w-6 min-w-[24px] flex-shrink-0 rounded-md bg-secondary/50 opacity-100 hover:bg-secondary-foreground/20 focus:bg-secondary-foreground/20 touch-target premium-tap"
             aria-label="Project options"
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -777,7 +808,7 @@ function ConversationItem({
             variant="ghost" 
             size="icon" 
             onClick={(e) => e.stopPropagation()}
-            className="h-6 w-6 min-w-[24px] flex-shrink-0 rounded-md bg-secondary/50 opacity-100 hover:bg-secondary-foreground/20 focus:bg-secondary-foreground/20"
+            className="h-6 w-6 min-w-[24px] flex-shrink-0 rounded-md bg-secondary/50 opacity-100 hover:bg-secondary-foreground/20 focus:bg-secondary-foreground/20 touch-target premium-tap"
             aria-label="Chat options"
           >
             <MoreHorizontal className="h-4 w-4" />
