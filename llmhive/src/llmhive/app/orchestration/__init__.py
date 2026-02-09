@@ -216,6 +216,31 @@ from .elite_orchestration import (
     estimate_elite_cost,
 )
 
+# Frontier Models Database (February 2026)
+from .frontier_models_2026 import (
+    ModelTier,
+    ModelSpecs,
+    FRONTIER_MODELS,
+    CATEGORY_RANKINGS_2026,
+    get_top_models_for_category,
+    get_model_specs,
+    get_best_model_for_task,
+    compare_models,
+)
+
+# Benchmark-Specific Configuration (February 2026)
+from .benchmark_config import (
+    is_benchmark_mode,
+    FRONTIER_MODEL_BENCHMARKS_2026,
+    BENCHMARK_ELITE_MODELS,
+    BENCHMARK_ORCHESTRATION_BASE,
+    get_benchmark_orchestration_config,
+    get_benchmark_prompt_template,
+    FORCE_CALCULATOR_PATTERNS,
+    should_force_calculator,
+    VERIFICATION_STRATEGIES,
+)
+
 __all__ = [
     # Stage 4 Core
     "TransformerCorefResolver",
@@ -341,4 +366,23 @@ __all__ = [
     "elite_multimodal_process",
     "detect_elite_category",
     "estimate_elite_cost",
+    # Frontier Models 2026
+    "ModelTier",
+    "ModelSpecs",
+    "FRONTIER_MODELS",
+    "CATEGORY_RANKINGS_2026",
+    "get_top_models_for_category",
+    "get_model_specs",
+    "get_best_model_for_task",
+    "compare_models",
+    # Benchmark Configuration 2026
+    "is_benchmark_mode",
+    "FRONTIER_MODEL_BENCHMARKS_2026",
+    "BENCHMARK_ELITE_MODELS",
+    "BENCHMARK_ORCHESTRATION_BASE",
+    "get_benchmark_orchestration_config",
+    "get_benchmark_prompt_template",
+    "FORCE_CALCULATOR_PATTERNS",
+    "should_force_calculator",
+    "VERIFICATION_STRATEGIES",
 ]
