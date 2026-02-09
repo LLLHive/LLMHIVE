@@ -300,34 +300,41 @@ MAXIMUM_MODELS = {
 # NOTE: Model IDs must match the constants in model_router.py for consistency
 ELITE_MODELS = {
     "math": [
-        "openai/o3-mini",          # 94.8% GSM8K - cost-effective reasoning
-        "openai/gpt-5.2",          # Latest version (Feb 2026) - 95.2% GSM8K
-        "anthropic/claude-opus-4", # 100% AIME with tools - 95.8% GSM8K
+        "zhipuai/glm-4.7",         # 98% GSM8K - CHAMPION
+        "moonshot/kimi-k2.5-thinking", # 96.8% GSM8K
+        "google/gemini-3-pro",     # 96% GSM8K - 1M context
+        "anthropic/claude-opus-4.6", # 95.8% GSM8K - Feb 2026
+        "openai/gpt-5.2",          # 95.2% GSM8K
     ],
     "reasoning": [
-        "openai/o3",               # 94.2% MMLU - Native reasoning
-        "openai/gpt-5.2",          # 92.8% MMLU - Latest GPT
-        "anthropic/claude-opus-4", # 91.5% MMLU - Best logic
+        "google/gemini-3-pro",     # 91.8% MMLU, 91.9% GPQA Diamond - #1
+        "openai/gpt-5.2",          # 92.8% MMLU
+        "anthropic/claude-opus-4.6", # 90% MMLU - Precision
+        "moonshot/kimi-k2.5-thinking", # 88% MMLU - Thinking mode
+        "xai/grok-4.1-thinking",   # 89% MMLU - Visual reasoning
     ],
     "coding": [
-        "anthropic/claude-sonnet-4", # 82.1% SWE-Bench Verified
-        "anthropic/claude-opus-4",   # 80.9% SWE-Bench
-        "openai/gpt-5.2",            # 79% SWE-Bench - Latest
+        "alibaba/qwen3-max",       # 92.7% HumanEval - LEADS GPT-4o
+        "openai/gpt-5.3-codex",    # 92% HumanEval (estimated) - Specialized
+        "moonshot/kimi-k2.5-thinking", # 92% accuracy - Visual coding
+        "anthropic/claude-opus-4.6", # 87% (79.2% SWE-Bench) - Champion
+        "google/gemini-3-pro",     # 85% (76.2% SWE-Bench)
     ],
     "rag": [
-        "openai/gpt-5.2",          # 95% RAG-Eval - Latest
-        "anthropic/claude-opus-4", # 94% RAG-Eval
-        "google/gemini-2.5-pro",   # 90% RAG-Eval
+        "openai/gpt-5.2",          # 95% RAG-Eval
+        "anthropic/claude-opus-4.6", # 94% RAG-Eval
+        "google/gemini-3-pro",     # Multimodal, 1M context
     ],
     "multilingual": [
-        "anthropic/claude-opus-4", # 90.8% MMMLU
-        "anthropic/claude-sonnet-4", # 89.1% MMMLU
-        "google/gemini-2.5-pro",   # 89.2% MMMLU
+        "google/gemini-3-pro",     # Multimodal, multilingual champion
+        "anthropic/claude-opus-4.6", # 90.8% MMMLU (estimated)
+        "alibaba/qwen3-max",       # Strong Chinese + multilingual
     ],
     "long_context": [
-        "anthropic/claude-sonnet-4", # 1M tokens
-        "openai/gpt-5.2",            # 256K tokens - Latest
-        "anthropic/claude-opus-4",   # 200K tokens
+        "google/gemini-3-pro",     # 1M tokens - LARGEST
+        "anthropic/claude-opus-4.6", # 1M tokens (beta)
+        "moonshot/kimi-k2.5-thinking", # 256K context
+        "alibaba/qwen3-max",       # 262K context
     ],
     "speed": [
         "openai/gpt-4o-mini",      # 0.35s TTFT, API available
