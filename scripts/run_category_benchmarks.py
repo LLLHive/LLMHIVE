@@ -225,17 +225,31 @@ def _strip_non_code_trailers(text: str) -> str:
 
 
 def _completion_from_response(problem: Dict[str, Any], response: str) -> str:
-    """Extract and format code completion for HumanEval"""
+    """Extract and format code completion for HumanEval
+    
+    CRITICAL FIX: Extract ONLY the function code, not surrounding explanations.
+    Previous bug: Returned entire text including markdown/explanations.
+    """
     text = _strip_code_fences(response)
     
-    # If response contains the full function, return it
+    # If response contains the full function, extract ONLY the function
     entry_point = problem.get("entry_point", "")
     if entry_point:
-        pattern = re.compile(rf"def\s+{re.escape(entry_point)}\s*\([^)]*\):", re.MULTILINE)
+        # Match function definition until next def/class or end
+        pattern = re.compile(
+            rf"(def\s+{re.escape(entry_point)}\s*\([^)]*\).*?)(?=\n(?:def|class|```|$))",
+            re.MULTILINE | re.DOTALL
+        )
         match = pattern.search(text)
         if match:
-            # Found full function definition - use it as-is
-            return text.strip() + "\n"
+            function_code = match.group(1).strip()
+            
+            # Add typing imports if needed (common HumanEval requirement)
+            if any(hint in function_code for hint in ["List[", "Dict[", "Optional[", "Tuple["]):
+                if "from typing import" not in function_code:
+                    function_code = "from typing import List, Dict, Optional, Tuple, Set\n\n" + function_code
+            
+            return function_code + "\n"
     
     # Otherwise, try to extract just the body
     prompt = problem.get("prompt", "")
