@@ -300,22 +300,22 @@ MAXIMUM_MODELS = {
 # NOTE: Model IDs must match the constants in model_router.py for consistency
 ELITE_MODELS = {
     "math": [
-        "openai/o3",               # 98.4% AIME - reasoning specialist
-        "openai/gpt-5",            # 100% AIME - best overall (gpt-5 is latest)
-        "anthropic/claude-opus-4", # 100% AIME with tools
+        "openai/o3-mini",          # 94.8% GSM8K - cost-effective reasoning
+        "openai/gpt-5.2",          # Latest version (Feb 2026) - 95.2% GSM8K
+        "anthropic/claude-opus-4", # 100% AIME with tools - 95.8% GSM8K
     ],
     "reasoning": [
-        "openai/gpt-5",            # 92.4% GPQA
-        "openai/o3",               # Native reasoning
-        "anthropic/claude-opus-4", # 87% GPQA
+        "openai/o3",               # 94.2% MMLU - Native reasoning
+        "openai/gpt-5.2",          # 92.8% MMLU - Latest GPT
+        "anthropic/claude-opus-4", # 91.5% MMLU - Best logic
     ],
     "coding": [
-        "anthropic/claude-sonnet-4", # 82% SWE-Bench
+        "anthropic/claude-sonnet-4", # 82.1% SWE-Bench Verified
         "anthropic/claude-opus-4",   # 80.9% SWE-Bench
-        "openai/gpt-5",              # 80% SWE-Bench
+        "openai/gpt-5.2",            # 79% SWE-Bench - Latest
     ],
     "rag": [
-        "openai/gpt-5",            # 95% RAG-Eval
+        "openai/gpt-5.2",          # 95% RAG-Eval - Latest
         "anthropic/claude-opus-4", # 94% RAG-Eval
         "google/gemini-2.5-pro",   # 90% RAG-Eval
     ],
@@ -326,7 +326,7 @@ ELITE_MODELS = {
     ],
     "long_context": [
         "anthropic/claude-sonnet-4", # 1M tokens
-        "openai/gpt-5",              # 256K tokens
+        "openai/gpt-5.2",            # 256K tokens - Latest
         "anthropic/claude-opus-4",   # 200K tokens
     ],
     "speed": [
@@ -335,13 +335,13 @@ ELITE_MODELS = {
         "anthropic/claude-3-haiku", # Fast variant
     ],
     "dialogue": [
-        "openai/gpt-5",            # 95% alignment
+        "openai/gpt-5.2",          # 95% alignment - Latest
         "anthropic/claude-opus-4", # 94% alignment
         "anthropic/claude-sonnet-4", # 92% alignment
     ],
     "multimodal": [
         "anthropic/claude-opus-4", # 378 ARC-AGI2
-        "openai/gpt-5",            # 53 ARC-AGI2
+        "openai/gpt-5.2",          # Latest - Vision capable
         "openai/gpt-4o",           # Vision capable
     ],
 }
