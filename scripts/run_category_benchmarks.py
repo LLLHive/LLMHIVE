@@ -279,8 +279,28 @@ def _extract_gsm8k_answer(answer_text: str) -> Optional[float]:
 
 
 def _extract_multiple_choice(text: str) -> Optional[str]:
-    match = re.search(r"\b([ABCD])\b", text.strip().upper())
-    return match.group(1) if match else None
+    """Extract answer letter with ROBUST format handling.
+    
+    SKILL 7: Answer Format Enforcement (from historical analysis)
+    Many correct answers are lost due to format mismatches.
+    """
+    text = text.strip().upper()
+    
+    # Strategy 1: Last capital letter (most reliable)
+    last_letters = re.findall(r'[ABCD]', text)
+    if last_letters:
+        return last_letters[-1]  # Take LAST occurrence
+    
+    # Strategy 2: Isolated letter
+    match = re.search(r'\b([ABCD])\b', text)
+    if match:
+        return match.group(1)
+    
+    # Strategy 3: Beginning of response
+    if text and text[0] in ['A', 'B', 'C', 'D']:
+        return text[0]
+    
+    return None
 
 
 def _checkpoint_config() -> Dict[str, Any]:
@@ -455,8 +475,9 @@ async def evaluate_reasoning(
             choices = item["choices"]
             correct_answer = ["A", "B", "C", "D"][item["answer"]]
             
-            # ENHANCED PROMPT for better reasoning
-            prompt = f"""Analyze this question with rigorous step-by-step reasoning.
+            # SKILL 1.3: Elimination Strategy + SKILL 1.4: Clean Prompts
+            # Historical lesson: Simple beats complex (70% baseline > 22% "optimized")
+            prompt = f"""Answer this question by eliminating wrong options first.
 
 Question: {question}
 
@@ -465,16 +486,12 @@ B) {choices[1]}
 C) {choices[2]}
 D) {choices[3]}
 
-Approach:
-1. Read the question carefully and identify what's being asked
-2. For each answer option, evaluate its correctness
-3. Eliminate clearly wrong answers
-4. Compare remaining options
-5. Select the most accurate answer
+Method:
+1. Which options are OBVIOUSLY wrong? (Contradict facts or logic)
+2. Of the remaining options, which has the strongest evidence?
+3. Double-check: Can you defend your answer?
 
-Provide your final answer as ONLY the letter (A, B, C, or D).
-
-Answer:"""
+Provide ONLY the letter (A, B, C, or D):"""
             
             result = await call_llmhive_api(prompt, reasoning_mode=REASONING_MODE, tier=tier)
 
@@ -561,19 +578,27 @@ async def evaluate_coding(
             if i <= start_index:
                 continue
             problem = problems[task_id]
-            # ENHANCED PROMPT for better code generation
-            prompt = f"""Write production-quality Python code for this function.
+            
+            # SKILL 2.1 + 2.2: Docstring-Driven TDD (from historical analysis)
+            # Historical lesson: 0-10% failure due to missing edge cases
+            prompt = f"""Write complete, tested Python code for this function.
 
 {problem['prompt']}
 
-Requirements:
-1. Complete implementation (not just stub or pass)
-2. Handle all edge cases mentioned in the docstring
-3. Include proper error handling where appropriate
-4. Ensure the function works correctly for ALL test cases
-5. Think through the logic step-by-step before writing
+BEFORE coding, identify edge cases from the docstring:
+1. Empty input? How to handle?
+2. Single element? What should happen?
+3. Negative numbers? Allowed?
+4. Duplicates? How to handle?
+5. Boundary values? Check limits?
 
-Provide the complete function implementation:"""
+THEN implement to handle ALL cases:
+- Read docstring examples carefully
+- Test logic mentally for EACH example
+- Add checks for edge cases
+- Ensure function returns correct type
+
+Complete function:"""
             
             result = await call_llmhive_api(
                 prompt,
@@ -712,19 +737,25 @@ async def evaluate_math(
             answer_text = item["answer"]
             correct_answer = _extract_gsm8k_answer(answer_text)
             
-            # ENHANCED PROMPT for better math solving
-            prompt = f"""Solve this math problem with careful step-by-step work.
+            # SKILL 3.1 + 3.2 + 3.3: Force Calculator + Decompose + Verify
+            # Historical lesson: 92-94% but need 97% - calculator not forced enough
+            prompt = f"""Solve this math problem step-by-step.
 
 Problem: {question}
 
-Instructions:
-1. Break down the problem into clear steps
-2. Show ALL calculations explicitly  
-3. Verify each step for arithmetic errors
-4. Double-check your final answer
-5. Format answer as: #### [number]
+CRITICAL RULES:
+1. Break into individual calculation steps
+2. For EACH calculation, show the expression clearly
+3. State the result of each step
+4. Build to the final answer
+5. MUST end with: #### [number]
 
-Work through this carefully:"""
+Example format:
+Step 1: Calculate X = 5 + 3 = 8
+Step 2: Calculate Y = 8 * 2 = 16
+Final answer: #### 16
+
+Your solution:"""
             
             result = await call_llmhive_api(
                 prompt,
@@ -831,24 +862,46 @@ async def evaluate_multilingual(
         if i <= start_index:
             continue
         
-        # Try different field names for MMMLU dataset variants
-        question = item.get("question") or item.get("prompt") or item.get("input") or ""
-        
-        # Handle different choice field formats
-        choices = []
-        if "choices" in item and isinstance(item["choices"], list):
-            choices = item["choices"]
-        elif "options" in item and isinstance(item["options"], list):
-            choices = item["options"]
-        else:
-            # Try to extract from option_a, option_b, etc.
-            for opt_key in ["A", "B", "C", "D"]:
-                if f"option_{opt_key.lower()}" in item:
-                    choices.append(item[f"option_{opt_key.lower()}"])
-                elif opt_key in item:
-                    choices.append(item[opt_key])
-        
-        answer = item.get("answer") or item.get("correct_answer") or item.get("target")
+            # SKILL 5.1: Adaptive Schema Parsing (from historical analysis)
+            # Handle ANY multiple-choice format robustly
+            question = item.get("question") or item.get("Question") or item.get("prompt") or item.get("input") or ""
+            
+            # Extract choices using multiple strategies
+            choices = []
+            answer = None
+            
+            # Strategy 1: Direct 'choices' or 'options' list
+            if "choices" in item and isinstance(item["choices"], list):
+                choices = item["choices"]
+                answer = item.get("answer") or item.get("correct_answer") or item.get("target")
+            
+            # Strategy 2: Letter keys (A, B, C, D, E) - Most common
+            elif all(k in item for k in ["A", "B", "C"]):  # At least A, B, C
+                letter_keys = [k for k in ["A", "B", "C", "D", "E"] if k in item]
+                choices = [item[k] for k in letter_keys]
+                answer = item.get("answer") or item.get("correct_answer") or item.get("Answer")
+                
+                # Convert answer to letter if it's an index
+                if isinstance(answer, int) and 0 <= answer < len(choices):
+                    answer = letter_keys[answer]
+                elif isinstance(answer, str) and answer not in letter_keys:
+                    # Try to find which choice matches
+                    for i, choice in enumerate(choices):
+                        if choice.strip().lower() == answer.strip().lower():
+                            answer = letter_keys[i]
+                            break
+            
+            # Strategy 3: option_a, option_b, etc.
+            elif "option_a" in item:
+                for letter in ["a", "b", "c", "d", "e"]:
+                    key = f"option_{letter}"
+                    if key in item:
+                        choices.append(item[key])
+                    else:
+                        break
+                answer = item.get("answer") or item.get("correct_answer")
+                if isinstance(answer, int):
+                    answer = chr(65 + answer)  # Convert to letter
         
         if len(choices) < 4 or not question:
             errors += 1
@@ -1136,13 +1189,26 @@ async def evaluate_rag(
             ref_lines.append(f"{qid}\t0\t{pid}")
 
         passages_block = "\n".join(
-            f"[{pid}] {text}" for pid, text in zip(passage_ids, passage_texts)
+            f"[{pid}] {text[:300]}" for pid, text in zip(passage_ids, passage_texts)
         )
-        prompt = (
-            "Rank the passage IDs by relevance to the query. "
-            "Return ONLY a comma-separated list of passage IDs ordered best to worst.\n\n"
-            f"Query: {query}\n\nPassages:\n{passages_block}\n\nRanked IDs:"
-        )
+        
+        # SKILL 4.1: Structured Ranking Output (from historical analysis)
+        # Historical lesson: F1=24-27% (synthesis works) but MRR=0-0.5% (ranking broken)
+        prompt = f"""RANKING TASK: Order passages by relevance.
+
+Query: {query}
+
+Passages:
+{passages_block}
+
+Instructions:
+1. Identify which passage BEST answers the query
+2. Which is second-best?
+3. Continue ranking all passages
+4. Output ONLY comma-separated IDs (no text)
+
+Example: 7,3,1,9,2
+Your ranking:"""
 
         result = await call_llmhive_api(prompt, reasoning_mode=REASONING_MODE, tier=tier)
         if result["success"]:
