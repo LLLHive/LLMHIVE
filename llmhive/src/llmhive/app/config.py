@@ -1,10 +1,18 @@
-"""Configuration settings for LLMHive."""
+"""Configuration settings for LLMHive.
+
+IMPORTANT: Uses Pydantic BaseSettings for lazy loading of environment variables.
+This prevents race conditions on serverless cold starts where env vars may not
+be fully loaded at module import time.
+"""
 from __future__ import annotations
 
 import logging
 import os
-from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from dataclasses import dataclass, field as dataclass_field
+from typing import List, Optional
+
+from pydantic import Field, field_validator, computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +21,9 @@ logger = logging.getLogger(__name__)
 class ConfigValidationResult:
     """Result of configuration validation."""
     is_valid: bool
-    warnings: List[str] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
-    available_providers: List[str] = field(default_factory=list)
+    warnings: List[str] = dataclass_field(default_factory=list)
+    errors: List[str] = dataclass_field(default_factory=list)
+    available_providers: List[str] = dataclass_field(default_factory=list)
     
     def log_results(self) -> None:
         """Log validation results."""
@@ -29,84 +37,194 @@ class ConfigValidationResult:
             logger.info("Available LLM providers: %s", ", ".join(self.available_providers))
 
 
-class Settings:
-    """Application settings loaded from environment variables."""
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables.
+    
+    Uses Pydantic BaseSettings for lazy loading - environment variables
+    are read when Settings() is instantiated, NOT when the module is imported.
+    This prevents race conditions on serverless cold starts.
+    """
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",  # Ignore extra environment variables
+        # Validate assignment to catch issues early
+        validate_assignment=True,
+    )
     
     # Default models for orchestration
-    default_models: List[str] = ["gpt-4o-mini", "claude-3-haiku"]
+    default_models: List[str] = Field(
+        default=["gpt-4o-mini", "claude-3-haiku"],
+        description="Default models for orchestration"
+    )
+    
+    # ==================== API KEYS ====================
     
     # API key (optional, for authentication)
-    api_key: str | None = os.getenv("API_KEY")
+    api_key: Optional[str] = Field(default=None, alias="API_KEY")
     
-    # Provider API keys (loaded from environment)
-    openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
-    # Support both ANTHROPIC_API_KEY and CLAUDE_API_KEY for Claude/Anthropic
-    anthropic_api_key: str | None = os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
-    claude_api_key: str | None = os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
-    grok_api_key: str | None = os.getenv("GROK_API_KEY")
-    gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
-    deepseek_api_key: str | None = os.getenv("DEEPSEEK_API_KEY")
-    manus_api_key: str | None = os.getenv("MANUS_API_KEY")
-    together_api_key: str | None = os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY")
+    # Provider API keys
+    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
+    anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
+    claude_api_key: Optional[str] = Field(default=None, alias="CLAUDE_API_KEY")
+    grok_api_key: Optional[str] = Field(default=None, alias="GROK_API_KEY")
+    gemini_api_key: Optional[str] = Field(default=None, alias="GEMINI_API_KEY")
+    deepseek_api_key: Optional[str] = Field(default=None, alias="DEEPSEEK_API_KEY")
+    manus_api_key: Optional[str] = Field(default=None, alias="MANUS_API_KEY")
+    together_api_key: Optional[str] = Field(default=None, alias="TOGETHERAI_API_KEY")
     
-    # Provider timeouts (optional)
-    openai_timeout_seconds: int | None = None
-    anthropic_timeout_seconds: int | None = None
-    grok_timeout_seconds: int | None = None
-    gemini_timeout_seconds: int | None = None
-    deepseek_timeout_seconds: int | None = None
-    manus_timeout_seconds: int | None = None
-    together_timeout_seconds: int | None = None
+    # ==================== PROVIDER TIMEOUTS ====================
     
-    # Vector Database Configuration (Pinecone)
-    pinecone_api_key: str | None = os.getenv("PINECONE_API_KEY")
-    pinecone_environment: str = os.getenv("PINECONE_ENVIRONMENT", "us-west1-gcp")
-    pinecone_index_name: str = os.getenv("PINECONE_INDEX_NAME", "llmhive-memory")
+    openai_timeout_seconds: Optional[int] = Field(default=None)
+    anthropic_timeout_seconds: Optional[int] = Field(default=None)
+    grok_timeout_seconds: Optional[int] = Field(default=None)
+    gemini_timeout_seconds: Optional[int] = Field(default=None)
+    deepseek_timeout_seconds: Optional[int] = Field(default=None)
+    manus_timeout_seconds: Optional[int] = Field(default=None)
+    together_timeout_seconds: Optional[int] = Field(default=None)
     
-    # Embedding Model Configuration
-    embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
-    embedding_dimension: int = int(os.getenv("EMBEDDING_DIMENSION", "1536"))
+    # ==================== PINECONE (VECTOR DB) ====================
     
-    # Memory Configuration
-    memory_namespace_per_user: bool = os.getenv("MEMORY_NAMESPACE_PER_USER", "true").lower() == "true"
-    memory_ttl_days: int = int(os.getenv("MEMORY_TTL_DAYS", "90"))
-    memory_max_results: int = int(os.getenv("MEMORY_MAX_RESULTS", "10"))
-    memory_min_score: float = float(os.getenv("MEMORY_MIN_SCORE", "0.7"))
+    pinecone_api_key: Optional[str] = Field(default=None, alias="PINECONE_API_KEY")
+    pinecone_environment: str = Field(
+        default="us-west1-gcp",
+        alias="PINECONE_ENVIRONMENT"
+    )
+    pinecone_index_name: str = Field(
+        default="llmhive-memory",
+        alias="PINECONE_INDEX_NAME"
+    )
     
-    # Stripe Configuration (Billing)
-    stripe_api_key: str | None = os.getenv("STRIPE_SECRET_KEY")
-    stripe_webhook_secret: str | None = os.getenv("STRIPE_WEBHOOK_SECRET")
-    stripe_publishable_key: str | None = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    # ==================== EMBEDDING CONFIGURATION ====================
     
-    # Stripe Price IDs (create these in Stripe Dashboard)
-    stripe_price_id_basic_monthly: str | None = os.getenv("STRIPE_PRICE_ID_BASIC_MONTHLY")
-    stripe_price_id_basic_annual: str | None = os.getenv("STRIPE_PRICE_ID_BASIC_ANNUAL")
-    stripe_price_id_pro_monthly: str | None = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")
-    stripe_price_id_pro_annual: str | None = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")
-    stripe_price_id_enterprise_monthly: str | None = os.getenv("STRIPE_PRICE_ID_ENTERPRISE_MONTHLY")
-    stripe_price_id_enterprise_annual: str | None = os.getenv("STRIPE_PRICE_ID_ENTERPRISE_ANNUAL")
+    embedding_model: str = Field(
+        default="text-embedding-3-small",
+        alias="EMBEDDING_MODEL"
+    )
+    embedding_dimension: int = Field(
+        default=1536,
+        alias="EMBEDDING_DIMENSION"
+    )
+    
+    # ==================== MEMORY CONFIGURATION ====================
+    
+    memory_namespace_per_user: bool = Field(
+        default=True,
+        alias="MEMORY_NAMESPACE_PER_USER"
+    )
+    memory_ttl_days: int = Field(
+        default=90,
+        alias="MEMORY_TTL_DAYS"
+    )
+    memory_max_results: int = Field(
+        default=10,
+        alias="MEMORY_MAX_RESULTS"
+    )
+    memory_min_score: float = Field(
+        default=0.7,
+        alias="MEMORY_MIN_SCORE"
+    )
+    memory_max_entries_per_user: int = Field(
+        default=1000,
+        alias="MEMORY_MAX_ENTRIES"
+    )
+    memory_max_age_days: int = Field(
+        default=90,
+        alias="MEMORY_MAX_AGE_DAYS"
+    )
+    
+    # ==================== STRIPE (BILLING) ====================
+    
+    stripe_api_key: Optional[str] = Field(default=None, alias="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: Optional[str] = Field(default=None, alias="STRIPE_WEBHOOK_SECRET")
+    stripe_publishable_key: Optional[str] = Field(default=None, alias="STRIPE_PUBLISHABLE_KEY")
+    
+    # Stripe Price IDs
+    stripe_price_id_basic_monthly: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_BASIC_MONTHLY")
+    stripe_price_id_basic_annual: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_BASIC_ANNUAL")
+    stripe_price_id_pro_monthly: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_PRO_MONTHLY")
+    stripe_price_id_pro_annual: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_PRO_ANNUAL")
+    stripe_price_id_enterprise_monthly: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_ENTERPRISE_MONTHLY")
+    stripe_price_id_enterprise_annual: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_ENTERPRISE_ANNUAL")
     
     # Stripe Redirect URLs
-    stripe_success_url: str = os.getenv("STRIPE_SUCCESS_URL", "https://llmhive.ai/billing/success")
-    stripe_cancel_url: str = os.getenv("STRIPE_CANCEL_URL", "https://llmhive.ai/billing")
+    stripe_success_url: str = Field(
+        default="https://llmhive.ai/billing/success",
+        alias="STRIPE_SUCCESS_URL"
+    )
+    stripe_cancel_url: str = Field(
+        default="https://llmhive.ai/billing",
+        alias="STRIPE_CANCEL_URL"
+    )
     
-    # Google Cloud Configuration
-    google_cloud_project: str | None = os.getenv("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT"))
+    # ==================== GOOGLE CLOUD ====================
     
-    # Application Configuration
-    debug: bool = os.getenv("DEBUG", "false").lower() == "true"
-    log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
-    cors_origins: List[str] = os.getenv("CORS_ORIGINS", "*").split(",")
+    google_cloud_project: Optional[str] = Field(default=None, alias="GOOGLE_CLOUD_PROJECT")
+    
+    # ==================== APPLICATION CONFIGURATION ====================
+    
+    debug: bool = Field(default=False, alias="DEBUG")
+    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+    cors_origins_str: str = Field(default="*", alias="CORS_ORIGINS")
+    environment: str = Field(default="development", alias="ENVIRONMENT")
     
     # Rate Limiting
-    rate_limit_requests_per_minute: int = int(os.getenv("RATE_LIMIT_RPM", "60"))
+    rate_limit_requests_per_minute: int = Field(
+        default=60,
+        alias="RATE_LIMIT_RPM"
+    )
     
-    # Memory Settings
-    memory_max_entries_per_user: int = int(os.getenv("MEMORY_MAX_ENTRIES", "1000"))
-    memory_max_age_days: int = int(os.getenv("MEMORY_MAX_AGE_DAYS", "90"))
+    # ==================== VALIDATORS ====================
     
+    @field_validator("log_level")
     @classmethod
-    def validate(cls, strict: bool = False) -> ConfigValidationResult:
+    def validate_log_level(cls, v: str) -> str:
+        """Ensure log level is uppercase and valid."""
+        v = v.upper()
+        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        if v not in valid_levels:
+            logger.warning(
+                f"Invalid LOG_LEVEL: {v}. Using INFO. Valid: {', '.join(valid_levels)}"
+            )
+            return "INFO"
+        return v
+    
+    @field_validator("embedding_dimension")
+    @classmethod
+    def validate_embedding_dimension(cls, v: int) -> int:
+        """Warn about unusual embedding dimensions."""
+        common_dims = [256, 512, 1024, 1536, 3072]
+        if v not in common_dims:
+            logger.warning(
+                f"Unusual embedding dimension: {v}. Common: {', '.join(map(str, common_dims))}"
+            )
+        return v
+    
+    # ==================== COMPUTED FIELDS ====================
+    
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def cors_origins(self) -> List[str]:
+        """Parse CORS origins from comma-separated string."""
+        return [origin.strip() for origin in self.cors_origins_str.split(",")]
+    
+    # ==================== HELPER METHODS ====================
+    
+    def get_anthropic_key(self) -> Optional[str]:
+        """Get Anthropic API key with fallback to CLAUDE_API_KEY."""
+        return self.anthropic_api_key or self.claude_api_key
+    
+    def get_together_key(self) -> Optional[str]:
+        """Get Together AI API key with fallback."""
+        return self.together_api_key or os.getenv("TOGETHER_API_KEY")
+    
+    def get_google_cloud_project(self) -> Optional[str]:
+        """Get Google Cloud project with fallback to GCP_PROJECT."""
+        return self.google_cloud_project or os.getenv("GCP_PROJECT")
+    
+    def validate(self, strict: bool = False) -> ConfigValidationResult:
         """Validate configuration settings.
         
         Args:
@@ -119,12 +237,12 @@ class Settings:
         
         # Check LLM provider API keys
         provider_keys = [
-            ("openai", cls.openai_api_key, "OPENAI_API_KEY"),
-            ("anthropic", cls.anthropic_api_key, "ANTHROPIC_API_KEY or CLAUDE_API_KEY"),
-            ("grok", cls.grok_api_key, "GROK_API_KEY"),
-            ("gemini", cls.gemini_api_key, "GEMINI_API_KEY"),
-            ("deepseek", cls.deepseek_api_key, "DEEPSEEK_API_KEY"),
-            ("together", cls.together_api_key, "TOGETHERAI_API_KEY"),
+            ("openai", self.openai_api_key, "OPENAI_API_KEY"),
+            ("anthropic", self.get_anthropic_key(), "ANTHROPIC_API_KEY or CLAUDE_API_KEY"),
+            ("grok", self.grok_api_key, "GROK_API_KEY"),
+            ("gemini", self.gemini_api_key, "GEMINI_API_KEY"),
+            ("deepseek", self.deepseek_api_key, "DEEPSEEK_API_KEY"),
+            ("together", self.get_together_key(), "TOGETHERAI_API_KEY"),
         ]
         
         for provider_name, api_key, env_var in provider_keys:
@@ -140,13 +258,13 @@ class Settings:
                 result.is_valid = False
         
         # Check Pinecone for RAG
-        if not cls.pinecone_api_key:
+        if not self.pinecone_api_key:
             result.warnings.append(
                 "PINECONE_API_KEY not set. RAG/memory features will be disabled."
             )
         
         # Check Stripe for billing
-        if not cls.stripe_api_key:
+        if not self.stripe_api_key:
             result.warnings.append(
                 "STRIPE_SECRET_KEY not set. Billing features will be disabled."
             )
@@ -157,29 +275,14 @@ class Settings:
             "text-embedding-3-large",
             "text-embedding-ada-002",
         ]
-        if cls.embedding_model not in valid_embedding_models:
+        if self.embedding_model not in valid_embedding_models:
             result.warnings.append(
-                f"Unknown embedding model: {cls.embedding_model}. "
+                f"Unknown embedding model: {self.embedding_model}. "
                 f"Supported: {', '.join(valid_embedding_models)}"
             )
         
-        # Validate embedding dimensions
-        if cls.embedding_dimension not in [256, 512, 1024, 1536, 3072]:
-            result.warnings.append(
-                f"Unusual embedding dimension: {cls.embedding_dimension}. "
-                "Common values: 256, 512, 1024, 1536, 3072"
-            )
-        
-        # Validate log level
-        valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if cls.log_level not in valid_log_levels:
-            result.warnings.append(
-                f"Invalid LOG_LEVEL: {cls.log_level}. "
-                f"Valid levels: {', '.join(valid_log_levels)}"
-            )
-        
         # Check for debug mode in production
-        if cls.debug and os.getenv("ENVIRONMENT", "development") == "production":
+        if self.debug and self.environment == "production":
             result.warnings.append(
                 "DEBUG mode enabled in production. This may expose sensitive information."
             )
@@ -189,8 +292,7 @@ class Settings:
         
         return result
     
-    @classmethod
-    def get_provider_status(cls) -> dict:
+    def get_provider_status(self) -> dict:
         """Get status of all configured providers.
         
         Returns:
@@ -198,41 +300,73 @@ class Settings:
         """
         return {
             "openai": {
-                "configured": bool(cls.openai_api_key),
-                "timeout": cls.openai_timeout_seconds,
+                "configured": bool(self.openai_api_key),
+                "timeout": self.openai_timeout_seconds,
             },
             "anthropic": {
-                "configured": bool(cls.anthropic_api_key),
-                "timeout": cls.anthropic_timeout_seconds,
+                "configured": bool(self.get_anthropic_key()),
+                "timeout": self.anthropic_timeout_seconds,
             },
             "grok": {
-                "configured": bool(cls.grok_api_key),
-                "timeout": cls.grok_timeout_seconds,
+                "configured": bool(self.grok_api_key),
+                "timeout": self.grok_timeout_seconds,
             },
             "gemini": {
-                "configured": bool(cls.gemini_api_key),
-                "timeout": cls.gemini_timeout_seconds,
+                "configured": bool(self.gemini_api_key),
+                "timeout": self.gemini_timeout_seconds,
             },
             "deepseek": {
-                "configured": bool(cls.deepseek_api_key),
-                "timeout": cls.deepseek_timeout_seconds,
+                "configured": bool(self.deepseek_api_key),
+                "timeout": self.deepseek_timeout_seconds,
             },
             "together": {
-                "configured": bool(cls.together_api_key),
-                "timeout": cls.together_timeout_seconds,
+                "configured": bool(self.get_together_key()),
+                "timeout": self.together_timeout_seconds,
             },
             "pinecone": {
-                "configured": bool(cls.pinecone_api_key),
-                "index": cls.pinecone_index_name,
+                "configured": bool(self.pinecone_api_key),
+                "index": self.pinecone_index_name,
             },
             "stripe": {
-                "configured": bool(cls.stripe_api_key),
+                "configured": bool(self.stripe_api_key),
             },
         }
 
 
-# Global settings instance
-settings = Settings()
+# ==================== SINGLETON PATTERN ====================
+
+_settings_instance: Optional[Settings] = None
+
+
+def get_settings() -> Settings:
+    """Get or create Settings singleton instance.
+    
+    This ensures settings are loaded lazily (at runtime, not import time).
+    This prevents race conditions on serverless cold starts where environment
+    variables may not be fully loaded when Python modules are first imported.
+    
+    Returns:
+        Settings instance with environment variables loaded
+    """
+    global _settings_instance
+    if _settings_instance is None:
+        logger.debug("Initializing Settings from environment variables")
+        _settings_instance = Settings()
+        logger.debug("Settings initialized successfully")
+    return _settings_instance
+
+
+def reset_settings() -> None:
+    """Reset the settings singleton (useful for testing)."""
+    global _settings_instance
+    _settings_instance = None
+
+
+# ==================== BACKWARD COMPATIBILITY ====================
+
+# For backward compatibility - lazily create settings instance
+# This allows old code like `from config import settings` to still work
+settings = get_settings()
 
 
 def validate_startup_config(strict: bool = False) -> ConfigValidationResult:
@@ -247,7 +381,8 @@ def validate_startup_config(strict: bool = False) -> ConfigValidationResult:
     Raises:
         RuntimeError: If strict=True and configuration is invalid
     """
-    result = Settings.validate(strict=strict)
+    settings = get_settings()
+    result = settings.validate(strict=strict)
     
     if strict and not result.is_valid:
         raise RuntimeError(
@@ -255,4 +390,3 @@ def validate_startup_config(strict: bool = False) -> ConfigValidationResult:
         )
     
     return result
-

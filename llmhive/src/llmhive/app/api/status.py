@@ -336,27 +336,137 @@ def get_sympy_diagnostics() -> Dict[str, Any]:
     return diagnostics
 
 
+@router.get("/diagnostics/config", status_code=status.HTTP_200_OK)
+def get_config_diagnostics() -> Dict[str, Any]:
+    """
+    Get configuration and environment variable loading diagnostics.
+    
+    CRITICAL: Use this endpoint to verify environment variables are properly
+    loaded on serverless cold starts. This helps diagnose intermittent
+    "API key not found" errors.
+    
+    Returns:
+    - Whether Pydantic BaseSettings is being used (lazy loading)
+    - Which API keys are configured (without exposing values)
+    - Configuration validation results
+    - Timestamp for monitoring cold start behavior
+    """
+    from ..config import get_settings, reset_settings
+    
+    # Force fresh load to test current environment state
+    reset_settings()
+    settings = get_settings()
+    
+    diagnostics = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "config_system": "Pydantic BaseSettings (lazy loading)",
+        "environment": settings.environment,
+        "debug_mode": settings.debug,
+        "api_keys_loaded": {
+            "openai": bool(settings.openai_api_key),
+            "anthropic": bool(settings.anthropic_api_key),
+            "claude": bool(settings.claude_api_key),
+            "grok": bool(settings.grok_api_key),
+            "gemini": bool(settings.gemini_api_key),
+            "deepseek": bool(settings.deepseek_api_key),
+            "manus": bool(settings.manus_api_key),
+            "together": bool(settings.together_api_key),
+            "pinecone": bool(settings.pinecone_api_key),
+            "stripe": bool(settings.stripe_api_key),
+            "llmhive_auth": bool(settings.api_key),
+        },
+        "provider_count": len([k for k, v in {
+            "openai": settings.openai_api_key,
+            "anthropic": settings.get_anthropic_key(),
+            "grok": settings.grok_api_key,
+            "gemini": settings.gemini_api_key,
+            "deepseek": settings.deepseek_api_key,
+            "together": settings.get_together_key(),
+        }.items() if v]),
+        "configuration": {
+            "embedding_model": settings.embedding_model,
+            "embedding_dimension": settings.embedding_dimension,
+            "log_level": settings.log_level,
+            "cors_origins_count": len(settings.cors_origins),
+            "rate_limit_rpm": settings.rate_limit_requests_per_minute,
+            "memory_ttl_days": settings.memory_ttl_days,
+            "pinecone_index": settings.pinecone_index_name if settings.pinecone_api_key else None,
+        },
+        "recommendations": [],
+    }
+    
+    # Validate configuration
+    validation = settings.validate(strict=False)
+    diagnostics["validation"] = {
+        "is_valid": validation.is_valid,
+        "providers_available": validation.available_providers,
+        "warnings_count": len(validation.warnings),
+        "errors_count": len(validation.errors),
+        "warnings": validation.warnings,
+        "errors": validation.errors,
+    }
+    
+    # Generate recommendations
+    if diagnostics["provider_count"] == 0:
+        diagnostics["recommendations"].append(
+            "⚠️ CRITICAL: No LLM provider API keys configured. "
+            "Set at least one: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY"
+        )
+    elif diagnostics["provider_count"] < 3:
+        diagnostics["recommendations"].append(
+            f"ℹ️ Only {diagnostics['provider_count']} provider(s) configured. "
+            "Consider adding more for redundancy and model diversity."
+        )
+    else:
+        diagnostics["recommendations"].append(
+            f"✓ Good: {diagnostics['provider_count']} LLM providers configured"
+        )
+    
+    if not settings.pinecone_api_key:
+        diagnostics["recommendations"].append(
+            "ℹ️ PINECONE_API_KEY not set - RAG/memory features disabled"
+        )
+    
+    if not settings.stripe_api_key:
+        diagnostics["recommendations"].append(
+            "ℹ️ STRIPE_SECRET_KEY not set - billing features disabled"
+        )
+    
+    if settings.debug and settings.environment == "production":
+        diagnostics["recommendations"].append(
+            "⚠️ WARNING: DEBUG=true in production environment!"
+        )
+    
+    if not diagnostics["recommendations"]:
+        diagnostics["recommendations"].append("✓ Configuration looks healthy")
+    
+    return diagnostics
+
+
 @router.get("/diagnostics/all", status_code=status.HTTP_200_OK)
 async def get_all_diagnostics() -> Dict[str, Any]:
     """
     Get all system diagnostics in one call.
     
-    Combines tracing, SymPy, and other diagnostic information.
+    Combines config, tracing, SymPy, and other diagnostic information.
     """
+    config_diag = get_config_diagnostics()
     tracing = get_tracing_diagnostics()
     sympy_diag = get_sympy_diagnostics()
     tracing_test = await test_tracing_span()
     
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "config": config_diag,
         "tracing": tracing,
         "tracing_test": tracing_test,
         "sympy": sympy_diag,
         "overall_status": {
+            "config_ok": config_diag["provider_count"] > 0,
             "tracing_ok": tracing["opentelemetry"]["initialized"] if tracing["opentelemetry"]["available"] else False,
             "sympy_ok": sympy_diag["sympy"]["available"],
             "all_ok": (
-                (tracing["opentelemetry"]["initialized"] if tracing["opentelemetry"]["available"] else False)
+                config_diag["provider_count"] > 0
                 and sympy_diag["sympy"]["available"]
             ),
         },
