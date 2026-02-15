@@ -1178,10 +1178,8 @@ class EliteOrchestrator:
             # Source: https://openrouter.ai/collections/free-models
             # Updated: January 30, 2026
             # =============================================================
-            # TOP TIER FREE MODELS
+            # TOP TIER FREE MODELS (verified Feb 15 2026)
             "deepseek/deepseek-r1-0528:free",           # 164K - BEST reasoning (o1-level!)
-            "tngtech/deepseek-r1t2-chimera:free",       # 164K - DeepSeek-based, 20% faster
-            "tngtech/deepseek-r1t-chimera:free",        # 164K - DeepSeek-based
             "meta-llama/llama-3.3-70b-instruct:free",   # 131K - GPT-4 level
             "google/gemma-3-27b-it:free",               # 131K - Multimodal, 140+ languages
             "qwen/qwen3-coder:free",                    # 262K - BEST for coding
@@ -1193,11 +1191,12 @@ class EliteOrchestrator:
             "nvidia/nemotron-nano-12b-v2-vl:free",      # 128K - Vision
             "arcee-ai/trinity-large-preview:free",      # 131K - Creative/agentic
             "arcee-ai/trinity-mini:free",               # 131K - Fast
-            "upstage/solar-pro-3:free",                 # 128K - Korean/multilingual
-            "tngtech/tng-r1t-chimera:free",             # 164K - Creative
+            "mistralai/mistral-small-3.1-24b-instruct:free", # 96K - Fast reasoning
+            "google/gemma-3-12b-it:free",               # 131K - Efficient
+            "meta-llama/llama-3.2-3b-instruct:free",    # 131K - Ultra-fast
             "liquid/lfm-2.5-1.2b-thinking:free",        # 32K - Thinking
             "liquid/lfm-2.5-1.2b-instruct:free",        # 32K - Fast
-            "allenai/molmo-2-8b:free",                  # 36K - Vision
+            "nousresearch/hermes-3-llama-3.1-405b:free", # 131K - Large
         ]
         
         together_models = [
