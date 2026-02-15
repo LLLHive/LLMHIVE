@@ -230,12 +230,13 @@ async def call_llmhive_api(
                         print(f"⚠️ Server error {response.status_code}, retrying in {wait_time}s...")
                         await asyncio.sleep(wait_time)
                         continue
-                    return {
-                        "success": False,
-                        "error": f"HTTP {response.status_code}: {response.text[:200]}",
-                        "latency": latency,
-                        "cost": 0,
-                    }
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"HTTP {response.status_code}: {response.text[:200]}",
+                            "latency": latency,
+                            "cost": 0,
+                        }
                 else:
                     return {
                         "success": False,
@@ -1627,7 +1628,7 @@ async def evaluate_rag(
                 attempt_prompt,
                 reasoning_mode=REASONING_MODE,
                 tier=tier,
-                timeout=120,
+                timeout=150,
                 orchestration_config={
                     "accuracy_level": 5,
                     "enable_reranking": True,
