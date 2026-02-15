@@ -997,7 +997,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                         self.api_key = api_key
                         self.base_url = "https://api.x.ai/v1"
                     
-                    async def generate(self, prompt, model="grok-2", **kwargs):
+                    async def generate(self, prompt, model="grok-3-mini", **kwargs):
                         """Generate response using Grok (xAI) API."""
                         try:
                             # Strip provider prefix (e.g., "x-ai/grok-4" -> "grok-4")
@@ -1044,7 +1044,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                             logger.error(f"Grok API error: {e}")
                             raise
                     
-                    async def complete(self, prompt, model="grok-2", **kwargs):
+                    async def complete(self, prompt, model="grok-3-mini", **kwargs):
                         """Alias for generate() - used by orchestration components."""
                         return await self.generate(prompt, model=model, **kwargs)
                 
@@ -2982,9 +2982,13 @@ Please provide an accurate, well-verified response."""
                         logger.warning(f"Router fallback chain failed: {fb_err}")
                     
                     # Method 2: Direct httpx calls if router failed entirely
+                    # Order: Grok (best quality) → Together → Cerebras → HuggingFace
                     if not fallback_result:
                         import os, httpx as _fb_httpx
                         _fb_providers = [
+                            ("xAI-Grok", os.getenv("GROK_API_KEY"),
+                             "https://api.x.ai/v1/chat/completions",
+                             "grok-3-mini"),
                             ("Together.ai", os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY"),
                              "https://api.together.ai/v1/chat/completions",
                              "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"),

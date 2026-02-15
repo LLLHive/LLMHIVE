@@ -311,13 +311,14 @@ ELITE_MODELS = {
         "google/gemini-3-pro",     # 96% GSM8K - 1M context
         "anthropic/claude-opus-4.6", # 95.8% GSM8K - Feb 2026
         "openai/gpt-5.2",          # 95.2% GSM8K
+        "x-ai/grok-3-mini",        # Built-in CoT reasoning, fast math
     ],
     "reasoning": [
         "google/gemini-3-pro",     # 91.8% MMLU, 91.9% GPQA Diamond - #1
         "openai/gpt-5.2",          # 92.8% MMLU
         "anthropic/claude-opus-4.6", # 90% MMLU - Precision
         "moonshot/kimi-k2.5-thinking", # 88% MMLU - Thinking mode
-        "xai/grok-4.1-thinking",   # 89% MMLU - Visual reasoning
+        "x-ai/grok-3-mini",        # 89% MMLU - Native chain-of-thought
     ],
     "coding": [
         "alibaba/qwen3-max",       # 92.7% HumanEval - LEADS GPT-4o
@@ -325,11 +326,13 @@ ELITE_MODELS = {
         "moonshot/kimi-k2.5-thinking", # 92% accuracy - Visual coding
         "anthropic/claude-opus-4.6", # 87% (79.2% SWE-Bench) - Champion
         "google/gemini-3-pro",     # 85% (76.2% SWE-Bench)
+        "x-ai/grok-3-mini",        # Good code generation, fast
     ],
     "rag": [
         "openai/gpt-5.2",          # 95% RAG-Eval
         "anthropic/claude-opus-4.6", # 94% RAG-Eval
         "google/gemini-3-pro",     # Multimodal, 1M context
+        "x-ai/grok-3-mini",        # Fast extraction, good comprehension
     ],
     "multilingual": [
         "google/gemini-3-pro",     # Multimodal, multilingual champion
@@ -343,6 +346,7 @@ ELITE_MODELS = {
         "alibaba/qwen3-max",       # 262K context
     ],
     "speed": [
+        "x-ai/grok-3-mini",        # Ultra-fast with reasoning, ~2-3s
         "openai/gpt-4o-mini",      # 0.35s TTFT, API available
         "google/gemini-2.5-flash", # Fast, API available
         "anthropic/claude-3-haiku", # Fast variant
@@ -351,6 +355,7 @@ ELITE_MODELS = {
         "openai/gpt-5.2",          # 95% alignment - Latest
         "anthropic/claude-opus-4", # 94% alignment
         "anthropic/claude-sonnet-4", # 92% alignment
+        "x-ai/grok-3-mini",        # Direct, engaging conversational style
     ],
     "multimodal": [
         "anthropic/claude-opus-4", # 378 ARC-AGI2
