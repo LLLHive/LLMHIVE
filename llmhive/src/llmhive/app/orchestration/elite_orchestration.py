@@ -1892,9 +1892,52 @@ async def _parallel_generate(
             logger.error("Fallback orchestrator failed: %s", e)
             return []
     
-    # Helper function for OpenRouter fallback
+    # Together.ai model mapping for instant fallback
+    TOGETHER_FALLBACK_MAP = {
+        "openai/gpt-4o-mini": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "openai/gpt-4o": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "meta-llama/llama-3.3-70b-instruct:free": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "meta-llama/llama-3.1-8b-instruct:free": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        "qwen/qwen-2.5-72b-instruct:free": "Qwen/Qwen2.5-72B-Instruct-Turbo",
+        "qwen/qwen-2.5-7b-instruct:free": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+    }
+    TOGETHER_DEFAULT = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+    together_api_key = os.getenv("TOGETHERAI_API_KEY")
+    
+    async def _together_fallback(model: str, query: str) -> Optional[str]:
+        """Together.ai instant fallback when OpenRouter fails (403/429/5xx)."""
+        if not together_api_key:
+            return None
+        together_model = TOGETHER_FALLBACK_MAP.get(model, TOGETHER_DEFAULT)
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    "https://api.together.ai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {together_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": together_model,
+                        "messages": [{"role": "user", "content": query}],
+                        "max_tokens": 2048,
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    choices = data.get("choices", [])
+                    if choices:
+                        logger.info("Together.ai fallback SUCCESS for %s → %s", model, together_model)
+                        return choices[0].get("message", {}).get("content", "")
+                logger.warning("Together.ai fallback failed for %s: %d", model, response.status_code)
+                return None
+        except Exception as e:
+            logger.error("Together.ai fallback error: %s", e)
+            return None
+
+    # Helper function for OpenRouter fallback (with Together.ai backup)
     async def _openrouter_fallback(model: str, query: str) -> Optional[str]:
-        """Direct OpenRouter API call (used when router returns None)."""
+        """Direct OpenRouter API call. Falls back to Together.ai on failure."""
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
@@ -1918,11 +1961,12 @@ async def _parallel_generate(
                     if choices:
                         return choices[0].get("message", {}).get("content", "")
                 
-                logger.warning("OpenRouter fallback failed for %s: %d", model, response.status_code)
-                return None
+                # OpenRouter failed → instant Together.ai fallback
+                logger.warning("OpenRouter failed for %s: %d → trying Together.ai", model, response.status_code)
+                return await _together_fallback(model, query)
         except Exception as e:
-            logger.error("OpenRouter fallback error for %s: %s", model, e)
-            return None
+            logger.error("OpenRouter error for %s: %s → trying Together.ai", model, e)
+            return await _together_fallback(model, query)
     
     def _model_timeout_seconds(model_id: str) -> float:
         """Adaptive timeout based on model speed tier."""
@@ -1987,17 +2031,17 @@ async def _parallel_generate(
                     await asyncio.sleep(delay)
                     continue
 
-                # Non-retryable errors
-                logger.warning("Model %s returned %d: %s", model, response.status_code, response.text[:100])
-                return None
+                # Non-retryable errors (403, 404, etc.) → instant Together.ai fallback
+                logger.warning("Model %s returned %d → Together.ai fallback", model, response.status_code)
+                return await _together_fallback(model, prompt)
             except Exception as e:
                 if attempt < max_retries - 1:
                     delay = min(base_delay * (2 ** attempt), 8.0) + random.uniform(0, 0.5)
                     logger.warning("Model %s failed (%s), retrying in %.2fs", model, e, delay)
                     await asyncio.sleep(delay)
                     continue
-                logger.warning("Model %s failed after retries: %s", model, e)
-                return None
+                logger.warning("Model %s failed after retries → Together.ai fallback: %s", model, e)
+                return await _together_fallback(model, prompt)
     
     # Skip known-failing models to reduce latency
     eligible_models = [m for m in models if not _should_skip_free_model(m)]
