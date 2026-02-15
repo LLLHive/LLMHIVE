@@ -2962,18 +2962,66 @@ Please provide an accurate, well-verified response."""
                         
                 except Exception as e:
                     logger.error(f"Error generating response from provider: {e}")
-                    # Re-raise provider errors so they can be handled properly upstream
-                    # instead of embedding error messages in 200 OK responses
-                    from .errors import ProviderError, ErrorCode
-                    raise ProviderError(
-                        message=f"Provider error: {str(e)}",
-                        provider=provider_name,
-                        model=first_model,
-                        code=ErrorCode.PROVIDER_ERROR,
-                        original_error=e,
-                        details={"models_attempted": models_to_use},
-                        recoverable=True,
-                    ) from e
+                    
+                    # FALLBACK: Try Together.ai before giving up
+                    # This catches OpenRouter 403/429/5xx and retries via Together.ai
+                    fallback_result = None
+                    
+                    # Method 1: Try via provider router
+                    try:
+                        from .providers import get_provider_router
+                        router = get_provider_router()
+                        if router:
+                            fallback_result = await router._try_together_fallback(
+                                first_model, augmented_prompt
+                            )
+                    except Exception as fb_err:
+                        logger.warning(f"Together.ai router fallback failed: {fb_err}")
+                    
+                    # Method 2: Direct httpx call if router failed
+                    if not fallback_result:
+                        try:
+                            import os, httpx as _fb_httpx
+                            _fb_key = os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY")
+                            if _fb_key:
+                                async with _fb_httpx.AsyncClient(timeout=60.0) as _fb_client:
+                                    _fb_resp = await _fb_client.post(
+                                        "https://api.together.ai/v1/chat/completions",
+                                        headers={"Authorization": f"Bearer {_fb_key}", "Content-Type": "application/json"},
+                                        json={"model": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+                                              "messages": [{"role": "user", "content": augmented_prompt}],
+                                              "max_tokens": 2048},
+                                    )
+                                    if _fb_resp.status_code == 200:
+                                        _fb_data = _fb_resp.json()
+                                        _fb_choices = _fb_data.get("choices", [])
+                                        if _fb_choices:
+                                            fallback_result = _fb_choices[0].get("message", {}).get("content", "")
+                                            logger.info("Direct Together.ai fallback succeeded")
+                        except Exception as direct_err:
+                            logger.warning(f"Direct Together.ai fallback failed: {direct_err}")
+                    
+                    if fallback_result:
+                        logger.info(f"Together.ai fallback succeeded for {first_model}")
+                        result = LLMResult(
+                            content=fallback_result,
+                            model=f"together-fallback-for-{first_model}",
+                            tokens=0,
+                            cost_info=None,
+                            generation_id=None,
+                        )
+                    else:
+                        # No fallback available — raise the error
+                        from .errors import ProviderError, ErrorCode
+                        raise ProviderError(
+                            message=f"Provider error: {str(e)}",
+                            provider=provider_name,
+                            model=first_model,
+                            code=ErrorCode.PROVIDER_ERROR,
+                            original_error=e,
+                            details={"models_attempted": models_to_use},
+                            recoverable=True,
+                        ) from e
         
         # Infer domain for later use
         domain = None
