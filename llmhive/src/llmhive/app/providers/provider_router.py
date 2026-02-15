@@ -235,6 +235,18 @@ class ProviderRouter:
         )
         return (Provider.OPENROUTER, None)
     
+    # Model mapping: OpenRouter model IDs → Together.ai equivalents for fallback
+    OPENROUTER_TO_TOGETHER_MAP = {
+        "openai/gpt-4o-mini": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "openai/gpt-4o": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "meta-llama/llama-3.3-70b-instruct:free": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "meta-llama/llama-3.1-8b-instruct:free": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        "qwen/qwen-2.5-72b-instruct:free": "Qwen/Qwen2.5-72B-Instruct-Turbo",
+        "qwen/qwen-2.5-7b-instruct:free": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+        "google/gemini-2.0-flash-exp:free": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "mistralai/mistral-small-3.1-24b-instruct:free": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    }
+
     async def generate(
         self, 
         model_id: str, 
@@ -243,6 +255,9 @@ class ProviderRouter:
     ) -> Optional[str]:
         """
         Generate response using optimal provider.
+        
+        Fallback chain: Primary Provider → OpenRouter → Together.ai
+        Together.ai acts as instant backup when OpenRouter fails (403/429/5xx).
         
         Args:
             model_id: OpenRouter model ID
@@ -277,24 +292,52 @@ class ProviderRouter:
                 return await self.together_client.generate_with_retry(prompt, native_model)
             
             else:
-                # OpenRouter fallback
-                logger.debug("Routing %s → OpenRouter (fallback)", model_id)
+                # OpenRouter as default
+                logger.debug("Routing %s → OpenRouter (default)", model_id)
                 if orchestrator:
-                    # Use existing OpenRouter logic via orchestrator
-                    # This will be implemented in elite_orchestration.py
                     return None  # Caller will handle OpenRouter
                 else:
-                    logger.warning("No orchestrator provided for OpenRouter fallback")
+                    logger.warning("No orchestrator provided for OpenRouter")
                     return None
         
         except Exception as e:
             logger.error("Provider %s failed for %s: %s", provider.value, model_id, e)
             
-            # Try OpenRouter fallback if primary failed
+            # INSTANT FALLBACK: Together.ai when any provider fails
+            together_result = await self._try_together_fallback(model_id, prompt)
+            if together_result:
+                return together_result
+            
+            # If Together.ai also failed and primary wasn't OpenRouter, signal caller to try OpenRouter
             if provider != Provider.OPENROUTER and orchestrator:
                 logger.info("Falling back to OpenRouter for %s", model_id)
                 return None  # Caller will handle OpenRouter fallback
             
+            return None
+    
+    async def _try_together_fallback(self, model_id: str, prompt: str) -> Optional[str]:
+        """
+        Instant Together.ai fallback when primary provider fails.
+        Maps the requested model to a Together.ai equivalent and retries.
+        """
+        if not self.together_client:
+            return None
+        
+        # Find Together.ai equivalent model
+        together_model = self.OPENROUTER_TO_TOGETHER_MAP.get(model_id)
+        if not together_model:
+            # Default fallback: use Llama 3.1 70B as general-purpose replacement
+            together_model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+        
+        try:
+            logger.info("FALLBACK → Together.ai (%s) for failed %s", together_model, model_id)
+            self.capacity[Provider.TOGETHER].record_request()
+            result = await self.together_client.generate_with_retry(prompt, together_model)
+            if result:
+                logger.info("Together.ai fallback SUCCESS for %s", model_id)
+            return result
+        except Exception as fallback_error:
+            logger.error("Together.ai fallback also failed for %s: %s", model_id, fallback_error)
             return None
     
     def get_capacity_status(self) -> Dict[str, Dict]:

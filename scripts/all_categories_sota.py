@@ -240,6 +240,7 @@ async def generate_multiple_solutions(
         "Solve by working backwards from the answer format.",
         "Solve by breaking into smaller sub-problems.",
         "Solve by identifying the key quantities and their relationships.",
+        "Convert ALL fractions to decimals first. Convert ALL percentages to decimals. Compute each step with decimal arithmetic. Watch for 'each' meaning per-person.",
     ]
     
     candidates = []
