@@ -51,7 +51,7 @@ class GroqClient:
     }
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROK_API_KEY")
+        self.api_key = api_key or os.getenv("GROQ_API_KEY")
         if not self.api_key:
             raise ValueError("GROQ_API_KEY not set. Get free key at https://console.groq.com")
         logger.info("✅ Groq client initialized (LPU ultra-fast inference)")
