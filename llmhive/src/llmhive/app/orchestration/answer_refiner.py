@@ -328,6 +328,19 @@ class AnswerRefiner:
         for pattern in leaked_instructions:
             cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.DOTALL)
         
+        # Remove HRM (Hierarchical Role Management) template leakage
+        # These patterns appear when HRM sub-task decomposition artifacts leak into output
+        hrm_patterns = [
+            r"\[?Sub-?task\s*\d+\]?:?\s*.*?(?=\n|$)",  # [Subtask 1]: ...
+            r"\[?Role\s*:?\s*\w+\s*(?:Specialist|Expert|Analyst)\]?\s*",  # [Role: Domain Expert]
+            r"(?:Assigned to|Delegated to|Handled by)\s*:?\s*\w+.*?(?=\n|$)",  # Assigned to: ModelX
+            r"Sub-?task\s+decomposition:.*?(?=\n\n|\Z)",  # Subtask decomposition: ...
+            r"Hierarchical\s+plan:.*?(?=\n\n|\Z)",  # Hierarchical plan: ...
+            r"Phase\s+\d+\s*[-:]\s*\w+\s+(?:Analysis|Planning|Execution).*?(?=\nPhase\s+\d+|\n\n|\Z)",  # Phase 1 - Planning
+        ]
+        for pattern in hrm_patterns:
+            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.DOTALL)
+        
         # Patterns that indicate meta-commentary (case-insensitive)
         meta_patterns = [
             r"^```\w*\s*\n",  # Code fence at start with language tag
@@ -563,30 +576,66 @@ class AnswerRefiner:
         return info
     
     def _clean_content(self, content: str) -> str:
-        """Clean and normalize content."""
-        # Remove excessive whitespace
-        cleaned = re.sub(r'\s+', ' ', content)
+        """Clean and normalize content while preserving structure.
         
-        # Fix spacing around punctuation
-        cleaned = re.sub(r'\s+([.!?,;:])', r'\1', cleaned)
-        cleaned = re.sub(r'([.!?])([A-Za-z])', r'\1 \2', cleaned)
+        CRITICAL FIX: Previous version used re.sub(r'\\s+', ' ', content) which
+        replaced ALL whitespace including newlines with spaces. This destroyed
+        code blocks, lists, and any structured formatting. Now we:
+        1. Preserve newlines completely (only normalize horizontal whitespace)
+        2. Collapse excessive blank lines (3+ -> 2)
+        3. Fix punctuation spacing per-line, not across lines
+        """
+        # Detect if content contains code
+        has_code = ('```' in content or
+                    content.lstrip().startswith(('def ', 'class ', 'import ', 'from ', 'async def ', '#!')) or
+                    '\ndef ' in content or
+                    '\nclass ' in content)
         
-        # Remove excessive newlines
+        if has_code:
+            # For code content: ONLY collapse excessive blank lines.
+            # Do NOT normalize horizontal whitespace — it destroys indentation!
+            # Do NOT fix punctuation — it corrupts code syntax!
+            cleaned = re.sub(r'\n{3,}', '\n\n', content)
+            return cleaned.strip()
+        
+        # For prose content: normalize horizontal whitespace (tabs, multiple spaces → single space)
+        cleaned = re.sub(r'[^\S\n]+', ' ', content)
+        
+        # Collapse excessive blank lines (3+ consecutive newlines -> 2)
         cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+        
+        # Fix spacing around punctuation (ONLY for prose content)
+        cleaned = re.sub(r' +([.!?,;:])', r'\1', cleaned)
+        cleaned = re.sub(r'([.!?])([A-Za-z])', r'\1 \2', cleaned)
         
         return cleaned.strip()
     
     def _fix_format_edge_cases(self, content: str) -> str:
-        """Fix common formatting edge cases."""
+        """Fix common formatting edge cases.
+        
+        CRITICAL: Skip destructive fixes for code-heavy responses.
+        Adding periods, closing parens, or other text-oriented fixes
+        will break code syntax.
+        """
         fixed = content
+        
+        # Detect if response is primarily code (contains code fences or looks like code)
+        has_code_blocks = '```' in fixed
+        # Also detect responses that ARE code (no prose, just function definitions)
+        looks_like_code = (
+            fixed.lstrip().startswith(('def ', 'class ', 'import ', 'from ', 'async def ', '#!'))
+            or '\ndef ' in fixed
+            or '\nclass ' in fixed
+        )
+        is_code_response = has_code_blocks or looks_like_code
         
         # Fix truncated ending
         if fixed.endswith("...") and len(fixed) > 100:
             # Remove trailing ellipsis if it seems like truncation
             pass  # Keep as is, user may want to know it's truncated
         
-        # Fix abrupt ending (no punctuation)
-        if fixed and fixed[-1] not in '.!?)"\'`:':
+        # Fix abrupt ending (no punctuation) — ONLY for prose, never for code
+        if not is_code_response and fixed and fixed[-1] not in '.!?)"\'`:\n':
             # Try to complete the sentence
             last_sentence_start = max(
                 fixed.rfind('. '),
@@ -602,7 +651,10 @@ class AnswerRefiner:
         if open_code_blocks % 2 != 0:
             fixed = fixed + "\n```"
         
-        # Fix unclosed parentheses/brackets
+        # Fix unclosed parentheses/brackets — ONLY for prose, not code
+        if is_code_response:
+            return fixed
+        
         open_parens = fixed.count('(') - fixed.count(')')
         if open_parens > 0:
             fixed = fixed + ')' * open_parens

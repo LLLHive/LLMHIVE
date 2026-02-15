@@ -144,33 +144,39 @@ def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
 # Includes TOP-TIER models: DeepSeek R1, Llama 3.3 70B, Gemma 3 27B, Qwen3
 # =============================================================================
 FREE_MODELS = {
-    # TOP FREE MODELS (ranked by quality):
-    # 1. deepseek/deepseek-r1-0528:free - 164K, BEST reasoning (o1-level!)
+    # TOP FREE MODELS — verified working on OpenRouter (Feb 2026):
+    # 1. deepseek/deepseek-r1-0528:free   - 164K, BEST reasoning (o1-level!)
     # 2. meta-llama/llama-3.3-70b-instruct:free - 131K, GPT-4 level
-    # 3. qwen/qwen3-coder:free - 262K, BEST for coding
-    # 4. google/gemma-3-27b-it:free - 131K, multimodal
+    # 3. qwen/qwen3-coder:free            - 262K, BEST for coding
+    # 4. google/gemma-3-27b-it:free        - 131K, multimodal
     # 5. qwen/qwen3-next-80b-a3b-instruct:free - 262K, strong reasoning
-    
+    # 6. nvidia/nemotron-3-nano-30b-a3b:free - 256K, long context
+    # 7. arcee-ai/trinity-large-preview:free - 131K, agentic/tool use
+    #
+    # REMOVED (404 on OpenRouter):
+    #   openai/gpt-oss-120b:free, tngtech/deepseek-r1t2-chimera:free,
+    #   openai/gpt-oss-20b:free, tngtech/tng-r1t-chimera:free
+
     "math": [
         "deepseek/deepseek-r1-0528:free",              # 164K - BEST reasoning, o1-level!
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong math
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
         "google/gemma-3-27b-it:free",                  # 131K - solid math
-        "openai/gpt-oss-120b:free",                    # 131K - good at math
+        "arcee-ai/trinity-large-preview:free",         # 131K - fallback
     ],
     "reasoning": [
         "deepseek/deepseek-r1-0528:free",              # 164K - BEST reasoning!
-        "tngtech/deepseek-r1t2-chimera:free",          # 164K - DeepSeek-based, 20% faster
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong reasoning
-        "openai/gpt-oss-120b:free",                    # 131K - strong reasoning
+        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
+        "google/gemma-3-27b-it:free",                  # 131K - solid reasoning
+        "arcee-ai/trinity-large-preview:free",         # 131K - agentic reasoning
     ],
     "coding": [
         "qwen/qwen3-coder:free",                       # 262K - BEST for coding!
         "deepseek/deepseek-r1-0528:free",              # 164K - excellent at code
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - good coding
         "arcee-ai/trinity-large-preview:free",         # 131K - agentic coding
-        "openai/gpt-oss-120b:free",                    # 131K - code capable
+        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - code capable
     ],
     "rag": [
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - LONGEST for RAG!
@@ -191,41 +197,41 @@ FREE_MODELS = {
         "qwen/qwen3-coder:free",                       # 262K context
         "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K context
         "deepseek/deepseek-r1-0528:free",              # 164K context
-        "tngtech/deepseek-r1t2-chimera:free",          # 164K context
+        "meta-llama/llama-3.3-70b-instruct:free",      # 131K context
     ],
     "speed": [
-        "arcee-ai/trinity-mini:free",                  # 131K - FASTEST
-        "openai/gpt-oss-20b:free",                     # 131K - fast & small
         "google/gemma-3-27b-it:free",                  # 131K - fast inference
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - fast & efficient
+        "arcee-ai/trinity-large-preview:free",         # 131K - fast
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - good speed
-        "tngtech/deepseek-r1t2-chimera:free",          # 164K - 20% faster than R1
+        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - reasonable speed
     ],
     "dialogue": [
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - BEST conversational
         "arcee-ai/trinity-large-preview:free",         # 131K - chat/roleplay
-        "tngtech/tng-r1t-chimera:free",                # 164K - creative/storytelling
         "z-ai/glm-4.5-air:free",                       # 131K - good alignment
         "google/gemma-3-27b-it:free",                  # 131K - natural dialogue
+        "deepseek/deepseek-r1-0528:free",              # 164K - thoughtful responses
     ],
     "multimodal": [
         "google/gemma-3-27b-it:free",                  # 131K - vision-language!
-        "nvidia/nemotron-nano-12b-v2-vl:free",         # 128K - vision capable
-        "allenai/molmo-2-8b:free",                     # 36K - vision model
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - capable
         "meta-llama/llama-3.3-70b-instruct:free",      # Text fallback
+        "deepseek/deepseek-r1-0528:free",              # Text fallback
     ],
     "tool_use": [
         "arcee-ai/trinity-large-preview:free",         # 131K - agentic harness
-        "arcee-ai/trinity-mini:free",                  # 131K - function calling
         "qwen/qwen3-coder:free",                       # 262K - tool capable
-        "openai/gpt-oss-120b:free",                    # 131K - tool use
         "deepseek/deepseek-r1-0528:free",              # 164K - tool capable
+        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - function calling
+        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - tool use
     ],
     "general": [
         "deepseek/deepseek-r1-0528:free",              # 164K - BEST overall
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong
         "google/gemma-3-27b-it:free",                  # 131K - versatile
-        "openai/gpt-oss-120b:free",                    # 131K - balanced
+        "arcee-ai/trinity-large-preview:free",         # 131K - balanced
     ],
 }
 
@@ -1187,7 +1193,69 @@ async def _free_orchestrate(
         logger.warning("Cheatsheets or scientific calculator not available")
     
     # =========================================================================
-    # NEW: COMPLEXITY DETECTION & ADAPTIVE ROUTING (Jan 31, 2026)
+    # PROMPT ENHANCEMENT (ported from elite_orchestrate — Feb 2026)
+    # =========================================================================
+    # Apply task-specific prompt enhancements to improve quality.
+    # Same enhance_prompt() call that elite tier uses — proven to boost scores.
+    # =========================================================================
+    try:
+        from .prompt_enhancer import enhance_prompt, detect_task_type
+        enhanced_prompt_result, detected_task, enhancement_meta = enhance_prompt(
+            prompt, tier="free"
+        )
+        if enhancement_meta.get("enhancement_applied"):
+            prompt = enhanced_prompt_result
+            metadata["prompt_enhanced"] = True
+            metadata["detected_task"] = detected_task
+            logger.info(
+                "Free orchestrate: Applied %s prompt enhancement",
+                detected_task,
+            )
+    except ImportError:
+        logger.debug("Prompt enhancer not available, using original prompt")
+    except Exception as e:
+        logger.warning("Free prompt enhancement failed (non-fatal): %s", e)
+    
+    # =========================================================================
+    # COMPOSABLE ENHANCEMENTS (ported from elite_orchestrate — Feb 2026)
+    # =========================================================================
+    # These augment the prompt without replacing downstream handlers.
+    # =========================================================================
+    try:
+        from .elite_enhancements import (
+            detect_long_context_query,
+            create_cot_reasoning_prompt,
+        )
+        
+        # Enhancement 1: Long Context Detection → extraction-focused prefix
+        if detect_long_context_query(prompt, context_length=len(prompt)):
+            if len(prompt) > 5000:
+                prompt = (
+                    "IMPORTANT: This is a long document. Focus on locating the specific "
+                    "information requested. Be precise and cite the relevant section.\n\n"
+                    + prompt
+                )
+                metadata["long_context_enhanced"] = True
+                logger.info("Free enhancement: Long-context prompt enrichment applied")
+        
+        # Enhancement 2: Reasoning CoT Boost
+        # Same step-by-step prefix that elite tier uses for reasoning queries
+        if category == "reasoning" and not prompt.startswith("You are an expert"):
+            prompt = (
+                "Think step-by-step. First understand what is being asked, then "
+                "evaluate each option systematically before selecting the best answer.\n\n"
+                + prompt
+            )
+            metadata["cot_boost_applied"] = True
+            logger.info("Free enhancement: Reasoning CoT boost applied")
+        
+    except ImportError:
+        pass  # Enhancements module not available, continue without
+    except Exception as e:
+        logger.warning("Free enhancements failed (non-fatal): %s", e)
+    
+    # =========================================================================
+    # COMPLEXITY DETECTION & ADAPTIVE ROUTING (Jan 31, 2026)
     # =========================================================================
     # Detect query complexity to route appropriately:
     # - SIMPLE: Single fast model (save API calls)
@@ -1563,21 +1631,42 @@ ANSWER:"""
                 }
     
     # =========================================================================
-    # GENERAL: Full ensemble with majority voting
+    # GENERAL: Full ensemble with majority voting + cross-validation
     # =========================================================================
     try:
         # Run ALL ensemble models in parallel (they're FREE!)
         responses = await _parallel_generate(orchestrator, enhanced_prompt, ensemble_models)
         
-        if len(responses) >= 3:
+        if len(responses) >= 2:
             # MAJORITY VOTING: Find the most common answer pattern
             best_response = _select_best_response(responses, prompt)
             consensus_count = len(responses)
             confidence = min(0.70 + (consensus_count * 0.05), 0.95)
             
-            from .prompt_enhancer import ensure_keywords, detect_task_type
-            if detect_task_type(prompt) == "physics":
-                best_response = ensure_keywords(best_response, "physics", prompt)
+            try:
+                from .prompt_enhancer import ensure_keywords, detect_task_type
+                task_type = detect_task_type(prompt)
+                if task_type == "physics":
+                    best_response = ensure_keywords(best_response, "physics", prompt)
+            except Exception:
+                pass
+            
+            # CROSS-VALIDATION (ported from elite — Feb 2026)
+            # For medium+ complexity, validate the best response with diverse models.
+            # This catches errors that consensus alone might miss.
+            if complexity in ('medium', 'complex') and consensus_count >= 2:
+                try:
+                    validated_response, val_confidence = await cross_validate_answer(
+                        best_response, prompt, category, orchestrator,
+                    )
+                    if val_confidence > 0.6:
+                        best_response = validated_response
+                        confidence = max(confidence, val_confidence)
+                        metadata["cross_validated"] = True
+                        metadata["validation_confidence"] = val_confidence
+                        logger.info("Free cross-validation: confidence=%.2f", val_confidence)
+                except Exception as e:
+                    logger.warning("Free cross-validation failed (non-fatal): %s", e)
 
             return {
                 "response": best_response,
@@ -1591,10 +1680,13 @@ ANSWER:"""
                 },
             }
         elif len(responses) >= 1:
-            from .prompt_enhancer import ensure_keywords, detect_task_type
-            response_text = responses[0]
-            if detect_task_type(prompt) == "physics":
-                response_text = ensure_keywords(response_text, "physics", prompt)
+            try:
+                from .prompt_enhancer import ensure_keywords, detect_task_type
+                response_text = responses[0]
+                if detect_task_type(prompt) == "physics":
+                    response_text = ensure_keywords(response_text, "physics", prompt)
+            except Exception:
+                response_text = responses[0]
 
             return {
                 "response": response_text,
@@ -1821,8 +1913,8 @@ async def _parallel_generate(
     if not eligible_models:
         eligible_models = models[:]
 
-    # Run all models in parallel with a shared HTTP client
-    async with httpx.AsyncClient() as client:
+    # Run all models in parallel with a shared HTTP client (with client-level timeout)
+    async with httpx.AsyncClient(timeout=httpx.Timeout(connect=10.0, read=55.0)) as client:
         tasks = [get_response(client, model) for model in eligible_models]
         results = await asyncio.gather(*tasks, return_exceptions=True)
     
@@ -1856,12 +1948,13 @@ async def _parallel_generate(
 
 def _select_best_response(responses: List[str], original_query: str) -> str:
     """
-    Select the best response using heuristics when we have multiple.
+    Select the best response using quality scoring (upgraded Feb 2026).
     
-    Strategies:
-    1. For math: prefer responses with numbers matching calculator
-    2. For code: prefer responses with code blocks
-    3. General: prefer longer, more detailed responses
+    Ported from elite orchestrator's quality estimation:
+    1. Math: prefer responses with Final Answer or numerical results
+    2. Code: prefer responses with code blocks and function definitions
+    3. Reasoning: prefer responses with step-by-step structure
+    4. General: quality score = structure + reasoning indicators + completeness
     """
     if not responses:
         return ""
@@ -1870,20 +1963,52 @@ def _select_best_response(responses: List[str], original_query: str) -> str:
     
     # For math queries, prefer responses with clear numerical answers
     if any(word in query_lower for word in ["calculate", "compute", "solve", "what is"]):
-        # Find responses with **Final Answer:** pattern
         for r in responses:
             if "**Final Answer:" in r or "final answer" in r.lower():
                 return r
     
-    # For code queries, prefer responses with code blocks
+    # For code queries, prefer responses with code blocks and definitions
     if any(word in query_lower for word in ["code", "function", "implement", "write"]):
-        for r in responses:
-            if "```" in r:
-                return r
+        code_responses = [r for r in responses if "```" in r]
+        if code_responses:
+            # Prefer the one with most def/class definitions (more complete)
+            return max(code_responses, key=lambda r: r.count('def ') + r.count('class '))
     
-    # Default: prefer the most comprehensive response
-    # Use length as a proxy for comprehensiveness
-    return max(responses, key=lambda r: len(r))
+    # Quality scoring (ported from elite_orchestrator._estimate_quality)
+    def _quality_score(content: str) -> float:
+        score = 0.5  # Base score
+        
+        # Length factor (completeness proxy, capped to avoid verbosity bias)
+        if len(content) > 100:
+            score += 0.1
+        if len(content) > 500:
+            score += 0.1
+        if len(content) > 2000:
+            score += 0.05
+        
+        # Structure indicators (lists, formatting, sections)
+        if any(marker in content for marker in ['\n\n', '1.', '- ', '* ', '## ']):
+            score += 0.1
+        
+        # Reasoning indicators (explanatory language)
+        reasoning_words = ['because', 'therefore', 'however', 'although',
+                          'specifically', 'first', 'second', 'finally',
+                          'step', 'reason', 'result']
+        reasoning_count = sum(1 for w in reasoning_words if w in content.lower())
+        score += min(0.15, reasoning_count * 0.03)
+        
+        # Answer clarity (has a clear conclusion)
+        if any(marker in content.lower() for marker in [
+            'final answer', 'answer:', 'conclusion', 'therefore,', 'in summary'
+        ]):
+            score += 0.1
+        
+        return min(1.0, score)
+    
+    # Score all responses and pick the best
+    scored = [(r, _quality_score(r)) for r in responses]
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return scored[0][0]
 
 
 # =============================================================================
@@ -2222,15 +2347,50 @@ async def elite_orchestrate(
         logger.warning("Prompt enhancement failed: %s", e)
     
     # =========================================================================
-    # ELITE ENHANCEMENTS (February 1, 2026 - TEMPORARILY DISABLED)
+    # ELITE ENHANCEMENTS (February 2026 - RE-ENABLED with composable guards)
     # =========================================================================
-    # NOTE: Enhancements caused regressions in Tool Use (93% → 67%) and MMLU (66% → 63%)
-    # Root cause: Early returns bypassed working orchestration logic
-    # Status: Disabled pending deeper integration into category handlers
-    # TODO: Re-enable after proper integration without early returns
+    # FIX: Enhancements now applied as composable prompt boosts, NOT early returns.
+    # They augment the existing category handlers rather than replacing them.
+    # Category-specific guards prevent false triggers (e.g., Tool Use, RAG untouched).
     # =========================================================================
-    # Enhancement code available in elite_enhancements.py but not applied here
-    # to preserve existing working orchestration (RAG 100%, Dialogue 100%, etc.)
+    try:
+        from .elite_enhancements import (
+            detect_long_context_query,
+            create_cot_reasoning_prompt,
+        )
+        
+        # COMPOSABLE ENHANCEMENT 1: Long Context Detection → Prompt Enhancement
+        # Only applies to queries with explicit long-context signals AND prompt > 5K chars
+        # Guards: Does NOT early-return. Just enriches the prompt for downstream handlers.
+        if detect_long_context_query(prompt, context_length=len(prompt)):
+            if len(prompt) > 5000:
+                # Add extraction-focused instruction prefix (helps downstream handlers)
+                prompt = (
+                    "IMPORTANT: This is a long document. Focus on locating the specific "
+                    "information requested. Be precise and cite the relevant section.\n\n"
+                    + prompt
+                )
+                logger.info("Elite enhancement: Long-context prompt enrichment applied")
+        
+        # COMPOSABLE ENHANCEMENT 2: Reasoning CoT Boost
+        # Only for detected reasoning/MMLU queries at high accuracy levels.
+        # Guards: Only category=="reasoning", ELITE+ tiers, no Tool Use/RAG/Code
+        detected_category = detect_elite_category(prompt, has_image=has_image)
+        if (detected_category == "reasoning" and 
+            config.tier in (EliteTier.ELITE, EliteTier.MAXIMUM, EliteTier.PREMIUM)):
+            # Prepend CoT reasoning instruction (composable, doesn't replace handler)
+            if not prompt.startswith("You are an expert"):
+                prompt = (
+                    "Think step-by-step. First understand what is being asked, then "
+                    "evaluate each option systematically before selecting the best answer.\n\n"
+                    + prompt
+                )
+                logger.info("Elite enhancement: Reasoning CoT boost applied")
+        
+    except ImportError:
+        pass  # Enhancements module not available, continue without
+    except Exception as e:
+        logger.warning("Elite enhancements failed (non-fatal): %s", e)
     
     # =========================================================================
     # CATEGORY OPTIMIZATION ENGINE (January 2026 Upgrade)

@@ -53,9 +53,9 @@ class OpenRouterConfig:
     retry_base_delay: float = 1.0
     retry_max_delay: float = 60.0
     
-    # Timeouts
+    # Timeouts (reduced from 120s to prevent long hangs on unresponsive models)
     connect_timeout: float = 10.0
-    read_timeout: float = 120.0
+    read_timeout: float = 60.0
     
     # Caching
     cache_ttl_seconds: int = 3600  # 1 hour for model list

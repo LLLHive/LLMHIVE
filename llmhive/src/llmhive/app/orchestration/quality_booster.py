@@ -209,6 +209,47 @@ class QualityBooster:
         # Final verification
         _, verified, confidence = await self._apply_verification(prompt, current, model)
         
+        # ====================================================================
+        # GUARD: Prevent over-summarization
+        # If the boosted response is significantly shorter than the original,
+        # the boosting likely removed valuable content. Revert.
+        # ====================================================================
+        min_length_ratio = 0.75  # Boosted must be at least 75% of original length
+        if len(current) < len(response) * min_length_ratio:
+            logger.info(
+                "Quality boost reverted: response shrunk from %d to %d chars (%.0f%%)",
+                len(response), len(current),
+                len(current) / max(len(response), 1) * 100,
+            )
+            current = response
+            applied = []
+            notes.append("Reverted: over-summarization detected")
+        
+        # ====================================================================
+        # GUARD: Preserve keywords from the original prompt
+        # If the boosted response drops critical keywords that were in the
+        # original response, it's likely losing important information.
+        # ====================================================================
+        if current != response:
+            orig_keywords = set(
+                w.lower() for w in response.split()
+                if len(w) > 4 and w.isalpha()
+            )
+            new_keywords = set(
+                w.lower() for w in current.split()
+                if len(w) > 4 and w.isalpha()
+            )
+            if orig_keywords:
+                keyword_retention = len(orig_keywords & new_keywords) / len(orig_keywords)
+                if keyword_retention < 0.6:
+                    logger.info(
+                        "Quality boost reverted: keyword retention %.0f%% < 60%%",
+                        keyword_retention * 100,
+                    )
+                    current = response
+                    applied = []
+                    notes.append(f"Reverted: keyword retention too low ({keyword_retention:.0%})")
+        
         # Estimate quality improvement
         improvement = self._estimate_improvement(response, current, applied)
         

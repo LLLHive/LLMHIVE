@@ -2312,37 +2312,39 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         if engines_mode == "automatic":
             accuracy_lvl = orchestration_config.get("accuracy_level", 3)
             
-            # Reset all manual engine settings - we'll enable what's needed
-            orchestration_config["use_hrm"] = False
-            orchestration_config["use_prompt_diffusion"] = False
-            orchestration_config["use_deep_consensus"] = False
-            orchestration_config["use_adaptive_routing"] = False
+            # FIX: Preserve explicit user settings instead of blindly resetting.
+            # Save what the user explicitly requested so we can merge later.
+            explicit_hrm = orchestration_config.get("use_hrm", False)
+            explicit_pd = orchestration_config.get("use_prompt_diffusion", False)
+            explicit_dc = orchestration_config.get("use_deep_consensus", False)
+            explicit_ar = orchestration_config.get("use_adaptive_routing", False)
+            
+            # Start with auto-selected engines (conservative defaults)
+            auto_hrm = False
+            auto_pd = False
+            auto_dc = False
+            auto_ar = False
             
             # Determine which engines to enable based on complexity and task
             if detected_complexity in ("complex", "expert"):
-                # Complex queries benefit from HRM (hierarchical decomposition)
-                orchestration_config["use_hrm"] = True
-                # High accuracy also gets deep consensus
+                auto_hrm = True
                 if accuracy_lvl >= 4:
-                    orchestration_config["use_deep_consensus"] = True
+                    auto_dc = True
                 logger.info(
                     "Auto-engines (complex): HRM=%s, DeepConsensus=%s",
                     True, accuracy_lvl >= 4
                 )
             elif detected_complexity == "moderate":
-                # Moderate queries: use adaptive routing for model selection
-                orchestration_config["use_adaptive_routing"] = True
-                # Higher accuracy gets prompt diffusion for refinement
+                auto_ar = True
                 if accuracy_lvl >= 3:
-                    orchestration_config["use_prompt_diffusion"] = True
+                    auto_pd = True
                 logger.info(
                     "Auto-engines (moderate): AdaptiveRouting=%s, PromptDiffusion=%s",
                     True, accuracy_lvl >= 3
                 )
             else:
-                # Simple queries: minimal overhead, just adaptive routing if accuracy > 2
                 if accuracy_lvl >= 3:
-                    orchestration_config["use_adaptive_routing"] = True
+                    auto_ar = True
                 logger.info(
                     "Auto-engines (simple): AdaptiveRouting=%s",
                     accuracy_lvl >= 3
@@ -2350,18 +2352,21 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             
             # Task-specific engine overrides
             if detected_task_type in ("coding", "code_generation", "debugging"):
-                # Coding benefits from prompt diffusion (iterative refinement)
-                orchestration_config["use_prompt_diffusion"] = True
+                auto_pd = True
             elif detected_task_type in ("reasoning", "math", "science_research"):
-                # Reasoning/math benefits from deep consensus
                 if accuracy_lvl >= 3:
-                    orchestration_config["use_deep_consensus"] = True
+                    auto_dc = True
             elif detected_task_type in ("creative_writing", "marketing"):
-                # Creative tasks benefit from adaptive ensemble (diverse outputs)
-                orchestration_config["use_adaptive_routing"] = True
+                auto_ar = True
+            
+            # MERGE: Use auto-selected OR explicit user settings (user always wins)
+            orchestration_config["use_hrm"] = auto_hrm or explicit_hrm
+            orchestration_config["use_prompt_diffusion"] = auto_pd or explicit_pd
+            orchestration_config["use_deep_consensus"] = auto_dc or explicit_dc
+            orchestration_config["use_adaptive_routing"] = auto_ar or explicit_ar
             
             logger.info(
-                "Automatic engine selection: HRM=%s, PromptDiffusion=%s, DeepConsensus=%s, AdaptiveEnsemble=%s",
+                "Automatic engine selection (merged with explicit): HRM=%s, PromptDiffusion=%s, DeepConsensus=%s, AdaptiveEnsemble=%s",
                 orchestration_config.get("use_hrm"),
                 orchestration_config.get("use_prompt_diffusion"),
                 orchestration_config.get("use_deep_consensus"),
@@ -3136,10 +3141,9 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             final_text = artifacts.final_response.content
         
         # Apply quality boosting for high accuracy requests
-        # NOTE: Quality booster disabled at level 4 - causes over-summarization
-        # resulting in terse responses that miss contextual keywords
-        # TODO: Fix quality booster to preserve context before re-enabling
-        if QUALITY_BOOSTER_AVAILABLE and accuracy_level >= 5:  # Only level 5+
+        # FIX: Quality booster now has min-length guard + keyword preservation
+        # Safe to re-enable at level 4+ (Feb 2026 fix)
+        if QUALITY_BOOSTER_AVAILABLE and accuracy_level >= 4:
             booster = _get_quality_booster()
             if booster:
                 try:

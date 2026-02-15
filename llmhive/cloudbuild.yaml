@@ -74,9 +74,10 @@ steps:
       - '--port'
       - '8080'
       - '--memory'
-      - '2Gi'
+      - '4Gi'
       - '--cpu'
       - '2'
+      - '--cpu-boost'
       - '--min-instances'
       - '0'
       - '--max-instances'
@@ -88,7 +89,7 @@ steps:
       - '--update-env-vars'
       - 'ALLOW_STUB_PROVIDER=true,LOG_LEVEL=INFO,ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
       - '--update-secrets'
-      - 'OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,PINECONE_API_KEY=pinecone-api-key:latest,OPENROUTER_API_KEY=open-router-key:latest,API_KEY=api-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest'
+      - 'OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,GROK_API_KEY=grok-api-key:latest,GROQ_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,GOOGLE_AI_API_KEY=gemini-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,PINECONE_API_KEY=pinecone-api-key:latest,OPENROUTER_API_KEY=open-router-key:latest,API_KEY=api-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest,TOGETHERAI_API_KEY=togetherai-api-key:latest'
     waitFor: ['push', 'push-latest']
 
   # Step 5: Run health check

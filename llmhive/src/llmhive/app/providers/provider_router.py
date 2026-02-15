@@ -39,6 +39,7 @@ class Provider(str, Enum):
     GOOGLE = "google"
     DEEPSEEK = "deepseek"
     TOGETHER = "together"
+    GROQ = "groq"
 
 
 @dataclass
@@ -79,6 +80,9 @@ PROVIDER_ROUTING = {
     "google/gemini-2.0-flash-exp:free": (Provider.GOOGLE, "gemini-2.0-flash-exp"),
     "google/gemini-2.5-flash:free": (Provider.GOOGLE, "gemini-2.5-flash-latest"),
     
+    # Groq models → Groq LPU (30 RPM, ~200ms latency, FREE)
+    "meta-llama/llama-3.3-70b-instruct:free": (Provider.GROQ, "llama-3.3-70b-versatile"),
+
     # DeepSeek models → DeepSeek Direct (30 RPM, excellent for math/reasoning)
     "deepseek/deepseek-r1-0528:free": (Provider.DEEPSEEK, "deepseek-reasoner"),
     "deepseek/deepseek-chat": (Provider.DEEPSEEK, "deepseek-chat"),
@@ -105,8 +109,11 @@ PROVIDER_ROUTING = {
         "Qwen/Qwen2.5-7B-Instruct-Turbo",
     ),
     
+    # Groq models → Groq LPU (30 RPM, ultra-fast ~200ms)
+    "groq/llama-3.3-70b": (Provider.GROQ, "llama-3.3-70b-versatile"),
+    "groq/llama-4-maverick": (Provider.GROQ, "meta-llama/llama-4-maverick-17b-128e-instruct"),
+
     # Everything else → OpenRouter (includes Llama, Qwen, and all other models)
-    # Llama models now remain on OpenRouter
 }
 
 
@@ -126,10 +133,12 @@ class ProviderRouter:
         from .google_ai_client import get_google_client
         from .deepseek_client import get_deepseek_client
         from .together_client import get_together_client
+        from .groq_client import get_groq_client
         
         self.google_client = get_google_client()
         self.deepseek_client = get_deepseek_client()
         self.together_client = get_together_client()
+        self.groq_client = get_groq_client()
         
         # Initialize capacity tracking
         self.capacity = {
@@ -153,10 +162,17 @@ class ProviderRouter:
                 window_start=time.time(),
                 requests_in_window=0
             ),
+            Provider.GROQ: ProviderCapacity(
+                rpm_limit=30,  # Groq: 30 RPM free tier
+                window_start=time.time(),
+                requests_in_window=0
+            ),
         }
         
         # Log availability
         providers_available = []
+        if self.groq_client:
+            providers_available.append("Groq LPU (30 RPM)")
         if self.google_client:
             providers_available.append("Google AI (15 RPM)")
         if self.deepseek_client:
@@ -191,13 +207,13 @@ class ProviderRouter:
             provider, native_id = PROVIDER_ROUTING[model_id]
             
             # Check if provider is available and has capacity
-            if provider == Provider.GOOGLE:
-                if self.google_client and self.capacity[Provider.GOOGLE].can_proceed():
-                    return (Provider.GOOGLE, native_id)
-            
-            elif provider == Provider.GROQ:
+            if provider == Provider.GROQ:
                 if self.groq_client and self.capacity[Provider.GROQ].can_proceed():
                     return (Provider.GROQ, native_id)
+
+            elif provider == Provider.GOOGLE:
+                if self.google_client and self.capacity[Provider.GOOGLE].can_proceed():
+                    return (Provider.GOOGLE, native_id)
             
             elif provider == Provider.DEEPSEEK:
                 if self.deepseek_client and self.capacity[Provider.DEEPSEEK].can_proceed():
@@ -244,7 +260,11 @@ class ProviderRouter:
         
         try:
             # Route to appropriate provider
-            if provider == Provider.GOOGLE and self.google_client:
+            if provider == Provider.GROQ and self.groq_client:
+                logger.debug("Routing %s → Groq LPU (native: %s)", model_id, native_model)
+                return await self.groq_client.generate_with_retry(prompt, native_model)
+            
+            elif provider == Provider.GOOGLE and self.google_client:
                 logger.debug("Routing %s → Google AI (native: %s)", model_id, native_model)
                 return await self.google_client.generate_with_retry(prompt, native_model)
             

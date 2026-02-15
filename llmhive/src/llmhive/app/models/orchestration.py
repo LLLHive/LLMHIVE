@@ -155,6 +155,10 @@ class OrchestrationSettings(BaseModel):
         default=False,
         description="Enable Adaptive Ensemble Logic"
     )
+    engines_mode: str = Field(
+        default="automatic",
+        description="Engine selection mode: 'automatic' = backend selects best engines, 'manual' = use explicit enable_* settings"
+    )
     enable_live_research: bool = Field(
         default=False,
         description="Enable real-time web research for current data (auto-enabled for temporal queries)"
