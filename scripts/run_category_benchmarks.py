@@ -206,9 +206,16 @@ async def call_llmhive_api(
                 
                 if response.status_code == 200:
                     data = response.json()
+                    resp_text = data.get("message", "")
+                    # Retry on empty or garbage responses (fallback model returned nothing)
+                    if not resp_text or not resp_text.strip() or resp_text.strip() in ("None", "null", "error"):
+                        if attempt < max_retries - 1:
+                            print(f"⚠️ Empty/garbage response, retrying ({attempt+1}/{max_retries})...")
+                            await asyncio.sleep(1)
+                            continue
                     return {
                         "success": True,
-                        "response": data.get("message", ""),
+                        "response": resp_text,
                         "latency": latency,
                         "cost": data.get("extra", {}).get("cost_tracking", {}).get("total_cost", 0),
                     }
@@ -216,6 +223,19 @@ async def call_llmhive_api(
                     wait_time = 2 ** attempt
                     print(f"⏳ Rate limited, waiting {wait_time}s...")
                     await asyncio.sleep(wait_time)
+                elif response.status_code in (502, 503, 504):
+                    # Transient server errors - retry
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt
+                        print(f"⚠️ Server error {response.status_code}, retrying in {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    return {
+                        "success": False,
+                        "error": f"HTTP {response.status_code}: {response.text[:200]}",
+                        "latency": latency,
+                        "cost": 0,
+                    }
                 else:
                     return {
                         "success": False,
@@ -782,7 +802,7 @@ Brief analysis:"""
                         plan_prompt,
                         reasoning_mode=REASONING_MODE,
                         tier=tier,
-                        timeout=60
+                        timeout=120
                     )
                     
                     analysis = plan_result.get("response", "") if plan_result.get("success") else "No analysis"
@@ -1607,7 +1627,7 @@ async def evaluate_rag(
                 attempt_prompt,
                 reasoning_mode=REASONING_MODE,
                 tier=tier,
-                timeout=90,
+                timeout=120,
                 orchestration_config={
                     "accuracy_level": 5,
                     "enable_reranking": True,
