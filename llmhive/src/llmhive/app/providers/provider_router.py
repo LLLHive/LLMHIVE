@@ -40,6 +40,7 @@ class Provider(str, Enum):
     DEEPSEEK = "deepseek"
     TOGETHER = "together"
     GROQ = "groq"
+    GROK = "grok"  # xAI Grok (paid, high quality)
     CEREBRAS = "cerebras"
     HUGGINGFACE = "huggingface"
 
@@ -143,6 +144,7 @@ class ProviderRouter:
         self.deepseek_client = get_deepseek_client()
         self.together_client = get_together_client()
         self.groq_client = get_groq_client()
+        self.grok_client = None  # xAI Grok handled by orchestrator.py directly
         self.cerebras_client = get_cerebras_client()
         self.hf_client = get_hf_client()
         
@@ -173,6 +175,11 @@ class ProviderRouter:
                 window_start=time.time(),
                 requests_in_window=0
             ),
+            Provider.GROK: ProviderCapacity(
+                rpm_limit=60,  # xAI Grok: 60 RPM paid tier
+                window_start=time.time(),
+                requests_in_window=0
+            ),
             Provider.CEREBRAS: ProviderCapacity(
                 rpm_limit=30,  # Cerebras: 30 RPM free tier, 2000+ tok/s
                 window_start=time.time(),
@@ -189,6 +196,8 @@ class ProviderRouter:
         providers_available = []
         if self.groq_client:
             providers_available.append("Groq LPU (30 RPM)")
+        if self.grok_client:
+            providers_available.append("xAI Grok (60 RPM)")
         if self.cerebras_client:
             providers_available.append("Cerebras WSE (30 RPM)")
         if self.google_client:
