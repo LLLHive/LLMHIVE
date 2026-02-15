@@ -37,27 +37,38 @@ async def generate_cot_reasoning_paths(
     Expected gain: +12% on MMLU
     """
     
-    # Create diverse prompting strategies
+    # Create genuinely diverse prompting strategies (EXP-4)
+    # Key insight: temperature diversity alone is insufficient when all paths
+    # use the same reasoning approach. We need structurally different strategies
+    # with different personas and cognitive frameworks.
     prompting_strategies = [
         {
             "style": "systematic",
-            "instruction": "Think step-by-step systematically. Break down the question into sub-problems."
+            "instruction": "You are an expert professor in this field. Think step-by-step systematically. Break down the question into sub-problems, identify the key concept being tested, and apply it precisely."
         },
         {
             "style": "eliminative",
-            "instruction": "Use elimination. Identify which options are clearly wrong first."
+            "instruction": "You are a test-taking strategist. Use process of elimination: for EACH option, find a specific reason it is wrong. The last option standing is your answer. Be ruthless about eliminating wrong choices."
         },
         {
-            "style": "conceptual",
-            "instruction": "Explain the underlying concept first, then apply it."
+            "style": "first_principles",
+            "instruction": "You are a scientist reasoning from first principles. Define the fundamental terms and principles involved. Derive the answer from basic definitions and axioms, without relying on memorized facts."
         },
         {
-            "style": "comparative",
-            "instruction": "Compare and contrast the options directly."
+            "style": "devil_advocate",
+            "instruction": "You are a critical analyst. For the option that SEEMS most obviously correct, argue AGAINST it. Then evaluate whether that argument holds. This prevents anchoring bias on the first plausible answer."
         },
         {
-            "style": "verifying",
-            "instruction": "For each option, verify if it satisfies all constraints."
+            "style": "example_based",
+            "instruction": "You are a practical educator. Think of a concrete, real-world example or analogy that illustrates the concept being tested. Use that example to evaluate which option is correct."
+        },
+        {
+            "style": "constraint_checking",
+            "instruction": "You are a logician. List ALL constraints and conditions stated in the question. For each option, check if it satisfies EVERY constraint. An option that violates even one constraint is wrong."
+        },
+        {
+            "style": "keyword_analysis",
+            "instruction": "You are a careful reader. Identify the KEY WORDS in the question (especially qualifiers like 'always', 'never', 'most', 'least', 'except', 'not'). These words often determine the correct answer."
         },
     ]
     
@@ -67,7 +78,7 @@ async def generate_cot_reasoning_paths(
     for i, strategy in enumerate(prompting_strategies[:num_paths]):
         choices_formatted = "\n".join([f"{chr(65+j)}. {choice}" for j, choice in enumerate(choices)])
         
-        prompt = f"""Answer this question with detailed reasoning.
+        prompt = f"""Answer this multiple-choice question.
 
 {strategy['instruction']}
 
@@ -76,7 +87,9 @@ Question: {question}
 Options:
 {choices_formatted}
 
-Reasoning (step-by-step):"""
+Think step-by-step, then on the VERY LAST LINE output ONLY the single letter (A, B, C, D, or E) of your answer. Nothing else on that line.
+
+Reasoning:"""
         
         result = await llm_api_call_func(
             prompt,
@@ -90,9 +103,30 @@ Reasoning (step-by-step):"""
         if result.get("success"):
             reasoning = result.get("response", "")
             
-            # Extract answer
-            answer_match = re.search(r'\b([A-E])\b(?!.*\b[A-E]\b)', reasoning)
-            answer = answer_match.group(1) if answer_match else None
+            # Extract answer with multi-strategy approach (EXP-1)
+            answer = None
+            
+            # Strategy 1: Check last non-empty line for a standalone letter
+            lines = [l.strip() for l in reasoning.strip().split('\n') if l.strip()]
+            if lines:
+                last_line = lines[-1]
+                last_line_match = re.match(r'^[^a-zA-Z]*([A-E])[^a-zA-Z]*$', last_line)
+                if last_line_match:
+                    answer = last_line_match.group(1)
+            
+            # Strategy 2: Look for "answer is X" or "answer: X" patterns
+            if not answer:
+                answer_phrase = re.search(
+                    r'(?:answer|correct|choice)\s*(?:is|:)\s*\(?([A-E])\)?',
+                    reasoning, re.IGNORECASE
+                )
+                if answer_phrase:
+                    answer = answer_phrase.group(1).upper()
+            
+            # Strategy 3: Last standalone letter (original fallback)
+            if not answer:
+                answer_match = re.search(r'\b([A-E])\b(?!.*\b[A-E]\b)', reasoning)
+                answer = answer_match.group(1) if answer_match else None
             
             reasoning_paths.append({
                 "strategy": strategy["style"],

@@ -276,12 +276,17 @@ Complete function:"""
 # Based on AWS OpenSearch hybrid search and Rank-DistiLLM (2025)
 # Key insight: LLM-only ranking fails. Need specialized retrieval.
 
-def compute_bm25_score(query: str, passage: str, k1: float = 1.5, b: float = 0.75) -> float:
+def compute_bm25_score(query: str, passage: str, k1: float = 1.5, b: float = 0.75,
+                       corpus_idf: dict = None, avg_dl: float = 200.0) -> float:
     """
-    Compute BM25 score for passage relevance
+    Compute BM25 score for passage relevance with optional IDF weighting.
     
-    BM25 is the gold standard for keyword-based retrieval
+    BM25 is the gold standard for keyword-based retrieval.
+    When corpus_idf is provided (EXP-6), uses proper IDF weighting so that
+    rare discriminative terms (e.g. proper nouns, technical terms) score higher
+    than common stop-word-like terms.
     """
+    import math
     
     # Tokenize
     query_terms = set(re.findall(r'\w+', query.lower()))
@@ -296,19 +301,55 @@ def compute_bm25_score(query: str, passage: str, k1: float = 1.5, b: float = 0.7
     for term in passage_terms:
         term_freq[term] = term_freq.get(term, 0) + 1
     
-    # BM25 scoring
+    # BM25 scoring with IDF
     score = 0.0
-    avg_passage_length = 200  # Assume average passage is 200 words
     
     for term in query_terms:
         if term in term_freq:
             tf = term_freq[term]
-            # BM25 formula (simplified - no IDF since we don't have corpus stats)
             numerator = tf * (k1 + 1)
-            denominator = tf + k1 * (1 - b + b * (passage_length / avg_passage_length))
-            score += numerator / denominator
+            denominator = tf + k1 * (1 - b + b * (passage_length / avg_dl))
+            tf_score = numerator / denominator
+            
+            # Apply IDF if available (EXP-6)
+            if corpus_idf and term in corpus_idf:
+                tf_score *= corpus_idf[term]
+            
+            score += tf_score
     
     return score
+
+
+def build_corpus_idf(passages: list) -> tuple:
+    """
+    Build IDF weights from the passage corpus (EXP-6).
+    
+    Returns (idf_dict, avg_document_length) so BM25 can use proper IDF.
+    IDF = log((N - df + 0.5) / (df + 0.5) + 1) where N = total docs, df = docs containing term.
+    """
+    import math
+    
+    N = len(passages)
+    if N == 0:
+        return {}, 200.0
+    
+    # Count document frequency for each term
+    df = {}
+    total_length = 0
+    for _, passage_text in passages:
+        terms = set(re.findall(r'\w+', passage_text.lower()))
+        for term in terms:
+            df[term] = df.get(term, 0) + 1
+        total_length += len(re.findall(r'\w+', passage_text.lower()))
+    
+    avg_dl = total_length / N
+    
+    # Compute IDF for each term
+    idf = {}
+    for term, doc_freq in df.items():
+        idf[term] = math.log((N - doc_freq + 0.5) / (doc_freq + 0.5) + 1)
+    
+    return idf, avg_dl
 
 def extract_docstring_examples(prompt: str) -> str:
     """Extract examples from docstring for mental testing"""

@@ -548,6 +548,8 @@ async def evaluate_reasoning(
         total_cost = float(progress.get("total_cost", 0.0)) if progress else 0.0
         start_index = int(progress.get("index", 0)) if progress else 0
         error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
+        wrong_answers: List[Dict] = list(progress.get("wrong_answers", [])) if progress else []
+        domain_stats: Dict[str, Dict] = dict(progress.get("domain_stats", {})) if progress else {}
 
         for i, item in enumerate(samples, start=1):
             if i <= start_index:
@@ -555,6 +557,7 @@ async def evaluate_reasoning(
             question = item["question"]
             choices = item["choices"]
             correct_answer = ["A", "B", "C", "D"][item["answer"]]
+            subject = item.get("subject", "unknown")
             
             # SOTA 2026: SELF-CONSISTENCY WITH MULTIPLE REASONING PATHS
             # Based on Wang et al. 2022 + Neighbor-Consistency Belief 2026
@@ -576,7 +579,12 @@ C) {choices[2]}
 D) {choices[3]}"""
             
             if is_negation:
-                formatted_question += "\n\n⚠️ NEGATION: Find what is FALSE/INCORRECT/EXCEPTION."
+                formatted_question = (
+                    "⚠️ CRITICAL: This question uses NEGATION — it asks for the INCORRECT, "
+                    "FALSE, or EXCEPTION option. You must identify the statement that is WRONG "
+                    "or does NOT apply. Do NOT select the true/correct statement.\n\n"
+                    + formatted_question
+                )
             
             # Generate multiple reasoning paths (SOTA: Self-consistency)
             reasoning_paths = await generate_cot_reasoning_paths(
@@ -1079,46 +1087,46 @@ async def evaluate_multilingual(
         if i <= start_index:
             continue
         
-            # SKILL 5.1: Adaptive Schema Parsing (from historical analysis)
-            # Handle ANY multiple-choice format robustly
-            question = item.get("question") or item.get("Question") or item.get("prompt") or item.get("input") or ""
+        # SKILL 5.1: Adaptive Schema Parsing (from historical analysis)
+        # Handle ANY multiple-choice format robustly
+        question = item.get("question") or item.get("Question") or item.get("prompt") or item.get("input") or ""
+        
+        # Extract choices using multiple strategies
+        choices = []
+        answer = None
+        
+        # Strategy 1: Direct 'choices' or 'options' list
+        if "choices" in item and isinstance(item["choices"], list):
+            choices = item["choices"]
+            answer = item.get("answer") or item.get("correct_answer") or item.get("target")
+        
+        # Strategy 2: Letter keys (A, B, C, D, E) - Most common
+        elif all(k in item for k in ["A", "B", "C"]):  # At least A, B, C
+            letter_keys = [k for k in ["A", "B", "C", "D", "E"] if k in item]
+            choices = [item[k] for k in letter_keys]
+            answer = item.get("answer") or item.get("correct_answer") or item.get("Answer")
             
-            # Extract choices using multiple strategies
-            choices = []
-            answer = None
-            
-            # Strategy 1: Direct 'choices' or 'options' list
-            if "choices" in item and isinstance(item["choices"], list):
-                choices = item["choices"]
-                answer = item.get("answer") or item.get("correct_answer") or item.get("target")
-            
-            # Strategy 2: Letter keys (A, B, C, D, E) - Most common
-            elif all(k in item for k in ["A", "B", "C"]):  # At least A, B, C
-                letter_keys = [k for k in ["A", "B", "C", "D", "E"] if k in item]
-                choices = [item[k] for k in letter_keys]
-                answer = item.get("answer") or item.get("correct_answer") or item.get("Answer")
-                
-                # Convert answer to letter if it's an index
-                if isinstance(answer, int) and 0 <= answer < len(choices):
-                    answer = letter_keys[answer]
-                elif isinstance(answer, str) and answer not in letter_keys:
-                    # Try to find which choice matches
-                    for i, choice in enumerate(choices):
-                        if choice.strip().lower() == answer.strip().lower():
-                            answer = letter_keys[i]
-                            break
-            
-            # Strategy 3: option_a, option_b, etc.
-            elif "option_a" in item:
-                for letter in ["a", "b", "c", "d", "e"]:
-                    key = f"option_{letter}"
-                    if key in item:
-                        choices.append(item[key])
-                    else:
+            # Convert answer to letter if it's an index
+            if isinstance(answer, int) and 0 <= answer < len(choices):
+                answer = letter_keys[answer]
+            elif isinstance(answer, str) and answer not in letter_keys:
+                # Try to find which choice matches
+                for idx, choice in enumerate(choices):
+                    if choice.strip().lower() == answer.strip().lower():
+                        answer = letter_keys[idx]
                         break
-                answer = item.get("answer") or item.get("correct_answer")
-                if isinstance(answer, int):
-                    answer = chr(65 + answer)  # Convert to letter
+        
+        # Strategy 3: option_a, option_b, etc.
+        elif "option_a" in item:
+            for letter in ["a", "b", "c", "d", "e"]:
+                key = f"option_{letter}"
+                if key in item:
+                    choices.append(item[key])
+                else:
+                    break
+            answer = item.get("answer") or item.get("correct_answer")
+            if isinstance(answer, int):
+                answer = chr(65 + answer)  # Convert to letter
         
         if len(choices) < 4 or not question:
             errors += 1
@@ -1505,13 +1513,36 @@ async def evaluate_rag(
             query_intent
         )
 
-        # Multi-attempt with validation
+        # EXP-9: Majority-vote passage ranking with anti-position-bias shuffling
+        # Collect rankings from 3 calls with SHUFFLED passage order each time.
+        # This eliminates position bias (LLMs favor passages shown first).
+        # Fuse using Reciprocal Rank Fusion (RRF).
         max_attempts = 3
         ranked = []
+        all_rankings = []
         
         for attempt in range(max_attempts):
+            # EXP-7+9: Anti-position-bias shuffling for attempts > 0
+            if attempt > 0:
+                shuffled_cands = top_candidates.copy()
+                random.shuffle(shuffled_cands)
+                rerank_shuffled = []
+                for rp, pid in enumerate(shuffled_cands, 1):
+                    text = passages_dict[pid]
+                    bm25_s = compute_bm25_score(query, text)
+                    mc = compute_keyword_matches(text, query_keywords)
+                    trunc = text[:200] + "..." if len(text) > 200 else text
+                    rerank_shuffled.append(f"[{pid}] BM25: {bm25_s:.1f}, Keywords: {mc}\n    {trunc}")
+                shuffled_block = "\n\n".join(rerank_shuffled)
+                attempt_prompt = generate_intent_aware_ranking_prompt(query, shuffled_block, query_intent)
+            else:
+                attempt_prompt = prompt
+            
+            # EXP-7: Stronger format forcing appended to every attempt
+            attempt_prompt += "\n\nCRITICAL: Output ONLY comma-separated passage IDs, best first. Example: 7,3,1,9,2"
+            
             result = await call_llmhive_api(
-                prompt,
+                attempt_prompt,
                 reasoning_mode=REASONING_MODE,
                 tier=tier,
                 timeout=90,
@@ -1519,27 +1550,39 @@ async def evaluate_rag(
                     "accuracy_level": 5,
                     "enable_reranking": True,
                     "reranker_model": "bge-reranker-v2-m3",
+                    "temperature": 0.3 + (attempt * 0.15),  # Gentle temp diversity
                 }
             )
             
             if result["success"]:
-                # Robust extraction
-                ranked = extract_passage_ids_robust(result["response"], top_candidates)
-                
-                # Validate
-                if validate_ranking(ranked, passage_ids):
-                    # Add remaining passages not in top reranking
-                    for pid in passage_ids:
-                        if pid not in ranked:
-                            ranked.append(pid)
-                    break
-                
-                # Retry with stronger constraint
-                if attempt < max_attempts - 1:
-                    prompt += f"\n\n⚠️ ATTEMPT {attempt + 2}: ONLY comma-separated numbers! Example: 7,3,1,9,2"
+                attempt_ranked = extract_passage_ids_robust(result["response"], top_candidates)
+                if validate_ranking(attempt_ranked, passage_ids):
+                    all_rankings.append(attempt_ranked)
             else:
                 errors += 1
-                break
+                if attempt == 0:
+                    break  # Only break on first attempt failure
+        
+        # EXP-9: Fuse rankings using RRF if we got multiple successful rankings
+        if len(all_rankings) >= 2:
+            # Reciprocal Rank Fusion: score(d) = sum(1 / (k + rank_i(d)))
+            rrf_k = 60  # Standard RRF constant
+            rrf_scores = {}
+            for ranking in all_rankings:
+                for rank_pos, pid in enumerate(ranking, 1):
+                    if pid not in rrf_scores:
+                        rrf_scores[pid] = 0.0
+                    rrf_scores[pid] += 1.0 / (rrf_k + rank_pos)
+            # Sort by RRF score descending
+            ranked = sorted(rrf_scores.keys(), key=lambda x: rrf_scores[x], reverse=True)
+        elif len(all_rankings) == 1:
+            ranked = all_rankings[0]
+        
+        # Add remaining passage IDs not in the ranking
+        if ranked:
+            for pid in passage_ids:
+                if pid not in ranked:
+                    ranked.append(pid)
         
         # Fallback: Use hybrid retrieval ranking directly
         if not ranked or not validate_ranking(ranked, passage_ids):
@@ -1594,17 +1637,30 @@ async def evaluate_rag(
                 relevant_by_query[qid].append(int(pid))
         
         # Calculate MRR@10 from rankings
-        mrr_sum = 0.0
-        mrr_count = 0
+        # Group candidate lines by query, then find best rank per query
+        cand_by_query = {}
         for line in cand_lines:
             parts = line.split('\t')
             if len(parts) >= 3:
                 qid, pid, rank = parts[0], int(parts[1]), int(parts[2])
-                if qid in relevant_by_query and pid in relevant_by_query[qid]:
-                    if rank <= 10:
-                        mrr_sum += 1.0 / rank
-                        mrr_count += 1
-                        break  # Only count first relevant doc per query
+                if qid not in cand_by_query:
+                    cand_by_query[qid] = []
+                cand_by_query[qid].append((pid, rank))
+        
+        mrr_sum = 0.0
+        mrr_count = 0
+        for qid, candidates in cand_by_query.items():
+            if qid not in relevant_by_query:
+                continue
+            # Find the highest-ranked (lowest rank number) relevant passage
+            best_rank = None
+            for pid, rank in candidates:
+                if pid in relevant_by_query[qid] and rank <= 10:
+                    if best_rank is None or rank < best_rank:
+                        best_rank = rank
+            if best_rank is not None:
+                mrr_sum += 1.0 / best_rank
+                mrr_count += 1
         
         mrr_at_10 = (mrr_sum / len(relevant_by_query)) if relevant_by_query else 0.0
         accuracy = mrr_at_10 * 100

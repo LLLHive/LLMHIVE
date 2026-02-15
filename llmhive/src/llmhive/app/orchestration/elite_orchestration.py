@@ -1505,10 +1505,35 @@ ANSWER:"""
             logger.warning("Free RAG orchestration failed: %s", e)
     
     # =========================================================================
-    # DIALOGUE/EMPATHY: Enhanced prompting for emotional intelligence
+    # DIALOGUE: MT-Bench-aware multi-category dialogue (EXP-11)
+    # MT-Bench tests 8 categories: writing, roleplay, extraction, reasoning,
+    # math, coding, knowledge, STEM. The old empathy-only prompt HURT scores
+    # on non-empathy questions. Now we detect sub-category and adapt.
     # =========================================================================
     if category in ("dialogue", "empathy", "emotional_intelligence"):
-        empathy_prompt = f"""You are responding to someone who needs emotional support.
+        prompt_lower_dial = prompt.lower()
+        
+        # Detect dialogue sub-category for appropriate response style
+        is_empathy = any(w in prompt_lower_dial for w in [
+            "feeling", "upset", "sad", "angry", "frustrated", "stressed",
+            "anxious", "worried", "lonely", "depressed", "hurt", "scared",
+            "support", "comfort", "help me cope"
+        ])
+        is_coding = any(w in prompt_lower_dial for w in [
+            "code", "function", "implement", "algorithm", "program", "python",
+            "javascript", "class", "def ", "return ", "debug", "compile"
+        ])
+        is_math = any(w in prompt_lower_dial for w in [
+            "calculate", "solve", "equation", "integral", "derivative",
+            "probability", "math", "formula", "proof", "theorem"
+        ])
+        is_extraction = any(w in prompt_lower_dial for w in [
+            "extract", "summarize", "list the", "identify", "find all",
+            "what are the", "key points", "main ideas"
+        ])
+        
+        if is_empathy:
+            dialogue_prompt = f"""You are responding to someone who needs emotional support.
 
 GUIDELINES:
 1. START by acknowledging and validating their feelings
@@ -1522,14 +1547,79 @@ GUIDELINES:
 USER'S MESSAGE: {prompt}
 
 Respond with warmth, understanding, and genuine support:"""
+        elif is_coding:
+            dialogue_prompt = f"""You are an expert software engineer having a helpful conversation.
+
+GUIDELINES:
+1. Write clean, correct, well-commented code
+2. Explain your approach briefly before the code
+3. Handle edge cases
+4. Follow best practices for the language
+
+USER'S MESSAGE: {prompt}
+
+Respond with a clear explanation and working code:"""
+        elif is_math:
+            dialogue_prompt = f"""You are a mathematics expert having a helpful conversation.
+
+GUIDELINES:
+1. Show your work step-by-step
+2. State any assumptions or formulas used
+3. Verify your answer at the end
+4. Be precise with notation
+
+USER'S MESSAGE: {prompt}
+
+Solve step-by-step:"""
+        elif is_extraction:
+            dialogue_prompt = f"""You are an expert analyst having a helpful conversation.
+
+GUIDELINES:
+1. Be thorough and systematic in extraction
+2. Use structured formatting (bullets, numbers)
+3. Don't miss any items
+4. Be concise but complete
+
+USER'S MESSAGE: {prompt}
+
+Provide a thorough, well-organized response:"""
+        else:
+            # General conversational - covers writing, roleplay, reasoning, knowledge, STEM
+            dialogue_prompt = f"""You are a knowledgeable, articulate assistant having a helpful conversation.
+
+GUIDELINES:
+1. Be thorough and detailed in your response
+2. Structure your answer clearly with paragraphs or sections as needed
+3. Provide specific examples and evidence
+4. Be direct and avoid filler phrases
+5. If the question has multiple parts, address each one
+
+{DIALOGUE_CHEATSHEET[:1000] if cheatsheets_available else ""}
+
+USER'S MESSAGE: {prompt}
+
+Respond thoughtfully and comprehensively:"""
         
         # Use dialogue-optimized models
         dialogue_models = ensemble_models[:3]
-        responses = await _parallel_generate(orchestrator, empathy_prompt, dialogue_models)
+        responses = await _parallel_generate(orchestrator, dialogue_prompt, dialogue_models)
         
         if responses:
-            # For dialogue, prefer the most empathetic response (longest often = most thoughtful)
-            best_response = max(responses, key=len)
+            # EXP-11: Select by quality, not just length
+            # Filter out very short responses (likely failures)
+            valid_responses = [r for r in responses if len(r.strip()) > 50]
+            if not valid_responses:
+                valid_responses = responses
+            
+            # For empathy, prefer longest (most thoughtful)
+            # For others, prefer medium-length (concise but thorough)
+            if is_empathy:
+                best_response = max(valid_responses, key=len)
+            else:
+                # Sort by length, pick the median to avoid both too-short and too-verbose
+                sorted_resp = sorted(valid_responses, key=len)
+                best_response = sorted_resp[len(sorted_resp) // 2]
+            
             try:
                 from .prompt_enhancer import ensure_keywords
                 best_response = ensure_keywords(best_response, "dialogue", prompt)
@@ -1540,7 +1630,8 @@ Respond with warmth, understanding, and genuine support:"""
                 "confidence": 0.85,
                 "category": category,
                 "tier": "free",
-                "metadata": {**metadata, "dialogue_enhanced": True},
+                "metadata": {**metadata, "dialogue_enhanced": True,
+                             "dialogue_subcategory": "empathy" if is_empathy else "coding" if is_coding else "math" if is_math else "extraction" if is_extraction else "general"},
             }
     
     # =========================================================================
@@ -2242,14 +2333,16 @@ def detect_elite_category(prompt: str, has_image: bool = False) -> str:
         return "reasoning"
     
     # Long Context detection - CHECK BEFORE RAG (takes precedence)
-    # Detect by keywords AND by actual prompt length
+    # Detect by keywords FIRST, then by extreme prompt length (>10000 chars)
+    # NOTE: Raised from 2000 to 10000 to prevent misclassifying MMLU formatted
+    # questions, HumanEval prompts, and MS MARCO passage ranking prompts as
+    # long_context (EXP-2: category misclassification fix)
     long_context_keywords = [
         "document start", "document end", "read it completely", "read carefully",
         "long document", "entire document", "hidden somewhere", "needle",
         "haystack", "throughout the document", "somewhere in this document"
     ]
-    # Check for long-context patterns or very long prompts (>2000 chars)
-    if any(keyword in prompt_lower for keyword in long_context_keywords) or len(prompt) > 2000:
+    if any(keyword in prompt_lower for keyword in long_context_keywords) or len(prompt) > 15000:
         return "long_context"
     
     # Math detection

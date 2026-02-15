@@ -13,9 +13,9 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-# Import BM25 from sota module (same directory)
+# Import BM25 and IDF builder from sota module (same directory)
 try:
-    from sota_benchmark_improvements import compute_bm25_score
+    from sota_benchmark_improvements import compute_bm25_score, build_corpus_idf
 except ImportError:
     # If running from different context, define locally
     def compute_bm25_score(query: str, passage: str, k1: float = 1.5, b: float = 0.75) -> float:
@@ -308,7 +308,10 @@ def ultra_hybrid_retrieval(
     query_intent: Dict[str, Any]
 ) -> List[int]:
     """
-    ULTRA-AGGRESSIVE hybrid retrieval with intent-aware scoring
+    ULTRA-AGGRESSIVE hybrid retrieval with intent-aware scoring.
+    
+    EXP-6: Now uses corpus-level IDF in BM25 so rare discriminative terms
+    (proper nouns, technical terms) are weighted much higher than common words.
     """
     
     query_keywords = [w for w in re.findall(r'\w+', query.lower()) 
@@ -316,11 +319,17 @@ def ultra_hybrid_retrieval(
                           "a", "an", "the", "is", "are", "was", "were", "of", "in", "on", "at", "to", "for"
                       }]
     
+    # EXP-6: Build corpus IDF from all passages for this query
+    try:
+        corpus_idf, avg_dl = build_corpus_idf(passages)
+    except Exception:
+        corpus_idf, avg_dl = None, 200.0
+    
     scores = []
     
     for passage_id, passage_text in passages:
-        # Component 1: BM25 (keyword matching)
-        bm25 = compute_bm25_score(query, passage_text)
+        # Component 1: BM25 with IDF (keyword matching - EXP-6 enhanced)
+        bm25 = compute_bm25_score(query, passage_text, corpus_idf=corpus_idf, avg_dl=avg_dl)
         
         # Component 2: Semantic (keyword + patterns)
         from benchmark_helpers import compute_length_normalized_score
@@ -329,9 +338,9 @@ def ultra_hybrid_retrieval(
         # Component 3: Intent-aware quality
         quality = score_passage_quality(passage_text, query_intent)
         
-        # Weighted combination
-        # BM25 (40%) + Semantic (40%) + Quality (20%)
-        final_score = 0.4 * bm25 + 0.4 * semantic + 0.2 * quality
+        # Weighted combination - BM25 boosted since IDF makes it more precise
+        # BM25 (50%) + Semantic (30%) + Quality (20%)
+        final_score = 0.5 * bm25 + 0.3 * semantic + 0.2 * quality
         
         scores.append((passage_id, final_score))
     
