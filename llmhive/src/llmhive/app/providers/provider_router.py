@@ -40,6 +40,8 @@ class Provider(str, Enum):
     DEEPSEEK = "deepseek"
     TOGETHER = "together"
     GROQ = "groq"
+    CEREBRAS = "cerebras"
+    HUGGINGFACE = "huggingface"
 
 
 @dataclass
@@ -134,11 +136,15 @@ class ProviderRouter:
         from .deepseek_client import get_deepseek_client
         from .together_client import get_together_client
         from .groq_client import get_groq_client
+        from .cerebras_client import get_cerebras_client
+        from .hf_client import get_hf_client
         
         self.google_client = get_google_client()
         self.deepseek_client = get_deepseek_client()
         self.together_client = get_together_client()
         self.groq_client = get_groq_client()
+        self.cerebras_client = get_cerebras_client()
+        self.hf_client = get_hf_client()
         
         # Initialize capacity tracking
         self.capacity = {
@@ -167,18 +173,32 @@ class ProviderRouter:
                 window_start=time.time(),
                 requests_in_window=0
             ),
+            Provider.CEREBRAS: ProviderCapacity(
+                rpm_limit=30,  # Cerebras: 30 RPM free tier, 2000+ tok/s
+                window_start=time.time(),
+                requests_in_window=0
+            ),
+            Provider.HUGGINGFACE: ProviderCapacity(
+                rpm_limit=10,  # HuggingFace: conservative (few hundred/hour)
+                window_start=time.time(),
+                requests_in_window=0
+            ),
         }
         
         # Log availability
         providers_available = []
         if self.groq_client:
             providers_available.append("Groq LPU (30 RPM)")
+        if self.cerebras_client:
+            providers_available.append("Cerebras WSE (30 RPM)")
         if self.google_client:
             providers_available.append("Google AI (15 RPM)")
         if self.deepseek_client:
             providers_available.append("DeepSeek (30 RPM)")
         if self.together_client:
             providers_available.append("Together.ai (20 RPM)")
+        if self.hf_client:
+            providers_available.append("HuggingFace (10 RPM)")
         providers_available.append("OpenRouter (20 RPM)")
         
         logger.info(
@@ -339,6 +359,70 @@ class ProviderRouter:
         except Exception as fallback_error:
             logger.error("Together.ai fallback also failed for %s: %s", model_id, fallback_error)
             return None
+
+    async def _try_cerebras_fallback(self, model_id: str, prompt: str) -> Optional[str]:
+        """
+        Cerebras fallback -- ultra-fast wafer-scale inference (2000+ tok/s).
+        Used when both primary provider and Together.ai fail.
+        """
+        if not self.cerebras_client:
+            return None
+        
+        try:
+            logger.info("FALLBACK → Cerebras (llama-3.3-70b) for failed %s", model_id)
+            self.capacity[Provider.CEREBRAS].record_request()
+            result = await self.cerebras_client.generate_with_retry(prompt, "llama-3.3-70b")
+            if result:
+                logger.info("Cerebras fallback SUCCESS for %s", model_id)
+            return result
+        except Exception as e:
+            logger.error("Cerebras fallback failed for %s: %s", model_id, e)
+            return None
+
+    async def _try_hf_fallback(self, model_id: str, prompt: str) -> Optional[str]:
+        """
+        HuggingFace Inference fallback -- last resort using open models.
+        Used when primary, Together.ai, and Cerebras all fail.
+        """
+        if not self.hf_client:
+            return None
+        
+        try:
+            logger.info("FALLBACK → HuggingFace (Llama-3.3-70B) for failed %s", model_id)
+            self.capacity[Provider.HUGGINGFACE].record_request()
+            result = await self.hf_client.generate_with_retry(
+                prompt, "meta-llama/Llama-3.3-70B-Instruct"
+            )
+            if result:
+                logger.info("HuggingFace fallback SUCCESS for %s", model_id)
+            return result
+        except Exception as e:
+            logger.error("HuggingFace fallback failed for %s: %s", model_id, e)
+            return None
+
+    async def try_all_fallbacks(self, model_id: str, prompt: str) -> Optional[str]:
+        """
+        Try all fallback providers in order:
+        Together.ai → Cerebras → HuggingFace
+        Returns first successful result or None.
+        """
+        # 1. Together.ai (good model variety, paid)
+        result = await self._try_together_fallback(model_id, prompt)
+        if result:
+            return result
+        
+        # 2. Cerebras (ultra-fast, free 1M tokens/day)
+        result = await self._try_cerebras_fallback(model_id, prompt)
+        if result:
+            return result
+        
+        # 3. HuggingFace (free, slower, last resort)
+        result = await self._try_hf_fallback(model_id, prompt)
+        if result:
+            return result
+        
+        logger.error("ALL fallback providers failed for %s", model_id)
+        return None
     
     def get_capacity_status(self) -> Dict[str, Dict]:
         """Get current capacity status for all providers."""

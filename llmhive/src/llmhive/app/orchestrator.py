@@ -2963,32 +2963,48 @@ Please provide an accurate, well-verified response."""
                 except Exception as e:
                     logger.error(f"Error generating response from provider: {e}")
                     
-                    # FALLBACK: Try Together.ai before giving up
-                    # This catches OpenRouter 403/429/5xx and retries via Together.ai
+                    # FALLBACK CHAIN: Together.ai → Cerebras → HuggingFace → Direct httpx
+                    # Catches OpenRouter 403/429/5xx and retries via alternative providers
                     fallback_result = None
+                    fallback_provider = None
                     
-                    # Method 1: Try via provider router
+                    # Method 1: Try full fallback chain via provider router
                     try:
                         from .providers import get_provider_router
                         router = get_provider_router()
                         if router:
-                            fallback_result = await router._try_together_fallback(
+                            fallback_result = await router.try_all_fallbacks(
                                 first_model, augmented_prompt
                             )
+                            if fallback_result:
+                                fallback_provider = "router-chain"
                     except Exception as fb_err:
-                        logger.warning(f"Together.ai router fallback failed: {fb_err}")
+                        logger.warning(f"Router fallback chain failed: {fb_err}")
                     
-                    # Method 2: Direct httpx call if router failed
+                    # Method 2: Direct httpx calls if router failed entirely
                     if not fallback_result:
-                        try:
-                            import os, httpx as _fb_httpx
-                            _fb_key = os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY")
-                            if _fb_key:
+                        import os, httpx as _fb_httpx
+                        _fb_providers = [
+                            ("Together.ai", os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY"),
+                             "https://api.together.ai/v1/chat/completions",
+                             "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"),
+                            ("Cerebras", os.getenv("CEREBRAS_API_KEY"),
+                             "https://api.cerebras.ai/v1/chat/completions",
+                             "llama-3.3-70b"),
+                            ("HuggingFace", os.getenv("HF_TOKEN"),
+                             "https://router.huggingface.co/hf-inference/v1/chat/completions",
+                             "meta-llama/Llama-3.3-70B-Instruct"),
+                        ]
+                        for _fb_name, _fb_key, _fb_url, _fb_model in _fb_providers:
+                            if not _fb_key or fallback_result:
+                                continue
+                            try:
                                 async with _fb_httpx.AsyncClient(timeout=60.0) as _fb_client:
                                     _fb_resp = await _fb_client.post(
-                                        "https://api.together.ai/v1/chat/completions",
-                                        headers={"Authorization": f"Bearer {_fb_key}", "Content-Type": "application/json"},
-                                        json={"model": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+                                        _fb_url,
+                                        headers={"Authorization": f"Bearer {_fb_key}",
+                                                 "Content-Type": "application/json"},
+                                        json={"model": _fb_model,
                                               "messages": [{"role": "user", "content": augmented_prompt}],
                                               "max_tokens": 2048},
                                     )
@@ -2997,21 +3013,23 @@ Please provide an accurate, well-verified response."""
                                         _fb_choices = _fb_data.get("choices", [])
                                         if _fb_choices:
                                             fallback_result = _fb_choices[0].get("message", {}).get("content", "")
-                                            logger.info("Direct Together.ai fallback succeeded")
-                        except Exception as direct_err:
-                            logger.warning(f"Direct Together.ai fallback failed: {direct_err}")
+                                            fallback_provider = f"direct-{_fb_name}"
+                                            logger.info(f"Direct {_fb_name} fallback succeeded")
+                                            break
+                            except Exception as direct_err:
+                                logger.warning(f"Direct {_fb_name} fallback failed: {direct_err}")
                     
                     if fallback_result:
-                        logger.info(f"Together.ai fallback succeeded for {first_model}")
+                        logger.info(f"Fallback succeeded via {fallback_provider} for {first_model}")
                         result = LLMResult(
                             content=fallback_result,
-                            model=f"together-fallback-for-{first_model}",
+                            model=f"fallback-{fallback_provider}-for-{first_model}",
                             tokens=0,
                             cost_info=None,
                             generation_id=None,
                         )
                     else:
-                        # No fallback available — raise the error
+                        # All fallbacks exhausted — raise the error
                         from .errors import ProviderError, ErrorCode
                         raise ProviderError(
                             message=f"Provider error: {str(e)}",
