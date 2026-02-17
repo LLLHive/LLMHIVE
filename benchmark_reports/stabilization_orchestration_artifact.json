@@ -1,0 +1,357 @@
+{
+  "generated_at": "2026-02-17T21:34:34.211704+00:00",
+  "configuration_snapshot": {
+    "global_harness": {
+      "entrypoint": "scripts/run_category_benchmarks.py",
+      "tier_env": "CATEGORY_BENCH_TIER (default: elite)",
+      "reasoning_mode_env": "CATEGORY_BENCH_REASONING_MODE (default: deep)",
+      "sampling_params": {
+        "temperature_env": "CATEGORY_BENCH_TEMPERATURE",
+        "top_p_env": "CATEGORY_BENCH_TOP_P"
+      },
+      "seed_policy": "fixed deterministic seeds; baseline seed=42",
+      "routing_api": {
+        "endpoint": "/v1/chat",
+        "retries": [
+          429,
+          502,
+          503,
+          504
+        ],
+        "max_retries": 3,
+        "defaults": {
+          "accuracy_level": 5,
+          "use_deep_consensus": true,
+          "enable_verification": true
+        }
+      },
+      "infra_dependencies": {
+        "API_KEY": "unset",
+        "LLMHIVE_API_KEY": "unset",
+        "TOOLBENCH_EVAL_CMD": "unset",
+        "LONGBENCH_EVAL_CMD": "unset",
+        "MTBENCH_EVAL_CMD": "unset",
+        "MSMARCO_EVAL_CMD": "unset"
+      }
+    },
+    "categories": {
+      "mmlu": {
+        "models": [
+          "anthropic/claude-opus-4.6",
+          "google/gemini-3-pro",
+          "openai/gpt-5.2",
+          "deepseek/deepseek-v3.2-thinking",
+          "openai/gpt-5.3-codex"
+        ],
+        "fallback": "google/gemini-3-pro",
+        "routing": "domain detection + negation handling + multi-path CoT + self-consistency + neighbor consistency",
+        "seed": 42
+      },
+      "humaneval": {
+        "routing": "orchestrator tier routing",
+        "prompt": "plan -> implement -> refine (3 attempts max)",
+        "tool_usage": "human_eval.execution.check_correctness",
+        "seed": "deterministic problem ordering"
+      },
+      "gsm8k": {
+        "routing": "generate-then-verify math candidates",
+        "extraction": "#### marker + fallback numeric parse",
+        "seed": 42
+      },
+      "mmmlu": {
+        "routing": "orchestrator routing with verification",
+        "prompt": "strict final line single letter A-D + robust schema parsing",
+        "seed": 42
+      },
+      "long_context": {
+        "judge": "external LONGBENCH_EVAL_CMD",
+        "seed": 42,
+        "timeout_s": 1800
+      },
+      "tool_use": {
+        "judge": "external TOOLBENCH_EVAL_CMD",
+        "seed": 42,
+        "timeout_s": 3600
+      },
+      "rag": {
+        "retrieval": "MS MARCO + hybrid retrieval + BM25/keyword + intent-aware rerank + anti-position-bias shuffle + RRF",
+        "reranker": "bge-reranker-v2-m3",
+        "metric": "builtin MRR@10 unless external command supplied",
+        "seed": 42
+      },
+      "dialogue": {
+        "judge": "external MTBENCH_EVAL_CMD",
+        "seed": 42,
+        "timeout_s": 1800
+      }
+    }
+  },
+  "smart_table_revalidation": {
+    "rows": [
+      {
+        "category": "MMLU",
+        "current": 60.0,
+        "best": 72.0,
+        "leader": 89.0,
+        "gap": -17.0,
+        "semantics": "behind"
+      },
+      {
+        "category": "HumanEval",
+        "current": 90.0,
+        "best": 90.0,
+        "leader": 92.0,
+        "gap": -2.0,
+        "semantics": "behind"
+      },
+      {
+        "category": "GSM8K",
+        "current": 81.8,
+        "best": 94.9,
+        "leader": 96.0,
+        "gap": -1.1,
+        "semantics": "behind"
+      },
+      {
+        "category": "MMMLU",
+        "current": 75.0,
+        "best": 84.5,
+        "leader": 86.0,
+        "gap": -1.5,
+        "semantics": "behind"
+      },
+      {
+        "category": "Long Context",
+        "current": 95.0,
+        "best": 95.0,
+        "leader": 90.0,
+        "gap": 5.0,
+        "semantics": "ahead"
+      },
+      {
+        "category": "Tool Use",
+        "current": 83.3,
+        "best": 83.3,
+        "leader": 85.0,
+        "gap": -1.7,
+        "semantics": "behind"
+      },
+      {
+        "category": "RAG (MRR@10)",
+        "current": 37.8,
+        "best": 51.5,
+        "leader": 43.0,
+        "gap": 8.5,
+        "semantics": "ahead"
+      },
+      {
+        "category": "Dialogue (MT-Bench)",
+        "current": 59.5,
+        "best": 67.0,
+        "leader": 90.0,
+        "gap": -23.0,
+        "semantics": "behind"
+      }
+    ],
+    "gap_formula": "Gap = Our Best - Leader",
+    "semantics": "positive gap means ahead; negative gap means behind",
+    "protected_categories": [
+      "Long Context",
+      "RAG (MRR@10)"
+    ]
+  },
+  "variance_diagnostics": {
+    "mmlu": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "humaneval": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "gsm8k": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "mmmlu": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "long_context": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "tool_use": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "rag": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "dialogue": {
+      "mean": null,
+      "std_dev": null,
+      "max_delta": null,
+      "instability_flag": "unknown",
+      "note": "missing artifact-backed replay data"
+    },
+    "special_checks": {
+      "humaneval": "pass@k sensitivity (k=1,5)",
+      "gsm8k": "answer extraction stability",
+      "dialogue": "judge variance",
+      "tool_use": "API instability vs tool selection",
+      "rag": "recall@k + rerank variance",
+      "mmlu_mmmlu": "option-selection drift"
+    }
+  },
+  "infra_vs_capability": [
+    {
+      "failure": "Tool API timeout/5xx",
+      "count": "TBD",
+      "infra_503": "TBD",
+      "judge_bias": 0,
+      "capability": 0
+    },
+    {
+      "failure": "Tool schema/sequence violation",
+      "count": "TBD",
+      "infra_503": 0,
+      "judge_bias": 0,
+      "capability": "TBD"
+    },
+    {
+      "failure": "MT-Bench judge unavailable/error",
+      "count": "TBD",
+      "infra_503": "TBD",
+      "judge_bias": "TBD",
+      "capability": 0
+    },
+    {
+      "failure": "MT-Bench low score with valid output",
+      "count": "TBD",
+      "infra_503": 0,
+      "judge_bias": "TBD",
+      "capability": "TBD"
+    }
+  ],
+  "regression_shields": {
+    "long_context": "needle test pre-merge mandatory",
+    "rag": "recall floor + MRR floor",
+    "humaneval": "format compliance suite",
+    "tool_use": "mock API retry shield",
+    "gsm8k": "extraction invariant enforcement",
+    "mmmlu": "locale-format validation suite"
+  },
+  "cross_category_gate": {
+    "sample": "20% fixed sample across all 8 categories",
+    "rule": "no category regression worse than 1% absolute",
+    "rollback": "mandatory if violated"
+  },
+  "anti_circularity": {
+    "re_proposed_implemented_fix": "NO",
+    "verified_artifact_before_change": "YES",
+    "bundled_variables": "NO",
+    "protected_categories_regressed": "NO_CHANGE_RUN",
+    "infra_separated_from_capability": "YES"
+  },
+  "success_criteria": {
+    "long_context": ">=95",
+    "rag": ">=historical best",
+    "gsm8k": ">=94",
+    "mmmlu": ">=86",
+    "tool_use": ">=85",
+    "humaneval": ">=91",
+    "mmlu": ">=80 trajectory",
+    "dialogue": ">=7.0 average",
+    "variance": "<3% all categories",
+    "protected_regression": "none"
+  },
+  "experiment_matrix": [
+    {
+      "id": "EXP-C1",
+      "category": "MMLU",
+      "single_variable": "negation preamble strictness",
+      "expected_delta": "+3 to +5",
+      "risk": "verbosity drift",
+      "rollback": "any category <-1%"
+    },
+    {
+      "id": "EXP-C2",
+      "category": "Dialogue",
+      "single_variable": "response scaffold template",
+      "expected_delta": "+0.4 to +0.8",
+      "risk": "style rigidity",
+      "rollback": "MT variance >3%"
+    },
+    {
+      "id": "EXP-C3",
+      "category": "Dialogue",
+      "single_variable": "judge-robust formatting constraints",
+      "expected_delta": "+0.3",
+      "risk": "response naturalness",
+      "rollback": "writing/roleplay <-1%"
+    },
+    {
+      "id": "EXP-B1",
+      "category": "GSM8K",
+      "single_variable": "final answer extraction rule",
+      "expected_delta": "+1 to +2",
+      "risk": "parser overfit",
+      "rollback": "arithmetic cluster worsens"
+    },
+    {
+      "id": "EXP-B2",
+      "category": "MMMLU",
+      "single_variable": "locale-specific answer-line instruction",
+      "expected_delta": "+1 to +2",
+      "risk": "token overhead",
+      "rollback": "EN locale <-1%"
+    },
+    {
+      "id": "EXP-B3",
+      "category": "Tool Use",
+      "single_variable": "retry/circuit-breaker shield",
+      "expected_delta": "+1 to +2",
+      "risk": "latency",
+      "rollback": "latency +20%"
+    },
+    {
+      "id": "EXP-B4",
+      "category": "HumanEval",
+      "single_variable": "completion sanitizer determinism",
+      "expected_delta": "+1",
+      "risk": "clip valid code",
+      "rollback": "compile-fail +1%"
+    },
+    {
+      "id": "EXP-A1",
+      "category": "RAG",
+      "single_variable": "rerank candidate depth",
+      "expected_delta": "+5 to +10",
+      "risk": "cost/latency",
+      "rollback": "Long Context or Tool Use <-1%"
+    }
+  ]
+}
