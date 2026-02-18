@@ -8,11 +8,113 @@ This module implements the main orchestration logic including:
 """
 from __future__ import annotations
 
+import asyncio
+import inspect
 import logging
 import os
+import time
 from typing import Dict, List, Optional, Any, Tuple
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# INFRA HARDENING — Response Validation & Provider Retry (Phase 2)
+# ---------------------------------------------------------------------------
+
+_INFRA_GARBAGE_MARKERS = (
+    "<html>", "<!doctype", "service unavailable", "502 bad gateway",
+    "503 service", "504 gateway", "internal server error",
+)
+
+_RETRYABLE_EXCEPTIONS = (
+    ConnectionError,
+    ConnectionResetError,
+    TimeoutError,
+    OSError,
+)
+
+_PROVIDER_RETRY_MAX = 5
+_PROVIDER_RETRY_BACKOFF_BASE = 2
+
+
+def _response_is_valid_infra(text: Any, min_length: int = 10) -> bool:
+    """Return True if *text* is a genuine model response, not infra garbage."""
+    if text is None:
+        return False
+    if not isinstance(text, str):
+        text = str(text)
+    stripped = text.strip()
+    if not stripped or stripped in ("None", "null", "error", ""):
+        return False
+    if len(stripped) < min_length:
+        return False
+    lower = stripped.lower()
+    return not any(marker in lower for marker in _INFRA_GARBAGE_MARKERS)
+
+
+def _is_retryable_error(exc: BaseException) -> bool:
+    """Return True if the exception indicates a transient infra failure."""
+    if isinstance(exc, _RETRYABLE_EXCEPTIONS):
+        return True
+    msg = str(exc).lower()
+    return any(tok in msg for tok in (
+        "502", "503", "timeout", "timed out", "connection reset",
+        "service unavailable", "bad gateway",
+    ))
+
+
+async def _call_provider_with_retry(
+    provider: Any,
+    prompt: str,
+    model_name: str,
+    **kwargs: Any,
+) -> Any:
+    """Call ``provider.generate()`` with exponential-backoff retry.
+
+    Retries on HTTP 502/503, timeout, connection reset, and empty responses.
+    Returns the provider result on success; raises on exhaustion.
+    """
+    last_exc: Optional[BaseException] = None
+    for attempt in range(_PROVIDER_RETRY_MAX):
+        try:
+            if inspect.iscoroutinefunction(provider.generate):
+                result = await provider.generate(prompt, model=model_name, **kwargs)
+            else:
+                result = provider.generate(prompt, model=model_name, **kwargs)
+
+            content = (
+                getattr(result, "text", None)
+                or getattr(result, "content", None)
+                or (result if isinstance(result, str) else str(result))
+            )
+            if _response_is_valid_infra(content):
+                return result
+
+            logger.warning(
+                "INFRA_RETRY attempt=%d/%d error_type=empty_or_invalid "
+                "model=%s ts=%s",
+                attempt + 1, _PROVIDER_RETRY_MAX, model_name,
+                time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            )
+            raise ValueError("Invalid/empty provider response")
+
+        except Exception as exc:
+            last_exc = exc
+            if attempt < _PROVIDER_RETRY_MAX - 1 and _is_retryable_error(exc):
+                wait = _PROVIDER_RETRY_BACKOFF_BASE ** attempt
+                logger.warning(
+                    "INFRA_RETRY attempt=%d/%d error_type=%s model=%s "
+                    "backoff=%ds ts=%s",
+                    attempt + 1, _PROVIDER_RETRY_MAX,
+                    type(exc).__name__, model_name, wait,
+                    time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                )
+                await asyncio.sleep(wait)
+                continue
+            raise
+
+    raise last_exc  # type: ignore[misc]
+
 
 # Import feature flags for controlling partial implementations
 try:
@@ -2911,18 +3013,14 @@ Please provide an accurate, well-verified response."""
             else:
                 # Try to generate a response using the provider
                 try:
-                    # Check if provider has a generate method
                     if hasattr(provider, 'generate'):
-                        # Pass the actual model name to the provider
                         model_name = first_model if first_model != provider_name else (models_to_use[0] if models_to_use else "default")
-                        # Check if generate is async
-                        import asyncio
-                        import inspect
-                        if inspect.iscoroutinefunction(provider.generate):
-                            provider_result = await provider.generate(augmented_prompt, model=model_name, **kwargs)
-                        else:
-                            provider_result = provider.generate(augmented_prompt, model=model_name, **kwargs)
-                        # Extract content from result
+
+                        # INFRA HARDENING: retry wrapper with exponential backoff
+                        provider_result = await _call_provider_with_retry(
+                            provider, augmented_prompt, model_name, **kwargs
+                        )
+
                         if hasattr(provider_result, 'text'):
                             content = provider_result.text
                         elif hasattr(provider_result, 'content'):
@@ -2934,11 +3032,9 @@ Please provide an accurate, well-verified response."""
                         
                         model_name = getattr(provider_result, 'model', models_to_use[0])
                         tokens = getattr(provider_result, 'tokens_used', 0)
-                        # Extract cost tracking info if available
                         cost_info = getattr(provider_result, 'cost_info', None)
                         generation_id = getattr(provider_result, 'generation_id', None)
                     else:
-                        # Fallback for providers without generate method
                         content = f"Stub response: {augmented_prompt[:100]}..."
                         model_name = "stub"
                         tokens = 0
@@ -2953,7 +3049,6 @@ Please provide an accurate, well-verified response."""
                         generation_id=generation_id,
                     )
                     
-                    # Store model output and cost info in scratchpad
                     if scratchpad:
                         scratchpad.write("model_output", content)
                         scratchpad.write("model_name", model_name)
