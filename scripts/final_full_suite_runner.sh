@@ -5,15 +5,25 @@
 # Runs the complete 8-category benchmark suite with cost and time controls.
 #
 # Usage:
-#   bash scripts/final_full_suite_runner.sh
+#   bash scripts/final_full_suite_runner.sh [--dry-run]
 #
 # Prerequisites:
 #   - API_KEY or LLMHIVE_API_KEY set
+#   - HF_TOKEN set
 #   - Python venv activated (or .venv present)
+#   - verify_authentication.py passes
 #   - micro_validation.py --dry-run passes
 # ===========================================================================
 
 set -euo pipefail
+
+# ---- Parse arguments ------------------------------------------------------
+DRY_RUN=false
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY_RUN=true ;;
+    esac
+done
 
 # ---- Configuration --------------------------------------------------------
 export MAX_RUNTIME_MINUTES="${MAX_RUNTIME_MINUTES:-180}"
@@ -50,11 +60,102 @@ LLMHive — Full-Suite Certification Run
   Seed:            $CATEGORY_BENCH_SEED
   Max Runtime:     ${MAX_RUNTIME_MINUTES} minutes
   Max Cost:        \$${MAX_TOTAL_COST_USD}
-  Report:          $REPORT_FILE
+  Dry Run:         $DRY_RUN
 ======================================================================
 HEADER
 
-# ---- Pre-flight: zero regression audit ------------------------------------
+# ===========================================================================
+# PHASE 3 — Cost & Runtime Cap Enforcement
+# ===========================================================================
+
+echo "" | tee -a "$LOG_FILE"
+echo "Verifying cost & runtime caps..." | tee -a "$LOG_FILE"
+
+if [[ "$MAX_TOTAL_COST_USD" != "5.00" ]]; then
+    echo "❌ Max cost must be 5.00 for certification run (got: $MAX_TOTAL_COST_USD)" | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+if [[ "$MAX_RUNTIME_MINUTES" -gt 180 ]]; then
+    echo "❌ Runtime cap exceeds certification limit (got: $MAX_RUNTIME_MINUTES, max: 180)" | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+echo "✅ Cost cap: \$${MAX_TOTAL_COST_USD}  |  Runtime cap: ${MAX_RUNTIME_MINUTES}m" | tee -a "$LOG_FILE"
+
+# ===========================================================================
+# PHASE 4 — Evaluator Placeholder Validation
+# ===========================================================================
+
+echo "" | tee -a "$LOG_FILE"
+echo "Verifying evaluator placeholders..." | tee -a "$LOG_FILE"
+
+EVAL_OK=true
+for EVAL_VAR in LONGBENCH_EVAL_CMD TOOLBENCH_EVAL_CMD MTBENCH_EVAL_CMD; do
+    CMD="${!EVAL_VAR:-}"
+    if [[ -z "$CMD" ]]; then
+        SCRIPT_NAME=""
+        case "$EVAL_VAR" in
+            LONGBENCH_EVAL_CMD) SCRIPT_NAME="eval_longbench.py" ;;
+            TOOLBENCH_EVAL_CMD) SCRIPT_NAME="eval_toolbench.py" ;;
+            MTBENCH_EVAL_CMD)   SCRIPT_NAME="eval_mtbench.py" ;;
+        esac
+        if [[ -f "$SCRIPT_DIR/$SCRIPT_NAME" ]]; then
+            echo "  ℹ  $EVAL_VAR auto-resolved from $SCRIPT_NAME" | tee -a "$LOG_FILE"
+        else
+            echo "  ❌ $EVAL_VAR not set and $SCRIPT_NAME not found" | tee -a "$LOG_FILE"
+            EVAL_OK=false
+        fi
+    elif [[ "$CMD" != *"{output_path}"* ]]; then
+        echo "  ❌ $EVAL_VAR missing {output_path} placeholder" | tee -a "$LOG_FILE"
+        EVAL_OK=false
+    else
+        echo "  ✅ $EVAL_VAR OK" | tee -a "$LOG_FILE"
+    fi
+done
+
+if [[ "$EVAL_OK" != "true" ]]; then
+    echo "ABORT: Evaluator placeholder validation failed." | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+# ===========================================================================
+# PHASE 5 — Certification Lock Validation
+# ===========================================================================
+
+echo "" | tee -a "$LOG_FILE"
+echo "Verifying certification lock..." | tee -a "$LOG_FILE"
+
+if [[ "${CERTIFICATION_LOCK:-}" != "true" ]]; then
+    echo "❌ Certification lock not enabled (CERTIFICATION_LOCK != true)" | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+if [[ "${CERTIFICATION_OVERRIDE:-}" != "true" ]]; then
+    echo "❌ Certification override missing (CERTIFICATION_OVERRIDE != true)" | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+echo "✅ CERTIFICATION_LOCK=true  |  CERTIFICATION_OVERRIDE=true" | tee -a "$LOG_FILE"
+
+# ===========================================================================
+# Pre-flight: Authentication verification
+# ===========================================================================
+
+echo "" | tee -a "$LOG_FILE"
+echo "Running authentication verification..." | tee -a "$LOG_FILE"
+
+if ! python3 "$SCRIPT_DIR/verify_authentication.py" 2>&1 | tee -a "$LOG_FILE"; then
+    echo "ABORT: Authentication verification failed." | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+echo "Authentication verified." | tee -a "$LOG_FILE"
+
+# ===========================================================================
+# Pre-flight: Zero regression audit
+# ===========================================================================
+
 echo "" | tee -a "$LOG_FILE"
 echo "Running zero-regression audit..." | tee -a "$LOG_FILE"
 
@@ -65,7 +166,24 @@ fi
 
 echo "Audit passed." | tee -a "$LOG_FILE"
 
-# ---- Run full suite -------------------------------------------------------
+# ===========================================================================
+# PHASE 6 — Dry Run Gate
+# ===========================================================================
+
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "" | tee -a "$LOG_FILE"
+    echo "======================================================================" | tee -a "$LOG_FILE"
+    echo "  DRY RUN COMPLETE — all checks passed." | tee -a "$LOG_FILE"
+    echo "  Ready for execution." | tee -a "$LOG_FILE"
+    echo "  To run for real: remove --dry-run flag." | tee -a "$LOG_FILE"
+    echo "======================================================================" | tee -a "$LOG_FILE"
+    exit 0
+fi
+
+# ===========================================================================
+# Run full suite
+# ===========================================================================
+
 START_EPOCH="$(date +%s)"
 echo "" | tee -a "$LOG_FILE"
 echo "Starting 8-category benchmark suite at $(date -u +%Y-%m-%dT%H:%M:%SZ)..." | tee -a "$LOG_FILE"
