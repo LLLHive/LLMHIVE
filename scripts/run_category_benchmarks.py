@@ -2582,6 +2582,16 @@ def _log_answer(log_path: str, entry: Dict[str, Any]) -> None:
 
 
 async def main():
+    if _is_truthy(os.getenv("CERTIFICATION_LOCK")):
+        if not _is_truthy(os.getenv("CERTIFICATION_OVERRIDE")):
+            print("=" * 70)
+            print("CERTIFICATION_LOCK is active.")
+            print("Full-suite execution blocked to prevent accidental costly runs.")
+            print("To proceed, also set CERTIFICATION_OVERRIDE=true")
+            print("=" * 70)
+            sys.exit(1)
+        print("CERTIFICATION_LOCK active — override accepted, proceeding.")
+
     _preflight_checks()
     
     # E2: Pre-flight API health check — abort early if backend is down
