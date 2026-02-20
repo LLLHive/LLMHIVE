@@ -2,9 +2,13 @@
 """
 LLMHive — Authentication & Pre-Certification Verification
 ==========================================================
-Verifies all API keys, environment variables, evaluator commands,
-cost/runtime caps, and Cloud Run configuration before allowing a
+Verifies API key, environment variables, evaluator commands,
+cost/runtime caps, and provider connectivity before allowing a
 certification benchmark run.
+
+Provider validation is delegated entirely to verify_all_providers.py
+via the adapter-based health system.  This script does NOT perform
+any direct provider health checks.
 
 Usage:
     python scripts/verify_authentication.py [--json]
@@ -17,17 +21,22 @@ Exit codes:
 import argparse
 import json
 import os
-import re
 import subprocess
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
+
+try:
+    from dotenv import load_dotenv
+    _cert_env = Path(__file__).resolve().parent.parent / ".env.certification"
+    if _cert_env.exists():
+        load_dotenv(_cert_env)
+except ImportError:
+    pass
 
 try:
     import httpx
-
     _HAS_HTTPX = True
 except ImportError:
     _HAS_HTTPX = False
@@ -36,15 +45,13 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 
 # ===================================================================
-# Readiness state — accumulates results across all phases
+# Readiness state
 # ===================================================================
 
 _readiness: Dict[str, Any] = {
     "timestamp": datetime.now().isoformat(),
     "authentication": "PENDING",
     "api_key_verified": False,
-    "hf_authenticated": False,
-    "google_models_available": False,
     "cloud_revision_verified": False,
     "cost_cap_verified": False,
     "runtime_cap_verified": False,
@@ -61,28 +68,32 @@ _failures: list = []
 
 def _pass(key: str, msg: str) -> None:
     _readiness[key] = True
-    print(f"  ✅  {msg}")
+    print(f"  PASS  {msg}")
 
 
 def _fail(key: str, msg: str) -> None:
     _readiness[key] = False
     _failures.append(msg)
-    print(f"  ❌  {msg}")
+    print(f"  FAIL  {msg}")
 
 
 def _skip(key: str, msg: str) -> None:
-    print(f"  ⏭   {msg}")
+    print(f"  SKIP  {msg}")
 
 
 # ===================================================================
-# PHASE 1 — Local Authentication Verification
+# PHASE 1 — API Key Verification (orchestrator health only)
 # ===================================================================
 
-def verify_api_key() -> None:
-    """Check API_KEY / LLMHIVE_API_KEY and hit the orchestrator health endpoint."""
+def phase_1() -> None:
+    print("\n" + "=" * 70)
+    print("PHASE 1 — API KEY VERIFICATION")
+    print("=" * 70)
+
     api_key = os.getenv("API_KEY") or os.getenv("LLMHIVE_API_KEY")
     if not api_key:
         _fail("api_key_verified", "API_KEY / LLMHIVE_API_KEY not set")
+        _readiness["authentication"] = "FAIL"
         return
 
     api_url = os.getenv(
@@ -92,111 +103,19 @@ def verify_api_key() -> None:
 
     if not _HAS_HTTPX:
         _fail("api_key_verified", "httpx not installed — cannot verify API health")
+        _readiness["authentication"] = "FAIL"
         return
 
     try:
         r = httpx.get(f"{api_url}/health", timeout=15)
         if r.status_code == 200:
             _pass("api_key_verified", f"API health OK ({api_url})")
+            _readiness["authentication"] = "PASS"
         else:
             _fail("api_key_verified", f"API health returned HTTP {r.status_code}")
+            _readiness["authentication"] = "FAIL"
     except Exception as exc:
         _fail("api_key_verified", f"API health unreachable: {exc}")
-
-
-def verify_hf_token() -> None:
-    """Check HF_TOKEN exists, run whoami, and verify authenticated access."""
-    hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
-    if not hf_token:
-        _fail("hf_authenticated", "HF_TOKEN not set")
-        return
-
-    if not _HAS_HTTPX:
-        _fail("hf_authenticated", "httpx not installed — cannot verify HF auth")
-        return
-
-    try:
-        r = httpx.get(
-            "https://huggingface.co/api/whoami",
-            headers={"Authorization": f"Bearer {hf_token}"},
-            timeout=15,
-        )
-        if r.status_code == 200:
-            data = r.json()
-            username = data.get("name", data.get("fullname", "unknown"))
-            _pass("hf_authenticated", f"HF authenticated as: {username}")
-        elif r.status_code == 401:
-            _fail("hf_authenticated", "HF_TOKEN invalid or expired")
-            print("       ─────────────────────────────────────────────")
-            print("       HF_TOKEN invalid or expired.")
-            print("       Run:  huggingface-cli login")
-            print("       Then: export HF_TOKEN=$(cat ~/.cache/huggingface/token)")
-            print("       ─────────────────────────────────────────────")
-        else:
-            _fail("hf_authenticated", f"HF whoami returned HTTP {r.status_code}")
-    except Exception as exc:
-        _fail("hf_authenticated", f"HF whoami failed: {exc}")
-
-    try:
-        r = httpx.head(
-            "https://huggingface.co/api/datasets/openai/gsm8k",
-            headers={"Authorization": f"Bearer {hf_token}"},
-            timeout=15,
-        )
-        if r.status_code in (200, 302):
-            print("       Dataset metadata download OK")
-        else:
-            print(f"       ⚠ Dataset metadata returned HTTP {r.status_code}")
-    except Exception:
-        pass
-
-
-def verify_google_ai() -> None:
-    """If GOOGLE_AI_API_KEY set, query models endpoint and confirm availability."""
-    api_key = os.getenv("GOOGLE_AI_API_KEY")
-    if not api_key:
-        _skip("google_models_available", "GOOGLE_AI_API_KEY not set — skipping Google verification")
-        return
-
-    if not _HAS_HTTPX:
-        _fail("google_models_available", "httpx not installed — cannot verify Google AI")
-        return
-
-    try:
-        r = httpx.get(
-            f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}",
-            timeout=15,
-        )
-        if r.status_code == 200:
-            models = r.json().get("models", [])
-            prod = [
-                m for m in models
-                if "generateContent" in m.get("supportedGenerationMethods", [])
-                and "exp" not in m.get("name", "").lower()
-            ]
-            if prod:
-                _pass("google_models_available", f"Google AI: {len(prod)} production models available")
-            else:
-                _fail("google_models_available", "Google AI: no production models found")
-        elif r.status_code == 404:
-            _fail("google_models_available", "Google AI: models endpoint returned 404")
-        else:
-            _fail("google_models_available", f"Google AI: models endpoint returned HTTP {r.status_code}")
-    except Exception as exc:
-        _fail("google_models_available", f"Google AI verification failed: {exc}")
-
-
-def phase_1() -> None:
-    print("\n" + "=" * 70)
-    print("PHASE 1 — LOCAL AUTHENTICATION VERIFICATION")
-    print("=" * 70)
-    verify_api_key()
-    verify_hf_token()
-    verify_google_ai()
-
-    if _readiness["api_key_verified"] and _readiness["hf_authenticated"]:
-        _readiness["authentication"] = "PASS"
-    else:
         _readiness["authentication"] = "FAIL"
 
 
@@ -244,15 +163,10 @@ def phase_2() -> None:
         pass
 
     if local_commit != "unknown" and remote_commit != "unknown" and local_commit != remote_commit[:12]:
-        print(f"  ⚠  Commit mismatch: local={local_commit} remote={remote_commit}")
-        print("       (Acceptable if deploying from this branch)")
+        print(f"  NOTE  Commit mismatch: local={local_commit} remote={remote_commit}")
+        print("        (Acceptable if deploying from this branch)")
 
-    required_vars = [
-        "HF_TOKEN", "API_KEY", "MAX_RUNTIME_MINUTES", "MAX_TOTAL_COST_USD",
-    ]
-    optional_provider_vars = [
-        "GOOGLE_AI_API_KEY", "OPENROUTER_API_KEY", "DEEPSEEK_API_KEY",
-    ]
+    required_vars = ["API_KEY", "MAX_RUNTIME_MINUTES", "MAX_TOTAL_COST_USD"]
     local_fallbacks = {"API_KEY": "LLMHIVE_API_KEY"}
     missing = [v for v in required_vars if not os.getenv(v)]
     actual_missing = [
@@ -264,11 +178,6 @@ def phase_2() -> None:
         _fail("cloud_revision_verified", f"Missing required env vars: {', '.join(actual_missing)}")
     else:
         _pass("cloud_revision_verified", "Cloud Run reachable, required env vars present")
-
-    missing_optional = [v for v in optional_provider_vars if not os.getenv(v)]
-    if missing_optional:
-        print(f"       Note: optional provider keys not set: {', '.join(missing_optional)}")
-        print("       (These providers will be skipped during benchmark)")
 
 
 # ===================================================================
@@ -328,18 +237,18 @@ def phase_4() -> None:
             script_path = _SCRIPTS_DIR / auto_script
             if script_path.exists():
                 cmd = f"python3 {script_path} --output {{output_path}} --seed {{seed}}"
-                print(f"  ℹ   {name} auto-resolved from {auto_script}")
+                print(f"  INFO  {name} auto-resolved from {auto_script}")
 
         if not cmd:
-            print(f"  ❌  {name} not set and script not found")
+            print(f"  FAIL  {name} not set and script not found")
             all_ok = False
             continue
 
         if "{output_path}" not in cmd:
-            print(f"  ❌  {name} missing {{output_path}} placeholder")
+            print(f"  FAIL  {name} missing {{output_path}} placeholder")
             all_ok = False
         else:
-            print(f"  ✅  {name} OK")
+            print(f"  PASS  {name} OK")
 
     if all_ok:
         _pass("evaluator_placeholders_valid", "All evaluator commands validated")
@@ -371,7 +280,7 @@ def phase_5() -> None:
 
 
 # ===================================================================
-# PHASE 6 — Provider Connectivity Verification
+# PHASE 6 — Provider Connectivity (delegated to verify_all_providers)
 # ===================================================================
 
 def phase_6_providers() -> None:
@@ -381,7 +290,6 @@ def phase_6_providers() -> None:
 
     try:
         from verify_all_providers import verify_all_providers
-        report = verify_all_providers()
     except ImportError:
         try:
             import importlib.util
@@ -390,26 +298,26 @@ def phase_6_providers() -> None:
             )
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
-            report = mod.verify_all_providers()
+            verify_all_providers = mod.verify_all_providers
         except Exception as exc:
-            print(f"  Could not run provider verification: {exc}")
+            print(f"  FAIL  Could not import verify_all_providers: {exc}")
             _readiness["providers"] = {}
             return
 
-    provider_results = report.get("providers", {})
-    _readiness["providers"] = {
-        k: v.get("status", "UNKNOWN") for k, v in provider_results.items()
-    }
+    report = verify_all_providers(strict=True)
 
-    passed = [k for k, v in provider_results.items() if v.get("status") == "PASS"]
-    failed = [k for k, v in provider_results.items() if v.get("status") == "FAIL"]
+    _readiness["providers"] = {}
+    for k, v in report.get("providers", {}).items():
+        _readiness["providers"][k] = v.get("status", "UNKNOWN")
 
-    if failed:
-        _fail("providers_verified", f"Provider failures: {', '.join(failed)}")
-    elif passed:
-        _pass("providers_verified", f"{len(passed)} providers verified")
+    if report.get("status") == "PASS":
+        _pass("providers_verified", "All providers verified")
     else:
-        print("  ℹ   No provider keys configured — skipping")
+        failed = [
+            k for k, v in report.get("providers", {}).items()
+            if v.get("status") == "FAIL"
+        ]
+        _fail("providers_verified", f"Provider failures: {', '.join(failed)}")
 
 
 # ===================================================================
@@ -423,24 +331,15 @@ def phase_7() -> None:
 
     all_critical = all([
         _readiness["api_key_verified"],
-        _readiness["hf_authenticated"],
         _readiness["cost_cap_verified"],
         _readiness["runtime_cap_verified"],
         _readiness["certification_lock_active"],
         _readiness["certification_override_active"],
         _readiness["evaluator_placeholders_valid"],
+        _readiness["providers_verified"],
     ])
 
-    # Provider failures block certification only if a provider was
-    # configured (key set) but its test call failed.
-    provider_hard_fail = any(
-        v == "FAIL" for v in _readiness.get("providers", {}).values()
-    )
-    if provider_hard_fail:
-        all_critical = False
-
     _readiness["ready_for_execution"] = all_critical
-    _readiness["authentication"] = "PASS" if _readiness["api_key_verified"] and _readiness["hf_authenticated"] else "FAIL"
     _readiness["failures"] = _failures if _failures else []
 
     print()
@@ -449,8 +348,6 @@ def phase_7() -> None:
 
     display_keys = [
         ("API Key Verified", "api_key_verified"),
-        ("HF Authenticated", "hf_authenticated"),
-        ("Google Models Available", "google_models_available"),
         ("Cloud Revision Verified", "cloud_revision_verified"),
         ("Cost Cap Verified", "cost_cap_verified"),
         ("Runtime Cap Verified", "runtime_cap_verified"),
@@ -462,10 +359,9 @@ def phase_7() -> None:
 
     for label, key in display_keys:
         val = _readiness.get(key, False)
-        icon = "PASS" if val else ("FAIL" if val is False else "SKIP")
+        icon = "PASS" if val else "FAIL"
         print(f"  {label:<35} {icon:<10}")
 
-    # Provider detail table
     providers = _readiness.get("providers", {})
     if providers:
         print()
@@ -491,7 +387,6 @@ def phase_7() -> None:
 # ===================================================================
 
 def phase_8() -> int:
-    """Return 0 if ready, 1 if not."""
     if _readiness.get("ready_for_execution"):
         return 0
     return 1

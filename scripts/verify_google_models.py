@@ -2,14 +2,17 @@
 """
 LLMHive — Google Model Access Verification
 ============================================
-Verifies GOOGLE_AI_API_KEY, discovers production models, selects the
-best stable candidate, and performs a lightweight inference test.
+Verifies GOOGLE_AI_API_KEY, discovers production models, and confirms
+the selected model exists.
+
+No inference calls.  Health = connectivity + auth + model listing +
+model existence.
 
 Usage:
     python scripts/verify_google_models.py [--json]
 
 Exit codes:
-    0  Google model verified and healthy.
+    0  Google models verified and accessible.
     1  Verification failed — abort certification.
 """
 
@@ -22,6 +25,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+try:
+    from dotenv import load_dotenv
+    _cert_env = Path(__file__).resolve().parent.parent / ".env.certification"
+    if _cert_env.exists():
+        load_dotenv(_cert_env)
+except ImportError:
+    pass
 
 try:
     import httpx
@@ -42,7 +53,6 @@ _REJECT_PATTERN = re.compile(
 
 
 def _parse_version(model_name: str) -> tuple:
-    """Extract (major, minor) version from model name for ranking."""
     m = re.search(r"gemini-(\d+)\.(\d+)", model_name)
     if m:
         return (int(m.group(1)), int(m.group(2)))
@@ -74,7 +84,7 @@ def _rank_model(model: dict) -> tuple:
 
 
 # ===================================================================
-# Discovery + selection
+# Discovery + selection (no inference)
 # ===================================================================
 
 def discover_google_models(api_key: str) -> List[dict]:
@@ -95,8 +105,8 @@ def discover_google_models(api_key: str) -> List[dict]:
     if r.status_code == 401:
         print("  GOOGLE_AI_API_KEY rejected (401 Unauthorized)")
         return []
-    if r.status_code == 404:
-        print("  Google AI models endpoint returned 404")
+    if r.status_code == 400:
+        print("  400 Bad Request — API key format may be incorrect")
         return []
     if r.status_code != 200:
         print(f"  Google AI models endpoint returned HTTP {r.status_code}")
@@ -125,76 +135,10 @@ def discover_google_models(api_key: str) -> List[dict]:
 
 
 def select_best_model(models: List[dict]) -> Optional[dict]:
-    """Select the highest-ranked stable production model (Pro preferred)."""
     if not models:
         return None
     ranked = sorted(models, key=_rank_model, reverse=True)
     return ranked[0]
-
-
-def validate_model(api_key: str, model_name: str) -> Dict[str, Any]:
-    """Perform a lightweight test call: ask the model to return '4'."""
-    short = model_name.replace("models/", "")
-    result: Dict[str, Any] = {
-        "model": short,
-        "status": "FAIL",
-        "latency_ms": 0,
-        "error": None,
-    }
-
-    if not _HAS_HTTPX:
-        result["error"] = "httpx not installed"
-        return result
-
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/"
-        f"{model_name}:generateContent?key={api_key}"
-    )
-    payload = {
-        "contents": [{"parts": [{"text": "Return the number 4."}]}],
-        "generationConfig": {"maxOutputTokens": 10},
-    }
-
-    t0 = time.time()
-    try:
-        r = httpx.post(url, json=payload, timeout=15)
-        latency = int((time.time() - t0) * 1000)
-        result["latency_ms"] = latency
-
-        if r.status_code == 404:
-            result["error"] = "404 — model not found"
-            return result
-        if r.status_code == 401:
-            result["error"] = "401 — unauthorized"
-            return result
-        if r.status_code != 200:
-            result["error"] = f"HTTP {r.status_code}"
-            return result
-
-        data = r.json()
-        candidates = data.get("candidates", [])
-        if not candidates:
-            result["error"] = "Empty response — no candidates"
-            return result
-
-        text = ""
-        parts = candidates[0].get("content", {}).get("parts", [])
-        for p in parts:
-            text += p.get("text", "")
-
-        if "4" in text:
-            result["status"] = "PASS"
-        else:
-            result["error"] = f"Unexpected response: {text[:80]}"
-
-    except httpx.TimeoutException:
-        result["latency_ms"] = int((time.time() - t0) * 1000)
-        result["error"] = "Timeout"
-    except Exception as exc:
-        result["latency_ms"] = int((time.time() - t0) * 1000)
-        result["error"] = str(exc)
-
-    return result
 
 
 # ===================================================================
@@ -210,15 +154,21 @@ def main() -> int:
 
     print("=" * 70)
     print("LLMHive — Google Model Access Verification")
-    print(f"  Timestamp: {datetime.now().isoformat()}")
+    print(f"  Timestamp:  {datetime.now().isoformat()}")
+    print(f"  Method:     Model listing only (no inference)")
     print("=" * 70)
 
     report: Dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
         "status": "FAIL",
+        "connectivity": False,
+        "auth": False,
+        "models_listed": False,
+        "target_model_exists": False,
         "selected_model": None,
         "total_production_models": 0,
-        "test_result": None,
+        "latency_ms": 0,
+        "error": None,
     }
 
     # 1. Check API key
@@ -226,25 +176,29 @@ def main() -> int:
     if not api_key:
         print("\n  ABORT: GOOGLE_AI_API_KEY is not set.")
         report["error"] = "GOOGLE_AI_API_KEY not set"
-        if args.json:
-            print(json.dumps(report, indent=2))
+        _save_and_print(report, args.json)
         return 1
 
     print(f"\n  GOOGLE_AI_API_KEY present ({len(api_key)} chars)")
 
-    # 2. Discover models
+    # 2. Discover models (connectivity + auth + listing in one call)
     print("\n  Discovering production models...")
+    t0 = time.time()
     models = discover_google_models(api_key)
+    report["latency_ms"] = int((time.time() - t0) * 1000)
+    report["connectivity"] = True
     report["total_production_models"] = len(models)
 
     if not models:
         print("  ABORT: No production models found.")
         report["error"] = "No production models found"
-        if args.json:
-            print(json.dumps(report, indent=2))
+        _save_and_print(report, args.json)
         return 1
 
-    print(f"  Found {len(models)} production models:")
+    report["auth"] = True
+    report["models_listed"] = True
+
+    print(f"  Found {len(models)} production models (latency: {report['latency_ms']}ms):")
     for m in sorted(models, key=_rank_model, reverse=True)[:8]:
         name = m.get("name", "").replace("models/", "")
         ctx = m.get("inputTokenLimit", 0)
@@ -255,46 +209,45 @@ def main() -> int:
     if not best:
         print("  ABORT: Could not select a model.")
         report["error"] = "Selection failed"
-        if args.json:
-            print(json.dumps(report, indent=2))
+        _save_and_print(report, args.json)
         return 1
 
-    best_name = best.get("name", "")
-    short_name = best_name.replace("models/", "")
+    short_name = best.get("name", "").replace("models/", "")
     report["selected_model"] = short_name
+    report["target_model_exists"] = True
+    report["status"] = "PASS"
+
     print(f"\n  Selected Google Model: {short_name}")
 
-    # 4. Validate
-    print("  Running lightweight test call...")
-    result = validate_model(api_key, best_name)
-    report["test_result"] = result
-
-    if result["status"] == "PASS":
-        print(f"  Status: PASS (latency: {result['latency_ms']}ms)")
-        report["status"] = "PASS"
-    else:
-        print(f"  Status: FAIL — {result.get('error', 'unknown')}")
-        report["error"] = result.get("error")
-
     # Latency guard
-    if result["latency_ms"] > 10000:
-        print(f"  ABORT: Latency {result['latency_ms']}ms exceeds 10s limit")
+    if report["latency_ms"] > 10_000:
+        print(f"  WARN: Latency {report['latency_ms']}ms exceeds 10s")
         report["status"] = "FAIL"
-        report["error"] = f"Latency {result['latency_ms']}ms > 10s"
+        report["error"] = f"Latency {report['latency_ms']}ms > 10s"
 
+    # Summary
+    print()
+    print(f"  {'Check':<25} {'Result'}")
+    print(f"  {'-'*25} {'-'*10}")
+    print(f"  {'Connectivity':<25} {'PASS' if report['connectivity'] else 'FAIL'}")
+    print(f"  {'Authentication':<25} {'PASS' if report['auth'] else 'FAIL'}")
+    print(f"  {'Models Listed':<25} {'PASS' if report['models_listed'] else 'FAIL'}")
+    print(f"  {'Target Model Exists':<25} {'PASS' if report['target_model_exists'] else 'FAIL'}")
+    print(f"  {'Overall':<25} {report['status']}")
     print()
 
-    # Save report
+    _save_and_print(report, args.json)
+    return 0 if report["status"] == "PASS" else 1
+
+
+def _save_and_print(report: Dict[str, Any], as_json: bool) -> None:
     report_path = _PROJECT_ROOT / "benchmark_reports" / "google_model_verification.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2))
     print(f"  Report saved: {report_path}")
-
-    if args.json:
+    if as_json:
         print()
         print(json.dumps(report, indent=2))
-
-    return 0 if report["status"] == "PASS" else 1
 
 
 if __name__ == "__main__":

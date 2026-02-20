@@ -17,6 +17,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Deterministic env: load .env.certification if present
+_ENV_FILE="$PROJECT_ROOT/.env.certification"
+if [ -f "$_ENV_FILE" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$_ENV_FILE"
+    set +a
+fi
+
 echo "======================================================================"
 echo "LLMHive — Certification Environment Setup"
 echo "  Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

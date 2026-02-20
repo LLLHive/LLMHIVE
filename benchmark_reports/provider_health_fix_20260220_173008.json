@@ -1,0 +1,112 @@
+{
+  "fix_branch": "fix/provider-health-stabilization-2026-02-20",
+  "timestamp": "20260220_173008",
+  "provider_verification": {
+    "status": "FAIL",
+    "providers": {
+      "openai": {
+        "provider": "openai",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "OPENAI_API_KEY not set"
+      },
+      "google": {
+        "provider": "google",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "GOOGLE_AI_API_KEY not set"
+      },
+      "anthropic": {
+        "provider": "anthropic",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "ANTHROPIC_API_KEY not set"
+      },
+      "grok": {
+        "provider": "grok",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "XAI_API_KEY not set"
+      },
+      "openrouter": {
+        "provider": "openrouter",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "OPENROUTER_API_KEY not set"
+      },
+      "deepseek": {
+        "provider": "deepseek",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "DEEPSEEK_API_KEY not set"
+      },
+      "groq": {
+        "provider": "groq",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "GROQ_API_KEY not set"
+      },
+      "together": {
+        "provider": "together",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "TOGETHERAI_API_KEY not set"
+      },
+      "cerebras": {
+        "provider": "cerebras",
+        "status": "FAIL",
+        "latency_ms": 0,
+        "error": "CEREBRAS_API_KEY not set"
+      },
+      "huggingface": {
+        "provider": "huggingface",
+        "status": "FAIL",
+        "connectivity": true,
+        "auth": false,
+        "models_listed": false,
+        "target_model_exists": false,
+        "latency_ms": 466,
+        "models_found": 0,
+        "selected_model": "",
+        "error": "401 Unauthorized \u2014 run: huggingface-cli login"
+      }
+    },
+    "timestamp": "2026-02-20T17:29:59.684869"
+  },
+  "readiness_report": {
+    "timestamp": "2026-02-20T17:29:59.577078",
+    "authentication": "PASS",
+    "api_key_verified": true,
+    "cloud_revision_verified": false,
+    "cost_cap_verified": false,
+    "runtime_cap_verified": false,
+    "certification_lock_active": false,
+    "certification_override_active": false,
+    "evaluator_placeholders_valid": true,
+    "providers_verified": false,
+    "providers": {
+      "openai": "FAIL",
+      "google": "FAIL",
+      "anthropic": "FAIL",
+      "grok": "FAIL",
+      "openrouter": "FAIL",
+      "deepseek": "FAIL",
+      "groq": "FAIL",
+      "together": "FAIL",
+      "cerebras": "FAIL",
+      "huggingface": "FAIL"
+    },
+    "ready_for_execution": false,
+    "failures": [
+      "Missing required env vars: MAX_RUNTIME_MINUTES, MAX_TOTAL_COST_USD",
+      "MAX_TOTAL_COST_USD not set",
+      "MAX_RUNTIME_MINUTES not set or invalid",
+      "CERTIFICATION_LOCK not set to true",
+      "CERTIFICATION_OVERRIDE not set to true",
+      "Provider failures: openai, google, anthropic, grok, openrouter, deepseek, groq, together, cerebras, huggingface"
+    ]
+  },
+  "zero_regression_audit": "PASS",
+  "unit_tests": "PASS",
+  "linter": "PASS"
+}

@@ -25,6 +25,15 @@
 
 set -euo pipefail
 
+# Deterministic env: load .env.certification if present (no shell profile sourcing)
+_ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env.certification"
+if [ -f "$_ENV_FILE" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$_ENV_FILE"
+    set +a
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPORT_DIR="$PROJECT_ROOT/benchmark_reports"
@@ -106,6 +115,18 @@ tlog "  PASS: API_KEY present (${#API_KEY_VAL} chars)"
 
 tlog ""
 tlog "  Phase 1 PASSED"
+
+# --- Provider key debug ---
+_gk="${GOOGLE_AI_API_KEY:-}"
+_or="${OPENROUTER_API_KEY:-}"
+_ds="${DEEPSEEK_API_KEY:-}"
+tlog ""
+tlog "  Provider Key Status:"
+tlog "    GOOGLE_AI_API_KEY length:  ${#_gk}"
+tlog "    OPENROUTER_API_KEY length: ${#_or}"
+tlog "    DEEPSEEK_API_KEY length:   ${#_ds}"
+tlog "    HF_TOKEN length:           ${#HF_TOKEN}"
+tlog "    API_KEY length:            ${#API_KEY_VAL}"
 
 # ===================================================================
 # PHASE 2 — Authentication Verification
