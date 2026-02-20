@@ -13,6 +13,7 @@ Categories:
 
 import re
 import asyncio
+import time as _time_mod
 from typing import Dict, List, Any, Optional, Tuple
 from collections import Counter
 
@@ -286,6 +287,8 @@ _MAX_VERIFY_RETRIES = 2
 _VERIFY_TIMEOUT = 15
 _consecutive_verify_failures = 0
 _verify_disabled = False
+_total_verify_calls = 0
+_total_verify_latency_ms = 0
 
 
 async def verify_solution(
@@ -296,19 +299,20 @@ async def verify_solution(
 ) -> Dict[str, Any]:
     """
     Verify a candidate solution for correctness.
-    
-    SOTA: Separate verifier model (Cobbe et al. 2021)
-    
+
     Hardened with isolated retry budget (max 2), timeout cap (15s),
     and circuit breaker (5 consecutive failures disables verify).
+    Includes latency tracking per call.
     """
     global _consecutive_verify_failures, _verify_disabled
+    global _total_verify_calls, _total_verify_latency_ms
 
     if _verify_disabled:
         return {
             "score": 0.5,
             "details": "VERIFY_CIRCUIT_OPEN: verification disabled after repeated failures",
             "raw_score": -1,
+            "verify_latency_ms": 0,
         }
 
     verify_prompt = f"""Verify if this solution is correct.
@@ -337,6 +341,7 @@ Reasonable:
 Total correctness score (0-5):"""
 
     for v_attempt in range(_MAX_VERIFY_RETRIES):
+        v_start = _time_mod.time()
         result = await llm_api_call_func(
             verify_prompt,
             orchestration_config={
@@ -345,6 +350,9 @@ Total correctness score (0-5):"""
             },
             timeout=_VERIFY_TIMEOUT,
         )
+        v_latency = int((_time_mod.time() - v_start) * 1000)
+        _total_verify_calls += 1
+        _total_verify_latency_ms += v_latency
 
         if result.get("success"):
             _consecutive_verify_failures = 0
@@ -355,19 +363,37 @@ Total correctness score (0-5):"""
                 "score": score / 5.0,
                 "details": verification,
                 "raw_score": score,
+                "verify_latency_ms": v_latency,
             }
 
         _consecutive_verify_failures += 1
+        print(
+            f"  ⚠️ VERIFY_FAILURE attempt {v_attempt+1}/{_MAX_VERIFY_RETRIES} "
+            f"(consecutive={_consecutive_verify_failures}, latency={v_latency}ms)",
+            flush=True,
+        )
         if _consecutive_verify_failures >= 5:
             _verify_disabled = True
-            print("  ⚠️ VERIFY CIRCUIT BREAKER: 5 consecutive failures — disabling verify for remaining questions", flush=True)
+            print(
+                "  ⚠️ VERIFY CIRCUIT BREAKER ACTIVATED: 5 consecutive failures — "
+                f"disabling verify for remaining questions "
+                f"(total calls={_total_verify_calls}, "
+                f"avg_latency={_total_verify_latency_ms // max(_total_verify_calls, 1)}ms)",
+                flush=True,
+            )
             return {
                 "score": 0.5,
                 "details": "VERIFY_CIRCUIT_OPEN",
                 "raw_score": -1,
+                "verify_latency_ms": v_latency,
             }
 
-    return {"score": 0.0, "details": "VERIFY_FAILURE: exhausted retries", "raw_score": 0}
+    return {
+        "score": 0.0,
+        "details": "VERIFY_FAILURE: exhausted retries",
+        "raw_score": 0,
+        "verify_latency_ms": _total_verify_latency_ms,
+    }
 
 async def generate_then_verify_math(
     problem: str,

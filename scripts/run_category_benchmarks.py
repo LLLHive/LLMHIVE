@@ -610,6 +610,73 @@ def _completion_from_response(problem: Dict[str, Any], response: str) -> str:
     return body_text
 
 
+def _sanitize_completion(completion: str, entry_point: str) -> str:
+    """Post-generation deterministic sanitizer for HumanEval completions.
+
+    1. Strip trailing whitespace from every line.
+    2. Remove markdown fences if still present.
+    3. Remove duplicate function definitions (keep first body).
+    4. Ensure exactly one function body is returned.
+    """
+    if not completion:
+        return completion
+
+    completion = _strip_code_fences(completion)
+
+    lines = [line.rstrip() for line in completion.splitlines()]
+
+    if entry_point:
+        def_pattern = re.compile(
+            rf"^\s*def\s+{re.escape(entry_point)}\s*\(", re.IGNORECASE
+        )
+        first_def_idx = None
+        dup_indices: List[int] = []
+        for idx, line in enumerate(lines):
+            if def_pattern.match(line):
+                if first_def_idx is None:
+                    first_def_idx = idx
+                else:
+                    dup_indices.append(idx)
+
+        if dup_indices:
+            for dup_idx in reversed(dup_indices):
+                end = dup_idx + 1
+                while end < len(lines) and (not lines[end].strip() or lines[end].startswith((" ", "\t"))):
+                    end += 1
+                del lines[dup_idx:end]
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _validate_function_signature(completion: str, entry_point: str, prompt: str) -> str:
+    """Static validation pass: if the body contains a misnamed function,
+    rename it to the expected entry_point.  Does NOT modify logic."""
+    if not entry_point or not completion:
+        return completion
+
+    wrong_def = re.search(r"^\s*def\s+(\w+)\s*\(", completion, re.MULTILINE)
+    if wrong_def and wrong_def.group(1) != entry_point:
+        wrong_name = wrong_def.group(1)
+        completion = re.sub(
+            rf"\b{re.escape(wrong_name)}\b",
+            entry_point,
+            completion,
+        )
+    return completion
+
+
+def _classify_failure(check_result: Optional[dict], completion: Optional[str]) -> str:
+    """Classify HumanEval failure as extraction / runtime / logic."""
+    if completion is None or not completion.strip() or completion.strip() == "pass":
+        return "extraction"
+    if check_result is None:
+        return "runtime"
+    result_str = str(check_result.get("result", "")).lower()
+    if any(k in result_str for k in ("syntaxerror", "nameerror", "typeerror", "indentationerror", "timeout")):
+        return "runtime"
+    return "logic"
+
+
 def _extract_gsm8k_answer(answer_text: str) -> Optional[float]:
     match = re.search(r"####\s*(-?[\d,]+\.?\d*)", answer_text)
     if match:
@@ -629,46 +696,48 @@ def _extract_gsm8k_answer(answer_text: str) -> Optional[float]:
     return None
 
 
+def _strip_diacritics(text: str) -> str:
+    """Remove combining diacritical marks (accents) from text."""
+    nfkd = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
+
+
 def _extract_multiple_choice(text: str) -> Optional[str]:
     """Extract answer letter with ROBUST format handling.
-    
-    D1: Fixed extraction — use last-line strategy first (not last-letter-in-full-text).
-    The old approach took the last [A-D] from the ENTIRE reasoning, which picked up
-    whatever option was discussed last rather than the chosen answer.
-    
-    Phase 5: Added unicode normalization, full-width letter handling, and
-    whitespace stripping for multilingual responses.
+
+    Applies: NFKC normalization, diacritics removal, standalone A/B/C/D
+    detection with multilingual keyword matching.
     """
     if not text:
         return None
 
-    # Unicode normalize + strip whitespace
     normalized = unicodedata.normalize("NFKC", text).strip()
-    text_upper = normalized.upper()
+    cleaned = _strip_diacritics(normalized)
+    text_upper = cleaned.upper()
 
-    # Strategy 1 (D1): Check last non-empty line for a standalone letter
+    # Strategy 1: Check last non-empty line for a standalone letter
     lines = [l.strip() for l in text_upper.split('\n') if l.strip()]
     if lines:
         last_line = lines[-1]
-        last_line_match = re.match(r'^[^A-Z]*([ABCD])[^A-Z]*$', last_line)
-        if last_line_match:
-            return last_line_match.group(1)
+        m = re.match(r'^[^A-Z]*([ABCD])[^A-Z]*$', last_line)
+        if m:
+            return m.group(1)
 
-    # Strategy 2: "answer is X" / "respuesta es X" / multilingual answer patterns
+    # Strategy 2: "answer is X" / multilingual answer patterns
     answer_phrase = re.search(
-        r'(?:answer|correct|choice|respuesta|r[ée]ponse|antwort|risposta|答案)\s*(?:is|es|est|ist|è|:)\s*\(?([ABCD])\)?',
-        text_upper
+        r'(?:answer|correct|choice|respuesta|r[ée]ponse|antwort|risposta|答案|정답|回答|jawaban)\s*(?:is|es|est|ist|e|:|는|은)\s*\(?([ABCD])\)?',
+        text_upper,
     )
     if answer_phrase:
         return answer_phrase.group(1)
 
-    # Strategy 3: Last standalone letter [A-D] (fallback)
-    last_letters = re.findall(r'\b([ABCD])\b', text_upper)
-    if last_letters:
-        return last_letters[-1]
+    # Strategy 3: Standalone letter token (word boundary)
+    standalone = re.findall(r'(?<![A-Z])([ABCD])(?![A-Z])', text_upper)
+    if standalone:
+        return standalone[-1]
 
     # Strategy 4: Beginning of response
-    if text_upper and text_upper[0] in ['A', 'B', 'C', 'D']:
+    if text_upper and text_upper[0] in "ABCD":
         return text_upper[0]
 
     return None
@@ -873,6 +942,7 @@ async def evaluate_reasoning(
         error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
         wrong_answers: List[Dict] = list(progress.get("wrong_answers", [])) if progress else []
         domain_stats: Dict[str, Dict] = dict(progress.get("domain_stats", {})) if progress else {}
+        subject_stats: Dict[str, Dict[str, int]] = {}
 
         for i, item in enumerate(samples, start=1):
             if i <= start_index:
@@ -942,8 +1012,9 @@ D) {choices[3]}"""
             # Self-consistency vote
             predicted, confidence = self_consistency_vote(reasoning_paths)
             
-            # EXP-A1: Confidence-gated fallback — if CoT consensus is weak,
-            # re-query with a single deliberate reasoning prompt
+            # Confidence-gated fallback — if CoT consensus is weak,
+            # re-query with reasoning_mode="deep" and replace only if
+            # the new answer has higher confidence.
             if confidence < 0.50 and predicted:
                 fallback_prompt = (
                     "You are an expert test-taker. Answer this multiple-choice question.\n"
@@ -954,16 +1025,17 @@ D) {choices[3]}"""
                 )
                 fallback_result = await call_llmhive_api(
                     fallback_prompt,
-                    reasoning_mode=REASONING_MODE,
+                    reasoning_mode="deep",
                     tier=tier,
                     orchestration_config={"accuracy_level": 5}
                 )
                 if fallback_result.get("success"):
                     fb_text = fallback_result.get("response", "")
                     fb_answer = _extract_multiple_choice(fb_text)
-                    if fb_answer and fb_answer in "ABCD":
+                    fb_confidence = fallback_result.get("confidence", 0.55)
+                    if fb_answer and fb_answer in "ABCD" and fb_confidence > confidence:
                         predicted = fb_answer
-                        confidence = 0.55  # Assign moderate confidence to fallback
+                        confidence = max(fb_confidence, 0.55)
 
             # Neighbor-consistency check (if high confidence)
             if confidence >= 0.6 and predicted:
@@ -991,6 +1063,11 @@ D) {choices[3]}"""
                     correct += 1
                 total_latency += path_latency
                 total_cost += path_cost
+                if subject not in subject_stats:
+                    subject_stats[subject] = {"correct": 0, "total": 0}
+                subject_stats[subject]["total"] += 1
+                if is_correct:
+                    subject_stats[subject]["correct"] += 1
                 status_icon = "✅" if is_correct else "❌"
                 print(f"  [{i}/{sample_size}] MMLU: {status_icon} pred={predicted} correct={correct_answer} conf={confidence:.0%} paths={len(reasoning_paths)} subj={subject} ({correct}/{i-errors} correct so far)", flush=True)
                 if _ANSWER_LOG_PATH:
@@ -1028,7 +1105,18 @@ D) {choices[3]}"""
         
         total_attempted = sample_size - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-        
+
+        if subject_stats:
+            worst_subjects = sorted(
+                ((s, d["correct"] / d["total"] * 100 if d["total"] else 0, d["total"])
+                 for s, d in subject_stats.items() if d["total"] >= 2),
+                key=lambda x: x[1],
+            )[:10]
+            if worst_subjects:
+                print(f"\n  MMLU — Worst-performing subjects:", flush=True)
+                for subj, acc, cnt in worst_subjects:
+                    print(f"    {subj}: {acc:.0f}% ({cnt} samples)", flush=True)
+
         return {
             "category": "General Reasoning (MMLU)",
             "dataset": "lighteval/mmlu",
@@ -1040,7 +1128,7 @@ D) {choices[3]}"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
-            "extra": {"error_samples": error_samples},
+            "extra": {"error_samples": error_samples, "subject_stats": subject_stats},
         }
     except Exception as e:
         print(f"❌ Reasoning evaluation failed: {e}")
@@ -1087,6 +1175,7 @@ async def evaluate_coding(
             if i <= start_index:
                 continue
             problem = problems[task_id]
+            entry_point = problem.get("entry_point", "")
             
             # SOTA 2026: Multi-Pass with Execution Feedback (RLEF + ICE-Coder approach)
             max_refinement_attempts = 3
@@ -1168,6 +1257,8 @@ RULES:
                     
                     if impl_result.get("success"):
                         completion = _completion_from_response(problem, impl_result.get("response", ""))
+                        completion = _sanitize_completion(completion, entry_point)
+                        completion = _validate_function_signature(completion, entry_point, problem.get("prompt", ""))
                     else:
                         errors += 1
                         break
@@ -1216,6 +1307,8 @@ Output CORRECTED function (code only):"""
                     
                     if refine_result.get("success"):
                         completion = _completion_from_response(problem, refine_result.get("response", ""))
+                        completion = _sanitize_completion(completion, entry_point)
+                        completion = _validate_function_signature(completion, entry_point, problem.get("prompt", ""))
                     else:
                         break
                 
@@ -1258,14 +1351,16 @@ Output CORRECTED function (code only):"""
                             error_detail = ""
                             if isinstance(check_result, dict):
                                 error_detail = str(check_result.get("result", ""))[:500]
+                            failure_type = _classify_failure(check_result, completion)
                             failed_ids.append(task_id)
-                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ❌ {task_id} failed after {max_refinement_attempts} attempts ({correct}/{i-errors} correct so far)", flush=True)
+                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ❌ {task_id} failed [{failure_type}] after {max_refinement_attempts} attempts ({correct}/{i-errors} correct so far)", flush=True)
                             if _HUMANEVAL_DEBUG:
-                                print(f"    DEBUG {task_id}: {error_detail[:200]}", flush=True)
+                                print(f"    DEBUG {task_id}: [{failure_type}] {error_detail[:200]}", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
                                     "category": "HumanEval", "index": i, "task_id": task_id,
                                     "is_correct": False, "attempt": max_refinement_attempts,
+                                    "failure_type": failure_type,
                                     "error": "all_attempts_failed",
                                     "last_error": error_detail,
                                     "completion_preview": (completion or "")[:300],
@@ -1277,22 +1372,24 @@ Output CORRECTED function (code only):"""
                             failed_ids.append(task_id)
                             if len(error_samples) < 3:
                                 error_samples.append(f"execution error: {str(e)[:120]}")
-                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} execution error ({errors} errors)", flush=True)
+                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} execution error [runtime] ({errors} errors)", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
                                     "category": "HumanEval", "index": i, "task_id": task_id,
-                                    "is_correct": False, "error": f"execution_error: {str(e)[:200]}",
+                                    "is_correct": False, "failure_type": "runtime",
+                                    "error": f"execution_error: {str(e)[:200]}",
                                 })
                         break
                 else:
                     if attempt == max_refinement_attempts:
                         errors += 1
                         failed_ids.append(task_id)
-                        print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} no completion generated ({errors} errors)", flush=True)
+                        print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} no completion generated [extraction] ({errors} errors)", flush=True)
                         if _ANSWER_LOG_PATH:
                             _log_answer(_ANSWER_LOG_PATH, {
                                 "category": "HumanEval", "index": i, "task_id": task_id,
-                                "is_correct": False, "error": "no_completion_generated",
+                                "is_correct": False, "failure_type": "extraction",
+                                "error": "no_completion_generated",
                             })
                     break
 
@@ -1657,9 +1754,29 @@ async def evaluate_multilingual(
 
         if result["success"]:
             predicted = _extract_multiple_choice(result["response"])
+            mmmlu_confidence = result.get("confidence", 0.5)
+            _mmmlu_fallback_used = False
 
-            # Phase 5 fallback: if extraction failed, re-query with strict format
-            if predicted is None:
+            # Confidence gate: if confidence < 45% and we have an answer,
+            # re-query once with reasoning_mode="deep" for higher quality.
+            if predicted and mmmlu_confidence < 0.45:
+                gate_result = await call_llmhive_api(
+                    prompt,
+                    reasoning_mode="deep",
+                    tier=tier,
+                    orchestration_config={"accuracy_level": 5, "enable_verification": True},
+                )
+                if gate_result.get("success"):
+                    gate_answer = _extract_multiple_choice(gate_result["response"])
+                    if gate_answer and gate_answer in "ABCD":
+                        predicted = gate_answer
+                        _mmmlu_fallback_used = True
+                    total_latency += gate_result.get("latency", 0)
+                    total_cost += gate_result.get("cost", 0.0)
+
+            # Extraction fallback: if extraction failed entirely, re-query
+            # with strict format. Does NOT cascade with the confidence gate.
+            if predicted is None and not _mmmlu_fallback_used:
                 retry_prompt = (
                     f"You were asked a multiple-choice question. "
                     f"Return ONLY one letter: A, B, C, or D.\n\n"
@@ -2409,6 +2526,30 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
                         f"{frontier.get('best', 'N/A')} ({frontier.get('score', 0):.1f}%) | {gap:+.1f}% |"
                     )
     
+    # Cost Analysis
+    report_lines.append("## 💰 Cost Analysis\n")
+    report_lines.append("| Category | Total Cost | Cost/Correct | Cost/Sample | Samples |")
+    report_lines.append("|----------|-----------|-------------|------------|---------|")
+    for r in results:
+        if "error" not in r:
+            cat = r["category"]
+            tc = r.get("total_cost", 0)
+            corr = r.get("correct", 0)
+            sz = r.get("sample_size", 0)
+            cpc = tc / corr if corr > 0 else 0
+            cps = tc / sz if sz > 0 else 0
+            report_lines.append(
+                f"| {cat} | ${tc:.4f} | ${cpc:.4f} | ${cps:.4f} | {sz} |"
+            )
+    total_correct_all = sum(r.get("correct", 0) for r in results if "error" not in r)
+    total_samples_all = sum(r.get("sample_size", 0) for r in results if "error" not in r)
+    cpc_all = total_cost / total_correct_all if total_correct_all > 0 else 0
+    cps_all = total_cost / total_samples_all if total_samples_all > 0 else 0
+    report_lines.append(
+        f"| **TOTAL** | **${total_cost:.4f}** | **${cpc_all:.4f}** | **${cps_all:.4f}** | **{total_samples_all}** |"
+    )
+    report_lines.append("")
+
     report_lines.append("\n---\n")
     report_lines.append(f"**Report Generated:** {datetime.now().isoformat()}")
     report_lines.append(f"**Status:** {tier.upper()} Tier Benchmarked")

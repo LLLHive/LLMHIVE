@@ -1,147 +1,77 @@
-# LLMHive Deployment Checklist
+# LLMHive — Deployment Gating Checklist
 
-**Date:** November 17, 2025  
-**Status:** Pre-Deployment
-
----
-
-## ✅ **PRE-DEPLOYMENT CHECKLIST**
-
-Use this checklist before going live. Check each item when complete.
+**Date:** _______________
+**Commit:** _______________
+**Branch:** _______________
+**Reviewer:** _______________
 
 ---
 
-## 🔐 **1. STRIPE CONFIGURATION**
+## Pre-Deploy Requirements
 
-- [ ] Stripe account created
-- [ ] Stripe secret key obtained (`sk_test_...` or `sk_live_...`)
-- [ ] Stripe webhook secret obtained (`whsec_...`)
-- [ ] `STRIPE_SECRET_KEY` environment variable set on server
-- [ ] `STRIPE_WEBHOOK_SECRET` environment variable set on server
-- [ ] Stripe webhook endpoint configured in Stripe dashboard
-- [ ] Stripe library installed (`pip install stripe>=7.0.0`)
-- [ ] Test payment processed successfully
+All items must be checked before deploying to production.
 
----
+### Suite Completeness
 
-## 💾 **2. DATABASE SETUP**
+- [ ] All 8 categories executed (Reasoning, Coding, Math, Multilingual, Long Context, Tool Use, RAG, Dialogue)
+- [ ] No skipped categories
+- [ ] Micro-validation (`scripts/micro_validation.py`) passed all thresholds
+- [ ] Full suite (`scripts/final_full_suite_runner.sh`) completed without error
 
-- [ ] Database connection configured
-- [ ] Database tables created (subscriptions, usage_records)
-- [ ] Migration run successfully (or `Base.metadata.create_all()`)
-- [ ] Database connection tested
-- [ ] Can create test subscription in database
+### Performance Thresholds
 
----
+| Category | Metric | Threshold | Actual | Pass? |
+|---|---|---|---|---|
+| HumanEval | Accuracy | >= 92% | ____% | [ ] |
+| MMLU | Accuracy | >= 78% | ____% | [ ] |
+| MMMLU | Accuracy | >= 82% | ____% | [ ] |
+| GSM8K | Accuracy | >= 94% | ____% | [ ] |
+| LongBench | Accuracy | >= 95% | ____% | [ ] |
+| ToolBench | Accuracy | >= 83% | ____% | [ ] |
+| RAG (MRR@10) | Accuracy | >= 40% | ____% | [ ] |
+| Dialogue | Avg Score | >= 7.0/10 | ____/10 | [ ] |
 
-## 🔧 **3. ENVIRONMENT VARIABLES**
+### Infrastructure Health
 
-Check these are set on your server:
+- [ ] Infra failure rate < 2% across all categories
+- [ ] Retry rate < 10% across all categories
+- [ ] Circuit breaker not triggered more than 5 times total
+- [ ] No silent category skips detected
 
-- [ ] `DATABASE_URL` - Database connection string
-- [ ] `STRIPE_SECRET_KEY` - Stripe secret key
-- [ ] `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
-- [ ] `OPENAI_API_KEY` - OpenAI API key (if using OpenAI)
-- [ ] `ANTHROPIC_API_KEY` - Anthropic API key (if using Claude)
-- [ ] `MCP_SERVER_URL` - Optional, for external MCP server
-- [ ] Any other provider API keys you're using
+### Cost Controls
 
----
+- [ ] Total benchmark cost within expected budget ($______)
+- [ ] Cost per correct answer within acceptable range
+- [ ] No runaway retry storms observed
 
-## 🧪 **4. TESTING**
+### Code Integrity
 
-### **API Endpoints:**
-- [ ] `/healthz` - Health check works
-- [ ] `/api/v1/orchestration/` - Orchestration works
-- [ ] `/api/v1/billing/tiers` - Lists pricing tiers
-- [ ] `/api/v1/billing/subscriptions` - Can create subscription
-- [ ] `/api/v1/mcp/tools` - Lists MCP tools
-- [ ] `/api/v1/mcp/tools/stats` - Shows tool statistics
+- [ ] Zero-regression audit passed (prompt, routing, model selection, decoding, RAG unchanged)
+- [ ] All unit tests pass
+- [ ] No linter errors introduced
+- [ ] PR approved by at least one reviewer
 
-### **Functionality:**
-- [ ] Can create subscription via API
-- [ ] Can process test payment
-- [ ] Tools can be called by agents
-- [ ] Usage tracking works
-- [ ] Rate limiting works
+### Deployment Readiness
+
+- [ ] Cloud Run revision identified for rollback
+- [ ] `ROLLBACK_PROTOCOL.md` reviewed and understood
+- [ ] Monitoring dashboards configured
+- [ ] Alerting thresholds set for error rate spikes
 
 ---
 
-## 🚀 **5. DEPLOYMENT**
+## Sign-off
 
-- [ ] Code deployed to production server
-- [ ] Server is running
-- [ ] Website is accessible
-- [ ] SSL certificate installed (HTTPS)
-- [ ] Domain name configured
-- [ ] DNS records set up correctly
+| Role | Name | Date | Signature |
+|---|---|---|---|
+| Engineer | | | |
+| Reviewer | | | |
 
 ---
 
-## 📊 **6. MONITORING (Optional but Recommended)**
+## Post-Deploy Verification
 
-- [ ] Error logging set up
-- [ ] Usage monitoring configured
-- [ ] Performance tracking enabled
-- [ ] Alerts configured (for critical errors)
-- [ ] Dashboard access (if using monitoring service)
-
----
-
-## 🔒 **7. SECURITY**
-
-- [ ] API keys are in environment variables (not in code)
-- [ ] Database credentials are secure
-- [ ] HTTPS is enabled
-- [ ] Rate limiting is active
-- [ ] File system tools are restricted to safe paths
-- [ ] API calls require HTTPS (except localhost)
-
----
-
-## ✅ **8. FINAL VERIFICATION**
-
-- [ ] All tests pass
-- [ ] No critical errors in logs
-- [ ] System responds quickly (< 5 seconds)
-- [ ] Can create and pay for subscription
-- [ ] Tools work correctly
-- [ ] All orchestration protocols work
-
----
-
-## 📝 **POST-DEPLOYMENT**
-
-### **First Week:**
-- [ ] Monitor error logs daily
-- [ ] Check Stripe dashboard for payments
-- [ ] Test subscription creation weekly
-- [ ] Monitor system performance
-- [ ] Check user feedback
-
-### **Ongoing:**
-- [ ] Weekly system health check
-- [ ] Monthly subscription review
-- [ ] Quarterly security review
-- [ ] Regular backup verification
-
----
-
-## 🆘 **IF SOMETHING GOES WRONG**
-
-1. **Check error logs** - Look for error messages
-2. **Check Stripe dashboard** - See if payments are failing
-3. **Test endpoints** - Use `/healthz` to check if server is up
-4. **Contact technical support** - Share error messages
-5. **Check environment variables** - Make sure all are set
-
----
-
-## ✅ **READY TO GO LIVE?**
-
-Once all items above are checked, you're ready to launch! 🚀
-
----
-
-**Last Updated:** November 17, 2025
-
+- [ ] Smoke test passed on production endpoint
+- [ ] Canary traffic validated (if applicable)
+- [ ] No error rate increase within first 30 minutes
+- [ ] Previous revision retained as rollback target
