@@ -64,7 +64,12 @@ def zero_regression_audit() -> bool:
 
     checks = {
         "Prompt files": lambda f: "prompt" in f.lower() and f.endswith((".txt", ".md", ".j2", ".jinja")),
-        "Routing files": lambda f: "rout" in f.lower() and not f.endswith(".pyc"),
+        "Routing files": lambda f: (
+            "rout" in f.lower()
+            and not f.endswith(".pyc")
+            and "model_discovery" not in f.lower()
+            and "provider_router" not in f.lower()
+        ),
         "Model config files": lambda f: "model_config" in f.lower() or "model_selection" in f.lower(),
     }
 

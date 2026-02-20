@@ -3,25 +3,12 @@ Google AI (Gemini) Direct API Client
 ====================================
 
 Direct integration with Google AI Studio API for FREE access to Gemini models.
-
-Benefits:
-- 100% FREE (no credit card required)
-- Independent rate limits from OpenRouter
-- 15 RPM for Gemini 2.0 Flash
-- Ultra-fast inference
-- 1M token context window
+Model selection is handled dynamically via ``google_model_discovery`` — no
+hardcoded model IDs.
 
 Setup:
 1. Get API key from https://aistudio.google.com
 2. Set GOOGLE_AI_API_KEY environment variable
-
-Rate Limits (Free Tier):
-- Gemini 2.0 Flash: 15 RPM, 200 RPD, 1M TPM
-- Gemini 2.5 Flash: 10 RPM, 250 RPD, 250K TPM
-- Gemini 2.5 Flash-Lite: 15 RPM, 1,000 RPD, 250K TPM
-- Gemini 2.5 Pro: 5 RPM, 100 RPD, 125K TPM
-
-Last Updated: January 31, 2026
 """
 
 import os
@@ -29,6 +16,13 @@ import logging
 from typing import Optional
 import httpx
 import asyncio
+
+from llmhive.app.providers.google_model_discovery import (
+    get_google_model_cached,
+    select_best_google_model,
+    select_with_fallback,
+    invalidate_cache,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,32 +32,12 @@ class GoogleAIClient:
     Direct Google AI (Gemini) API client.
     
     Uses Google AI Studio API for FREE access to Gemini models.
-    No credit card required, just Gmail account.
+    Model IDs are discovered dynamically at runtime.
     """
     
-    # Default model for FREE tier (fastest, best limits)
-    # Updated Jan 31, 2026: Gemini 3 models now available
-    DEFAULT_MODEL = "gemini-3-flash-preview"
-    
-    # Model mapping from OpenRouter IDs to Google AI IDs
-    MODEL_MAP = {
-        "google/gemini-2.0-flash-exp:free": "gemini-3-flash-preview",  # Latest fast model
-        "google/gemini-3-flash-preview:free": "gemini-3-flash-preview",
-        "gemini-2.0-flash": "gemini-3-flash-preview",
-        "gemini-2.5-flash": "gemini-3-flash-preview",
-        "gemini-3-flash": "gemini-3-flash-preview",
-        "gemini-3-pro": "gemini-3-pro-preview",
-        "gemini-2.5-pro": "gemini-3-pro-preview",
-    }
+    _resolved_default: Optional[str] = None
     
     def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize Google AI client.
-        
-        Args:
-            api_key: Google AI API key (or will use GOOGLE_AI_API_KEY/GEMINI_API_KEY env var)
-        """
-        # Check both GOOGLE_AI_API_KEY and GEMINI_API_KEY (for backward compatibility)
         self.api_key = (
             api_key 
             or os.getenv("GOOGLE_AI_API_KEY") 
@@ -76,114 +50,109 @@ class GoogleAIClient:
             )
         
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
-        logger.info("✅ Google AI client initialized (FREE tier)")
+        logger.info("Google AI client initialized")
     
-    def _get_native_model_id(self, model: str) -> str:
-        """Convert OpenRouter model ID to Google AI native ID."""
-        return self.MODEL_MAP.get(model, model)
+    async def _resolve_model(self, model: Optional[str] = None) -> str:
+        """Resolve a model ID through auto-discovery.
+        
+        If *model* is an OpenRouter-style ID (``google/...``) or an alias,
+        strip it to the bare Gemini name.  Then validate it exists in the
+        discovered list.  Falls back to the best available model.
+        """
+        bare = model or ""
+        bare = bare.split(":")[0]               # remove :free suffix
+        if bare.startswith("google/"):
+            bare = bare[len("google/"):]
+
+        if bare:
+            models = await get_google_model_cached(self.api_key)
+            known_ids = {m.model_id for m in models}
+            if bare in known_ids:
+                return bare
+
+        try:
+            models = await get_google_model_cached(self.api_key)
+            selected = select_best_google_model(models, workload="speed")
+            GoogleAIClient._resolved_default = selected
+            return selected
+        except ValueError:
+            fallback = GoogleAIClient._resolved_default or "gemini-2.5-flash"
+            logger.warning("google_ai_client: discovery failed, using fallback %s", fallback)
+            return fallback
     
     async def generate(
-        self, 
-        prompt: str, 
-        model: str = DEFAULT_MODEL,
+        self,
+        prompt: str,
+        model: Optional[str] = None,
         max_tokens: int = 2048,
         temperature: float = 1.0,
     ) -> str:
+        """Generate a response from a Gemini model.
+
+        *model* can be an OpenRouter-style ID, a bare Gemini name, or
+        ``None`` (auto-selects the best available).  On a 404 the client
+        automatically re-discovers models and retries once.
         """
-        Generate response from Gemini model.
-        
-        Args:
-            prompt: User prompt/query
-            model: Model ID (OpenRouter or native format)
-            max_tokens: Max tokens to generate
-            temperature: Sampling temperature (0-2)
-        
-        Returns:
-            Generated text response
-        
-        Raises:
-            Exception: If API call fails
-        """
-        native_model = self._get_native_model_id(model)
-        
+        native_model = await self._resolve_model(model)
+        logger.info("Google AI: using model %s", native_model)
+
+        return await self._call(prompt, native_model, max_tokens, temperature)
+
+    async def _call(
+        self,
+        prompt: str,
+        native_model: str,
+        max_tokens: int,
+        temperature: float,
+        _retried: bool = False,
+    ) -> str:
         url = f"{self.base_url}/models/{native_model}:generateContent"
-        
-        headers = {
-            "Content-Type": "application/json",
-            "x-goog-api-key": self.api_key,
-        }
-        
+        headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
         payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }],
-            "generationConfig": {
-                "maxOutputTokens": max_tokens,
-                "temperature": temperature,
-            }
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"maxOutputTokens": max_tokens, "temperature": temperature},
         }
-        
+
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(url, headers=headers, json=payload)
-                
+
                 if response.status_code == 200:
                     data = response.json()
-                    
-                    # Extract text from response
                     candidates = data.get("candidates", [])
                     if candidates:
-                        content = candidates[0].get("content", {})
-                        parts = content.get("parts", [])
+                        parts = candidates[0].get("content", {}).get("parts", [])
                         if parts:
                             text = parts[0].get("text", "")
-                            logger.debug(
-                                "Google AI: %s returned %d chars", 
-                                native_model, len(text)
-                            )
+                            logger.debug("Google AI: %s returned %d chars", native_model, len(text))
                             return text
-                    
                     logger.warning("Google AI: Empty response from %s", native_model)
                     return ""
-                
-                elif response.status_code == 429:
-                    # Rate limit hit
-                    logger.warning(
-                        "Google AI: Rate limit hit for %s (15 RPM limit)", 
-                        native_model
+
+                if response.status_code == 404 and not _retried:
+                    logger.warning("Google AI: 404 for %s — re-discovering models", native_model)
+                    new_model = await select_with_fallback(
+                        api_key=self.api_key, workload="speed", failed_model=native_model,
                     )
+                    logger.info("Google AI: switching to %s", new_model)
+                    return await self._call(prompt, new_model, max_tokens, temperature, _retried=True)
+
+                if response.status_code == 429:
                     raise Exception(f"Google AI rate limit (429): {response.text[:200]}")
-                
-                elif response.status_code == 400:
-                    # Bad request (possibly invalid model)
-                    logger.error(
-                        "Google AI: Bad request for %s: %s", 
-                        native_model, response.text[:200]
-                    )
+                if response.status_code == 400:
                     raise Exception(f"Google AI bad request (400): {response.text[:200]}")
-                
-                else:
-                    # Other error
-                    logger.error(
-                        "Google AI: Error %d for %s: %s", 
-                        response.status_code, native_model, response.text[:200]
-                    )
-                    raise Exception(
-                        f"Google AI error ({response.status_code}): {response.text[:200]}"
-                    )
-        
+
+                raise Exception(f"Google AI error ({response.status_code}): {response.text[:200]}")
+
         except httpx.TimeoutException:
-            logger.warning("Google AI: Timeout for %s", native_model)
             raise Exception(f"Google AI timeout for {native_model}")
-        
-        except Exception as e:
-            logger.error("Google AI: Failed for %s: %s", native_model, e)
+        except Exception:
             raise
     
     async def generate_with_retry(
         self,
         prompt: str,
-        model: str = DEFAULT_MODEL,
+        model: Optional[str] = None,
         max_retries: int = 2,
         **kwargs
     ) -> Optional[str]:

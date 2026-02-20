@@ -78,10 +78,12 @@ class ProviderCapacity:
 
 # Provider routing configuration
 # Maps OpenRouter model IDs → (preferred_provider, native_model_id)
+# Google models are resolved dynamically — the native_model_id here is
+# passed to GoogleAIClient which re-resolves it through auto-discovery.
 PROVIDER_ROUTING = {
-    # Google Gemini models → Google AI (15 RPM, ultra-fast)
-    "google/gemini-2.0-flash-exp:free": (Provider.GOOGLE, "gemini-2.0-flash-exp"),
-    "google/gemini-2.5-flash:free": (Provider.GOOGLE, "gemini-2.5-flash-latest"),
+    # Google Gemini models → Google AI (resolved dynamically)
+    "google/gemini-2.0-flash-exp:free": (Provider.GOOGLE, "gemini-flash"),
+    "google/gemini-2.5-flash:free": (Provider.GOOGLE, "gemini-flash"),
     
     # Groq models → Groq LPU (30 RPM, ~200ms latency, FREE)
     "meta-llama/llama-3.3-70b-instruct:free": (Provider.GROQ, "llama-3.3-70b-versatile"),
