@@ -10,7 +10,9 @@ import json
 import os
 import random
 import re
+import sys
 import time
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
@@ -148,10 +150,31 @@ MSMARCO_EVAL_CMD = _get_env_str("MSMARCO_EVAL_CMD", "")
 LONGBENCH_EVAL_CMD = _get_env_str("LONGBENCH_EVAL_CMD", "")
 MTBENCH_EVAL_CMD = _get_env_str("MTBENCH_EVAL_CMD", "")
 
-# Module-level answer log path, set at runtime by main()
-_ANSWER_LOG_PATH: Optional[str] = None
+# ---------------------------------------------------------------------------
+# Auto-resolve external evaluator commands from sibling scripts when the
+# environment variable is not explicitly set.  This removes the requirement
+# for the user to manually wire up *_EVAL_CMD vars when the scripts live
+# alongside run_category_benchmarks.py.
+# ---------------------------------------------------------------------------
+_SCRIPTS_DIR = Path(__file__).resolve().parent
 
-# Module-level answer log path (set in main())
+def _auto_eval_cmd(env_var: str, script_name: str) -> str:
+    """Return the env value if set, otherwise build a command from the
+    sibling script path.  The generated command uses ``{output_path}`` and
+    ``{seed}`` placeholders expected by the evaluator functions."""
+    current = globals().get(env_var, "")
+    if current:
+        return current
+    script_path = _SCRIPTS_DIR / script_name
+    if script_path.exists():
+        return f"{sys.executable} {script_path} --output {{output_path}} --seed {{seed}}"
+    return ""
+
+LONGBENCH_EVAL_CMD = _auto_eval_cmd("LONGBENCH_EVAL_CMD", "eval_longbench.py")
+TOOLBENCH_EVAL_CMD = _auto_eval_cmd("TOOLBENCH_EVAL_CMD", "eval_toolbench.py")
+MTBENCH_EVAL_CMD = _auto_eval_cmd("MTBENCH_EVAL_CMD", "eval_mtbench.py")
+
+# Module-level answer log path, set at runtime by main()
 _ANSWER_LOG_PATH: Optional[str] = None
 
 FRONTIER_JSON = _get_env_str("CATEGORY_BENCH_FRONTIER_JSON", "")
@@ -612,35 +635,42 @@ def _extract_multiple_choice(text: str) -> Optional[str]:
     D1: Fixed extraction — use last-line strategy first (not last-letter-in-full-text).
     The old approach took the last [A-D] from the ENTIRE reasoning, which picked up
     whatever option was discussed last rather than the chosen answer.
-    """
-    text_upper = text.strip().upper()
     
+    Phase 5: Added unicode normalization, full-width letter handling, and
+    whitespace stripping for multilingual responses.
+    """
+    if not text:
+        return None
+
+    # Unicode normalize + strip whitespace
+    normalized = unicodedata.normalize("NFKC", text).strip()
+    text_upper = normalized.upper()
+
     # Strategy 1 (D1): Check last non-empty line for a standalone letter
     lines = [l.strip() for l in text_upper.split('\n') if l.strip()]
     if lines:
         last_line = lines[-1]
-        # Last line is just a letter (possibly with punctuation)
         last_line_match = re.match(r'^[^A-Z]*([ABCD])[^A-Z]*$', last_line)
         if last_line_match:
             return last_line_match.group(1)
-    
-    # Strategy 2: "answer is X" or "answer: X" patterns
+
+    # Strategy 2: "answer is X" / "respuesta es X" / multilingual answer patterns
     answer_phrase = re.search(
-        r'(?:answer|correct|choice)\s*(?:is|:)\s*\(?([ABCD])\)?',
+        r'(?:answer|correct|choice|respuesta|r[ée]ponse|antwort|risposta|答案)\s*(?:is|es|est|ist|è|:)\s*\(?([ABCD])\)?',
         text_upper
     )
     if answer_phrase:
         return answer_phrase.group(1)
-    
+
     # Strategy 3: Last standalone letter [A-D] (fallback)
     last_letters = re.findall(r'\b([ABCD])\b', text_upper)
     if last_letters:
         return last_letters[-1]
-    
+
     # Strategy 4: Beginning of response
     if text_upper and text_upper[0] in ['A', 'B', 'C', 'D']:
         return text_upper[0]
-    
+
     return None
 
 
@@ -744,8 +774,10 @@ def _load_frontier_scores() -> Dict[str, Any]:
 
 
 def _preflight_checks() -> None:
-    # E2: API health check before benchmark (runs in ALL modes)
+    """Full-suite preflight: abort early on missing evaluators or config."""
     import httpx as _httpx_check
+
+    # E2: API health check (runs in ALL modes)
     try:
         r = _httpx_check.get(f"{LLMHIVE_API_URL}/health", timeout=15)
         if r.status_code == 200:
@@ -754,23 +786,28 @@ def _preflight_checks() -> None:
             print(f"⚠️ API health check returned {r.status_code} — benchmark may fail")
     except Exception as _hc_err:
         print(f"⚠️ API health check failed: {_hc_err} — benchmark may fail")
-    
-    if not STRICT_MODE:
-        return
-    missing = []
-    if TEMPERATURE != 0.0 or TOP_P != 1.0:
-        missing.append(
-            "deterministic decoding required: set CATEGORY_BENCH_TEMPERATURE=0 "
-            "and CATEGORY_BENCH_TOP_P=1.0"
-        )
-    if not TOOLBENCH_EVAL_CMD:
-        missing.append("TOOLBENCH_EVAL_CMD is required")
-    if not MSMARCO_EVAL_CMD:
-        missing.append("MSMARCO_EVAL_CMD is required")
-    if not LONGBENCH_EVAL_CMD:
-        missing.append("LONGBENCH_EVAL_CMD is required")
-    if not MTBENCH_EVAL_CMD:
-        missing.append("MTBENCH_EVAL_CMD is required")
+
+    # Phase 6: Verify all evaluator scripts/commands resolve BEFORE starting.
+    # This prevents wasted API cost when an evaluator is misconfigured.
+    skip_set = set(_normalize_skip_list())
+    missing: List[str] = []
+
+    _eval_script_checks = {
+        "long_context": ("LONGBENCH_EVAL_CMD", LONGBENCH_EVAL_CMD, "eval_longbench.py"),
+        "tool_use": ("TOOLBENCH_EVAL_CMD", TOOLBENCH_EVAL_CMD, "eval_toolbench.py"),
+        "dialogue": ("MTBENCH_EVAL_CMD", MTBENCH_EVAL_CMD, "eval_mtbench.py"),
+    }
+    for cat_key, (env_name, cmd_value, script_name) in _eval_script_checks.items():
+        if cat_key in skip_set:
+            continue
+        if not cmd_value:
+            missing.append(
+                f"{env_name} not set and scripts/{script_name} not found. "
+                f"Set {env_name} or add the script to scripts/."
+            )
+        elif "{output_path}" not in cmd_value:
+            missing.append(f"{env_name} must include {{output_path}} placeholder")
+
     if MSMARCO_EVAL_CMD and (
         "{reference_path}" not in MSMARCO_EVAL_CMD
         or "{candidate_path}" not in MSMARCO_EVAL_CMD
@@ -778,13 +815,21 @@ def _preflight_checks() -> None:
         missing.append(
             "MSMARCO_EVAL_CMD must include {reference_path} and {candidate_path}"
         )
-    if LONGBENCH_EVAL_CMD and "{output_path}" not in LONGBENCH_EVAL_CMD:
-        missing.append("LONGBENCH_EVAL_CMD must include {output_path}")
-    if MTBENCH_EVAL_CMD and "{output_path}" not in MTBENCH_EVAL_CMD:
-        missing.append("MTBENCH_EVAL_CMD must include {output_path}")
+
+    # Strict-mode additional checks
+    if STRICT_MODE:
+        if TEMPERATURE != 0.0 or TOP_P != 1.0:
+            missing.append(
+                "deterministic decoding required: set CATEGORY_BENCH_TEMPERATURE=0 "
+                "and CATEGORY_BENCH_TOP_P=1.0"
+            )
+
     if missing:
+        print("\n🚨 PREFLIGHT FAILURES — aborting before any API call:")
+        for m in missing:
+            print(f"  - {m}")
         raise RuntimeError(
-            "Strict mode preflight failed:\n- " + "\n- ".join(missing)
+            "Preflight failed (no API calls made):\n- " + "\n- ".join(missing)
         )
 
 # ============================================================================
@@ -1005,6 +1050,9 @@ D) {choices[3]}"""
 # CATEGORY 2: CODING (HumanEval)
 # ============================================================================
 
+_HUMANEVAL_DEBUG = _is_truthy(os.getenv("HUMANEVAL_DEBUG"))
+
+
 async def evaluate_coding(
     tier: str = TIER,
     progress: Optional[Dict[str, Any]] = None,
@@ -1014,6 +1062,7 @@ async def evaluate_coding(
     print(f"\n{'='*70}")
     print(f"CATEGORY 2: CODING (HumanEval)")
     print(f"{'='*70}\n")
+    failed_ids: List[str] = []
     
     try:
         from human_eval.data import read_problems
@@ -1209,7 +1258,10 @@ Output CORRECTED function (code only):"""
                             error_detail = ""
                             if isinstance(check_result, dict):
                                 error_detail = str(check_result.get("result", ""))[:500]
+                            failed_ids.append(task_id)
                             print(f"  [{i}/{len(sample_ids)}] HumanEval: ❌ {task_id} failed after {max_refinement_attempts} attempts ({correct}/{i-errors} correct so far)", flush=True)
+                            if _HUMANEVAL_DEBUG:
+                                print(f"    DEBUG {task_id}: {error_detail[:200]}", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
                                     "category": "HumanEval", "index": i, "task_id": task_id,
@@ -1222,6 +1274,7 @@ Output CORRECTED function (code only):"""
                     except Exception as e:
                         if attempt == max_refinement_attempts:
                             errors += 1
+                            failed_ids.append(task_id)
                             if len(error_samples) < 3:
                                 error_samples.append(f"execution error: {str(e)[:120]}")
                             print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} execution error ({errors} errors)", flush=True)
@@ -1234,6 +1287,7 @@ Output CORRECTED function (code only):"""
                 else:
                     if attempt == max_refinement_attempts:
                         errors += 1
+                        failed_ids.append(task_id)
                         print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} no completion generated ({errors} errors)", flush=True)
                         if _ANSWER_LOG_PATH:
                             _log_answer(_ANSWER_LOG_PATH, {
@@ -1257,7 +1311,10 @@ Output CORRECTED function (code only):"""
         
         total_attempted = len(sample_ids) - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-        
+
+        if failed_ids:
+            print(f"\n  HumanEval failing IDs ({len(failed_ids)}): {', '.join(failed_ids)}", flush=True)
+
         return {
             "category": "Coding (HumanEval)",
             "dataset": "openai/human_eval",
@@ -1269,7 +1326,7 @@ Output CORRECTED function (code only):"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
-            "extra": {"error_samples": error_samples},
+            "extra": {"error_samples": error_samples, "failed_ids": failed_ids},
         }
     
     except ImportError as e:
@@ -1600,28 +1657,45 @@ async def evaluate_multilingual(
 
         if result["success"]:
             predicted = _extract_multiple_choice(result["response"])
-            
-            # D2+B3: Simplified scoring — always count the answer.
-            # The old cross-lingual verification had a bug that silently dropped
-            # correct answers when consistency was low. It also added 3 API calls
-            # per non-English question, increasing error risk (403/timeout).
-            # B3: Skip cross-lingual for high-resource languages where the model
-            # is already strong (Spanish, French, German, Chinese, Japanese, etc.)
+
+            # Phase 5 fallback: if extraction failed, re-query with strict format
+            if predicted is None:
+                retry_prompt = (
+                    f"You were asked a multiple-choice question. "
+                    f"Return ONLY one letter: A, B, C, or D.\n\n"
+                    f"Question: {question[:500]}\n"
+                    f"A) {choices[0]}\nB) {choices[1]}\nC) {choices[2]}\nD) {choices[3]}\n\n"
+                    f"Your answer (single letter only):"
+                )
+                retry_result = await call_llmhive_api(
+                    retry_prompt, reasoning_mode="basic", tier=tier, timeout=30,
+                )
+                if retry_result.get("success"):
+                    predicted = _extract_multiple_choice(retry_result["response"])
+                    total_latency += retry_result.get("latency", 0)
+                    total_cost += retry_result.get("cost", 0.0)
+
             is_correct = predicted and predicted == correct_answer
             if is_correct:
                 correct += 1
-            
+
             total_latency += result["latency"]
             total_cost += result["cost"]
+            failure_tag = ""
+            if predicted is None:
+                failure_tag = " [PARSING_FAILURE]"
             status_icon = "✅" if is_correct else ("❌" if predicted else "⚠️")
             lang_tag = "NE" if has_non_english else "EN"
-            print(f"  [{i}/{sample_size}] MMMLU: {status_icon} pred={predicted} correct={correct_answer} lang={lang_tag} subj={subject[:20]} ({correct}/{i-errors} correct so far)", flush=True)
+            print(f"  [{i}/{sample_size}] MMMLU: {status_icon} pred={predicted} correct={correct_answer} lang={lang_tag} subj={subject[:20]}{failure_tag} ({correct}/{i-errors} correct so far)", flush=True)
             if _ANSWER_LOG_PATH:
                 _log_answer(_ANSWER_LOG_PATH, {
                     "category": "MMMLU", "index": i, "subject": subject,
                     "question": question[:200], "predicted": predicted,
                     "correct_answer": correct_answer, "is_correct": bool(is_correct),
                     "language": lang_tag,
+                    "failure_type": "PARSING_FAILURE" if predicted is None else (
+                        "MODEL_CORRECT" if is_correct else "MODEL_INCORRECT"
+                    ),
                 })
         else:
             errors += 1
@@ -1633,6 +1707,7 @@ async def evaluate_multilingual(
                     "category": "MMMLU", "index": i, "subject": subject,
                     "question": question[:200], "predicted": None,
                     "correct_answer": correct_answer, "error": result.get("error", "unknown")[:200],
+                    "failure_type": "INFRA_FAILURE",
                 })
 
         if on_progress:
@@ -1674,21 +1749,12 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
     print(f"\n{'='*70}")
     print(f"CATEGORY 5: LONG CONTEXT (Needle in Haystack)")
     print(f"{'='*70}\n")
-    
+
     if not LONGBENCH_EVAL_CMD:
-        return {
-            "category": "Long Context (LongBench)",
-            "dataset": "THUDM/LongBench",
-            "sample_size": 0,
-            "correct": 0,
-            "incorrect": 0,
-            "errors": 1,
-            "accuracy": 0.0,
-            "avg_latency_ms": 0,
-            "avg_cost": 0.0,
-            "total_cost": 0.0,
-            "extra": {"error": "LONGBENCH_EVAL_CMD not set"},
-        }
+        raise RuntimeError(
+            "Long Context evaluator not configured. Set LONGBENCH_EVAL_CMD "
+            "or place eval_longbench.py in scripts/."
+        )
 
     import shlex
     import subprocess
@@ -1698,7 +1764,7 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
         output_path = Path(temp_dir) / "longbench_eval.json"
         command = LONGBENCH_EVAL_CMD.format(
             output_path=str(output_path),
-            seed=42,
+            seed=FIXED_SEED,
         )
         try:
             subprocess.run(
@@ -1723,6 +1789,7 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
                     "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
                     "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
                     "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                    "infra_failures": int(payload.get("infra_failures", 0)),
                     "extra": {"longbench_eval": "external"},
                 }
             raise FileNotFoundError("LongBench eval output missing")
@@ -1750,11 +1817,57 @@ async def evaluate_tool_use(tier: str = TIER) -> Dict[str, Any]:
     print(f"\n{'='*70}")
     print(f"CATEGORY 6: TOOL USE")
     print(f"{'='*70}\n")
-    
+
     if not TOOLBENCH_EVAL_CMD:
+        raise RuntimeError(
+            "Tool Use evaluator not configured. Set TOOLBENCH_EVAL_CMD "
+            "or place eval_toolbench.py in scripts/."
+        )
+
+    import shlex
+    import subprocess
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = Path("benchmark_reports") / f"toolbench_eval_{timestamp}.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    command = TOOLBENCH_EVAL_CMD.format(
+        data_dir=os.getenv("TOOLBENCH_DATA_DIR", ""),
+        output_path=str(output_path),
+        seed=FIXED_SEED,
+    )
+    try:
+        subprocess.run(
+            shlex.split(command),
+            check=True,
+            timeout=3600,
+        )
+        if output_path.exists():
+            payload = json.loads(output_path.read_text())
+            accuracy = payload.get("accuracy") or payload.get("success_rate")
+            if accuracy is None:
+                raise ValueError("ToolBench output missing accuracy/success_rate")
+            attempted = int(payload.get("attempted", SAMPLE_SIZES["tool_use"]))
+            return {
+                "category": "Tool Use (ToolBench)",
+                "dataset": "ToolBench (OpenBMB)",
+                "sample_size": attempted,
+                "correct": int(payload.get("correct", 0)),
+                "incorrect": max(0, attempted - int(payload.get("correct", 0))),
+                "errors": int(payload.get("errors", 0)),
+                "accuracy": round(float(accuracy), 2),
+                "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
+                "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
+                "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                "infra_failures": int(payload.get("infra_failures", 0)),
+                "parsing_failures": int(payload.get("parsing_failures", 0)),
+                "extra": {"toolbench_eval": "external"},
+            }
+        raise FileNotFoundError("ToolBench eval output missing")
+    except Exception as exc:
         return {
             "category": "Tool Use (ToolBench)",
-            "dataset": "ToolBench - SKIPPED",
+            "dataset": "ToolBench (OpenBMB) - ERROR",
             "sample_size": 0,
             "correct": 0,
             "incorrect": 0,
@@ -1763,60 +1876,8 @@ async def evaluate_tool_use(tier: str = TIER) -> Dict[str, Any]:
             "avg_latency_ms": 0,
             "avg_cost": 0.0,
             "total_cost": 0.0,
-            "extra": {"error": "TOOLBENCH_EVAL_CMD not set"},
+            "extra": {"error": f"ToolBench eval failed: {exc}"},
         }
-
-    import shlex
-    import subprocess
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output_path = Path(temp_dir) / "toolbench_eval.json"
-        command = TOOLBENCH_EVAL_CMD.format(
-            data_dir=os.getenv("TOOLBENCH_DATA_DIR", ""),
-            output_path=str(output_path),
-            seed=42,
-        )
-        try:
-            subprocess.run(
-                shlex.split(command),
-                check=True,
-                timeout=3600,
-            )
-            if output_path.exists():
-                payload = json.loads(output_path.read_text())
-                accuracy = payload.get("accuracy") or payload.get("success_rate")
-                if accuracy is None:
-                    raise ValueError("ToolBench output missing accuracy/success_rate")
-                attempted = int(payload.get("attempted", SAMPLE_SIZES["tool_use"]))
-                return {
-                    "category": "Tool Use (ToolBench)",
-                    "dataset": "ToolBench (OpenBMB)",
-                    "sample_size": attempted,
-                    "correct": int(payload.get("correct", 0)),
-                    "incorrect": max(0, attempted - int(payload.get("correct", 0))),
-                    "errors": int(payload.get("errors", 0)),
-                    "accuracy": round(float(accuracy), 2),
-                    "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
-                    "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
-                    "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
-                    "extra": {"toolbench_eval": "external"},
-                }
-            raise FileNotFoundError("ToolBench eval output missing")
-        except Exception as exc:
-            return {
-                "category": "Tool Use (ToolBench)",
-                "dataset": "ToolBench (OpenBMB) - ERROR",
-                "sample_size": 0,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"ToolBench eval failed: {exc}"},
-            }
 
 # ============================================================================
 # CATEGORY 7: RAG
@@ -1858,6 +1919,10 @@ async def evaluate_rag(
     error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
     ref_lines: List[str] = list(progress.get("ref_lines", [])) if progress else []
     cand_lines: List[str] = list(progress.get("cand_lines", [])) if progress else []
+
+    # Phase 7: rank distribution + zero-relevant tracking (logging only, no logic change)
+    _rank_distribution: Dict[int, int] = {}
+    _zero_relevant_count = 0
 
     print(f"→ MS MARCO: {sample_size} samples", flush=True)
     for i, item in enumerate(samples, start=1):
@@ -2036,8 +2101,11 @@ async def evaluate_rag(
                     break
             if first_relevant_rank:
                 top_relevant = f"rank={first_relevant_rank}"
+                _rank_distribution[first_relevant_rank] = _rank_distribution.get(first_relevant_rank, 0) + 1
             else:
                 top_relevant = "miss"
+        if not relevant_ids:
+            _zero_relevant_count += 1
         votes_str = f"{len(all_rankings)}v" if all_rankings else "0v"
         print(f"  [{i}/{sample_size}] RAG: {top_relevant} {votes_str} ranked={len(ranked)} relevant={len(relevant_ids)} ({errors} errors)", flush=True)
 
@@ -2055,6 +2123,13 @@ async def evaluate_rag(
                     "selected_indices": selected_indices if not STRICT_MODE else None,
                 }
             )
+
+    # Phase 7: Log rank distribution and zero-relevant queries
+    if _rank_distribution:
+        dist_str = ", ".join(f"rank{k}={v}" for k, v in sorted(_rank_distribution.items()))
+        print(f"  RAG rank distribution: {dist_str}", flush=True)
+    if _zero_relevant_count:
+        print(f"  RAG zero-relevant queries: {_zero_relevant_count}/{sample_size}", flush=True)
 
     # Calculate MRR@10 directly if no external eval command
     if not MSMARCO_EVAL_CMD:
@@ -2185,11 +2260,55 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
     print(f"\n{'='*70}")
     print(f"CATEGORY 8: DIALOGUE")
     print(f"{'='*70}\n")
-    
+
     if not MTBENCH_EVAL_CMD:
+        raise RuntimeError(
+            "Dialogue evaluator not configured. Set MTBENCH_EVAL_CMD "
+            "or place eval_mtbench.py in scripts/."
+        )
+
+    import shlex
+    import subprocess
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = Path("benchmark_reports") / f"mtbench_eval_{timestamp}.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    command = MTBENCH_EVAL_CMD.format(
+        output_path=str(output_path),
+        seed=FIXED_SEED,
+    )
+    try:
+        subprocess.run(
+            shlex.split(command),
+            check=True,
+            timeout=1800,
+        )
+        if output_path.exists():
+            payload = json.loads(output_path.read_text())
+            score = payload.get("score") or payload.get("avg_score")
+            if score is None:
+                raise ValueError("MT-Bench output missing score/avg_score")
+            attempted = int(payload.get("attempted", SAMPLE_SIZES["dialogue"]))
+            return {
+                "category": "Dialogue (MT-Bench)",
+                "dataset": "lmsys/mt-bench",
+                "sample_size": attempted,
+                "correct": int(payload.get("correct", 0)),
+                "incorrect": max(0, attempted - int(payload.get("correct", 0))),
+                "errors": int(payload.get("errors", 0)),
+                "accuracy": round(float(score), 2),
+                "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
+                "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
+                "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                "infra_failures": int(payload.get("infra_failures", 0)),
+                "extra": {"mtbench_eval": "external"},
+            }
+        raise FileNotFoundError("MT-Bench eval output missing")
+    except Exception as exc:
         return {
             "category": "Dialogue (MT-Bench)",
-            "dataset": "lmsys/mt-bench - SKIPPED",
+            "dataset": "lmsys/mt-bench - ERROR",
             "sample_size": 0,
             "correct": 0,
             "incorrect": 0,
@@ -2198,59 +2317,8 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
             "avg_latency_ms": 0,
             "avg_cost": 0.0,
             "total_cost": 0.0,
-            "extra": {"error": "MTBENCH_EVAL_CMD not set"},
+            "extra": {"error": f"MT-Bench eval failed: {exc}"},
         }
-
-    import shlex
-    import subprocess
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output_path = Path(temp_dir) / "mtbench_eval.json"
-        command = MTBENCH_EVAL_CMD.format(
-            output_path=str(output_path),
-            seed=42,
-        )
-        try:
-            subprocess.run(
-                shlex.split(command),
-                check=True,
-                timeout=1800,
-            )
-            if output_path.exists():
-                payload = json.loads(output_path.read_text())
-                score = payload.get("score") or payload.get("avg_score")
-                if score is None:
-                    raise ValueError("MT-Bench output missing score/avg_score")
-                attempted = int(payload.get("attempted", SAMPLE_SIZES["dialogue"]))
-                return {
-                    "category": "Dialogue (MT-Bench)",
-                    "dataset": "lmsys/mt-bench",
-                    "sample_size": attempted,
-                    "correct": int(payload.get("correct", 0)),
-                    "incorrect": max(0, attempted - int(payload.get("correct", 0))),
-                    "errors": int(payload.get("errors", 0)),
-                    "accuracy": round(float(score), 2),
-                    "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
-                    "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
-                    "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
-                    "extra": {"mtbench_eval": "external"},
-                }
-            raise FileNotFoundError("MT-Bench eval output missing")
-        except Exception as exc:
-            return {
-                "category": "Dialogue (MT-Bench)",
-                "dataset": "lmsys/mt-bench - ERROR",
-                "sample_size": 0,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"MT-Bench eval failed: {exc}"},
-            }
 
 # ============================================================================
 # REPORTING
