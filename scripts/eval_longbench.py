@@ -62,19 +62,74 @@ def response_is_valid(text, min_length=10):
 # Needle-in-Haystack test cases
 # ---------------------------------------------------------------------------
 
-_FILLER_PARAGRAPH = (
-    "The history of computing is rich with innovation. From the earliest "
-    "mechanical calculators to modern quantum processors, each generation "
-    "has pushed the boundaries of what is possible. Early pioneers like "
-    "Ada Lovelace and Charles Babbage laid the groundwork for programmable "
-    "machines. The invention of the transistor in 1947 revolutionized "
-    "electronics, leading to the development of integrated circuits and "
-    "eventually microprocessors. Today's computers can perform billions of "
-    "operations per second, enabling everything from scientific simulations "
-    "to artificial intelligence. The field continues to evolve rapidly, "
-    "with new breakthroughs in areas like neuromorphic computing and "
-    "photonic processors promising even greater capabilities. "
-)
+_MAX_PROMPT_CHARS = 9500
+
+_FILLER_PARAGRAPHS = [
+    (
+        "The history of computing is rich with innovation. From the earliest "
+        "mechanical calculators to modern quantum processors, each generation "
+        "has pushed the boundaries of what is possible. Early pioneers like "
+        "Ada Lovelace and Charles Babbage laid the groundwork for programmable "
+        "machines. The invention of the transistor in 1947 revolutionized "
+        "electronics and eventually microprocessors."
+    ),
+    (
+        "The field of astronomy has captivated humanity for millennia. Ancient "
+        "civilizations built observatories to track celestial movements, and "
+        "modern telescopes peer billions of light-years into space. The Hubble "
+        "Space Telescope transformed our understanding of the cosmos, revealing "
+        "galaxies forming just after the Big Bang. New missions continue to "
+        "search for exoplanets in habitable zones."
+    ),
+    (
+        "Oceanography explores Earth's vast underwater realms. The Mariana "
+        "Trench descends nearly 11 kilometers below sea level, a depth greater "
+        "than Everest's height. Deep-sea hydrothermal vents support unique "
+        "ecosystems independent of sunlight. Marine biologists have catalogued "
+        "over 230,000 species, yet estimate millions remain undiscovered in "
+        "the ocean's unexplored regions."
+    ),
+    (
+        "The development of modern medicine has dramatically increased human "
+        "life expectancy. Vaccines have eradicated smallpox and nearly "
+        "eliminated polio. Antibiotics transformed bacterial infections from "
+        "death sentences into treatable conditions. Advances in surgical "
+        "techniques, imaging technology, and genomic medicine continue to "
+        "push the boundaries of healthcare."
+    ),
+    (
+        "Architecture reflects the cultural and technological achievements of "
+        "civilizations. From the pyramids of Egypt to Gothic cathedrals, each "
+        "era has left monumental structures. Modern architecture embraces "
+        "sustainable design, incorporating solar panels, green roofs, and "
+        "natural ventilation. Skyscrapers now exceed 800 meters, showcasing "
+        "advances in engineering and materials science."
+    ),
+    (
+        "The global transportation network connects billions of people daily. "
+        "Railways revolutionized overland travel in the 19th century, while "
+        "aviation shrank the world in the 20th. Container shipping carries "
+        "over 80 percent of global trade by volume. Electric and autonomous "
+        "vehicles are reshaping urban mobility, promising cleaner and safer "
+        "transportation for future generations."
+    ),
+    (
+        "Agriculture has been the foundation of human civilization for over "
+        "ten thousand years. The domestication of wheat, rice, and maize "
+        "allowed permanent settlements and population growth. Modern precision "
+        "agriculture uses satellite imagery, drones, and AI to optimize crop "
+        "yields while minimizing environmental impact. Vertical farming and "
+        "lab-grown proteins offer new food production paradigms."
+    ),
+    (
+        "The study of linguistics reveals how language shapes thought and "
+        "society. Over 7,000 languages are spoken worldwide, though many face "
+        "extinction. The Rosetta Stone unlocked Egyptian hieroglyphics, while "
+        "modern computational linguistics powers machine translation and voice "
+        "assistants. Language families trace migration patterns spanning "
+        "thousands of years across continents."
+    ),
+]
 
 NEEDLES = [
     {
@@ -180,8 +235,20 @@ NEEDLES = [
 ]
 
 
-def _build_haystack(needle_text: str, rng: random.Random, target_tokens: int = 4000) -> str:
-    paragraphs = [_FILLER_PARAGRAPH] * (target_tokens // 60)
+def _build_haystack(needle_text: str, rng: random.Random) -> str:
+    prompt_frame_overhead = 300
+    available = _MAX_PROMPT_CHARS - prompt_frame_overhead - len(needle_text)
+    paragraphs: list[str] = []
+    used = 0
+    idx = 0
+    while used < available:
+        p = _FILLER_PARAGRAPHS[idx % len(_FILLER_PARAGRAPHS)]
+        if used + len(p) + 2 > available:
+            break
+        paragraphs.append(p)
+        used += len(p) + 2  # +2 for "\n\n" separator
+        idx += 1
+    rng.shuffle(paragraphs)
     insert_pos = rng.randint(len(paragraphs) // 4, 3 * len(paragraphs) // 4)
     paragraphs.insert(insert_pos, needle_text)
     return "\n\n".join(paragraphs)
@@ -225,7 +292,18 @@ async def call_api(prompt: str, timeout: int = 300) -> dict:
                 if resp.status_code in _RETRYABLE:
                     await asyncio.sleep(2 ** attempt)
                     continue
-                return {"success": False, "error": f"HTTP {resp.status_code}", "latency": latency, "cost": 0}
+                error_detail = f"HTTP {resp.status_code}"
+                try:
+                    body = resp.json()
+                    if "detail" in body:
+                        detail = body["detail"]
+                        if isinstance(detail, list) and detail:
+                            error_detail += f": {detail[0].get('msg', '')}"
+                        elif isinstance(detail, str):
+                            error_detail += f": {detail}"
+                except Exception:
+                    pass
+                return {"success": False, "error": error_detail, "latency": latency, "cost": 0}
             except Exception as exc:
                 if attempt == _MAX_RETRIES - 1:
                     return {"success": False, "error": str(exc), "latency": 0, "cost": 0}
@@ -263,7 +341,8 @@ async def run_evaluation(seed: int = 42) -> dict:
 
         if not result.get("success"):
             infra_failures += 1
-            print(f"  [{i}/{len(cases)}] LongBench: INFRA_FAILURE ({infra_failures} infra failures)", flush=True)
+            err = result.get("error", "unknown")
+            print(f"  [{i}/{len(cases)}] LongBench: INFRA_FAILURE — {err} ({infra_failures} infra failures)", flush=True)
             continue
 
         resp_text = result.get("response", "")
