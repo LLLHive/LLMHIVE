@@ -19,6 +19,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 from datasets import load_dataset
 
+from experiment_telemetry import ExperimentTracer
+
 # Import world-class benchmark helpers (all 3 phases)
 from benchmark_helpers import (
     # Phase 1: HumanEval
@@ -177,6 +179,9 @@ MTBENCH_EVAL_CMD = _auto_eval_cmd("MTBENCH_EVAL_CMD", "eval_mtbench.py")
 # Module-level answer log path, set at runtime by main()
 _ANSWER_LOG_PATH: Optional[str] = None
 
+# Experiment tracer, initialized in main()
+_TRACER: Optional[ExperimentTracer] = None
+
 FRONTIER_JSON = _get_env_str("CATEGORY_BENCH_FRONTIER_JSON", "")
 
 # Sample sizes (adjust for time/cost tradeoff)
@@ -299,11 +304,17 @@ async def call_llmhive_api(
                             print(f"⚠️ Invalid response (attempt {attempt+1}/{_MAX_API_RETRIES}), retrying in {wait}s...", flush=True)
                             await asyncio.sleep(wait)
                             continue
+                    extra = data.get("extra", {})
+                    cost_tracking = extra.get("cost_tracking", {})
+                    usage = extra.get("usage", {})
                     return {
                         "success": True,
                         "response": resp_text,
                         "latency": latency,
-                        "cost": data.get("extra", {}).get("cost_tracking", {}).get("total_cost", 0),
+                        "cost": cost_tracking.get("total_cost", 0),
+                        "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                        "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                        "retries": attempt,
                     }
                 elif response.status_code in _RETRYABLE_STATUS_CODES:
                     wait = 2 ** attempt
@@ -1072,10 +1083,16 @@ D) {choices[3]}"""
                 print(f"  [{i}/{sample_size}] MMLU: {status_icon} pred={predicted} correct={correct_answer} conf={confidence:.0%} paths={len(reasoning_paths)} subj={subject} ({correct}/{i-errors} correct so far)", flush=True)
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
-                        "category": "MMLU", "index": i, "subject": subject,
+                        "category": "MMLU", "question_id": f"mmlu_{i}",
+                        "index": i, "subject": subject,
                         "question": question[:200], "predicted": predicted,
+                        "extracted_answer": predicted,
                         "correct_answer": correct_answer, "is_correct": is_correct,
                         "confidence": confidence, "num_paths": len(reasoning_paths),
+                        "latency_ms": path_latency,
+                        "cost_usd": path_cost,
+                        "retry_count": 0, "infra_failure": False,
+                        "failure_type": None if is_correct else "MODEL_INCORRECT",
                     })
             else:
                 errors += 1
@@ -1084,10 +1101,14 @@ D) {choices[3]}"""
                 print(f"  [{i}/{sample_size}] MMLU: ⚠️ NO ANSWER from {len(reasoning_paths)} paths subj={subject} ({errors} errors)", flush=True)
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
-                        "category": "MMLU", "index": i, "subject": subject,
+                        "category": "MMLU", "question_id": f"mmlu_{i}",
+                        "index": i, "subject": subject,
                         "question": question[:200], "predicted": None,
+                        "extracted_answer": None,
                         "correct_answer": correct_answer, "is_correct": False,
                         "error": "no_answer", "num_paths": len(reasoning_paths),
+                        "failure_type": "extraction",
+                        "infra_failure": False,
                     })
 
             if on_progress:
@@ -1338,8 +1359,14 @@ Output CORRECTED function (code only):"""
                             print(f"  [{i}/{len(sample_ids)}] HumanEval: ✅ {task_id} passed on attempt {attempt}/{max_refinement_attempts} ({correct}/{i-errors} correct so far)", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
-                                    "category": "HumanEval", "index": i, "task_id": task_id,
-                                    "is_correct": True, "attempt": attempt,
+                                    "category": "HumanEval", "question_id": task_id,
+                                    "index": i, "task_id": task_id,
+                                    "is_correct": True, "passed": True, "attempt": attempt,
+                                    "latency_ms": attempt_latency,
+                                    "cost_usd": attempt_cost,
+                                    "raw_response": (completion or "")[:500],
+                                    "failure_type": None,
+                                    "retry_count": attempt - 1,
                                 })
                             break  # Success! Stop attempting
                         
@@ -1358,12 +1385,17 @@ Output CORRECTED function (code only):"""
                                 print(f"    DEBUG {task_id}: [{failure_type}] {error_detail[:200]}", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
-                                    "category": "HumanEval", "index": i, "task_id": task_id,
-                                    "is_correct": False, "attempt": max_refinement_attempts,
+                                    "category": "HumanEval", "question_id": task_id,
+                                    "index": i, "task_id": task_id,
+                                    "is_correct": False, "passed": False,
+                                    "attempt": max_refinement_attempts,
                                     "failure_type": failure_type,
                                     "error": "all_attempts_failed",
                                     "last_error": error_detail,
-                                    "completion_preview": (completion or "")[:300],
+                                    "raw_response": (completion or "")[:500],
+                                    "latency_ms": attempt_latency,
+                                    "cost_usd": attempt_cost,
+                                    "retry_count": max_refinement_attempts - 1,
                                 })
                         
                     except Exception as e:
@@ -1530,10 +1562,30 @@ async def evaluate_math(
                     print(f"  [{i}/{sample_size}] GSM8K: {status_icon} pred={predicted_num} correct={correct_answer} ({correct}/{i-errors} correct so far)", flush=True)
                     if _ANSWER_LOG_PATH:
                         _log_answer(_ANSWER_LOG_PATH, {
-                            "category": "GSM8K", "index": i,
+                            "category": "GSM8K", "question_id": f"gsm8k_{i}",
+                            "index": i,
                             "question": question[:200], "predicted": predicted_num,
+                            "extracted_answer": str(predicted_num),
                             "correct_answer": correct_answer, "is_correct": is_correct,
+                            "latency_ms": candidate_latency,
+                            "cost_usd": candidate_cost,
+                            "failure_type": None if is_correct else "logic",
+                            "verify_candidates": best_candidate.get("candidates", []) if isinstance(best_candidate, dict) else [],
+                            "verify_scores": [best_candidate.get("verification_score", 0)] if isinstance(best_candidate, dict) else [],
                         })
+                    if _TRACER and isinstance(best_candidate, dict):
+                        try:
+                            _TRACER.log_gsm8k_verify(
+                                question_id=f"gsm8k_{i}",
+                                candidates=best_candidate.get("candidates", []),
+                                verify_scores=[best_candidate.get("verification_score", 0)],
+                                selected_answer=str(predicted_num),
+                                majority_vote=str(predicted_answer),
+                                circuit_breaker_active=False,
+                                verify_latencies_ms=[best_candidate.get("verify_latency_ms", 0)],
+                            )
+                        except Exception:
+                            pass
                 except ValueError:
                     errors += 1
                     if len(error_samples) < 3:
@@ -1806,10 +1858,20 @@ async def evaluate_multilingual(
             print(f"  [{i}/{sample_size}] MMMLU: {status_icon} pred={predicted} correct={correct_answer} lang={lang_tag} subj={subject[:20]}{failure_tag} ({correct}/{i-errors} correct so far)", flush=True)
             if _ANSWER_LOG_PATH:
                 _log_answer(_ANSWER_LOG_PATH, {
-                    "category": "MMMLU", "index": i, "subject": subject,
+                    "category": "MMMLU", "question_id": f"mmmlu_{i}",
+                    "index": i, "subject": subject,
                     "question": question[:200], "predicted": predicted,
+                    "extracted_answer": predicted,
                     "correct_answer": correct_answer, "is_correct": bool(is_correct),
                     "language": lang_tag,
+                    "confidence": mmmlu_confidence if 'mmmlu_confidence' in dir() else None,
+                    "raw_response": result.get("response", "")[:500],
+                    "latency_ms": result.get("latency", 0),
+                    "cost_usd": result.get("cost", 0),
+                    "input_tokens": result.get("input_tokens", 0),
+                    "output_tokens": result.get("output_tokens", 0),
+                    "retry_count": result.get("retries", 0),
+                    "infra_failure": False,
                     "failure_type": "PARSING_FAILURE" if predicted is None else (
                         "MODEL_CORRECT" if is_correct else "MODEL_INCORRECT"
                     ),
@@ -1821,10 +1883,13 @@ async def evaluate_multilingual(
             print(f"  [{i}/{sample_size}] MMMLU: ⚠️ API error ({errors} errors)", flush=True)
             if _ANSWER_LOG_PATH:
                 _log_answer(_ANSWER_LOG_PATH, {
-                    "category": "MMMLU", "index": i, "subject": subject,
+                    "category": "MMMLU", "question_id": f"mmmlu_{i}",
+                    "index": i, "subject": subject,
                     "question": question[:200], "predicted": None,
-                    "correct_answer": correct_answer, "error": result.get("error", "unknown")[:200],
-                    "failure_type": "INFRA_FAILURE",
+                    "extracted_answer": None,
+                    "correct_answer": correct_answer,
+                    "error": result.get("error", "unknown")[:200],
+                    "failure_type": "INFRA_FAILURE", "infra_failure": True,
                 })
 
         if on_progress:
@@ -2572,11 +2637,16 @@ def _init_answer_log() -> None:
 
 
 def _log_answer(log_path: str, entry: Dict[str, Any]) -> None:
-    """Append one answer record to the JSONL answer log."""
+    """Append one answer record to the JSONL answer log and experiment tracer."""
     try:
         entry["ts"] = datetime.now().isoformat()
         with open(log_path, "a") as f:
             f.write(json.dumps(entry, default=str) + "\n")
+    except Exception:
+        pass
+    try:
+        if _TRACER and entry.get("category"):
+            _TRACER.log_trace(entry["category"], entry)
     except Exception:
         pass
 
@@ -2609,6 +2679,11 @@ async def main():
     # Initialize answer log for future improvement
     _init_answer_log()
     print(f"Answer log: {_ANSWER_LOG_PATH}")
+
+    # Initialize experiment telemetry
+    global _TRACER
+    _TRACER = ExperimentTracer.init()
+    print(f"Experiment dir: {_TRACER.run_dir}")
     
     print("="*70)
     print("LLMHive 8-Category Industry Benchmark Suite")
@@ -2797,6 +2872,14 @@ async def main():
         except Exception as e:
             print(f"  (Could not load best_scores.json: {e})")
     
+    # Finalize experiment telemetry
+    if _TRACER:
+        try:
+            _TRACER.finalize(results)
+            print(f"\n  Telemetry artifacts: {_TRACER.run_dir}")
+        except Exception as _te:
+            print(f"  (Telemetry finalization warning: {_te})")
+
     print("\n" + "="*70)
     print("BENCHMARK COMPLETE")
     print("="*70)

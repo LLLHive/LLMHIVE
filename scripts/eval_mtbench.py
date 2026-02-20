@@ -24,6 +24,12 @@ import time
 
 import httpx
 
+try:
+    from experiment_telemetry import ExperimentTracer
+    _TRACER: ExperimentTracer | None = None
+except ImportError:
+    _TRACER = None
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -359,6 +365,29 @@ async def evaluate_single_question(idx: int, total: int, question: dict) -> dict
         flush=True,
     )
 
+    try:
+        if _TRACER:
+            _TRACER.log_dialogue_transcript(
+                question_id=f"mtbench_{idx}",
+                category=category,
+                turn1_response=turn1_response,
+                turn2_response=turn2_response,
+                judge_score1=score1,
+                judge_score2=score2,
+                judge_rationale1=judge1_result.get("response", "")[:500] if judge1_result.get("success") else "",
+                judge_rationale2=judge2_result.get("response", "")[:500] if judge2_result.get("success") else "",
+                consistency_drop=score1 - score2 > 2,
+            )
+            _TRACER.log_trace("Dialogue", {
+                "question_id": f"mtbench_{idx}",
+                "subject": category,
+                "is_correct": avg_score >= 7.0,
+                "confidence": avg_score / 10.0,
+                "latency_ms": total_latency,
+            })
+    except Exception:
+        pass
+
     return {
         "success": True,
         "category": category,
@@ -372,6 +401,13 @@ async def evaluate_single_question(idx: int, total: int, question: dict) -> dict
 
 async def run_evaluation(seed: int, output_path: str):
     """Run the full dialogue evaluation."""
+    global _TRACER
+    try:
+        if ExperimentTracer is not None and _TRACER is None:
+            _TRACER = ExperimentTracer.init()
+    except Exception:
+        pass
+
     rng = random.Random(seed)
     sample_size = min(SAMPLE_SIZE, len(QUESTIONS))
     selected = rng.sample(range(len(QUESTIONS)), sample_size)

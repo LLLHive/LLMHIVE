@@ -417,6 +417,7 @@ async def generate_then_verify_math(
 
     verified_candidates = []
     verify_failures = 0
+    verify_latencies = []
 
     for candidate in candidates:
         if candidate["answer"]:
@@ -429,6 +430,7 @@ async def generate_then_verify_math(
 
             if verification.get("raw_score", 0) < 0:
                 verify_failures += 1
+            verify_latencies.append(verification.get("verify_latency_ms", 0))
 
             verified_candidates.append({
                 **candidate,
@@ -436,19 +438,29 @@ async def generate_then_verify_math(
                 "verification_details": verification["details"],
             })
 
+    _pipeline_meta = {
+        "candidates": [{"answer": c.get("answer"), "score": c.get("verification_score", 0)} for c in verified_candidates],
+        "verify_latencies_ms": verify_latencies,
+        "verify_failures": verify_failures,
+        "circuit_breaker_active": _verify_disabled,
+        "total_verify_calls": _total_verify_calls,
+    }
+
     if verified_candidates:
         if verify_failures < len(verified_candidates):
             best_candidate = max(verified_candidates, key=lambda x: x["verification_score"])
+            best_candidate.update(_pipeline_meta)
             return best_candidate["answer"], best_candidate
 
-    # Fallback: majority-vote when verify is degraded or all failed
     answers = [c["answer"] for c in candidates if c["answer"]]
     if answers:
         most_common = Counter(answers).most_common(1)[0][0]
         fallback = next((c for c in candidates if c["answer"] == most_common), candidates[0])
+        fallback.update(_pipeline_meta)
+        fallback["fallback_majority_vote"] = True
         return most_common, fallback
 
-    return None, {}
+    return None, _pipeline_meta
 
 # ============================================================================
 # TRUTHFULNESS: MULTI-PATH VERIFICATION + FACT CHECKING
