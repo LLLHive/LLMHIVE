@@ -37,6 +37,7 @@ class HealthResult:
     models_found: int = 0
     selected_model: str = ""
     error: Optional[str] = None
+    attempts: Optional[List[Dict[str, Any]]] = None
 
     @property
     def status(self) -> str:
@@ -45,7 +46,7 @@ class HealthResult:
         return "FAIL"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d: Dict[str, Any] = {
             "provider": self.provider,
             "status": self.status,
             "connectivity": self.connectivity,
@@ -57,6 +58,9 @@ class HealthResult:
             "selected_model": self.selected_model,
             "error": self.error,
         }
+        if self.attempts:
+            d["attempts"] = self.attempts
+        return d
 
 
 # ===================================================================
@@ -89,7 +93,8 @@ class ProviderHealthAdapter:
             self._run_checks(r, key)
         except Exception as exc:
             r.error = str(exc)
-        r.latency_ms = int((time.time() - t0) * 1000)
+        if r.latency_ms == 0:
+            r.latency_ms = int((time.time() - t0) * 1000)
         return r
 
     def _run_checks(self, r: HealthResult, key: str) -> None:
@@ -97,8 +102,7 @@ class ProviderHealthAdapter:
 
 
 # ===================================================================
-# OpenAI-compatible adapter (shared by OpenAI, Groq, Together,
-# Cerebras, DeepSeek)
+# OpenAI-compatible adapter (shared by OpenAI, Groq, Cerebras, DeepSeek)
 # ===================================================================
 
 class OpenAICompatibleAdapter(ProviderHealthAdapter):
@@ -179,12 +183,133 @@ class GroqAdapter(OpenAICompatibleAdapter):
     target_model_prefix = "llama"
 
 
-class TogetherAdapter(OpenAICompatibleAdapter):
+class TogetherAdapter(ProviderHealthAdapter):
+    """Together — fully isolated, retry+best-of for latency resilience."""
     name = "together"
     env_var = "TOGETHERAI_API_KEY"
     fallback_env = "TOGETHER_API_KEY"
-    base_url = "https://api.together.xyz/v1"
-    target_model_prefix = "meta-llama"
+
+    _BACKOFF = [0.5, 1.0, 2.0]
+
+    def _run_checks(self, r: HealthResult, key: str) -> None:
+        max_attempts = int(os.getenv("TOGETHER_HEALTH_RETRIES", "3"))
+        target = os.getenv("TOGETHER_MODEL", "meta-llama/Llama-3-70b-chat-hf")
+        headers = {"Authorization": f"Bearer {key}"}
+
+        attempts: List[Dict[str, Any]] = []
+        best: Optional[Dict[str, Any]] = None  # best successful attempt
+
+        for i in range(max_attempts):
+            attempt: Dict[str, Any] = {"attempt": i + 1, "status_code": 0,
+                                        "latency_ms": 0, "error": None}
+            t0 = time.time()
+            try:
+                resp = httpx.get(
+                    "https://api.together.xyz/v1/models",
+                    headers=headers, timeout=10,
+                )
+                lat = int((time.time() - t0) * 1000)
+                attempt["status_code"] = resp.status_code
+                attempt["latency_ms"] = lat
+
+                r.connectivity = True
+
+                if resp.status_code == 401:
+                    attempt["error"] = "401 Unauthorized"
+                    r.error = "401 Unauthorized"
+                    attempts.append(attempt)
+                    r.attempts = attempts
+                    return
+
+                if resp.status_code != 200:
+                    attempt["error"] = f"HTTP {resp.status_code}"
+                    attempts.append(attempt)
+                    if i < max_attempts - 1:
+                        time.sleep(self._BACKOFF[min(i, len(self._BACKOFF) - 1)])
+                    continue
+
+                r.auth = True
+
+                try:
+                    data = resp.json()
+                except Exception:
+                    attempt["error"] = "Invalid JSON"
+                    attempts.append(attempt)
+                    if i < max_attempts - 1:
+                        time.sleep(self._BACKOFF[min(i, len(self._BACKOFF) - 1)])
+                    continue
+
+                if not isinstance(data, list):
+                    attempt["error"] = f"Expected list, got {type(data).__name__}"
+                    attempts.append(attempt)
+                    if i < max_attempts - 1:
+                        time.sleep(self._BACKOFF[min(i, len(self._BACKOFF) - 1)])
+                    continue
+
+                model_ids = [m["id"] for m in data
+                             if isinstance(m, dict) and "id" in m]
+                attempt["models_found"] = len(model_ids)
+
+                if not model_ids:
+                    attempt["error"] = "No models returned"
+                    attempts.append(attempt)
+                    if i < max_attempts - 1:
+                        time.sleep(self._BACKOFF[min(i, len(self._BACKOFF) - 1)])
+                    continue
+
+                # Resolve target
+                if target in model_ids:
+                    attempt["selected_model"] = target
+                else:
+                    fb = [m for m in model_ids if "meta-llama" in m]
+                    attempt["selected_model"] = fb[0] if fb else model_ids[0]
+
+                attempt["success"] = True
+                attempts.append(attempt)
+
+                if best is None or lat < best["latency_ms"]:
+                    best = attempt
+
+                # Got a success — stop early if latency is comfortable
+                if lat <= 8000:
+                    break
+
+                if i < max_attempts - 1:
+                    time.sleep(self._BACKOFF[min(i, len(self._BACKOFF) - 1)])
+
+            except httpx.TimeoutException:
+                lat = int((time.time() - t0) * 1000)
+                attempt["latency_ms"] = lat
+                attempt["error"] = "Timeout"
+                attempts.append(attempt)
+                r.connectivity = True
+                if i < max_attempts - 1:
+                    time.sleep(self._BACKOFF[min(i, len(self._BACKOFF) - 1)])
+
+            except Exception as exc:
+                attempt["latency_ms"] = int((time.time() - t0) * 1000)
+                attempt["error"] = str(exc)
+                attempts.append(attempt)
+                if i < max_attempts - 1:
+                    time.sleep(self._BACKOFF[min(i, len(self._BACKOFF) - 1)])
+
+        r.attempts = attempts
+
+        if not best:
+            last_err = attempts[-1].get("error", "unknown") if attempts else "no attempts"
+            r.error = f"All {max_attempts} attempts failed ({last_err})"
+            return
+
+        r.latency_ms = best["latency_ms"]
+        r.models_found = best.get("models_found", 0)
+        r.models_listed = True
+        r.target_model_exists = True
+        r.selected_model = best.get("selected_model", "")
+
+        if best["latency_ms"] > 10_000:
+            r.error = (f"Best latency {best['latency_ms']}ms > 10s "
+                       f"({len(attempts)} attempts)")
+            r.models_listed = False  # force FAIL via status property
 
 
 class CerebrasAdapter(OpenAICompatibleAdapter):
