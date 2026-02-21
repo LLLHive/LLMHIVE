@@ -57,7 +57,13 @@ def verify_all_providers(
         selected = info.get("selected_model", "")
         err = info.get("error", "")
 
-        note = selected if status == "PASS" else err
+        warn = info.get("warning", "")
+        if status == "PASS" and warn:
+            note = f"{selected}  [{warn}]"
+        elif status == "PASS":
+            note = selected
+        else:
+            note = err
         print(f"  {name:<15} {status:<8} {lat_str:<10} {mod_str:<8} {note}")
 
     return report

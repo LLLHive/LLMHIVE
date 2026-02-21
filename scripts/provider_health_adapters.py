@@ -37,6 +37,7 @@ class HealthResult:
     models_found: int = 0
     selected_model: str = ""
     error: Optional[str] = None
+    warning: Optional[str] = None
     attempts: Optional[List[Dict[str, Any]]] = None
 
     @property
@@ -58,6 +59,8 @@ class HealthResult:
             "selected_model": self.selected_model,
             "error": self.error,
         }
+        if self.warning:
+            d["warning"] = self.warning
         if self.attempts:
             d["attempts"] = self.attempts
         return d
@@ -306,10 +309,12 @@ class TogetherAdapter(ProviderHealthAdapter):
         r.target_model_exists = True
         r.selected_model = best.get("selected_model", "")
 
-        if best["latency_ms"] > 10_000:
-            r.error = (f"Best latency {best['latency_ms']}ms > 10s "
+        if best["latency_ms"] > 30_000:
+            r.error = (f"Best latency {best['latency_ms']}ms > 30s "
                        f"({len(attempts)} attempts)")
             r.models_listed = False  # force FAIL via status property
+        elif best["latency_ms"] > 10_000:
+            r.warning = f"High latency: {best['latency_ms']}ms"
 
 
 class CerebrasAdapter(OpenAICompatibleAdapter):
@@ -620,9 +625,11 @@ def check_all(
 
         hr = adapter.check()
         d = hr.to_dict()
-        if hr.latency_ms > 10_000 and hr.status == "PASS":
+        if hr.status == "PASS" and hr.latency_ms > 30_000:
             d["status"] = "FAIL"
-            d["error"] = f"Latency {hr.latency_ms}ms > 10s"
+            d["error"] = f"Latency {hr.latency_ms}ms > 30s"
+        elif hr.status == "PASS" and hr.latency_ms > 10_000:
+            d["warning"] = f"High latency: {hr.latency_ms}ms"
         results[adapter.name] = d
 
     all_pass = True
