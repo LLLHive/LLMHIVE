@@ -144,8 +144,8 @@ CHECKPOINT_PATH = _get_env_str(
     "benchmark_reports/category_benchmarks_checkpoint.json",
 )
 FORCE_RESUME = _is_truthy(os.getenv("CATEGORY_BENCH_FORCE_RESUME"))
-START_AT = _get_env_str("CATEGORY_BENCH_START_AT", "")
-SKIP_CATEGORIES_RAW = _get_env_str("CATEGORY_BENCH_SKIP_CATEGORIES", "")
+START_AT = _get_env_str("CATEGORY_BENCH_START_AT", "") or _get_env_str("START_AT", "")
+SKIP_CATEGORIES_RAW = _get_env_str("CATEGORY_BENCH_SKIP_CATEGORIES", "") or _get_env_str("SKIP_CATEGORIES", "")
 
 TOOLBENCH_EVAL_CMD = _get_env_str("TOOLBENCH_EVAL_CMD", "")
 MSMARCO_EVAL_CMD = _get_env_str("MSMARCO_EVAL_CMD", "")
@@ -806,18 +806,19 @@ def _normalize_skip_list() -> List[str]:
     if not SKIP_CATEGORIES_RAW:
         return []
     tokens = [t.strip().lower() for t in SKIP_CATEGORIES_RAW.split(",") if t.strip()]
-    mapping = {
-        "mmlu": "reasoning",
-        "gsm8k": "math",
-        "humaneval": "coding",
-        "mmmlu": "multilingual",
-        "longbench": "long_context",
-        "toolbench": "tool_use",
-        "msmarco": "rag",
-        "mtbench": "dialogue",
-    }
-    return [mapping.get(token, token) for token in tokens]
+    return [_ALIAS_TO_KEY.get(token, token) for token in tokens]
 
+
+_ALIAS_TO_KEY = {
+    "mmlu": "reasoning",
+    "gsm8k": "math",
+    "humaneval": "coding",
+    "mmmlu": "multilingual",
+    "longbench": "long_context",
+    "toolbench": "tool_use",
+    "msmarco": "rag",
+    "mtbench": "dialogue",
+}
 
 def _categories_to_run() -> List[str]:
     order = [
@@ -830,23 +831,14 @@ def _categories_to_run() -> List[str]:
         "rag",
         "dialogue",
     ]
-    skip = set(_normalize_skip_list())
+    # 1. Apply START_AT slicing first
     start_at = START_AT.strip().lower()
     if start_at:
-        mapping = {
-            "mmlu": "reasoning",
-            "gsm8k": "math",
-            "humaneval": "coding",
-            "mmmlu": "multilingual",
-            "longbench": "long_context",
-            "toolbench": "tool_use",
-            "msmarco": "rag",
-            "mtbench": "dialogue",
-        }
-        start_key = mapping.get(start_at, start_at)
+        start_key = _ALIAS_TO_KEY.get(start_at, start_at)
         if start_key in order:
-            start_index = order.index(start_key)
-            skip.update(order[:start_index])
+            order = order[order.index(start_key):]
+    # 2. Apply SKIP_CATEGORIES filtering
+    skip = set(_normalize_skip_list())
     return [key for key in order if key not in skip]
 
 
@@ -875,7 +867,7 @@ def _preflight_checks() -> None:
 
     # Phase 6: Verify all evaluator scripts/commands resolve BEFORE starting.
     # This prevents wasted API cost when an evaluator is misconfigured.
-    skip_set = set(_normalize_skip_list())
+    _will_run = set(_categories_to_run())
     missing: List[str] = []
 
     _eval_script_checks = {
@@ -884,7 +876,7 @@ def _preflight_checks() -> None:
         "dialogue": ("MTBENCH_EVAL_CMD", MTBENCH_EVAL_CMD, "eval_mtbench.py"),
     }
     for cat_key, (env_name, cmd_value, script_name) in _eval_script_checks.items():
-        if cat_key in skip_set:
+        if cat_key not in _will_run:
             continue
         if not cmd_value:
             missing.append(
@@ -2693,6 +2685,12 @@ async def main():
     if checkpoint is None:
         checkpoint = {"config": _checkpoint_config(), "results": {}, "progress": {}}
     categories_to_run = _categories_to_run()
+    skip_set = set(_normalize_skip_list())
+
+    print(f"  START_AT:             {START_AT or '(none)'}")
+    print(f"  SKIP_CATEGORIES:      {SKIP_CATEGORIES_RAW or '(none)'}")
+    print(f"  SKIP SET (resolved):  {skip_set or '{}'}")
+    print(f"  FINAL CATEGORY ORDER: {categories_to_run}")
 
     def update_progress(key: str, data: Dict[str, Any]) -> None:
         checkpoint.setdefault("progress", {})[key] = data
