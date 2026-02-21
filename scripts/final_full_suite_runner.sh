@@ -93,24 +93,19 @@ echo "Verifying evaluator placeholders..." | tee -a "$LOG_FILE"
 EVAL_OK=true
 for EVAL_VAR in LONGBENCH_EVAL_CMD TOOLBENCH_EVAL_CMD MTBENCH_EVAL_CMD; do
     CMD="${!EVAL_VAR:-}"
-    if [[ -z "$CMD" ]]; then
-        SCRIPT_NAME=""
-        case "$EVAL_VAR" in
-            LONGBENCH_EVAL_CMD) SCRIPT_NAME="eval_longbench.py" ;;
-            TOOLBENCH_EVAL_CMD) SCRIPT_NAME="eval_toolbench.py" ;;
-            MTBENCH_EVAL_CMD)   SCRIPT_NAME="eval_mtbench.py" ;;
-        esac
-        if [[ -f "$SCRIPT_DIR/$SCRIPT_NAME" ]]; then
-            echo "  ℹ  $EVAL_VAR auto-resolved from $SCRIPT_NAME" | tee -a "$LOG_FILE"
-        else
-            echo "  ❌ $EVAL_VAR not set and $SCRIPT_NAME not found" | tee -a "$LOG_FILE"
-            EVAL_OK=false
-        fi
-    elif [[ "$CMD" != *"{output_path}"* ]]; then
-        echo "  ❌ $EVAL_VAR missing {output_path} placeholder" | tee -a "$LOG_FILE"
-        EVAL_OK=false
-    else
+    SCRIPT_NAME=""
+    case "$EVAL_VAR" in
+        LONGBENCH_EVAL_CMD) SCRIPT_NAME="eval_longbench.py" ;;
+        TOOLBENCH_EVAL_CMD) SCRIPT_NAME="eval_toolbench.py" ;;
+        MTBENCH_EVAL_CMD)   SCRIPT_NAME="eval_mtbench.py" ;;
+    esac
+    if [[ -n "$CMD" && "$CMD" == *"{output_path}"* ]]; then
         echo "  ✅ $EVAL_VAR OK" | tee -a "$LOG_FILE"
+    elif [[ -f "$SCRIPT_DIR/$SCRIPT_NAME" ]]; then
+        echo "  ℹ  $EVAL_VAR auto-resolved from $SCRIPT_NAME (Python handles placeholders)" | tee -a "$LOG_FILE"
+    else
+        echo "  ❌ $EVAL_VAR not set and $SCRIPT_NAME not found" | tee -a "$LOG_FILE"
+        EVAL_OK=false
     fi
 done
 
@@ -126,17 +121,21 @@ fi
 echo "" | tee -a "$LOG_FILE"
 echo "Verifying certification lock..." | tee -a "$LOG_FILE"
 
-if [[ "${CERTIFICATION_LOCK:-}" != "true" ]]; then
-    echo "❌ Certification lock not enabled (CERTIFICATION_LOCK != true)" | tee -a "$LOG_FILE"
-    exit 1
-fi
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "  ℹ  Certification lock check skipped (dry-run mode)" | tee -a "$LOG_FILE"
+else
+    if [[ "${CERTIFICATION_LOCK:-}" != "true" ]]; then
+        echo "❌ Certification lock not enabled (CERTIFICATION_LOCK != true)" | tee -a "$LOG_FILE"
+        exit 1
+    fi
 
-if [[ "${CERTIFICATION_OVERRIDE:-}" != "true" ]]; then
-    echo "❌ Certification override missing (CERTIFICATION_OVERRIDE != true)" | tee -a "$LOG_FILE"
-    exit 1
-fi
+    if [[ "${CERTIFICATION_OVERRIDE:-}" != "true" ]]; then
+        echo "❌ Certification override missing (CERTIFICATION_OVERRIDE != true)" | tee -a "$LOG_FILE"
+        exit 1
+    fi
 
-echo "✅ CERTIFICATION_LOCK=true  |  CERTIFICATION_OVERRIDE=true" | tee -a "$LOG_FILE"
+    echo "✅ CERTIFICATION_LOCK=true  |  CERTIFICATION_OVERRIDE=true" | tee -a "$LOG_FILE"
+fi
 
 # ===========================================================================
 # Pre-flight: Authentication verification

@@ -129,6 +129,40 @@ tlog "    HF_TOKEN length:           ${#HF_TOKEN}"
 tlog "    API_KEY length:            ${#API_KEY_VAL}"
 
 # ===================================================================
+# PHASE 1b — Stale Checkpoint Cleanup
+# ===================================================================
+
+CHECKPOINT_FILE="$REPORT_DIR/category_benchmarks_checkpoint.json"
+if [[ -f "$CHECKPOINT_FILE" ]]; then
+    STALE=$(python3 -c "
+import json, sys
+from pathlib import Path
+try:
+    d = json.loads(Path('$CHECKPOINT_FILE').read_text())
+    results = d.get('results', {})
+    zero = [k for k, v in results.items() if isinstance(v, dict) and v.get('sample_size', 0) == 0]
+    if zero:
+        print(','.join(zero))
+except Exception:
+    pass
+" 2>/dev/null || true)
+
+    if [[ -n "$STALE" ]]; then
+        tlog ""
+        tlog "  Stale checkpoint detected — categories with 0 samples: $STALE"
+        tlog "  Removing: $CHECKPOINT_FILE"
+        rm -f "$CHECKPOINT_FILE"
+        tlog "  PASS: Stale checkpoint removed — categories will re-execute"
+    else
+        tlog ""
+        tlog "  PASS: Checkpoint is clean (no 0-sample categories)"
+    fi
+else
+    tlog ""
+    tlog "  PASS: No checkpoint file found — clean start"
+fi
+
+# ===================================================================
 # PHASE 2 — Authentication Verification
 # ===================================================================
 
@@ -176,24 +210,19 @@ tlog "================================================================"
 PHASE3_OK=true
 for EVAL_VAR in LONGBENCH_EVAL_CMD TOOLBENCH_EVAL_CMD MTBENCH_EVAL_CMD; do
     CMD="${!EVAL_VAR:-}"
-    if [[ -z "$CMD" ]]; then
-        SCRIPT_NAME=""
-        case "$EVAL_VAR" in
-            LONGBENCH_EVAL_CMD) SCRIPT_NAME="eval_longbench.py" ;;
-            TOOLBENCH_EVAL_CMD) SCRIPT_NAME="eval_toolbench.py" ;;
-            MTBENCH_EVAL_CMD)   SCRIPT_NAME="eval_mtbench.py" ;;
-        esac
-        if [[ -f "$SCRIPT_DIR/$SCRIPT_NAME" ]]; then
-            tlog "  OK: $EVAL_VAR auto-resolved from $SCRIPT_NAME"
-        else
-            tlog "  FAIL: $EVAL_VAR not set and $SCRIPT_NAME not found"
-            PHASE3_OK=false
-        fi
-    elif [[ "$CMD" != *"{output_path}"* ]]; then
-        tlog "  FAIL: $EVAL_VAR missing {output_path} placeholder"
-        PHASE3_OK=false
-    else
+    SCRIPT_NAME=""
+    case "$EVAL_VAR" in
+        LONGBENCH_EVAL_CMD) SCRIPT_NAME="eval_longbench.py" ;;
+        TOOLBENCH_EVAL_CMD) SCRIPT_NAME="eval_toolbench.py" ;;
+        MTBENCH_EVAL_CMD)   SCRIPT_NAME="eval_mtbench.py" ;;
+    esac
+    if [[ -n "$CMD" && "$CMD" == *"{output_path}"* ]]; then
         tlog "  OK: $EVAL_VAR validated"
+    elif [[ -f "$SCRIPT_DIR/$SCRIPT_NAME" ]]; then
+        tlog "  OK: $EVAL_VAR auto-resolved from $SCRIPT_NAME (Python handles placeholders)"
+    else
+        tlog "  FAIL: $EVAL_VAR not set and $SCRIPT_NAME not found"
+        PHASE3_OK=false
     fi
 done
 
@@ -404,6 +433,31 @@ Path('$CERT_REPORT').write_text(json.dumps({
 }, indent=2))
 " 2>&1 | tee -a "$GOV_LOG"
     tlog "  Minimal report saved: $CERT_REPORT"
+fi
+
+# ===================================================================
+# Phase 7b — Zero-Sample Category Guard
+# ===================================================================
+
+if [[ -f "$CERT_REPORT" ]]; then
+    ZERO_CATS=$(python3 -c "
+import json, sys
+from pathlib import Path
+d = json.loads(Path('$CERT_REPORT').read_text())
+cats = d.get('categories', {})
+zero = [c for c, v in cats.items() if isinstance(v, dict) and v.get('samples', 0) == 0]
+if zero:
+    print(','.join(zero))
+" 2>/dev/null || true)
+
+    if [[ -n "$ZERO_CATS" ]]; then
+        tlog ""
+        tlog "  HARD ABORT: INCOMPLETE CERTIFICATION — CATEGORIES SKIPPED"
+        tlog "  Categories with 0 samples: $ZERO_CATS"
+        tlog "  Certification INVALID."
+        exit 1
+    fi
+    tlog "  PASS: All categories have non-zero sample counts"
 fi
 
 # ===================================================================

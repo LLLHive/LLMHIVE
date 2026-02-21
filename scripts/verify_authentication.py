@@ -228,27 +228,26 @@ def phase_4() -> None:
 
     all_ok = True
     for name, cmd in eval_vars.items():
-        if not cmd:
-            auto_script = {
-                "LONGBENCH_EVAL_CMD": "eval_longbench.py",
-                "TOOLBENCH_EVAL_CMD": "eval_toolbench.py",
-                "MTBENCH_EVAL_CMD": "eval_mtbench.py",
-            }[name]
-            script_path = _SCRIPTS_DIR / auto_script
-            if script_path.exists():
-                cmd = f"python3 {script_path} --output {{output_path}} --seed {{seed}}"
-                print(f"  INFO  {name} auto-resolved from {auto_script}")
+        auto_script = {
+            "LONGBENCH_EVAL_CMD": "eval_longbench.py",
+            "TOOLBENCH_EVAL_CMD": "eval_toolbench.py",
+            "MTBENCH_EVAL_CMD": "eval_mtbench.py",
+        }[name]
+        script_path = _SCRIPTS_DIR / auto_script
 
-        if not cmd:
-            print(f"  FAIL  {name} not set and script not found")
-            all_ok = False
+        if cmd and "{output_path}" in cmd:
+            print(f"  PASS  {name} OK")
             continue
 
-        if "{output_path}" not in cmd:
-            print(f"  FAIL  {name} missing {{output_path}} placeholder")
-            all_ok = False
-        else:
-            print(f"  PASS  {name} OK")
+        if script_path.exists():
+            if cmd:
+                print(f"  INFO  {name} missing placeholders — auto-resolved from {auto_script}")
+            else:
+                print(f"  INFO  {name} auto-resolved from {auto_script}")
+            continue
+
+        print(f"  FAIL  {name} not set and {auto_script} not found")
+        all_ok = False
 
     if all_ok:
         _pass("evaluator_placeholders_valid", "All evaluator commands validated")

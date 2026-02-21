@@ -91,13 +91,16 @@ def zero_regression_audit() -> bool:
 
         added_lines = [l for l in diff_runner.splitlines() if l.startswith("+") and not l.startswith("+++")]
 
-        sample_size_change = any("SAMPLE_SIZES" in l and ("=" in l or "{" in l) for l in added_lines)
-        if sample_size_change:
-            for line in added_lines:
-                if "SAMPLE_SIZES" in line and any(c in line for c in ("{", "=")):
-                    if "_get_env_int" not in line:
-                        violations.append(f"SAMPLE_SIZES dict potentially modified")
-                        break
+        import re as _re
+        _SS_REASSIGN = _re.compile(r"SAMPLE_SIZES\s*=\s*\{")
+        _SS_MUTATE = _re.compile(r"SAMPLE_SIZES\s*\[")
+        for line in added_lines:
+            stripped = line.lstrip("+").strip()
+            if "_get_env_int" in stripped:
+                continue
+            if _SS_REASSIGN.search(stripped) or _SS_MUTATE.search(stripped):
+                violations.append("SAMPLE_SIZES dict potentially modified")
+                break
 
         decoding_keywords = ["TEMPERATURE", "TOP_P", "FIXED_SEED"]
         for kw in decoding_keywords:

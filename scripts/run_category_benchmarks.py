@@ -161,15 +161,21 @@ MTBENCH_EVAL_CMD = _get_env_str("MTBENCH_EVAL_CMD", "")
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 
 def _auto_eval_cmd(env_var: str, script_name: str) -> str:
-    """Return the env value if set, otherwise build a command from the
-    sibling script path.  The generated command uses ``{output_path}`` and
-    ``{seed}`` placeholders expected by the evaluator functions."""
+    """Return the env value if set AND valid, otherwise build a command from
+    the sibling script path.  The generated command uses ``{output_path}``
+    and ``{seed}`` placeholders expected by the evaluator functions.
+    If the env var is set but missing required placeholders, override it
+    with the auto-resolved command to prevent silent subprocess failures."""
     current = globals().get(env_var, "")
-    if current:
+    if current and "{output_path}" in current:
         return current
     script_path = _SCRIPTS_DIR / script_name
     if script_path.exists():
-        return f"{sys.executable} {script_path} --output {{output_path}} --seed {{seed}}"
+        resolved = f"{sys.executable} {script_path} --output {{output_path}} --seed {{seed}}"
+        if current:
+            print(f"  WARNING: {env_var} missing {{output_path}} placeholder — "
+                  f"auto-overriding with: {resolved}")
+        return resolved
     return ""
 
 LONGBENCH_EVAL_CMD = _auto_eval_cmd("LONGBENCH_EVAL_CMD", "eval_longbench.py")
@@ -1152,8 +1158,9 @@ D) {choices[3]}"""
             "extra": {"error_samples": error_samples, "subject_stats": subject_stats},
         }
     except Exception as e:
-        print(f"❌ Reasoning evaluation failed: {e}")
-        return {"category": "General Reasoning (MMLU)", "error": str(e)}
+        raise RuntimeError(
+            f"Reasoning (MMLU) evaluator FAILED (not skipping): {e}"
+        ) from e
 
 # ============================================================================
 # CATEGORY 2: CODING (HumanEval)
@@ -1459,25 +1466,14 @@ Output CORRECTED function (code only):"""
         }
     
     except ImportError as e:
-        print(f"⚠️  HumanEval library not available: {e}")
-        print("   Run: pip install human-eval")
-        return {
-            "category": "Coding (HumanEval)",
-            "dataset": "openai/human_eval",
-            "error": "Library not available",
-            "sample_size": 0,
-            "correct": 0,
-            "accuracy": 0,
-        }
+        raise RuntimeError(
+            f"Coding (HumanEval) evaluator FAILED — missing library: {e}. "
+            f"Run: pip install human-eval"
+        ) from e
     except Exception as e:
-        print(f"❌ Coding evaluation failed: {e}")
-        return {
-            "category": "Coding (HumanEval)",
-            "error": str(e),
-            "sample_size": 0,
-            "correct": 0,
-            "accuracy": 0,
-        }
+        raise RuntimeError(
+            f"Coding (HumanEval) evaluator FAILED (not skipping): {e}"
+        ) from e
 
 # ============================================================================
 # CATEGORY 3: MATH (GSM8K)
@@ -1639,8 +1635,9 @@ async def evaluate_math(
             "extra": {"error_samples": error_samples},
         }
     except Exception as e:
-        print(f"❌ Math evaluation failed: {e}")
-        return {"category": "Math (GSM8K)", "error": str(e)}
+        raise RuntimeError(
+            f"Math (GSM8K) evaluator FAILED (not skipping): {e}"
+        ) from e
 
 # ============================================================================
 # CATEGORY 4: MULTILINGUAL
@@ -1949,10 +1946,12 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
             seed=FIXED_SEED,
         )
         try:
-            subprocess.run(
+            proc = subprocess.run(
                 shlex.split(command),
                 check=True,
                 timeout=1800,
+                capture_output=True,
+                text=True,
             )
             if output_path.exists():
                 payload = json.loads(output_path.read_text())
@@ -1975,20 +1974,17 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
                     "extra": {"longbench_eval": "external"},
                 }
             raise FileNotFoundError("LongBench eval output missing")
+        except subprocess.CalledProcessError as cpe:
+            raise RuntimeError(
+                f"Long Context evaluator FAILED | cmd={command} | "
+                f"exit={cpe.returncode} | "
+                f"stdout={cpe.stdout[:500] if cpe.stdout else ''} | "
+                f"stderr={cpe.stderr[:500] if cpe.stderr else ''}"
+            ) from cpe
         except Exception as exc:
-            return {
-                "category": "Long Context (LongBench)",
-                "dataset": "THUDM/LongBench - ERROR",
-                "sample_size": 0,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"LongBench eval failed: {exc}"},
-            }
+            raise RuntimeError(
+                f"Long Context evaluator FAILED (not skipping): {exc}"
+            ) from exc
 
 # ============================================================================
 # CATEGORY 6: TOOL USE
@@ -2019,10 +2015,12 @@ async def evaluate_tool_use(tier: str = TIER) -> Dict[str, Any]:
         seed=FIXED_SEED,
     )
     try:
-        subprocess.run(
+        proc = subprocess.run(
             shlex.split(command),
             check=True,
             timeout=3600,
+            capture_output=True,
+            text=True,
         )
         if output_path.exists():
             payload = json.loads(output_path.read_text())
@@ -2046,20 +2044,17 @@ async def evaluate_tool_use(tier: str = TIER) -> Dict[str, Any]:
                 "extra": {"toolbench_eval": "external"},
             }
         raise FileNotFoundError("ToolBench eval output missing")
+    except subprocess.CalledProcessError as cpe:
+        raise RuntimeError(
+            f"Tool Use evaluator FAILED | cmd={command} | "
+            f"exit={cpe.returncode} | "
+            f"stdout={cpe.stdout[:500] if cpe.stdout else ''} | "
+            f"stderr={cpe.stderr[:500] if cpe.stderr else ''}"
+        ) from cpe
     except Exception as exc:
-        return {
-            "category": "Tool Use (ToolBench)",
-            "dataset": "ToolBench (OpenBMB) - ERROR",
-            "sample_size": 0,
-            "correct": 0,
-            "incorrect": 0,
-            "errors": 1,
-            "accuracy": 0.0,
-            "avg_latency_ms": 0,
-            "avg_cost": 0.0,
-            "total_cost": 0.0,
-            "extra": {"error": f"ToolBench eval failed: {exc}"},
-        }
+        raise RuntimeError(
+            f"Tool Use evaluator FAILED (not skipping): {exc}"
+        ) from exc
 
 # ============================================================================
 # CATEGORY 7: RAG
@@ -2405,19 +2400,9 @@ async def evaluate_rag(
             mrr_at_10 = float(match.group(1))
             accuracy = mrr_at_10 * 100
         except Exception as exc:
-            return {
-                "category": "RAG (MS MARCO)",
-                "dataset": "microsoft/ms_marco v1.1 - ERROR",
-                "sample_size": sample_size,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"MS MARCO eval failed: {exc}"},
-            }
+            raise RuntimeError(
+                f"RAG (MS MARCO) external eval FAILED (not skipping): {exc}"
+            ) from exc
 
     return {
         "category": "RAG (MS MARCO)",
@@ -2461,10 +2446,12 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
         seed=FIXED_SEED,
     )
     try:
-        subprocess.run(
+        proc = subprocess.run(
             shlex.split(command),
             check=True,
             timeout=1800,
+            capture_output=True,
+            text=True,
         )
         if output_path.exists():
             payload = json.loads(output_path.read_text())
@@ -2487,20 +2474,17 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
                 "extra": {"mtbench_eval": "external"},
             }
         raise FileNotFoundError("MT-Bench eval output missing")
+    except subprocess.CalledProcessError as cpe:
+        raise RuntimeError(
+            f"Dialogue evaluator FAILED | cmd={command} | "
+            f"exit={cpe.returncode} | "
+            f"stdout={cpe.stdout[:500] if cpe.stdout else ''} | "
+            f"stderr={cpe.stderr[:500] if cpe.stderr else ''}"
+        ) from cpe
     except Exception as exc:
-        return {
-            "category": "Dialogue (MT-Bench)",
-            "dataset": "lmsys/mt-bench - ERROR",
-            "sample_size": 0,
-            "correct": 0,
-            "incorrect": 0,
-            "errors": 1,
-            "accuracy": 0.0,
-            "avg_latency_ms": 0,
-            "avg_cost": 0.0,
-            "total_cost": 0.0,
-            "extra": {"error": f"MT-Bench eval failed: {exc}"},
-        }
+        raise RuntimeError(
+            f"Dialogue evaluator FAILED (not skipping): {exc}"
+        ) from exc
 
 # ============================================================================
 # REPORTING
@@ -2694,6 +2678,17 @@ async def main():
     
     results = []
 
+    # Phase 3: Log sample sizes before execution
+    print(f"\n  SAMPLE_SIZES:")
+    for cat, sz in SAMPLE_SIZES.items():
+        print(f"    {cat:<15} = {sz}")
+    zero_samples = [k for k, v in SAMPLE_SIZES.items() if v <= 0]
+    if zero_samples:
+        raise RuntimeError(
+            f"ABORT: Categories with zero sample size: {zero_samples}. "
+            f"Fix SAMPLE_SIZES config."
+        )
+
     checkpoint = _load_checkpoint()
     if checkpoint is None:
         checkpoint = {"config": _checkpoint_config(), "results": {}, "progress": {}}
@@ -2717,10 +2712,17 @@ async def main():
     for key in categories_to_run:
         cached = checkpoint.get("results", {}).get(key)
         if cached:
-            results.append(cached)
-            continue
+            cached_samples = cached.get("sample_size", 0) if isinstance(cached, dict) else 0
+            if cached_samples > 0:
+                print(f"  [{key}] Restored from checkpoint ({cached_samples} samples)")
+                results.append(cached)
+                continue
+            print(f"  [{key}] Stale checkpoint (0 samples) — re-executing")
+            checkpoint.get("results", {}).pop(key, None)
         progress = checkpoint.get("progress", {}).get(key)
         evaluator = evaluators[key]
+        expected_samples = SAMPLE_SIZES.get(key, "?")
+        print(f"  EXECUTING {key} — expected sample size: {expected_samples}")
         if key in {"long_context", "tool_use", "dialogue"}:
             result = await evaluator(TIER)
         else:
@@ -2731,6 +2733,16 @@ async def main():
             )
         if isinstance(result, dict):
             result.setdefault("infra_failures", 0)
+
+        actual_samples = result.get("sample_size", 0) if isinstance(result, dict) else 0
+        print(f"  COMPLETED {key} — actual samples: {actual_samples}")
+
+        if actual_samples == 0:
+            raise RuntimeError(
+                f"CRITICAL: {key} executed with 0 samples. "
+                f"External evaluator failed or produced no output."
+            )
+
         checkpoint.setdefault("results", {})[key] = result
         _save_checkpoint(checkpoint)
         results.append(result)
