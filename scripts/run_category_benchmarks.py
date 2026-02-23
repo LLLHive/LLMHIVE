@@ -11,6 +11,7 @@ import os
 import random
 import re
 import sys
+import threading
 import time
 import unicodedata
 from datetime import datetime
@@ -20,6 +21,25 @@ from typing import Any, Callable, Dict, List, Optional
 from datasets import load_dataset
 
 from experiment_telemetry import ExperimentTracer
+
+# ── 2026 Intelligence Layer ──
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "llmhive" / "src"))
+try:
+    from llmhive.app.intelligence import (
+        print_elite_config as _print_elite_config_2026,
+        print_drift_status as _print_drift_status,
+        assert_startup_invariants as _assert_startup_invariants,
+        get_intelligence_telemetry as _get_intel_telemetry,
+        IntelligenceTraceEntry as _IntelTraceEntry,
+        get_routing_engine as _get_routing_engine,
+        record_benchmark_run as _record_benchmark_run,
+        print_performance_summary as _print_perf_summary,
+        is_benchmark_mode as _is_benchmark_mode_2026,
+        get_strategy_db as _get_strategy_db_2026,
+    )
+    _INTELLIGENCE_LAYER = True
+except ImportError as _ie:
+    _INTELLIGENCE_LAYER = False
 
 # Import world-class benchmark helpers (all 3 phases)
 from benchmark_helpers import (
@@ -133,6 +153,8 @@ def _is_truthy(value: Optional[str]) -> bool:
 
 
 STRICT_MODE = _is_truthy(os.getenv("CATEGORY_BENCH_STRICT"))
+BENCHMARK_MODE = _is_truthy(os.getenv("BENCHMARK_MODE", "true"))
+ORCHESTRATION_MODE = _get_env_str("ORCHESTRATION_MODE", "ensemble")
 TIER = _get_env_str("CATEGORY_BENCH_TIER", "elite")
 REASONING_MODE = _get_env_str("CATEGORY_BENCH_REASONING_MODE", "deep")
 TEMPERATURE = _get_env_float("CATEGORY_BENCH_TEMPERATURE", -1.0)
@@ -160,6 +182,11 @@ MTBENCH_EVAL_CMD = _get_env_str("MTBENCH_EVAL_CMD", "")
 # ---------------------------------------------------------------------------
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 
+_IS_MAIN_PROCESS = (os.getpid() == int(os.environ.get("_LLMHIVE_MAIN_PID", str(os.getpid()))))
+if "_LLMHIVE_MAIN_PID" not in os.environ:
+    os.environ["_LLMHIVE_MAIN_PID"] = str(os.getpid())
+
+
 def _auto_eval_cmd(env_var: str, script_name: str) -> str:
     """Return the env value if set AND valid, otherwise build a command from
     the sibling script path.  The generated command uses ``{output_path}``
@@ -172,7 +199,7 @@ def _auto_eval_cmd(env_var: str, script_name: str) -> str:
     script_path = _SCRIPTS_DIR / script_name
     if script_path.exists():
         resolved = f"{sys.executable} {script_path} --output {{output_path}} --seed {{seed}}"
-        if current:
+        if current and _IS_MAIN_PROCESS:
             print(f"  WARNING: {env_var} missing {{output_path}} placeholder — "
                   f"auto-overriding with: {resolved}")
         return resolved
@@ -187,6 +214,162 @@ _ANSWER_LOG_PATH: Optional[str] = None
 
 # Experiment tracer, initialized in main()
 _TRACER: Optional[ExperimentTracer] = None
+
+# ---------------------------------------------------------------------------
+# ELITE MODEL DETERMINISM & TELEMETRY
+# ---------------------------------------------------------------------------
+
+ELITE_MODEL_BINDINGS: Dict[str, str] = {
+    "openai": os.getenv("ELITE_MODEL_OPENAI", "gpt-5.2-pro"),
+    "anthropic": os.getenv("ELITE_MODEL_ANTHROPIC", "claude-sonnet-4.6"),
+    "google": os.getenv("ELITE_MODEL_GOOGLE", "gemini-2.5-pro"),
+    "grok": os.getenv("ELITE_MODEL_GROK", "grok-3-mini"),
+    "openrouter": os.getenv("ELITE_MODEL_OPENROUTER", ""),
+    "deepseek": os.getenv("ELITE_MODEL_DEEPSEEK", "deepseek-reasoner"),
+}
+
+# ---------------------------------------------------------------------------
+# SINGLE-MODEL BASELINE MODE (ORCHESTRATION_MODE=single)
+# ---------------------------------------------------------------------------
+
+SINGLE_MODEL_MAP: Dict[str, str] = {
+    "reasoning":    os.getenv("SINGLE_MODEL_REASONING",    "GPT-5.2"),
+    "coding":       os.getenv("SINGLE_MODEL_CODING",       "GPT-5.2"),
+    "math":         os.getenv("SINGLE_MODEL_MATH",         "GPT-5.2"),
+    "multilingual": os.getenv("SINGLE_MODEL_MULTILINGUAL", "Claude Sonnet 4"),
+    "long_context": os.getenv("SINGLE_MODEL_LONG_CONTEXT", "Gemini 2.5 Pro"),
+    "rag":          os.getenv("SINGLE_MODEL_RAG",           "GPT-5.2"),
+    "dialogue":     os.getenv("SINGLE_MODEL_DIALOGUE",      "GPT-5.2"),
+    "tool_use":     os.getenv("SINGLE_MODEL_TOOL_USE",      "GPT-5.2"),
+}
+
+_SINGLE_MODE_ORCHESTRATION: Dict[str, Any] = {
+    "accuracy_level": 1,
+    "enable_deep_consensus": False,
+    "enable_adaptive_ensemble": False,
+    "enable_verification": False,
+}
+
+def _is_single_mode() -> bool:
+    return ORCHESTRATION_MODE.lower() == "single"
+
+
+def _single_model_for_category() -> str:
+    """Return the pinned model for the current category in single mode."""
+    return SINGLE_MODEL_MAP.get(_CURRENT_CATEGORY, "GPT-5.2")
+
+_MODEL_TRACE_PATH: Optional[str] = None
+_CURRENT_CATEGORY: str = ""
+
+_MODEL_TRACE_LOCK = threading.Lock()
+
+def _init_model_trace() -> str:
+    """Initialize model trace JSONL file and return its path."""
+    report_dir = Path("benchmark_reports")
+    report_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return str(report_dir / f"model_trace_{ts}.jsonl")
+
+
+def _write_model_trace(entry: Dict[str, Any]) -> None:
+    """Append a model trace entry to the JSONL log. Fire-and-forget."""
+    if not BENCHMARK_MODE or not _MODEL_TRACE_PATH:
+        return
+    try:
+        line = json.dumps(entry, default=str) + "\n"
+        with _MODEL_TRACE_LOCK:
+            with open(_MODEL_TRACE_PATH, "a") as f:
+                f.write(line)
+    except Exception:
+        pass
+
+
+def _check_elite_model_drift(models_used: list, category: str) -> None:
+    """Log a warning if returned models don't match configured elite bindings.
+    Diagnostic only — never aborts execution."""
+    if not BENCHMARK_MODE or not models_used:
+        return
+    known_elite = set(v for v in ELITE_MODEL_BINDINGS.values() if v)
+    for model in models_used:
+        normalised = model.lower().strip()
+        if any(elite.lower() in normalised or normalised in elite.lower()
+               for elite in known_elite):
+            return
+    print(f"  DRIFT: {category} — models_used={models_used}, "
+          f"configured={known_elite}", flush=True)
+
+
+def _log_verify_trace(question_id: str, best_candidate: Optional[Dict[str, Any]],
+                      latency_ms: int) -> None:
+    """Write a verify-pipeline-specific trace entry for GSM8K."""
+    if not BENCHMARK_MODE or not best_candidate or not _MODEL_TRACE_PATH:
+        return
+    _write_model_trace({
+        "call_type": "verify",
+        "category": "math",
+        "question_id": question_id,
+        "verify_model": best_candidate.get("model", ""),
+        "verify_provider": best_candidate.get("provider", ""),
+        "verification_score": best_candidate.get("verification_score", 0),
+        "candidates_count": len(best_candidate.get("candidates", [])),
+        "verify_latency_ms": best_candidate.get("verify_latency_ms", latency_ms),
+        "timestamp": datetime.now().isoformat(),
+    })
+
+
+def assert_elite_model_locked() -> None:
+    """Print elite tier configuration before benchmark execution.
+    Diagnostic only — never aborts."""
+    if not BENCHMARK_MODE:
+        return
+    print("  Elite Tier Config:")
+    print(f"    tier:              {TIER}")
+    print(f"    reasoning_mode:    {REASONING_MODE}")
+    print(f"    orchestration:     {ORCHESTRATION_MODE}")
+    print(f"    temperature:       {TEMPERATURE if TEMPERATURE >= 0 else '(default)'}")
+    print(f"    top_p:             {TOP_P if TOP_P >= 0 else '(default)'}")
+    print(f"    seed:              {FIXED_SEED if FIXED_SEED >= 0 else '(none)'}")
+    if _is_single_mode():
+        print("    SINGLE-MODEL PINNING:")
+        for cat, model in sorted(SINGLE_MODEL_MAP.items()):
+            print(f"      {cat:15s} → {model}")
+    else:
+        configured = {k: v for k, v in ELITE_MODEL_BINDINGS.items() if v}
+        if configured:
+            print("    model bindings:")
+            for provider, model_id in sorted(configured.items()):
+                print(f"      {provider:12s} → {model_id}")
+        else:
+            print("    model bindings:    (none configured)")
+
+# ---------------------------------------------------------------------------
+# HUMANEVAL FORENSIC LOGGING
+# ---------------------------------------------------------------------------
+
+_HE_RAW_PATH: Optional[str] = None
+_HE_PROCESSED_PATH: Optional[str] = None
+_HE_EXEC_PATH: Optional[str] = None
+
+
+def _init_humaneval_forensics() -> None:
+    global _HE_RAW_PATH, _HE_PROCESSED_PATH, _HE_EXEC_PATH
+    report_dir = Path("benchmark_reports")
+    report_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    _HE_RAW_PATH = str(report_dir / f"humaneval_raw_{ts}.jsonl")
+    _HE_PROCESSED_PATH = str(report_dir / f"humaneval_processed_{ts}.jsonl")
+    _HE_EXEC_PATH = str(report_dir / f"humaneval_execution_trace_{ts}.jsonl")
+
+
+def _he_log(path: Optional[str], entry: Dict[str, Any]) -> None:
+    if not path:
+        return
+    try:
+        with open(path, "a") as f:
+            f.write(json.dumps(entry, default=str) + "\n")
+    except Exception:
+        pass
+
 
 FRONTIER_JSON = _get_env_str("CATEGORY_BENCH_FRONTIER_JSON", "")
 
@@ -212,8 +395,13 @@ _INFRA_GARBAGE_MARKERS = (
 )
 
 
-def response_is_valid(text: Optional[str], min_length: int = 10) -> bool:
-    """Return True if *text* looks like a genuine model response."""
+def response_is_valid(text: Optional[str], min_length: int = 2) -> bool:
+    """Return True if *text* looks like a genuine model response.
+
+    min_length=2 allows short but valid answers (e.g. 'C', 'NO.', 'YES.')
+    while still catching empty/null responses.  Infra garbage is caught
+    separately by _INFRA_GARBAGE_MARKERS.
+    """
     if text is None:
         return False
     stripped = text.strip()
@@ -266,22 +454,38 @@ async def call_llmhive_api(
     reasoning_mode: str = REASONING_MODE,
     tier: str = TIER,
     timeout: int = 180,
-    orchestration_config: Optional[Dict[str, Any]] = None
+    orchestration_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Call LLMHive API with exponential backoff retry (max 5 attempts)."""
+    """Call LLMHive API with exponential backoff retry (max 5 attempts).
+
+    When *BENCHMARK_MODE* is active, every successful call emits a structured
+    model-trace entry and checks for elite-model drift.
+    """
+    category = _CURRENT_CATEGORY
+    single = _is_single_mode()
     async with httpx.AsyncClient(timeout=timeout) as client:
         for attempt in range(_MAX_API_RETRIES):
             try:
                 start_time = time.time()
-                payload = {
-                    "prompt": prompt,
-                    "reasoning_mode": reasoning_mode,
-                    "orchestration": orchestration_config or {
-                        "accuracy_level": 5,
-                        "use_deep_consensus": True,
-                        "enable_verification": True,
-                    },
-                }
+
+                if single:
+                    orch = dict(_SINGLE_MODE_ORCHESTRATION)
+                    payload: Dict[str, Any] = {
+                        "prompt": prompt,
+                        "reasoning_mode": reasoning_mode,
+                        "model": _single_model_for_category(),
+                        "orchestration": orch,
+                    }
+                else:
+                    payload = {
+                        "prompt": prompt,
+                        "reasoning_mode": reasoning_mode,
+                        "orchestration": orchestration_config or {
+                            "accuracy_level": 5,
+                            "use_deep_consensus": True,
+                            "enable_verification": True,
+                        },
+                    }
                 if tier:
                     payload["tier"] = tier
                 if TEMPERATURE >= 0:
@@ -313,6 +517,76 @@ async def call_llmhive_api(
                     extra = data.get("extra", {})
                     cost_tracking = extra.get("cost_tracking", {})
                     usage = extra.get("usage", {})
+                    models_used = data.get("models_used", [])
+                    _fo_info = extra.get("failover", {})
+
+                    fallback_used = attempt > 0
+
+                    _trace = {
+                        "category": category,
+                        "orchestration_mode": ORCHESTRATION_MODE,
+                        "pinned_model": _single_model_for_category() if single else None,
+                        "provider": models_used[0].split("/")[0] if models_used and "/" in str(models_used[0]) else "",
+                        "model_name": models_used,
+                        "number_of_models_used": len(models_used),
+                        "tier": tier,
+                        "reasoning_mode": reasoning_mode,
+                        "temperature": TEMPERATURE if TEMPERATURE >= 0 else None,
+                        "top_p": TOP_P if TOP_P >= 0 else None,
+                        "seed": FIXED_SEED if FIXED_SEED >= 0 else None,
+                        "fallback_used": fallback_used,
+                        "retry_count": attempt,
+                        "timestamp": datetime.now().isoformat(),
+                        "latency_ms": latency,
+                        "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                        "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                    }
+                    if _fo_info:
+                        _trace["failover_attempted"] = _fo_info.get("failover_attempted", False)
+                        _trace["failover_provider"] = _fo_info.get("failover_provider")
+                        _trace["failure_type"] = _fo_info.get("failure_type")
+                        _trace["provider_sla_breached"] = _fo_info.get("provider_sla_breached", False)
+                    _write_model_trace(_trace)
+
+                    if BENCHMARK_MODE:
+                        _check_elite_model_drift(models_used, category)
+                        if fallback_used:
+                            print(f"  WARNING: Benchmark call required {attempt} retries "
+                                  f"(category={category})")
+                    if single and len(models_used) > 1:
+                        print(f"  SINGLE-MODE VIOLATION: {category} returned "
+                              f"{len(models_used)} models: {models_used}", flush=True)
+
+                    # ── 2026 Intelligence Telemetry ──
+                    if _INTELLIGENCE_LAYER and BENCHMARK_MODE:
+                        try:
+                            _primary = models_used[0] if models_used else (_single_model_for_category() if single else "")
+                            _provider_name = _primary.split("/")[0] if "/" in str(_primary) else ""
+                            _get_intel_telemetry().record(_IntelTraceEntry(
+                                timestamp=datetime.now().isoformat(),
+                                category=category,
+                                provider=_provider_name,
+                                model_id=str(_primary),
+                                display_name=str(_primary),
+                                orchestration_mode=ORCHESTRATION_MODE,
+                                consensus_enabled=not single,
+                                reasoning_mode=reasoning_mode,
+                                temperature=TEMPERATURE if TEMPERATURE >= 0 else None,
+                                top_p=TOP_P if TOP_P >= 0 else None,
+                                seed=FIXED_SEED if FIXED_SEED >= 0 else None,
+                                fallback_used=fallback_used,
+                                retry_count=attempt,
+                                latency_ms=latency,
+                                input_tokens=usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                                output_tokens=usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                                failover_attempted=_fo_info.get("failover_attempted", False),
+                                failover_provider=_fo_info.get("failover_provider"),
+                                failure_type=_fo_info.get("failure_type"),
+                                provider_sla_breached=_fo_info.get("provider_sla_breached", False),
+                            ))
+                        except Exception:
+                            pass
+
                     return {
                         "success": True,
                         "response": resp_text,
@@ -321,6 +595,7 @@ async def call_llmhive_api(
                         "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
                         "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
                         "retries": attempt,
+                        "models_used": models_used,
                     }
                 elif response.status_code in _RETRYABLE_STATUS_CODES:
                     wait = 2 ** attempt
@@ -631,16 +906,31 @@ def _sanitize_completion(completion: str, entry_point: str) -> str:
     """Post-generation deterministic sanitizer for HumanEval completions.
 
     1. Strip trailing whitespace from every line.
-    2. Remove markdown fences if still present.
+    2. Remove markdown fences if still present (without destroying indentation).
     3. Remove duplicate function definitions (keep first body).
     4. Ensure exactly one function body is returned.
     """
     if not completion:
         return completion
 
-    completion = _strip_code_fences(completion)
+    fence_match = re.search(r"```(?:python)?\n(.*?)```", completion, re.DOTALL | re.IGNORECASE)
+    if fence_match:
+        completion = fence_match.group(1).rstrip()
 
     lines = [line.rstrip() for line in completion.splitlines()]
+
+    # Remove markdown headers and non-code lines that models sometimes emit
+    lines = [l for l in lines if not re.match(r"^\s*##\s+", l)]
+
+    # Remove trailing sentence-ending periods from code lines
+    # (e.g., "return False." → "return False")
+    cleaned_lines: List[str] = []
+    for l in lines:
+        s = l.rstrip()
+        if s.endswith(".") and not s.endswith("..") and not re.search(r"\d\.$", s):
+            s = s[:-1]
+        cleaned_lines.append(s)
+    lines = cleaned_lines
 
     if entry_point:
         def_pattern = re.compile(
@@ -662,7 +952,21 @@ def _sanitize_completion(completion: str, entry_point: str) -> str:
                     end += 1
                 del lines[dup_idx:end]
 
-    return "\n".join(lines).rstrip() + "\n"
+    # Re-normalize indentation: every non-blank line must have >= 4 spaces
+    # to sit inside the prompt's def block.
+    result_lines: List[str] = []
+    for line in lines:
+        if not line.strip():
+            result_lines.append("")
+        else:
+            stripped = line.lstrip()
+            current_indent = len(line) - len(stripped)
+            if current_indent < 4:
+                result_lines.append("    " + stripped)
+            else:
+                result_lines.append(line)
+
+    return "\n".join(result_lines).rstrip() + "\n"
 
 
 def _validate_function_signature(completion: str, entry_point: str, prompt: str) -> str:
@@ -689,7 +993,10 @@ def _classify_failure(check_result: Optional[dict], completion: Optional[str]) -
     if check_result is None:
         return "runtime"
     result_str = str(check_result.get("result", "")).lower()
-    if any(k in result_str for k in ("syntaxerror", "nameerror", "typeerror", "indentationerror", "timeout")):
+    if any(k in result_str for k in ("syntaxerror", "nameerror", "typeerror",
+                                      "indentationerror", "timeout",
+                                      "unexpected indent", "unindent",
+                                      "invalid syntax", "'return' outside function")):
         return "runtime"
     return "logic"
 
@@ -1024,7 +1331,7 @@ D) {choices[3]}"""
             # Confidence-gated fallback — if CoT consensus is weak,
             # re-query with reasoning_mode="deep" and replace only if
             # the new answer has higher confidence.
-            if confidence < 0.50 and predicted:
+            if confidence < 0.55 and predicted:
                 fallback_prompt = (
                     "You are an expert test-taker. Answer this multiple-choice question.\n"
                     "Think through each option carefully before answering.\n\n"
@@ -1191,11 +1498,16 @@ async def evaluate_coding(
         start_index = int(progress.get("index", 0)) if progress else 0
         error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
 
+        _init_humaneval_forensics()
+        print(f"  Forensic logs: {_HE_RAW_PATH}")
+
         for i, task_id in enumerate(sample_ids, start=1):
             if i <= start_index:
+                print(f"  [DBG] Skipping {task_id} (i={i} <= start_index={start_index})", flush=True)
                 continue
             problem = problems[task_id]
             entry_point = problem.get("entry_point", "")
+            print(f"  [DBG] Processing {task_id} (i={i}, entry_point={entry_point})", flush=True)
             
             # SOTA 2026: Multi-Pass with Execution Feedback (RLEF + ICE-Coder approach)
             max_refinement_attempts = 3
@@ -1275,10 +1587,29 @@ RULES:
                     attempt_latency += impl_result.get("latency", 0)
                     attempt_cost += impl_result.get("cost", 0)
                     
+                    print(f"  [DBG] {task_id} attempt={attempt} plan_ok={plan_result.get('success')} impl_ok={impl_result.get('success')}", flush=True)
                     if impl_result.get("success"):
-                        completion = _completion_from_response(problem, impl_result.get("response", ""))
+                        raw_resp = impl_result.get("response", "")
+                        _he_log(_HE_RAW_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "raw_response": raw_resp[:4000],
+                            "model": impl_result.get("models_used", []),
+                            "timestamp": datetime.now().isoformat(),
+                        })
+                        completion = _completion_from_response(problem, raw_resp)
                         completion = _sanitize_completion(completion, entry_point)
                         completion = _validate_function_signature(completion, entry_point, problem.get("prompt", ""))
+                        _he_log(_HE_PROCESSED_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "sanitized_code": (completion or "")[:2000],
+                            "entry_point_expected": entry_point,
+                            "has_def_line": bool(completion and re.search(r"^\s*def\s+", completion, re.MULTILINE)),
+                            "body_line_count": len([l for l in (completion or "").splitlines() if l.strip()]),
+                            "is_stub": completion is None or completion.strip() in ("pass", "pass\n", "    pass\n"),
+                            "timestamp": datetime.now().isoformat(),
+                        })
                     else:
                         errors += 1
                         break
@@ -1311,14 +1642,16 @@ ANALYSIS:
 
 Output CORRECTED function (code only):"""
                     
+                    _refine_accuracy = 5 if attempt < max_refinement_attempts else 6
                     refine_result = await call_llmhive_api(
                         refine_prompt,
                         reasoning_mode=REASONING_MODE,
                         tier=tier,
                         timeout=120,
                         orchestration_config={
-                            "accuracy_level": 5,
+                            "accuracy_level": _refine_accuracy,
                             "enable_verification": True,
+                            "use_deep_consensus": attempt == max_refinement_attempts,
                         }
                     )
                     
@@ -1326,9 +1659,27 @@ Output CORRECTED function (code only):"""
                     attempt_cost += refine_result.get("cost", 0)
                     
                     if refine_result.get("success"):
-                        completion = _completion_from_response(problem, refine_result.get("response", ""))
+                        raw_resp = refine_result.get("response", "")
+                        _he_log(_HE_RAW_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "raw_response": raw_resp[:4000],
+                            "model": refine_result.get("models_used", []),
+                            "timestamp": datetime.now().isoformat(),
+                        })
+                        completion = _completion_from_response(problem, raw_resp)
                         completion = _sanitize_completion(completion, entry_point)
                         completion = _validate_function_signature(completion, entry_point, problem.get("prompt", ""))
+                        _he_log(_HE_PROCESSED_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "sanitized_code": (completion or "")[:2000],
+                            "entry_point_expected": entry_point,
+                            "has_def_line": bool(completion and re.search(r"^\s*def\s+", completion, re.MULTILINE)),
+                            "body_line_count": len([l for l in (completion or "").splitlines() if l.strip()]),
+                            "is_stub": completion is None or completion.strip() in ("pass", "pass\n", "    pass\n"),
+                            "timestamp": datetime.now().isoformat(),
+                        })
                     else:
                         break
                 
@@ -1340,17 +1691,42 @@ Output CORRECTED function (code only):"""
                         completion = None  # Force refinement attempt
                         continue
                 
+                print(f"  [DBG] {task_id} attempt={attempt} completion={'YES' if completion else 'NONE'} len={len(completion) if completion else 0}", flush=True)
                 if completion:
                     try:
                         check_result = check_correctness(
                             problem,
                             completion,
-                            timeout=10.0,  # D3: Increased from 5s for complex algorithms
+                            timeout=10.0,
                             completion_id=f"{i}_attempt{attempt}"
                         )
                         
                         is_correct = check_result.get("passed", False) if isinstance(check_result, dict) else False
-                        
+                        print(f"  [DBG] {task_id} attempt={attempt} check_result passed={is_correct}", flush=True)
+
+                        result_str = str(check_result.get("result", "")) if isinstance(check_result, dict) else ""
+                        exec_entry: Dict[str, Any] = {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "passed": is_correct,
+                            "result_detail": result_str[:2000],
+                            "completion_preview": (completion or "")[:1000],
+                            "prompt_preview": problem.get("prompt", "")[:300],
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                        if not is_correct and result_str:
+                            for tag in ("SyntaxError", "NameError", "TypeError",
+                                        "IndentationError", "AttributeError",
+                                        "ValueError", "IndexError", "KeyError",
+                                        "ZeroDivisionError", "RecursionError",
+                                        "timed out", "AssertionError", "Exception"):
+                                if tag.lower() in result_str.lower():
+                                    exec_entry["exception_type"] = tag
+                                    break
+                            else:
+                                exec_entry["exception_type"] = "assertion_fail" if "assert" in result_str.lower() else "unknown"
+                        _he_log(_HE_EXEC_PATH, exec_entry)
+
                         if is_correct:
                             correct += 1
                             total_latency += attempt_latency
@@ -1443,6 +1819,55 @@ Output CORRECTED function (code only):"""
         if failed_ids:
             print(f"\n  HumanEval failing IDs ({len(failed_ids)}): {', '.join(failed_ids)}", flush=True)
 
+        # ---- Forensic failure classification summary ----
+        if _HE_EXEC_PATH and Path(_HE_EXEC_PATH).exists():
+            try:
+                exec_entries = [json.loads(l) for l in Path(_HE_EXEC_PATH).read_text().splitlines() if l.strip()]
+                failures = [e for e in exec_entries if not e.get("passed")]
+                from collections import Counter as _Ctr
+                exc_types = _Ctr(e.get("exception_type", "unknown") for e in failures)
+                print(f"\n  {'='*50}")
+                print(f"  HUMANEVAL FORENSIC FAILURE SUMMARY")
+                print(f"  {'='*50}")
+                print(f"  Total execution checks:  {len(exec_entries)}")
+                print(f"  Passed:                  {sum(1 for e in exec_entries if e.get('passed'))}")
+                print(f"  Failed:                  {len(failures)}")
+                if exc_types:
+                    print(f"  Failure breakdown:")
+                    for exc, cnt in exc_types.most_common():
+                        pct = cnt / max(len(failures), 1) * 100
+                        print(f"    {exc:<25} {cnt:>3} ({pct:.0f}%)")
+                print(f"  Raw log:       {_HE_RAW_PATH}")
+                print(f"  Processed log: {_HE_PROCESSED_PATH}")
+                print(f"  Exec trace:    {_HE_EXEC_PATH}")
+                print(f"  {'='*50}")
+            except Exception:
+                pass
+
+        # ---- Pipeline metrics counter ----
+        _he_metrics = {"signature_mismatch": 0, "runtime_error": 0, "logic_mismatch": 0, "extraction": 0}
+        if _ANSWER_LOG_PATH and Path(_ANSWER_LOG_PATH).exists():
+            try:
+                for _line in Path(_ANSWER_LOG_PATH).read_text().splitlines():
+                    if not _line.strip():
+                        continue
+                    _entry = json.loads(_line)
+                    if _entry.get("category") != "HumanEval" or _entry.get("is_correct"):
+                        continue
+                    _ft = _entry.get("failure_type", "")
+                    if _ft == "extraction":
+                        _he_metrics["extraction"] += 1
+                    elif _ft == "runtime":
+                        _he_metrics["runtime_error"] += 1
+                    elif _ft == "logic":
+                        _he_metrics["logic_mismatch"] += 1
+            except Exception:
+                pass
+        _total_fails = sum(_he_metrics.values()) or 1
+        print(f"\n  HumanEval Pipeline Metrics:")
+        for _mk, _mv in _he_metrics.items():
+            print(f"    {_mk:<22} {_mv:>3} ({_mv/_total_fails*100:.0f}%)")
+
         return {
             "category": "Coding (HumanEval)",
             "dataset": "openai/human_eval",
@@ -1454,7 +1879,11 @@ Output CORRECTED function (code only):"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
-            "extra": {"error_samples": error_samples, "failed_ids": failed_ids},
+            "extra": {
+                "error_samples": error_samples,
+                "failed_ids": failed_ids,
+                "pipeline_metrics": _he_metrics,
+            },
         }
     
     except ImportError as e:
@@ -1533,6 +1962,8 @@ async def evaluate_math(
             # Calculate total cost and latency
             candidate_latency = best_candidate.get("latency", 1000) if best_candidate else 5000
             candidate_cost = best_candidate.get("cost", 0.005) if best_candidate else 0.025
+
+            _log_verify_trace(f"gsm8k_{i}", best_candidate, candidate_latency)
             
             if predicted_answer:
                 try:
@@ -1800,7 +2231,7 @@ async def evaluate_multilingual(
 
             # Confidence gate: if confidence < 45% and we have an answer,
             # re-query once with reasoning_mode="deep" for higher quality.
-            if predicted and mmmlu_confidence < 0.45:
+            if predicted and mmmlu_confidence < 0.55:
                 gate_result = await call_llmhive_api(
                     prompt,
                     reasoning_mode="deep",
@@ -2343,6 +2774,10 @@ async def evaluate_rag(
         correct = int(mrr_count)
         total_attempted = sample_size - errors
         
+        _recall_at_10 = mrr_count / len(relevant_by_query) if relevant_by_query else 0.0
+        _zr_rate = _zero_relevant_count / max(sample_size, 1)
+        _rqi = (mrr_at_10 * 0.6 + _recall_at_10 * 0.4) * (1.0 - _zr_rate)
+
         return {
             "category": "RAG (MS MARCO)",
             "dataset": "microsoft/ms_marco v1.1",
@@ -2354,7 +2789,15 @@ async def evaluate_rag(
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
-            "extra": {"mrr_at_10": round(mrr_at_10, 4), "eval_mode": "builtin"},
+            "extra": {
+                "mrr_at_10": round(mrr_at_10, 4),
+                "recall_at_10": round(_recall_at_10, 4),
+                "rqi": round(_rqi, 4),
+                "eval_mode": "builtin",
+                "rank_distribution": _rank_distribution,
+                "zero_relevant_queries": _zero_relevant_count,
+                "zero_relevant_rate": round(_zr_rate, 4),
+            },
         }
 
     import shlex
@@ -2396,6 +2839,10 @@ async def evaluate_rag(
                 f"RAG (MS MARCO) external eval FAILED (not skipping): {exc}"
             ) from exc
 
+    _zr_rate_ext = _zero_relevant_count / max(sample_size, 1)
+    _recall_ext = correct / max(sample_size - errors, 1)
+    _rqi_ext = (mrr_at_10 * 0.6 + _recall_ext * 0.4) * (1.0 - _zr_rate_ext)
+
     return {
         "category": "RAG (MS MARCO)",
         "dataset": "microsoft/ms_marco v1.1",
@@ -2407,7 +2854,14 @@ async def evaluate_rag(
         "avg_latency_ms": int(total_latency / (sample_size - errors)) if sample_size - errors > 0 else 0,
         "avg_cost": round(total_cost / (sample_size - errors), 6) if sample_size - errors > 0 else 0,
         "total_cost": round(total_cost, 4),
-        "extra": {"mrr_at_10": round(mrr_at_10, 4)},
+        "extra": {
+            "mrr_at_10": round(mrr_at_10, 4),
+            "recall_at_10": round(_recall_ext, 4),
+            "rqi": round(_rqi_ext, 4),
+            "rank_distribution": _rank_distribution,
+            "zero_relevant_queries": _zero_relevant_count,
+            "zero_relevant_rate": round(_zr_rate_ext, 4),
+        },
     }
 
 # ============================================================================
@@ -2656,6 +3110,11 @@ async def main():
     _init_answer_log()
     print(f"Answer log: {_ANSWER_LOG_PATH}")
 
+    # Initialize model trace for elite-tier instrumentation
+    global _MODEL_TRACE_PATH
+    _MODEL_TRACE_PATH = _init_model_trace()
+    print(f"Model trace: {_MODEL_TRACE_PATH}")
+
     # Initialize experiment telemetry
     global _TRACER
     _TRACER = ExperimentTracer.init()
@@ -2707,7 +3166,27 @@ async def main():
         "dialogue": evaluate_dialogue,
     }
 
+    # ---- Elite tier diagnostic (print-only, no enforcement) ----
+    global _CURRENT_CATEGORY
+    assert_elite_model_locked()
+
+    # ── 2026 Intelligence Layer pre-flight ──
+    if _INTELLIGENCE_LAYER:
+        try:
+            _print_elite_config_2026()
+            _print_drift_status()
+            warnings = _assert_startup_invariants()
+            if warnings:
+                for w in warnings:
+                    print(f"  [INTEL] startup warning: {w}")
+            telemetry = _get_intel_telemetry()
+            telemetry.init_trace_file()
+        except Exception as _il_err:
+            print(f"  [INTEL] pre-flight warning: {_il_err}")
+
     for key in categories_to_run:
+        _CURRENT_CATEGORY = key
+
         cached = checkpoint.get("results", {}).get(key)
         if cached:
             cached_samples = cached.get("sample_size", 0) if isinstance(cached, dict) else 0
@@ -2889,6 +3368,118 @@ async def main():
             print(f"\n  Telemetry artifacts: {_TRACER.run_dir}")
         except Exception as _te:
             print(f"  (Telemetry finalization warning: {_te})")
+
+    # Model trace summary
+    if _MODEL_TRACE_PATH and Path(_MODEL_TRACE_PATH).exists():
+        try:
+            trace_lines = Path(_MODEL_TRACE_PATH).read_text().strip().splitlines()
+            trace_entries = [json.loads(line) for line in trace_lines if line.strip()]
+            models_seen: Dict[str, int] = {}
+            fallback_count = 0
+            total_calls = len(trace_entries)
+            for entry in trace_entries:
+                for m in entry.get("model_name", []):
+                    models_seen[m] = models_seen.get(m, 0) + 1
+                if entry.get("fallback_used"):
+                    fallback_count += 1
+            print(f"\n{'='*70}")
+            print("MODEL TRACE SUMMARY")
+            print(f"{'='*70}")
+            print(f"  Total API calls:   {total_calls}")
+            print(f"  Fallback calls:    {fallback_count}")
+            print(f"  Models observed:")
+            for m, count in sorted(models_seen.items(), key=lambda x: -x[1]):
+                print(f"    {m:40s} ({count} calls)")
+            print(f"  Trace file: {_MODEL_TRACE_PATH}")
+        except Exception as _me:
+            print(f"  (Model trace summary warning: {_me})")
+
+    # ── 2026 Intelligence Layer post-run ──
+    if _INTELLIGENCE_LAYER:
+        try:
+            _get_intel_telemetry().print_summary()
+        except Exception as _ts:
+            print(f"  [INTEL] telemetry summary warning: {_ts}")
+        try:
+            commit_hash = os.popen("git rev-parse --short HEAD 2>/dev/null").read().strip() or "unknown"
+            branch = os.popen("git branch --show-current 2>/dev/null").read().strip() or "unknown"
+            cat_data = {}
+            for r in results:
+                if isinstance(r, dict) and "error" not in r:
+                    cat_key = r.get("category", "").lower().replace(" ", "_")
+                    for orig, mapped in [("General Reasoning (MMLU)", "reasoning"),
+                                         ("Coding (HumanEval)", "coding"),
+                                         ("Math (GSM8K)", "math"),
+                                         ("Multilingual (MMMLU)", "multilingual"),
+                                         ("RAG (MS MARCO)", "rag"),
+                                         ("Long Context (LongBench)", "long_context"),
+                                         ("Tool Use (ToolBench)", "tool_use"),
+                                         ("Dialogue (MT-Bench)", "dialogue")]:
+                        if r.get("category") == orig:
+                            cat_key = mapped
+                            break
+                    cat_data[cat_key] = {
+                        "accuracy": r.get("accuracy", 0),
+                        "sample_size": r.get("sample_size", 0),
+                    }
+            _record_benchmark_run(commit_hash, branch, cat_data)
+            _print_perf_summary()
+        except Exception as _pf:
+            print(f"  [INTEL] performance feedback warning: {_pf}")
+
+        # ── Strategy DB real data ingestion ──
+        try:
+            _sdb = _get_strategy_db_2026()
+            _sdb.load_from_local_history()
+            for r in results:
+                if not isinstance(r, dict) or "error" in r:
+                    continue
+                _cat_key = r.get("category", "")
+                for orig, mapped in [("General Reasoning (MMLU)", "reasoning"),
+                                     ("Coding (HumanEval)", "coding"),
+                                     ("Math (GSM8K)", "math"),
+                                     ("Multilingual (MMMLU)", "multilingual"),
+                                     ("RAG (MS MARCO)", "rag"),
+                                     ("Long Context (LongBench)", "long_context"),
+                                     ("Tool Use (ToolBench)", "tool_use"),
+                                     ("Dialogue (MT-Bench)", "dialogue")]:
+                    if r.get("category") == orig:
+                        _cat_key = mapped
+                        break
+                _sdb.ingest_benchmark_result(
+                    category=_cat_key,
+                    model_id=r.get("model_used", "unknown"),
+                    provider=r.get("provider", "unknown"),
+                    accuracy=r.get("accuracy", 0) / 100.0,
+                    latency_p50=r.get("avg_latency_ms", 0),
+                    cost_per_sample=r.get("total_cost", 0) / max(r.get("sample_size", 1), 1),
+                    entropy=r.get("avg_entropy", 0),
+                    verify_timeout_rate=r.get("verify_timeout_rate", 0),
+                )
+            _cai = _sdb.compute_competitive_advantage_index()
+            _sdb.save_competitive_advantage()
+            _sdb.save_activation_summary()
+            print(f"\n  [INTEL] Strategy DB Activation Summary")
+            print(f"  {'='*50}")
+            print(f"  CAI Composite: {_cai['composite_index']:.2f} ({_cai['interpretation']})")
+            print(f"  All categories populated: {_sdb.has_real_data_for_all_categories()}")
+            print(f"  Records cached: {len(_sdb._performance_cache)}")
+            for _cc, _cv in sorted(_cai.get('categories', {}).items()):
+                print(f"    {_cc:<16} index={_cv['index']:>6.2f}  "
+                      f"wr_delta={_cv['win_rate_delta']:+.4f}  "
+                      f"stability={_cv['stability']:.4f}  "
+                      f"cost_eff={_cv['cost_efficiency']:.4f}")
+            _degr = _sdb.check_degradation()
+            if _degr:
+                print(f"\n  DEGRADATION ALERTS ({len(_degr)}):")
+                for _da in _degr:
+                    print(f"    [{_da['severity'].upper()}] {_da['category']}/{_da['model_id']}: "
+                          f"-{_da['drop_pct']:.1f}%")
+            else:
+                print(f"  Degradation alerts: none")
+            print(f"  {'='*50}")
+        except Exception as _sd_err:
+            print(f"  [INTEL] strategy DB ingestion warning: {_sd_err}")
 
     print("\n" + "="*70)
     print("BENCHMARK COMPLETE")

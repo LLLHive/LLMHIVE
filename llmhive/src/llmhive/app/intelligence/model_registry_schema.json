@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LLMHive Model Registry Schema 2026",
+  "version": "2026.1",
+  "type": "object",
+  "required": ["provider", "model_id", "display_name", "context_window", "reasoning_strength", "coding_strength", "math_strength", "capability_tags"],
+  "properties": {
+    "provider": { "type": "string", "enum": ["openai", "anthropic", "google", "grok", "deepseek", "openrouter", "groq", "together", "cerebras", "huggingface"] },
+    "model_id": { "type": "string", "minLength": 1 },
+    "display_name": { "type": "string" },
+    "release_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}$" },
+    "context_window": { "type": "integer", "minimum": 1024 },
+    "reasoning_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "coding_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "math_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "rag_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "dialogue_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "multilingual_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "long_context_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "tool_use_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "supports_tools": { "type": "boolean" },
+    "supports_multimodal": { "type": "boolean" },
+    "latency_profile": {
+      "type": "object",
+      "properties": {
+        "p50": { "type": "integer" },
+        "p95": { "type": "integer" }
+      }
+    },
+    "cost_profile": {
+      "type": "object",
+      "properties": {
+        "input_per_1k": { "type": "number" },
+        "output_per_1k": { "type": "number" }
+      }
+    },
+    "capability_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  }
+}
