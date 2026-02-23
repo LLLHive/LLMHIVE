@@ -10,12 +10,36 @@ import json
 import os
 import random
 import re
+import sys
+import threading
 import time
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from datasets import load_dataset
+
+from experiment_telemetry import ExperimentTracer
+
+# ── 2026 Intelligence Layer ──
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "llmhive" / "src"))
+try:
+    from llmhive.app.intelligence import (
+        print_elite_config as _print_elite_config_2026,
+        print_drift_status as _print_drift_status,
+        assert_startup_invariants as _assert_startup_invariants,
+        get_intelligence_telemetry as _get_intel_telemetry,
+        IntelligenceTraceEntry as _IntelTraceEntry,
+        get_routing_engine as _get_routing_engine,
+        record_benchmark_run as _record_benchmark_run,
+        print_performance_summary as _print_perf_summary,
+        is_benchmark_mode as _is_benchmark_mode_2026,
+        get_strategy_db as _get_strategy_db_2026,
+    )
+    _INTELLIGENCE_LAYER = True
+except ImportError as _ie:
+    _INTELLIGENCE_LAYER = False
 
 # Import world-class benchmark helpers (all 3 phases)
 from benchmark_helpers import (
@@ -129,6 +153,8 @@ def _is_truthy(value: Optional[str]) -> bool:
 
 
 STRICT_MODE = _is_truthy(os.getenv("CATEGORY_BENCH_STRICT"))
+BENCHMARK_MODE = _is_truthy(os.getenv("BENCHMARK_MODE", "true"))
+ORCHESTRATION_MODE = _get_env_str("ORCHESTRATION_MODE", "ensemble")
 TIER = _get_env_str("CATEGORY_BENCH_TIER", "elite")
 REASONING_MODE = _get_env_str("CATEGORY_BENCH_REASONING_MODE", "deep")
 TEMPERATURE = _get_env_float("CATEGORY_BENCH_TEMPERATURE", -1.0)
@@ -140,19 +166,210 @@ CHECKPOINT_PATH = _get_env_str(
     "benchmark_reports/category_benchmarks_checkpoint.json",
 )
 FORCE_RESUME = _is_truthy(os.getenv("CATEGORY_BENCH_FORCE_RESUME"))
-START_AT = _get_env_str("CATEGORY_BENCH_START_AT", "")
-SKIP_CATEGORIES_RAW = _get_env_str("CATEGORY_BENCH_SKIP_CATEGORIES", "")
+START_AT = _get_env_str("CATEGORY_BENCH_START_AT", "") or _get_env_str("START_AT", "")
+SKIP_CATEGORIES_RAW = _get_env_str("CATEGORY_BENCH_SKIP_CATEGORIES", "") or _get_env_str("SKIP_CATEGORIES", "")
 
 TOOLBENCH_EVAL_CMD = _get_env_str("TOOLBENCH_EVAL_CMD", "")
 MSMARCO_EVAL_CMD = _get_env_str("MSMARCO_EVAL_CMD", "")
 LONGBENCH_EVAL_CMD = _get_env_str("LONGBENCH_EVAL_CMD", "")
 MTBENCH_EVAL_CMD = _get_env_str("MTBENCH_EVAL_CMD", "")
 
+# ---------------------------------------------------------------------------
+# Auto-resolve external evaluator commands from sibling scripts when the
+# environment variable is not explicitly set.  This removes the requirement
+# for the user to manually wire up *_EVAL_CMD vars when the scripts live
+# alongside run_category_benchmarks.py.
+# ---------------------------------------------------------------------------
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+
+_IS_MAIN_PROCESS = (os.getpid() == int(os.environ.get("_LLMHIVE_MAIN_PID", str(os.getpid()))))
+if "_LLMHIVE_MAIN_PID" not in os.environ:
+    os.environ["_LLMHIVE_MAIN_PID"] = str(os.getpid())
+
+
+def _auto_eval_cmd(env_var: str, script_name: str) -> str:
+    """Return the env value if set AND valid, otherwise build a command from
+    the sibling script path.  The generated command uses ``{output_path}``
+    and ``{seed}`` placeholders expected by the evaluator functions.
+    If the env var is set but missing required placeholders, override it
+    with the auto-resolved command to prevent silent subprocess failures."""
+    current = globals().get(env_var, "")
+    if current and "{output_path}" in current:
+        return current
+    script_path = _SCRIPTS_DIR / script_name
+    if script_path.exists():
+        resolved = f"{sys.executable} {script_path} --output {{output_path}} --seed {{seed}}"
+        if current and _IS_MAIN_PROCESS:
+            print(f"  WARNING: {env_var} missing {{output_path}} placeholder — "
+                  f"auto-overriding with: {resolved}")
+        return resolved
+    return ""
+
+LONGBENCH_EVAL_CMD = _auto_eval_cmd("LONGBENCH_EVAL_CMD", "eval_longbench.py")
+TOOLBENCH_EVAL_CMD = _auto_eval_cmd("TOOLBENCH_EVAL_CMD", "eval_toolbench.py")
+MTBENCH_EVAL_CMD = _auto_eval_cmd("MTBENCH_EVAL_CMD", "eval_mtbench.py")
+
 # Module-level answer log path, set at runtime by main()
 _ANSWER_LOG_PATH: Optional[str] = None
 
-# Module-level answer log path (set in main())
-_ANSWER_LOG_PATH: Optional[str] = None
+# Experiment tracer, initialized in main()
+_TRACER: Optional[ExperimentTracer] = None
+
+# ---------------------------------------------------------------------------
+# ELITE MODEL DETERMINISM & TELEMETRY
+# ---------------------------------------------------------------------------
+
+ELITE_MODEL_BINDINGS: Dict[str, str] = {
+    "openai": os.getenv("ELITE_MODEL_OPENAI", "gpt-5.2-pro"),
+    "anthropic": os.getenv("ELITE_MODEL_ANTHROPIC", "claude-sonnet-4.6"),
+    "google": os.getenv("ELITE_MODEL_GOOGLE", "gemini-2.5-pro"),
+    "grok": os.getenv("ELITE_MODEL_GROK", "grok-3-mini"),
+    "openrouter": os.getenv("ELITE_MODEL_OPENROUTER", ""),
+    "deepseek": os.getenv("ELITE_MODEL_DEEPSEEK", "deepseek-reasoner"),
+}
+
+# ---------------------------------------------------------------------------
+# SINGLE-MODEL BASELINE MODE (ORCHESTRATION_MODE=single)
+# ---------------------------------------------------------------------------
+
+SINGLE_MODEL_MAP: Dict[str, str] = {
+    "reasoning":    os.getenv("SINGLE_MODEL_REASONING",    "GPT-5.2"),
+    "coding":       os.getenv("SINGLE_MODEL_CODING",       "GPT-5.2"),
+    "math":         os.getenv("SINGLE_MODEL_MATH",         "GPT-5.2"),
+    "multilingual": os.getenv("SINGLE_MODEL_MULTILINGUAL", "Claude Sonnet 4"),
+    "long_context": os.getenv("SINGLE_MODEL_LONG_CONTEXT", "Gemini 2.5 Pro"),
+    "rag":          os.getenv("SINGLE_MODEL_RAG",           "GPT-5.2"),
+    "dialogue":     os.getenv("SINGLE_MODEL_DIALOGUE",      "GPT-5.2"),
+    "tool_use":     os.getenv("SINGLE_MODEL_TOOL_USE",      "GPT-5.2"),
+}
+
+_SINGLE_MODE_ORCHESTRATION: Dict[str, Any] = {
+    "accuracy_level": 1,
+    "enable_deep_consensus": False,
+    "enable_adaptive_ensemble": False,
+    "enable_verification": False,
+}
+
+def _is_single_mode() -> bool:
+    return ORCHESTRATION_MODE.lower() == "single"
+
+
+def _single_model_for_category() -> str:
+    """Return the pinned model for the current category in single mode."""
+    return SINGLE_MODEL_MAP.get(_CURRENT_CATEGORY, "GPT-5.2")
+
+_MODEL_TRACE_PATH: Optional[str] = None
+_CURRENT_CATEGORY: str = ""
+
+_MODEL_TRACE_LOCK = threading.Lock()
+
+def _init_model_trace() -> str:
+    """Initialize model trace JSONL file and return its path."""
+    report_dir = Path("benchmark_reports")
+    report_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return str(report_dir / f"model_trace_{ts}.jsonl")
+
+
+def _write_model_trace(entry: Dict[str, Any]) -> None:
+    """Append a model trace entry to the JSONL log. Fire-and-forget."""
+    if not BENCHMARK_MODE or not _MODEL_TRACE_PATH:
+        return
+    try:
+        line = json.dumps(entry, default=str) + "\n"
+        with _MODEL_TRACE_LOCK:
+            with open(_MODEL_TRACE_PATH, "a") as f:
+                f.write(line)
+    except Exception:
+        pass
+
+
+def _check_elite_model_drift(models_used: list, category: str) -> None:
+    """Log a warning if returned models don't match configured elite bindings.
+    Diagnostic only — never aborts execution."""
+    if not BENCHMARK_MODE or not models_used:
+        return
+    known_elite = set(v for v in ELITE_MODEL_BINDINGS.values() if v)
+    for model in models_used:
+        normalised = model.lower().strip()
+        if any(elite.lower() in normalised or normalised in elite.lower()
+               for elite in known_elite):
+            return
+    print(f"  DRIFT: {category} — models_used={models_used}, "
+          f"configured={known_elite}", flush=True)
+
+
+def _log_verify_trace(question_id: str, best_candidate: Optional[Dict[str, Any]],
+                      latency_ms: int) -> None:
+    """Write a verify-pipeline-specific trace entry for GSM8K."""
+    if not BENCHMARK_MODE or not best_candidate or not _MODEL_TRACE_PATH:
+        return
+    _write_model_trace({
+        "call_type": "verify",
+        "category": "math",
+        "question_id": question_id,
+        "verify_model": best_candidate.get("model", ""),
+        "verify_provider": best_candidate.get("provider", ""),
+        "verification_score": best_candidate.get("verification_score", 0),
+        "candidates_count": len(best_candidate.get("candidates", [])),
+        "verify_latency_ms": best_candidate.get("verify_latency_ms", latency_ms),
+        "timestamp": datetime.now().isoformat(),
+    })
+
+
+def assert_elite_model_locked() -> None:
+    """Print elite tier configuration before benchmark execution.
+    Diagnostic only — never aborts."""
+    if not BENCHMARK_MODE:
+        return
+    print("  Elite Tier Config:")
+    print(f"    tier:              {TIER}")
+    print(f"    reasoning_mode:    {REASONING_MODE}")
+    print(f"    orchestration:     {ORCHESTRATION_MODE}")
+    print(f"    temperature:       {TEMPERATURE if TEMPERATURE >= 0 else '(default)'}")
+    print(f"    top_p:             {TOP_P if TOP_P >= 0 else '(default)'}")
+    print(f"    seed:              {FIXED_SEED if FIXED_SEED >= 0 else '(none)'}")
+    if _is_single_mode():
+        print("    SINGLE-MODEL PINNING:")
+        for cat, model in sorted(SINGLE_MODEL_MAP.items()):
+            print(f"      {cat:15s} → {model}")
+    else:
+        configured = {k: v for k, v in ELITE_MODEL_BINDINGS.items() if v}
+        if configured:
+            print("    model bindings:")
+            for provider, model_id in sorted(configured.items()):
+                print(f"      {provider:12s} → {model_id}")
+        else:
+            print("    model bindings:    (none configured)")
+
+# ---------------------------------------------------------------------------
+# HUMANEVAL FORENSIC LOGGING
+# ---------------------------------------------------------------------------
+
+_HE_RAW_PATH: Optional[str] = None
+_HE_PROCESSED_PATH: Optional[str] = None
+_HE_EXEC_PATH: Optional[str] = None
+
+
+def _init_humaneval_forensics() -> None:
+    global _HE_RAW_PATH, _HE_PROCESSED_PATH, _HE_EXEC_PATH
+    report_dir = Path("benchmark_reports")
+    report_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    _HE_RAW_PATH = str(report_dir / f"humaneval_raw_{ts}.jsonl")
+    _HE_PROCESSED_PATH = str(report_dir / f"humaneval_processed_{ts}.jsonl")
+    _HE_EXEC_PATH = str(report_dir / f"humaneval_execution_trace_{ts}.jsonl")
+
+
+def _he_log(path: Optional[str], entry: Dict[str, Any]) -> None:
+    if not path:
+        return
+    try:
+        with open(path, "a") as f:
+            f.write(json.dumps(entry, default=str) + "\n")
+    except Exception:
+        pass
+
 
 FRONTIER_JSON = _get_env_str("CATEGORY_BENCH_FRONTIER_JSON", "")
 
@@ -178,8 +395,13 @@ _INFRA_GARBAGE_MARKERS = (
 )
 
 
-def response_is_valid(text: Optional[str], min_length: int = 10) -> bool:
-    """Return True if *text* looks like a genuine model response."""
+def response_is_valid(text: Optional[str], min_length: int = 2) -> bool:
+    """Return True if *text* looks like a genuine model response.
+
+    min_length=2 allows short but valid answers (e.g. 'C', 'NO.', 'YES.')
+    while still catching empty/null responses.  Infra garbage is caught
+    separately by _INFRA_GARBAGE_MARKERS.
+    """
     if text is None:
         return False
     stripped = text.strip()
@@ -232,22 +454,38 @@ async def call_llmhive_api(
     reasoning_mode: str = REASONING_MODE,
     tier: str = TIER,
     timeout: int = 180,
-    orchestration_config: Optional[Dict[str, Any]] = None
+    orchestration_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Call LLMHive API with exponential backoff retry (max 5 attempts)."""
+    """Call LLMHive API with exponential backoff retry (max 5 attempts).
+
+    When *BENCHMARK_MODE* is active, every successful call emits a structured
+    model-trace entry and checks for elite-model drift.
+    """
+    category = _CURRENT_CATEGORY
+    single = _is_single_mode()
     async with httpx.AsyncClient(timeout=timeout) as client:
         for attempt in range(_MAX_API_RETRIES):
             try:
                 start_time = time.time()
-                payload = {
-                    "prompt": prompt,
-                    "reasoning_mode": reasoning_mode,
-                    "orchestration": orchestration_config or {
-                        "accuracy_level": 5,
-                        "use_deep_consensus": True,
-                        "enable_verification": True,
-                    },
-                }
+
+                if single:
+                    orch = dict(_SINGLE_MODE_ORCHESTRATION)
+                    payload: Dict[str, Any] = {
+                        "prompt": prompt,
+                        "reasoning_mode": reasoning_mode,
+                        "model": _single_model_for_category(),
+                        "orchestration": orch,
+                    }
+                else:
+                    payload = {
+                        "prompt": prompt,
+                        "reasoning_mode": reasoning_mode,
+                        "orchestration": orchestration_config or {
+                            "accuracy_level": 5,
+                            "use_deep_consensus": True,
+                            "enable_verification": True,
+                        },
+                    }
                 if tier:
                     payload["tier"] = tier
                 if TEMPERATURE >= 0:
@@ -276,11 +514,88 @@ async def call_llmhive_api(
                             print(f"⚠️ Invalid response (attempt {attempt+1}/{_MAX_API_RETRIES}), retrying in {wait}s...", flush=True)
                             await asyncio.sleep(wait)
                             continue
+                    extra = data.get("extra", {})
+                    cost_tracking = extra.get("cost_tracking", {})
+                    usage = extra.get("usage", {})
+                    models_used = data.get("models_used", [])
+                    _fo_info = extra.get("failover", {})
+
+                    fallback_used = attempt > 0
+
+                    _trace = {
+                        "category": category,
+                        "orchestration_mode": ORCHESTRATION_MODE,
+                        "pinned_model": _single_model_for_category() if single else None,
+                        "provider": models_used[0].split("/")[0] if models_used and "/" in str(models_used[0]) else "",
+                        "model_name": models_used,
+                        "number_of_models_used": len(models_used),
+                        "tier": tier,
+                        "reasoning_mode": reasoning_mode,
+                        "temperature": TEMPERATURE if TEMPERATURE >= 0 else None,
+                        "top_p": TOP_P if TOP_P >= 0 else None,
+                        "seed": FIXED_SEED if FIXED_SEED >= 0 else None,
+                        "fallback_used": fallback_used,
+                        "retry_count": attempt,
+                        "timestamp": datetime.now().isoformat(),
+                        "latency_ms": latency,
+                        "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                        "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                    }
+                    if _fo_info:
+                        _trace["failover_attempted"] = _fo_info.get("failover_attempted", False)
+                        _trace["failover_provider"] = _fo_info.get("failover_provider")
+                        _trace["failure_type"] = _fo_info.get("failure_type")
+                        _trace["provider_sla_breached"] = _fo_info.get("provider_sla_breached", False)
+                    _write_model_trace(_trace)
+
+                    if BENCHMARK_MODE:
+                        _check_elite_model_drift(models_used, category)
+                        if fallback_used:
+                            print(f"  WARNING: Benchmark call required {attempt} retries "
+                                  f"(category={category})")
+                    if single and len(models_used) > 1:
+                        print(f"  SINGLE-MODE VIOLATION: {category} returned "
+                              f"{len(models_used)} models: {models_used}", flush=True)
+
+                    # ── 2026 Intelligence Telemetry ──
+                    if _INTELLIGENCE_LAYER and BENCHMARK_MODE:
+                        try:
+                            _primary = models_used[0] if models_used else (_single_model_for_category() if single else "")
+                            _provider_name = _primary.split("/")[0] if "/" in str(_primary) else ""
+                            _get_intel_telemetry().record(_IntelTraceEntry(
+                                timestamp=datetime.now().isoformat(),
+                                category=category,
+                                provider=_provider_name,
+                                model_id=str(_primary),
+                                display_name=str(_primary),
+                                orchestration_mode=ORCHESTRATION_MODE,
+                                consensus_enabled=not single,
+                                reasoning_mode=reasoning_mode,
+                                temperature=TEMPERATURE if TEMPERATURE >= 0 else None,
+                                top_p=TOP_P if TOP_P >= 0 else None,
+                                seed=FIXED_SEED if FIXED_SEED >= 0 else None,
+                                fallback_used=fallback_used,
+                                retry_count=attempt,
+                                latency_ms=latency,
+                                input_tokens=usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                                output_tokens=usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                                failover_attempted=_fo_info.get("failover_attempted", False),
+                                failover_provider=_fo_info.get("failover_provider"),
+                                failure_type=_fo_info.get("failure_type"),
+                                provider_sla_breached=_fo_info.get("provider_sla_breached", False),
+                            ))
+                        except Exception:
+                            pass
+
                     return {
                         "success": True,
                         "response": resp_text,
                         "latency": latency,
-                        "cost": data.get("extra", {}).get("cost_tracking", {}).get("total_cost", 0),
+                        "cost": cost_tracking.get("total_cost", 0),
+                        "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                        "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                        "retries": attempt,
+                        "models_used": models_used,
                     }
                 elif response.status_code in _RETRYABLE_STATUS_CODES:
                     wait = 2 ** attempt
@@ -587,6 +902,105 @@ def _completion_from_response(problem: Dict[str, Any], response: str) -> str:
     return body_text
 
 
+def _sanitize_completion(completion: str, entry_point: str) -> str:
+    """Post-generation deterministic sanitizer for HumanEval completions.
+
+    1. Strip trailing whitespace from every line.
+    2. Remove markdown fences if still present (without destroying indentation).
+    3. Remove duplicate function definitions (keep first body).
+    4. Ensure exactly one function body is returned.
+    """
+    if not completion:
+        return completion
+
+    fence_match = re.search(r"```(?:python)?\n(.*?)```", completion, re.DOTALL | re.IGNORECASE)
+    if fence_match:
+        completion = fence_match.group(1).rstrip()
+
+    lines = [line.rstrip() for line in completion.splitlines()]
+
+    # Remove markdown headers and non-code lines that models sometimes emit
+    lines = [l for l in lines if not re.match(r"^\s*##\s+", l)]
+
+    # Remove trailing sentence-ending periods from code lines
+    # (e.g., "return False." → "return False")
+    cleaned_lines: List[str] = []
+    for l in lines:
+        s = l.rstrip()
+        if s.endswith(".") and not s.endswith("..") and not re.search(r"\d\.$", s):
+            s = s[:-1]
+        cleaned_lines.append(s)
+    lines = cleaned_lines
+
+    if entry_point:
+        def_pattern = re.compile(
+            rf"^\s*def\s+{re.escape(entry_point)}\s*\(", re.IGNORECASE
+        )
+        first_def_idx = None
+        dup_indices: List[int] = []
+        for idx, line in enumerate(lines):
+            if def_pattern.match(line):
+                if first_def_idx is None:
+                    first_def_idx = idx
+                else:
+                    dup_indices.append(idx)
+
+        if dup_indices:
+            for dup_idx in reversed(dup_indices):
+                end = dup_idx + 1
+                while end < len(lines) and (not lines[end].strip() or lines[end].startswith((" ", "\t"))):
+                    end += 1
+                del lines[dup_idx:end]
+
+    # Re-normalize indentation: every non-blank line must have >= 4 spaces
+    # to sit inside the prompt's def block.
+    result_lines: List[str] = []
+    for line in lines:
+        if not line.strip():
+            result_lines.append("")
+        else:
+            stripped = line.lstrip()
+            current_indent = len(line) - len(stripped)
+            if current_indent < 4:
+                result_lines.append("    " + stripped)
+            else:
+                result_lines.append(line)
+
+    return "\n".join(result_lines).rstrip() + "\n"
+
+
+def _validate_function_signature(completion: str, entry_point: str, prompt: str) -> str:
+    """Static validation pass: if the body contains a misnamed function,
+    rename it to the expected entry_point.  Does NOT modify logic."""
+    if not entry_point or not completion:
+        return completion
+
+    wrong_def = re.search(r"^\s*def\s+(\w+)\s*\(", completion, re.MULTILINE)
+    if wrong_def and wrong_def.group(1) != entry_point:
+        wrong_name = wrong_def.group(1)
+        completion = re.sub(
+            rf"\b{re.escape(wrong_name)}\b",
+            entry_point,
+            completion,
+        )
+    return completion
+
+
+def _classify_failure(check_result: Optional[dict], completion: Optional[str]) -> str:
+    """Classify HumanEval failure as extraction / runtime / logic."""
+    if completion is None or not completion.strip() or completion.strip() == "pass":
+        return "extraction"
+    if check_result is None:
+        return "runtime"
+    result_str = str(check_result.get("result", "")).lower()
+    if any(k in result_str for k in ("syntaxerror", "nameerror", "typeerror",
+                                      "indentationerror", "timeout",
+                                      "unexpected indent", "unindent",
+                                      "invalid syntax", "'return' outside function")):
+        return "runtime"
+    return "logic"
+
+
 def _extract_gsm8k_answer(answer_text: str) -> Optional[float]:
     match = re.search(r"####\s*(-?[\d,]+\.?\d*)", answer_text)
     if match:
@@ -606,41 +1020,50 @@ def _extract_gsm8k_answer(answer_text: str) -> Optional[float]:
     return None
 
 
+def _strip_diacritics(text: str) -> str:
+    """Remove combining diacritical marks (accents) from text."""
+    nfkd = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
+
+
 def _extract_multiple_choice(text: str) -> Optional[str]:
     """Extract answer letter with ROBUST format handling.
-    
-    D1: Fixed extraction — use last-line strategy first (not last-letter-in-full-text).
-    The old approach took the last [A-D] from the ENTIRE reasoning, which picked up
-    whatever option was discussed last rather than the chosen answer.
+
+    Applies: NFKC normalization, diacritics removal, standalone A/B/C/D
+    detection with multilingual keyword matching.
     """
-    text_upper = text.strip().upper()
-    
-    # Strategy 1 (D1): Check last non-empty line for a standalone letter
+    if not text:
+        return None
+
+    normalized = unicodedata.normalize("NFKC", text).strip()
+    cleaned = _strip_diacritics(normalized)
+    text_upper = cleaned.upper()
+
+    # Strategy 1: Check last non-empty line for a standalone letter
     lines = [l.strip() for l in text_upper.split('\n') if l.strip()]
     if lines:
         last_line = lines[-1]
-        # Last line is just a letter (possibly with punctuation)
-        last_line_match = re.match(r'^[^A-Z]*([ABCD])[^A-Z]*$', last_line)
-        if last_line_match:
-            return last_line_match.group(1)
-    
-    # Strategy 2: "answer is X" or "answer: X" patterns
+        m = re.match(r'^[^A-Z]*([ABCD])[^A-Z]*$', last_line)
+        if m:
+            return m.group(1)
+
+    # Strategy 2: "answer is X" / multilingual answer patterns
     answer_phrase = re.search(
-        r'(?:answer|correct|choice)\s*(?:is|:)\s*\(?([ABCD])\)?',
-        text_upper
+        r'(?:answer|correct|choice|respuesta|r[ée]ponse|antwort|risposta|答案|정답|回答|jawaban)\s*(?:is|es|est|ist|e|:|는|은)\s*\(?([ABCD])\)?',
+        text_upper,
     )
     if answer_phrase:
         return answer_phrase.group(1)
-    
-    # Strategy 3: Last standalone letter [A-D] (fallback)
-    last_letters = re.findall(r'\b([ABCD])\b', text_upper)
-    if last_letters:
-        return last_letters[-1]
-    
+
+    # Strategy 3: Standalone letter token (word boundary)
+    standalone = re.findall(r'(?<![A-Z])([ABCD])(?![A-Z])', text_upper)
+    if standalone:
+        return standalone[-1]
+
     # Strategy 4: Beginning of response
-    if text_upper and text_upper[0] in ['A', 'B', 'C', 'D']:
+    if text_upper and text_upper[0] in "ABCD":
         return text_upper[0]
-    
+
     return None
 
 
@@ -690,18 +1113,19 @@ def _normalize_skip_list() -> List[str]:
     if not SKIP_CATEGORIES_RAW:
         return []
     tokens = [t.strip().lower() for t in SKIP_CATEGORIES_RAW.split(",") if t.strip()]
-    mapping = {
-        "mmlu": "reasoning",
-        "gsm8k": "math",
-        "humaneval": "coding",
-        "mmmlu": "multilingual",
-        "longbench": "long_context",
-        "toolbench": "tool_use",
-        "msmarco": "rag",
-        "mtbench": "dialogue",
-    }
-    return [mapping.get(token, token) for token in tokens]
+    return [_ALIAS_TO_KEY.get(token, token) for token in tokens]
 
+
+_ALIAS_TO_KEY = {
+    "mmlu": "reasoning",
+    "gsm8k": "math",
+    "humaneval": "coding",
+    "mmmlu": "multilingual",
+    "longbench": "long_context",
+    "toolbench": "tool_use",
+    "msmarco": "rag",
+    "mtbench": "dialogue",
+}
 
 def _categories_to_run() -> List[str]:
     order = [
@@ -714,23 +1138,14 @@ def _categories_to_run() -> List[str]:
         "rag",
         "dialogue",
     ]
-    skip = set(_normalize_skip_list())
+    # 1. Apply START_AT slicing first
     start_at = START_AT.strip().lower()
     if start_at:
-        mapping = {
-            "mmlu": "reasoning",
-            "gsm8k": "math",
-            "humaneval": "coding",
-            "mmmlu": "multilingual",
-            "longbench": "long_context",
-            "toolbench": "tool_use",
-            "msmarco": "rag",
-            "mtbench": "dialogue",
-        }
-        start_key = mapping.get(start_at, start_at)
+        start_key = _ALIAS_TO_KEY.get(start_at, start_at)
         if start_key in order:
-            start_index = order.index(start_key)
-            skip.update(order[:start_index])
+            order = order[order.index(start_key):]
+    # 2. Apply SKIP_CATEGORIES filtering
+    skip = set(_normalize_skip_list())
     return [key for key in order if key not in skip]
 
 
@@ -744,8 +1159,10 @@ def _load_frontier_scores() -> Dict[str, Any]:
 
 
 def _preflight_checks() -> None:
-    # E2: API health check before benchmark (runs in ALL modes)
+    """Full-suite preflight: abort early on missing evaluators or config."""
     import httpx as _httpx_check
+
+    # E2: API health check (runs in ALL modes)
     try:
         r = _httpx_check.get(f"{LLMHIVE_API_URL}/health", timeout=15)
         if r.status_code == 200:
@@ -754,23 +1171,28 @@ def _preflight_checks() -> None:
             print(f"⚠️ API health check returned {r.status_code} — benchmark may fail")
     except Exception as _hc_err:
         print(f"⚠️ API health check failed: {_hc_err} — benchmark may fail")
-    
-    if not STRICT_MODE:
-        return
-    missing = []
-    if TEMPERATURE != 0.0 or TOP_P != 1.0:
-        missing.append(
-            "deterministic decoding required: set CATEGORY_BENCH_TEMPERATURE=0 "
-            "and CATEGORY_BENCH_TOP_P=1.0"
-        )
-    if not TOOLBENCH_EVAL_CMD:
-        missing.append("TOOLBENCH_EVAL_CMD is required")
-    if not MSMARCO_EVAL_CMD:
-        missing.append("MSMARCO_EVAL_CMD is required")
-    if not LONGBENCH_EVAL_CMD:
-        missing.append("LONGBENCH_EVAL_CMD is required")
-    if not MTBENCH_EVAL_CMD:
-        missing.append("MTBENCH_EVAL_CMD is required")
+
+    # Phase 6: Verify all evaluator scripts/commands resolve BEFORE starting.
+    # This prevents wasted API cost when an evaluator is misconfigured.
+    _will_run = set(_categories_to_run())
+    missing: List[str] = []
+
+    _eval_script_checks = {
+        "long_context": ("LONGBENCH_EVAL_CMD", LONGBENCH_EVAL_CMD, "eval_longbench.py"),
+        "tool_use": ("TOOLBENCH_EVAL_CMD", TOOLBENCH_EVAL_CMD, "eval_toolbench.py"),
+        "dialogue": ("MTBENCH_EVAL_CMD", MTBENCH_EVAL_CMD, "eval_mtbench.py"),
+    }
+    for cat_key, (env_name, cmd_value, script_name) in _eval_script_checks.items():
+        if cat_key not in _will_run:
+            continue
+        if not cmd_value:
+            missing.append(
+                f"{env_name} not set and scripts/{script_name} not found. "
+                f"Set {env_name} or add the script to scripts/."
+            )
+        elif "{output_path}" not in cmd_value:
+            missing.append(f"{env_name} must include {{output_path}} placeholder")
+
     if MSMARCO_EVAL_CMD and (
         "{reference_path}" not in MSMARCO_EVAL_CMD
         or "{candidate_path}" not in MSMARCO_EVAL_CMD
@@ -778,13 +1200,21 @@ def _preflight_checks() -> None:
         missing.append(
             "MSMARCO_EVAL_CMD must include {reference_path} and {candidate_path}"
         )
-    if LONGBENCH_EVAL_CMD and "{output_path}" not in LONGBENCH_EVAL_CMD:
-        missing.append("LONGBENCH_EVAL_CMD must include {output_path}")
-    if MTBENCH_EVAL_CMD and "{output_path}" not in MTBENCH_EVAL_CMD:
-        missing.append("MTBENCH_EVAL_CMD must include {output_path}")
+
+    # Strict-mode additional checks
+    if STRICT_MODE:
+        if TEMPERATURE != 0.0 or TOP_P != 1.0:
+            missing.append(
+                "deterministic decoding required: set CATEGORY_BENCH_TEMPERATURE=0 "
+                "and CATEGORY_BENCH_TOP_P=1.0"
+            )
+
     if missing:
+        print("\n🚨 PREFLIGHT FAILURES — aborting before any API call:")
+        for m in missing:
+            print(f"  - {m}")
         raise RuntimeError(
-            "Strict mode preflight failed:\n- " + "\n- ".join(missing)
+            "Preflight failed (no API calls made):\n- " + "\n- ".join(missing)
         )
 
 # ============================================================================
@@ -828,6 +1258,7 @@ async def evaluate_reasoning(
         error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
         wrong_answers: List[Dict] = list(progress.get("wrong_answers", [])) if progress else []
         domain_stats: Dict[str, Dict] = dict(progress.get("domain_stats", {})) if progress else {}
+        subject_stats: Dict[str, Dict[str, int]] = {}
 
         for i, item in enumerate(samples, start=1):
             if i <= start_index:
@@ -897,9 +1328,10 @@ D) {choices[3]}"""
             # Self-consistency vote
             predicted, confidence = self_consistency_vote(reasoning_paths)
             
-            # EXP-A1: Confidence-gated fallback — if CoT consensus is weak,
-            # re-query with a single deliberate reasoning prompt
-            if confidence < 0.50 and predicted:
+            # Confidence-gated fallback — if CoT consensus is weak,
+            # re-query with reasoning_mode="deep" and replace only if
+            # the new answer has higher confidence.
+            if confidence < 0.55 and predicted:
                 fallback_prompt = (
                     "You are an expert test-taker. Answer this multiple-choice question.\n"
                     "Think through each option carefully before answering.\n\n"
@@ -909,16 +1341,17 @@ D) {choices[3]}"""
                 )
                 fallback_result = await call_llmhive_api(
                     fallback_prompt,
-                    reasoning_mode=REASONING_MODE,
+                    reasoning_mode="deep",
                     tier=tier,
                     orchestration_config={"accuracy_level": 5}
                 )
                 if fallback_result.get("success"):
                     fb_text = fallback_result.get("response", "")
                     fb_answer = _extract_multiple_choice(fb_text)
-                    if fb_answer and fb_answer in "ABCD":
+                    fb_confidence = fallback_result.get("confidence", 0.55)
+                    if fb_answer and fb_answer in "ABCD" and fb_confidence > confidence:
                         predicted = fb_answer
-                        confidence = 0.55  # Assign moderate confidence to fallback
+                        confidence = max(fb_confidence, 0.55)
 
             # Neighbor-consistency check (if high confidence)
             if confidence >= 0.6 and predicted:
@@ -946,14 +1379,25 @@ D) {choices[3]}"""
                     correct += 1
                 total_latency += path_latency
                 total_cost += path_cost
+                if subject not in subject_stats:
+                    subject_stats[subject] = {"correct": 0, "total": 0}
+                subject_stats[subject]["total"] += 1
+                if is_correct:
+                    subject_stats[subject]["correct"] += 1
                 status_icon = "✅" if is_correct else "❌"
                 print(f"  [{i}/{sample_size}] MMLU: {status_icon} pred={predicted} correct={correct_answer} conf={confidence:.0%} paths={len(reasoning_paths)} subj={subject} ({correct}/{i-errors} correct so far)", flush=True)
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
-                        "category": "MMLU", "index": i, "subject": subject,
+                        "category": "MMLU", "question_id": f"mmlu_{i}",
+                        "index": i, "subject": subject,
                         "question": question[:200], "predicted": predicted,
+                        "extracted_answer": predicted,
                         "correct_answer": correct_answer, "is_correct": is_correct,
                         "confidence": confidence, "num_paths": len(reasoning_paths),
+                        "latency_ms": path_latency,
+                        "cost_usd": path_cost,
+                        "retry_count": 0, "infra_failure": False,
+                        "failure_type": None if is_correct else "MODEL_INCORRECT",
                     })
             else:
                 errors += 1
@@ -962,10 +1406,14 @@ D) {choices[3]}"""
                 print(f"  [{i}/{sample_size}] MMLU: ⚠️ NO ANSWER from {len(reasoning_paths)} paths subj={subject} ({errors} errors)", flush=True)
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
-                        "category": "MMLU", "index": i, "subject": subject,
+                        "category": "MMLU", "question_id": f"mmlu_{i}",
+                        "index": i, "subject": subject,
                         "question": question[:200], "predicted": None,
+                        "extracted_answer": None,
                         "correct_answer": correct_answer, "is_correct": False,
                         "error": "no_answer", "num_paths": len(reasoning_paths),
+                        "failure_type": "extraction",
+                        "infra_failure": False,
                     })
 
             if on_progress:
@@ -983,7 +1431,18 @@ D) {choices[3]}"""
         
         total_attempted = sample_size - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-        
+
+        if subject_stats:
+            worst_subjects = sorted(
+                ((s, d["correct"] / d["total"] * 100 if d["total"] else 0, d["total"])
+                 for s, d in subject_stats.items() if d["total"] >= 2),
+                key=lambda x: x[1],
+            )[:10]
+            if worst_subjects:
+                print(f"\n  MMLU — Worst-performing subjects:", flush=True)
+                for subj, acc, cnt in worst_subjects:
+                    print(f"    {subj}: {acc:.0f}% ({cnt} samples)", flush=True)
+
         return {
             "category": "General Reasoning (MMLU)",
             "dataset": "lighteval/mmlu",
@@ -995,15 +1454,19 @@ D) {choices[3]}"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
-            "extra": {"error_samples": error_samples},
+            "extra": {"error_samples": error_samples, "subject_stats": subject_stats},
         }
     except Exception as e:
-        print(f"❌ Reasoning evaluation failed: {e}")
-        return {"category": "General Reasoning (MMLU)", "error": str(e)}
+        raise RuntimeError(
+            f"Reasoning (MMLU) evaluator FAILED (not skipping): {e}"
+        ) from e
 
 # ============================================================================
 # CATEGORY 2: CODING (HumanEval)
 # ============================================================================
+
+_HUMANEVAL_DEBUG = _is_truthy(os.getenv("HUMANEVAL_DEBUG"))
+
 
 async def evaluate_coding(
     tier: str = TIER,
@@ -1014,6 +1477,7 @@ async def evaluate_coding(
     print(f"\n{'='*70}")
     print(f"CATEGORY 2: CODING (HumanEval)")
     print(f"{'='*70}\n")
+    failed_ids: List[str] = []
     
     try:
         from human_eval.data import read_problems
@@ -1034,10 +1498,16 @@ async def evaluate_coding(
         start_index = int(progress.get("index", 0)) if progress else 0
         error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
 
+        _init_humaneval_forensics()
+        print(f"  Forensic logs: {_HE_RAW_PATH}")
+
         for i, task_id in enumerate(sample_ids, start=1):
             if i <= start_index:
+                print(f"  [DBG] Skipping {task_id} (i={i} <= start_index={start_index})", flush=True)
                 continue
             problem = problems[task_id]
+            entry_point = problem.get("entry_point", "")
+            print(f"  [DBG] Processing {task_id} (i={i}, entry_point={entry_point})", flush=True)
             
             # SOTA 2026: Multi-Pass with Execution Feedback (RLEF + ICE-Coder approach)
             max_refinement_attempts = 3
@@ -1117,8 +1587,29 @@ RULES:
                     attempt_latency += impl_result.get("latency", 0)
                     attempt_cost += impl_result.get("cost", 0)
                     
+                    print(f"  [DBG] {task_id} attempt={attempt} plan_ok={plan_result.get('success')} impl_ok={impl_result.get('success')}", flush=True)
                     if impl_result.get("success"):
-                        completion = _completion_from_response(problem, impl_result.get("response", ""))
+                        raw_resp = impl_result.get("response", "")
+                        _he_log(_HE_RAW_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "raw_response": raw_resp[:4000],
+                            "model": impl_result.get("models_used", []),
+                            "timestamp": datetime.now().isoformat(),
+                        })
+                        completion = _completion_from_response(problem, raw_resp)
+                        completion = _sanitize_completion(completion, entry_point)
+                        completion = _validate_function_signature(completion, entry_point, problem.get("prompt", ""))
+                        _he_log(_HE_PROCESSED_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "sanitized_code": (completion or "")[:2000],
+                            "entry_point_expected": entry_point,
+                            "has_def_line": bool(completion and re.search(r"^\s*def\s+", completion, re.MULTILINE)),
+                            "body_line_count": len([l for l in (completion or "").splitlines() if l.strip()]),
+                            "is_stub": completion is None or completion.strip() in ("pass", "pass\n", "    pass\n"),
+                            "timestamp": datetime.now().isoformat(),
+                        })
                     else:
                         errors += 1
                         break
@@ -1151,14 +1642,16 @@ ANALYSIS:
 
 Output CORRECTED function (code only):"""
                     
+                    _refine_accuracy = 5 if attempt < max_refinement_attempts else 6
                     refine_result = await call_llmhive_api(
                         refine_prompt,
                         reasoning_mode=REASONING_MODE,
                         tier=tier,
                         timeout=120,
                         orchestration_config={
-                            "accuracy_level": 5,
+                            "accuracy_level": _refine_accuracy,
                             "enable_verification": True,
+                            "use_deep_consensus": attempt == max_refinement_attempts,
                         }
                     )
                     
@@ -1166,7 +1659,27 @@ Output CORRECTED function (code only):"""
                     attempt_cost += refine_result.get("cost", 0)
                     
                     if refine_result.get("success"):
-                        completion = _completion_from_response(problem, refine_result.get("response", ""))
+                        raw_resp = refine_result.get("response", "")
+                        _he_log(_HE_RAW_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "raw_response": raw_resp[:4000],
+                            "model": refine_result.get("models_used", []),
+                            "timestamp": datetime.now().isoformat(),
+                        })
+                        completion = _completion_from_response(problem, raw_resp)
+                        completion = _sanitize_completion(completion, entry_point)
+                        completion = _validate_function_signature(completion, entry_point, problem.get("prompt", ""))
+                        _he_log(_HE_PROCESSED_PATH, {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "sanitized_code": (completion or "")[:2000],
+                            "entry_point_expected": entry_point,
+                            "has_def_line": bool(completion and re.search(r"^\s*def\s+", completion, re.MULTILINE)),
+                            "body_line_count": len([l for l in (completion or "").splitlines() if l.strip()]),
+                            "is_stub": completion is None or completion.strip() in ("pass", "pass\n", "    pass\n"),
+                            "timestamp": datetime.now().isoformat(),
+                        })
                     else:
                         break
                 
@@ -1178,17 +1691,42 @@ Output CORRECTED function (code only):"""
                         completion = None  # Force refinement attempt
                         continue
                 
+                print(f"  [DBG] {task_id} attempt={attempt} completion={'YES' if completion else 'NONE'} len={len(completion) if completion else 0}", flush=True)
                 if completion:
                     try:
                         check_result = check_correctness(
                             problem,
                             completion,
-                            timeout=10.0,  # D3: Increased from 5s for complex algorithms
+                            timeout=10.0,
                             completion_id=f"{i}_attempt{attempt}"
                         )
                         
                         is_correct = check_result.get("passed", False) if isinstance(check_result, dict) else False
-                        
+                        print(f"  [DBG] {task_id} attempt={attempt} check_result passed={is_correct}", flush=True)
+
+                        result_str = str(check_result.get("result", "")) if isinstance(check_result, dict) else ""
+                        exec_entry: Dict[str, Any] = {
+                            "problem_id": task_id,
+                            "attempt": attempt,
+                            "passed": is_correct,
+                            "result_detail": result_str[:2000],
+                            "completion_preview": (completion or "")[:1000],
+                            "prompt_preview": problem.get("prompt", "")[:300],
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                        if not is_correct and result_str:
+                            for tag in ("SyntaxError", "NameError", "TypeError",
+                                        "IndentationError", "AttributeError",
+                                        "ValueError", "IndexError", "KeyError",
+                                        "ZeroDivisionError", "RecursionError",
+                                        "timed out", "AssertionError", "Exception"):
+                                if tag.lower() in result_str.lower():
+                                    exec_entry["exception_type"] = tag
+                                    break
+                            else:
+                                exec_entry["exception_type"] = "assertion_fail" if "assert" in result_str.lower() else "unknown"
+                        _he_log(_HE_EXEC_PATH, exec_entry)
+
                         if is_correct:
                             correct += 1
                             total_latency += attempt_latency
@@ -1196,8 +1734,14 @@ Output CORRECTED function (code only):"""
                             print(f"  [{i}/{len(sample_ids)}] HumanEval: ✅ {task_id} passed on attempt {attempt}/{max_refinement_attempts} ({correct}/{i-errors} correct so far)", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
-                                    "category": "HumanEval", "index": i, "task_id": task_id,
-                                    "is_correct": True, "attempt": attempt,
+                                    "category": "HumanEval", "question_id": task_id,
+                                    "index": i, "task_id": task_id,
+                                    "is_correct": True, "passed": True, "attempt": attempt,
+                                    "latency_ms": attempt_latency,
+                                    "cost_usd": attempt_cost,
+                                    "raw_response": (completion or "")[:500],
+                                    "failure_type": None,
+                                    "retry_count": attempt - 1,
                                 })
                             break  # Success! Stop attempting
                         
@@ -1209,36 +1753,50 @@ Output CORRECTED function (code only):"""
                             error_detail = ""
                             if isinstance(check_result, dict):
                                 error_detail = str(check_result.get("result", ""))[:500]
-                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ❌ {task_id} failed after {max_refinement_attempts} attempts ({correct}/{i-errors} correct so far)", flush=True)
+                            failure_type = _classify_failure(check_result, completion)
+                            failed_ids.append(task_id)
+                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ❌ {task_id} failed [{failure_type}] after {max_refinement_attempts} attempts ({correct}/{i-errors} correct so far)", flush=True)
+                            if _HUMANEVAL_DEBUG:
+                                print(f"    DEBUG {task_id}: [{failure_type}] {error_detail[:200]}", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
-                                    "category": "HumanEval", "index": i, "task_id": task_id,
-                                    "is_correct": False, "attempt": max_refinement_attempts,
+                                    "category": "HumanEval", "question_id": task_id,
+                                    "index": i, "task_id": task_id,
+                                    "is_correct": False, "passed": False,
+                                    "attempt": max_refinement_attempts,
+                                    "failure_type": failure_type,
                                     "error": "all_attempts_failed",
                                     "last_error": error_detail,
-                                    "completion_preview": (completion or "")[:300],
+                                    "raw_response": (completion or "")[:500],
+                                    "latency_ms": attempt_latency,
+                                    "cost_usd": attempt_cost,
+                                    "retry_count": max_refinement_attempts - 1,
                                 })
                         
                     except Exception as e:
                         if attempt == max_refinement_attempts:
                             errors += 1
+                            failed_ids.append(task_id)
                             if len(error_samples) < 3:
                                 error_samples.append(f"execution error: {str(e)[:120]}")
-                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} execution error ({errors} errors)", flush=True)
+                            print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} execution error [runtime] ({errors} errors)", flush=True)
                             if _ANSWER_LOG_PATH:
                                 _log_answer(_ANSWER_LOG_PATH, {
                                     "category": "HumanEval", "index": i, "task_id": task_id,
-                                    "is_correct": False, "error": f"execution_error: {str(e)[:200]}",
+                                    "is_correct": False, "failure_type": "runtime",
+                                    "error": f"execution_error: {str(e)[:200]}",
                                 })
                         break
                 else:
                     if attempt == max_refinement_attempts:
                         errors += 1
-                        print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} no completion generated ({errors} errors)", flush=True)
+                        failed_ids.append(task_id)
+                        print(f"  [{i}/{len(sample_ids)}] HumanEval: ⚠️ {task_id} no completion generated [extraction] ({errors} errors)", flush=True)
                         if _ANSWER_LOG_PATH:
                             _log_answer(_ANSWER_LOG_PATH, {
                                 "category": "HumanEval", "index": i, "task_id": task_id,
-                                "is_correct": False, "error": "no_completion_generated",
+                                "is_correct": False, "failure_type": "extraction",
+                                "error": "no_completion_generated",
                             })
                     break
 
@@ -1257,7 +1815,59 @@ Output CORRECTED function (code only):"""
         
         total_attempted = len(sample_ids) - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
-        
+
+        if failed_ids:
+            print(f"\n  HumanEval failing IDs ({len(failed_ids)}): {', '.join(failed_ids)}", flush=True)
+
+        # ---- Forensic failure classification summary ----
+        if _HE_EXEC_PATH and Path(_HE_EXEC_PATH).exists():
+            try:
+                exec_entries = [json.loads(l) for l in Path(_HE_EXEC_PATH).read_text().splitlines() if l.strip()]
+                failures = [e for e in exec_entries if not e.get("passed")]
+                from collections import Counter as _Ctr
+                exc_types = _Ctr(e.get("exception_type", "unknown") for e in failures)
+                print(f"\n  {'='*50}")
+                print(f"  HUMANEVAL FORENSIC FAILURE SUMMARY")
+                print(f"  {'='*50}")
+                print(f"  Total execution checks:  {len(exec_entries)}")
+                print(f"  Passed:                  {sum(1 for e in exec_entries if e.get('passed'))}")
+                print(f"  Failed:                  {len(failures)}")
+                if exc_types:
+                    print(f"  Failure breakdown:")
+                    for exc, cnt in exc_types.most_common():
+                        pct = cnt / max(len(failures), 1) * 100
+                        print(f"    {exc:<25} {cnt:>3} ({pct:.0f}%)")
+                print(f"  Raw log:       {_HE_RAW_PATH}")
+                print(f"  Processed log: {_HE_PROCESSED_PATH}")
+                print(f"  Exec trace:    {_HE_EXEC_PATH}")
+                print(f"  {'='*50}")
+            except Exception:
+                pass
+
+        # ---- Pipeline metrics counter ----
+        _he_metrics = {"signature_mismatch": 0, "runtime_error": 0, "logic_mismatch": 0, "extraction": 0}
+        if _ANSWER_LOG_PATH and Path(_ANSWER_LOG_PATH).exists():
+            try:
+                for _line in Path(_ANSWER_LOG_PATH).read_text().splitlines():
+                    if not _line.strip():
+                        continue
+                    _entry = json.loads(_line)
+                    if _entry.get("category") != "HumanEval" or _entry.get("is_correct"):
+                        continue
+                    _ft = _entry.get("failure_type", "")
+                    if _ft == "extraction":
+                        _he_metrics["extraction"] += 1
+                    elif _ft == "runtime":
+                        _he_metrics["runtime_error"] += 1
+                    elif _ft == "logic":
+                        _he_metrics["logic_mismatch"] += 1
+            except Exception:
+                pass
+        _total_fails = sum(_he_metrics.values()) or 1
+        print(f"\n  HumanEval Pipeline Metrics:")
+        for _mk, _mv in _he_metrics.items():
+            print(f"    {_mk:<22} {_mv:>3} ({_mv/_total_fails*100:.0f}%)")
+
         return {
             "category": "Coding (HumanEval)",
             "dataset": "openai/human_eval",
@@ -1269,29 +1879,22 @@ Output CORRECTED function (code only):"""
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
-            "extra": {"error_samples": error_samples},
+            "extra": {
+                "error_samples": error_samples,
+                "failed_ids": failed_ids,
+                "pipeline_metrics": _he_metrics,
+            },
         }
     
     except ImportError as e:
-        print(f"⚠️  HumanEval library not available: {e}")
-        print("   Run: pip install human-eval")
-        return {
-            "category": "Coding (HumanEval)",
-            "dataset": "openai/human_eval",
-            "error": "Library not available",
-            "sample_size": 0,
-            "correct": 0,
-            "accuracy": 0,
-        }
+        raise RuntimeError(
+            f"Coding (HumanEval) evaluator FAILED — missing library: {e}. "
+            f"Run: pip install human-eval"
+        ) from e
     except Exception as e:
-        print(f"❌ Coding evaluation failed: {e}")
-        return {
-            "category": "Coding (HumanEval)",
-            "error": str(e),
-            "sample_size": 0,
-            "correct": 0,
-            "accuracy": 0,
-        }
+        raise RuntimeError(
+            f"Coding (HumanEval) evaluator FAILED (not skipping): {e}"
+        ) from e
 
 # ============================================================================
 # CATEGORY 3: MATH (GSM8K)
@@ -1359,6 +1962,8 @@ async def evaluate_math(
             # Calculate total cost and latency
             candidate_latency = best_candidate.get("latency", 1000) if best_candidate else 5000
             candidate_cost = best_candidate.get("cost", 0.005) if best_candidate else 0.025
+
+            _log_verify_trace(f"gsm8k_{i}", best_candidate, candidate_latency)
             
             if predicted_answer:
                 try:
@@ -1376,10 +1981,30 @@ async def evaluate_math(
                     print(f"  [{i}/{sample_size}] GSM8K: {status_icon} pred={predicted_num} correct={correct_answer} ({correct}/{i-errors} correct so far)", flush=True)
                     if _ANSWER_LOG_PATH:
                         _log_answer(_ANSWER_LOG_PATH, {
-                            "category": "GSM8K", "index": i,
+                            "category": "GSM8K", "question_id": f"gsm8k_{i}",
+                            "index": i,
                             "question": question[:200], "predicted": predicted_num,
+                            "extracted_answer": str(predicted_num),
                             "correct_answer": correct_answer, "is_correct": is_correct,
+                            "latency_ms": candidate_latency,
+                            "cost_usd": candidate_cost,
+                            "failure_type": None if is_correct else "logic",
+                            "verify_candidates": best_candidate.get("candidates", []) if isinstance(best_candidate, dict) else [],
+                            "verify_scores": [best_candidate.get("verification_score", 0)] if isinstance(best_candidate, dict) else [],
                         })
+                    if _TRACER and isinstance(best_candidate, dict):
+                        try:
+                            _TRACER.log_gsm8k_verify(
+                                question_id=f"gsm8k_{i}",
+                                candidates=best_candidate.get("candidates", []),
+                                verify_scores=[best_candidate.get("verification_score", 0)],
+                                selected_answer=str(predicted_num),
+                                majority_vote=str(predicted_answer),
+                                circuit_breaker_active=False,
+                                verify_latencies_ms=[best_candidate.get("verify_latency_ms", 0)],
+                            )
+                        except Exception:
+                            pass
                 except ValueError:
                     errors += 1
                     if len(error_samples) < 3:
@@ -1433,8 +2058,9 @@ async def evaluate_math(
             "extra": {"error_samples": error_samples},
         }
     except Exception as e:
-        print(f"❌ Math evaluation failed: {e}")
-        return {"category": "Math (GSM8K)", "error": str(e)}
+        raise RuntimeError(
+            f"Math (GSM8K) evaluator FAILED (not skipping): {e}"
+        ) from e
 
 # ============================================================================
 # CATEGORY 4: MULTILINGUAL
@@ -1600,28 +2226,75 @@ async def evaluate_multilingual(
 
         if result["success"]:
             predicted = _extract_multiple_choice(result["response"])
-            
-            # D2+B3: Simplified scoring — always count the answer.
-            # The old cross-lingual verification had a bug that silently dropped
-            # correct answers when consistency was low. It also added 3 API calls
-            # per non-English question, increasing error risk (403/timeout).
-            # B3: Skip cross-lingual for high-resource languages where the model
-            # is already strong (Spanish, French, German, Chinese, Japanese, etc.)
+            mmmlu_confidence = result.get("confidence", 0.5)
+            _mmmlu_fallback_used = False
+
+            # Confidence gate: if confidence < 45% and we have an answer,
+            # re-query once with reasoning_mode="deep" for higher quality.
+            if predicted and mmmlu_confidence < 0.55:
+                gate_result = await call_llmhive_api(
+                    prompt,
+                    reasoning_mode="deep",
+                    tier=tier,
+                    orchestration_config={"accuracy_level": 5, "enable_verification": True},
+                )
+                if gate_result.get("success"):
+                    gate_answer = _extract_multiple_choice(gate_result["response"])
+                    if gate_answer and gate_answer in "ABCD":
+                        predicted = gate_answer
+                        _mmmlu_fallback_used = True
+                    total_latency += gate_result.get("latency", 0)
+                    total_cost += gate_result.get("cost", 0.0)
+
+            # Extraction fallback: if extraction failed entirely, re-query
+            # with strict format. Does NOT cascade with the confidence gate.
+            if predicted is None and not _mmmlu_fallback_used:
+                retry_prompt = (
+                    f"You were asked a multiple-choice question. "
+                    f"Return ONLY one letter: A, B, C, or D.\n\n"
+                    f"Question: {question[:500]}\n"
+                    f"A) {choices[0]}\nB) {choices[1]}\nC) {choices[2]}\nD) {choices[3]}\n\n"
+                    f"Your answer (single letter only):"
+                )
+                retry_result = await call_llmhive_api(
+                    retry_prompt, reasoning_mode="basic", tier=tier, timeout=30,
+                )
+                if retry_result.get("success"):
+                    predicted = _extract_multiple_choice(retry_result["response"])
+                    total_latency += retry_result.get("latency", 0)
+                    total_cost += retry_result.get("cost", 0.0)
+
             is_correct = predicted and predicted == correct_answer
             if is_correct:
                 correct += 1
-            
+
             total_latency += result["latency"]
             total_cost += result["cost"]
+            failure_tag = ""
+            if predicted is None:
+                failure_tag = " [PARSING_FAILURE]"
             status_icon = "✅" if is_correct else ("❌" if predicted else "⚠️")
             lang_tag = "NE" if has_non_english else "EN"
-            print(f"  [{i}/{sample_size}] MMMLU: {status_icon} pred={predicted} correct={correct_answer} lang={lang_tag} subj={subject[:20]} ({correct}/{i-errors} correct so far)", flush=True)
+            print(f"  [{i}/{sample_size}] MMMLU: {status_icon} pred={predicted} correct={correct_answer} lang={lang_tag} subj={subject[:20]}{failure_tag} ({correct}/{i-errors} correct so far)", flush=True)
             if _ANSWER_LOG_PATH:
                 _log_answer(_ANSWER_LOG_PATH, {
-                    "category": "MMMLU", "index": i, "subject": subject,
+                    "category": "MMMLU", "question_id": f"mmmlu_{i}",
+                    "index": i, "subject": subject,
                     "question": question[:200], "predicted": predicted,
+                    "extracted_answer": predicted,
                     "correct_answer": correct_answer, "is_correct": bool(is_correct),
                     "language": lang_tag,
+                    "confidence": mmmlu_confidence if 'mmmlu_confidence' in dir() else None,
+                    "raw_response": result.get("response", "")[:500],
+                    "latency_ms": result.get("latency", 0),
+                    "cost_usd": result.get("cost", 0),
+                    "input_tokens": result.get("input_tokens", 0),
+                    "output_tokens": result.get("output_tokens", 0),
+                    "retry_count": result.get("retries", 0),
+                    "infra_failure": False,
+                    "failure_type": "PARSING_FAILURE" if predicted is None else (
+                        "MODEL_CORRECT" if is_correct else "MODEL_INCORRECT"
+                    ),
                 })
         else:
             errors += 1
@@ -1630,9 +2303,13 @@ async def evaluate_multilingual(
             print(f"  [{i}/{sample_size}] MMMLU: ⚠️ API error ({errors} errors)", flush=True)
             if _ANSWER_LOG_PATH:
                 _log_answer(_ANSWER_LOG_PATH, {
-                    "category": "MMMLU", "index": i, "subject": subject,
+                    "category": "MMMLU", "question_id": f"mmmlu_{i}",
+                    "index": i, "subject": subject,
                     "question": question[:200], "predicted": None,
-                    "correct_answer": correct_answer, "error": result.get("error", "unknown")[:200],
+                    "extracted_answer": None,
+                    "correct_answer": correct_answer,
+                    "error": result.get("error", "unknown")[:200],
+                    "failure_type": "INFRA_FAILURE", "infra_failure": True,
                 })
 
         if on_progress:
@@ -1674,21 +2351,12 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
     print(f"\n{'='*70}")
     print(f"CATEGORY 5: LONG CONTEXT (Needle in Haystack)")
     print(f"{'='*70}\n")
-    
+
     if not LONGBENCH_EVAL_CMD:
-        return {
-            "category": "Long Context (LongBench)",
-            "dataset": "THUDM/LongBench",
-            "sample_size": 0,
-            "correct": 0,
-            "incorrect": 0,
-            "errors": 1,
-            "accuracy": 0.0,
-            "avg_latency_ms": 0,
-            "avg_cost": 0.0,
-            "total_cost": 0.0,
-            "extra": {"error": "LONGBENCH_EVAL_CMD not set"},
-        }
+        raise RuntimeError(
+            "Long Context evaluator not configured. Set LONGBENCH_EVAL_CMD "
+            "or place eval_longbench.py in scripts/."
+        )
 
     import shlex
     import subprocess
@@ -1698,13 +2366,15 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
         output_path = Path(temp_dir) / "longbench_eval.json"
         command = LONGBENCH_EVAL_CMD.format(
             output_path=str(output_path),
-            seed=42,
+            seed=FIXED_SEED,
         )
         try:
-            subprocess.run(
+            proc = subprocess.run(
                 shlex.split(command),
                 check=True,
                 timeout=1800,
+                capture_output=True,
+                text=True,
             )
             if output_path.exists():
                 payload = json.loads(output_path.read_text())
@@ -1723,23 +2393,21 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
                     "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
                     "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
                     "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                    "infra_failures": int(payload.get("infra_failures", 0)),
                     "extra": {"longbench_eval": "external"},
                 }
             raise FileNotFoundError("LongBench eval output missing")
+        except subprocess.CalledProcessError as cpe:
+            raise RuntimeError(
+                f"Long Context evaluator FAILED | cmd={command} | "
+                f"exit={cpe.returncode} | "
+                f"stdout={cpe.stdout[:500] if cpe.stdout else ''} | "
+                f"stderr={cpe.stderr[:500] if cpe.stderr else ''}"
+            ) from cpe
         except Exception as exc:
-            return {
-                "category": "Long Context (LongBench)",
-                "dataset": "THUDM/LongBench - ERROR",
-                "sample_size": 0,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"LongBench eval failed: {exc}"},
-            }
+            raise RuntimeError(
+                f"Long Context evaluator FAILED (not skipping): {exc}"
+            ) from exc
 
 # ============================================================================
 # CATEGORY 6: TOOL USE
@@ -1750,73 +2418,66 @@ async def evaluate_tool_use(tier: str = TIER) -> Dict[str, Any]:
     print(f"\n{'='*70}")
     print(f"CATEGORY 6: TOOL USE")
     print(f"{'='*70}\n")
-    
+
     if not TOOLBENCH_EVAL_CMD:
-        return {
-            "category": "Tool Use (ToolBench)",
-            "dataset": "ToolBench - SKIPPED",
-            "sample_size": 0,
-            "correct": 0,
-            "incorrect": 0,
-            "errors": 1,
-            "accuracy": 0.0,
-            "avg_latency_ms": 0,
-            "avg_cost": 0.0,
-            "total_cost": 0.0,
-            "extra": {"error": "TOOLBENCH_EVAL_CMD not set"},
-        }
+        raise RuntimeError(
+            "Tool Use evaluator not configured. Set TOOLBENCH_EVAL_CMD "
+            "or place eval_toolbench.py in scripts/."
+        )
 
     import shlex
     import subprocess
-    import tempfile
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output_path = Path(temp_dir) / "toolbench_eval.json"
-        command = TOOLBENCH_EVAL_CMD.format(
-            data_dir=os.getenv("TOOLBENCH_DATA_DIR", ""),
-            output_path=str(output_path),
-            seed=42,
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = Path("benchmark_reports") / f"toolbench_eval_{timestamp}.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    command = TOOLBENCH_EVAL_CMD.format(
+        data_dir=os.getenv("TOOLBENCH_DATA_DIR", ""),
+        output_path=str(output_path),
+        seed=FIXED_SEED,
+    )
+    try:
+        proc = subprocess.run(
+            shlex.split(command),
+            check=True,
+            timeout=3600,
+            capture_output=True,
+            text=True,
         )
-        try:
-            subprocess.run(
-                shlex.split(command),
-                check=True,
-                timeout=3600,
-            )
-            if output_path.exists():
-                payload = json.loads(output_path.read_text())
-                accuracy = payload.get("accuracy") or payload.get("success_rate")
-                if accuracy is None:
-                    raise ValueError("ToolBench output missing accuracy/success_rate")
-                attempted = int(payload.get("attempted", SAMPLE_SIZES["tool_use"]))
-                return {
-                    "category": "Tool Use (ToolBench)",
-                    "dataset": "ToolBench (OpenBMB)",
-                    "sample_size": attempted,
-                    "correct": int(payload.get("correct", 0)),
-                    "incorrect": max(0, attempted - int(payload.get("correct", 0))),
-                    "errors": int(payload.get("errors", 0)),
-                    "accuracy": round(float(accuracy), 2),
-                    "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
-                    "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
-                    "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
-                    "extra": {"toolbench_eval": "external"},
-                }
-            raise FileNotFoundError("ToolBench eval output missing")
-        except Exception as exc:
+        if output_path.exists():
+            payload = json.loads(output_path.read_text())
+            accuracy = payload.get("accuracy") or payload.get("success_rate")
+            if accuracy is None:
+                raise ValueError("ToolBench output missing accuracy/success_rate")
+            attempted = int(payload.get("attempted", SAMPLE_SIZES["tool_use"]))
             return {
                 "category": "Tool Use (ToolBench)",
-                "dataset": "ToolBench (OpenBMB) - ERROR",
-                "sample_size": 0,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"ToolBench eval failed: {exc}"},
+                "dataset": "ToolBench (OpenBMB)",
+                "sample_size": attempted,
+                "correct": int(payload.get("correct", 0)),
+                "incorrect": max(0, attempted - int(payload.get("correct", 0))),
+                "errors": int(payload.get("errors", 0)),
+                "accuracy": round(float(accuracy), 2),
+                "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
+                "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
+                "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                "infra_failures": int(payload.get("infra_failures", 0)),
+                "parsing_failures": int(payload.get("parsing_failures", 0)),
+                "extra": {"toolbench_eval": "external"},
             }
+        raise FileNotFoundError("ToolBench eval output missing")
+    except subprocess.CalledProcessError as cpe:
+        raise RuntimeError(
+            f"Tool Use evaluator FAILED | cmd={command} | "
+            f"exit={cpe.returncode} | "
+            f"stdout={cpe.stdout[:500] if cpe.stdout else ''} | "
+            f"stderr={cpe.stderr[:500] if cpe.stderr else ''}"
+        ) from cpe
+    except Exception as exc:
+        raise RuntimeError(
+            f"Tool Use evaluator FAILED (not skipping): {exc}"
+        ) from exc
 
 # ============================================================================
 # CATEGORY 7: RAG
@@ -1858,6 +2519,10 @@ async def evaluate_rag(
     error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
     ref_lines: List[str] = list(progress.get("ref_lines", [])) if progress else []
     cand_lines: List[str] = list(progress.get("cand_lines", [])) if progress else []
+
+    # Phase 7: rank distribution + zero-relevant tracking (logging only, no logic change)
+    _rank_distribution: Dict[int, int] = {}
+    _zero_relevant_count = 0
 
     print(f"→ MS MARCO: {sample_size} samples", flush=True)
     for i, item in enumerate(samples, start=1):
@@ -2036,8 +2701,11 @@ async def evaluate_rag(
                     break
             if first_relevant_rank:
                 top_relevant = f"rank={first_relevant_rank}"
+                _rank_distribution[first_relevant_rank] = _rank_distribution.get(first_relevant_rank, 0) + 1
             else:
                 top_relevant = "miss"
+        if not relevant_ids:
+            _zero_relevant_count += 1
         votes_str = f"{len(all_rankings)}v" if all_rankings else "0v"
         print(f"  [{i}/{sample_size}] RAG: {top_relevant} {votes_str} ranked={len(ranked)} relevant={len(relevant_ids)} ({errors} errors)", flush=True)
 
@@ -2055,6 +2723,13 @@ async def evaluate_rag(
                     "selected_indices": selected_indices if not STRICT_MODE else None,
                 }
             )
+
+    # Phase 7: Log rank distribution and zero-relevant queries
+    if _rank_distribution:
+        dist_str = ", ".join(f"rank{k}={v}" for k, v in sorted(_rank_distribution.items()))
+        print(f"  RAG rank distribution: {dist_str}", flush=True)
+    if _zero_relevant_count:
+        print(f"  RAG zero-relevant queries: {_zero_relevant_count}/{sample_size}", flush=True)
 
     # Calculate MRR@10 directly if no external eval command
     if not MSMARCO_EVAL_CMD:
@@ -2099,6 +2774,10 @@ async def evaluate_rag(
         correct = int(mrr_count)
         total_attempted = sample_size - errors
         
+        _recall_at_10 = mrr_count / len(relevant_by_query) if relevant_by_query else 0.0
+        _zr_rate = _zero_relevant_count / max(sample_size, 1)
+        _rqi = (mrr_at_10 * 0.6 + _recall_at_10 * 0.4) * (1.0 - _zr_rate)
+
         return {
             "category": "RAG (MS MARCO)",
             "dataset": "microsoft/ms_marco v1.1",
@@ -2110,7 +2789,15 @@ async def evaluate_rag(
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
-            "extra": {"mrr_at_10": round(mrr_at_10, 4), "eval_mode": "builtin"},
+            "extra": {
+                "mrr_at_10": round(mrr_at_10, 4),
+                "recall_at_10": round(_recall_at_10, 4),
+                "rqi": round(_rqi, 4),
+                "eval_mode": "builtin",
+                "rank_distribution": _rank_distribution,
+                "zero_relevant_queries": _zero_relevant_count,
+                "zero_relevant_rate": round(_zr_rate, 4),
+            },
         }
 
     import shlex
@@ -2148,19 +2835,13 @@ async def evaluate_rag(
             mrr_at_10 = float(match.group(1))
             accuracy = mrr_at_10 * 100
         except Exception as exc:
-            return {
-                "category": "RAG (MS MARCO)",
-                "dataset": "microsoft/ms_marco v1.1 - ERROR",
-                "sample_size": sample_size,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"MS MARCO eval failed: {exc}"},
-            }
+            raise RuntimeError(
+                f"RAG (MS MARCO) external eval FAILED (not skipping): {exc}"
+            ) from exc
+
+    _zr_rate_ext = _zero_relevant_count / max(sample_size, 1)
+    _recall_ext = correct / max(sample_size - errors, 1)
+    _rqi_ext = (mrr_at_10 * 0.6 + _recall_ext * 0.4) * (1.0 - _zr_rate_ext)
 
     return {
         "category": "RAG (MS MARCO)",
@@ -2173,7 +2854,14 @@ async def evaluate_rag(
         "avg_latency_ms": int(total_latency / (sample_size - errors)) if sample_size - errors > 0 else 0,
         "avg_cost": round(total_cost / (sample_size - errors), 6) if sample_size - errors > 0 else 0,
         "total_cost": round(total_cost, 4),
-        "extra": {"mrr_at_10": round(mrr_at_10, 4)},
+        "extra": {
+            "mrr_at_10": round(mrr_at_10, 4),
+            "recall_at_10": round(_recall_ext, 4),
+            "rqi": round(_rqi_ext, 4),
+            "rank_distribution": _rank_distribution,
+            "zero_relevant_queries": _zero_relevant_count,
+            "zero_relevant_rate": round(_zr_rate_ext, 4),
+        },
     }
 
 # ============================================================================
@@ -2185,72 +2873,64 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
     print(f"\n{'='*70}")
     print(f"CATEGORY 8: DIALOGUE")
     print(f"{'='*70}\n")
-    
+
     if not MTBENCH_EVAL_CMD:
-        return {
-            "category": "Dialogue (MT-Bench)",
-            "dataset": "lmsys/mt-bench - SKIPPED",
-            "sample_size": 0,
-            "correct": 0,
-            "incorrect": 0,
-            "errors": 1,
-            "accuracy": 0.0,
-            "avg_latency_ms": 0,
-            "avg_cost": 0.0,
-            "total_cost": 0.0,
-            "extra": {"error": "MTBENCH_EVAL_CMD not set"},
-        }
+        raise RuntimeError(
+            "Dialogue evaluator not configured. Set MTBENCH_EVAL_CMD "
+            "or place eval_mtbench.py in scripts/."
+        )
 
     import shlex
     import subprocess
-    import tempfile
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output_path = Path(temp_dir) / "mtbench_eval.json"
-        command = MTBENCH_EVAL_CMD.format(
-            output_path=str(output_path),
-            seed=42,
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = Path("benchmark_reports") / f"mtbench_eval_{timestamp}.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    command = MTBENCH_EVAL_CMD.format(
+        output_path=str(output_path),
+        seed=FIXED_SEED,
+    )
+    try:
+        proc = subprocess.run(
+            shlex.split(command),
+            check=True,
+            timeout=1800,
+            capture_output=True,
+            text=True,
         )
-        try:
-            subprocess.run(
-                shlex.split(command),
-                check=True,
-                timeout=1800,
-            )
-            if output_path.exists():
-                payload = json.loads(output_path.read_text())
-                score = payload.get("score") or payload.get("avg_score")
-                if score is None:
-                    raise ValueError("MT-Bench output missing score/avg_score")
-                attempted = int(payload.get("attempted", SAMPLE_SIZES["dialogue"]))
-                return {
-                    "category": "Dialogue (MT-Bench)",
-                    "dataset": "lmsys/mt-bench",
-                    "sample_size": attempted,
-                    "correct": int(payload.get("correct", 0)),
-                    "incorrect": max(0, attempted - int(payload.get("correct", 0))),
-                    "errors": int(payload.get("errors", 0)),
-                    "accuracy": round(float(score), 2),
-                    "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
-                    "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
-                    "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
-                    "extra": {"mtbench_eval": "external"},
-                }
-            raise FileNotFoundError("MT-Bench eval output missing")
-        except Exception as exc:
+        if output_path.exists():
+            payload = json.loads(output_path.read_text())
+            score = payload.get("score") or payload.get("avg_score")
+            if score is None:
+                raise ValueError("MT-Bench output missing score/avg_score")
+            attempted = int(payload.get("attempted", SAMPLE_SIZES["dialogue"]))
             return {
                 "category": "Dialogue (MT-Bench)",
-                "dataset": "lmsys/mt-bench - ERROR",
-                "sample_size": 0,
-                "correct": 0,
-                "incorrect": 0,
-                "errors": 1,
-                "accuracy": 0.0,
-                "avg_latency_ms": 0,
-                "avg_cost": 0.0,
-                "total_cost": 0.0,
-                "extra": {"error": f"MT-Bench eval failed: {exc}"},
+                "dataset": "lmsys/mt-bench",
+                "sample_size": attempted,
+                "correct": int(payload.get("correct", 0)),
+                "incorrect": max(0, attempted - int(payload.get("correct", 0))),
+                "errors": int(payload.get("errors", 0)),
+                "accuracy": round(float(score), 2),
+                "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
+                "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
+                "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
+                "infra_failures": int(payload.get("infra_failures", 0)),
+                "extra": {"mtbench_eval": "external"},
             }
+        raise FileNotFoundError("MT-Bench eval output missing")
+    except subprocess.CalledProcessError as cpe:
+        raise RuntimeError(
+            f"Dialogue evaluator FAILED | cmd={command} | "
+            f"exit={cpe.returncode} | "
+            f"stdout={cpe.stdout[:500] if cpe.stdout else ''} | "
+            f"stderr={cpe.stderr[:500] if cpe.stderr else ''}"
+        ) from cpe
+    except Exception as exc:
+        raise RuntimeError(
+            f"Dialogue evaluator FAILED (not skipping): {exc}"
+        ) from exc
 
 # ============================================================================
 # REPORTING
@@ -2341,6 +3021,30 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
                         f"{frontier.get('best', 'N/A')} ({frontier.get('score', 0):.1f}%) | {gap:+.1f}% |"
                     )
     
+    # Cost Analysis
+    report_lines.append("## 💰 Cost Analysis\n")
+    report_lines.append("| Category | Total Cost | Cost/Correct | Cost/Sample | Samples |")
+    report_lines.append("|----------|-----------|-------------|------------|---------|")
+    for r in results:
+        if "error" not in r:
+            cat = r["category"]
+            tc = r.get("total_cost", 0)
+            corr = r.get("correct", 0)
+            sz = r.get("sample_size", 0)
+            cpc = tc / corr if corr > 0 else 0
+            cps = tc / sz if sz > 0 else 0
+            report_lines.append(
+                f"| {cat} | ${tc:.4f} | ${cpc:.4f} | ${cps:.4f} | {sz} |"
+            )
+    total_correct_all = sum(r.get("correct", 0) for r in results if "error" not in r)
+    total_samples_all = sum(r.get("sample_size", 0) for r in results if "error" not in r)
+    cpc_all = total_cost / total_correct_all if total_correct_all > 0 else 0
+    cps_all = total_cost / total_samples_all if total_samples_all > 0 else 0
+    report_lines.append(
+        f"| **TOTAL** | **${total_cost:.4f}** | **${cpc_all:.4f}** | **${cps_all:.4f}** | **{total_samples_all}** |"
+    )
+    report_lines.append("")
+
     report_lines.append("\n---\n")
     report_lines.append(f"**Report Generated:** {datetime.now().isoformat()}")
     report_lines.append(f"**Status:** {tier.upper()} Tier Benchmarked")
@@ -2363,16 +3067,31 @@ def _init_answer_log() -> None:
 
 
 def _log_answer(log_path: str, entry: Dict[str, Any]) -> None:
-    """Append one answer record to the JSONL answer log."""
+    """Append one answer record to the JSONL answer log and experiment tracer."""
     try:
         entry["ts"] = datetime.now().isoformat()
         with open(log_path, "a") as f:
             f.write(json.dumps(entry, default=str) + "\n")
     except Exception:
         pass
+    try:
+        if _TRACER and entry.get("category"):
+            _TRACER.log_trace(entry["category"], entry)
+    except Exception:
+        pass
 
 
 async def main():
+    if _is_truthy(os.getenv("CERTIFICATION_LOCK")):
+        if not _is_truthy(os.getenv("CERTIFICATION_OVERRIDE")):
+            print("=" * 70)
+            print("CERTIFICATION_LOCK is active.")
+            print("Full-suite execution blocked to prevent accidental costly runs.")
+            print("To proceed, also set CERTIFICATION_OVERRIDE=true")
+            print("=" * 70)
+            sys.exit(1)
+        print("CERTIFICATION_LOCK active — override accepted, proceeding.")
+
     _preflight_checks()
     
     # E2: Pre-flight API health check — abort early if backend is down
@@ -2390,6 +3109,16 @@ async def main():
     # Initialize answer log for future improvement
     _init_answer_log()
     print(f"Answer log: {_ANSWER_LOG_PATH}")
+
+    # Initialize model trace for elite-tier instrumentation
+    global _MODEL_TRACE_PATH
+    _MODEL_TRACE_PATH = _init_model_trace()
+    print(f"Model trace: {_MODEL_TRACE_PATH}")
+
+    # Initialize experiment telemetry
+    global _TRACER
+    _TRACER = ExperimentTracer.init()
+    print(f"Experiment dir: {_TRACER.run_dir}")
     
     print("="*70)
     print("LLMHive 8-Category Industry Benchmark Suite")
@@ -2400,10 +3129,27 @@ async def main():
     
     results = []
 
+    # Phase 3: Log sample sizes before execution
+    print(f"\n  SAMPLE_SIZES:")
+    for cat, sz in SAMPLE_SIZES.items():
+        print(f"    {cat:<15} = {sz}")
+    zero_samples = [k for k, v in SAMPLE_SIZES.items() if v <= 0]
+    if zero_samples:
+        raise RuntimeError(
+            f"ABORT: Categories with zero sample size: {zero_samples}. "
+            f"Fix SAMPLE_SIZES config."
+        )
+
     checkpoint = _load_checkpoint()
     if checkpoint is None:
         checkpoint = {"config": _checkpoint_config(), "results": {}, "progress": {}}
     categories_to_run = _categories_to_run()
+    skip_set = set(_normalize_skip_list())
+
+    print(f"  START_AT:             {START_AT or '(none)'}")
+    print(f"  SKIP_CATEGORIES:      {SKIP_CATEGORIES_RAW or '(none)'}")
+    print(f"  SKIP SET (resolved):  {skip_set or '{}'}")
+    print(f"  FINAL CATEGORY ORDER: {categories_to_run}")
 
     def update_progress(key: str, data: Dict[str, Any]) -> None:
         checkpoint.setdefault("progress", {})[key] = data
@@ -2420,13 +3166,40 @@ async def main():
         "dialogue": evaluate_dialogue,
     }
 
+    # ---- Elite tier diagnostic (print-only, no enforcement) ----
+    global _CURRENT_CATEGORY
+    assert_elite_model_locked()
+
+    # ── 2026 Intelligence Layer pre-flight ──
+    if _INTELLIGENCE_LAYER:
+        try:
+            _print_elite_config_2026()
+            _print_drift_status()
+            warnings = _assert_startup_invariants()
+            if warnings:
+                for w in warnings:
+                    print(f"  [INTEL] startup warning: {w}")
+            telemetry = _get_intel_telemetry()
+            telemetry.init_trace_file()
+        except Exception as _il_err:
+            print(f"  [INTEL] pre-flight warning: {_il_err}")
+
     for key in categories_to_run:
+        _CURRENT_CATEGORY = key
+
         cached = checkpoint.get("results", {}).get(key)
         if cached:
-            results.append(cached)
-            continue
+            cached_samples = cached.get("sample_size", 0) if isinstance(cached, dict) else 0
+            if cached_samples > 0:
+                print(f"  [{key}] Restored from checkpoint ({cached_samples} samples)")
+                results.append(cached)
+                continue
+            print(f"  [{key}] Stale checkpoint (0 samples) — re-executing")
+            checkpoint.get("results", {}).pop(key, None)
         progress = checkpoint.get("progress", {}).get(key)
         evaluator = evaluators[key]
+        expected_samples = SAMPLE_SIZES.get(key, "?")
+        print(f"  EXECUTING {key} — expected sample size: {expected_samples}")
         if key in {"long_context", "tool_use", "dialogue"}:
             result = await evaluator(TIER)
         else:
@@ -2437,6 +3210,16 @@ async def main():
             )
         if isinstance(result, dict):
             result.setdefault("infra_failures", 0)
+
+        actual_samples = result.get("sample_size", 0) if isinstance(result, dict) else 0
+        print(f"  COMPLETED {key} — actual samples: {actual_samples}")
+
+        if actual_samples == 0:
+            raise RuntimeError(
+                f"CRITICAL: {key} executed with 0 samples. "
+                f"External evaluator failed or produced no output."
+            )
+
         checkpoint.setdefault("results", {})[key] = result
         _save_checkpoint(checkpoint)
         results.append(result)
@@ -2578,6 +3361,126 @@ async def main():
         except Exception as e:
             print(f"  (Could not load best_scores.json: {e})")
     
+    # Finalize experiment telemetry
+    if _TRACER:
+        try:
+            _TRACER.finalize(results)
+            print(f"\n  Telemetry artifacts: {_TRACER.run_dir}")
+        except Exception as _te:
+            print(f"  (Telemetry finalization warning: {_te})")
+
+    # Model trace summary
+    if _MODEL_TRACE_PATH and Path(_MODEL_TRACE_PATH).exists():
+        try:
+            trace_lines = Path(_MODEL_TRACE_PATH).read_text().strip().splitlines()
+            trace_entries = [json.loads(line) for line in trace_lines if line.strip()]
+            models_seen: Dict[str, int] = {}
+            fallback_count = 0
+            total_calls = len(trace_entries)
+            for entry in trace_entries:
+                for m in entry.get("model_name", []):
+                    models_seen[m] = models_seen.get(m, 0) + 1
+                if entry.get("fallback_used"):
+                    fallback_count += 1
+            print(f"\n{'='*70}")
+            print("MODEL TRACE SUMMARY")
+            print(f"{'='*70}")
+            print(f"  Total API calls:   {total_calls}")
+            print(f"  Fallback calls:    {fallback_count}")
+            print(f"  Models observed:")
+            for m, count in sorted(models_seen.items(), key=lambda x: -x[1]):
+                print(f"    {m:40s} ({count} calls)")
+            print(f"  Trace file: {_MODEL_TRACE_PATH}")
+        except Exception as _me:
+            print(f"  (Model trace summary warning: {_me})")
+
+    # ── 2026 Intelligence Layer post-run ──
+    if _INTELLIGENCE_LAYER:
+        try:
+            _get_intel_telemetry().print_summary()
+        except Exception as _ts:
+            print(f"  [INTEL] telemetry summary warning: {_ts}")
+        try:
+            commit_hash = os.popen("git rev-parse --short HEAD 2>/dev/null").read().strip() or "unknown"
+            branch = os.popen("git branch --show-current 2>/dev/null").read().strip() or "unknown"
+            cat_data = {}
+            for r in results:
+                if isinstance(r, dict) and "error" not in r:
+                    cat_key = r.get("category", "").lower().replace(" ", "_")
+                    for orig, mapped in [("General Reasoning (MMLU)", "reasoning"),
+                                         ("Coding (HumanEval)", "coding"),
+                                         ("Math (GSM8K)", "math"),
+                                         ("Multilingual (MMMLU)", "multilingual"),
+                                         ("RAG (MS MARCO)", "rag"),
+                                         ("Long Context (LongBench)", "long_context"),
+                                         ("Tool Use (ToolBench)", "tool_use"),
+                                         ("Dialogue (MT-Bench)", "dialogue")]:
+                        if r.get("category") == orig:
+                            cat_key = mapped
+                            break
+                    cat_data[cat_key] = {
+                        "accuracy": r.get("accuracy", 0),
+                        "sample_size": r.get("sample_size", 0),
+                    }
+            _record_benchmark_run(commit_hash, branch, cat_data)
+            _print_perf_summary()
+        except Exception as _pf:
+            print(f"  [INTEL] performance feedback warning: {_pf}")
+
+        # ── Strategy DB real data ingestion ──
+        try:
+            _sdb = _get_strategy_db_2026()
+            _sdb.load_from_local_history()
+            for r in results:
+                if not isinstance(r, dict) or "error" in r:
+                    continue
+                _cat_key = r.get("category", "")
+                for orig, mapped in [("General Reasoning (MMLU)", "reasoning"),
+                                     ("Coding (HumanEval)", "coding"),
+                                     ("Math (GSM8K)", "math"),
+                                     ("Multilingual (MMMLU)", "multilingual"),
+                                     ("RAG (MS MARCO)", "rag"),
+                                     ("Long Context (LongBench)", "long_context"),
+                                     ("Tool Use (ToolBench)", "tool_use"),
+                                     ("Dialogue (MT-Bench)", "dialogue")]:
+                    if r.get("category") == orig:
+                        _cat_key = mapped
+                        break
+                _sdb.ingest_benchmark_result(
+                    category=_cat_key,
+                    model_id=r.get("model_used", "unknown"),
+                    provider=r.get("provider", "unknown"),
+                    accuracy=r.get("accuracy", 0) / 100.0,
+                    latency_p50=r.get("avg_latency_ms", 0),
+                    cost_per_sample=r.get("total_cost", 0) / max(r.get("sample_size", 1), 1),
+                    entropy=r.get("avg_entropy", 0),
+                    verify_timeout_rate=r.get("verify_timeout_rate", 0),
+                )
+            _cai = _sdb.compute_competitive_advantage_index()
+            _sdb.save_competitive_advantage()
+            _sdb.save_activation_summary()
+            print(f"\n  [INTEL] Strategy DB Activation Summary")
+            print(f"  {'='*50}")
+            print(f"  CAI Composite: {_cai['composite_index']:.2f} ({_cai['interpretation']})")
+            print(f"  All categories populated: {_sdb.has_real_data_for_all_categories()}")
+            print(f"  Records cached: {len(_sdb._performance_cache)}")
+            for _cc, _cv in sorted(_cai.get('categories', {}).items()):
+                print(f"    {_cc:<16} index={_cv['index']:>6.2f}  "
+                      f"wr_delta={_cv['win_rate_delta']:+.4f}  "
+                      f"stability={_cv['stability']:.4f}  "
+                      f"cost_eff={_cv['cost_efficiency']:.4f}")
+            _degr = _sdb.check_degradation()
+            if _degr:
+                print(f"\n  DEGRADATION ALERTS ({len(_degr)}):")
+                for _da in _degr:
+                    print(f"    [{_da['severity'].upper()}] {_da['category']}/{_da['model_id']}: "
+                          f"-{_da['drop_pct']:.1f}%")
+            else:
+                print(f"  Degradation alerts: none")
+            print(f"  {'='*50}")
+        except Exception as _sd_err:
+            print(f"  [INTEL] strategy DB ingestion warning: {_sd_err}")
+
     print("\n" + "="*70)
     print("BENCHMARK COMPLETE")
     print("="*70)

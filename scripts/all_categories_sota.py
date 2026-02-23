@@ -13,6 +13,7 @@ Categories:
 
 import re
 import asyncio
+import time as _time_mod
 from typing import Dict, List, Any, Optional, Tuple
 from collections import Counter
 
@@ -282,6 +283,14 @@ Solution:"""
     
     return candidates
 
+_MAX_VERIFY_RETRIES = 2
+_VERIFY_TIMEOUT = 15
+_consecutive_verify_failures = 0
+_verify_disabled = False
+_total_verify_calls = 0
+_total_verify_latency_ms = 0
+
+
 async def verify_solution(
     problem: str,
     solution: str,
@@ -289,11 +298,23 @@ async def verify_solution(
     llm_api_call_func
 ) -> Dict[str, Any]:
     """
-    Verify a candidate solution for correctness
-    
-    SOTA: Separate verifier model (Cobbe et al. 2021)
+    Verify a candidate solution for correctness.
+
+    Hardened with isolated retry budget (max 2), timeout cap (15s),
+    and circuit breaker (5 consecutive failures disables verify).
+    Includes latency tracking per call.
     """
-    
+    global _consecutive_verify_failures, _verify_disabled
+    global _total_verify_calls, _total_verify_latency_ms
+
+    if _verify_disabled:
+        return {
+            "score": 0.5,
+            "details": "VERIFY_CIRCUIT_OPEN: verification disabled after repeated failures",
+            "raw_score": -1,
+            "verify_latency_ms": 0,
+        }
+
     verify_prompt = f"""Verify if this solution is correct.
 
 Problem: {problem}
@@ -318,31 +339,60 @@ Units:
 Reasonable: 
 
 Total correctness score (0-5):"""
-    
-    result = await llm_api_call_func(
-        verify_prompt,
-        orchestration_config={
-            "accuracy_level": 5,
-            "enable_verification": True,
-        }
-    )
-    
-    if not result.get("success"):
-        return {"score": 0.0, "details": "Verification failed"}
-    
-    verification = result.get("response", "")
-    
-    # Extract score
-    score_match = re.search(r'Total.*?:\s*(\d+)', verification)
-    score = int(score_match.group(1)) if score_match else 0
-    
-    # Normalize to 0-1
-    normalized_score = score / 5.0
-    
+
+    for v_attempt in range(_MAX_VERIFY_RETRIES):
+        v_start = _time_mod.time()
+        result = await llm_api_call_func(
+            verify_prompt,
+            orchestration_config={
+                "accuracy_level": 5,
+                "enable_verification": True,
+            },
+            timeout=_VERIFY_TIMEOUT,
+        )
+        v_latency = int((_time_mod.time() - v_start) * 1000)
+        _total_verify_calls += 1
+        _total_verify_latency_ms += v_latency
+
+        if result.get("success"):
+            _consecutive_verify_failures = 0
+            verification = result.get("response", "")
+            score_match = re.search(r'Total.*?:\s*(\d+)', verification)
+            score = int(score_match.group(1)) if score_match else 0
+            return {
+                "score": score / 5.0,
+                "details": verification,
+                "raw_score": score,
+                "verify_latency_ms": v_latency,
+            }
+
+        _consecutive_verify_failures += 1
+        print(
+            f"  ⚠️ VERIFY_FAILURE attempt {v_attempt+1}/{_MAX_VERIFY_RETRIES} "
+            f"(consecutive={_consecutive_verify_failures}, latency={v_latency}ms)",
+            flush=True,
+        )
+        if _consecutive_verify_failures >= 5:
+            _verify_disabled = True
+            print(
+                "  ⚠️ VERIFY CIRCUIT BREAKER ACTIVATED: 5 consecutive failures — "
+                f"disabling verify for remaining questions "
+                f"(total calls={_total_verify_calls}, "
+                f"avg_latency={_total_verify_latency_ms // max(_total_verify_calls, 1)}ms)",
+                flush=True,
+            )
+            return {
+                "score": 0.5,
+                "details": "VERIFY_CIRCUIT_OPEN",
+                "raw_score": -1,
+                "verify_latency_ms": v_latency,
+            }
+
     return {
-        "score": normalized_score,
-        "details": verification,
-        "raw_score": score,
+        "score": 0.0,
+        "details": "VERIFY_FAILURE: exhausted retries",
+        "raw_score": 0,
+        "verify_latency_ms": _total_verify_latency_ms,
     }
 
 async def generate_then_verify_math(
@@ -351,20 +401,24 @@ async def generate_then_verify_math(
     num_candidates: int = 5
 ) -> Tuple[str, Dict[str, Any]]:
     """
-    Full generate-then-verify pipeline for math problems
+    Full generate-then-verify pipeline for math problems.
     
-    SOTA: Best practice for GSM8K
+    SOTA: Best practice for GSM8K.
+    
+    Hardened: if the verify phase fails (circuit breaker, timeouts), the
+    pipeline falls back to majority-vote over the generated candidates
+    without cascading retries.
     """
-    
-    # Step 1: Generate multiple candidates
+
     candidates = await generate_multiple_solutions(problem, llm_api_call_func, num_candidates)
-    
+
     if not candidates:
         return None, {}
-    
-    # Step 2: Verify each candidate
+
     verified_candidates = []
-    
+    verify_failures = 0
+    verify_latencies = []
+
     for candidate in candidates:
         if candidate["answer"]:
             verification = await verify_solution(
@@ -373,25 +427,40 @@ async def generate_then_verify_math(
                 candidate["answer"],
                 llm_api_call_func
             )
-            
+
+            if verification.get("raw_score", 0) < 0:
+                verify_failures += 1
+            verify_latencies.append(verification.get("verify_latency_ms", 0))
+
             verified_candidates.append({
                 **candidate,
                 "verification_score": verification["score"],
                 "verification_details": verification["details"],
             })
-    
-    # Step 3: Select best candidate by verification score
+
+    _pipeline_meta = {
+        "candidates": [{"answer": c.get("answer"), "score": c.get("verification_score", 0)} for c in verified_candidates],
+        "verify_latencies_ms": verify_latencies,
+        "verify_failures": verify_failures,
+        "circuit_breaker_active": _verify_disabled,
+        "total_verify_calls": _total_verify_calls,
+    }
+
     if verified_candidates:
-        best_candidate = max(verified_candidates, key=lambda x: x["verification_score"])
-        return best_candidate["answer"], best_candidate
-    
-    # Fallback: Use most common answer
+        if verify_failures < len(verified_candidates):
+            best_candidate = max(verified_candidates, key=lambda x: x["verification_score"])
+            best_candidate.update(_pipeline_meta)
+            return best_candidate["answer"], best_candidate
+
     answers = [c["answer"] for c in candidates if c["answer"]]
     if answers:
         most_common = Counter(answers).most_common(1)[0][0]
-        return most_common, candidates[0]
-    
-    return None, {}
+        fallback = next((c for c in candidates if c["answer"] == most_common), candidates[0])
+        fallback.update(_pipeline_meta)
+        fallback["fallback_majority_vote"] = True
+        return most_common, fallback
+
+    return None, _pipeline_meta
 
 # ============================================================================
 # TRUTHFULNESS: MULTI-PATH VERIFICATION + FACT CHECKING

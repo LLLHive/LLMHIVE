@@ -126,6 +126,19 @@ except ImportError:
     get_reasoning_hack = lambda *a: None
     ModelTier = None
 
+# ── 2026 Intelligence Layer ──
+try:
+    from ..intelligence import (
+        get_routing_engine as _get_routing_engine_2026,
+        get_model_registry_2026 as _get_registry_2026,
+        get_adaptive_ensemble as _get_ensemble_2026,
+        get_strategy_db as _get_strategy_db,
+        is_benchmark_mode as _is_benchmark_mode_2026,
+    )
+    _INTELLIGENCE_2026 = True
+except ImportError:
+    _INTELLIGENCE_2026 = False
+
 # Import Elite Orchestrator and Quality Booster
 try:
     from ..orchestration.elite_orchestrator import (
@@ -274,6 +287,23 @@ except ImportError:
     ReasoningDetector = None  # type: ignore
     QueryComplexity = None  # type: ignore
     ReasoningType = None  # type: ignore
+
+# ── 2026 Intelligence Layer ──
+try:
+    from ..intelligence import (
+        get_routing_engine as _get_routing_engine_2026,
+        get_intelligence_telemetry as _get_intel_telemetry_2026,
+        get_adaptive_ensemble as _get_ensemble_2026,
+        get_strategy_db as _get_strategy_db_2026,
+        get_verify_policy as _get_verify_policy_2026,
+        is_benchmark_mode as _is_benchmark_mode_2026,
+        assert_elite_locked as _assert_elite_locked_2026,
+        get_intelligence_mode as _get_intelligence_mode_2026,
+        get_elite_model as _get_elite_model_2026,
+    )
+    INTELLIGENCE_2026_AVAILABLE = True
+except ImportError:
+    INTELLIGENCE_2026_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -844,7 +874,38 @@ async def get_intelligent_models(
     """
     selected = []
     used_providers = set()
-    
+
+    # ===========================================================================
+    # STEP -1: 2026 Intelligence Layer routing (highest priority)
+    # ===========================================================================
+    if _INTELLIGENCE_2026:
+        try:
+            _category_map = {
+                "code": "coding", "coding": "coding",
+                "math": "math", "reasoning": "reasoning",
+                "rag": "rag", "search": "rag",
+                "dialogue": "dialogue", "conversation": "dialogue",
+                "multilingual": "multilingual",
+                "long_context": "long_context",
+                "tool_use": "tool_use",
+            }
+            _mapped = _category_map.get(task_type.lower(), task_type.lower())
+            _engine = _get_routing_engine_2026()
+            _scored = _engine.select(
+                _mapped,
+                top_n=num_models,
+                require_tools=require_tools,
+            )
+            if _scored:
+                _ids = [s.model_id for s in _scored]
+                logger.info(
+                    "2026 routing engine selected for %s: %s",
+                    _mapped, _ids,
+                )
+                return _ids[:num_models]
+        except Exception as _re:
+            logger.debug("2026 routing fallthrough: %s", _re)
+
     # ===========================================================================
     # STEP 0: Use comprehensive MODEL_INTELLIGENCE if available
     # ===========================================================================
@@ -2034,6 +2095,42 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     selected_models = [FALLBACK_O3, FALLBACK_GPT_5] + selected_models
                 category_override = True
             
+            # ── 2026 Intelligence Layer: Authority-based model selection ──
+            if INTELLIGENCE_2026_AVAILABLE:
+                try:
+                    _intel_mode = _get_intelligence_mode_2026()
+                    _task = _detect_task_type(request.prompt) or "reasoning"
+
+                    if _intel_mode == "benchmark_locked":
+                        _elite_id = _get_elite_model_2026(_task)
+                        selected_models = [_elite_id]
+                        category_override = True
+                        logger.info("2026 benchmark_locked: %s -> %s", _task, _elite_id)
+
+                    elif _intel_mode == "controlled" and not category_override:
+                        _scored = _get_routing_engine_2026().select(_task, top_n=2)
+                        if _scored:
+                            selected_models = [s.model_id for s in _scored]
+                            category_override = True
+                            logger.info(
+                                "2026 controlled routing: %s -> %s "
+                                "(score=%.4f, str=%.3f, reas=%.3f, lat=%.3f, cost=%.3f)",
+                                _task, selected_models[0],
+                                _scored[0].total_score, _scored[0].strength_score,
+                                _scored[0].reasoning_score, _scored[0].latency_score,
+                                _scored[0].cost_score,
+                            )
+
+                    else:
+                        _scored = _get_routing_engine_2026().select(_task, top_n=2)
+                        if _scored:
+                            logger.info(
+                                "2026 advisory: %s -> %s (score=%.4f, not overriding)",
+                                _task, _scored[0].model_id, _scored[0].total_score,
+                            )
+                except Exception as _re:
+                    logger.debug("2026 routing skipped: %s", _re)
+
             # Map to actual model names
             actual_models = []
             user_model_names = []
@@ -3484,6 +3581,17 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 "provider": "unknown",
                 "total_cost": 0.0,
             }
+
+        # Expose same-model failover telemetry from orchestrator result
+        _orch_meta = getattr(artifacts, "metadata", None) if artifacts else None
+        if isinstance(_orch_meta, dict) and _orch_meta:
+            _fo = {}
+            for _fk in ("failover_attempted", "failover_provider", "failure_type",
+                         "provider_sla_breached", "providers_tried"):
+                if _fk in _orch_meta:
+                    _fo[_fk] = _orch_meta[_fk]
+            if _fo:
+                extra["failover"] = _fo
         
         # CRITICAL SAFEGUARD: Never return empty message
         # If final_text is empty after all processing, provide a fallback

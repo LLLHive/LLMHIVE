@@ -24,6 +24,12 @@ import time
 
 import httpx
 
+try:
+    from experiment_telemetry import ExperimentTracer
+    _TRACER: ExperimentTracer | None = None
+except ImportError:
+    _TRACER = None
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -257,6 +263,9 @@ def extract_score(judge_response: str) -> float:
     return 5.0  # Default to middle score if parsing fails
 
 
+_MIN_RESPONSE_LEN = 30
+
+
 async def evaluate_single_question(idx: int, total: int, question: dict) -> dict:
     """Evaluate a single multi-turn question with LLM-as-judge."""
     category = question["category"]
@@ -269,8 +278,17 @@ async def evaluate_single_question(idx: int, total: int, question: dict) -> dict
         "Always follow the user's instructions carefully."
     )
 
+    orchestration_preamble = (
+        "Maintain coherence across turns. "
+        "Be concise unless asked for elaboration. "
+        "Answer precisely and directly. "
+        "Preserve role consistency."
+    )
+
+    full_system = f"{system_msg}\n\n{orchestration_preamble}"
+
     # Turn 1
-    turn1_prompt = f"{system_msg}\n\n{question['turn1']}"
+    turn1_prompt = f"{full_system}\n\n{question['turn1']}"
     result1 = await call_api(turn1_prompt)
     if not result1.get("success"):
         return {"success": False, "error": result1.get("error", "turn1 failed"),
@@ -279,14 +297,20 @@ async def evaluate_single_question(idx: int, total: int, question: dict) -> dict
     turn1_response = result1.get("response", "")
     turn1_latency = result1.get("latency", 0)
 
-    # INFRA HARDENING: validate turn-1 response before judge scoring
     if not response_is_valid(turn1_response):
         return {"success": True, "failure_type": "INFRA_FAILURE",
                 "category": category, "latency": turn1_latency}
 
-    # Turn 2 (structured multi-turn context)
+    # Response validator: re-query if turn1 is too short
+    if len(turn1_response.strip()) < _MIN_RESPONSE_LEN:
+        retry1 = await call_api(turn1_prompt)
+        if retry1.get("success") and len(retry1.get("response", "").strip()) >= _MIN_RESPONSE_LEN:
+            turn1_response = retry1["response"]
+            turn1_latency += retry1.get("latency", 0)
+
+    # Turn 2 — always includes full turn1 context for memory enforcement
     turn2_prompt = (
-        f"{system_msg}\n\n"
+        f"{full_system}\n\n"
         f"This is a multi-turn conversation. Here is the prior exchange:\n\n"
         f"[Turn 1] User: {question['turn1']}\n\n"
         f"[Turn 1] Assistant: {turn1_response}\n\n"
@@ -301,10 +325,16 @@ async def evaluate_single_question(idx: int, total: int, question: dict) -> dict
     turn2_response = result2.get("response", "")
     turn2_latency = result2.get("latency", 0)
 
-    # INFRA HARDENING: validate turn-2 response before judge scoring
     if not response_is_valid(turn2_response):
         return {"success": True, "failure_type": "INFRA_FAILURE",
                 "category": category, "latency": turn1_latency + turn2_latency}
+
+    # Response validator: re-query if turn2 is too short
+    if len(turn2_response.strip()) < _MIN_RESPONSE_LEN:
+        retry2 = await call_api(turn2_prompt)
+        if retry2.get("success") and len(retry2.get("response", "").strip()) >= _MIN_RESPONSE_LEN:
+            turn2_response = retry2["response"]
+            turn2_latency += retry2.get("latency", 0)
 
     # Judge turn 1
     judge1_prompt = JUDGE_PROMPT_TEMPLATE.format(
@@ -325,11 +355,38 @@ async def evaluate_single_question(idx: int, total: int, question: dict) -> dict
     avg_score = round((score1 + score2) / 2, 1)
     total_latency = turn1_latency + turn2_latency
 
+    consistency_flag = ""
+    if score1 - score2 > 2:
+        consistency_flag = " ⚠️ CONSISTENCY_DROP"
+
     print(
         f"  [{idx+1}/{total}] Dialogue: {category:<12} "
-        f"turn1={score1:.0f}/10 turn2={score2:.0f}/10 avg={avg_score:.1f}/10",
+        f"turn1={score1:.0f}/10 turn2={score2:.0f}/10 avg={avg_score:.1f}/10{consistency_flag}",
         flush=True,
     )
+
+    try:
+        if _TRACER:
+            _TRACER.log_dialogue_transcript(
+                question_id=f"mtbench_{idx}",
+                category=category,
+                turn1_response=turn1_response,
+                turn2_response=turn2_response,
+                judge_score1=score1,
+                judge_score2=score2,
+                judge_rationale1=judge1_result.get("response", "")[:500] if judge1_result.get("success") else "",
+                judge_rationale2=judge2_result.get("response", "")[:500] if judge2_result.get("success") else "",
+                consistency_drop=score1 - score2 > 2,
+            )
+            _TRACER.log_trace("Dialogue", {
+                "question_id": f"mtbench_{idx}",
+                "subject": category,
+                "is_correct": avg_score >= 7.0,
+                "confidence": avg_score / 10.0,
+                "latency_ms": total_latency,
+            })
+    except Exception:
+        pass
 
     return {
         "success": True,
@@ -338,11 +395,19 @@ async def evaluate_single_question(idx: int, total: int, question: dict) -> dict
         "score2": score2,
         "avg_score": avg_score,
         "latency": total_latency,
+        "consistency_drop": score1 - score2 > 2,
     }
 
 
 async def run_evaluation(seed: int, output_path: str):
     """Run the full dialogue evaluation."""
+    global _TRACER
+    try:
+        if ExperimentTracer is not None and _TRACER is None:
+            _TRACER = ExperimentTracer.init()
+    except Exception:
+        pass
+
     rng = random.Random(seed)
     sample_size = min(SAMPLE_SIZE, len(QUESTIONS))
     selected = rng.sample(range(len(QUESTIONS)), sample_size)

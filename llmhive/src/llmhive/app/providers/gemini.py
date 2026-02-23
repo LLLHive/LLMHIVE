@@ -1,11 +1,7 @@
 """Google Gemini Provider for LLMHive.
 
-Integrates Google's Gemini models (Gemini 2.5 Pro, Flash, etc.) via the
-google-generativeai SDK.
-
-Usage:
-    provider = GeminiProvider(api_key="your-api-key")
-    result = await provider.generate("Hello, world!", model="gemini-2.0-flash")
+Integrates Google's Gemini models via the google-generativeai SDK.
+Model IDs are resolved dynamically through ``google_model_discovery``.
 """
 from __future__ import annotations
 
@@ -15,6 +11,16 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+try:
+    from llmhive.app.providers.google_model_discovery import (
+        get_google_model_cached,
+        select_best_google_model,
+        GoogleModel,
+    )
+    _HAS_DISCOVERY = True
+except ImportError:
+    _HAS_DISCOVERY = False
 
 
 @dataclass
@@ -30,75 +36,38 @@ class GeminiResult:
 
 class GeminiProvider:
     """Provider for Google Gemini models.
-    
-    Supports:
-    - gemini-2.0-flash-exp (latest)
-    - gemini-1.5-pro
-    - gemini-1.5-flash
-    - gemini-2.5-pro (mapped to gemini-1.5-pro)
+
+    Model names are resolved dynamically via ``google_model_discovery``.
+    Legacy aliases (``gemini-1.5-pro``, ``gemini-pro``, etc.) are mapped
+    to the best available model at runtime.
     """
     
-    # Orchestration kwargs to filter out (not valid for Gemini API)
     ORCHESTRATION_KWARGS = {
         'use_hrm', 'use_adaptive_routing', 'use_deep_consensus', 
         'use_prompt_diffusion', 'use_memory', 'accuracy_level',
         'session_id', 'user_id', 'user_tier', 'enable_tools',
         'knowledge_snippets', 'context', 'plan', 'db_session',
     }
-    
-    # Model name mapping (UI names to actual Gemini model names)
-    # Discovered available: gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash
-    MODEL_MAPPING = {
-        "gemini-2.5-pro": "gemini-2.5-pro",
-        "gemini-2.5-flash": "gemini-2.5-flash", 
-        "gemini-2.0-flash": "gemini-2.0-flash",
-        "gemini-1.5-pro": "gemini-2.5-pro",  # Upgrade to 2.5
-        "gemini-1.5-flash": "gemini-2.5-flash",  # Upgrade to 2.5
-        "gemini-pro": "gemini-2.5-pro",
-        "gemini-flash": "gemini-2.5-flash",
+
+    _VARIANT_ALIASES = {
+        "gemini-pro": "pro",
+        "gemini-flash": "flash",
     }
+
+    _discovered_models: Optional[List["GoogleModel"]] = None
     
     def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize Gemini provider.
-        
-        Args:
-            api_key: Google AI API key (or uses GEMINI_API_KEY env var)
-        """
         self.name = "gemini"
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_AI_API_KEY")
         
         if not self.api_key:
             raise ValueError("Gemini API key not provided")
         
-        # Initialize the Google Generative AI client
         try:
             import google.generativeai as genai
             genai.configure(api_key=self.api_key)
             self._genai = genai
-            
-            # List available models for debugging
-            try:
-                models_list = list(genai.list_models())
-                available = []
-                for m in models_list:
-                    # Check if model supports generateContent
-                    methods = getattr(m, 'supported_generation_methods', [])
-                    if 'generateContent' in methods:
-                        available.append(m.name)
-                
-                logger.info("Gemini available models: %s", available[:10])  # Log first 10
-                if available:
-                    # Use the first available model as default (remove "models/" prefix)
-                    self._default_model = available[0].replace("models/", "")
-                    logger.info("Gemini using default model: %s", self._default_model)
-                else:
-                    self._default_model = None
-                    logger.warning("No Gemini models with generateContent support found")
-            except Exception as e:
-                logger.warning("Could not list Gemini models: %s", e)
-                self._default_model = None
-                
+            self._default_model: Optional[str] = None
             logger.info("Gemini provider initialized")
         except ImportError:
             raise ImportError(
@@ -107,36 +76,57 @@ class GeminiProvider:
             )
     
     def _map_model_name(self, model: str) -> str:
-        """Map UI model names to actual Gemini model names."""
-        model_lower = model.lower()
-        mapped = self.MODEL_MAPPING.get(model_lower, model)
-        logger.debug("Gemini model mapping: %s -> %s", model, mapped)
-        return mapped
+        """Resolve *model* to the best available Gemini model ID.
+
+        Pure aliases (``gemini-pro`` -> ``pro`` workload) are resolved
+        via discovery.  Direct model IDs are passed through.
+        """
+        model_lower = model.lower().strip()
+
+        if model_lower in self._VARIANT_ALIASES:
+            workload = self._VARIANT_ALIASES[model_lower]
+            if _HAS_DISCOVERY and GeminiProvider._discovered_models:
+                try:
+                    return select_best_google_model(
+                        GeminiProvider._discovered_models, workload=workload,
+                    )
+                except ValueError:
+                    pass
+
+        if "gemini" in model_lower:
+            return model_lower
+
+        return model
     
     async def generate(
         self,
         prompt: str,
-        model: str = "gemini-2.5-flash",
+        model: Optional[str] = None,
         **kwargs,
     ) -> GeminiResult:
-        """
-        Generate a response using Gemini.
-        
-        Args:
-            prompt: The input prompt
-            model: Model name (e.g., "gemini-1.5-pro", "gemini-2.0-flash-exp")
-            **kwargs: Additional parameters (filtered for Gemini API)
-            
-        Returns:
-            GeminiResult with response content and metadata
+        """Generate a response using Gemini.
+
+        *model* is resolved through auto-discovery if ``None`` or an alias.
         """
         # Filter out orchestration-specific kwargs
         api_kwargs = {
             k: v for k, v in kwargs.items() 
             if k not in self.ORCHESTRATION_KWARGS
         }
-        
-        # Map model name
+
+        if model is None:
+            if self._default_model:
+                model = self._default_model
+            elif _HAS_DISCOVERY and GeminiProvider._discovered_models:
+                try:
+                    model = select_best_google_model(
+                        GeminiProvider._discovered_models, workload="speed",
+                    )
+                except ValueError:
+                    model = "gemini-2.5-flash"
+            else:
+                model = "gemini-2.5-flash"
+
         actual_model = self._map_model_name(model)
         
         try:
@@ -190,25 +180,24 @@ class GeminiProvider:
     async def complete(
         self,
         prompt: str,
-        model: str = "gemini-2.5-flash",
+        model: Optional[str] = None,
         **kwargs,
     ) -> GeminiResult:
-        """Alias for generate() - used by orchestration components."""
+        """Alias for generate() — used by orchestration components."""
         return await self.generate(prompt, model=model, **kwargs)
     
     def supports_model(self, model: str) -> bool:
         """Check if this provider supports the given model."""
         model_lower = model.lower()
-        return (
-            "gemini" in model_lower or
-            model_lower in self.MODEL_MAPPING
-        )
+        if "gemini" in model_lower:
+            return True
+        if model_lower in self._VARIANT_ALIASES:
+            return True
+        return False
     
     def list_models(self) -> List[str]:
-        """List available models."""
-        return [
-            "gemini-2.5-pro",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-        ]
+        """List available models (from discovery cache if available)."""
+        if _HAS_DISCOVERY and GeminiProvider._discovered_models:
+            return [m.model_id for m in GeminiProvider._discovered_models]
+        return []
 

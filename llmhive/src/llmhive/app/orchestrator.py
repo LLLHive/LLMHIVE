@@ -33,7 +33,7 @@ _RETRYABLE_EXCEPTIONS = (
     OSError,
 )
 
-_PROVIDER_RETRY_MAX = 5
+_PROVIDER_RETRY_MAX = 2
 _PROVIDER_RETRY_BACKOFF_BASE = 2
 
 
@@ -53,10 +53,19 @@ def _response_is_valid_infra(text: Any, min_length: int = 10) -> bool:
 
 
 def _is_retryable_error(exc: BaseException) -> bool:
-    """Return True if the exception indicates a transient infra failure."""
+    """Return True if the exception indicates a transient infra failure.
+
+    402 (payment) and 429 (rate limit) are NOT retryable at this level —
+    they should fail fast so the same-model failover loop can route to
+    an alternative provider instead of wasting retries.
+    """
+    msg = str(exc).lower()
+    if "402" in msg or "payment required" in msg:
+        return False
+    if "429" in msg or "rate limit" in msg:
+        return False
     if isinstance(exc, _RETRYABLE_EXCEPTIONS):
         return True
-    msg = str(exc).lower()
     return any(tok in msg for tok in (
         "502", "503", "timeout", "timed out", "connection reset",
         "service unavailable", "bad gateway",
@@ -928,49 +937,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                             )
                             
                         except Exception as e:
-                            error_str = str(e).lower()
-                            is_rate_limit = (
-                                "429" in error_str
-                                or "rate limit" in error_str
-                                or "rate limited" in error_str
-                                or "request failed after retries" in error_str
-                            )
                             logger.error(f"OpenRouter API error for model {model}: {e}")
-                            # Fallback to Together.ai only on rate limit (backup path)
-                            if is_rate_limit:
-                                try:
-                                    from .providers.together_client import get_together_client
-                                    together_client = get_together_client()
-                                    if together_client:
-                                        model_lower = model.lower()
-                                        if "qwen" in model_lower:
-                                            together_model = "together/Qwen/Qwen2.5-72B-Instruct-Turbo"
-                                        elif "405" in model_lower:
-                                            together_model = "together/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
-                                        elif "8b" in model_lower:
-                                            together_model = "together/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
-                                        else:
-                                            together_model = "together/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
-                                        logger.warning(
-                                            "OpenRouter rate limit; falling back to Together.ai model %s",
-                                            together_model,
-                                        )
-                                        fallback_text = await together_client.generate_with_retry(
-                                            prompt,
-                                            model=together_model,
-                                            temperature=kwargs.get("temperature", 0.7),
-                                            max_tokens=kwargs.get("max_tokens", 2048),
-                                        )
-                                        if fallback_text:
-                                            return Result(
-                                                text=fallback_text,
-                                                model_name=together_model,
-                                                tokens=0,
-                                                cost_info={"provider": "together", "fallback": True},
-                                                generation_id=None,
-                                            )
-                                except Exception as fallback_error:
-                                    logger.warning("Together.ai fallback failed: %s", fallback_error)
                             raise
                     
                     async def complete(self, prompt: str, model: str = "openai/gpt-4o", **kwargs):
@@ -2994,31 +2961,57 @@ Please provide an accurate, well-verified response."""
                 # Fall through to single model execution
         
         # Single model execution (when HRM and consensus not used or failed)
+        # ── SAME-MODEL MULTI-PROVIDER FAILOVER ──────────────────────────
         if hrm_execution_result is None and consensus_result is None:
-            # Get the provider for the first model
+            from .intelligence.provider_equivalence import (
+                get_equivalent_providers,
+                get_provider_model_name,
+                classify_provider_failure,
+                is_failover_worthy,
+                is_provider_sla_healthy,
+                record_provider_error,
+            )
+            from .intelligence.elite_policy import is_benchmark_mode
+
             first_model = models_to_use[0]
-            provider_name = model_to_provider.get(first_model, first_model)
-            # Try to get the provider, fallback to openrouter if available (NEVER fall back to stub)
-            provider = self.providers.get(provider_name)
-            if not provider:
-                # Try real providers only - stub should NEVER be used for actual API calls
-                provider = self.providers.get("openrouter") or self.providers.get("openai") or self.providers.get("anthropic") or self.providers.get("google")
-            if not provider:
-                # Create minimal stub response
-                result = LLMResult(
-                    content="I apologize, but no LLM providers are configured. Please configure at least one API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, GROK_API_KEY, or GEMINI_API_KEY).",
-                    model="stub",
-                    tokens=0
-                )
-            else:
-                # Try to generate a response using the provider
+            equivalent_providers = get_equivalent_providers(first_model)
+
+            # Telemetry tracking for this invocation
+            _failover_attempted = False
+            _failover_provider = None
+            _failure_type = None
+            _provider_sla_breached = False
+
+            # Track which providers we actually tried
+            _providers_tried: List[str] = []
+            _last_exc: Optional[Exception] = None
+            _same_model_succeeded = False
+
+            for eq_provider_key in equivalent_providers:
+                # SLA pre-check: skip providers currently breaching thresholds
+                if not is_provider_sla_healthy(eq_provider_key):
+                    _provider_sla_breached = True
+                    logger.warning(
+                        "FAILOVER_SLA_SKIP: %s breached SLA for model=%s, trying next",
+                        eq_provider_key, first_model,
+                    )
+                    continue
+
+                provider = self.providers.get(eq_provider_key)
+                if not provider:
+                    continue
+
+                provider_model_name = get_provider_model_name(first_model, eq_provider_key)
+                _providers_tried.append(eq_provider_key)
+
+                if _providers_tried and len(_providers_tried) > 1:
+                    _failover_attempted = True
+                    _failover_provider = eq_provider_key
+
                 try:
                     if hasattr(provider, 'generate'):
-                        model_name = first_model if first_model != provider_name else (models_to_use[0] if models_to_use else "default")
-
-                        # INFRA HARDENING: retry wrapper with exponential backoff
                         provider_result = await _call_provider_with_retry(
-                            provider, augmented_prompt, model_name, **kwargs
+                            provider, augmented_prompt, provider_model_name, **kwargs
                         )
 
                         if hasattr(provider_result, 'text'):
@@ -3029,8 +3022,8 @@ Please provide an accurate, well-verified response."""
                             content = provider_result
                         else:
                             content = str(provider_result)
-                        
-                        model_name = getattr(provider_result, 'model', models_to_use[0])
+
+                        model_name = getattr(provider_result, 'model', first_model)
                         tokens = getattr(provider_result, 'tokens_used', 0)
                         cost_info = getattr(provider_result, 'cost_info', None)
                         generation_id = getattr(provider_result, 'generation_id', None)
@@ -3040,105 +3033,167 @@ Please provide an accurate, well-verified response."""
                         tokens = 0
                         cost_info = None
                         generation_id = None
-                    
+
+                    _failover_meta: Dict[str, Any] = {}
+                    if _failover_attempted:
+                        _failover_meta["failover_attempted"] = True
+                        _failover_meta["failover_provider"] = eq_provider_key
+                        _failover_meta["providers_tried"] = list(_providers_tried)
+                    if _failure_type:
+                        _failover_meta["failure_type"] = _failure_type
+                    if _provider_sla_breached:
+                        _failover_meta["provider_sla_breached"] = True
+
                     result = LLMResult(
                         content=content,
                         model=model_name,
                         tokens=tokens,
                         cost_info=cost_info,
                         generation_id=generation_id,
+                        metadata=_failover_meta if _failover_meta else None,
                     )
-                    
+
+                    if _failover_attempted:
+                        logger.info(
+                            "SAME_MODEL_FAILOVER_SUCCESS: model=%s provider=%s "
+                            "(tried: %s)",
+                            first_model, eq_provider_key,
+                            " → ".join(_providers_tried),
+                        )
+
                     if scratchpad:
                         scratchpad.write("model_output", content)
                         scratchpad.write("model_name", model_name)
                         if cost_info:
                             scratchpad.write("cost_info", cost_info)
-                        
+                        if _failover_attempted:
+                            scratchpad.write("failover_attempted", True)
+                            scratchpad.write("failover_provider", eq_provider_key)
+                        if _failure_type:
+                            scratchpad.write("failure_type", _failure_type)
+                        if _provider_sla_breached:
+                            scratchpad.write("provider_sla_breached", True)
+
+                    _same_model_succeeded = True
+                    break  # Success — exit failover loop
+
                 except Exception as e:
-                    logger.error(f"Error generating response from provider: {e}")
-                    
-                    # FALLBACK CHAIN: Together.ai → Cerebras → HuggingFace → Direct httpx
-                    # Catches OpenRouter 403/429/5xx and retries via alternative providers
-                    fallback_result = None
-                    fallback_provider = None
-                    
-                    # Method 1: Try full fallback chain via provider router
-                    try:
-                        from .providers import get_provider_router
-                        router = get_provider_router()
-                        if router:
-                            fallback_result = await router.try_all_fallbacks(
-                                first_model, augmented_prompt
-                            )
-                            if fallback_result:
-                                fallback_provider = "router-chain"
-                    except Exception as fb_err:
-                        logger.warning(f"Router fallback chain failed: {fb_err}")
-                    
-                    # Method 2: Direct httpx calls if router failed entirely
-                    # Order: Grok (best quality) → Together → Cerebras → HuggingFace
-                    if not fallback_result:
-                        import os, httpx as _fb_httpx
-                        _fb_providers = [
-                            ("xAI-Grok", os.getenv("GROK_API_KEY"),
-                             "https://api.x.ai/v1/chat/completions",
-                             "grok-3-mini"),
-                            ("Together.ai", os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY"),
-                             "https://api.together.ai/v1/chat/completions",
-                             "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"),
-                            ("Cerebras", os.getenv("CEREBRAS_API_KEY"),
-                             "https://api.cerebras.ai/v1/chat/completions",
-                             "llama-3.3-70b"),
-                            ("HuggingFace", os.getenv("HF_TOKEN"),
-                             "https://router.huggingface.co/hf-inference/v1/chat/completions",
-                             "meta-llama/Llama-3.3-70B-Instruct"),
-                        ]
-                        for _fb_name, _fb_key, _fb_url, _fb_model in _fb_providers:
-                            if not _fb_key or fallback_result:
-                                continue
-                            try:
-                                async with _fb_httpx.AsyncClient(timeout=60.0) as _fb_client:
-                                    _fb_resp = await _fb_client.post(
-                                        _fb_url,
-                                        headers={"Authorization": f"Bearer {_fb_key}",
-                                                 "Content-Type": "application/json"},
-                                        json={"model": _fb_model,
-                                              "messages": [{"role": "user", "content": augmented_prompt}],
-                                              "max_tokens": 2048},
-                                    )
-                                    if _fb_resp.status_code == 200:
-                                        _fb_data = _fb_resp.json()
-                                        _fb_choices = _fb_data.get("choices", [])
-                                        if _fb_choices:
-                                            fallback_result = _fb_choices[0].get("message", {}).get("content", "")
-                                            fallback_provider = f"direct-{_fb_name}"
-                                            logger.info(f"Direct {_fb_name} fallback succeeded")
-                                            break
-                            except Exception as direct_err:
-                                logger.warning(f"Direct {_fb_name} fallback failed: {direct_err}")
-                    
-                    if fallback_result:
-                        logger.info(f"Fallback succeeded via {fallback_provider} for {first_model}")
-                        result = LLMResult(
-                            content=fallback_result,
-                            model=f"fallback-{fallback_provider}-for-{first_model}",
-                            tokens=0,
-                            cost_info=None,
-                            generation_id=None,
+                    _failure_type = classify_provider_failure(e)
+                    record_provider_error(eq_provider_key)
+                    _last_exc = e
+
+                    if is_failover_worthy(_failure_type):
+                        logger.warning(
+                            "SAME_MODEL_FAILOVER: %s failed on provider=%s "
+                            "failure_type=%s, trying next equivalent provider. "
+                            "Error: %s",
+                            first_model, eq_provider_key, _failure_type, e,
                         )
+                        continue  # Try next equivalent provider
                     else:
-                        # All fallbacks exhausted — raise the error
-                        from .errors import ProviderError, ErrorCode
-                        raise ProviderError(
-                            message=f"Provider error: {str(e)}",
-                            provider=provider_name,
-                            model=first_model,
-                            code=ErrorCode.PROVIDER_ERROR,
-                            original_error=e,
-                            details={"models_attempted": models_to_use},
-                            recoverable=True,
-                        ) from e
+                        logger.error(
+                            "NON_RETRYABLE failure for model=%s provider=%s "
+                            "failure_type=%s: %s",
+                            first_model, eq_provider_key, _failure_type, e,
+                        )
+                        break  # Client error — don't bother trying other providers
+
+            # ── All equivalent providers exhausted ──────────────────────
+            if not _same_model_succeeded:
+                if is_benchmark_mode():
+                    raise RuntimeError(
+                        f"BENCHMARK_ABORT: Elite model continuity failed — "
+                        f"model={first_model} exhausted all equivalent providers "
+                        f"({', '.join(_providers_tried)}). "
+                        f"Last failure: {_failure_type}. "
+                        f"No downgrade allowed in benchmark mode."
+                    )
+
+                # Production fallback: try weaker-model chain as last resort
+                logger.error(
+                    "SAME_MODEL_EXHAUSTED: model=%s providers_tried=%s "
+                    "failure_type=%s — falling back to weak-model chain",
+                    first_model, _providers_tried, _failure_type,
+                )
+                fallback_result = None
+                fallback_provider = None
+
+                try:
+                    from .providers import get_provider_router
+                    router = get_provider_router()
+                    if router:
+                        fallback_result = await router.try_all_fallbacks(
+                            first_model, augmented_prompt
+                        )
+                        if fallback_result:
+                            fallback_provider = "router-chain"
+                except Exception as fb_err:
+                    logger.warning("Router fallback chain failed: %s", fb_err)
+
+                if not fallback_result:
+                    import httpx as _fb_httpx
+                    _fb_providers = [
+                        ("xAI-Grok", os.getenv("GROK_API_KEY"),
+                         "https://api.x.ai/v1/chat/completions",
+                         "grok-3-mini"),
+                        ("Together.ai", os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY"),
+                         "https://api.together.ai/v1/chat/completions",
+                         "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"),
+                        ("Cerebras", os.getenv("CEREBRAS_API_KEY"),
+                         "https://api.cerebras.ai/v1/chat/completions",
+                         "llama-3.3-70b"),
+                        ("HuggingFace", os.getenv("HF_TOKEN"),
+                         "https://router.huggingface.co/hf-inference/v1/chat/completions",
+                         "meta-llama/Llama-3.3-70B-Instruct"),
+                    ]
+                    for _fb_name, _fb_key, _fb_url, _fb_model in _fb_providers:
+                        if not _fb_key or fallback_result:
+                            continue
+                        try:
+                            async with _fb_httpx.AsyncClient(timeout=60.0) as _fb_client:
+                                _fb_resp = await _fb_client.post(
+                                    _fb_url,
+                                    headers={"Authorization": f"Bearer {_fb_key}",
+                                             "Content-Type": "application/json"},
+                                    json={"model": _fb_model,
+                                          "messages": [{"role": "user", "content": augmented_prompt}],
+                                          "max_tokens": 2048},
+                                )
+                                if _fb_resp.status_code == 200:
+                                    _fb_data = _fb_resp.json()
+                                    _fb_choices = _fb_data.get("choices", [])
+                                    if _fb_choices:
+                                        fallback_result = _fb_choices[0].get("message", {}).get("content", "")
+                                        fallback_provider = f"direct-{_fb_name}"
+                                        logger.info("Direct %s fallback succeeded", _fb_name)
+                                        break
+                        except Exception as direct_err:
+                            logger.warning("Direct %s fallback failed: %s", _fb_name, direct_err)
+
+                if fallback_result:
+                    logger.info("Fallback succeeded via %s for %s", fallback_provider, first_model)
+                    result = LLMResult(
+                        content=fallback_result,
+                        model=f"fallback-{fallback_provider}-for-{first_model}",
+                        tokens=0,
+                        cost_info=None,
+                        generation_id=None,
+                    )
+                else:
+                    from .errors import ProviderError, ErrorCode
+                    raise ProviderError(
+                        message=f"Provider error: {_last_exc}",
+                        provider=", ".join(_providers_tried) if _providers_tried else "none",
+                        model=first_model,
+                        code=ErrorCode.ALL_PROVIDERS_FAILED,
+                        original_error=_last_exc,
+                        details={
+                            "models_attempted": models_to_use,
+                            "providers_tried": _providers_tried,
+                            "failure_type": _failure_type,
+                        },
+                        recoverable=True,
+                    ) from _last_exc
         
         # Infer domain for later use
         domain = None
