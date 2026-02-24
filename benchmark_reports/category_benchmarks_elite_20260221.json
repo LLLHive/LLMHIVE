@@ -1,0 +1,44 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 5,
+      "correct": 3,
+      "incorrect": 2,
+      "errors": 0,
+      "accuracy": 60.0,
+      "avg_latency_ms": 5000,
+      "avg_cost": 0.005,
+      "total_cost": 0.025,
+      "extra": {
+        "error_samples": [],
+        "subject_stats": {
+          "business_ethics": {
+            "correct": 1,
+            "total": 1
+          },
+          "miscellaneous": {
+            "correct": 0,
+            "total": 1
+          },
+          "professional_law": {
+            "correct": 1,
+            "total": 1
+          },
+          "professional_psychology": {
+            "correct": 1,
+            "total": 1
+          },
+          "moral_scenarios": {
+            "correct": 0,
+            "total": 1
+          }
+        }
+      },
+      "infra_failures": 0
+    }
+  ],
+  "timestamp": "2026-02-21T23:52:46.449296"
+}

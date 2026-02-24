@@ -1,0 +1,141 @@
+{
+  "runs": [
+    {
+      "timestamp": "2026-02-23T02:49:01.222298+00:00",
+      "commit": "41594f035",
+      "branch": "fix/enterprise-latency-policy-2026-02-20",
+      "categories": {
+        "reasoning": {
+          "accuracy": 100.0,
+          "sample_size": 1
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-23T02:53:42.317895+00:00",
+      "commit": "41594f035",
+      "branch": "fix/enterprise-latency-policy-2026-02-20",
+      "categories": {
+        "reasoning": {
+          "accuracy": 100.0,
+          "sample_size": 2
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-23T14:29:50.855070+00:00",
+      "commit": "41594f035",
+      "branch": "fix/enterprise-latency-policy-2026-02-20",
+      "categories": {
+        "reasoning": {
+          "accuracy": 74.0,
+          "sample_size": 100
+        },
+        "coding": {
+          "accuracy": 88.0,
+          "sample_size": 50
+        },
+        "math": {
+          "accuracy": 93.7,
+          "sample_size": 100
+        },
+        "multilingual": {
+          "accuracy": 81.0,
+          "sample_size": 100
+        },
+        "long_context": {
+          "accuracy": 100.0,
+          "sample_size": 20
+        },
+        "tool_use": {
+          "accuracy": 100.0,
+          "sample_size": 10
+        },
+        "rag": {
+          "accuracy": 46.3,
+          "sample_size": 200
+        },
+        "dialogue": {
+          "accuracy": 4.4,
+          "sample_size": 10
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    }
+  ],
+  "alerts": [
+    {
+      "timestamp": "2026-02-23T14:29:50.857587+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 26.0% (from 100.0% to 74.0%)"
+    }
+  ],
+  "latest_analysis": {
+    "run_count": 3,
+    "latest_timestamp": "2026-02-23T14:29:50.855070+00:00",
+    "categories": {
+      "reasoning": {
+        "current": 74.0,
+        "rolling_30_mean": 91.33,
+        "volatility": 12.257,
+        "trend": "degrading"
+      },
+      "coding": {
+        "current": 88.0,
+        "rolling_30_mean": 88.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "math": {
+        "current": 93.7,
+        "rolling_30_mean": 93.7,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "multilingual": {
+        "current": 81.0,
+        "rolling_30_mean": 81.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "long_context": {
+        "current": 100.0,
+        "rolling_30_mean": 100.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "tool_use": {
+        "current": 100.0,
+        "rolling_30_mean": 100.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "rag": {
+        "current": 46.3,
+        "rolling_30_mean": 46.3,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "dialogue": {
+        "current": 4.4,
+        "rolling_30_mean": 4.4,
+        "volatility": 0.0,
+        "trend": "stable"
+      }
+    },
+    "alerts": [
+      {
+        "timestamp": "2026-02-23T14:29:50.857587+00:00",
+        "category": "reasoning",
+        "severity": "warning",
+        "message": "Elite performance drop: reasoning dropped 26.0% (from 100.0% to 74.0%)"
+      }
+    ]
+  }
+}

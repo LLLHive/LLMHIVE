@@ -1,0 +1,8 @@
+{
+  "total_tokens": 0,
+  "total_cost_usd": 0,
+  "cost_per_category": {},
+  "cost_per_correct_answer": 0.0,
+  "cost_per_benchmark": 0.0,
+  "cost_vs_previous_commit_delta": -0.11741
+}

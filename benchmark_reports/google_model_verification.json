@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-02-20T17:23:28.438931",
+  "status": "PASS",
+  "connectivity": true,
+  "auth": true,
+  "models_listed": true,
+  "target_model_exists": true,
+  "selected_model": "gemini-2.5-pro",
+  "total_production_models": 8,
+  "latency_ms": 485,
+  "error": null
+}

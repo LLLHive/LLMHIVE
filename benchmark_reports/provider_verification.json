@@ -1,0 +1,137 @@
+{
+  "status": "PASS",
+  "providers": {
+    "openai": {
+      "provider": "openai",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 953,
+      "models_found": 111,
+      "selected_model": "gpt-4-0613",
+      "error": null
+    },
+    "google": {
+      "provider": "google",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 359,
+      "models_found": 17,
+      "selected_model": "gemini-2.5-flash",
+      "error": null
+    },
+    "anthropic": {
+      "provider": "anthropic",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 295,
+      "models_found": 9,
+      "selected_model": "claude-sonnet-4-6",
+      "error": null
+    },
+    "grok": {
+      "provider": "grok",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 3948,
+      "models_found": 1,
+      "selected_model": "grok-3-mini",
+      "error": null
+    },
+    "openrouter": {
+      "provider": "openrouter",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 298,
+      "models_found": 337,
+      "selected_model": "google/gemini-3.1-pro-preview",
+      "error": null
+    },
+    "deepseek": {
+      "provider": "deepseek",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 499,
+      "models_found": 2,
+      "selected_model": "deepseek-chat",
+      "error": null
+    },
+    "groq": {
+      "provider": "groq",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 324,
+      "models_found": 20,
+      "selected_model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+      "error": null
+    },
+    "together": {
+      "provider": "together",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 5903,
+      "models_found": 261,
+      "selected_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "error": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status_code": 200,
+          "latency_ms": 5903,
+          "error": null,
+          "models_found": 261,
+          "selected_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          "success": true
+        }
+      ]
+    },
+    "cerebras": {
+      "provider": "cerebras",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 289,
+      "models_found": 4,
+      "selected_model": "llama3.1-8b",
+      "error": null
+    },
+    "huggingface": {
+      "provider": "huggingface",
+      "status": "PASS",
+      "connectivity": true,
+      "auth": true,
+      "models_listed": true,
+      "target_model_exists": true,
+      "latency_ms": 344,
+      "models_found": 0,
+      "selected_model": "camilodiaz",
+      "error": null
+    }
+  },
+  "timestamp": "2026-02-20T21:24:40.699978"
+}

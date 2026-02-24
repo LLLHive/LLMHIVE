@@ -1,0 +1,236 @@
+{
+  "timestamp": "2026-02-23T14:29:51.670165+00:00",
+  "cai": {
+    "timestamp": "2026-02-23T14:29:51.669880+00:00",
+    "composite_index": 84.12,
+    "categories": {
+      "reasoning": {
+        "index": 66.83,
+        "win_rate_delta": 0.6667,
+        "stability": 0.0,
+        "volatility": 0.1226,
+        "cost_efficiency": 0.9,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "coding": {
+        "index": 87.47,
+        "win_rate_delta": 1.0,
+        "stability": 1.0,
+        "volatility": 0.0,
+        "cost_efficiency": 0.1644,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "math": {
+        "index": 94.73,
+        "win_rate_delta": 1.0,
+        "stability": 1.0,
+        "volatility": 0.0,
+        "cost_efficiency": 0.6488,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "multilingual": {
+        "index": 98.28,
+        "win_rate_delta": 1.0,
+        "stability": 1.0,
+        "volatility": 0.0,
+        "cost_efficiency": 0.8853,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "long_context": {
+        "index": 100.0,
+        "win_rate_delta": 1.0,
+        "stability": 1.0,
+        "volatility": 0.0,
+        "cost_efficiency": 1.0,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "tool_use": {
+        "index": 100.0,
+        "win_rate_delta": 1.0,
+        "stability": 1.0,
+        "volatility": 0.0,
+        "cost_efficiency": 1.0,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "rag": {
+        "index": 60.65,
+        "win_rate_delta": 0.0,
+        "stability": 1.0,
+        "volatility": 0.0,
+        "cost_efficiency": 0.7103,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "dialogue": {
+        "index": 65.0,
+        "win_rate_delta": 0.0,
+        "stability": 1.0,
+        "volatility": 0.0,
+        "cost_efficiency": 1.0,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      }
+    },
+    "ensemble_entropy_avg": 0.0,
+    "reliability_score": 1.0,
+    "interpretation": "strong_moat"
+  },
+  "categories": {
+    "reasoning": {
+      "models_tracked": 1,
+      "history_depth": 3,
+      "best_model": "unknown",
+      "win_rate": 0.6667,
+      "stability": 0.0,
+      "volatility": 0.1226
+    },
+    "coding": {
+      "models_tracked": 1,
+      "history_depth": 1,
+      "best_model": "unknown",
+      "win_rate": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0
+    },
+    "math": {
+      "models_tracked": 1,
+      "history_depth": 1,
+      "best_model": "unknown",
+      "win_rate": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0
+    },
+    "multilingual": {
+      "models_tracked": 1,
+      "history_depth": 1,
+      "best_model": "unknown",
+      "win_rate": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0
+    },
+    "long_context": {
+      "models_tracked": 1,
+      "history_depth": 1,
+      "best_model": "unknown",
+      "win_rate": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0
+    },
+    "tool_use": {
+      "models_tracked": 1,
+      "history_depth": 1,
+      "best_model": "unknown",
+      "win_rate": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0
+    },
+    "rag": {
+      "models_tracked": 1,
+      "history_depth": 1,
+      "best_model": "unknown",
+      "win_rate": 0.0,
+      "stability": 1.0,
+      "volatility": 0.0
+    },
+    "dialogue": {
+      "models_tracked": 1,
+      "history_depth": 1,
+      "best_model": "unknown",
+      "win_rate": 0.0,
+      "stability": 1.0,
+      "volatility": 0.0
+    }
+  },
+  "degradation_alerts": [
+    {
+      "category": "reasoning",
+      "model_id": "unknown",
+      "rolling_baseline": 1.0,
+      "latest": 0.74,
+      "drop_pct": 26.0,
+      "severity": "critical"
+    }
+  ],
+  "all_categories_populated": true,
+  "total_records": 8,
+  "pareto_top3": {
+    "reasoning": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 182.6667,
+        "win_rate": 0.6667,
+        "avg_cost_usd": 0.005,
+        "history_depth": 3
+      }
+    ],
+    "coding": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 21.0637,
+        "win_rate": 1.0,
+        "avg_cost_usd": 0.041778,
+        "history_depth": 1
+      }
+    ],
+    "math": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 53.3569,
+        "win_rate": 1.0,
+        "avg_cost_usd": 0.017561,
+        "history_depth": 1
+      }
+    ],
+    "multilingual": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 141.238,
+        "win_rate": 1.0,
+        "avg_cost_usd": 0.005735,
+        "history_depth": 1
+      }
+    ],
+    "long_context": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 100.0,
+        "win_rate": 1.0,
+        "avg_cost_usd": 0.0,
+        "history_depth": 1
+      }
+    ],
+    "tool_use": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 100.0,
+        "win_rate": 1.0,
+        "avg_cost_usd": 0.0,
+        "history_depth": 1
+      }
+    ],
+    "rag": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 31.963,
+        "win_rate": 0.0,
+        "avg_cost_usd": 0.014486,
+        "history_depth": 1
+      }
+    ],
+    "dialogue": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 4.4,
+        "win_rate": 0.0,
+        "avg_cost_usd": 0.0,
+        "history_depth": 1
+      }
+    ]
+  }
+}

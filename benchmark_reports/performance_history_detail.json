@@ -1,0 +1,122 @@
+[
+  {
+    "timestamp": "2026-02-23T02:49:01.806740+00:00",
+    "category": "reasoning",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 1.0,
+    "latency_p50": 5000,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.005,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T02:53:42.932541+00:00",
+    "category": "reasoning",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 1.0,
+    "latency_p50": 5000,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.005,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.654973+00:00",
+    "category": "reasoning",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.74,
+    "latency_p50": 5000,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.005,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.655714+00:00",
+    "category": "coding",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.88,
+    "latency_p50": 42890,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.041778,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.657563+00:00",
+    "category": "math",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.937,
+    "latency_p50": 23546,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.017561,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.658919+00:00",
+    "category": "multilingual",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.81,
+    "latency_p50": 17432,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0057350000000000005,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.660257+00:00",
+    "category": "long_context",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 1.0,
+    "latency_p50": 12787,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.662064+00:00",
+    "category": "tool_use",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 1.0,
+    "latency_p50": 6789,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.663690+00:00",
+    "category": "rag",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.46299999999999997,
+    "latency_p50": 18139,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0144855,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-02-23T14:29:51.665052+00:00",
+    "category": "dialogue",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.044000000000000004,
+    "latency_p50": 67441,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  }
+]

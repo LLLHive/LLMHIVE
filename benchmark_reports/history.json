@@ -1,0 +1,433 @@
+[
+  {
+    "commit": "869f9a0014951676cc7b64ea4fbb271be8146656",
+    "commit_short": "869f9a001",
+    "branch": "production-hardening-phase",
+    "timestamp": "20260220_002223",
+    "iso_timestamp": "2026-02-20T03:56:28.308698",
+    "overall_accuracy": 81.5,
+    "total_correct": 110,
+    "total_attempted": 135,
+    "total_cost_usd": 0.11741,
+    "total_tokens": 0,
+    "cost_per_correct": 0.001067,
+    "cost_per_1pct_accuracy": 0.001441,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 75.0,
+      "Coding (HumanEval)": 0.0,
+      "Math (GSM8K)": 100.0,
+      "Multilingual (MMMLU)": 75.0,
+      "Long Context (LongBench)": 95.0,
+      "Tool Use (ToolBench)": 90.0,
+      "RAG (MS MARCO)": 36.8,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.1,
+      "Coding (HumanEval)": 0.0174,
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0,
+      "Dialogue (MT-Bench)": 0.0
+    }
+  },
+  {
+    "commit": "5cfde0390e125c5b934a17832254ac869221b6a1",
+    "commit_short": "5cfde0390",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260220_213256",
+    "iso_timestamp": "2026-02-20T21:32:56.056259",
+    "overall_accuracy": 87.2,
+    "total_correct": 462,
+    "total_attempted": 530,
+    "total_cost_usd": 0,
+    "total_tokens": 0,
+    "cost_per_correct": 0.0,
+    "cost_per_1pct_accuracy": 0.0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 73.0,
+      "Coding (HumanEval)": 89.8,
+      "Math (GSM8K)": 94.1,
+      "Multilingual (MMMLU)": 76.8,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 40.9,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.5,
+      "Coding (HumanEval)": 0.0249,
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0048,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0065,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": -0.11741,
+    "accuracy_delta_vs_previous": 5.7
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260221_233357",
+    "iso_timestamp": "2026-02-21T23:42:39.275594",
+    "overall_accuracy": 0.0,
+    "total_correct": 0,
+    "total_attempted": 5,
+    "total_cost_usd": 0.0,
+    "total_tokens": 0,
+    "cost_per_correct": 0,
+    "cost_per_1pct_accuracy": 0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_delta_vs_previous": 0.0,
+    "accuracy_delta_vs_previous": -87.2
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260221_234327",
+    "iso_timestamp": "2026-02-21T23:52:46.453681",
+    "overall_accuracy": 60.0,
+    "total_correct": 3,
+    "total_attempted": 5,
+    "total_cost_usd": 0.025,
+    "total_tokens": 0,
+    "cost_per_correct": 0.008333,
+    "cost_per_1pct_accuracy": 0.000417,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 60.0
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.025
+    },
+    "cost_delta_vs_previous": 0.025,
+    "accuracy_delta_vs_previous": 60.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260221_235354",
+    "iso_timestamp": "2026-02-22T00:08:56.643970",
+    "overall_accuracy": 75.0,
+    "total_correct": 3,
+    "total_attempted": 4,
+    "total_cost_usd": 0.0,
+    "total_tokens": 0,
+    "cost_per_correct": 0.0,
+    "cost_per_1pct_accuracy": 0.0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Math (GSM8K)": 75.0
+    },
+    "cost_by_category": {
+      "Math (GSM8K)": 0.0
+    },
+    "cost_delta_vs_previous": -0.025,
+    "accuracy_delta_vs_previous": 15.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_010956",
+    "iso_timestamp": "2026-02-22T01:30:30.950208",
+    "overall_accuracy": 0.0,
+    "total_correct": 0,
+    "total_attempted": 10,
+    "total_cost_usd": 0.755365,
+    "total_tokens": 0,
+    "cost_per_correct": 0,
+    "cost_per_1pct_accuracy": 0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.7554
+    },
+    "cost_delta_vs_previous": 0.755365,
+    "accuracy_delta_vs_previous": -75.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_013135",
+    "iso_timestamp": "2026-02-22T02:46:35.946072",
+    "overall_accuracy": 80.0,
+    "total_correct": 16,
+    "total_attempted": 20,
+    "total_cost_usd": 0.1,
+    "total_tokens": 0,
+    "cost_per_correct": 0.00625,
+    "cost_per_1pct_accuracy": 0.00125,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 80.0
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.1
+    },
+    "cost_delta_vs_previous": -0.655365,
+    "accuracy_delta_vs_previous": 80.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_024940",
+    "iso_timestamp": "2026-02-22T03:14:36.582344",
+    "overall_accuracy": 88.9,
+    "total_correct": 8,
+    "total_attempted": 9,
+    "total_cost_usd": 0.181245,
+    "total_tokens": 0,
+    "cost_per_correct": 0.022656,
+    "cost_per_1pct_accuracy": 0.002039,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Math (GSM8K)": 88.9
+    },
+    "cost_by_category": {
+      "Math (GSM8K)": 0.1812
+    },
+    "cost_delta_vs_previous": 0.081245,
+    "accuracy_delta_vs_previous": 8.9
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_121536",
+    "iso_timestamp": "2026-02-22T12:24:59.344642",
+    "overall_accuracy": 0.0,
+    "total_correct": 0,
+    "total_attempted": 5,
+    "total_cost_usd": 0.42438,
+    "total_tokens": 0,
+    "cost_per_correct": 0,
+    "cost_per_1pct_accuracy": 0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.4244
+    },
+    "cost_delta_vs_previous": 0.243135,
+    "accuracy_delta_vs_previous": -88.9
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_122727",
+    "iso_timestamp": "2026-02-22T12:28:56.330921",
+    "overall_accuracy": 0.0,
+    "total_correct": 0,
+    "total_attempted": 5,
+    "total_cost_usd": 0.072515,
+    "total_tokens": 0,
+    "cost_per_correct": 0,
+    "cost_per_1pct_accuracy": 0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.2954
+    },
+    "cost_delta_vs_previous": -0.351865,
+    "accuracy_delta_vs_previous": 0.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_122023",
+    "iso_timestamp": "2026-02-22T12:29:15.332804",
+    "overall_accuracy": 0.0,
+    "total_correct": 0,
+    "total_attempted": 5,
+    "total_cost_usd": 0.324755,
+    "total_tokens": 0,
+    "cost_per_correct": 0,
+    "cost_per_1pct_accuracy": 0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.3248
+    },
+    "cost_delta_vs_previous": 0.25224,
+    "accuracy_delta_vs_previous": 0.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_124941",
+    "iso_timestamp": "2026-02-22T13:01:10.949866",
+    "overall_accuracy": 0.0,
+    "total_correct": 0,
+    "total_attempted": 5,
+    "total_cost_usd": 0.48047,
+    "total_tokens": 0,
+    "cost_per_correct": 0,
+    "cost_per_1pct_accuracy": 0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.4805
+    },
+    "cost_delta_vs_previous": 0.155715,
+    "accuracy_delta_vs_previous": 0.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_130116",
+    "iso_timestamp": "2026-02-22T13:15:07.847883",
+    "overall_accuracy": 0.0,
+    "total_correct": 0,
+    "total_attempted": 5,
+    "total_cost_usd": 0.44014,
+    "total_tokens": 0,
+    "cost_per_correct": 0,
+    "cost_per_1pct_accuracy": 0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 0.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.4401
+    },
+    "cost_delta_vs_previous": -0.04033,
+    "accuracy_delta_vs_previous": 0.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_134329",
+    "iso_timestamp": "2026-02-22T13:47:32.928924",
+    "overall_accuracy": 100.0,
+    "total_correct": 5,
+    "total_attempted": 5,
+    "total_cost_usd": 0.149805,
+    "total_tokens": 0,
+    "cost_per_correct": 0.029961,
+    "cost_per_1pct_accuracy": 0.001498,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 100.0
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.1498
+    },
+    "cost_delta_vs_previous": -0.290335,
+    "accuracy_delta_vs_previous": 100.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_214447",
+    "iso_timestamp": "2026-02-22T21:49:00.946400",
+    "overall_accuracy": 100.0,
+    "total_correct": 1,
+    "total_attempted": 1,
+    "total_cost_usd": 0.005,
+    "total_tokens": 0,
+    "cost_per_correct": 0.005,
+    "cost_per_1pct_accuracy": 5e-05,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 100.0
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.005
+    },
+    "cost_delta_vs_previous": -0.144805,
+    "accuracy_delta_vs_previous": 0.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_214937",
+    "iso_timestamp": "2026-02-22T21:53:42.080106",
+    "overall_accuracy": 100.0,
+    "total_correct": 2,
+    "total_attempted": 2,
+    "total_cost_usd": 0.01,
+    "total_tokens": 0,
+    "cost_per_correct": 0.005,
+    "cost_per_1pct_accuracy": 0.0001,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 100.0
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.01
+    },
+    "cost_delta_vs_previous": 0.005,
+    "accuracy_delta_vs_previous": 0.0
+  },
+  {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "commit_short": "41594f035",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "timestamp": "20260222_215509",
+    "iso_timestamp": "2026-02-23T09:29:50.234042",
+    "overall_accuracy": 93.2,
+    "total_correct": 507,
+    "total_attempted": 544,
+    "total_cost_usd": 4.63157,
+    "total_tokens": 0,
+    "cost_per_correct": 0.009135,
+    "cost_per_1pct_accuracy": 0.049696,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 74.0,
+      "Coding (HumanEval)": 88.0,
+      "Math (GSM8K)": 93.7,
+      "Multilingual (MMMLU)": 81.0,
+      "Long Context (LongBench)": 100.0,
+      "Tool Use (ToolBench)": 100.0,
+      "RAG (MS MARCO)": 46.3,
+      "Dialogue (MT-Bench)": 4.4
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.5,
+      "Coding (HumanEval)": 2.0889,
+      "Math (GSM8K)": 1.7561,
+      "Multilingual (MMMLU)": 0.5735,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 2.8971,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": 4.62157,
+    "accuracy_delta_vs_previous": -6.8
+  }
+]

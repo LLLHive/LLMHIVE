@@ -1,0 +1,60 @@
+{
+  "certification_timestamp": "20260220_213135",
+  "commit": "5cfde0390e125c5b934a17832254ac869221b6a1",
+  "exit_code": 0,
+  "elapsed_seconds": 53,
+  "categories": {
+    "General Reasoning (MMLU)": {
+      "score": 73.0,
+      "samples": 100,
+      "infra_failures": 0,
+      "cost": 0.5
+    },
+    "Coding (HumanEval)": {
+      "score": 89.8,
+      "samples": 50,
+      "infra_failures": 0,
+      "cost": 0.0249
+    },
+    "Math (GSM8K)": {
+      "score": 94.1,
+      "samples": 100,
+      "infra_failures": 0,
+      "cost": 0.0
+    },
+    "Multilingual (MMMLU)": {
+      "score": 76.8,
+      "samples": 100,
+      "infra_failures": 0,
+      "cost": 0.0048
+    },
+    "Long Context (LongBench)": {
+      "score": 0.0,
+      "samples": 0,
+      "infra_failures": 0,
+      "cost": 0.0
+    },
+    "Tool Use (ToolBench)": {
+      "score": 0.0,
+      "samples": 0,
+      "infra_failures": 0,
+      "cost": 0.0
+    },
+    "RAG (MS MARCO)": {
+      "score": 40.9,
+      "samples": 200,
+      "infra_failures": 0,
+      "cost": 0.0065
+    },
+    "Dialogue (MT-Bench)": {
+      "score": 0.0,
+      "samples": 0,
+      "infra_failures": 0,
+      "cost": 0.0
+    }
+  },
+  "infra_failure_rate": 0.0,
+  "retry_rate": 0.0,
+  "total_cost": 0.5362,
+  "ready": true
+}

@@ -1,0 +1,316 @@
+{
+  "generated_at": "2026-02-23T02:20:07.838588+00:00",
+  "schema_version": "2026.1",
+  "git": {
+    "commit": "41594f0358ac8aff7681d2539642691d30bdad30",
+    "branch": "fix/enterprise-latency-policy-2026-02-20",
+    "dirty": true
+  },
+  "python_version": "3.12.8",
+  "platform": "macOS-15.7.4-x86_64-i386-64bit",
+  "dependencies": {
+    "pinecone": "8.0.0",
+    "httpx": "0.28.1",
+    "datasets": "4.5.0",
+    "openai": "2.17.0",
+    "anthropic": "not_installed"
+  },
+  "benchmark_seed": 42,
+  "intelligence_mode": "advisory",
+  "valid_modes": [
+    "advisory",
+    "controlled",
+    "benchmark_locked",
+    "production_hardened"
+  ],
+  "model_registry": {
+    "version": "2026.1",
+    "model_count": 9,
+    "models": {
+      "gpt-5.2-pro": {
+        "provider": "openai",
+        "context_window": 1000000,
+        "reasoning_strength": 0.95,
+        "coding_strength": 0.96,
+        "math_strength": 0.97,
+        "capability_tags": [
+          "elite_reasoning",
+          "code_strong",
+          "long_context",
+          "math_strong"
+        ],
+        "latency_p50": 700,
+        "latency_p95": 1600,
+        "cost_input": 0.003,
+        "cost_output": 0.006
+      },
+      "gpt-5.2": {
+        "provider": "openai",
+        "context_window": 1000000,
+        "reasoning_strength": 0.93,
+        "coding_strength": 0.94,
+        "math_strength": 0.95,
+        "capability_tags": [
+          "elite_reasoning",
+          "code_strong",
+          "long_context"
+        ],
+        "latency_p50": 600,
+        "latency_p95": 1400,
+        "cost_input": 0.002,
+        "cost_output": 0.004
+      },
+      "claude-sonnet-4.6": {
+        "provider": "anthropic",
+        "context_window": 200000,
+        "reasoning_strength": 0.92,
+        "coding_strength": 0.93,
+        "math_strength": 0.9,
+        "capability_tags": [
+          "elite_reasoning",
+          "multilingual_leader",
+          "code_strong"
+        ],
+        "latency_p50": 800,
+        "latency_p95": 1800,
+        "cost_input": 0.003,
+        "cost_output": 0.015
+      },
+      "claude-opus-4.5": {
+        "provider": "anthropic",
+        "context_window": 200000,
+        "reasoning_strength": 0.94,
+        "coding_strength": 0.94,
+        "math_strength": 0.92,
+        "capability_tags": [
+          "elite_reasoning",
+          "code_strong"
+        ],
+        "latency_p50": 1200,
+        "latency_p95": 3000,
+        "cost_input": 0.015,
+        "cost_output": 0.075
+      },
+      "gemini-2.5-pro": {
+        "provider": "google",
+        "context_window": 2000000,
+        "reasoning_strength": 0.9,
+        "coding_strength": 0.88,
+        "math_strength": 0.89,
+        "capability_tags": [
+          "long_context_leader",
+          "multimodal",
+          "elite_reasoning"
+        ],
+        "latency_p50": 900,
+        "latency_p95": 2200,
+        "cost_input": 0.00125,
+        "cost_output": 0.005
+      },
+      "gemini-2.5-flash": {
+        "provider": "google",
+        "context_window": 1000000,
+        "reasoning_strength": 0.82,
+        "coding_strength": 0.8,
+        "math_strength": 0.83,
+        "capability_tags": [
+          "speed_tier",
+          "long_context"
+        ],
+        "latency_p50": 300,
+        "latency_p95": 800,
+        "cost_input": 0.00015,
+        "cost_output": 0.0006
+      },
+      "grok-3-mini": {
+        "provider": "grok",
+        "context_window": 131072,
+        "reasoning_strength": 0.8,
+        "coding_strength": 0.78,
+        "math_strength": 0.82,
+        "capability_tags": [
+          "speed_tier",
+          "reasoning"
+        ],
+        "latency_p50": 500,
+        "latency_p95": 1200,
+        "cost_input": 0.001,
+        "cost_output": 0.003
+      },
+      "deepseek-reasoner": {
+        "provider": "deepseek",
+        "context_window": 128000,
+        "reasoning_strength": 0.91,
+        "coding_strength": 0.9,
+        "math_strength": 0.93,
+        "capability_tags": [
+          "elite_reasoning",
+          "math_strong",
+          "verify_specialist"
+        ],
+        "latency_p50": 1500,
+        "latency_p95": 4000,
+        "cost_input": 0.0005,
+        "cost_output": 0.002
+      },
+      "deepseek-v3.2": {
+        "provider": "deepseek",
+        "context_window": 128000,
+        "reasoning_strength": 0.87,
+        "coding_strength": 0.88,
+        "math_strength": 0.89,
+        "capability_tags": [
+          "code_strong",
+          "math_strong",
+          "cost_efficient"
+        ],
+        "latency_p50": 600,
+        "latency_p95": 1400,
+        "cost_input": 0.0003,
+        "cost_output": 0.001
+      }
+    }
+  },
+  "elite_policy": {
+    "category_bindings": {
+      "reasoning": "gpt-5.2-pro",
+      "coding": "gpt-5.2-pro",
+      "math": "gpt-5.2-pro",
+      "multilingual": "claude-sonnet-4.6",
+      "long_context": "gemini-2.5-pro",
+      "tool_use": "gpt-5.2-pro",
+      "rag": "gpt-5.2-pro",
+      "dialogue": "gpt-5.2-pro"
+    },
+    "verify_model": "deepseek-reasoner"
+  },
+  "routing_engine": {
+    "weights": {
+      "strength_weight": 0.5,
+      "reasoning_weight": 0.2,
+      "latency_weight": 0.15,
+      "cost_weight": 0.15,
+      "latency_reference_ms": 2000,
+      "cost_reference_per_1k": 0.01
+    },
+    "results_per_category": {
+      "reasoning": [
+        {
+          "model_id": "deepseek-v3.2",
+          "total_score": 0.849
+        },
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.846
+        },
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8425
+        }
+      ],
+      "coding": [
+        {
+          "model_id": "deepseek-v3.2",
+          "total_score": 0.854
+        },
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.851
+        },
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8325
+        }
+      ],
+      "math": [
+        {
+          "model_id": "deepseek-v3.2",
+          "total_score": 0.859
+        },
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.856
+        },
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8475
+        }
+      ],
+      "multilingual": [
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8225
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "total_score": 0.784
+        },
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.781
+        }
+      ],
+      "long_context": [
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8825
+        },
+        {
+          "model_id": "gemini-2.5-pro",
+          "total_score": 0.8175
+        },
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.811
+        }
+      ],
+      "tool_use": [
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.836
+        },
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8225
+        },
+        {
+          "model_id": "gpt-5.2-pro",
+          "total_score": 0.8125
+        }
+      ],
+      "rag": [
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8225
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "total_score": 0.814
+        },
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.811
+        }
+      ],
+      "dialogue": [
+        {
+          "model_id": "gemini-2.5-flash",
+          "total_score": 0.8325
+        },
+        {
+          "model_id": "gpt-5.2",
+          "total_score": 0.821
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "total_score": 0.814
+        }
+      ]
+    }
+  },
+  "strategy_db": {
+    "records_cached": 0,
+    "pinecone_available": true,
+    "firestore_available": false
+  }
+}

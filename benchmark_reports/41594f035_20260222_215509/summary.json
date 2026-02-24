@@ -1,0 +1,90 @@
+{
+  "failure_by_category": {
+    "HumanEval": 5,
+    "GSM8K": 11,
+    "MMMLU": 19,
+    "MMLU": 26
+  },
+  "failure_by_type": {
+    "logic": 8,
+    "runtime": 3,
+    "unknown": 5,
+    "MODEL_INCORRECT": 45
+  },
+  "failure_by_subject": {
+    "unknown": 16,
+    "high_school_microeconomics": 2,
+    "human_aging": 1,
+    "philosophy": 1,
+    "moral_scenarios": 3,
+    "professional_law": 6,
+    "sociology": 2,
+    "college_computer_science": 1,
+    "clinical_knowledge": 2,
+    "professional_accounting": 1,
+    "security_studies": 2,
+    "marketing": 1,
+    "college_mathematics": 1,
+    "electrical_engineering": 1,
+    "high_school_statistics": 1,
+    "high_school_world_history": 1,
+    "high_school_geography": 2,
+    "high_school_european_history": 1,
+    "high_school_psychology": 2,
+    "moral_disputes": 2,
+    "high_school_biology": 2,
+    "nutrition": 1,
+    "high_school_us_history": 2,
+    "professional_medicine": 1,
+    "professional_psychology": 2,
+    "miscellaneous": 2,
+    "conceptual_physics": 1,
+    "virology": 1
+  },
+  "extraction_failures": 0,
+  "verify_failures": 0,
+  "low_confidence_cases": 11,
+  "pred_none_cases": 54,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 16
+    },
+    {
+      "subject": "professional_law",
+      "failures": 6
+    },
+    {
+      "subject": "moral_scenarios",
+      "failures": 3
+    },
+    {
+      "subject": "high_school_microeconomics",
+      "failures": 2
+    },
+    {
+      "subject": "sociology",
+      "failures": 2
+    },
+    {
+      "subject": "clinical_knowledge",
+      "failures": 2
+    },
+    {
+      "subject": "security_studies",
+      "failures": 2
+    },
+    {
+      "subject": "high_school_geography",
+      "failures": 2
+    },
+    {
+      "subject": "high_school_psychology",
+      "failures": 2
+    },
+    {
+      "subject": "moral_disputes",
+      "failures": 2
+    }
+  ]
+}

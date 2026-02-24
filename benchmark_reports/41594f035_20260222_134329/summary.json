@@ -1,0 +1,12 @@
+{
+  "failure_by_category": {
+    "HumanEval": 0
+  },
+  "failure_by_type": {},
+  "failure_by_subject": {},
+  "extraction_failures": 0,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 5,
+  "top_hardest_subjects": []
+}

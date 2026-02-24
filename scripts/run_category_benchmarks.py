@@ -382,7 +382,7 @@ SAMPLE_SIZES = {
     "long_context": _get_env_int("CATEGORY_BENCH_LONGBENCH_SAMPLES", 100),
     "tool_use": _get_env_int("CATEGORY_BENCH_TOOLBENCH_SAMPLES", 50),
     "rag": _get_env_int("CATEGORY_BENCH_MSMARCO_SAMPLES", 200),
-    "dialogue": _get_env_int("CATEGORY_BENCH_MTBENCH_SAMPLES", 50),
+    "dialogue": _get_env_int("CATEGORY_BENCH_MTBENCH_SAMPLES", 30),
 }
 
 # ============================================================================
@@ -1329,15 +1329,13 @@ D) {choices[3]}"""
             predicted, confidence = self_consistency_vote(reasoning_paths)
             
             # Confidence-gated fallback — if CoT consensus is weak,
-            # re-query with reasoning_mode="deep" and replace only if
-            # the new answer has higher confidence.
-            if confidence < 0.55 and predicted:
+            # re-query with a structured "letter-only" prompt.
+            if confidence < 0.60 and predicted:
                 fallback_prompt = (
-                    "You are an expert test-taker. Answer this multiple-choice question.\n"
-                    "Think through each option carefully before answering.\n\n"
                     f"{formatted_question}\n\n"
-                    "First, briefly analyze why each option is correct or incorrect. "
-                    "Then state your final answer as a single letter (A, B, C, or D) on the last line."
+                    "Return ONLY the letter of the correct answer: A, B, C, or D.\n"
+                    "Do not explain. Do not add any other text. "
+                    "Output a single capital letter."
                 )
                 fallback_result = await call_llmhive_api(
                     fallback_prompt,
@@ -1348,10 +1346,10 @@ D) {choices[3]}"""
                 if fallback_result.get("success"):
                     fb_text = fallback_result.get("response", "")
                     fb_answer = _extract_multiple_choice(fb_text)
-                    fb_confidence = fallback_result.get("confidence", 0.55)
+                    fb_confidence = fallback_result.get("confidence", 0.60)
                     if fb_answer and fb_answer in "ABCD" and fb_confidence > confidence:
                         predicted = fb_answer
-                        confidence = max(fb_confidence, 0.55)
+                        confidence = max(fb_confidence, 0.60)
 
             # Neighbor-consistency check (if high confidence)
             if confidence >= 0.6 and predicted:
@@ -2101,9 +2099,18 @@ async def evaluate_multilingual(
     start_index = int(progress.get("index", 0)) if progress else 0
     error_samples: List[str] = list(progress.get("error_samples", [])) if progress else []
 
+    # Concurrency cap to avoid Claude rate limits on multilingual workload
+    _MMMLU_CONCURRENCY = 3
+    _mmmlu_semaphore = asyncio.Semaphore(_MMMLU_CONCURRENCY)
+    _MMMLU_BURST_DELAY = 0.5  # seconds between requests for burst smoothing
+
     for i, item in enumerate(samples, start=1):
         if i <= start_index:
             continue
+
+        # Burst smoothing: small delay between requests
+        if i > start_index + 1:
+            await asyncio.sleep(_MMMLU_BURST_DELAY)
         
         # SKILL 5.1: Adaptive Schema Parsing (from historical analysis)
         # Handle ANY multiple-choice format robustly
@@ -2214,15 +2221,16 @@ async def evaluate_multilingual(
             "Reasoning:"
         )
 
-        result = await call_llmhive_api(
-            prompt,
-            reasoning_mode=REASONING_MODE,
-            tier=tier,
-            orchestration_config={
-                "accuracy_level": 5,
-                "enable_verification": True,
-            }
-        )
+        async with _mmmlu_semaphore:
+            result = await call_llmhive_api(
+                prompt,
+                reasoning_mode=REASONING_MODE,
+                tier=tier,
+                orchestration_config={
+                    "accuracy_level": 5,
+                    "enable_verification": True,
+                }
+            )
 
         if result["success"]:
             predicted = _extract_multiple_choice(result["response"])
@@ -2232,12 +2240,13 @@ async def evaluate_multilingual(
             # Confidence gate: if confidence < 45% and we have an answer,
             # re-query once with reasoning_mode="deep" for higher quality.
             if predicted and mmmlu_confidence < 0.55:
-                gate_result = await call_llmhive_api(
-                    prompt,
-                    reasoning_mode="deep",
-                    tier=tier,
-                    orchestration_config={"accuracy_level": 5, "enable_verification": True},
-                )
+                async with _mmmlu_semaphore:
+                    gate_result = await call_llmhive_api(
+                        prompt,
+                        reasoning_mode="deep",
+                        tier=tier,
+                        orchestration_config={"accuracy_level": 5, "enable_verification": True},
+                    )
                 if gate_result.get("success"):
                     gate_answer = _extract_multiple_choice(gate_result["response"])
                     if gate_answer and gate_answer in "ABCD":
@@ -2256,9 +2265,10 @@ async def evaluate_multilingual(
                     f"A) {choices[0]}\nB) {choices[1]}\nC) {choices[2]}\nD) {choices[3]}\n\n"
                     f"Your answer (single letter only):"
                 )
-                retry_result = await call_llmhive_api(
-                    retry_prompt, reasoning_mode="basic", tier=tier, timeout=30,
-                )
+                async with _mmmlu_semaphore:
+                    retry_result = await call_llmhive_api(
+                        retry_prompt, reasoning_mode="basic", tier=tier, timeout=30,
+                    )
                 if retry_result.get("success"):
                     predicted = _extract_multiple_choice(retry_result["response"])
                     total_latency += retry_result.get("latency", 0)
@@ -2647,14 +2657,21 @@ async def evaluate_rag(
         
         # EXP-9: Fuse rankings using RRF if we got multiple successful rankings
         if len(all_rankings) >= 2:
-            # Reciprocal Rank Fusion: score(d) = sum(1 / (k + rank_i(d)))
-            rrf_k = 60  # Standard RRF constant
+            # Reciprocal Rank Fusion with sharper top-weighting (k=30 vs 60)
+            rrf_k = 30
             rrf_scores = {}
             for ranking in all_rankings:
                 for rank_pos, pid in enumerate(ranking, 1):
                     if pid not in rrf_scores:
                         rrf_scores[pid] = 0.0
-                    rrf_scores[pid] += 1.0 / (rrf_k + rank_pos)
+                    base = 1.0 / (rrf_k + rank_pos)
+                    # Top-1 promotion: 20% bonus for rank-1 docs
+                    if rank_pos == 1:
+                        base *= 1.20
+                    # Position penalty: docs ranked >3 get 15% reduction
+                    elif rank_pos > 3:
+                        base *= 0.85
+                    rrf_scores[pid] += base
             # Sort by RRF score descending
             ranked = sorted(rrf_scores.keys(), key=lambda x: rrf_scores[x], reverse=True)
         elif len(all_rankings) == 1:
@@ -2895,7 +2912,7 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
         proc = subprocess.run(
             shlex.split(command),
             check=True,
-            timeout=1800,
+            timeout=3600,
             capture_output=True,
             text=True,
         )

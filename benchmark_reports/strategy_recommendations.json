@@ -1,0 +1,178 @@
+{
+  "timestamp": "2026-02-23T02:27:02.336748+00:00",
+  "categories": {
+    "reasoning": {
+      "recommendation": {
+        "model": "gpt-5.2-pro",
+        "confidence": 0.0,
+        "win_rate_delta": 0.0,
+        "volatility": 0.0555,
+        "meets_stability": false
+      },
+      "models_tracked": 1,
+      "fatigue_detected": [],
+      "pareto_ranking": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 173.9994,
+          "win_rate": 0.0,
+          "avg_cost_usd": 0.003883,
+          "history_depth": 14
+        }
+      ],
+      "model_stats": {
+        "gpt-5.2-pro": {
+          "win_rate": 0.0,
+          "confidence_weighted": 0.0,
+          "stability_score": 0.4449,
+          "volatility": 0.0555,
+          "fatigue": false,
+          "history_depth": 14,
+          "efficiency_score": 173.9994
+        }
+      }
+    },
+    "coding": {
+      "recommendation": {
+        "model": "gpt-5.2-pro",
+        "confidence": 0.5714285714285714,
+        "win_rate_delta": 0.0,
+        "volatility": 0.4243,
+        "meets_stability": false
+      },
+      "models_tracked": 1,
+      "fatigue_detected": [],
+      "pareto_ranking": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 104.6244,
+          "win_rate": 0.5714,
+          "avg_cost_usd": 0.005344,
+          "history_depth": 14
+        }
+      ],
+      "model_stats": {
+        "gpt-5.2-pro": {
+          "win_rate": 0.5714,
+          "confidence_weighted": 0.6234,
+          "stability_score": 0.0,
+          "volatility": 0.4243,
+          "fatigue": false,
+          "history_depth": 14,
+          "efficiency_score": 104.6244
+        }
+      }
+    },
+    "math": {
+      "recommendation": {
+        "model": "gpt-5.2-pro",
+        "confidence": 1.0,
+        "win_rate_delta": 0.0,
+        "volatility": 0.004,
+        "meets_stability": false
+      },
+      "models_tracked": 1,
+      "fatigue_detected": [],
+      "pareto_ranking": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 257.8504,
+          "win_rate": 1.0,
+          "avg_cost_usd": 0.003641,
+          "history_depth": 12
+        }
+      ],
+      "model_stats": {
+        "gpt-5.2-pro": {
+          "win_rate": 1.0,
+          "confidence_weighted": 1.0,
+          "stability_score": 0.9602,
+          "volatility": 0.004,
+          "fatigue": false,
+          "history_depth": 12,
+          "efficiency_score": 257.8504
+        }
+      }
+    },
+    "multilingual": {
+      "recommendation": {
+        "model": "claude-sonnet-4.6",
+        "confidence": 0.0,
+        "win_rate_delta": 0.0,
+        "volatility": 0.3326,
+        "meets_stability": false
+      },
+      "models_tracked": 1,
+      "fatigue_detected": [],
+      "pareto_ranking": [
+        {
+          "model_id": "claude-sonnet-4.6",
+          "efficiency_score": 16000.0,
+          "win_rate": 0.0,
+          "avg_cost_usd": 3.6e-05,
+          "history_depth": 8
+        }
+      ],
+      "model_stats": {
+        "claude-sonnet-4.6": {
+          "win_rate": 0.0,
+          "confidence_weighted": 0.0,
+          "stability_score": 0.0,
+          "volatility": 0.3326,
+          "fatigue": false,
+          "history_depth": 8,
+          "efficiency_score": 16000.0
+        }
+      }
+    },
+    "long_context": {
+      "recommendation": null,
+      "models_tracked": 0,
+      "fatigue_detected": [],
+      "pareto_ranking": []
+    },
+    "tool_use": {
+      "recommendation": null,
+      "models_tracked": 0,
+      "fatigue_detected": [],
+      "pareto_ranking": []
+    },
+    "rag": {
+      "recommendation": {
+        "model": "gpt-5.2-pro",
+        "confidence": 0.0,
+        "win_rate_delta": 0.0,
+        "volatility": 0.1749,
+        "meets_stability": false
+      },
+      "models_tracked": 1,
+      "fatigue_detected": [],
+      "pareto_ranking": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 124.627,
+          "win_rate": 0.0,
+          "avg_cost_usd": 0.002471,
+          "history_depth": 8
+        }
+      ],
+      "model_stats": {
+        "gpt-5.2-pro": {
+          "win_rate": 0.0,
+          "confidence_weighted": 0.0,
+          "stability_score": 0.0,
+          "volatility": 0.1749,
+          "fatigue": false,
+          "history_depth": 8,
+          "efficiency_score": 124.627
+        }
+      }
+    },
+    "dialogue": {
+      "recommendation": null,
+      "models_tracked": 0,
+      "fatigue_detected": [],
+      "pareto_ranking": []
+    }
+  }
+}

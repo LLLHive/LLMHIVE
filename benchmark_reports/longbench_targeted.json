@@ -1,0 +1,13 @@
+{
+  "score": 95.0,
+  "accuracy": 95.0,
+  "attempted": 20,
+  "correct": 19,
+  "incorrect": 1,
+  "errors": 0,
+  "infra_failures": 0,
+  "infra_failure_rate": 0.0,
+  "avg_latency_ms": 14697,
+  "avg_cost": 0.0,
+  "total_cost": 0.0
+}

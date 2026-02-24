@@ -1,0 +1,240 @@
+{
+  "generated_at": "2026-02-23T02:20:06.994761+00:00",
+  "intelligence_mode": "advisory",
+  "elite_policy": {
+    "reasoning": "gpt-5.2-pro",
+    "coding": "gpt-5.2-pro",
+    "math": "gpt-5.2-pro",
+    "multilingual": "claude-sonnet-4.6",
+    "long_context": "gemini-2.5-pro",
+    "tool_use": "gpt-5.2-pro",
+    "rag": "gpt-5.2-pro",
+    "dialogue": "gpt-5.2-pro"
+  },
+  "registry_models": 9,
+  "categories": {
+    "coding": {
+      "accuracy": 100.0,
+      "sample_size": 5,
+      "latency_avg_ms": 38922,
+      "infra_failures": 0
+    }
+  },
+  "cost_per_correct_answer_usd": 0.03,
+  "total_cost_usd": 0.1498,
+  "comparisons_vs_baselines": {
+    "gpt-5.2-pro": {
+      "reasoning": {
+        "llmhive": 0,
+        "baseline": 78.0,
+        "uplift_pct": -100.0
+      },
+      "coding": {
+        "llmhive": 100.0,
+        "baseline": 90.0,
+        "uplift_pct": 11.11
+      },
+      "math": {
+        "llmhive": 0,
+        "baseline": 95.0,
+        "uplift_pct": -100.0
+      },
+      "multilingual": {
+        "llmhive": 0,
+        "baseline": 76.0,
+        "uplift_pct": -100.0
+      },
+      "long_context": {
+        "llmhive": 0,
+        "baseline": 88.0,
+        "uplift_pct": -100.0
+      },
+      "tool_use": {
+        "llmhive": 0,
+        "baseline": 85.0,
+        "uplift_pct": -100.0
+      },
+      "rag": {
+        "llmhive": 0,
+        "baseline": 40.0,
+        "uplift_pct": -100.0
+      },
+      "dialogue": {
+        "llmhive": 0,
+        "baseline": 6.5,
+        "uplift_pct": -100.0
+      },
+      "aggregate_uplift_pct": -82.09
+    },
+    "claude-sonnet-4.6": {
+      "reasoning": {
+        "llmhive": 0,
+        "baseline": 76.0,
+        "uplift_pct": -100.0
+      },
+      "coding": {
+        "llmhive": 100.0,
+        "baseline": 88.0,
+        "uplift_pct": 13.64
+      },
+      "math": {
+        "llmhive": 0,
+        "baseline": 91.0,
+        "uplift_pct": -100.0
+      },
+      "multilingual": {
+        "llmhive": 0,
+        "baseline": 82.0,
+        "uplift_pct": -100.0
+      },
+      "long_context": {
+        "llmhive": 0,
+        "baseline": 85.0,
+        "uplift_pct": -100.0
+      },
+      "tool_use": {
+        "llmhive": 0,
+        "baseline": 82.0,
+        "uplift_pct": -100.0
+      },
+      "rag": {
+        "llmhive": 0,
+        "baseline": 38.0,
+        "uplift_pct": -100.0
+      },
+      "dialogue": {
+        "llmhive": 0,
+        "baseline": 7.0,
+        "uplift_pct": -100.0
+      },
+      "aggregate_uplift_pct": -81.79
+    },
+    "gemini-2.5-pro": {
+      "reasoning": {
+        "llmhive": 0,
+        "baseline": 74.0,
+        "uplift_pct": -100.0
+      },
+      "coding": {
+        "llmhive": 100.0,
+        "baseline": 84.0,
+        "uplift_pct": 19.05
+      },
+      "math": {
+        "llmhive": 0,
+        "baseline": 89.0,
+        "uplift_pct": -100.0
+      },
+      "multilingual": {
+        "llmhive": 0,
+        "baseline": 78.0,
+        "uplift_pct": -100.0
+      },
+      "long_context": {
+        "llmhive": 0,
+        "baseline": 96.0,
+        "uplift_pct": -100.0
+      },
+      "tool_use": {
+        "llmhive": 0,
+        "baseline": 80.0,
+        "uplift_pct": -100.0
+      },
+      "rag": {
+        "llmhive": 0,
+        "baseline": 36.0,
+        "uplift_pct": -100.0
+      },
+      "dialogue": {
+        "llmhive": 0,
+        "baseline": 6.0,
+        "uplift_pct": -100.0
+      },
+      "aggregate_uplift_pct": -81.58
+    }
+  },
+  "competitive_advantage_index": {
+    "timestamp": "2026-02-23T02:20:06.994671+00:00",
+    "composite_index": 0.0,
+    "categories": {},
+    "ensemble_entropy_avg": 0.0,
+    "reliability_score": 1.0,
+    "interpretation": "improvement_needed"
+  },
+  "rag_quality_index": 0.0,
+  "rag_rqi_uplift_vs_baselines": {
+    "gpt-5.2-pro": {
+      "llmhive_rqi": 0.0,
+      "baseline_rqi": 0.38,
+      "uplift": -0.38,
+      "uplift_pct": -100.0
+    },
+    "claude-sonnet-4.6": {
+      "llmhive_rqi": 0.0,
+      "baseline_rqi": 0.35,
+      "uplift": -0.35,
+      "uplift_pct": -100.0
+    },
+    "gemini-2.5-pro": {
+      "llmhive_rqi": 0.0,
+      "baseline_rqi": 0.33,
+      "uplift": -0.33,
+      "uplift_pct": -100.0
+    }
+  },
+  "sla_compliance_pct": 0.0,
+  "entropy_stability_score": 1.0,
+  "pareto_efficiency": {
+    "reasoning": [],
+    "coding": [],
+    "math": [],
+    "multilingual": [],
+    "long_context": [],
+    "tool_use": [],
+    "rag": [],
+    "dialogue": []
+  },
+  "ensemble_precision": {
+    "avg_entropy": 0.0,
+    "escalation_count": 0,
+    "tiebreaker_count": 0,
+    "instability_fallbacks": 0
+  },
+  "verify_pipeline": {
+    "timeout_rate": 0.0,
+    "verify_penalty": 0.0,
+    "latency_p95": 0
+  },
+  "telemetry": {
+    "total_calls": 0
+  },
+  "reliability": {
+    "timestamp": "2026-02-23T02:20:06.494837+00:00",
+    "models": {},
+    "provider_failures": {},
+    "total_alerts": 0,
+    "alerts": [],
+    "sla_tiers": {
+      "standard": "Default tier \u2014 relaxed thresholds for development / testing",
+      "enterprise": "Enterprise tier \u2014 production SLA for paying customers",
+      "mission_critical": "Mission-critical tier \u2014 zero tolerance for finance / healthcare"
+    },
+    "sla_compliance": {
+      "standard": {
+        "compliant_models": 0,
+        "total_models": 0,
+        "compliance_pct": 0.0
+      },
+      "enterprise": {
+        "compliant_models": 0,
+        "total_models": 0,
+        "compliance_pct": 0.0
+      },
+      "mission_critical": {
+        "compliant_models": 0,
+        "total_models": 0,
+        "compliance_pct": 0.0
+      }
+    }
+  }
+}

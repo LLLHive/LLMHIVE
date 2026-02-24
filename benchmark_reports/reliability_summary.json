@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-02-23T02:19:51.043199+00:00",
+  "models": {
+    "deepseek-v3.2": {
+      "total_calls": 150,
+      "error_rate": 0.0133,
+      "p50_latency_ms": 703,
+      "p95_latency_ms": 964,
+      "max_latency_ms": 1000,
+      "latency_stddev_ms": 174.3,
+      "verify_timeouts": 0,
+      "sla_breaches": []
+    },
+    "gemini-2.5-flash": {
+      "total_calls": 50,
+      "error_rate": 0.02,
+      "p50_latency_ms": 408,
+      "p95_latency_ms": 654,
+      "max_latency_ms": 686,
+      "latency_stddev_ms": 167.9,
+      "verify_timeouts": 0,
+      "sla_breaches": [
+        "SLA BREACH: gemini-2.5-flash error rate 2.1% > 2.0%",
+        "SLA BREACH: gemini-2.5-flash error rate 2.0% > 2.0%"
+      ]
+    }
+  },
+  "provider_failures": {
+    "deepseek": 2,
+    "google": 1
+  },
+  "total_alerts": 2,
+  "alerts": [
+    {
+      "timestamp": "2026-02-23T02:19:51.040876+00:00",
+      "type": "error_rate_breach",
+      "model_id": "gemini-2.5-flash",
+      "message": "SLA BREACH: gemini-2.5-flash error rate 2.1% > 2.0%"
+    },
+    {
+      "timestamp": "2026-02-23T02:19:51.042073+00:00",
+      "type": "error_rate_breach",
+      "model_id": "gemini-2.5-flash",
+      "message": "SLA BREACH: gemini-2.5-flash error rate 2.0% > 2.0%"
+    }
+  ],
+  "sla_tiers": {
+    "standard": "Default tier \u2014 relaxed thresholds for development / testing",
+    "enterprise": "Enterprise tier \u2014 production SLA for paying customers",
+    "mission_critical": "Mission-critical tier \u2014 zero tolerance for finance / healthcare"
+  },
+  "sla_compliance": {
+    "standard": {
+      "compliant_models": 2,
+      "total_models": 2,
+      "compliance_pct": 100.0
+    },
+    "enterprise": {
+      "compliant_models": 2,
+      "total_models": 2,
+      "compliance_pct": 100.0
+    },
+    "mission_critical": {
+      "compliant_models": 0,
+      "total_models": 2,
+      "compliance_pct": 0.0
+    }
+  }
+}

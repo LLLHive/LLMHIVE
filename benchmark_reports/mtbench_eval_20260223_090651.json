@@ -1,0 +1,20 @@
+{
+  "score": 4.4,
+  "avg_score": 4.4,
+  "accuracy": 44.0,
+  "attempted": 10,
+  "correct": 0,
+  "errors": 0,
+  "infra_failures": 5,
+  "infra_failure_rate": 50.0,
+  "avg_latency_ms": 67441,
+  "avg_cost": 0.0,
+  "total_cost": 0.0,
+  "category_scores": {
+    "roleplay": 4.5,
+    "writing": 1.0,
+    "extraction": 6.5,
+    "reasoning": 5.0,
+    "humanities": 5.0
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "failure_by_category": {
+    "HumanEval": 1
+  },
+  "failure_by_type": {
+    "logic": 1
+  },
+  "failure_by_subject": {
+    "unknown": 1
+  },
+  "extraction_failures": 0,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 1,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 1
+    }
+  ]
+}
