@@ -16,7 +16,7 @@ import time
 import unicodedata
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from datasets import load_dataset
 
@@ -90,10 +90,13 @@ from ultra_aggressive_improvements import (
 # ALL CATEGORIES SOTA: Research-backed methods for every category
 from all_categories_sota import (
     # MMLU SOTA
+    retrieve_relevant_facts,
     generate_cot_reasoning_paths,
     self_consistency_vote,
+    sanity_check_answer,
+    ensemble_compare_reasoning,
     neighbor_consistency_check,
-    # GSM8K SOTA
+    # GSM8K SOTA (ensemble_compare_math used internally by generate_then_verify_math)
     generate_then_verify_math,
     # Truthfulness SOTA
     generate_truthfulness_answers,
@@ -103,9 +106,12 @@ from all_categories_sota import (
     check_internal_consistency,
     verify_with_probing_questions,
     # MMMLU SOTA
+    translate_and_solve_multilingual,
     cross_lingual_verification,
     # Safety SOTA
     multi_perspective_safety_check,
+    # Verify circuit breaker reset
+    reset_verify_circuit_breaker,
 )
 
 # ============================================================================
@@ -171,6 +177,23 @@ SKIP_CATEGORIES_RAW = _get_env_str("CATEGORY_BENCH_SKIP_CATEGORIES", "") or _get
 
 TOOLBENCH_EVAL_CMD = _get_env_str("TOOLBENCH_EVAL_CMD", "")
 MSMARCO_EVAL_CMD = _get_env_str("MSMARCO_EVAL_CMD", "")
+
+RAG_RERANK_DETERMINISTIC = _is_truthy(os.getenv("RAG_RERANK_DETERMINISTIC"))
+RAG_TOP1_FIRST = _is_truthy(os.getenv("RAG_TOP1_FIRST"))
+RAG_CONFIDENCE_FALLBACK = _is_truthy(os.getenv("RAG_CONFIDENCE_FALLBACK"))
+RAG_RERANK_SHUFFLE_SEEDED = _is_truthy(os.getenv("RAG_RERANK_SHUFFLE_SEEDED"))
+_RAG_SHUFFLE_SALT = "rag_shuffle_v1"
+_RAG_CONFIDENCE_BM25_THRESHOLD = _get_env_float("RAG_CONFIDENCE_BM25_THRESHOLD", 2.0)
+_RAG_CONFIDENCE_KW_THRESHOLD = _get_env_int("RAG_CONFIDENCE_KW_THRESHOLD", 2)
+
+if RAG_RERANK_DETERMINISTIC:
+    import warnings
+    warnings.warn(
+        "RAG_RERANK_DETERMINISTIC=1 is enabled (debug-only). "
+        "Strict deterministic rerank reduces ensemble diversity and is NOT "
+        "recommended for benchmarks. Use RAG_RERANK_SHUFFLE_SEEDED=1 instead.",
+        stacklevel=1,
+    )
 LONGBENCH_EVAL_CMD = _get_env_str("LONGBENCH_EVAL_CMD", "")
 MTBENCH_EVAL_CMD = _get_env_str("MTBENCH_EVAL_CMD", "")
 
@@ -258,6 +281,43 @@ def _single_model_for_category() -> str:
     """Return the pinned model for the current category in single mode."""
     return SINGLE_MODEL_MAP.get(_CURRENT_CATEGORY, "GPT-5.2")
 
+_MASTER_EXECUTION_GUARD = (
+    "You are an execution agent operating inside LLMHive Elite. "
+    "Optimize for correctness over verbosity. Avoid speculative answers. "
+    "If uncertain, explicitly state uncertainty. Do not hallucinate facts. "
+    "Follow the instructions precisely. Output strictly in the required format. "
+    "Be precise and concise."
+)
+
+ELITE_PRIMARY_MODEL: Dict[str, str] = {
+    "reasoning":    "gpt-5.2-pro",
+    "coding":       "gpt-5.2-pro",
+    "math":         "gpt-5.2-pro",
+    "multilingual": "claude-sonnet-4.6",
+    "long_context": "gemini-2.5-pro",
+    "rag":          "gpt-5.2-pro",
+    "dialogue":     "gpt-5.2-pro",
+    "tool_use":     "gpt-5.2-pro",
+}
+ELITE_ESCALATION_MODEL: Dict[str, str] = {
+    "reasoning":    "deepseek-reasoner",
+    "coding":       "claude-sonnet-4.6",
+    "math":         "deepseek-reasoner",
+    "multilingual": "gpt-5.2-pro",
+    "long_context": "claude-sonnet-4.6",
+    "rag":          "claude-sonnet-4.6",
+    "dialogue":     "claude-sonnet-4.6",
+    "tool_use":     "claude-sonnet-4.6",
+}
+
+def _elite_models_for_category() -> List[str]:
+    """Return SINGLE primary model for the category (no server-side ensemble)."""
+    return [ELITE_PRIMARY_MODEL.get(_CURRENT_CATEGORY, "gpt-5.2-pro")]
+
+def _escalation_model_for_category() -> str:
+    """Return the escalation model for when primary confidence is low."""
+    return ELITE_ESCALATION_MODEL.get(_CURRENT_CATEGORY, "deepseek-reasoner")
+
 _MODEL_TRACE_PATH: Optional[str] = None
 _CURRENT_CATEGORY: str = ""
 
@@ -342,6 +402,256 @@ def assert_elite_model_locked() -> None:
         else:
             print("    model bindings:    (none configured)")
 
+# ============================================================================
+# REGRESSION SHIELD — PROTECTED CATEGORIES (Long Context, Tool Use)
+# ============================================================================
+# These categories scored well in baseline.  Any modification to temperature,
+# prompt template, routing model, or injected system prompts must fail the run.
+
+import hashlib as _hashlib
+
+_PROTECTED_CATEGORIES = {"long_context", "tool_use"}
+
+_PROTECTED_BASELINES: Dict[str, Dict[str, Any]] = {
+    "long_context": {
+        "primary_model": "gemini-2.5-pro",
+        "escalation_model": "claude-sonnet-4.6",
+        "default_temperature": 0.2,
+        "eval_script": "eval_longbench.py",
+        "eval_script_prompt_hash": None,   # populated at startup
+        "shared_memory_injection": False,
+    },
+    "tool_use": {
+        "primary_model": "gpt-5.2-pro",
+        "escalation_model": "claude-sonnet-4.6",
+        "default_temperature": 0.2,
+        "eval_script": "eval_toolbench.py",
+        "eval_script_prompt_hash": None,
+        "shared_memory_injection": False,
+    },
+}
+
+_PROTECTED_PROMPT_HASHES: Dict[str, str] = {}
+
+
+def _hash_eval_prompt_section(script_name: str) -> str:
+    """SHA-256 of the evaluator script content — detects any change."""
+    for candidate in [
+        Path("scripts") / script_name,
+        Path(__file__).parent / script_name,
+    ]:
+        if candidate.exists():
+            return _hashlib.sha256(candidate.read_bytes()).hexdigest()
+    return "MISSING"
+
+
+def _init_protected_baselines() -> None:
+    """Compute and freeze prompt-template hashes for protected eval scripts."""
+    for cat, baseline in _PROTECTED_BASELINES.items():
+        digest = _hash_eval_prompt_section(baseline["eval_script"])
+        baseline["eval_script_prompt_hash"] = digest
+        _PROTECTED_PROMPT_HASHES[cat] = digest
+
+
+def _assert_regression_shield(category: str) -> None:
+    """Abort the run if a protected category deviates from its frozen baseline.
+
+    Checks:
+      1. Temperature unchanged from baseline default.
+      2. Prompt template (eval script) unchanged (SHA-256 match).
+      3. No shared memory / system-prompt injection applied.
+      4. Routing model (primary + escalation) unchanged.
+
+    Raises RuntimeError on any violation.
+    """
+    if category not in _PROTECTED_CATEGORIES:
+        return
+    if not BENCHMARK_MODE:
+        return
+
+    baseline = _PROTECTED_BASELINES[category]
+    violations: List[str] = []
+
+    # 1. Temperature invariant
+    cat_temps = {"coding": 0.1, "reasoning": 0.2, "math": 0.2,
+                 "multilingual": 0.2, "rag": 0.2, "dialogue": 0.3}
+    if TEMPERATURE >= 0:
+        effective_temp = TEMPERATURE
+    else:
+        effective_temp = cat_temps.get(category, 0.2)
+
+    if effective_temp != baseline["default_temperature"]:
+        violations.append(
+            f"temperature: expected {baseline['default_temperature']}, "
+            f"got {effective_temp}"
+        )
+
+    # 2. Prompt template invariant (eval script content hash)
+    current_hash = _hash_eval_prompt_section(baseline["eval_script"])
+    expected_hash = _PROTECTED_PROMPT_HASHES.get(category, baseline["eval_script_prompt_hash"])
+    if expected_hash and expected_hash != "MISSING" and current_hash != expected_hash:
+        violations.append(
+            f"prompt template ({baseline['eval_script']}): "
+            f"expected hash {expected_hash[:16]}…, got {current_hash[:16]}…"
+        )
+    elif current_hash == "MISSING":
+        violations.append(
+            f"prompt template ({baseline['eval_script']}): script file not found"
+        )
+
+    # 3. Shared memory / system-prompt injection invariant
+    shared_memory_env = os.getenv("SHARED_MEMORY_INJECTION", "").strip()
+    category_memory_env = os.getenv(f"{category.upper()}_MEMORY_INJECT", "").strip()
+    if shared_memory_env or category_memory_env:
+        violations.append(
+            "shared memory injection detected "
+            f"(SHARED_MEMORY_INJECTION={shared_memory_env!r}, "
+            f"{category.upper()}_MEMORY_INJECT={category_memory_env!r})"
+        )
+
+    # 4. Routing model invariant
+    actual_primary = ELITE_PRIMARY_MODEL.get(category)
+    actual_escalation = ELITE_ESCALATION_MODEL.get(category)
+    if actual_primary != baseline["primary_model"]:
+        violations.append(
+            f"primary model: expected {baseline['primary_model']!r}, "
+            f"got {actual_primary!r}"
+        )
+    if actual_escalation != baseline["escalation_model"]:
+        violations.append(
+            f"escalation model: expected {baseline['escalation_model']!r}, "
+            f"got {actual_escalation!r}"
+        )
+
+    if violations:
+        detail = "\n  ".join(violations)
+        raise RuntimeError(
+            f"Regression shield violation — protected category modified\n"
+            f"  Category: {category}\n"
+            f"  {detail}\n"
+            f"Protected categories ({', '.join(sorted(_PROTECTED_CATEGORIES))}) "
+            f"must not be modified without explicit approval."
+        )
+
+    print(f"  [SHIELD] {category}: all invariants verified "
+          f"(temp={effective_temp}, model={actual_primary}, "
+          f"script={current_hash[:12]}…)", flush=True)
+
+
+# ============================================================================
+# PRE-SUITE INVARIANT GATE
+# ============================================================================
+# Before any category executes, verify that all structural invariants are
+# wired in and functional.  A missing invariant means the suite could produce
+# unreliable results that look correct.
+
+_INVARIANTS_VERIFIED = False
+
+
+def _assert_all_invariants_active() -> bool:
+    """Verify every structural invariant is present and active.
+
+    Checks:
+      1. Dialogue metric invariant  (_validate_dialogue_metric callable)
+      2. RAG recall invariant       (recall invariance code present in evaluate_rag)
+      3. Fixed slice hash validated  (hash file exists & matches, or no slice mode)
+      4. Regression shield active    (_PROTECTED_BASELINES populated)
+
+    Returns True if all pass.  Raises RuntimeError listing missing ones.
+    """
+    global _INVARIANTS_VERIFIED
+    missing: List[str] = []
+    status: Dict[str, bool] = {}
+
+    # 1. Dialogue metric invariant
+    try:
+        _ok = callable(_validate_dialogue_metric)
+        status["dialogue_invariant"] = _ok
+        if not _ok:
+            missing.append("Dialogue metric invariant: _validate_dialogue_metric is not callable")
+    except NameError:
+        status["dialogue_invariant"] = False
+        missing.append("Dialogue metric invariant: _validate_dialogue_metric is not defined")
+
+    # 2. RAG recall invariant (structural check: the code path exists)
+    try:
+        import inspect as _insp
+        _rag_src = _insp.getsource(evaluate_rag)
+        _has_recall_check = "RECALL INVARIANCE CHECK" in _rag_src and "_original_top10_set" in _rag_src
+        status["rag_recall_invariant"] = _has_recall_check
+        if not _has_recall_check:
+            missing.append("RAG recall invariant: RECALL INVARIANCE CHECK block not found in evaluate_rag")
+    except Exception as _e:
+        status["rag_recall_invariant"] = False
+        missing.append(f"RAG recall invariant: could not inspect evaluate_rag ({_e})")
+
+    # 3. Fixed slice hash validation
+    _slice_path = Path(_FIXED_SLICE_PATH)
+    _hash_path = Path(_FIXED_SLICE_HASH_PATH)
+    if _slice_path.exists():
+        if _hash_path.exists():
+            try:
+                _expected = _hash_path.read_text().strip()
+                _actual = _compute_slice_hash(_slice_path)
+                _hash_ok = (_actual == _expected) or _ALLOW_SLICE_REGEN
+                status["fixed_slice_hash"] = _hash_ok
+                if not _hash_ok:
+                    missing.append(
+                        f"Fixed slice hash: mismatch "
+                        f"(expected {_expected[:16]}…, got {_actual[:16]}…)"
+                    )
+            except Exception as _e:
+                status["fixed_slice_hash"] = False
+                missing.append(f"Fixed slice hash: validation error ({_e})")
+        else:
+            status["fixed_slice_hash"] = False
+            missing.append(
+                f"Fixed slice hash: slice file exists ({_slice_path}) "
+                f"but hash file missing ({_hash_path}). "
+                f"Run: python3 scripts/run_category_benchmarks.py --generate-fixed-slice"
+            )
+    else:
+        status["fixed_slice_hash"] = True
+
+    # 4. Regression shield active
+    _shield_ready = (
+        bool(_PROTECTED_BASELINES)
+        and all(
+            b.get("eval_script_prompt_hash") not in (None, "MISSING")
+            for b in _PROTECTED_BASELINES.values()
+        )
+    )
+    status["regression_shield"] = _shield_ready
+    if not _shield_ready:
+        _detail_parts = []
+        if not _PROTECTED_BASELINES:
+            _detail_parts.append("_PROTECTED_BASELINES is empty")
+        else:
+            for _cat, _bl in _PROTECTED_BASELINES.items():
+                _h = _bl.get("eval_script_prompt_hash")
+                if _h in (None, "MISSING"):
+                    _detail_parts.append(f"{_cat}: hash={_h}")
+        missing.append(f"Regression shield: not fully initialized ({'; '.join(_detail_parts)})")
+
+    # Verdict
+    if missing:
+        _detail = "\n    ".join(missing)
+        raise RuntimeError(
+            f"Pre-suite invariant gate FAILED — {len(missing)} invariant(s) inactive:\n"
+            f"    {_detail}\n"
+            f"All four invariants must be active before the benchmark suite can execute.\n"
+            f"Status: {json.dumps(status, indent=2)}"
+        )
+
+    _INVARIANTS_VERIFIED = True
+    print("\n  " + "-" * 50)
+    print("  PRE-SUITE INVARIANT GATE: ALL VERIFIED")
+    for _name, _ok in status.items():
+        print(f"    {_name:<25} {'ACTIVE' if _ok else 'MISSING'}")
+    print("  " + "-" * 50 + "\n", flush=True)
+    return True
+
+
 # ---------------------------------------------------------------------------
 # HUMANEVAL FORENSIC LOGGING
 # ---------------------------------------------------------------------------
@@ -384,6 +694,192 @@ SAMPLE_SIZES = {
     "rag": _get_env_int("CATEGORY_BENCH_MSMARCO_SAMPLES", 200),
     "dialogue": _get_env_int("CATEGORY_BENCH_MTBENCH_SAMPLES", 30),
 }
+
+# ============================================================================
+# DETERMINISTIC FIXED SLICE (reproducible evaluation indices)
+# ============================================================================
+
+_FIXED_SLICE_PATH = os.getenv(
+    "CATEGORY_BENCH_FIXED_SLICE_FILE",
+    "benchmark_reports/fixed_slice.json",
+)
+_FIXED_SLICE_HASH_PATH = os.getenv(
+    "CATEGORY_BENCH_FIXED_SLICE_HASH_FILE",
+    "benchmark_reports/fixed_slice.hash",
+)
+_ALLOW_SLICE_REGEN = _is_truthy(os.getenv("ALLOW_SLICE_REGEN"))
+_FIXED_SLICES: Optional[Dict[str, List[int]]] = None
+
+
+def _compute_slice_hash(path: Path) -> str:
+    """Return the SHA-256 hex digest of a file's contents."""
+    import hashlib
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _write_slice_hash(slice_path: Path, hash_path: Optional[Path] = None) -> str:
+    """Compute SHA-256 of *slice_path*, write to *hash_path*, return digest."""
+    digest = _compute_slice_hash(slice_path)
+    hp = hash_path or Path(_FIXED_SLICE_HASH_PATH)
+    hp.write_text(digest + "\n")
+    return digest
+
+
+def _verify_slice_hash(slice_path: Path) -> None:
+    """Assert slice file matches its committed hash.
+
+    Aborts with RuntimeError on mismatch unless ALLOW_SLICE_REGEN is set.
+    Silently passes if no hash file exists yet (first run).
+    """
+    hash_path = Path(_FIXED_SLICE_HASH_PATH)
+    if not hash_path.exists():
+        print(f"  [SLICE] No hash file at {hash_path} — "
+              f"generate one with --generate-fixed-slice", flush=True)
+        return
+    expected = hash_path.read_text().strip()
+    actual = _compute_slice_hash(slice_path)
+    if actual != expected:
+        if _ALLOW_SLICE_REGEN:
+            print(f"  [SLICE] WARNING: hash mismatch (ALLOW_SLICE_REGEN=1, continuing)\n"
+                  f"           expected: {expected}\n"
+                  f"           actual:   {actual}", flush=True)
+            return
+        raise RuntimeError(
+            "Fixed slice hash mismatch — deterministic evaluation violated. "
+            f"File: {slice_path}\n"
+            f"  expected SHA-256: {expected}\n"
+            f"  actual   SHA-256: {actual}\n"
+            "The fixed_slice.json has been modified since the hash was committed. "
+            "To regenerate, run:  python3 scripts/run_category_benchmarks.py --generate-fixed-slice\n"
+            "To bypass (unsafe):  ALLOW_SLICE_REGEN=1"
+        )
+    print(f"  [SLICE] Hash verified: {actual[:16]}…", flush=True)
+
+
+def _load_fixed_slices() -> Optional[Dict[str, List[int]]]:
+    """Load fixed evaluation indices from JSON.  Returns None if file absent."""
+    global _FIXED_SLICES
+    if _FIXED_SLICES is not None:
+        return _FIXED_SLICES
+    path = Path(_FIXED_SLICE_PATH)
+    if not path.exists():
+        return None
+    try:
+        _verify_slice_hash(path)
+        data = json.loads(path.read_text())
+        _FIXED_SLICES = {k: list(v) for k, v in data.items()}
+        print(f"  [SLICE] Loaded fixed slice from {path} "
+              f"({', '.join(f'{k}={len(v)}' for k, v in _FIXED_SLICES.items())})",
+              flush=True)
+        return _FIXED_SLICES
+    except RuntimeError:
+        raise
+    except Exception as e:
+        print(f"  [SLICE] WARNING: could not load {path}: {e}", flush=True)
+    return None
+
+
+def get_fixed_indices(category: str) -> Optional[List[int]]:
+    """Return pre-selected indices for *category*, or None for RNG sampling."""
+    slices = _load_fixed_slices()
+    if slices is None:
+        return None
+    return slices.get(category)
+
+
+def generate_fixed_slice_file(
+    output_path: Optional[str] = None,
+    seed: int = 42,
+) -> str:
+    """One-shot helper: generate a fixed_slice.json for all categories.
+
+    Uses the same RNG logic the evaluators would use so the indices are valid
+    for the configured SAMPLE_SIZES.  Returns the written path.
+    """
+    from datasets import load_dataset as _ld
+
+    out = Path(output_path or _FIXED_SLICE_PATH)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rng = random.Random(seed)
+    slices: Dict[str, List[int]] = {}
+
+    _ds_configs: Dict[str, tuple] = {
+        "reasoning":    ("lighteval/mmlu", "all", "test"),
+        "math":         ("openai/gsm8k", "main", "test"),
+        "multilingual": ("openai/MMMLU", None, "test"),
+        "rag":          ("microsoft/ms_marco", "v1.1", "validation"),
+    }
+    for cat, (ds_name, ds_cfg, ds_split) in _ds_configs.items():
+        try:
+            if ds_cfg:
+                ds = _ld(ds_name, ds_cfg, split=ds_split)
+            else:
+                ds = _ld(ds_name, split=ds_split)
+            n = min(SAMPLE_SIZES[cat], len(ds))
+            idx = list(range(len(ds)))
+            rng.shuffle(idx)
+            slices[cat] = idx[:n]
+        except Exception as e:
+            print(f"  [SLICE] Could not generate slice for {cat}: {e}")
+
+    try:
+        from human_eval.data import read_problems as _rp
+        pids = list(_rp().keys())
+        slices["coding"] = pids[:min(SAMPLE_SIZES["coding"], len(pids))]
+    except Exception as e:
+        print(f"  [SLICE] Could not generate slice for coding: {e}")
+
+    out.write_text(json.dumps(slices, indent=2))
+    digest = _write_slice_hash(out)
+    print(f"  [SLICE] Written {out} with {len(slices)} categories")
+    print(f"  [SLICE] Hash written to {_FIXED_SLICE_HASH_PATH} ({digest[:16]}…)")
+    return str(out)
+
+
+# ============================================================================
+# EXECUTION INTEGRITY COUNTERS (per-category)
+# ============================================================================
+
+_EXEC_INTEGRITY: Dict[str, Dict[str, int]] = {}
+
+
+def _init_exec_integrity(category: str) -> None:
+    """Initialize counters for a category."""
+    _EXEC_INTEGRITY[category] = {
+        "attempted": 0,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0,
+    }
+
+
+def _record_exec_call(category: str, result: dict) -> None:
+    """Record one API call's outcome into the integrity counters."""
+    if category not in _EXEC_INTEGRITY:
+        _init_exec_integrity(category)
+    c = _EXEC_INTEGRITY[category]
+    c["attempted"] += 1
+    if not result.get("success"):
+        c["errors"] += 1
+    retries = result.get("retries", 0)
+    if retries > 0:
+        c["retries"] += retries
+        c["fallback_used"] += 1
+
+
+def _record_exec_infra_failure(category: str) -> None:
+    if category not in _EXEC_INTEGRITY:
+        _init_exec_integrity(category)
+    _EXEC_INTEGRITY[category]["infra_failures"] += 1
+
+
+def _get_exec_integrity(category: str) -> Dict[str, int]:
+    return _EXEC_INTEGRITY.get(category, {
+        "attempted": 0, "errors": 0, "infra_failures": 0,
+        "retries": 0, "fallback_used": 0,
+    })
+
 
 # ============================================================================
 # RESPONSE INTEGRITY VALIDATION (STEP 2)
@@ -445,184 +941,278 @@ def classify_failure(response_dict: Dict[str, Any], parsed_answer: Optional[str]
 # API CLIENT
 # ============================================================================
 
-_MAX_API_RETRIES = 5
+_MAX_API_ATTEMPTS = 2          # hard cap: primary + one provider-switch
 _RETRYABLE_STATUS_CODES = {429, 502, 503, 504}
+_BACKOFF_BASE_SECONDS = 2
+
+
+def _build_api_payload(
+    prompt: str,
+    reasoning_mode: str,
+    tier: str,
+    orchestration_config: Optional[Dict[str, Any]],
+    *,
+    provider_switched: bool = False,
+) -> Dict[str, Any]:
+    """Construct the ``/v1/chat`` payload.
+
+    On a provider-switch attempt the ``exclude_providers`` hint is set so the
+    orchestrator avoids the primary provider that just failed.
+    """
+    single = _is_single_mode()
+    if single:
+        payload: Dict[str, Any] = {
+            "prompt": prompt,
+            "reasoning_mode": reasoning_mode,
+            "model": _single_model_for_category(),
+            "orchestration": dict(_SINGLE_MODE_ORCHESTRATION),
+        }
+    else:
+        payload = {
+            "prompt": prompt,
+            "reasoning_mode": reasoning_mode,
+            "orchestration": orchestration_config or {
+                "accuracy_level": 5,
+                "use_deep_consensus": False,
+                "enable_verification": False,
+            },
+        }
+    if tier:
+        payload["tier"] = tier
+    if BENCHMARK_MODE:
+        payload["models"] = _elite_models_for_category()
+        payload["system_prompt"] = _MASTER_EXECUTION_GUARD
+    if TEMPERATURE >= 0:
+        payload["temperature"] = TEMPERATURE
+    elif BENCHMARK_MODE:
+        _cat_temps = {"coding": 0.1, "reasoning": 0.2, "math": 0.2,
+                      "multilingual": 0.2, "rag": 0.2, "dialogue": 0.3}
+        payload["temperature"] = _cat_temps.get(_CURRENT_CATEGORY, 0.2)
+    if TOP_P >= 0:
+        payload["top_p"] = TOP_P
+    if FIXED_SEED >= 0:
+        payload["seed"] = FIXED_SEED
+
+    if provider_switched:
+        payload["force_provider_switch"] = True
+
+    return payload
+
+
+async def _single_api_call(
+    client: httpx.AsyncClient,
+    payload: Dict[str, Any],
+) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
+    """Execute one HTTP POST and return (result_dict | None, error | None, latency_ms).
+
+    Returns a tuple so the caller can decide retry strategy.
+    """
+    start_time = time.time()
+    try:
+        response = await client.post(
+            f"{LLMHIVE_API_URL}/v1/chat",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "X-API-Key": API_KEY,
+            },
+        )
+        latency = int((time.time() - start_time) * 1000)
+
+        if response.status_code == 200:
+            data = response.json()
+            resp_text = data.get("message", "")
+            if not response_is_valid(resp_text):
+                return None, f"invalid_response:{resp_text[:80]}", latency
+            return data, None, latency
+
+        if response.status_code in _RETRYABLE_STATUS_CODES:
+            label = "rate_limit" if response.status_code == 429 else f"server_{response.status_code}"
+            return None, label, latency
+
+        return None, f"http_{response.status_code}:{response.text[:200]}", latency
+
+    except Exception as exc:
+        latency = int((time.time() - start_time) * 1000)
+        return None, f"exception:{str(exc)[:120]}", latency
+
+
+def _is_retryable_error(error_label: str) -> bool:
+    """Return True if the error warrants a provider-switch attempt."""
+    if not error_label:
+        return False
+    for prefix in ("rate_limit", "server_", "invalid_response", "exception"):
+        if error_label.startswith(prefix):
+            return True
+    return False
 
 
 async def call_llmhive_api(
     prompt: str,
     reasoning_mode: str = REASONING_MODE,
     tier: str = TIER,
-    timeout: int = 180,
+    timeout: int = 60,
     orchestration_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Call LLMHive API with exponential backoff retry (max 5 attempts).
+    """Call LLMHive API with strict 2-attempt retry policy.
+
+    Attempt 1 — primary call with exponential backoff on transient failure.
+    Attempt 2 — immediate provider switch (no additional delay).
+
+    If both fail, the query is aborted with an explicit failure log.
+    No silent retries beyond 2 attempts.
 
     When *BENCHMARK_MODE* is active, every successful call emits a structured
     model-trace entry and checks for elite-model drift.
     """
     category = _CURRENT_CATEGORY
     single = _is_single_mode()
+
+    _fallback_event = False
+    _provider_switched = False
+    _attempt1_error: Optional[str] = None
+    _attempt2_error: Optional[str] = None
+
     async with httpx.AsyncClient(timeout=timeout) as client:
-        for attempt in range(_MAX_API_RETRIES):
+
+        # ── Attempt 1: primary call with exponential backoff ──
+        payload = _build_api_payload(
+            prompt, reasoning_mode, tier, orchestration_config,
+            provider_switched=False,
+        )
+        data, error, latency = await _single_api_call(client, payload)
+
+        if data is None and error and _is_retryable_error(error):
+            _attempt1_error = error
+            wait = _BACKOFF_BASE_SECONDS
+            print(f"  [RETRY] Attempt 1 failed ({error}), "
+                  f"backoff {wait}s then provider switch", flush=True)
+            await asyncio.sleep(wait)
+
+            # ── Attempt 2: immediate provider switch ──
+            _fallback_event = True
+            _provider_switched = True
+            payload_switched = _build_api_payload(
+                prompt, reasoning_mode, tier, orchestration_config,
+                provider_switched=True,
+            )
+            data, error, latency = await _single_api_call(client, payload_switched)
+            if error:
+                _attempt2_error = error
+
+        # ── Both attempts exhausted — explicit abort ──
+        if data is None:
+            final_error = _attempt2_error or _attempt1_error or error or "unknown"
+            _fail_ret: Dict[str, Any] = {
+                "success": False,
+                "error": final_error,
+                "latency": latency,
+                "cost": 0,
+                "fallback_event": _fallback_event,
+                "provider_switched": _provider_switched,
+                "attempt1_error": _attempt1_error,
+                "attempt2_error": _attempt2_error,
+            }
+            print(f"  [FAIL] API call aborted after {_MAX_API_ATTEMPTS} attempts "
+                  f"(category={category}, err={final_error[:80]})", flush=True)
+            _record_exec_call(_CURRENT_CATEGORY, _fail_ret)
+            return _fail_ret
+
+        # ── Success path ──
+        attempt_used = 2 if _provider_switched else 1
+        resp_text = data.get("message", "")
+        extra = data.get("extra", {})
+        cost_tracking = extra.get("cost_tracking", {})
+        usage = extra.get("usage", {})
+        models_used = data.get("models_used", [])
+        _fo_info = extra.get("failover", {})
+
+        fallback_used = _fallback_event
+
+        _trace = {
+            "category": category,
+            "orchestration_mode": ORCHESTRATION_MODE,
+            "pinned_model": _single_model_for_category() if single else None,
+            "provider": models_used[0].split("/")[0] if models_used and "/" in str(models_used[0]) else "",
+            "model_name": models_used,
+            "number_of_models_used": len(models_used),
+            "tier": tier,
+            "reasoning_mode": reasoning_mode,
+            "temperature": TEMPERATURE if TEMPERATURE >= 0 else None,
+            "top_p": TOP_P if TOP_P >= 0 else None,
+            "seed": FIXED_SEED if FIXED_SEED >= 0 else None,
+            "fallback_used": fallback_used,
+            "fallback_event": _fallback_event,
+            "provider_switched": _provider_switched,
+            "retry_count": attempt_used - 1,
+            "timestamp": datetime.now().isoformat(),
+            "latency_ms": latency,
+            "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+            "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+        }
+        if _fo_info:
+            _trace["failover_attempted"] = _fo_info.get("failover_attempted", False)
+            _trace["failover_provider"] = _fo_info.get("failover_provider")
+            _trace["failure_type"] = _fo_info.get("failure_type")
+            _trace["provider_sla_breached"] = _fo_info.get("provider_sla_breached", False)
+        if _attempt1_error:
+            _trace["attempt1_error"] = _attempt1_error
+        _write_model_trace(_trace)
+
+        if BENCHMARK_MODE:
+            _check_elite_model_drift(models_used, category)
+            if fallback_used:
+                print(f"  WARNING: Benchmark call recovered via provider switch "
+                      f"(category={category}, attempt1_err={_attempt1_error})",
+                      flush=True)
+        if single and len(models_used) > 1:
+            print(f"  SINGLE-MODE VIOLATION: {category} returned "
+                  f"{len(models_used)} models: {models_used}", flush=True)
+
+        # ── 2026 Intelligence Telemetry ──
+        if _INTELLIGENCE_LAYER and BENCHMARK_MODE:
             try:
-                start_time = time.time()
+                _primary = models_used[0] if models_used else (_single_model_for_category() if single else "")
+                _provider_name = _primary.split("/")[0] if "/" in str(_primary) else ""
+                _get_intel_telemetry().record(_IntelTraceEntry(
+                    timestamp=datetime.now().isoformat(),
+                    category=category,
+                    provider=_provider_name,
+                    model_id=str(_primary),
+                    display_name=str(_primary),
+                    orchestration_mode=ORCHESTRATION_MODE,
+                    consensus_enabled=not single,
+                    reasoning_mode=reasoning_mode,
+                    temperature=TEMPERATURE if TEMPERATURE >= 0 else None,
+                    top_p=TOP_P if TOP_P >= 0 else None,
+                    seed=FIXED_SEED if FIXED_SEED >= 0 else None,
+                    fallback_used=fallback_used,
+                    retry_count=attempt_used - 1,
+                    latency_ms=latency,
+                    input_tokens=usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+                    output_tokens=usage.get("completion_tokens", usage.get("output_tokens", 0)),
+                    failover_attempted=_fo_info.get("failover_attempted", False),
+                    failover_provider=_fo_info.get("failover_provider"),
+                    failure_type=_fo_info.get("failure_type"),
+                    provider_sla_breached=_fo_info.get("provider_sla_breached", False),
+                ))
+            except Exception:
+                pass
 
-                if single:
-                    orch = dict(_SINGLE_MODE_ORCHESTRATION)
-                    payload: Dict[str, Any] = {
-                        "prompt": prompt,
-                        "reasoning_mode": reasoning_mode,
-                        "model": _single_model_for_category(),
-                        "orchestration": orch,
-                    }
-                else:
-                    payload = {
-                        "prompt": prompt,
-                        "reasoning_mode": reasoning_mode,
-                        "orchestration": orchestration_config or {
-                            "accuracy_level": 5,
-                            "use_deep_consensus": True,
-                            "enable_verification": True,
-                        },
-                    }
-                if tier:
-                    payload["tier"] = tier
-                if TEMPERATURE >= 0:
-                    payload["temperature"] = TEMPERATURE
-                if TOP_P >= 0:
-                    payload["top_p"] = TOP_P
-                if FIXED_SEED >= 0:
-                    payload["seed"] = FIXED_SEED
-
-                response = await client.post(
-                    f"{LLMHIVE_API_URL}/v1/chat",
-                    json=payload,
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-API-Key": API_KEY,
-                    }
-                )
-                latency = int((time.time() - start_time) * 1000)
-
-                if response.status_code == 200:
-                    data = response.json()
-                    resp_text = data.get("message", "")
-                    if not response_is_valid(resp_text):
-                        if attempt < _MAX_API_RETRIES - 1:
-                            wait = 2 ** attempt
-                            print(f"⚠️ Invalid response (attempt {attempt+1}/{_MAX_API_RETRIES}), retrying in {wait}s...", flush=True)
-                            await asyncio.sleep(wait)
-                            continue
-                    extra = data.get("extra", {})
-                    cost_tracking = extra.get("cost_tracking", {})
-                    usage = extra.get("usage", {})
-                    models_used = data.get("models_used", [])
-                    _fo_info = extra.get("failover", {})
-
-                    fallback_used = attempt > 0
-
-                    _trace = {
-                        "category": category,
-                        "orchestration_mode": ORCHESTRATION_MODE,
-                        "pinned_model": _single_model_for_category() if single else None,
-                        "provider": models_used[0].split("/")[0] if models_used and "/" in str(models_used[0]) else "",
-                        "model_name": models_used,
-                        "number_of_models_used": len(models_used),
-                        "tier": tier,
-                        "reasoning_mode": reasoning_mode,
-                        "temperature": TEMPERATURE if TEMPERATURE >= 0 else None,
-                        "top_p": TOP_P if TOP_P >= 0 else None,
-                        "seed": FIXED_SEED if FIXED_SEED >= 0 else None,
-                        "fallback_used": fallback_used,
-                        "retry_count": attempt,
-                        "timestamp": datetime.now().isoformat(),
-                        "latency_ms": latency,
-                        "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
-                        "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
-                    }
-                    if _fo_info:
-                        _trace["failover_attempted"] = _fo_info.get("failover_attempted", False)
-                        _trace["failover_provider"] = _fo_info.get("failover_provider")
-                        _trace["failure_type"] = _fo_info.get("failure_type")
-                        _trace["provider_sla_breached"] = _fo_info.get("provider_sla_breached", False)
-                    _write_model_trace(_trace)
-
-                    if BENCHMARK_MODE:
-                        _check_elite_model_drift(models_used, category)
-                        if fallback_used:
-                            print(f"  WARNING: Benchmark call required {attempt} retries "
-                                  f"(category={category})")
-                    if single and len(models_used) > 1:
-                        print(f"  SINGLE-MODE VIOLATION: {category} returned "
-                              f"{len(models_used)} models: {models_used}", flush=True)
-
-                    # ── 2026 Intelligence Telemetry ──
-                    if _INTELLIGENCE_LAYER and BENCHMARK_MODE:
-                        try:
-                            _primary = models_used[0] if models_used else (_single_model_for_category() if single else "")
-                            _provider_name = _primary.split("/")[0] if "/" in str(_primary) else ""
-                            _get_intel_telemetry().record(_IntelTraceEntry(
-                                timestamp=datetime.now().isoformat(),
-                                category=category,
-                                provider=_provider_name,
-                                model_id=str(_primary),
-                                display_name=str(_primary),
-                                orchestration_mode=ORCHESTRATION_MODE,
-                                consensus_enabled=not single,
-                                reasoning_mode=reasoning_mode,
-                                temperature=TEMPERATURE if TEMPERATURE >= 0 else None,
-                                top_p=TOP_P if TOP_P >= 0 else None,
-                                seed=FIXED_SEED if FIXED_SEED >= 0 else None,
-                                fallback_used=fallback_used,
-                                retry_count=attempt,
-                                latency_ms=latency,
-                                input_tokens=usage.get("prompt_tokens", usage.get("input_tokens", 0)),
-                                output_tokens=usage.get("completion_tokens", usage.get("output_tokens", 0)),
-                                failover_attempted=_fo_info.get("failover_attempted", False),
-                                failover_provider=_fo_info.get("failover_provider"),
-                                failure_type=_fo_info.get("failure_type"),
-                                provider_sla_breached=_fo_info.get("provider_sla_breached", False),
-                            ))
-                        except Exception:
-                            pass
-
-                    return {
-                        "success": True,
-                        "response": resp_text,
-                        "latency": latency,
-                        "cost": cost_tracking.get("total_cost", 0),
-                        "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
-                        "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
-                        "retries": attempt,
-                        "models_used": models_used,
-                    }
-                elif response.status_code in _RETRYABLE_STATUS_CODES:
-                    wait = 2 ** attempt
-                    label = "Rate limited" if response.status_code == 429 else f"Server error {response.status_code}"
-                    print(f"⚠️ {label}, retrying in {wait}s (attempt {attempt+1}/{_MAX_API_RETRIES})...", flush=True)
-                    await asyncio.sleep(wait)
-                    continue
-                else:
-                    return {
-                        "success": False,
-                        "error": f"HTTP {response.status_code}: {response.text[:200]}",
-                        "latency": latency,
-                        "cost": 0,
-                    }
-            except Exception as e:
-                if attempt == _MAX_API_RETRIES - 1:
-                    return {
-                        "success": False,
-                        "error": str(e),
-                        "latency": 0,
-                        "cost": 0,
-                    }
-                wait = 2 ** attempt
-                print(f"⚠️ Request exception (attempt {attempt+1}/{_MAX_API_RETRIES}): {str(e)[:80]}, retrying in {wait}s...", flush=True)
-                await asyncio.sleep(wait)
-
-        return {"success": False, "error": "Max retries exceeded", "latency": 0, "cost": 0}
+        _ret = {
+            "success": True,
+            "response": resp_text,
+            "latency": latency,
+            "cost": cost_tracking.get("total_cost", 0),
+            "input_tokens": usage.get("prompt_tokens", usage.get("input_tokens", 0)),
+            "output_tokens": usage.get("completion_tokens", usage.get("output_tokens", 0)),
+            "retries": attempt_used - 1,
+            "models_used": models_used,
+            "fallback_event": _fallback_event,
+            "provider_switched": _provider_switched,
+        }
+        _record_exec_call(_CURRENT_CATEGORY, _ret)
+        return _ret
 
 
 def _normalize_text(text: str) -> str:
@@ -1104,9 +1694,12 @@ def _load_checkpoint() -> Optional[Dict[str, Any]]:
 def _save_checkpoint(payload: Dict[str, Any]) -> None:
     path = Path(CHECKPOINT_PATH)
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(payload, indent=2))
-    tmp.rename(path)
+    try:
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, indent=2))
+        tmp.rename(path)
+    except OSError:
+        path.write_text(json.dumps(payload, indent=2))
 
 
 def _normalize_skip_list() -> List[str]:
@@ -1233,6 +1826,7 @@ async def evaluate_reasoning(
     
     try:
         dataset = load_dataset("lighteval/mmlu", "all", split="test")
+        _init_exec_integrity("reasoning")
         selected_indices: Optional[List[int]] = None
         if STRICT_MODE:
             sample_size = len(dataset)
@@ -1241,11 +1835,15 @@ async def evaluate_reasoning(
             if progress and progress.get("selected_indices"):
                 selected_indices = progress["selected_indices"]
             else:
-                sample_size = min(SAMPLE_SIZES["reasoning"], len(dataset))
-                rng_indices = list(range(len(dataset)))
-                rng = random.Random(42)
-                rng.shuffle(rng_indices)
-                selected_indices = rng_indices[:sample_size]
+                fixed = get_fixed_indices("reasoning")
+                if fixed is not None:
+                    selected_indices = [i for i in fixed if i < len(dataset)]
+                else:
+                    sample_size = min(SAMPLE_SIZES["reasoning"], len(dataset))
+                    rng_indices = list(range(len(dataset)))
+                    rng = random.Random(42)
+                    rng.shuffle(rng_indices)
+                    selected_indices = rng_indices[:sample_size]
             sample_size = min(SAMPLE_SIZES["reasoning"], len(selected_indices))
             selected_indices = selected_indices[:sample_size]
             samples = dataset.select(selected_indices)
@@ -1268,108 +1866,142 @@ async def evaluate_reasoning(
             correct_answer = ["A", "B", "C", "D"][item["answer"]]
             subject = item.get("subject", "unknown")
             
-            # SOTA 2026: SELF-CONSISTENCY WITH MULTIPLE REASONING PATHS
-            # Based on Wang et al. 2022 + Neighbor-Consistency Belief 2026
-            # Expected gain: +12% on MMLU
-            
-            # Domain detection for routing
-            domain = detect_domain(question)
-            preferred_model = DOMAIN_EXPERT_MODELS.get(domain, "google/gemini-3-pro")
-            
-            # Negation detection
+            # ── GLOBAL ORCHESTRATION SAFETY LAYER: MMLU ──
+            # Lean pipeline: Structured Reasoning → Verification (if conf < 0.9)
+            # Max 2 API calls per question. No server-side ensemble.
+
             is_negation = has_negation(question)
-            
-            # Format question for reasoning
+
             formatted_question = f"""{question}
 
 A) {choices[0]}
 B) {choices[1]}
 C) {choices[2]}
 D) {choices[3]}"""
-            
+
             if is_negation:
                 formatted_question = (
-                    "⚠️ CRITICAL: This question uses NEGATION — it asks for the INCORRECT, "
-                    "FALSE, or EXCEPTION option. You must identify the statement that is WRONG "
-                    "or does NOT apply. Do NOT select the true/correct statement.\n\n"
+                    "CRITICAL: This question uses NEGATION — it asks for the INCORRECT, "
+                    "FALSE, or EXCEPTION option. Identify the statement that is WRONG "
+                    "or does NOT apply.\n\n"
                     + formatted_question
                 )
-            
+
             if subject == "moral_scenarios":
                 formatted_question = (
-                    "IMPORTANT: This question presents TWO scenarios. You must judge EACH scenario "
+                    "This question presents TWO scenarios. Judge EACH scenario "
                     "INDEPENDENTLY using ordinary US moral standards as of 2020.\n"
-                    "Step 1: Read Scenario 1. Is the described action clearly morally wrong? Answer 'Wrong' or 'Not wrong'.\n"
-                    "Step 2: Read Scenario 2. Is the described action clearly morally wrong? Answer 'Wrong' or 'Not wrong'.\n"
-                    "Step 3: Combine your two judgments to select the matching answer option.\n"
-                    "BE CAREFUL: Actions that cause harm, endanger others, or involve deception ARE wrong. "
-                    "Actions that are routine or benign are NOT wrong. "
-                    "Do NOT default to 'Not wrong, Not wrong' — many scenarios DO contain one wrong action.\n\n"
+                    "Step 1: Read Scenario 1 — is it clearly morally wrong?\n"
+                    "Step 2: Read Scenario 2 — is it clearly morally wrong?\n"
+                    "Step 3: Combine judgments to select the matching answer.\n\n"
                     + formatted_question
                 )
-            
-            # Generate multiple reasoning paths (SOTA: Self-consistency)
-            reasoning_paths = await generate_cot_reasoning_paths(
-                formatted_question,
-                choices,
-                lambda prompt, **kwargs: call_llmhive_api(
-                    prompt,
-                    reasoning_mode=REASONING_MODE,
-                    tier=tier,
-                    orchestration_config={
-                        "accuracy_level": 5,
-                        "preferred_model": preferred_model if domain != "general" else None,
-                        **kwargs.get("orchestration_config", {})
-                    }
-                ),
-                num_paths=5
+
+            # ── Agent 1: Structured Reasoning (1 API call) ──
+            structured_prompt = (
+                "You are a structured reasoning expert.\n\n"
+                "Task: Solve the following multiple-choice question.\n\n"
+                "Steps:\n"
+                "1. Decompose the problem into logical subcomponents.\n"
+                "2. Identify key facts.\n"
+                "3. Eliminate incorrect answers explicitly.\n"
+                "4. Select the most defensible option.\n"
+                "5. Provide FINAL_ANSWER as the letter only.\n\n"
+                "Avoid speculation. Be precise.\n\n"
+                f"{formatted_question}\n\n"
+                "After your reasoning, output exactly:\n"
+                "FINAL_ANSWER: <letter>\n"
+                "CONFIDENCE: <0.00-1.00>"
             )
-            
-            # Self-consistency vote
-            predicted, confidence = self_consistency_vote(reasoning_paths)
-            
-            # Confidence-gated fallback — if CoT consensus is weak,
-            # re-query with a structured "letter-only" prompt.
-            if confidence < 0.60 and predicted:
+
+            agent1_result = await call_llmhive_api(
+                structured_prompt,
+                reasoning_mode="deep",
+                tier=tier,
+                orchestration_config={"accuracy_level": 5},
+            )
+
+            predicted = None
+            confidence = 0.0
+            _total_calls = 1
+
+            if agent1_result.get("success"):
+                resp_text = agent1_result.get("response", "")
+                predicted = _extract_multiple_choice(resp_text)
+                import re as _re_mod
+                _conf_match = _re_mod.search(r'CONFIDENCE:\s*([\d.]+)', resp_text)
+                try:
+                    confidence = float(_conf_match.group(1).rstrip('.')) if _conf_match else 0.5
+                except (ValueError, AttributeError):
+                    confidence = 0.5
+                if confidence > 1.0:
+                    confidence = min(confidence / 100.0, 1.0)
+
+            # ── Agent 2: Verification (only if CONFIDENCE < 0.9) ──
+            if predicted and confidence < 0.90:
+                verify_prompt = (
+                    "You are a verification specialist.\n\n"
+                    "You are given:\n"
+                    f"- Question: {formatted_question}\n"
+                    f"- Proposed answer: {predicted}\n\n"
+                    "Your task:\n"
+                    "1. Independently evaluate the question.\n"
+                    "2. Determine if the proposed answer is correct.\n"
+                    "3. If incorrect, provide corrected answer.\n\n"
+                    "Output exactly:\n"
+                    "FINAL_ANSWER: <letter>\n"
+                    "CONFIDENCE: <0.00-1.00>"
+                )
+
+                agent2_result = await call_llmhive_api(
+                    verify_prompt,
+                    reasoning_mode="deep",
+                    tier=tier,
+                    orchestration_config={"accuracy_level": 5},
+                )
+                _total_calls += 1
+
+                if agent2_result.get("success"):
+                    v_text = agent2_result.get("response", "")
+                    v_answer = _extract_multiple_choice(v_text)
+                    _v_conf_match = _re_mod.search(r'CONFIDENCE:\s*([\d.]+)', v_text)
+                    try:
+                        v_conf = float(_v_conf_match.group(1).rstrip('.')) if _v_conf_match else 0.5
+                    except (ValueError, AttributeError):
+                        v_conf = 0.5
+                    if v_conf > 1.0:
+                        v_conf = min(v_conf / 100.0, 1.0)
+
+                    if v_answer and v_answer in "ABCD":
+                        if v_answer == predicted:
+                            confidence = max(confidence, v_conf)
+                        elif v_conf > confidence:
+                            predicted = v_answer
+                            confidence = v_conf
+
+            # ── Escalation: if still low confidence, one final call ──
+            if predicted and confidence < 0.60:
                 fallback_prompt = (
                     f"{formatted_question}\n\n"
                     "Return ONLY the letter of the correct answer: A, B, C, or D.\n"
-                    "Do not explain. Do not add any other text. "
-                    "Output a single capital letter."
+                    "Do not explain. Output a single capital letter."
                 )
-                fallback_result = await call_llmhive_api(
+                fb_result = await call_llmhive_api(
                     fallback_prompt,
                     reasoning_mode="deep",
                     tier=tier,
-                    orchestration_config={"accuracy_level": 5}
+                    orchestration_config={"accuracy_level": 5},
                 )
-                if fallback_result.get("success"):
-                    fb_text = fallback_result.get("response", "")
+                _total_calls += 1
+                if fb_result.get("success"):
+                    fb_text = fb_result.get("response", "")
                     fb_answer = _extract_multiple_choice(fb_text)
-                    fb_confidence = fallback_result.get("confidence", 0.60)
-                    if fb_answer and fb_answer in "ABCD" and fb_confidence > confidence:
+                    if fb_answer and fb_answer in "ABCD":
                         predicted = fb_answer
-                        confidence = max(fb_confidence, 0.60)
+                        confidence = max(confidence, 0.60)
 
-            # Neighbor-consistency check (if high confidence)
-            if confidence >= 0.6 and predicted:
-                neighbor_consistency = await neighbor_consistency_check(
-                    formatted_question,
-                    predicted,
-                    lambda prompt, **kwargs: call_llmhive_api(
-                        prompt,
-                        reasoning_mode=REASONING_MODE,
-                        tier=tier,
-                    )
-                )
-                
-                # If neighbor consistency is low, reduce confidence
-                if neighbor_consistency < 0.5:
-                    confidence *= 0.7
-            
-            # Calculate total cost and latency from all paths
-            path_latency = sum(1000 for _ in reasoning_paths)  # Estimate
-            path_cost = len(reasoning_paths) * 0.001  # Estimate
+            path_latency = _total_calls * 5000
+            path_cost = _total_calls * 0.002
             
             if predicted:
                 is_correct = predicted == correct_answer
@@ -1383,7 +2015,7 @@ D) {choices[3]}"""
                 if is_correct:
                     subject_stats[subject]["correct"] += 1
                 status_icon = "✅" if is_correct else "❌"
-                print(f"  [{i}/{sample_size}] MMLU: {status_icon} pred={predicted} correct={correct_answer} conf={confidence:.0%} paths={len(reasoning_paths)} subj={subject} ({correct}/{i-errors} correct so far)", flush=True)
+                print(f"  [{i}/{sample_size}] MMLU: {status_icon} pred={predicted} correct={correct_answer} conf={confidence:.0%} calls={_total_calls} subj={subject} ({correct}/{i-errors} correct so far)", flush=True)
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
                         "category": "MMLU", "question_id": f"mmlu_{i}",
@@ -1391,7 +2023,7 @@ D) {choices[3]}"""
                         "question": question[:200], "predicted": predicted,
                         "extracted_answer": predicted,
                         "correct_answer": correct_answer, "is_correct": is_correct,
-                        "confidence": confidence, "num_paths": len(reasoning_paths),
+                        "confidence": confidence, "num_paths": _total_calls,
                         "latency_ms": path_latency,
                         "cost_usd": path_cost,
                         "retry_count": 0, "infra_failure": False,
@@ -1400,8 +2032,8 @@ D) {choices[3]}"""
             else:
                 errors += 1
                 if len(error_samples) < 3:
-                    error_samples.append(f"No valid answer from {len(reasoning_paths)} paths")
-                print(f"  [{i}/{sample_size}] MMLU: ⚠️ NO ANSWER from {len(reasoning_paths)} paths subj={subject} ({errors} errors)", flush=True)
+                    error_samples.append(f"No valid answer from {_total_calls} calls")
+                print(f"  [{i}/{sample_size}] MMLU: ⚠️ NO ANSWER from {_total_calls} calls subj={subject} ({errors} errors)", flush=True)
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
                         "category": "MMLU", "question_id": f"mmlu_{i}",
@@ -1409,7 +2041,7 @@ D) {choices[3]}"""
                         "question": question[:200], "predicted": None,
                         "extracted_answer": None,
                         "correct_answer": correct_answer, "is_correct": False,
-                        "error": "no_answer", "num_paths": len(reasoning_paths),
+                        "error": "no_answer", "num_paths": _total_calls,
                         "failure_type": "extraction",
                         "infra_failure": False,
                     })
@@ -1453,6 +2085,7 @@ D) {choices[3]}"""
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
             "extra": {"error_samples": error_samples, "subject_stats": subject_stats},
+            "exec_integrity": _get_exec_integrity("reasoning"),
         }
     except Exception as e:
         raise RuntimeError(
@@ -1483,11 +2116,15 @@ async def evaluate_coding(
         
         problems = read_problems()
         problem_ids = list(problems.keys())
-        sample_ids = (
-            progress.get("sample_ids")
-            if progress and progress.get("sample_ids")
-            else problem_ids[: min(SAMPLE_SIZES["coding"], len(problem_ids))]
-        )
+        _init_exec_integrity("coding")
+        if progress and progress.get("sample_ids"):
+            sample_ids = progress["sample_ids"]
+        else:
+            fixed = get_fixed_indices("coding")
+            if fixed is not None:
+                sample_ids = [pid for pid in fixed if pid in problems]
+            else:
+                sample_ids = problem_ids[:min(SAMPLE_SIZES["coding"], len(problem_ids))]
 
         correct = int(progress.get("correct", 0)) if progress else 0
         errors = int(progress.get("errors", 0)) if progress else 0
@@ -1555,7 +2192,7 @@ Brief analysis:"""
                         for args, expected in test_matches[:5]:
                             test_cases.append(f"  {args.strip()} → {expected.strip()}")
                     
-                    impl_prompt = f"""Complete the following Python function. Output ONLY the function code, nothing else.
+                    impl_prompt = f"""Write a short, correct Python function to solve the problem below. Mentally trace through the test cases to verify your logic before finalising.
 
 {problem['prompt']}
     # Your analysis: {analysis[:300]}
@@ -1567,7 +2204,8 @@ TESTS YOUR CODE MUST PASS:
 RULES:
 - Output the COMPLETE function including the def line and docstring.
 - Implement the FULL body. NEVER use `pass`, `...`, or `NotImplementedError`.
-- If unsure, write a simple brute-force solution.
+- Trace through at least one test case to confirm correctness before outputting.
+- If unsure, write a simple brute-force solution that handles all edge cases.
 - Do NOT add explanations, markdown, or anything outside the function."""
                     
                     impl_result = await call_llmhive_api(
@@ -1577,8 +2215,8 @@ RULES:
                         timeout=120,
                         orchestration_config={
                             "accuracy_level": 5,
-                            "enable_verification": True,
-                            "use_deep_consensus": True,
+                            "enable_verification": False,
+                            "use_deep_consensus": False,
                         }
                     )
                     
@@ -1633,23 +2271,22 @@ TEST FAILURE INFO:
 {error_msg}
 
 ANALYSIS:
-- Your code runs but produces WRONG outputs
-- Review the test assertions and trace your logic
-- Find where your logic diverges from expected behavior
-- Common issues: off-by-one, wrong condition, missing edge case
+- Mentally execute your code line-by-line on the failing test input
+- Identify the exact line where your output diverges from expected
+- Common issues: off-by-one, wrong condition, missing edge case, type error
+- After fixing, trace through the test case again to confirm the fix is correct
 
 Output CORRECTED function (code only):"""
                     
-                    _refine_accuracy = 5 if attempt < max_refinement_attempts else 6
                     refine_result = await call_llmhive_api(
                         refine_prompt,
                         reasoning_mode=REASONING_MODE,
                         tier=tier,
                         timeout=120,
                         orchestration_config={
-                            "accuracy_level": _refine_accuracy,
-                            "enable_verification": True,
-                            "use_deep_consensus": attempt == max_refinement_attempts,
+                            "accuracy_level": 5,
+                            "enable_verification": False,
+                            "use_deep_consensus": False,
                         }
                     )
                     
@@ -1882,6 +2519,7 @@ Output CORRECTED function (code only):"""
                 "failed_ids": failed_ids,
                 "pipeline_metrics": _he_metrics,
             },
+            "exec_integrity": _get_exec_integrity("coding"),
         }
     
     except ImportError as e:
@@ -1904,12 +2542,14 @@ async def evaluate_math(
     on_progress: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> Dict[str, Any]:
     """Evaluate math using GSM8K"""
+    reset_verify_circuit_breaker()
     print(f"\n{'='*70}")
     print(f"CATEGORY 3: MATH (GSM8K)")
     print(f"{'='*70}\n")
     
     try:
         dataset = load_dataset("openai/gsm8k", "main", split="test")
+        _init_exec_integrity("math")
         selected_indices: Optional[List[int]] = None
         if STRICT_MODE:
             sample_size = len(dataset)
@@ -1918,11 +2558,15 @@ async def evaluate_math(
             if progress and progress.get("selected_indices"):
                 selected_indices = progress["selected_indices"]
             else:
-                sample_size = min(SAMPLE_SIZES["math"], len(dataset))
-                rng_indices = list(range(len(dataset)))
-                rng = random.Random(42)
-                rng.shuffle(rng_indices)
-                selected_indices = rng_indices[:sample_size]
+                fixed = get_fixed_indices("math")
+                if fixed is not None:
+                    selected_indices = [i for i in fixed if i < len(dataset)]
+                else:
+                    sample_size = min(SAMPLE_SIZES["math"], len(dataset))
+                    rng_indices = list(range(len(dataset)))
+                    rng = random.Random(42)
+                    rng.shuffle(rng_indices)
+                    selected_indices = rng_indices[:sample_size]
             sample_size = min(SAMPLE_SIZES["math"], len(selected_indices))
             selected_indices = selected_indices[:sample_size]
             samples = dataset.select(selected_indices)
@@ -1954,7 +2598,7 @@ async def evaluate_math(
                     tier=tier,
                     **kwargs
                 ),
-                num_candidates=5  # Generate 5 candidates, verify all
+                num_candidates=3
             )
             
             # Calculate total cost and latency
@@ -1977,6 +2621,7 @@ async def evaluate_math(
                     total_cost += candidate_cost
                     status_icon = "✅" if is_correct else "❌"
                     print(f"  [{i}/{sample_size}] GSM8K: {status_icon} pred={predicted_num} correct={correct_answer} ({correct}/{i-errors} correct so far)", flush=True)
+                    _arith_override = best_candidate.get("arithmetic_override", False) if isinstance(best_candidate, dict) else False
                     if _ANSWER_LOG_PATH:
                         _log_answer(_ANSWER_LOG_PATH, {
                             "category": "GSM8K", "question_id": f"gsm8k_{i}",
@@ -1987,6 +2632,9 @@ async def evaluate_math(
                             "latency_ms": candidate_latency,
                             "cost_usd": candidate_cost,
                             "failure_type": None if is_correct else "logic",
+                            "arithmetic_override": _arith_override,
+                            "calc_expression": best_candidate.get("calc_expression") if isinstance(best_candidate, dict) else None,
+                            "calc_result": best_candidate.get("calc_result") if isinstance(best_candidate, dict) else None,
                             "verify_candidates": best_candidate.get("candidates", []) if isinstance(best_candidate, dict) else [],
                             "verify_scores": [best_candidate.get("verification_score", 0)] if isinstance(best_candidate, dict) else [],
                         })
@@ -2054,6 +2702,7 @@ async def evaluate_math(
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
             "extra": {"error_samples": error_samples},
+            "exec_integrity": _get_exec_integrity("math"),
         }
     except Exception as e:
         raise RuntimeError(
@@ -2075,6 +2724,7 @@ async def evaluate_multilingual(
     print(f"{'='*70}\n")
     
     dataset = load_dataset("openai/MMMLU", split="test")
+    _init_exec_integrity("multilingual")
     selected_indices: Optional[List[int]] = None
     if STRICT_MODE:
         sample_size = len(dataset)
@@ -2083,11 +2733,15 @@ async def evaluate_multilingual(
         if progress and progress.get("selected_indices"):
             selected_indices = progress["selected_indices"]
         else:
-            sample_size = min(SAMPLE_SIZES["multilingual"], len(dataset))
-            rng_indices = list(range(len(dataset)))
-            rng = random.Random(42)
-            rng.shuffle(rng_indices)
-            selected_indices = rng_indices[:sample_size]
+            fixed = get_fixed_indices("multilingual")
+            if fixed is not None:
+                selected_indices = [i for i in fixed if i < len(dataset)]
+            else:
+                sample_size = min(SAMPLE_SIZES["multilingual"], len(dataset))
+                rng_indices = list(range(len(dataset)))
+                rng = random.Random(42)
+                rng.shuffle(rng_indices)
+                selected_indices = rng_indices[:sample_size]
         sample_size = min(SAMPLE_SIZES["multilingual"], len(selected_indices))
         selected_indices = selected_indices[:sample_size]
         samples = dataset.select(selected_indices)
@@ -2207,10 +2861,25 @@ async def evaluate_multilingual(
                 "Do NOT default to 'Not wrong, Not wrong' — many scenarios contain one wrong action.\n\n"
             )
         
+        # Multilingual expert preamble
+        multilingual_preamble = (
+            "You are a multilingual expert. "
+        )
+        if has_non_english:
+            multilingual_preamble += (
+                "The question below may be in a non-English language. "
+                "If so, first understand the question in its original language, "
+                "reason about the answer, and respond with the correct option letter.\n\n"
+            )
+        else:
+            multilingual_preamble += (
+                "Answer the following question carefully.\n\n"
+            )
+
         # A5: Strict format — force single letter on final line
         prompt = (
+            f"{multilingual_preamble}"
             f"{moral_preamble}"
-            "Answer this multiple-choice question.\n\n"
             f"Question: {question}\n\n"
             f"A) {choices[0]}\n"
             f"B) {choices[1]}\n"
@@ -2221,6 +2890,18 @@ async def evaluate_multilingual(
             "Reasoning:"
         )
 
+        # For non-English questions: run translate-and-solve in parallel
+        # with the direct prompt; use whichever succeeds with higher quality.
+        _translate_answer: Optional[str] = None
+        if has_non_english:
+            _mmmlu_api = lambda p, **kw: call_llmhive_api(
+                p, reasoning_mode=REASONING_MODE, tier=tier, **kw,
+            )
+            async with _mmmlu_semaphore:
+                _translate_answer, _translated_q = await translate_and_solve_multilingual(
+                    question, choices, _mmmlu_api,
+                )
+
         async with _mmmlu_semaphore:
             result = await call_llmhive_api(
                 prompt,
@@ -2228,7 +2909,8 @@ async def evaluate_multilingual(
                 tier=tier,
                 orchestration_config={
                     "accuracy_level": 5,
-                    "enable_verification": True,
+                    "enable_verification": False,
+                    "use_deep_consensus": False,
                 }
             )
 
@@ -2237,15 +2919,25 @@ async def evaluate_multilingual(
             mmmlu_confidence = result.get("confidence", 0.5)
             _mmmlu_fallback_used = False
 
-            # Confidence gate: if confidence < 45% and we have an answer,
+            # If translate-and-solve produced an answer and direct didn't,
+            # or direct confidence is low, prefer the translated answer.
+            if _translate_answer and _translate_answer in "ABCD":
+                if predicted is None:
+                    predicted = _translate_answer
+                    _mmmlu_fallback_used = True
+                elif mmmlu_confidence < 0.50:
+                    predicted = _translate_answer
+                    _mmmlu_fallback_used = True
+
+            # Confidence gate: if confidence < 55% and we have an answer,
             # re-query once with reasoning_mode="deep" for higher quality.
-            if predicted and mmmlu_confidence < 0.55:
+            if predicted and mmmlu_confidence < 0.55 and not _mmmlu_fallback_used:
                 async with _mmmlu_semaphore:
                     gate_result = await call_llmhive_api(
                         prompt,
                         reasoning_mode="deep",
                         tier=tier,
-                        orchestration_config={"accuracy_level": 5, "enable_verification": True},
+                        orchestration_config={"accuracy_level": 5, "enable_verification": False},
                     )
                 if gate_result.get("success"):
                     gate_answer = _extract_multiple_choice(gate_result["response"])
@@ -2350,6 +3042,7 @@ async def evaluate_multilingual(
         "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
         "total_cost": round(total_cost, 4),
         "extra": {"error_samples": error_samples},
+        "exec_integrity": _get_exec_integrity("multilingual"),
     }
 
 # ============================================================================
@@ -2405,6 +3098,14 @@ async def evaluate_long_context(tier: str = TIER) -> Dict[str, Any]:
                     "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
                     "infra_failures": int(payload.get("infra_failures", 0)),
                     "extra": {"longbench_eval": "external"},
+                    "exec_integrity": {
+                        "attempted": attempted,
+                        "errors": int(payload.get("errors", 0)),
+                        "infra_failures": int(payload.get("infra_failures", 0)),
+                        "retries": int(payload.get("total_retries", 0)),
+                        "fallback_used": int(payload.get("fallback_count", 0)),
+                        "eval_mode": "external_subprocess",
+                    },
                 }
             raise FileNotFoundError("LongBench eval output missing")
         except subprocess.CalledProcessError as cpe:
@@ -2475,6 +3176,14 @@ async def evaluate_tool_use(tier: str = TIER) -> Dict[str, Any]:
                 "infra_failures": int(payload.get("infra_failures", 0)),
                 "parsing_failures": int(payload.get("parsing_failures", 0)),
                 "extra": {"toolbench_eval": "external"},
+                "exec_integrity": {
+                    "attempted": attempted,
+                    "errors": int(payload.get("errors", 0)),
+                    "infra_failures": int(payload.get("infra_failures", 0)),
+                    "retries": int(payload.get("total_retries", 0)),
+                    "fallback_used": int(payload.get("fallback_count", 0)),
+                    "eval_mode": "external_subprocess",
+                },
             }
         raise FileNotFoundError("ToolBench eval output missing")
     except subprocess.CalledProcessError as cpe:
@@ -2504,6 +3213,7 @@ async def evaluate_rag(
     print(f"{'='*70}\n")
     
     dataset = load_dataset("microsoft/ms_marco", "v1.1", split="validation")
+    _init_exec_integrity("rag")
     selected_indices: Optional[List[int]] = None
     if STRICT_MODE:
         sample_size = len(dataset)
@@ -2512,11 +3222,15 @@ async def evaluate_rag(
         if progress and progress.get("selected_indices"):
             selected_indices = progress["selected_indices"]
         else:
-            sample_size = min(SAMPLE_SIZES["rag"], len(dataset))
-            rng_indices = list(range(len(dataset)))
-            rng = random.Random(42)
-            rng.shuffle(rng_indices)
-            selected_indices = rng_indices[:sample_size]
+            fixed = get_fixed_indices("rag")
+            if fixed is not None:
+                selected_indices = [i for i in fixed if i < len(dataset)]
+            else:
+                sample_size = min(SAMPLE_SIZES["rag"], len(dataset))
+                rng_indices = list(range(len(dataset)))
+                rng = random.Random(42)
+                rng.shuffle(rng_indices)
+                selected_indices = rng_indices[:sample_size]
         sample_size = min(SAMPLE_SIZES["rag"], len(selected_indices))
         selected_indices = selected_indices[:sample_size]
         samples = dataset.select(selected_indices)
@@ -2535,6 +3249,16 @@ async def evaluate_rag(
     _zero_relevant_count = 0
 
     print(f"→ MS MARCO: {sample_size} samples", flush=True)
+    if RAG_RERANK_DETERMINISTIC:
+        print("  [RAG] WARNING: STRICT DETERMINISTIC MODE (debug-only). "
+              "Single rerank pass, no diversity. Not recommended for benchmarks.", flush=True)
+    if RAG_RERANK_SHUFFLE_SEEDED:
+        print("  [RAG] SEEDED SHUFFLE MODE: multi-pass rerank with deterministic "
+              "per-attempt shuffling (reproducible diversity)", flush=True)
+    print(f"  [RAG] Flags: DETERMINISTIC={RAG_RERANK_DETERMINISTIC} "
+          f"SHUFFLE_SEEDED={RAG_RERANK_SHUFFLE_SEEDED} "
+          f"TOP1_FIRST={RAG_TOP1_FIRST} "
+          f"CONFIDENCE_FALLBACK={RAG_CONFIDENCE_FALLBACK}", flush=True)
     for i, item in enumerate(samples, start=1):
         if i <= start_index:
             continue
@@ -2605,59 +3329,176 @@ async def evaluate_rag(
             query_intent
         )
 
-        # EXP-9: Majority-vote passage ranking with anti-position-bias shuffling
-        # Collect rankings from 3 calls with SHUFFLED passage order each time.
-        # This eliminates position bias (LLMs favor passages shown first).
-        # Fuse using Reciprocal Rank Fusion (RRF).
-        max_attempts = 3
+        # ── Deterministic seed per query ──
+        _query_seed = hash(str(qid)) & 0x7FFFFFFF
+        _query_rng = random.Random(_query_seed)
+
+        # ── Snapshot original top-10 before any reranking ──
+        _original_top10 = hybrid_ranked_ids[:10]
+        _original_top10_set = set(_original_top10)
+        _rerank_disabled_for_query = False
+        _recall_invariance_violations = 0
+
+        # ── RAG_CONFIDENCE_FALLBACK: skip LLM rerank when BM25 signal is strong ──
+        _rag_used_confidence_fallback = False
+        if RAG_CONFIDENCE_FALLBACK and len(top_candidates) >= 2:
+            _bm25_top1 = compute_bm25_score(query, passages_dict[top_candidates[0]])
+            _bm25_top2 = compute_bm25_score(query, passages_dict[top_candidates[1]])
+            _kw_top1 = compute_keyword_matches(passages_dict[top_candidates[0]], query_keywords)
+            _bm25_gap = _bm25_top1 - _bm25_top2
+            if _bm25_gap >= _RAG_CONFIDENCE_BM25_THRESHOLD and _kw_top1 >= _RAG_CONFIDENCE_KW_THRESHOLD:
+                _rag_used_confidence_fallback = True
+
+        # ── Rerank strategy: deterministic (1 attempt) vs stochastic (up to 3) ──
+        _deterministic_rerank = RAG_RERANK_DETERMINISTIC
+        max_attempts = 1 if _deterministic_rerank else 3
         ranked = []
         all_rankings = []
-        
-        for attempt in range(max_attempts):
-            # EXP-7+9: Anti-position-bias shuffling for attempts > 0
-            if attempt > 0:
-                shuffled_cands = top_candidates.copy()
-                random.shuffle(shuffled_cands)
-                rerank_shuffled = []
-                for rp, pid in enumerate(shuffled_cands, 1):
-                    text = passages_dict[pid]
-                    bm25_s = compute_bm25_score(query, text)
-                    mc = compute_keyword_matches(text, query_keywords)
-                    trunc = text[:200] + "..." if len(text) > 200 else text
-                    rerank_shuffled.append(f"[{pid}] BM25: {bm25_s:.1f}, Keywords: {mc}\n    {trunc}")
-                shuffled_block = "\n\n".join(rerank_shuffled)
-                attempt_prompt = generate_intent_aware_ranking_prompt(query, shuffled_block, query_intent)
-            else:
-                attempt_prompt = prompt
-            
-            # EXP-7: Stronger format forcing appended to every attempt
-            attempt_prompt += "\n\nCRITICAL: Output ONLY comma-separated passage IDs, best first. Example: 7,3,1,9,2"
-            
-            result = await call_llmhive_api(
-                attempt_prompt,
-                reasoning_mode=REASONING_MODE,
-                tier=tier,
-                timeout=150,
-                orchestration_config={
+
+        if _rag_used_confidence_fallback:
+            ranked = hybrid_ranked_ids
+        else:
+            # ── RAG_TOP1_FIRST: anchor best passage at rank-1 ──
+            _top1_anchor = None
+            _top1_anchor_accepted = False
+            if RAG_TOP1_FIRST:
+                # Step 1: Ask model for the single most relevant passage ID
+                _top10_ids_for_prompt = _original_top10[:10]
+                _top10_block_parts = []
+                for _tp_pid in _top10_ids_for_prompt:
+                    _tp_text = passages_dict.get(_tp_pid, "")
+                    _tp_trunc = _tp_text[:200] + "..." if len(_tp_text) > 200 else _tp_text
+                    _top10_block_parts.append(f"[{_tp_pid}] {_tp_trunc}")
+                _top10_passages_block = "\n\n".join(_top10_block_parts)
+
+                top1_prompt = (
+                    f"Query: {query}\n\n"
+                    "Below are the top candidate passages. "
+                    "Select the single most relevant passage that best answers the query.\n\n"
+                    "RULES:\n"
+                    "- Output ONLY the passage ID number, nothing else.\n"
+                    "- Do not explain. Do not add text. Just the number.\n\n"
+                    f"{_top10_passages_block}"
+                )
+                top1_result = await call_llmhive_api(
+                    top1_prompt,
+                    reasoning_mode=REASONING_MODE,
+                    tier=tier,
+                    timeout=60,
+                    orchestration_config={
+                        "accuracy_level": 5,
+                        "temperature": 0.0,
+                        "top_p": 1.0,
+                        "seed": _query_seed,
+                        "use_deep_consensus": False,
+                        "enable_verification": False,
+                        "num_samples": 1,
+                    },
+                )
+                if top1_result.get("success"):
+                    import re as _re_rag
+                    _top1_ids = _re_rag.findall(r'\b(\d+)\b', top1_result["response"])
+                    if _top1_ids:
+                        _t1 = int(_top1_ids[0])
+                        # Step 2: Only accept anchor if it's in the original top-10
+                        # (prevents recall invariance violation from anchor)
+                        if _t1 in _original_top10_set:
+                            _top1_anchor = _t1
+                            _top1_anchor_accepted = True
+                        elif _t1 in passage_ids:
+                            print(f"    [TOP1] qid={qid}: model picked {_t1} but it's "
+                                  f"outside original top-10 — ignoring to preserve recall",
+                                  flush=True)
+
+            # Step 3: Rerank remaining passages deterministically
+            # When TOP1_FIRST is active, the rerank prompt excludes the anchor
+            # so the model only orders the remaining 9.
+            _rerank_shuffle_seeds: List[Optional[int]] = []
+            for attempt in range(max_attempts):
+                _attempt_shuffle_seed: Optional[int] = None
+                if attempt > 0 and not _deterministic_rerank:
+                    shuffled_cands = top_candidates.copy()
+                    if RAG_RERANK_SHUFFLE_SEEDED:
+                        _attempt_shuffle_seed = hash(f"{qid}|{attempt}|{_RAG_SHUFFLE_SALT}") & 0xFFFFFFFF
+                        _seeded_rng = random.Random(_attempt_shuffle_seed)
+                        _seeded_rng.shuffle(shuffled_cands)
+                    else:
+                        _query_rng.shuffle(shuffled_cands)
+                    rerank_shuffled = []
+                    for rp, pid in enumerate(shuffled_cands, 1):
+                        text = passages_dict[pid]
+                        bm25_s = compute_bm25_score(query, text)
+                        mc = compute_keyword_matches(text, query_keywords)
+                        trunc = text[:200] + "..." if len(text) > 200 else text
+                        rerank_shuffled.append(f"[{pid}] BM25: {bm25_s:.1f}, Keywords: {mc}\n    {trunc}")
+                    shuffled_block = "\n\n".join(rerank_shuffled)
+                    attempt_prompt = generate_intent_aware_ranking_prompt(query, shuffled_block, query_intent)
+                else:
+                    if _top1_anchor_accepted:
+                        # Exclude the anchored passage from the rerank prompt
+                        _remaining_formatted = []
+                        for _rp, _rpid in enumerate(top_candidates, 1):
+                            if _rpid == _top1_anchor:
+                                continue
+                            _rtext = passages_dict[_rpid]
+                            _rbm25 = compute_bm25_score(query, _rtext)
+                            _rmc = compute_keyword_matches(_rtext, query_keywords)
+                            _rtrunc = _rtext[:200] + "..." if len(_rtext) > 200 else _rtext
+                            _remaining_formatted.append(
+                                f"[{_rpid}] BM25: {_rbm25:.1f}, Keywords: {_rmc}\n    {_rtrunc}"
+                            )
+                        _remaining_block = "\n\n".join(_remaining_formatted)
+                        attempt_prompt = generate_intent_aware_ranking_prompt(
+                            query, _remaining_block, query_intent
+                        )
+                    else:
+                        attempt_prompt = prompt
+
+                attempt_prompt += "\n\nCRITICAL: Output ONLY comma-separated passage IDs, best first. Example: 7,3,1,9,2"
+
+                _rerank_temp = 0.0
+                _rerank_top_p = 1.0
+
+                _orch: Dict[str, Any] = {
                     "accuracy_level": 5,
                     "enable_reranking": True,
                     "reranker_model": "bge-reranker-v2-m3",
-                    "temperature": 0.3 + (attempt * 0.15),  # Gentle temp diversity
+                    "temperature": _rerank_temp,
+                    "top_p": _rerank_top_p,
+                    "seed": _query_seed,
                 }
-            )
-            
-            if result["success"]:
-                attempt_ranked = extract_passage_ids_robust(result["response"], top_candidates)
-                if validate_ranking(attempt_ranked, passage_ids):
-                    all_rankings.append(attempt_ranked)
-            else:
-                errors += 1
-                if attempt == 0:
-                    break  # Only break on first attempt failure
+
+                if _deterministic_rerank or RAG_TOP1_FIRST:
+                    _orch["use_deep_consensus"] = False
+                    _orch["enable_verification"] = False
+                    _orch["num_samples"] = 1
+
+                result = await call_llmhive_api(
+                    attempt_prompt,
+                    reasoning_mode=REASONING_MODE,
+                    tier=tier,
+                    timeout=150,
+                    orchestration_config=_orch,
+                )
+
+                _rerank_shuffle_seeds.append(_attempt_shuffle_seed)
+
+                if result["success"]:
+                    attempt_ranked = extract_passage_ids_robust(result["response"], top_candidates)
+                    if validate_ranking(attempt_ranked, passage_ids):
+                        if _top1_anchor_accepted and _top1_anchor is not None:
+                            if _top1_anchor in attempt_ranked:
+                                attempt_ranked.remove(_top1_anchor)
+                            attempt_ranked.insert(0, _top1_anchor)
+                        all_rankings.append(attempt_ranked)
+                else:
+                    errors += 1
+                    if attempt == 0:
+                        break
         
-        # EXP-9: Fuse rankings using RRF if we got multiple successful rankings
+        # Fuse rankings using RRF if we got multiple successful rankings
+        # (only possible when deterministic mode is off, since max_attempts=1 otherwise)
         if len(all_rankings) >= 2:
-            # Reciprocal Rank Fusion with sharper top-weighting (k=30 vs 60)
             rrf_k = 30
             rrf_scores = {}
             for ranking in all_rankings:
@@ -2665,14 +3506,11 @@ async def evaluate_rag(
                     if pid not in rrf_scores:
                         rrf_scores[pid] = 0.0
                     base = 1.0 / (rrf_k + rank_pos)
-                    # Top-1 promotion: 20% bonus for rank-1 docs
                     if rank_pos == 1:
                         base *= 1.20
-                    # Position penalty: docs ranked >3 get 15% reduction
                     elif rank_pos > 3:
                         base *= 0.85
                     rrf_scores[pid] += base
-            # Sort by RRF score descending
             ranked = sorted(rrf_scores.keys(), key=lambda x: rrf_scores[x], reverse=True)
         elif len(all_rankings) == 1:
             ranked = all_rankings[0]
@@ -2687,9 +3525,8 @@ async def evaluate_rag(
         if not ranked or not validate_ranking(ranked, passage_ids):
             ranked = hybrid_ranked_ids
         
-        # ULTRA-AGGRESSIVE: Sanity check ranking
+        # Sanity check ranking
         if not verify_ranking_makes_sense(query, passage_tuples, ranked):
-            # Ranking failed sanity check - use hybrid ranking instead
             ranked = hybrid_ranked_ids
         
         # Ensure we have at least 10 rankings
@@ -2699,7 +3536,29 @@ async def evaluate_rag(
                     ranked.append(pid)
                 if len(ranked) >= 10:
                     break
-        
+
+        # ── RECALL INVARIANCE CHECK ──
+        # The reranked top-10 must contain exactly the same IDs as the
+        # original hybrid top-10.  Reranking may reorder but must never
+        # add or remove passages.  Violation aborts rerank for this query
+        # only (not the full suite).
+        _reranked_top10_set = set(ranked[:10])
+        if _reranked_top10_set != _original_top10_set:
+            _recall_invariance_violations += 1
+            _added = _reranked_top10_set - _original_top10_set
+            _dropped = _original_top10_set - _reranked_top10_set
+            print(
+                f"  ⚠️ RECALL INVARIANCE VIOLATION qid={qid}: "
+                f"added={_added}, dropped={_dropped} — "
+                f"falling back to original ranking",
+                flush=True,
+            )
+            ranked = list(_original_top10)
+            for pid in hybrid_ranked_ids:
+                if pid not in ranked:
+                    ranked.append(pid)
+            _rerank_disabled_for_query = True
+
         # Record ranking
         for rank, pid in enumerate(ranked[:10], start=1):
             cand_lines.append(f"{qid}\t{pid}\t{rank}")
@@ -2709,7 +3568,8 @@ async def evaluate_rag(
             total_cost += result["cost"]
 
         # Check if top-ranked passage is relevant (quick MRR indicator)
-        top_relevant = "?" 
+        top_relevant = "?"
+        first_relevant_rank = None
         if ranked and relevant_ids:
             first_relevant_rank = None
             for r_pos, r_pid in enumerate(ranked[:10], 1):
@@ -2724,7 +3584,66 @@ async def evaluate_rag(
         if not relevant_ids:
             _zero_relevant_count += 1
         votes_str = f"{len(all_rankings)}v" if all_rankings else "0v"
-        print(f"  [{i}/{sample_size}] RAG: {top_relevant} {votes_str} ranked={len(ranked)} relevant={len(relevant_ids)} ({errors} errors)", flush=True)
+        if _rerank_disabled_for_query:
+            _det_tag = " FALLBACK"
+        elif _deterministic_rerank:
+            _det_tag = " DET"
+        elif RAG_RERANK_SHUFFLE_SEEDED:
+            _det_tag = " SEEDED"
+        else:
+            _det_tag = " det"
+        _anchor_tag = f" anchor={_top1_anchor}" if _top1_anchor_accepted else ""
+        print(f"  [{i}/{sample_size}] RAG: {top_relevant} {votes_str} ranked={len(ranked)} relevant={len(relevant_ids)} seed={_query_seed}{_det_tag}{_anchor_tag} ({errors} errors)", flush=True)
+
+        _mrr_at_10 = (1.0 / first_relevant_rank) if first_relevant_rank else 0.0
+        _recall_at_10 = 1.0 if first_relevant_rank else (0.0 if relevant_ids else None)
+
+        if _ANSWER_LOG_PATH:
+            _log_answer(_ANSWER_LOG_PATH, {
+                "category": "RAG",
+                "question_id": f"rag_{qid}",
+                "index": i,
+                "question": query[:200],
+                "predicted_rank1": ranked[0] if ranked else None,
+                "relevant_ids": relevant_ids,
+                "first_relevant_rank": first_relevant_rank if relevant_ids else None,
+                "is_correct": first_relevant_rank == 1 if first_relevant_rank else False,
+                "ranked_top10": ranked[:10],
+                "original_top10": _original_top10,
+                "votes": len(all_rankings),
+                "latency_ms": result.get("latency", 0) if result.get("success") else 0,
+                "cost_usd": result.get("cost", 0) if result.get("success") else 0,
+                "failure_type": None if result.get("success") else "api_error",
+                "confidence_fallback": _rag_used_confidence_fallback,
+                "deterministic_rerank": _deterministic_rerank,
+                "deterministic_seed": _query_seed,
+                "rerank_attempts": len(all_rankings),
+                "rerank_shuffle_seeds": _rerank_shuffle_seeds,
+                "rerank_temps": [0.0] * len(all_rankings),
+                "rerank_original_top10_ids": _original_top10,
+                "rerank_top10_ids": ranked[:10],
+                "first_relevant_rank": first_relevant_rank if relevant_ids else None,
+                "mrr_at_10": round(_mrr_at_10, 4),
+                "recall_at_10": _recall_at_10,
+                "top1_first": RAG_TOP1_FIRST,
+                "top1_anchor": _top1_anchor if _top1_anchor_accepted else None,
+                "top1_anchor_accepted": _top1_anchor_accepted,
+                "rerank_disabled_for_query": _rerank_disabled_for_query,
+                "recall_invariance_violation": _recall_invariance_violations > 0,
+                "rag_flags": {
+                    "RAG_RERANK_SHUFFLE_SEEDED": RAG_RERANK_SHUFFLE_SEEDED,
+                    "RAG_TOP1_FIRST": RAG_TOP1_FIRST,
+                    "RAG_RERANK_DETERMINISTIC": RAG_RERANK_DETERMINISTIC,
+                    "RAG_CONFIDENCE_FALLBACK": RAG_CONFIDENCE_FALLBACK,
+                },
+                "exec_integrity": {
+                    "errors": errors,
+                    "invariant_violations": [
+                        "recall_invariance"
+                    ] if _recall_invariance_violations > 0 else [],
+                    "provider_fallbacks": 0,
+                },
+            })
 
         if on_progress:
             on_progress(
@@ -2814,7 +3733,12 @@ async def evaluate_rag(
                 "rank_distribution": _rank_distribution,
                 "zero_relevant_queries": _zero_relevant_count,
                 "zero_relevant_rate": round(_zr_rate, 4),
+                "rag_rerank_deterministic": RAG_RERANK_DETERMINISTIC,
+                "rag_rerank_shuffle_seeded": RAG_RERANK_SHUFFLE_SEEDED,
+                "rag_top1_first": RAG_TOP1_FIRST,
+                "rag_confidence_fallback": RAG_CONFIDENCE_FALLBACK,
             },
+            "exec_integrity": _get_exec_integrity("rag"),
         }
 
     import shlex
@@ -2878,7 +3802,12 @@ async def evaluate_rag(
             "rank_distribution": _rank_distribution,
             "zero_relevant_queries": _zero_relevant_count,
             "zero_relevant_rate": round(_zr_rate_ext, 4),
+            "rag_rerank_deterministic": RAG_RERANK_DETERMINISTIC,
+            "rag_rerank_shuffle_seeded": RAG_RERANK_SHUFFLE_SEEDED,
+            "rag_top1_first": RAG_TOP1_FIRST,
+            "rag_confidence_fallback": RAG_CONFIDENCE_FALLBACK,
         },
+        "exec_integrity": _get_exec_integrity("rag"),
     }
 
 # ============================================================================
@@ -2908,19 +3837,37 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
         output_path=str(output_path),
         seed=FIXED_SEED,
     )
+    sub_env = os.environ.copy()
+    sub_env["CATEGORY_BENCH_MTBENCH_SAMPLES"] = str(SAMPLE_SIZES["dialogue"])
+    sub_env["LLMHIVE_API_URL"] = LLMHIVE_API_URL
+    sub_env["CATEGORY_BENCH_API_URL"] = LLMHIVE_API_URL
+    if API_KEY:
+        sub_env["API_KEY"] = API_KEY
+        sub_env["LLMHIVE_API_KEY"] = API_KEY
+    sub_env["CATEGORY_BENCH_TIER"] = TIER
+    sub_env["CATEGORY_BENCH_SEED"] = str(FIXED_SEED)
     try:
         proc = subprocess.run(
             shlex.split(command),
             check=True,
-            timeout=3600,
+            timeout=5400,
             capture_output=True,
             text=True,
+            env=sub_env,
         )
         if output_path.exists():
             payload = json.loads(output_path.read_text())
-            score = payload.get("score") or payload.get("avg_score")
-            if score is None:
+            raw_score = payload.get("score") or payload.get("avg_score")
+            if raw_score is None:
                 raise ValueError("MT-Bench output missing score/avg_score")
+            raw_score = round(float(raw_score), 2)
+            accuracy_pct = payload.get("accuracy")
+            if accuracy_pct is not None:
+                accuracy_pct = round(float(accuracy_pct), 2)
+            else:
+                accuracy_pct = round(raw_score * 10, 2)
+            if accuracy_pct <= 10.0 and raw_score <= 10.0:
+                accuracy_pct = round(raw_score * 10, 2)
             attempted = int(payload.get("attempted", SAMPLE_SIZES["dialogue"]))
             return {
                 "category": "Dialogue (MT-Bench)",
@@ -2929,12 +3876,24 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
                 "correct": int(payload.get("correct", 0)),
                 "incorrect": max(0, attempted - int(payload.get("correct", 0))),
                 "errors": int(payload.get("errors", 0)),
-                "accuracy": round(float(score), 2),
+                "accuracy": accuracy_pct,
                 "avg_latency_ms": int(payload.get("avg_latency_ms", 0)),
                 "avg_cost": round(float(payload.get("avg_cost", 0.0)), 6),
                 "total_cost": round(float(payload.get("total_cost", 0.0)), 4),
                 "infra_failures": int(payload.get("infra_failures", 0)),
-                "extra": {"mtbench_eval": "external"},
+                "extra": {
+                    "mtbench_eval": "external",
+                    "raw_score_out_of_10": raw_score,
+                    "score_scale": "0-10",
+                    "category_scores": payload.get("category_scores", {}),
+                },
+                "exec_integrity": {
+                    "attempted": attempted,
+                    "errors": int(payload.get("errors", 0)),
+                    "infra_failures": int(payload.get("infra_failures", 0)),
+                    "retries": 0,
+                    "fallback_used": 0,
+                },
             }
         raise FileNotFoundError("MT-Bench eval output missing")
     except subprocess.CalledProcessError as cpe:
@@ -2953,8 +3912,73 @@ async def evaluate_dialogue(tier: str = TIER) -> Dict[str, Any]:
 # REPORTING
 # ============================================================================
 
+def _is_dialogue_result(r: Dict) -> bool:
+    """True if result is from the Dialogue (MT-Bench) category."""
+    return "Dialogue" in r.get("category", "") or "MT-Bench" in r.get("category", "")
+
+
+def _format_score(r: Dict) -> str:
+    """Format score as 'x.x / 10' for Dialogue, 'x.x%' for all others.
+
+    Dialogue MUST NEVER be displayed with a '%' label.
+    """
+    if _is_dialogue_result(r):
+        raw = r.get("extra", {}).get("raw_score_out_of_10")
+        if raw is not None:
+            return f"{raw:.1f} / 10"
+        return f"{r.get('accuracy', 0) / 10:.1f} / 10"
+    return f"{r['accuracy']:.1f}%"
+
+
+def _validate_dialogue_metric(results: List[Dict]) -> None:
+    """Strict Dialogue metric normalization invariant.
+
+    For every Dialogue result, ALL of the following must hold:
+      1. extra.raw_score_out_of_10 MUST exist
+      2. 0 <= raw_score_out_of_10 <= 10
+      3. accuracy == raw_score_out_of_10 * 10  (within ±0.01 tolerance)
+      4. No silent correction — any violation aborts the suite
+
+    This invariant executes before report write.
+    Failure aborts the suite.
+    """
+    for r in results:
+        if "error" in r or not _is_dialogue_result(r):
+            continue
+
+        extra = r.get("extra", {})
+        acc = r.get("accuracy")
+        raw = extra.get("raw_score_out_of_10")
+
+        # Rule 1: raw_score_out_of_10 must exist
+        if raw is None:
+            raise RuntimeError(
+                "Dialogue metric normalization invariant violated: "
+                f"raw_score_out_of_10 is missing from extra. "
+                f"accuracy={acc}, extra keys={list(extra.keys())}. "
+                "evaluate_dialogue() must populate extra.raw_score_out_of_10."
+            )
+
+        # Rule 2: 0 <= raw_score_out_of_10 <= 10
+        if not (0 <= raw <= 10):
+            raise RuntimeError(
+                "Dialogue metric normalization invariant violated: "
+                f"raw_score_out_of_10={raw} is outside [0, 10] range."
+            )
+
+        # Rule 3: accuracy must equal raw_score_out_of_10 * 10
+        expected_acc = round(raw * 10, 2)
+        if abs(acc - expected_acc) > 0.01:
+            raise RuntimeError(
+                "Dialogue metric normalization invariant violated: "
+                f"accuracy={acc} does not match raw_score_out_of_10 * 10 = {expected_acc}. "
+                f"raw_score_out_of_10={raw}. No silent correction allowed."
+            )
+
+
 def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
     """Generate markdown report"""
+    _validate_dialogue_metric(results)
     report_lines = []
     report_lines.append(f"# LLMHive {tier.upper()} Tier: 8-Category Industry Benchmark")
     report_lines.append(f"**Test Date:** {datetime.now().strftime('%B %d, %Y')}")
@@ -2992,18 +4016,19 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
             report_lines.append(f"| {r['category']} | ERROR | - | - | ❌ |")
         else:
             status = "✅" if r["accuracy"] >= 80 else "⚠️" if r["accuracy"] >= 60 else "❌"
+            score_str = _format_score(r)
             if frontier_scores:
                 category_key = r["category"].split("(")[0].strip().lower().replace(" ", "_")
                 frontier = frontier_scores.get(category_key, {})
                 frontier_score = frontier.get("score", 0)
                 gap = r["accuracy"] - frontier_score if frontier_score else 0
-                gap_str = f"{gap:+.1f}%" if frontier_score else "N/A"
+                gap_str = f"{gap:+.1f}pp" if frontier_score else "N/A"
                 report_lines.append(
-                    f"| {r['category']} | **{r['accuracy']:.1f}%** | {gap_str} | {r.get('dataset', 'N/A')} | {status} |"
+                    f"| {r['category']} | **{score_str}** | {gap_str} | {r.get('dataset', 'N/A')} | {status} |"
                 )
             else:
                 report_lines.append(
-                    f"| {r['category']} | **{r['accuracy']:.1f}%** | {r.get('dataset', 'N/A')} | {status} |"
+                    f"| {r['category']} | **{score_str}** | {r.get('dataset', 'N/A')} | {status} |"
                 )
     
     report_lines.append("\n---\n")
@@ -3015,7 +4040,11 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
             report_lines.append(f"### {r['category']}\n")
             report_lines.append(f"- **Dataset:** {r.get('dataset', 'N/A')}")
             report_lines.append(f"- **Sample Size:** {r['sample_size']}")
-            report_lines.append(f"- **Correct:** {r['correct']}/{r['sample_size'] - r['errors']} ({r['accuracy']:.1f}%)")
+            if _is_dialogue_result(r):
+                raw = r.get("extra", {}).get("raw_score_out_of_10", r["accuracy"] / 10)
+                report_lines.append(f"- **Score:** {raw:.1f} / 10 (≥7/10 = pass: {r['correct']}/{r['sample_size'] - r['errors']})")
+            else:
+                report_lines.append(f"- **Correct:** {r['correct']}/{r['sample_size'] - r['errors']} ({r['accuracy']:.1f}%)")
             report_lines.append(f"- **Errors:** {r['errors']}")
             report_lines.append(f"- **Avg Latency:** {r['avg_latency_ms']}ms")
             report_lines.append(f"- **Avg Cost:** ${r['avg_cost']:.6f}")
@@ -3033,9 +4062,10 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
                 frontier = frontier_scores.get(category_key, {})
                 if frontier:
                     gap = r["accuracy"] - frontier.get("score", 0)
+                    score_str = _format_score(r)
                     report_lines.append(
-                        f"| {r['category']} | {r['accuracy']:.1f}% | "
-                        f"{frontier.get('best', 'N/A')} ({frontier.get('score', 0):.1f}%) | {gap:+.1f}% |"
+                        f"| {r['category']} | {score_str} | "
+                        f"{frontier.get('best', 'N/A')} ({frontier.get('score', 0):.1f}%) | {gap:+.1f}pp |"
                     )
     
     # Cost Analysis
@@ -3061,6 +4091,27 @@ def generate_comprehensive_report(results: List[Dict], tier: str) -> str:
         f"| **TOTAL** | **${total_cost:.4f}** | **${cpc_all:.4f}** | **${cps_all:.4f}** | **{total_samples_all}** |"
     )
     report_lines.append("")
+
+    # Execution Integrity Summary
+    has_integrity = any(r.get("exec_integrity") for r in results if "error" not in r)
+    if has_integrity:
+        report_lines.append("\n## 🛡️ Execution Integrity Summary\n")
+        report_lines.append("| Category | API Calls | Errors | Infra Failures | Retries | Fallback Used |")
+        report_lines.append("|----------|-----------|--------|----------------|---------|---------------|")
+        for r in results:
+            if "error" in r:
+                continue
+            ei = r.get("exec_integrity", {})
+            cat = r["category"]
+            report_lines.append(
+                f"| {cat} "
+                f"| {ei.get('attempted', '—')} "
+                f"| {ei.get('errors', '—')} "
+                f"| {ei.get('infra_failures', '—')} "
+                f"| {ei.get('retries', '—')} "
+                f"| {ei.get('fallback_used', '—')} |"
+            )
+        report_lines.append("")
 
     report_lines.append("\n---\n")
     report_lines.append(f"**Report Generated:** {datetime.now().isoformat()}")
@@ -3187,6 +4238,12 @@ async def main():
     global _CURRENT_CATEGORY
     assert_elite_model_locked()
 
+    # ---- Regression Shield: freeze baselines for protected categories ----
+    _init_protected_baselines()
+
+    # ---- Pre-Suite Invariant Gate ----
+    _assert_all_invariants_active()
+
     # ── 2026 Intelligence Layer pre-flight ──
     if _INTELLIGENCE_LAYER:
         try:
@@ -3216,6 +4273,10 @@ async def main():
         progress = checkpoint.get("progress", {}).get(key)
         evaluator = evaluators[key]
         expected_samples = SAMPLE_SIZES.get(key, "?")
+
+        # Regression shield gate — abort before execution if protected category modified
+        _assert_regression_shield(key)
+
         print(f"  EXECUTING {key} — expected sample size: {expected_samples}")
         if key in {"long_context", "tool_use", "dialogue"}:
             result = await evaluator(TIER)
@@ -3281,8 +4342,8 @@ async def main():
     else:
         print("  ✅ All shields passed.")
 
-    print(f"\n  {'Category':<30} {'Score':>8} {'Floor':>8} {'Status':>8}")
-    print(f"  {'-'*30} {'-'*8} {'-'*8} {'-'*8}")
+    print(f"\n  {'Category':<30} {'Score':>10} {'Floor':>8} {'Status':>8}")
+    print(f"  {'-'*30} {'-'*10} {'-'*8} {'-'*8}")
     for r in results:
         if not isinstance(r, dict) or "error" in r:
             continue
@@ -3291,7 +4352,28 @@ async def main():
         floor = _PROTECTED_FLOORS.get(cat, 0)
         status = "✅" if score >= floor or floor == 0 else "❌"
         floor_str = f"{floor:.0f}%" if floor > 0 else "—"
-        print(f"  {cat:<30} {score:>7.1f}% {floor_str:>8} {status:>8}")
+        score_str = _format_score(r) if isinstance(r, dict) and "accuracy" in r else f"{score:.1f}%"
+        print(f"  {cat:<30} {score_str:>10} {floor_str:>8} {status:>8}")
+
+    # Execution Integrity Summary (printed even on partial runs)
+    _has_ei = any(isinstance(r, dict) and r.get("exec_integrity") for r in results)
+    if _has_ei:
+        print(f"\n{'='*70}")
+        print("EXECUTION INTEGRITY SUMMARY")
+        print(f"{'='*70}")
+        print(f"  {'Category':<30} {'Calls':>6} {'Errs':>6} {'Infra':>6} {'Retry':>6} {'Fback':>6}")
+        print(f"  {'-'*30} {'-'*6} {'-'*6} {'-'*6} {'-'*6} {'-'*6}")
+        for r in results:
+            if not isinstance(r, dict) or "error" in r:
+                continue
+            ei = r.get("exec_integrity", {})
+            cat = r.get("category", "?")
+            print(f"  {cat:<30} {ei.get('attempted', 0):>6} {ei.get('errors', 0):>6} "
+                  f"{ei.get('infra_failures', 0):>6} {ei.get('retries', 0):>6} "
+                  f"{ei.get('fallback_used', 0):>6}")
+
+    # Validate Dialogue metric before report generation
+    _validate_dialogue_metric(results)
 
     # Generate reports
     print("\n" + "="*70)
@@ -3312,7 +4394,12 @@ async def main():
     
     with open(json_path, "w") as f:
         json.dump(
-            {"tier": TIER, "results": results, "timestamp": datetime.now().isoformat()},
+            {
+                "tier": TIER,
+                "results": results,
+                "timestamp": datetime.now().isoformat(),
+                "invariants_verified": _INVARIANTS_VERIFIED,
+            },
             f,
             indent=2,
         )
@@ -3322,61 +4409,167 @@ async def main():
     print(f"   - {json_path}")
     
     # ========================================================================
-    # REGRESSION DETECTION GUARDRAIL
-    # Compare current scores against best_scores.json and warn on regressions
+    # BEST SCORES: REGRESSION GATE + AUTO-UPDATE
     # ========================================================================
-    best_scores_path = Path("benchmark_reports/best_scores.json")
-    if best_scores_path.exists():
+    # After a certified run:
+    #   - If best_scores.json doesn't exist, generate it from this run.
+    #   - If it exists, enforce: no category may fall below its best score
+    #     unless ALLOW_REGRESSION=1 is set.
+    #   - Update best_scores.json with any new highs.
+    # ========================================================================
+
+    _BEST_SCORES_PATH = Path("benchmark_reports/best_scores.json")
+    _ALLOW_REGRESSION = _is_truthy(os.getenv("ALLOW_REGRESSION"))
+
+    _CATEGORY_NAME_TO_KEY: Dict[str, str] = {
+        "General Reasoning (MMLU)": "reasoning",
+        "Coding (HumanEval)": "coding",
+        "Math (GSM8K)": "math",
+        "Multilingual (MMMLU)": "multilingual",
+        "RAG (MS MARCO)": "rag",
+        "Long Context (LongBench)": "long_context",
+        "Tool Use (ToolBench)": "tool_use",
+        "Dialogue (MT-Bench)": "dialogue",
+    }
+
+    # ── Collect current scores ──
+    _current_scores: Dict[str, float] = {}
+    for r in results:
+        if not isinstance(r, dict) or "error" in r:
+            continue
+        cat_name = r.get("category", "")
+        score = r.get("accuracy", 0)
+        if score <= 0:
+            continue
+        key = _CATEGORY_NAME_TO_KEY.get(cat_name, "")
+        if key:
+            _current_scores[key] = score
+
+    if _BEST_SCORES_PATH.exists():
+        # ── Regression gate: compare against stored bests ──
         try:
-            best_scores = json.loads(best_scores_path.read_text())
+            _stored = json.loads(_BEST_SCORES_PATH.read_text())
+            _best_scores: Dict[str, Dict[str, Any]] = _stored.get("categories", _stored)
+
             print("\n" + "="*70)
-            print("REGRESSION CHECK (vs Best Ever)")
+            print("REGRESSION GATE (vs Best Certified Scores)")
             print("="*70)
-            
-            category_map = {
-                "General Reasoning (MMLU)": "reasoning",
-                "Coding (HumanEval)": "coding",
-                "Math (GSM8K)": "math",
-                "Multilingual (MMMLU)": "multilingual",
-                "RAG (MS MARCO)": "rag",
-                "Long Context (LongBench)": "long_context",
-                "Tool Use (ToolBench)": "tool_use",
-                "Dialogue (MT-Bench)": "dialogue",
-            }
-            
-            regressions = []
-            improvements = []
+
+            regressions: List[str] = []
+            improvements: List[str] = []
             for r in results:
+                if not isinstance(r, dict) or "error" in r:
+                    continue
                 cat_name = r.get("category", "")
                 score = r.get("accuracy", 0)
                 if score <= 0:
                     continue
-                
-                key = category_map.get(cat_name, "")
-                best_entry = best_scores.get(key, {})
+
+                key = _CATEGORY_NAME_TO_KEY.get(cat_name, "")
+                best_entry = _best_scores.get(key, {})
                 best_score = best_entry.get("score", 0) if isinstance(best_entry, dict) else 0
-                
+
+                score_label = _format_score(r) if isinstance(r, dict) else f"{score:.1f}%"
                 if best_score > 0:
                     diff = score - best_score
-                    if diff < -5:
-                        regressions.append(f"  ⚠️  {cat_name}: {score:.1f}% (best: {best_score:.1f}%, Δ{diff:+.1f}pp)")
-                    elif diff > 2:
-                        improvements.append(f"  🆕 {cat_name}: {score:.1f}% (best: {best_score:.1f}%, Δ{diff:+.1f}pp)")
+                    if diff < 0:
+                        regressions.append(
+                            f"  {cat_name}: {score_label} < best {best_score:.1f}% "
+                            f"({diff:+.1f}pp)"
+                        )
+                    elif diff > 0:
+                        improvements.append(
+                            f"  {cat_name}: {score_label} > best {best_score:.1f}% "
+                            f"({diff:+.1f}pp) NEW HIGH"
+                        )
                     else:
-                        print(f"  ✅ {cat_name}: {score:.1f}% (best: {best_score:.1f}%, Δ{diff:+.1f}pp)")
-            
+                        print(f"  {cat_name}: {score_label} == best {best_score:.1f}%")
+
             for line in improvements:
                 print(line)
-            
+
             if regressions:
-                print(f"\n🚨 REGRESSIONS DETECTED ({len(regressions)} categories):")
+                print(f"\n  REGRESSIONS DETECTED ({len(regressions)} categories):")
                 for line in regressions:
-                    print(line)
-                print("\n  Action: Review model routing, BUDGET_MODE, and task classification.")
+                    print(f"    {line}")
+
+                if _ALLOW_REGRESSION:
+                    print(f"\n  ALLOW_REGRESSION=1 — regressions permitted, continuing.")
+                else:
+                    print(f"\n  ABORTING: Set ALLOW_REGRESSION=1 to override.")
+                    raise RuntimeError(
+                        f"Regression gate failed — {len(regressions)} category(s) "
+                        f"fell below best certified scores. "
+                        f"Set ALLOW_REGRESSION=1 to bypass."
+                    )
             else:
-                print("\n  ✅ No significant regressions detected.")
+                print("\n  No regressions detected.")
+
+            # ── Update best_scores.json with new highs ──
+            _updated = False
+            for key, current in _current_scores.items():
+                prev = _best_scores.get(key, {})
+                prev_score = prev.get("score", 0) if isinstance(prev, dict) else 0
+                if current > prev_score:
+                    _best_scores[key] = {
+                        "score": round(current, 2),
+                        "timestamp": datetime.now().isoformat(),
+                        "commit": os.popen("git rev-parse --short HEAD 2>/dev/null").read().strip() or "unknown",
+                        "sample_size": next(
+                            (r.get("sample_size", 0) for r in results
+                             if _CATEGORY_NAME_TO_KEY.get(r.get("category", "")) == key),
+                            0,
+                        ),
+                    }
+                    _updated = True
+
+            if _updated:
+                _out_data = {
+                    "categories": _best_scores,
+                    "last_updated": datetime.now().isoformat(),
+                    "invariants_verified": _INVARIANTS_VERIFIED,
+                }
+                _BEST_SCORES_PATH.write_text(json.dumps(_out_data, indent=2))
+                print(f"  best_scores.json updated with new highs.")
+
+        except RuntimeError:
+            raise
         except Exception as e:
-            print(f"  (Could not load best_scores.json: {e})")
+            print(f"  (Could not process best_scores.json: {e})")
+
+    else:
+        # ── First certified run: generate best_scores.json ──
+        if _current_scores:
+            print("\n" + "="*70)
+            print("GENERATING best_scores.json (first certified run)")
+            print("="*70)
+
+            _commit = os.popen("git rev-parse --short HEAD 2>/dev/null").read().strip() or "unknown"
+            _best_data: Dict[str, Dict[str, Any]] = {}
+            for key, score in _current_scores.items():
+                _sample_size = next(
+                    (r.get("sample_size", 0) for r in results
+                     if _CATEGORY_NAME_TO_KEY.get(r.get("category", "")) == key),
+                    0,
+                )
+                _best_data[key] = {
+                    "score": round(score, 2),
+                    "timestamp": datetime.now().isoformat(),
+                    "commit": _commit,
+                    "sample_size": _sample_size,
+                }
+                print(f"  {key:<20} {score:.1f}%  (samples={_sample_size})")
+
+            _out = {
+                "categories": _best_data,
+                "created": datetime.now().isoformat(),
+                "last_updated": datetime.now().isoformat(),
+                "certification_commit": _commit,
+                "invariants_verified": _INVARIANTS_VERIFIED,
+            }
+            _BEST_SCORES_PATH.write_text(json.dumps(_out, indent=2))
+            print(f"\n  Saved: {_BEST_SCORES_PATH}")
+            print(f"  Commit this file to lock the baseline.")
     
     # Finalize experiment telemetry
     if _TRACER:
@@ -3498,9 +4691,52 @@ async def main():
         except Exception as _sd_err:
             print(f"  [INTEL] strategy DB ingestion warning: {_sd_err}")
 
+    # ==================================================================
+    # ERROR AUDIT SUMMARY
+    # ==================================================================
+    print(f"\n{'='*70}")
+    print("ERROR AUDIT SUMMARY")
+    print(f"{'='*70}")
+    _audit_total_errors = 0
+    _audit_total_samples = 0
+    for r in results:
+        if not isinstance(r, dict) or "error" in r:
+            continue
+        cat = r.get("category", "?")
+        errs = r.get("errors", 0)
+        infra = r.get("infra_failures", 0)
+        samples = r.get("sample_size", 0)
+        _audit_total_errors += errs
+        _audit_total_samples += samples
+        err_rate = (errs / samples * 100) if samples > 0 else 0
+        err_samples = r.get("error_samples", [])
+        status = "✅" if err_rate < 5 else ("⚠️" if err_rate < 15 else "🚨")
+        print(f"  {status} {cat:<30} errors={errs:>3}/{samples}  "
+              f"({err_rate:.1f}%)  infra={infra}")
+        if err_samples:
+            for _es in err_samples[:2]:
+                print(f"       └ {_es[:100]}")
+    _overall_err = (_audit_total_errors / _audit_total_samples * 100) if _audit_total_samples > 0 else 0
+    print(f"\n  Overall: {_audit_total_errors} errors across "
+          f"{_audit_total_samples} samples ({_overall_err:.1f}%)")
+    if _overall_err < 5:
+        print("  Verdict: ✅ Error rate within acceptable bounds")
+    elif _overall_err < 15:
+        print("  Verdict: ⚠️  Elevated error rate — review failing categories")
+    else:
+        print("  Verdict: 🚨 High error rate — investigate before relying on results")
+
     print("\n" + "="*70)
     print("BENCHMARK COMPLETE")
     print("="*70)
 
 if __name__ == "__main__":
+    if "--generate-fixed-slice" in sys.argv:
+        out = None
+        for i, arg in enumerate(sys.argv):
+            if arg == "--generate-fixed-slice" and i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("-"):
+                out = sys.argv[i + 1]
+        path = generate_fixed_slice_file(output_path=out)
+        print(f"Fixed slice written to: {path}")
+        sys.exit(0)
     asyncio.run(main())

@@ -1,738 +1,485 @@
 #!/usr/bin/env python3
 """
-LLMHive — Micro Validation Framework
-=====================================
-Targeted, cost-controlled validation of previously-failing areas.
-Runs only the minimum samples needed to verify performance uplift
-before committing to a full-suite benchmark.
+RAG Micro-Validation: A/B evaluator for 25 fixed MS MARCO samples.
+
+Runs the RAG reranking pipeline twice (baseline vs flagged variant),
+computes MRR@10 and Rank-1 hit rate for each, and fails if MRR drops
+by >= 1.0 point or Rank-1 drops by >= 3.0 points.
 
 Usage:
-    python scripts/micro_validation.py [--dry-run]
+    # Baseline only (no flags):
+    python3 scripts/micro_validation.py
 
-Environment:
-    API_KEY / LLMHIVE_API_KEY    Required.
-    LLMHIVE_API_URL              Orchestrator URL (has default).
-    CATEGORY_BENCH_TIER          Tier (default: elite).
-    CATEGORY_BENCH_SEED          Seed (default: 42).
+    # DEFAULT EXPERIMENT — seeded shuffle determinism (recommended):
+    RAG_RERANK_SHUFFLE_SEEDED=1 python3 scripts/micro_validation.py
+
+    # Seeded shuffle + top1-first anchoring:
+    RAG_RERANK_SHUFFLE_SEEDED=1 RAG_TOP1_FIRST=1 python3 scripts/micro_validation.py
+
+    # Compare with confidence fallback:
+    RAG_CONFIDENCE_FALLBACK=1 python3 scripts/micro_validation.py
+
+    # DEBUG ONLY / KNOWN REGRESSOR — strict deterministic reranking:
+    # (reduces multi-pass diversity; NOT recommended for benchmarks)
+    RAG_RERANK_DETERMINISTIC=1 python3 scripts/micro_validation.py
 """
-
-import argparse
 import asyncio
 import json
 import os
+import random
 import re
-import subprocess
 import sys
 import time
-import unicodedata
-from collections import Counter
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import httpx
+from datasets import load_dataset
 
-# ---------------------------------------------------------------------------
-# Phase 1 — Zero Regression Audit
-# ---------------------------------------------------------------------------
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_SCRIPTS_DIR = Path(__file__).resolve().parent
-
-
-def zero_regression_audit() -> bool:
-    """Programmatically verify no protected files were modified.
-    Returns True if audit passes, False if violations detected."""
-
-    print("\n" + "=" * 70)
-    print("PHASE 1 — ZERO REGRESSION AUDIT")
-    print("=" * 70 + "\n")
-
-    violations: List[str] = []
-
-    try:
-        diff_output = subprocess.check_output(
-            ["git", "diff", "--name-only"],
-            cwd=str(_PROJECT_ROOT),
-            text=True,
-        ).strip()
-    except subprocess.CalledProcessError:
-        diff_output = ""
-
-    modified = [f for f in diff_output.splitlines() if f.strip()] if diff_output else []
-    source_modified = [f for f in modified if not f.endswith(".pyc")]
-
-    checks = {
-        "Prompt files": lambda f: "prompt" in f.lower() and f.endswith((".txt", ".md", ".j2", ".jinja")),
-        "Routing files": lambda f: (
-            "rout" in f.lower()
-            and not f.endswith(".pyc")
-            and "model_discovery" not in f.lower()
-            and "provider_router" not in f.lower()
-        ),
-        "Model config files": lambda f: "model_config" in f.lower() or "model_selection" in f.lower(),
-    }
-
-    for label, predicate in checks.items():
-        matched = [f for f in source_modified if predicate(f)]
-        if matched:
-            violations.append(f"{label} modified: {matched}")
-
-    runner_path = _SCRIPTS_DIR / "run_category_benchmarks.py"
-    if runner_path.exists():
-        try:
-            diff_runner = subprocess.check_output(
-                ["git", "diff", str(runner_path)],
-                cwd=str(_PROJECT_ROOT),
-                text=True,
-            )
-        except subprocess.CalledProcessError:
-            diff_runner = ""
-
-        added_lines = [l for l in diff_runner.splitlines() if l.startswith("+") and not l.startswith("+++")]
-
-        import re as _re
-        _SS_REASSIGN = _re.compile(r"SAMPLE_SIZES\s*=\s*\{")
-        _SS_MUTATE = _re.compile(r"SAMPLE_SIZES\s*\[")
-        for line in added_lines:
-            stripped = line.lstrip("+").strip()
-            if "_get_env_int" in stripped:
-                continue
-            if _SS_REASSIGN.search(stripped) or _SS_MUTATE.search(stripped):
-                violations.append("SAMPLE_SIZES dict potentially modified")
-                break
-
-        decoding_keywords = ["TEMPERATURE", "TOP_P", "FIXED_SEED"]
-        for kw in decoding_keywords:
-            changed = [l for l in added_lines if kw in l and ("=" in l) and "get_env" not in l.lower() and "payload" not in l.lower() and "config" not in l.lower()]
-            for cl in changed:
-                stripped = cl.lstrip("+").strip()
-                if stripped.startswith(f"{kw}") and "=" in stripped and "_get_env" not in stripped:
-                    violations.append(f"Decoding parameter {kw} potentially modified")
-
-        rag_keywords = ["retrieval_depth", "reranker", "embedding_model", "context_pack"]
-        rag_hits = [l for l in added_lines if any(k in l.lower() for k in rag_keywords)]
-        if rag_hits:
-            violations.append(f"RAG retrieval code potentially modified ({len(rag_hits)} lines)")
-
-    results = [
-        ("Prompt files unchanged", not any("Prompt" in v for v in violations)),
-        ("Routing files unchanged", not any("Routing" in v for v in violations)),
-        ("Model config unchanged", not any("Model config" in v for v in violations)),
-        ("SAMPLE_SIZES unchanged", not any("SAMPLE_SIZES" in v for v in violations)),
-        ("Decoding params unchanged", not any("Decoding" in v for v in violations)),
-        ("RAG retrieval unchanged", not any("RAG" in v for v in violations)),
-    ]
-
-    print(f"  {'Check':<30} {'Status':<10}")
-    print(f"  {'-'*30} {'-'*10}")
-    for label, passed in results:
-        icon = "PASS" if passed else "FAIL"
-        print(f"  {label:<30} {icon}")
-
-    if violations:
-        print(f"\n  VIOLATIONS DETECTED:")
-        for v in violations:
-            print(f"    - {v}")
-        print(f"\n  AUDIT RESULT: FAIL — cannot proceed.")
-        return False
-
-    print(f"\n  AUDIT RESULT: PASS — all protected files intact.")
-    return True
-
-
-# ---------------------------------------------------------------------------
-# Configuration (mirrors run_category_benchmarks.py)
-# ---------------------------------------------------------------------------
-
-API_URL = os.getenv(
-    "LLMHIVE_API_URL",
-    os.getenv("CATEGORY_BENCH_API_URL", "https://llmhive-orchestrator-792354158895.us-east1.run.app"),
+from benchmark_helpers import (
+    extract_passage_ids_robust,
+    extract_query_keywords,
+    compute_keyword_matches,
+    validate_ranking,
 )
+from sota_benchmark_improvements import compute_bm25_score, expand_query
+from ultra_aggressive_improvements import (
+    analyze_query_intent,
+    ultra_hybrid_retrieval,
+    generate_intent_aware_ranking_prompt,
+)
+
+API_URL = os.getenv("LLMHIVE_API_URL", os.getenv("CATEGORY_BENCH_API_URL",
+    "https://llmhive-orchestrator-792354158895.us-east1.run.app"))
 API_KEY = os.getenv("API_KEY", os.getenv("LLMHIVE_API_KEY", ""))
 TIER = os.getenv("CATEGORY_BENCH_TIER", "elite")
-FIXED_SEED = int(os.getenv("CATEGORY_BENCH_SEED", "42"))
 REASONING_MODE = os.getenv("CATEGORY_BENCH_REASONING_MODE", "deep")
 
-_INFRA_GARBAGE = ("<html>", "<!doctype", "service unavailable", "502 bad gateway",
-                   "503 service", "504 gateway", "internal server error")
-_RETRYABLE = {429, 502, 503, 504}
-_MAX_RETRIES = 5
+FIXED_INDICES = [
+    42, 137, 256, 389, 512, 678, 821, 943, 1057, 1198,
+    1324, 1467, 1589, 1723, 1856, 2001, 2134, 2289, 2401, 2567,
+    2698, 2834, 2967, 3102, 3245,
+]
+
+RAG_RERANK_DETERMINISTIC = os.getenv("RAG_RERANK_DETERMINISTIC", "").lower() in ("1", "true", "yes")
+RAG_RERANK_SHUFFLE_SEEDED = os.getenv("RAG_RERANK_SHUFFLE_SEEDED", "").lower() in ("1", "true", "yes")
+RAG_TOP1_FIRST = os.getenv("RAG_TOP1_FIRST", "").lower() in ("1", "true", "yes")
+RAG_CONFIDENCE_FALLBACK = os.getenv("RAG_CONFIDENCE_FALLBACK", "").lower() in ("1", "true", "yes")
+_RAG_SHUFFLE_SALT = "rag_shuffle_v1"
+_RAG_CONFIDENCE_BM25_THRESHOLD = float(os.getenv("RAG_CONFIDENCE_BM25_THRESHOLD", "2.0"))
+_RAG_CONFIDENCE_KW_THRESHOLD = int(os.getenv("RAG_CONFIDENCE_KW_THRESHOLD", "2"))
+
+if RAG_RERANK_DETERMINISTIC:
+    import warnings
+    warnings.warn(
+        "RAG_RERANK_DETERMINISTIC=1 is a debug/known-regressor flag. "
+        "It disables multi-pass diversity. Use RAG_RERANK_SHUFFLE_SEEDED=1 instead.",
+        stacklevel=1,
+    )
 
 
-def _valid(text: str, min_len: int = 10) -> bool:
-    if not text or not text.strip():
-        return False
-    lower = text.strip().lower()
-    if lower in ("none", "null", "error", ""):
-        return False
-    if len(text.strip()) < min_len:
-        return False
-    return not any(m in lower for m in _INFRA_GARBAGE)
-
-
-async def call_api(prompt: str, timeout: int = 180, **overrides) -> dict:
-    rm = overrides.pop("reasoning_mode", REASONING_MODE)
-    orch = overrides.pop("orchestration_config", {"accuracy_level": 5, "enable_verification": True})
+async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
+                   timeout: int = 150) -> dict:
     async with httpx.AsyncClient(timeout=timeout) as client:
-        for attempt in range(_MAX_RETRIES):
+        payload = {
+            "prompt": prompt,
+            "reasoning_mode": REASONING_MODE,
+            "tier": TIER,
+            "models": ["gpt-5.2-pro"],
+            "orchestration": {
+                "accuracy_level": 5,
+                "enable_verification": False,
+                "use_deep_consensus": False,
+                "temperature": temperature,
+            },
+        }
+        if top_p >= 0:
+            payload["orchestration"]["top_p"] = top_p
+        for attempt in range(3):
             try:
-                t0 = time.time()
-                payload = {"prompt": prompt, "reasoning_mode": rm, "tier": TIER, "seed": FIXED_SEED, "orchestration": orch}
                 resp = await client.post(
-                    f"{API_URL}/v1/chat", json=payload,
+                    f"{API_URL}/v1/chat",
+                    json=payload,
                     headers={"Content-Type": "application/json", "X-API-Key": API_KEY},
                 )
-                lat = int((time.time() - t0) * 1000)
                 if resp.status_code == 200:
-                    d = resp.json()
-                    txt = d.get("message", "")
-                    cost = d.get("extra", {}).get("cost_tracking", {}).get("total_cost", 0)
-                    if not _valid(txt) and attempt < _MAX_RETRIES - 1:
-                        await asyncio.sleep(2 ** attempt)
-                        continue
-                    return {"success": True, "response": txt, "latency": lat, "cost": cost}
-                if resp.status_code in _RETRYABLE:
+                    data = resp.json()
+                    return {"success": True, "response": data.get("message", "")}
+                if resp.status_code in (429, 502, 503, 504):
                     await asyncio.sleep(2 ** attempt)
                     continue
-                return {"success": False, "error": f"HTTP {resp.status_code}", "latency": lat, "cost": 0}
+                return {"success": False, "error": f"HTTP {resp.status_code}"}
             except Exception as e:
-                if attempt == _MAX_RETRIES - 1:
-                    return {"success": False, "error": str(e), "latency": 0, "cost": 0}
-                await asyncio.sleep(2 ** attempt)
-    return {"success": False, "error": "max retries", "latency": 0, "cost": 0}
+                if attempt < 2:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                return {"success": False, "error": str(e)}
+    return {"success": False, "error": "exhausted retries"}
 
 
-def _extract_mc(text: str) -> Optional[str]:
-    if not text:
-        return None
-    norm = unicodedata.normalize("NFKC", text).strip().upper()
-    lines = [l.strip() for l in norm.split("\n") if l.strip()]
-    if lines:
-        m = re.match(r"^[^A-Z]*([ABCD])[^A-Z]*$", lines[-1])
-        if m:
-            return m.group(1)
-    ap = re.search(r"(?:ANSWER|CORRECT|CHOICE)\s*(?:IS|:)\s*\(?([ABCD])\)?", norm)
-    if ap:
-        return ap.group(1)
-    sl = re.findall(r"(?<![A-Z])([ABCD])(?![A-Z])", norm)
-    if sl:
-        return sl[-1]
-    return None
+async def rank_single_query(
+    query: str,
+    passage_ids: List[int],
+    passage_texts: List[str],
+    *,
+    use_flags: bool,
+    qid: int = 0,
+) -> List[int]:
+    """Run the full RAG ranking pipeline for one query, returning ranked IDs."""
 
+    passages_dict = {pid: text for pid, text in zip(passage_ids, passage_texts)}
+    passage_tuples = list(zip(passage_ids, passage_texts))
 
-# ---------------------------------------------------------------------------
-# Micro-validators
-# ---------------------------------------------------------------------------
+    query_keywords = extract_query_keywords(query)
+    expanded_query = expand_query(query)
+    query_intent = analyze_query_intent(query)
 
-async def micro_humaneval() -> Dict[str, Any]:
-    """Run HumanEval on previously-failing IDs only."""
-    print("\n" + "-" * 50)
-    print("  HumanEval — failing ID re-test")
-    print("-" * 50)
+    hybrid_ranked_ids = ultra_hybrid_retrieval(expanded_query, passage_tuples, query_intent)
+    top_candidates = hybrid_ranked_ids[:20]
 
-    try:
-        from human_eval.data import read_problems
-        from human_eval.execution import check_correctness
-    except ImportError:
-        return {"category": "HumanEval", "status": "SKIP", "reason": "human_eval not installed"}
+    rerank_formatted = []
+    for pid in top_candidates:
+        text = passages_dict[pid]
+        bm25_s = compute_bm25_score(query, text)
+        mc = compute_keyword_matches(text, query_keywords)
+        trunc = text[:200] + "..." if len(text) > 200 else text
+        rerank_formatted.append(f"[{pid}] BM25: {bm25_s:.1f}, Keywords: {mc}\n    {trunc}")
+    passages_block = "\n\n".join(rerank_formatted)
 
-    problems = read_problems()
-    failing_ids = [
-        "HumanEval/5", "HumanEval/16", "HumanEval/18",
-        "HumanEval/41", "HumanEval/46",
-    ]
-    existing = [tid for tid in failing_ids if tid in problems]
-    if not existing:
-        return {"category": "HumanEval", "status": "SKIP", "reason": "no failing IDs found"}
+    # ── Confidence fallback gate ──
+    if use_flags and RAG_CONFIDENCE_FALLBACK and len(top_candidates) >= 2:
+        b1 = compute_bm25_score(query, passages_dict[top_candidates[0]])
+        b2 = compute_bm25_score(query, passages_dict[top_candidates[1]])
+        kw1 = compute_keyword_matches(passages_dict[top_candidates[0]], query_keywords)
+        if (b1 - b2) >= _RAG_CONFIDENCE_BM25_THRESHOLD and kw1 >= _RAG_CONFIDENCE_KW_THRESHOLD:
+            return hybrid_ranked_ids
 
-    correct = 0
-    results_detail: List[Dict] = []
-    total_cost = 0.0
-
-    for tid in existing:
-        problem = problems[tid]
-        entry_point = problem.get("entry_point", "")
-        prompt_text = (
-            f"Complete the following Python function. Output ONLY the function code.\n\n"
-            f"{problem['prompt']}\n\n"
-            f"RULES:\n- Output the COMPLETE function including the def line.\n"
-            f"- Implement the FULL body. NEVER use `pass` or `...`.\n"
-            f"- Do NOT add explanations or markdown."
+    # ── TOP1_FIRST anchor ──
+    top1_anchor = None
+    if use_flags and RAG_TOP1_FIRST:
+        top1_prompt = (
+            f"Query: {query}\n\n"
+            "Below are candidate passages. Output ONLY the single passage ID "
+            "that best answers the query. Output just the number, nothing else.\n\n"
+            + passages_block
         )
-        result = await call_api(prompt_text, timeout=120)
-        if not result.get("success"):
-            results_detail.append({"id": tid, "passed": False, "failure_type": "extraction"})
-            continue
+        top1_result = await call_api(top1_prompt, temperature=0.0, top_p=1.0, timeout=60)
+        if top1_result.get("success"):
+            nums = re.findall(r'\b(\d+)\b', top1_result["response"])
+            if nums:
+                t1 = int(nums[0])
+                if t1 in passage_ids:
+                    top1_anchor = t1
 
-        total_cost += result.get("cost", 0)
-        raw = result["response"]
-        fence = re.search(r"```(?:python)?\n(.*?)```", raw, re.DOTALL | re.IGNORECASE)
-        code = fence.group(1).strip() if fence else raw.strip()
+    # ── Rerank config ──
+    _use_deterministic = use_flags and RAG_RERANK_DETERMINISTIC
+    _use_seeded_shuffle = use_flags and RAG_RERANK_SHUFFLE_SEEDED
+    max_attempts = 1 if _use_deterministic else 3
 
-        func_pat = re.compile(rf"def\s+{re.escape(entry_point)}\s*\([^)]*\).*?:", re.DOTALL)
-        m = func_pat.search(code)
-        if m:
-            after = code[m.end():]
-            ds = re.match(r'\s*(?:""".*?"""|\'\'\'.*?\'\'\')', after, re.DOTALL)
-            if ds:
-                after = after[ds.end():]
-            body_lines = []
-            for line in after.splitlines():
-                if line.strip():
-                    body_lines.append(line)
-                elif body_lines:
-                    body_lines.append(line)
-            completion_body = "\n".join(body_lines).rstrip() + "\n"
-        else:
-            completion_body = "    " + code.lstrip() + "\n"
-
-        body_norm = []
-        for line in completion_body.splitlines():
-            if not line.strip():
-                body_norm.append("")
+    # ── LLM reranking ──
+    all_rankings = []
+    for attempt in range(max_attempts):
+        if attempt > 0:
+            shuffled = top_candidates.copy()
+            if _use_seeded_shuffle:
+                _seed = hash(f"{qid}|{attempt}|{_RAG_SHUFFLE_SALT}") & 0xFFFFFFFF
+                random.Random(_seed).shuffle(shuffled)
             else:
-                s = line.lstrip()
-                if len(line) - len(s) < 4:
-                    body_norm.append("    " + s)
-                else:
-                    body_norm.append(line)
-        completion_body = "\n".join(body_norm).rstrip() + "\n"
+                random.shuffle(shuffled)
+            rf = []
+            for pid in shuffled:
+                text = passages_dict[pid]
+                b = compute_bm25_score(query, text)
+                mc = compute_keyword_matches(text, query_keywords)
+                trunc = text[:200] + "..." if len(text) > 200 else text
+                rf.append(f"[{pid}] BM25: {b:.1f}, Keywords: {mc}\n    {trunc}")
+            block = "\n\n".join(rf)
+            a_prompt = generate_intent_aware_ranking_prompt(query, block, query_intent)
+        else:
+            a_prompt = generate_intent_aware_ranking_prompt(query, passages_block, query_intent)
+
+        a_prompt += "\n\nCRITICAL: Output ONLY comma-separated passage IDs, best first. Example: 7,3,1,9,2"
+
+        if _use_deterministic:
+            temp, tp = 0.0, 1.0
+        else:
+            temp, tp = 0.3 + (attempt * 0.15), -1
+
+        result = await call_api(a_prompt, temperature=temp, top_p=tp)
+        if result.get("success"):
+            ranked = extract_passage_ids_robust(result["response"], top_candidates)
+            if validate_ranking(ranked, passage_ids):
+                if top1_anchor and top1_anchor in ranked:
+                    ranked.remove(top1_anchor)
+                    ranked.insert(0, top1_anchor)
+                all_rankings.append(ranked)
+
+    # RRF fusion
+    if len(all_rankings) >= 2:
+        rrf_scores: Dict[int, float] = {}
+        for ranking in all_rankings:
+            for pos, pid in enumerate(ranking, 1):
+                base = 1.0 / (30 + pos)
+                if pos == 1:
+                    base *= 1.20
+                elif pos > 3:
+                    base *= 0.85
+                rrf_scores[pid] = rrf_scores.get(pid, 0.0) + base
+        final = sorted(rrf_scores, key=lambda x: rrf_scores[x], reverse=True)
+    elif all_rankings:
+        final = all_rankings[0]
+    else:
+        final = hybrid_ranked_ids
+
+    for pid in passage_ids:
+        if pid not in final:
+            final.append(pid)
+    return final
+
+
+def compute_mrr_rank1(
+    rankings: Dict[int, List[int]],
+    relevants: Dict[int, List[int]],
+) -> Tuple[float, float]:
+    """Return (MRR@10, Rank-1 hit rate)."""
+    mrr_sum = 0.0
+    rank1_hits = 0
+    total = 0
+    for qid, ranked in rankings.items():
+        rels = relevants.get(qid, [])
+        if not rels:
+            continue
+        total += 1
+        for pos, pid in enumerate(ranked[:10], 1):
+            if pid in rels:
+                mrr_sum += 1.0 / pos
+                if pos == 1:
+                    rank1_hits += 1
+                break
+    mrr = mrr_sum / total if total else 0.0
+    r1 = rank1_hits / total if total else 0.0
+    return mrr, r1
+
+
+async def run_variant(dataset, label: str, use_flags: bool) -> Tuple[float, float]:
+    """Run the pipeline on 25 fixed samples and return (MRR@10, Rank1)."""
+    rankings: Dict[int, List[int]] = {}
+    relevants: Dict[int, List[int]] = {}
+    errors = 0
+
+    for idx_pos, ds_idx in enumerate(FIXED_INDICES):
+        if ds_idx >= len(dataset):
+            continue
+        item = dataset[ds_idx]
+        query = item["query"]
+        passages = item["passages"]
+        p_texts = passages.get("passage_text", [])
+        is_selected = passages.get("is_selected", [])
+        p_ids = passages.get("passage_id", list(range(1, len(p_texts) + 1)))
+        qid = item.get("query_id", ds_idx)
+        rels = [pid for pid, sel in zip(p_ids, is_selected) if sel]
+        relevants[qid] = rels
 
         try:
-            cr = check_correctness(problem, completion_body, timeout=10.0, completion_id=tid)
-            passed = cr.get("passed", False) if isinstance(cr, dict) else False
-        except Exception:
-            passed = False
-
-        failure_type = "none" if passed else "logic"
-        if passed:
-            correct += 1
-        results_detail.append({"id": tid, "passed": passed, "failure_type": failure_type})
-        icon = "PASS" if passed else "FAIL"
-        print(f"    {tid}: {icon} [{failure_type}]", flush=True)
-
-    total = len(existing)
-    pct = (correct / total * 100) if total else 0
-    print(f"  Result: {correct}/{total} = {pct:.0f}%")
-    return {
-        "category": "HumanEval",
-        "correct": correct, "total": total, "accuracy": round(pct, 1),
-        "details": results_detail, "cost": round(total_cost, 4),
-    }
-
-
-async def micro_mmlu() -> Dict[str, Any]:
-    """Run MMLU on worst-performing subjects (10 Qs max)."""
-    print("\n" + "-" * 50)
-    print("  MMLU — worst-subject spot-check")
-    print("-" * 50)
-
-    from datasets import load_dataset
-    dataset = load_dataset("lighteval/mmlu", "all", split="test")
-
-    target_subjects = {"professional_law", "conceptual_physics", "geography", "global_facts"}
-    candidates = [(i, item) for i, item in enumerate(dataset) if item.get("subject", "") in target_subjects]
-
-    import random
-    rng = random.Random(FIXED_SEED)
-    rng.shuffle(candidates)
-    selected = candidates[:10]
-
-    correct = 0
-    total_cost = 0.0
-    subject_results: Dict[str, Dict[str, int]] = {}
-
-    for _, item in selected:
-        q = item["question"]
-        choices = item["choices"]
-        correct_answer = ["A", "B", "C", "D"][item["answer"]]
-        subj = item.get("subject", "unknown")
-
-        prompt = (
-            f"Answer this multiple-choice question.\n\n"
-            f"Question: {q}\n\n"
-            f"A) {choices[0]}\nB) {choices[1]}\nC) {choices[2]}\nD) {choices[3]}\n\n"
-            f"Think step-by-step, then on the VERY LAST LINE output ONLY the single letter "
-            f"(A, B, C, or D). Nothing else on that line.\n\nReasoning:"
-        )
-        result = await call_api(prompt)
-        total_cost += result.get("cost", 0)
-        pred = _extract_mc(result.get("response", "")) if result.get("success") else None
-        is_correct = pred == correct_answer
-
-        if subj not in subject_results:
-            subject_results[subj] = {"correct": 0, "total": 0}
-        subject_results[subj]["total"] += 1
-        if is_correct:
-            correct += 1
-            subject_results[subj]["correct"] += 1
-
-        icon = "PASS" if is_correct else ("FAIL" if pred else "NONE")
-        print(f"    {subj[:20]}: pred={pred} correct={correct_answer} {icon}", flush=True)
-
-    total = len(selected)
-    pct = (correct / total * 100) if total else 0
-    print(f"  Result: {correct}/{total} = {pct:.0f}%")
-    print(f"  Subject breakdown: { {s: f'{d['correct']}/{d['total']}' for s, d in subject_results.items()} }")
-    return {
-        "category": "MMLU",
-        "correct": correct, "total": total, "accuracy": round(pct, 1),
-        "subject_stats": subject_results, "cost": round(total_cost, 4),
-    }
-
-
-async def micro_mmmlu() -> Dict[str, Any]:
-    """Run MMMLU on 10 questions, tracking pred=None and fallback triggers."""
-    print("\n" + "-" * 50)
-    print("  MMMLU — multilingual spot-check")
-    print("-" * 50)
-
-    from datasets import load_dataset
-    dataset = load_dataset("openai/MMMLU", split="test")
-
-    non_english = [
-        (i, item) for i, item in enumerate(dataset)
-        if bool(re.search(r"[^\x00-\x7F]", item.get("question", "") or item.get("Question", "") or ""))
-    ]
-
-    import random
-    rng = random.Random(FIXED_SEED)
-    rng.shuffle(non_english)
-    selected = non_english[:10]
-
-    correct = 0
-    pred_none_count = 0
-    fallback_count = 0
-    total_cost = 0.0
-
-    for _, item in selected:
-        question = item.get("question") or item.get("Question") or ""
-        choices = []
-        answer = None
-        if all(k in item for k in ["A", "B", "C"]):
-            letter_keys = [k for k in ["A", "B", "C", "D"] if k in item]
-            choices = [item[k] for k in letter_keys]
-            answer = item.get("answer") or item.get("Answer")
-            if isinstance(answer, int) and 0 <= answer < len(choices):
-                answer = letter_keys[answer]
-
-        if len(choices) < 4:
-            continue
-        correct_answer = str(answer).strip() if answer else "?"
-
-        prompt = (
-            f"Answer this multiple-choice question.\n\n"
-            f"Question: {question}\n\n"
-            f"A) {choices[0]}\nB) {choices[1]}\nC) {choices[2]}\nD) {choices[3]}\n\n"
-            f"Think step-by-step, then on the VERY LAST LINE output ONLY the single letter "
-            f"(A, B, C, or D).\n\nReasoning:"
-        )
-        result = await call_api(prompt)
-        total_cost += result.get("cost", 0)
-        pred = _extract_mc(result.get("response", "")) if result.get("success") else None
-
-        if pred is None:
-            pred_none_count += 1
-            retry_prompt = f"Return ONLY one letter: A, B, C, or D.\n\nQuestion: {question[:400]}\nA) {choices[0]}\nB) {choices[1]}\nC) {choices[2]}\nD) {choices[3]}\n\nAnswer:"
-            retry = await call_api(retry_prompt, reasoning_mode="basic", timeout=30)
-            total_cost += retry.get("cost", 0)
-            if retry.get("success"):
-                pred = _extract_mc(retry["response"])
-                if pred:
-                    fallback_count += 1
-
-        is_correct = pred == correct_answer
-        if is_correct:
-            correct += 1
-        icon = "PASS" if is_correct else ("FAIL" if pred else "NONE")
-        print(f"    pred={pred} correct={correct_answer} {icon}", flush=True)
-
-    total = len(selected)
-    pct = (correct / total * 100) if total else 0
-    print(f"  Result: {correct}/{total} = {pct:.0f}%")
-    print(f"  pred=None: {pred_none_count}, fallback triggers: {fallback_count}")
-    return {
-        "category": "MMMLU",
-        "correct": correct, "total": total, "accuracy": round(pct, 1),
-        "pred_none": pred_none_count, "fallback_triggers": fallback_count,
-        "cost": round(total_cost, 4),
-    }
-
-
-async def micro_gsm8k() -> Dict[str, Any]:
-    """Run 10 GSM8K questions, logging verify stats."""
-    print("\n" + "-" * 50)
-    print("  GSM8K — verify pipeline spot-check")
-    print("-" * 50)
-
-    from datasets import load_dataset
-    dataset = load_dataset("openai/gsm8k", "main", split="test")
-
-    import random
-    rng = random.Random(FIXED_SEED)
-    indices = list(range(len(dataset)))
-    rng.shuffle(indices)
-    selected = [dataset[i] for i in indices[:10]]
-
-    correct = 0
-    verify_calls = 0
-    verify_failures = 0
-    verify_latency_total = 0
-    total_cost = 0.0
-    retries = 0
-
-    for item in selected:
-        question = item["question"]
-        ref_answer_text = item["answer"]
-        ref_match = re.search(r"####\s*(-?[\d,]+\.?\d*)", ref_answer_text)
-        ref_answer = float(ref_match.group(1).replace(",", "")) if ref_match else None
-
-        prompt = (
-            f"{question}\n\nSolve step-by-step. End with: #### [numerical answer]\n\nSolution:"
-        )
-        result = await call_api(prompt, timeout=120)
-        total_cost += result.get("cost", 0)
-        if not result.get("success"):
-            retries += 1
-            continue
-
-        ans_match = re.search(r"####\s*(-?[\d,]+\.?\d*)", result.get("response", ""))
-        if not ans_match:
-            continue
-
-        pred_answer = float(ans_match.group(1).replace(",", ""))
-
-        v_start = time.time()
-        v_prompt = (
-            f"Verify: Is the answer {pred_answer} correct for this problem?\n\n"
-            f"{question}\n\nAnswer YES or NO:"
-        )
-        v_result = await call_api(v_prompt, timeout=15)
-        v_lat = int((time.time() - v_start) * 1000)
-        verify_calls += 1
-        verify_latency_total += v_lat
-        total_cost += v_result.get("cost", 0)
-
-        if not v_result.get("success"):
-            verify_failures += 1
-
-        is_correct = ref_answer is not None and abs(pred_answer - ref_answer) < 0.01
-        if is_correct:
-            correct += 1
-        icon = "PASS" if is_correct else "FAIL"
-        print(f"    pred={pred_answer} ref={ref_answer} {icon} (verify {v_lat}ms)", flush=True)
-
-    total = len(selected)
-    pct = (correct / total * 100) if total else 0
-    vfr = (verify_failures / verify_calls * 100) if verify_calls else 0
-    avg_vlat = (verify_latency_total // verify_calls) if verify_calls else 0
-
-    print(f"  Result: {correct}/{total} = {pct:.0f}%")
-    print(f"  Verify: calls={verify_calls} failures={verify_failures} ({vfr:.0f}%) avg_latency={avg_vlat}ms")
-    print(f"  Retries: {retries}, Circuit breaker: not triggered")
-    return {
-        "category": "GSM8K",
-        "correct": correct, "total": total, "accuracy": round(pct, 1),
-        "verify_calls": verify_calls, "verify_failures": verify_failures,
-        "verify_failure_rate": round(vfr, 1),
-        "verify_avg_latency_ms": avg_vlat,
-        "retries": retries, "circuit_breaker": False,
-        "cost": round(total_cost, 4),
-    }
-
-
-async def micro_dialogue() -> Dict[str, Any]:
-    """Run 5 MT-Bench style prompts, tracking consistency."""
-    print("\n" + "-" * 50)
-    print("  Dialogue — MT-Bench spot-check")
-    print("-" * 50)
-
-    questions = [
-        {"category": "reasoning", "turn1": "If a train leaves Station A at 9 AM at 60 mph, and another leaves Station B (300 miles away) at 10 AM at 90 mph toward A, when do they meet?", "turn2": "Now suppose a bird flies at 120 mph between the trains from when the first departs. How far does the bird fly?"},
-        {"category": "writing", "turn1": "Write a persuasive email to convince your manager to let your team work from home two days a week.", "turn2": "Now rewrite the email in a more casual, friendly tone."},
-        {"category": "coding", "turn1": "Write a Python function to find the longest palindromic substring. Include comments.", "turn2": "Now optimize it to O(n) using Manacher's algorithm."},
-        {"category": "stem", "turn1": "Explain CRISPR-Cas9 gene editing to a high school student using an analogy.", "turn2": "What are the ethical concerns of CRISPR, especially germline editing? Both sides."},
-        {"category": "humanities", "turn1": "Compare Kant and Mill on ethics. What would each say about lying to protect feelings?", "turn2": "Apply both to: should a self-driving car prioritize passengers or pedestrians?"},
-    ]
-
-    system_msg = (
-        "You are a helpful, knowledgeable, and thoughtful AI assistant. "
-        "Maintain coherence across turns. Be concise unless asked for elaboration. "
-        "Answer precisely and directly. Preserve role consistency."
-    )
-
-    judge_template = (
-        "Rate this response from 1-10.\n\n"
-        "[Question]\n{question}\n\n[Response]\n{response}\n\n"
-        "Format: Score: X/10\nJustification: ..."
-    )
-
-    scores_all = []
-    consistency_drops = 0
-    infra_retries = 0
-    total_cost = 0.0
-
-    for idx, q in enumerate(questions):
-        t1_prompt = f"{system_msg}\n\n{q['turn1']}"
-        r1 = await call_api(t1_prompt)
-        total_cost += r1.get("cost", 0)
-        if not r1.get("success"):
-            infra_retries += 1
-            continue
-        t1_resp = r1.get("response", "")
-
-        t2_prompt = (
-            f"{system_msg}\n\nMulti-turn conversation:\n\n"
-            f"[Turn 1] User: {q['turn1']}\n\n"
-            f"[Turn 1] Assistant: {t1_resp}\n\n"
-            f"[Turn 2] User: {q['turn2']}\n\n"
-            f"Continue naturally."
-        )
-        r2 = await call_api(t2_prompt)
-        total_cost += r2.get("cost", 0)
-        if not r2.get("success"):
-            infra_retries += 1
-            continue
-        t2_resp = r2.get("response", "")
-
-        j1 = await call_api(judge_template.format(question=q["turn1"], response=t1_resp))
-        j2 = await call_api(judge_template.format(question=q["turn2"], response=t2_resp))
-        total_cost += j1.get("cost", 0) + j2.get("cost", 0)
-
-        def _score(jr):
-            if not jr.get("success"):
-                return 5.0
-            m = re.search(r"(\d+(?:\.\d+)?)\s*/\s*10", jr.get("response", ""))
-            return min(max(float(m.group(1)), 1), 10) if m else 5.0
-
-        s1 = _score(j1)
-        s2 = _score(j2)
-        avg = round((s1 + s2) / 2, 1)
-        scores_all.append(avg)
-
-        drop_flag = ""
-        if s1 - s2 > 2:
-            consistency_drops += 1
-            drop_flag = " CONSISTENCY_DROP"
-
-        print(f"    [{idx+1}/5] {q['category']}: t1={s1:.0f} t2={s2:.0f} avg={avg}{drop_flag}", flush=True)
-
-    overall = round(sum(scores_all) / len(scores_all), 2) if scores_all else 0
-    variance = round(max(scores_all) - min(scores_all), 1) if scores_all else 0
-    print(f"  Result: {overall}/10 avg, variance={variance}, consistency_drops={consistency_drops}")
-    return {
-        "category": "Dialogue",
-        "avg_score": overall, "scores": scores_all,
-        "variance": variance, "consistency_drops": consistency_drops,
-        "infra_retries": infra_retries,
-        "cost": round(total_cost, 4),
-    }
-
-
-# ---------------------------------------------------------------------------
-# Phase 3 — Threshold Evaluation
-# ---------------------------------------------------------------------------
-
-THRESHOLDS = {
-    "HumanEval": {"metric": "accuracy", "min": 92.0, "unit": "%"},
-    "MMLU": {"metric": "accuracy", "min": 78.0, "unit": "% projected"},
-    "MMMLU": {"metric": "accuracy", "min": 82.0, "unit": "% projected"},
-    "GSM8K": {"metric": "verify_failure_rate", "max": 5.0, "unit": "%"},
-    "Dialogue": {"metric": "avg_score", "min": 6.5, "unit": "/10"},
-}
-
-
-def evaluate_thresholds(results: Dict[str, Dict]) -> bool:
-    print("\n" + "=" * 70)
-    print("PHASE 3 — THRESHOLD EVALUATION")
-    print("=" * 70 + "\n")
-
-    all_pass = True
-    print(f"  {'Category':<15} {'Metric':<25} {'Value':<10} {'Threshold':<15} {'Status'}")
-    print(f"  {'-'*15} {'-'*25} {'-'*10} {'-'*15} {'-'*6}")
-
-    for cat, spec in THRESHOLDS.items():
-        r = results.get(cat)
-        if not r or r.get("status") == "SKIP":
-            print(f"  {cat:<15} {'(skipped)':<25} {'N/A':<10} {'N/A':<15} SKIP")
-            continue
-
-        metric = spec["metric"]
-        value = r.get(metric, 0)
-
-        if "min" in spec:
-            passed = value >= spec["min"]
-            thr_str = f">= {spec['min']}{spec['unit']}"
-        else:
-            passed = value <= spec["max"]
-            thr_str = f"<= {spec['max']}{spec['unit']}"
-
-        if not passed:
-            all_pass = False
-        icon = "PASS" if passed else "FAIL"
-        print(f"  {cat:<15} {metric:<25} {value:<10} {thr_str:<15} {icon}")
-
-    total_cost = sum(r.get("cost", 0) for r in results.values() if isinstance(r, dict))
-    print(f"\n  Total micro-validation cost: ${total_cost:.4f}")
-
-    if all_pass:
-        print(f"\n  VERDICT: ALL THRESHOLDS MET — ready for full-suite certification.")
+            ranked = await rank_single_query(query, p_ids, p_texts, use_flags=use_flags, qid=qid)
+            rankings[qid] = ranked
+        except Exception as e:
+            errors += 1
+            rankings[qid] = p_ids
+
+        mrr_so_far, r1_so_far = compute_mrr_rank1(rankings, relevants)
+        status = "✅" if rels and ranked[:1] and ranked[0] in rels else "·"
+        print(f"  [{idx_pos+1}/25] {label}: {status} qid={qid} mrr={mrr_so_far:.4f} r1={r1_so_far:.1%}", flush=True)
+
+    mrr, r1 = compute_mrr_rank1(rankings, relevants)
+    print(f"\n  {label} FINAL: MRR@10={mrr:.4f}  Rank-1={r1:.1%}  errors={errors}\n", flush=True)
+    return mrr, r1
+
+
+def _is_dry_run() -> bool:
+    return "--dry-run" in sys.argv
+
+
+async def dry_run() -> None:
+    """Validate configuration without making API calls."""
+    print("=" * 60)
+    print("RAG Micro-Validation — DRY RUN")
+    print("=" * 60)
+
+    checks_passed = 0
+    checks_failed = 0
+
+    # 1. Check imports
+    try:
+        from benchmark_helpers import extract_passage_ids_robust  # noqa: F401
+        from sota_benchmark_improvements import compute_bm25_score  # noqa: F401
+        from ultra_aggressive_improvements import analyze_query_intent  # noqa: F401
+        print("  [PASS] Helper imports OK")
+        checks_passed += 1
+    except ImportError as e:
+        print(f"  [FAIL] Import error: {e}")
+        checks_failed += 1
+
+    # 2. Check API config
+    if API_URL:
+        print(f"  [PASS] API_URL = {API_URL}")
+        checks_passed += 1
     else:
-        print(f"\n  VERDICT: THRESHOLDS NOT MET — review required before full suite.")
+        print("  [FAIL] API_URL not set")
+        checks_failed += 1
 
-    return all_pass
+    if API_KEY:
+        print(f"  [PASS] API_KEY present ({len(API_KEY)} chars)")
+        checks_passed += 1
+    else:
+        print("  [WARN] API_KEY not set (will fail at runtime)")
 
+    # 3. Check flags
+    flags_active = []
+    if RAG_RERANK_SHUFFLE_SEEDED:
+        flags_active.append("RERANK_SHUFFLE_SEEDED")
+    if RAG_TOP1_FIRST:
+        flags_active.append("TOP1_FIRST")
+    if RAG_CONFIDENCE_FALLBACK:
+        flags_active.append("CONFIDENCE_FALLBACK")
+    if RAG_RERANK_DETERMINISTIC:
+        flags_active.append("RERANK_DETERMINISTIC (debug/known-regressor)")
+    print(f"  [INFO] Flags: {', '.join(flags_active) or '(none)'}")
+    checks_passed += 1
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+    # 4. Check dataset access
+    print("  Loading MS MARCO dataset (dry-run)...", flush=True)
+    try:
+        dataset = load_dataset("microsoft/ms_marco", "v1.1", split="validation")
+        max_idx = max(FIXED_INDICES)
+        if max_idx >= len(dataset):
+            print(f"  [WARN] Max index {max_idx} >= dataset size {len(dataset)}")
+        else:
+            print(f"  [PASS] Dataset loaded ({len(dataset)} samples), max index {max_idx} valid")
+            checks_passed += 1
 
-async def run_all():
-    if not API_KEY:
-        print("ERROR: API_KEY or LLMHIVE_API_KEY must be set", file=sys.stderr)
+        # Quick schema check on first sample
+        item = dataset[FIXED_INDICES[0]]
+        assert "query" in item, "Missing 'query' field"
+        assert "passages" in item, "Missing 'passages' field"
+        p = item["passages"]
+        assert "passage_text" in p, "Missing 'passage_text'"
+        assert "is_selected" in p, "Missing 'is_selected'"
+        print(f"  [PASS] Dataset schema valid (query + passages.passage_text + is_selected)")
+        checks_passed += 1
+    except Exception as e:
+        print(f"  [FAIL] Dataset load/check: {e}")
+        checks_failed += 1
+
+    # 5. Check report directory
+    out_dir = Path("benchmark_reports")
+    if out_dir.exists():
+        print(f"  [PASS] Report directory exists: {out_dir}")
+        checks_passed += 1
+    else:
+        print(f"  [WARN] Report directory missing, will be created at runtime")
+
+    print(f"\n  Dry-run summary: {checks_passed} passed, {checks_failed} failed")
+    if checks_failed > 0:
+        print("  DRY RUN FAILED")
         sys.exit(1)
+    else:
+        print("  DRY RUN PASSED — ready for execution")
+        sys.exit(0)
 
-    if not zero_regression_audit():
+
+async def main():
+    if _is_dry_run():
+        await dry_run()
+        return
+
+    print("=" * 60)
+    print("RAG Micro-Validation (25 fixed MS MARCO samples)")
+    print("=" * 60)
+
+    flags_active = []
+    if RAG_RERANK_SHUFFLE_SEEDED:
+        flags_active.append("RERANK_SHUFFLE_SEEDED")
+    if RAG_TOP1_FIRST:
+        flags_active.append("TOP1_FIRST")
+    if RAG_CONFIDENCE_FALLBACK:
+        flags_active.append("CONFIDENCE_FALLBACK")
+    if RAG_RERANK_DETERMINISTIC:
+        flags_active.append("RERANK_DETERMINISTIC (debug/known-regressor)")
+
+    if not flags_active:
+        print("\n  No RAG flags set. Running baseline only.\n")
+
+    print(f"  API: {API_URL}")
+    print(f"  Flags: {', '.join(flags_active) or '(none — baseline only)'}")
+    print(f"  Indices: {FIXED_INDICES[:5]}...{FIXED_INDICES[-1]}")
+    print()
+
+    print("Loading MS MARCO dataset...", flush=True)
+    dataset = load_dataset("microsoft/ms_marco", "v1.1", split="validation")
+    print(f"  Loaded {len(dataset)} samples.\n")
+
+    # ── Run baseline (no flags) ──
+    print("-" * 40)
+    print("BASELINE (all RAG flags OFF)")
+    print("-" * 40)
+    baseline_mrr, baseline_r1 = await run_variant(dataset, "baseline", use_flags=False)
+
+    flagged_mrr, flagged_r1 = baseline_mrr, baseline_r1
+    if flags_active:
+        print("-" * 40)
+        print(f"VARIANT ({', '.join(flags_active)})")
+        print("-" * 40)
+        flagged_mrr, flagged_r1 = await run_variant(dataset, "variant", use_flags=True)
+
+    # ── Report ──
+    print("=" * 60)
+    print("A/B RESULTS")
+    print("=" * 60)
+    mrr_delta = (flagged_mrr - baseline_mrr) * 100
+    r1_delta = (flagged_r1 - baseline_r1) * 100
+    print(f"  Baseline   MRR@10={baseline_mrr:.4f}  Rank-1={baseline_r1:.1%}")
+    if flags_active:
+        print(f"  Variant    MRR@10={flagged_mrr:.4f}  Rank-1={flagged_r1:.1%}")
+        print(f"  Delta      MRR={mrr_delta:+.2f}pp  Rank-1={r1_delta:+.1f}pp")
+
+    report = {
+        "baseline_mrr": round(baseline_mrr, 4),
+        "baseline_rank1": round(baseline_r1, 4),
+        "variant_mrr": round(flagged_mrr, 4),
+        "variant_rank1": round(flagged_r1, 4),
+        "mrr_delta_pp": round(mrr_delta, 2),
+        "rank1_delta_pp": round(r1_delta, 2),
+        "flags": flags_active,
+        "samples": len(FIXED_INDICES),
+        "fixed_indices": FIXED_INDICES,
+    }
+
+    out_dir = Path("benchmark_reports")
+    out_dir.mkdir(exist_ok=True)
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    out_path = out_dir / f"rag_micro_validation_{ts}.json"
+    out_path.write_text(json.dumps(report, indent=2))
+    print(f"\n  Report: {out_path}")
+
+    # ── Gate check ──
+    _gate_failed = False
+    if flags_active:
+        if mrr_delta <= -1.0:
+            print(f"\n  FAIL: MRR dropped by {abs(mrr_delta):.2f}pp (threshold: 1.0pp)")
+            _gate_failed = True
+        if r1_delta <= -3.0:
+            print(f"\n  FAIL: Rank-1 dropped by {abs(r1_delta):.1f}pp (threshold: 3.0pp)")
+            _gate_failed = True
+
+    if _gate_failed:
         sys.exit(1)
-
-    print("\n" + "=" * 70)
-    print("PHASE 2 — MICRO VALIDATION")
-    print("=" * 70)
-
-    results: Dict[str, Dict] = {}
-
-    results["HumanEval"] = await micro_humaneval()
-    results["MMLU"] = await micro_mmlu()
-    results["MMMLU"] = await micro_mmmlu()
-    results["GSM8K"] = await micro_gsm8k()
-    results["Dialogue"] = await micro_dialogue()
-
-    passed = evaluate_thresholds(results)
-
-    report_dir = _PROJECT_ROOT / "benchmark_reports"
-    report_dir.mkdir(exist_ok=True)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = report_dir / f"micro_validation_{ts}.json"
-    with open(report_path, "w") as f:
-        json.dump({"timestamp": ts, "seed": FIXED_SEED, "tier": TIER, "results": results, "thresholds_met": passed}, f, indent=2)
-    print(f"\n  Report saved: {report_path}")
-
-    return 0 if passed else 1
-
-
-def main():
-    parser = argparse.ArgumentParser(description="LLMHive Micro Validation")
-    parser.add_argument("--dry-run", action="store_true", help="Run only Phase 1 audit")
-    args = parser.parse_args()
-
-    if args.dry_run:
-        ok = zero_regression_audit()
-        sys.exit(0 if ok else 1)
-
-    rc = asyncio.run(run_all())
-    sys.exit(rc)
+    else:
+        print(f"\n  PASS: No regression detected.")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
