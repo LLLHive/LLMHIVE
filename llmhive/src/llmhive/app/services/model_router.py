@@ -40,6 +40,7 @@ MODEL_GPT_4_1 = "gpt-4.1"
 MODEL_GPT_4O = "gpt-4o"
 MODEL_CLAUDE_4_5 = "claude-opus-4.5"
 MODEL_CLAUDE_SONNET_4 = "claude-sonnet-4"
+MODEL_GEMINI_3_1_PRO = "gemini-3.1-pro"
 MODEL_GEMINI_3_PRO = "gemini-3-pro"
 MODEL_GEMINI_2_5 = "gemini-2.5-pro"
 MODEL_GROK_4_HEAVY = "grok-4-heavy"
@@ -68,7 +69,8 @@ FALLBACK_CLAUDE_3_5 = "anthropic/claude-3-5-sonnet-20241022"  # Legacy, still wo
 FALLBACK_CLAUDE_3_HAIKU = "anthropic/claude-3-5-haiku-20241022"  # Legacy
 
 # Google - Top tier
-FALLBACK_GEMINI_3_PRO = "google/gemini-3-pro-preview"    # ✓ Verified - newest
+FALLBACK_GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"  # ✓ Verified - newest Google
+FALLBACK_GEMINI_3_PRO = "google/gemini-3-pro-preview"    # ✓ Verified
 FALLBACK_GEMINI_2_5 = "google/gemini-2.5-pro"            # ✓ Verified
 FALLBACK_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"    # ✓ Verified
 
@@ -96,59 +98,45 @@ FALLBACK_QWEN = "qwen/qwen2.5"
 # Format: (preferred_model, [fallback1, fallback2, ...])
 # Based on research: "Implementing Advanced Reasoning Methods with Optimal LLMs (2025)"
 REASONING_METHOD_ROUTING = {
-    # Original methods
     ReasoningMethod.chain_of_thought: (
         MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
-        [MODEL_GPT_4_1, MODEL_GPT_4O, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_GPT_4_1, MODEL_GPT_4O, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.tree_of_thought: (
         MODEL_CLAUDE_4_5,
-        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
+        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.react: (
         MODEL_CLAUDE_4_5,
-        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.plan_and_solve: (
         MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
-        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.self_consistency: (
         MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
-        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
+        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4_HEAVY, MODEL_LLAMA_3_70B],
     ),
     ReasoningMethod.reflexion: (
         MODEL_CLAUDE_4_5,
-        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_CLAUDE_SONNET_4, MODEL_GPT_5_1, MODEL_GPT_4O, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
-    
-    # Research methods from "Implementing Advanced Reasoning Methods with Optimal LLMs (2025)"
-    # 1. Hierarchical Task Decomposition (HRM-style)
-    # Best: GPT-4.1 (GPT-5.1), Claude 2/3, Gemini Pro/Ultra, PaLM 2, LLaMA-2 70B
     ReasoningMethod.hierarchical_decomposition: (
-        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,  # complex planning
-        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
+        [MODEL_GPT_4_1, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
-    
-    # 2. Diffusion-Inspired Iterative Reasoning
-    # Best: GPT-4.1, Gemini 2.5 Pro/Ultra, Claude 2, GPT-3.5 Turbo, Open-source
     ReasoningMethod.iterative_refinement: (
         MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
-        [MODEL_GPT_4_1, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_GPT_4_1, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
-    
-    # 3. Confidence-Based Filtering (DeepConf)
-    # Best: GPT-4, Gemini, Claude 2, GPT-3.5, Open-source with logits
     ReasoningMethod.confidence_filtering: (
         MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
-        [MODEL_GPT_4_1, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_GPT_4_1, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
-    
-    # 4. Dynamic Planning (Test-Time Decision-Making)
-    # Best: GPT-4, Gemini, Claude 2, GPT-3.5, Rule-based
     ReasoningMethod.dynamic_planning: (
         MODEL_GPT_5_1 if MODEL_GPT_5_1 else MODEL_GPT_4O,
-        [MODEL_GPT_4_1, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
+        [MODEL_GPT_4_1, MODEL_GEMINI_3_1_PRO, MODEL_GEMINI_3_PRO, MODEL_GEMINI_2_5, MODEL_CLAUDE_4_5, MODEL_CLAUDE_SONNET_4, MODEL_GROK_4, MODEL_LLAMA_3_70B],
     ),
 }
 
@@ -296,6 +284,26 @@ MODEL_CAPABILITIES = {
         "speed": 98,
         "overall": 78,
     },
+    FALLBACK_GEMINI_3_1_PRO: {
+        "coding": 95,
+        "math": 93,
+        "reasoning": 94,
+        "creative": 85,
+        "factual": 94,
+        "analysis": 94,
+        "speed": 75,
+        "overall": 94,
+    },
+    FALLBACK_GEMINI_3_PRO: {
+        "coding": 92,
+        "math": 91,
+        "reasoning": 92,
+        "creative": 82,
+        "factual": 92,
+        "analysis": 92,
+        "speed": 78,
+        "overall": 92,
+    },
     FALLBACK_GEMINI_2_5: {
         "coding": 90,
         "math": 90,
@@ -375,53 +383,53 @@ TASK_CAPABILITY_MAP = {
 # Based on empirical testing (Phase 4 optimization)
 # ==============================================================================
 TASK_OPTIMIZED_MODELS = {
-    # Math: DeepSeek and GPT-4o are best for calculations
     "math_problem": [
-        FALLBACK_DEEPSEEK,      # 95 coding, 90 math
-        FALLBACK_GPT_4O,        # 90 math
-        FALLBACK_GEMINI_2_5,    # 90 math
+        FALLBACK_DEEPSEEK,          # 95 coding, 90 math
+        FALLBACK_GEMINI_3_1_PRO,    # 93 math
+        FALLBACK_GPT_4O,            # 90 math
+        FALLBACK_GEMINI_2_5,        # 90 math
     ],
-    # Coding: DeepSeek excels, Claude is excellent too
     "code_generation": [
-        FALLBACK_DEEPSEEK,      # 95 coding - exceptional
-        FALLBACK_GPT_4O,        # 95 coding
-        FALLBACK_CLAUDE_SONNET_4,  # 95 coding
+        FALLBACK_GEMINI_3_1_PRO,    # 95 coding
+        FALLBACK_DEEPSEEK,          # 95 coding
+        FALLBACK_GPT_4O,            # 95 coding
+        FALLBACK_CLAUDE_SONNET_4,   # 95 coding
     ],
-    # Reasoning: Claude and GPT-4o best
     "reasoning": [
-        FALLBACK_CLAUDE_SONNET_4,  # 95 reasoning
-        FALLBACK_GPT_4O,           # 95 reasoning
-        FALLBACK_GEMINI_2_5,       # 92 reasoning
+        FALLBACK_CLAUDE_SONNET_4,   # 95 reasoning
+        FALLBACK_GPT_4O,            # 95 reasoning
+        FALLBACK_GEMINI_3_1_PRO,    # 94 reasoning
+        FALLBACK_GEMINI_2_5,        # 92 reasoning
     ],
-    # Creative: Claude excels at creative writing
     "creative_writing": [
-        FALLBACK_CLAUDE_SONNET_4,  # 95 creative
-        FALLBACK_CLAUDE_3_5,       # 90 creative
-        FALLBACK_GROK_4,           # 88 creative
+        FALLBACK_CLAUDE_SONNET_4,   # 95 creative
+        FALLBACK_CLAUDE_3_5,        # 90 creative
+        FALLBACK_GROK_4,            # 88 creative
+        FALLBACK_GEMINI_3_1_PRO,    # 85 creative
     ],
-    # Factual: Grok has real-time knowledge
     "factual_question": [
-        FALLBACK_GROK_4,           # 95 factual - real-time
-        FALLBACK_GEMINI_2_5,       # 92 factual
-        FALLBACK_GPT_4O,           # 90 factual
+        FALLBACK_GROK_4,            # 95 factual
+        FALLBACK_GEMINI_3_1_PRO,    # 94 factual
+        FALLBACK_GEMINI_2_5,        # 92 factual
+        FALLBACK_GPT_4O,            # 90 factual
     ],
-    # Analysis: Claude and GPT-4o excel
     "analysis": [
-        FALLBACK_CLAUDE_SONNET_4,  # 95 analysis
-        FALLBACK_GPT_4O,           # 95 analysis
-        FALLBACK_GEMINI_2_5,       # 90 analysis
+        FALLBACK_CLAUDE_SONNET_4,   # 95 analysis
+        FALLBACK_GPT_4O,            # 95 analysis
+        FALLBACK_GEMINI_3_1_PRO,    # 94 analysis
+        FALLBACK_GEMINI_2_5,        # 90 analysis
     ],
-    # Multi-step: Needs strong reasoning
     "multi_step": [
-        FALLBACK_CLAUDE_SONNET_4,  # Best for complex decomposition
-        FALLBACK_GPT_4O,           # Strong reasoning
-        FALLBACK_GEMINI_2_5,       # Good reasoning
+        FALLBACK_CLAUDE_SONNET_4,
+        FALLBACK_GEMINI_3_1_PRO,    # 94 reasoning
+        FALLBACK_GPT_4O,
+        FALLBACK_GEMINI_2_5,
     ],
-    # Comparison: Analysis capability
     "comparison": [
-        FALLBACK_CLAUDE_SONNET_4,  # 95 analysis
-        FALLBACK_GPT_4O,           # 95 analysis
-        FALLBACK_GEMINI_2_5,       # 90 analysis
+        FALLBACK_CLAUDE_SONNET_4,   # 95 analysis
+        FALLBACK_GEMINI_3_1_PRO,    # 94 analysis
+        FALLBACK_GPT_4O,            # 95 analysis
+        FALLBACK_GEMINI_2_5,        # 90 analysis
     ],
 }
 
@@ -542,7 +550,7 @@ def get_diverse_ensemble(
     provider_groups = {
         "openai": [FALLBACK_GPT_5, FALLBACK_GPT_4O, FALLBACK_O3],
         "anthropic": [FALLBACK_CLAUDE_OPUS_4, FALLBACK_CLAUDE_SONNET_4, FALLBACK_CLAUDE_3_5],
-        "google": [FALLBACK_GEMINI_3_PRO, FALLBACK_GEMINI_2_5, FALLBACK_GEMINI_2_5_FLASH],
+        "google": [FALLBACK_GEMINI_3_1_PRO, FALLBACK_GEMINI_3_PRO, FALLBACK_GEMINI_2_5, FALLBACK_GEMINI_2_5_FLASH],
         "xai": [FALLBACK_GROK_4],
         "deepseek": [FALLBACK_DEEPSEEK, FALLBACK_DEEPSEEK_R1],
         "meta": [FALLBACK_LLAMA_4],
@@ -595,16 +603,20 @@ def get_diverse_ensemble(
 
 # Models with large context windows (for Long Context ranking)
 LONG_CONTEXT_MODELS = {
-    FALLBACK_CLAUDE_SONNET_4: 1000000,  # 1M tokens
+    FALLBACK_GEMINI_3_1_PRO: 1050000,    # 1.05M tokens
+    FALLBACK_GEMINI_3_PRO: 1000000,      # 1M tokens
+    FALLBACK_CLAUDE_SONNET_4: 1000000,   # 1M tokens
+    FALLBACK_GEMINI_2_5: 1000000,        # 1M tokens
     FALLBACK_CLAUDE_OPUS_4: 200000,      # 200K tokens
     FALLBACK_GPT_5: 256000,              # 256K tokens
+    FALLBACK_GROK_4: 256000,             # 256K tokens
     FALLBACK_GPT_4O: 128000,             # 128K tokens
-    FALLBACK_GEMINI_2_5: 128000,         # 128K tokens
 }
 
 # Models strong in multilingual (for Multilingual ranking)
 MULTILINGUAL_MODELS = [
     FALLBACK_CLAUDE_OPUS_4,    # 90.8% MMMLU
+    FALLBACK_GEMINI_3_1_PRO,   # Strong multilingual
     FALLBACK_CLAUDE_SONNET_4,  # 89.1% MMMLU
     FALLBACK_GEMINI_2_5,       # 89.2% MMMLU
     FALLBACK_GPT_5,            # Strong multilingual
@@ -623,6 +635,7 @@ MATH_SPECIALIST_MODELS = [
     FALLBACK_O3,               # 98.4% AIME
     FALLBACK_O1,               # Native reasoning
     FALLBACK_GPT_5,            # 100% AIME
+    FALLBACK_GEMINI_3_1_PRO,   # 93% math
     FALLBACK_DEEPSEEK_R1,      # Strong math
     FALLBACK_CLAUDE_OPUS_4,    # 100% with tools
 ]
@@ -631,6 +644,7 @@ MATH_SPECIALIST_MODELS = [
 RAG_OPTIMIZED_MODELS = [
     FALLBACK_GPT_5,            # 95% RAG-Eval
     FALLBACK_CLAUDE_OPUS_4,    # 94% RAG-Eval
+    FALLBACK_GEMINI_3_1_PRO,   # Strong RAG with long context
     FALLBACK_CLAUDE_SONNET_4,  # 88% RAG-Eval
     FALLBACK_GPT_4O,           # 82% RAG-Eval
 ]

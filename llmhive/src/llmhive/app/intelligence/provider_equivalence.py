@@ -25,7 +25,10 @@ SAME_MODEL_PROVIDER_MATRIX: Dict[str, List[str]] = {
     "gpt-5.2-pro":       ["openrouter", "openai"],
     "gpt-5.2":           ["openrouter", "openai"],
     "claude-sonnet-4.6": ["openrouter", "anthropic"],
+    "gemini-3.1-pro":    ["openrouter", "gemini"],
+    "gemini-3-pro":      ["openrouter", "gemini"],
     "gemini-2.5-pro":    ["openrouter", "gemini"],
+    "grok-4":            ["openrouter", "grok"],
     "grok-3-mini":       ["openrouter", "grok"],
     "deepseek-reasoner": ["openrouter", "deepseek"],
 }
@@ -46,9 +49,21 @@ _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
         "openrouter": "anthropic/claude-sonnet-4.6",
         "anthropic":  "claude-sonnet-4.6",
     },
+    "gemini-3.1-pro": {
+        "openrouter": "google/gemini-3.1-pro-preview",
+        "gemini":     "gemini-3.1-pro",
+    },
+    "gemini-3-pro": {
+        "openrouter": "google/gemini-3-pro-preview",
+        "gemini":     "gemini-3-pro",
+    },
     "gemini-2.5-pro": {
         "openrouter": "google/gemini-2.5-pro-preview",
         "gemini":     "gemini-2.5-pro",
+    },
+    "grok-4": {
+        "openrouter": "x-ai/grok-4",
+        "grok":       "grok-4",
     },
     "grok-3-mini": {
         "openrouter": "x-ai/grok-3-mini",

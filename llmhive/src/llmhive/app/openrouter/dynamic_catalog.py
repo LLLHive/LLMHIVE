@@ -96,6 +96,34 @@ BOOTSTRAP_FALLBACK_MODELS = [
         "price_per_1m_completion": 10.00,
         "tier": 1,
     },
+    {
+        "id": "google/gemini-3.1-pro-preview",
+        "name": "Gemini 3.1 Pro",
+        "family": "gemini-3.1",
+        "author": "google",
+        "context_length": 1050000,
+        "supports_tools": True,
+        "supports_reasoning": True,
+        "supports_structured": True,
+        "multimodal_input": True,
+        "price_per_1m_prompt": 2.00,
+        "price_per_1m_completion": 12.00,
+        "tier": 1,
+    },
+    {
+        "id": "google/gemini-3-pro-preview",
+        "name": "Gemini 3 Pro",
+        "family": "gemini-3",
+        "author": "google",
+        "context_length": 1000000,
+        "supports_tools": True,
+        "supports_reasoning": True,
+        "supports_structured": True,
+        "multimodal_input": True,
+        "price_per_1m_prompt": 1.25,
+        "price_per_1m_completion": 5.00,
+        "tier": 1,
+    },
 ]
 
 
@@ -124,7 +152,8 @@ FAMILY_PATTERNS: List[Tuple[str, str]] = [
     ("claude-3", r"anthropic/claude-.*-3(?!\.)"),
     
     # Google
-    ("gemini-3", r"google/gemini-3"),
+    ("gemini-3.1", r"google/gemini-3\.1"),
+    ("gemini-3", r"google/gemini-3(?!\.)"),
     ("gemini-2.5", r"google/gemini-2\.5"),
     ("gemini-2", r"google/gemini-2(?!\.)"),
     ("gemini-1.5", r"google/gemini-1\.5"),
@@ -176,7 +205,7 @@ AUTHOR_LOGOS: Dict[str, str] = {
 HIGH_ACCURACY_FAMILIES: Set[str] = {
     "gpt-5.2", "o3-pro", "o3", "o1-pro", "o1", "gpt-4o",
     "claude-4.5", "claude-4",
-    "gemini-3", "gemini-2.5",
+    "gemini-3.1", "gemini-3", "gemini-2.5",
     "grok-4", "grok-3",
     "llama-4",
     "deepseek-v3", "deepseek-r1",

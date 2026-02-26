@@ -575,9 +575,23 @@ MODEL_CAPABILITIES: Dict[str, Dict[ModelCapability, float]] = {
     },
     
     # --------------------------------------------------------------------------
-    # Gemini 3 Series (Google's Latest - January 2026)
+    # Gemini 3.1 Series (Google's Latest - February 2026)
     # --------------------------------------------------------------------------
-    # Gemini 3 Pro Preview: Next-gen Google flagship
+    "gemini-3.1-pro-preview": {
+        ModelCapability.CODING: 0.98,
+        ModelCapability.REASONING: 0.98,
+        ModelCapability.MATH: 0.99,
+        ModelCapability.CREATIVE: 0.92,
+        ModelCapability.FACTUAL: 0.98,
+        ModelCapability.ANALYSIS: 0.98,
+        ModelCapability.SUMMARIZATION: 0.96,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.97,
+        ModelCapability.SPEED: 0.70,
+        ModelCapability.QUALITY: 0.98,
+    },
+    # --------------------------------------------------------------------------
+    # Gemini 3 Series (Google - January 2026)
+    # --------------------------------------------------------------------------
     "gemini-3-pro-preview": {
         ModelCapability.CODING: 0.96,
         ModelCapability.REASONING: 0.97,
@@ -896,9 +910,11 @@ _MODEL_ALIASES = {
     # ==========================================================================
     # Google Gemini Models (January 2026 Latest)
     # ==========================================================================
-    # Gemini 3 series (LATEST)
-    "google/gemini-3-pro-preview": "gemini-3-pro-preview",  # NEW: Latest flagship
-    "google/gemini-3-flash-preview": "gemini-3-flash-preview",  # NEW
+    # Gemini 3.1 series (NEWEST)
+    "google/gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
+    # Gemini 3 series
+    "google/gemini-3-pro-preview": "gemini-3-pro-preview",
+    "google/gemini-3-flash-preview": "gemini-3-flash-preview",
     "google/gemini-3-pro-image-preview": "gemini-3-pro-preview",
     # Gemini 2.5 series
     "google/gemini-2.5-pro": "gemini-2.5-pro",
@@ -1163,8 +1179,9 @@ class EliteOrchestrator:
             "anthropic/claude-3-5-sonnet-20241022",
             # Google
             "gemini-2.5-pro", "gemini-2.5-flash", "gemini-3-pro-preview",
+            "gemini-3.1-pro-preview",
             "google/gemini-2.5-pro", "google/gemini-2.5-flash",
-            "google/gemini-3-pro-preview",
+            "google/gemini-3-pro-preview", "google/gemini-3.1-pro-preview",
             # DeepSeek
             "deepseek-chat", "deepseek-v3.2", "deepseek-r1-0528",
             "deepseek/deepseek-chat", "deepseek/deepseek-v3.2",
@@ -1225,9 +1242,10 @@ class EliteOrchestrator:
                              "claude-3-5-haiku-20241022", "claude-sonnet-4-20250514",
                              "anthropic/claude-sonnet-4", "anthropic/claude-opus-4",
                              "anthropic/claude-3-5-sonnet-20241022"],
-                "gemini": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-3-pro-preview",
-                          "google/gemini-2.5-pro", "google/gemini-2.5-flash",
-                          "google/gemini-3-pro-preview"],
+                "gemini": ["gemini-3.1-pro-preview", "gemini-2.5-pro", "gemini-2.5-flash",
+                          "gemini-3-pro-preview",
+                          "google/gemini-3.1-pro-preview", "google/gemini-2.5-pro",
+                          "google/gemini-2.5-flash", "google/gemini-3-pro-preview"],
                 "deepseek": ["deepseek-chat", "deepseek-v3.2", "deepseek-r1-0528",
                             "deepseek/deepseek-chat", "deepseek/deepseek-v3.2",
                             "deepseek/deepseek-r1-0528"],

@@ -50,6 +50,7 @@ from .model_router import (
     FALLBACK_CLAUDE_SONNET_4,
     FALLBACK_CLAUDE_3_5,
     FALLBACK_CLAUDE_3_HAIKU,
+    FALLBACK_GEMINI_3_1_PRO,
     FALLBACK_GEMINI_3_PRO,
     FALLBACK_GEMINI_2_5,
     FALLBACK_GEMINI_2_5_FLASH,
@@ -179,6 +180,14 @@ try:
 except ImportError:
     FREE_MODELS_DB_AVAILABLE = False
     FREE_MODELS_DB = {}
+
+try:
+    from ..openrouter.dynamic_catalog import get_dynamic_catalog, DynamicModelCatalog
+    DYNAMIC_CATALOG_AVAILABLE = True
+except ImportError:
+    DYNAMIC_CATALOG_AVAILABLE = False
+    get_dynamic_catalog = None
+    DynamicModelCatalog = None
 
 try:
     from ..orchestration.quality_booster import (
@@ -602,7 +611,8 @@ OPENROUTER_DEEPSEEK = "deepseek/deepseek-v3.2"           # ✓ Verified - COST-E
 OPENROUTER_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"     # ✓ Verified - COST-EFFECTIVE
 OPENROUTER_GROK_4 = "x-ai/grok-4"                        # ✓ Verified
 OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"  # ✓ Verified - VERY CHEAP
-OPENROUTER_GEMINI_3_PRO = "google/gemini-3-pro-preview"  # ✓ Verified (newest)
+OPENROUTER_GEMINI_3_PRO = "google/gemini-3-pro-preview"  # ✓ Verified
+OPENROUTER_GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"  # ✓ Verified (newest Google)
 
 # Budget-aware flag - set to True to use cost-effective models only
 BUDGET_MODE = os.getenv("BUDGET_MODE", "true").lower() == "true"
@@ -614,6 +624,7 @@ COST_EFFECTIVE_MODELS = [
     OPENROUTER_DEEPSEEK_R1,      # ~$0.55/1M tokens - reasoning specialist
     OPENROUTER_GEMINI_2_5_FLASH, # ~$0.075/1M tokens - very fast
     OPENROUTER_GEMINI_2_PRO,     # ~$1.25/1M tokens - good for research
+    OPENROUTER_GEMINI_3_1_PRO,   # ~$2/1M tokens - newest Google, excellent
     OPENROUTER_CLAUDE_SONNET_4,  # ~$3/1M tokens - good balance
     OPENROUTER_LLAMA_4,          # ~$0.20/1M tokens - open source
     OPENROUTER_MISTRAL_LARGE,    # ~$2/1M tokens - good for coding
@@ -642,51 +653,56 @@ MODEL_STRENGTHS = {
         "strengths": ["reasoning", "factual", "analysis", "multimodal", "research"],
         "provider": "google", "tier": "flagship", "rank": 3
     },
+    OPENROUTER_GEMINI_3_1_PRO: {
+        "strengths": ["reasoning", "coding", "factual", "analysis", "multimodal",
+                      "research", "medical", "math", "agentic", "tool_use"],
+        "provider": "google", "tier": "flagship", "rank": 3
+    },
     OPENROUTER_GEMINI_3_PRO: {
         "strengths": ["reasoning", "factual", "analysis", "multimodal", "research", "medical"],
-        "provider": "google", "tier": "flagship", "rank": 4
+        "provider": "google", "tier": "flagship", "rank": 5
     },
     OPENROUTER_CLAUDE_SONNET_4: {
         "strengths": ["reasoning", "creative", "coding", "analysis"],
-        "provider": "anthropic", "tier": "flagship", "rank": 5
+        "provider": "anthropic", "tier": "flagship", "rank": 6
     },
     
     # ===== REASONING SPECIALISTS =====
     OPENROUTER_O3: {
         "strengths": ["reasoning", "math", "coding", "logic", "analysis", "research"],
-        "provider": "openai", "tier": "reasoning", "rank": 6
+        "provider": "openai", "tier": "reasoning", "rank": 7
     },
     OPENROUTER_O1: {
         "strengths": ["reasoning", "math", "coding", "logic", "analysis"],
-        "provider": "openai", "tier": "reasoning", "rank": 7
+        "provider": "openai", "tier": "reasoning", "rank": 8
     },
     OPENROUTER_DEEPSEEK_R1: {
         "strengths": ["reasoning", "math", "coding", "logic"],
-        "provider": "deepseek", "tier": "reasoning", "rank": 8
+        "provider": "deepseek", "tier": "reasoning", "rank": 9
     },
     
     # ===== OTHER TOP MODELS =====
     OPENROUTER_LLAMA_4: {
         "strengths": ["reasoning", "coding", "general", "open-source"],
-        "provider": "meta", "tier": "flagship", "rank": 9
+        "provider": "meta", "tier": "flagship", "rank": 10
     },
     OPENROUTER_MISTRAL_LARGE: {
         "strengths": ["reasoning", "coding", "multilingual", "analysis"],
-        "provider": "mistral", "tier": "flagship", "rank": 10
+        "provider": "mistral", "tier": "flagship", "rank": 11
     },
     
     # ===== STILL AVAILABLE (legacy/fallback) =====
     OPENROUTER_GPT_4O: {
         "strengths": ["reasoning", "coding", "analysis", "general"],
-        "provider": "openai", "tier": "flagship", "rank": 11
+        "provider": "openai", "tier": "flagship", "rank": 12
     },
     OPENROUTER_DEEPSEEK: {
         "strengths": ["coding", "math", "reasoning"],
-        "provider": "deepseek", "tier": "specialized", "rank": 12
+        "provider": "deepseek", "tier": "specialized", "rank": 13
     },
     OPENROUTER_GROK_4: {
         "strengths": ["factual", "realtime", "creative", "reasoning"],
-        "provider": "xai", "tier": "flagship", "rank": 13
+        "provider": "xai", "tier": "flagship", "rank": 14
     },
     
     # ===== FAST MODELS =====
@@ -769,57 +785,67 @@ DOMAIN_TOP_MODELS_BUDGET = {
 # Domain-specific top models - PREMIUM versions (for when credits available)
 DOMAIN_TOP_MODELS_PREMIUM = {
     "health_medical": [
-        OPENROUTER_GPT_5,           # #1 overall
-        OPENROUTER_CLAUDE_OPUS_4,   # #2 - excellent for medical reasoning
-        OPENROUTER_GEMINI_3_PRO,    # #3 - newest Google model
-        OPENROUTER_GEMINI_2_PRO,    # #4 - strong for factual/research
-    ],
-    "legal_analysis": [
-        OPENROUTER_CLAUDE_OPUS_4,   # Best for legal reasoning
-        OPENROUTER_GPT_5,
-        OPENROUTER_O3,              # Strong reasoning model
-    ],
-    "financial_analysis": [
-        OPENROUTER_O3,              # Math + reasoning specialist
         OPENROUTER_GPT_5,
         OPENROUTER_CLAUDE_OPUS_4,
-        OPENROUTER_DEEPSEEK_R1,     # Good at math
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_GEMINI_3_PRO,
+        OPENROUTER_GEMINI_2_PRO,
+    ],
+    "legal_analysis": [
+        OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_GPT_5,
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_O3,
+    ],
+    "financial_analysis": [
+        OPENROUTER_O3,
+        OPENROUTER_GPT_5,
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_DEEPSEEK_R1,
     ],
     "science_research": [
-        OPENROUTER_GEMINI_3_PRO,    # Newest, strong for research
-        OPENROUTER_GEMINI_2_PRO,    # Strong for research
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_GEMINI_3_PRO,
+        OPENROUTER_GEMINI_2_PRO,
         OPENROUTER_CLAUDE_OPUS_4,
         OPENROUTER_GPT_5,
     ],
     "code_generation": [
-        OPENROUTER_CLAUDE_SONNET_4, # Best for coding
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_CLAUDE_SONNET_4,
         OPENROUTER_GPT_5,
-        OPENROUTER_DEEPSEEK,        # Specialized for coding
-        OPENROUTER_DEEPSEEK_R1,     # Reasoning + coding
+        OPENROUTER_DEEPSEEK,
+        OPENROUTER_DEEPSEEK_R1,
     ],
     "debugging": [
         OPENROUTER_CLAUDE_SONNET_4,
+        OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_DEEPSEEK,
         OPENROUTER_GPT_5,
     ],
     "math_problem": [
-        OPENROUTER_O3,              # Best reasoning specialist
-        OPENROUTER_DEEPSEEK_R1,     # Reasoning model
+        OPENROUTER_O3,
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_DEEPSEEK_R1,
         OPENROUTER_GPT_5,
         OPENROUTER_GEMINI_2_PRO,
     ],
     "creative_writing": [
-        OPENROUTER_CLAUDE_OPUS_4,   # Best for creative
+        OPENROUTER_CLAUDE_OPUS_4,
         OPENROUTER_CLAUDE_SONNET_4,
         OPENROUTER_GPT_5,
+        OPENROUTER_GEMINI_3_1_PRO,
     ],
     "factual_question": [
         OPENROUTER_GPT_5,
+        OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_GEMINI_3_PRO,
-        OPENROUTER_GROK_4,          # Real-time knowledge
+        OPENROUTER_GROK_4,
     ],
     "general": [
         OPENROUTER_GPT_5,
+        OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_CLAUDE_OPUS_4,
         OPENROUTER_GEMINI_2_PRO,
     ],
@@ -836,6 +862,7 @@ TOOL_CAPABLE_MODELS = {
     OPENROUTER_O1,
     OPENROUTER_CLAUDE_OPUS_4,
     OPENROUTER_CLAUDE_SONNET_4,
+    OPENROUTER_GEMINI_3_1_PRO,
     OPENROUTER_GEMINI_3_PRO,
     OPENROUTER_GEMINI_2_PRO,
     OPENROUTER_GEMINI_2_5_FLASH,
@@ -1069,19 +1096,19 @@ async def get_intelligent_models(
         selected.append(model_id)
         used_providers.add(provider)
     
-    # Step 3: Fallback to OpenRouter top-ranked models (VERIFIED December 2025)
+    # Step 3: Fallback to OpenRouter top-ranked models (updated February 2026)
     if len(selected) < num_models:
-        # Use actual OpenRouter ranking order (verified against /api/v1/models)
         fallback_order = [
             OPENROUTER_GPT_5,           # #1
             OPENROUTER_CLAUDE_OPUS_4,   # #2
-            OPENROUTER_GEMINI_3_PRO,    # #3 newest
-            OPENROUTER_GEMINI_2_PRO,    # #4
-            OPENROUTER_CLAUDE_SONNET_4, # #5
-            OPENROUTER_O3,              # #6 reasoning
-            OPENROUTER_LLAMA_4,         # #7
-            OPENROUTER_MISTRAL_LARGE,   # #8
-            OPENROUTER_GROK_4,          # #9
+            OPENROUTER_GEMINI_3_1_PRO,  # #3 newest Google
+            OPENROUTER_GEMINI_3_PRO,    # #4
+            OPENROUTER_GEMINI_2_PRO,    # #5
+            OPENROUTER_CLAUDE_SONNET_4, # #6
+            OPENROUTER_O3,              # #7 reasoning
+            OPENROUTER_GROK_4,          # #8
+            OPENROUTER_LLAMA_4,         # #9
+            OPENROUTER_MISTRAL_LARGE,   # #10
             OPENROUTER_GPT_4O,          # fallback
         ]
         for model_id in fallback_order:
@@ -1089,7 +1116,50 @@ async def get_intelligent_models(
                 if available_models is None or model_id in available_models:
                     if not require_tools or model_id in TOOL_CAPABLE_MODELS:
                         selected.append(model_id)
-    
+
+    # Step 4: Dynamic catalog augmentation — discover models from OpenRouter/modeldb
+    if len(selected) < num_models and DYNAMIC_CATALOG_AVAILABLE:
+        try:
+            catalog = get_dynamic_catalog()
+            if catalog and catalog._models:
+                _task_lower = task_type.lower()
+                _dyn_candidates = []
+                for dyn_model in catalog._models.values():
+                    if not dyn_model.is_active:
+                        continue
+                    if dyn_model.id in selected:
+                        continue
+                    if require_tools and not dyn_model.supports_tools:
+                        continue
+                    if available_models is not None and dyn_model.id not in available_models:
+                        continue
+                    _score = 0.0
+                    if dyn_model.tier == 1:
+                        _score += 0.4
+                    elif dyn_model.tier == 2:
+                        _score += 0.2
+                    if dyn_model.supports_reasoning:
+                        _score += 0.15
+                    if dyn_model.supports_tools:
+                        _score += 0.1
+                    if dyn_model.context_length >= 100_000:
+                        _score += 0.05
+                    _dyn_candidates.append((dyn_model.id, _score))
+                _dyn_candidates.sort(key=lambda x: x[1], reverse=True)
+                for _did, _ds in _dyn_candidates:
+                    if len(selected) >= num_models:
+                        break
+                    if _did not in selected:
+                        selected.append(_did)
+                if _dyn_candidates:
+                    logger.info(
+                        "Dynamic catalog augmented selection: %d models available, "
+                        "added %d to fill %d slots",
+                        len(catalog._models), len(selected), num_models,
+                    )
+        except Exception as _dce:
+            logger.debug("Dynamic catalog augmentation skipped: %s", _dce)
+
     logger.info(
         "Intelligent model selection for '%s': %d models, require_tools=%s -> %s",
         task_type, num_models, require_tools, selected
@@ -1710,10 +1780,10 @@ def _map_model_to_provider(model_id: str, available_providers: list) -> str:
     IMPORTANT: This function should preserve the exact model ID when it's
     already a valid OpenRouter model ID (e.g., "openai/gpt-5").
     
-    Latest models (VERIFIED December 2025 from OpenRouter):
+    Latest models (VERIFIED February 2026 from OpenRouter):
     - OpenAI: gpt-5, gpt-4o, o3, o1-pro
     - Anthropic: claude-opus-4, claude-sonnet-4
-    - Google: gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash
+    - Google: gemini-3.1-pro-preview, gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash
     - xAI: grok-4
     - DeepSeek: deepseek-v3.2, deepseek-r1-0528
     """
@@ -1754,7 +1824,9 @@ def _map_model_to_provider(model_id: str, available_providers: list) -> str:
     
     # Google Gemini models
     elif "gemini" in model_lower:
-        if "3" in model_lower and "pro" in model_lower:
+        if "3.1" in model_lower and "pro" in model_lower:
+            return OPENROUTER_GEMINI_3_1_PRO  # google/gemini-3.1-pro-preview
+        elif "3" in model_lower and "pro" in model_lower:
             return OPENROUTER_GEMINI_3_PRO  # google/gemini-3-pro-preview
         elif "flash" in model_lower:
             return OPENROUTER_GEMINI_2_5_FLASH
@@ -1785,7 +1857,17 @@ def _map_model_to_provider(model_id: str, available_providers: list) -> str:
         return model_id
     
     else:
-        # Default to GPT-5 (best overall)
+        # Check dynamic catalog — the model may exist in OpenRouter/modeldb
+        if DYNAMIC_CATALOG_AVAILABLE:
+            try:
+                _cat = get_dynamic_catalog()
+                if _cat and _cat._models:
+                    for _mid in _cat._models:
+                        if model_lower in _mid.lower():
+                            logger.info("Dynamic catalog resolved '%s' → '%s'", model_id, _mid)
+                            return _mid
+            except Exception:
+                pass
         return OPENROUTER_GPT_5
 
 
@@ -1796,6 +1878,7 @@ def _get_display_name(model_id: str) -> str:
         OPENROUTER_GPT_5: "GPT-5",
         OPENROUTER_CLAUDE_OPUS_4: "Claude Opus 4",
         OPENROUTER_CLAUDE_SONNET_4: "Claude Sonnet 4",
+        OPENROUTER_GEMINI_3_1_PRO: "Gemini 3.1 Pro",
         OPENROUTER_GEMINI_3_PRO: "Gemini 3 Pro",
         OPENROUTER_GEMINI_2_PRO: "Gemini 2.5 Pro",
         OPENROUTER_O3: "o3",

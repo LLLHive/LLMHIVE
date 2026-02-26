@@ -244,6 +244,7 @@ BUDGET_MODELS = {
     "rag": ["anthropic/claude-sonnet-4"],        # Pinecone reranker does the heavy lifting
     "multilingual": ["anthropic/claude-sonnet-4"], # 89.1% MMMLU - #2 among API
     "long_context": [
+        "google/gemini-3.1-pro-preview",  # 1.05M tokens - newest Google, excellent
         "google/gemini-3-flash-preview",  # 1M tokens - Direct Gemini API, FREE!
         "anthropic/claude-sonnet-4"       # 1M tokens - Fallback if Gemini fails
     ],
@@ -282,7 +283,8 @@ MAXIMUM_MODELS = {
         # 2-model consensus = 93%+ expected
     ],
     "long_context": [
-        "anthropic/claude-sonnet-4", # 1M tokens - ALREADY #1 API!
+        "google/gemini-3.1-pro-preview", # 1.05M tokens - newest, best
+        "anthropic/claude-sonnet-4",      # 1M tokens
     ],
     "speed": [
         "anthropic/claude-sonnet-4", # Fast + capable
@@ -307,6 +309,7 @@ MAXIMUM_MODELS = {
 ELITE_MODELS = {
     "math": [
         "zhipuai/glm-4.7",         # 98% GSM8K - CHAMPION
+        "google/gemini-3.1-pro-preview", # 97%+ GSM8K - newest Google
         "moonshot/kimi-k2.5-thinking", # 96.8% GSM8K
         "google/gemini-3-pro",     # 96% GSM8K - 1M context
         "anthropic/claude-opus-4.6", # 95.8% GSM8K - Feb 2026
@@ -314,33 +317,38 @@ ELITE_MODELS = {
         "x-ai/grok-3-mini",        # Built-in CoT reasoning, fast math
     ],
     "reasoning": [
-        "google/gemini-3-pro",     # 91.8% MMLU, 91.9% GPQA Diamond - #1
+        "google/gemini-3.1-pro-preview", # Newest Google flagship
+        "google/gemini-3-pro",     # 91.8% MMLU, 91.9% GPQA Diamond
         "openai/gpt-5.2",          # 92.8% MMLU
         "anthropic/claude-opus-4.6", # 90% MMLU - Precision
         "moonshot/kimi-k2.5-thinking", # 88% MMLU - Thinking mode
         "x-ai/grok-3-mini",        # 89% MMLU - Native chain-of-thought
     ],
     "coding": [
-        "alibaba/qwen3-max",       # 92.7% HumanEval - LEADS GPT-4o
-        "openai/gpt-5.3-codex",    # 92% HumanEval (estimated) - Specialized
+        "google/gemini-3.1-pro-preview", # Top coding scores
+        "alibaba/qwen3-max",       # 92.7% HumanEval
+        "openai/gpt-5.3-codex",    # 92% HumanEval (estimated)
         "moonshot/kimi-k2.5-thinking", # 92% accuracy - Visual coding
-        "anthropic/claude-opus-4.6", # 87% (79.2% SWE-Bench) - Champion
+        "anthropic/claude-opus-4.6", # 87% (79.2% SWE-Bench)
         "google/gemini-3-pro",     # 85% (76.2% SWE-Bench)
         "x-ai/grok-3-mini",        # Good code generation, fast
     ],
     "rag": [
         "openai/gpt-5.2",          # 95% RAG-Eval
+        "google/gemini-3.1-pro-preview", # Strong retrieval + 1M context
         "anthropic/claude-opus-4.6", # 94% RAG-Eval
         "google/gemini-3-pro",     # Multimodal, 1M context
         "x-ai/grok-3-mini",        # Fast extraction, good comprehension
     ],
     "multilingual": [
-        "google/gemini-3-pro",     # Multimodal, multilingual champion
+        "google/gemini-3.1-pro-preview", # Multilingual champion
+        "google/gemini-3-pro",     # Multimodal, multilingual
         "anthropic/claude-opus-4.6", # 90.8% MMMLU (estimated)
         "alibaba/qwen3-max",       # Strong Chinese + multilingual
     ],
     "long_context": [
-        "google/gemini-3-pro",     # 1M tokens - LARGEST
+        "google/gemini-3.1-pro-preview", # 1M+ tokens - LATEST
+        "google/gemini-3-pro",     # 1M tokens
         "anthropic/claude-opus-4.6", # 1M tokens (beta)
         "moonshot/kimi-k2.5-thinking", # 256K context
         "alibaba/qwen3-max",       # 262K context
