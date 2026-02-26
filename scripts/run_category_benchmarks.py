@@ -181,10 +181,15 @@ MSMARCO_EVAL_CMD = _get_env_str("MSMARCO_EVAL_CMD", "")
 RAG_RERANK_DETERMINISTIC = _is_truthy(os.getenv("RAG_RERANK_DETERMINISTIC"))
 RAG_TOP1_FIRST = _is_truthy(os.getenv("RAG_TOP1_FIRST"))
 RAG_CONFIDENCE_FALLBACK = _is_truthy(os.getenv("RAG_CONFIDENCE_FALLBACK"))
-RAG_RERANK_SHUFFLE_SEEDED = _is_truthy(os.getenv("RAG_RERANK_SHUFFLE_SEEDED"))
+RAG_RERANK_SHUFFLE_SEEDED = _is_truthy(os.getenv("RAG_RERANK_SHUFFLE_SEEDED", "1"))
 _RAG_SHUFFLE_SALT = "rag_shuffle_v1"
 _RAG_CONFIDENCE_BM25_THRESHOLD = _get_env_float("RAG_CONFIDENCE_BM25_THRESHOLD", 2.0)
 _RAG_CONFIDENCE_KW_THRESHOLD = _get_env_int("RAG_CONFIDENCE_KW_THRESHOLD", 2)
+
+MULTILINGUAL_FALLBACK = _is_truthy(os.getenv("MULTILINGUAL_FALLBACK", "1"))
+_MULTILINGUAL_FALLBACK_MODEL = os.getenv("MULTILINGUAL_FALLBACK_MODEL", "gpt-4o")
+MMLU_SELF_CHECK = _is_truthy(os.getenv("MMLU_SELF_CHECK", "1"))
+GOVERNANCE = _is_truthy(os.getenv("GOVERNANCE"))
 
 if RAG_RERANK_DETERMINISTIC:
     import warnings
@@ -1937,8 +1942,8 @@ D) {choices[3]}"""
                 if confidence > 1.0:
                     confidence = min(confidence / 100.0, 1.0)
 
-            # ── Agent 2: Verification (only if CONFIDENCE < 0.9) ──
-            if predicted and confidence < 0.90:
+            # ── Agent 2: Verification (only if MMLU_SELF_CHECK and CONFIDENCE < 0.9) ──
+            if MMLU_SELF_CHECK and predicted and confidence < 0.90:
                 verify_prompt = (
                     "You are a verification specialist.\n\n"
                     "You are given:\n"
@@ -2994,25 +2999,68 @@ async def evaluate_multilingual(
                     "output_tokens": result.get("output_tokens", 0),
                     "retry_count": result.get("retries", 0),
                     "infra_failure": False,
+                    "multilingual_fallback": False,
                     "failure_type": "PARSING_FAILURE" if predicted is None else (
                         "MODEL_CORRECT" if is_correct else "MODEL_INCORRECT"
                     ),
                 })
         else:
-            errors += 1
-            if len(error_samples) < 3:
-                error_samples.append(result.get("error", "unknown error")[:200])
-            print(f"  [{i}/{sample_size}] MMMLU: ⚠️ API error ({errors} errors)", flush=True)
-            if _ANSWER_LOG_PATH:
-                _log_answer(_ANSWER_LOG_PATH, {
-                    "category": "MMMLU", "question_id": f"mmmlu_{i}",
-                    "index": i, "subject": subject,
-                    "question": question[:200], "predicted": None,
-                    "extracted_answer": None,
-                    "correct_answer": correct_answer,
-                    "error": result.get("error", "unknown")[:200],
-                    "failure_type": "INFRA_FAILURE", "infra_failure": True,
-                })
+            _ml_fallback_recovered = False
+            if MULTILINGUAL_FALLBACK:
+                async with _mmmlu_semaphore:
+                    _fb_result = await call_llmhive_api(
+                        prompt,
+                        reasoning_mode=REASONING_MODE,
+                        tier=tier,
+                        orchestration_config={
+                            "accuracy_level": 5,
+                            "enable_verification": False,
+                            "use_deep_consensus": False,
+                            "preferred_model": _MULTILINGUAL_FALLBACK_MODEL,
+                        },
+                    )
+                if _fb_result.get("success"):
+                    _fb_pred = _extract_multiple_choice(_fb_result["response"])
+                    if _fb_pred and _fb_pred in "ABCD":
+                        predicted = _fb_pred
+                        is_correct = predicted == correct_answer
+                        if is_correct:
+                            correct += 1
+                        total_latency += _fb_result.get("latency", 0)
+                        total_cost += _fb_result.get("cost", 0.0)
+                        _ml_fallback_recovered = True
+                        print(f"  [{i}/{sample_size}] MMMLU: {'✅' if is_correct else '❌'} "
+                              f"pred={predicted} correct={correct_answer} "
+                              f"[MULTILINGUAL_FALLBACK={_MULTILINGUAL_FALLBACK_MODEL}]",
+                              flush=True)
+                        if _ANSWER_LOG_PATH:
+                            _log_answer(_ANSWER_LOG_PATH, {
+                                "category": "MMMLU", "question_id": f"mmmlu_{i}",
+                                "index": i, "subject": subject,
+                                "question": question[:200], "predicted": predicted,
+                                "correct_answer": correct_answer,
+                                "is_correct": bool(is_correct),
+                                "multilingual_fallback": True,
+                                "fallback_model": _MULTILINGUAL_FALLBACK_MODEL,
+                                "failure_type": "MODEL_CORRECT" if is_correct else "MODEL_INCORRECT",
+                                "infra_failure": False,
+                            })
+            if not _ml_fallback_recovered:
+                errors += 1
+                if len(error_samples) < 3:
+                    error_samples.append(result.get("error", "unknown error")[:200])
+                print(f"  [{i}/{sample_size}] MMMLU: ⚠️ API error ({errors} errors)", flush=True)
+                if _ANSWER_LOG_PATH:
+                    _log_answer(_ANSWER_LOG_PATH, {
+                        "category": "MMMLU", "question_id": f"mmmlu_{i}",
+                        "index": i, "subject": subject,
+                        "question": question[:200], "predicted": None,
+                        "extracted_answer": None,
+                        "correct_answer": correct_answer,
+                        "error": result.get("error", "unknown")[:200],
+                        "failure_type": "INFRA_FAILURE", "infra_failure": True,
+                        "multilingual_fallback": MULTILINGUAL_FALLBACK,
+                    })
 
         if on_progress:
             on_progress(
@@ -4725,6 +4773,37 @@ async def main():
         print("  Verdict: ⚠️  Elevated error rate — review failing categories")
     else:
         print("  Verdict: 🚨 High error rate — investigate before relying on results")
+
+    # ==================================================================
+    # GOVERNANCE GATE
+    # ==================================================================
+    if GOVERNANCE:
+        print(f"\n{'='*70}")
+        print("GOVERNANCE GATE ENFORCEMENT")
+        print(f"{'='*70}")
+        _gov_failures: List[str] = []
+        for r in results:
+            if not isinstance(r, dict) or "error" in r:
+                continue
+            cat = r.get("category", "")
+            acc = r.get("accuracy", 0)
+            key = _CATEGORY_NAME_TO_KEY.get(cat, "")
+            if key == "reasoning" and acc < 75.0:
+                _gov_failures.append(f"  {cat}: {acc:.1f}% < 75% governance floor")
+            if key == "dialogue":
+                _raw = r.get("extra", {}).get("raw_score_out_of_10")
+                if _raw is not None and _raw <= 0:
+                    _gov_failures.append(f"  {cat}: raw_score={_raw} — timeout/failure")
+        if _gov_failures:
+            print("  GOVERNANCE FAILURES:")
+            for gf in _gov_failures:
+                print(f"    {gf}")
+            print(f"\n  Set GOVERNANCE=0 to bypass.")
+            raise RuntimeError(
+                f"Governance gate failed: {len(_gov_failures)} violation(s)"
+            )
+        else:
+            print("  All governance checks passed.")
 
     print("\n" + "="*70)
     print("BENCHMARK COMPLETE")

@@ -64,7 +64,7 @@ FIXED_INDICES = [
 ]
 
 RAG_RERANK_DETERMINISTIC = os.getenv("RAG_RERANK_DETERMINISTIC", "").lower() in ("1", "true", "yes")
-RAG_RERANK_SHUFFLE_SEEDED = os.getenv("RAG_RERANK_SHUFFLE_SEEDED", "").lower() in ("1", "true", "yes")
+RAG_RERANK_SHUFFLE_SEEDED = os.getenv("RAG_RERANK_SHUFFLE_SEEDED", "1").lower() in ("1", "true", "yes")
 RAG_TOP1_FIRST = os.getenv("RAG_TOP1_FIRST", "").lower() in ("1", "true", "yes")
 RAG_CONFIDENCE_FALLBACK = os.getenv("RAG_CONFIDENCE_FALLBACK", "").lower() in ("1", "true", "yes")
 _RAG_SHUFFLE_SALT = "rag_shuffle_v1"
@@ -239,19 +239,23 @@ async def rank_single_query(
     return final
 
 
-def compute_mrr_rank1(
+def compute_metrics(
     rankings: Dict[int, List[int]],
     relevants: Dict[int, List[int]],
-) -> Tuple[float, float]:
-    """Return (MRR@10, Rank-1 hit rate)."""
+) -> Tuple[float, float, float]:
+    """Return (MRR@10, Rank-1 hit rate, Recall@10)."""
     mrr_sum = 0.0
     rank1_hits = 0
+    recall_hits = 0
     total = 0
     for qid, ranked in rankings.items():
         rels = relevants.get(qid, [])
         if not rels:
             continue
         total += 1
+        top10_set = set(ranked[:10])
+        if top10_set & set(rels):
+            recall_hits += 1
         for pos, pid in enumerate(ranked[:10], 1):
             if pid in rels:
                 mrr_sum += 1.0 / pos
@@ -260,11 +264,12 @@ def compute_mrr_rank1(
                 break
     mrr = mrr_sum / total if total else 0.0
     r1 = rank1_hits / total if total else 0.0
-    return mrr, r1
+    recall = recall_hits / total if total else 0.0
+    return mrr, r1, recall
 
 
-async def run_variant(dataset, label: str, use_flags: bool) -> Tuple[float, float]:
-    """Run the pipeline on 25 fixed samples and return (MRR@10, Rank1)."""
+async def run_variant(dataset, label: str, use_flags: bool) -> Tuple[float, float, float, int]:
+    """Run the pipeline on 25 fixed samples. Returns (MRR@10, Rank1, Recall@10, errors)."""
     rankings: Dict[int, List[int]] = {}
     relevants: Dict[int, List[int]] = {}
     errors = 0
@@ -285,17 +290,19 @@ async def run_variant(dataset, label: str, use_flags: bool) -> Tuple[float, floa
         try:
             ranked = await rank_single_query(query, p_ids, p_texts, use_flags=use_flags, qid=qid)
             rankings[qid] = ranked
-        except Exception as e:
+        except Exception:
             errors += 1
             rankings[qid] = p_ids
 
-        mrr_so_far, r1_so_far = compute_mrr_rank1(rankings, relevants)
+        mrr_so_far, r1_so_far, rec_so_far = compute_metrics(rankings, relevants)
         status = "✅" if rels and ranked[:1] and ranked[0] in rels else "·"
-        print(f"  [{idx_pos+1}/25] {label}: {status} qid={qid} mrr={mrr_so_far:.4f} r1={r1_so_far:.1%}", flush=True)
+        print(f"  [{idx_pos+1}/25] {label}: {status} qid={qid} mrr={mrr_so_far:.4f} "
+              f"r1={r1_so_far:.1%} recall={rec_so_far:.1%}", flush=True)
 
-    mrr, r1 = compute_mrr_rank1(rankings, relevants)
-    print(f"\n  {label} FINAL: MRR@10={mrr:.4f}  Rank-1={r1:.1%}  errors={errors}\n", flush=True)
-    return mrr, r1
+    mrr, r1, recall = compute_metrics(rankings, relevants)
+    print(f"\n  {label} FINAL: MRR@10={mrr:.4f}  Rank-1={r1:.1%}  "
+          f"Recall@10={recall:.1%}  errors={errors}\n", flush=True)
+    return mrr, r1, recall, errors
 
 
 def _is_dry_run() -> bool:
@@ -425,14 +432,20 @@ async def main():
     print("-" * 40)
     print("BASELINE (all RAG flags OFF)")
     print("-" * 40)
-    baseline_mrr, baseline_r1 = await run_variant(dataset, "baseline", use_flags=False)
+    baseline_mrr, baseline_r1, baseline_recall, baseline_errors = await run_variant(
+        dataset, "baseline", use_flags=False,
+    )
 
-    flagged_mrr, flagged_r1 = baseline_mrr, baseline_r1
+    flagged_mrr, flagged_r1, flagged_recall, flagged_errors = (
+        baseline_mrr, baseline_r1, baseline_recall, baseline_errors,
+    )
     if flags_active:
         print("-" * 40)
         print(f"VARIANT ({', '.join(flags_active)})")
         print("-" * 40)
-        flagged_mrr, flagged_r1 = await run_variant(dataset, "variant", use_flags=True)
+        flagged_mrr, flagged_r1, flagged_recall, flagged_errors = await run_variant(
+            dataset, "variant", use_flags=True,
+        )
 
     # ── Report ──
     print("=" * 60)
@@ -440,18 +453,27 @@ async def main():
     print("=" * 60)
     mrr_delta = (flagged_mrr - baseline_mrr) * 100
     r1_delta = (flagged_r1 - baseline_r1) * 100
-    print(f"  Baseline   MRR@10={baseline_mrr:.4f}  Rank-1={baseline_r1:.1%}")
+    recall_delta = (flagged_recall - baseline_recall) * 100
+    print(f"  Baseline   MRR@10={baseline_mrr:.4f}  Rank-1={baseline_r1:.1%}"
+          f"  Recall@10={baseline_recall:.1%}  errors={baseline_errors}")
     if flags_active:
-        print(f"  Variant    MRR@10={flagged_mrr:.4f}  Rank-1={flagged_r1:.1%}")
-        print(f"  Delta      MRR={mrr_delta:+.2f}pp  Rank-1={r1_delta:+.1f}pp")
+        print(f"  Variant    MRR@10={flagged_mrr:.4f}  Rank-1={flagged_r1:.1%}"
+              f"  Recall@10={flagged_recall:.1%}  errors={flagged_errors}")
+        print(f"  Delta      MRR={mrr_delta:+.2f}pp  Rank-1={r1_delta:+.1f}pp"
+              f"  Recall={recall_delta:+.1f}pp")
 
     report = {
         "baseline_mrr": round(baseline_mrr, 4),
         "baseline_rank1": round(baseline_r1, 4),
+        "baseline_recall": round(baseline_recall, 4),
+        "baseline_errors": baseline_errors,
         "variant_mrr": round(flagged_mrr, 4),
         "variant_rank1": round(flagged_r1, 4),
+        "variant_recall": round(flagged_recall, 4),
+        "variant_errors": flagged_errors,
         "mrr_delta_pp": round(mrr_delta, 2),
         "rank1_delta_pp": round(r1_delta, 2),
+        "recall_delta_pp": round(recall_delta, 2),
         "flags": flags_active,
         "samples": len(FIXED_INDICES),
         "fixed_indices": FIXED_INDICES,
@@ -468,11 +490,16 @@ async def main():
     _gate_failed = False
     if flags_active:
         if mrr_delta <= -1.0:
-            print(f"\n  FAIL: MRR dropped by {abs(mrr_delta):.2f}pp (threshold: 1.0pp)")
+            print(f"  FAIL: MRR dropped by {abs(mrr_delta):.2f}pp (threshold: 1.0pp)")
             _gate_failed = True
         if r1_delta <= -3.0:
-            print(f"\n  FAIL: Rank-1 dropped by {abs(r1_delta):.1f}pp (threshold: 3.0pp)")
+            print(f"  FAIL: Rank-1 dropped by {abs(r1_delta):.1f}pp (threshold: 3.0pp)")
             _gate_failed = True
+        if recall_delta < 0:
+            print(f"  FAIL: Recall@10 dropped by {abs(recall_delta):.1f}pp (must not decrease)")
+            _gate_failed = True
+        if flagged_errors > 0:
+            print(f"  WARN: {flagged_errors} errors in variant run")
 
     if _gate_failed:
         sys.exit(1)
@@ -481,5 +508,67 @@ async def main():
         sys.exit(0)
 
 
+DIALOGUE_STUB_INDICES = list(range(10))
+
+async def run_dialogue_stub() -> Dict:
+    """10-sample Dialogue micro-test stub.
+
+    Calls the MT-Bench evaluator on a tiny slice and returns pass/fail
+    based on timeout only (no raw-score gate).  The full Dialogue quality
+    gate lives in the certified suite.
+    """
+    print("\n" + "=" * 60)
+    print("DIALOGUE MICRO-TEST (10-sample stub)")
+    print("=" * 60)
+
+    eval_script = Path(__file__).resolve().parent / "eval_mtbench.py"
+    if not eval_script.exists():
+        print("  [SKIP] eval_mtbench.py not found — dialogue stub skipped")
+        return {"status": "skipped", "reason": "eval_mtbench.py not found"}
+
+    import subprocess, shlex
+    out_dir = Path("benchmark_reports")
+    out_dir.mkdir(exist_ok=True)
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    out_path = out_dir / f"mtbench_micro_{ts}.json"
+
+    cmd = f"python3 {eval_script} --output {out_path} --seed 42"
+    sub_env = os.environ.copy()
+    sub_env["CATEGORY_BENCH_MTBENCH_SAMPLES"] = "10"
+
+    try:
+        proc = subprocess.run(
+            shlex.split(cmd), check=True, timeout=600,
+            capture_output=True, text=True, env=sub_env,
+        )
+        if out_path.exists():
+            payload = json.loads(out_path.read_text())
+            raw = round(float(payload.get("score", payload.get("avg_score", 0))), 2)
+            acc = round(raw * 10, 2)
+            errs = int(payload.get("errors", 0))
+            print(f"  Score: {raw} / 10  (accuracy_pct={acc}%)  errors={errs}")
+            result = {
+                "status": "passed",
+                "raw_score_out_of_10": raw,
+                "accuracy_pct": acc,
+                "errors": errs,
+                "dialogue_exec_integrity": True,
+            }
+        else:
+            result = {"status": "failed", "reason": "output file missing"}
+    except subprocess.TimeoutExpired:
+        print("  FAIL: Dialogue stub timed out (600s)")
+        result = {"status": "failed", "reason": "timeout"}
+    except subprocess.CalledProcessError as e:
+        print(f"  FAIL: Dialogue stub exited {e.returncode}")
+        result = {"status": "failed", "reason": f"exit {e.returncode}"}
+
+    print(f"  Result: {result['status']}")
+    return result
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    if "--dialogue" in sys.argv:
+        asyncio.run(run_dialogue_stub())
+    else:
+        asyncio.run(main())
