@@ -87,7 +87,6 @@ if RAG_RERANK_DETERMINISTIC:
 
 
 _FREE_ALLOWED_MODELS = {
-    "deepseek/deepseek-r1-0528:free",
     "deepseek/deepseek-chat",
     "meta-llama/llama-3.3-70b-instruct:free",
     "qwen/qwen3-coder:free",
@@ -99,7 +98,6 @@ _FREE_ALLOWED_MODELS = {
     "arcee-ai/trinity-mini:free",
     "z-ai/glm-4.5-air:free",
     "upstage/solar-pro-3:free",
-    "moonshotai/kimi-k2:free",
     "nousresearch/hermes-3-llama-3.1-405b:free",
 }
 
@@ -156,11 +154,11 @@ async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
                 body_snippet = resp.text[:200] if resp.text else ""
                 return {"success": False, "error": f"HTTP {resp.status_code}: {body_snippet}"}
             except Exception as e:
-                last_err = str(e)
+                last_err = f"{type(e).__name__}" + (f": {e}" if str(e) else "")
                 if attempt < 2:
                     await asyncio.sleep(2 ** attempt)
                     continue
-                return {"success": False, "error": str(e)}
+                return {"success": False, "error": f"exhausted retries (last: {last_err})"}
     return {"success": False, "error": f"exhausted retries (last: {last_err or last_status})"}
 
 
@@ -646,8 +644,8 @@ async def run_free_smoke() -> None:
     passed = 0
 
     for i, (category, prompt) in enumerate(prompts, 1):
-        print(f"\n  [{i}/5] category={category}")
-        result = await call_api(prompt, temperature=0.3)
+        print(f"\n  [{i}/5] category={category}", flush=True)
+        result = await call_api(prompt, temperature=0.3, timeout=90)
 
         if not result.get("success"):
             err = result.get("error", "unknown")

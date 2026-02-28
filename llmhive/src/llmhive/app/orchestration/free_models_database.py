@@ -141,27 +141,7 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # =========================================================================
     # DEEPSEEK MODELS
     # =========================================================================
-    "deepseek/deepseek-r1-0528:free": FreeModelInfo(
-        model_id="deepseek/deepseek-r1-0528:free",
-        display_name="DeepSeek R1 (V3.2-Thinking)",
-        provider="DeepSeek",
-        context_window=163840,
-        speed_tier=SpeedTier.MEDIUM,  # Faster via direct API
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.MATH,
-            ModelStrength.CODING,
-            ModelStrength.TOOL_USE,
-        ],
-        best_for=["Complex reasoning", "Math problems", "Step-by-step analysis"],
-        notes="🏆 RANK #2 - Elite reasoning (81.3), 96% AIME 2025",
-        verified_working=True,
-        preferred_api="deepseek",  # Route to DeepSeek Direct
-        native_model_id="deepseek-reasoner",
-        performance_score=81.3,
-        capability_score=57.9,
-        supports_tools=False,
-    ),
+    # DISABLED: deepseek/deepseek-r1-0528:free — 404 on OpenRouter (Feb 28, 2026)
     
     "deepseek/deepseek-chat": FreeModelInfo(
         model_id="deepseek/deepseek-chat",
@@ -348,23 +328,7 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # DISABLED: tngtech/deepseek-r1t-chimera:free — 404 on OpenRouter (Feb 2026)
     # DISABLED: tngtech/deepseek-r1t2-chimera:free — 404 on OpenRouter (Feb 2026)
     
-    "moonshotai/kimi-k2:free": FreeModelInfo(
-        model_id="moonshotai/kimi-k2:free",
-        display_name="Moonshot AI Kimi K2",
-        provider="Moonshot AI",
-        context_window=32768,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.MULTILINGUAL,
-        ],
-        best_for=["Reasoning", "Chinese language tasks"],
-        notes="🏆 RANK #4 - Strong performance (67.5), good reasoning model",
-        verified_working=True,
-        performance_score=67.5,
-        capability_score=0.0,  # Not in capability top 20
-        supports_tools=False,
-    ),
+    # DISABLED: moonshotai/kimi-k2:free — 404 on OpenRouter (Feb 28, 2026)
     
     # DISABLED: tngtech/tng-r1t-chimera:free — 404 on OpenRouter (Feb 2026)
 }

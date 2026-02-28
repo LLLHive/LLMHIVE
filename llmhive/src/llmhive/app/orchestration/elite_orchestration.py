@@ -144,28 +144,24 @@ def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
 # Includes TOP-TIER models: DeepSeek R1, Llama 3.3 70B, Gemma 3 27B, Qwen3
 # =============================================================================
 FREE_MODELS = {
-    # TOP FREE MODELS — verified working on OpenRouter (Feb 2026):
-    # 1. deepseek/deepseek-r1-0528:free   - 164K, BEST reasoning (o1-level!)
-    # 2. meta-llama/llama-3.3-70b-instruct:free - 131K, GPT-4 level
-    # 3. qwen/qwen3-coder:free            - 262K, BEST for coding
-    # 4. google/gemma-3-27b-it:free        - 131K, multimodal
-    # 5. qwen/qwen3-next-80b-a3b-instruct:free - 262K, strong reasoning
-    # 6. nvidia/nemotron-3-nano-30b-a3b:free - 256K, long context
-    # 7. arcee-ai/trinity-large-preview:free - 131K, agentic/tool use
-    #
-    # REMOVED (404 on OpenRouter):
-    #   openai/gpt-oss-120b:free, tngtech/deepseek-r1t2-chimera:free,
-    #   openai/gpt-oss-20b:free, tngtech/tng-r1t-chimera:free
+    # TOP FREE MODELS — live-verified on OpenRouter (Feb 28 2026):
+    # OK:  nvidia/nemotron-3-nano-30b-a3b:free, arcee-ai/trinity-large-preview:free,
+    #      arcee-ai/trinity-mini:free, nvidia/nemotron-nano-12b-v2-vl:free,
+    #      z-ai/glm-4.5-air:free, upstage/solar-pro-3:free, deepseek/deepseek-chat
+    # 429: meta-llama/llama-3.3-70b-instruct:free, google/gemma-3-27b-it:free,
+    #      qwen/qwen3-coder:free, qwen/qwen3-next-80b-a3b-instruct:free,
+    #      nousresearch/hermes-3-llama-3.1-405b:free
+    # 404: deepseek/deepseek-r1-0528:free, moonshotai/kimi-k2:free
 
     "math": [
-        "deepseek/deepseek-r1-0528:free",              # 164K - BEST reasoning, o1-level!
+        "deepseek/deepseek-chat",                      # 164K - DeepSeek V3, fast
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong math
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
         "google/gemma-3-27b-it:free",                  # 131K - solid math
-        "arcee-ai/trinity-large-preview:free",         # 131K - fallback
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - reliable
     ],
     "reasoning": [
-        "deepseek/deepseek-r1-0528:free",              # 164K - BEST reasoning!
+        "deepseek/deepseek-chat",                      # 164K - strong reasoning
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong reasoning
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
         "google/gemma-3-27b-it:free",                  # 131K - solid reasoning
@@ -173,7 +169,7 @@ FREE_MODELS = {
     ],
     "coding": [
         "qwen/qwen3-coder:free",                       # 262K - BEST for coding!
-        "deepseek/deepseek-r1-0528:free",              # 164K - excellent at code
+        "deepseek/deepseek-chat",                      # 164K - excellent at code
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - good coding
         "arcee-ai/trinity-large-preview:free",         # 131K - agentic coding
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - code capable
@@ -182,7 +178,7 @@ FREE_MODELS = {
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - LONGEST for RAG!
         "qwen/qwen3-coder:free",                       # 262K - long context
         "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - long context
-        "deepseek/deepseek-r1-0528:free",              # 164K - great comprehension
+        "deepseek/deepseek-chat",                      # 164K - great comprehension
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - solid context
     ],
     "multilingual": [
@@ -196,38 +192,38 @@ FREE_MODELS = {
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - LONGEST!
         "qwen/qwen3-coder:free",                       # 262K context
         "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K context
-        "deepseek/deepseek-r1-0528:free",              # 164K context
+        "deepseek/deepseek-chat",                      # 164K context
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K context
     ],
     "speed": [
-        "google/gemma-3-27b-it:free",                  # 131K - fast inference
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - fast & efficient
+        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - fast & reliable
+        "arcee-ai/trinity-mini:free",                  # 131K - fast
         "arcee-ai/trinity-large-preview:free",         # 131K - fast
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - good speed
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - reasonable speed
+        "deepseek/deepseek-chat",                      # 164K - good speed
+        "google/gemma-3-27b-it:free",                  # 131K - fast inference
     ],
     "dialogue": [
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - BEST conversational
         "arcee-ai/trinity-large-preview:free",         # 131K - chat/roleplay
         "z-ai/glm-4.5-air:free",                       # 131K - good alignment
         "google/gemma-3-27b-it:free",                  # 131K - natural dialogue
-        "deepseek/deepseek-r1-0528:free",              # 164K - thoughtful responses
+        "deepseek/deepseek-chat",                      # 164K - thoughtful responses
     ],
     "multimodal": [
         "google/gemma-3-27b-it:free",                  # 131K - vision-language!
         "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - capable
+        "nvidia/nemotron-nano-12b-v2-vl:free",         # 128K - vision
         "meta-llama/llama-3.3-70b-instruct:free",      # Text fallback
-        "deepseek/deepseek-r1-0528:free",              # Text fallback
     ],
     "tool_use": [
         "arcee-ai/trinity-large-preview:free",         # 131K - agentic harness
         "qwen/qwen3-coder:free",                       # 262K - tool capable
-        "deepseek/deepseek-r1-0528:free",              # 164K - tool capable
+        "deepseek/deepseek-chat",                      # 164K - tool capable
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - function calling
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - tool use
     ],
     "general": [
-        "deepseek/deepseek-r1-0528:free",              # 164K - BEST overall
+        "deepseek/deepseek-chat",                      # 164K - strong overall
         "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
         "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong
         "google/gemma-3-27b-it:free",                  # 131K - versatile
