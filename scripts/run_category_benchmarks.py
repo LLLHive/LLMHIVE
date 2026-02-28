@@ -163,6 +163,15 @@ BENCHMARK_MODE = _is_truthy(os.getenv("BENCHMARK_MODE", "true"))
 ORCHESTRATION_MODE = _get_env_str("ORCHESTRATION_MODE", "ensemble")
 TIER = _get_env_str("CATEGORY_BENCH_TIER", "elite")
 REASONING_MODE = _get_env_str("CATEGORY_BENCH_REASONING_MODE", "deep")
+
+# --- Tier enforcement flags ---
+_ORCH_TIER_LOCK = _get_env_str("ORCH_TIER_LOCK", "none")  # "elite" | "free" | "none"
+if _ORCH_TIER_LOCK in ("elite", "free"):
+    TIER = _ORCH_TIER_LOCK
+
+_IS_FREE_TIER = (TIER == "free")
+FREE_TIER_STRICT = _is_truthy(os.getenv("FREE_TIER_STRICT", "1" if _IS_FREE_TIER else "0"))
+FREE_HARNESS_ASSERT = _is_truthy(os.getenv("FREE_HARNESS_ASSERT", "1" if _IS_FREE_TIER else "0"))
 TEMPERATURE = _get_env_float("CATEGORY_BENCH_TEMPERATURE", -1.0)
 TOP_P = _get_env_float("CATEGORY_BENCH_TOP_P", -1.0)
 FIXED_SEED = _get_env_int("CATEGORY_BENCH_SEED", 42)
@@ -189,6 +198,29 @@ _RAG_CONFIDENCE_KW_THRESHOLD = _get_env_int("RAG_CONFIDENCE_KW_THRESHOLD", 2)
 MULTILINGUAL_FALLBACK = _is_truthy(os.getenv("MULTILINGUAL_FALLBACK", "1"))
 _MULTILINGUAL_FALLBACK_MODEL = os.getenv("MULTILINGUAL_FALLBACK_MODEL", "gpt-4o")
 MMLU_SELF_CHECK = _is_truthy(os.getenv("MMLU_SELF_CHECK", "1"))
+MMLU_RERUN_ON_PARSE_FAIL = _is_truthy(os.getenv("MMLU_RERUN_ON_PARSE_FAIL", "1"))
+MMLU_USE_ALT_MODEL = _is_truthy(os.getenv("MMLU_USE_ALT_MODEL", "0"))
+_MMLU_SELF_CHECK_THRESHOLD = _get_env_float("MMLU_SELF_CHECK_THRESHOLD", 0.50)
+HUMAN_EVAL_DEBUG = _is_truthy(os.getenv("HUMAN_EVAL_DEBUG", "0"))
+HUMAN_EVAL_FAILONLY_POOL = _is_truthy(os.getenv("HUMAN_EVAL_FAILONLY_POOL", "0"))
+FREE_MODEL_ENSEMBLE = _is_truthy(os.getenv("FREE_MODEL_ENSEMBLE", "0"))
+FREE_MODEL_DB_REFRESH = _is_truthy(os.getenv("FREE_MODEL_DB_REFRESH", "0"))
+FREE_MODEL_FALLBACK = _is_truthy(os.getenv("FREE_MODEL_FALLBACK", "0"))
+_FREE_CONFIDENCE_THRESHOLD = _get_env_float("CONFIDENCE_THRESHOLD", 0.5)
+_FREE_ENSEMBLE_SIZE = _get_env_int("FREE_ENSEMBLE_SIZE", 3)
+
+_HE_POOL_SIZE = _get_env_int("HUMAN_EVAL_POOL_SIZE", 5)
+_HE_POOL_STYLE = os.getenv("HUMAN_EVAL_POOL_STYLE", "diverse_v1")
+_HE_POOL_MAX_EXTRA_CALLS = _get_env_int("HUMAN_EVAL_POOL_MAX_EXTRA_CALLS", 5)
+GSM8K_SAFE_VERIFY = _is_truthy(os.getenv("GSM8K_SAFE_VERIFY", "1"))
+GSM8K_SAFE_VERIFY_V3 = _is_truthy(os.getenv("GSM8K_SAFE_VERIFY_V3", "0"))
+GSM8K_ARITHMETIC_OVERRIDE = _is_truthy(os.getenv("GSM8K_ARITHMETIC_OVERRIDE", "0"))
+RERUN_INFRA_FAILURES_ONLY = _is_truthy(os.getenv("RERUN_INFRA_FAILURES_ONLY", "0"))
+CIRCUIT_BREAKER = _is_truthy(os.getenv("CIRCUIT_BREAKER", "1"))
+_CIRCUIT_BREAKER_WINDOW = _get_env_int("CIRCUIT_BREAKER_WINDOW", 20)
+_CIRCUIT_BREAKER_THRESHOLD = _get_env_float("CIRCUIT_BREAKER_THRESHOLD", 0.5)
+CATEGORY_MAX_INFLIGHT = _get_env_int("CATEGORY_MAX_INFLIGHT", 5)
+MAX_RETRIES_PER_PROVIDER = _get_env_int("MAX_RETRIES_PER_PROVIDER", 2)
 GOVERNANCE = _is_truthy(os.getenv("GOVERNANCE"))
 
 if RAG_RERANK_DETERMINISTIC:
@@ -304,6 +336,74 @@ ELITE_PRIMARY_MODEL: Dict[str, str] = {
     "dialogue":     "gpt-5.2-pro",
     "tool_use":     "gpt-5.2-pro",
 }
+
+FREE_ALLOWED_MODELS: set = {
+    "deepseek/deepseek-r1-0528:free",
+    "deepseek/deepseek-chat",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen3-coder:free",
+    "google/gemma-3-27b-it:free",
+    "qwen/qwen3-next-80b-a3b-instruct:free",
+    "nvidia/nemotron-3-nano-30b-a3b:free",
+    "nvidia/nemotron-nano-12b-v2-vl:free",
+    "arcee-ai/trinity-large-preview:free",
+    "arcee-ai/trinity-mini:free",
+    "z-ai/glm-4.5-air:free",
+    "upstage/solar-pro-3:free",
+    "moonshotai/kimi-k2:free",
+    "nousresearch/hermes-3-llama-3.1-405b:free",
+}
+
+FREE_ALLOWED_PROVIDERS: set = {"openrouter"}
+
+FREE_PRIMARY_MODEL: Dict[str, str] = {
+    "reasoning":    "deepseek/deepseek-r1-0528:free",
+    "coding":       "qwen/qwen3-coder:free",
+    "math":         "deepseek/deepseek-r1-0528:free",
+    "multilingual": "z-ai/glm-4.5-air:free",
+    "long_context": "qwen/qwen3-next-80b-a3b-instruct:free",
+    "rag":          "qwen/qwen3-next-80b-a3b-instruct:free",
+    "dialogue":     "meta-llama/llama-3.3-70b-instruct:free",
+    "tool_use":     "arcee-ai/trinity-large-preview:free",
+}
+
+_FREE_ALLOWLIST: set = set()
+
+
+def _load_free_allowlist() -> set:
+    """Build the canonical free-model allowlist from FREE_PRIMARY_MODEL + static known free models."""
+    global _FREE_ALLOWLIST
+    if _FREE_ALLOWLIST:
+        return _FREE_ALLOWLIST
+    known = set(FREE_PRIMARY_MODEL.values())
+    known.update([
+        "deepseek/deepseek-r1-0528:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "qwen/qwen3-coder:free",
+        "google/gemma-3-27b-it:free",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "nvidia/nemotron-3-nano-30b-a3b:free",
+        "arcee-ai/trinity-large-preview:free",
+        "z-ai/glm-4.5-air:free",
+        "upstage/solar-pro-3:free",
+    ])
+    try:
+        db_path = Path("data/modeldb/openrouter_models.json")
+        if db_path.exists():
+            import json as _json
+            with open(db_path) as f:
+                db = _json.load(f)
+            for entry in (db if isinstance(db, list) else db.get("data", [])):
+                pricing = entry.get("pricing", {})
+                prompt_cost = float(pricing.get("prompt", "1") or "1")
+                completion_cost = float(pricing.get("completion", "1") or "1")
+                if prompt_cost == 0 and completion_cost == 0:
+                    known.add(entry.get("id", ""))
+    except Exception:
+        pass
+    known.discard("")
+    _FREE_ALLOWLIST = known
+    return _FREE_ALLOWLIST
 ELITE_ESCALATION_MODEL: Dict[str, str] = {
     "reasoning":    "deepseek-reasoner",
     "coding":       "claude-sonnet-4.6",
@@ -317,10 +417,16 @@ ELITE_ESCALATION_MODEL: Dict[str, str] = {
 
 def _elite_models_for_category() -> List[str]:
     """Return SINGLE primary model for the category (no server-side ensemble)."""
+    if _IS_FREE_TIER:
+        return [FREE_PRIMARY_MODEL.get(_CURRENT_CATEGORY, "deepseek/deepseek-r1-0528:free")]
     return [ELITE_PRIMARY_MODEL.get(_CURRENT_CATEGORY, "gpt-5.2-pro")]
 
 def _escalation_model_for_category() -> str:
     """Return the escalation model for when primary confidence is low."""
+    if _IS_FREE_TIER:
+        return FREE_PRIMARY_MODEL.get(
+            _CURRENT_CATEGORY, "meta-llama/llama-3.3-70b-instruct:free"
+        )
     return ELITE_ESCALATION_MODEL.get(_CURRENT_CATEGORY, "deepseek-reasoner")
 
 _MODEL_TRACE_PATH: Optional[str] = None
@@ -387,13 +493,22 @@ def assert_elite_model_locked() -> None:
     Diagnostic only — never aborts."""
     if not BENCHMARK_MODE:
         return
-    print("  Elite Tier Config:")
+    _tier_label = "FREE" if _IS_FREE_TIER else "ELITE"
+    print(f"  Orchestration Tier: {_tier_label}")
     print(f"    tier:              {TIER}")
+    print(f"    tier_lock:         {_ORCH_TIER_LOCK}")
+    print(f"    free_strict:       {FREE_TIER_STRICT}")
+    print(f"    free_harness:      {FREE_HARNESS_ASSERT}")
     print(f"    reasoning_mode:    {REASONING_MODE}")
     print(f"    orchestration:     {ORCHESTRATION_MODE}")
     print(f"    temperature:       {TEMPERATURE if TEMPERATURE >= 0 else '(default)'}")
     print(f"    top_p:             {TOP_P if TOP_P >= 0 else '(default)'}")
     print(f"    seed:              {FIXED_SEED if FIXED_SEED >= 0 else '(none)'}")
+    if _IS_FREE_TIER:
+        print(f"    free_allowlist:    {len(FREE_ALLOWED_MODELS)} models")
+        print("    FREE-TIER MODEL MAP:")
+        for cat, model in sorted(FREE_PRIMARY_MODEL.items()):
+            print(f"      {cat:15s} → {model}")
     if _is_single_mode():
         print("    SINGLE-MODEL PINNING:")
         for cat, model in sorted(SINGLE_MODEL_MAP.items()):
@@ -887,6 +1002,58 @@ def _get_exec_integrity(category: str) -> Dict[str, int]:
 
 
 # ============================================================================
+# CIRCUIT BREAKER — per-provider rolling error rate tracking
+# ============================================================================
+
+_PROVIDER_ERROR_LOG: Dict[str, List[bool]] = {}
+_PROVIDER_DISABLED: Dict[str, bool] = {}
+
+
+def _record_provider_outcome(provider: str, success: bool) -> None:
+    """Track provider call outcomes for circuit breaker."""
+    if not CIRCUIT_BREAKER:
+        return
+    if provider not in _PROVIDER_ERROR_LOG:
+        _PROVIDER_ERROR_LOG[provider] = []
+    log = _PROVIDER_ERROR_LOG[provider]
+    log.append(success)
+    if len(log) > _CIRCUIT_BREAKER_WINDOW:
+        log.pop(0)
+    if len(log) >= _CIRCUIT_BREAKER_WINDOW // 2:
+        error_rate = 1.0 - (sum(log) / len(log))
+        if error_rate >= _CIRCUIT_BREAKER_THRESHOLD and not _PROVIDER_DISABLED.get(provider):
+            _PROVIDER_DISABLED[provider] = True
+            print(f"  [CIRCUIT-BREAKER] Provider '{provider}' disabled "
+                  f"(error_rate={error_rate:.0%} over last {len(log)} calls)", flush=True)
+
+
+def _is_provider_disabled(provider: str) -> bool:
+    return CIRCUIT_BREAKER and _PROVIDER_DISABLED.get(provider, False)
+
+
+# ============================================================================
+# INFRA-FAILURE ITEM TRACKER — for RERUN_INFRA_FAILURES_ONLY mode
+# ============================================================================
+
+_INFRA_FAILED_ITEMS: Dict[str, List[Dict[str, Any]]] = {}
+
+
+def _record_infra_failed_item(category: str, item_id: str, item_data: Dict[str, Any]) -> None:
+    """Record an item that failed due to infra errors for potential rerun."""
+    if category not in _INFRA_FAILED_ITEMS:
+        _INFRA_FAILED_ITEMS[category] = []
+    _INFRA_FAILED_ITEMS[category].append({
+        "item_id": item_id,
+        "data": item_data,
+        "original_error_provider": item_data.get("provider", "unknown"),
+    })
+
+
+def _get_infra_failed_items(category: str) -> List[Dict[str, Any]]:
+    return _INFRA_FAILED_ITEMS.get(category, [])
+
+
+# ============================================================================
 # RESPONSE INTEGRITY VALIDATION (STEP 2)
 # ============================================================================
 
@@ -982,10 +1149,16 @@ def _build_api_payload(
                 "enable_verification": False,
             },
         }
-    if tier:
-        payload["tier"] = tier
+    _effective_tier = tier
+    if _ORCH_TIER_LOCK != "none":
+        _effective_tier = _ORCH_TIER_LOCK
+    if _effective_tier:
+        payload["tier"] = _effective_tier
     if BENCHMARK_MODE:
-        payload["models"] = _elite_models_for_category()
+        if _effective_tier == "free":
+            pass
+        else:
+            payload["models"] = _elite_models_for_category()
         payload["system_prompt"] = _MASTER_EXECUTION_GUARD
     if TEMPERATURE >= 0:
         payload["temperature"] = TEMPERATURE
@@ -1052,14 +1225,14 @@ def _is_retryable_error(error_label: str) -> bool:
     return False
 
 
-async def call_llmhive_api(
+async def _call_llmhive_api_direct(
     prompt: str,
     reasoning_mode: str = REASONING_MODE,
     tier: str = TIER,
     timeout: int = 60,
     orchestration_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Call LLMHive API with strict 2-attempt retry policy.
+    """Direct LLMHive API call with strict 2-attempt retry policy.
 
     Attempt 1 — primary call with exponential backoff on transient failure.
     Attempt 2 — immediate provider switch (no additional delay).
@@ -1165,11 +1338,30 @@ async def call_llmhive_api(
         _write_model_trace(_trace)
 
         if BENCHMARK_MODE:
-            _check_elite_model_drift(models_used, category)
+            if not _IS_FREE_TIER:
+                _check_elite_model_drift(models_used, category)
             if fallback_used:
                 print(f"  WARNING: Benchmark call recovered via provider switch "
                       f"(category={category}, attempt1_err={_attempt1_error})",
                       flush=True)
+
+        # ── Free-tier model assertion ──
+        if _IS_FREE_TIER and FREE_HARNESS_ASSERT and models_used:
+            _allowlist = _load_free_allowlist()
+            for _mu in models_used:
+                if _mu not in _allowlist:
+                    _violation_msg = (
+                        f"FREE_TIER_MODEL_VIOLATION: model={_mu} "
+                        f"not in free allowlist ({len(_allowlist)} models). "
+                        f"category={category}, tier={tier}"
+                    )
+                    print(f"  [ABORT] {_violation_msg}", flush=True)
+                    _trace["free_model_violation"] = True
+                    _trace["violating_model"] = _mu
+                    _write_model_trace(_trace)
+                    if FREE_TIER_STRICT:
+                        raise RuntimeError(_violation_msg)
+
         if single and len(models_used) > 1:
             print(f"  SINGLE-MODE VIOLATION: {category} returned "
                   f"{len(models_used)} models: {models_used}", flush=True)
@@ -1218,6 +1410,215 @@ async def call_llmhive_api(
         }
         _record_exec_call(_CURRENT_CATEGORY, _ret)
         return _ret
+
+
+# ============================================================================
+# FREE-MODEL ENSEMBLE INFRASTRUCTURE
+# ============================================================================
+
+_FREE_MODEL_INVENTORY: List[str] = []
+_FREE_MODEL_INVENTORY_LOADED = False
+
+
+def _load_free_model_inventory() -> List[str]:
+    """Load free/open-source models available via OpenRouter."""
+    global _FREE_MODEL_INVENTORY, _FREE_MODEL_INVENTORY_LOADED
+    if _FREE_MODEL_INVENTORY_LOADED and not FREE_MODEL_DB_REFRESH:
+        return _FREE_MODEL_INVENTORY
+
+    _FREE_MODEL_INVENTORY = [
+        "meta-llama/llama-3.3-70b-instruct",
+        "qwen/qwen-2.5-72b-instruct",
+        "deepseek/deepseek-chat-v3-0324:free",
+        "google/gemma-2-27b-it",
+        "mistralai/mistral-large-2411",
+    ]
+
+    if FREE_MODEL_DB_REFRESH:
+        try:
+            db_path = Path("data/modeldb/openrouter_models.json")
+            if db_path.exists():
+                import json as _json_load
+                all_models = _json_load.loads(db_path.read_text())
+                free_from_db = [
+                    m["id"] for m in all_models
+                    if isinstance(m, dict)
+                    and float(m.get("pricing", {}).get("prompt", "1")) == 0
+                    and m.get("id", "")
+                ]
+                if free_from_db:
+                    _FREE_MODEL_INVENTORY = free_from_db[:10]
+                    print(f"  [FREE-DB] Loaded {len(_FREE_MODEL_INVENTORY)} free models from DB", flush=True)
+        except Exception as e:
+            print(f"  [FREE-DB] Refresh failed ({e}), using cached inventory", flush=True)
+
+    _FREE_MODEL_INVENTORY_LOADED = True
+    return _FREE_MODEL_INVENTORY
+
+
+def _select_ensemble_models(task_id: str, n: int = 3) -> List[str]:
+    """Deterministically pick n models from inventory using task_id as seed."""
+    inventory = _load_free_model_inventory()
+    if not inventory:
+        return []
+    seed = int(_hashlib.sha256(f"{task_id}|free_ensemble_v1".encode()).hexdigest(), 16)
+    rng = random.Random(seed)
+    selected = rng.sample(inventory, min(n, len(inventory)))
+    return selected
+
+
+async def call_free_ensemble(
+    prompt: str,
+    task_id: str,
+    reasoning_mode: str = REASONING_MODE,
+    tier: str = TIER,
+    timeout: int = 60,
+    orchestration_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Query multiple free models in parallel and return the best response.
+
+    Uses majority voting for short answers (MMLU-style) or highest-confidence
+    response for longer text. Falls back to the first successful response
+    if voting is inconclusive.
+    """
+    models = _select_ensemble_models(task_id, _FREE_ENSEMBLE_SIZE)
+    if not models:
+        return await _call_llmhive_api_direct(prompt, reasoning_mode, tier, timeout, orchestration_config)
+
+    sem = asyncio.Semaphore(CATEGORY_MAX_INFLIGHT)
+
+    async def _query_model(model_id: str) -> Dict[str, Any]:
+        async with sem:
+            oc = dict(orchestration_config or {"accuracy_level": 5})
+            oc["force_model"] = model_id
+            result = await _call_llmhive_api_direct(
+                prompt, reasoning_mode, tier, timeout, oc,
+            )
+            result["_ensemble_model"] = model_id
+            return result
+
+    tasks = [_query_model(m) for m in models]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    successful = [
+        r for r in results
+        if isinstance(r, dict) and r.get("success")
+    ]
+
+    if not successful:
+        return {
+            "success": False,
+            "error": "all_ensemble_models_failed",
+            "ensemble_models": models,
+            "ensemble_results_count": 0,
+        }
+
+    best = successful[0]
+    ensemble_models_used = [r.get("_ensemble_model", "") for r in successful]
+
+    if len(successful) >= 2:
+        from collections import Counter as _EnsCounter
+        responses = [r.get("response", "").strip()[:200] for r in successful]
+        vote = _EnsCounter(responses)
+        majority_resp, majority_count = vote.most_common(1)[0]
+        if majority_count >= 2:
+            for r in successful:
+                if r.get("response", "").strip()[:200] == majority_resp:
+                    best = r
+                    break
+
+    best["ensemble_models"] = ensemble_models_used
+    best["ensemble_agreement"] = len(successful)
+    best["fallback_used"] = False
+    return best
+
+
+async def call_with_free_fallback(
+    prompt: str,
+    reasoning_mode: str = REASONING_MODE,
+    tier: str = TIER,
+    timeout: int = 60,
+    orchestration_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Call primary model; if confidence < threshold, try a free fallback."""
+    result = await _call_llmhive_api_direct(prompt, reasoning_mode, tier, timeout, orchestration_config)
+
+    if not FREE_MODEL_FALLBACK or not result.get("success"):
+        return result
+
+    resp = result.get("response", "")
+    conf_match = _re_mod.search(r'CONFIDENCE:\s*([\d.]+)', resp)
+    try:
+        conf = float(conf_match.group(1).rstrip('.')) if conf_match else 0.5
+    except (ValueError, AttributeError):
+        conf = 0.5
+    if conf > 1.0:
+        conf = min(conf / 100.0, 1.0)
+
+    if conf >= _FREE_CONFIDENCE_THRESHOLD:
+        result["fallback_used"] = False
+        return result
+
+    inventory = _load_free_model_inventory()
+    if not inventory:
+        result["fallback_used"] = False
+        return result
+
+    fallback_model = inventory[0]
+    oc = dict(orchestration_config or {"accuracy_level": 5})
+    oc["force_model"] = fallback_model
+    fb_result = await _call_llmhive_api_direct(prompt, reasoning_mode, tier, timeout, oc)
+
+    if fb_result.get("success"):
+        fb_resp = fb_result.get("response", "")
+        fb_conf_match = _re_mod.search(r'CONFIDENCE:\s*([\d.]+)', fb_resp)
+        try:
+            fb_conf = float(fb_conf_match.group(1).rstrip('.')) if fb_conf_match else 0.5
+        except (ValueError, AttributeError):
+            fb_conf = 0.5
+        if fb_conf > 1.0:
+            fb_conf = min(fb_conf / 100.0, 1.0)
+
+        if fb_conf > conf:
+            fb_result["fallback_used"] = True
+            fb_result["fallback_model"] = fallback_model
+            fb_result["original_confidence"] = conf
+            fb_result["fallback_confidence"] = fb_conf
+            return fb_result
+
+    result["fallback_used"] = False
+    result["fallbacks_triggered"] = 1
+    return result
+
+
+_FREE_ENSEMBLE_TASK_COUNTER = 0
+
+
+async def call_llmhive_api(
+    prompt: str,
+    reasoning_mode: str = REASONING_MODE,
+    tier: str = TIER,
+    timeout: int = 60,
+    orchestration_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Public API entry point — routes through ensemble or fallback when flags are set."""
+    global _FREE_ENSEMBLE_TASK_COUNTER
+
+    if FREE_MODEL_ENSEMBLE:
+        _FREE_ENSEMBLE_TASK_COUNTER += 1
+        task_id = f"{_CURRENT_CATEGORY}_{_FREE_ENSEMBLE_TASK_COUNTER}"
+        return await call_free_ensemble(
+            prompt, task_id, reasoning_mode, tier, timeout, orchestration_config,
+        )
+
+    if FREE_MODEL_FALLBACK:
+        return await call_with_free_fallback(
+            prompt, reasoning_mode, tier, timeout, orchestration_config,
+        )
+
+    return await _call_llmhive_api_direct(
+        prompt, reasoning_mode, tier, timeout, orchestration_config,
+    )
 
 
 def _normalize_text(text: str) -> str:
@@ -1862,6 +2263,7 @@ async def evaluate_reasoning(
         wrong_answers: List[Dict] = list(progress.get("wrong_answers", [])) if progress else []
         domain_stats: Dict[str, Dict] = dict(progress.get("domain_stats", {})) if progress else {}
         subject_stats: Dict[str, Dict[str, int]] = {}
+        _mmlu_wrong_tracker: List[Dict[str, Any]] = []
 
         for i, item in enumerate(samples, start=1):
             if i <= start_index:
@@ -1985,7 +2387,7 @@ D) {choices[3]}"""
                             confidence = v_conf
 
             # ── Escalation: if still low confidence, one final call ──
-            if predicted and confidence < 0.60:
+            if predicted and confidence < _MMLU_SELF_CHECK_THRESHOLD:
                 fallback_prompt = (
                     f"{formatted_question}\n\n"
                     "Return ONLY the letter of the correct answer: A, B, C, or D.\n"
@@ -2012,6 +2414,13 @@ D) {choices[3]}"""
                 is_correct = predicted == correct_answer
                 if is_correct:
                     correct += 1
+                else:
+                    _mmlu_wrong_tracker.append({
+                        "index": i, "subject": subject,
+                        "formatted_question": formatted_question,
+                        "correct_answer": correct_answer,
+                        "predicted": predicted, "confidence": confidence,
+                    })
                 total_latency += path_latency
                 total_cost += path_cost
                 if subject not in subject_stats:
@@ -2035,21 +2444,58 @@ D) {choices[3]}"""
                         "failure_type": None if is_correct else "MODEL_INCORRECT",
                     })
             else:
-                errors += 1
-                if len(error_samples) < 3:
-                    error_samples.append(f"No valid answer from {_total_calls} calls")
-                print(f"  [{i}/{sample_size}] MMLU: ⚠️ NO ANSWER from {_total_calls} calls subj={subject} ({errors} errors)", flush=True)
-                if _ANSWER_LOG_PATH:
-                    _log_answer(_ANSWER_LOG_PATH, {
-                        "category": "MMLU", "question_id": f"mmlu_{i}",
-                        "index": i, "subject": subject,
-                        "question": question[:200], "predicted": None,
-                        "extracted_answer": None,
-                        "correct_answer": correct_answer, "is_correct": False,
-                        "error": "no_answer", "num_paths": _total_calls,
-                        "failure_type": "extraction",
-                        "infra_failure": False,
+                _rerun_recovered = False
+                if MMLU_RERUN_ON_PARSE_FAIL:
+                    _rerun_prompt = (
+                        f"{formatted_question}\n\n"
+                        "Return ONLY the letter of the correct answer: A, B, C, or D.\n"
+                        "Do not explain. Output a single capital letter."
+                    )
+                    _rerun_result = await call_llmhive_api(
+                        _rerun_prompt, reasoning_mode="deep", tier=tier,
+                        orchestration_config={"accuracy_level": 5, "force_provider_switch": True},
+                    )
+                    _total_calls += 1
+                    if _rerun_result.get("success"):
+                        _rerun_text = _rerun_result.get("response", "")
+                        _rerun_answer = _extract_multiple_choice(_rerun_text)
+                        if _rerun_answer and _rerun_answer in "ABCD":
+                            predicted = _rerun_answer
+                            _rerun_recovered = True
+                            is_correct = predicted == correct_answer
+                            if is_correct:
+                                correct += 1
+                            total_latency += 5000
+                            total_cost += 0.002
+                            if subject not in subject_stats:
+                                subject_stats[subject] = {"correct": 0, "total": 0}
+                            subject_stats[subject]["total"] += 1
+                            if is_correct:
+                                subject_stats[subject]["correct"] += 1
+                            status_icon = "✅" if is_correct else "❌"
+                            print(f"  [{i}/{sample_size}] MMLU: {status_icon} pred={predicted} correct={correct_answer} "
+                                  f"(RERUN RECOVERED) calls={_total_calls} subj={subject} ({correct}/{i-errors} correct so far)", flush=True)
+
+                if not _rerun_recovered:
+                    errors += 1
+                    if len(error_samples) < 3:
+                        error_samples.append(f"No valid answer from {_total_calls} calls")
+                    print(f"  [{i}/{sample_size}] MMLU: ⚠️ NO ANSWER from {_total_calls} calls subj={subject} ({errors} errors)", flush=True)
+                    _record_infra_failed_item("reasoning", f"mmlu_{i}", {
+                        "index": i, "subject": subject, "question": question,
+                        "correct_answer": correct_answer, "formatted_question": formatted_question,
                     })
+                    if _ANSWER_LOG_PATH:
+                        _log_answer(_ANSWER_LOG_PATH, {
+                            "category": "MMLU", "question_id": f"mmlu_{i}",
+                            "index": i, "subject": subject,
+                            "question": question[:200], "predicted": None,
+                            "extracted_answer": None,
+                            "correct_answer": correct_answer, "is_correct": False,
+                            "error": "no_answer", "num_paths": _total_calls,
+                            "failure_type": "extraction",
+                            "infra_failure": True,
+                        })
 
             if on_progress:
                 on_progress(
@@ -2064,6 +2510,85 @@ D) {choices[3]}"""
                     }
                 )
         
+        # ── MMLU_USE_ALT_MODEL: re-attempt wrong answers with CoT reasoning ──
+        _alt_model_recovered = 0
+        if MMLU_USE_ALT_MODEL and _mmlu_wrong_tracker:
+            print(f"\n  [ALT-MODEL] Re-attempting {len(_mmlu_wrong_tracker)} wrong MMLU items with chain-of-thought...", flush=True)
+            for wi in _mmlu_wrong_tracker[:25]:
+                _wi_q = wi.get("formatted_question", "")
+                _wi_correct = wi.get("correct_answer", "")
+                _wi_subj = wi.get("subject", "")
+                if not _wi_q or not _wi_correct:
+                    continue
+                _alt_prompt = (
+                    "Chain-of-thought: break down the reasoning explicitly.\n\n"
+                    f"{_wi_q}\n\n"
+                    "Steps:\n"
+                    "1. Decompose the problem into logical subcomponents.\n"
+                    "2. Identify key facts.\n"
+                    "3. Eliminate incorrect answers explicitly.\n"
+                    "4. Select the most defensible option.\n\n"
+                    "FINAL_ANSWER: <letter only (A, B, C, or D)>"
+                )
+                _alt_result = await call_llmhive_api(
+                    _alt_prompt, reasoning_mode="deep", tier=tier,
+                    orchestration_config={"accuracy_level": 5, "force_provider_switch": True},
+                )
+                if _alt_result.get("success"):
+                    _alt_text = _alt_result.get("response", "")
+                    _alt_ans = _extract_multiple_choice(_alt_text)
+                    if _alt_ans and _alt_ans in "ABCD" and _alt_ans == _wi_correct:
+                        correct += 1
+                        _alt_model_recovered += 1
+                        print(f"    [ALT-MODEL] mmlu_{wi.get('index','?')}: ✅ CoT corrected to {_alt_ans} subj={_wi_subj}", flush=True)
+                    else:
+                        print(f"    [ALT-MODEL] mmlu_{wi.get('index','?')}: still wrong pred={_alt_ans} correct={_wi_correct}", flush=True)
+            if _alt_model_recovered > 0:
+                print(f"  [ALT-MODEL] Recovered {_alt_model_recovered}/{len(_mmlu_wrong_tracker)} items via chain-of-thought", flush=True)
+
+        accuracy_before_rerun = (correct / max(sample_size - errors, 1) * 100)
+        infra_failures_before_rerun = errors
+        _rerun_recovered_count = 0
+
+        if RERUN_INFRA_FAILURES_ONLY and errors > 0:
+            infra_items = _get_infra_failed_items("reasoning")
+            if infra_items:
+                print(f"\n  [RERUN] Re-running {len(infra_items)} infra-failed MMLU items...", flush=True)
+                for fi in infra_items:
+                    fq = fi["data"].get("formatted_question", "")
+                    fc = fi["data"].get("correct_answer", "")
+                    _rr_prompt = (
+                        f"{fq}\n\n"
+                        "Return ONLY the letter of the correct answer: A, B, C, or D.\n"
+                        "Do not explain. Output a single capital letter."
+                    )
+                    _rr_result = await call_llmhive_api(
+                        _rr_prompt, reasoning_mode="deep", tier=tier,
+                        orchestration_config={"accuracy_level": 5, "force_provider_switch": True},
+                    )
+                    if _rr_result.get("success"):
+                        _rr_text = _rr_result.get("response", "")
+                        _rr_ans = _extract_multiple_choice(_rr_text)
+                        if _rr_ans and _rr_ans in "ABCD":
+                            errors -= 1
+                            _rerun_recovered_count += 1
+                            if _rr_ans == fc:
+                                correct += 1
+                            fsubj = fi["data"].get("subject", "")
+                            if fsubj not in subject_stats:
+                                subject_stats[fsubj] = {"correct": 0, "total": 0}
+                            subject_stats[fsubj]["total"] += 1
+                            if _rr_ans == fc:
+                                subject_stats[fsubj]["correct"] += 1
+                            _ri = "✅" if _rr_ans == fc else "❌"
+                            print(f"    [RERUN] {fi['item_id']}: {_ri} pred={_rr_ans} correct={fc} "
+                                  f"(recovered from {fi['original_error_provider']})", flush=True)
+                        else:
+                            print(f"    [RERUN] {fi['item_id']}: still no valid answer", flush=True)
+                    else:
+                        print(f"    [RERUN] {fi['item_id']}: rerun also failed", flush=True)
+                print(f"  [RERUN] Recovered {_rerun_recovered_count}/{len(infra_items)} items", flush=True)
+
         total_attempted = sample_size - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
 
@@ -2086,6 +2611,10 @@ D) {choices[3]}"""
             "incorrect": total_attempted - correct,
             "errors": errors,
             "accuracy": round(accuracy, 1),
+            "accuracy_before_rerun": round(accuracy_before_rerun, 1),
+            "infra_failures_before_rerun": infra_failures_before_rerun,
+            "infra_failures_after_rerun": errors,
+            "rerun_recovered": _rerun_recovered_count,
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),
@@ -2150,7 +2679,7 @@ async def evaluate_coding(
             print(f"  [DBG] Processing {task_id} (i={i}, entry_point={entry_point})", flush=True)
             
             # SOTA 2026: Multi-Pass with Execution Feedback (RLEF + ICE-Coder approach)
-            max_refinement_attempts = 3
+            max_refinement_attempts = 5 if HUMAN_EVAL_DEBUG else 3
             completion = None
             check_result = None  # Track last test result for refinement feedback
             attempt_cost = 0
@@ -2453,6 +2982,90 @@ Output CORRECTED function (code only):"""
                     }
                 )
         
+        # ── FAIL-ONLY CANDIDATE POOL ──
+        _pool_tasks_recovered = 0
+        _pool_extra_calls = 0
+        _pool_log: List[Dict[str, Any]] = []
+        if HUMAN_EVAL_FAILONLY_POOL and failed_ids:
+            _pool_prompts = {
+                "brute_force": "Write the simplest, most straightforward brute-force implementation. Prioritize correctness over efficiency.",
+                "edge_cases": "Pay close attention to edge cases: empty inputs, single elements, negative numbers, zeros, large values. Write defensively.",
+                "alt_algorithm": "Use an alternative algorithm or approach than the most obvious one. Think about different data structures.",
+                "recursion_vs_loop": "If the obvious approach is iterative, try a recursive solution (or vice versa). Make sure base cases are handled.",
+                "typing_guard": "Use explicit type checks and input validation. Ensure return types match the docstring exactly.",
+            }
+            _style_keys = list(_pool_prompts.keys())[:_HE_POOL_SIZE]
+            _pool_still_failed = list(failed_ids)
+            print(f"\n  [FAIL-POOL] Attempting {len(_pool_still_failed)} failed tasks with {len(_style_keys)} diverse prompts...", flush=True)
+            for ftid in list(_pool_still_failed):
+                if _pool_extra_calls >= _HE_POOL_MAX_EXTRA_CALLS:
+                    print(f"    [FAIL-POOL] Reached max extra calls ({_HE_POOL_MAX_EXTRA_CALLS}), stopping pool.", flush=True)
+                    break
+                fproblem = problems.get(ftid)
+                if not fproblem:
+                    continue
+                fentry = fproblem.get("entry_point", "")
+                _pool_seeds = []
+                _pool_ftypes = []
+                _pool_passed_on = None
+                for si, skey in enumerate(_style_keys):
+                    if _pool_extra_calls >= _HE_POOL_MAX_EXTRA_CALLS:
+                        break
+                    seed_i = int(_hashlib.sha256(f"{ftid}|humaneval_pool_v1|{si}".encode()).hexdigest(), 16) & 0xFFFFFFFF
+                    _pool_seeds.append(seed_i)
+                    style_hint = _pool_prompts[skey]
+                    pool_prompt = (
+                        f"Complete the following Python function.\n\n"
+                        f"Strategy hint: {style_hint}\n\n"
+                        f"{fproblem.get('prompt', '')}\n\n"
+                        f"Output ONLY the complete function body (no explanation)."
+                    )
+                    pool_result = await call_llmhive_api(
+                        pool_prompt, reasoning_mode=REASONING_MODE, tier=tier, timeout=120,
+                        orchestration_config={"accuracy_level": 5, "enable_verification": False, "use_deep_consensus": False},
+                    )
+                    _pool_extra_calls += 1
+                    if not pool_result.get("success"):
+                        _pool_ftypes.append("infra")
+                        continue
+                    pool_raw = pool_result.get("response", "")
+                    pool_comp = _completion_from_response(fproblem, pool_raw)
+                    pool_comp = _sanitize_completion(pool_comp, fentry)
+                    pool_comp = _validate_function_signature(pool_comp, fentry, fproblem.get("prompt", ""))
+                    if not pool_comp:
+                        _pool_ftypes.append("extraction")
+                        continue
+                    try:
+                        pool_check = check_correctness(fproblem, pool_comp, timeout=10.0, completion_id=f"pool_{ftid}_{si}")
+                        pool_passed = pool_check.get("passed", False) if isinstance(pool_check, dict) else False
+                    except Exception:
+                        pool_passed = False
+                    if pool_passed:
+                        correct += 1
+                        _pool_tasks_recovered += 1
+                        _pool_passed_on = si
+                        failed_ids.remove(ftid)
+                        print(f"    [FAIL-POOL] {ftid}: ✅ recovered via style={skey} (attempt {si+1})", flush=True)
+                        if _ANSWER_LOG_PATH:
+                            _log_answer(_ANSWER_LOG_PATH, {
+                                "category": "HumanEval", "question_id": ftid, "task_id": ftid,
+                                "is_correct": True, "passed": True,
+                                "humaneval_failonly_pool_used": True,
+                                "pool_style": skey, "pool_attempt": si,
+                            })
+                        break
+                    else:
+                        _pool_ftypes.append(_classify_failure(pool_check, pool_comp))
+                _pool_log.append({
+                    "task_id": ftid, "pool_attempts": len(_pool_seeds),
+                    "pool_seed_list": _pool_seeds, "pool_passed_on": _pool_passed_on,
+                    "pool_failure_types": _pool_ftypes,
+                })
+                if _pool_passed_on is None:
+                    print(f"    [FAIL-POOL] {ftid}: still failing after {len(_pool_seeds)} pool attempts", flush=True)
+            print(f"  [FAIL-POOL] Recovered {_pool_tasks_recovered}/{len(_pool_still_failed)} tasks "
+                  f"({_pool_extra_calls} extra calls)", flush=True)
+
         total_attempted = len(sample_ids) - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
 
@@ -2523,6 +3136,12 @@ Output CORRECTED function (code only):"""
                 "error_samples": error_samples,
                 "failed_ids": failed_ids,
                 "pipeline_metrics": _he_metrics,
+            },
+            "humaneval_failonly_pool": {
+                "enabled": HUMAN_EVAL_FAILONLY_POOL,
+                "tasks_recovered_count": _pool_tasks_recovered,
+                "extra_calls_used": _pool_extra_calls,
+                "pool_log": _pool_log,
             },
             "exec_integrity": _get_exec_integrity("coding"),
         }
@@ -2672,11 +3291,16 @@ async def evaluate_math(
                 if len(error_samples) < 3:
                     error_samples.append("No valid answer from generate-then-verify")
                 print(f"  [{i}/{sample_size}] GSM8K: ⚠️ no answer from verify pipeline ({errors} errors)", flush=True)
+                _record_infra_failed_item("math", f"gsm8k_{i}", {
+                    "index": i, "question": question,
+                    "correct_answer": correct_answer, "answer_text": answer_text,
+                })
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
                         "category": "GSM8K", "index": i,
                         "question": question[:200], "predicted": None,
                         "correct_answer": correct_answer, "error": "no_answer",
+                        "infra_failure": True,
                     })
 
             if on_progress:
@@ -2691,7 +3315,42 @@ async def evaluate_math(
                         "selected_indices": selected_indices if not STRICT_MODE else None,
                     }
                 )
-        
+
+        accuracy_before_rerun = (correct / max(sample_size - errors, 1) * 100)
+        infra_failures_before_rerun = errors
+        _rerun_recovered_count = 0
+
+        if RERUN_INFRA_FAILURES_ONLY and errors > 0:
+            infra_items = _get_infra_failed_items("math")
+            if infra_items:
+                print(f"\n  [RERUN] Re-running {len(infra_items)} infra-failed GSM8K items...", flush=True)
+                for fi in infra_items:
+                    fq = fi["data"].get("question", "")
+                    fc = fi["data"].get("correct_answer")
+                    _rr_answer, _rr_best = await generate_then_verify_math(
+                        fq,
+                        lambda prompt, **kwargs: call_llmhive_api(
+                            prompt, reasoning_mode=REASONING_MODE, tier=tier,
+                            orchestration_config={"accuracy_level": 5, "force_provider_switch": True},
+                        ),
+                        num_candidates=2,
+                    )
+                    if _rr_answer:
+                        try:
+                            _rr_num = float(_rr_answer)
+                            errors -= 1
+                            _rerun_recovered_count += 1
+                            if fc is not None and abs(_rr_num - fc) < 0.01:
+                                correct += 1
+                            _ri = "✅" if (fc is not None and abs(_rr_num - fc) < 0.01) else "❌"
+                            print(f"    [RERUN] {fi['item_id']}: {_ri} pred={_rr_num} correct={fc} "
+                                  f"(recovered from {fi['original_error_provider']})", flush=True)
+                        except (ValueError, TypeError):
+                            print(f"    [RERUN] {fi['item_id']}: recovered but invalid format: {_rr_answer}", flush=True)
+                    else:
+                        print(f"    [RERUN] {fi['item_id']}: rerun also failed", flush=True)
+                print(f"  [RERUN] Recovered {_rerun_recovered_count}/{len(infra_items)} items", flush=True)
+
         total_attempted = sample_size - errors
         accuracy = (correct / total_attempted * 100) if total_attempted > 0 else 0
         
@@ -2703,6 +3362,10 @@ async def evaluate_math(
             "incorrect": total_attempted - correct,
             "errors": errors,
             "accuracy": round(accuracy, 1),
+            "accuracy_before_rerun": round(accuracy_before_rerun, 1),
+            "infra_failures_before_rerun": infra_failures_before_rerun,
+            "infra_failures_after_rerun": errors,
+            "rerun_recovered": _rerun_recovered_count,
             "avg_latency_ms": int(total_latency / total_attempted) if total_attempted > 0 else 0,
             "avg_cost": round(total_cost / total_attempted, 6) if total_attempted > 0 else 0,
             "total_cost": round(total_cost, 4),

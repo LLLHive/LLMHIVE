@@ -87,68 +87,55 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # =========================================================================
     # TOP-TIER FREE MODELS (January 2026)
     # =========================================================================
-    "tngtech/deepseek-r1t2-chimera:free": FreeModelInfo(
-        model_id="tngtech/deepseek-r1t2-chimera:free",
-        display_name="DeepSeek R1T2 Chimera",
-        provider="TNG",
-        context_window=60000,
-        speed_tier=SpeedTier.FAST,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.MATH,
-            ModelStrength.CODING,
-            ModelStrength.SPEED,
-        ],
-        best_for=["Math", "Coding", "Fast reasoning", "General tasks"],
-        notes="Top FREE model - 671B MoE, 20% faster than R1, verified working Feb 1 2026",
-        verified_working=True,
-        preferred_api="openrouter",
-        performance_score=81.3,
-        capability_score=85.0,
-        supports_tools=True,
-    ),
-    
-    # REMOVED: google/gemini-2.0-flash-exp:free - Returns 404 on OpenRouter (Feb 1, 2026)
-    # Gemini models should be accessed via Google AI API directly, not OpenRouter
-    
+    # DISABLED: tngtech/deepseek-r1t2-chimera:free — 404 on OpenRouter (Feb 2026)
+    # DISABLED: google/gemini-2.0-flash-exp:free — 404 on OpenRouter (Feb 2026)
+    # DISABLED: meta-llama/llama-3.1-405b-instruct:free — 404 on OpenRouter (Feb 2026)
+    # DISABLED: meta-llama/llama-3.2-3b-instruct:free — 404 on OpenRouter (Feb 2026)
+
     # =========================================================================
-    # META/LLAMA MODELS
+    # META/LLAMA MODELS (verified working Feb 2026)
     # =========================================================================
-    # REMOVED: meta-llama/llama-3.3-70b-instruct:free - Returns 404 on OpenRouter (Feb 1, 2026)
-    # Model may have been removed or renamed by OpenRouter
-    
-    "meta-llama/llama-3.1-405b-instruct:free": FreeModelInfo(
-        model_id="meta-llama/llama-3.1-405b-instruct:free",
-        display_name="Llama 3.1 405B Instruct",
+    "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
+        model_id="meta-llama/llama-3.3-70b-instruct:free",
+        display_name="Llama 3.3 70B Instruct",
         provider="Meta",
         context_window=131072,
-        speed_tier=SpeedTier.SLOW,
+        speed_tier=SpeedTier.MEDIUM,
         strengths=[
             ModelStrength.REASONING,
-            ModelStrength.MATH,
-            ModelStrength.CODING,
+            ModelStrength.DIALOGUE,
+            ModelStrength.MULTILINGUAL,
         ],
-        best_for=["Complex reasoning", "Hard math", "Detailed analysis"],
-        notes="🏆 RANK #8 - Largest Llama (62.0), powerful reasoning",
+        best_for=["General reasoning", "Dialogue", "Multilingual tasks"],
+        notes="GPT-4 level, 131K context, strong general-purpose model",
         verified_working=True,
         preferred_api="openrouter",
-        performance_score=62.0,
-        capability_score=0.0,
+        performance_score=68.0,
+        capability_score=60.0,
         supports_tools=False,
     ),
-    
-    "meta-llama/llama-3.2-3b-instruct:free": FreeModelInfo(
-        model_id="meta-llama/llama-3.2-3b-instruct:free",
-        display_name="Llama 3.2 3B Instruct",
-        provider="Meta",
+
+    # =========================================================================
+    # GOOGLE MODELS (verified working Feb 2026)
+    # =========================================================================
+    "google/gemma-3-27b-it:free": FreeModelInfo(
+        model_id="google/gemma-3-27b-it:free",
+        display_name="Gemma 3 27B IT",
+        provider="Google",
         context_window=131072,
-        speed_tier=SpeedTier.FAST,
+        speed_tier=SpeedTier.MEDIUM,
         strengths=[
-            ModelStrength.SPEED,
+            ModelStrength.MULTILINGUAL,
+            ModelStrength.REASONING,
+            ModelStrength.MATH,
         ],
-        best_for=["Fast simple tasks", "Quick responses"],
-        notes="Very fast but limited capability - use for speed-critical simple tasks",
+        best_for=["Multilingual (140+ languages)", "Reasoning", "Math"],
+        notes="Google Gemma 3, 131K context, multimodal, 140+ languages",
         verified_working=True,
+        preferred_api="openrouter",
+        performance_score=65.0,
+        capability_score=58.0,
+        supports_tools=False,
     ),
     
     # =========================================================================
@@ -356,71 +343,10 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         supports_tools=True,
     ),
     
-    "openai/gpt-oss-20b:free": FreeModelInfo(
-        model_id="openai/gpt-oss-20b:free",
-        display_name="GPT OSS 20B",
-        provider="OpenAI (OSS)",
-        context_window=131072,
-        speed_tier=SpeedTier.FAST,
-        strengths=[
-            ModelStrength.SPEED,
-        ],
-        best_for=["Fast simple tasks"],
-        notes="Fast OSS variant",
-        verified_working=True,
-    ),
-    
-    "openai/gpt-oss-120b:free": FreeModelInfo(
-        model_id="openai/gpt-oss-120b:free",
-        display_name="GPT OSS 120B",
-        provider="OpenAI (OSS)",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.TOOL_USE,
-            ModelStrength.REASONING,
-        ],
-        best_for=["Tool calling", "General tasks"],
-        notes="🏆 RANK #5 - Strong general model (67.3) with tool support",
-        verified_working=True,
-        performance_score=67.3,
-        capability_score=72.5,
-        supports_tools=True,
-    ),
-    
-    "tngtech/deepseek-r1t-chimera:free": FreeModelInfo(
-        model_id="tngtech/deepseek-r1t-chimera:free",
-        display_name="DeepSeek R1T Chimera",
-        provider="TNG Technology",
-        context_window=163840,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.LONG_CONTEXT,
-        ],
-        best_for=["Reasoning", "Long context"],
-        notes="DeepSeek variant with extended context",
-        verified_working=True,
-    ),
-    
-    "tngtech/deepseek-r1t2-chimera:free": FreeModelInfo(
-        model_id="tngtech/deepseek-r1t2-chimera:free",
-        display_name="DeepSeek R1T2 Chimera",
-        provider="TNG Technology",
-        context_window=163840,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.LONG_CONTEXT,
-            ModelStrength.DIALOGUE,
-        ],
-        best_for=["Reasoning", "Long context analysis", "Roleplay"],
-        notes="🏆 RANK #1 - Highest performance score (81.3) among free models",
-        verified_working=True,
-        performance_score=81.3,
-        capability_score=57.9,
-        supports_tools=False,
-    ),
+    # DISABLED: openai/gpt-oss-20b:free — 404 on OpenRouter (Feb 2026)
+    # DISABLED: openai/gpt-oss-120b:free — 404 on OpenRouter (Feb 2026)
+    # DISABLED: tngtech/deepseek-r1t-chimera:free — 404 on OpenRouter (Feb 2026)
+    # DISABLED: tngtech/deepseek-r1t2-chimera:free — 404 on OpenRouter (Feb 2026)
     
     "moonshotai/kimi-k2:free": FreeModelInfo(
         model_id="moonshotai/kimi-k2:free",
@@ -440,21 +366,7 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         supports_tools=False,
     ),
     
-    "tngtech/tng-r1t-chimera:free": FreeModelInfo(
-        model_id="tngtech/tng-r1t-chimera:free",
-        display_name="TNG R1T Chimera",
-        provider="TNG Technology",
-        context_window=163840,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.CREATIVE,
-            ModelStrength.DIALOGUE,
-            ModelStrength.TOOL_USE,
-        ],
-        best_for=["Creative writing", "Storytelling", "Tool calling"],
-        notes="Creative/storytelling focused, improved EQ",
-        verified_working=True,
-    ),
+    # DISABLED: tngtech/tng-r1t-chimera:free — 404 on OpenRouter (Feb 2026)
 }
 
 

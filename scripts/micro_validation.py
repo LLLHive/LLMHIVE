@@ -55,6 +55,12 @@ API_URL = os.getenv("LLMHIVE_API_URL", os.getenv("CATEGORY_BENCH_API_URL",
     "https://llmhive-orchestrator-792354158895.us-east1.run.app"))
 API_KEY = os.getenv("API_KEY", os.getenv("LLMHIVE_API_KEY", ""))
 TIER = os.getenv("CATEGORY_BENCH_TIER", "elite")
+_ORCH_TIER_LOCK = os.getenv("ORCH_TIER_LOCK", "none").lower()
+if _ORCH_TIER_LOCK in ("elite", "free"):
+    TIER = _ORCH_TIER_LOCK
+_IS_FREE_TIER = (TIER.lower() == "free")
+FREE_TIER_STRICT = os.getenv("FREE_TIER_STRICT", "1" if _IS_FREE_TIER else "0").lower() in ("1", "true", "yes")
+FREE_HARNESS_ASSERT = os.getenv("FREE_HARNESS_ASSERT", "1" if _IS_FREE_TIER else "0").lower() in ("1", "true", "yes")
 REASONING_MODE = os.getenv("CATEGORY_BENCH_REASONING_MODE", "deep")
 
 FIXED_INDICES = [
@@ -80,6 +86,24 @@ if RAG_RERANK_DETERMINISTIC:
     )
 
 
+_FREE_ALLOWED_MODELS = {
+    "deepseek/deepseek-r1-0528:free",
+    "deepseek/deepseek-chat",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen3-coder:free",
+    "google/gemma-3-27b-it:free",
+    "qwen/qwen3-next-80b-a3b-instruct:free",
+    "nvidia/nemotron-3-nano-30b-a3b:free",
+    "nvidia/nemotron-nano-12b-v2-vl:free",
+    "arcee-ai/trinity-large-preview:free",
+    "arcee-ai/trinity-mini:free",
+    "z-ai/glm-4.5-air:free",
+    "upstage/solar-pro-3:free",
+    "moonshotai/kimi-k2:free",
+    "nousresearch/hermes-3-llama-3.1-405b:free",
+}
+
+
 async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
                    timeout: int = 150) -> dict:
     async with httpx.AsyncClient(timeout=timeout) as client:
@@ -87,7 +111,6 @@ async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
             "prompt": prompt,
             "reasoning_mode": REASONING_MODE,
             "tier": TIER,
-            "models": ["gpt-5.2-pro"],
             "orchestration": {
                 "accuracy_level": 5,
                 "enable_verification": False,
@@ -95,8 +118,12 @@ async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
                 "temperature": temperature,
             },
         }
+        if not _IS_FREE_TIER:
+            payload["models"] = ["gpt-5.2-pro"]
         if top_p >= 0:
             payload["orchestration"]["top_p"] = top_p
+        last_status = None
+        last_err = None
         for attempt in range(3):
             try:
                 resp = await client.post(
@@ -104,19 +131,37 @@ async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
                     json=payload,
                     headers={"Content-Type": "application/json", "X-API-Key": API_KEY},
                 )
+                last_status = resp.status_code
                 if resp.status_code == 200:
                     data = resp.json()
-                    return {"success": True, "response": data.get("message", "")}
+                    models_used = data.get("models_used", [])
+                    if _IS_FREE_TIER and FREE_HARNESS_ASSERT and models_used:
+                        for mu in models_used:
+                            if mu not in _FREE_ALLOWED_MODELS:
+                                return {
+                                    "success": False,
+                                    "error": f"FREE_TIER_MODEL_VIOLATION: {mu}",
+                                    "models_used": models_used,
+                                }
+                    return {
+                        "success": True,
+                        "response": data.get("message", ""),
+                        "models_used": models_used,
+                        "tier": TIER,
+                    }
                 if resp.status_code in (429, 502, 503, 504):
+                    last_err = f"HTTP {resp.status_code}"
                     await asyncio.sleep(2 ** attempt)
                     continue
-                return {"success": False, "error": f"HTTP {resp.status_code}"}
+                body_snippet = resp.text[:200] if resp.text else ""
+                return {"success": False, "error": f"HTTP {resp.status_code}: {body_snippet}"}
             except Exception as e:
+                last_err = str(e)
                 if attempt < 2:
                     await asyncio.sleep(2 ** attempt)
                     continue
                 return {"success": False, "error": str(e)}
-    return {"success": False, "error": "exhausted retries"}
+    return {"success": False, "error": f"exhausted retries (last: {last_err or last_status})"}
 
 
 async def rank_single_query(
@@ -567,8 +612,94 @@ async def run_dialogue_stub() -> Dict:
     return result
 
 
+async def run_free_smoke() -> None:
+    """Smoke test: 5 queries proving free tier uses free models only.
+
+    Sends 5 simple prompts across 2 categories (math + reasoning).
+    Asserts every response includes models_used, all models are in the
+    free allowlist, and no paid models appear.
+    """
+    print("\n" + "=" * 60)
+    print("FREE-TIER SMOKE TEST (5 queries)")
+    print("=" * 60)
+    print(f"  API:  {API_URL}")
+    print(f"  TIER: {TIER}")
+    print(f"  FREE_TIER_STRICT: {FREE_TIER_STRICT}")
+    print(f"  Allowlist size: {len(_FREE_ALLOWED_MODELS)}")
+
+    if TIER != "free":
+        print(f"\n  [ABORT] TIER={TIER} but --free-smoke requires TIER=free.")
+        print("  Set CATEGORY_BENCH_TIER=free and rerun.")
+        sys.exit(1)
+
+    prompts = [
+        ("math", "What is 17 * 23? Show your work step by step and give the final answer."),
+        ("math", "If a train travels 60 mph for 2.5 hours, how far does it go?"),
+        ("reasoning", "What is the capital of France? Answer in one word."),
+        ("reasoning", "Is the number 37 prime? Explain briefly."),
+        ("reasoning", "Name the three states of matter."),
+    ]
+
+    paid_violations = []
+    missing_models = []
+    free_models_seen = set()
+    passed = 0
+
+    for i, (category, prompt) in enumerate(prompts, 1):
+        print(f"\n  [{i}/5] category={category}")
+        result = await call_api(prompt, temperature=0.3)
+
+        if not result.get("success"):
+            err = result.get("error", "unknown")
+            if "FREE_TIER_MODEL_VIOLATION" in str(err):
+                paid_violations.append({"query": i, "error": err,
+                                        "models": result.get("models_used", [])})
+                print(f"        VIOLATION: {err}")
+            else:
+                print(f"        ERROR: {err}")
+            continue
+
+        models = result.get("models_used", [])
+        if not models:
+            missing_models.append(i)
+            print(f"        WARN: models_used missing from response")
+            continue
+
+        all_free = all(m in _FREE_ALLOWED_MODELS for m in models)
+        free_models_seen.update(models)
+        if all_free:
+            passed += 1
+            print(f"        OK: models={models}")
+        else:
+            bad = [m for m in models if m not in _FREE_ALLOWED_MODELS]
+            paid_violations.append({"query": i, "models": models, "paid": bad})
+            print(f"        VIOLATION: paid models used: {bad}")
+
+    print("\n" + "-" * 60)
+    print("FREE-SMOKE RESULTS")
+    print("-" * 60)
+    print(f"  Passed:           {passed}/5")
+    print(f"  Paid violations:  {len(paid_violations)}")
+    print(f"  Missing models:   {len(missing_models)}")
+    print(f"  Free models seen: {free_models_seen or '(none)'}")
+
+    if paid_violations:
+        print(f"\n  FAIL: {len(paid_violations)} paid-model violations detected:")
+        for v in paid_violations:
+            print(f"    query {v['query']}: {v}")
+        sys.exit(1)
+    elif passed == 0:
+        print("\n  FAIL: 0 queries succeeded — cannot confirm free routing.")
+        sys.exit(1)
+    else:
+        print(f"\n  PASS: All {passed} responses used free models only.")
+        sys.exit(0)
+
+
 if __name__ == "__main__":
-    if "--dialogue" in sys.argv:
+    if "--free-smoke" in sys.argv:
+        asyncio.run(run_free_smoke())
+    elif "--dialogue" in sys.argv:
         asyncio.run(run_dialogue_stub())
     else:
         asyncio.run(main())
