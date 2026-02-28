@@ -338,7 +338,6 @@ ELITE_PRIMARY_MODEL: Dict[str, str] = {
 }
 
 FREE_ALLOWED_MODELS: set = {
-    "deepseek/deepseek-r1-0528:free",
     "deepseek/deepseek-chat",
     "meta-llama/llama-3.3-70b-instruct:free",
     "qwen/qwen3-coder:free",
@@ -350,16 +349,15 @@ FREE_ALLOWED_MODELS: set = {
     "arcee-ai/trinity-mini:free",
     "z-ai/glm-4.5-air:free",
     "upstage/solar-pro-3:free",
-    "moonshotai/kimi-k2:free",
     "nousresearch/hermes-3-llama-3.1-405b:free",
 }
 
 FREE_ALLOWED_PROVIDERS: set = {"openrouter"}
 
 FREE_PRIMARY_MODEL: Dict[str, str] = {
-    "reasoning":    "deepseek/deepseek-r1-0528:free",
+    "reasoning":    "deepseek/deepseek-chat",
     "coding":       "qwen/qwen3-coder:free",
-    "math":         "deepseek/deepseek-r1-0528:free",
+    "math":         "deepseek/deepseek-chat",
     "multilingual": "z-ai/glm-4.5-air:free",
     "long_context": "qwen/qwen3-next-80b-a3b-instruct:free",
     "rag":          "qwen/qwen3-next-80b-a3b-instruct:free",
@@ -377,7 +375,7 @@ def _load_free_allowlist() -> set:
         return _FREE_ALLOWLIST
     known = set(FREE_PRIMARY_MODEL.values())
     known.update([
-        "deepseek/deepseek-r1-0528:free",
+        "deepseek/deepseek-chat",
         "meta-llama/llama-3.3-70b-instruct:free",
         "qwen/qwen3-coder:free",
         "google/gemma-3-27b-it:free",
@@ -418,7 +416,7 @@ ELITE_ESCALATION_MODEL: Dict[str, str] = {
 def _elite_models_for_category() -> List[str]:
     """Return SINGLE primary model for the category (no server-side ensemble)."""
     if _IS_FREE_TIER:
-        return [FREE_PRIMARY_MODEL.get(_CURRENT_CATEGORY, "deepseek/deepseek-r1-0528:free")]
+        return [FREE_PRIMARY_MODEL.get(_CURRENT_CATEGORY, "deepseek/deepseek-chat")]
     return [ELITE_PRIMARY_MODEL.get(_CURRENT_CATEGORY, "gpt-5.2-pro")]
 
 def _escalation_model_for_category() -> str:
