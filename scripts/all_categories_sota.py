@@ -11,31 +11,111 @@ Categories:
 - Safety: Adversarial Testing + Multi-Perspective Evaluation
 """
 
+import os
 import re
 import asyncio
 import time as _time_mod
 from typing import Dict, List, Any, Optional, Tuple
 from collections import Counter
 
+
+import ast as _ast
+
+
+def _is_truthy_env(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _safe_ast_eval(expr: str) -> float | None:
+    """Evaluate a simple arithmetic expression using AST whitelist.
+    Only allows numbers and +-*/ operators. Returns None on any failure."""
+    try:
+        tree = _ast.parse(expr, mode="eval")
+        _ALLOWED = (_ast.Expression, _ast.BinOp, _ast.UnaryOp, _ast.Constant,
+                     _ast.Add, _ast.Sub, _ast.Mult, _ast.Div, _ast.USub, _ast.UAdd)
+        for node in _ast.walk(tree):
+            if not isinstance(node, _ALLOWED):
+                return None
+        result = eval(compile(tree, "<calc>", "eval"), {"__builtins__": {}})
+        return float(result)
+    except Exception:
+        return None
+
 # ============================================================================
-# MMLU: CHAIN OF THOUGHT + SELF-CONSISTENCY + NEIGHBOR-CONSISTENCY
+# MMLU: RETRIEVAL-AUGMENTED REASONING + COT + SELF-CONSISTENCY
 # ============================================================================
 # Based on:
 # - "Self-Consistency Improves Chain of Thought Reasoning" (Wang et al. 2022)
 # - "Neighborhood Consistency Belief" (2026, arXiv:2601.05905)
 # - "MMLU-Pro: More Robust and Challenging" (2024)
+# - Retrieval-augmented prompting for knowledge-grounded reasoning
+
+
+async def retrieve_relevant_facts(
+    question: str,
+    choices: List[str],
+    llm_api_call_func,
+) -> str:
+    """Ask the model to recall relevant knowledge before answering.
+
+    Returns a concise fact summary string that can be injected into the
+    reasoning prompt.  Returns empty string on failure so callers can
+    proceed without facts.
+    """
+    choices_block = "\n".join(
+        f"{chr(65 + i)}. {c}" for i, c in enumerate(choices)
+    )
+
+    retrieval_prompt = (
+        "Search relevant knowledge or documents for facts about this "
+        "question. Summarize any important information that will help "
+        "answer it.\n\n"
+        f"Question: {question}\n\n"
+        f"Options:\n{choices_block}\n\n"
+        "Provide ONLY a concise factual summary (3-5 bullet points). "
+        "Do not answer the question. Do not select an option. "
+        "Only list the key facts, definitions, or context needed to "
+        "reason about this question."
+    )
+
+    result = await llm_api_call_func(
+        retrieval_prompt,
+        orchestration_config={"accuracy_level": 3},
+    )
+    if not result.get("success"):
+        return ""
+
+    facts = result.get("response", "").strip()
+    if len(facts) < 10:
+        return ""
+    # Cap length to avoid prompt bloat
+    if len(facts) > 800:
+        facts = facts[:800].rsplit("\n", 1)[0]
+    return facts
+
+
+_COT_PER_QUESTION_BUDGET_S = 120  # max seconds for all paths per question
 
 async def generate_cot_reasoning_paths(
     question: str,
     choices: List[str],
     llm_api_call_func,
-    num_paths: int = 5
+    num_paths: int = 5,
+    context_facts: str = "",
 ) -> List[Dict[str, Any]]:
     """
     Generate multiple diverse reasoning paths using Chain of Thought
     
     SOTA: Self-consistency with diverse paths (Wang et al. 2022)
     Expected gain: +12% on MMLU
+
+    If *context_facts* is provided (from retrieve_relevant_facts),
+    they are injected into every reasoning prompt so the model
+    reasons over grounded knowledge.
+
+    A per-question time budget (_COT_PER_QUESTION_BUDGET_S) ensures
+    that if path generation is slow, we stop and use whatever paths
+    we have so far rather than blocking indefinitely.
     """
     
     # Create genuinely diverse prompting strategies (EXP-4)
@@ -75,11 +155,36 @@ async def generate_cot_reasoning_paths(
     
     reasoning_paths = []
     
+    COT_SYSTEM_PREAMBLE = (
+        "You are an expert AI assistant solving complex questions step-by-step. "
+        "For each reasoning problem, provide a detailed chain-of-thought before "
+        "giving the final answer. Show all intermediate reasoning in a clear, "
+        "logical sequence. Keep your reasoning concise — focus on the key "
+        "steps that lead to the answer without unnecessary elaboration.\n\n"
+    )
+
+    # Build optional facts block
+    _facts_block = ""
+    if context_facts:
+        _facts_block = (
+            "Here is information from a knowledge base or documents. "
+            "Use this information to answer the question step-by-step.\n\n"
+            f"Retrieved Facts:\n{context_facts}\n\n"
+        )
+
+    _q_start = _time_mod.time()
+
     # Generate multiple paths with different strategies
     for i, strategy in enumerate(prompting_strategies[:num_paths]):
+        # Time budget guard: stop generating more paths if we already
+        # have at least 2 and the budget is exhausted.
+        elapsed = _time_mod.time() - _q_start
+        if i >= 2 and elapsed > _COT_PER_QUESTION_BUDGET_S and reasoning_paths:
+            break
+
         choices_formatted = "\n".join([f"{chr(65+j)}. {choice}" for j, choice in enumerate(choices)])
         
-        prompt = f"""Answer this multiple-choice question.
+        prompt = f"""{COT_SYSTEM_PREAMBLE}{_facts_block}Solve the following question step-by-step. Show your reasoning clearly before giving the final answer.
 
 {strategy['instruction']}
 
@@ -88,7 +193,7 @@ Question: {question}
 Options:
 {choices_formatted}
 
-Think step-by-step, then on the VERY LAST LINE output ONLY the single letter (A, B, C, D, or E) of your answer. Nothing else on that line.
+Think step-by-step. After reaching your answer, perform a quick self-check: does your chosen option actually match your reasoning? If not, correct it. Then on the VERY LAST LINE output ONLY the single letter (A, B, C, D, or E) of your answer. Nothing else on that line.
 
 Reasoning:"""
         
@@ -138,6 +243,56 @@ Reasoning:"""
     
     return reasoning_paths
 
+
+async def sanity_check_answer(
+    question: str,
+    predicted: str,
+    confidence: float,
+    llm_api_call_func,
+) -> Tuple[str, float]:
+    """Fast self-check for borderline answers (confidence 0.40-0.60).
+
+    Asks the model to verify the selected answer against the question.
+    Returns (answer, adjusted_confidence).  If the check disagrees,
+    the confidence is reduced so downstream fallback logic triggers.
+    Only fires for borderline confidence to avoid unnecessary cost.
+    """
+    if not predicted or confidence >= 0.60 or confidence < 0.40:
+        return predicted, confidence
+
+    check_prompt = (
+        "After generating the final answer, perform a quick self-check "
+        "of completeness and correctness before returning the answer.\n\n"
+        f"Question: {question}\n\n"
+        f"Proposed answer: {predicted}\n\n"
+        "Is this answer correct? If yes, reply with the same letter. "
+        "If no, reply with the correct letter. "
+        "On the LAST LINE output ONLY a single letter (A, B, C, or D)."
+    )
+
+    result = await llm_api_call_func(
+        check_prompt,
+        orchestration_config={"accuracy_level": 3},
+    )
+    if not result.get("success"):
+        return predicted, confidence
+
+    text = result.get("response", "")
+    lines = [l.strip() for l in text.strip().split("\n") if l.strip()]
+    checked = None
+    if lines:
+        m = re.match(r'^[^a-zA-Z]*([A-D])[^a-zA-Z]*$', lines[-1])
+        if m:
+            checked = m.group(1)
+    if not checked:
+        return predicted, confidence
+
+    if checked == predicted:
+        return predicted, min(confidence + 0.10, 0.75)
+    # Disagreement — reduce confidence so downstream fallback fires
+    return predicted, confidence * 0.6
+
+
 def self_consistency_vote(reasoning_paths: List[Dict[str, Any]]) -> Tuple[str, float]:
     """
     Use self-consistency to select most common answer
@@ -161,6 +316,131 @@ def self_consistency_vote(reasoning_paths: List[Dict[str, Any]]) -> Tuple[str, f
     confidence = count / len(votes)
     
     return most_common_answer, confidence
+
+
+async def ensemble_compare_reasoning(
+    question: str,
+    reasoning_paths: List[Dict[str, Any]],
+    llm_api_call_func,
+) -> Tuple[Optional[str], float]:
+    """Compare top candidate answers via an LLM voting/evaluation prompt.
+
+    Takes the distinct answers from reasoning_paths, formats the best
+    reasoning for each, and asks the model to adjudicate.  Returns
+    (selected_answer, confidence) or (None, 0.0) on failure.
+    """
+    valid = [p for p in reasoning_paths if p.get("answer")]
+    if len(valid) < 2:
+        return (valid[0]["answer"], 0.8) if valid else (None, 0.0)
+
+    by_answer: Dict[str, List[Dict[str, Any]]] = {}
+    for p in valid:
+        by_answer.setdefault(p["answer"], []).append(p)
+
+    if len(by_answer) < 2:
+        ans = next(iter(by_answer))
+        return ans, 1.0
+
+    top_answers = sorted(by_answer.keys(),
+                         key=lambda a: len(by_answer[a]), reverse=True)[:3]
+
+    candidates_block = []
+    for idx, ans in enumerate(top_answers, 1):
+        best_path = max(by_answer[ans], key=lambda p: p.get("confidence", 0))
+        snippet = best_path.get("reasoning", "")[:600]
+        votes = len(by_answer[ans])
+        candidates_block.append(
+            f"--- Candidate {idx} (Answer: {ans}, votes: {votes}) ---\n{snippet}"
+        )
+
+    prompt = (
+        "Here are multiple candidate solutions to the same question. "
+        "Compare them and select the one that is clearly correct "
+        "(or state if there is disagreement).\n\n"
+        f"Question:\n{question}\n\n"
+        + "\n\n".join(candidates_block)
+        + "\n\nWhich candidate answer is correct? "
+        "On the VERY LAST LINE output ONLY the single letter (A, B, C, or D). "
+        "Nothing else on that line."
+    )
+
+    result = await llm_api_call_func(
+        prompt,
+        orchestration_config={"accuracy_level": 5},
+    )
+    if not result.get("success"):
+        return None, 0.0
+
+    text = result.get("response", "")
+    lines = [l.strip() for l in text.strip().split("\n") if l.strip()]
+    selected = None
+    if lines:
+        m = re.match(r'^[^a-zA-Z]*([A-E])[^a-zA-Z]*$', lines[-1])
+        if m:
+            selected = m.group(1)
+    if not selected:
+        m = re.search(r'(?:correct|answer|select)\s*(?:is|:)\s*\(?([A-E])\)?',
+                       text, re.IGNORECASE)
+        if m:
+            selected = m.group(1).upper()
+
+    if selected and selected in top_answers:
+        return selected, 0.75
+    if selected:
+        return selected, 0.65
+    return None, 0.0
+
+
+async def ensemble_compare_math(
+    problem: str,
+    candidates: List[Dict[str, Any]],
+    llm_api_call_func,
+) -> Optional[str]:
+    """Compare multiple math solution candidates and select the best answer.
+
+    Returns the selected numerical answer string, or None on failure.
+    """
+    valid = [c for c in candidates if c.get("answer")]
+    if len(valid) < 2:
+        return valid[0]["answer"] if valid else None
+
+    answers = [c["answer"] for c in valid]
+    if len(set(answers)) < 2:
+        return answers[0]
+
+    solutions_block = []
+    for idx, c in enumerate(valid[:4], 1):
+        snippet = c.get("solution", "")[:500]
+        solutions_block.append(
+            f"--- Solution {idx} (Answer: {c['answer']}) ---\n{snippet}"
+        )
+
+    prompt = (
+        "Here are multiple candidate solutions to a math problem. "
+        "Compare them and select the one that is clearly correct "
+        "(or state if there is disagreement).\n\n"
+        f"Problem:\n{problem}\n\n"
+        + "\n\n".join(solutions_block)
+        + "\n\nWhich solution has the correct final numerical answer? "
+        "On the VERY LAST LINE output ONLY the correct numerical answer. "
+        "Nothing else on that line."
+    )
+
+    result = await llm_api_call_func(
+        prompt,
+        orchestration_config={"accuracy_level": 5},
+    )
+    if not result.get("success"):
+        return None
+
+    text = result.get("response", "")
+    lines = [l.strip() for l in text.strip().split("\n") if l.strip()]
+    if lines:
+        m = re.search(r'([+-]?\d+(?:\.\d+)?)', lines[-1])
+        if m:
+            return m.group(1)
+    return None
+
 
 async def neighbor_consistency_check(
     question: str,
@@ -217,6 +497,135 @@ Respond with YES or NO:"""
     return consistency
 
 # ============================================================================
+# GSM8K: ARITHMETIC CALCULATOR VERIFICATION
+# ============================================================================
+# After reasoning is complete, extract the final arithmetic expression from
+# the solution text, evaluate it with Python, and override the answer if the
+# computed result differs.  The reasoning text is never modified.
+
+_ARITH_EXPR_PATTERNS = [
+    # "= 120 + 45 = 165" or "120 + 45 = 165"
+    re.compile(
+        r'=?\s*([+-]?\d[\d,]*(?:\.\d+)?'
+        r'(?:\s*[+\-*/]\s*[+-]?\d[\d,]*(?:\.\d+)?)+)'
+        r'\s*=\s*[+-]?\d[\d,]*(?:\.\d+)?',
+    ),
+    # Standalone "120 + 45" without trailing "= ..."
+    re.compile(
+        r'(?:^|[=:\s])([+-]?\d[\d,]*(?:\.\d+)?'
+        r'(?:\s*[+\-*/]\s*[+-]?\d[\d,]*(?:\.\d+)?)+)',
+    ),
+]
+
+
+def _safe_calc(expr_str: str) -> Optional[float]:
+    """Evaluate a simple arithmetic expression using Python.
+
+    Only allows digits, +, -, *, /, parentheses, and whitespace.
+    Returns None on any error or disallowed content.
+    """
+    cleaned = expr_str.replace(',', '').strip()
+    if not cleaned:
+        return None
+    if not re.fullmatch(r'[\d+\-*/().\s]+', cleaned):
+        return None
+    try:
+        result = float(eval(cleaned, {"__builtins__": {}}, {}))  # noqa: S307
+        if not (-1e15 < result < 1e15):
+            return None
+        return result
+    except Exception:
+        return None
+
+
+def _extract_last_arithmetic_expression(solution: str) -> Optional[str]:
+    """Find the last evaluable arithmetic expression in the reasoning text."""
+    last_expr = None
+    for pattern in _ARITH_EXPR_PATTERNS:
+        for m in pattern.finditer(solution):
+            last_expr = m.group(1)
+    return last_expr
+
+
+def arithmetic_verify_answer(
+    solution: str,
+    extracted_answer: Optional[str],
+) -> Dict[str, Any]:
+    """Verify extracted_answer against a calculator evaluation of
+    arithmetic expressions found in the reasoning text.
+
+    IMPORTANT: The override only fires when the *final* expression
+    (the one whose RHS equals the extracted answer) has a miscomputed
+    RHS.  We never override with a random intermediate sub-expression.
+    If no expression's RHS matches the extracted answer, we trust the
+    model's explicitly stated answer.
+
+    Returns a dict with:
+      - verified_answer: the (possibly overridden) answer string
+      - arithmetic_override: True if the answer was changed
+      - calc_expression: the expression that was evaluated (or None)
+      - calc_result: the computed value (or None)
+    """
+    result = {
+        "verified_answer": extracted_answer,
+        "arithmetic_override": False,
+        "calc_expression": None,
+        "calc_result": None,
+    }
+
+    if not extracted_answer or not solution:
+        return result
+
+    try:
+        extracted_val = float(extracted_answer.replace(',', ''))
+    except (ValueError, TypeError):
+        return result
+
+    # Strategy: find all "LHS = RHS" expressions, pick the one whose
+    # RHS matches the extracted answer, then verify the LHS computation.
+    # This avoids overriding with unrelated intermediate calculations.
+    final_pattern = re.compile(
+        r'([+-]?\d[\d,]*(?:\.\d+)?'
+        r'(?:\s*[+\-*/]\s*[+-]?\d[\d,]*(?:\.\d+)?)+)'
+        r'\s*=\s*([+-]?\d[\d,]*(?:\.\d+)?)',
+    )
+
+    best_expr = None
+    best_computed = None
+    for m in final_pattern.finditer(solution):
+        rhs_str = m.group(2).replace(',', '').strip()
+        try:
+            rhs_val = float(rhs_str)
+        except (ValueError, TypeError):
+            continue
+        if abs(rhs_val - extracted_val) < 0.01:
+            lhs = m.group(1)
+            computed = _safe_calc(lhs)
+            if computed is not None:
+                best_expr = lhs.strip()
+                best_computed = computed
+
+    if best_expr is None or best_computed is None:
+        return result
+
+    result["calc_expression"] = best_expr
+    result["calc_result"] = best_computed
+
+    if abs(best_computed - extracted_val) > 0.01:
+        if '.' in extracted_answer:
+            decimal_places = len(extracted_answer.split('.')[-1])
+            result["verified_answer"] = f"{best_computed:.{decimal_places}f}"
+        else:
+            if best_computed == int(best_computed):
+                result["verified_answer"] = str(int(best_computed))
+            else:
+                result["verified_answer"] = str(best_computed)
+        result["arithmetic_override"] = True
+
+    return result
+
+
+# ============================================================================
 # GSM8K: GENERATE-THEN-VERIFY (30x MODEL SIZE GAIN!)
 # ============================================================================
 # Based on:
@@ -246,13 +655,44 @@ async def generate_multiple_solutions(
     
     candidates = []
     
+    MATH_COT_PREAMBLE = (
+        "You are an expert AI assistant solving math problems step-by-step. "
+        "Provide a detailed chain-of-thought showing all intermediate "
+        "calculations in a clear, logical sequence. Double-check each "
+        "arithmetic step before proceeding to the next. Be concise — "
+        "show each calculation clearly but avoid restating the problem "
+        "or adding unnecessary commentary.\n\n"
+    )
+
+    CALCULATOR_INSTRUCTION = (
+        "Calculate each arithmetic step precisely using a calculator or "
+        "math tool. For every computation (addition, subtraction, "
+        "multiplication, division, percentages), write the expression "
+        "explicitly and compute the exact result before proceeding. "
+        "Do not estimate or round until the final answer.\n\n"
+    )
+
+    _math_q_start = _time_mod.time()
+
     for i, approach in enumerate(solution_approaches[:num_candidates]):
-        prompt = f"""{problem}
+        # Time budget: stop generating if we have >=2 candidates and
+        # exceeded 90s, to avoid blocking on slow providers.
+        if i >= 2 and (_time_mod.time() - _math_q_start) > 90 and candidates:
+            break
+
+        prompt = f"""{MATH_COT_PREAMBLE}{CALCULATOR_INSTRUCTION}Solve the following math word problem step-by-step.
+
+Problem: {problem}
 
 Approach: {approach}
 
-Show your work step-by-step and end with:
-#### [numerical answer]
+IMPORTANT FORMAT RULES:
+- Show your work step-by-step with clear calculations.
+- After reaching your answer, verify it makes sense.
+- You MUST end your response with the final numerical answer on its own line in this EXACT format:
+#### <number>
+- Example: #### 42
+- The number after #### must be ONLY digits (and optionally a decimal point). No words, no units, no dollar signs.
 
 Solution:"""
         
@@ -268,27 +708,95 @@ Solution:"""
         
         if result.get("success"):
             solution = result.get("response", "")
-            
-            # Extract answer
-            answer_match = re.search(r'####\s*([+-]?\d+(?:\.\d+)?)', solution)
-            answer = answer_match.group(1) if answer_match else None
-            
+            _safe_verify = _is_truthy_env("GSM8K_SAFE_VERIFY", "1")
+
+            answer = None
+            _parse_confidence = "NONE"
+            answer_match = re.search(r'####\s*\$?\s*([+-]?\d[\d,]*(?:\.\d+)?)', solution)
+            print(f"    [GSM8K-DBG] candidate {i+1}: success=True len={len(solution)} has_####={'####' in solution} answer_match={bool(answer_match)}", flush=True)
+            if answer_match:
+                answer = answer_match.group(1).replace(',', '')
+                _parse_confidence = "HIGH"
+            elif not _safe_verify:
+                final_match = re.search(
+                    r'(?:final answer|the answer is|answer is|therefore,? the (?:total )?(?:answer|number|amount|cost|price|distance|time|age|weight|height|speed|rate|value|result) is)\s*[:=]?\s*\$?\s*([+-]?\d[\d,]*(?:\.\d+)?)',
+                    solution, re.IGNORECASE
+                )
+                if final_match:
+                    answer = final_match.group(1).replace(',', '')
+                    _parse_confidence = "MEDIUM"
+                elif len(solution) < 500:
+                    nums = re.findall(r'(?<![.\d])(\d[\d,]*(?:\.\d+)?)(?![.\d])', solution)
+                    if nums:
+                        answer = nums[-1].replace(',', '')
+                        _parse_confidence = "LOW"
+
+            _arith_overridden = False
+            _calc_expr = None
+            _calc_result = None
+            _verifier_disagree = False
+            _v3_active = _is_truthy_env("GSM8K_SAFE_VERIFY_V3", "0")
+
+            if _v3_active and answer and _parse_confidence == "HIGH":
+                calc_match = re.search(r'CALC:\s*(.+)', solution)
+                if calc_match:
+                    _calc_expr = calc_match.group(1).strip()
+                    _calc_result = _safe_ast_eval(_calc_expr)
+                    if _calc_result is not None:
+                        try:
+                            ans_f = float(answer)
+                            if abs(_calc_result - ans_f) > 0.01:
+                                _verifier_disagree = True
+                                print(f"    [GSM8K-V3] candidate {i+1}: verifier_disagree "
+                                      f"#### {answer} vs CALC: {_calc_result} "
+                                      f"(expr: {_calc_expr}) — NO override", flush=True)
+                        except (ValueError, TypeError):
+                            pass
+            elif answer and _parse_confidence == "HIGH" and not _v3_active:
+                arith_check = arithmetic_verify_answer(solution, answer)
+                _calc_expr = arith_check.get("calc_expression")
+                _calc_result = arith_check.get("calc_result")
+                if arith_check["arithmetic_override"]:
+                    print(f"    [GSM8K-CALC] candidate {i+1}: arithmetic check detected mismatch "
+                          f"{answer} vs {arith_check['verified_answer']} "
+                          f"(expr: {arith_check['calc_expression']}) — logged only, no override", flush=True)
+
             candidates.append({
                 "approach": approach,
                 "solution": solution,
                 "answer": answer,
+                "parse_confidence": _parse_confidence,
                 "latency": result.get("latency", 0),
                 "cost": result.get("cost", 0),
+                "arithmetic_override": _arith_overridden,
+                "calc_expression": _calc_expr,
+                "calc_result": _calc_result,
+                "gsm8k_safe_verify_v3": _v3_active,
+                "verifier_disagree": _verifier_disagree,
+                "override_applied": False,
             })
+        else:
+            print(f"    [GSM8K-DBG] candidate {i+1}: success=False", flush=True)
     
+    print(f"    [GSM8K-DBG] total candidates: {len(candidates)}, with answers: {sum(1 for c in candidates if c.get('answer'))}", flush=True)
     return candidates
 
-_MAX_VERIFY_RETRIES = 2
-_VERIFY_TIMEOUT = 15
+_MAX_VERIFY_RETRIES = 1
+_VERIFY_TIMEOUT = 30
 _consecutive_verify_failures = 0
 _verify_disabled = False
 _total_verify_calls = 0
 _total_verify_latency_ms = 0
+
+
+def reset_verify_circuit_breaker():
+    """Reset verify circuit breaker state between categories."""
+    global _consecutive_verify_failures, _verify_disabled
+    global _total_verify_calls, _total_verify_latency_ms
+    _consecutive_verify_failures = 0
+    _verify_disabled = False
+    _total_verify_calls = 0
+    _total_verify_latency_ms = 0
 
 
 async def verify_solution(
@@ -315,7 +823,7 @@ async def verify_solution(
             "verify_latency_ms": 0,
         }
 
-    verify_prompt = f"""Verify if this solution is correct.
+    verify_prompt = f"""You are a separate verifier. Given the previous answer and reasoning, check if the logic is correct and the final answer is justified. If you find an error, provide corrections step-by-step. Be concise — focus only on correctness, not style.
 
 Problem: {problem}
 
@@ -325,11 +833,11 @@ Proposed Solution:
 Final Answer: {answer}
 
 VERIFICATION CHECKLIST:
-1. Are all calculation steps correct?
-2. Is the logic sound?
-3. Does the answer match the question asked?
-4. Are units handled properly?
-5. Is the final answer reasonable?
+1. Re-derive each calculation step independently — do the numbers match?
+2. Is the logical chain sound with no skipped steps?
+3. Does the final answer actually address what the question asked?
+4. Are units and conversions handled properly?
+5. Is the final answer reasonable given the problem constraints?
 
 Score each criterion (0 or 1):
 Calculations: 
@@ -345,8 +853,9 @@ Total correctness score (0-5):"""
         result = await llm_api_call_func(
             verify_prompt,
             orchestration_config={
-                "accuracy_level": 5,
-                "enable_verification": True,
+                "accuracy_level": 3,
+                "enable_verification": False,
+                "use_deep_consensus": False,
             },
             timeout=_VERIFY_TIMEOUT,
         )
@@ -449,12 +958,39 @@ async def generate_then_verify_math(
     if verified_candidates:
         if verify_failures < len(verified_candidates):
             best_candidate = max(verified_candidates, key=lambda x: x["verification_score"])
+
+            # Ensemble tiebreaker: when the top two verified scores are close,
+            # use an LLM comparison to adjudicate.
+            sorted_vc = sorted(verified_candidates,
+                               key=lambda x: x["verification_score"], reverse=True)
+            if (len(sorted_vc) >= 2
+                    and sorted_vc[0]["answer"] != sorted_vc[1]["answer"]
+                    and sorted_vc[0]["verification_score"] - sorted_vc[1]["verification_score"] < 0.3):
+                ens_answer = await ensemble_compare_math(
+                    problem, sorted_vc[:4], llm_api_call_func)
+                if ens_answer:
+                    matched = next((c for c in sorted_vc if c["answer"] == ens_answer), None)
+                    if matched:
+                        best_candidate = matched
+                        best_candidate["ensemble_tiebreaker"] = True
+
             best_candidate.update(_pipeline_meta)
             return best_candidate["answer"], best_candidate
 
     answers = [c["answer"] for c in candidates if c["answer"]]
     if answers:
         most_common = Counter(answers).most_common(1)[0][0]
+
+        # Ensemble fallback: when majority vote has a weak margin, compare.
+        vote_counts = Counter(answers)
+        if len(vote_counts) >= 2:
+            top_two = vote_counts.most_common(2)
+            if top_two[0][1] - top_two[1][1] <= 1:
+                ens_answer = await ensemble_compare_math(
+                    problem, candidates, llm_api_call_func)
+                if ens_answer:
+                    most_common = ens_answer
+
         fallback = next((c for c in candidates if c["answer"] == most_common), candidates[0])
         fallback.update(_pipeline_meta)
         fallback["fallback_majority_vote"] = True
@@ -755,10 +1291,87 @@ YES or NO:"""
     }
 
 # ============================================================================
-# MMMLU: CROSS-LINGUAL CONSISTENCY
+# MMMLU: TRANSLATE-AND-SOLVE + CROSS-LINGUAL CONSISTENCY
 # ============================================================================
 # Based on:
 # - "MMLU-ProX: Multilingual Benchmark" (EMNLP 2025)
+# - Translate-Test approach for multilingual QA
+
+
+async def translate_and_solve_multilingual(
+    question: str,
+    choices: List[str],
+    llm_api_call_func,
+) -> Tuple[Optional[str], str]:
+    """Translate a non-English question to English, solve it, return the answer.
+
+    Returns (answer_letter, translated_question) where answer_letter is
+    A/B/C/D or None on failure.  The translated_question is returned for
+    logging/debugging.
+    """
+
+    choices_block = "\n".join(
+        f"{chr(65 + i)}) {c}" for i, c in enumerate(choices)
+    )
+
+    # Step 1: Detect language and translate question + choices to English
+    translate_prompt = (
+        "You are a multilingual expert. Auto-detect the language of the "
+        "question below. Translate the question AND all answer choices to "
+        "English. Preserve the option labels (A, B, C, D).\n\n"
+        f"Question: {question}\n\n"
+        f"{choices_block}\n\n"
+        "Provide the English translation only. Keep the format:\n"
+        "Question: ...\nA) ...\nB) ...\nC) ...\nD) ..."
+    )
+
+    translate_result = await llm_api_call_func(
+        translate_prompt,
+        orchestration_config={"accuracy_level": 3},
+    )
+    if not translate_result.get("success"):
+        return None, ""
+
+    translated = translate_result.get("response", "").strip()
+    if len(translated) < 20:
+        return None, ""
+
+    # Step 2: Solve the translated (English) question
+    solve_prompt = (
+        "You are an expert AI assistant. Use the translated information "
+        "below to answer the question step-by-step.\n\n"
+        f"{translated}\n\n"
+        "Think step-by-step, then on the VERY LAST LINE output ONLY the "
+        "single letter (A, B, C, or D) of your answer. Nothing else on "
+        "that line.\n\n"
+        "Reasoning:"
+    )
+
+    solve_result = await llm_api_call_func(
+        solve_prompt,
+        orchestration_config={"accuracy_level": 5, "enable_verification": True},
+    )
+    if not solve_result.get("success"):
+        return None, translated
+
+    text = solve_result.get("response", "")
+    # Extract answer letter
+    answer = None
+    lines = [l.strip() for l in text.strip().split("\n") if l.strip()]
+    if lines:
+        m = re.match(r'^[^a-zA-Z]*([A-D])[^a-zA-Z]*$', lines[-1])
+        if m:
+            answer = m.group(1)
+    if not answer:
+        m = re.search(
+            r'(?:answer|correct|choice)\s*(?:is|:)\s*\(?([A-D])\)?',
+            text, re.IGNORECASE,
+        )
+        if m:
+            answer = m.group(1).upper()
+
+    return answer, translated
+
 
 async def cross_lingual_verification(
     question: str,

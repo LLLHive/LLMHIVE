@@ -1,75 +1,75 @@
 {
-  "timestamp": "2026-02-23T14:29:51.668308+00:00",
-  "composite_index": 84.12,
+  "timestamp": "2026-02-28T07:50:11.497614+00:00",
+  "composite_index": 69.76,
   "categories": {
     "reasoning": {
-      "index": 66.83,
-      "win_rate_delta": 0.6667,
+      "index": 58.96,
+      "win_rate_delta": 0.4286,
       "stability": 0.0,
-      "volatility": 0.1226,
-      "cost_efficiency": 0.9,
+      "volatility": 0.125,
+      "cost_efficiency": 0.9306,
       "entropy_reduction": 1.0,
       "reliability": 1.0
     },
     "coding": {
-      "index": 87.47,
-      "win_rate_delta": 1.0,
-      "stability": 1.0,
-      "volatility": 0.0,
-      "cost_efficiency": 0.1644,
+      "index": 82.46,
+      "win_rate_delta": 0.875,
+      "stability": 0.4265,
+      "volatility": 0.0573,
+      "cost_efficiency": 0.8868,
       "entropy_reduction": 1.0,
       "reliability": 1.0
     },
     "math": {
-      "index": 94.73,
-      "win_rate_delta": 1.0,
-      "stability": 1.0,
-      "volatility": 0.0,
-      "cost_efficiency": 0.6488,
+      "index": 75.53,
+      "win_rate_delta": 0.8889,
+      "stability": 0.0,
+      "volatility": 0.2696,
+      "cost_efficiency": 0.961,
       "entropy_reduction": 1.0,
       "reliability": 1.0
     },
     "multilingual": {
-      "index": 98.28,
-      "win_rate_delta": 1.0,
-      "stability": 1.0,
-      "volatility": 0.0,
-      "cost_efficiency": 0.8853,
+      "index": 57.83,
+      "win_rate_delta": 0.2857,
+      "stability": 0.1536,
+      "volatility": 0.0846,
+      "cost_efficiency": 0.9836,
       "entropy_reduction": 1.0,
       "reliability": 1.0
     },
     "long_context": {
-      "index": 100.0,
+      "index": 94.18,
       "win_rate_delta": 1.0,
-      "stability": 1.0,
-      "volatility": 0.0,
+      "stability": 0.709,
+      "volatility": 0.0291,
       "cost_efficiency": 1.0,
       "entropy_reduction": 1.0,
       "reliability": 1.0
     },
     "tool_use": {
-      "index": 100.0,
+      "index": 88.71,
       "win_rate_delta": 1.0,
-      "stability": 1.0,
-      "volatility": 0.0,
+      "stability": 0.4353,
+      "volatility": 0.0565,
       "cost_efficiency": 1.0,
       "entropy_reduction": 1.0,
       "reliability": 1.0
     },
     "rag": {
-      "index": 60.65,
+      "index": 55.41,
       "win_rate_delta": 0.0,
-      "stability": 1.0,
-      "volatility": 0.0,
-      "cost_efficiency": 0.7103,
+      "stability": 0.5553,
+      "volatility": 0.0445,
+      "cost_efficiency": 0.954,
       "entropy_reduction": 1.0,
       "reliability": 1.0
     },
     "dialogue": {
-      "index": 65.0,
+      "index": 45.0,
       "win_rate_delta": 0.0,
-      "stability": 1.0,
-      "volatility": 0.0,
+      "stability": 0.0,
+      "volatility": 0.1485,
       "cost_efficiency": 1.0,
       "entropy_reduction": 1.0,
       "reliability": 1.0
@@ -77,5 +77,5 @@
   },
   "ensemble_entropy_avg": 0.0,
   "reliability_score": 1.0,
-  "interpretation": "strong_moat"
+  "interpretation": "competitive_advantage"
 }

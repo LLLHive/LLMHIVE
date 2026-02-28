@@ -85,64 +85,18 @@ class FreeModelInfo:
 
 FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # =========================================================================
-    # TOP-TIER FREE MODELS (January 2026)
+    # ORDERING: reliably-available models FIRST, rate-limited models later.
+    # _filter_free_models() uses list(FREE_MODELS_DB.keys())[:3] as fallback,
+    # so the first entries must be models that respond consistently.
+    # Live-tested Feb 28, 2026 against OpenRouter.
     # =========================================================================
-    # DISABLED: tngtech/deepseek-r1t2-chimera:free — 404 on OpenRouter (Feb 2026)
-    # DISABLED: google/gemini-2.0-flash-exp:free — 404 on OpenRouter (Feb 2026)
-    # DISABLED: meta-llama/llama-3.1-405b-instruct:free — 404 on OpenRouter (Feb 2026)
-    # DISABLED: meta-llama/llama-3.2-3b-instruct:free — 404 on OpenRouter (Feb 2026)
+    # DISABLED (404): tngtech/deepseek-r1t2-chimera:free, google/gemini-2.0-flash-exp:free,
+    #   meta-llama/llama-3.1-405b-instruct:free, meta-llama/llama-3.2-3b-instruct:free,
+    #   deepseek/deepseek-r1-0528:free, moonshotai/kimi-k2:free
 
     # =========================================================================
-    # META/LLAMA MODELS (verified working Feb 2026)
+    # RELIABLY AVAILABLE (200 OK on Feb 28 2026) — put first
     # =========================================================================
-    "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
-        model_id="meta-llama/llama-3.3-70b-instruct:free",
-        display_name="Llama 3.3 70B Instruct",
-        provider="Meta",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.DIALOGUE,
-            ModelStrength.MULTILINGUAL,
-        ],
-        best_for=["General reasoning", "Dialogue", "Multilingual tasks"],
-        notes="GPT-4 level, 131K context, strong general-purpose model",
-        verified_working=True,
-        preferred_api="openrouter",
-        performance_score=68.0,
-        capability_score=60.0,
-        supports_tools=False,
-    ),
-
-    # =========================================================================
-    # GOOGLE MODELS (verified working Feb 2026)
-    # =========================================================================
-    "google/gemma-3-27b-it:free": FreeModelInfo(
-        model_id="google/gemma-3-27b-it:free",
-        display_name="Gemma 3 27B IT",
-        provider="Google",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.MULTILINGUAL,
-            ModelStrength.REASONING,
-            ModelStrength.MATH,
-        ],
-        best_for=["Multilingual (140+ languages)", "Reasoning", "Math"],
-        notes="Google Gemma 3, 131K context, multimodal, 140+ languages",
-        verified_working=True,
-        preferred_api="openrouter",
-        performance_score=65.0,
-        capability_score=58.0,
-        supports_tools=False,
-    ),
-    
-    # =========================================================================
-    # DEEPSEEK MODELS
-    # =========================================================================
-    # DISABLED: deepseek/deepseek-r1-0528:free — 404 on OpenRouter (Feb 28, 2026)
-    
     "deepseek/deepseek-chat": FreeModelInfo(
         model_id="deepseek/deepseek-chat",
         display_name="DeepSeek Chat (V3.2-Speciale)",
@@ -157,7 +111,7 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         best_for=["Fast reasoning", "Code generation", "General tasks"],
         notes="Fast general-purpose model, 90% on HMMT 2025, routes to direct API",
         verified_working=True,
-        preferred_api="deepseek",  # Route to DeepSeek Direct
+        preferred_api="deepseek",
         native_model_id="deepseek-chat",
     ),
     
@@ -323,14 +277,75 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         supports_tools=True,
     ),
     
-    # DISABLED: openai/gpt-oss-20b:free — 404 on OpenRouter (Feb 2026)
-    # DISABLED: openai/gpt-oss-120b:free — 404 on OpenRouter (Feb 2026)
-    # DISABLED: tngtech/deepseek-r1t-chimera:free — 404 on OpenRouter (Feb 2026)
-    # DISABLED: tngtech/deepseek-r1t2-chimera:free — 404 on OpenRouter (Feb 2026)
-    
-    # DISABLED: moonshotai/kimi-k2:free — 404 on OpenRouter (Feb 28, 2026)
-    
-    # DISABLED: tngtech/tng-r1t-chimera:free — 404 on OpenRouter (Feb 2026)
+    # =========================================================================
+    # RATE-LIMITED MODELS (429 on Feb 28 2026 — exist but throttled upstream)
+    # Placed after reliable models so _filter_free_models fallback picks
+    # working models first via list(FREE_MODELS_DB.keys())[:3]
+    # =========================================================================
+    "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
+        model_id="meta-llama/llama-3.3-70b-instruct:free",
+        display_name="Llama 3.3 70B Instruct",
+        provider="Meta",
+        context_window=131072,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.DIALOGUE,
+            ModelStrength.MULTILINGUAL,
+        ],
+        best_for=["General reasoning", "Dialogue", "Multilingual tasks"],
+        notes="GPT-4 level, 131K context — rate-limited upstream Feb 28 2026",
+        verified_working=True,
+        preferred_api="openrouter",
+        performance_score=68.0,
+        capability_score=60.0,
+        supports_tools=False,
+    ),
+
+    "google/gemma-3-27b-it:free": FreeModelInfo(
+        model_id="google/gemma-3-27b-it:free",
+        display_name="Gemma 3 27B IT",
+        provider="Google",
+        context_window=131072,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.MULTILINGUAL,
+            ModelStrength.REASONING,
+            ModelStrength.MATH,
+        ],
+        best_for=["Multilingual (140+ languages)", "Reasoning", "Math"],
+        notes="Google Gemma 3, 131K context — rate-limited upstream Feb 28 2026",
+        verified_working=True,
+        preferred_api="openrouter",
+        performance_score=65.0,
+        capability_score=58.0,
+        supports_tools=False,
+    ),
+
+    "nousresearch/hermes-3-llama-3.1-405b:free": FreeModelInfo(
+        model_id="nousresearch/hermes-3-llama-3.1-405b:free",
+        display_name="Hermes 3 Llama 3.1 405B",
+        provider="NousResearch",
+        context_window=131072,
+        speed_tier=SpeedTier.SLOW,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.CODING,
+        ],
+        best_for=["Complex reasoning", "Code generation"],
+        notes="405B parameter model — rate-limited upstream Feb 28 2026",
+        verified_working=True,
+        preferred_api="openrouter",
+        performance_score=62.0,
+        capability_score=55.0,
+        supports_tools=False,
+    ),
+
+    # DISABLED (404 on OpenRouter):
+    # openai/gpt-oss-20b:free, openai/gpt-oss-120b:free,
+    # tngtech/deepseek-r1t-chimera:free, tngtech/deepseek-r1t2-chimera:free,
+    # tngtech/tng-r1t-chimera:free, deepseek/deepseek-r1-0528:free,
+    # moonshotai/kimi-k2:free
 }
 
 

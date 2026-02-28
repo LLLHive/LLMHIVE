@@ -1,0 +1,19 @@
+{
+  "score": 4.88,
+  "avg_score": 4.88,
+  "accuracy": 48.8,
+  "attempted": 5,
+  "correct": 1,
+  "errors": 1,
+  "infra_failures": 0,
+  "infra_failure_rate": 0.0,
+  "avg_latency_ms": 72204,
+  "avg_cost": 0.0,
+  "total_cost": 0.0,
+  "category_scores": {
+    "writing": 4.5,
+    "extraction": 3.0,
+    "reasoning": 5.0,
+    "humanities": 7.0
+  }
+}

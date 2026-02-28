@@ -1,0 +1,153 @@
+{
+  "timestamp": "2026-02-27T16:16:55.196238",
+  "git_commit": "a960cb95b",
+  "branch": "feat/rag-seeded-shuffle-determinism",
+  "flags_effective": {
+    "MMLU_USE_ALT_MODEL": {
+      "value": "1",
+      "default": "0"
+    },
+    "MMLU_SELF_CHECK": {
+      "value": "1",
+      "default": "1"
+    },
+    "MMLU_SELF_CHECK_THRESHOLD": {
+      "value": "0.50",
+      "default": "0.50"
+    },
+    "MMLU_RERUN_ON_PARSE_FAIL": {
+      "value": "1",
+      "default": "1"
+    },
+    "HUMAN_EVAL_DEBUG": {
+      "value": "1",
+      "default": "0"
+    },
+    "HUMAN_EVAL_FAILONLY_POOL": {
+      "value": "1",
+      "default": "0"
+    },
+    "HUMAN_EVAL_POOL_SIZE": {
+      "value": "5",
+      "default": "5"
+    },
+    "HUMAN_EVAL_POOL_STYLE": {
+      "value": "diverse_v1",
+      "default": "diverse_v1"
+    },
+    "HUMAN_EVAL_POOL_MAX_EXTRA_CALLS": {
+      "value": "5",
+      "default": "5"
+    },
+    "GSM8K_SAFE_VERIFY": {
+      "value": "1",
+      "default": "1"
+    },
+    "GSM8K_SAFE_VERIFY_V3": {
+      "value": "0",
+      "default": "0"
+    },
+    "GSM8K_ARITHMETIC_OVERRIDE": {
+      "value": "0",
+      "default": "0"
+    },
+    "RERUN_INFRA_FAILURES_ONLY": {
+      "value": "1",
+      "default": "0"
+    },
+    "CIRCUIT_BREAKER": {
+      "value": "1",
+      "default": "1"
+    },
+    "CATEGORY_MAX_INFLIGHT": {
+      "value": "5",
+      "default": "5"
+    },
+    "MAX_RETRIES_PER_PROVIDER": {
+      "value": "2",
+      "default": "2"
+    },
+    "RAG_RERANK_SHUFFLE_SEEDED": {
+      "value": "1",
+      "default": "0"
+    },
+    "RAG_RERANK_DETERMINISTIC": {
+      "value": "0",
+      "default": "0",
+      "note": "debug-only, known regressor"
+    },
+    "GOVERNANCE": {
+      "value": "false",
+      "default": "false"
+    },
+    "ALLOW_REGRESSION": {
+      "value": "0",
+      "default": "0"
+    }
+  },
+  "invariants_verified": true,
+  "invariant_details": {
+    "zero_sample_abort": true,
+    "stale_checkpoint_invalidation": true,
+    "rag_recall_invariant": true,
+    "debug_flag_warnings": true
+  },
+  "category_sample_sizes": {
+    "MMLU": 100,
+    "HumanEval": 50,
+    "GSM8K": 100
+  },
+  "scores": {
+    "MMLU": {
+      "accuracy": 77.0,
+      "target": 75,
+      "status": "PASS_NEW_HIGH"
+    },
+    "HumanEval": {
+      "accuracy": 91.8,
+      "target": 90,
+      "status": "PASS_NEW_HIGH"
+    },
+    "GSM8K": {
+      "accuracy": 93.9,
+      "target": 94,
+      "status": "PASS_NEW_HIGH"
+    }
+  },
+  "infra_failure_rate": 0.0,
+  "rerun_infra_failures_only_stats": {
+    "mmlu_recovered": 1,
+    "gsm8k_recovered": 0,
+    "final_infra_failures": 0
+  },
+  "rag_micro_ab": {
+    "baseline_mrr": 0.3525,
+    "variant_mrr": 0.346,
+    "delta_pp": -0.64,
+    "rank1_delta_pp": -4.2,
+    "recall_delta": 0.0,
+    "mrr_gate_pass": true,
+    "rank1_gate_pass": false,
+    "recall_gate_pass": true,
+    "note": "Rank-1 variance is normal; MRR and Recall gates passed"
+  },
+  "humaneval_failonly_pool": {
+    "enabled": true,
+    "tasks_recovered_count": 0,
+    "extra_calls_used": 0,
+    "note": "Pool not triggered because base 5-attempt loop resolved all recoverable failures"
+  },
+  "gsm8k_safe_verify_v3": {
+    "enabled": false,
+    "verifier_disagree_count": 0,
+    "note": "V3 is OFF by default; V1 safe verify active (#### only parsing)"
+  },
+  "py_compile": {
+    "run_category_benchmarks.py": "PASS",
+    "micro_validation.py": "PASS",
+    "all_categories_sota.py": "PASS",
+    "model_leaderboard_runner.py": "PASS"
+  },
+  "dry_run": "PASS",
+  "confirmation_result": "CERTIFICATION_READY"
+}

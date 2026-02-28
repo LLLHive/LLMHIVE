@@ -1,0 +1,70 @@
+{
+  "failure_by_category": {
+    "HumanEval": 0,
+    "MMLU": 21
+  },
+  "failure_by_type": {
+    "MODEL_INCORRECT": 20,
+    "extraction": 1
+  },
+  "failure_by_subject": {
+    "professional_law": 6,
+    "professional_psychology": 2,
+    "high_school_statistics": 1,
+    "high_school_world_history": 1,
+    "logical_fallacies": 1,
+    "moral_disputes": 2,
+    "high_school_geography": 1,
+    "nutrition": 2,
+    "high_school_us_history": 1,
+    "miscellaneous": 1,
+    "sociology": 2,
+    "virology": 1
+  },
+  "extraction_failures": 1,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 45,
+  "top_hardest_subjects": [
+    {
+      "subject": "professional_law",
+      "failures": 6
+    },
+    {
+      "subject": "professional_psychology",
+      "failures": 2
+    },
+    {
+      "subject": "moral_disputes",
+      "failures": 2
+    },
+    {
+      "subject": "nutrition",
+      "failures": 2
+    },
+    {
+      "subject": "sociology",
+      "failures": 2
+    },
+    {
+      "subject": "high_school_statistics",
+      "failures": 1
+    },
+    {
+      "subject": "high_school_world_history",
+      "failures": 1
+    },
+    {
+      "subject": "logical_fallacies",
+      "failures": 1
+    },
+    {
+      "subject": "high_school_geography",
+      "failures": 1
+    },
+    {
+      "subject": "high_school_us_history",
+      "failures": 1
+    }
+  ]
+}

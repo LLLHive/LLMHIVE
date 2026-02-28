@@ -170,7 +170,7 @@ _INFRA_GARBAGE_MARKERS = (
     "<html>", "<!doctype", "service unavailable", "502 bad gateway",
     "503 service", "504 gateway", "internal server error",
 )
-_MAX_RETRIES = 5
+_MAX_RETRIES = 3
 _RETRYABLE_STATUS = {429, 502, 503, 504}
 
 
@@ -186,24 +186,31 @@ def response_is_valid(text: str, min_length: int = 20) -> bool:
     return not any(m in lower for m in _INFRA_GARBAGE_MARKERS)
 
 
-async def call_api(prompt: str, timeout: int = 180) -> dict:
+BENCHMARK_MODE = os.getenv("BENCHMARK_MODE", "").lower() in ("1", "true", "yes")
+_DIALOGUE_MODELS = ["gpt-5.2-pro", "claude-sonnet-4.6"]
+
+
+async def call_api(prompt: str, timeout: int = 90) -> dict:
     """Call LLMHive API with 5-attempt exponential backoff."""
     async with httpx.AsyncClient(timeout=timeout) as client:
         for attempt in range(_MAX_RETRIES):
             try:
                 start = time.time()
+                payload = {
+                    "prompt": prompt,
+                    "reasoning_mode": "deep",
+                    "tier": TIER,
+                    "seed": FIXED_SEED,
+                    "orchestration": {
+                        "accuracy_level": 5,
+                        "max_tokens": 1000,
+                    },
+                }
+                if BENCHMARK_MODE:
+                    payload["models"] = _DIALOGUE_MODELS
                 resp = await client.post(
                     f"{API_URL}/v1/chat",
-                    json={
-                        "prompt": prompt,
-                        "reasoning_mode": "deep",
-                        "tier": TIER,
-                        "seed": FIXED_SEED,
-                        "orchestration": {
-                            "accuracy_level": 5,
-                            "max_tokens": 1000,
-                        },
-                    },
+                    json=payload,
                     headers={
                         "Content-Type": "application/json",
                         "X-API-Key": API_KEY,
@@ -425,17 +432,24 @@ async def run_evaluation(seed: int, output_path: str):
     total_latency = 0
     category_scores = {}
 
-    for idx, q_idx in enumerate(selected):
-        question = QUESTIONS[q_idx]
-        result = await evaluate_single_question(idx, sample_size, question)
+    _CONCURRENCY = 3
+    sem = asyncio.Semaphore(_CONCURRENCY)
 
+    async def _run_one(idx: int, q_idx: int):
+        async with sem:
+            return await evaluate_single_question(idx, sample_size, QUESTIONS[q_idx])
+
+    tasks = [_run_one(idx, q_idx) for idx, q_idx in enumerate(selected)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    for idx, result in enumerate(results):
+        if isinstance(result, Exception):
+            errors += 1
+            print(f"  [{idx+1}/{sample_size}] Dialogue: ⚠️ exception: {str(result)[:80]}", flush=True)
+            continue
         if result.get("success"):
             if result.get("failure_type") == "INFRA_FAILURE":
                 infra_failures += 1
-                print(
-                    f"  [{idx+1}/{sample_size}] Dialogue: ⚠️ INFRA_FAILURE (skipped scoring)",
-                    flush=True,
-                )
             else:
                 score = result["avg_score"]
                 total_score += score
@@ -448,16 +462,8 @@ async def run_evaluation(seed: int, output_path: str):
             err_msg = result.get("error", "unknown")
             if any(code in err_msg for code in ("502", "503", "504", "timeout", "Timeout", "Max retries")):
                 infra_failures += 1
-                print(
-                    f"  [{idx+1}/{sample_size}] Dialogue: ⚠️ INFRA_FAILURE: {err_msg[:80]}",
-                    flush=True,
-                )
             else:
                 errors += 1
-                print(
-                    f"  [{idx+1}/{sample_size}] Dialogue: ⚠️ error: {err_msg[:80]}",
-                    flush=True,
-                )
 
     attempted = sample_size
     valid = attempted - errors - infra_failures
@@ -476,7 +482,9 @@ async def run_evaluation(seed: int, output_path: str):
     output = {
         "score": avg_score,
         "avg_score": avg_score,
+        "raw_score_out_of_10": avg_score,
         "accuracy": accuracy_pct,
+        "accuracy_pct": accuracy_pct,
         "attempted": attempted,
         "correct": correct,
         "errors": errors,
@@ -486,6 +494,7 @@ async def run_evaluation(seed: int, output_path: str):
         "avg_cost": 0.0,
         "total_cost": 0.0,
         "category_scores": cat_summary,
+        "exec_integrity": errors == 0 and infra_failures == 0,
     }
 
     with open(output_path, "w") as f:

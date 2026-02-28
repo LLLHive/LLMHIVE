@@ -1,0 +1,81 @@
+{
+  "failure_by_category": {
+    "HumanEval": 0,
+    "GSM8K": 8,
+    "MMLU": 29
+  },
+  "failure_by_type": {
+    "logic": 6,
+    "unknown": 2,
+    "MODEL_INCORRECT": 28,
+    "extraction": 1
+  },
+  "failure_by_subject": {
+    "unknown": 8,
+    "professional_law": 6,
+    "professional_psychology": 3,
+    "high_school_statistics": 1,
+    "high_school_world_history": 1,
+    "college_medicine": 1,
+    "high_school_psychology": 1,
+    "moral_disputes": 1,
+    "high_school_biology": 2,
+    "nutrition": 2,
+    "high_school_us_history": 1,
+    "sociology": 2,
+    "high_school_macroeconomics": 1,
+    "miscellaneous": 1,
+    "professional_medicine": 1,
+    "philosophy": 1,
+    "human_aging": 1,
+    "moral_scenarios": 1,
+    "elementary_mathematics": 1,
+    "virology": 1
+  },
+  "extraction_failures": 1,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 47,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 8
+    },
+    {
+      "subject": "professional_law",
+      "failures": 6
+    },
+    {
+      "subject": "professional_psychology",
+      "failures": 3
+    },
+    {
+      "subject": "high_school_biology",
+      "failures": 2
+    },
+    {
+      "subject": "nutrition",
+      "failures": 2
+    },
+    {
+      "subject": "sociology",
+      "failures": 2
+    },
+    {
+      "subject": "high_school_statistics",
+      "failures": 1
+    },
+    {
+      "subject": "high_school_world_history",
+      "failures": 1
+    },
+    {
+      "subject": "college_medicine",
+      "failures": 1
+    },
+    {
+      "subject": "high_school_psychology",
+      "failures": 1
+    }
+  ]
+}

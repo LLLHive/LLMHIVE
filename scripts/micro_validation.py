@@ -110,13 +110,15 @@ async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
             "reasoning_mode": REASONING_MODE,
             "tier": TIER,
             "orchestration": {
-                "accuracy_level": 5,
+                "accuracy_level": 1 if _IS_FREE_TIER else 5,
                 "enable_verification": False,
                 "use_deep_consensus": False,
                 "temperature": temperature,
             },
         }
-        if not _IS_FREE_TIER:
+        if _IS_FREE_TIER:
+            payload["agent_mode"] = "single"
+        else:
             payload["models"] = ["gpt-5.2-pro"]
         if top_p >= 0:
             payload["orchestration"]["top_p"] = top_p
@@ -645,7 +647,7 @@ async def run_free_smoke() -> None:
 
     for i, (category, prompt) in enumerate(prompts, 1):
         print(f"\n  [{i}/5] category={category}", flush=True)
-        result = await call_api(prompt, temperature=0.3, timeout=90)
+        result = await call_api(prompt, temperature=0.3, timeout=180)
 
         if not result.get("success"):
             err = result.get("error", "unknown")

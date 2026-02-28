@@ -429,5 +429,357 @@
     },
     "cost_delta_vs_previous": 4.62157,
     "accuracy_delta_vs_previous": -6.8
+  },
+  {
+    "commit": "e12020fa12cfa71203b83172603690d89a7c1653",
+    "commit_short": "e12020fa1",
+    "branch": "main",
+    "timestamp": "20260224_145350",
+    "iso_timestamp": "2026-02-24T18:01:55.755016",
+    "overall_accuracy": 82.0,
+    "total_correct": 114,
+    "total_attempted": 139,
+    "total_cost_usd": 0.08434,
+    "total_tokens": 0,
+    "cost_per_correct": 0.00074,
+    "cost_per_1pct_accuracy": 0.001028,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 81.2,
+      "Coding (HumanEval)": 75.0,
+      "Math (GSM8K)": 100.0,
+      "Multilingual (MMMLU)": 71.9,
+      "Long Context (LongBench)": 100.0,
+      "Tool Use (ToolBench)": 87.5,
+      "RAG (MS MARCO)": 35.7,
+      "Dialogue (MT-Bench)": 5.0
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.076,
+      "Coding (HumanEval)": 0.0083,
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": -4.54723,
+    "accuracy_delta_vs_previous": -11.2
+  },
+  {
+    "commit": "e12020fa12cfa71203b83172603690d89a7c1653",
+    "commit_short": "e12020fa1",
+    "branch": "main",
+    "timestamp": "20260224_154031",
+    "iso_timestamp": "2026-02-24T19:35:39.598510",
+    "overall_accuracy": 66.1,
+    "total_correct": 111,
+    "total_attempted": 168,
+    "total_cost_usd": 0.08806,
+    "total_tokens": 0,
+    "cost_per_correct": 0.000793,
+    "cost_per_1pct_accuracy": 0.001333,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 71.9,
+      "Coding (HumanEval)": 87.5,
+      "Math (GSM8K)": 9.1,
+      "Multilingual (MMMLU)": 66.7,
+      "Long Context (LongBench)": 94.12,
+      "Tool Use (ToolBench)": 100.0,
+      "RAG (MS MARCO)": 35.0,
+      "Dialogue (MT-Bench)": 5.88
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.082,
+      "Coding (HumanEval)": 0.0061,
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0063,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": 0.00372,
+    "accuracy_delta_vs_previous": -15.9
+  },
+  {
+    "commit": "e12020fa12cfa71203b83172603690d89a7c1653",
+    "commit_short": "e12020fa1",
+    "branch": "main",
+    "timestamp": "20260224_181723",
+    "iso_timestamp": "2026-02-24T20:03:37.573476",
+    "overall_accuracy": 86.6,
+    "total_correct": 84,
+    "total_attempted": 97,
+    "total_cost_usd": 0.0,
+    "total_tokens": 0,
+    "cost_per_correct": 0.0,
+    "cost_per_1pct_accuracy": 0.0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Math (GSM8K)": 100.0,
+      "Multilingual (MMMLU)": 84.4,
+      "Long Context (LongBench)": 94.12,
+      "Tool Use (ToolBench)": 100.0,
+      "RAG (MS MARCO)": 35.1,
+      "Dialogue (MT-Bench)": 5.4
+    },
+    "cost_by_category": {
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": -0.08806,
+    "accuracy_delta_vs_previous": 20.5
+  },
+  {
+    "commit": "e12020fa12cfa71203b83172603690d89a7c1653",
+    "commit_short": "e12020fa1",
+    "branch": "main",
+    "timestamp": "20260224_180049",
+    "iso_timestamp": "2026-02-24T20:52:56.810407",
+    "overall_accuracy": 83.6,
+    "total_correct": 107,
+    "total_attempted": 128,
+    "total_cost_usd": 0.0,
+    "total_tokens": 0,
+    "cost_per_correct": 0.0,
+    "cost_per_1pct_accuracy": 0.0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Math (GSM8K)": 90.6,
+      "Multilingual (MMMLU)": 69.7,
+      "Long Context (LongBench)": 100.0,
+      "Tool Use (ToolBench)": 100.0,
+      "RAG (MS MARCO)": 31.6,
+      "Dialogue (MT-Bench)": 4.1
+    },
+    "cost_by_category": {
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0053,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": 0.0,
+    "accuracy_delta_vs_previous": -3.0
+  },
+  {
+    "commit": "e12020fa12cfa71203b83172603690d89a7c1653",
+    "commit_short": "e12020fa1",
+    "branch": "main",
+    "timestamp": "20260224_180553",
+    "iso_timestamp": "2026-02-24T21:10:41.467386",
+    "overall_accuracy": 79.5,
+    "total_correct": 101,
+    "total_attempted": 127,
+    "total_cost_usd": 0.0,
+    "total_tokens": 0,
+    "cost_per_correct": 0.0,
+    "cost_per_1pct_accuracy": 0.0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Math (GSM8K)": 87.5,
+      "Multilingual (MMMLU)": 57.6,
+      "Long Context (LongBench)": 94.12,
+      "Tool Use (ToolBench)": 87.5,
+      "RAG (MS MARCO)": 32.7,
+      "Dialogue (MT-Bench)": 4.88
+    },
+    "cost_by_category": {
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": 0.0,
+    "accuracy_delta_vs_previous": -4.1
+  },
+  {
+    "commit": "e12020fa12cfa71203b83172603690d89a7c1653",
+    "commit_short": "e12020fa1",
+    "branch": "main",
+    "timestamp": "20260224_182054",
+    "iso_timestamp": "2026-02-24T21:23:50.625205",
+    "overall_accuracy": 88.1,
+    "total_correct": 111,
+    "total_attempted": 126,
+    "total_cost_usd": 0.0,
+    "total_tokens": 0,
+    "cost_per_correct": 0.0,
+    "cost_per_1pct_accuracy": 0.0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Math (GSM8K)": 93.9,
+      "Multilingual (MMMLU)": 77.4,
+      "Long Context (LongBench)": 100.0,
+      "Tool Use (ToolBench)": 100.0,
+      "RAG (MS MARCO)": 36.6,
+      "Dialogue (MT-Bench)": 6.25
+    },
+    "cost_by_category": {
+      "Math (GSM8K)": 0.0,
+      "Multilingual (MMMLU)": 0.0,
+      "Long Context (LongBench)": 0.0,
+      "Tool Use (ToolBench)": 0.0,
+      "RAG (MS MARCO)": 0.0419,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": 0.0,
+    "accuracy_delta_vs_previous": 8.6
+  },
+  {
+    "commit": "a960cb95bdcd64db2ddc7b2ceb2eee95b0810dfb",
+    "commit_short": "a960cb95b",
+    "branch": "feat/rag-seeded-shuffle-determinism",
+    "timestamp": "20260226_031345",
+    "iso_timestamp": "2026-02-26T07:31:44.161990",
+    "overall_accuracy": 84.2,
+    "total_correct": 96,
+    "total_attempted": 114,
+    "total_cost_usd": 0.0,
+    "total_tokens": 0,
+    "cost_per_correct": 0.0,
+    "cost_per_1pct_accuracy": 0.0,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Math (GSM8K)": 92.9,
+      "Dialogue (MT-Bench)": 50.0
+    },
+    "cost_by_category": {
+      "Math (GSM8K)": 0.0,
+      "Dialogue (MT-Bench)": 0.0
+    },
+    "cost_delta_vs_previous": 0.0,
+    "accuracy_delta_vs_previous": -3.9
+  },
+  {
+    "commit": "a960cb95bdcd64db2ddc7b2ceb2eee95b0810dfb",
+    "commit_short": "a960cb95b",
+    "branch": "feat/rag-seeded-shuffle-determinism",
+    "timestamp": "20260226_115631",
+    "iso_timestamp": "2026-02-26T18:34:00.017303",
+    "overall_accuracy": 81.8,
+    "total_correct": 202,
+    "total_attempted": 247,
+    "total_cost_usd": 0.23436,
+    "total_tokens": 0,
+    "cost_per_correct": 0.00116,
+    "cost_per_1pct_accuracy": 0.002866,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 66.0,
+      "Coding (HumanEval)": 89.8,
+      "Math (GSM8K)": 93.9
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.232,
+      "Coding (HumanEval)": 0.0204,
+      "Math (GSM8K)": 0.0
+    },
+    "cost_delta_vs_previous": 0.23436,
+    "accuracy_delta_vs_previous": -2.4
+  },
+  {
+    "commit": "a960cb95bdcd64db2ddc7b2ceb2eee95b0810dfb",
+    "commit_short": "a960cb95b",
+    "branch": "feat/rag-seeded-shuffle-determinism",
+    "timestamp": "20260226_221715",
+    "iso_timestamp": "2026-02-27T00:46:45.903444",
+    "overall_accuracy": 81.2,
+    "total_correct": 121,
+    "total_attempted": 149,
+    "total_cost_usd": 0.212215,
+    "total_tokens": 0,
+    "cost_per_correct": 0.001754,
+    "cost_per_1pct_accuracy": 0.002613,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "General Reasoning (MMLU)": 77.0,
+      "Coding (HumanEval)": 89.8
+    },
+    "cost_by_category": {
+      "General Reasoning (MMLU)": 0.218,
+      "Coding (HumanEval)": 0.0122
+    },
+    "cost_delta_vs_previous": -0.022145,
+    "accuracy_delta_vs_previous": -0.6
+  },
+  {
+    "commit": "a960cb95bdcd64db2ddc7b2ceb2eee95b0810dfb",
+    "commit_short": "a960cb95b",
+    "branch": "feat/rag-seeded-shuffle-determinism",
+    "timestamp": "20260227_144352",
+    "iso_timestamp": "2026-02-27T15:52:49.068683",
+    "overall_accuracy": 91.8,
+    "total_correct": 45,
+    "total_attempted": 49,
+    "total_cost_usd": 0.019455,
+    "total_tokens": 0,
+    "cost_per_correct": 0.000432,
+    "cost_per_1pct_accuracy": 0.000212,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 91.8
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.0195
+    },
+    "cost_delta_vs_previous": -0.19276,
+    "accuracy_delta_vs_previous": 10.6
+  },
+  {
+    "commit": "a960cb95bdcd64db2ddc7b2ceb2eee95b0810dfb",
+    "commit_short": "a960cb95b",
+    "branch": "feat/rag-seeded-shuffle-determinism",
+    "timestamp": "20260227_162849",
+    "iso_timestamp": "2026-02-27T17:41:46.099890",
+    "overall_accuracy": 91.8,
+    "total_correct": 45,
+    "total_attempted": 49,
+    "total_cost_usd": 0.016535,
+    "total_tokens": 0,
+    "cost_per_correct": 0.000367,
+    "cost_per_1pct_accuracy": 0.00018,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 91.8
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.0165
+    },
+    "cost_delta_vs_previous": -0.00292,
+    "accuracy_delta_vs_previous": 0.0
+  },
+  {
+    "commit": "a960cb95bdcd64db2ddc7b2ceb2eee95b0810dfb",
+    "commit_short": "a960cb95b",
+    "branch": "feat/rag-seeded-shuffle-determinism",
+    "timestamp": "20260228_014254",
+    "iso_timestamp": "2026-02-28T02:50:10.653319",
+    "overall_accuracy": 95.9,
+    "total_correct": 47,
+    "total_attempted": 49,
+    "total_cost_usd": 0.017165,
+    "total_tokens": 0,
+    "cost_per_correct": 0.000365,
+    "cost_per_1pct_accuracy": 0.000179,
+    "token_efficiency": 0,
+    "accuracy_by_category": {
+      "Coding (HumanEval)": 95.9
+    },
+    "cost_by_category": {
+      "Coding (HumanEval)": 0.0172
+    },
+    "cost_delta_vs_previous": 0.00063,
+    "accuracy_delta_vs_previous": 4.1
   }
 ]

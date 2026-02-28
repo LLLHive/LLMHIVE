@@ -1,0 +1,30 @@
+{
+  "categories": {
+    "math": {
+      "score": 93.9,
+      "timestamp": "2026-02-26T18:33:59.914181",
+      "commit": "a960cb95b",
+      "sample_size": 100
+    },
+    "dialogue": {
+      "score": 50.0,
+      "timestamp": "2026-02-26T07:31:44.138300",
+      "commit": "a960cb95b",
+      "sample_size": 16
+    },
+    "reasoning": {
+      "score": 77.0,
+      "timestamp": "2026-02-27T00:46:45.827481",
+      "commit": "a960cb95b",
+      "sample_size": 100
+    },
+    "coding": {
+      "score": 95.9,
+      "timestamp": "2026-02-28T02:50:10.552405",
+      "commit": "a960cb95b",
+      "sample_size": 50
+    }
+  },
+  "last_updated": "2026-02-28T02:50:10.638914",
+  "invariants_verified": true
+}

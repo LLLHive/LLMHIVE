@@ -1,0 +1,43 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "Coding (HumanEval)",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 45,
+      "incorrect": 4,
+      "errors": 1,
+      "accuracy": 91.8,
+      "avg_latency_ms": 53486,
+      "avg_cost": 0.000337,
+      "total_cost": 0.0165,
+      "extra": {
+        "error_samples": [],
+        "failed_ids": [],
+        "pipeline_metrics": {
+          "signature_mismatch": 0,
+          "runtime_error": 0,
+          "logic_mismatch": 0,
+          "extraction": 0
+        }
+      },
+      "humaneval_failonly_pool": {
+        "enabled": true,
+        "tasks_recovered_count": 0,
+        "extra_calls_used": 0,
+        "pool_log": []
+      },
+      "exec_integrity": {
+        "attempted": 104,
+        "errors": 5,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      },
+      "infra_failures": 0
+    }
+  ],
+  "timestamp": "2026-02-27T17:41:46.081942",
+  "invariants_verified": true
+}

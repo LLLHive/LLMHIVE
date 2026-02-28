@@ -1,0 +1,21 @@
+{
+  "total_tokens": 0,
+  "total_cost_usd": 0.212215,
+  "cost_per_category": {
+    "MMLU": {
+      "total_cost_usd": 0.2,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 91
+    },
+    "HumanEval": {
+      "total_cost_usd": 0.012215,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 44
+    }
+  },
+  "cost_per_correct_answer": 0.001754,
+  "cost_per_benchmark": 0.106108,
+  "cost_vs_previous_commit_delta": -0.022145
+}

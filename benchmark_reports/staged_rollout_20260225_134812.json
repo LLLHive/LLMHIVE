@@ -1,0 +1,13 @@
+{
+  "timestamp": "20260225_134812",
+  "commit": "e12020fa12cfa71203b83172603690d89a7c1653",
+  "stages": {
+    "1_invariants": "DRY-RUN",
+    "2_micro_rag_ab": "DRY-RUN",
+    "3_math_onwards": "DRY-RUN",
+    "4_full_suite": "DRY-RUN"
+  },
+  "all_passed": false,
+  "rollback_performed": false,
+  "exit_code": 0
+}

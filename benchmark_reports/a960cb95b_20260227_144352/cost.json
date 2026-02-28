@@ -1,0 +1,15 @@
+{
+  "total_tokens": 0,
+  "total_cost_usd": 0.019455,
+  "cost_per_category": {
+    "HumanEval": {
+      "total_cost_usd": 0.019455,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 45
+    }
+  },
+  "cost_per_correct_answer": 0.000432,
+  "cost_per_benchmark": 0.019455,
+  "cost_vs_previous_commit_delta": -0.19276
+}

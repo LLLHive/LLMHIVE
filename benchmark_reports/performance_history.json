@@ -66,6 +66,314 @@
       },
       "total_cost_usd": 0.0,
       "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-24T23:01:55.963474+00:00",
+      "commit": "e12020fa1",
+      "branch": "main",
+      "categories": {
+        "reasoning": {
+          "accuracy": 81.2,
+          "sample_size": 33
+        },
+        "coding": {
+          "accuracy": 75.0,
+          "sample_size": 8
+        },
+        "math": {
+          "accuracy": 100.0,
+          "sample_size": 33
+        },
+        "multilingual": {
+          "accuracy": 71.9,
+          "sample_size": 33
+        },
+        "long_context": {
+          "accuracy": 100.0,
+          "sample_size": 17
+        },
+        "tool_use": {
+          "accuracy": 87.5,
+          "sample_size": 8
+        },
+        "rag": {
+          "accuracy": 35.7,
+          "sample_size": 33
+        },
+        "dialogue": {
+          "accuracy": 5.0,
+          "sample_size": 5
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-25T00:35:39.753711+00:00",
+      "commit": "e12020fa1",
+      "branch": "main",
+      "categories": {
+        "reasoning": {
+          "accuracy": 71.9,
+          "sample_size": 33
+        },
+        "coding": {
+          "accuracy": 87.5,
+          "sample_size": 8
+        },
+        "math": {
+          "accuracy": 9.1,
+          "sample_size": 33
+        },
+        "multilingual": {
+          "accuracy": 66.7,
+          "sample_size": 33
+        },
+        "long_context": {
+          "accuracy": 94.12,
+          "sample_size": 17
+        },
+        "tool_use": {
+          "accuracy": 100.0,
+          "sample_size": 8
+        },
+        "rag": {
+          "accuracy": 35.0,
+          "sample_size": 33
+        },
+        "dialogue": {
+          "accuracy": 5.88,
+          "sample_size": 5
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-25T01:03:37.740305+00:00",
+      "commit": "e12020fa1",
+      "branch": "main",
+      "categories": {
+        "math": {
+          "accuracy": 100.0,
+          "sample_size": 3
+        },
+        "multilingual": {
+          "accuracy": 84.4,
+          "sample_size": 33
+        },
+        "long_context": {
+          "accuracy": 94.12,
+          "sample_size": 17
+        },
+        "tool_use": {
+          "accuracy": 100.0,
+          "sample_size": 8
+        },
+        "rag": {
+          "accuracy": 35.1,
+          "sample_size": 33
+        },
+        "dialogue": {
+          "accuracy": 5.4,
+          "sample_size": 5
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-25T01:52:56.973761+00:00",
+      "commit": "e12020fa1",
+      "branch": "main",
+      "categories": {
+        "math": {
+          "accuracy": 90.6,
+          "sample_size": 33
+        },
+        "multilingual": {
+          "accuracy": 69.7,
+          "sample_size": 33
+        },
+        "long_context": {
+          "accuracy": 100.0,
+          "sample_size": 17
+        },
+        "tool_use": {
+          "accuracy": 100.0,
+          "sample_size": 8
+        },
+        "rag": {
+          "accuracy": 31.6,
+          "sample_size": 33
+        },
+        "dialogue": {
+          "accuracy": 4.1,
+          "sample_size": 5
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-25T02:10:41.652040+00:00",
+      "commit": "e12020fa1",
+      "branch": "main",
+      "categories": {
+        "math": {
+          "accuracy": 87.5,
+          "sample_size": 33
+        },
+        "multilingual": {
+          "accuracy": 57.6,
+          "sample_size": 33
+        },
+        "long_context": {
+          "accuracy": 94.12,
+          "sample_size": 17
+        },
+        "tool_use": {
+          "accuracy": 87.5,
+          "sample_size": 8
+        },
+        "rag": {
+          "accuracy": 32.7,
+          "sample_size": 33
+        },
+        "dialogue": {
+          "accuracy": 4.88,
+          "sample_size": 5
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-25T02:23:50.767634+00:00",
+      "commit": "e12020fa1",
+      "branch": "main",
+      "categories": {
+        "math": {
+          "accuracy": 93.9,
+          "sample_size": 33
+        },
+        "multilingual": {
+          "accuracy": 77.4,
+          "sample_size": 33
+        },
+        "long_context": {
+          "accuracy": 100.0,
+          "sample_size": 17
+        },
+        "tool_use": {
+          "accuracy": 100.0,
+          "sample_size": 8
+        },
+        "rag": {
+          "accuracy": 36.6,
+          "sample_size": 33
+        },
+        "dialogue": {
+          "accuracy": 6.25,
+          "sample_size": 5
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-26T12:31:44.289171+00:00",
+      "commit": "a960cb95b",
+      "branch": "feat/rag-seeded-shuffle-determinism",
+      "categories": {
+        "math": {
+          "accuracy": 92.9,
+          "sample_size": 100
+        },
+        "dialogue": {
+          "accuracy": 50.0,
+          "sample_size": 16
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-26T23:34:00.172176+00:00",
+      "commit": "a960cb95b",
+      "branch": "feat/rag-seeded-shuffle-determinism",
+      "categories": {
+        "reasoning": {
+          "accuracy": 66.0,
+          "sample_size": 100
+        },
+        "coding": {
+          "accuracy": 89.8,
+          "sample_size": 50
+        },
+        "math": {
+          "accuracy": 93.9,
+          "sample_size": 100
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-27T05:46:46.019821+00:00",
+      "commit": "a960cb95b",
+      "branch": "feat/rag-seeded-shuffle-determinism",
+      "categories": {
+        "reasoning": {
+          "accuracy": 77.0,
+          "sample_size": 100
+        },
+        "coding": {
+          "accuracy": 89.8,
+          "sample_size": 50
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-27T20:52:49.224810+00:00",
+      "commit": "a960cb95b",
+      "branch": "feat/rag-seeded-shuffle-determinism",
+      "categories": {
+        "coding": {
+          "accuracy": 91.8,
+          "sample_size": 50
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-27T22:41:46.267268+00:00",
+      "commit": "a960cb95b",
+      "branch": "feat/rag-seeded-shuffle-determinism",
+      "categories": {
+        "coding": {
+          "accuracy": 91.8,
+          "sample_size": 50
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    },
+    {
+      "timestamp": "2026-02-28T07:50:10.824081+00:00",
+      "commit": "a960cb95b",
+      "branch": "feat/rag-seeded-shuffle-determinism",
+      "categories": {
+        "coding": {
+          "accuracy": 95.9,
+          "sample_size": 50
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
     }
   ],
   "alerts": [
@@ -74,68 +382,175 @@
       "category": "reasoning",
       "severity": "warning",
       "message": "Elite performance drop: reasoning dropped 26.0% (from 100.0% to 74.0%)"
+    },
+    {
+      "timestamp": "2026-02-24T23:01:55.966189+00:00",
+      "category": "coding",
+      "severity": "warning",
+      "message": "Elite performance drop: coding dropped 13.0% (from 88.0% to 75.0%)"
+    },
+    {
+      "timestamp": "2026-02-24T23:01:55.978078+00:00",
+      "category": "multilingual",
+      "severity": "warning",
+      "message": "Elite performance drop: multilingual dropped 9.1% (from 81.0% to 71.9%)"
+    },
+    {
+      "timestamp": "2026-02-24T23:01:55.978206+00:00",
+      "category": "tool_use",
+      "severity": "warning",
+      "message": "Elite performance drop: tool_use dropped 12.5% (from 100.0% to 87.5%)"
+    },
+    {
+      "timestamp": "2026-02-24T23:01:55.978254+00:00",
+      "category": "rag",
+      "severity": "warning",
+      "message": "Elite performance drop: rag dropped 10.6% (from 46.3% to 35.7%)"
+    },
+    {
+      "timestamp": "2026-02-25T00:35:39.755040+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 9.3% (from 81.2% to 71.9%)"
+    },
+    {
+      "timestamp": "2026-02-25T00:35:39.762660+00:00",
+      "category": "math",
+      "severity": "warning",
+      "message": "Elite performance drop: math dropped 90.9% (from 100.0% to 9.1%)"
+    },
+    {
+      "timestamp": "2026-02-25T00:35:39.762759+00:00",
+      "category": "multilingual",
+      "severity": "warning",
+      "message": "Elite performance drop: multilingual dropped 5.2% (from 71.9% to 66.7%)"
+    },
+    {
+      "timestamp": "2026-02-25T00:35:39.762808+00:00",
+      "category": "long_context",
+      "severity": "warning",
+      "message": "Elite performance drop: long_context dropped 5.9% (from 100.0% to 94.1%)"
+    },
+    {
+      "timestamp": "2026-02-25T01:03:37.741060+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 9.3% (from 81.2% to 71.9%)"
+    },
+    {
+      "timestamp": "2026-02-25T01:52:56.976248+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 9.3% (from 81.2% to 71.9%)"
+    },
+    {
+      "timestamp": "2026-02-25T01:52:56.988671+00:00",
+      "category": "math",
+      "severity": "warning",
+      "message": "Elite performance drop: math dropped 9.4% (from 100.0% to 90.6%)"
+    },
+    {
+      "timestamp": "2026-02-25T01:52:56.988873+00:00",
+      "category": "multilingual",
+      "severity": "warning",
+      "message": "Elite performance drop: multilingual dropped 14.7% (from 84.4% to 69.7%)"
+    },
+    {
+      "timestamp": "2026-02-25T02:10:41.652741+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 9.3% (from 81.2% to 71.9%)"
+    },
+    {
+      "timestamp": "2026-02-25T02:10:41.661025+00:00",
+      "category": "multilingual",
+      "severity": "warning",
+      "message": "Elite performance drop: multilingual dropped 12.1% (from 69.7% to 57.6%)"
+    },
+    {
+      "timestamp": "2026-02-25T02:10:41.661136+00:00",
+      "category": "long_context",
+      "severity": "warning",
+      "message": "Elite performance drop: long_context dropped 5.9% (from 100.0% to 94.1%)"
+    },
+    {
+      "timestamp": "2026-02-25T02:10:41.661186+00:00",
+      "category": "tool_use",
+      "severity": "warning",
+      "message": "Elite performance drop: tool_use dropped 12.5% (from 100.0% to 87.5%)"
+    },
+    {
+      "timestamp": "2026-02-25T02:23:50.769145+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 9.3% (from 81.2% to 71.9%)"
+    },
+    {
+      "timestamp": "2026-02-26T12:31:44.290340+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 9.3% (from 81.2% to 71.9%)"
+    },
+    {
+      "timestamp": "2026-02-26T23:34:00.175512+00:00",
+      "category": "reasoning",
+      "severity": "warning",
+      "message": "Elite performance drop: reasoning dropped 5.9% (from 71.9% to 66.0%)"
     }
   ],
   "latest_analysis": {
-    "run_count": 3,
-    "latest_timestamp": "2026-02-23T14:29:50.855070+00:00",
+    "run_count": 15,
+    "latest_timestamp": "2026-02-28T07:50:10.824081+00:00",
     "categories": {
       "reasoning": {
-        "current": 74.0,
-        "rolling_30_mean": 91.33,
-        "volatility": 12.257,
-        "trend": "degrading"
+        "current": 77.0,
+        "rolling_30_mean": 81.44,
+        "volatility": 12.498,
+        "trend": "improving"
       },
       "coding": {
-        "current": 88.0,
-        "rolling_30_mean": 88.0,
-        "volatility": 0.0,
+        "current": 95.9,
+        "rolling_30_mean": 88.7,
+        "volatility": 5.735,
         "trend": "stable"
       },
       "math": {
-        "current": 93.7,
-        "rolling_30_mean": 93.7,
-        "volatility": 0.0,
+        "current": 93.9,
+        "rolling_30_mean": 84.62,
+        "volatility": 26.964,
         "trend": "stable"
       },
       "multilingual": {
-        "current": 81.0,
-        "rolling_30_mean": 81.0,
-        "volatility": 0.0,
-        "trend": "stable"
+        "current": 77.4,
+        "rolling_30_mean": 72.67,
+        "volatility": 8.464,
+        "trend": "improving"
       },
       "long_context": {
         "current": 100.0,
-        "rolling_30_mean": 100.0,
-        "volatility": 0.0,
-        "trend": "stable"
+        "rolling_30_mean": 97.48,
+        "volatility": 2.91,
+        "trend": "improving"
       },
       "tool_use": {
         "current": 100.0,
-        "rolling_30_mean": 100.0,
-        "volatility": 0.0,
-        "trend": "stable"
+        "rolling_30_mean": 96.43,
+        "volatility": 5.647,
+        "trend": "improving"
       },
       "rag": {
-        "current": 46.3,
-        "rolling_30_mean": 46.3,
-        "volatility": 0.0,
+        "current": 36.6,
+        "rolling_30_mean": 36.14,
+        "volatility": 4.447,
         "trend": "stable"
       },
       "dialogue": {
-        "current": 4.4,
-        "rolling_30_mean": 4.4,
-        "volatility": 0.0,
-        "trend": "stable"
+        "current": 50.0,
+        "rolling_30_mean": 10.74,
+        "volatility": 14.854,
+        "trend": "improving"
       }
     },
-    "alerts": [
-      {
-        "timestamp": "2026-02-23T14:29:50.857587+00:00",
-        "category": "reasoning",
-        "severity": "warning",
-        "message": "Elite performance drop: reasoning dropped 26.0% (from 100.0% to 74.0%)"
-      }
-    ]
+    "alerts": []
   }
 }
