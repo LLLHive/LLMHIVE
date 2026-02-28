@@ -2244,7 +2244,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
 
             actual_models = _filter_free_models(actual_models)
             logger.info("Filtered FREE models: %s", actual_models)
-            user_model_names = [m.split("/")[-1] if "/" in m else m for m in actual_models]
+            user_model_names = list(actual_models)
             logger.info("TIER FILTERING APPLIED: FREE tier -> models=%s", actual_models)
         elif use_free_models and not ELITE_ORCHESTRATION_AVAILABLE:
             logger.warning("TIER FILTERING SKIPPED: use_free_models=True but ELITE_ORCHESTRATION_AVAILABLE=False!")
@@ -2556,6 +2556,18 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             logger.info("Manual engine mode: using explicit settings from request")
         
         # ========================================================================
+        # FREE TIER GUARD: disable engines that bypass tier-filtered models
+        # HRM passes provider names (not model IDs) to the executor, causing
+        # fallback to paid defaults (GPT-4o). Adaptive routing also overrides
+        # the filtered model list.  Disable both for free tier only.
+        # ========================================================================
+        if use_free_models:
+            orchestration_config["use_hrm"] = False
+            orchestration_config["use_adaptive_routing"] = False
+            orchestration_config["use_deep_consensus"] = False
+            logger.info("FREE TIER GUARD: disabled HRM/adaptive/consensus to enforce free-model-only routing")
+
+        # ========================================================================
         # STEP 1.22: AUTO-ENABLE HRM FOR COMPLEX QUERIES (Legacy + Override)
         # ========================================================================
         # This allows complex queries to be automatically decomposed into sub-steps
@@ -2568,8 +2580,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # Edge case: If a query is labeled complex but could be handled by a single model,
         # HRM may still decompose it. We trust PromptOps for now; monitor for over-triggering.
         if prompt_spec and hasattr(prompt_spec, 'requires_hrm') and prompt_spec.requires_hrm:
-            if not orchestration_config.get("use_hrm", False):
-                # Auto-enable HRM for complex/research queries
+            if not use_free_models and not orchestration_config.get("use_hrm", False):
                 orchestration_config["use_hrm"] = True
                 logger.info(
                     "Auto-enabled HRM for complex query (complexity=%s, task=%s)",
@@ -2955,6 +2966,17 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 agent_mode, detected_task_type, actual_models,
             )
         
+        # ====================================================================
+        # FREE TIER: Re-apply model filter after intelligent selection.
+        # The SINGLE/TEAM selector doesn't know about tier constraints and
+        # may pick paid models (e.g. GPT-4o).  Override here so both
+        # actual_models AND user_model_names reflect free-tier models.
+        # ====================================================================
+        if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+            actual_models = _filter_free_models(actual_models)
+            user_model_names = list(actual_models)
+            logger.info("FREE TIER: Re-filtered after intelligent selection -> models=%s", actual_models)
+        
         # Enhance prompt with reasoning method template
         # NOTE: Only apply complex reasoning templates at accuracy_level >= 4 to avoid template echo issues
         accuracy_level = orchestration_config.get("accuracy_level", 3)
@@ -3054,8 +3076,7 @@ Before finishing, verify:
 
 Now provide your complete response, addressing EVERY requirement:"""
             enhanced_prompt = multi_step_prompt.replace("{question}", base_prompt)
-            # Enable HRM for multi-step tasks if not already enabled
-            if not orchestration_config.get("use_hrm"):
+            if not use_free_models and not orchestration_config.get("use_hrm"):
                 orchestration_config["use_hrm"] = True
                 logger.info("Enabled HRM for multi-step task decomposition")
             logger.info("Applied task decomposition prompt for multi-step task")
@@ -3306,13 +3327,15 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             orchestrator_models = actual_models
             if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
                 orchestrator_models = _filter_free_models(actual_models)
+                actual_models = orchestrator_models
+                user_model_names = list(orchestrator_models)
                 logger.info("TIER FILTERING (pre-orchestrator): FREE tier -> models=%s", orchestrator_models)
             
             artifacts = await _orchestrator.orchestrate(
                 enhanced_prompt,
                 orchestrator_models,
-                use_hrm=orchestration_config.get("use_hrm", False),
-                use_adaptive_routing=False if use_free_models else orchestration_config.get("use_adaptive_routing", False),  # Disable adaptive routing for FREE tier - it overrides models
+                use_hrm=False if use_free_models else orchestration_config.get("use_hrm", False),
+                use_adaptive_routing=False if use_free_models else orchestration_config.get("use_adaptive_routing", False),
                 use_deep_consensus=orchestration_config.get("use_deep_consensus", False),
                 use_prompt_diffusion=orchestration_config.get("use_prompt_diffusion", False),
                 accuracy_level=accuracy_level,
