@@ -617,6 +617,15 @@ OPENROUTER_GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"  # ✓ Verified (new
 # Budget-aware flag - set to True to use cost-effective models only
 BUDGET_MODE = os.getenv("BUDGET_MODE", "true").lower() == "true"
 
+# ---------------------------------------------------------------------------
+# Tier isolation & telemetry flags (market-readiness hardening)
+# All default OFF to preserve current behavior.
+# ---------------------------------------------------------------------------
+_ELITE_TIER_STRICT = os.getenv("ELITE_TIER_STRICT", "0").lower() in ("1", "true", "yes")
+_FREE_TIER_STRICT_SERVER = os.getenv("FREE_TIER_STRICT", "0").lower() in ("1", "true", "yes")
+_ORCH_TIER_LOCK = os.getenv("ORCH_TIER_LOCK", "none").lower().strip()
+_TRACE_PROVIDER_CALLS = os.getenv("TRACE_PROVIDER_CALLS", "0").lower() in ("1", "true", "yes")
+
 # Cost-effective models (use when credits are limited)
 COST_EFFECTIVE_MODELS = [
     OPENROUTER_GPT_4O,           # ~$5/1M tokens - excellent quality
@@ -2002,6 +2011,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # The ONLY difference is the models used.
         # =========================================================================
         use_free_models = False  # Default to premium models
+        requested_tier = "auto"
         
         # DEBUG: Log tier detection
         logger.info(
@@ -2014,19 +2024,31 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         if hasattr(request, 'tier') and request.tier:
             tier_value = request.tier
-            # Handle both string and enum comparisons
             is_free = (tier_value == RequestModelTier.free) or (str(tier_value).lower() == "free")
             is_elite = (tier_value == RequestModelTier.elite) or (str(tier_value).lower() == "elite")
             
             if is_free:
                 use_free_models = True
+                requested_tier = "free"
                 logger.info("Tier-based routing: FREE tier -> using FREE models only (tier_value=%s)", tier_value)
             elif is_elite:
                 use_free_models = False
+                requested_tier = "elite"
                 logger.info("Tier-based routing: ELITE tier -> using premium models (tier_value=%s)", tier_value)
             else:
                 logger.info("Tier-based routing: AUTO tier -> using default behavior (tier_value=%s)", tier_value)
-            # RequestModelTier.auto - determine from user's subscription (default behavior)
+        
+        # Apply ORCH_TIER_LOCK override (env-level hard lock)
+        tier_locked = _ORCH_TIER_LOCK in ("elite", "free")
+        if tier_locked:
+            use_free_models = (_ORCH_TIER_LOCK == "free")
+            effective_tier = _ORCH_TIER_LOCK
+            logger.info(
+                "ORCH_TIER_LOCK=%s: effective_tier=%s (overriding requested=%s)",
+                _ORCH_TIER_LOCK, effective_tier, requested_tier,
+            )
+        else:
+            effective_tier = requested_tier if requested_tier != "auto" else ("free" if use_free_models else "elite")
         
         # Backward-compatible alias: allow single "model" to map to "models"
         if getattr(request, "model", None) and not request.models:
@@ -3644,9 +3666,29 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # Add tool broker results to extra
         extra["tool_broker"] = tool_results_info
         
-        # Add models used info to extra
+        # Add models used info to extra (backward-compatible keys preserved)
         extra["models_requested"] = request.models or []
         extra["models_mapped"] = actual_models
+        
+        # Tier isolation & telemetry (market-readiness)
+        _final_model = None
+        if cost_info:
+            _final_model = cost_info.get("model_used")
+        if not _final_model and elite_result:
+            _final_model = getattr(elite_result, "primary_model", None)
+        if not _final_model and actual_models:
+            _final_model = actual_models[0]
+        
+        extra["tier_info"] = {
+            "requested_tier": requested_tier,
+            "effective_tier": effective_tier,
+            "tier_locked": tier_locked,
+        }
+        extra["final_model_used"] = _final_model or "unknown"
+        extra["models_executed"] = actual_models_used if 'actual_models_used' in locals() else actual_models
+        extra["models_attempted"] = user_model_names
+        if _TRACE_PROVIDER_CALLS:
+            extra["provider_calls"] = []
         
         # PR5: Add budget info to extra
         if budget_constraints:
@@ -3951,6 +3993,22 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 final_text = extracted
             else:
                 logger.info("PHASE 4: Extraction insufficient, keeping original")
+        
+        # ====================================================================
+        # Tier violation detection (strict mode only — no-op when flags OFF)
+        # ====================================================================
+        _tier_violation = None
+        if _ELITE_TIER_STRICT and effective_tier == "elite" and use_free_models:
+            _tier_violation = "ELITE_TIER_MODEL_VIOLATION: elite tier active but free-model flag set"
+        if _FREE_TIER_STRICT_SERVER and effective_tier == "free":
+            _all_free = _get_all_free_models() if ELITE_ORCHESTRATION_AVAILABLE else set()
+            _exec_models = actual_models_used if 'actual_models_used' in locals() else actual_models
+            _bad = [m for m in _exec_models if m not in _all_free]
+            if _bad:
+                _tier_violation = f"FREE_TIER_MODEL_VIOLATION: non-free models executed: {_bad}"
+        if _tier_violation:
+            extra["tier_violation"] = _tier_violation
+            logger.warning("TIER VIOLATION: %s", _tier_violation)
         
         # Build response with models_used
         response = ChatResponse(

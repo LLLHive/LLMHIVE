@@ -135,6 +135,7 @@ async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
                 if resp.status_code == 200:
                     data = resp.json()
                     models_used = data.get("models_used", [])
+                    extra = data.get("extra", {})
                     if _IS_FREE_TIER and FREE_HARNESS_ASSERT and models_used:
                         for mu in models_used:
                             if mu not in _FREE_ALLOWED_MODELS:
@@ -142,12 +143,14 @@ async def call_api(prompt: str, temperature: float = 0.3, top_p: float = -1,
                                     "success": False,
                                     "error": f"FREE_TIER_MODEL_VIOLATION: {mu}",
                                     "models_used": models_used,
+                                    "extra": extra,
                                 }
                     return {
                         "success": True,
                         "response": data.get("message", ""),
                         "models_used": models_used,
                         "tier": TIER,
+                        "extra": extra,
                     }
                 if resp.status_code in (429, 502, 503, 504):
                     last_err = f"HTTP {resp.status_code}"
@@ -660,19 +663,30 @@ async def run_free_smoke() -> None:
             continue
 
         models = result.get("models_used", [])
+        extra = result.get("extra", {})
+        models_executed = extra.get("models_executed", models)
+        models_attempted = extra.get("models_attempted", models)
+        tier_info = extra.get("tier_info", {})
+        tier_violation = extra.get("tier_violation")
+
         if not models:
             missing_models.append(i)
             print(f"        WARN: models_used missing from response")
             continue
 
-        all_free = all(m in _FREE_ALLOWED_MODELS for m in models)
-        free_models_seen.update(models)
-        if all_free:
+        check_set = set(models) | set(models_executed)
+        all_free = all(m in _FREE_ALLOWED_MODELS for m in check_set)
+        free_models_seen.update(check_set)
+        if tier_violation:
+            paid_violations.append({"query": i, "violation": tier_violation})
+            print(f"        VIOLATION (server): {tier_violation}")
+        elif all_free:
             passed += 1
-            print(f"        OK: models={models}")
+            eff = tier_info.get("effective_tier", "?")
+            print(f"        OK: models={models}  effective_tier={eff}")
         else:
-            bad = [m for m in models if m not in _FREE_ALLOWED_MODELS]
-            paid_violations.append({"query": i, "models": models, "paid": bad})
+            bad = [m for m in check_set if m not in _FREE_ALLOWED_MODELS]
+            paid_violations.append({"query": i, "models": list(check_set), "paid": bad})
             print(f"        VIOLATION: paid models used: {bad}")
 
     print("\n" + "-" * 60)
@@ -696,9 +710,102 @@ async def run_free_smoke() -> None:
         sys.exit(0)
 
 
+async def run_elite_smoke() -> None:
+    """Smoke test: 5 queries proving elite tier uses premium models only.
+
+    Sends 5 prompts.  Asserts every response includes models_used,
+    none of the models are in the free allowlist, and tier_info shows
+    effective_tier=elite.
+    """
+    print("\n" + "=" * 60)
+    print("ELITE-TIER SMOKE TEST (5 queries)")
+    print("=" * 60)
+    print(f"  API:  {API_URL}")
+    print(f"  TIER: {TIER}")
+    elite_strict = os.getenv("ELITE_TIER_STRICT", "0").lower() in ("1", "true", "yes")
+    print(f"  ELITE_TIER_STRICT: {elite_strict}")
+
+    if TIER != "elite":
+        print(f"\n  [ABORT] TIER={TIER} but --elite-smoke requires TIER=elite.")
+        print("  Set CATEGORY_BENCH_TIER=elite and rerun.")
+        sys.exit(1)
+
+    prompts = [
+        ("math", "What is 17 * 23? Show your work step by step."),
+        ("math", "If a train travels 60 mph for 2.5 hours, how far does it go?"),
+        ("reasoning", "What is the capital of France? Answer in one word."),
+        ("reasoning", "Is the number 37 prime? Explain briefly."),
+        ("reasoning", "Name the three states of matter."),
+    ]
+
+    free_violations = []
+    missing_models = []
+    elite_models_seen: set = set()
+    passed = 0
+
+    for i, (category, prompt) in enumerate(prompts, 1):
+        print(f"\n  [{i}/5] category={category}", flush=True)
+        result = await call_api(prompt, temperature=0.3, timeout=180)
+
+        if not result.get("success"):
+            err = result.get("error", "unknown")
+            print(f"        ERROR: {err}")
+            continue
+
+        models = result.get("models_used", [])
+        extra = result.get("extra", {})
+        models_attempted = extra.get("models_attempted", models)
+        models_executed = extra.get("models_executed", models)
+        tier_info = extra.get("tier_info", {})
+        tier_violation = extra.get("tier_violation")
+
+        if not models:
+            missing_models.append(i)
+            print(f"        WARN: models_used missing from response")
+            continue
+
+        has_free = any(m in _FREE_ALLOWED_MODELS for m in set(models_attempted) | set(models_executed))
+        elite_models_seen.update(models)
+
+        if tier_violation:
+            free_violations.append({"query": i, "violation": tier_violation})
+            print(f"        VIOLATION (server): {tier_violation}")
+        elif has_free:
+            bad = [m for m in set(models_attempted) | set(models_executed) if m in _FREE_ALLOWED_MODELS]
+            free_violations.append({"query": i, "free_models": bad})
+            print(f"        VIOLATION: free models in elite path: {bad}")
+        else:
+            passed += 1
+            eff = tier_info.get("effective_tier", "?")
+            final = extra.get("final_model_used", "?")
+            print(f"        OK: models={models}  effective_tier={eff}  final={final}")
+
+    print("\n" + "-" * 60)
+    print("ELITE-SMOKE RESULTS")
+    print("-" * 60)
+    print(f"  Passed:            {passed}/5")
+    print(f"  Free violations:   {len(free_violations)}")
+    print(f"  Missing models:    {len(missing_models)}")
+    print(f"  Elite models seen: {elite_models_seen or '(none)'}")
+
+    if free_violations:
+        print(f"\n  FAIL: {len(free_violations)} free-model violations in elite path:")
+        for v in free_violations:
+            print(f"    query {v['query']}: {v}")
+        sys.exit(1)
+    elif passed == 0:
+        print("\n  FAIL: 0 queries succeeded — cannot confirm elite routing.")
+        sys.exit(1)
+    else:
+        print(f"\n  PASS: All {passed} responses used elite models only.")
+        sys.exit(0)
+
+
 if __name__ == "__main__":
     if "--free-smoke" in sys.argv:
         asyncio.run(run_free_smoke())
+    elif "--elite-smoke" in sys.argv:
+        asyncio.run(run_elite_smoke())
     elif "--dialogue" in sys.argv:
         asyncio.run(run_dialogue_stub())
     else:
