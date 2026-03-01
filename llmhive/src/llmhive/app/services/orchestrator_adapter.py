@@ -3670,21 +3670,13 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         extra["models_requested"] = request.models or []
         extra["models_mapped"] = actual_models
         
-        # Tier isolation & telemetry (market-readiness)
-        _final_model = None
-        if cost_info:
-            _final_model = cost_info.get("model_used")
-        if not _final_model and elite_result:
-            _final_model = getattr(elite_result, "primary_model", None)
-        if not _final_model and actual_models:
-            _final_model = actual_models[0]
-        
+        # Tier isolation telemetry (tier_info placed here; final_model_used
+        # is added after cost_info is computed below)
         extra["tier_info"] = {
             "requested_tier": requested_tier,
             "effective_tier": effective_tier,
             "tier_locked": tier_locked,
         }
-        extra["final_model_used"] = _final_model or "unknown"
         extra["models_executed"] = actual_models_used if 'actual_models_used' in locals() else actual_models
         extra["models_attempted"] = user_model_names
         if _TRACE_PROVIDER_CALLS:
@@ -3729,6 +3721,16 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 "provider": "unknown",
                 "total_cost": 0.0,
             }
+        
+        # final_model_used (needs cost_info which is now computed above)
+        _final_model = None
+        if cost_info:
+            _final_model = cost_info.get("model_used")
+        if not _final_model and elite_result:
+            _final_model = getattr(elite_result, "primary_model", None)
+        if not _final_model and actual_models:
+            _final_model = actual_models[0]
+        extra["final_model_used"] = _final_model or "unknown"
 
         # Expose same-model failover telemetry from orchestrator result
         _orch_meta = getattr(artifacts, "metadata", None) if artifacts else None
