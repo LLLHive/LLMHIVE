@@ -1,0 +1,54 @@
+{
+  "report_date": "2026-03-01T03:55:39.301497+00:00",
+  "week_start": "2026-02-22T03:55:39.301497+00:00",
+  "week_end": "2026-03-01T03:55:39.301497+00:00",
+  "models": {
+    "added": [],
+    "removed": [],
+    "updated": 0
+  },
+  "categories": {
+    "changes": []
+  },
+  "rankings": {
+    "highlights": []
+  },
+  "research": {
+    "findings_count": 0,
+    "high_impact_proposals": []
+  },
+  "benchmarks": {
+    "before": {
+      "overall_score": 0.992,
+      "pass_rate": 1.0,
+      "category_scores": {
+        "coding": 1.0,
+        "reasoning": 1.0,
+        "math": 1.0,
+        "factual": 1.0,
+        "multi_hop": 1.0,
+        "creative": 0.9
+      },
+      "regressions": [],
+      "improvements": []
+    },
+    "after": null,
+    "regressions": []
+  },
+  "upgrades": {
+    "applied": [],
+    "gated": [],
+    "failed": []
+  },
+  "safety": {
+    "all_tests_passed": true,
+    "safe_to_deploy": true,
+    "notes": []
+  },
+  "duration": {
+    "total_seconds": 0,
+    "sync_seconds": 0.003768,
+    "research_seconds": 0.093989,
+    "benchmark_seconds": 0.37066
+  }
+}
