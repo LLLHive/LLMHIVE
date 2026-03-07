@@ -560,6 +560,56 @@ async def build_info() -> dict:
     }
 
 
+@app.get("/internal/launch_kpis", summary="Launch KPI snapshot", include_in_schema=False)
+async def launch_kpis() -> dict:
+    """Real-time KPI snapshot for post-deploy monitoring.
+
+    Returns cost, paid-call rate, tool/RAG health, circuit breaker status,
+    and model registry version — designed for dashboards and alerting.
+    """
+    from pathlib import Path as _P
+    import json as _json
+
+    launch_mode = os.getenv("ELITE_PLUS_LAUNCH_MODE", "0") == "1"
+
+    cb_status = {}
+    try:
+        from .orchestration.elite_plus_orchestrator import get_circuit_breaker_status
+        cb_status = get_circuit_breaker_status()
+    except Exception:
+        pass
+
+    registry_version = "unknown"
+    try:
+        from .orchestration.model_registry import MODEL_REGISTRY_VERSION
+        registry_version = MODEL_REGISTRY_VERSION
+    except Exception:
+        pass
+
+    kpis_file = _P(__file__).resolve().parent.parent.parent.parent.parent / "launch_kpis.json"
+    file_kpis = {}
+    if kpis_file.exists():
+        try:
+            file_kpis = _json.loads(kpis_file.read_text())
+        except Exception:
+            pass
+
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "launch_mode_enabled": launch_mode,
+        "model_registry_version": registry_version,
+        "circuit_breaker": cb_status,
+        "config": {
+            "max_paid_calls": int(os.getenv("ELITE_PLUS_MAX_PAID_CALLS", "1")),
+            "max_cost_usd_request": float(os.getenv("ELITE_PLUS_MAX_COST_USD_REQUEST", "0.02")),
+            "budget_p50": float(os.getenv("ELITE_PLUS_BUDGET_USD_P50", "0.010")),
+            "budget_p95": float(os.getenv("ELITE_PLUS_BUDGET_USD_P95", "0.020")),
+            "policy": os.getenv("ELITE_PLUS_POLICY", "free_first_verified"),
+        },
+        "offline_kpis": file_kpis,
+    }
+
+
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")
 

@@ -181,6 +181,63 @@ except ImportError:
     FREE_MODELS_DB_AVAILABLE = False
     FREE_MODELS_DB = {}
 
+# Elite+ Orchestrator (free-first verified premium tier)
+try:
+    from ..orchestration.elite_plus_orchestrator import (
+        run_elite_plus,
+        ElitePlusResult,
+        ELITE_PLUS_ENABLED as _EP_MODULE_FLAG,
+        ELITE_PLUS_MODE as _EP_MODULE_MODE,
+        PREMIUM_DEFAULT_TIER as _PREMIUM_DEFAULT_TIER,
+        ELITE_FALLBACK_ENABLED as _ELITE_FALLBACK_ENABLED,
+        ELITE_PUBLIC_ENABLED as _ELITE_PUBLIC_ENABLED,
+    )
+    ELITE_PLUS_AVAILABLE = True
+except ImportError:
+    ELITE_PLUS_AVAILABLE = False
+    run_elite_plus = None  # type: ignore
+    _EP_MODULE_FLAG = False
+    _EP_MODULE_MODE = "shadow"
+    _PREMIUM_DEFAULT_TIER = "elite"
+    _ELITE_FALLBACK_ENABLED = True
+    _ELITE_PUBLIC_ENABLED = True
+
+# Tier Spend Governor + Internal Auth
+try:
+    from ..orchestration.tier_spend_governor import governor as _spend_governor
+    from ..orchestration.internal_auth import sanitize_internal_flags as _sanitize_internal
+    _SPEND_GOVERNOR_AVAILABLE = True
+except ImportError:
+    _spend_governor = None  # type: ignore
+    _sanitize_internal = None  # type: ignore
+    _SPEND_GOVERNOR_AVAILABLE = False
+
+# Progressive Free Orchestration (staged escalation for lower latency)
+try:
+    from ..orchestration.progressive_free import (
+        run_progressive_free,
+        ProgressiveResult,
+        FREE_PROGRESSIVE as _PF_MODULE_FLAG,
+    )
+    PROGRESSIVE_FREE_AVAILABLE = True
+except ImportError:
+    PROGRESSIVE_FREE_AVAILABLE = False
+    run_progressive_free = None  # type: ignore
+    _PF_MODULE_FLAG = False
+
+# Tier-Safe Model Allowlisting (Phase B: replaces blanket HRM disable)
+try:
+    from ..orchestration.tier_allowlist import (
+        filter_models_for_tier,
+        get_tier_safe_orchestration_flags,
+        build_telemetry as build_orch_telemetry,
+    )
+    TIER_ALLOWLIST_AVAILABLE = True
+except ImportError:
+    TIER_ALLOWLIST_AVAILABLE = False
+    filter_models_for_tier = None  # type: ignore
+    build_orch_telemetry = None  # type: ignore
+
 try:
     from ..openrouter.dynamic_catalog import get_dynamic_catalog, DynamicModelCatalog
     DYNAMIC_CATALOG_AVAILABLE = True
@@ -625,6 +682,24 @@ _ELITE_TIER_STRICT = os.getenv("ELITE_TIER_STRICT", "0").lower() in ("1", "true"
 _FREE_TIER_STRICT_SERVER = os.getenv("FREE_TIER_STRICT", "0").lower() in ("1", "true", "yes")
 _ORCH_TIER_LOCK = os.getenv("ORCH_TIER_LOCK", "none").lower().strip()
 _TRACE_PROVIDER_CALLS = os.getenv("TRACE_PROVIDER_CALLS", "0").lower() in ("1", "true", "yes")
+
+# ---------------------------------------------------------------------------
+# Elite+ Shadow Orchestrator flags (all default OFF)
+# ---------------------------------------------------------------------------
+_ELITE_PLUS_ENABLED = os.getenv("ELITE_PLUS_ENABLED", "0").lower() in ("1", "true", "yes")
+_ELITE_PLUS_MODE = os.getenv("ELITE_PLUS_MODE", "shadow").lower().strip()
+
+# ---------------------------------------------------------------------------
+# Elite+ Free-Model Ensemble: merge free models into elite candidate set
+# When ON, elite orchestration uses BOTH paid and free models with full
+# HRM / adaptive / consensus enabled.  Default OFF.
+# ---------------------------------------------------------------------------
+_ENABLE_ELITE_FREE_MODELS = os.getenv("ENABLE_ELITE_FREE_MODELS", "0").lower() in ("1", "true", "yes")
+
+# ---------------------------------------------------------------------------
+# Progressive Free Orchestration flag (default OFF)
+# ---------------------------------------------------------------------------
+_FREE_PROGRESSIVE = os.getenv("FREE_PROGRESSIVE", "0").lower() in ("1", "true", "yes")
 
 # Cost-effective models (use when credits are limited)
 COST_EFFECTIVE_MODELS = [
@@ -1970,6 +2045,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
     uses user-selected models if provided, and calls the orchestrator.
     """
     start_time = time.perf_counter()
+    extra: Dict[str, Any] = {}
     
     try:
         # Profile defaults (format/tone/show_confidence)
@@ -2049,6 +2125,18 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             )
         else:
             effective_tier = requested_tier if requested_tier != "auto" else ("free" if use_free_models else "elite")
+
+        # Premium routing: Elite+ replaces Elite as the premium tier
+        _use_elite_plus_as_premium = (
+            ELITE_PLUS_AVAILABLE
+            and _PREMIUM_DEFAULT_TIER == "elite_plus"
+            and _EP_MODULE_FLAG
+            and effective_tier == "elite"
+        )
+        if _use_elite_plus_as_premium:
+            logger.info(
+                "PREMIUM_DEFAULT_TIER=elite_plus: routing premium request through Elite+ pipeline"
+            )
         
         # Backward-compatible alias: allow single "model" to map to "models"
         if getattr(request, "model", None) and not request.models:
@@ -2271,6 +2359,29 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         elif use_free_models and not ELITE_ORCHESTRATION_AVAILABLE:
             logger.warning("TIER FILTERING SKIPPED: use_free_models=True but ELITE_ORCHESTRATION_AVAILABLE=False!")
         
+        # =====================================================================
+        # ELITE+ FREE-MODEL ENSEMBLE: merge free models into elite candidate set
+        # When ENABLE_ELITE_FREE_MODELS=1 and tier is elite, combine paid models
+        # with top free models so the orchestrator can use both.
+        # =====================================================================
+        _elite_free_active = False
+        if (
+            _ENABLE_ELITE_FREE_MODELS
+            and effective_tier == "elite"
+            and not use_free_models
+            and ELITE_ORCHESTRATION_AVAILABLE
+        ):
+            _elite_free_active = True
+            _free_pool = _get_all_free_models()
+            _to_add = [m for m in _free_pool if m not in actual_models][:5]
+            if _to_add:
+                actual_models = actual_models + _to_add
+                user_model_names = user_model_names + _to_add
+                logger.info(
+                    "ELITE+ FREE ENSEMBLE: merged %d free models into elite set -> %s",
+                    len(_to_add), actual_models,
+                )
+
         logger.info(
             "Final models for orchestration: %s (display: %s)",
             actual_models,
@@ -2578,16 +2689,45 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             logger.info("Manual engine mode: using explicit settings from request")
         
         # ========================================================================
-        # FREE TIER GUARD: disable engines that bypass tier-filtered models
-        # HRM passes provider names (not model IDs) to the executor, causing
-        # fallback to paid defaults (GPT-4o). Adaptive routing also overrides
-        # the filtered model list.  Disable both for free tier only.
+        # FREE TIER GUARD: constrain engines to tier-safe model sets
+        # Phase B upgrade: use allowlist filtering instead of blanket disable.
+        # If tier_allowlist is available, HRM/adaptive can run on filtered
+        # candidates. Otherwise fall back to the original blanket disable.
         # ========================================================================
         if use_free_models:
-            orchestration_config["use_hrm"] = False
-            orchestration_config["use_adaptive_routing"] = False
-            orchestration_config["use_deep_consensus"] = False
-            logger.info("FREE TIER GUARD: disabled HRM/adaptive/consensus to enforce free-model-only routing")
+            if TIER_ALLOWLIST_AVAILABLE:
+                orchestration_config = get_tier_safe_orchestration_flags(
+                    effective_tier, orchestration_config,
+                )
+                logger.info(
+                    "FREE TIER GUARD (allowlist): HRM=%s, adaptive=%s, consensus=%s",
+                    orchestration_config.get("use_hrm"),
+                    orchestration_config.get("use_adaptive_routing"),
+                    orchestration_config.get("use_deep_consensus"),
+                )
+            else:
+                orchestration_config["use_hrm"] = False
+                orchestration_config["use_adaptive_routing"] = False
+                orchestration_config["use_deep_consensus"] = False
+                logger.info("FREE TIER GUARD (legacy): disabled HRM/adaptive/consensus")
+
+        # ========================================================================
+        # ELITE+ FREE ENSEMBLE: re-enable advanced orchestration
+        # When elite+ merges free models into the elite set, we explicitly
+        # allow HRM / adaptive / consensus — the tier is still elite, so these
+        # engines are safe.  This block overrides the guard above for the case
+        # where _elite_free_active was set earlier.
+        # ========================================================================
+        if _elite_free_active:
+            orchestration_config["use_hrm"] = orchestration_config.get("use_hrm", True) or True
+            orchestration_config["use_adaptive_routing"] = orchestration_config.get("use_adaptive_routing", True) or True
+            orchestration_config["use_deep_consensus"] = orchestration_config.get("use_deep_consensus", True) or True
+            logger.info(
+                "ELITE+ FREE ENSEMBLE: re-enabled HRM=%s, adaptive=%s, consensus=%s",
+                orchestration_config.get("use_hrm"),
+                orchestration_config.get("use_adaptive_routing"),
+                orchestration_config.get("use_deep_consensus"),
+            )
 
         # ========================================================================
         # STEP 1.22: AUTO-ENABLE HRM FOR COMPLEX QUERIES (Legacy + Override)
@@ -3306,32 +3446,52 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     )
                     selected_strategy = strategy
                     
-                    # For FREE tier: use "parallel_race" for speed, or let normal strategy work
-                    # The tier filtering already ensures we use free models, so we can use
-                    # normal orchestration strategies. Just avoid "auto/dynamic" which would
-                    # try to fetch models from OpenRouter.
-                    elite_strategy = strategy
-                    if use_free_models and strategy in ("auto", "automatic", "dynamic"):
-                        elite_strategy = "parallel_race"  # Fast multi-model, avoids dynamic selection
-                        logger.info("FREE tier: using parallel_race to avoid dynamic model selection")
-                    
-                    elite_result = await elite.orchestrate(
-                        enhanced_prompt,
-                        task_type=task_type,
-                        available_models=actual_models,
-                        strategy=elite_strategy,
-                        quality_threshold=0.7,
-                        max_parallel=min(3, len(actual_models)),
-                    )
-                    
-                    final_text = elite_result.final_answer
-                    
-                    logger.info(
-                        "Elite orchestration complete: strategy=%s, quality=%.2f, models=%s",
-                        elite_result.strategy_used,
-                        elite_result.quality_score,
-                        elite_result.models_used,
-                    )
+                    # =================================================================
+                    # PROGRESSIVE FREE: staged escalation (if enabled)
+                    # =================================================================
+                    if (
+                        use_free_models
+                        and _FREE_PROGRESSIVE
+                        and PROGRESSIVE_FREE_AVAILABLE
+                    ):
+                        logger.info("PROGRESSIVE FREE: using staged escalation with models=%s", actual_models)
+                        prog_result = await run_progressive_free(
+                            enhanced_prompt, actual_models, _orchestrator,
+                        )
+                        final_text = prog_result.final_answer
+                        extra["progressive_free"] = prog_result.to_telemetry()
+                        user_model_names = prog_result.models_used
+                        logger.info(
+                            "PROGRESSIVE FREE complete: stages=%d calls=%d conf=%.2f early=%s",
+                            prog_result.stages_executed,
+                            prog_result.total_calls,
+                            prog_result.final_confidence,
+                            prog_result.early_stopped,
+                        )
+                    else:
+                        # For FREE tier: use "parallel_race" for speed, or let normal strategy work
+                        elite_strategy = strategy
+                        if use_free_models and strategy in ("auto", "automatic", "dynamic"):
+                            elite_strategy = "parallel_race"
+                            logger.info("FREE tier: using parallel_race to avoid dynamic model selection")
+                        
+                        elite_result = await elite.orchestrate(
+                            enhanced_prompt,
+                            task_type=task_type,
+                            available_models=actual_models,
+                            strategy=elite_strategy,
+                            quality_threshold=0.7,
+                            max_parallel=min(3, len(actual_models)),
+                        )
+                        
+                        final_text = elite_result.final_answer
+                        
+                        logger.info(
+                            "Elite orchestration complete: strategy=%s, quality=%.2f, models=%s",
+                            elite_result.strategy_used,
+                            elite_result.quality_score,
+                            elite_result.models_used,
+                        )
                 except Exception as e:
                     logger.warning("Elite orchestration failed, falling back: %s", e)
                     use_elite = False
@@ -3365,6 +3525,106 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             )
             final_text = artifacts.final_response.content
         
+        # =====================================================================
+        # TIER SPEND GOVERNOR — evaluate before any paid escalation
+        # =====================================================================
+        _spend_decision = None
+        _is_internal = False
+        _account_id = user_id or "anonymous"
+
+        if _SPEND_GOVERNOR_AVAILABLE and _spend_governor:
+            _req_headers = {}
+            if hasattr(request, "metadata") and request.metadata:
+                _req_headers = getattr(request.metadata, "headers", {}) or {}
+            _internal_flags = _sanitize_internal(_req_headers) if _sanitize_internal else {}
+            _is_internal = _internal_flags.get("is_internal", False)
+
+            _gov_tier = "free" if use_free_models else "elite+"
+            _spend_decision = _spend_governor.evaluate(
+                tier=_gov_tier,
+                account_id=_account_id,
+                predicted_cost_usd=0.01 if not use_free_models else 0.0,
+                is_internal=_is_internal,
+            )
+            extra["spend_decision"] = _spend_decision.to_dict()
+
+            if _is_internal:
+                _allow_bench_output_flag = True
+            else:
+                _allow_bench_output_flag = False
+
+        # =====================================================================
+        # ELITE+ ORCHESTRATOR (free-first verified premium tier)
+        # Runs as primary pipeline when PREMIUM_DEFAULT_TIER=elite_plus,
+        # or as shadow/tiebreak alongside Elite otherwise.
+        # =====================================================================
+        if (
+            _ELITE_PLUS_ENABLED
+            and ELITE_PLUS_AVAILABLE
+            and effective_tier == "elite"
+            and final_text
+        ):
+            try:
+                _base_confidence = 0.7
+                if elite_result and hasattr(elite_result, "quality_score"):
+                    _base_confidence = getattr(elite_result, "quality_score", 0.7)
+                _ep_category = detected_task_type or "reasoning"
+
+                _allow_bench_output = _allow_bench_output_flag if _SPEND_GOVERNOR_AVAILABLE else (
+                    os.getenv("ALLOW_INTERNAL_BENCH_OUTPUT", "0").lower() in ("1", "true")
+                )
+
+                _ep_internal_bench = _is_internal if _SPEND_GOVERNOR_AVAILABLE else _allow_bench_output
+
+                ep_result = await run_elite_plus(
+                    query=original_prompt,
+                    base_answer=final_text,
+                    base_confidence=_base_confidence,
+                    category=_ep_category,
+                    orchestrator=_orchestrator,
+                    effective_tier=effective_tier,
+                    extra=extra,
+                    internal_bench=_ep_internal_bench,
+                )
+
+                extra["elite_plus"] = ep_result.to_telemetry()
+
+                if _allow_bench_output:
+                    extra["elite_plus"]["shadow_answer"] = ep_result.answer
+
+                # Record actual spend
+                if _SPEND_GOVERNOR_AVAILABLE and _spend_governor:
+                    _spend_governor.record(
+                        _account_id,
+                        ep_result.estimated_cost_usd,
+                        tool_calls_used=len(ep_result.tool_invocations),
+                    )
+
+                # In active mode (launch): Elite+ answer replaces base
+                if _EP_MODULE_MODE == "active" and _use_elite_plus_as_premium:
+                    final_text = ep_result.answer
+                    extra["elite_plus_overridden"] = True
+                    logger.info(
+                        "ELITE+ ACTIVE: using Elite+ answer (stage=%s paid=%d cost=$%.4f)",
+                        ep_result.stage_used, ep_result.paid_calls_count,
+                        ep_result.estimated_cost_usd,
+                    )
+                elif _EP_MODULE_MODE == "tiebreak" and ep_result.confidence_final > _base_confidence + 0.15:
+                    final_text = ep_result.answer
+                    extra["elite_plus_overridden"] = True
+                    logger.info(
+                        "ELITE+ TIEBREAK: overriding base (base=%.2f elite+=%.2f)",
+                        _base_confidence, ep_result.confidence_final,
+                    )
+                else:
+                    extra["elite_plus_overridden"] = False
+
+            except Exception as ep_exc:
+                logger.warning("ELITE+ failed (non-fatal): %s", ep_exc)
+                extra["elite_plus"] = {"error": str(ep_exc)}
+                if _use_elite_plus_as_premium:
+                    logger.warning("ELITE+ active mode failed; falling back to Elite base answer")
+
         # Apply quality boosting for high accuracy requests
         # FIX: Quality booster now has min-length guard + keyword preservation
         # Safe to re-enable at level 4+ (Feb 2026 fix)
@@ -3608,8 +3868,8 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # Calculate latency
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         
-        # Build extra data
-        extra: Dict[str, Any] = {
+        # Build extra data (extra dict initialized at function entry)
+        extra.update({
             "orchestration_settings": {
                 "accuracy_level": orchestration_config.get("accuracy_level", 3),
                 "hrm_enabled": orchestration_config.get("use_hrm", False),
@@ -3617,7 +3877,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 "deep_consensus_enabled": orchestration_config.get("use_deep_consensus", False),
                 "prompt_diffusion_enabled": orchestration_config.get("use_prompt_diffusion", False),
             },
-        }
+        })
         
         # Add elite orchestrator info if used
         if elite_result:
@@ -3681,6 +3941,14 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         extra["models_attempted"] = user_model_names
         if _TRACE_PROVIDER_CALLS:
             extra["provider_calls"] = []
+
+        if TIER_ALLOWLIST_AVAILABLE and build_orch_telemetry:
+            extra["orchestration_features"] = build_orch_telemetry(
+                effective_tier,
+                orchestration_config.get("use_hrm", False),
+                orchestration_config.get("use_adaptive_routing", False),
+                orchestration_config.get("use_deep_consensus", False),
+            )
         
         # PR5: Add budget info to extra
         if budget_constraints:
@@ -3998,9 +4266,11 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         
         # ====================================================================
         # Tier violation detection (strict mode only — no-op when flags OFF)
+        # When ENABLE_ELITE_FREE_MODELS is active, mixed models in elite are
+        # intentional — skip the elite strict check in that case.
         # ====================================================================
         _tier_violation = None
-        if _ELITE_TIER_STRICT and effective_tier == "elite" and use_free_models:
+        if _ELITE_TIER_STRICT and effective_tier == "elite" and use_free_models and not _elite_free_active:
             _tier_violation = "ELITE_TIER_MODEL_VIOLATION: elite tier active but free-model flag set"
         if _FREE_TIER_STRICT_SERVER and effective_tier == "free":
             _all_free = _get_all_free_models() if ELITE_ORCHESTRATION_AVAILABLE else set()

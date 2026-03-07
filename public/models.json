@@ -1,0 +1,572 @@
+{
+  "registryVersion": "2",
+  "registryIntegrityHash": "370a6ff992d8262db7980fb313c14f919817497646cfa9c6d2fc7713ff681c98",
+  "generatedBy": "scripts/export_model_registry.py",
+  "models": [
+    {
+      "id": "zhipuai/glm-4.7",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "math",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.85,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "math": 98
+      },
+      "recommended": false,
+      "bestForCategories": [
+        "math"
+      ],
+      "leaderboardRank": {
+        "math": 1
+      },
+      "notes": "GSM8K champion (Feb 2026)"
+    },
+    {
+      "id": "openai/gpt-5.2",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "coding",
+        "dialogue",
+        "math",
+        "rag",
+        "reasoning",
+        "tool_use",
+        "verification"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.95,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "math": 97.5,
+        "reasoning": 92.8,
+        "coding": 95.5,
+        "rag": 88,
+        "dialogue": 90,
+        "tool_use": 93
+      },
+      "recommended": true,
+      "bestForCategories": [
+        "rag",
+        "reasoning"
+      ],
+      "leaderboardRank": {
+        "coding": 2,
+        "dialogue": 2,
+        "math": 2,
+        "rag": 1,
+        "reasoning": 1,
+        "tool_use": 2
+      },
+      "notes": null
+    },
+    {
+      "id": "google/gemini-3.1-pro-preview",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "long_context",
+        "math",
+        "multilingual",
+        "reasoning",
+        "tool_use"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.9,
+      "contextWindow": 1050000,
+      "categoryScores": {
+        "math": 97.2,
+        "reasoning": 91.8,
+        "long_context": 96
+      },
+      "recommended": true,
+      "bestForCategories": [
+        "long_context"
+      ],
+      "leaderboardRank": {
+        "long_context": 1,
+        "math": 3,
+        "reasoning": 2
+      },
+      "notes": "Best long-context model (1.05M tokens)"
+    },
+    {
+      "id": "anthropic/claude-opus-4.6",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "coding",
+        "math",
+        "multilingual",
+        "rag",
+        "reasoning",
+        "tool_use",
+        "verification"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.94,
+      "contextWindow": 200000,
+      "categoryScores": {
+        "math": 95.8,
+        "reasoning": 90,
+        "coding": 97,
+        "multilingual": 90.8,
+        "dialogue": 94,
+        "tool_use": 93.5
+      },
+      "recommended": true,
+      "bestForCategories": [
+        "coding",
+        "dialogue",
+        "multilingual",
+        "tool_use"
+      ],
+      "leaderboardRank": {
+        "coding": 1,
+        "dialogue": 1,
+        "math": 7,
+        "multilingual": 1,
+        "reasoning": 4,
+        "tool_use": 1
+      },
+      "notes": "Top coding model, strong across all categories"
+    },
+    {
+      "id": "deepseek/deepseek-reasoner",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "math",
+        "reasoning",
+        "verification"
+      ],
+      "latencyTier": "very_slow",
+      "reliability": 0.6,
+      "contextWindow": 64000,
+      "categoryScores": {
+        "math": 97,
+        "reasoning": 91
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "math": 4,
+        "reasoning": 3
+      },
+      "notes": "Powerful but VERY SLOW (62s+ typical). Do NOT use as default verifier."
+    },
+    {
+      "id": "moonshot/kimi-k2.5-thinking",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "coding",
+        "math",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.88,
+      "contextWindow": 256000,
+      "categoryScores": {
+        "math": 96.8,
+        "reasoning": 88,
+        "coding": 92
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "coding": 4,
+        "math": 5,
+        "reasoning": 7
+      },
+      "notes": "Thinking mode with visual coding"
+    },
+    {
+      "id": "google/gemini-2.5-pro",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "long_context",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.91,
+      "contextWindow": 1000000,
+      "categoryScores": {
+        "long_context": 96
+      },
+      "recommended": true,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "long_context": 2
+      },
+      "notes": null
+    },
+    {
+      "id": "google/gemini-3-pro",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "long_context",
+        "math",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.91,
+      "contextWindow": 1000000,
+      "categoryScores": {
+        "math": 96,
+        "reasoning": 87.5
+      },
+      "recommended": true,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "math": 6,
+        "reasoning": 8
+      },
+      "notes": null
+    },
+    {
+      "id": "google/gemini-2.5-flash",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "reasoning",
+        "speed"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.93,
+      "contextWindow": 1000000,
+      "categoryScores": {
+        "speed": 95
+      },
+      "recommended": true,
+      "bestForCategories": [
+        "speed"
+      ],
+      "leaderboardRank": {
+        "speed": 1
+      },
+      "notes": "Fast Gemini variant"
+    },
+    {
+      "id": "x-ai/grok-3-mini",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "math",
+        "reasoning",
+        "tool_use",
+        "verification"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.92,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "math": 93.8,
+        "reasoning": 89
+      },
+      "recommended": true,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "math": 8,
+        "reasoning": 6
+      },
+      "notes": "Fast CoT, good for quick verification"
+    },
+    {
+      "id": "alibaba/qwen3-max",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "coding",
+        "multilingual",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.87,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "coding": 92.7,
+        "multilingual": 80.5
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "coding": 3,
+        "multilingual": 3
+      },
+      "notes": null
+    },
+    {
+      "id": "deepseek/deepseek-chat",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "coding",
+        "math",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.85,
+      "contextWindow": 64000,
+      "categoryScores": {
+        "math": 90,
+        "reasoning": 80,
+        "coding": 82
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "coding": 7,
+        "math": 9,
+        "reasoning": 10
+      },
+      "notes": null
+    },
+    {
+      "id": "anthropic/claude-sonnet-4",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "coding",
+        "long_context",
+        "math",
+        "multilingual",
+        "rag",
+        "reasoning",
+        "verification"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.96,
+      "contextWindow": 1000000,
+      "categoryScores": {
+        "coding": 82,
+        "reasoning": 89.1,
+        "multilingual": 89.1
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "coding": 6,
+        "multilingual": 2,
+        "reasoning": 5
+      },
+      "notes": "Fast, reliable \u2014 good verifier candidate"
+    },
+    {
+      "id": "openai/gpt-4o",
+      "tier": "elite",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "coding",
+        "dialogue",
+        "reasoning",
+        "verification"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.97,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "reasoning": 85,
+        "coding": 88
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "coding": 5,
+        "reasoning": 9
+      },
+      "notes": "Very fast, very reliable \u2014 excellent verifier"
+    },
+    {
+      "id": "nvidia/nemotron-3-nano-30b-a3b:free",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "reasoning",
+        "speed"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.82,
+      "contextWindow": 256000,
+      "categoryScores": {
+        "reasoning": 70,
+        "speed": 85
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "reasoning": 17,
+        "speed": 2
+      },
+      "notes": "Fast, 256K context"
+    },
+    {
+      "id": "meta-llama/llama-3.3-70b-instruct:free",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "coding",
+        "dialogue",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.8,
+      "contextWindow": 131000,
+      "categoryScores": {
+        "reasoning": 78,
+        "coding": 76,
+        "dialogue": 75
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "coding": 9,
+        "dialogue": 3,
+        "reasoning": 12
+      },
+      "notes": "GPT-4 level free model"
+    },
+    {
+      "id": "openai/gpt-4o-mini",
+      "tier": "both",
+      "tierDisplay": "Elite+",
+      "capabilities": [
+        "coding",
+        "reasoning",
+        "verification"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.97,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "reasoning": 78
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "reasoning": 11
+      },
+      "notes": "Cheapest fast model \u2014 ideal lightweight verifier"
+    },
+    {
+      "id": "qwen/qwen3-coder:free",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "coding",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.8,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "coding": 78,
+        "reasoning": 75
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "coding": 8,
+        "reasoning": 14
+      },
+      "notes": null
+    },
+    {
+      "id": "qwen/qwen3-next-80b-a3b-instruct:free",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "multilingual",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.78,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "reasoning": 76,
+        "multilingual": 74
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "multilingual": 4,
+        "reasoning": 13
+      },
+      "notes": null
+    },
+    {
+      "id": "google/gemma-3-27b-it:free",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "multilingual",
+        "multimodal",
+        "reasoning"
+      ],
+      "latencyTier": "medium",
+      "reliability": 0.78,
+      "contextWindow": 131000,
+      "categoryScores": {
+        "reasoning": 74,
+        "multilingual": 72
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "multilingual": 5,
+        "reasoning": 15
+      },
+      "notes": "Vision-language, 140+ languages"
+    },
+    {
+      "id": "arcee-ai/trinity-large-preview:free",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "dialogue",
+        "reasoning"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.75,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "reasoning": 72,
+        "dialogue": 70
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "dialogue": 4,
+        "reasoning": 16
+      },
+      "notes": null
+    },
+    {
+      "id": "arcee-ai/trinity-mini:free",
+      "tier": "free",
+      "tierDisplay": "Free",
+      "capabilities": [
+        "reasoning"
+      ],
+      "latencyTier": "fast",
+      "reliability": 0.75,
+      "contextWindow": 128000,
+      "categoryScores": {
+        "reasoning": 68
+      },
+      "recommended": false,
+      "bestForCategories": [],
+      "leaderboardRank": {
+        "reasoning": 18
+      },
+      "notes": null
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "_doc": "Launch-candidate evaluation floors. P0 categories MUST have data — gate fails if no samples. min_n is the minimum required sample count.",
+  "categories": {
+    "tool_use": {
+      "priority": "P0",
+      "require_nonzero_data": true,
+      "min_score": 60.0,
+      "max_cost_usd_avg": 0.015,
+      "max_paid_call_pct": 60,
+      "max_tool_error_rate_pct": 20,
+      "min_n": 3
+    },
+    "rag": {
+      "priority": "P0",
+      "require_nonzero_data": true,
+      "min_score": 55.0,
+      "max_cost_usd_avg": 0.015,
+      "max_paid_call_pct": 50,
+      "max_rag_ungrounded_pct": 25,
+      "min_n": 3
+    },
+    "dialogue": {
+      "priority": "P0",
+      "require_nonzero_data": true,
+      "min_score": 70.0,
+      "max_cost_usd_avg": 0.008,
+      "max_paid_call_pct": 30,
+      "min_n": 3
+    },
+    "math": {
+      "priority": "P0",
+      "require_nonzero_data": true,
+      "min_score": 72.0,
+      "max_cost_usd_avg": 0.012,
+      "max_paid_call_pct": 50,
+      "min_n": 3
+    },
+    "reasoning": {
+      "priority": "P1",
+      "min_score": 70.0,
+      "max_cost_usd_avg": 0.012,
+      "max_paid_call_pct": 50,
+      "min_n": 3
+    },
+    "coding": {
+      "priority": "P1",
+      "min_score": 65.0,
+      "max_cost_usd_avg": 0.020,
+      "max_paid_call_pct": 60,
+      "min_n": 2
+    },
+    "long_context": {
+      "priority": "P1",
+      "min_score": 55.0,
+      "max_cost_usd_avg": 0.025,
+      "max_paid_call_pct": 70,
+      "min_n": 2
+    },
+    "multilingual": {
+      "priority": "P2",
+      "min_score": 60.0,
+      "max_cost_usd_avg": 0.012,
+      "max_paid_call_pct": 40,
+      "min_n": 2
+    }
+  },
+  "global": {
+    "budget_p50_usd": 0.010,
+    "budget_p95_usd": 0.025,
+    "max_fallback_elite_pct": 15,
+    "max_latency_p95_ms": 15000
+  }
+}
