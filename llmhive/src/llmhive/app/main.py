@@ -9,7 +9,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -561,12 +561,21 @@ async def build_info() -> dict:
 
 
 @app.get("/internal/launch_kpis", summary="Launch KPI snapshot", include_in_schema=False)
-async def launch_kpis() -> dict:
+async def launch_kpis(request: Request) -> dict:
     """Real-time KPI snapshot for post-deploy monitoring.
 
     Returns cost, paid-call rate, tool/RAG health, circuit breaker status,
     and model registry version — designed for dashboards and alerting.
     """
+    try:
+        from .orchestration.internal_auth import is_internal_request
+        if not is_internal_request(request=request):
+            raise HTTPException(status_code=403, detail="Forbidden")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     from pathlib import Path as _P
     import json as _json
 

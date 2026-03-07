@@ -5,6 +5,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "llmhive", "src"))
 
+import llmhive.app.orchestration.tier_spend_governor as tsg
 from llmhive.app.orchestration.tier_spend_governor import (
     TierSpendGovernor,
     _SpendLedger,
@@ -120,6 +121,22 @@ class TestGlobalBreaker(unittest.TestCase):
         d = self.gov.evaluate("elite+", "admin", predicted_cost_usd=0.01, is_internal=True)
         self.assertTrue(d.allowed_paid_escalation)
         self.assertTrue(d.is_internal_override)
+
+    def test_firestore_unavailable_fails_closed(self):
+        class UnavailableLedger(_SpendLedger):
+            def is_available(self):
+                return False
+
+        original_backend = tsg.SPEND_LEDGER_BACKEND
+        try:
+            tsg.SPEND_LEDGER_BACKEND = "firestore"
+            gov = TierSpendGovernor(UnavailableLedger())
+            d = gov.evaluate("elite+", "firestore_user", predicted_cost_usd=0.01)
+            self.assertFalse(d.allowed_paid_escalation)
+            self.assertEqual(d.reason_blocked, "ledger_unavailable_fail_closed")
+            self.assertEqual(d.ledger_backend, "firestore_unavailable")
+        finally:
+            tsg.SPEND_LEDGER_BACKEND = original_backend
 
 
 class TestInternalAuth(unittest.TestCase):
