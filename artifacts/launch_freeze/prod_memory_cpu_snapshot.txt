@@ -1,0 +1,10 @@
+# Cloud Run resources — 2026-03-07T23:21:23.066301+00:00
+
+spec:
+  template:
+    spec:
+      containers:
+      - resources:
+          limits:
+            cpu: '2'
+            memory: 1Gi

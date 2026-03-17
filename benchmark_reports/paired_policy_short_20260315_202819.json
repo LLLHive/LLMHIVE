@@ -1,0 +1,228 @@
+{
+  "timestamp": "2026-03-16T05:18:59.733148",
+  "sample_percent": 10,
+  "seed": 1337,
+  "min_per_category": {
+    "reasoning": 20,
+    "multilingual": 20,
+    "coding": 10,
+    "math": 20,
+    "tool_use": 10,
+    "rag": 40,
+    "long_context": 10,
+    "dialogue": 10
+  },
+  "overall": {
+    "free_first_accuracy": 88.1,
+    "leader_first_accuracy": 87.1,
+    "delta_pp": -1.1
+  },
+  "per_category": {
+    "Coding (HumanEval)": {
+      "free_first_accuracy": 95.9,
+      "leader_first_accuracy": 95.9,
+      "delta_pp": 0.0,
+      "verdict": "neutral",
+      "infra_errors": {
+        "free_first": 1,
+        "leader_first": 1
+      },
+      "infra_rate_pct": {
+        "free_first": 2.0,
+        "leader_first": 2.0
+      }
+    },
+    "Dialogue (MT-Bench)": {
+      "free_first_accuracy": 83.1,
+      "leader_first_accuracy": 73.0,
+      "delta_pp": -10.1,
+      "verdict": "worse",
+      "infra_errors": {
+        "free_first": 1,
+        "leader_first": 0
+      },
+      "infra_rate_pct": {
+        "free_first": 10.0,
+        "leader_first": 0.0
+      }
+    },
+    "General Reasoning (MMLU)": {
+      "free_first_accuracy": 84.2,
+      "leader_first_accuracy": 68.4,
+      "delta_pp": -15.8,
+      "verdict": "worse",
+      "infra_errors": {
+        "free_first": 1,
+        "leader_first": 1
+      },
+      "infra_rate_pct": {
+        "free_first": 5.0,
+        "leader_first": 5.0
+      }
+    },
+    "Long Context (LongBench)": {
+      "free_first_accuracy": 90.0,
+      "leader_first_accuracy": 100.0,
+      "delta_pp": 10.0,
+      "verdict": "better",
+      "infra_errors": {
+        "free_first": 0,
+        "leader_first": 0
+      },
+      "infra_rate_pct": {
+        "free_first": 0.0,
+        "leader_first": 0.0
+      }
+    },
+    "Math (GSM8K)": {
+      "free_first_accuracy": 100.0,
+      "leader_first_accuracy": 100.0,
+      "delta_pp": 0.0,
+      "verdict": "neutral",
+      "infra_errors": {
+        "free_first": 0,
+        "leader_first": 0
+      },
+      "infra_rate_pct": {
+        "free_first": 0.0,
+        "leader_first": 0.0
+      }
+    },
+    "Multilingual (MMMLU)": {
+      "free_first_accuracy": 50.0,
+      "leader_first_accuracy": 45.0,
+      "delta_pp": -5.0,
+      "verdict": "worse",
+      "infra_errors": {
+        "free_first": 0,
+        "leader_first": 0
+      },
+      "infra_rate_pct": {
+        "free_first": 0.0,
+        "leader_first": 0.0
+      }
+    },
+    "RAG (MS MARCO)": {
+      "free_first_accuracy": 55.3,
+      "leader_first_accuracy": 57.6,
+      "delta_pp": 2.3,
+      "verdict": "better",
+      "infra_errors": {
+        "free_first": 0,
+        "leader_first": 0
+      },
+      "infra_rate_pct": {
+        "free_first": 0.0,
+        "leader_first": 0.0
+      }
+    },
+    "Tool Use (ToolBench)": {
+      "free_first_accuracy": 70.0,
+      "leader_first_accuracy": 90.0,
+      "delta_pp": 20.0,
+      "verdict": "better",
+      "infra_errors": {
+        "free_first": 0,
+        "leader_first": 0
+      },
+      "infra_rate_pct": {
+        "free_first": 0.0,
+        "leader_first": 0.0
+      }
+    }
+  },
+  "cost": {
+    "free_first": {
+      "p50_usd": 0.0,
+      "p95_usd": 0.0075
+    },
+    "leader_first": {
+      "p50_usd": 0.0,
+      "p95_usd": 0.0075
+    }
+  },
+  "paid_calls": {
+    "free_first": {
+      "pct": 23.3,
+      "count": 95,
+      "paid_call_made_count": 95
+    },
+    "leader_first": {
+      "pct": 23.3,
+      "count": 95,
+      "paid_call_made_count": 95
+    }
+  },
+  "anchor_models_used": {
+    "google/gemini-3.1-pro-preview": 163,
+    "openai/gpt-5.2": 78,
+    "anthropic/claude-opus-4.6": 74,
+    "anthropic/claude-sonnet-4": 1,
+    "openai/gpt-4o-mini": 91
+  },
+  "fallback_rates": {
+    "free_first": {
+      "grounding_fail_rate": 0.0,
+      "tool_schema_invalid_rate": 0.0,
+      "fallback_rate": 0.0,
+      "grounding_fail_count": 0,
+      "tool_schema_invalid_count": 0,
+      "fallback_count": 0
+    },
+    "leader_first": {
+      "grounding_fail_rate": 0.0,
+      "tool_schema_invalid_rate": 0.0,
+      "fallback_rate": 0.0,
+      "grounding_fail_count": 0,
+      "tool_schema_invalid_count": 0,
+      "fallback_count": 0
+    }
+  },
+  "mcq_telemetry": {
+    "free_first": {
+      "mcq_tie_detected": 0,
+      "mcq_tie_break_strategy": "none",
+      "mcq_invalid_extraction_count": 0,
+      "mcq_retry_count": 2
+    },
+    "leader_first": {
+      "mcq_tie_detected": 0,
+      "mcq_tie_break_strategy": "none",
+      "mcq_invalid_extraction_count": 1,
+      "mcq_retry_count": 1
+    }
+  },
+  "infra_fail_rate": {
+    "free_first": 0.56,
+    "leader_first": 0.0
+  },
+  "phase_exit_codes": {
+    "free_first": 1,
+    "leader_first": 1
+  },
+  "phase_regression_gate_failed": {
+    "free_first": true,
+    "leader_first": true
+  },
+  "promotion_recommendation": "HOLD \u2014 insufficient evidence or gate failure",
+  "promotion_gate": {
+    "reasoning_delta_pp": -15.8,
+    "multilingual_delta_pp": -5.0,
+    "cost_p95_within_ceiling": true,
+    "paid_pct_under_limit": true,
+    "infra_fail_rate_ok": true
+  },
+  "dominance_assertion": {
+    "all_deterministic_pass": false,
+    "violations": [
+      {
+        "category": "General Reasoning (MMLU)",
+        "delta_pp": -15.8
+      },
+      {
+        "category": "Multilingual (MMMLU)",
+        "delta_pp": -5.0
+      }
+    ]
+  }
+}

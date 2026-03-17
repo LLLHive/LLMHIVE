@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-02-05T13:42:13.927946",
+  "tier": "elite",
+  "reasoning_mode": "deep",
+  "config": {
+    "num_runs": 1,
+    "base_seed": 42,
+    "sample_sizes": {
+      "mmlu": 10,
+      "gsm8k": 10,
+      "humaneval": 5,
+      "msmarco": 10,
+      "toolbench": 50
+    }
+  },
+  "results": {
+    "general_reasoning": {
+      "avg_accuracy": 70.0,
+      "std_accuracy": 0.0,
+      "runs": [
+        {
+          "category": "General Reasoning",
+          "dataset": "MMLU (lighteval/mmlu)",
+          "sample_size": 10,
+          "correct": 7,
+          "attempted": 10,
+          "errors": 0,
+          "accuracy": 70.0,
+          "avg_latency_ms": 6454,
+          "avg_cost": 0.004733,
+          "total_cost": 0.0473,
+          "extra": {
+            "seed": 42
+          }
+        }
+      ],
+      "total_cost": 0.0473,
+      "avg_cost": 0.00473
+    },
+    "math": {
+      "avg_accuracy": 80.0,
+      "std_accuracy": 0.0,
+      "runs": [
+        {
+          "category": "Math",
+          "dataset": "GSM8K (openai/gsm8k)",
+          "sample_size": 10,
+          "correct": 8,
+          "attempted": 10,
+          "errors": 0,
+          "accuracy": 80.0,
+          "avg_latency_ms": 10098,
+          "avg_cost": 0.008434,
+          "total_cost": 0.0843,
+          "extra": {
+            "seed": 42
+          }
+        }
+      ],
+      "total_cost": 0.0843,
+      "avg_cost": 0.00843
+    },
+    "coding": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [
+        {
+          "category": "Coding",
+          "dataset": "HumanEval (openai/human_eval)",
+          "sample_size": 5,
+          "correct": 0,
+          "attempted": 5,
+          "errors": 0,
+          "accuracy": 0.0,
+          "avg_latency_ms": 4926,
+          "avg_cost": 0.002408,
+          "total_cost": 0.012,
+          "extra": {
+            "seed": 42
+          }
+        }
+      ],
+      "total_cost": 0.012,
+      "avg_cost": 0.0024
+    },
+    "rag": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [
+        {
+          "category": "RAG",
+          "dataset": "MS MARCO (microsoft/ms_marco v1.1)",
+          "sample_size": 10,
+          "correct": 0,
+          "attempted": 10,
+          "errors": 0,
+          "accuracy": 0.0,
+          "avg_latency_ms": 4508,
+          "avg_cost": 0.002963,
+          "total_cost": 0.0296,
+          "extra": {
+            "seed": 42,
+            "avg_f1": 37.03
+          }
+        }
+      ],
+      "total_cost": 0.0296,
+      "avg_cost": 0.00296
+    },
+    "tool_use": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [
+        {
+          "category": "Tool Use",
+          "dataset": "ToolBench (OpenBMB) - REQUIRES ToolEval",
+          "sample_size": 0,
+          "correct": 0,
+          "attempted": 0,
+          "errors": 1,
+          "accuracy": 0.0,
+          "avg_latency_ms": 0,
+          "avg_cost": 0.0,
+          "total_cost": 0.0,
+          "extra": {
+            "error": "ToolEval not implemented in this script"
+          }
+        }
+      ],
+      "total_cost": 0.0,
+      "avg_cost": 0.0
+    }
+  }
+}

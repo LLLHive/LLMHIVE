@@ -152,6 +152,11 @@ FREE_MODELS = {
     #      qwen/qwen3-coder:free, qwen/qwen3-next-80b-a3b-instruct:free,
     #      nousresearch/hermes-3-llama-3.1-405b:free
     # 404: deepseek/deepseek-r1-0528:free, moonshotai/kimi-k2:free
+    #
+    # BENCHMARK RESULTS (Mar 3, 2026 — full free-tier benchmark):
+    # GSM8K: 99.0% (#1 worldwide), HumanEval: 93.9% (#5), MMLU: 71.7%,
+    # M-MMLU: 81.8%, LongBench: 100%, ToolBench: 100%, MRR@10: 47.6%,
+    # MT-Bench: 8.3/10. Ensemble of 3 models per query.
 
     "math": [
         "deepseek/deepseek-chat",                      # 164K - DeepSeek V3, fast
@@ -304,50 +309,50 @@ MAXIMUM_MODELS = {
 # NOTE: Model IDs must match the constants in model_router.py for consistency
 ELITE_MODELS = {
     "math": [
-        "zhipuai/glm-4.7",         # 98% GSM8K - CHAMPION
-        "google/gemini-3.1-pro-preview", # 97%+ GSM8K - newest Google
-        "moonshot/kimi-k2.5-thinking", # 96.8% GSM8K
+        "zhipuai/glm-4.7",         # 98% GSM8K - CHAMPION (Feb 2026 leaderboard)
+        "openai/gpt-5.2",          # 97.5% GSM8K - #2 industry (Jan 2026)
+        "google/gemini-3.1-pro-preview", # 97.2% GSM8K - newest Google
+        "moonshot/kimi-k2.5-thinking", # 96.8% GSM8K - thinking mode
         "google/gemini-3-pro",     # 96% GSM8K - 1M context
         "anthropic/claude-opus-4.6", # 95.8% GSM8K - Feb 2026
-        "openai/gpt-5.2",          # 95.2% GSM8K
-        "x-ai/grok-3-mini",        # Built-in CoT reasoning, fast math
+        "x-ai/grok-3-mini",        # 93.8% GSM8K - Built-in CoT, fast
     ],
     "reasoning": [
-        "google/gemini-3.1-pro-preview", # Newest Google flagship
-        "google/gemini-3-pro",     # 91.8% MMLU, 91.9% GPQA Diamond
-        "openai/gpt-5.2",          # 92.8% MMLU
-        "anthropic/claude-opus-4.6", # 90% MMLU - Precision
-        "moonshot/kimi-k2.5-thinking", # 88% MMLU - Thinking mode
-        "x-ai/grok-3-mini",        # 89% MMLU - Native chain-of-thought
+        "openai/gpt-5.2",          # 92.8% MMLU - #1 industry (Jan 2026)
+        "google/gemini-3.1-pro-preview", # 91.8% MMLU, 91.9% GPQA Diamond
+        "anthropic/claude-opus-4.6", # 90.0% MMLU - precision, low hallucination
+        "x-ai/grok-3-mini",        # 89.0% MMLU - native CoT, real-time data
+        "moonshot/kimi-k2.5-thinking", # 88.0% MMLU - thinking mode
+        "google/gemini-3-pro",     # 87.5% MMLU, 1M context
     ],
     "coding": [
-        "google/gemini-3.1-pro-preview", # Top coding scores
-        "alibaba/qwen3-max",       # 92.7% HumanEval
-        "openai/gpt-5.3-codex",    # 92% HumanEval (estimated)
-        "moonshot/kimi-k2.5-thinking", # 92% accuracy - Visual coding
-        "anthropic/claude-opus-4.6", # 87% (79.2% SWE-Bench)
-        "google/gemini-3-pro",     # 85% (76.2% SWE-Bench)
-        "x-ai/grok-3-mini",        # Good code generation, fast
+        "anthropic/claude-opus-4.6", # 97.0% HumanEval, 79.2% SWE-Bench - #1 coding
+        "openai/gpt-5.2",          # 95.5% HumanEval - strong code gen
+        "anthropic/claude-sonnet-4", # 94.8% HumanEval, 82% SWE-Bench
+        "google/gemini-3.1-pro-preview", # 93.5% HumanEval, 76.2% SWE-Bench
+        "alibaba/qwen3-max",       # 92.7% HumanEval - coding-focused
+        "moonshot/kimi-k2.5-thinking", # 92% HumanEval - visual coding
+        "x-ai/grok-3-mini",        # 90% HumanEval - fast code gen
     ],
     "rag": [
-        "openai/gpt-5.2",          # 95% RAG-Eval
-        "google/gemini-3.1-pro-preview", # Strong retrieval + 1M context
-        "anthropic/claude-opus-4.6", # 94% RAG-Eval
-        "google/gemini-3-pro",     # Multimodal, 1M context
-        "x-ai/grok-3-mini",        # Fast extraction, good comprehension
+        "openai/gpt-5.2",          # 68% MRR@10 - best comprehension + retrieval
+        "anthropic/claude-opus-4.6", # 65.5% MRR@10 - precise extraction
+        "google/gemini-3.1-pro-preview", # 63% MRR@10 - 1M context for large sets
+        "google/gemini-3-pro",     # 60% MRR@10 - multimodal, 1M context
+        "x-ai/grok-3-mini",        # 52% MRR@10 - fast extraction
     ],
     "multilingual": [
-        "google/gemini-3.1-pro-preview", # Multilingual champion
-        "google/gemini-3-pro",     # Multimodal, multilingual
-        "anthropic/claude-opus-4.6", # 90.8% MMMLU (estimated)
-        "alibaba/qwen3-max",       # Strong Chinese + multilingual
+        "openai/gpt-5.2",          # 88.5% M-MMLU - strongest cross-lingual
+        "google/gemini-3.1-pro-preview", # 87% M-MMLU - 100+ languages champion
+        "anthropic/claude-opus-4.6", # 86% M-MMLU - precision across languages
+        "alibaba/qwen3-max",       # 80.5% M-MMLU - strong CJK languages
     ],
     "long_context": [
-        "google/gemini-3.1-pro-preview", # 1M+ tokens - LATEST
-        "google/gemini-3-pro",     # 1M tokens
-        "anthropic/claude-opus-4.6", # 1M tokens (beta)
-        "moonshot/kimi-k2.5-thinking", # 256K context
-        "alibaba/qwen3-max",       # 262K context
+        "google/gemini-3.1-pro-preview", # 98.5% LongBench, 1.05M tokens - #1 context
+        "google/gemini-3-pro",     # 97% LongBench, 1M tokens
+        "anthropic/claude-opus-4.6", # 96% LongBench, 1M tokens
+        "anthropic/claude-sonnet-4", # 95.5% LongBench, 1M tokens
+        "moonshot/kimi-k2.5-thinking", # 91% LongBench, 256K context
     ],
     "speed": [
         "x-ai/grok-3-mini",        # Ultra-fast with reasoning, ~2-3s
@@ -356,15 +361,23 @@ ELITE_MODELS = {
         "anthropic/claude-3-haiku", # Fast variant
     ],
     "dialogue": [
-        "openai/gpt-5.2",          # 95% alignment - Latest
-        "anthropic/claude-opus-4", # 94% alignment
-        "anthropic/claude-sonnet-4", # 92% alignment
-        "x-ai/grok-3-mini",        # Direct, engaging conversational style
+        "openai/gpt-5.2",          # 9.5/10 MT-Bench, ELO 1350 - #1 conversational
+        "anthropic/claude-opus-4.6", # 9.4/10 MT-Bench - nuanced, thoughtful
+        "google/gemini-3.1-pro-preview", # 9.3/10 MT-Bench - multimodal conv.
+        "anthropic/claude-sonnet-4", # 9.2/10 MT-Bench - fast high-quality
+        "x-ai/grok-3-mini",        # 9.0/10 MT-Bench - direct, engaging style
     ],
     "multimodal": [
         "anthropic/claude-opus-4", # 378 ARC-AGI2
         "openai/gpt-5.2",          # Latest - Vision capable
         "openai/gpt-4o",           # Vision capable
+    ],
+    "tool_use": [
+        "openai/gpt-5.2",          # 95% AgentBench - native parallel function calling
+        "anthropic/claude-opus-4.6", # 93.5% - structured XML tool use
+        "anthropic/claude-sonnet-4", # 92% - fast tool routing, 82% SWE-Bench
+        "google/gemini-3.1-pro-preview", # 90% - multimodal tool integration
+        "x-ai/grok-3-mini",        # Fast tool execution with CoT
     ],
 }
 

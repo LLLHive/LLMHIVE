@@ -12,6 +12,13 @@ Hits the deployed API with curated prompts to verify:
 
 Produces structured results JSON for audit.
 
+Environment:
+  - API_KEY or LLMHIVE_API_KEY: required for /v1/chat online tests
+  - INTERNAL_ADMIN_OVERRIDE_KEY: read from env for /internal/launch_kpis validation
+    (no --internal-key flag; set export INTERNAL_ADMIN_OVERRIDE_KEY=... before running)
+  - If validating /internal endpoints and key is missing: explicit error
+    "Missing INTERNAL_ADMIN_OVERRIDE_KEY; cannot validate /internal endpoints"
+
 Usage:
     python scripts/run_synthetic_prod_suite.py --target https://llmhive-....run.app
     python scripts/run_synthetic_prod_suite.py --offline   # local governor/auth checks only
@@ -31,7 +38,7 @@ _REPORT_PATH = _ROOT / "synthetic_prod_results.json"
 
 
 def _parse_args() -> Dict[str, Any]:
-    args = {"target": "", "offline": False, "output": str(_REPORT_PATH)}
+    args = {"target": "", "offline": False, "output": str(_REPORT_PATH), "require_internal": False}
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] in ("--target", "--base-url") and i + 1 < len(sys.argv):
@@ -42,6 +49,9 @@ def _parse_args() -> Dict[str, Any]:
             i += 1
         elif sys.argv[i] == "--online":
             args["offline"] = False
+            i += 1
+        elif sys.argv[i] == "--require-internal":
+            args["require_internal"] = True
             i += 1
         elif sys.argv[i] == "--output" and i + 1 < len(sys.argv):
             args["output"] = sys.argv[i + 1]
@@ -334,6 +344,24 @@ def run_online_tests(target: str) -> List[Dict[str, Any]]:
     except Exception as e:
         results.append(_result("free_tier_escalation_blocked", False, str(e)))
 
+    # Optional: /internal/launch_kpis validation (requires INTERNAL_ADMIN_OVERRIDE_KEY from env)
+    internal_key = os.getenv("INTERNAL_ADMIN_OVERRIDE_KEY", "")
+    if internal_key:
+        try:
+            r = requests.get(
+                f"{target}/internal/launch_kpis",
+                headers={"X-LLMHive-Internal-Key": internal_key},
+                timeout=10,
+            )
+            kpis_ok = r.status_code == 200
+            results.append(_result(
+                "internal_launch_kpis_accessible",
+                kpis_ok,
+                f"status={r.status_code}" if not kpis_ok else "200 OK",
+            ))
+        except Exception as e:
+            results.append(_result("internal_launch_kpis_accessible", False, str(e)))
+
     return results
 
 
@@ -346,6 +374,13 @@ def main():
     target = args["target"]
     output_path = Path(args["output"])
     t0 = time.time()
+
+    # Explicit error when --require-internal but key missing
+    if args.get("require_internal") and target and not args["offline"]:
+        if not os.getenv("INTERNAL_ADMIN_OVERRIDE_KEY", ""):
+            print("ERROR: Missing INTERNAL_ADMIN_OVERRIDE_KEY; cannot validate /internal endpoints.")
+            print("  Set: export INTERNAL_ADMIN_OVERRIDE_KEY=<key>")
+            sys.exit(2)
 
     print("=" * 70)
     print("SYNTHETIC PRODUCTION TEST SUITE")

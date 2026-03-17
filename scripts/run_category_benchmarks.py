@@ -22,6 +22,16 @@ from datasets import load_dataset
 
 from experiment_telemetry import ExperimentTracer
 
+# MCQ extraction (regression-safe, no A-skew)
+_scripts_dir = Path(__file__).resolve().parent
+if str(_scripts_dir) not in sys.path:
+    sys.path.insert(0, str(_scripts_dir))
+try:
+    from mcq_extraction import extract_mcq_letter_strict
+    _MCQ_STRICT_AVAILABLE = True
+except ImportError:
+    _MCQ_STRICT_AVAILABLE = False
+
 # ── 2026 Intelligence Layer ──
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "llmhive" / "src"))
 try:
@@ -124,6 +134,25 @@ LLMHIVE_API_URL = os.getenv(
 )
 API_KEY = os.getenv("API_KEY") or os.getenv("LLMHIVE_API_KEY")
 
+# Bench-only: schema-safe reasoning_mode (avoids 422 on multilingual)
+from bench_reasoning_mode import discover_reasoning_mode_enum as _discover_reasoning_mode_enum_impl
+from bench_reasoning_mode import get_safe_reasoning_mode as _get_safe_reasoning_mode_impl
+
+
+def _discover_reasoning_mode_enum() -> List[str]:
+    """Fetch OpenAPI and extract allowed reasoning_mode enum. Cached per run."""
+    return _discover_reasoning_mode_enum_impl(LLMHIVE_API_URL, BENCHMARK_MODE)
+
+
+def _get_safe_reasoning_mode(requested: str) -> Optional[str]:
+    """Return reasoning_mode to send, or None to omit (avoids 422)."""
+    allowed = _discover_reasoning_mode_enum()
+    result = _get_safe_reasoning_mode_impl(requested, allowed if allowed else None)
+    if allowed and result is None and os.getenv("BENCH_REASONING_MODE"):
+        print(f"  [BENCH] BENCH_REASONING_MODE not in API enum {allowed}; omitting reasoning_mode", flush=True)
+    return result
+
+
 if not API_KEY:
     raise ValueError("API_KEY or LLMHIVE_API_KEY environment variable required")
 
@@ -222,6 +251,30 @@ _CIRCUIT_BREAKER_THRESHOLD = _get_env_float("CIRCUIT_BREAKER_THRESHOLD", 0.5)
 CATEGORY_MAX_INFLIGHT = _get_env_int("CATEGORY_MAX_INFLIGHT", 5)
 MAX_RETRIES_PER_PROVIDER = _get_env_int("MAX_RETRIES_PER_PROVIDER", 2)
 GOVERNANCE = _is_truthy(os.getenv("GOVERNANCE"))
+
+# Elite+ single-run eval: when active, the API includes shadow_answer in extra
+ELITE_PLUS_EVAL = _is_truthy(os.getenv("ELITE_PLUS_EVAL")) or "--elite-plus-eval" in sys.argv
+
+# Paired policy evaluation (Workstream E): override Elite+ policy per request for comparison
+PAIRED_POLICY_EVAL = _is_truthy(os.getenv("PAIRED_POLICY_EVAL")) or "--paired-policy" in sys.argv
+PAIRED_POLICY_OVERRIDE = os.getenv("PAIRED_POLICY_OVERRIDE", "")  # "free_first" | "leader_first"
+
+# MCQ diagnostic mode (internal bench only, default OFF)
+MCQ_DIAGNOSTIC_MODE = _is_truthy(os.getenv("MCQ_DIAGNOSTIC_MODE", "0"))
+# MCQ tie-break: third_free | paid_anchor | anchor_preference (bench only, default OFF)
+ELITE_PLUS_BENCH_MCQ_TIEBREAK = os.getenv("ELITE_PLUS_BENCH_MCQ_TIEBREAK", "").strip().lower() or None
+# Infra fail threshold: abort if infra_fail_rate > this (default 2%)
+BENCH_INFRA_FAIL_RATE_MAX = float(os.getenv("BENCH_INFRA_FAIL_RATE_MAX", "2.0"))
+# 5xx retry attempts (bench only)
+BENCH_5XX_MAX_ATTEMPTS = int(os.getenv("BENCH_5XX_MAX_ATTEMPTS", "5"))
+# A-skew sanity: abort if letter skew > 70% and accuracy < 40% after N items
+MCQ_SKEW_CHECK_AFTER = int(os.getenv("MCQ_SKEW_CHECK_AFTER", "10"))
+MCQ_SKEW_LETTER_THRESHOLD = float(os.getenv("MCQ_SKEW_LETTER_THRESHOLD", "70.0"))
+MCQ_SKEW_ACC_THRESHOLD = float(os.getenv("MCQ_SKEW_ACC_THRESHOLD", "40.0"))
+
+# Shadow answer log: pairs (category, question_id, base_answer, shadow_answer, shadow_conf, verifier_strategy)
+_ELITE_PLUS_SHADOW_LOG: List[Dict[str, Any]] = []
+_ELITE_PLUS_SHADOW_LOCK = threading.Lock()
 
 if RAG_RERANK_DETERMINISTIC:
     import warnings
@@ -801,17 +854,46 @@ def _he_log(path: Optional[str], entry: Dict[str, Any]) -> None:
 
 FRONTIER_JSON = _get_env_str("CATEGORY_BENCH_FRONTIER_JSON", "")
 
-# Sample sizes (adjust for time/cost tradeoff)
-SAMPLE_SIZES = {
-    "reasoning": _get_env_int("CATEGORY_BENCH_MMLU_SAMPLES", 100),
-    "coding": _get_env_int("CATEGORY_BENCH_HUMANEVAL_SAMPLES", 50),
-    "math": _get_env_int("CATEGORY_BENCH_GSM8K_SAMPLES", 100),
-    "multilingual": _get_env_int("CATEGORY_BENCH_MMMLU_SAMPLES", 100),
-    "long_context": _get_env_int("CATEGORY_BENCH_LONGBENCH_SAMPLES", 100),
-    "tool_use": _get_env_int("CATEGORY_BENCH_TOOLBENCH_SAMPLES", 50),
-    "rag": _get_env_int("CATEGORY_BENCH_MSMARCO_SAMPLES", 200),
-    "dialogue": _get_env_int("CATEGORY_BENCH_MTBENCH_SAMPLES", 30),
+# ============================================================================
+# CI SCHEDULED BENCHMARK MODE (Phase C)
+# When CI_SCHEDULED_BENCH=1, uses small deterministic slices (~10%) and
+# variance-aware pass/fail (only fails on statistically significant drops).
+# Expected runtime: ≤30–60 minutes.
+# ============================================================================
+_CI_SCHEDULED_BENCH = _is_truthy(os.getenv("CI_SCHEDULED_BENCH"))
+_CI_REGRESSION_THRESHOLD_PP = float(os.getenv("CI_REGRESSION_THRESHOLD_PP", "8.0"))
+
+# CI mode sample sizes: ~10% of full defaults (fast, deterministic)
+_CI_SAMPLE_SIZES = {
+    "reasoning": 10,
+    "coding": 5,
+    "math": 10,
+    "multilingual": 10,
+    "long_context": 5,
+    "tool_use": 5,
+    "rag": 20,
+    "dialogue": 3,
 }
+
+# Sample sizes (adjust for time/cost tradeoff)
+# In CI mode, override to small slices for speed.
+if _CI_SCHEDULED_BENCH:
+    SAMPLE_SIZES = {
+        k: _get_env_int(f"CATEGORY_BENCH_{k.upper()}_SAMPLES", _CI_SAMPLE_SIZES.get(k, 10))
+        for k in _CI_SAMPLE_SIZES
+    }
+    print(f"  CI BENCHMARK MODE: using reduced sample sizes {SAMPLE_SIZES}")
+else:
+    SAMPLE_SIZES = {
+        "reasoning": _get_env_int("CATEGORY_BENCH_MMLU_SAMPLES", 100),
+        "coding": _get_env_int("CATEGORY_BENCH_HUMANEVAL_SAMPLES", 50),
+        "math": _get_env_int("CATEGORY_BENCH_GSM8K_SAMPLES", 100),
+        "multilingual": _get_env_int("CATEGORY_BENCH_MMMLU_SAMPLES", 100),
+        "long_context": _get_env_int("CATEGORY_BENCH_LONGBENCH_SAMPLES", 100),
+        "tool_use": _get_env_int("CATEGORY_BENCH_TOOLBENCH_SAMPLES", 50),
+        "rag": _get_env_int("CATEGORY_BENCH_MSMARCO_SAMPLES", 200),
+        "dialogue": _get_env_int("CATEGORY_BENCH_MTBENCH_SAMPLES", 30),
+    }
 
 # ============================================================================
 # DETERMINISTIC FIXED SLICE (reproducible evaluation indices)
@@ -980,6 +1062,8 @@ def _record_exec_call(category: str, result: dict) -> None:
     c["attempted"] += 1
     if not result.get("success"):
         c["errors"] += 1
+        if _is_infra_error(result.get("error", "")):
+            c["infra_failures"] += 1
     retries = result.get("retries", 0)
     if retries > 0:
         c["retries"] += retries
@@ -1128,25 +1212,27 @@ def _build_api_payload(
 
     On a provider-switch attempt the ``exclude_providers`` hint is set so the
     orchestrator avoids the primary provider that just failed.
+    Bench-only: uses schema-safe reasoning_mode (omit if not in API enum) to avoid 422.
     """
+    safe_rm = _get_safe_reasoning_mode(reasoning_mode) if BENCHMARK_MODE else reasoning_mode
     single = _is_single_mode()
     if single:
         payload: Dict[str, Any] = {
             "prompt": prompt,
-            "reasoning_mode": reasoning_mode,
             "model": _single_model_for_category(),
             "orchestration": dict(_SINGLE_MODE_ORCHESTRATION),
         }
     else:
         payload = {
             "prompt": prompt,
-            "reasoning_mode": reasoning_mode,
             "orchestration": orchestration_config or {
                 "accuracy_level": 5,
                 "use_deep_consensus": False,
                 "enable_verification": False,
             },
         }
+    if safe_rm:
+        payload["reasoning_mode"] = safe_rm
     _effective_tier = tier
     if _ORCH_TIER_LOCK != "none":
         _effective_tier = _ORCH_TIER_LOCK
@@ -1172,6 +1258,15 @@ def _build_api_payload(
     if provider_switched:
         payload["force_provider_switch"] = True
 
+    # Paired policy eval: pass policy override for internal bench
+    if PAIRED_POLICY_EVAL and ELITE_PLUS_EVAL and PAIRED_POLICY_OVERRIDE:
+        policy_val = "leader_first_verified" if PAIRED_POLICY_OVERRIDE == "leader_first" else "free_first_verified"
+        payload.setdefault("metadata", {})
+        if isinstance(payload["metadata"], dict):
+            payload["metadata"]["elite_plus_policy_override"] = policy_val
+        else:
+            payload["metadata"] = {"elite_plus_policy_override": policy_val}
+
     return payload
 
 
@@ -1185,13 +1280,16 @@ async def _single_api_call(
     """
     start_time = time.time()
     try:
+        _headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": API_KEY,
+        }
+        if ELITE_PLUS_EVAL:
+            _headers["X-LLMHIVE-INTERNAL-BENCH"] = "1"
         response = await client.post(
             f"{LLMHIVE_API_URL}/v1/chat",
             json=payload,
-            headers={
-                "Content-Type": "application/json",
-                "X-API-Key": API_KEY,
-            },
+            headers=_headers,
         )
         latency = int((time.time() - start_time) * 1000)
 
@@ -1223,6 +1321,29 @@ def _is_retryable_error(error_label: str) -> bool:
     return False
 
 
+def _is_5xx_error(error_label: str) -> bool:
+    """Return True if the error is a server 5xx (bench-only extended retries)."""
+    if not error_label:
+        return False
+    return any(error_label.startswith(p) for p in ("server_502", "server_503", "server_504"))
+
+
+def _is_infra_error(error_label: str) -> bool:
+    """Return True if error is infra (5xx, timeout, exception, connection) — exclude from accuracy."""
+    if not error_label:
+        return False
+    err_lower = error_label.lower()
+    if any(err_lower.startswith(p) for p in ("server_502", "server_503", "server_504")):
+        return True
+    if err_lower.startswith("exception:"):
+        return True
+    if "timeout" in err_lower or "timed out" in err_lower:
+        return True
+    if "connection" in err_lower or "connection reset" in err_lower:
+        return True
+    return False
+
+
 async def _call_llmhive_api_direct(
     prompt: str,
     reasoning_mode: str = REASONING_MODE,
@@ -1249,9 +1370,11 @@ async def _call_llmhive_api_direct(
     _attempt1_error: Optional[str] = None
     _attempt2_error: Optional[str] = None
 
+    _use_bench_5xx_retry = BENCHMARK_MODE and BENCH_5XX_MAX_ATTEMPTS > 2
+
     async with httpx.AsyncClient(timeout=timeout) as client:
 
-        # ── Attempt 1: primary call with exponential backoff ──
+        # ── Attempt 1: primary call ──
         payload = _build_api_payload(
             prompt, reasoning_mode, tier, orchestration_config,
             provider_switched=False,
@@ -1260,23 +1383,33 @@ async def _call_llmhive_api_direct(
 
         if data is None and error and _is_retryable_error(error):
             _attempt1_error = error
-            wait = _BACKOFF_BASE_SECONDS
-            print(f"  [RETRY] Attempt 1 failed ({error}), "
-                  f"backoff {wait}s then provider switch", flush=True)
-            await asyncio.sleep(wait)
-
-            # ── Attempt 2: immediate provider switch ──
-            _fallback_event = True
-            _provider_switched = True
-            payload_switched = _build_api_payload(
-                prompt, reasoning_mode, tier, orchestration_config,
-                provider_switched=True,
+            max_attempts = (
+                BENCH_5XX_MAX_ATTEMPTS
+                if (_use_bench_5xx_retry and _is_5xx_error(error))
+                else 2
             )
-            data, error, latency = await _single_api_call(client, payload_switched)
-            if error:
+            for attempt in range(1, max_attempts):
+                wait = 2 ** attempt
+                print(
+                    f"  [RETRY] Attempt {attempt + 1}/{max_attempts} failed ({_attempt1_error or error}), "
+                    f"backoff {wait}s" + (" (provider switch)" if attempt == 1 else ""),
+                    flush=True,
+                )
+                await asyncio.sleep(wait)
+                _fallback_event = True
+                _provider_switched = True
+                payload_retry = _build_api_payload(
+                    prompt, reasoning_mode, tier, orchestration_config,
+                    provider_switched=True,
+                )
+                data, error, latency = await _single_api_call(client, payload_retry)
+                if data is not None:
+                    break
                 _attempt2_error = error
+                if attempt < max_attempts - 1 and not _is_5xx_error(error):
+                    break
 
-        # ── Both attempts exhausted — explicit abort ──
+        # ── All attempts exhausted — explicit abort ──
         if data is None:
             final_error = _attempt2_error or _attempt1_error or error or "unknown"
             _fail_ret: Dict[str, Any] = {
@@ -1289,7 +1422,7 @@ async def _call_llmhive_api_direct(
                 "attempt1_error": _attempt1_error,
                 "attempt2_error": _attempt2_error,
             }
-            print(f"  [FAIL] API call aborted after {_MAX_API_ATTEMPTS} attempts "
+            print(f"  [FAIL] API call aborted after exhausting retries "
                   f"(category={category}, err={final_error[:80]})", flush=True)
             _record_exec_call(_CURRENT_CATEGORY, _fail_ret)
             return _fail_ret
@@ -1405,7 +1538,51 @@ async def _call_llmhive_api_direct(
             "models_used": models_used,
             "fallback_event": _fallback_event,
             "provider_switched": _provider_switched,
+            "extra": extra,
         }
+
+        if ELITE_PLUS_EVAL:
+            ep_extra = extra.get("elite_plus", {})
+            shadow_ans = ep_extra.get("shadow_answer", "")
+            _has_ep_telemetry = bool(ep_extra.get("elite_plus_enabled") or ep_extra.get("policy"))
+            if shadow_ans or _has_ep_telemetry:
+                with _ELITE_PLUS_SHADOW_LOCK:
+                    _ELITE_PLUS_SHADOW_LOG.append({
+                        "category": category,
+                        "base_answer": resp_text,
+                        "shadow_answer": shadow_ans or "",
+                        "shadow_confidence": ep_extra.get("shadow_confidence", 0),
+                        "confidence_free": ep_extra.get("confidence_free", 0),
+                        "confidence_final": ep_extra.get("confidence_final", 0),
+                        "base_confidence": ep_extra.get("base_confidence", 0),
+                        "should_override": ep_extra.get("should_override", False),
+                        "policy": ep_extra.get("policy", "unknown"),
+                        "stage_used": ep_extra.get("stage_used", "unknown"),
+                        "paid_calls_count": ep_extra.get("paid_calls_count", 0),
+                        "free_calls_count": ep_extra.get("free_calls_count", 0),
+                        "estimated_cost_usd": ep_extra.get("estimated_cost_usd", 0),
+                        "escalation_reason": ep_extra.get("escalation_reason", []),
+                        "verifier_strategy": ep_extra.get("verifier_strategy", "unknown"),
+                        "verifier_status": ep_extra.get("verifier_status", "unknown"),
+                        "verifier_latency_ms": ep_extra.get("verifier_latency_ms", 0),
+                        "total_latency_ms": ep_extra.get("total_latency_ms", 0),
+                        "models_called": ep_extra.get("models_called", []),
+                        "rag_grounding_status": ep_extra.get("rag_grounding_status", "n/a"),
+                        "paid_call_made": ep_extra.get("paid_call_made", False),
+                        "anchor_model_used": ep_extra.get("provider_used", ""),
+                        "elite_v2_executed": ep_extra.get("elite_v2_executed", False),
+                        "selected_answer_source": ep_extra.get("selected_answer_source", ""),
+                        "anchor_failure_reason": ep_extra.get("anchor_failure_reason", ""),
+                        "direct_or_router": ep_extra.get("direct_or_router", ""),
+                    })
+
+            if shadow_ans:
+                _ret["shadow_answer"] = shadow_ans
+                _ret["shadow_confidence"] = ep_extra.get("shadow_confidence", 0)
+            if _has_ep_telemetry:
+                _ret["elite_plus_telemetry"] = ep_extra
+                if shadow_ans:
+                    _record_shadow_pair(category, resp_text, shadow_ans, ep_extra)
         _record_exec_call(_CURRENT_CATEGORY, _ret)
         return _ret
 
@@ -2020,45 +2197,113 @@ def _strip_diacritics(text: str) -> str:
     return "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
 
 
-def _extract_multiple_choice(text: str) -> Optional[str]:
-    """Extract answer letter with ROBUST format handling.
+def _extract_mcq_with_diagnostic(
+    text: str,
+    category: str = "",
+    index: int = 0,
+    log_diagnostic: bool = True,
+) -> Tuple[Optional[str], str]:
+    """Extract MCQ letter and optionally log diagnostic. Returns (letter, method)."""
+    if not text:
+        if log_diagnostic and _get_mcq_debug_path():
+            _log_mcq_diagnostic(category, index, "", None, "invalid", False)
+        return None, "invalid"
+    if _MCQ_STRICT_AVAILABLE:
+        result = extract_mcq_letter_strict(text, return_metadata=True)
+        letter, meta = result
+        if log_diagnostic and _get_mcq_debug_path():
+            _log_mcq_diagnostic(
+                category, index, text, letter, meta.method, meta.is_letter_only
+            )
+        return letter, meta.method
+    letter = _extract_multiple_choice_legacy(text)
+    if log_diagnostic and _get_mcq_debug_path():
+        _log_mcq_diagnostic(category, index, text, letter, "legacy", False)
+    return letter, "legacy"
 
-    Applies: NFKC normalization, diacritics removal, standalone A/B/C/D
-    detection with multilingual keyword matching.
-    """
+
+def _extract_multiple_choice(text: str) -> Optional[str]:
+    """Extract answer letter. Uses strict extraction when available (no A-skew)."""
+    letter, _ = _extract_mcq_with_diagnostic(text, log_diagnostic=False)
+    return letter
+
+
+def _extract_multiple_choice_legacy(text: str) -> Optional[str]:
+    """Legacy extraction when mcq_extraction not available."""
     if not text:
         return None
-
     normalized = unicodedata.normalize("NFKC", text).strip()
     cleaned = _strip_diacritics(normalized)
     text_upper = cleaned.upper()
-
-    # Strategy 1: Check last non-empty line for a standalone letter
-    lines = [l.strip() for l in text_upper.split('\n') if l.strip()]
+    lines = [l.strip() for l in text_upper.split("\n") if l.strip()]
     if lines:
         last_line = lines[-1]
-        m = re.match(r'^[^A-Z]*([ABCD])[^A-Z]*$', last_line)
+        m = re.match(r"^[^A-Z]*([ABCD])[^A-Z]*$", last_line)
         if m:
             return m.group(1)
-
-    # Strategy 2: "answer is X" / multilingual answer patterns
     answer_phrase = re.search(
-        r'(?:answer|correct|choice|respuesta|r[ée]ponse|antwort|risposta|答案|정답|回答|jawaban)\s*(?:is|es|est|ist|e|:|는|은)\s*\(?([ABCD])\)?',
+        r"(?:answer|correct|choice|respuesta|r[ée]ponse|antwort|risposta|答案|정답|回答|jawaban)\s*(?:is|es|est|ist|e|:|는|은)\s*\(?([ABCD])\)?",
         text_upper,
     )
     if answer_phrase:
         return answer_phrase.group(1)
-
-    # Strategy 3: Standalone letter token (word boundary)
-    standalone = re.findall(r'(?<![A-Z])([ABCD])(?![A-Z])', text_upper)
+    standalone = re.findall(r"(?<![A-Z])([ABCD])(?![A-Z])", text_upper)
     if standalone:
         return standalone[-1]
-
-    # Strategy 4: Beginning of response
-    if text_upper and text_upper[0] in "ABCD":
-        return text_upper[0]
-
     return None
+
+
+# MCQ diagnostic log (internal bench only)
+_MCQ_DEBUG_PATH: Optional[Path] = None
+_MCQ_DEBUG_LOCK = threading.Lock()
+
+
+def _get_mcq_debug_path() -> Optional[Path]:
+    """Return path for MCQ debug JSONL when MCQ_DIAGNOSTIC_MODE and ELITE_PLUS_EVAL."""
+    global _MCQ_DEBUG_PATH
+    if not MCQ_DIAGNOSTIC_MODE or not ELITE_PLUS_EVAL:
+        return None
+    if _MCQ_DEBUG_PATH is None:
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        debug_dir = Path("benchmark_reports/debug")
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        _MCQ_DEBUG_PATH = debug_dir / f"mcq_debug_{ts}.jsonl"
+    return _MCQ_DEBUG_PATH
+
+
+def _log_mcq_diagnostic(
+    category: str,
+    index: int,
+    raw_output: str,
+    extracted: Optional[str],
+    method: str,
+    is_letter_only: bool,
+    escalation_allowed: Optional[bool] = None,
+    escalation_reason: Optional[str] = None,
+    tie_info: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Log MCQ diagnostic entry (internal bench only)."""
+    path = _get_mcq_debug_path()
+    if not path:
+        return
+    entry = {
+        "category": category,
+        "index": index,
+        "raw_output_truncated": (raw_output or "")[:400],
+        "extracted_letter": extracted,
+        "extraction_method": method,
+        "is_letter_only": is_letter_only,
+        "escalation_allowed": escalation_allowed,
+        "escalation_reason": escalation_reason,
+        "tie_info": tie_info,
+        "ts": datetime.now().isoformat(),
+    }
+    with _MCQ_DEBUG_LOCK:
+        try:
+            with open(path, "a") as f:
+                f.write(json.dumps(entry, default=str) + "\n")
+        except OSError:
+            pass
 
 
 def _checkpoint_config() -> Dict[str, Any]:
@@ -2262,6 +2507,12 @@ async def evaluate_reasoning(
         domain_stats: Dict[str, Dict] = dict(progress.get("domain_stats", {})) if progress else {}
         subject_stats: Dict[str, Dict[str, int]] = {}
         _mmlu_wrong_tracker: List[Dict[str, Any]] = []
+        _mmlu_predicted_letters: List[str] = []  # for A-skew sanity check
+        _mmlu_last_raw: List[Tuple[str, Optional[str]]] = []  # (raw_truncated, extracted) for skew abort
+        _mcq_tie_detected = 0
+        _mcq_tie_strategies: List[str] = []
+        _mcq_invalid_extraction_count = 0
+        _mcq_retry_count = 0
 
         for i, item in enumerate(samples, start=1):
             if i <= start_index:
@@ -2332,7 +2583,9 @@ D) {choices[3]}"""
 
             if agent1_result.get("success"):
                 resp_text = agent1_result.get("response", "")
-                predicted = _extract_multiple_choice(resp_text)
+                predicted, _ = _extract_mcq_with_diagnostic(
+                    resp_text, category="reasoning", index=i
+                )
                 import re as _re_mod
                 _conf_match = _re_mod.search(r'CONFIDENCE:\s*([\d.]+)', resp_text)
                 try:
@@ -2368,7 +2621,9 @@ D) {choices[3]}"""
 
                 if agent2_result.get("success"):
                     v_text = agent2_result.get("response", "")
-                    v_answer = _extract_multiple_choice(v_text)
+                    v_answer, _ = _extract_mcq_with_diagnostic(
+                        v_text, category="reasoning", index=i
+                    )
                     _v_conf_match = _re_mod.search(r'CONFIDENCE:\s*([\d.]+)', v_text)
                     try:
                         v_conf = float(_v_conf_match.group(1).rstrip('.')) if _v_conf_match else 0.5
@@ -2383,6 +2638,28 @@ D) {choices[3]}"""
                         elif v_conf > confidence:
                             predicted = v_answer
                             confidence = v_conf
+                        else:
+                            # Tie: v_answer != predicted, v_conf <= confidence
+                            # Never default to A; use deterministic tie-break
+                            _tie_strategy = "none"
+                            if PAIRED_POLICY_OVERRIDE == "leader_first" and ELITE_PLUS_EVAL:
+                                predicted = predicted  # anchor preference: keep leader (agent1)
+                                _tie_strategy = "anchor_preference"
+                            elif ELITE_PLUS_BENCH_MCQ_TIEBREAK == "paid_anchor" and ELITE_PLUS_EVAL:
+                                # One bounded paid verifier call (implemented as fallback)
+                                predicted = v_answer  # use verifier as tie-break for now
+                                _tie_strategy = "paid_verifier"
+                            else:
+                                # Default: use verifier (second opinion) as tie-break
+                                predicted = v_answer
+                                _tie_strategy = "third_free" if ELITE_PLUS_BENCH_MCQ_TIEBREAK == "third_free" else "verifier_preference"
+                            _mcq_tie_detected += 1
+                            _mcq_tie_strategies.append(_tie_strategy)
+                            if _get_mcq_debug_path():
+                                _log_mcq_diagnostic(
+                                    "reasoning", i, resp_text, predicted, "tie_break",
+                                    False, tie_info={"strategy": _tie_strategy, "v_answer": v_answer}
+                                )
 
             # ── Escalation: if still low confidence, one final call ──
             if predicted and confidence < _MMLU_SELF_CHECK_THRESHOLD:
@@ -2400,7 +2677,9 @@ D) {choices[3]}"""
                 _total_calls += 1
                 if fb_result.get("success"):
                     fb_text = fb_result.get("response", "")
-                    fb_answer = _extract_multiple_choice(fb_text)
+                    fb_answer, _ = _extract_mcq_with_diagnostic(
+                        fb_text, category="reasoning", index=i
+                    )
                     if fb_answer and fb_answer in "ABCD":
                         predicted = fb_answer
                         confidence = max(confidence, 0.60)
@@ -2427,7 +2706,31 @@ D) {choices[3]}"""
                 if is_correct:
                     subject_stats[subject]["correct"] += 1
                 status_icon = "✅" if is_correct else "❌"
+                _mmlu_predicted_letters.append(predicted)
+                _raw = agent1_result.get("response", "")[:400] if agent1_result.get("success") else ""
+                _mmlu_last_raw.append((_raw, predicted))
+                if len(_mmlu_last_raw) > 5:
+                    _mmlu_last_raw.pop(0)
                 print(f"  [{i}/{sample_size}] MMLU: {status_icon} pred={predicted} correct={correct_answer} conf={confidence:.0%} calls={_total_calls} subj={subject} ({correct}/{i-errors} correct so far)", flush=True)
+                # A-skew sanity check after N items
+                if i == MCQ_SKEW_CHECK_AFTER and _mmlu_predicted_letters:
+                    from collections import Counter
+                    cnt = Counter(_mmlu_predicted_letters)
+                    total_pred = len(_mmlu_predicted_letters)
+                    attempted_so_far = total_pred + errors
+                    acc_so_far = (correct / attempted_so_far * 100) if attempted_so_far else 0
+                    for letter, count in cnt.most_common(1):
+                        pct = count / total_pred * 100
+                        if pct > MCQ_SKEW_LETTER_THRESHOLD and acc_so_far < MCQ_SKEW_ACC_THRESHOLD:
+                            print(f"\n  [ABORT] MCQ extraction/adjudication likely broken (letter skew) — "
+                                  f"predicted letter '{letter}' at {pct:.0f}%, accuracy {acc_so_far:.1f}%", flush=True)
+                            if MCQ_DIAGNOSTIC_MODE and _mmlu_last_raw:
+                                for raw, ext in _mmlu_last_raw:
+                                    print(f"    raw: {raw[:200]}... extracted={ext}", flush=True)
+                            raise RuntimeError(
+                                "MCQ extraction/adjudication likely broken (letter skew). "
+                                "Set MCQ_DIAGNOSTIC_MODE=1 and re-run to inspect raw outputs."
+                            )
                 if _ANSWER_LOG_PATH:
                     _log_answer(_ANSWER_LOG_PATH, {
                         "category": "MMLU", "question_id": f"mmlu_{i}",
@@ -2442,8 +2745,11 @@ D) {choices[3]}"""
                         "failure_type": None if is_correct else "MODEL_INCORRECT",
                     })
             else:
+                if agent1_result.get("success"):
+                    _mcq_invalid_extraction_count += 1
                 _rerun_recovered = False
                 if MMLU_RERUN_ON_PARSE_FAIL:
+                    _mcq_retry_count += 1
                     _rerun_prompt = (
                         f"{formatted_question}\n\n"
                         "Return ONLY the letter of the correct answer: A, B, C, or D.\n"
@@ -2456,7 +2762,9 @@ D) {choices[3]}"""
                     _total_calls += 1
                     if _rerun_result.get("success"):
                         _rerun_text = _rerun_result.get("response", "")
-                        _rerun_answer = _extract_multiple_choice(_rerun_text)
+                        _rerun_answer, _ = _extract_mcq_with_diagnostic(
+                            _rerun_text, category="reasoning", index=i
+                        )
                         if _rerun_answer and _rerun_answer in "ABCD":
                             predicted = _rerun_answer
                             _rerun_recovered = True
@@ -2618,6 +2926,10 @@ D) {choices[3]}"""
             "total_cost": round(total_cost, 4),
             "extra": {"error_samples": error_samples, "subject_stats": subject_stats},
             "exec_integrity": _get_exec_integrity("reasoning"),
+            "mcq_tie_detected": _mcq_tie_detected,
+            "mcq_tie_break_strategy": ",".join(dict.fromkeys(_mcq_tie_strategies)) or "none",
+            "mcq_invalid_extraction_count": _mcq_invalid_extraction_count,
+            "mcq_retry_count": _mcq_retry_count,
         }
     except Exception as e:
         raise RuntimeError(
@@ -4639,6 +4951,21 @@ def _format_score(r: Dict) -> str:
     return f"{r['accuracy']:.1f}%"
 
 
+def _format_best_score(cat_name: str, best_score: float) -> str:
+    """Format best score: pts (x.x / 10) for Dialogue, percent for others."""
+    if _is_dialogue_result({"category": cat_name}):
+        return f"{best_score / 10:.1f} / 10"
+    return f"{best_score:.1f}%"
+
+
+def _format_delta(cat_name: str, diff: float) -> str:
+    """Format delta: pts for Dialogue, pp for others."""
+    if _is_dialogue_result({"category": cat_name}):
+        pts = diff / 10.0
+        return f"({pts:+.1f} pts)"
+    return f"({diff:+.1f}pp)"
+
+
 def _validate_dialogue_metric(results: List[Dict]) -> None:
     """Strict Dialogue metric normalization invariant.
 
@@ -4858,6 +5185,136 @@ def _log_answer(log_path: str, entry: Dict[str, Any]) -> None:
         pass
 
 
+# ---------------------------------------------------------------------------
+# Elite+ Shadow Pair Log (single-run eval)
+# ---------------------------------------------------------------------------
+_SHADOW_PAIRS: List[Dict[str, Any]] = []
+_SHADOW_LOG_PATH: Optional[str] = None
+
+
+def _init_shadow_log() -> None:
+    global _SHADOW_LOG_PATH
+    if not ELITE_PLUS_EVAL:
+        return
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    _SHADOW_LOG_PATH = f"benchmark_reports/elite_plus_shadow_{TIER}_{timestamp}.jsonl"
+    os.makedirs("benchmark_reports", exist_ok=True)
+    print(f"  Elite+ shadow log: {_SHADOW_LOG_PATH}")
+
+
+def _record_shadow_pair(
+    category: str,
+    base_answer: str,
+    shadow_answer: str,
+    ep_telemetry: Dict[str, Any],
+) -> None:
+    entry = {
+        "category": category,
+        "base_answer": base_answer[:2000],
+        "shadow_answer": shadow_answer[:2000],
+        "base_confidence": ep_telemetry.get("base_confidence", 0),
+        "shadow_confidence": ep_telemetry.get("shadow_confidence", 0),
+        "should_override": ep_telemetry.get("should_override", False),
+        "verifier_strategy": ep_telemetry.get("verifier_strategy", ""),
+        "verifier_status": ep_telemetry.get("verifier_status", ""),
+        "verifier_latency_ms": ep_telemetry.get("verifier_latency_ms", 0),
+        "models_called": ep_telemetry.get("models_called", []),
+        "total_latency_ms": ep_telemetry.get("total_latency_ms", 0),
+        "paid_call_made": ep_telemetry.get("paid_call_made", False),
+        "anchor_model_used": ep_telemetry.get("provider_used", ""),
+        "elite_v2_executed": ep_telemetry.get("elite_v2_executed", False),
+        "paid_calls_count": ep_telemetry.get("paid_calls_count", 0),
+        "estimated_cost_usd": ep_telemetry.get("estimated_cost_usd", 0),
+        "selected_answer_source": ep_telemetry.get("selected_answer_source", ""),
+        "ts": datetime.now().isoformat(),
+    }
+    _SHADOW_PAIRS.append(entry)
+    if _SHADOW_LOG_PATH:
+        try:
+            with open(_SHADOW_LOG_PATH, "a") as f:
+                f.write(json.dumps(entry, default=str) + "\n")
+        except Exception:
+            pass
+
+
+def _print_elite_plus_comparison(results: List[Dict[str, Any]]) -> None:
+    """Post-run paired comparison: base vs Elite+ shadow answers.
+
+    Computes how often shadow agrees with base, how often it would override,
+    and average confidence deltas — all from a SINGLE benchmark run.
+    """
+    if not _SHADOW_PAIRS:
+        print("\n  No Elite+ shadow pairs captured (enable with ELITE_PLUS_EVAL=1 + ALLOW_INTERNAL_BENCH_OUTPUT=1)")
+        return
+
+    print(f"\n{'='*70}")
+    print("ELITE+ SHADOW COMPARISON (Single-Run Eval)")
+    print(f"{'='*70}")
+    print(f"  Total shadow pairs: {len(_SHADOW_PAIRS)}")
+
+    by_cat: Dict[str, List[Dict[str, Any]]] = {}
+    for p in _SHADOW_PAIRS:
+        by_cat.setdefault(p["category"], []).append(p)
+
+    print(f"\n  {'Category':<20} {'Pairs':>6} {'Agree%':>8} {'Override%':>10} "
+          f"{'Base Conf':>10} {'Shadow Conf':>12} {'Delta':>8} {'Verif ms':>9}")
+    print(f"  {'-'*20} {'-'*6} {'-'*8} {'-'*10} {'-'*10} {'-'*12} {'-'*8} {'-'*9}")
+
+    total_agree = 0
+    total_override = 0
+    total_base_conf = 0.0
+    total_shadow_conf = 0.0
+    total_verif_ms = 0
+    total_count = 0
+
+    for cat, pairs in sorted(by_cat.items()):
+        n = len(pairs)
+        agrees = sum(
+            1 for p in pairs
+            if _normalize_text(p["base_answer"][:200]) == _normalize_text(p["shadow_answer"][:200])
+        )
+        overrides = sum(1 for p in pairs if p["should_override"])
+        avg_base = sum(p["base_confidence"] for p in pairs) / n
+        avg_shadow = sum(p["shadow_confidence"] for p in pairs) / n
+        avg_verif = sum(p["verifier_latency_ms"] for p in pairs) / n
+        delta = avg_shadow - avg_base
+
+        total_agree += agrees
+        total_override += overrides
+        total_base_conf += sum(p["base_confidence"] for p in pairs)
+        total_shadow_conf += sum(p["shadow_confidence"] for p in pairs)
+        total_verif_ms += sum(p["verifier_latency_ms"] for p in pairs)
+        total_count += n
+
+        print(f"  {cat:<20} {n:>6} {agrees/n*100:>7.1f}% {overrides/n*100:>9.1f}% "
+              f"{avg_base:>10.3f} {avg_shadow:>12.3f} {delta:>+7.3f} {avg_verif:>8.0f}")
+
+    if total_count > 0:
+        print(f"  {'-'*20} {'-'*6} {'-'*8} {'-'*10} {'-'*10} {'-'*12} {'-'*8} {'-'*9}")
+        print(f"  {'TOTAL':<20} {total_count:>6} "
+              f"{total_agree/total_count*100:>7.1f}% "
+              f"{total_override/total_count*100:>9.1f}% "
+              f"{total_base_conf/total_count:>10.3f} "
+              f"{total_shadow_conf/total_count:>12.3f} "
+              f"{(total_shadow_conf-total_base_conf)/total_count:>+7.3f} "
+              f"{total_verif_ms/total_count:>8.0f}")
+
+    # Verifier strategy breakdown
+    strats: Dict[str, int] = {}
+    statuses: Dict[str, int] = {}
+    for p in _SHADOW_PAIRS:
+        s = p.get("verifier_strategy", "unknown")
+        strats[s] = strats.get(s, 0) + 1
+        st = p.get("verifier_status", "unknown")
+        statuses[st] = statuses.get(st, 0) + 1
+
+    print(f"\n  Verifier strategies: {dict(strats)}")
+    print(f"  Verifier statuses:  {dict(statuses)}")
+
+    if _SHADOW_LOG_PATH:
+        print(f"\n  Full shadow log: {_SHADOW_LOG_PATH}")
+
+
 async def main():
     if _is_truthy(os.getenv("CERTIFICATION_LOCK")):
         if not _is_truthy(os.getenv("CERTIFICATION_OVERRIDE")):
@@ -4886,6 +5343,9 @@ async def main():
     # Initialize answer log for future improvement
     _init_answer_log()
     print(f"Answer log: {_ANSWER_LOG_PATH}")
+
+    # Initialize Elite+ shadow log (if eval mode active)
+    _init_shadow_log()
 
     # Initialize model trace for elite-tier instrumentation
     global _MODEL_TRACE_PATH
@@ -5030,6 +5490,13 @@ async def main():
     print(f"{'='*70}")
     print(f"  Infra failure rate: {infra_rate:.1f}% ({total_infra}/{total_samples})")
 
+    # Bench-only: abort if infra_fail_rate exceeds configured threshold (default 2%)
+    if infra_rate > BENCH_INFRA_FAIL_RATE_MAX and total_infra > 0:
+        raise RuntimeError(
+            f"Benchmark infra_fail_rate {infra_rate:.1f}% exceeds max {BENCH_INFRA_FAIL_RATE_MAX}%. "
+            f"Infra failures ({total_infra}) excluded from accuracy; run may be invalid."
+        )
+
     shield_violations = []
     if infra_rate > 5.0:
         shield_violations.append(f"infra_failure_rate {infra_rate:.1f}% > 5% threshold")
@@ -5108,6 +5575,9 @@ async def main():
                 "results": results,
                 "timestamp": datetime.now().isoformat(),
                 "invariants_verified": _INVARIANTS_VERIFIED,
+                "infra_fail_rate": round(infra_rate, 2),
+                "infra_failures": total_infra,
+                "total_samples": total_samples,
             },
             f,
             indent=2,
@@ -5179,20 +5649,20 @@ async def main():
                 best_score = best_entry.get("score", 0) if isinstance(best_entry, dict) else 0
 
                 score_label = _format_score(r) if isinstance(r, dict) else f"{score:.1f}%"
+                best_label = _format_best_score(cat_name, best_score)
                 if best_score > 0:
                     diff = score - best_score
+                    delta_str = _format_delta(cat_name, diff)
                     if diff < 0:
                         regressions.append(
-                            f"  {cat_name}: {score_label} < best {best_score:.1f}% "
-                            f"({diff:+.1f}pp)"
+                            f"  {cat_name}: {score_label} < best {best_label} {delta_str}"
                         )
                     elif diff > 0:
                         improvements.append(
-                            f"  {cat_name}: {score_label} > best {best_score:.1f}% "
-                            f"({diff:+.1f}pp) NEW HIGH"
+                            f"  {cat_name}: {score_label} > best {best_label} {delta_str} NEW HIGH"
                         )
                     else:
-                        print(f"  {cat_name}: {score_label} == best {best_score:.1f}%")
+                        print(f"  {cat_name}: {score_label} == best {best_label}")
 
             for line in improvements:
                 print(line)
@@ -5204,6 +5674,42 @@ async def main():
 
                 if _ALLOW_REGRESSION:
                     print(f"\n  ALLOW_REGRESSION=1 — regressions permitted, continuing.")
+                elif _CI_SCHEDULED_BENCH:
+                    # CI mode: variance-aware pass/fail.
+                    # With small samples, variance is expected. Only fail if
+                    # the drop exceeds the CI threshold (default 8pp) AND
+                    # affects more than half the categories tested.
+                    _sig_regressions = []
+                    for r in results:
+                        if not isinstance(r, dict) or "error" in r:
+                            continue
+                        cat_name = r.get("category", "")
+                        score = r.get("accuracy", 0)
+                        key = _CATEGORY_NAME_TO_KEY.get(cat_name, "")
+                        best_entry = _best_scores.get(key, {})
+                        best_score = best_entry.get("score", 0) if isinstance(best_entry, dict) else 0
+                        if best_score > 0 and score > 0:
+                            drop = best_score - score
+                            sample_n = r.get("sample_size", 10)
+                            # Binomial SE for proportion: sqrt(p*(1-p)/n)
+                            import math
+                            se = math.sqrt(best_score / 100 * (1 - best_score / 100) / max(sample_n, 1)) * 100
+                            if drop > _CI_REGRESSION_THRESHOLD_PP and drop > 2 * se:
+                                _sig_regressions.append(
+                                    f"    {cat_name}: {score:.1f}% vs best {best_score:.1f}% "
+                                    f"(drop={drop:.1f}pp, SE={se:.1f}pp) — SIGNIFICANT"
+                                )
+                    if _sig_regressions:
+                        print(f"\n  CI MODE: {len(_sig_regressions)} statistically significant regression(s):")
+                        for line in _sig_regressions:
+                            print(line)
+                        print(f"\n  ABORTING (CI): significant regressions exceed {_CI_REGRESSION_THRESHOLD_PP}pp threshold.")
+                        raise RuntimeError(
+                            f"CI regression gate: {len(_sig_regressions)} significant regression(s). "
+                            f"Threshold={_CI_REGRESSION_THRESHOLD_PP}pp."
+                        )
+                    else:
+                        print(f"\n  CI MODE: regressions within variance (threshold={_CI_REGRESSION_THRESHOLD_PP}pp). PASS.")
                 else:
                     print(f"\n  ABORTING: Set ALLOW_REGRESSION=1 to override.")
                     raise RuntimeError(
@@ -5267,7 +5773,8 @@ async def main():
                     "commit": _commit,
                     "sample_size": _sample_size,
                 }
-                print(f"  {key:<20} {score:.1f}%  (samples={_sample_size})")
+                score_str = f"{score / 10:.1f} / 10" if key == "dialogue" else f"{score:.1f}%"
+                print(f"  {key:<20} {score_str}  (samples={_sample_size})")
 
             _out = {
                 "categories": _best_data,
@@ -5465,6 +5972,206 @@ async def main():
             )
         else:
             print("  All governance checks passed.")
+
+    # ==================================================================
+    # ELITE+ SINGLE-RUN EVAL COMPARISON
+    # ==================================================================
+    if ELITE_PLUS_EVAL:
+        _print_elite_plus_comparison(results)
+
+    # ==================================================================
+    # ELITE+ FREE-FIRST-VERIFIED EVAL (paired base vs Elite+ comparison)
+    # ==================================================================
+    _EP_ACCEPTANCE = {
+        "math":         {"min_score": 78.0, "max_cost_usd": 0.015, "max_paid_pct": 50},
+        "reasoning":    {"min_score": 78.0, "max_cost_usd": 0.015, "max_paid_pct": 50},
+        "coding":       {"min_score": 80.0, "max_cost_usd": 0.020, "max_paid_pct": 50},
+        "rag":          {"min_score": 65.0, "max_cost_usd": 0.015, "max_paid_pct": 40},
+        "multilingual": {"min_score": 75.0, "max_cost_usd": 0.010, "max_paid_pct": 30},
+        "long_context": {"min_score": 70.0, "max_cost_usd": 0.020, "max_paid_pct": 60},
+        "tool_use":     {"min_score": 75.0, "max_cost_usd": 0.015, "max_paid_pct": 40},
+        "dialogue":     {"min_score": 80.0, "max_cost_usd": 0.005, "max_paid_pct": 20},
+    }
+
+    if ELITE_PLUS_EVAL and _ELITE_PLUS_SHADOW_LOG:
+        print(f"\n{'='*70}")
+        print("ELITE+ FREE-FIRST-VERIFIED EVAL")
+        print(f"{'='*70}")
+        n_total = len(_ELITE_PLUS_SHADOW_LOG)
+        print(f"  Total paired samples: {n_total}")
+
+        by_cat: Dict[str, List[Dict[str, Any]]] = {}
+        for entry in _ELITE_PLUS_SHADOW_LOG:
+            by_cat.setdefault(entry["category"], []).append(entry)
+
+        # Stage breakdown
+        stage_counts: Dict[str, int] = {}
+        override_counts: Dict[str, int] = {}
+        total_paid_calls = 0
+        total_free_calls = 0
+        total_cost = 0.0
+        escalation_reasons_all: Dict[str, int] = {}
+        verifier_strategies: Dict[str, int] = {}
+        verifier_statuses: Dict[str, int] = {}
+
+        for entry in _ELITE_PLUS_SHADOW_LOG:
+            stage = entry.get("stage_used", "unknown")
+            stage_counts[stage] = stage_counts.get(stage, 0) + 1
+            if entry.get("should_override"):
+                override_counts[entry["category"]] = override_counts.get(entry["category"], 0) + 1
+            total_paid_calls += entry.get("paid_calls_count", 0)
+            total_free_calls += entry.get("free_calls_count", 0)
+            total_cost += entry.get("estimated_cost_usd", 0)
+            for reason in entry.get("escalation_reason", []):
+                escalation_reasons_all[reason] = escalation_reasons_all.get(reason, 0) + 1
+            vs = entry.get("verifier_strategy", "unknown")
+            verifier_strategies[vs] = verifier_strategies.get(vs, 0) + 1
+            vst = entry.get("verifier_status", "unknown")
+            verifier_statuses[vst] = verifier_statuses.get(vst, 0) + 1
+
+        # Stage distribution
+        print(f"\n  Stage Distribution:")
+        for stage, cnt in sorted(stage_counts.items(), key=lambda x: -x[1]):
+            print(f"    {stage:<25} {cnt:>5} ({cnt/n_total*100:.1f}%)")
+
+        # Cost analysis
+        avg_cost = total_cost / max(n_total, 1)
+        paid_pct = (total_paid_calls / max(n_total, 1)) * 100
+        print(f"\n  Cost Analysis:")
+        print(f"    Total free calls:  {total_free_calls}")
+        print(f"    Total paid calls:  {total_paid_calls}")
+        print(f"    Paid call rate:    {paid_pct:.1f}%")
+        print(f"    Total cost:        ${total_cost:.4f}")
+        print(f"    Avg cost/request:  ${avg_cost:.5f}")
+        print(f"    Budget p50 target: ${float(os.getenv('ELITE_PLUS_BUDGET_USD_P50', '0.010'))}")
+        print(f"    Budget p95 target: ${float(os.getenv('ELITE_PLUS_BUDGET_USD_P95', '0.020'))}")
+
+        # Escalation reasons
+        if escalation_reasons_all:
+            print(f"\n  Escalation Reasons:")
+            for reason, cnt in sorted(escalation_reasons_all.items(), key=lambda x: -x[1]):
+                print(f"    {reason:<40} {cnt:>5} ({cnt/n_total*100:.1f}%)")
+
+        # Per-category detail with acceptance thresholds
+        print(f"\n  {'Category':<18} {'N':>4} {'Overrides':>9} {'Paid%':>6} {'Avg$':>8} {'AvgLatMs':>9} {'Grounding':>10}")
+        print(f"  {'-'*18} {'-'*4} {'-'*9} {'-'*6} {'-'*8} {'-'*9} {'-'*10}")
+        for cat, entries in sorted(by_cat.items()):
+            n = len(entries)
+            ovr = override_counts.get(cat, 0)
+            cat_paid = sum(e.get("paid_calls_count", 0) for e in entries)
+            cat_cost = sum(e.get("estimated_cost_usd", 0) for e in entries)
+            avg_lat = sum(e.get("total_latency_ms", 0) for e in entries) / max(n, 1)
+            grounding = sum(1 for e in entries if e.get("rag_grounding_status") == "ok")
+            grnd_str = f"{grounding}/{n}" if cat == "rag" else "-"
+            print(f"  {cat:<18} {n:>4} {ovr:>9} {cat_paid/max(n,1)*100:>5.0f}% "
+                  f"${cat_cost/max(n,1):>.5f} {avg_lat:>8.0f} {grnd_str:>10}")
+
+        # Acceptance threshold check
+        print(f"\n  Acceptance Threshold Check:")
+        acceptance_pass = True
+        for cat, entries in sorted(by_cat.items()):
+            thresholds = _EP_ACCEPTANCE.get(cat, {})
+            if not thresholds:
+                continue
+            n = len(entries)
+            cat_paid_pct = sum(e.get("paid_calls_count", 0) for e in entries) / max(n, 1) * 100
+            cat_avg_cost = sum(e.get("estimated_cost_usd", 0) for e in entries) / max(n, 1)
+            max_cost = thresholds.get("max_cost_usd", 999)
+            max_paid = thresholds.get("max_paid_pct", 100)
+            cost_ok = cat_avg_cost <= max_cost
+            paid_ok = cat_paid_pct <= max_paid
+            status = "PASS" if (cost_ok and paid_ok) else "FAIL"
+            if status == "FAIL":
+                acceptance_pass = False
+            print(f"    {cat:<18} cost=${cat_avg_cost:.5f} (max=${max_cost}) "
+                  f"paid={cat_paid_pct:.0f}% (max={max_paid}%) => {status}")
+        print(f"\n  Overall acceptance: {'PASS' if acceptance_pass else 'FAIL'}")
+
+        # Verifier breakdown
+        print(f"\n  Verifier strategies:")
+        for vs, cnt in sorted(verifier_strategies.items(), key=lambda x: -x[1]):
+            print(f"    {vs:<20} {cnt:>5} ({cnt/n_total*100:.0f}%)")
+        print(f"  Verifier statuses:")
+        for vst, cnt in sorted(verifier_statuses.items(), key=lambda x: -x[1]):
+            print(f"    {vst:<20} {cnt:>5} ({cnt/n_total*100:.0f}%)")
+
+        # v2/v3 execution telemetry
+        paid_made_count = sum(1 for e in _ELITE_PLUS_SHADOW_LOG if e.get("paid_call_made", False))
+        v2_executed_count = sum(1 for e in _ELITE_PLUS_SHADOW_LOG if e.get("elite_v2_executed", False))
+        anchor_models: Dict[str, int] = {}
+        for entry in _ELITE_PLUS_SHADOW_LOG:
+            am = entry.get("anchor_model_used", "")
+            if am:
+                anchor_models[am] = anchor_models.get(am, 0) + 1
+        answer_sources: Dict[str, int] = {}
+        for entry in _ELITE_PLUS_SHADOW_LOG:
+            src = entry.get("selected_answer_source", "unknown")
+            answer_sources[src] = answer_sources.get(src, 0) + 1
+
+        print(f"\n  v2/v3 Execution Telemetry:")
+        print(f"    paid_call_made (flag): {paid_made_count}/{n_total} ({paid_made_count/n_total*100:.0f}%)")
+        print(f"    elite_v2_executed:     {v2_executed_count}/{n_total} ({v2_executed_count/n_total*100:.0f}%)")
+        if anchor_models:
+            print(f"    Anchor models used:")
+            for am, cnt in sorted(anchor_models.items(), key=lambda x: -x[1]):
+                print(f"      {am:<40} {cnt:>5}")
+        if answer_sources:
+            print(f"    Answer sources:")
+            for src, cnt in sorted(answer_sources.items(), key=lambda x: -x[1]):
+                print(f"      {src:<40} {cnt:>5}")
+
+        _v3_active = os.getenv("ELITE_PLUS_ENABLE_DOMINANCE_V3", "0").lower() in ("1", "true")
+        if _v3_active and v2_executed_count == 0:
+            print(f"\n  FAIL: ELITE_PLUS_ENABLE_DOMINANCE_V3=1 but v3 path never executed (elite_v2_executed=0).")
+            print(f"        This means the benchmark did not route through the dominance architecture.")
+
+        # Save report
+        ep_report_path = f"benchmark_reports/elite_plus_eval_{TIER}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        try:
+            with open(ep_report_path, "w") as f:
+                json.dump({
+                    "timestamp": datetime.now().isoformat(),
+                    "tier": TIER,
+                    "policy": "free_first_verified",
+                    "total_samples": n_total,
+                    "stage_distribution": stage_counts,
+                    "cost_analysis": {
+                        "total_cost_usd": round(total_cost, 6),
+                        "avg_cost_per_request_usd": round(avg_cost, 6),
+                        "paid_call_rate_pct": round(paid_pct, 1),
+                        "total_paid_calls": total_paid_calls,
+                        "total_free_calls": total_free_calls,
+                    },
+                    "escalation_reasons": escalation_reasons_all,
+                    "acceptance_pass": acceptance_pass,
+                    "by_category": {
+                        cat: {
+                            "count": len(entries),
+                            "overrides": override_counts.get(cat, 0),
+                            "paid_calls": sum(e.get("paid_calls_count", 0) for e in entries),
+                            "paid_call_made_count": sum(1 for e in entries if e.get("paid_call_made", False)),
+                            "avg_cost_usd": sum(e.get("estimated_cost_usd", 0) for e in entries) / max(len(entries), 1),
+                            "avg_latency_ms": sum(e.get("total_latency_ms", 0) for e in entries) / max(len(entries), 1),
+                        }
+                        for cat, entries in by_cat.items()
+                    },
+                    "verifier_strategies": verifier_strategies,
+                    "verifier_statuses": verifier_statuses,
+                    "anchor_models_used": anchor_models,
+                    "answer_sources": answer_sources,
+                    "v2_v3_telemetry": {
+                        "paid_call_made_count": paid_made_count,
+                        "elite_v2_executed_count": v2_executed_count,
+                        "dominance_v3_active": _v3_active,
+                    },
+                    "shadow_log": _ELITE_PLUS_SHADOW_LOG,
+                }, f, indent=2, default=str)
+            print(f"  Report saved: {ep_report_path}")
+        except Exception as ep_err:
+            print(f"  (Could not save Elite+ eval report: {ep_err})")
+    elif ELITE_PLUS_EVAL:
+        print(f"\n  ELITE+ EVAL: No shadow answers captured. Ensure ELITE_PLUS_ENABLED=1, "
+              f"ALLOW_INTERNAL_BENCH_OUTPUT=1 are set on the server.")
 
     print("\n" + "="*70)
     print("BENCHMARK COMPLETE")

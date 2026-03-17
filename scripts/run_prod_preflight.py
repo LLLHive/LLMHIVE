@@ -356,18 +356,33 @@ def check_security(target: str) -> List[Dict[str, Any]]:
     except Exception as e:
         results.append(_check("security_check", False, f"Error: {e}"))
 
+    # /internal/launch_kpis is auth-gated: without auth expect 401/403; with auth expect 200.
     if target:
         import requests
+        internal_key = os.getenv("INTERNAL_ADMIN_OVERRIDE_KEY", "")
         try:
-            r = requests.get(f"{target}/internal/launch_kpis", timeout=10)
-            results.append(_check(
-                "kpis_accessible",
-                r.status_code == 200,
-                f"status={r.status_code}",
-                p0=False,
-            ))
+            if internal_key:
+                r = requests.get(
+                    f"{target}/internal/launch_kpis",
+                    headers={"X-LLMHive-Internal-Key": internal_key},
+                    timeout=10,
+                )
+                results.append(_check(
+                    "kpis_accessible",
+                    r.status_code == 200 and (r.headers.get("content-type") or "").startswith("application/json"),
+                    f"status={r.status_code} (with auth)" if r.status_code != 200 else "200 OK",
+                    p0=False,
+                ))
+            else:
+                r = requests.get(f"{target}/internal/launch_kpis", timeout=10)
+                results.append(_check(
+                    "kpis_accessible",
+                    r.status_code in (401, 403),
+                    f"status={r.status_code} (unauth correctly rejected)" if r.status_code in (401, 403) else f"status={r.status_code}",
+                    p0=False,
+                ))
         except Exception as e:
-            results.append(_check("kpis_endpoint", False, str(e), p0=False))
+            results.append(_check("kpis_accessible", False, str(e), p0=False))
 
     return results
 

@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-03-06T23:23:22.188458",
+  "gate_status": "pass",
+  "git_sha": "4798d02a06d6",
+  "model_registry_version": "2",
+  "launch_mode_enabled": false,
+  "cost": {
+    "avg_usd": 0.0,
+    "p50_usd": 0.0,
+    "p95_usd": 0.0,
+    "budget_p50_floor": 0.01,
+    "budget_p95_floor": 0.02,
+    "p50_pass": true,
+    "p95_pass": true
+  },
+  "paid_calls": {
+    "total": 0,
+    "rate_pct": 0.0
+  },
+  "tool_use": {
+    "score": 0,
+    "error_rate_pct": 0
+  },
+  "rag": {
+    "score": 0,
+    "ungrounded_rate_pct": 0
+  },
+  "dialogue": {
+    "score": 0,
+    "escalation_rate_pct": 0
+  },
+  "latency": {
+    "p95_ms": 10046
+  },
+  "top_escalation_reasons": {},
+  "circuit_breaker": {},
+  "p0_failures": [],
+  "total_samples": 10
+}

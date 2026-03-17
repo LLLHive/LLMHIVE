@@ -1,0 +1,1149 @@
+{
+  "timestamp": "2026-01-30T09:57:47.335268",
+  "elite": {
+    "tier": "elite",
+    "tier_name": "ELITE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": true,
+            "passed": false,
+            "score": 0.0,
+            "latency_ms": 13137.547016143799,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.0,
+            "cost_info": {
+              "total_tokens": 895,
+              "provider": "unknown",
+              "total_cost": 0.0
+            }
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 7133.829116821289,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.004915,
+            "cost_info": {
+              "generation_id": "gen-1769784575-dvVAWNDYbdrNItkz6L0b",
+              "prompt_tokens": 170,
+              "completion_tokens": 271,
+              "total_tokens": 441,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.004915,
+              "cost_usd": 0.004915
+            }
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 8237.36310005188,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.004225,
+            "cost_info": {
+              "generation_id": "gen-1769784584-5mw8IH90usLNOpwwTYhD",
+              "prompt_tokens": 176,
+              "completion_tokens": 223,
+              "total_tokens": 399,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.004225,
+              "cost_usd": 0.004225
+            }
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 15341.847896575928,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.009735,
+            "cost_info": {
+              "generation_id": "gen-1769784592-tAi4TitRfWhKbtTJx07a",
+              "prompt_tokens": 177,
+              "completion_tokens": 590,
+              "total_tokens": 767,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.009735,
+              "cost_usd": 0.009735
+            }
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 6953.306198120117,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.0037,
+            "cost_info": {
+              "generation_id": "gen-1769784606-2Z9gWVIfmznIRxkKeBFq",
+              "prompt_tokens": 176,
+              "completion_tokens": 188,
+              "total_tokens": 364,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.0037,
+              "cost_usd": 0.0037
+            }
+          }
+        ],
+        "passed": 4,
+        "total": 5,
+        "pass_rate": 0.8,
+        "total_cost": 0.022575
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 14643.769025802612,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.011015,
+            "cost_info": {
+              "generation_id": "gen-1769784613-Q1dws4gdbrclrhNTneyO",
+              "prompt_tokens": 208,
+              "completion_tokens": 665,
+              "total_tokens": 873,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.011015,
+              "cost_usd": 0.011015
+            }
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 12159.852027893066,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.00676,
+            "cost_info": {
+              "generation_id": "gen-1769784627-t8qYPcMkdxlBJUKeq9Kz",
+              "prompt_tokens": 209,
+              "completion_tokens": 381,
+              "total_tokens": 590,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.00676,
+              "cost_usd": 0.00676
+            }
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 10561.458826065063,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.00748,
+            "cost_info": {
+              "generation_id": "gen-1769784640-kp8GL0dBymqwuVBqssMP",
+              "prompt_tokens": 218,
+              "completion_tokens": 426,
+              "total_tokens": 644,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00748,
+              "cost_usd": 0.00748
+            }
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": true,
+            "passed": true,
+            "score": 0.75,
+            "latency_ms": 10852.45394706726,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.011755,
+            "cost_info": {
+              "generation_id": "gen-1769784651-kflvely7yljOLSZSsigq",
+              "prompt_tokens": 206,
+              "completion_tokens": 715,
+              "total_tokens": 921,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.011755,
+              "cost_usd": 0.011755
+            }
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 10026.771068572998,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.01015,
+            "cost_info": {
+              "generation_id": "gen-1769784661-imGaOd6yih1grtUjmGYZ",
+              "prompt_tokens": 218,
+              "completion_tokens": 604,
+              "total_tokens": 822,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.01015,
+              "cost_usd": 0.01015
+            }
+          }
+        ],
+        "passed": 5,
+        "total": 5,
+        "pass_rate": 1.0,
+        "total_cost": 0.04716
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 22588.072061538696,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.020555,
+            "cost_info": {
+              "generation_id": "gen-1769784672-hkqT1p1lq469ZFxesNMF",
+              "prompt_tokens": 901,
+              "completion_tokens": 1070,
+              "total_tokens": 1971,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.020555,
+              "cost_usd": 0.020555
+            }
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 12664.55101966858,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.008665,
+            "cost_info": {
+              "generation_id": "gen-1769784694-Um0dxlJaukXb1l4v6m6Z",
+              "prompt_tokens": 215,
+              "completion_tokens": 506,
+              "total_tokens": 721,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.008665,
+              "cost_usd": 0.008665
+            }
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 9653.65195274353,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.00854,
+            "cost_info": {
+              "generation_id": "gen-1769784707-eBOM4AYB5GQSihapNstp",
+              "prompt_tokens": 619,
+              "completion_tokens": 363,
+              "total_tokens": 982,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.00854,
+              "cost_usd": 0.00854
+            }
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 10716.485023498535,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.010845,
+            "cost_info": {
+              "generation_id": "gen-1769784718-6iLilhgJAT4eZDRwqMlm",
+              "prompt_tokens": 1020,
+              "completion_tokens": 383,
+              "total_tokens": 1403,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.010845,
+              "cost_usd": 0.010845
+            }
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 11735.80288887024,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.00887,
+            "cost_info": {
+              "generation_id": "gen-1769784727-6zgmBoYd5ZrFFBIXWYbu",
+              "prompt_tokens": 208,
+              "completion_tokens": 522,
+              "total_tokens": 730,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00887,
+              "cost_usd": 0.00887
+            }
+          }
+        ],
+        "passed": 5,
+        "total": 5,
+        "pass_rate": 1.0,
+        "total_cost": 0.057475
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 4009.751081466675,
+            "models_used": [
+              "GPT-4o"
+            ],
+            "actual_cost": 0.002045,
+            "cost_info": {
+              "generation_id": "gen-1769784738-coK9uvE29GNJH5pGKAQt",
+              "prompt_tokens": 220,
+              "completion_tokens": 63,
+              "total_tokens": 283,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.002045,
+              "cost_usd": 0.002045
+            }
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 4031.001091003418,
+            "models_used": [
+              "GPT-4o"
+            ],
+            "actual_cost": 0.002345,
+            "cost_info": {
+              "generation_id": "gen-1769784742-aUnKGlbOcaNf1iclMWYs",
+              "prompt_tokens": 208,
+              "completion_tokens": 87,
+              "total_tokens": 295,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.002345,
+              "cost_usd": 0.002345
+            }
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 3341.393232345581,
+            "models_used": [
+              "GPT-4o"
+            ],
+            "actual_cost": 0.001175,
+            "cost_info": {
+              "generation_id": "gen-1769784747-WCZ1DPaMfPA9sN9mwz6G",
+              "prompt_tokens": 181,
+              "completion_tokens": 18,
+              "total_tokens": 199,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.001175,
+              "cost_usd": 0.001175
+            }
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 8866.403102874756,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.006675,
+            "cost_info": {
+              "generation_id": "gen-1769784750-CKaf88TI1l6H8jtdzY9U",
+              "prompt_tokens": 207,
+              "completion_tokens": 376,
+              "total_tokens": 583,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.006675,
+              "cost_usd": 0.006675
+            }
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 8266.720056533813,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.00558,
+            "cost_info": {
+              "generation_id": "gen-1769784759-aX0gNtcAJMF6ifJ2e3GT",
+              "prompt_tokens": 162,
+              "completion_tokens": 318,
+              "total_tokens": 480,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00558,
+              "cost_usd": 0.00558
+            }
+          }
+        ],
+        "passed": 5,
+        "total": 5,
+        "pass_rate": 1.0,
+        "total_cost": 0.01782
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 2831.163167953491,
+            "models_used": [
+              "GPT-4o"
+            ],
+            "actual_cost": 0.00302,
+            "cost_info": {
+              "generation_id": "gen-1769784767-dovkpTCsPplbmIyN9Tz8",
+              "prompt_tokens": 568,
+              "completion_tokens": 12,
+              "total_tokens": 580,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00302,
+              "cost_usd": 0.00302
+            }
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 11470.706939697266,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.008875,
+            "cost_info": {
+              "generation_id": "gen-1769784770-gNLaK1cmvoaLgWuuAHdV",
+              "prompt_tokens": 266,
+              "completion_tokens": 503,
+              "total_tokens": 769,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.008875,
+              "cost_usd": 0.008875
+            }
+          }
+        ],
+        "passed": 2,
+        "total": 2,
+        "pass_rate": 1.0,
+        "total_cost": 0.011895
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 5319.26703453064,
+            "models_used": [
+              "GPT-4o"
+            ],
+            "actual_cost": 0.00459,
+            "cost_info": {
+              "generation_id": "gen-1769784782-MnooqLEGbU67Bcwi615z",
+              "prompt_tokens": 708,
+              "completion_tokens": 70,
+              "total_tokens": 778,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00459,
+              "cost_usd": 0.00459
+            }
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 10549.761772155762,
+            "models_used": [
+              "GPT-4o"
+            ],
+            "actual_cost": 0.011185,
+            "cost_info": {
+              "generation_id": "gen-1769784786-QHq3tDfNcPxPQKzu40zk",
+              "prompt_tokens": 827,
+              "completion_tokens": 470,
+              "total_tokens": 1297,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.011185,
+              "cost_usd": 0.011185
+            }
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": true,
+            "passed": true,
+            "score": 0.6666666666666666,
+            "latency_ms": 4480.799913406372,
+            "models_used": [
+              "GPT-4o"
+            ],
+            "actual_cost": 0.00277,
+            "cost_info": {
+              "generation_id": "gen-1769784797-BkQw90svHDGoOikm1tTP",
+              "prompt_tokens": 197,
+              "completion_tokens": 119,
+              "total_tokens": 316,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00277,
+              "cost_usd": 0.00277
+            }
+          }
+        ],
+        "passed": 3,
+        "total": 3,
+        "pass_rate": 1.0,
+        "total_cost": 0.018545
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 12006.60490989685,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.006905,
+            "cost_info": {
+              "generation_id": "gen-1769784802-z2QHiDpakOyo97aNtZ8N",
+              "prompt_tokens": 181,
+              "completion_tokens": 400,
+              "total_tokens": 581,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.006905,
+              "cost_usd": 0.006905
+            }
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 14056.42819404602,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.011205,
+            "cost_info": {
+              "generation_id": "gen-1769784814-QFA2BBkAbtw3wANB8tFV",
+              "prompt_tokens": 213,
+              "completion_tokens": 676,
+              "total_tokens": 889,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.011205,
+              "cost_usd": 0.011205
+            }
+          }
+        ],
+        "passed": 2,
+        "total": 2,
+        "pass_rate": 1.0,
+        "total_cost": 0.01811
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": true,
+            "passed": true,
+            "score": 0.6666666666666666,
+            "latency_ms": 8147.963047027588,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.004525,
+            "cost_info": {
+              "generation_id": "gen-1769784828-AiLXtN4WC7TTJ7sXWjxG",
+              "prompt_tokens": 173,
+              "completion_tokens": 244,
+              "total_tokens": 417,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.004525,
+              "cost_usd": 0.004525
+            }
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": true,
+            "passed": true,
+            "score": 1.0,
+            "latency_ms": 7502.781391143799,
+            "models_used": [
+              "GPT-4o",
+              "Claude 3.5 Sonnet",
+              "DeepSeek V3.2"
+            ],
+            "actual_cost": 0.005075,
+            "cost_info": {
+              "generation_id": "gen-1769784836-CbzD3X4DXRkDn92k2iNd",
+              "prompt_tokens": 169,
+              "completion_tokens": 282,
+              "total_tokens": 451,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.005075,
+              "cost_usd": 0.005075
+            }
+          }
+        ],
+        "passed": 2,
+        "total": 2,
+        "pass_rate": 1.0,
+        "total_cost": 0.009600000000000001
+      }
+    },
+    "total_passed": 28,
+    "total_cases": 29,
+    "overall_pass_rate": 0.9655172413793104,
+    "total_cost": 0.20318,
+    "avg_cost_per_query": 0.007006206896551724
+  },
+  "free": {
+    "tier": "free",
+    "tier_name": "FREE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3205.9359550476074,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2795.7539558410645,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3646.721124649048,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3043.039083480835,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3168.088912963867,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3986.3312244415283,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3486.2070083618164,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3615.572929382324,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3048.0258464813232,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2568.505048751831,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 69353.5361289978,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 4733.567953109741,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3794.121026992798,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 7389.265298843384,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTT",
+            "latency_ms": 3329.646110534668,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '400 Bad Request' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTT",
+            "latency_ms": 2615.0221824645996,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3069.8180198669434,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2488.646984100342,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3267.909049987793,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3295.083999633789,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2520.906925201416,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2906.6600799560547,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 3951.7641067504883,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 5119.146108627319,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 63031.864166259766,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 3,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 4346.471786499023,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2901.3779163360596,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2885.8797550201416,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 502: {\"detail\":{\"error\":\"Provider error: Client error '404 Not Found' for url 'https://openrouter.ai/api/v1/chat/completions'\\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/",
+            "latency_ms": 2716.4831161499023,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      }
+    },
+    "total_passed": 0,
+    "total_cases": 29,
+    "overall_pass_rate": 0.0,
+    "total_cost": 0.0,
+    "avg_cost_per_query": 0.0
+  }
+}

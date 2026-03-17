@@ -1,0 +1,115 @@
+{
+  "title": "LLMHive Elite+ Benchmark Report",
+  "generated_at": "2026-03-06T17:23:17.566169",
+  "methods": {
+    "orchestration": "Elite+ free-first verified premium pipeline",
+    "policy": "free_first_verified (Stage A \u2192 B \u2192 C \u2192 D)",
+    "evaluation": "Paired comparison against Elite baseline",
+    "scoring": "Deterministic verification + paid escalation metrics"
+  },
+  "version_manifest": {
+    "orchestrator_revision": "4798d02a06d6",
+    "model_registry_version": "2",
+    "release_manifest_version": "2"
+  },
+  "gate_status": "pass",
+  "total_samples": 10,
+  "cost_distribution": {
+    "p50_usd": 0,
+    "p95_usd": 0,
+    "budget_p50_target": 0.01,
+    "budget_p95_target": 0.02
+  },
+  "latency_distribution": {
+    "p50_ms": 5151,
+    "p95_ms": 10046
+  },
+  "paid_escalation_rate": {
+    "overall_pct": 0.0
+  },
+  "categories": [
+    {
+      "category": "coding",
+      "priority": "P1",
+      "sample_count": 1,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0,
+      "pass": false,
+      "stage_distribution": {}
+    },
+    {
+      "category": "dialogue",
+      "priority": "P0",
+      "sample_count": 0,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0,
+      "pass": true,
+      "stage_distribution": {}
+    },
+    {
+      "category": "long_context",
+      "priority": "P1",
+      "sample_count": 0,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0,
+      "pass": true,
+      "stage_distribution": {}
+    },
+    {
+      "category": "math",
+      "priority": "P0",
+      "sample_count": 0,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0,
+      "pass": true,
+      "stage_distribution": {}
+    },
+    {
+      "category": "multilingual",
+      "priority": "P2",
+      "sample_count": 0,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0,
+      "pass": true,
+      "stage_distribution": {}
+    },
+    {
+      "category": "rag",
+      "priority": "P0",
+      "sample_count": 0,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0,
+      "pass": true,
+      "stage_distribution": {}
+    },
+    {
+      "category": "reasoning",
+      "priority": "P1",
+      "sample_count": 9,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0.0,
+      "pass": true,
+      "stage_distribution": {
+        "unknown": 9
+      }
+    },
+    {
+      "category": "tool_use",
+      "priority": "P0",
+      "sample_count": 0,
+      "score": 0,
+      "cost_usd_avg": 0,
+      "paid_call_pct": 0,
+      "pass": true,
+      "stage_distribution": {}
+    }
+  ],
+  "p0_failures": []
+}

@@ -1,0 +1,43 @@
+{
+  "title": "LLMHive Final Launch Certification",
+  "generated_at": "2026-03-07T04:23:12.221136+00:00",
+  "mode": "offline",
+  "git_sha": "74e5049b17bd",
+  "offline_certification": {
+    "checks": [
+      {
+        "check": "free_tier_blocks_paid",
+        "pass": true
+      },
+      {
+        "check": "elite_plus_allows_within_budget",
+        "pass": true
+      },
+      {
+        "check": "elite_plus_blocks_over_ceiling",
+        "pass": true
+      },
+      {
+        "check": "elite_plus_enabled",
+        "pass": true
+      },
+      {
+        "check": "elite_plus_mode_valid",
+        "pass": true,
+        "detail": "mode=active"
+      },
+      {
+        "check": "internal_auth_rejects_fake",
+        "pass": true
+      },
+      {
+        "check": "registry_version_sync",
+        "pass": true
+      }
+    ],
+    "failures": [],
+    "certified": true
+  },
+  "certified": true,
+  "failures": []
+}

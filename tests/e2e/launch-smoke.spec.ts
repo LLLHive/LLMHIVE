@@ -118,6 +118,22 @@ test.describe('Launch Smoke: Registry Version Match', () => {
     }
   })
 
+  test('models.json contains categoryLeaders and categoryLeadersVersion', async ({}) => {
+    const modelsJson = loadModelsJson()
+    expect(modelsJson).not.toBeNull()
+    expect(modelsJson).toHaveProperty('categoryLeaders')
+    expect(modelsJson).toHaveProperty('categoryLeadersVersion')
+    expect(Array.isArray(modelsJson.categoryLeaders)).toBeTruthy()
+    expect(modelsJson.categoryLeaders.length).toBeGreaterThan(0)
+    expect(modelsJson.categoryLeadersVersion).toBeTruthy()
+    for (const c of modelsJson.categoryLeaders) {
+      expect(c).toHaveProperty('category_key')
+      expect(c).toHaveProperty('display_name')
+      expect(c).toHaveProperty('leader_score')
+      expect(c).toHaveProperty('leader_model')
+    }
+  })
+
   test('models.json has both free and elite tier models', async ({}) => {
     const modelsJson = loadModelsJson()
     expect(modelsJson).not.toBeNull()

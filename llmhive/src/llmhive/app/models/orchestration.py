@@ -100,6 +100,10 @@ class ChatMetadata(BaseModel):
     user_id: Optional[str] = Field(default=None, description="User ID")
     project_id: Optional[str] = Field(default=None, description="Project ID")
     org_id: Optional[str] = Field(default=None, description="Organization ID")
+    elite_plus_policy_override: Optional[str] = Field(
+        default=None,
+        description="Internal bench only: override ELITE_PLUS_POLICY for paired evaluation (free_first_verified | leader_first_verified)",
+    )
     criteria: Optional[CriteriaSettings] = Field(
         default=None,
         description="Dynamic criteria settings for quality/speed/creativity balance"

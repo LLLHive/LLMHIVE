@@ -1,0 +1,141 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 100,
+      "correct": 73,
+      "incorrect": 27,
+      "errors": 0,
+      "accuracy": 73.0,
+      "avg_latency_ms": 5000,
+      "avg_cost": 0.005,
+      "total_cost": 0.5,
+      "extra": {
+        "error_samples": []
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Coding (HumanEval)",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 44,
+      "incorrect": 5,
+      "errors": 1,
+      "accuracy": 89.8,
+      "avg_latency_ms": 64601,
+      "avg_cost": 0.000509,
+      "total_cost": 0.0249,
+      "extra": {
+        "error_samples": []
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 100,
+      "correct": 80,
+      "incorrect": 5,
+      "errors": 15,
+      "accuracy": 94.1,
+      "avg_latency_ms": 26046,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": [
+          "No valid answer from generate-then-verify",
+          "No valid answer from generate-then-verify",
+          "No valid answer from generate-then-verify"
+        ]
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Multilingual (MMMLU)",
+      "dataset": "openai/MMMLU",
+      "sample_size": 100,
+      "correct": 76,
+      "incorrect": 23,
+      "errors": 1,
+      "accuracy": 76.8,
+      "avg_latency_ms": 22814,
+      "avg_cost": 4.8e-05,
+      "total_cost": 0.0048,
+      "extra": {
+        "error_samples": [
+          ""
+        ]
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Long Context (LongBench)",
+      "dataset": "THUDM/LongBench - ERROR",
+      "sample_size": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 1,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error": "LongBench eval failed: Command '['python3', 'scripts/eval_longbench.py']' returned non-zero exit status 2."
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Tool Use (ToolBench)",
+      "dataset": "ToolBench (OpenBMB) - ERROR",
+      "sample_size": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 1,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error": "ToolBench eval failed: Command '['python3', 'scripts/eval_toolbench.py']' returned non-zero exit status 2."
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "RAG (MS MARCO)",
+      "dataset": "microsoft/ms_marco v1.1",
+      "sample_size": 200,
+      "correct": 189,
+      "incorrect": 11,
+      "errors": 0,
+      "accuracy": 40.9,
+      "avg_latency_ms": 24186,
+      "avg_cost": 3.2e-05,
+      "total_cost": 0.0065,
+      "extra": {
+        "mrr_at_10": 0.4085,
+        "eval_mode": "builtin"
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Dialogue (MT-Bench)",
+      "dataset": "lmsys/mt-bench - ERROR",
+      "sample_size": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "errors": 1,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error": "MT-Bench eval failed: Command '['python3', 'scripts/eval_mtbench.py']' returned non-zero exit status 2."
+      },
+      "infra_failures": 0
+    }
+  ],
+  "timestamp": "2026-02-20T21:32:56.053939"
+}

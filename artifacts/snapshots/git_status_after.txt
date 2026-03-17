@@ -1,0 +1,66 @@
+ M .gitignore
+ M benchmark_reports/best_scores.json
+ M benchmark_reports/category_benchmarks_checkpoint.json
+ M benchmark_reports/history.json
+ M benchmark_reports/performance_history.json
+ M benchmark_reports/performance_history_detail.json
+ M benchmark_reports/strategy_activation_summary.json
+ M components/openrouter/model-selection.tsx
+ M final_launch_checklist.md
+ M lib/openrouter/tiers.ts
+ M llmhive/src/llmhive/app/__pycache__/main.cpython-312.pyc
+ M llmhive/src/llmhive/app/__pycache__/orchestrator.cpython-312.pyc
+ M llmhive/src/llmhive/app/orchestration/__pycache__/adaptive_router.cpython-312.pyc
+ M llmhive/src/llmhive/app/orchestration/__pycache__/elite_orchestrator.cpython-312.pyc
+ M llmhive/src/llmhive/app/orchestration/elite_orchestration.py
+ M llmhive/src/llmhive/app/providers/__pycache__/gemini.cpython-312.pyc
+ M llmhive/src/llmhive/app/services/__pycache__/model_router.cpython-312.pyc
+ M llmhive/src/llmhive/app/services/__pycache__/orchestrator_adapter.cpython-312.pyc
+ M llmhive/tests/__pycache__/test_tier_rate_limiting.cpython-312-pytest-9.0.1.pyc
+ M scripts/micro_validation.py
+ M scripts/run_category_benchmarks.py
+ M strategy_reports/competitive_advantage_index.json
+?? artifacts/final_launch_checklist.json
+?? artifacts/final_launch_checklist.md
+?? artifacts/logs/
+?? artifacts/reports/
+?? artifacts/snapshots/
+?? benchmark_reports/category_benchmarks_elite_20260302.json
+?? benchmark_reports/category_benchmarks_elite_20260302.md
+?? benchmark_reports/category_benchmarks_elite_20260303.json
+?? benchmark_reports/category_benchmarks_elite_20260303.md
+?? benchmark_reports/category_benchmarks_elite_20260304.json
+?? benchmark_reports/category_benchmarks_elite_20260304.md
+?? benchmark_reports/category_benchmarks_free_20260301.json
+?? benchmark_reports/category_benchmarks_free_20260301.md
+?? benchmark_reports/category_benchmarks_free_20260303.json
+?? benchmark_reports/category_benchmarks_free_20260303.md
+?? benchmark_reports/elite_plus_shadow_elite_20260306_014547.jsonl
+?? benchmark_reports/elite_plus_shadow_elite_20260306_014650.jsonl
+?? benchmark_reports/final_launch_certification.json
+?? benchmark_reports/final_launch_checklist.json
+?? benchmark_reports/integration_certification.json
+?? benchmark_reports/latest/
+?? benchmark_reports/launch_candidate_gate_20260306_020227.json
+?? benchmark_reports/launch_candidate_gate_20260306_104533.json
+?? benchmark_reports/launch_candidate_gate_20260306_104632.json
+?? benchmark_reports/launch_candidate_gate_20260306_104701.json
+?? benchmark_reports/marketing_benchmark.json
+?? benchmark_reports/marketing_benchmark.md
+?? benchmark_reports/rag_micro_validation_20260306_023544.json
+?? benchmark_reports/rc_summary.json
+?? benchmark_reports/stress_certification.json
+?? benchmark_reports/telemetry_audit.json
+?? benchmark_reports/test_gate.json
+?? docs/2026_LLM_BENCHMARK_LEADERBOARD.md
+?? docs/ELITE_PLUS_SHADOW_PLAN.md
+?? docs/FREE_TIER_LAUNCH_READINESS.md
+?? hooks/use-model-registry.ts
+?? launch_kpis.json
+?? llmhive/.gcloudignore
+?? llmhive/src/llmhive/app/orchestration/progressive_free.py
+?? llmhive/src/llmhive/app/orchestration/tier_allowlist.py
+?? preflight_report.json
+?? scripts/benchmark_reports/
+?? scripts/strategy_reports/
+?? synthetic_prod_results.json

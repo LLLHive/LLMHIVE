@@ -1,0 +1,15 @@
+{
+  "total_tokens": 0,
+  "total_cost_usd": 0.1,
+  "cost_per_category": {
+    "MMLU": {
+      "total_cost_usd": 0.1,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 20
+    }
+  },
+  "cost_per_correct_answer": 0.00625,
+  "cost_per_benchmark": 0.1,
+  "cost_vs_previous_commit_delta": -0.655365
+}

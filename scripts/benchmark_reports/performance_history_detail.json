@@ -1,0 +1,98 @@
+[
+  {
+    "timestamp": "2026-03-05T04:24:49.882889+00:00",
+    "category": "reasoning",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.778,
+    "latency_p50": 5000,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0018,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-03-05T04:24:49.884279+00:00",
+    "category": "coding",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 1.0,
+    "latency_p50": 61535,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-03-05T04:24:49.888028+00:00",
+    "category": "math",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.889,
+    "latency_p50": 24610,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-03-05T04:24:49.892267+00:00",
+    "category": "multilingual",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.8,
+    "latency_p50": 39822,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-03-05T04:24:49.895004+00:00",
+    "category": "long_context",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 1.0,
+    "latency_p50": 13250,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-03-05T04:24:49.902931+00:00",
+    "category": "tool_use",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.6,
+    "latency_p50": 7528,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-03-05T04:24:49.905193+00:00",
+    "category": "rag",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.34700000000000003,
+    "latency_p50": 21611,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  },
+  {
+    "timestamp": "2026-03-05T04:24:49.912157+00:00",
+    "category": "dialogue",
+    "model": "unknown",
+    "provider": "unknown",
+    "accuracy": 0.5,
+    "latency_p50": 55134,
+    "latency_p95": 0.0,
+    "cost_per_sample": 0.0,
+    "entropy": 0,
+    "verify_timeout_rate": 0
+  }
+]

@@ -1,0 +1,481 @@
+{
+  "timestamp": "2026-01-29T10:24:57.509601",
+  "api_url": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+  "total_cases": 29,
+  "total_passed": 8,
+  "overall_pass_rate": 0.27586206896551724,
+  "categories": {
+    "general_reasoning": {
+      "category": "general_reasoning",
+      "total_cases": 5,
+      "passed": 1,
+      "pass_rate": 0.2,
+      "avg_score": 0.26666666666666666,
+      "avg_latency_ms": 8882.56196975708,
+      "results": [
+        {
+          "case_id": "gr_001",
+          "category": "PhD-Level Physics",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 6736.84287071228,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "gr_002",
+          "category": "PhD-Level Chemistry",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 4112.812042236328,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "gr_003",
+          "category": "PhD-Level Mathematics",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 8067.723035812378,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "gr_004",
+          "category": "PhD-Level Biology",
+          "success": true,
+          "passed": false,
+          "score": 0.3333333333333333,
+          "latency_ms": 15795.15790939331,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "CRISPR-Cas9 is a genome editing tool that enables precise modifications within an organism's DNA.\n\nIt operates using a natural mechanism derived from the immune system of bacteria, which use CRISPR se..."
+        },
+        {
+          "case_id": "gr_005",
+          "category": "PhD-Level Computer Science",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 9700.273990631104,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Shor's algorithm is a quantum algorithm that efficiently solves the problem of integer factorization, which is the basis for the security of RSA encryption.\n\nRSA relies on the difficulty of factoring ..."
+        }
+      ]
+    },
+    "coding": {
+      "category": "coding",
+      "total_cases": 5,
+      "passed": 4,
+      "pass_rate": 0.8,
+      "avg_score": 0.8,
+      "avg_latency_ms": 14513.372564315796,
+      "results": [
+        {
+          "case_id": "code_001",
+          "category": "Algorithm Implementation",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 16398.488998413086,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```python\nCertainly! Below is the implementation of the Aho-Corasick algorithm in Python with proper type hints. This implementation builds the trie from a list of patterns and matches them against th..."
+        },
+        {
+          "case_id": "code_002",
+          "category": "Data Structures",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 16458.48512649536,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "To implement a thread-safe LRU (Least Recently Used) cache in Python, we can use the `OrderedDict` from the `collections` module for maintaining the order of usage, combined with `threading.\n\nLock` to..."
+        },
+        {
+          "case_id": "code_003",
+          "category": "Database",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 3613.083839416504,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "code_004",
+          "category": "Frontend",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 18638.065814971924,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```python\nHere's a TypeScript-based React component implementing an infinite scroll list with virtualization, loading states, and error handling. This example uses React, React Virtualized, and the Fe..."
+        },
+        {
+          "case_id": "code_005",
+          "category": "DevOps",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 17458.739042282104,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "Below is a Kubernetes deployment YAML file for a microservice, incorporating health checks, resource limits, horizontal pod autoscaling, and a rolling update strategy. apiVersion: apps/v1 kind: Deploy..."
+        }
+      ]
+    },
+    "math": {
+      "category": "math",
+      "total_cases": 5,
+      "passed": 3,
+      "pass_rate": 0.6,
+      "avg_score": 0.65,
+      "avg_latency_ms": 7905.563688278198,
+      "results": [
+        {
+          "case_id": "math_001",
+          "category": "Number Theory",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 14426.830053329468,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "## 1.\n\nFirst, Identify All Requirements Requirement 1: Use the calculator result above as the authoritative answer for the expression `1000+1`.\n\nRequirement 2: Calculate the sum of all positive intege..."
+        },
+        {
+          "case_id": "math_002",
+          "category": "Geometry",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 3233.0281734466553,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "math_003",
+          "category": "Calculus",
+          "success": true,
+          "passed": true,
+          "score": 1.0,
+          "latency_ms": 11147.488117218018,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```javascript\nTo solve the integral of \\( e^{x^2} \\) from 0 to 1, we need to utilize the error function because the integral of the exponential of a square is related to the error function, a special ..."
+        },
+        {
+          "case_id": "math_004",
+          "category": "Combinatorics",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 6799.483299255371,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "math_005",
+          "category": "Algebra",
+          "success": true,
+          "passed": false,
+          "score": 0.25,
+          "latency_ms": 3920.9887981414795,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        }
+      ]
+    },
+    "multilingual": {
+      "category": "multilingual",
+      "total_cases": 5,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0.05,
+      "avg_latency_ms": 3386.712074279785,
+      "results": [
+        {
+          "case_id": "ml_001",
+          "category": "Translation",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 2809.354066848755,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "ml_002",
+          "category": "Chinese Comprehension",
+          "success": true,
+          "passed": false,
+          "score": 0.25,
+          "latency_ms": 3177.509307861328,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "ml_003",
+          "category": "French Comprehension",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 3200.2780437469482,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "ml_004",
+          "category": "Japanese Generation",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 4353.656053543091,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "ml_005",
+          "category": "German Generation",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 3392.7628993988037,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        }
+      ]
+    },
+    "long_context": {
+      "category": "long_context",
+      "total_cases": 2,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0.0,
+      "avg_latency_ms": 2694.2155361175537,
+      "results": [
+        {
+          "case_id": "lc_001",
+          "category": "Memory Recall",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 2232.8381538391113,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "lc_002",
+          "category": "Code Analysis",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 3155.592918395996,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "```\nI apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://d..."
+        }
+      ]
+    },
+    "tool_use": {
+      "category": "tool_use",
+      "total_cases": 3,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0.0,
+      "avg_latency_ms": 4572.53893216451,
+      "results": [
+        {
+          "case_id": "tu_001",
+          "category": "Web Search",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 4263.144254684448,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "tu_002",
+          "category": "Calculator",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 6178.768873214722,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "tu_003",
+          "category": "Code Execution",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 3275.7036685943604,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "```\nI apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://d..."
+        }
+      ]
+    },
+    "rag": {
+      "category": "rag",
+      "total_cases": 2,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0.0,
+      "avg_latency_ms": 3838.432550430298,
+      "results": [
+        {
+          "case_id": "rag_001",
+          "category": "Documentation QA",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 4982.522010803223,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "rag_002",
+          "category": "Product Knowledge",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 2694.343090057373,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        }
+      ]
+    },
+    "dialogue": {
+      "category": "dialogue",
+      "total_cases": 2,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "avg_score": 0.0,
+      "avg_latency_ms": 2795.0448989868164,
+      "results": [
+        {
+          "case_id": "dl_001",
+          "category": "Empathetic Response",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 3085.444688796997,
+          "models_used": [
+            "GPT-4o",
+            "Claude 3.5 Sonnet",
+            "DeepSeek V3.2"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        },
+        {
+          "case_id": "dl_002",
+          "category": "Emotional Intelligence",
+          "success": true,
+          "passed": false,
+          "score": 0.0,
+          "latency_ms": 2504.6451091766357,
+          "models_used": [
+            "GPT-4o"
+          ],
+          "response_preview": "I apologize, but I encountered an error while processing your request: Client error '400 Bad Request' for url 'https://openrouter. ai/api/v1/chat/completions' For more information check: https://devel..."
+        }
+      ]
+    }
+  }
+}

@@ -415,6 +415,44 @@ def compute_registry_integrity_hash() -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
+def get_industry_leaders() -> Dict[str, Dict[str, Any]]:
+    """Load industry leader metadata per category (for leader-first policy / UI badges).
+
+    Returns {internal_category: {industryLeaderScore, industryLeaderModelLabel, industryLeaderDataset}}.
+    Only used when ELITE_PLUS_LEADERBOARD_AWARE=1. Does not affect leaderboardRank.
+    """
+    try:
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent.parent.parent.parent
+        path = root / "benchmark_configs" / "industry_leaders_2026-02-27.json"
+        if not path.exists():
+            return {}
+        data = json.loads(path.read_text())
+        cats = data.get("categories", {})
+        mapping = {
+            "mmlu_reasoning": "reasoning",
+            "coding_humaneval": "coding",
+            "math_gsm8k": "math",
+            "multilingual_mmmlu": "multilingual",
+            "longbench": "long_context",
+            "toolbench": "tool_use",
+            "rag_msmarco_mrr10": "rag",
+            "dialogue_mtbench": "dialogue",
+        }
+        out: Dict[str, Dict[str, Any]] = {}
+        for ind_key, val in cats.items():
+            internal = mapping.get(ind_key)
+            if internal and isinstance(val, dict):
+                out[internal] = {
+                    "industryLeaderScore": val.get("leader_score"),
+                    "industryLeaderModelLabel": val.get("leader_model_label", ""),
+                    "industryLeaderDataset": val.get("dataset", ""),
+                }
+        return out
+    except Exception:
+        return {}
+
+
 def check_champion_challenger_gate(
     new_version: str,
     rc_summary_path: Optional[str] = None,

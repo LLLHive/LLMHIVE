@@ -9,7 +9,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -181,6 +181,29 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"OpenRouter tables init skipped: {e}")
     
+    # Elite+ Provider Warmup (STEP 2)
+    try:
+        from .orchestration.elite_plus_orchestrator import (
+            ELITE_PLUS_WARMUP,
+            ELITE_PLUS_STABILITY_V1,
+            warmup_providers,
+            ELITE_PLUS_ENABLE_DOMINANCE_V3,
+            ELITE_PLUS_ENABLE_DOMINANCE_V2,
+        )
+        if ELITE_PLUS_WARMUP and ELITE_PLUS_STABILITY_V1 and (ELITE_PLUS_ENABLE_DOMINANCE_V2 or ELITE_PLUS_ENABLE_DOMINANCE_V3):
+            import asyncio
+            logger.info("Starting Elite+ provider warmup...")
+            warmup_result = await warmup_providers(orch)
+            healthy = sum(1 for v in warmup_result.values() if isinstance(v, dict) and v.get("status") == "healthy")
+            total = len([v for v in warmup_result.values() if isinstance(v, dict)])
+            logger.info("✓ Elite+ provider warmup complete: %d/%d healthy", healthy, total)
+        elif ELITE_PLUS_WARMUP:
+            logger.info("ELITE_PLUS_WARMUP=1 but dominance v2/v3 not enabled, skipping")
+    except ImportError:
+        logger.debug("Elite+ warmup not available")
+    except Exception as e:
+        logger.warning("Elite+ provider warmup failed (non-fatal): %s", e)
+
     # Configure Tool Broker with Tavily web search
     try:
         from .services.web_research import web_search_formatted, get_web_research_client
@@ -561,12 +584,21 @@ async def build_info() -> dict:
 
 
 @app.get("/internal/launch_kpis", summary="Launch KPI snapshot", include_in_schema=False)
-async def launch_kpis() -> dict:
+async def launch_kpis(request: Request) -> dict:
     """Real-time KPI snapshot for post-deploy monitoring.
 
     Returns cost, paid-call rate, tool/RAG health, circuit breaker status,
     and model registry version — designed for dashboards and alerting.
     """
+    try:
+        from .orchestration.internal_auth import is_internal_request
+        if not is_internal_request(request=request):
+            raise HTTPException(status_code=403, detail="Forbidden")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     from pathlib import Path as _P
     import json as _json
 

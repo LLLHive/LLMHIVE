@@ -1,0 +1,26 @@
+{
+  "failure_by_category": {
+    "MMLU": 2
+  },
+  "failure_by_type": {
+    "MODEL_INCORRECT": 2
+  },
+  "failure_by_subject": {
+    "miscellaneous": 1,
+    "moral_scenarios": 1
+  },
+  "extraction_failures": 0,
+  "verify_failures": 0,
+  "low_confidence_cases": 1,
+  "pred_none_cases": 0,
+  "top_hardest_subjects": [
+    {
+      "subject": "miscellaneous",
+      "failures": 1
+    },
+    {
+      "subject": "moral_scenarios",
+      "failures": 1
+    }
+  ]
+}

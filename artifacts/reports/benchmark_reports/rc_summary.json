@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-03-06T10:55:17.039844",
+  "gate_status": "pass",
+  "git_sha": "4798d02a06d6",
+  "elapsed_seconds": 0.3,
+  "p0_failures": [],
+  "p1_warnings": [
+    "coding (P1): insufficient_samples (1 < 2)"
+  ],
+  "category_results": {
+    "tool_use": {
+      "priority": "P0",
+      "pass": true,
+      "sample_count": 0,
+      "checks": {},
+      "escalation_reasons": {},
+      "stage_distribution": {}
+    },
+    "rag": {
+      "priority": "P0",
+      "pass": true,
+      "sample_count": 0,
+      "checks": {},
+      "escalation_reasons": {},
+      "stage_distribution": {}
+    },
+    "dialogue": {
+      "priority": "P0",
+      "pass": true,
+      "sample_count": 0,
+      "checks": {},
+      "escalation_reasons": {},
+      "stage_distribution": {}
+    },
+    "math": {
+      "priority": "P0",
+      "pass": true,
+      "sample_count": 0,
+      "checks": {},
+      "escalation_reasons": {},
+      "stage_distribution": {}
+    },
+    "reasoning": {
+      "priority": "P1",
+      "pass": true,
+      "sample_count": 9,
+      "checks": {
+        "avg_cost_usd": {
+          "value": 0,
+          "max": 0.012,
+          "pass": true
+        },
+        "paid_call_pct": {
+          "value": 0.0,
+          "max": 50,
+          "pass": true
+        }
+      },
+      "escalation_reasons": {},
+      "stage_distribution": {
+        "unknown": 9
+      }
+    },
+    "coding": {
+      "priority": "P1",
+      "pass": false,
+      "sample_count": 1,
+      "checks": {},
+      "escalation_reasons": {},
+      "stage_distribution": {}
+    },
+    "long_context": {
+      "priority": "P1",
+      "pass": true,
+      "sample_count": 0,
+      "checks": {},
+      "escalation_reasons": {},
+      "stage_distribution": {}
+    },
+    "multilingual": {
+      "priority": "P2",
+      "pass": true,
+      "sample_count": 0,
+      "checks": {},
+      "escalation_reasons": {},
+      "stage_distribution": {}
+    }
+  },
+  "global_result": {
+    "cost_p50_usd": 0,
+    "cost_p95_usd": 0,
+    "budget_p50_pass": true,
+    "budget_p95_pass": true,
+    "fallback_elite_pct": 0.0,
+    "fallback_elite_pass": true,
+    "latency_p50_ms": 5151,
+    "latency_p95_ms": 10046
+  },
+  "total_samples": 10,
+  "top_escalation_reasons": {},
+  "recommended_next_actions": [
+    "Deploy with ELITE_PLUS_LAUNCH_MODE=1",
+    "Monitor /internal/launch_kpis for 30 minutes",
+    "Verify cost p50 <= $0.010"
+  ]
+}

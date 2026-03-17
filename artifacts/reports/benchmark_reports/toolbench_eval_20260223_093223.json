@@ -1,0 +1,16 @@
+{
+  "accuracy": 80.0,
+  "success_rate": 80.0,
+  "weighted_accuracy": 83.87,
+  "attempted": 10,
+  "correct": 8,
+  "errors": 0,
+  "infra_failures": 0,
+  "parsing_failures": 2,
+  "infra_failure_rate": 0.0,
+  "total_points": 26,
+  "max_points": 31,
+  "avg_latency_ms": 9643,
+  "avg_cost": 0.0,
+  "total_cost": 0.0
+}

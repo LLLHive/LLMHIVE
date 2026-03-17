@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-03-05T04:24:49.919519+00:00",
+  "composite_index": 82.43,
+  "categories": {
+    "reasoning": {
+      "index": 64.46,
+      "win_rate_delta": 0.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 0.964,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    },
+    "coding": {
+      "index": 100.0,
+      "win_rate_delta": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 1.0,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    },
+    "math": {
+      "index": 100.0,
+      "win_rate_delta": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 1.0,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    },
+    "multilingual": {
+      "index": 100.0,
+      "win_rate_delta": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 1.0,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    },
+    "long_context": {
+      "index": 100.0,
+      "win_rate_delta": 1.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 1.0,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    },
+    "tool_use": {
+      "index": 65.0,
+      "win_rate_delta": 0.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 1.0,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    },
+    "rag": {
+      "index": 65.0,
+      "win_rate_delta": 0.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 1.0,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    },
+    "dialogue": {
+      "index": 65.0,
+      "win_rate_delta": 0.0,
+      "stability": 1.0,
+      "volatility": 0.0,
+      "cost_efficiency": 1.0,
+      "entropy_reduction": 1.0,
+      "reliability": 1.0
+    }
+  },
+  "ensemble_entropy_avg": 0.0,
+  "reliability_score": 1.0,
+  "interpretation": "strong_moat"
+}

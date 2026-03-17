@@ -1,0 +1,628 @@
+{
+  "generated_at": "2026-02-23T02:19:57.402354+00:00",
+  "intelligence_mode": "advisory",
+  "domination_targets": {
+    "coding": {
+      "label": "HumanEval",
+      "target": 92.0,
+      "actual": 100.0,
+      "met": true,
+      "delta": 8.0
+    },
+    "reasoning": {
+      "label": "MMLU",
+      "target": 80.0,
+      "actual": 0,
+      "met": false,
+      "delta": -80.0
+    },
+    "multilingual": {
+      "label": "MMMLU",
+      "target": 82.0,
+      "actual": 0,
+      "met": false,
+      "delta": -82.0
+    },
+    "math": {
+      "label": "GSM8K",
+      "target": 94.0,
+      "actual": 0,
+      "met": false,
+      "delta": -94.0
+    },
+    "rag": {
+      "label": "RAG MRR",
+      "target": 43.0,
+      "actual": 0,
+      "met": false,
+      "delta": -43.0
+    },
+    "tool_use": {
+      "label": "ToolBench",
+      "target": 85.0,
+      "actual": 0,
+      "met": false,
+      "delta": -85.0
+    },
+    "dialogue": {
+      "label": "MT-Bench",
+      "target": 8.5,
+      "actual": 0,
+      "met": false,
+      "delta": -8.5
+    },
+    "long_context": {
+      "label": "LongBench",
+      "target": 95.0,
+      "actual": 0,
+      "met": false,
+      "delta": -95.0
+    }
+  },
+  "all_targets_met": false,
+  "deployment_gates": {
+    "mmlu_gte_75": false,
+    "humaneval_gte_90": true,
+    "gsm8k_gte_92": false,
+    "rag_mrr_above_baseline": true,
+    "verify_timeout_rate_lt_8": true,
+    "ensemble_entropy_lt_85": true,
+    "cai_gte_065": true
+  },
+  "deploy_allowed": false,
+  "cai": {
+    "composite_index": 49.7,
+    "interpretation": "market_parity",
+    "categories": {
+      "reasoning": {
+        "index": 52.73,
+        "win_rate_delta": 0.0,
+        "stability": 0.4449,
+        "volatility": 0.0555,
+        "cost_efficiency": 0.9223,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "coding": {
+        "index": 43.4,
+        "win_rate_delta": 0.0,
+        "stability": 0.0,
+        "volatility": 0.4243,
+        "cost_efficiency": 0.8931,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "math": {
+        "index": 63.11,
+        "win_rate_delta": 0.0,
+        "stability": 0.9602,
+        "volatility": 0.004,
+        "cost_efficiency": 0.9272,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "multilingual": {
+        "index": 44.99,
+        "win_rate_delta": 0.0,
+        "stability": 0.0,
+        "volatility": 0.3326,
+        "cost_efficiency": 0.9993,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "rag": {
+        "index": 44.26,
+        "win_rate_delta": 0.0,
+        "stability": 0.0,
+        "volatility": 0.1749,
+        "cost_efficiency": 0.9506,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      }
+    },
+    "target": 0.65,
+    "met": true
+  },
+  "ensemble": {
+    "timestamp": "2026-02-23T02:19:57.401961+00:00",
+    "total_resolutions": 0,
+    "avg_entropy": 0.0,
+    "entropy_p95": 0.0,
+    "entropy_histogram": {
+      "<0.3": 0,
+      "0.3-0.5": 0,
+      "0.5-0.8": 0,
+      "0.8-1.0": 0,
+      ">1.0": 0
+    },
+    "category_entropy_stats": {},
+    "escalation_count": 0,
+    "tiebreaker_count": 0,
+    "instability_fallback_count": 0,
+    "instability_warnings": [],
+    "disagreement_clusters": {},
+    "adaptive_weight_adjustments": 0,
+    "weight_adjustment_log": []
+  },
+  "verify_pipeline": {
+    "total_verifications": 0,
+    "passed": 0,
+    "failed": 0,
+    "timeout_warnings": 0,
+    "timeout_failures": 0,
+    "timeout_rate": 0.0,
+    "verify_penalty": 0.0,
+    "avg_latency_ms": 0,
+    "max_latency_ms": 0,
+    "verify_latency_p95": 0,
+    "latency_distribution": {
+      "p50": 0,
+      "p95": 0,
+      "max": 0,
+      "count": 0
+    },
+    "failure_classification": {
+      "timeout": 0,
+      "mismatch": 0,
+      "exception": 0
+    },
+    "sla_warnings": [],
+    "circuit_open": false,
+    "consecutive_failures": 0,
+    "verify_model": "deepseek-reasoner",
+    "timestamp": "2026-02-23T02:19:57.402341+00:00",
+    "rolling_timeout_rate": 0.0
+  },
+  "rag_quality": {
+    "rqi": 0.0,
+    "mrr_at_10": 0,
+    "recall_at_10": 0,
+    "zero_relevant_rate": 0
+  },
+  "cost_efficiency": {
+    "total_cost_usd": 0.1498,
+    "pareto_rankings": {
+      "reasoning": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 173.9994,
+          "win_rate": 0.0,
+          "avg_cost_usd": 0.003883,
+          "history_depth": 7
+        }
+      ],
+      "coding": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 104.6244,
+          "win_rate": 0.5714,
+          "avg_cost_usd": 0.005344,
+          "history_depth": 7
+        }
+      ],
+      "math": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 257.8504,
+          "win_rate": 1.0,
+          "avg_cost_usd": 0.003641,
+          "history_depth": 6
+        }
+      ],
+      "multilingual": [
+        {
+          "model_id": "claude-sonnet-4.6",
+          "efficiency_score": 16000.0,
+          "win_rate": 0.0,
+          "avg_cost_usd": 3.6e-05,
+          "history_depth": 4
+        }
+      ],
+      "long_context": [],
+      "tool_use": [],
+      "rag": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 124.627,
+          "win_rate": 0.0,
+          "avg_cost_usd": 0.002471,
+          "history_depth": 4
+        }
+      ],
+      "dialogue": []
+    }
+  },
+  "stability": {
+    "strategy_db_records": 5,
+    "all_categories_populated": false,
+    "degradation_alerts": []
+  },
+  "team_performance_delta": {
+    "timestamp": "2026-02-23T02:19:57.402313+00:00",
+    "categories": {
+      "reasoning": {
+        "elite_model": "gpt-5.2-pro",
+        "elite_score": 0.895,
+        "team_avg_score": 0.8747,
+        "team_max_score": 0.895,
+        "score_delta": -0.0203,
+        "entropy_estimate": 1.5848,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "claude-sonnet-4.6",
+          "deepseek-v3.2"
+        ]
+      },
+      "coding": {
+        "elite_model": "gpt-5.2-pro",
+        "elite_score": 0.901,
+        "team_avg_score": 0.8807,
+        "team_max_score": 0.901,
+        "score_delta": -0.0203,
+        "entropy_estimate": 1.5848,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "claude-sonnet-4.6",
+          "deepseek-v3.2"
+        ]
+      },
+      "math": {
+        "elite_model": "gpt-5.2-pro",
+        "elite_score": 0.907,
+        "team_avg_score": 0.8795,
+        "team_max_score": 0.907,
+        "score_delta": -0.0275,
+        "entropy_estimate": 1.5846,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "deepseek-v3.2",
+          "gemini-2.5-pro"
+        ]
+      },
+      "multilingual": {
+        "elite_model": "claude-sonnet-4.6",
+        "elite_score": 0.866,
+        "team_avg_score": 0.8747,
+        "team_max_score": 0.895,
+        "score_delta": 0.0087,
+        "entropy_estimate": 1.5848,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "claude-sonnet-4.6",
+          "deepseek-v3.2"
+        ]
+      },
+      "long_context": {
+        "elite_model": "gemini-2.5-pro",
+        "elite_score": 0.8625,
+        "team_avg_score": 0.8747,
+        "team_max_score": 0.895,
+        "score_delta": 0.0122,
+        "entropy_estimate": 1.5848,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "claude-sonnet-4.6",
+          "deepseek-v3.2"
+        ]
+      },
+      "tool_use": {
+        "elite_model": "gpt-5.2-pro",
+        "elite_score": 0.901,
+        "team_avg_score": 0.8807,
+        "team_max_score": 0.901,
+        "score_delta": -0.0203,
+        "entropy_estimate": 1.5848,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "claude-sonnet-4.6",
+          "deepseek-v3.2"
+        ]
+      },
+      "rag": {
+        "elite_model": "gpt-5.2-pro",
+        "elite_score": 0.895,
+        "team_avg_score": 0.8747,
+        "team_max_score": 0.895,
+        "score_delta": -0.0203,
+        "entropy_estimate": 1.5848,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "claude-sonnet-4.6",
+          "deepseek-v3.2"
+        ]
+      },
+      "dialogue": {
+        "elite_model": "gpt-5.2-pro",
+        "elite_score": 0.895,
+        "team_avg_score": 0.8747,
+        "team_max_score": 0.895,
+        "score_delta": -0.0203,
+        "entropy_estimate": 1.5848,
+        "team_advantage": false,
+        "team_members": [
+          "gpt-5.2-pro",
+          "claude-sonnet-4.6",
+          "deepseek-v3.2"
+        ]
+      }
+    },
+    "summary": {
+      "advantage_categories": [],
+      "no_advantage_categories": [
+        "reasoning",
+        "coding",
+        "math",
+        "multilingual",
+        "long_context",
+        "tool_use",
+        "rag",
+        "dialogue"
+      ]
+    }
+  },
+  "team_configs": {
+    "reasoning": {
+      "category": "reasoning",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "coding": {
+      "category": "coding",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.901
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.872
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.869
+        }
+      ]
+    },
+    "math": {
+      "category": "math",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.907
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.875
+        },
+        {
+          "model_id": "gemini-2.5-pro",
+          "display_name": "Gemini 2.5 Pro",
+          "provider": "google",
+          "role": "support",
+          "score": 0.8565
+        }
+      ]
+    },
+    "multilingual": {
+      "category": "multilingual",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "long_context": {
+      "category": "long_context",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "tool_use": {
+      "category": "tool_use",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.901
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.872
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.869
+        }
+      ]
+    },
+    "rag": {
+      "category": "rag",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "dialogue": {
+      "category": "dialogue",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    }
+  },
+  "reliability": {
+    "total_alerts": 0,
+    "sla_compliance": {
+      "standard": {
+        "compliant_models": 0,
+        "total_models": 0,
+        "compliance_pct": 0.0
+      },
+      "enterprise": {
+        "compliant_models": 0,
+        "total_models": 0,
+        "compliance_pct": 0.0
+      },
+      "mission_critical": {
+        "compliant_models": 0,
+        "total_models": 0,
+        "compliance_pct": 0.0
+      }
+    }
+  },
+  "zero_regression": {
+    "prompts_unchanged": true,
+    "routing_unchanged": true,
+    "elite_binding_unchanged": true,
+    "decoding_unchanged": true,
+    "sample_sizes_unchanged": true,
+    "rag_unchanged": true,
+    "governance_unchanged": true
+  },
+  "market_launch_gate": {
+    "gates": {
+      "all_7_performance_gates": false,
+      "cai_gte_065": true,
+      "rqi_gte_042": false,
+      "entropy_p95_lte_085": true,
+      "verify_timeout_lte_8pct": true,
+      "sla_compliance_gte_95pct": true
+    },
+    "market_ready": false
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "timestamp": "2026-03-04T17:49:17.660948+00:00",
+  "cai": {
+    "timestamp": "2026-03-04T17:49:17.659826+00:00",
+    "composite_index": 69.78,
+    "categories": {
+      "reasoning": {
+        "index": 53.64,
+        "win_rate_delta": 0.2727,
+        "stability": 0.0,
+        "volatility": 0.1126,
+        "cost_efficiency": 0.9398,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "coding": {
+        "index": 85.36,
+        "win_rate_delta": 0.9091,
+        "stability": 0.4889,
+        "volatility": 0.0511,
+        "cost_efficiency": 0.9176,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "math": {
+        "index": 76.9,
+        "win_rate_delta": 0.9231,
+        "stability": 0.0,
+        "volatility": 0.2307,
+        "cost_efficiency": 0.973,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "multilingual": {
+        "index": 60.45,
+        "win_rate_delta": 0.3636,
+        "stability": 0.1439,
+        "volatility": 0.0856,
+        "cost_efficiency": 0.9896,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "long_context": {
+        "index": 94.43,
+        "win_rate_delta": 1.0,
+        "stability": 0.7217,
+        "volatility": 0.0278,
+        "cost_efficiency": 1.0,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "tool_use": {
+        "index": 85.72,
+        "win_rate_delta": 1.0,
+        "stability": 0.2859,
+        "volatility": 0.0714,
+        "cost_efficiency": 1.0,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "rag": {
+        "index": 53.8,
+        "win_rate_delta": 0.0,
+        "stability": 0.4622,
+        "volatility": 0.0538,
+        "cost_efficiency": 0.9707,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "dialogue": {
+        "index": 47.92,
+        "win_rate_delta": 0.0833,
+        "stability": 0.0,
+        "volatility": 0.2929,
+        "cost_efficiency": 1.0,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      }
+    },
+    "ensemble_entropy_avg": 0.0,
+    "reliability_score": 1.0,
+    "interpretation": "competitive_advantage"
+  },
+  "categories": {
+    "reasoning": {
+      "models_tracked": 1,
+      "history_depth": 11,
+      "best_model": "unknown",
+      "win_rate": 0.2727,
+      "stability": 0.0,
+      "volatility": 0.1126
+    },
+    "coding": {
+      "models_tracked": 1,
+      "history_depth": 11,
+      "best_model": "unknown",
+      "win_rate": 0.9091,
+      "stability": 0.4889,
+      "volatility": 0.0511
+    },
+    "math": {
+      "models_tracked": 1,
+      "history_depth": 13,
+      "best_model": "unknown",
+      "win_rate": 0.9231,
+      "stability": 0.0,
+      "volatility": 0.2307
+    },
+    "multilingual": {
+      "models_tracked": 1,
+      "history_depth": 11,
+      "best_model": "unknown",
+      "win_rate": 0.3636,
+      "stability": 0.1439,
+      "volatility": 0.0856
+    },
+    "long_context": {
+      "models_tracked": 1,
+      "history_depth": 10,
+      "best_model": "unknown",
+      "win_rate": 1.0,
+      "stability": 0.7217,
+      "volatility": 0.0278
+    },
+    "tool_use": {
+      "models_tracked": 1,
+      "history_depth": 10,
+      "best_model": "unknown",
+      "win_rate": 1.0,
+      "stability": 0.2859,
+      "volatility": 0.0714
+    },
+    "rag": {
+      "models_tracked": 1,
+      "history_depth": 11,
+      "best_model": "unknown",
+      "win_rate": 0.0,
+      "stability": 0.4622,
+      "volatility": 0.0538
+    },
+    "dialogue": {
+      "models_tracked": 1,
+      "history_depth": 12,
+      "best_model": "unknown",
+      "win_rate": 0.0833,
+      "stability": 0.0,
+      "volatility": 0.2929
+    }
+  },
+  "degradation_alerts": [
+    {
+      "category": "reasoning",
+      "model_id": "unknown",
+      "rolling_baseline": 0.7904,
+      "latest": 0.667,
+      "drop_pct": 12.34,
+      "severity": "critical"
+    },
+    {
+      "category": "long_context",
+      "model_id": "unknown",
+      "rolling_baseline": 0.9804,
+      "latest": 0.95,
+      "drop_pct": 3.04,
+      "severity": "warning"
+    },
+    {
+      "category": "tool_use",
+      "model_id": "unknown",
+      "rolling_baseline": 0.95,
+      "latest": 0.9,
+      "drop_pct": 5.0,
+      "severity": "critical"
+    }
+  ],
+  "all_categories_populated": true,
+  "total_records": 8,
+  "pareto_top3": {
+    "reasoning": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 259.0375,
+        "win_rate": 0.2727,
+        "avg_cost_usd": 0.003008,
+        "history_depth": 11
+      }
+    ],
+    "coding": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 216.9603,
+        "win_rate": 0.9091,
+        "avg_cost_usd": 0.004118,
+        "history_depth": 11
+      }
+    ],
+    "math": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 649.5074,
+        "win_rate": 0.9231,
+        "avg_cost_usd": 0.001351,
+        "history_depth": 13
+      }
+    ],
+    "multilingual": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 1395.8152,
+        "win_rate": 0.3636,
+        "avg_cost_usd": 0.000521,
+        "history_depth": 11
+      }
+    ],
+    "long_context": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 97.736,
+        "win_rate": 1.0,
+        "avg_cost_usd": 0.0,
+        "history_depth": 10
+      }
+    ],
+    "tool_use": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 94.5,
+        "win_rate": 1.0,
+        "avg_cost_usd": 0.0,
+        "history_depth": 10
+      }
+    ],
+    "rag": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 266.5348,
+        "win_rate": 0.0,
+        "avg_cost_usd": 0.001464,
+        "history_depth": 11
+      }
+    ],
+    "dialogue": [
+      {
+        "model_id": "unknown",
+        "efficiency_score": 28.8425,
+        "win_rate": 0.0833,
+        "avg_cost_usd": 0.0,
+        "history_depth": 12
+      }
+    ]
+  }
+}

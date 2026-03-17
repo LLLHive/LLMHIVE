@@ -1,0 +1,44 @@
+{
+  "failure_by_category": {
+    "HumanEval": 0,
+    "RAG": 16,
+    "GSM8K": 1,
+    "MMMLU": 4,
+    "MMLU": 1
+  },
+  "failure_by_type": {
+    "null": 15,
+    "api_error": 1,
+    "logic": 1,
+    "MODEL_INCORRECT": 4,
+    "extraction": 1
+  },
+  "failure_by_subject": {
+    "unknown": 17,
+    "virology": 2,
+    "professional_law": 2,
+    "nutrition": 1
+  },
+  "extraction_failures": 1,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 64,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 17
+    },
+    {
+      "subject": "virology",
+      "failures": 2
+    },
+    {
+      "subject": "professional_law",
+      "failures": 2
+    },
+    {
+      "subject": "nutrition",
+      "failures": 1
+    }
+  ]
+}

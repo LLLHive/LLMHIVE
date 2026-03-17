@@ -1,0 +1,367 @@
+{
+  "coding": {
+    "category": "coding",
+    "expected_anchor": "anthropic/claude-opus-4.6",
+    "paid_calls": 5,
+    "total_cost": 0.0015,
+    "providers_seen": [
+      "openai/gpt-4o-mini"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 26.7
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 33.7
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 42.4
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 41.3
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 32.8
+      }
+    ]
+  },
+  "tool_use": {
+    "category": "tool_use",
+    "expected_anchor": "anthropic/claude-opus-4.6",
+    "paid_calls": 5,
+    "total_cost": 0.0015,
+    "providers_seen": [
+      "openai/gpt-4o-mini"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 54.9
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 32.8
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 15.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 16.4
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 26.5
+      }
+    ]
+  },
+  "multilingual": {
+    "category": "multilingual",
+    "expected_anchor": "google/gemini-3-pro",
+    "paid_calls": 5,
+    "total_cost": 0.0015,
+    "providers_seen": [
+      "openai/gpt-4o-mini"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 29.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 20.7
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 18.9
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 22.3
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 19.8
+      }
+    ]
+  },
+  "reasoning": {
+    "category": "reasoning",
+    "expected_anchor": "google/gemini-3.1-pro-preview",
+    "paid_calls": 5,
+    "total_cost": 0.0015,
+    "providers_seen": [
+      "openai/gpt-4o-mini"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 35.1
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 31.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 31.2
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 24.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 28.2
+      }
+    ]
+  },
+  "math": {
+    "category": "math",
+    "expected_anchor": "openai/gpt-5.2",
+    "paid_calls": 5,
+    "total_cost": 0.0015,
+    "providers_seen": [
+      "openai/gpt-4o-mini"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 35.1
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 45.3
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 34.0
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 35.8
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0003,
+        "provider_used": "openai/gpt-4o-mini",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 24.7
+      }
+    ]
+  }
+}

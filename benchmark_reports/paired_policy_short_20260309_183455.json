@@ -1,0 +1,128 @@
+{
+  "timestamp": "2026-03-10T04:40:05.243497",
+  "sample_percent": 10,
+  "seed": 1337,
+  "min_per_category": {
+    "reasoning": 20,
+    "multilingual": 20,
+    "coding": 10,
+    "math": 20,
+    "tool_use": 10,
+    "rag": 40,
+    "long_context": 10,
+    "dialogue": 10
+  },
+  "overall": {
+    "free_first_accuracy": 81.1,
+    "leader_first_accuracy": 77.8,
+    "delta_pp": -3.3
+  },
+  "per_category": {
+    "Coding (HumanEval)": {
+      "free_first_accuracy": 79.6,
+      "leader_first_accuracy": 81.6,
+      "delta_pp": 2.0,
+      "verdict": "better"
+    },
+    "Dialogue (MT-Bench)": {
+      "free_first_accuracy": 73.9,
+      "leader_first_accuracy": 72.0,
+      "delta_pp": -1.9,
+      "verdict": "worse"
+    },
+    "General Reasoning (MMLU)": {
+      "free_first_accuracy": 75.0,
+      "leader_first_accuracy": 82.4,
+      "delta_pp": 7.4,
+      "verdict": "better"
+    },
+    "Long Context (LongBench)": {
+      "free_first_accuracy": 100.0,
+      "leader_first_accuracy": 100.0,
+      "delta_pp": 0.0,
+      "verdict": "neutral"
+    },
+    "Math (GSM8K)": {
+      "free_first_accuracy": 95.0,
+      "leader_first_accuracy": 80.0,
+      "delta_pp": -15.0,
+      "verdict": "worse"
+    },
+    "Multilingual (MMMLU)": {
+      "free_first_accuracy": 60.0,
+      "leader_first_accuracy": 35.0,
+      "delta_pp": -25.0,
+      "verdict": "worse"
+    },
+    "RAG (MS MARCO)": {
+      "free_first_accuracy": 44.2,
+      "leader_first_accuracy": 44.0,
+      "delta_pp": -0.2,
+      "verdict": "worse"
+    },
+    "Tool Use (ToolBench)": {
+      "free_first_accuracy": 40.0,
+      "leader_first_accuracy": 20.0,
+      "delta_pp": -20.0,
+      "verdict": "worse"
+    }
+  },
+  "cost": {
+    "free_first": {
+      "p50_usd": 0.0,
+      "p95_usd": 0.0
+    },
+    "leader_first": {
+      "p50_usd": 0.0,
+      "p95_usd": 0.0
+    }
+  },
+  "paid_calls": {
+    "free_first": {
+      "pct": 0,
+      "count": 0
+    },
+    "leader_first": {
+      "pct": 0,
+      "count": 0
+    }
+  },
+  "fallback_rates": {
+    "free_first": {},
+    "leader_first": {}
+  },
+  "mcq_telemetry": {
+    "free_first": {
+      "mcq_tie_detected": 2,
+      "mcq_tie_break_strategy": "verifier_preference",
+      "mcq_invalid_extraction_count": 7,
+      "mcq_retry_count": 8
+    },
+    "leader_first": {
+      "mcq_tie_detected": 1,
+      "mcq_tie_break_strategy": "anchor_preference",
+      "mcq_invalid_extraction_count": 4,
+      "mcq_retry_count": 4
+    }
+  },
+  "infra_fail_rate": {
+    "free_first": 0.56,
+    "leader_first": 0.0
+  },
+  "phase_exit_codes": {
+    "free_first": 0,
+    "leader_first": 0
+  },
+  "phase_regression_gate_failed": {
+    "free_first": false,
+    "leader_first": false
+  },
+  "promotion_recommendation": "HOLD \u2014 insufficient evidence or gate failure",
+  "promotion_gate": {
+    "reasoning_delta_pp": 7.4,
+    "multilingual_delta_pp": -25.0,
+    "cost_p95_within_ceiling": true,
+    "paid_pct_under_limit": true,
+    "infra_fail_rate_ok": true
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "categories": {
+    "reasoning": {
+      "score": 77.8,
+      "timestamp": "2026-03-04T23:24:48.589025",
+      "commit": "4798d02a0",
+      "sample_size": 10
+    },
+    "coding": {
+      "score": 100.0,
+      "timestamp": "2026-03-04T23:24:48.589662",
+      "commit": "4798d02a0",
+      "sample_size": 5
+    },
+    "math": {
+      "score": 88.9,
+      "timestamp": "2026-03-04T23:24:48.589687",
+      "commit": "4798d02a0",
+      "sample_size": 10
+    },
+    "multilingual": {
+      "score": 80.0,
+      "timestamp": "2026-03-04T23:24:48.589701",
+      "commit": "4798d02a0",
+      "sample_size": 10
+    },
+    "long_context": {
+      "score": 100.0,
+      "timestamp": "2026-03-04T23:24:48.589715",
+      "commit": "4798d02a0",
+      "sample_size": 10
+    },
+    "tool_use": {
+      "score": 60.0,
+      "timestamp": "2026-03-04T23:24:48.589729",
+      "commit": "4798d02a0",
+      "sample_size": 5
+    },
+    "rag": {
+      "score": 34.7,
+      "timestamp": "2026-03-04T23:24:48.589744",
+      "commit": "4798d02a0",
+      "sample_size": 20
+    },
+    "dialogue": {
+      "score": 50.0,
+      "timestamp": "2026-03-04T23:24:48.589755",
+      "commit": "4798d02a0",
+      "sample_size": 3
+    }
+  },
+  "created": "2026-03-04T23:24:48.589760",
+  "last_updated": "2026-03-04T23:24:48.589763",
+  "certification_commit": "4798d02a0",
+  "invariants_verified": true
+}

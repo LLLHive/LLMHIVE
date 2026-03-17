@@ -2699,37 +2699,48 @@ Please provide an accurate, well-verified response."""
         models_to_use = selected_models
         
         # Map model names to provider names
-        # PRIORITY: OpenRouter FIRST (400+ models), direct APIs as FALLBACK
+        prefer_direct = kwargs.get("_prefer_direct_provider", False)
         model_to_provider = {}
         openrouter_available = "openrouter" in self.providers
-        
+
+        def _resolve_direct_provider(model_name: str) -> str:
+            """Resolve a model name to its direct provider key."""
+            ml = model_name.lower()
+            if "gpt" in ml or "openai" in ml or ml.startswith("openai/"):
+                return "openai"
+            if "claude" in ml or "anthropic" in ml or ml.startswith("anthropic/"):
+                return "anthropic"
+            if "gemini" in ml or "google" in ml or ml.startswith("google/"):
+                return "gemini"
+            if "grok" in ml:
+                return "grok"
+            if "deepseek" in ml:
+                return "deepseek"
+            return ""
+
         for model in models_to_use:
             model_lower = model.lower()
-            
-            # Use OpenRouter for ALL models if available (PRIMARY)
-            if openrouter_available:
-                if "/" in model:
-                    # Already in OpenRouter format (e.g., "openai/gpt-4o")
+
+            if prefer_direct:
+                # STEP 3: When _prefer_direct_provider is set, bypass OpenRouter
+                direct_key = _resolve_direct_provider(model)
+                if direct_key and direct_key in self.providers:
+                    model_to_provider[model] = direct_key
+                    logger.info(
+                        "PROVIDER_ISOLATION: model=%s routed to direct provider=%s (bypassing OpenRouter)",
+                        model, direct_key,
+                    )
+                elif openrouter_available:
                     model_to_provider[model] = "openrouter"
                 else:
-                    # Route through OpenRouter regardless of model type
-                    model_to_provider[model] = "openrouter"
+                    model_to_provider[model] = direct_key or model
+            elif openrouter_available:
+                model_to_provider[model] = "openrouter"
             else:
-                # FALLBACK: Direct providers only when OpenRouter unavailable
-                if "gpt" in model_lower or "openai" in model_lower:
-                    model_to_provider[model] = "openai"
-                elif "claude" in model_lower or "anthropic" in model_lower:
-                    model_to_provider[model] = "anthropic"
-                elif "grok" in model_lower:
-                    model_to_provider[model] = "grok"
-                elif "gemini" in model_lower:
-                    model_to_provider[model] = "gemini"
-                elif "deepseek" in model_lower:
-                    model_to_provider[model] = "deepseek"
-                else:
-                    model_to_provider[model] = model
-        
-        if openrouter_available:
+                direct_key = _resolve_direct_provider(model)
+                model_to_provider[model] = direct_key if direct_key else model
+
+        if openrouter_available and not prefer_direct:
             logger.info("Using OpenRouter as PRIMARY provider for %d models", len(models_to_use))
         
         # Consensus result tracking

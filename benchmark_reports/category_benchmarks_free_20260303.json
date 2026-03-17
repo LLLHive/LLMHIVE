@@ -1,0 +1,401 @@
+{
+  "tier": "free",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 100,
+      "correct": 71,
+      "incorrect": 28,
+      "errors": 1,
+      "accuracy": 71.7,
+      "accuracy_before_rerun": 71.7,
+      "infra_failures_before_rerun": 1,
+      "infra_failures_after_rerun": 1,
+      "rerun_recovered": 0,
+      "avg_latency_ms": 7727,
+      "avg_cost": 0.003091,
+      "total_cost": 0.306,
+      "extra": {
+        "error_samples": [
+          "No valid answer from 2 calls"
+        ],
+        "subject_stats": {
+          "business_ethics": {
+            "correct": 2,
+            "total": 3
+          },
+          "miscellaneous": {
+            "correct": 12,
+            "total": 13
+          },
+          "professional_law": {
+            "correct": 2,
+            "total": 10
+          },
+          "professional_psychology": {
+            "correct": 4,
+            "total": 7
+          },
+          "moral_scenarios": {
+            "correct": 3,
+            "total": 5
+          },
+          "high_school_biology": {
+            "correct": 3,
+            "total": 3
+          },
+          "high_school_statistics": {
+            "correct": 2,
+            "total": 2
+          },
+          "high_school_psychology": {
+            "correct": 4,
+            "total": 4
+          },
+          "college_medicine": {
+            "correct": 3,
+            "total": 4
+          },
+          "elementary_mathematics": {
+            "correct": 3,
+            "total": 3
+          },
+          "human_sexuality": {
+            "correct": 1,
+            "total": 1
+          },
+          "philosophy": {
+            "correct": 2,
+            "total": 3
+          },
+          "high_school_world_history": {
+            "correct": 2,
+            "total": 2
+          },
+          "anatomy": {
+            "correct": 1,
+            "total": 1
+          },
+          "sociology": {
+            "correct": 3,
+            "total": 4
+          },
+          "nutrition": {
+            "correct": 2,
+            "total": 3
+          },
+          "logical_fallacies": {
+            "correct": 2,
+            "total": 2
+          },
+          "high_school_geography": {
+            "correct": 0,
+            "total": 2
+          },
+          "high_school_european_history": {
+            "correct": 1,
+            "total": 1
+          },
+          "professional_medicine": {
+            "correct": 2,
+            "total": 2
+          },
+          "high_school_macroeconomics": {
+            "correct": 2,
+            "total": 2
+          },
+          "moral_disputes": {
+            "correct": 1,
+            "total": 3
+          },
+          "world_religions": {
+            "correct": 2,
+            "total": 2
+          },
+          "professional_accounting": {
+            "correct": 1,
+            "total": 1
+          },
+          "high_school_us_history": {
+            "correct": 1,
+            "total": 2
+          },
+          "jurisprudence": {
+            "correct": 1,
+            "total": 1
+          },
+          "international_law": {
+            "correct": 1,
+            "total": 1
+          },
+          "conceptual_physics": {
+            "correct": 2,
+            "total": 2
+          },
+          "formal_logic": {
+            "correct": 2,
+            "total": 2
+          },
+          "marketing": {
+            "correct": 0,
+            "total": 1
+          },
+          "clinical_knowledge": {
+            "correct": 1,
+            "total": 1
+          },
+          "global_facts": {
+            "correct": 1,
+            "total": 1
+          },
+          "human_aging": {
+            "correct": 0,
+            "total": 1
+          },
+          "high_school_government_and_politics": {
+            "correct": 1,
+            "total": 1
+          },
+          "high_school_computer_science": {
+            "correct": 0,
+            "total": 1
+          },
+          "virology": {
+            "correct": 0,
+            "total": 1
+          },
+          "college_computer_science": {
+            "correct": 1,
+            "total": 1
+          }
+        }
+      },
+      "exec_integrity": {
+        "attempted": 184,
+        "errors": 29,
+        "infra_failures": 0,
+        "retries": 30,
+        "fallback_used": 30
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Coding (HumanEval)",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 46,
+      "incorrect": 3,
+      "errors": 1,
+      "accuracy": 93.9,
+      "avg_latency_ms": 103170,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": [],
+        "failed_ids": [],
+        "pipeline_metrics": {
+          "signature_mismatch": 0,
+          "runtime_error": 0,
+          "logic_mismatch": 0,
+          "extraction": 0
+        }
+      },
+      "humaneval_failonly_pool": {
+        "enabled": false,
+        "tasks_recovered_count": 0,
+        "extra_calls_used": 0,
+        "pool_log": []
+      },
+      "exec_integrity": {
+        "attempted": 103,
+        "errors": 4,
+        "infra_failures": 0,
+        "retries": 3,
+        "fallback_used": 3
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 100,
+      "correct": 99,
+      "incorrect": 1,
+      "errors": 0,
+      "accuracy": 99.0,
+      "accuracy_before_rerun": 99.0,
+      "infra_failures_before_rerun": 0,
+      "infra_failures_after_rerun": 0,
+      "rerun_recovered": 0,
+      "avg_latency_ms": 37857,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": []
+      },
+      "exec_integrity": {
+        "attempted": 464,
+        "errors": 37,
+        "infra_failures": 0,
+        "retries": 56,
+        "fallback_used": 56
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Multilingual (MMMLU)",
+      "dataset": "openai/MMMLU",
+      "sample_size": 100,
+      "correct": 81,
+      "incorrect": 18,
+      "errors": 1,
+      "accuracy": 81.8,
+      "avg_latency_ms": 73617,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": [
+          "exception:"
+        ]
+      },
+      "exec_integrity": {
+        "attempted": 360,
+        "errors": 14,
+        "infra_failures": 0,
+        "retries": 18,
+        "fallback_used": 18
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Long Context (LongBench)",
+      "dataset": "THUDM/LongBench",
+      "sample_size": 20,
+      "correct": 20,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 27468,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "extra": {
+        "longbench_eval": "external"
+      },
+      "exec_integrity": {
+        "attempted": 20,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0,
+        "eval_mode": "external_subprocess"
+      }
+    },
+    {
+      "category": "Tool Use (ToolBench)",
+      "dataset": "ToolBench (OpenBMB)",
+      "sample_size": 10,
+      "correct": 10,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 15340,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "parsing_failures": 0,
+      "extra": {
+        "toolbench_eval": "external"
+      },
+      "exec_integrity": {
+        "attempted": 10,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0,
+        "eval_mode": "external_subprocess"
+      }
+    },
+    {
+      "category": "RAG (MS MARCO)",
+      "dataset": "microsoft/ms_marco v1.1",
+      "sample_size": 200,
+      "correct": 190,
+      "incorrect": 9,
+      "errors": 1,
+      "accuracy": 47.6,
+      "avg_latency_ms": 49345,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "mrr_at_10": 0.4756,
+        "recall_at_10": 1.0,
+        "rqi": 0.6511,
+        "eval_mode": "builtin",
+        "rank_distribution": {
+          "2": 31,
+          "7": 14,
+          "5": 19,
+          "4": 24,
+          "1": 51,
+          "3": 25,
+          "8": 6,
+          "9": 5,
+          "6": 14,
+          "10": 1
+        },
+        "zero_relevant_queries": 10,
+        "zero_relevant_rate": 0.05,
+        "rag_rerank_deterministic": false,
+        "rag_rerank_shuffle_seeded": true,
+        "rag_top1_first": false,
+        "rag_confidence_fallback": false
+      },
+      "exec_integrity": {
+        "attempted": 598,
+        "errors": 1,
+        "infra_failures": 0,
+        "retries": 1,
+        "fallback_used": 1
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Dialogue (MT-Bench)",
+      "dataset": "lmsys/mt-bench",
+      "sample_size": 16,
+      "correct": 11,
+      "incorrect": 5,
+      "errors": 3,
+      "accuracy": 83.5,
+      "avg_latency_ms": 116002,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "extra": {
+        "mtbench_eval": "external",
+        "raw_score_out_of_10": 8.35,
+        "score_scale": "0-10",
+        "category_scores": {
+          "roleplay": 7.5,
+          "writing": 6.0,
+          "extraction": 9.5,
+          "reasoning": 9.25,
+          "humanities": 8.5,
+          "stem": 9.0,
+          "math": 9.0
+        }
+      },
+      "exec_integrity": {
+        "attempted": 16,
+        "errors": 3,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      }
+    }
+  ],
+  "timestamp": "2026-03-03T13:44:35.948125",
+  "invariants_verified": true
+}

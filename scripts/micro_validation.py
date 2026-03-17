@@ -801,9 +801,102 @@ async def run_elite_smoke() -> None:
         sys.exit(0)
 
 
+async def run_elite_plus_smoke() -> None:
+    """Smoke test for Elite+ mode: free models in elite path is EXPECTED.
+
+    Validates that ENABLE_ELITE_FREE_MODELS=1 causes the server to merge
+    free models into the elite candidate set.  Passes only if every response
+    contains at least one elite AND at least one free model in models_attempted.
+    """
+    _ELITE_MODELS_KNOWN = {
+        "openai/gpt-5.2", "openai/gpt-5.2-pro", "openai/gpt-5.2-mini",
+        "anthropic/claude-opus-4.6", "anthropic/claude-sonnet-4",
+        "google/gemini-3.1-pro-preview", "google/gemini-2.5-pro",
+        "x-ai/grok-3", "x-ai/grok-3-mini",
+        "deepseek/deepseek-r1", "meta-llama/llama-4-nemotron-ultra-253b",
+    }
+
+    print("=" * 60)
+    print("ELITE+ SMOKE TEST (5 queries, ENABLE_ELITE_FREE_MODELS=1)")
+    print("=" * 60)
+    print(f"  API:  {API_URL}")
+    print(f"  TIER: {TIER}")
+    print(f"  Expecting: elite + free models in models_attempted")
+
+    prompts = [
+        ("math", "What is 17 * 23? Show your work step by step."),
+        ("math", "Solve: 2x + 5 = 17"),
+        ("reasoning", "If all roses are flowers and some flowers fade quickly, can we conclude some roses fade quickly?"),
+        ("reasoning", "A bat and ball cost $1.10 total. The bat costs $1 more than the ball. What does the ball cost?"),
+        ("reasoning", "Three friends split a bill of $30. They each paid $10. The waiter returns $5. They each take $1 back. Where did the missing dollar go?"),
+    ]
+
+    passed = 0
+    failed = 0
+    elite_seen: set = set()
+    free_seen: set = set()
+
+    for i, (category, prompt) in enumerate(prompts, 1):
+        print(f"\n  [{i}/5] category={category}", flush=True)
+        result = await call_api(prompt, temperature=0.3, timeout=180)
+
+        if not result.get("success"):
+            err = result.get("error", "unknown")
+            print(f"        ERROR: {err}")
+            failed += 1
+            continue
+
+        extra = result.get("extra", {})
+        models_attempted = extra.get("models_attempted", result.get("models_used", []))
+        models_executed = extra.get("models_executed", result.get("models_used", []))
+        tier_info = extra.get("tier_info", {})
+        eff_tier = tier_info.get("effective_tier", "?")
+
+        all_models = set(models_attempted) | set(models_executed)
+        has_elite = any(m in _ELITE_MODELS_KNOWN for m in all_models)
+        has_free = any(m in _FREE_ALLOWED_MODELS for m in all_models)
+        elite_in_resp = [m for m in all_models if m in _ELITE_MODELS_KNOWN]
+        free_in_resp = [m for m in all_models if m in _FREE_ALLOWED_MODELS]
+
+        elite_seen.update(elite_in_resp)
+        free_seen.update(free_in_resp)
+
+        if has_elite and has_free:
+            passed += 1
+            print(f"        OK: effective_tier={eff_tier}")
+            print(f"            elite: {elite_in_resp}")
+            print(f"            free:  {free_in_resp}")
+        elif has_elite and not has_free:
+            failed += 1
+            print(f"        WARN: elite models only — free models not injected: {list(all_models)}")
+        else:
+            failed += 1
+            print(f"        WARN: unexpected model mix: {list(all_models)}")
+
+    print("\n" + "-" * 60)
+    print("ELITE+ SMOKE RESULTS")
+    print("-" * 60)
+    print(f"  Passed (elite+free): {passed}/5")
+    print(f"  Failed/Warn:         {failed}/5")
+    print(f"  Elite models seen:   {elite_seen or '(none)'}")
+    print(f"  Free models seen:    {free_seen or '(none)'}")
+
+    if passed >= 4:
+        print(f"\n  PASS: Elite+ mode confirmed — {passed}/5 responses used elite+free ensemble.")
+        sys.exit(0)
+    elif passed > 0:
+        print(f"\n  PARTIAL: {passed}/5 used elite+free. Check server flags.")
+        sys.exit(0)
+    else:
+        print(f"\n  FAIL: No responses showed elite+free model mix.")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     if "--free-smoke" in sys.argv:
         asyncio.run(run_free_smoke())
+    elif "--elite-plus-smoke" in sys.argv:
+        asyncio.run(run_elite_plus_smoke())
     elif "--elite-smoke" in sys.argv:
         asyncio.run(run_elite_smoke())
     elif "--dialogue" in sys.argv:

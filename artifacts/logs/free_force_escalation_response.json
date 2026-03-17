@@ -1,0 +1,88 @@
+{
+  "status": 200,
+  "body": {
+    "message": "I am now using a paid model.\n\nConfirmed.\n\nHow can I assist you?",
+    "models_used": [
+      "deepseek/deepseek-chat",
+      "qwen/qwen3-next-80b-a3b-instruct:free",
+      "qwen/qwen3-coder:free"
+    ],
+    "reasoning_mode": "standard",
+    "reasoning_method": null,
+    "domain_pack": "default",
+    "agent_mode": "team",
+    "used_tuning": {
+      "prompt_optimization": true,
+      "output_validation": true,
+      "answer_structure": true,
+      "learn_from_chat": true
+    },
+    "metadata": {
+      "chat_id": null,
+      "user_id": null,
+      "project_id": null,
+      "org_id": null,
+      "criteria": null
+    },
+    "tokens_used": 167,
+    "latency_ms": 4199,
+    "agent_traces": [],
+    "extra": {
+      "orchestration_settings": {
+        "accuracy_level": 3,
+        "hrm_enabled": false,
+        "adaptive_routing_enabled": false,
+        "deep_consensus_enabled": false,
+        "prompt_diffusion_enabled": false
+      },
+      "initial_responses_count": 1,
+      "critiques_count": 0,
+      "improvements_count": 0,
+      "consensus_notes": [
+        "Response generated using deepseek/deepseek-chat-v3",
+        "Guardrails: active"
+      ],
+      "task_type": "general",
+      "verification": {
+        "performed": false
+      },
+      "tool_broker": {
+        "used": false
+      },
+      "models_requested": [
+        "auto"
+      ],
+      "models_mapped": [
+        "deepseek/deepseek-chat",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "qwen/qwen3-coder:free"
+      ],
+      "tier_info": {
+        "requested_tier": "free",
+        "effective_tier": "free",
+        "tier_locked": false
+      },
+      "models_executed": [
+        "deepseek/deepseek-chat",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "qwen/qwen3-coder:free"
+      ],
+      "models_attempted": [
+        "deepseek/deepseek-chat",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "qwen/qwen3-coder:free"
+      ],
+      "cost_tracking": {
+        "generation_id": "gen-1772857157-bowMHXzNVVRkxEqdsiXe",
+        "prompt_tokens": 149,
+        "completion_tokens": 18,
+        "total_tokens": 167,
+        "model_used": "deepseek/deepseek-chat-v3",
+        "provider": "openrouter",
+        "total_cost": 0.0,
+        "cost_usd": 0.0
+      },
+      "final_model_used": "deepseek/deepseek-chat-v3"
+    }
+  }
+}

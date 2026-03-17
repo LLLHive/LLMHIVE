@@ -7,10 +7,11 @@ Enforces:
      spend in the last N minutes exceeds threshold.
 
 Ledger backends:
-  - in_memory: thread-safe, single-process only (default, launch-safe)
-  - redis: multi-instance safe with atomic increments and TTL windows
+  - in_memory: thread-safe, single-process only (default for local/dev)
+  - firestore: multi-instance safe via Firestore documents + transactions
+  - redis: legacy multi-instance backend retained for compatibility
 
-Fail-closed: if Redis is configured but unavailable, paid escalation is
+Fail-closed: if a multi-instance ledger is configured but unavailable, paid escalation is
 blocked with reason_blocked=ledger_unavailable_fail_closed.
 """
 from __future__ import annotations
@@ -22,6 +23,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -58,9 +60,23 @@ GLOBAL_PAID_ESCALATION_BUDGET_USD_10MIN = float(
 
 INTERNAL_ADMIN_OVERRIDE_KEY = os.getenv("INTERNAL_ADMIN_OVERRIDE_KEY", "")
 
+def _default_ledger_backend() -> str:
+    configured = os.getenv("SPEND_LEDGER_BACKEND")
+    if configured:
+        return configured.lower()
+    # Production defaults to Firestore for multi-instance safety.
+    if os.getenv("K_SERVICE") or os.getenv("ENVIRONMENT", "").lower() == "production":
+        return "firestore"
+    return "in_memory"
+
+
 # Ledger backend
-SPEND_LEDGER_BACKEND = os.getenv("SPEND_LEDGER_BACKEND", "in_memory").lower()
+SPEND_LEDGER_BACKEND = _default_ledger_backend()
 SPEND_LEDGER_PREFIX = os.getenv("SPEND_LEDGER_PREFIX", "llmhive")
+FIRESTORE_PROJECT_ID = os.getenv(
+    "FIRESTORE_PROJECT_ID",
+    os.getenv("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT_ID", "")),
+)
 
 # Per-account rate limiting
 ACCOUNT_QPS_LIMIT = int(os.getenv("ACCOUNT_QPS_LIMIT", "10"))
@@ -414,9 +430,287 @@ class RedisLedger(SpendLedger):
 
 
 # ---------------------------------------------------------------------------
+# Firestore-backed ledger (multi-instance safe)
+# ---------------------------------------------------------------------------
+class FirestoreLedger(SpendLedger):
+    """Firestore-backed spend ledger using atomic increments and transactions.
+
+    Document layout (all names prefixed by SPEND_LEDGER_PREFIX):
+      spend_daily/{account}__{day_key}
+      spend_monthly/{account}__{month_key}
+      tool_daily/{account}__{day_key}
+      concurrency/{account}
+      global_minute/{minute_epoch}
+      rate_minute/{account}__{minute_epoch}
+      rate_second/{account}__{second_epoch}
+    """
+
+    def __init__(
+        self,
+        prefix: str = SPEND_LEDGER_PREFIX,
+        project_id: str = FIRESTORE_PROJECT_ID,
+        client: Optional[Any] = None,
+    ):
+        self._prefix = prefix
+        self._project_id = project_id
+        self._client = client
+        self._available = False
+        self._firestore = None
+        self._increment = None
+        self._connect()
+
+    def _connect(self) -> None:
+        if self._client is not None:
+            try:
+                from google.cloud import firestore  # type: ignore
+
+                self._firestore = firestore
+                self._increment = firestore.Increment
+            except Exception:
+                self._firestore = None
+                self._increment = None
+            self._available = True
+            return
+        try:
+            from google.cloud import firestore  # type: ignore
+
+            self._firestore = firestore
+            self._increment = firestore.Increment
+            kwargs = {}
+            if self._project_id:
+                kwargs["project"] = self._project_id
+            self._client = firestore.Client(**kwargs)
+            # A simple existence check that works in Cloud Run with ADC.
+            self._client.collections()
+            self._available = True
+            logger.info("Firestore spend ledger connected: %s", self._prefix)
+        except Exception as e:
+            logger.warning("Firestore spend ledger unavailable: %s", e)
+            self._available = False
+
+    def is_available(self) -> bool:
+        return bool(self._available and self._client is not None)
+
+    def _collection(self, name: str):
+        return self._client.collection(f"{self._prefix}_{name}")
+
+    @staticmethod
+    def _day_key(now: Optional[float] = None) -> str:
+        ts = datetime.fromtimestamp(now or time.time(), tz=timezone.utc)
+        return ts.strftime("%Y%m%d")
+
+    @staticmethod
+    def _month_key(now: Optional[float] = None) -> str:
+        ts = datetime.fromtimestamp(now or time.time(), tz=timezone.utc)
+        return ts.strftime("%Y%m")
+
+    @staticmethod
+    def _minute_bucket(now: Optional[float] = None) -> int:
+        return int((now or time.time()) // 60)
+
+    @staticmethod
+    def _second_bucket(now: Optional[float] = None) -> int:
+        return int(now or time.time())
+
+    def record_spend(self, account_id: str, amount: float) -> None:
+        if not self.is_available():
+            return
+        try:
+            now = time.time()
+            day_key = self._day_key(now)
+            month_key = self._month_key(now)
+            minute_bucket = self._minute_bucket(now)
+            day_ref = self._collection("spend_daily").document(f"{account_id}__{day_key}")
+            month_ref = self._collection("spend_monthly").document(f"{account_id}__{month_key}")
+            global_ref = self._collection("global_minute").document(str(minute_bucket))
+            batch = self._client.batch()
+            payload = {
+                "updated_at": now,
+                "account_id": account_id,
+            }
+            batch.set(
+                day_ref,
+                {**payload, "day_key": day_key, "amount": self._increment(amount)},
+                merge=True,
+            )
+            batch.set(
+                month_ref,
+                {**payload, "month_key": month_key, "amount": self._increment(amount)},
+                merge=True,
+            )
+            batch.set(
+                global_ref,
+                {"updated_at": now, "minute_bucket": minute_bucket, "amount": self._increment(amount)},
+                merge=True,
+            )
+            batch.commit()
+        except Exception as e:
+            logger.warning("Firestore record_spend failed: %s", e)
+            self._available = False
+
+    def record_tool_calls(self, account_id: str, count: int) -> None:
+        if not self.is_available():
+            return
+        try:
+            now = time.time()
+            day_key = self._day_key(now)
+            ref = self._collection("tool_daily").document(f"{account_id}__{day_key}")
+            ref.set(
+                {
+                    "updated_at": now,
+                    "account_id": account_id,
+                    "day_key": day_key,
+                    "count": self._increment(count),
+                },
+                merge=True,
+            )
+        except Exception as e:
+            logger.warning("Firestore record_tool_calls failed: %s", e)
+            self._available = False
+
+    def get_daily_spend(self, account_id: str) -> float:
+        if not self.is_available():
+            return 0.0
+        try:
+            doc = self._collection("spend_daily").document(
+                f"{account_id}__{self._day_key()}"
+            ).get()
+            if not doc.exists:
+                return 0.0
+            return float((doc.to_dict() or {}).get("amount", 0.0))
+        except Exception:
+            return 0.0
+
+    def get_monthly_spend(self, account_id: str) -> float:
+        if not self.is_available():
+            return 0.0
+        try:
+            doc = self._collection("spend_monthly").document(
+                f"{account_id}__{self._month_key()}"
+            ).get()
+            if not doc.exists:
+                return 0.0
+            return float((doc.to_dict() or {}).get("amount", 0.0))
+        except Exception:
+            return 0.0
+
+    def get_daily_tool_calls(self, account_id: str) -> int:
+        if not self.is_available():
+            return 0
+        try:
+            doc = self._collection("tool_daily").document(
+                f"{account_id}__{self._day_key()}"
+            ).get()
+            if not doc.exists:
+                return 0
+            return int((doc.to_dict() or {}).get("count", 0))
+        except Exception:
+            return 0
+
+    def acquire_concurrency(self, account_id: str, cap: int) -> bool:
+        if not self.is_available():
+            return False
+        try:
+            ref = self._collection("concurrency").document(account_id)
+            transaction = self._client.transaction()
+
+            @self._firestore.transactional
+            def _txn(txn):
+                snap = ref.get(transaction=txn)
+                current = int((snap.to_dict() or {}).get("count", 0)) if snap.exists else 0
+                if current >= cap:
+                    return False
+                txn.set(ref, {"count": current + 1, "updated_at": time.time()}, merge=True)
+                return True
+
+            return bool(_txn(transaction))
+        except Exception as e:
+            logger.warning("Firestore acquire_concurrency failed: %s", e)
+            self._available = False
+            return False
+
+    def release_concurrency(self, account_id: str) -> None:
+        if not self.is_available():
+            return
+        try:
+            ref = self._collection("concurrency").document(account_id)
+            transaction = self._client.transaction()
+
+            @self._firestore.transactional
+            def _txn(txn):
+                snap = ref.get(transaction=txn)
+                current = int((snap.to_dict() or {}).get("count", 0)) if snap.exists else 0
+                txn.set(ref, {"count": max(0, current - 1), "updated_at": time.time()}, merge=True)
+
+            _txn(transaction)
+        except Exception:
+            pass
+
+    def global_spend_last_n_minutes(self, minutes: int = 10) -> float:
+        if not self.is_available():
+            return 0.0
+        total = 0.0
+        now_bucket = self._minute_bucket()
+        try:
+            for bucket in range(max(0, now_bucket - minutes + 1), now_bucket + 1):
+                snap = self._collection("global_minute").document(str(bucket)).get()
+                if snap.exists:
+                    total += float((snap.to_dict() or {}).get("amount", 0.0))
+            return total
+        except Exception:
+            return 0.0
+
+    def check_rate_limit(self, account_id: str, qps: int, rpm: int) -> bool:
+        if not self.is_available():
+            return True
+        try:
+            now = time.time()
+            sec_bucket = self._second_bucket(now)
+            minute_bucket = self._minute_bucket(now)
+            sec_ref = self._collection("rate_second").document(f"{account_id}__{sec_bucket}")
+            minute_ref = self._collection("rate_minute").document(f"{account_id}__{minute_bucket}")
+            transaction = self._client.transaction()
+
+            @self._firestore.transactional
+            def _txn(txn):
+                sec_snap = sec_ref.get(transaction=txn)
+                min_snap = minute_ref.get(transaction=txn)
+                sec_count = int((sec_snap.to_dict() or {}).get("count", 0)) if sec_snap.exists else 0
+                min_count = int((min_snap.to_dict() or {}).get("count", 0)) if min_snap.exists else 0
+                if sec_count >= qps or min_count >= rpm:
+                    return False
+                txn.set(sec_ref, {"count": sec_count + 1, "updated_at": now}, merge=True)
+                txn.set(minute_ref, {"count": min_count + 1, "updated_at": now}, merge=True)
+                return True
+
+            return bool(_txn(transaction))
+        except Exception:
+            # Rate limiter should not fail open for paid flows; the enclosing governor
+            # will fail-closed if the backend becomes unavailable.
+            self._available = False
+            return True
+
+    def get_status(self) -> Dict[str, Any]:
+        return {
+            "backend": "firestore",
+            "available": self.is_available(),
+            "project_id": self._project_id or "default",
+            "prefix": self._prefix,
+        }
+
+
+# ---------------------------------------------------------------------------
 # Ledger factory
 # ---------------------------------------------------------------------------
 def _create_ledger() -> SpendLedger:
+    if SPEND_LEDGER_BACKEND == "firestore":
+        ledger = FirestoreLedger(prefix=SPEND_LEDGER_PREFIX, project_id=FIRESTORE_PROJECT_ID)
+        if not ledger.is_available():
+            logger.warning(
+                "SPEND_LEDGER_BACKEND=firestore but Firestore unavailable. "
+                "Governor will FAIL CLOSED for paid escalation."
+            )
+        return ledger
     if SPEND_LEDGER_BACKEND == "redis":
         ledger = RedisLedger(prefix=SPEND_LEDGER_PREFIX)
         if not ledger.is_available():
@@ -511,9 +805,9 @@ class TierSpendGovernor:
         tool_calls_requested: int,
         is_internal: bool,
     ) -> SpendDecision:
-        # Fail-closed: if Redis configured but unavailable
-        if SPEND_LEDGER_BACKEND == "redis" and not self._ledger.is_available():
-            logger.warning("Redis unavailable — FAIL CLOSED for paid escalation")
+        # Fail-closed: if a multi-instance backend is configured but unavailable.
+        if SPEND_LEDGER_BACKEND in {"redis", "firestore"} and not self._ledger.is_available():
+            logger.warning("%s unavailable — FAIL CLOSED for paid escalation", SPEND_LEDGER_BACKEND)
             return SpendDecision(
                 tier="elite+",
                 account_id=account_id,
@@ -524,7 +818,7 @@ class TierSpendGovernor:
                 spend_remaining_month=0.0,
                 global_breaker_active=True,
                 is_internal_override=is_internal,
-                ledger_backend="redis_unavailable",
+                ledger_backend=f"{SPEND_LEDGER_BACKEND}_unavailable",
                 rate_limited=False,
             )
 

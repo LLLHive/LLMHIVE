@@ -1,0 +1,22 @@
+{
+  "failure_by_category": {
+    "GSM8K": 9
+  },
+  "failure_by_type": {
+    "logic": 7,
+    "unknown": 2
+  },
+  "failure_by_subject": {
+    "unknown": 9
+  },
+  "extraction_failures": 0,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 2,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 9
+    }
+  ]
+}

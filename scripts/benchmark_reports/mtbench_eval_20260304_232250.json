@@ -1,0 +1,21 @@
+{
+  "score": 5.0,
+  "avg_score": 5.0,
+  "raw_score_out_of_10": 5.0,
+  "accuracy": 50.0,
+  "accuracy_pct": 50.0,
+  "attempted": 3,
+  "correct": 0,
+  "errors": 0,
+  "infra_failures": 0,
+  "infra_failure_rate": 0.0,
+  "avg_latency_ms": 55134,
+  "avg_cost": 0.0,
+  "total_cost": 0.0,
+  "category_scores": {
+    "roleplay": 4.5,
+    "writing": 5.5,
+    "extraction": 5.0
+  },
+  "exec_integrity": true
+}

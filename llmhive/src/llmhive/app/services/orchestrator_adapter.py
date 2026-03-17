@@ -1572,6 +1572,13 @@ def _detect_task_type(prompt: str) -> str:
     # ===========================================================================
     # PRIORITY 3: Math Problems (need calculator)
     # ===========================================================================
+    # Tool Use / Function Calling - needs tool-capable models
+    if any(kw in prompt_lower for kw in [
+        "call this tool", "tool call", "function call", "invoke the",
+        "use the calculator", "use the search tool", "call the api",
+    ]) or ('"function"' in prompt_lower and '"args"' in prompt_lower):
+        return "tool_use"
+
     # Code/Programming - DeepSeek, Claude Sonnet 4, GPT-4o excel
     if any(kw in prompt_lower for kw in ["code", "function", "implement", "debug", "program", "script", "api", "backend", "frontend"]):
         return "code_generation"
@@ -1619,6 +1626,14 @@ def _detect_task_type(prompt: str) -> str:
     ]):
         return "financial_analysis"
     
+    # Multilingual/Translation - needs multilingual models
+    elif any(kw in prompt_lower for kw in [
+        "translate", "translation", "multilingual", "en español", "en français",
+        "auf deutsch", "in french", "in spanish", "in german", "in italian",
+        "in japanese", "in chinese", "in arabic", "in korean",
+    ]):
+        return "multilingual"
+
     # Creative Writing - Claude models excel
     elif any(kw in prompt_lower for kw in [
         "write", "story", "creative", "poem", "narrative", "fiction", "character"
@@ -1654,6 +1669,41 @@ def _detect_task_type(prompt: str) -> str:
         return "high_quality"
     else:
         return "general"
+
+
+_ELITE_PLUS_CATEGORY_MAP = {
+    "code_generation": "coding",
+    "coding": "coding",
+    "debugging": "coding",
+    "math_problem": "math",
+    "math": "math",
+    "reasoning": "reasoning",
+    "multi_step": "reasoning",
+    "explanation": "reasoning",
+    "general": "reasoning",
+    "creative_writing": "dialogue",
+    "emotional_dialogue": "dialogue",
+    "dialogue": "dialogue",
+    "comparison": "reasoning",
+    "summarization": "reasoning",
+    "research_analysis": "reasoning",
+    "science_research": "reasoning",
+    "health_medical": "reasoning",
+    "legal_analysis": "reasoning",
+    "financial_analysis": "reasoning",
+    "fast_response": "reasoning",
+    "high_quality": "reasoning",
+    "marketing": "dialogue",
+    "tool_use": "tool_use",
+    "rag": "rag",
+    "multilingual": "multilingual",
+    "long_context": "long_context",
+}
+
+
+def _normalize_elite_plus_category(task_type: str) -> str:
+    """Map task type classifier output to Elite+ v2 anchor category."""
+    return _ELITE_PLUS_CATEGORY_MAP.get(task_type, "reasoning")
 
 
 def _select_elite_strategy(
@@ -3568,13 +3618,18 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 _base_confidence = 0.7
                 if elite_result and hasattr(elite_result, "quality_score"):
                     _base_confidence = getattr(elite_result, "quality_score", 0.7)
-                _ep_category = detected_task_type or "reasoning"
+                _raw_task_type = detected_task_type if detected_task_type != "general" else _detect_task_type(original_prompt)
+                _ep_category = _normalize_elite_plus_category(_raw_task_type)
 
                 _allow_bench_output = _allow_bench_output_flag if _SPEND_GOVERNOR_AVAILABLE else (
                     os.getenv("ALLOW_INTERNAL_BENCH_OUTPUT", "0").lower() in ("1", "true")
                 )
 
                 _ep_internal_bench = _is_internal if _SPEND_GOVERNOR_AVAILABLE else _allow_bench_output
+
+                _policy_override = None
+                if _ep_internal_bench and request.metadata and getattr(request.metadata, "elite_plus_policy_override", None):
+                    _policy_override = request.metadata.elite_plus_policy_override
 
                 ep_result = await run_elite_plus(
                     query=original_prompt,
@@ -3585,6 +3640,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     effective_tier=effective_tier,
                     extra=extra,
                     internal_bench=_ep_internal_bench,
+                    policy_override=_policy_override,
                 )
 
                 extra["elite_plus"] = ep_result.to_telemetry()

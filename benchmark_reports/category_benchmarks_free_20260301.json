@@ -1,0 +1,277 @@
+{
+  "tier": "free",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 10,
+      "correct": 6,
+      "incorrect": 4,
+      "errors": 0,
+      "accuracy": 60.0,
+      "accuracy_before_rerun": 60.0,
+      "infra_failures_before_rerun": 0,
+      "infra_failures_after_rerun": 0,
+      "rerun_recovered": 0,
+      "avg_latency_ms": 9000,
+      "avg_cost": 0.0036,
+      "total_cost": 0.036,
+      "extra": {
+        "error_samples": [],
+        "subject_stats": {
+          "business_ethics": {
+            "correct": 0,
+            "total": 1
+          },
+          "miscellaneous": {
+            "correct": 1,
+            "total": 1
+          },
+          "professional_law": {
+            "correct": 0,
+            "total": 1
+          },
+          "professional_psychology": {
+            "correct": 1,
+            "total": 2
+          },
+          "moral_scenarios": {
+            "correct": 0,
+            "total": 1
+          },
+          "high_school_biology": {
+            "correct": 1,
+            "total": 1
+          },
+          "high_school_statistics": {
+            "correct": 1,
+            "total": 1
+          },
+          "high_school_psychology": {
+            "correct": 1,
+            "total": 1
+          },
+          "college_medicine": {
+            "correct": 1,
+            "total": 1
+          }
+        }
+      },
+      "exec_integrity": {
+        "attempted": 18,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 1,
+        "fallback_used": 1
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Coding (HumanEval)",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 47,
+      "incorrect": 2,
+      "errors": 1,
+      "accuracy": 95.9,
+      "avg_latency_ms": 99304,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": [],
+        "failed_ids": [],
+        "pipeline_metrics": {
+          "signature_mismatch": 0,
+          "runtime_error": 0,
+          "logic_mismatch": 0,
+          "extraction": 0
+        }
+      },
+      "humaneval_failonly_pool": {
+        "enabled": false,
+        "tasks_recovered_count": 0,
+        "extra_calls_used": 0,
+        "pool_log": []
+      },
+      "exec_integrity": {
+        "attempted": 102,
+        "errors": 3,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 10,
+      "correct": 10,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "accuracy_before_rerun": 100.0,
+      "infra_failures_before_rerun": 0,
+      "infra_failures_after_rerun": 0,
+      "rerun_recovered": 0,
+      "avg_latency_ms": 28766,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": []
+      },
+      "exec_integrity": {
+        "attempted": 60,
+        "errors": 3,
+        "infra_failures": 0,
+        "retries": 3,
+        "fallback_used": 3
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Multilingual (MMMLU)",
+      "dataset": "openai/MMMLU",
+      "sample_size": 10,
+      "correct": 9,
+      "incorrect": 1,
+      "errors": 0,
+      "accuracy": 90.0,
+      "avg_latency_ms": 59587,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": []
+      },
+      "exec_integrity": {
+        "attempted": 34,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Long Context (LongBench)",
+      "dataset": "THUDM/LongBench",
+      "sample_size": 10,
+      "correct": 10,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 25341,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "extra": {
+        "longbench_eval": "external"
+      },
+      "exec_integrity": {
+        "attempted": 10,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0,
+        "eval_mode": "external_subprocess"
+      }
+    },
+    {
+      "category": "Tool Use (ToolBench)",
+      "dataset": "ToolBench (OpenBMB)",
+      "sample_size": 5,
+      "correct": 5,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 11968,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "parsing_failures": 0,
+      "extra": {
+        "toolbench_eval": "external"
+      },
+      "exec_integrity": {
+        "attempted": 5,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0,
+        "eval_mode": "external_subprocess"
+      }
+    },
+    {
+      "category": "RAG (MS MARCO)",
+      "dataset": "microsoft/ms_marco v1.1",
+      "sample_size": 20,
+      "correct": 20,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 49.8,
+      "avg_latency_ms": 37696,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "mrr_at_10": 0.4983,
+        "recall_at_10": 1.0,
+        "rqi": 0.699,
+        "eval_mode": "builtin",
+        "rank_distribution": {
+          "2": 5,
+          "1": 5,
+          "5": 4,
+          "3": 3,
+          "4": 2,
+          "6": 1
+        },
+        "zero_relevant_queries": 0,
+        "zero_relevant_rate": 0.0,
+        "rag_rerank_deterministic": false,
+        "rag_rerank_shuffle_seeded": true,
+        "rag_top1_first": false,
+        "rag_confidence_fallback": false
+      },
+      "exec_integrity": {
+        "attempted": 60,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Dialogue (MT-Bench)",
+      "dataset": "lmsys/mt-bench",
+      "sample_size": 3,
+      "correct": 2,
+      "incorrect": 1,
+      "errors": 0,
+      "accuracy": 78.3,
+      "avg_latency_ms": 100323,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "extra": {
+        "mtbench_eval": "external",
+        "raw_score_out_of_10": 7.83,
+        "score_scale": "0-10",
+        "category_scores": {
+          "roleplay": 8.5,
+          "writing": 6.5,
+          "extraction": 8.5
+        }
+      },
+      "exec_integrity": {
+        "attempted": 3,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      }
+    }
+  ],
+  "timestamp": "2026-03-01T01:52:02.361770",
+  "invariants_verified": true
+}

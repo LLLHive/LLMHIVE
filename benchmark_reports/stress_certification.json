@@ -1,0 +1,81 @@
+{
+  "title": "Multi-Instance Stress Certification",
+  "generated_at": "2026-03-07T04:23:12.351399+00:00",
+  "elapsed_seconds": 0.2,
+  "total_tests": 10,
+  "passed": 10,
+  "failed": 0,
+  "certified": true,
+  "results": [
+    {
+      "test_name": "parallel_50_requests",
+      "passed": true,
+      "details": "total=50, allowed=50, blocked=0, total_spend=$0.2500, negative_budgets=0, exceptions=0",
+      "duration_ms": 10.6,
+      "exceptions": []
+    },
+    {
+      "test_name": "budget_exhaustion",
+      "passed": true,
+      "details": "budget=$2.0, filled=$1.9990, blocked_after=True, remaining_day=$0.0010, remaining_nonneg=True",
+      "duration_ms": 0.1,
+      "exceptions": []
+    },
+    {
+      "test_name": "redis_restart_simulation",
+      "passed": true,
+      "details": "elite_blocked_when_redis_down=True, fail_closed_reason=True, free_tier_still_works=True",
+      "duration_ms": 0.2,
+      "exceptions": []
+    },
+    {
+      "test_name": "paid_anchor_failure",
+      "passed": true,
+      "details": "no_charge_on_failure=True, still_allowed_after_failure=True",
+      "duration_ms": 0.1,
+      "exceptions": []
+    },
+    {
+      "test_name": "concurrency_cap_enforcement",
+      "passed": true,
+      "details": "cap=5, attempts=15, granted=5, denied=10",
+      "duration_ms": 51.3,
+      "exceptions": []
+    },
+    {
+      "test_name": "tool_malformed_json",
+      "passed": true,
+      "details": "{\"empty_string\": \"ok=False, reason=empty\", \"null\": \"handled_none\", \"plain_text\": \"ok=True, reason=freeform_ok\", \"malformed_json\": \"ok=True, reason=freeform_ok\", \"valid_json_no_tool\": \"ok=True, reason=valid_json\", \"nested_broken\": \"ok=True, reason=freeform_ok\"}",
+      "duration_ms": 13.2,
+      "exceptions": []
+    },
+    {
+      "test_name": "pinecone_failure_simulation",
+      "passed": true,
+      "details": "governor_works_without_pinecone=True, free_tier_safe=True",
+      "duration_ms": 0.1,
+      "exceptions": []
+    },
+    {
+      "test_name": "global_breaker_under_load",
+      "passed": true,
+      "details": "threshold=$50.0, filled=$51.00, all_blocked=True, checked=20, free_safe=True",
+      "duration_ms": 2.5,
+      "exceptions": []
+    },
+    {
+      "test_name": "no_double_spending",
+      "passed": true,
+      "details": "expected=$0.1000, actual=$0.100000, diff=$0.00000000, tolerance=1e-06",
+      "duration_ms": 5.5,
+      "exceptions": []
+    },
+    {
+      "test_name": "free_first_always_safe",
+      "passed": true,
+      "details": "free_requests=50, all_blocked_paid=True, exceptions=0",
+      "duration_ms": 0.3,
+      "exceptions": []
+    }
+  ]
+}

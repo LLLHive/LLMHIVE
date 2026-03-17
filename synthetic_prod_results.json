@@ -1,0 +1,338 @@
+{
+  "timestamp": "2026-03-07T21:53:50.920112",
+  "target": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+  "elapsed_seconds": 93.5,
+  "total_tests": 16,
+  "passed": 16,
+  "failed": 0,
+  "verdict": "PASS",
+  "results": [
+    {
+      "test": "free_tier_blocks_paid_escalation",
+      "passed": true,
+      "detail": "allowed=False reason=free_tier_cost_exceeded: predicted=$0.0100 > max=$0.0000",
+      "telemetry": {
+        "tier": "free",
+        "account_id": "test_free_user",
+        "predicted_cost_usd": 0.01,
+        "allowed_paid_escalation": false,
+        "reason_blocked": "free_tier_cost_exceeded: predicted=$0.0100 > max=$0.0000",
+        "spend_remaining_day": 0.0,
+        "spend_remaining_month": 0.0,
+        "tool_calls_remaining_request": 5,
+        "global_breaker_active": false,
+        "is_internal_override": false,
+        "ledger_backend": "in_memory",
+        "rate_limited": false
+      },
+      "timestamp": "2026-03-07T21:52:17.658090"
+    },
+    {
+      "test": "free_tier_blocks_zero_cost",
+      "passed": true,
+      "detail": "allowed=False reason=free_tier_no_paid",
+      "telemetry": {
+        "tier": "free",
+        "account_id": "test_free_user",
+        "predicted_cost_usd": 0.0,
+        "allowed_paid_escalation": false,
+        "reason_blocked": "free_tier_no_paid",
+        "spend_remaining_day": 0.0,
+        "spend_remaining_month": 0.0,
+        "tool_calls_remaining_request": 5,
+        "global_breaker_active": false,
+        "is_internal_override": false,
+        "ledger_backend": "in_memory",
+        "rate_limited": false
+      },
+      "timestamp": "2026-03-07T21:52:17.658134"
+    },
+    {
+      "test": "elite_plus_allows_within_budget",
+      "passed": true,
+      "detail": "allowed=True day_remain=$2.00",
+      "telemetry": {
+        "tier": "elite+",
+        "account_id": "test_elite_user",
+        "predicted_cost_usd": 0.01,
+        "allowed_paid_escalation": true,
+        "reason_blocked": "",
+        "spend_remaining_day": 2.0,
+        "spend_remaining_month": 25.0,
+        "tool_calls_remaining_request": 15,
+        "global_breaker_active": false,
+        "is_internal_override": false,
+        "ledger_backend": "in_memory",
+        "rate_limited": false
+      },
+      "timestamp": "2026-03-07T21:52:17.658172"
+    },
+    {
+      "test": "elite_plus_blocks_over_ceiling",
+      "passed": true,
+      "detail": "allowed=False reason=request_ceiling: predicted=$0.0500 > max=$0.0250",
+      "telemetry": {
+        "tier": "elite+",
+        "account_id": "test_elite_user",
+        "predicted_cost_usd": 0.05,
+        "allowed_paid_escalation": false,
+        "reason_blocked": "request_ceiling: predicted=$0.0500 > max=$0.0250",
+        "spend_remaining_day": 2.0,
+        "spend_remaining_month": 25.0,
+        "tool_calls_remaining_request": 15,
+        "global_breaker_active": false,
+        "is_internal_override": false,
+        "ledger_backend": "in_memory",
+        "rate_limited": false
+      },
+      "timestamp": "2026-03-07T21:52:17.658207"
+    },
+    {
+      "test": "elite_plus_daily_budget_enforcement",
+      "passed": true,
+      "detail": "allowed=False day_remain=$0.0000 reason=daily_budget: predicted=$0.0100 > remaining=$0.0000",
+      "telemetry": {
+        "tier": "elite+",
+        "account_id": "budget_test_user",
+        "predicted_cost_usd": 0.01,
+        "allowed_paid_escalation": false,
+        "reason_blocked": "daily_budget: predicted=$0.0100 > remaining=$0.0000",
+        "spend_remaining_day": 0.0,
+        "spend_remaining_month": 22.500000000000004,
+        "tool_calls_remaining_request": 15,
+        "global_breaker_active": false,
+        "is_internal_override": false,
+        "ledger_backend": "in_memory",
+        "rate_limited": false
+      },
+      "timestamp": "2026-03-07T21:52:17.658438"
+    },
+    {
+      "test": "global_emergency_breaker",
+      "passed": true,
+      "detail": "breaker=True allowed=False reason=global_breaker: 10min_spend=$65.00 >= threshold=$50.00",
+      "telemetry": {
+        "tier": "elite+",
+        "account_id": "new_user",
+        "predicted_cost_usd": 0.01,
+        "allowed_paid_escalation": false,
+        "reason_blocked": "global_breaker: 10min_spend=$65.00 >= threshold=$50.00",
+        "spend_remaining_day": 2.0,
+        "spend_remaining_month": 25.0,
+        "tool_calls_remaining_request": 15,
+        "global_breaker_active": true,
+        "is_internal_override": false,
+        "ledger_backend": "in_memory",
+        "rate_limited": false
+      },
+      "timestamp": "2026-03-07T21:52:17.662568"
+    },
+    {
+      "test": "internal_override_bypasses_breaker",
+      "passed": true,
+      "detail": "allowed=True internal=True",
+      "telemetry": {
+        "tier": "elite+",
+        "account_id": "admin_user",
+        "predicted_cost_usd": 0.01,
+        "allowed_paid_escalation": true,
+        "reason_blocked": "",
+        "spend_remaining_day": 2.0,
+        "spend_remaining_month": 25.0,
+        "tool_calls_remaining_request": 15,
+        "global_breaker_active": true,
+        "is_internal_override": true,
+        "ledger_backend": "in_memory",
+        "rate_limited": false
+      },
+      "timestamp": "2026-03-07T21:52:17.663271"
+    },
+    {
+      "test": "internal_auth_rejects_external",
+      "passed": true,
+      "detail": "accepted=False",
+      "telemetry": {},
+      "timestamp": "2026-03-07T21:52:17.665085"
+    },
+    {
+      "test": "concurrency_cap_enforced",
+      "passed": true,
+      "detail": "blocked_at=6 cap=5",
+      "telemetry": {},
+      "timestamp": "2026-03-07T21:52:17.665114"
+    },
+    {
+      "test": "free_tier_no_paid_calls",
+      "passed": true,
+      "detail": "paid_calls=0 tier=free",
+      "telemetry": {
+        "elite_plus": {},
+        "spend_decision": {
+          "tier": "free",
+          "account_id": "anonymous",
+          "predicted_cost_usd": 0.0,
+          "allowed_paid_escalation": false,
+          "reason_blocked": "free_tier_no_paid",
+          "spend_remaining_day": 0.0,
+          "spend_remaining_month": 0.0,
+          "tool_calls_remaining_request": 5,
+          "global_breaker_active": false,
+          "is_internal_override": false,
+          "ledger_backend": "firestore",
+          "rate_limited": false
+        }
+      },
+      "timestamp": "2026-03-07T21:52:29.745430"
+    },
+    {
+      "test": "elite_plus_pipeline_active",
+      "passed": true,
+      "detail": "stage=deterministic_verify overridden=True cost=$0.0000",
+      "telemetry": {
+        "elite_plus": {
+          "elite_plus_enabled": true,
+          "elite_plus_mode": "active",
+          "policy": "free_first_verified",
+          "stage_used": "deterministic_verify",
+          "paid_calls_count": 0,
+          "free_calls_count": 1,
+          "estimated_cost_usd": 0.0,
+          "estimated_cost_breakdown": {
+            "deepseek/deepseek-chat": 0.0
+          },
+          "confidence_free": 0.7,
+          "confidence_final": 0.7,
+          "escalation_reason": [],
+          "models_called": [
+            "deepseek/deepseek-chat"
+          ],
+          "tool_invocations": [],
+          "rag_grounding_status": "n/a",
+          "total_latency_ms": 5003,
+          "verifier_strategy": "deterministic",
+          "verifier_status": "verified",
+          "verifier_latency_ms": 5003,
+          "should_override": true,
+          "shadow_confidence": 0.7,
+          "base_confidence": 0.7,
+          "tool_schema_valid": true,
+          "tool_retry_count": 0,
+          "tool_execution_ok": true,
+          "tool_error_type": "none",
+          "rag_unanswered_reason": "none",
+          "rag_passage_count_used": 0,
+          "dialogue_mode": "n/a",
+          "dialogue_anchor_used": "",
+          "dialogue_escalated": false
+        }
+      },
+      "timestamp": "2026-03-07T21:52:42.076875"
+    },
+    {
+      "test": "spend_decision_telemetry_present",
+      "passed": true,
+      "detail": "tier=elite+ allowed=True",
+      "telemetry": {
+        "spend_decision": {
+          "tier": "elite+",
+          "account_id": "anonymous",
+          "predicted_cost_usd": 0.01,
+          "allowed_paid_escalation": true,
+          "reason_blocked": "",
+          "spend_remaining_day": 2.0,
+          "spend_remaining_month": 25.0,
+          "tool_calls_remaining_request": 15,
+          "global_breaker_active": false,
+          "is_internal_override": false,
+          "ledger_backend": "firestore",
+          "rate_limited": false
+        }
+      },
+      "timestamp": "2026-03-07T21:52:49.231746"
+    },
+    {
+      "test": "parallel_requests_succeed",
+      "passed": true,
+      "detail": "statuses=[200, 200, 200]",
+      "telemetry": {},
+      "timestamp": "2026-03-07T21:53:06.031001"
+    },
+    {
+      "test": "elite_plus_cost_under_ceiling",
+      "passed": true,
+      "detail": "cost=$0.0000 paid_calls=0",
+      "telemetry": {
+        "elite_plus": {
+          "elite_plus_enabled": true,
+          "elite_plus_mode": "active",
+          "policy": "free_first_verified",
+          "stage_used": "fallback_elite",
+          "paid_calls_count": 0,
+          "free_calls_count": 1,
+          "estimated_cost_usd": 0.0,
+          "estimated_cost_breakdown": {
+            "deepseek/deepseek-chat": 0.0
+          },
+          "confidence_free": 0.0,
+          "confidence_final": 0.7,
+          "escalation_reason": [
+            "low_confidence_0.00",
+            "launch_mode_blocked"
+          ],
+          "models_called": [
+            "deepseek/deepseek-chat"
+          ],
+          "tool_invocations": [],
+          "rag_grounding_status": "n/a",
+          "total_latency_ms": 8002,
+          "verifier_strategy": "deterministic",
+          "verifier_status": "ok",
+          "verifier_latency_ms": 8002,
+          "should_override": true,
+          "shadow_confidence": 0.7,
+          "base_confidence": 0.7,
+          "tool_schema_valid": true,
+          "tool_retry_count": 0,
+          "tool_execution_ok": true,
+          "tool_error_type": "none",
+          "rag_unanswered_reason": "none",
+          "rag_passage_count_used": 0,
+          "dialogue_mode": "n/a",
+          "dialogue_anchor_used": "",
+          "dialogue_escalated": false
+        }
+      },
+      "timestamp": "2026-03-07T21:53:27.544324"
+    },
+    {
+      "test": "free_tier_escalation_blocked",
+      "passed": true,
+      "detail": "paid=0 blocked=True spend_tier=free",
+      "telemetry": {
+        "elite_plus": {},
+        "spend_decision": {
+          "tier": "free",
+          "account_id": "anonymous",
+          "predicted_cost_usd": 0.0,
+          "allowed_paid_escalation": false,
+          "reason_blocked": "free_tier_no_paid",
+          "spend_remaining_day": 0.0,
+          "spend_remaining_month": 0.0,
+          "tool_calls_remaining_request": 5,
+          "global_breaker_active": false,
+          "is_internal_override": false,
+          "ledger_backend": "firestore",
+          "rate_limited": false
+        }
+      },
+      "timestamp": "2026-03-07T21:53:50.781526"
+    },
+    {
+      "test": "internal_launch_kpis_accessible",
+      "passed": true,
+      "detail": "200 OK",
+      "telemetry": {},
+      "timestamp": "2026-03-07T21:53:50.911479"
+    }
+  ]
+}

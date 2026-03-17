@@ -1,0 +1,51 @@
+{
+  "title": "Integration Certification",
+  "generated_at": "2026-03-07T03:50:09.307723+00:00",
+  "elapsed_seconds": 0.3,
+  "total_checks": 8,
+  "passed": 8,
+  "failed": 0,
+  "certified": true,
+  "checks": [
+    {
+      "check": "models_json_version_match",
+      "pass": true,
+      "detail": "models.json=2, manifest=2"
+    },
+    {
+      "check": "registry_backend_version_match",
+      "pass": true,
+      "detail": "backend=2, models.json=2"
+    },
+    {
+      "check": "model_count_consistency",
+      "pass": true,
+      "detail": "backend=22, models.json=22"
+    },
+    {
+      "check": "free_tier_zero_cost",
+      "pass": true,
+      "detail": "max_cost=$0.0"
+    },
+    {
+      "check": "elite_plus_cost_ceiling_set",
+      "pass": true,
+      "detail": "ceiling=$0.025"
+    },
+    {
+      "check": "daily_budget_reasonable",
+      "pass": true,
+      "detail": "daily=$2.0"
+    },
+    {
+      "check": "global_breaker_set",
+      "pass": true,
+      "detail": "threshold=$50.0"
+    },
+    {
+      "check": "tool_broker_roundtrip",
+      "pass": true,
+      "detail": "valid_json: ok=True, reason=freeform_ok"
+    }
+  ]
+}

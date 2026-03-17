@@ -1,0 +1,102 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 100,
+      "correct": 63,
+      "incorrect": 37,
+      "errors": 0,
+      "accuracy": 63.0,
+      "avg_latency_ms": 3433,
+      "avg_cost": 0.002466,
+      "total_cost": 0.2466
+    },
+    {
+      "category": "Coding (HumanEval)",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 0,
+      "incorrect": 50,
+      "errors": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0,
+      "avg_cost": 0.0,
+      "total_cost": 0
+    },
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 100,
+      "correct": 94,
+      "incorrect": 6,
+      "errors": 0,
+      "accuracy": 94.0,
+      "avg_latency_ms": 10124,
+      "avg_cost": 0.007337,
+      "total_cost": 0.7337
+    },
+    {
+      "category": "Multilingual",
+      "dataset": "Custom multilingual QA",
+      "sample_size": 50,
+      "correct": 49,
+      "incorrect": 1,
+      "errors": 0,
+      "accuracy": 98.0,
+      "avg_latency_ms": 2875,
+      "avg_cost": 0.001152,
+      "total_cost": 0.0576
+    },
+    {
+      "category": "Long Context (Needle in Haystack)",
+      "dataset": "Custom long-context tests",
+      "sample_size": 20,
+      "correct": 0,
+      "incorrect": 20,
+      "errors": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 2898,
+      "avg_cost": 0.007186,
+      "total_cost": 0.1437
+    },
+    {
+      "category": "Tool Use",
+      "dataset": "Custom tool use tests",
+      "sample_size": 30,
+      "correct": 20,
+      "incorrect": 10,
+      "errors": 0,
+      "accuracy": 66.7,
+      "avg_latency_ms": 5192,
+      "avg_cost": 0.004568,
+      "total_cost": 0.137
+    },
+    {
+      "category": "RAG",
+      "dataset": "Custom RAG tests",
+      "sample_size": 30,
+      "correct": 30,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 2454,
+      "avg_cost": 0.001474,
+      "total_cost": 0.0442
+    },
+    {
+      "category": "Dialogue",
+      "dataset": "Custom dialogue tests",
+      "sample_size": 30,
+      "correct": 30,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 5153,
+      "avg_cost": 0.003847,
+      "total_cost": 0.1154
+    }
+  ],
+  "timestamp": "2026-02-01T21:44:33.261769"
+}

@@ -568,5 +568,99 @@
       },
       "notes": null
     }
-  ]
+  ],
+  "categoryLeaders": [
+    {
+      "category_key": "reasoning_mmlu",
+      "display_name": "General reasoning (MMLU)",
+      "leader_score": "92.8%",
+      "leader_model": "GPT-5.2 Pro"
+    },
+    {
+      "category_key": "coding_humaneval",
+      "display_name": "Coding (HumanEval)",
+      "leader_score": "97.0%",
+      "leader_model": "Claude Opus 4.6"
+    },
+    {
+      "category_key": "math_gsm8k",
+      "display_name": "Math (GSM8K)",
+      "leader_score": "98.0%",
+      "leader_model": "GLM 4.7"
+    },
+    {
+      "category_key": "multilingual_mmmlu",
+      "display_name": "Multilingual (M-MMLU)",
+      "leader_score": "88.5%",
+      "leader_model": "GPT-5.2 Pro"
+    },
+    {
+      "category_key": "long_context_longbench",
+      "display_name": "Long context (LongBench)",
+      "leader_score": "98.5%",
+      "leader_model": "Gemini 3.1 Pro"
+    },
+    {
+      "category_key": "tool_use_toolbench",
+      "display_name": "Tool use (ToolBench)",
+      "leader_score": "95.0%",
+      "leader_model": "GPT-5.2 Pro"
+    },
+    {
+      "category_key": "rag_msmarco_mrr10",
+      "display_name": "RAG (MS MARCO MRR@10)",
+      "leader_score": "68.0%",
+      "leader_model": "GPT-5.2 Pro + BM25"
+    },
+    {
+      "category_key": "dialogue_mtbench",
+      "display_name": "Dialogue (MT-Bench)",
+      "leader_score": "9.5/10",
+      "leader_model": "GPT-5.2 Pro"
+    }
+  ],
+  "categoryLeadersVersion": "2026-03-08",
+  "industryLeaders": {
+    "reasoning": {
+      "industryLeaderScore": 92.8,
+      "industryLeaderModelLabel": "GPT-5.2 Pro",
+      "industryLeaderDataset": "MMLU"
+    },
+    "coding": {
+      "industryLeaderScore": 97.0,
+      "industryLeaderModelLabel": "Claude Opus 4.6",
+      "industryLeaderDataset": "HumanEval"
+    },
+    "math": {
+      "industryLeaderScore": 98.0,
+      "industryLeaderModelLabel": "GLM 4.7",
+      "industryLeaderDataset": "GSM8K"
+    },
+    "multilingual": {
+      "industryLeaderScore": 88.5,
+      "industryLeaderModelLabel": "GPT-5.2 Pro",
+      "industryLeaderDataset": "M-MMLU"
+    },
+    "long_context": {
+      "industryLeaderScore": 98.5,
+      "industryLeaderModelLabel": "Gemini 3.1 Pro",
+      "industryLeaderDataset": "LongBench"
+    },
+    "tool_use": {
+      "industryLeaderScore": 95.0,
+      "industryLeaderModelLabel": "GPT-5.2 Pro",
+      "industryLeaderDataset": "ToolBench"
+    },
+    "rag": {
+      "industryLeaderScore": 68.0,
+      "industryLeaderModelLabel": "GPT-5.2 Pro + BM25",
+      "industryLeaderDataset": "MS MARCO MRR@10"
+    },
+    "dialogue": {
+      "industryLeaderScore": 9.5,
+      "industryLeaderModelLabel": "GPT-5.2 Pro",
+      "industryLeaderDataset": "MT-Bench"
+    }
+  },
+  "industryLeadersUpdatedAt": "2026-02-27"
 }

@@ -1,0 +1,32 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 2,
+      "correct": 2,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 5000,
+      "avg_cost": 0.005,
+      "total_cost": 0.01,
+      "extra": {
+        "error_samples": [],
+        "subject_stats": {
+          "business_ethics": {
+            "correct": 1,
+            "total": 1
+          },
+          "miscellaneous": {
+            "correct": 1,
+            "total": 1
+          }
+        }
+      },
+      "infra_failures": 0
+    }
+  ],
+  "timestamp": "2026-02-22T21:53:42.060250"
+}

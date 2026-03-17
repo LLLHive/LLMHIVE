@@ -1,0 +1,2 @@
+# Marketing pack not yet generated — 2026-03-07T23:21:23.067185+00:00
+Run: python scripts/run_marketing_certified_release.py --ref certified-eliteplus-firestore-2026-03-07 --outdir artifacts/marketing_certified

@@ -1,0 +1,36 @@
+{
+  "failure_by_category": {
+    "RAG": 16,
+    "GSM8K": 1,
+    "MMMLU": 3
+  },
+  "failure_by_type": {
+    "null": 16,
+    "logic": 1,
+    "PARSING_FAILURE": 1,
+    "MODEL_INCORRECT": 2
+  },
+  "failure_by_subject": {
+    "unknown": 17,
+    "high_school_macroeconomics": 1,
+    "virology": 2
+  },
+  "extraction_failures": 1,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 21,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 17
+    },
+    {
+      "subject": "virology",
+      "failures": 2
+    },
+    {
+      "subject": "high_school_macroeconomics",
+      "failures": 1
+    }
+  ]
+}

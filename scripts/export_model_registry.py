@@ -28,6 +28,28 @@ from llmhive.app.orchestration.model_registry import (
 )
 
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "public" / "models.json"
+LEADERS_PATH = Path(__file__).resolve().parent.parent / "benchmark_configs" / "category_leaders_llmhive.json"
+INDUSTRY_LEADERS_PATH = Path(__file__).resolve().parent.parent / "benchmark_configs" / "industry_leaders_2026-02-27.json"
+
+# Map industry_leaders category keys to internal category names
+_INDUSTRY_TO_INTERNAL: dict[str, str] = {
+    "mmlu_reasoning": "reasoning",
+    "coding_humaneval": "coding",
+    "math_gsm8k": "math",
+    "multilingual_mmmlu": "multilingual",
+    "longbench": "long_context",
+    "toolbench": "tool_use",
+    "rag_msmarco_mrr10": "rag",
+    "dialogue_mtbench": "dialogue",
+}
+
+
+def _load_category_leaders() -> tuple[list, str]:
+    """Load category leaders from canonical JSON. Returns (categories, version)."""
+    if not LEADERS_PATH.exists():
+        return [], ""
+    data = json.loads(LEADERS_PATH.read_text())
+    return data.get("categories", []), data.get("version", "")
 
 
 def _tier_display(tier: Tier) -> str:
@@ -61,12 +83,35 @@ def _build_json() -> dict:
             "leaderboardRank": lb_ranks,
             "notes": m.notes or None,
         })
-    return {
+    category_leaders, leaders_version = _load_category_leaders()
+    payload = {
         "registryVersion": MODEL_REGISTRY_VERSION,
         "registryIntegrityHash": compute_registry_integrity_hash(),
         "generatedBy": "scripts/export_model_registry.py",
         "models": models,
     }
+    if category_leaders:
+        payload["categoryLeaders"] = category_leaders
+        payload["categoryLeadersVersion"] = leaders_version
+
+    # Industry leader metadata (for UI badges) — loaded regardless of ELITE_PLUS_LEADERBOARD_AWARE
+    if INDUSTRY_LEADERS_PATH.exists():
+        ind_data = json.loads(INDUSTRY_LEADERS_PATH.read_text())
+        cats = ind_data.get("categories", {})
+        industry_by_internal: dict[str, dict] = {}
+        for ind_key, val in cats.items():
+            internal = _INDUSTRY_TO_INTERNAL.get(ind_key)
+            if internal and isinstance(val, dict):
+                industry_by_internal[internal] = {
+                    "industryLeaderScore": val.get("leader_score"),
+                    "industryLeaderModelLabel": val.get("leader_model_label", ""),
+                    "industryLeaderDataset": val.get("dataset", ""),
+                }
+        if industry_by_internal:
+            payload["industryLeaders"] = industry_by_internal
+            payload["industryLeadersUpdatedAt"] = ind_data.get("updated_at", "")
+
+    return payload
 
 
 def main() -> None:
@@ -98,6 +143,20 @@ def main() -> None:
                 f"(models.json={existing_hash[:16]}… vs registry={current_hash[:16]}…). "
                 f"Re-run export."
             )
+            sys.exit(1)
+        if LEADERS_PATH.exists() and not existing.get("categoryLeaders"):
+            print("FAIL: models.json missing categoryLeaders. Re-run export.")
+            sys.exit(1)
+        if LEADERS_PATH.exists() and existing.get("categoryLeadersVersion") != payload.get("categoryLeadersVersion"):
+            print(
+                f"FAIL: categoryLeadersVersion mismatch. Re-run export."
+            )
+            sys.exit(1)
+        if INDUSTRY_LEADERS_PATH.exists() and not existing.get("industryLeaders"):
+            print("FAIL: models.json missing industryLeaders. Re-run export.")
+            sys.exit(1)
+        if INDUSTRY_LEADERS_PATH.exists() and existing.get("industryLeadersUpdatedAt") != payload.get("industryLeadersUpdatedAt"):
+            print("FAIL: industryLeadersUpdatedAt mismatch. Re-run export.")
             sys.exit(1)
         print(f"OK: models.json is in sync (version={payload['registryVersion']}, models={len(payload['models'])})")
         sys.exit(0)

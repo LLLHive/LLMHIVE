@@ -22,15 +22,32 @@ logger = logging.getLogger(__name__)
 # NO weaker substitutes. Order = failover priority.
 
 SAME_MODEL_PROVIDER_MATRIX: Dict[str, List[str]] = {
-    "gpt-5.2-pro":       ["openrouter", "openai"],
-    "gpt-5.2":           ["openrouter", "openai"],
-    "claude-sonnet-4.6": ["openrouter", "anthropic"],
-    "gemini-3.1-pro":    ["openrouter", "gemini"],
-    "gemini-3-pro":      ["openrouter", "gemini"],
-    "gemini-2.5-pro":    ["openrouter", "gemini"],
-    "grok-4":            ["openrouter", "grok"],
-    "grok-3-mini":       ["openrouter", "grok"],
-    "deepseek-reasoner": ["openrouter", "deepseek"],
+    "gpt-5.2-pro":       ["openai", "openrouter"],
+    "gpt-5.2":           ["openai", "openrouter"],
+    "claude-sonnet-4.6": ["anthropic", "openrouter"],
+    "claude-opus-4.6":   ["anthropic", "openrouter"],
+    "gemini-3.1-pro":    ["gemini", "openrouter"],
+    "gemini-3-pro":      ["gemini", "openrouter"],
+    "gemini-2.5-pro":    ["gemini", "openrouter"],
+    "grok-4":            ["grok", "openrouter"],
+    "grok-3-mini":       ["grok", "openrouter"],
+    "deepseek-reasoner": ["deepseek", "openrouter"],
+}
+
+# Normalize OpenRouter-format IDs to short IDs for matrix lookup
+_OPENROUTER_TO_SHORT: Dict[str, str] = {
+    "openai/gpt-5.2": "gpt-5.2",
+    "openai/gpt-5.2-pro": "gpt-5.2-pro",
+    "anthropic/claude-sonnet-4.6": "claude-sonnet-4.6",
+    "anthropic/claude-opus-4.6": "claude-opus-4.6",
+    "google/gemini-3.1-pro-preview": "gemini-3.1-pro",
+    "google/gemini-3-pro": "gemini-3-pro",
+    "google/gemini-3-pro-preview": "gemini-3-pro",
+    "google/gemini-2.5-pro-preview": "gemini-2.5-pro",
+    "x-ai/grok-4": "grok-4",
+    "x-ai/grok-3-mini": "grok-3-mini",
+    "deepseek/deepseek-r1-0528": "deepseek-reasoner",
+    "deepseek/deepseek-reasoner": "deepseek-reasoner",
 }
 
 # Maps internal model_id → the model string each provider expects.
@@ -48,6 +65,10 @@ _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
     "claude-sonnet-4.6": {
         "openrouter": "anthropic/claude-sonnet-4.6",
         "anthropic":  "claude-sonnet-4.6",
+    },
+    "claude-opus-4.6": {
+        "openrouter": "anthropic/claude-opus-4.6",
+        "anthropic":  "claude-opus-4.6",
     },
     "gemini-3.1-pro": {
         "openrouter": "google/gemini-3.1-pro-preview",
@@ -149,21 +170,33 @@ def is_failover_worthy(failure_type: str) -> bool:
 
 # ── Public API ──────────────────────────────────────────────────────────
 
+def normalize_model_id(model_id: str) -> str:
+    """Normalize OpenRouter-format IDs (e.g. 'openai/gpt-5.2') to short form ('gpt-5.2')."""
+    return _OPENROUTER_TO_SHORT.get(model_id, model_id)
+
+
 def get_equivalent_providers(model_id: str) -> List[str]:
     """Return ordered list of provider keys that can serve *model_id*.
 
-    Falls back to ``["openrouter"]`` for models not in the matrix
-    (non-elite models keep existing behaviour).
+    Normalizes OpenRouter-format IDs before lookup. Priority order:
+    direct provider first, then OpenRouter, then fallback.
+    Falls back to ``["openrouter"]`` for models not in the matrix.
     """
-    return list(SAME_MODEL_PROVIDER_MATRIX.get(model_id, ["openrouter"]))
+    short_id = normalize_model_id(model_id)
+    return list(SAME_MODEL_PROVIDER_MATRIX.get(short_id,
+                SAME_MODEL_PROVIDER_MATRIX.get(model_id, ["openrouter"])))
 
 
 def get_provider_model_name(model_id: str, provider_key: str) -> str:
     """Return the model name string that *provider_key* expects for *model_id*.
 
+    Normalizes OpenRouter-format IDs before lookup.
     Falls back to *model_id* unchanged if no explicit mapping exists.
     """
-    return _MODEL_ID_PER_PROVIDER.get(model_id, {}).get(provider_key, model_id)
+    short_id = normalize_model_id(model_id)
+    return _MODEL_ID_PER_PROVIDER.get(short_id, _MODEL_ID_PER_PROVIDER.get(model_id, {})).get(
+        provider_key, model_id
+    )
 
 
 def is_provider_sla_healthy(

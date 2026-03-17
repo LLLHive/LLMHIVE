@@ -1,0 +1,54 @@
+{
+  "failure_by_category": {
+    "GSM8K": 1,
+    "MMMLU": 6
+  },
+  "failure_by_type": {
+    "unknown": 1,
+    "MODEL_INCORRECT": 5,
+    "INFRA_FAILURE": 1
+  },
+  "failure_by_subject": {
+    "unknown": 1,
+    "high_school_microeconomics": 1,
+    "philosophy": 1,
+    "high_school_computer_science": 1,
+    "moral_scenarios": 1,
+    "professional_psychology": 1,
+    "professional_law": 1
+  },
+  "extraction_failures": 0,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 2,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 1
+    },
+    {
+      "subject": "high_school_microeconomics",
+      "failures": 1
+    },
+    {
+      "subject": "philosophy",
+      "failures": 1
+    },
+    {
+      "subject": "high_school_computer_science",
+      "failures": 1
+    },
+    {
+      "subject": "moral_scenarios",
+      "failures": 1
+    },
+    {
+      "subject": "professional_psychology",
+      "failures": 1
+    },
+    {
+      "subject": "professional_law",
+      "failures": 1
+    }
+  ]
+}

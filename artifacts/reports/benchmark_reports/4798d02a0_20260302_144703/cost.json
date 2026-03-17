@@ -1,0 +1,39 @@
+{
+  "total_tokens": 0,
+  "total_cost_usd": 0.248,
+  "cost_per_category": {
+    "MMLU": {
+      "total_cost_usd": 0.248,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 71
+    },
+    "HumanEval": {
+      "total_cost_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 46
+    },
+    "GSM8K": {
+      "total_cost_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 100
+    },
+    "MMMLU": {
+      "total_cost_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 100
+    },
+    "RAG": {
+      "total_cost_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "calls": 200
+    }
+  },
+  "cost_per_correct_answer": 0.00047,
+  "cost_per_benchmark": 0.031,
+  "cost_vs_previous_commit_delta": 0.044
+}

@@ -1,0 +1,168 @@
+{
+  "timestamp": "2026-03-07T21:52:13.610892",
+  "target": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+  "elapsed_seconds": 12.2,
+  "total_checks": 26,
+  "passed": 26,
+  "failed": 0,
+  "p0_failures": 0,
+  "verdict": "PASS",
+  "checks": [
+    {
+      "name": "elite_plus_enabled",
+      "passed": true,
+      "detail": "ELITE_PLUS_ENABLED=True",
+      "priority": "P0"
+    },
+    {
+      "name": "elite_plus_mode_active",
+      "passed": true,
+      "detail": "ELITE_PLUS_MODE=active",
+      "priority": "P0"
+    },
+    {
+      "name": "policy_free_first",
+      "passed": true,
+      "detail": "ELITE_PLUS_POLICY=free_first_verified",
+      "priority": "P0"
+    },
+    {
+      "name": "premium_tier_elite_plus",
+      "passed": true,
+      "detail": "PREMIUM_DEFAULT_TIER=elite_plus",
+      "priority": "P0"
+    },
+    {
+      "name": "launch_mode_enabled",
+      "passed": true,
+      "detail": "ELITE_PLUS_LAUNCH_MODE=True",
+      "priority": "P0"
+    },
+    {
+      "name": "cost_ceiling_set",
+      "passed": true,
+      "detail": "MAX_COST_USD_REQUEST=0.025",
+      "priority": "P0"
+    },
+    {
+      "name": "max_paid_calls_capped",
+      "passed": true,
+      "detail": "MAX_PAID_CALLS=1",
+      "priority": "P0"
+    },
+    {
+      "name": "free_tier_zero_cost",
+      "passed": true,
+      "detail": "FREE_TIER_MAX_COST_USD_REQUEST=0.0",
+      "priority": "P0"
+    },
+    {
+      "name": "free_tier_blocks_paid",
+      "passed": true,
+      "detail": "allowed=False reason=free_tier_cost_exceeded: predicted=$0.0100 > max=$0.0000",
+      "priority": "P0"
+    },
+    {
+      "name": "internal_auth_rejects_fake",
+      "passed": true,
+      "detail": "Fake key accepted=False",
+      "priority": "P0"
+    },
+    {
+      "name": "health_endpoint",
+      "passed": true,
+      "detail": "status=200",
+      "priority": "P0"
+    },
+    {
+      "name": "build_info",
+      "passed": true,
+      "detail": "commit=dbeeceb44ee1 env=production",
+      "priority": "P0"
+    },
+    {
+      "name": "internal_kpis_no_auth_rejected",
+      "passed": true,
+      "detail": "status=403 (expected 401 or 403)",
+      "priority": "P0"
+    },
+    {
+      "name": "launch_kpis_endpoint",
+      "passed": true,
+      "detail": "launch_mode=True registry_v=2",
+      "priority": "P0"
+    },
+    {
+      "name": "spend_decision_in_elite_response",
+      "passed": true,
+      "detail": "tier=elite+ allowed=True",
+      "priority": "P0"
+    },
+    {
+      "name": "free_tier_spend_blocks_paid",
+      "passed": true,
+      "detail": "allowed=False",
+      "priority": "P0"
+    },
+    {
+      "name": "tool_strict_mode_on",
+      "passed": true,
+      "detail": "TOOL_STRICT_MODE=True",
+      "priority": "P0"
+    },
+    {
+      "name": "tool_valid_json_accepted",
+      "passed": true,
+      "detail": "freeform_ok",
+      "priority": "P0"
+    },
+    {
+      "name": "tool_malformed_json_handled",
+      "passed": true,
+      "detail": "ok=True detail=freeform_ok",
+      "priority": "P1"
+    },
+    {
+      "name": "tool_empty_rejected",
+      "passed": true,
+      "detail": "empty",
+      "priority": "P0"
+    },
+    {
+      "name": "rag_require_support_on",
+      "passed": true,
+      "detail": "RAG_REQUIRE_SUPPORT=True",
+      "priority": "P0"
+    },
+    {
+      "name": "rag_refusal_detected",
+      "passed": true,
+      "detail": "ok=False rationale=ungrounded_0%_overlap reason=low_precision",
+      "priority": "P0"
+    },
+    {
+      "name": "empty_key_rejected",
+      "passed": true,
+      "detail": "accepted=False",
+      "priority": "P0"
+    },
+    {
+      "name": "no_header_rejected",
+      "passed": true,
+      "detail": "accepted=False",
+      "priority": "P0"
+    },
+    {
+      "name": "convenience_header_rejected",
+      "passed": true,
+      "detail": "accepted=False (X-LLMHIVE-INTERNAL-BENCH ignored)",
+      "priority": "P0"
+    },
+    {
+      "name": "kpis_accessible",
+      "passed": true,
+      "detail": "200 OK",
+      "priority": "P1"
+    }
+  ]
+}

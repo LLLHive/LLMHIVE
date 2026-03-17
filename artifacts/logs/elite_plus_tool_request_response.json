@@ -1,0 +1,92 @@
+{
+  "status": 200,
+  "body": {
+    "message": "is: \\[ \\boxed{323} \\].",
+    "models_used": [
+      "GPT-4o"
+    ],
+    "reasoning_mode": "standard",
+    "reasoning_method": null,
+    "domain_pack": "default",
+    "agent_mode": "team",
+    "used_tuning": {
+      "prompt_optimization": true,
+      "output_validation": true,
+      "answer_structure": true,
+      "learn_from_chat": true
+    },
+    "metadata": {
+      "chat_id": null,
+      "user_id": null,
+      "project_id": null,
+      "org_id": null,
+      "criteria": null
+    },
+    "tokens_used": 855,
+    "latency_ms": 8581,
+    "agent_traces": [],
+    "extra": {
+      "orchestration_settings": {
+        "accuracy_level": 3,
+        "hrm_enabled": false,
+        "adaptive_routing_enabled": true,
+        "deep_consensus_enabled": false,
+        "prompt_diffusion_enabled": false
+      },
+      "initial_responses_count": 1,
+      "critiques_count": 0,
+      "improvements_count": 0,
+      "consensus_notes": [
+        "Response generated using openai/gpt-4o-mini",
+        "Adaptive routing enabled",
+        "Real-time live data integrated",
+        "Guardrails: active"
+      ],
+      "task_type": "math_problem",
+      "verification": {
+        "performed": true,
+        "confidence": 1.0,
+        "issues_found": 0,
+        "issues": [],
+        "corrected": false
+      },
+      "tool_broker": {
+        "used": true,
+        "tools": [
+          "web_search",
+          "calculator"
+        ],
+        "success_count": 1,
+        "reasoning": "Query contains time-sensitive or factual keywords requiring web search; Query requires mathematical computation"
+      },
+      "models_requested": [
+        "auto"
+      ],
+      "models_mapped": [
+        "openai/gpt-4o"
+      ],
+      "tier_info": {
+        "requested_tier": "elite",
+        "effective_tier": "elite",
+        "tier_locked": false
+      },
+      "models_executed": [
+        "openai/gpt-4o"
+      ],
+      "models_attempted": [
+        "GPT-4o"
+      ],
+      "cost_tracking": {
+        "generation_id": "gen-1772857162-l6W1hy9encCIs7xQg2ts",
+        "prompt_tokens": 782,
+        "completion_tokens": 73,
+        "total_tokens": 855,
+        "model_used": "openai/gpt-4o-mini",
+        "provider": "openrouter",
+        "total_cost": 0.005005,
+        "cost_usd": 0.005005
+      },
+      "final_model_used": "openai/gpt-4o-mini"
+    }
+  }
+}

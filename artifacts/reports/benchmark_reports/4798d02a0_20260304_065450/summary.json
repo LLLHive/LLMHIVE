@@ -1,0 +1,38 @@
+{
+  "failure_by_category": {
+    "HumanEval": 0,
+    "RAG": 16,
+    "GSM8K": 3,
+    "MMMLU": 2,
+    "MMLU": 1
+  },
+  "failure_by_type": {
+    "null": 16,
+    "unknown": 3,
+    "MODEL_INCORRECT": 2,
+    "extraction": 1
+  },
+  "failure_by_subject": {
+    "unknown": 19,
+    "virology": 2,
+    "professional_law": 1
+  },
+  "extraction_failures": 1,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 67,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 19
+    },
+    {
+      "subject": "virology",
+      "failures": 2
+    },
+    {
+      "subject": "professional_law",
+      "failures": 1
+    }
+  ]
+}

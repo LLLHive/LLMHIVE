@@ -1,0 +1,101 @@
+{
+  "runs": [
+    {
+      "timestamp": "2026-03-05T04:24:48.737052+00:00",
+      "commit": "4798d02a0",
+      "branch": "main",
+      "categories": {
+        "reasoning": {
+          "accuracy": 77.8,
+          "sample_size": 10
+        },
+        "coding": {
+          "accuracy": 100.0,
+          "sample_size": 5
+        },
+        "math": {
+          "accuracy": 88.9,
+          "sample_size": 10
+        },
+        "multilingual": {
+          "accuracy": 80.0,
+          "sample_size": 10
+        },
+        "long_context": {
+          "accuracy": 100.0,
+          "sample_size": 10
+        },
+        "tool_use": {
+          "accuracy": 60.0,
+          "sample_size": 5
+        },
+        "rag": {
+          "accuracy": 34.7,
+          "sample_size": 20
+        },
+        "dialogue": {
+          "accuracy": 50.0,
+          "sample_size": 3
+        }
+      },
+      "total_cost_usd": 0.0,
+      "total_runtime_seconds": 0.0
+    }
+  ],
+  "alerts": [],
+  "latest_analysis": {
+    "run_count": 1,
+    "latest_timestamp": "2026-03-05T04:24:48.737052+00:00",
+    "categories": {
+      "reasoning": {
+        "current": 77.8,
+        "rolling_30_mean": 77.8,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "coding": {
+        "current": 100.0,
+        "rolling_30_mean": 100.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "math": {
+        "current": 88.9,
+        "rolling_30_mean": 88.9,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "multilingual": {
+        "current": 80.0,
+        "rolling_30_mean": 80.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "long_context": {
+        "current": 100.0,
+        "rolling_30_mean": 100.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "tool_use": {
+        "current": 60.0,
+        "rolling_30_mean": 60.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "rag": {
+        "current": 34.7,
+        "rolling_30_mean": 34.7,
+        "volatility": 0.0,
+        "trend": "stable"
+      },
+      "dialogue": {
+        "current": 50.0,
+        "rolling_30_mean": 50.0,
+        "volatility": 0.0,
+        "trend": "stable"
+      }
+    },
+    "alerts": []
+  }
+}

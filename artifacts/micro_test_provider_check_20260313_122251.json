@@ -1,0 +1,459 @@
+{
+  "coding": {
+    "category": "coding",
+    "expected_anchor": "anthropic/claude-opus-4.6",
+    "paid_calls": 2,
+    "total_cost": 0.015,
+    "providers_seen": [
+      "anthropic/claude-opus-4.6"
+    ],
+    "anchor_failures": [
+      {
+        "query": 1,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 3,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 5,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8002ms)"
+      }
+    ],
+    "pass": false,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 23.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 34.5
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 43.9
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 43.0
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8002ms)",
+        "latency_s": 41.7
+      }
+    ]
+  },
+  "tool_use": {
+    "category": "tool_use",
+    "expected_anchor": "anthropic/claude-opus-4.6",
+    "paid_calls": 0,
+    "total_cost": 0.0,
+    "providers_seen": [
+      "anthropic/claude-opus-4.6",
+      "google/gemini-3.1-pro-preview",
+      "openai/gpt-5.2"
+    ],
+    "anchor_failures": [
+      {
+        "query": 1,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)"
+      },
+      {
+        "query": 2,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)"
+      },
+      {
+        "query": 3,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)"
+      },
+      {
+        "query": 4,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 5,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)"
+      }
+    ],
+    "pass": false,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)",
+        "latency_s": 45.8
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)",
+        "latency_s": 41.4
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)",
+        "latency_s": 14.5
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 18.1
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)",
+        "latency_s": 26.2
+      }
+    ]
+  },
+  "multilingual": {
+    "category": "multilingual",
+    "expected_anchor": "google/gemini-3-pro",
+    "paid_calls": 1,
+    "total_cost": 0.001,
+    "providers_seen": [
+      "google/gemini-3.1-pro-preview"
+    ],
+    "anchor_failures": [
+      {
+        "query": 1,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)"
+      },
+      {
+        "query": 2,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 4,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)"
+      }
+    ],
+    "pass": false,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)",
+        "latency_s": 26.5
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 21.2
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "",
+        "direct_or_router": "",
+        "v2_executed": false,
+        "policy": "free_first_verified",
+        "source": "baseline",
+        "anchor_failure_reason": "",
+        "latency_s": 28.7
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)",
+        "latency_s": 25.4
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 19.8
+      }
+    ]
+  },
+  "reasoning": {
+    "category": "reasoning",
+    "expected_anchor": "google/gemini-3.1-pro-preview",
+    "paid_calls": 0,
+    "total_cost": 0.0,
+    "providers_seen": [
+      "google/gemini-3.1-pro-preview",
+      "openai/gpt-5.2"
+    ],
+    "anchor_failures": [
+      {
+        "query": 1,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)"
+      },
+      {
+        "query": 2,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 3,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 4,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 5,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      }
+    ],
+    "pass": false,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8000ms)",
+        "latency_s": 35.6
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 30.8
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 25.5
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 23.9
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 25.6
+      }
+    ]
+  },
+  "math": {
+    "category": "math",
+    "expected_anchor": "openai/gpt-5.2",
+    "paid_calls": 0,
+    "total_cost": 0.0,
+    "providers_seen": [
+      "openai/gpt-5.2"
+    ],
+    "anchor_failures": [
+      {
+        "query": 1,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 2,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 3,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 4,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      },
+      {
+        "query": 5,
+        "reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)"
+      }
+    ],
+    "pass": false,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 33.9
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 35.6
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 36.2
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 36.3
+      },
+      {
+        "success": true,
+        "paid_call_made": false,
+        "cost": 0.0,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "free",
+        "anchor_failure_reason": "provider_response_invalid: empty or too short (len=0, latency=8001ms)",
+        "latency_s": 29.3
+      }
+    ]
+  }
+}

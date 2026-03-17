@@ -88,7 +88,7 @@ def _evaluate_category(
         "failures": [],
     }
 
-    require_data = floor_config.get("require_nonzero_data", False)
+    require_data = floor.get("require_nonzero_data", False)
     if n == 0:
         if require_data:
             result["pass"] = False

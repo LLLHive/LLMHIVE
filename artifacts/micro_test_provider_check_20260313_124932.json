@@ -1,0 +1,371 @@
+{
+  "coding": {
+    "category": "coding",
+    "expected_anchor": "anthropic/claude-opus-4.6",
+    "paid_calls": 5,
+    "total_cost": 0.0375,
+    "providers_seen": [
+      "anthropic/claude-opus-4.6"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 41.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 31.6
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 53.0
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 39.4
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 58.5
+      }
+    ]
+  },
+  "tool_use": {
+    "category": "tool_use",
+    "expected_anchor": "anthropic/claude-opus-4.6",
+    "paid_calls": 5,
+    "total_cost": 0.031,
+    "providers_seen": [
+      "anthropic/claude-opus-4.6",
+      "google/gemini-3.1-pro-preview",
+      "openai/gpt-5.2"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 41.1
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 33.9
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 31.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 25.5
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "anthropic/claude-opus-4.6",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 46.0
+      }
+    ]
+  },
+  "multilingual": {
+    "category": "multilingual",
+    "expected_anchor": "google/gemini-3-pro",
+    "paid_calls": 5,
+    "total_cost": 0.0115,
+    "providers_seen": [
+      "google/gemini-3.1-pro-preview",
+      "openai/gpt-5.2"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 37.7
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader_confirmed",
+        "anchor_failure_reason": "",
+        "latency_s": 25.4
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "router",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "dialogue_premium",
+        "anchor_failure_reason": "",
+        "latency_s": 26.8
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "",
+        "latency_s": 20.8
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "",
+        "latency_s": 22.2
+      }
+    ]
+  },
+  "reasoning": {
+    "category": "reasoning",
+    "expected_anchor": "google/gemini-3.1-pro-preview",
+    "paid_calls": 5,
+    "total_cost": 0.018,
+    "providers_seen": [
+      "google/gemini-3.1-pro-preview",
+      "openai/gpt-5.2"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "fallback_elite",
+        "anchor_failure_reason": "",
+        "latency_s": 39.2
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 28.7
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 29.8
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 32.4
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.001,
+        "provider_used": "google/gemini-3.1-pro-preview",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 32.5
+      }
+    ]
+  },
+  "math": {
+    "category": "math",
+    "expected_anchor": "openai/gpt-5.2",
+    "paid_calls": 5,
+    "total_cost": 0.0375,
+    "providers_seen": [
+      "openai/gpt-5.2"
+    ],
+    "anchor_failures": [],
+    "pass": true,
+    "results": [
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 35.8
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 40.7
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 32.4
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 34.1
+      },
+      {
+        "success": true,
+        "paid_call_made": true,
+        "cost": 0.0075,
+        "provider_used": "openai/gpt-5.2",
+        "direct_or_router": "direct",
+        "v2_executed": true,
+        "policy": "dominance_v2",
+        "source": "leader",
+        "anchor_failure_reason": "",
+        "latency_s": 26.8
+      }
+    ]
+  }
+}

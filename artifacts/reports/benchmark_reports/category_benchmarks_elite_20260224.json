@@ -1,0 +1,120 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 33,
+      "correct": 31,
+      "incorrect": 2,
+      "errors": 0,
+      "accuracy": 93.9,
+      "avg_latency_ms": 26277,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": []
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Multilingual (MMMLU)",
+      "dataset": "openai/MMMLU",
+      "sample_size": 33,
+      "correct": 24,
+      "incorrect": 7,
+      "errors": 2,
+      "accuracy": 77.4,
+      "avg_latency_ms": 43296,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": [
+          "",
+          ""
+        ]
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Long Context (LongBench)",
+      "dataset": "THUDM/LongBench",
+      "sample_size": 17,
+      "correct": 17,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 12256,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "extra": {
+        "longbench_eval": "external"
+      }
+    },
+    {
+      "category": "Tool Use (ToolBench)",
+      "dataset": "ToolBench (OpenBMB)",
+      "sample_size": 8,
+      "correct": 8,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 100.0,
+      "avg_latency_ms": 8139,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "parsing_failures": 0,
+      "extra": {
+        "toolbench_eval": "external"
+      }
+    },
+    {
+      "category": "RAG (MS MARCO)",
+      "dataset": "microsoft/ms_marco v1.1",
+      "sample_size": 33,
+      "correct": 30,
+      "incorrect": 3,
+      "errors": 0,
+      "accuracy": 36.6,
+      "avg_latency_ms": 23062,
+      "avg_cost": 0.001269,
+      "total_cost": 0.0419,
+      "extra": {
+        "mrr_at_10": 0.3656,
+        "recall_at_10": 1.0,
+        "rqi": 0.563,
+        "eval_mode": "builtin",
+        "rank_distribution": {
+          "1": 3,
+          "4": 3,
+          "6": 3,
+          "5": 4,
+          "2": 4,
+          "3": 11,
+          "8": 2
+        },
+        "zero_relevant_queries": 3,
+        "zero_relevant_rate": 0.0909
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Dialogue (MT-Bench)",
+      "dataset": "lmsys/mt-bench",
+      "sample_size": 5,
+      "correct": 1,
+      "incorrect": 4,
+      "errors": 1,
+      "accuracy": 6.25,
+      "avg_latency_ms": 57045,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "extra": {
+        "mtbench_eval": "external"
+      }
+    }
+  ],
+  "timestamp": "2026-02-24T21:23:50.612390"
+}

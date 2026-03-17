@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "model_registry_version": "2",
+  "gate_timestamp": "2026-03-06T10:55:17.039844",
+  "promote_timestamp": "2026-03-06T10:55:22.680854",
+  "git_sha": "4798d02a06d6",
+  "gate_status": "pass",
+  "launch_mode_enabled": false,
+  "config_snapshot": {},
+  "total_samples_evaluated": 10,
+  "p0_failures": [],
+  "forced": false
+}

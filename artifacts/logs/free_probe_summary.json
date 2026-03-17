@@ -1,0 +1,39 @@
+{
+  "status_code": 200,
+  "top_level_keys": [
+    "agent_mode",
+    "agent_traces",
+    "domain_pack",
+    "extra",
+    "latency_ms",
+    "message",
+    "metadata",
+    "models_used",
+    "reasoning_method",
+    "reasoning_mode",
+    "tokens_used",
+    "used_tuning"
+  ],
+  "extra_keys": [
+    "consensus_notes",
+    "cost_tracking",
+    "critiques_count",
+    "final_model_used",
+    "improvements_count",
+    "initial_responses_count",
+    "models_attempted",
+    "models_executed",
+    "models_mapped",
+    "models_requested",
+    "orchestration_settings",
+    "task_type",
+    "tier_info",
+    "tool_broker",
+    "verification"
+  ],
+  "elite_plus_stage_used": null,
+  "elite_plus_paid_calls_count": null,
+  "spend_decision_tier": null,
+  "spend_decision_allowed_paid_escalation": null,
+  "message_excerpt": "{'message': '**: The numerical answer is **4**.', 'models_used': ['deepseek/deepseek-chat', 'qwen/qwen3-next-80b-a3b-instruct:free', 'qwen/qwen3-coder:free'], 'reasoning_mode': 'standard', 'reasoning_"
+}

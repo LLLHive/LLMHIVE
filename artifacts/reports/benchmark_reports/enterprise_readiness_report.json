@@ -1,0 +1,628 @@
+{
+  "generated_at": "2026-02-23T02:19:57.407560+00:00",
+  "schema_version": "2026.1",
+  "intelligence_mode": "advisory",
+  "benchmark_mode": false,
+  "elite_determinism": {
+    "policy": {
+      "reasoning": "gpt-5.2-pro",
+      "coding": "gpt-5.2-pro",
+      "math": "gpt-5.2-pro",
+      "multilingual": "claude-sonnet-4.6",
+      "long_context": "gemini-2.5-pro",
+      "tool_use": "gpt-5.2-pro",
+      "rag": "gpt-5.2-pro",
+      "dialogue": "gpt-5.2-pro"
+    },
+    "verify_model": "deepseek-reasoner",
+    "all_models_in_registry": true,
+    "registry_model_count": 9
+  },
+  "drift_enforcement": {
+    "benchmark_mode_raises": true,
+    "production_mode_logs_critical": true,
+    "unregistered_model_detection": true,
+    "provider_validation": true
+  },
+  "sla_metrics": {
+    "models_monitored": 0,
+    "total_sla_breaches": 0,
+    "provider_failures": {},
+    "total_alerts": 0
+  },
+  "sla_compliance": {
+    "standard": {
+      "compliant_models": 0,
+      "total_models": 0,
+      "compliance_pct": 0.0
+    },
+    "enterprise": {
+      "compliant_models": 0,
+      "total_models": 0,
+      "compliance_pct": 0.0
+    },
+    "mission_critical": {
+      "compliant_models": 0,
+      "total_models": 0,
+      "compliance_pct": 0.0
+    }
+  },
+  "stability_metrics": {
+    "categories_tracked": 8,
+    "fatigue_detected": []
+  },
+  "rolling_stability_forecast": {
+    "reasoning": {
+      "gpt-5.2-pro": {
+        "stability": 0.4449,
+        "volatility": 0.0555,
+        "30d_trend": "uncertain"
+      }
+    },
+    "coding": {
+      "gpt-5.2-pro": {
+        "stability": 0.0,
+        "volatility": 0.4243,
+        "30d_trend": "degrading"
+      }
+    },
+    "math": {
+      "gpt-5.2-pro": {
+        "stability": 0.9602,
+        "volatility": 0.004,
+        "30d_trend": "stable"
+      }
+    },
+    "multilingual": {
+      "claude-sonnet-4.6": {
+        "stability": 0.0,
+        "volatility": 0.3326,
+        "30d_trend": "degrading"
+      }
+    },
+    "rag": {
+      "gpt-5.2-pro": {
+        "stability": 0.0,
+        "volatility": 0.1749,
+        "30d_trend": "degrading"
+      }
+    }
+  },
+  "latency_budget_adherence": {
+    "budget_ms": 20000,
+    "actual_p95": 0,
+    "within_budget": true,
+    "utilization_pct": 0.0
+  },
+  "verify_timeout_compliance": {
+    "timeout_rate": 0.0,
+    "threshold": 0.08,
+    "compliant": true,
+    "penalty_active": false
+  },
+  "drift_incidents": {
+    "total_drift_events": 0,
+    "degradation_alerts": 0,
+    "severity_breakdown": {
+      "warning": 0,
+      "critical": 0
+    }
+  },
+  "model_governance": {
+    "validation_passed": null,
+    "validation_errors": 0,
+    "validation_warnings": 0
+  },
+  "strategy_db_gating": {
+    "win_rate_delta_threshold": 0.03,
+    "volatility_threshold": 0.05,
+    "min_history_depth": 5,
+    "benchmark_mode_suppression": true,
+    "auto_promotion": false
+  },
+  "competitive_advantage": {
+    "timestamp": "2026-02-23T02:19:57.401569+00:00",
+    "composite_index": 49.7,
+    "categories": {
+      "reasoning": {
+        "index": 52.73,
+        "win_rate_delta": 0.0,
+        "stability": 0.4449,
+        "volatility": 0.0555,
+        "cost_efficiency": 0.9223,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "coding": {
+        "index": 43.4,
+        "win_rate_delta": 0.0,
+        "stability": 0.0,
+        "volatility": 0.4243,
+        "cost_efficiency": 0.8931,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "math": {
+        "index": 63.11,
+        "win_rate_delta": 0.0,
+        "stability": 0.9602,
+        "volatility": 0.004,
+        "cost_efficiency": 0.9272,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "multilingual": {
+        "index": 44.99,
+        "win_rate_delta": 0.0,
+        "stability": 0.0,
+        "volatility": 0.3326,
+        "cost_efficiency": 0.9993,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      },
+      "rag": {
+        "index": 44.26,
+        "win_rate_delta": 0.0,
+        "stability": 0.0,
+        "volatility": 0.1749,
+        "cost_efficiency": 0.9506,
+        "entropy_reduction": 1.0,
+        "reliability": 1.0
+      }
+    },
+    "ensemble_entropy_avg": 0.0,
+    "reliability_score": 1.0,
+    "interpretation": "market_parity"
+  },
+  "strategy_activation": {
+    "timestamp": "2026-02-23T02:19:57.407533+00:00",
+    "cai": {
+      "timestamp": "2026-02-23T02:19:57.407440+00:00",
+      "composite_index": 49.7,
+      "categories": {
+        "reasoning": {
+          "index": 52.73,
+          "win_rate_delta": 0.0,
+          "stability": 0.4449,
+          "volatility": 0.0555,
+          "cost_efficiency": 0.9223,
+          "entropy_reduction": 1.0,
+          "reliability": 1.0
+        },
+        "coding": {
+          "index": 43.4,
+          "win_rate_delta": 0.0,
+          "stability": 0.0,
+          "volatility": 0.4243,
+          "cost_efficiency": 0.8931,
+          "entropy_reduction": 1.0,
+          "reliability": 1.0
+        },
+        "math": {
+          "index": 63.11,
+          "win_rate_delta": 0.0,
+          "stability": 0.9602,
+          "volatility": 0.004,
+          "cost_efficiency": 0.9272,
+          "entropy_reduction": 1.0,
+          "reliability": 1.0
+        },
+        "multilingual": {
+          "index": 44.99,
+          "win_rate_delta": 0.0,
+          "stability": 0.0,
+          "volatility": 0.3326,
+          "cost_efficiency": 0.9993,
+          "entropy_reduction": 1.0,
+          "reliability": 1.0
+        },
+        "rag": {
+          "index": 44.26,
+          "win_rate_delta": 0.0,
+          "stability": 0.0,
+          "volatility": 0.1749,
+          "cost_efficiency": 0.9506,
+          "entropy_reduction": 1.0,
+          "reliability": 1.0
+        }
+      },
+      "ensemble_entropy_avg": 0.0,
+      "reliability_score": 1.0,
+      "interpretation": "market_parity"
+    },
+    "categories": {
+      "reasoning": {
+        "models_tracked": 1,
+        "history_depth": 7,
+        "best_model": "gpt-5.2-pro",
+        "win_rate": 0.0,
+        "stability": 0.4449,
+        "volatility": 0.0555
+      },
+      "coding": {
+        "models_tracked": 1,
+        "history_depth": 7,
+        "best_model": "gpt-5.2-pro",
+        "win_rate": 0.5714,
+        "stability": 0.0,
+        "volatility": 0.4243
+      },
+      "math": {
+        "models_tracked": 1,
+        "history_depth": 6,
+        "best_model": "gpt-5.2-pro",
+        "win_rate": 1.0,
+        "stability": 0.9602,
+        "volatility": 0.004
+      },
+      "multilingual": {
+        "models_tracked": 1,
+        "history_depth": 4,
+        "best_model": "claude-sonnet-4.6",
+        "win_rate": 0.0,
+        "stability": 0.0,
+        "volatility": 0.3326
+      },
+      "long_context": {
+        "models_tracked": 0,
+        "history_depth": 0
+      },
+      "tool_use": {
+        "models_tracked": 0,
+        "history_depth": 0
+      },
+      "rag": {
+        "models_tracked": 1,
+        "history_depth": 4,
+        "best_model": "gpt-5.2-pro",
+        "win_rate": 0.0,
+        "stability": 0.0,
+        "volatility": 0.1749
+      },
+      "dialogue": {
+        "models_tracked": 0,
+        "history_depth": 0
+      }
+    },
+    "degradation_alerts": [],
+    "all_categories_populated": false,
+    "total_records": 5,
+    "pareto_top3": {
+      "reasoning": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 173.9994,
+          "win_rate": 0.0,
+          "avg_cost_usd": 0.003883,
+          "history_depth": 7
+        }
+      ],
+      "coding": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 104.6244,
+          "win_rate": 0.5714,
+          "avg_cost_usd": 0.005344,
+          "history_depth": 7
+        }
+      ],
+      "math": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 257.8504,
+          "win_rate": 1.0,
+          "avg_cost_usd": 0.003641,
+          "history_depth": 6
+        }
+      ],
+      "multilingual": [
+        {
+          "model_id": "claude-sonnet-4.6",
+          "efficiency_score": 16000.0,
+          "win_rate": 0.0,
+          "avg_cost_usd": 3.6e-05,
+          "history_depth": 4
+        }
+      ],
+      "long_context": [],
+      "tool_use": [],
+      "rag": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "efficiency_score": 124.627,
+          "win_rate": 0.0,
+          "avg_cost_usd": 0.002471,
+          "history_depth": 4
+        }
+      ],
+      "dialogue": []
+    }
+  },
+  "team_composition": {
+    "reasoning": {
+      "category": "reasoning",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "coding": {
+      "category": "coding",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.901
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.872
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.869
+        }
+      ]
+    },
+    "math": {
+      "category": "math",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.907
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.875
+        },
+        {
+          "model_id": "gemini-2.5-pro",
+          "display_name": "Gemini 2.5 Pro",
+          "provider": "google",
+          "role": "support",
+          "score": 0.8565
+        }
+      ]
+    },
+    "multilingual": {
+      "category": "multilingual",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "long_context": {
+      "category": "long_context",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "tool_use": {
+      "category": "tool_use",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.901
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.872
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.869
+        }
+      ]
+    },
+    "rag": {
+      "category": "rag",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    },
+    "dialogue": {
+      "category": "dialogue",
+      "team_size": 3,
+      "members": [
+        {
+          "model_id": "gpt-5.2-pro",
+          "display_name": "GPT-5.2 Pro",
+          "provider": "openai",
+          "role": "reasoning_specialist",
+          "score": 0.895
+        },
+        {
+          "model_id": "claude-sonnet-4.6",
+          "display_name": "Claude Sonnet 4.6",
+          "provider": "anthropic",
+          "role": "support",
+          "score": 0.866
+        },
+        {
+          "model_id": "deepseek-v3.2",
+          "display_name": "DeepSeek V3.2",
+          "provider": "deepseek",
+          "role": "cost_efficient",
+          "score": 0.863
+        }
+      ]
+    }
+  },
+  "ensemble_precision": {
+    "timestamp": "2026-02-23T02:19:57.401961+00:00",
+    "total_resolutions": 0,
+    "avg_entropy": 0.0,
+    "entropy_p95": 0.0,
+    "entropy_histogram": {
+      "<0.3": 0,
+      "0.3-0.5": 0,
+      "0.5-0.8": 0,
+      "0.8-1.0": 0,
+      ">1.0": 0
+    },
+    "category_entropy_stats": {},
+    "escalation_count": 0,
+    "tiebreaker_count": 0,
+    "instability_fallback_count": 0,
+    "instability_warnings": [],
+    "disagreement_clusters": {},
+    "adaptive_weight_adjustments": 0,
+    "weight_adjustment_log": []
+  },
+  "cost_efficiency": {
+    "total_calls": 0,
+    "avg_latency_ms": 0,
+    "drift_events": 0
+  },
+  "zero_regression": {
+    "prompts_unchanged": true,
+    "decoding_unchanged": true,
+    "sample_sizes_unchanged": true,
+    "rag_unchanged": true,
+    "provider_health_unchanged": true,
+    "governance_unchanged": true,
+    "latency_policy_unchanged": true,
+    "elite_binding_unchanged": true
+  },
+  "telemetry": {
+    "total_calls": 0
+  },
+  "verify_pipeline": {
+    "total_verifications": 0,
+    "passed": 0,
+    "failed": 0,
+    "timeout_warnings": 0,
+    "timeout_failures": 0,
+    "timeout_rate": 0.0,
+    "verify_penalty": 0.0,
+    "avg_latency_ms": 0,
+    "max_latency_ms": 0,
+    "verify_latency_p95": 0,
+    "latency_distribution": {
+      "p50": 0,
+      "p95": 0,
+      "max": 0,
+      "count": 0
+    },
+    "failure_classification": {
+      "timeout": 0,
+      "mismatch": 0,
+      "exception": 0
+    },
+    "sla_warnings": [],
+    "circuit_open": false,
+    "consecutive_failures": 0,
+    "verify_model": "deepseek-reasoner"
+  },
+  "canary_validation": {
+    "status": "not_run"
+  }
+}

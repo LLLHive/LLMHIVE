@@ -1,0 +1,6 @@
+llmhive/src/llmhive/app/main.py
+llmhive/src/llmhive/app/orchestration/internal_auth.py
+llmhive/src/llmhive/app/orchestration/tier_spend_governor.py
+llmhive/src/llmhive/app/services/orchestrator_adapter.py
+scripts/run_prod_preflight.py
+scripts/run_synthetic_prod_suite.py

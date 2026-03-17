@@ -1,0 +1,791 @@
+{
+  "timestamp": "2026-01-29T18:43:53.461941",
+  "elite": {
+    "tier": "elite",
+    "tier_name": "ELITE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 692.4500465393066,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 207.4878215789795,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 229.51292991638184,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 202.93021202087402,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 175.5211353302002,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 188.64893913269043,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 200.58798789978027,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 199.0358829498291,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 188.17472457885742,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 228.31010818481445,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 199.73206520080566,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 170.4578399658203,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 173.5081672668457,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 224.761962890625,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 186.1438751220703,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 183.59899520874023,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 187.38198280334473,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 172.30725288391113,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 225.51298141479492,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 172.652006149292,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 171.22697830200195,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 167.694091796875,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 177.537202835083,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 162.1110439300537,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 186.01298332214355,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 3,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 181.75482749938965,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 242.7041530609131,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 240.1123046875,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 184.67020988464355,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      }
+    },
+    "total_passed": 0,
+    "total_cases": 29,
+    "overall_pass_rate": 0.0,
+    "total_cost": 0.0,
+    "avg_cost_per_query": 0.0
+  },
+  "free": {
+    "tier": "free",
+    "tier_name": "FREE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 180.85289001464844,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 184.72814559936523,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 186.48695945739746,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 181.35809898376465,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 174.93700981140137,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 167.40107536315918,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 178.6031723022461,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 195.37925720214844,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 194.0162181854248,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 166.34702682495117,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 176.98216438293457,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 183.74300003051758,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 171.16689682006836,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 185.3470802307129,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 192.18182563781738,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 171.0219383239746,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 180.00411987304688,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 182.96432495117188,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 173.69508743286133,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 184.74817276000977,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 193.84384155273438,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 196.577787399292,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 182.88421630859375,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 184.34405326843262,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 178.86090278625488,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 3,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 161.17382049560547,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 190.9489631652832,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 203.63378524780273,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": false,
+            "passed": false,
+            "score": 0,
+            "error": "HTTP 422: {\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"reasoning_mode\"],\"msg\":\"Input should be 'fast', 'standard' or 'deep'\",\"input\":\"elite\",\"ctx\":{\"expected\":\"'fast', 'standard' or 'deep'\"}}]}",
+            "latency_ms": 193.5279369354248,
+            "actual_cost": 0.0,
+            "cost_info": {}
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.0
+      }
+    },
+    "total_passed": 0,
+    "total_cases": 29,
+    "overall_pass_rate": 0.0,
+    "total_cost": 0.0,
+    "avg_cost_per_query": 0.0
+  }
+}

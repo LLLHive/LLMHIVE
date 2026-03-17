@@ -1,0 +1,14 @@
+{
+  "recorded_at": "2026-03-07T23:21:15.194223+00:00",
+  "prod_url": "https://llmhive-orchestrator-792354158895.us-east1.run.app",
+  "build_info": {
+    "commit": "dbeeceb44ee1",
+    "build_time": "2026-03-06T17:02:28Z",
+    "environment": "production",
+    "version": "1.0.0",
+    "service": "llmhive-orchestrator"
+  },
+  "health": {
+    "status": "ok"
+  }
+}

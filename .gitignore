@@ -120,6 +120,22 @@ test-results/
 .env*.local
 
 # ===========================================
+# BENCHMARK ARTIFACTS (generated output, not source)
+# ===========================================
+benchmark_reports/answers_*.jsonl
+benchmark_reports/model_trace_*.jsonl
+benchmark_reports/humaneval_raw_*.jsonl
+benchmark_reports/humaneval_processed_*.jsonl
+benchmark_reports/humaneval_execution_trace_*.jsonl
+benchmark_reports/mtbench_eval_*.json
+benchmark_reports/toolbench_eval_*.json
+benchmark_reports/category_benchmarks_checkpoint.json
+benchmark_reports/confirmation_layer_*.json
+
+# Experiment run directories (timestamped)
+benchmark_reports/*_2026*/
+
+# ===========================================
 # BACKUPS (contains sensitive env files)
 # ===========================================
 backups/

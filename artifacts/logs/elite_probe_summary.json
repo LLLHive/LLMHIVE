@@ -1,0 +1,40 @@
+{
+  "status_code": 200,
+  "top_level_keys": [
+    "agent_mode",
+    "agent_traces",
+    "domain_pack",
+    "extra",
+    "latency_ms",
+    "message",
+    "metadata",
+    "models_used",
+    "reasoning_method",
+    "reasoning_mode",
+    "tokens_used",
+    "used_tuning"
+  ],
+  "extra_keys": [
+    "consensus_notes",
+    "cost_tracking",
+    "critiques_count",
+    "final_model_used",
+    "improvements_count",
+    "initial_responses_count",
+    "models_attempted",
+    "models_executed",
+    "models_mapped",
+    "models_requested",
+    "orchestration_settings",
+    "task_type",
+    "tier_info",
+    "tool_broker",
+    "verification"
+  ],
+  "elite_plus_stage_used": null,
+  "elite_plus_paid_calls_count": null,
+  "elite_plus_estimated_cost_usd": null,
+  "spend_decision_tier": null,
+  "spend_decision_allowed_paid_escalation": null,
+  "message_excerpt": "{'message': 'To solve the integral of \\\\( x^3 \\\\) from 0 to 2, we will follow these steps: 1. **Find the indefinite integral of \\\\( x^3 \\\\)**.\\n\\nThe integral of \\\\( x^n \\\\) is given by the formula: \\"
+}

@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
+import { AlertTriangle } from "lucide-react"
 import { type OpenRouterModel } from "@/lib/openrouter/types"
 import {
   type UserTier,
@@ -37,6 +38,7 @@ import {
   TIER_CONFIGS,
   STORAGE_KEYS,
 } from "@/lib/openrouter/tiers"
+import { useModelRegistry } from "@/hooks/use-model-registry"
 
 // =============================================================================
 // Types
@@ -56,6 +58,30 @@ interface SelectedModelCardProps {
   userTier: UserTier
   onUpdate: (config: SelectedModelConfig) => void
   onRemove: () => void
+}
+
+// =============================================================================
+// Registry Version Badge
+// =============================================================================
+
+function RegistryVersionBadge() {
+  const { version, registryMismatch, loading } = useModelRegistry()
+
+  if (loading || !version) return null
+
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <Badge variant="outline" className="text-xs font-mono">
+        Registry v{version}
+      </Badge>
+      {registryMismatch && (
+        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="h-3 w-3" />
+          Version mismatch — redeploy may be needed
+        </span>
+      )}
+    </div>
+  )
 }
 
 // =============================================================================
@@ -521,6 +547,9 @@ export function ModelSelection({
           )}
         </CardContent>
       </Card>
+
+      {/* Registry version indicator */}
+      <RegistryVersionBadge />
 
       {/* Selected models grid */}
       {selectedModels.length === 0 ? (

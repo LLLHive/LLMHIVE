@@ -1,0 +1,160 @@
+{
+  "title": "Final Launch Checklist",
+  "generated_at": "2026-03-07T03:50:07.274380+00:00",
+  "elapsed_seconds": 2.5,
+  "total_gates": 10,
+  "passed": 10,
+  "failed": 0,
+  "all_pass": true,
+  "gates": [
+    {
+      "gate": "full_benchmark_certification",
+      "pass": true,
+      "exit_code": 0,
+      "artifact": "/Users/camilodiaz/LLMHIVE/benchmark_reports/final_launch_certification.json",
+      "detail": []
+    },
+    {
+      "gate": "multi_instance_stress",
+      "pass": true,
+      "exit_code": 0,
+      "artifact": "/Users/camilodiaz/LLMHIVE/benchmark_reports/stress_certification.json",
+      "detail": 0
+    },
+    {
+      "gate": "registry_firewall",
+      "pass": true,
+      "checks": [
+        {
+          "test": "require_rc_gate_pass_enabled",
+          "pass": true,
+          "detail": "REQUIRE_RC_GATE_PASS_FOR_REGISTRY_UPDATE=True"
+        },
+        {
+          "test": "integrity_hash_computable",
+          "pass": true,
+          "detail": "hash=370a6ff992d8262d..."
+        },
+        {
+          "test": "integrity_hash_matches_models_json",
+          "pass": true,
+          "detail": "registry=370a6ff992d8262d..., models.json=370a6ff992d8262d..."
+        },
+        {
+          "test": "champion_challenger_blocks_without_rc",
+          "pass": true,
+          "detail": "gate_result=False (should be False)"
+        }
+      ]
+    },
+    {
+      "gate": "telemetry_audit",
+      "pass": true,
+      "exit_code": 0,
+      "artifact": "/Users/camilodiaz/LLMHIVE/benchmark_reports/telemetry_audit.json",
+      "detail": 0
+    },
+    {
+      "gate": "integration_certification",
+      "pass": true,
+      "exit_code": 0,
+      "artifact": "/Users/camilodiaz/LLMHIVE/benchmark_reports/integration_certification.json",
+      "detail": 0
+    },
+    {
+      "gate": "free_tier_zero_spend_proof",
+      "pass": true,
+      "checks": [
+        {
+          "test": "free_tier_blocks_paid_escalation",
+          "pass": true,
+          "detail": "allowed=False, reason=free_tier_cost_exceeded: predicted=$0.0500 > max=$0.0000; free_tier_tool_cap: 10 > 5/request"
+        },
+        {
+          "test": "reason_blocked_is_free_tier",
+          "pass": true,
+          "detail": "reason=free_tier_cost_exceeded: predicted=$0.0500 > max=$0.0000; free_tier_tool_cap: 10 > 5/request"
+        },
+        {
+          "test": "zero_remaining_daily_spend",
+          "pass": true,
+          "detail": "spend_remaining_day=0.0"
+        },
+        {
+          "test": "zero_remaining_monthly_spend",
+          "pass": true,
+          "detail": "spend_remaining_month=0.0"
+        },
+        {
+          "test": "batch_free_requests_all_blocked",
+          "pass": true,
+          "detail": "10 requests, all_blocked=True"
+        },
+        {
+          "test": "zero_cost_still_blocks_paid",
+          "pass": true,
+          "detail": "cost=0.0, blocked=True"
+        }
+      ]
+    },
+    {
+      "gate": "cost_ceilings_verified",
+      "pass": true,
+      "detail": "verified via offline certification",
+      "checks": []
+    },
+    {
+      "gate": "ui_registry_version_sync",
+      "pass": true,
+      "detail": "backend=2, models.json=2, manifest=2",
+      "checks": []
+    },
+    {
+      "gate": "ci_enforcement",
+      "pass": true,
+      "checks": [
+        {
+          "test": "ci_yaml_exists",
+          "pass": true,
+          "detail": "/Users/camilodiaz/LLMHIVE/.github/workflows/ci-cd.yaml"
+        },
+        {
+          "test": "ci_has_test_job",
+          "pass": true,
+          "detail": "pytest found"
+        },
+        {
+          "test": "ci_has_registry_sync_check",
+          "pass": true,
+          "detail": "registry check found"
+        },
+        {
+          "test": "ci_has_preflight",
+          "pass": true,
+          "detail": "preflight job found"
+        }
+      ]
+    },
+    {
+      "gate": "rollback_verified",
+      "pass": true,
+      "checks": [
+        {
+          "test": "elite_plus_toggle_available",
+          "pass": true,
+          "detail": "ELITE_PLUS_ENABLED env var controls activation"
+        },
+        {
+          "test": "release_manifest_exists",
+          "pass": true,
+          "detail": "version=1, git_sha=4798d02a06d6"
+        },
+        {
+          "test": "promote_script_exists",
+          "pass": true,
+          "detail": "/Users/camilodiaz/LLMHIVE/scripts/promote_release_candidate.py"
+        }
+      ]
+    }
+  ]
+}

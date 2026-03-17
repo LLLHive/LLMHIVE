@@ -1,0 +1,1308 @@
+{
+  "timestamp": "2026-01-29T20:23:24.632186",
+  "elite": {
+    "tier": "elite",
+    "tier_name": "ELITE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 18053.00211906433,
+            "models_used": [],
+            "actual_cost": 0.0,
+            "cost_info": {
+              "total_tokens": 956,
+              "provider": "unknown",
+              "total_cost": 0.0
+            }
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7642.153024673462,
+            "models_used": [],
+            "actual_cost": 0.004825,
+            "cost_info": {
+              "generation_id": "gen-1769735607-1Q8GtPHtA6tCIgzUv6r2",
+              "prompt_tokens": 170,
+              "completion_tokens": 265,
+              "total_tokens": 435,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.004825,
+              "cost_usd": 0.004825
+            }
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 9859.714031219482,
+            "models_used": [],
+            "actual_cost": 0.00508,
+            "cost_info": {
+              "generation_id": "gen-1769735617-cd5L2D58aJoSyHrDH5cP",
+              "prompt_tokens": 176,
+              "completion_tokens": 280,
+              "total_tokens": 456,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.00508,
+              "cost_usd": 0.00508
+            }
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 14747.746706008911,
+            "models_used": [],
+            "actual_cost": 0.00924,
+            "cost_info": {
+              "generation_id": "gen-1769735625-8FA1mA0CXR56pPogVdcw",
+              "prompt_tokens": 177,
+              "completion_tokens": 557,
+              "total_tokens": 734,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.00924,
+              "cost_usd": 0.00924
+            }
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7016.607284545898,
+            "models_used": [],
+            "actual_cost": 0.004555,
+            "cost_info": {
+              "generation_id": "gen-1769735639-F8LdySKaO77fYmgw3wzb",
+              "prompt_tokens": 176,
+              "completion_tokens": 245,
+              "total_tokens": 421,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.004555,
+              "cost_usd": 0.004555
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.0237
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 18534.61194038391,
+            "models_used": [],
+            "actual_cost": 0.011915,
+            "cost_info": {
+              "generation_id": "gen-1769735645-K8ES3MeC00alv9YzF6hv",
+              "prompt_tokens": 208,
+              "completion_tokens": 725,
+              "total_tokens": 933,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.011915,
+              "cost_usd": 0.011915
+            }
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 19834.697008132935,
+            "models_used": [],
+            "actual_cost": 0.01327,
+            "cost_info": {
+              "generation_id": "gen-1769735668-tFfkO8qFh8C3phMcHuwR",
+              "prompt_tokens": 728,
+              "completion_tokens": 642,
+              "total_tokens": 1370,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.01327,
+              "cost_usd": 0.01327
+            }
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7824.136972427368,
+            "models_used": [],
+            "actual_cost": 0.005695,
+            "cost_info": {
+              "generation_id": "gen-1769735684-0EJrBOGtXOl2t2T9ilsP",
+              "prompt_tokens": 218,
+              "completion_tokens": 307,
+              "total_tokens": 525,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.005695,
+              "cost_usd": 0.005695
+            }
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 11955.087900161743,
+            "models_used": [],
+            "actual_cost": 0.012835,
+            "cost_info": {
+              "generation_id": "gen-1769735692-WXrfOjn14LV4cEZKjiR1",
+              "prompt_tokens": 206,
+              "completion_tokens": 787,
+              "total_tokens": 993,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.012835,
+              "cost_usd": 0.012835
+            }
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 14819.27490234375,
+            "models_used": [],
+            "actual_cost": 0.01147,
+            "cost_info": {
+              "generation_id": "gen-1769735704-WtJDpD63nwWVSs4gISpu",
+              "prompt_tokens": 218,
+              "completion_tokens": 692,
+              "total_tokens": 910,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.01147,
+              "cost_usd": 0.01147
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.055185
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 14163.831233978271,
+            "models_used": [],
+            "actual_cost": 0.011055,
+            "cost_info": {
+              "generation_id": "gen-1769735725-5qjvBZLd5TDvlBWVyVy0",
+              "prompt_tokens": 1053,
+              "completion_tokens": 386,
+              "total_tokens": 1439,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.011055,
+              "cost_usd": 0.011055
+            }
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 10364.51506614685,
+            "models_used": [],
+            "actual_cost": 0.00808,
+            "cost_info": {
+              "generation_id": "gen-1769735732-iFTfLRsghrjqW4TZGMhm",
+              "prompt_tokens": 215,
+              "completion_tokens": 467,
+              "total_tokens": 682,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00808,
+              "cost_usd": 0.00808
+            }
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 10417.847871780396,
+            "models_used": [],
+            "actual_cost": 0.00787,
+            "cost_info": {
+              "generation_id": "gen-1769735745-QrtbmXqBK2mi1Lk1xzyx",
+              "prompt_tokens": 524,
+              "completion_tokens": 350,
+              "total_tokens": 874,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00787,
+              "cost_usd": 0.00787
+            }
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 17795.98903656006,
+            "models_used": [],
+            "actual_cost": 0.010545,
+            "cost_info": {
+              "generation_id": "gen-1769735757-NwxeB2s41VVbAjoxMDs3",
+              "prompt_tokens": 834,
+              "completion_tokens": 425,
+              "total_tokens": 1259,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.010545,
+              "cost_usd": 0.010545
+            }
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 10698.844909667969,
+            "models_used": [],
+            "actual_cost": 0.008135,
+            "cost_info": {
+              "generation_id": "gen-1769735771-D1klnXlH7ze5P14y67mG",
+              "prompt_tokens": 208,
+              "completion_tokens": 473,
+              "total_tokens": 681,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.008135,
+              "cost_usd": 0.008135
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.045685
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 3121.8340396881104,
+            "models_used": [],
+            "actual_cost": 0.002045,
+            "cost_info": {
+              "generation_id": "gen-1769735781-07k9lunjsT0XesCHQqQY",
+              "prompt_tokens": 220,
+              "completion_tokens": 63,
+              "total_tokens": 283,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.002045,
+              "cost_usd": 0.002045
+            }
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 4401.31688117981,
+            "models_used": [],
+            "actual_cost": 0.00245,
+            "cost_info": {
+              "generation_id": "gen-1769735785-FyQQfBJMUVNRLkg3SGDw",
+              "prompt_tokens": 208,
+              "completion_tokens": 94,
+              "total_tokens": 302,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00245,
+              "cost_usd": 0.00245
+            }
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 2201.5862464904785,
+            "models_used": [],
+            "actual_cost": 0.001175,
+            "cost_info": {
+              "generation_id": "gen-1769735789-8oSrpzYYXIe9DAW1XMst",
+              "prompt_tokens": 181,
+              "completion_tokens": 18,
+              "total_tokens": 199,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.001175,
+              "cost_usd": 0.001175
+            }
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 8145.103216171265,
+            "models_used": [],
+            "actual_cost": 0.006765,
+            "cost_info": {
+              "generation_id": "gen-1769735791-BYCArrpRZGfEADVHjLMp",
+              "prompt_tokens": 207,
+              "completion_tokens": 382,
+              "total_tokens": 589,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.006765,
+              "cost_usd": 0.006765
+            }
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 8658.720016479492,
+            "models_used": [],
+            "actual_cost": 0.006195,
+            "cost_info": {
+              "generation_id": "gen-1769735799-hEMnk7nccog3MiYF0sLF",
+              "prompt_tokens": 162,
+              "completion_tokens": 359,
+              "total_tokens": 521,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.006195,
+              "cost_usd": 0.006195
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.01863
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 2748.2991218566895,
+            "models_used": [],
+            "actual_cost": 0.00302,
+            "cost_info": {
+              "generation_id": "gen-1769735808-mUEEPXgAzAs4P8TXThzm",
+              "prompt_tokens": 568,
+              "completion_tokens": 12,
+              "total_tokens": 580,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00302,
+              "cost_usd": 0.00302
+            }
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7908.614158630371,
+            "models_used": [],
+            "actual_cost": 0.00544,
+            "cost_info": {
+              "generation_id": "gen-1769735811-TDae1FFEFLlCTIBQrpL4",
+              "prompt_tokens": 266,
+              "completion_tokens": 274,
+              "total_tokens": 540,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00544,
+              "cost_usd": 0.00544
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.00846
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 4820.883750915527,
+            "models_used": [],
+            "actual_cost": 0.00501,
+            "cost_info": {
+              "generation_id": "gen-1769735820-MAYWu14ELLZGU8CEJKBM",
+              "prompt_tokens": 834,
+              "completion_tokens": 56,
+              "total_tokens": 890,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00501,
+              "cost_usd": 0.00501
+            }
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 22784.008264541626,
+            "models_used": [],
+            "actual_cost": 0.01181,
+            "cost_info": {
+              "generation_id": "gen-1769735828-mvyg6Ua57l0fyUnFJqDz",
+              "prompt_tokens": 826,
+              "completion_tokens": 512,
+              "total_tokens": 1338,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.01181,
+              "cost_usd": 0.01181
+            }
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 4989.4609451293945,
+            "models_used": [],
+            "actual_cost": 0.002785,
+            "cost_info": {
+              "generation_id": "gen-1769735847-jAXOHrrcOkeyUFJwxF8n",
+              "prompt_tokens": 197,
+              "completion_tokens": 120,
+              "total_tokens": 317,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.002785,
+              "cost_usd": 0.002785
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 3,
+        "pass_rate": 0.0,
+        "total_cost": 0.019604999999999997
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 11455.566883087158,
+            "models_used": [],
+            "actual_cost": 0.00596,
+            "cost_info": {
+              "generation_id": "gen-1769735851-eCVYnNieJ9DAYFkXJqKZ",
+              "prompt_tokens": 181,
+              "completion_tokens": 337,
+              "total_tokens": 518,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.00596,
+              "cost_usd": 0.00596
+            }
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 16692.75212287903,
+            "models_used": [],
+            "actual_cost": 0.009825,
+            "cost_info": {
+              "generation_id": "gen-1769735863-RMWPmIPbvDc4NvKfi6FG",
+              "prompt_tokens": 213,
+              "completion_tokens": 584,
+              "total_tokens": 797,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.009825,
+              "cost_usd": 0.009825
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.015785
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 8102.330923080444,
+            "models_used": [],
+            "actual_cost": 0.00451,
+            "cost_info": {
+              "generation_id": "gen-1769735880-4g8ToAiVRisoEUuftuH8",
+              "prompt_tokens": 173,
+              "completion_tokens": 243,
+              "total_tokens": 416,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00451,
+              "cost_usd": 0.00451
+            }
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7788.873910903931,
+            "models_used": [],
+            "actual_cost": 0.00503,
+            "cost_info": {
+              "generation_id": "gen-1769735888-7qZUm3ZbFZEBem0yiog4",
+              "prompt_tokens": 169,
+              "completion_tokens": 279,
+              "total_tokens": 448,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00503,
+              "cost_usd": 0.00503
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.00954
+      }
+    },
+    "total_passed": 0,
+    "total_cases": 29,
+    "overall_pass_rate": 0.0,
+    "total_cost": 0.19659,
+    "avg_cost_per_query": 0.006778965517241379
+  },
+  "free": {
+    "tier": "free",
+    "tier_name": "FREE",
+    "results": {
+      "general_reasoning": {
+        "cases": [
+          {
+            "case_id": "gr_001",
+            "category": "PhD-Level Physics",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 16122.295141220093,
+            "models_used": [],
+            "actual_cost": 0.01196,
+            "cost_info": {
+              "generation_id": "gen-1769735896-EPnX2tKBfPfcXGqzAGL2",
+              "prompt_tokens": 244,
+              "completion_tokens": 716,
+              "total_tokens": 960,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.01196,
+              "cost_usd": 0.01196
+            }
+          },
+          {
+            "case_id": "gr_002",
+            "category": "PhD-Level Chemistry",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7172.931909561157,
+            "models_used": [],
+            "actual_cost": 0.0049,
+            "cost_info": {
+              "generation_id": "gen-1769735912-rGqZuVDbKvvqtEkcVgq4",
+              "prompt_tokens": 170,
+              "completion_tokens": 270,
+              "total_tokens": 440,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.0049,
+              "cost_usd": 0.0049
+            }
+          },
+          {
+            "case_id": "gr_003",
+            "category": "PhD-Level Mathematics",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 13867.67601966858,
+            "models_used": [],
+            "actual_cost": 0.00601,
+            "cost_info": {
+              "generation_id": "gen-1769735919-3MpmxCd168xLweHfBaUq",
+              "prompt_tokens": 176,
+              "completion_tokens": 342,
+              "total_tokens": 518,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.00601,
+              "cost_usd": 0.00601
+            }
+          },
+          {
+            "case_id": "gr_004",
+            "category": "PhD-Level Biology",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 14024.362087249756,
+            "models_used": [],
+            "actual_cost": 0.008535,
+            "cost_info": {
+              "generation_id": "gen-1769735933-IUmNtwSv8YWTQ248UUk6",
+              "prompt_tokens": 177,
+              "completion_tokens": 510,
+              "total_tokens": 687,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.008535,
+              "cost_usd": 0.008535
+            }
+          },
+          {
+            "case_id": "gr_005",
+            "category": "PhD-Level Computer Science",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7372.554063796997,
+            "models_used": [],
+            "actual_cost": 0.00406,
+            "cost_info": {
+              "generation_id": "gen-1769735947-9mfKTlxw8J92cOab4Z5L",
+              "prompt_tokens": 176,
+              "completion_tokens": 212,
+              "total_tokens": 388,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.00406,
+              "cost_usd": 0.00406
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.035464999999999997
+      },
+      "coding": {
+        "cases": [
+          {
+            "case_id": "code_001",
+            "category": "Algorithm Implementation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 14348.533391952515,
+            "models_used": [],
+            "actual_cost": 0.009785,
+            "cost_info": {
+              "generation_id": "gen-1769735954-qQLrl6amRmFBt7lLRyVT",
+              "prompt_tokens": 208,
+              "completion_tokens": 583,
+              "total_tokens": 791,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.009785,
+              "cost_usd": 0.009785
+            }
+          },
+          {
+            "case_id": "code_002",
+            "category": "Data Structures",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 10611.65189743042,
+            "models_used": [],
+            "actual_cost": 0.008395,
+            "cost_info": {
+              "generation_id": "gen-1769735969-Z3Fsrn4kcBNYyTATWwPX",
+              "prompt_tokens": 209,
+              "completion_tokens": 490,
+              "total_tokens": 699,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.008395,
+              "cost_usd": 0.008395
+            }
+          },
+          {
+            "case_id": "code_003",
+            "category": "Database",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 10188.721895217896,
+            "models_used": [],
+            "actual_cost": 0.006175,
+            "cost_info": {
+              "generation_id": "gen-1769735979-Fp3saM4FkZaNlk7mjx4B",
+              "prompt_tokens": 218,
+              "completion_tokens": 339,
+              "total_tokens": 557,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.006175,
+              "cost_usd": 0.006175
+            }
+          },
+          {
+            "case_id": "code_004",
+            "category": "Frontend",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 12246.734142303467,
+            "models_used": [],
+            "actual_cost": 0.010975,
+            "cost_info": {
+              "generation_id": "gen-1769735989-7u5KWxCifbR5mNxJf7qV",
+              "prompt_tokens": 206,
+              "completion_tokens": 663,
+              "total_tokens": 869,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.010975,
+              "cost_usd": 0.010975
+            }
+          },
+          {
+            "case_id": "code_005",
+            "category": "DevOps",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 13974.21383857727,
+            "models_used": [],
+            "actual_cost": 0.010405,
+            "cost_info": {
+              "generation_id": "gen-1769736002-BqhxKTraHx4N8Ms1yBhl",
+              "prompt_tokens": 218,
+              "completion_tokens": 621,
+              "total_tokens": 839,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.010405,
+              "cost_usd": 0.010405
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.045735
+      },
+      "math": {
+        "cases": [
+          {
+            "case_id": "math_001",
+            "category": "Number Theory",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 29560.718297958374,
+            "models_used": [],
+            "actual_cost": 0.02056,
+            "cost_info": {
+              "generation_id": "gen-1769736016-vSyPIqOUIQvhCovFA36s",
+              "prompt_tokens": 1055,
+              "completion_tokens": 1019,
+              "total_tokens": 2074,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.02056,
+              "cost_usd": 0.02056
+            }
+          },
+          {
+            "case_id": "math_002",
+            "category": "Geometry",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 13465.267896652222,
+            "models_used": [],
+            "actual_cost": 0.008515,
+            "cost_info": {
+              "generation_id": "gen-1769736045-eQuKgeMUQmrKqa5A9yKe",
+              "prompt_tokens": 215,
+              "completion_tokens": 496,
+              "total_tokens": 711,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.008515,
+              "cost_usd": 0.008515
+            }
+          },
+          {
+            "case_id": "math_003",
+            "category": "Calculus",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 9450.83212852478,
+            "models_used": [],
+            "actual_cost": 0.007315,
+            "cost_info": {
+              "generation_id": "gen-1769736059-ZTPag5dQsdVhGACBxrnI",
+              "prompt_tokens": 521,
+              "completion_tokens": 314,
+              "total_tokens": 835,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.007315,
+              "cost_usd": 0.007315
+            }
+          },
+          {
+            "case_id": "math_004",
+            "category": "Combinatorics",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7604.2609214782715,
+            "models_used": [],
+            "actual_cost": 0.00748,
+            "cost_info": {
+              "generation_id": "gen-1769736068-kHfTeQBeIi27SIY6lW9w",
+              "prompt_tokens": 839,
+              "completion_tokens": 219,
+              "total_tokens": 1058,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00748,
+              "cost_usd": 0.00748
+            }
+          },
+          {
+            "case_id": "math_005",
+            "category": "Algebra",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 11567.68798828125,
+            "models_used": [],
+            "actual_cost": 0.008315,
+            "cost_info": {
+              "generation_id": "gen-1769736076-a0oGbkPmtDKhSHEkWxN8",
+              "prompt_tokens": 208,
+              "completion_tokens": 485,
+              "total_tokens": 693,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.008315,
+              "cost_usd": 0.008315
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.052184999999999995
+      },
+      "multilingual": {
+        "cases": [
+          {
+            "case_id": "ml_001",
+            "category": "Translation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 3668.834924697876,
+            "models_used": [],
+            "actual_cost": 0.002045,
+            "cost_info": {
+              "generation_id": "gen-1769736087-Ipcot8KCakapFrZNJGAz",
+              "prompt_tokens": 220,
+              "completion_tokens": 63,
+              "total_tokens": 283,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.002045,
+              "cost_usd": 0.002045
+            }
+          },
+          {
+            "case_id": "ml_002",
+            "category": "Chinese Comprehension",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 5135.095119476318,
+            "models_used": [],
+            "actual_cost": 0.00209,
+            "cost_info": {
+              "generation_id": "gen-1769736091-o7oPpXGRxb32Ev2QhFsb",
+              "prompt_tokens": 208,
+              "completion_tokens": 70,
+              "total_tokens": 278,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00209,
+              "cost_usd": 0.00209
+            }
+          },
+          {
+            "case_id": "ml_003",
+            "category": "French Comprehension",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 2657.4997901916504,
+            "models_used": [],
+            "actual_cost": 0.001175,
+            "cost_info": {
+              "generation_id": "gen-1769736096-z9X8RnhRio1yqziQ6CCI",
+              "prompt_tokens": 181,
+              "completion_tokens": 18,
+              "total_tokens": 199,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.001175,
+              "cost_usd": 0.001175
+            }
+          },
+          {
+            "case_id": "ml_004",
+            "category": "Japanese Generation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 11716.974973678589,
+            "models_used": [],
+            "actual_cost": 0.008205,
+            "cost_info": {
+              "generation_id": "gen-1769736099-PrpeSqeuc3hwNUo0EhuZ",
+              "prompt_tokens": 207,
+              "completion_tokens": 478,
+              "total_tokens": 685,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.008205,
+              "cost_usd": 0.008205
+            }
+          },
+          {
+            "case_id": "ml_005",
+            "category": "German Generation",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7580.073833465576,
+            "models_used": [],
+            "actual_cost": 0.005745,
+            "cost_info": {
+              "generation_id": "gen-1769736110-SL3ywoPIqcIi9KlJQ4R5",
+              "prompt_tokens": 162,
+              "completion_tokens": 329,
+              "total_tokens": 491,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.005745,
+              "cost_usd": 0.005745
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 5,
+        "pass_rate": 0.0,
+        "total_cost": 0.01926
+      },
+      "long_context": {
+        "cases": [
+          {
+            "case_id": "lc_001",
+            "category": "Memory Recall",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 3283.046007156372,
+            "models_used": [],
+            "actual_cost": 0.00302,
+            "cost_info": {
+              "generation_id": "gen-1769736118-kUJUBpOHPXUhK742uh3w",
+              "prompt_tokens": 568,
+              "completion_tokens": 12,
+              "total_tokens": 580,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00302,
+              "cost_usd": 0.00302
+            }
+          },
+          {
+            "case_id": "lc_002",
+            "category": "Code Analysis",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 9921.490907669067,
+            "models_used": [],
+            "actual_cost": 0.007345,
+            "cost_info": {
+              "generation_id": "gen-1769736121-bXgPrxRLRDYlu8B9DcL3",
+              "prompt_tokens": 266,
+              "completion_tokens": 401,
+              "total_tokens": 667,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.007345,
+              "cost_usd": 0.007345
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.010365
+      },
+      "tool_use": {
+        "cases": [
+          {
+            "case_id": "tu_001",
+            "category": "Web Search",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 8574.004888534546,
+            "models_used": [],
+            "actual_cost": 0.005255,
+            "cost_info": {
+              "generation_id": "gen-1769736133-QRr6FJoZ2ZsgN4jy99iM",
+              "prompt_tokens": 829,
+              "completion_tokens": 74,
+              "total_tokens": 903,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.005255,
+              "cost_usd": 0.005255
+            }
+          },
+          {
+            "case_id": "tu_002",
+            "category": "Calculator",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 16064.743041992188,
+            "models_used": [],
+            "actual_cost": 0.010805,
+            "cost_info": {
+              "generation_id": "gen-1769736140-YtR3Qft5whQROitVUget",
+              "prompt_tokens": 826,
+              "completion_tokens": 445,
+              "total_tokens": 1271,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.010805,
+              "cost_usd": 0.010805
+            }
+          },
+          {
+            "case_id": "tu_003",
+            "category": "Code Execution",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 5017.121076583862,
+            "models_used": [],
+            "actual_cost": 0.002935,
+            "cost_info": {
+              "generation_id": "gen-1769736156-o6cUpADb4utwmMQ9aNME",
+              "prompt_tokens": 197,
+              "completion_tokens": 130,
+              "total_tokens": 327,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.002935,
+              "cost_usd": 0.002935
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 3,
+        "pass_rate": 0.0,
+        "total_cost": 0.018995
+      },
+      "rag": {
+        "cases": [
+          {
+            "case_id": "rag_001",
+            "category": "Documentation QA",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 8706.187725067139,
+            "models_used": [],
+            "actual_cost": 0.006695,
+            "cost_info": {
+              "generation_id": "gen-1769736161-YSq3uqgksJbnjGi5q27S",
+              "prompt_tokens": 181,
+              "completion_tokens": 386,
+              "total_tokens": 567,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.006695,
+              "cost_usd": 0.006695
+            }
+          },
+          {
+            "case_id": "rag_002",
+            "category": "Product Knowledge",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 19553.797006607056,
+            "models_used": [],
+            "actual_cost": 0.011565,
+            "cost_info": {
+              "generation_id": "gen-1769736169-Oh6hhduvEGMPTtUL0Wgb",
+              "prompt_tokens": 213,
+              "completion_tokens": 700,
+              "total_tokens": 913,
+              "model_used": "openai/gpt-4o",
+              "provider": "openrouter",
+              "total_cost": 0.011565,
+              "cost_usd": 0.011565
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.018260000000000002
+      },
+      "dialogue": {
+        "cases": [
+          {
+            "case_id": "dl_001",
+            "category": "Empathetic Response",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 9714.57576751709,
+            "models_used": [],
+            "actual_cost": 0.006505,
+            "cost_info": {
+              "generation_id": "gen-1769736189-kjQvYuHCZhtaJjnC90OU",
+              "prompt_tokens": 173,
+              "completion_tokens": 376,
+              "total_tokens": 549,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.006505,
+              "cost_usd": 0.006505
+            }
+          },
+          {
+            "case_id": "dl_002",
+            "category": "Emotional Intelligence",
+            "success": true,
+            "passed": false,
+            "score": 0,
+            "latency_ms": 7422.5428104400635,
+            "models_used": [],
+            "actual_cost": 0.00551,
+            "cost_info": {
+              "generation_id": "gen-1769736199-AwEd9aeL4qL6iYCgAK0n",
+              "prompt_tokens": 169,
+              "completion_tokens": 311,
+              "total_tokens": 480,
+              "model_used": "openai/gpt-4o-mini",
+              "provider": "openrouter",
+              "total_cost": 0.00551,
+              "cost_usd": 0.00551
+            }
+          }
+        ],
+        "passed": 0,
+        "total": 2,
+        "pass_rate": 0.0,
+        "total_cost": 0.012015000000000001
+      }
+    },
+    "total_passed": 0,
+    "total_cases": 29,
+    "overall_pass_rate": 0.0,
+    "total_cost": 0.21228,
+    "avg_cost_per_query": 0.00732
+  }
+}

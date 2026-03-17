@@ -449,9 +449,8 @@ export function canAccessModel(userTier: UserTier, modelId: string): boolean {
 /**
  * Get tier badge color for display
  * 
- * NOTE: We now only display 2 tiers to users: "Elite" and "Free"
- * - Free: Green badge (free models)
- * - Elite: Gold/amber badge (all paid tier models - starter, pro, enterprise)
+ * - Free: Green badge
+ * - Elite+ (all paid): Violet/purple badge (premium flagship)
  */
 export function getTierBadgeColor(tier: ModelAccessLevel): string {
   switch (tier) {
@@ -460,8 +459,7 @@ export function getTierBadgeColor(tier: ModelAccessLevel): string {
     case 'starter':
     case 'pro':
     case 'enterprise':
-      // All paid tiers display as "Elite" with gold/amber styling
-      return 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+      return 'bg-violet-500/10 text-violet-500 border-violet-500/30'
     default: 
       return 'bg-gray-500/10 text-gray-600 border-gray-500/20'
   }
@@ -470,9 +468,10 @@ export function getTierBadgeColor(tier: ModelAccessLevel): string {
 /**
  * Get tier display name
  * 
- * NOTE: We now only display 2 tiers to users: "Elite" and "Free"
+ * Display 2 tiers to users: "Elite+" (premium) and "Free"
  * - Free tier models → "Free"
- * - All other tiers (starter, pro, enterprise) → "Elite"
+ * - All paid tiers (starter, pro, enterprise) → "Elite+"
+ *   Elite+ is the launch premium tier (free-first verified premium).
  */
 export function getTierDisplayName(tier: ModelAccessLevel): string {
   switch (tier) {
@@ -481,8 +480,7 @@ export function getTierDisplayName(tier: ModelAccessLevel): string {
     case 'starter':
     case 'pro':
     case 'enterprise':
-      // All paid tiers display as "Elite"
-      return 'Elite'
+      return 'Elite+'
     default: 
       return 'Unknown'
   }

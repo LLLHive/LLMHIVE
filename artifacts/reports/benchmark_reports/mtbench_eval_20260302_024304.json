@@ -1,0 +1,26 @@
+{
+  "score": 5.86,
+  "avg_score": 5.86,
+  "raw_score_out_of_10": 5.86,
+  "accuracy": 58.6,
+  "accuracy_pct": 58.6,
+  "attempted": 16,
+  "correct": 5,
+  "errors": 2,
+  "infra_failures": 0,
+  "infra_failure_rate": 0.0,
+  "avg_latency_ms": 60332,
+  "avg_cost": 0.0,
+  "total_cost": 0.0,
+  "category_scores": {
+    "roleplay": 5.5,
+    "writing": 4.0,
+    "extraction": 5.75,
+    "reasoning": 9.0,
+    "humanities": 4.5,
+    "stem": 6.0,
+    "math": 7.5,
+    "coding": 5.0
+  },
+  "exec_integrity": false
+}

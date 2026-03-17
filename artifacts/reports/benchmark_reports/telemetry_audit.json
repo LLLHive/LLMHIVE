@@ -1,0 +1,91 @@
+{
+  "title": "Telemetry Integrity Audit",
+  "generated_at": "2026-03-07T04:23:21.649608+00:00",
+  "elapsed_seconds": 0.2,
+  "total_checks": 16,
+  "passed": 16,
+  "failed": 0,
+  "clean": true,
+  "checks": [
+    {
+      "check": "free_tier_spend_decision_fields",
+      "pass": true,
+      "detail": "all fields present"
+    },
+    {
+      "check": "free_tier_ledger_backend_present",
+      "pass": true,
+      "detail": "ledger_backend=in_memory"
+    },
+    {
+      "check": "elite_plus_spend_decision_fields",
+      "pass": true,
+      "detail": "all fields present"
+    },
+    {
+      "check": "elite_plus_ledger_backend_present",
+      "pass": true,
+      "detail": "ledger_backend=in_memory"
+    },
+    {
+      "check": "elite_plus_result_has_escalation_reason",
+      "pass": true,
+      "detail": "field present"
+    },
+    {
+      "check": "elite_plus_result_has_paid_calls_count",
+      "pass": true,
+      "detail": "field present"
+    },
+    {
+      "check": "external_no_headers_is_not_internal",
+      "pass": true,
+      "detail": "flags={'is_internal': False, 'allow_bench_output': False, 'allow_extra_paid_calls': False, 'max_paid_calls_override': None}"
+    },
+    {
+      "check": "external_no_bench_output",
+      "pass": true,
+      "detail": "allow_bench_output=False"
+    },
+    {
+      "check": "external_no_extra_paid_calls",
+      "pass": true,
+      "detail": "allow_extra_paid_calls=False"
+    },
+    {
+      "check": "external_no_paid_calls_override",
+      "pass": true,
+      "detail": "max_paid_calls_override=None"
+    },
+    {
+      "check": "fake_key_is_not_internal",
+      "pass": true,
+      "detail": "flags={'is_internal': False, 'allow_bench_output': False, 'allow_extra_paid_calls': False, 'max_paid_calls_override': None}"
+    },
+    {
+      "check": "convenience_header_ignored",
+      "pass": true,
+      "detail": "flags={'is_internal': False, 'allow_bench_output': False, 'allow_extra_paid_calls': False, 'max_paid_calls_override': None}"
+    },
+    {
+      "check": "empty_key_is_not_internal",
+      "pass": true,
+      "detail": "flags={'is_internal': False, 'allow_bench_output': False, 'allow_extra_paid_calls': False, 'max_paid_calls_override': None}"
+    },
+    {
+      "check": "free_blocked_has_reason",
+      "pass": true,
+      "detail": "reason=free_tier_cost_exceeded: predicted=$0.0100 > max=$0.0000"
+    },
+    {
+      "check": "elite_over_ceiling_has_reason",
+      "pass": true,
+      "detail": "reason=request_ceiling: predicted=$0.1000 > max=$0.0250"
+    },
+    {
+      "check": "elite_allowed_empty_reason",
+      "pass": true,
+      "detail": "allowed=True, reason=''"
+    }
+  ]
+}

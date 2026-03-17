@@ -1,0 +1,13 @@
+{
+  "updated_at": "2026-02-27",
+  "categories": {
+    "mmlu_reasoning": {"leader_score": 92.8, "leader_model_label": "GPT-5.2 Pro", "dataset": "MMLU"},
+    "coding_humaneval": {"leader_score": 97.0, "leader_model_label": "Claude Opus 4.6", "dataset": "HumanEval"},
+    "math_gsm8k": {"leader_score": 98.0, "leader_model_label": "GLM 4.7", "dataset": "GSM8K"},
+    "multilingual_mmmlu": {"leader_score": 88.5, "leader_model_label": "GPT-5.2 Pro", "dataset": "M-MMLU"},
+    "longbench": {"leader_score": 98.5, "leader_model_label": "Gemini 3.1 Pro", "dataset": "LongBench"},
+    "toolbench": {"leader_score": 95.0, "leader_model_label": "GPT-5.2 Pro", "dataset": "ToolBench"},
+    "rag_msmarco_mrr10": {"leader_score": 68.0, "leader_model_label": "GPT-5.2 Pro + BM25", "dataset": "MS MARCO MRR@10"},
+    "dialogue_mtbench": {"leader_score": 9.5, "leader_model_label": "GPT-5.2 Pro", "dataset": "MT-Bench"}
+  }
+}

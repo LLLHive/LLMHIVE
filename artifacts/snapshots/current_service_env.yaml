@@ -1,0 +1,228 @@
+spec:
+  template:
+    spec:
+      containers:
+      - env:
+        - name: DEPLOY_TS
+          value: 20260228T194730Z
+        - name: BUILD_COMMIT
+          value: 4798d02a0
+        - name: ALLOW_STUB_PROVIDER
+          value: 'true'
+        - name: LOG_LEVEL
+          value: INFO
+        - name: ENVIRONMENT
+          value: production
+        - name: BUILD_TIME
+          value: '2026-03-06T17:02:28Z'
+        - name: OTEL_USE_GCP_TRACE
+          value: 'true'
+        - name: GCP_PROJECT_ID
+          value: llmhive-orchestrator
+        - name: EMAIL_FROM
+          value: LLMHive <noreply@contact.llmhive.ai>
+        - name: ENABLE_ELITE_FREE_MODELS
+          value: '0'
+        - name: ELITE_PLUS_ENABLED
+          value: '1'
+        - name: FREE_PROGRESSIVE
+          value: '0'
+        - name: ELITE_PLUS_MODE
+          value: active
+        - name: ELITE_PLUS_LOG_SHADOW
+          value: '1'
+        - name: ELITE_PLUS_INCLUDE_FREE_ADVISORS
+          value: '1'
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: openai-api-key
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: anthropic-api-key
+        - name: GROK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: grok-api-key
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: gemini-api-key
+        - name: DEEPSEEK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: deepseek-api-key
+        - name: TAVILY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: tavily-api-key
+        - name: PINECONE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: pinecone-api-key
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: api-key
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-secret-key
+        - name: STRIPE_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-webhook-secret
+        - name: ELITE_PLUS_REASONING_FASTPATH
+          value: '0'
+        - name: ELITE_PLUS_LONG_CONTEXT_ANCHOR_MODEL
+          value: google/gemini-3.1-pro-preview
+        - name: ELITE_PLUS_VERIFIER_TIMEOUT_MS
+          value: '12000'
+        - name: ELITE_PLUS_VERIFIER_ALLOW_DEEPSEEK_REASONER
+          value: '0'
+        - name: ELITE_PLUS_VERIFIER_MODEL
+          value: openai/gpt-4o-mini
+        - name: ELITE_PLUS_VERIFIER_STRATEGY
+          value: hybrid
+        - name: ELITE_PLUS_CATEGORY_ROUTER
+          value: '1'
+        - name: ELITE_PLUS_MAX_EXTRA_MODELS
+          value: '3'
+        - name: ALLOW_INTERNAL_BENCH_OUTPUT
+          value: '1'
+        - name: TOGETHERAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: togetherai-api-key
+        - name: OPENROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: open-router-key
+        - name: CLERK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: clerk-secret-key
+        - name: STRIPE_PRICE_ID_BASIC_ANNUAL
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-basic-annual
+        - name: STRIPE_PRICE_ID_BASIC_MONTHLY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-basic-monthly
+        - name: STRIPE_PRICE_ID_ENTERPRISE_ANNUAL
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-enterprise-annual
+        - name: STRIPE_PRICE_ID_ENTERPRISE_MONTHLY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-enterprise-monthly
+        - name: STRIPE_PRICE_ID_PRO_ANNUAL
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-pro-annual
+        - name: STRIPE_PRICE_ID_PRO_MONTHLY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-pro-monthly
+        - name: STRIPE_PRICE_ID_MAXIMUM_MONTHLY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-maximum-monthly
+        - name: STRIPE_PRICE_ID_MAXIMUM_ANNUAL
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-price-id-maximum-annual
+        - name: STRIPE_PUBLISHABLE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: stripe-publishable-key
+        - name: PINECONE_HOST_ORCHESTRATOR_KB
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: pinecone-host-orchestrator-kb
+        - name: PINECONE_HOST_MODEL_KNOWLEDGE
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: pinecone-host-model-knowledge
+        - name: PINECONE_HOST_MEMORY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: pinecone-host-memory
+        - name: PINECONE_HOST_RLHF_FEEDBACK
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: pinecone-host-rlhf-feedback
+        - name: PINECONE_HOST_AGENTIC_QUICKSTART_TEST
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: pinecone-host-agentic-quickstart-test
+        - name: SLACK_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: slack-webhook-url
+        - name: RESEND_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: resend-api-key
+        - name: ELITE_PLUS_POLICY
+          value: free_first_verified
+        - name: PREMIUM_DEFAULT_TIER
+          value: elite_plus
+        - name: ELITE_FALLBACK_ENABLED
+          value: '1'
+        - name: ELITE_PUBLIC_ENABLED
+          value: '0'
+        - name: ELITE_PLUS_MAX_PAID_CALLS
+          value: '1'
+        - name: ELITE_PLUS_BUDGET_USD_P50
+          value: '0.010'
+        - name: ELITE_PLUS_BUDGET_USD_P95
+          value: '0.020'
+        - name: ELITE_PLUS_TOOL_STRICT_MODE
+          value: '1'
+        - name: ELITE_PLUS_RAG_EXTRACTIVE_MODE
+          value: '1'
+        - name: ELITE_PLUS_DIALOGUE_LIGHT_TOUCH
+          value: '1'
+        - name: ELITE_PLUS_MATH_FREE_FIRST
+          value: '1'
+        - name: ELITE_PLUS_LAUNCH_MODE
+          value: '1'
+        - name: ELITE_PLUS_MAX_COST_USD_REQUEST
+          value: '0.025'
+        - name: ELITE_PLUS_MAX_PAID_CALLS_INTERNAL_BENCH
+          value: '1'
+        - name: ELITE_PLUS_RAG_REQUIRE_SUPPORT
+          value: '1'

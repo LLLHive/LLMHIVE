@@ -1,0 +1,130 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 10,
+      "correct": 9,
+      "incorrect": 1,
+      "errors": 0,
+      "accuracy": 90.0,
+      "accuracy_before_rerun": 90.0,
+      "infra_failures_before_rerun": 0,
+      "infra_failures_after_rerun": 0,
+      "rerun_recovered": 0,
+      "avg_latency_ms": 38520,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": []
+      },
+      "exec_integrity": {
+        "attempted": 34,
+        "errors": 5,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Multilingual (MMMLU)",
+      "dataset": "openai/MMMLU",
+      "sample_size": 10,
+      "correct": 7,
+      "incorrect": 3,
+      "errors": 0,
+      "accuracy": 70.0,
+      "avg_latency_ms": 45410,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": []
+      },
+      "exec_integrity": {
+        "attempted": 34,
+        "errors": 1,
+        "infra_failures": 0,
+        "retries": 1,
+        "fallback_used": 1
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "RAG (MS MARCO)",
+      "dataset": "microsoft/ms_marco v1.1",
+      "sample_size": 20,
+      "correct": 20,
+      "incorrect": 0,
+      "errors": 0,
+      "accuracy": 44.3,
+      "avg_latency_ms": 24221,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "mrr_at_10": 0.443,
+        "recall_at_10": 1.0,
+        "rqi": 0.6658,
+        "eval_mode": "builtin",
+        "rank_distribution": {
+          "2": 4,
+          "5": 4,
+          "4": 3,
+          "1": 4,
+          "3": 3,
+          "7": 1,
+          "6": 1
+        },
+        "zero_relevant_queries": 0,
+        "zero_relevant_rate": 0.0,
+        "rag_rerank_deterministic": false,
+        "rag_rerank_shuffle_seeded": true,
+        "rag_top1_first": false,
+        "rag_confidence_fallback": false
+      },
+      "exec_integrity": {
+        "attempted": 60,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Dialogue (MT-Bench)",
+      "dataset": "lmsys/mt-bench",
+      "sample_size": 5,
+      "correct": 2,
+      "incorrect": 3,
+      "errors": 0,
+      "accuracy": 50.0,
+      "avg_latency_ms": 51471,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "infra_failures": 0,
+      "extra": {
+        "mtbench_eval": "external",
+        "raw_score_out_of_10": 5.0,
+        "score_scale": "0-10",
+        "category_scores": {
+          "roleplay": 7.0,
+          "writing": 3.0,
+          "extraction": 1.0,
+          "reasoning": 9.0,
+          "humanities": 5.0
+        }
+      },
+      "exec_integrity": {
+        "attempted": 5,
+        "errors": 0,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      }
+    }
+  ],
+  "timestamp": "2026-03-03T22:58:45.087405",
+  "invariants_verified": true
+}

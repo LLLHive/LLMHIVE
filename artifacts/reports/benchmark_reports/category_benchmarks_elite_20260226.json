@@ -1,0 +1,246 @@
+{
+  "tier": "elite",
+  "results": [
+    {
+      "category": "General Reasoning (MMLU)",
+      "dataset": "lighteval/mmlu",
+      "sample_size": 100,
+      "correct": 66,
+      "incorrect": 34,
+      "errors": 0,
+      "accuracy": 66.0,
+      "accuracy_before_rerun": 66.7,
+      "infra_failures_before_rerun": 1,
+      "infra_failures_after_rerun": 0,
+      "rerun_recovered": 1,
+      "avg_latency_ms": 5800,
+      "avg_cost": 0.00232,
+      "total_cost": 0.232,
+      "extra": {
+        "error_samples": [
+          "No valid answer from 2 calls"
+        ],
+        "subject_stats": {
+          "business_ethics": {
+            "correct": 3,
+            "total": 3
+          },
+          "miscellaneous": {
+            "correct": 12,
+            "total": 13
+          },
+          "professional_law": {
+            "correct": 1,
+            "total": 10
+          },
+          "professional_psychology": {
+            "correct": 4,
+            "total": 7
+          },
+          "moral_scenarios": {
+            "correct": 4,
+            "total": 5
+          },
+          "high_school_biology": {
+            "correct": 1,
+            "total": 3
+          },
+          "high_school_statistics": {
+            "correct": 1,
+            "total": 2
+          },
+          "high_school_psychology": {
+            "correct": 3,
+            "total": 4
+          },
+          "college_medicine": {
+            "correct": 3,
+            "total": 4
+          },
+          "elementary_mathematics": {
+            "correct": 2,
+            "total": 3
+          },
+          "human_sexuality": {
+            "correct": 1,
+            "total": 1
+          },
+          "philosophy": {
+            "correct": 2,
+            "total": 3
+          },
+          "high_school_world_history": {
+            "correct": 1,
+            "total": 2
+          },
+          "anatomy": {
+            "correct": 1,
+            "total": 1
+          },
+          "sociology": {
+            "correct": 3,
+            "total": 5
+          },
+          "nutrition": {
+            "correct": 1,
+            "total": 3
+          },
+          "logical_fallacies": {
+            "correct": 2,
+            "total": 2
+          },
+          "high_school_geography": {
+            "correct": 1,
+            "total": 2
+          },
+          "high_school_european_history": {
+            "correct": 1,
+            "total": 1
+          },
+          "professional_medicine": {
+            "correct": 1,
+            "total": 2
+          },
+          "high_school_macroeconomics": {
+            "correct": 1,
+            "total": 2
+          },
+          "moral_disputes": {
+            "correct": 2,
+            "total": 3
+          },
+          "world_religions": {
+            "correct": 2,
+            "total": 2
+          },
+          "professional_accounting": {
+            "correct": 1,
+            "total": 1
+          },
+          "high_school_us_history": {
+            "correct": 1,
+            "total": 2
+          },
+          "jurisprudence": {
+            "correct": 1,
+            "total": 1
+          },
+          "international_law": {
+            "correct": 1,
+            "total": 1
+          },
+          "conceptual_physics": {
+            "correct": 2,
+            "total": 2
+          },
+          "formal_logic": {
+            "correct": 1,
+            "total": 2
+          },
+          "marketing": {
+            "correct": 1,
+            "total": 1
+          },
+          "clinical_knowledge": {
+            "correct": 1,
+            "total": 1
+          },
+          "global_facts": {
+            "correct": 1,
+            "total": 1
+          },
+          "human_aging": {
+            "correct": 0,
+            "total": 1
+          },
+          "high_school_government_and_politics": {
+            "correct": 1,
+            "total": 1
+          },
+          "high_school_computer_science": {
+            "correct": 1,
+            "total": 1
+          },
+          "virology": {
+            "correct": 0,
+            "total": 1
+          },
+          "college_computer_science": {
+            "correct": 1,
+            "total": 1
+          }
+        }
+      },
+      "exec_integrity": {
+        "attempted": 128,
+        "errors": 8,
+        "infra_failures": 0,
+        "retries": 3,
+        "fallback_used": 3
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Coding (HumanEval)",
+      "dataset": "openai/human_eval",
+      "sample_size": 50,
+      "correct": 44,
+      "incorrect": 5,
+      "errors": 1,
+      "accuracy": 89.8,
+      "avg_latency_ms": 60349,
+      "avg_cost": 0.000416,
+      "total_cost": 0.0204,
+      "extra": {
+        "error_samples": [],
+        "failed_ids": [],
+        "pipeline_metrics": {
+          "signature_mismatch": 0,
+          "runtime_error": 0,
+          "logic_mismatch": 0,
+          "extraction": 0
+        }
+      },
+      "exec_integrity": {
+        "attempted": 105,
+        "errors": 6,
+        "infra_failures": 0,
+        "retries": 0,
+        "fallback_used": 0
+      },
+      "infra_failures": 0
+    },
+    {
+      "category": "Math (GSM8K)",
+      "dataset": "openai/gsm8k",
+      "sample_size": 100,
+      "correct": 92,
+      "incorrect": 6,
+      "errors": 2,
+      "accuracy": 93.9,
+      "accuracy_before_rerun": 93.9,
+      "infra_failures_before_rerun": 2,
+      "infra_failures_after_rerun": 2,
+      "rerun_recovered": 0,
+      "avg_latency_ms": 27649,
+      "avg_cost": 0.0,
+      "total_cost": 0.0,
+      "extra": {
+        "error_samples": [
+          "No valid answer from generate-then-verify",
+          "No valid answer from generate-then-verify"
+        ]
+      },
+      "exec_integrity": {
+        "attempted": 562,
+        "errors": 18,
+        "infra_failures": 0,
+        "retries": 21,
+        "fallback_used": 21
+      },
+      "infra_failures": 0
+    }
+  ],
+  "timestamp": "2026-02-26T18:33:59.664026",
+  "invariants_verified": true
+}

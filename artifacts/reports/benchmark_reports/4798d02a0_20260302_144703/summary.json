@@ -1,0 +1,87 @@
+{
+  "failure_by_category": {
+    "HumanEval": 0,
+    "RAG": 149,
+    "GSM8K": 1,
+    "MMMLU": 19,
+    "MMLU": 16
+  },
+  "failure_by_type": {
+    "null": 148,
+    "api_error": 1,
+    "logic": 1,
+    "MODEL_INCORRECT": 31,
+    "INFRA_FAILURE": 1,
+    "PARSING_FAILURE": 2,
+    "extraction": 1
+  },
+  "failure_by_subject": {
+    "unknown": 150,
+    "virology": 2,
+    "security_studies": 3,
+    "machine_learning": 1,
+    "college_chemistry": 1,
+    "prehistory": 1,
+    "high_school_macroeconomics": 1,
+    "philosophy": 2,
+    "sociology": 2,
+    "management": 1,
+    "professional_law": 4,
+    "miscellaneous": 3,
+    "human_aging": 2,
+    "moral_scenarios": 4,
+    "moral_disputes": 1,
+    "nutrition": 1,
+    "professional_psychology": 2,
+    "marketing": 1,
+    "high_school_us_history": 1,
+    "high_school_computer_science": 1,
+    "college_medicine": 1
+  },
+  "extraction_failures": 3,
+  "verify_failures": 0,
+  "low_confidence_cases": 0,
+  "pred_none_cases": 250,
+  "top_hardest_subjects": [
+    {
+      "subject": "unknown",
+      "failures": 150
+    },
+    {
+      "subject": "professional_law",
+      "failures": 4
+    },
+    {
+      "subject": "moral_scenarios",
+      "failures": 4
+    },
+    {
+      "subject": "security_studies",
+      "failures": 3
+    },
+    {
+      "subject": "miscellaneous",
+      "failures": 3
+    },
+    {
+      "subject": "virology",
+      "failures": 2
+    },
+    {
+      "subject": "philosophy",
+      "failures": 2
+    },
+    {
+      "subject": "sociology",
+      "failures": 2
+    },
+    {
+      "subject": "human_aging",
+      "failures": 2
+    },
+    {
+      "subject": "professional_psychology",
+      "failures": 2
+    }
+  ]
+}

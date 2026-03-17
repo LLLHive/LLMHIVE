@@ -1,0 +1,73 @@
+{
+  "timestamp": "2026-02-08T02:01:52.856416",
+  "tier": "elite",
+  "reasoning_mode": "deep",
+  "config": {
+    "num_runs": 1,
+    "base_seed": 42,
+    "sample_sizes": {
+      "mmlu": 10,
+      "gsm8k": 10,
+      "humaneval": 5,
+      "msmarco": 10,
+      "toolbench": 10
+    },
+    "temperature": null,
+    "top_p": null,
+    "strict_mode": false,
+    "msmarco_eval_cmd_set": false
+  },
+  "results": {
+    "general_reasoning": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [],
+      "total_cost": 0,
+      "avg_cost": 0.0
+    },
+    "math": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [],
+      "total_cost": 0,
+      "avg_cost": 0.0
+    },
+    "coding": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [],
+      "total_cost": 0,
+      "avg_cost": 0.0
+    },
+    "rag": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [],
+      "total_cost": 0,
+      "avg_cost": 0.0
+    },
+    "tool_use": {
+      "avg_accuracy": 0.0,
+      "std_accuracy": 0.0,
+      "runs": [
+        {
+          "category": "Tool Use",
+          "dataset": "ToolBench (OpenBMB) - ERROR",
+          "sample_size": 0,
+          "correct": 0,
+          "attempted": 0,
+          "errors": 1,
+          "accuracy": 0.0,
+          "avg_latency_ms": 0,
+          "avg_cost": 0.0,
+          "total_cost": 0.0,
+          "extra": {
+            "error": "ToolEval failed: [Errno 2] No such file or directory: '...'"
+          }
+        }
+      ],
+      "total_cost": 0.0,
+      "avg_cost": 0.0
+    }
+  }
+}

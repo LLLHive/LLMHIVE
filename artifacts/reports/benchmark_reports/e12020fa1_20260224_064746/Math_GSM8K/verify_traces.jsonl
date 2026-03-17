@@ -1,0 +1,1 @@
+{"question_id": "gsm8k_50", "timestamp": "2026-02-24T06:52:03.684017", "candidates": [{"answer": "33", "score": 0.0}], "verify_scores": [0.0], "selected_answer": "33.0", "majority_vote": "33", "circuit_breaker_active": false, "verify_latencies_ms": [0]}
