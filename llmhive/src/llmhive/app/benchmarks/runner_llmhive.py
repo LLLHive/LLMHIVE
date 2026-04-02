@@ -58,6 +58,11 @@ class LLMHiveRunner(RunnerBase):
             "LLMHIVE_BENCHMARK_URL",
             "http://localhost:8000"
         )
+        self.api_key = (
+            os.getenv("LLMHIVE_API_KEY")
+            or os.getenv("API_KEY")
+            or ""
+        )
         self._version = get_git_commit_hash() or "dev"
         
         # Lazy-load local mode dependencies
@@ -262,6 +267,16 @@ class LLMHiveRunner(RunnerBase):
         config: RunConfig,
     ) -> RunResult:
         """Run case in HTTP mode (API call)."""
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        elif "localhost" not in self.base_url and "127.0.0.1" not in self.base_url:
+            logger.warning(
+                "LLMHive HTTP benchmark runner is calling %s without an API key. "
+                "Set LLMHIVE_API_KEY or API_KEY to avoid 401 Unauthorized errors.",
+                self.base_url,
+            )
+
         payload = {
             "prompt": case.prompt,
             "reasoning_mode": config.reasoning_mode,
@@ -294,7 +309,7 @@ class LLMHiveRunner(RunnerBase):
             response = await client.post(
                 f"{self.base_url}/v1/chat",
                 json=payload,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
             response.raise_for_status()
             data = response.json()

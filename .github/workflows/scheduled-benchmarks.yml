@@ -101,6 +101,18 @@ jobs:
             echo "BENCHMARK_MODE=local" >> $GITHUB_ENV
             echo "Using local mode (direct Python invocation)"
           fi
+
+      - name: Configure benchmark API key
+        if: steps.mode.outputs.target == 'production'
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          if [ -n "${API_KEY:-}" ]; then
+            echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
+            echo "✅ Configured production benchmark API key from GitHub secret"
+          else
+            echo "::warning::API_KEY secret is not configured. Production HTTP benchmarks may fail with 401 Unauthorized."
+          fi
       
       - name: Run Critical Benchmarks
         if: steps.mode.outputs.mode == 'critical'
@@ -109,6 +121,10 @@ jobs:
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
             echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
+              echo "::error::Production HTTP benchmark mode requires LLMHIVE_API_KEY or API_KEY"
+              exit 1
+            fi
           fi
           python -m llmhive.app.benchmarks.cli \
             --systems llmhive \
@@ -123,6 +139,10 @@ jobs:
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
             echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
+              echo "::error::Production HTTP benchmark mode requires LLMHIVE_API_KEY or API_KEY"
+              exit 1
+            fi
           fi
           python -m llmhive.app.benchmarks.cli \
             --systems llmhive \
@@ -136,6 +156,10 @@ jobs:
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
             echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
+              echo "::error::Production HTTP benchmark mode requires LLMHIVE_API_KEY or API_KEY"
+              exit 1
+            fi
           fi
           python -m llmhive.app.benchmarks.cli \
             --suite benchmarks/suites/domain_specific_v1.yaml \
@@ -345,7 +369,7 @@ jobs:
           fi
 
       - name: Send Slack Notification
-        if: env.SLACK_WEBHOOK_URL != ''
+        if: steps.fetch-slack.outputs.has_webhook == 'true'
         run: |
           curl -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-type: application/json' \
