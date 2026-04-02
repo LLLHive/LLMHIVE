@@ -120,6 +120,7 @@ jobs:
         run: |
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "${API_KEY:-}" ]; then
+            echo "::add-mask::$API_KEY"
             echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
             echo "✅ Retrieved api-key from Secret Manager for production benchmark run"
           else
