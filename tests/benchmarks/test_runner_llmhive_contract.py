@@ -158,6 +158,41 @@ class TestLLMHiveRunnerContract:
         assert result.answer_text != ""
         assert isinstance(result.metadata, RunMetadata)
 
+    def test_prepare_benchmark_prompt_preserves_normal_prompts(self, runner, sample_case):
+        """Non-benchmark-special prompts should be unchanged."""
+        assert runner._prepare_benchmark_prompt(sample_case) == sample_case.prompt
+
+    def test_prepare_benchmark_prompt_requests_result_only_for_code_execution(self, runner):
+        """Execution-style coding benchmarks should ask for final output, not code."""
+        case = BenchmarkCase(
+            id="cdr_002",
+            category="code_reasoning",
+            prompt="Execute Python code to sort the list [64, 34, 25, 12, 22, 11, 90] in ascending order and return the sorted list.",
+            expected={"expected_contains": "[11, 12, 22, 25, 34, 64, 90]"},
+            requirements={},
+            scoring={"objective_weight": 1.0, "rubric_weight": 0.0},
+        )
+
+        prepared = runner._prepare_benchmark_prompt(case)
+
+        assert "Return only the final execution result in plain text." in prepared
+        assert "Do not return source code, code fences, or pseudocode" in prepared
+
+    def test_prepare_benchmark_prompt_requests_commas_for_large_factorials(self, runner):
+        """Large integer math benchmarks should request comma formatting."""
+        case = BenchmarkCase(
+            id="tbr_003",
+            category="tool_backed_reasoning",
+            prompt="What is 17^3 + sqrt(625) - 12!",
+            expected={"expected_regex": "-?478,?996,?662"},
+            requirements={},
+            scoring={"objective_weight": 1.0, "rubric_weight": 0.0},
+        )
+
+        prepared = runner._prepare_benchmark_prompt(case)
+
+        assert "Format the final integer answer with comma separators" in prepared
+
 
 class TestLLMHiveRunnerMetadataExtraction:
     """Test metadata extraction from orchestrator responses."""
