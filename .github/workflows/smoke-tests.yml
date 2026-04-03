@@ -35,6 +35,10 @@ jobs:
     name: Run Smoke Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: write
+      id-token: write
     
     # Only run if workflow_run succeeded (or if triggered manually/scheduled)
     if: |
@@ -67,7 +71,7 @@ jobs:
 
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           
@@ -232,6 +236,9 @@ jobs:
     name: Quality Benchmark Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
     
     # Only run if full smoke tests passed
     needs: [smoke-tests]
@@ -263,7 +270,7 @@ jobs:
 
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$API_KEY" ]; then

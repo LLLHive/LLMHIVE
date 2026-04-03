@@ -28,6 +28,8 @@ jobs:
     
     permissions:
       contents: write
+      id-token: write
+      issues: write
       pull-requests: write
     
     steps:
@@ -67,7 +69,7 @@ jobs:
       
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           

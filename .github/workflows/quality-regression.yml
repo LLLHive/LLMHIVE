@@ -89,6 +89,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: unit-quality-tests
+    permissions:
+      contents: read
+      id-token: write
     
     # Only run if:
     # - Manually triggered with run_live_audit=true, OR
@@ -123,7 +126,7 @@ jobs:
 
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           
@@ -232,6 +235,9 @@ jobs:
     name: Notify on Failure
     runs-on: ubuntu-latest
     needs: [unit-quality-tests, live-audit]
+    permissions:
+      contents: read
+      id-token: write
     if: |
       failure() && 
       github.event_name == 'schedule' &&
@@ -248,7 +254,7 @@ jobs:
         continue-on-error: true
 
       - name: Fetch Slack webhook from GCP Secret Manager
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$SLACK_URL" ]; then
