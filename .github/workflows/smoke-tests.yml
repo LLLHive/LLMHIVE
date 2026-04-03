@@ -67,7 +67,7 @@ jobs:
 
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           
@@ -263,7 +263,7 @@ jobs:
 
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$API_KEY" ]; then

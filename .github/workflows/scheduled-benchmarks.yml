@@ -22,6 +22,7 @@ on:
         default: 'critical'
         type: choice
         options:
+          - secrets_only
           - critical
           - full
           - domain
@@ -51,6 +52,10 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      issues: write
     
     outputs:
       passed: ${{ steps.run-benchmark.outputs.passed }}
@@ -101,6 +106,42 @@ jobs:
             echo "BENCHMARK_MODE=local" >> $GITHUB_ENV
             echo "Using local mode (direct Python invocation)"
           fi
+
+      - name: Authenticate to Google Cloud for benchmark secrets
+        id: gcp-auth-bench
+        if: steps.mode.outputs.target == 'production'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Fetch benchmark API key from GCP Secret Manager
+        if: steps.mode.outputs.target == 'production' && steps['gcp-auth-bench'].outcome == 'success'
+        run: |
+          API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "${API_KEY:-}" ]; then
+            echo "::add-mask::$API_KEY"
+            echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
+            echo "✅ Retrieved api-key from Secret Manager for production benchmark run"
+          else
+            echo "::warning::api-key not found in Secret Manager"
+          fi
+
+      - name: Verify production secret wiring only
+        if: steps.mode.outputs.mode == 'secrets_only'
+        run: |
+          echo "Running secrets-only verification in $BENCHMARK_MODE mode"
+          if [ "${{ steps.mode.outputs.target }}" == "production" ]; then
+            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
+              echo "::error::Secrets-only production verification requires LLMHIVE_API_KEY from Secret Manager"
+              exit 1
+            fi
+            echo "✅ Production benchmark API key was fetched successfully"
+          else
+            echo "✅ Local target selected; no production secret fetch required"
+          fi
+          echo "No benchmark suite executed in secrets_only mode."
       
       - name: Run Critical Benchmarks
         if: steps.mode.outputs.mode == 'critical'
@@ -109,6 +150,10 @@ jobs:
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
             echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
+              echo "::error::Production HTTP benchmark mode requires LLMHIVE_API_KEY or API_KEY"
+              exit 1
+            fi
           fi
           python -m llmhive.app.benchmarks.cli \
             --systems llmhive \
@@ -123,6 +168,10 @@ jobs:
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
             echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
+              echo "::error::Production HTTP benchmark mode requires LLMHIVE_API_KEY or API_KEY"
+              exit 1
+            fi
           fi
           python -m llmhive.app.benchmarks.cli \
             --systems llmhive \
@@ -136,6 +185,10 @@ jobs:
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
             echo "  Target URL: $LLMHIVE_BENCHMARK_URL"
+            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
+              echo "::error::Production HTTP benchmark mode requires LLMHIVE_API_KEY or API_KEY"
+              exit 1
+            fi
           fi
           python -m llmhive.app.benchmarks.cli \
             --suite benchmarks/suites/domain_specific_v1.yaml \
@@ -154,7 +207,7 @@ jobs:
         continue-on-error: true
 
       - name: Fetch API keys from GCP Secret Manager
-        if: inputs.enable_external && steps.gcp-auth.outcome == 'success'
+        if: inputs.enable_external && steps['gcp-auth'].outcome == 'success'
         run: |
           echo "Fetching API keys from GCP Secret Manager..."
           
@@ -321,6 +374,9 @@ jobs:
     needs: benchmark
     runs-on: ubuntu-latest
     if: needs.benchmark.outputs.passed == 'false'
+    permissions:
+      contents: read
+      id-token: write
     
     steps:
       # Authenticate to GCP for Secret Manager access
@@ -334,7 +390,7 @@ jobs:
 
       - name: Fetch Slack webhook from GCP Secret Manager
         id: fetch-slack
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$SLACK_URL" ]; then
@@ -345,7 +401,7 @@ jobs:
           fi
 
       - name: Send Slack Notification
-        if: env.SLACK_WEBHOOK_URL != ''
+        if: steps.fetch-slack.outputs.has_webhook == 'true'
         run: |
           curl -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-type: application/json' \
