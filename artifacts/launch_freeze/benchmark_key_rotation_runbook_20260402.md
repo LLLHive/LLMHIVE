@@ -100,4 +100,5 @@ The runtime rotation is now executable from this machine because Vercel access h
 
 Remaining blocker:
 - GitHub workflow verification is currently imperfect because several workflows authenticate to Google Cloud successfully but still skip their Secret Manager fetch step.
+- Root cause from branch verification: those jobs lacked `id-token: write`, so GitHub never injected OIDC token request variables for `google-github-actions/auth`.
 - Until that workflow gating issue is fixed, use direct runtime checks plus explicit GitHub secret alignment as mitigation, and treat end-to-end WIF validation as still pending.

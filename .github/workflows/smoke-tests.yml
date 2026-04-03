@@ -35,6 +35,10 @@ jobs:
     name: Run Smoke Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: write
+      id-token: write
     
     # Only run if workflow_run succeeded (or if triggered manually/scheduled)
     if: |
@@ -232,6 +236,9 @@ jobs:
     name: Quality Benchmark Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
     
     # Only run if full smoke tests passed
     needs: [smoke-tests]

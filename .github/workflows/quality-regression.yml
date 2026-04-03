@@ -89,6 +89,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: unit-quality-tests
+    permissions:
+      contents: read
+      id-token: write
     
     # Only run if:
     # - Manually triggered with run_live_audit=true, OR
@@ -232,6 +235,9 @@ jobs:
     name: Notify on Failure
     runs-on: ubuntu-latest
     needs: [unit-quality-tests, live-audit]
+    permissions:
+      contents: read
+      id-token: write
     if: |
       failure() && 
       github.event_name == 'schedule' &&

@@ -100,6 +100,7 @@ Blocker:
 - A workflow-only condition fix has been prepared locally in `.github/workflows/smoke-tests.yml`, `.github/workflows/quality-regression.yml`, `.github/workflows/scheduled-benchmarks.yml`, and `.github/workflows/weekly-improvement.yml`, but GitHub cannot use that fix until it is committed and pushed.
 - `scheduled-benchmarks.yml` manual verification run `23927096244` failed with `401` because it never populated `LLMHIVE_API_KEY`; the benchmark secret-fetch step was skipped.
 - `smoke-tests.yml` manual verification run `23927210730` succeeded overall, but both jobs also skipped the Secret Manager fetch step even after successful GCP auth.
+- Root cause confirmed from live branch verification: the affected jobs were missing `id-token: write`, so `google-github-actions/auth` could not receive GitHub OIDC token variables and Secret Manager fetch steps were skipped afterward.
 - Detailed procedure: `artifacts/launch_freeze/benchmark_key_rotation_runbook_20260402.md`
 
 Safe rotation sequence:
