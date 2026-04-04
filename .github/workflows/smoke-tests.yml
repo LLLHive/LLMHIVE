@@ -67,7 +67,7 @@ jobs:
 
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           echo "Fetching secrets from GCP Secret Manager..."
           
@@ -103,13 +103,12 @@ jobs:
         id: smoke
         env:
           PRODUCTION_URL: ${{ steps.url.outputs.url }}
-          API_KEY: ${{ env.SMOKE_TEST_API_KEY }}
           SMOKE_TIMEOUT: '60'
         run: |
           echo "Running smoke tests against: $PRODUCTION_URL"
           pytest tests/smoke/ \
             --production-url="$PRODUCTION_URL" \
-            --api-key="${API_KEY:-}" \
+            --api-key="${SMOKE_TEST_API_KEY:-}" \
             --smoke-timeout=60 \
             -v \
             --tb=short \
@@ -129,6 +128,62 @@ jobs:
             smoke-test-results.xml
             smoke-test-output.txt
           retention-days: 30
+
+      - name: Capture Cloud Run latency diagnostics on failure
+        if: failure() && steps['gcp-auth'].outcome == 'success'
+        env:
+          PRODUCTION_URL: ${{ steps.url.outputs.url }}
+        run: |
+          mkdir -p artifacts/smoke_diagnostics
+          gcloud logging read \
+            "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"llmhive-orchestrator\" AND httpRequest.requestMethod=\"POST\" AND timestamp>=\"$(date -u -d '20 minutes ago' +%Y-%m-%dT%H:%M:%SZ)\"" \
+            --project=llmhive-orchestrator \
+            --limit=50 \
+            --format=json \
+            > artifacts/smoke_diagnostics/cloud_run_post_requests.json || true
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          src = Path("artifacts/smoke_diagnostics/cloud_run_post_requests.json")
+          out = Path("artifacts/smoke_diagnostics/cloud_run_post_summary.txt")
+          if not src.exists():
+              out.write_text("No Cloud Run request log dump was captured.\n")
+              raise SystemExit(0)
+          try:
+              rows = json.loads(src.read_text() or "[]")
+          except json.JSONDecodeError:
+              out.write_text("Cloud Run request log dump was not valid JSON.\n")
+              raise SystemExit(0)
+          post_rows = []
+          for row in rows:
+              req = row.get("httpRequest", {})
+              url = req.get("requestUrl", "")
+              if "/v1/chat" not in url:
+                  continue
+              latency = req.get("latency", "0s")
+              post_rows.append({
+                  "timestamp": row.get("timestamp", ""),
+                  "status": req.get("status", ""),
+                  "latency": latency,
+                  "url": url,
+              })
+          post_rows.sort(key=lambda x: x["timestamp"])
+          lines = ["Recent /v1/chat Cloud Run requests:"]
+          if not post_rows:
+              lines.append("No /v1/chat requests found in the sampled window.")
+          else:
+              for item in post_rows[-15:]:
+                  lines.append(f"{item['timestamp']} status={item['status']} latency={item['latency']} url={item['url']}")
+          out.write_text("\n".join(lines) + "\n")
+          PY
+
+      - name: Upload smoke diagnostics
+        uses: actions/upload-artifact@v4
+        if: failure() && steps['gcp-auth'].outcome == 'success'
+        with:
+          name: smoke-diagnostics
+          path: artifacts/smoke_diagnostics/
+          retention-days: 14
 
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -263,7 +318,7 @@ jobs:
 
       - name: Fetch secrets from GCP Secret Manager
         id: fetch-secrets
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$API_KEY" ]; then
@@ -284,12 +339,11 @@ jobs:
         id: quality
         env:
           PRODUCTION_URL: ${{ steps.url.outputs.url }}
-          API_KEY: ${{ env.QUALITY_TEST_API_KEY }}
         run: |
           echo "Running quality benchmarks against: $PRODUCTION_URL"
           pytest tests/smoke/test_quality_benchmark.py \
             --production-url="$PRODUCTION_URL" \
-            --api-key="${API_KEY:-}" \
+            --api-key="${QUALITY_TEST_API_KEY:-}" \
             --smoke-timeout=120 \
             -v \
             --tb=short \

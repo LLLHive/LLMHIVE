@@ -116,11 +116,12 @@ jobs:
         continue-on-error: true
 
       - name: Fetch benchmark API key from GCP Secret Manager
-        if: steps.mode.outputs.target == 'production' && steps.gcp-auth-bench.outcome == 'success'
+        if: steps.mode.outputs.target == 'production' && steps['gcp-auth-bench'].outcome == 'success'
         run: |
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "${API_KEY:-}" ]; then
             echo "::add-mask::$API_KEY"
+            echo "API_KEY=$API_KEY" >> $GITHUB_ENV
             echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
             echo "✅ Retrieved api-key from Secret Manager for production benchmark run"
           else
@@ -130,6 +131,9 @@ jobs:
       - name: Run Critical Benchmarks
         if: steps.mode.outputs.mode == 'critical'
         id: run-critical
+        env:
+          API_KEY: ${{ env.API_KEY }}
+          LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
@@ -148,6 +152,9 @@ jobs:
       - name: Run Full Benchmarks
         if: steps.mode.outputs.mode == 'full'
         id: run-full
+        env:
+          API_KEY: ${{ env.API_KEY }}
+          LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
@@ -165,6 +172,9 @@ jobs:
       - name: Run Domain Benchmarks
         if: steps.mode.outputs.mode == 'domain'
         id: run-domain
+        env:
+          API_KEY: ${{ env.API_KEY }}
+          LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
@@ -191,7 +201,7 @@ jobs:
         continue-on-error: true
 
       - name: Fetch API keys from GCP Secret Manager
-        if: inputs.enable_external && steps.gcp-auth.outcome == 'success'
+        if: inputs.enable_external && steps['gcp-auth'].outcome == 'success'
         run: |
           echo "Fetching API keys from GCP Secret Manager..."
           
@@ -374,7 +384,7 @@ jobs:
 
       - name: Fetch Slack webhook from GCP Secret Manager
         id: fetch-slack
-        if: steps.gcp-auth.outcome == 'success'
+        if: steps['gcp-auth'].outcome == 'success'
         run: |
           SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$SLACK_URL" ]; then
