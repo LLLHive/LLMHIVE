@@ -2,11 +2,6 @@ name: Purge env files and guard
 
 on:
   workflow_dispatch: {}                 # manual button, if visible
-  # Fallback trigger: commit .github/trigger/run-purge on main
-  push:
-    branches: [main]
-    paths:
-      - '.github/trigger/run-purge'
 
 permissions:
   contents: write                       # needed to push
@@ -17,7 +12,7 @@ concurrency:
 
 jobs:
   purge_history:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
