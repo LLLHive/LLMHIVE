@@ -22,7 +22,6 @@ on:
         default: 'critical'
         type: choice
         options:
-          - secrets_only
           - critical
           - full
           - domain
@@ -122,30 +121,19 @@ jobs:
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "${API_KEY:-}" ]; then
             echo "::add-mask::$API_KEY"
+            echo "API_KEY=$API_KEY" >> $GITHUB_ENV
             echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
             echo "✅ Retrieved api-key from Secret Manager for production benchmark run"
           else
             echo "::warning::api-key not found in Secret Manager"
           fi
-
-      - name: Verify production secret wiring only
-        if: steps.mode.outputs.mode == 'secrets_only'
-        run: |
-          echo "Running secrets-only verification in $BENCHMARK_MODE mode"
-          if [ "${{ steps.mode.outputs.target }}" == "production" ]; then
-            if [ -z "${LLMHIVE_API_KEY:-}" ]; then
-              echo "::error::Secrets-only production verification requires LLMHIVE_API_KEY from Secret Manager"
-              exit 1
-            fi
-            echo "✅ Production benchmark API key was fetched successfully"
-          else
-            echo "✅ Local target selected; no production secret fetch required"
-          fi
-          echo "No benchmark suite executed in secrets_only mode."
       
       - name: Run Critical Benchmarks
         if: steps.mode.outputs.mode == 'critical'
         id: run-critical
+        env:
+          API_KEY: ${{ env.API_KEY }}
+          LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
@@ -164,6 +152,9 @@ jobs:
       - name: Run Full Benchmarks
         if: steps.mode.outputs.mode == 'full'
         id: run-full
+        env:
+          API_KEY: ${{ env.API_KEY }}
+          LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
@@ -181,6 +172,9 @@ jobs:
       - name: Run Domain Benchmarks
         if: steps.mode.outputs.mode == 'domain'
         id: run-domain
+        env:
+          API_KEY: ${{ env.API_KEY }}
+          LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then

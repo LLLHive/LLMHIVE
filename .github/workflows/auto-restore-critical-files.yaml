@@ -8,6 +8,9 @@ on:
 jobs:
   restore-critical-files:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,11 +78,40 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit and push restored files
+      - name: Commit restored files to automation branch
+        id: restore-pr
         if: steps.check-changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="automation/restore-critical-files"
+          git checkout -B "$BRANCH"
           git commit -m "Auto-restore critical files deleted by V0/Vercel deployment" || echo "No changes to commit"
-          git push origin main || echo "Nothing to push or push failed"
+          git push --force-with-lease origin "$BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Open or update restore PR
+        if: steps.check-changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="fix: restore critical deployment files"
+          BODY="$(cat <<EOF
+          ## Summary
+          - Restore missing deployment-critical files detected on the protected launch branch.
+          - Changes were routed to an automation branch instead of direct mutation of \`main\`.
+          
+          ## Source
+          - Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - Branch: \`${{ steps.restore-pr.outputs.branch }}\`
+          EOF
+          )"
+          EXISTING_PR="$(gh pr list --head "${{ steps.restore-pr.outputs.branch }}" --base main --state open --json number --jq '.[0].number // ""')"
+          if [ -n "$EXISTING_PR" ]; then
+            gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
+          else
+            gh pr create --base main --head "${{ steps.restore-pr.outputs.branch }}" --title "$TITLE" --body "$BODY"
+          fi
 
       - name: Summary
         run: |
