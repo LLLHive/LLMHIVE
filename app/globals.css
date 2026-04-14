@@ -635,6 +635,12 @@
   }
 }
 
+/* touch-target uses a ::before hit slop; inside the composer it can overlap the
+   textarea and steal taps / confuse focus. Let events pass through to the input. */
+.chat-input-container .touch-target::before {
+  pointer-events: none;
+}
+
 @layer utilities {
   .touch-target {
     position: relative;
@@ -718,9 +724,9 @@ html, body {
   /* High-quality image rendering */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
-  /* Performance tweak: creates a new composite layer */
+  /* Promote layer without will-change — permanent will-change caused Safari/WebKit
+     repaints and “viewport zooming” artifacts when typing in inputs over the bg. */
   transform: translateZ(0);
-  will-change: transform;
 }
 
 /* Swap to desktop image at 768px and above */

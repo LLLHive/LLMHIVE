@@ -387,14 +387,14 @@ export function ChatInterface() {
   )
 
   return (
-    <div className="flex h-full w-full relative">
+    <div className="flex h-full min-h-0 w-full flex-1 flex-row relative">
       {/* Sign In Button - Desktop Top Right (fixed position) */}
       <div className="hidden md:block fixed top-3 right-3 z-50">
         <UserAccountMenu />
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block h-full">{sidebarContent}</div>
+      <div className="hidden md:block h-full shrink-0">{sidebarContent}</div>
 
       {/* Mobile Header with Hamburger - Glassmorphism */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] border-b border-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.25)] llmhive-glass-sidebar glass-header flex items-center justify-between px-3">
@@ -434,16 +434,18 @@ export function ChatInterface() {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent sm:hidden" />
       </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-x-hidden overflow-y-auto md:pt-0 pt-14">
+      {/* Main content: overflow-y-hidden avoids a second scroll root. Nested
+          scrollIntoView was scrolling this column (page “jumping up”) instead of
+          only the chat message list inside Radix ScrollArea. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-hidden md:pt-0 pt-14">
         {!currentConversationId && !initialQuery ? (
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="flex-1 h-full overflow-auto">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
             </div>
           </div>
         ) : (
-          <>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <ChatArea
               conversation={currentConv}
               onSendMessage={handleSendMessage}
@@ -459,7 +461,7 @@ export function ChatInterface() {
             {showArtifact && currentArtifact && (
               <ArtifactPanel artifact={currentArtifact} onClose={() => setShowArtifact(false)} />
             )}
-          </>
+          </div>
         )}
       </div>
 
