@@ -14,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, Set
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,12 +26,30 @@ if str(_src_path) not in sys.path:
 
 from llmhive.app.main import app
 from llmhive.app.models.orchestration import (
+    AgentMode,
+    ChatMetadata,
     ChatRequest,
     ChatResponse,
-    ReasoningMode,
     DomainPack,
-    AgentMode,
+    ReasoningMode,
+    TuningOptions,
 )
+
+# Patch where the name is bound (router), not where it is defined — otherwise the
+# real async orchestrator runs in CI without API keys → 502 ProviderError.
+_PATCH_CHAT_RUN = "llmhive.app.routers.chat.run_orchestration"
+
+# Stable key for tests regardless of developer/CI env (auth reads API_KEY per request).
+_CONTRACT_TEST_API_KEY = "llmhive-contract-pytest-key"
+
+
+@pytest.fixture(autouse=True)
+def _contract_tests_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("API_KEY", _CONTRACT_TEST_API_KEY)
+
+
+def _contract_headers() -> dict[str, str]:
+    return {"X-API-Key": _CONTRACT_TEST_API_KEY}
 
 
 # ============================================================
@@ -90,7 +108,7 @@ class TestRouteExistence:
         response = client.post(
             "/v1/chat",
             json={"prompt": "test"},
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         # Should not be 404
         assert response.status_code != 404, "Chat endpoint not found"
@@ -105,7 +123,7 @@ class TestRouteExistence:
         response = client.post(
             "/v1/execute/python",
             json={"code": "print(1)", "language": "python", "session_token": "test"},
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         assert response.status_code != 404, "Execute endpoint not found"
     
@@ -131,35 +149,30 @@ class TestChatContractSchema:
     
     def test_chat_request_accepts_all_fields(self, client, valid_chat_request):
         """Chat endpoint accepts all documented fields."""
-        with patch("llmhive.app.services.orchestrator_adapter.run_orchestration") as mock:
-            mock.return_value = MagicMock(
-                message="Test response",
-                models_used=["gpt-4o"],
-                reasoning_mode=ReasoningMode.standard,
-                domain_pack=DomainPack.default,
-                agent_mode=AgentMode.team,
-                used_tuning=MagicMock(
-                    prompt_optimization=True,
-                    output_validation=True,
-                    answer_structure=True,
-                    learn_from_chat=True,
-                ),
-                metadata=MagicMock(
-                    chat_id="test",
-                    user_id=None,
-                    project_id=None,
-                    criteria=None,
-                ),
-                tokens_used=100,
-                latency_ms=500,
-                agent_traces=[],
-                extra={},
-            )
-            
+        fake = ChatResponse(
+            message="Test response",
+            models_used=["gpt-4o"],
+            reasoning_mode=ReasoningMode.standard,
+            reasoning_method=None,
+            domain_pack=DomainPack.default,
+            agent_mode=AgentMode.team,
+            used_tuning=TuningOptions(
+                prompt_optimization=True,
+                output_validation=True,
+                answer_structure=True,
+                learn_from_chat=True,
+            ),
+            metadata=ChatMetadata(chat_id="test"),
+            tokens_used=100,
+            latency_ms=500,
+            agent_traces=[],
+            extra={},
+        )
+        with patch(_PATCH_CHAT_RUN, new_callable=AsyncMock, return_value=fake):
             response = client.post(
                 "/v1/chat",
                 json=valid_chat_request,
-                headers={"X-API-Key": "test-key"},
+                headers=_contract_headers(),
             )
             
             # Should succeed (not validation error)
@@ -167,62 +180,30 @@ class TestChatContractSchema:
     
     def test_chat_response_has_required_fields(self, client, valid_chat_request):
         """Chat response contains all required fields."""
-        with patch("llmhive.app.services.orchestrator_adapter.run_orchestration") as mock:
-            mock.return_value = MagicMock(
-                message="Test response",
-                models_used=["gpt-4o"],
-                reasoning_mode=ReasoningMode.standard,
-                reasoning_method=None,
-                domain_pack=DomainPack.default,
-                agent_mode=AgentMode.team,
-                used_tuning=MagicMock(
-                    prompt_optimization=True,
-                    output_validation=True,
-                    answer_structure=True,
-                    learn_from_chat=True,
-                    model_dump=lambda: {
-                        "prompt_optimization": True,
-                        "output_validation": True,
-                        "answer_structure": True,
-                        "learn_from_chat": True,
-                    }
-                ),
-                metadata=MagicMock(
-                    chat_id="test",
-                    user_id=None,
-                    project_id=None,
-                    criteria=None,
-                    model_dump=lambda: {"chat_id": "test"},
-                ),
-                tokens_used=100,
-                latency_ms=500,
-                agent_traces=[],
-                extra={},
-                model_dump=lambda: {
-                    "message": "Test response",
-                    "models_used": ["gpt-4o"],
-                    "reasoning_mode": "standard",
-                    "reasoning_method": None,
-                    "domain_pack": "default",
-                    "agent_mode": "team",
-                    "used_tuning": {
-                        "prompt_optimization": True,
-                        "output_validation": True,
-                        "answer_structure": True,
-                        "learn_from_chat": True,
-                    },
-                    "metadata": {"chat_id": "test"},
-                    "tokens_used": 100,
-                    "latency_ms": 500,
-                    "agent_traces": [],
-                    "extra": {},
-                },
-            )
-            
+        fake = ChatResponse(
+            message="Test response",
+            models_used=["gpt-4o"],
+            reasoning_mode=ReasoningMode.standard,
+            reasoning_method=None,
+            domain_pack=DomainPack.default,
+            agent_mode=AgentMode.team,
+            used_tuning=TuningOptions(
+                prompt_optimization=True,
+                output_validation=True,
+                answer_structure=True,
+                learn_from_chat=True,
+            ),
+            metadata=ChatMetadata(chat_id="test"),
+            tokens_used=100,
+            latency_ms=500,
+            agent_traces=[],
+            extra={},
+        )
+        with patch(_PATCH_CHAT_RUN, new_callable=AsyncMock, return_value=fake):
             response = client.post(
                 "/v1/chat",
                 json=valid_chat_request,
-                headers={"X-API-Key": "test-key"},
+                headers=_contract_headers(),
             )
             
             if response.status_code == 200:
@@ -236,7 +217,7 @@ class TestChatContractSchema:
         response = client.post(
             "/v1/chat",
             json={"prompt": "test", "reasoning_mode": "invalid_mode"},
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         assert response.status_code == 422, "Should reject invalid reasoning_mode"
 
@@ -274,7 +255,7 @@ class TestExecuteContractSchema:
         response = client.post(
             "/v1/execute/python",
             json={"language": "python", "session_token": "test"},
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         assert response.status_code == 422, "Should require 'code' field"
     
@@ -283,7 +264,7 @@ class TestExecuteContractSchema:
         response = client.post(
             "/v1/execute/python",
             json={"code": "print(1)", "language": "python"},
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         assert response.status_code == 422, "Should require 'session_token' field"
     
@@ -292,7 +273,7 @@ class TestExecuteContractSchema:
         response = client.post(
             "/v1/execute/python",
             json={"code": "print(1)", "language": "python", "session_token": "test"},
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         
         # Even on error, should have standard response structure
@@ -341,7 +322,7 @@ class TestErrorResponseContract:
         response = client.post(
             "/v1/chat",
             json={},  # Missing required 'prompt' field
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         assert response.status_code == 422
         
@@ -358,7 +339,7 @@ class TestErrorResponseContract:
         response = client.post(
             "/v1/chat",
             json={},
-            headers={"X-API-Key": "test-key"},
+            headers=_contract_headers(),
         )
         
         # Check for correlation ID in response headers
@@ -377,11 +358,25 @@ class TestAPIVersionContract:
     
     def test_chat_supports_v1_prefix(self, client, valid_chat_request):
         """Chat endpoint supports /v1 prefix."""
-        with patch("llmhive.app.services.orchestrator_adapter.run_orchestration"):
+        fake = ChatResponse(
+            message="ok",
+            models_used=["gpt-4o"],
+            reasoning_mode=ReasoningMode.standard,
+            reasoning_method=None,
+            domain_pack=DomainPack.default,
+            agent_mode=AgentMode.team,
+            used_tuning=TuningOptions(),
+            metadata=ChatMetadata(chat_id="test"),
+            tokens_used=1,
+            latency_ms=1,
+            agent_traces=[],
+            extra={},
+        )
+        with patch(_PATCH_CHAT_RUN, new_callable=AsyncMock, return_value=fake):
             response = client.post(
                 "/v1/chat",
                 json=valid_chat_request,
-                headers={"X-API-Key": "test-key"},
+                headers=_contract_headers(),
             )
             assert response.status_code != 404, "/v1/chat should exist"
     

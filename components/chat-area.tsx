@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -131,7 +131,53 @@ export function ChatArea({
   const eventIdRef = useRef(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  
+
+  /** Radix ScrollArea scrolls its inner viewport — never use scrollIntoView here
+   *  or the browser may scroll an ancestor (previously the main column), which
+   *  felt like the whole page jumping up on send / chat switch. */
+  const getScrollViewport = useCallback((): HTMLElement | null => {
+    const root = scrollAreaRef.current
+    if (!root) return null
+    return root.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null
+  }, [])
+
+  const scrollMessagesToEnd = useCallback(
+    (behavior: ScrollBehavior = "smooth") => {
+      const viewport = getScrollViewport()
+      if (!viewport) return
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
+        behavior,
+      })
+    },
+    [getScrollViewport]
+  )
+
+  // Track scroll position on the Radix viewport (scroll events do not bubble to Root).
+  useEffect(() => {
+    let detach: (() => void) | undefined
+
+    const id = window.setTimeout(() => {
+      const viewport = getScrollViewport()
+      if (!viewport) return
+
+      const onScroll = () => {
+        const isNearBottom =
+          viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 100
+        setUserHasScrolled(!isNearBottom)
+      }
+
+      viewport.addEventListener("scroll", onScroll, { passive: true })
+      onScroll()
+      detach = () => viewport.removeEventListener("scroll", onScroll)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(id)
+      detach?.()
+    }
+  }, [conversation?.id, getScrollViewport])
+
   // Check for speech recognition support
   useEffect(() => {
     setSpeechSupported(voiceRecognition.supported)
@@ -160,42 +206,33 @@ export function ChatArea({
   // Auto-scroll to bottom when new messages arrive (unless user has scrolled up)
   useEffect(() => {
     if (conversation?.messages?.length && !userHasScrolled) {
-      // Use setTimeout to ensure DOM has updated before scrolling
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-      }, 100)
+      const id = window.setTimeout(() => scrollMessagesToEnd("smooth"), 100)
+      return () => window.clearTimeout(id)
     }
-  }, [conversation?.messages?.length, userHasScrolled])
-  
+  }, [conversation?.messages?.length, userHasScrolled, scrollMessagesToEnd])
+
   // Also scroll when clarification state changes (ensures clarification questions are visible)
   useEffect(() => {
     if (pendingClarification && !userHasScrolled) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-      }, 150)
+      const id = window.setTimeout(() => scrollMessagesToEnd("smooth"), 150)
+      return () => window.clearTimeout(id)
     }
-  }, [pendingClarification, userHasScrolled])
-  
+  }, [pendingClarification, userHasScrolled, scrollMessagesToEnd])
+
   // Scroll when loading starts (ensures user can see their message + loading indicator)
   useEffect(() => {
     if (isLoading && !userHasScrolled) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-      }, 50)
+      const id = window.setTimeout(() => scrollMessagesToEnd("smooth"), 50)
+      return () => window.clearTimeout(id)
     }
-  }, [isLoading, userHasScrolled])
-  
-  // Reset user scroll state when conversation changes
-  useEffect(() => {
+  }, [isLoading, userHasScrolled, scrollMessagesToEnd])
+
+  // Reset scroll tracking and pin to bottom when switching chats (saved chat / new chat).
+  useLayoutEffect(() => {
     setUserHasScrolled(false)
-  }, [conversation?.id])
-  
-  // Handle user scroll - detect if they've scrolled away from bottom
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement
-    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100
-    setUserHasScrolled(!isNearBottom)
-  }, [])
+    scrollMessagesToEnd("instant")
+    requestAnimationFrame(() => scrollMessagesToEnd("instant"))
+  }, [conversation?.id, scrollMessagesToEnd])
   
   // Enhanced voice recording with audio level visualization
   const toggleVoiceRecording = useCallback(() => {
@@ -566,10 +603,8 @@ export function ChatArea({
     setIsLoading(true)
     setLoadingStartTime(Date.now())
     
-    // Ensure scroll to show user message + loading indicator immediately
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, 100)
+    // Scroll only the message list viewport (not any page-level scroll parent)
+    setTimeout(() => scrollMessagesToEnd("smooth"), 100)
 
     // Start orchestration status
     const startTime = Date.now()
@@ -739,7 +774,7 @@ export function ChatArea({
                                error.message?.toLowerCase().includes('plan') ||
                                error.message?.toLowerCase().includes('upgrade')
           if (isLimitError) {
-            errorContent = `You've reached your plan limit. [Upgrade to Pro](/pricing) for unlimited access.`
+            errorContent = `You've reached your plan limit. [View pricing options](/pricing) to continue with the current launch plans.`
             errorDetail = `Plan limit reached`
             toast.error("Plan limit reached. Consider upgrading!")
           } else {
@@ -900,7 +935,7 @@ export function ChatArea({
   const displayMessages = conversation?.messages || []
 
   return (
-    <div className="flex-1 flex flex-col relative min-h-0">
+    <div className="flex h-full min-h-0 flex-1 flex-col relative">
       {/* Hexagonal pattern background */}
       <div
         className="absolute inset-0 opacity-[0.02] pointer-events-none"
@@ -910,7 +945,7 @@ export function ChatArea({
         }}
       />
 
-      <header className="border-b border-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.25)] sm:shadow-none p-2 sm:p-3 glass-content glass-header sticky top-0 z-40 space-y-2 sm:space-y-3">
+      <header className="shrink-0 border-b border-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.25)] sm:shadow-none p-2 sm:p-3 glass-content glass-header z-40 space-y-2 sm:space-y-3">
         <div className="flex items-center gap-2 sm:gap-4 flex-wrap w-full">
           {/* Powered By LLMHive - Marketing showcase dropdown - FIRST */}
           <div className="shrink-0">
@@ -995,7 +1030,7 @@ export function ChatArea({
 
       {/* Live Status Panel - Shows during orchestration */}
       {(orchestrationStatus.isActive || orchestrationStatus.events.length > 0) && (
-        <div className="px-4 py-2 border-b border-white/10 glass-content">
+        <div className="shrink-0 px-4 py-2 border-b border-white/10 glass-content">
           <div className="max-w-4xl mx-auto">
             <LiveStatusPanel status={orchestrationStatus} />
           </div>
@@ -1004,7 +1039,7 @@ export function ChatArea({
 
       {/* Active Prompt Display - Shows the current/last prompt (persists after response) */}
       {activePrompt && (
-        <div className={`px-4 py-2 border-b border-white/10 glass-content transition-all duration-300 ${
+        <div className={`shrink-0 px-4 py-2 border-b border-white/10 glass-content transition-all duration-300 ${
           isLoading ? 'bg-[var(--bronze)]/5' : 'bg-transparent'
         }`}>
           <div className="max-w-4xl mx-auto">
@@ -1037,7 +1072,9 @@ export function ChatArea({
         </div>
       )}
 
-      <ScrollArea className="flex-1 relative z-10" ref={scrollAreaRef} onScroll={handleScroll}>
+      {/* h-0 + flex-1: flexbox idiom so this region gets a real height budget and scrolls
+          (otherwise flex-1 can shrink to content and the composer sits mid-viewport). */}
+      <ScrollArea className="h-0 min-h-0 flex-1 relative z-10" ref={scrollAreaRef}>
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
           {displayMessages.map((message, index) => {
             // Find the previous user message for context (for RLHF training)
@@ -1131,7 +1168,7 @@ export function ChatArea({
         />
       )}
 
-      <div className="border-t border-white/10 p-3 md:p-4 glass-content relative z-10 sticky bottom-0">
+      <div className="shrink-0 border-t border-white/10 p-3 md:p-4 glass-content relative z-10">
         <div className="max-w-4xl mx-auto">
           {attachments.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
@@ -1188,7 +1225,9 @@ export function ChatArea({
                 }}
                 placeholder={isListening ? "Listening... speak now" : "Ask the hive mind anything..."}
                 aria-label="Chat message input"
-                className={`min-h-[60px] md:min-h-[72px] max-h-[300px] pr-[140px] md:pr-36 pl-4 py-3 resize-none bg-transparent border-transparent focus:border-transparent focus:ring-0 text-sm md:text-base overflow-y-auto ${
+                /* 16px+ at all breakpoints: prevents iOS Safari auto-zoom on focus/typing.
+                   md:text-base overrides ui/textarea’s md:text-sm merge. */
+                className={`min-h-[60px] md:min-h-[72px] max-h-[300px] pr-[140px] md:pr-36 pl-4 py-3 resize-none bg-transparent border-transparent focus:border-transparent focus:ring-0 text-base md:text-base overflow-y-auto ${
                   isListening ? 'ring-1 ring-red-500/20' : ''
                 }`}
                 spellCheck={orchestratorSettings.enableSpellCheck ?? true}

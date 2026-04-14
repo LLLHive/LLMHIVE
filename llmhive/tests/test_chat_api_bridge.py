@@ -1,9 +1,56 @@
 """Tests for the chat API bridge to FastAPI backend."""
-from llmhive.app.main import app
+import pytest
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
 
+from llmhive.app.main import app
+from llmhive.app.models.orchestration import (
+    AgentMode,
+    ChatMetadata,
+    ChatResponse,
+    DomainPack,
+    ReasoningMode,
+    TuningOptions,
+)
 
 client = TestClient(app)
+
+_PATCH_CHAT_RUN = "llmhive.app.routers.chat.run_orchestration"
+
+# Fixed key so tests pass whether or not the developer machine has API_KEY in the environment.
+_CHAT_TEST_KEY = "llmhive-pytest-chat-bridge-key"
+
+
+@pytest.fixture(autouse=True)
+def _chat_bridge_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("API_KEY", _CHAT_TEST_KEY)
+
+
+def _chat_headers() -> dict[str, str]:
+    return {"X-API-Key": _CHAT_TEST_KEY}
+
+
+def _ci_chat_response(
+    *,
+    reasoning_mode: ReasoningMode = ReasoningMode.standard,
+    agent_mode: AgentMode = AgentMode.single,
+) -> ChatResponse:
+    """Deterministic response so CI does not call real LLM providers (no API keys)."""
+    return ChatResponse(
+        message="Synthetic smoke-test response.",
+        models_used=["gpt-4o-mini"],
+        reasoning_mode=reasoning_mode,
+        reasoning_method=None,
+        domain_pack=DomainPack.default,
+        agent_mode=agent_mode,
+        used_tuning=TuningOptions(),
+        metadata=ChatMetadata(chat_id="ci-smoke"),
+        tokens_used=1,
+        latency_ms=1,
+        agent_traces=[],
+        extra={},
+    )
 
 
 def test_chat_endpoint_integration():
@@ -29,7 +76,9 @@ def test_chat_endpoint_integration():
         "metadata": {},
         "history": [],
     }
-    response = client.post("/v1/chat", json=payload)
+    with patch(_PATCH_CHAT_RUN, new_callable=AsyncMock) as mock_run:
+        mock_run.return_value = _ci_chat_response()
+        response = client.post("/v1/chat", json=payload, headers=_chat_headers())
     assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
     
     data = response.json()
@@ -69,7 +118,11 @@ def test_chat_endpoint_with_models():
         "metadata": {},
         "history": [],
     }
-    response = client.post("/v1/chat", json=payload)
+    with patch(_PATCH_CHAT_RUN, new_callable=AsyncMock) as mock_run:
+        mock_run.return_value = _ci_chat_response(
+            reasoning_mode=ReasoningMode.fast,
+        )
+        response = client.post("/v1/chat", json=payload, headers=_chat_headers())
     assert response.status_code == 200
     
     data = response.json()
@@ -84,7 +137,7 @@ def test_chat_endpoint_missing_prompt():
         "domain_pack": "default",
         "agent_mode": "single",
     }
-    response = client.post("/v1/chat", json=payload)
+    response = client.post("/v1/chat", json=payload, headers=_chat_headers())
     # Should return 422 Unprocessable Entity for missing required field
     assert response.status_code == 422
 

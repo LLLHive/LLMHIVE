@@ -22,7 +22,7 @@ export function HiveActivityIndicator({ active, agentCount = 6 }: HiveActivityIn
   if (!active) return null
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-[var(--bronze)]/5 border-b border-[var(--bronze)]/10">
+    <div className="flex shrink-0 items-center gap-2 px-4 py-2 bg-[var(--bronze)]/5 border-b border-[var(--bronze)]/10">
       <div className="flex items-center gap-1">
         {Array.from({ length: agentCount }).map((_, i) => (
           <div

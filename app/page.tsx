@@ -23,9 +23,11 @@ function ChatInterfaceLoading() {
 
 export default function Home() {
   return (
-    <main className="h-screen w-full overflow-hidden">
+    <main className="flex h-screen min-h-0 w-full flex-col overflow-hidden">
       <Suspense fallback={<ChatInterfaceLoading />}>
-        <ChatInterface />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <ChatInterface />
+        </div>
       </Suspense>
       {/* Onboarding modal for first-time users */}
       <OnboardingWrapper />
