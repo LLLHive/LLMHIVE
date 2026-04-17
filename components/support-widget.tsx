@@ -21,17 +21,21 @@ interface SupportWidgetProps {
   userName?: string
 }
 
+/** Bottom-left inset: keeps the FAB and panel inside safe areas (notch / home indicator). */
+const supportInsetClass =
+  "left-[max(1rem,calc(env(safe-area-inset-left,0px)+0.75rem))] bottom-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))]"
+
 export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [view, setView] = useState<"menu" | "form" | "success">("menu")
+  const [loading, setLoading] = useState(false)
+  const [ticketId, setTicketId] = useState<string | null>(null)
 
   // Avoid overlapping auth pages / mobile safe-area; Clerk sign-in is bottom-heavy on small screens
   if (pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up")) {
     return null
   }
-  const [view, setView] = useState<"menu" | "form" | "success">("menu")
-  const [loading, setLoading] = useState(false)
-  const [ticketId, setTicketId] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -80,7 +84,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed z-50 bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target bottom-[max(1.75rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))] right-[max(1.75rem,calc(env(safe-area-inset-right,0px)+1.25rem))]"
+        className={`fixed z-[100] bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target ${supportInsetClass}`}
         aria-label="Open support"
       >
         <MessageCircle className="h-6 w-6" />
@@ -89,7 +93,9 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
   }
 
   return (
-    <div className="fixed z-50 w-[360px] max-h-[500px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col bottom-[max(1.75rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))] right-[max(1.75rem,calc(env(safe-area-inset-right,0px)+1.25rem))]">
+    <div
+      className={`fixed z-[100] w-[min(360px,calc(100vw-2rem))] max-h-[min(500px,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-5rem))] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col ${supportInsetClass}`}
+    >
       {/* Header */}
       <div className="bg-[var(--bronze)] text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
