@@ -2,6 +2,8 @@
 // This file is used to initialize Sentry on the server and edge runtimes
 // https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
 
+import { isLikelyValidPublicSentryDsn } from "./lib/sentry-dsn";
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     await import("./sentry.server.config");
@@ -31,9 +33,11 @@ export const onRequestError = async (
     renderType: "dynamic" | "dynamic-resume";
   }
 ) => {
-  // Import Sentry dynamically to capture the error
+  if (!isLikelyValidPublicSentryDsn(process.env.NEXT_PUBLIC_SENTRY_DSN)) {
+    return;
+  }
   const Sentry = await import("@sentry/nextjs");
-  
+
   Sentry.captureException(error, {
     extra: {
       request_path: request.path,

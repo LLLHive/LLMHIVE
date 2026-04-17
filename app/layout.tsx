@@ -102,6 +102,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  if (process.env.NODE_ENV === "development") {
+    const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ""
+    if (pk.startsWith("pk_live_")) {
+      const g = globalThis as { __llmhiveClerkPkWarn?: boolean }
+      if (!g.__llmhiveClerkPkWarn) {
+        g.__llmhiveClerkPkWarn = true
+        console.warn(
+          "[LLMHive] Clerk production keys (pk_live_) cannot be used on http://localhost. " +
+            "Copy pk_test_ and sk_test_ from Clerk Dashboard → Development → API Keys into .env.local, then restart `npm run dev`.",
+        )
+      }
+    }
+  }
+
   return (
     <ClerkProvider
       signUpForceRedirectUrl="/pricing"

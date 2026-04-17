@@ -82,6 +82,14 @@ export function ChatInterface() {
     const savedSettings = loadOrchestratorSettings()
     setOrchestratorSettings(savedSettings)
   }, [])
+
+  // Prevent the document from staying scrolled when switching chats (mobile Safari / focus quirks).
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [currentConversationId])
   
   // Handle URL query parameter (e.g., ?q=search+query)
   useEffect(() => {
@@ -387,7 +395,7 @@ export function ChatInterface() {
   )
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-1 flex-row relative">
+    <div className="flex h-full min-h-0 w-full flex-1 flex-row relative overflow-hidden overscroll-contain">
       {/* Sign In Button - Desktop Top Right (fixed position) */}
       <div className="hidden md:block fixed top-3 right-3 z-50">
         <UserAccountMenu />
@@ -437,7 +445,7 @@ export function ChatInterface() {
       {/* Main content: overflow-y-hidden avoids a second scroll root. Nested
           scrollIntoView was scrolling this column (page “jumping up”) instead of
           only the chat message list inside Radix ScrollArea. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-hidden md:pt-0 pt-14">
+      <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-hidden md:pt-0 pt-14">
         {!currentConversationId && !initialQuery ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -445,7 +453,7 @@ export function ChatInterface() {
             </div>
           </div>
         ) : (
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <ChatArea
               conversation={currentConv}
               onSendMessage={handleSendMessage}

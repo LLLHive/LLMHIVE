@@ -3,9 +3,12 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { isLikelyValidPublicSentryDsn } from "./lib/sentry-dsn";
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+if (!isLikelyValidPublicSentryDsn(dsn)) {
+} else Sentry.init({
+  dsn,
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,

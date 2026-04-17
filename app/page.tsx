@@ -6,7 +6,7 @@ import { OnboardingWrapper } from "@/components/onboarding-wrapper"
 // Loading skeleton for the chat interface
 function ChatInterfaceLoading() {
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-[100dvh] max-h-[100dvh] w-full overflow-hidden">
       <div className="w-64 h-full bg-card/50 animate-pulse" />
       <div className="flex-1 flex flex-col">
         <div className="h-16 bg-card/50 animate-pulse border-b" />
@@ -23,9 +23,9 @@ function ChatInterfaceLoading() {
 
 export default function Home() {
   return (
-    <main className="flex h-screen min-h-0 w-full flex-col overflow-hidden">
+    <main className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none">
       <Suspense fallback={<ChatInterfaceLoading />}>
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <ChatInterface />
         </div>
       </Suspense>

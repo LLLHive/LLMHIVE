@@ -1,5 +1,24 @@
 import { withSentryConfig } from "@sentry/nextjs";
 
+/** Avoid wrapping next.config when .env still has env.example placeholders */
+function sentryPublicDsnLooksValid(dsn) {
+  if (!dsn || typeof dsn !== "string") return false;
+  const s = dsn.trim();
+  if (s.length < 20) return false;
+  if (s.includes("@...") || s.includes("...ingest")) return false;
+  try {
+    const u = new URL(s);
+    const host = u.hostname.toLowerCase();
+    return (
+      host.includes("sentry.io") ||
+      host.includes("ingest.us") ||
+      host.includes("ingest.de")
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -44,9 +63,10 @@ const sentryWebpackPluginOptions = {
   automaticVercelMonitors: true,
 };
 
-// Only wrap with Sentry if DSN is available
-const config = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
-  : nextConfig;
+// Only wrap with Sentry if DSN is set and not a placeholder
+const config =
+  sentryPublicDsnLooksValid(process.env.NEXT_PUBLIC_SENTRY_DSN)
+    ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+    : nextConfig;
 
 export default config;

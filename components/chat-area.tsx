@@ -143,12 +143,19 @@ export function ChatArea({
 
   const scrollMessagesToEnd = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
-      const viewport = getScrollViewport()
-      if (!viewport) return
-      viewport.scrollTo({
-        top: viewport.scrollHeight,
-        behavior,
-      })
+      const run = () => {
+        const viewport = getScrollViewport()
+        if (!viewport) return
+        viewport.scrollTo({
+          top: viewport.scrollHeight,
+          behavior,
+        })
+      }
+      run()
+      requestAnimationFrame(run)
+      requestAnimationFrame(() => requestAnimationFrame(run))
+      window.setTimeout(run, 50)
+      window.setTimeout(run, 200)
     },
     [getScrollViewport]
   )
@@ -507,6 +514,10 @@ export function ChatArea({
   const handleSend = async (skipClarification: boolean = false) => {
     if (!input.trim() && attachments.length === 0) return
 
+    // After reading older messages, userHasScrolled stays true and blocks auto-scroll — reset on each send
+    // so the new reply and loading state stay in view.
+    setUserHasScrolled(false)
+
     // Check if clarification questions should be asked (always enabled - backend feature)
     if (!skipClarification && !pendingClarification) {
       const clarificationDecision = shouldAskClarification(input)
@@ -835,6 +846,8 @@ export function ChatArea({
   // Regenerate a response for a given message
   const handleRegenerate = useCallback(async (messageId: string, originalUserInput: string) => {
     if (isLoading || regeneratingMessageId) return
+
+    setUserHasScrolled(false)
     
     setRegeneratingMessageId(messageId)
     setIsLoading(true)
@@ -935,7 +948,7 @@ export function ChatArea({
   const displayMessages = conversation?.messages || []
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col relative">
+    <div className="flex h-full min-h-0 flex-1 flex-col relative overflow-hidden">
       {/* Hexagonal pattern background */}
       <div
         className="absolute inset-0 opacity-[0.02] pointer-events-none"
@@ -1072,9 +1085,9 @@ export function ChatArea({
         </div>
       )}
 
-      {/* h-0 + flex-1: flexbox idiom so this region gets a real height budget and scrolls
-          (otherwise flex-1 can shrink to content and the composer sits mid-viewport). */}
-      <ScrollArea className="h-0 min-h-0 flex-1 relative z-10" ref={scrollAreaRef}>
+      {/* Flex-1 wrapper + ScrollArea fills space between header and composer (mobile Safari). */}
+      <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <ScrollArea className="h-full min-h-0 flex-1 basis-0" ref={scrollAreaRef}>
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
           {displayMessages.map((message, index) => {
             // Find the previous user message for context (for RLHF training)
@@ -1157,7 +1170,8 @@ export function ChatArea({
           {/* Auto-scroll anchor */}
           <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
       {showInsights && selectedMessageForInsights?.agents && (
         <AgentInsightsPanel
@@ -1168,7 +1182,7 @@ export function ChatArea({
         />
       )}
 
-      <div className="shrink-0 border-t border-white/10 p-3 md:p-4 glass-content relative z-10">
+      <div className="shrink-0 border-t border-white/10 pt-3 px-3 md:pt-4 md:px-4 glass-content relative z-10 pb-[max(0.75rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))] md:pb-4">
         <div className="max-w-4xl mx-auto">
           {attachments.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">

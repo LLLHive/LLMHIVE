@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,7 +22,13 @@ interface SupportWidgetProps {
 }
 
 export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Avoid overlapping auth pages / mobile safe-area; Clerk sign-in is bottom-heavy on small screens
+  if (pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up")) {
+    return null
+  }
   const [view, setView] = useState<"menu" | "form" | "success">("menu")
   const [loading, setLoading] = useState(false)
   const [ticketId, setTicketId] = useState<string | null>(null)
@@ -73,7 +80,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target"
+        className="fixed z-50 bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target bottom-[max(1.75rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))] right-[max(1.75rem,calc(env(safe-area-inset-right,0px)+1.25rem))]"
         aria-label="Open support"
       >
         <MessageCircle className="h-6 w-6" />
@@ -82,7 +89,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[360px] max-h-[500px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col">
+    <div className="fixed z-50 w-[360px] max-h-[500px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col bottom-[max(1.75rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))] right-[max(1.75rem,calc(env(safe-area-inset-right,0px)+1.25rem))]">
       {/* Header */}
       <div className="bg-[var(--bronze)] text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">

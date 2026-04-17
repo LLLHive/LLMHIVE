@@ -315,7 +315,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   const currentTemplate = templates.find(t => t.id === activeDrawer)
 
   return (
-    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-20 overflow-y-auto relative">
+    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-[max(6rem,calc(env(safe-area-inset-bottom,0px)+5rem))] overflow-x-hidden relative">
       {/* Hero Section with 3D Logo */}
       <div className="text-center mb-6 llmhive-fade-in">
         <div className="relative w-52 h-52 md:w-[340px] md:h-[340px] lg:w-[378px] lg:h-[378px] mx-auto -mb-14 md:-mb-24 llmhive-float">
