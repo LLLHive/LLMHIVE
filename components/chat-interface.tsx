@@ -159,8 +159,13 @@ export function ChatInterface() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [showShortcutsModal, showRenameModal, showMoveModal, showArtifact])
 
-  // Get current conversation from context or by ID
-  const currentConv = currentConversation || conversations.find((c) => c.id === currentConversationId)
+  // Prefer lookup by `currentConversationId`. Context `currentConversation` alone would stay
+  // set after the last create/update and incorrectly override sidebar picks (stale thread).
+  const currentConv =
+    currentConversationId != null
+      ? conversations.find((c) => c.id === currentConversationId) ??
+        (currentConversation?.id === currentConversationId ? currentConversation : null)
+      : null
 
   const handleNewChat = async () => {
     const newConv: Conversation = {
@@ -214,9 +219,12 @@ export function ChatInterface() {
 
   const handleSelectConversation = (id: string) => {
     setCurrentConversationId(id)
-    setMobileSidebarOpen(false)
     const conv = conversations.find((c) => c.id === id)
-    const lastArtifact = conv?.messages.reverse().find((m) => m.artifact)?.artifact
+    setCurrentConversation(conv ?? null)
+    setMobileSidebarOpen(false)
+    const lastArtifact = [...(conv?.messages ?? [])]
+      .reverse()
+      .find((m) => m.artifact)?.artifact
     if (lastArtifact) {
       setCurrentArtifact(lastArtifact)
       setShowArtifact(true)
@@ -245,6 +253,7 @@ export function ChatInterface() {
     
     if (currentConversationId === id) {
       setCurrentConversationId(null)
+      setCurrentConversation(null)
       setShowArtifact(false)
       setCurrentArtifact(null)
     }
@@ -349,14 +358,17 @@ export function ChatInterface() {
   const handleSelectProject = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId)
     if (project && project.conversations.length > 0) {
-      // Select the first conversation in the project
-      setCurrentConversationId(project.conversations[0])
+      const firstId = project.conversations[0]
+      setCurrentConversationId(firstId)
+      const conv = conversations.find((c) => c.id === firstId)
+      setCurrentConversation(conv ?? null)
       toast.info(`Viewing project: ${project.name}`)
     }
   }
 
   const handleGoHome = () => {
     setCurrentConversationId(null)
+    setCurrentConversation(null)
     setShowArtifact(false)
     setCurrentArtifact(null)
     setMobileSidebarOpen(false)
