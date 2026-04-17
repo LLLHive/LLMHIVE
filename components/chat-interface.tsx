@@ -467,7 +467,7 @@ export function ChatInterface() {
         ) : (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <ChatArea
-              conversation={currentConv}
+              conversation={currentConv ?? undefined}
               onSendMessage={handleSendMessage}
               onShowArtifact={(artifact) => {
                 setCurrentArtifact(artifact)
