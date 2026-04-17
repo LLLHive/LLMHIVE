@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,16 +22,29 @@ interface SupportWidgetProps {
   userName?: string
 }
 
-/** Bottom-left inset: keeps the FAB and panel inside safe areas (notch / home indicator). */
-const supportInsetClass =
-  "left-[max(1rem,calc(env(safe-area-inset-left,0px)+0.75rem))] bottom-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))]"
+/**
+ * Anchor the FAB/panel so it sits on the page, not under the glass sidebar:
+ * - Mobile: corner insets + safe areas (fab clears home indicator).
+ * - md+: left edge lines up just past expanded sidebar (`w-60` = 15rem), so it sits in the
+ *   main column — visible above rounded sidebar chrome (also OK when sidebar is collapsed).
+ */
+const supportAnchorClass =
+  "fixed z-[200] pointer-events-auto " +
+  "left-[max(1rem,calc(env(safe-area-inset-left,0px)+0.75rem))] " +
+  "bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] " +
+  "md:left-[calc(15rem+1rem)] md:bottom-8 md:right-auto"
 
 export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
   const pathname = usePathname()
+  const [mounted, setMounted] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [view, setView] = useState<"menu" | "form" | "success">("menu")
   const [loading, setLoading] = useState(false)
   const [ticketId, setTicketId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Avoid overlapping auth pages / mobile safe-area; Clerk sign-in is bottom-heavy on small screens
   if (pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up")) {
@@ -80,21 +94,18 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
     setTicketId(null)
   }
 
-  if (!isOpen) {
-    return (
+  const fabButton = !isOpen ? (
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className={`fixed z-[100] bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target ${supportInsetClass}`}
+        className={`${supportAnchorClass} bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target`}
         aria-label="Open support"
       >
         <MessageCircle className="h-6 w-6" />
       </button>
-    )
-  }
-
-  return (
+  ) : (
     <div
-      className={`fixed z-[100] w-[min(360px,calc(100vw-2rem))] max-h-[min(500px,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-5rem))] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col ${supportInsetClass}`}
+      className={`${supportAnchorClass} w-[min(360px,calc(100vw-2rem))] max-h-[min(500px,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-5rem))] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col`}
     >
       {/* Header */}
       <div className="bg-[var(--bronze)] text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
@@ -256,4 +267,10 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
       </div>
     </div>
   )
+
+  if (!mounted || typeof document === "undefined") {
+    return null
+  }
+
+  return createPortal(fabButton, document.body)
 }
