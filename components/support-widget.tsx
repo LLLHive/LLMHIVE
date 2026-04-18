@@ -23,16 +23,13 @@ interface SupportWidgetProps {
 }
 
 /**
- * Anchor the FAB/panel so it sits on the page, not under the glass sidebar:
- * - Mobile: corner insets + safe areas (fab clears home indicator).
- * - md+: left edge lines up just past expanded sidebar (`w-60` = 15rem), so it sits in the
- *   main column — visible above rounded sidebar chrome (also OK when sidebar is collapsed).
+ * Bottom-right anchor (over the decorative star in `bg-desktop.png` / main column).
+ * Generous safe-area padding so the full circle stays inside the viewport (not clipped).
  */
 const supportAnchorClass =
-  "fixed z-[200] pointer-events-auto " +
-  "left-[max(1rem,calc(env(safe-area-inset-left,0px)+0.75rem))] " +
-  "bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] " +
-  "md:left-[calc(15rem+1rem)] md:bottom-8 md:right-auto"
+  "fixed z-[300] pointer-events-auto left-auto " +
+  "right-[max(1.25rem,calc(env(safe-area-inset-right,0px)+1rem))] " +
+  "bottom-[max(2rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))]"
 
 export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
   const pathname = usePathname()
