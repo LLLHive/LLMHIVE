@@ -339,16 +339,16 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         <LogoText height={84} className="relative z-10 -mt-1.5 mx-auto mb-0 hidden md:block lg:hidden" />
         <LogoText height={102} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
 
-        <p className="llmhive-subtitle-3d mx-auto mb-1 max-w-[min(100%,42rem)] whitespace-normal px-1 text-[11px] leading-snug sm:text-xs md:mb-1 md:text-sm md:leading-tight">
+        <p className="llmhive-subtitle-3d mx-auto mb-0 w-full max-w-[min(100%,calc(100vw-1.5rem))] whitespace-nowrap overflow-x-auto overflow-y-hidden px-2 text-center text-[clamp(0.65rem,2vw,0.9375rem)] leading-normal [-ms-overflow-style:none] [scrollbar-width:none] sm:text-sm md:text-base [&::-webkit-scrollbar]:hidden">
           Patented multi-agent orchestration for enhanced accuracy and performance.
         </p>
 
-        {/* #1 Benchmark Badge */}
-        <div className="mb-0 flex max-w-[min(100%,40rem)] items-center justify-center gap-2 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2.5 py-1.5 shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-3 sm:py-2">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-14 sm:w-14 md:h-[3.75rem] md:w-[3.75rem]">
-            <span className="text-base font-bold text-white sm:text-lg md:text-xl">#1</span>
+        {/* #1 Benchmark: shorter pill (~75% prior vertical padding); claim 2× type size; my = inset */}
+        <div className="my-3 flex w-full max-w-[min(100%,calc(100vw-1rem))] items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2 py-[0.2rem] shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-2.5 sm:py-1 md:gap-2.5 md:px-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-10 sm:w-10 md:h-11 md:w-11">
+            <span className="text-sm font-bold text-white sm:text-base md:text-lg">#1</span>
           </div>
-          <p className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[11px] font-semibold leading-tight text-transparent sm:text-xs md:text-sm">
+          <p className="min-w-0 flex-1 bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[22px] font-semibold leading-[1.1] text-transparent sm:text-[26px] md:text-[28px] lg:text-[30px]">
             {BENCHMARK_CLAIM_BANNER}
           </p>
         </div>
