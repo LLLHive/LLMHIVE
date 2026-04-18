@@ -370,7 +370,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
       </div>
 
       {/* Template Cards */}
-      <div className="llmhive-fade-in w-full max-w-3xl shrink-0 self-center pt-0" style={{ animationDelay: "0.1s" }}>
+      <div className="llmhive-fade-in mt-4 w-full max-w-3xl shrink-0 self-center sm:mt-5" style={{ animationDelay: "0.1s" }}>
         <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4 lg:gap-3">
           {templates.map((template, index) => {
             const Icon = template.icon
