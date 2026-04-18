@@ -357,8 +357,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </div>
       </div>
 
-      {/* Main CTA */}
-      <div className="flex shrink-0 justify-center px-1 pt-0">
+      {/* Main CTA — mt matches template row gap so space above ≈ space below */}
+      <div className="mt-4 flex shrink-0 justify-center px-1 sm:mt-5">
         <Button
           onClick={onNewChat}
           size="lg"
