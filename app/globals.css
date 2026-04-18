@@ -627,11 +627,13 @@
   }
 }
 
-/* Safe-area support for iPhone notches/home indicators */
+/* Safe-area for the composer is handled by .glass-content (px-* / max-w). Do not add
+   extra horizontal padding here — it breaks the 1px gradient ring: sides looked inset
+   vs top/bottom. */
 @supports (padding: max(0px)) {
   .chat-input-container {
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(1px, env(safe-area-inset-left, 0px));
+    padding-right: max(1px, env(safe-area-inset-right, 0px));
   }
 }
 
