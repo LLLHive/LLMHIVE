@@ -54,7 +54,7 @@ interface QuotaUsage {
 }
 
 const ORCHESTRATION_MODE_LABELS = {
-  elite: { label: "ELITE", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "GPT-5, Claude & Gemini unified — #1 in ALL categories" },
+  elite: { label: "ELITE", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "GPT-5, Claude & Gemini unified — #1 in 5 out of 8 benchmark categories" },
   standard: { label: "STANDARD", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "Premium routing & verification — Top 3 quality" },
   budget: { label: "BUDGET", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "Claude Sonnet optimized — Excellent quality" },
   free: { label: "FREE", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patented AI ensemble — BEATS most paid models" },
@@ -224,8 +224,8 @@ export default function BillingPage() {
                 </CardTitle>
                 <CardDescription>
                   {isFreeTier
-                    ? "Upgrade to unlock ELITE queries (#1 in ALL categories)"
-                    : "Your best-quality queries (#1 in ALL categories)"
+                    ? "Upgrade to unlock ELITE queries (#1 in 5 out of 8 benchmark categories)"
+                    : "Your best-quality queries (#1 in 5 out of 8 benchmark categories)"
                   }
                 </CardDescription>
               </div>
@@ -245,7 +245,7 @@ export default function BillingPage() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium flex items-center gap-2">
                   🟢 ELITE Queries
-                  <Badge variant="outline" className="text-green-500 text-xs">#1 in ALL</Badge>
+                  <Badge variant="outline" className="text-green-500 text-xs">5/8 categories #1</Badge>
                 </span>
                 <span className="text-sm font-mono">
                   {usage?.elite.remaining || 0} / {usage?.elite.limit || 0} remaining

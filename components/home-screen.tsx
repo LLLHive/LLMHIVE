@@ -51,6 +51,7 @@ import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequired
 import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
 
 interface HomeScreenProps {
   onNewChat: () => void
@@ -343,7 +344,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
             <span className="text-base md:text-lg font-bold text-white">#1</span>
           </div>
           <p className="text-sm md:text-lg font-semibold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
-            #1 in ALL 10 Industry Benchmarks · January 2026
+            {BENCHMARK_CLAIM_BANNER}
           </p>
         </div>
       </div>
@@ -423,9 +424,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     </div>
                     <div>
                       <h3 className="font-bold text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
-                        #1 in ALL 10 Industry Benchmarks
+                        {BENCHMARK_CLAIM_SHORT}
                       </h3>
-                      <p className="text-[10px] text-muted-foreground">January 2026 Rankings</p>
+                      <p className="text-[10px] text-muted-foreground">April 2026 rankings</p>
                     </div>
                   </div>
                   <button 

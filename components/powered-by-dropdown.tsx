@@ -37,6 +37,7 @@ import {
   Crown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
 
 // Feature sections data - Ordered for marketing impact
 const featureSections = [
@@ -186,9 +187,9 @@ export function PoweredByDropdown({ compact = false }: PoweredByDropdownProps) {
           </div>
           <div>
             <h3 className="font-bold text-sm sm:text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
-              #1 in ALL 10 Industry Benchmarks
+              {BENCHMARK_CLAIM_SHORT}
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground">January 2026 Rankings</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">April 2026 rankings</p>
           </div>
         </div>
       </div>

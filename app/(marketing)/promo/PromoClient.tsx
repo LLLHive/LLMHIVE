@@ -25,6 +25,7 @@ import {
   Rocket,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TECHNOLOGY SECTIONS - Organized in rows of 3 for synchronized expansion
@@ -140,20 +141,6 @@ const featureRows = [
   ],
 ]
 
-// Benchmark categories
-const benchmarkCategories = [
-  "GPQA Diamond",
-  "SWE-Bench",
-  "AIME 2024",
-  "MMMLU",
-  "ARC-AGI 2",
-  "Tool Use",
-  "RAG",
-  "Multimodal",
-  "Dialogue EQ",
-  "Long Context",
-]
-
 export default function PromoClient() {
   // Track which ROW is expanded (0, 1, 2, or null)
   const [expandedRow, setExpandedRow] = useState<number | null>(null)
@@ -213,7 +200,7 @@ export default function PromoClient() {
               <span className="text-base md:text-lg font-bold text-white">#1</span>
             </div>
             <p className="text-sm md:text-lg font-semibold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
-              #1 in ALL 10 Industry Benchmarks · January 2026
+              {BENCHMARK_CLAIM_BANNER}
             </p>
           </div>
 
@@ -227,7 +214,7 @@ export default function PromoClient() {
           </h1>
 
           <p className="text-base md:text-lg text-white/80 mb-6 max-w-2xl mx-auto">
-            <strong className="text-yellow-400">500 ELITE queries</strong> ranked #1 in ALL benchmarks.
+            <strong className="text-yellow-400">500 ELITE queries</strong> with {BENCHMARK_CLAIM_SHORT}.
             Then <strong className="text-green-400">UNLIMITED FREE</strong> queries that still beat most
             paid models.
           </p>
@@ -445,7 +432,7 @@ export default function PromoClient() {
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
                 <li className="flex items-center gap-1.5 text-white/80">
                   <Check className="h-2.5 w-2.5 text-yellow-400" />
-                  #1 in ALL 10 benchmarks
+                  {BENCHMARK_CLAIM_SHORT}
                 </li>
                 <li className="flex items-center gap-1.5 text-white/80">
                   <Check className="h-2.5 w-2.5 text-yellow-400" />
@@ -519,7 +506,7 @@ export default function PromoClient() {
             <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" />
           </div>
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-            Ready for <span className="text-yellow-400">#1 AI Quality</span>?
+            Ready for <span className="text-yellow-400">ELITE benchmark quality</span>?
           </h2>
           <p className="text-white/70 mb-6">
             500 ELITE queries. UNLIMITED FREE after. Just{" "}
@@ -543,20 +530,9 @@ export default function PromoClient() {
             </Link>
           </div>
 
-          {/* Benchmark Grid - #1 in ALL 10 Categories */}
-          <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mt-12">
-            {benchmarkCategories.map((benchmark) => (
-              <div
-                key={benchmark}
-                className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center"
-              >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mx-auto mb-1">
-                  <span className="text-xs font-bold text-white">#1</span>
-                </div>
-                <p className="text-[10px] font-medium text-white/80 truncate">{benchmark}</p>
-              </div>
-            ))}
-          </div>
+          <p className="mt-10 text-sm text-white/70 max-w-lg mx-auto">
+            {BENCHMARK_CLAIM_SHORT}. Competing across GPQA Diamond, SWE-Bench, AIME 2024, MMMLU, and more.
+          </p>
         </div>
       </section>
 

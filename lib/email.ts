@@ -8,6 +8,8 @@
  * - Support ticket confirmations
  */
 
+import { BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+
 // Email configuration
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const EMAIL_FROM = process.env.EMAIL_FROM || "LLMHive <noreply@contact.llmhive.ai>"
@@ -153,7 +155,7 @@ export async function sendWelcomeEmail(options: {
                         </td>
                         <td style="padding-left: 12px;">
                           <h4 style="margin: 0 0 4px 0; color: #f5f5f5; font-size: 14px;">Top-Ranked Performance</h4>
-                          <p style="margin: 0; color: #737373; font-size: 13px;">Outperforming single models across all categories</p>
+                          <p style="margin: 0; color: #737373; font-size: 13px;">${BENCHMARK_CLAIM_SHORT} — strong results vs. single-model baselines</p>
                         </td>
                       </tr>
                     </table>
@@ -205,7 +207,7 @@ You've just unlocked access to the most powerful AI orchestration platform avail
 What you can do:
 - Multi-Model Intelligence: GPT-4, Claude, Gemini, and more working together
 - ELITE Mode Orchestration: Advanced reasoning with HRM, DeepConf, and ensemble methods  
-- Top-Ranked Performance: Outperforming single models across all categories
+- Top-Ranked Performance: ${BENCHMARK_CLAIM_SHORT} — strong results vs. single-model baselines
 
 Get started: ${APP_URL}
 

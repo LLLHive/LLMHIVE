@@ -91,9 +91,9 @@ const tiers = [
     name: "Lite",
     price: "$14.99",
     period: "/month",
-    description: "#1 quality in ALL categories",
+    description: "#1 in 5 out of 8 benchmark categories",
     features: [
-      "100 ELITE queries (#1 in ALL)",
+      "100 ELITE queries (ELITE tier: 5/8 categories #1)",
       "Premium AI orchestration",
       "Knowledge Base access",
       "Email support"
@@ -108,7 +108,7 @@ const tiers = [
     period: "/month",
     description: "Full power for professionals",
     features: [
-      "500 ELITE queries (#1 in ALL)",
+      "500 ELITE queries (ELITE tier: 5/8 categories #1)",
       "Full API access",
       "DeepConf & Prompt Diffusion",
       "Priority support"

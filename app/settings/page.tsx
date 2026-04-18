@@ -358,9 +358,9 @@ export default function SettingsPage() {
               <LogoText height={64} className="md:hidden mb-2 mx-auto" />
               <LogoText height={92} className="hidden md:block lg:hidden mb-2 mx-auto" />
               <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
-              <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
+              <h1 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Settings
-              </h2>
+              </h1>
               <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto whitespace-nowrap">
                 Configure your account, integrations, and preferences
               </p>
@@ -564,7 +564,7 @@ export default function SettingsPage() {
                 }}
               >
                 <Zap className="h-4 w-4 mr-2" />
-                Upgrade to ELITE (#1 in ALL Categories)
+                Upgrade to ELITE (#1 in 5 out of 8 benchmark categories)
               </Button>
 
               {/* Manage Billing */}

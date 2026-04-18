@@ -28,6 +28,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
@@ -79,7 +80,7 @@ const pricingTiers: PricingTier[] = [
   },
   {
     name: "Lite",
-    description: "Unlock #1 AI quality",
+    description: "Unlock ELITE benchmark quality",
     monthlyPrice: 14.99,
     annualPrice: 149.99,
     tier: "lite",
@@ -87,12 +88,12 @@ const pricingTiers: PricingTier[] = [
     quotas: {
       eliteQueries: "100 ELITE queries",
       afterQuota: "Then UNLIMITED FREE",
-      totalQueries: "#1 in ALL categories",
+      totalQueries: BENCHMARK_CLAIM_SHORT,
     },
     features: [
       "100 ELITE queries/month",
       "Then UNLIMITED FREE queries",
-      "#1 quality when using ELITE",
+      "Top benchmark results when using ELITE",
       "Knowledge Base access",
       "7-day memory retention",
       "Consensus voting",
@@ -112,12 +113,12 @@ const pricingTiers: PricingTier[] = [
     quotas: {
       eliteQueries: "500 ELITE queries",
       afterQuota: "Then UNLIMITED FREE",
-      totalQueries: "#1 in ALL + Full API",
+      totalQueries: `${BENCHMARK_CLAIM_SHORT} + Full API`,
     },
     features: [
       "500 ELITE queries/month",
       "Then UNLIMITED FREE queries",
-      "#1 quality when using ELITE",
+      "Top benchmark results when using ELITE",
       "Full API access",
       "DeepConf debate system",
       "Prompt Diffusion",
@@ -331,11 +332,11 @@ export default function PricingClient() {
           <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-yellow-500/30 border-2 border-yellow-400 shadow-lg shadow-yellow-500/20 mb-6">
             <Trophy className="h-10 w-10 text-yellow-400" />
             <div className="text-left">
-              <div className="text-3xl md:text-4xl font-black bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 bg-clip-text text-transparent">
-                #1 IN ALL 10 BENCHMARKS
+              <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 bg-clip-text text-transparent">
+                {BENCHMARK_CLAIM_BANNER}
               </div>
               <div className="text-sm md:text-base text-yellow-200/80 font-medium">
-                January 2026 Industry Rankings — GPQA Diamond, SWE-Bench, AIME 2024 & more
+                GPQA Diamond, SWE-Bench, AIME 2024, MMMLU & more
               </div>
             </div>
           </div>
@@ -347,8 +348,8 @@ export default function PricingClient() {
             The World's Best AI Quality at <span className="text-yellow-400">$29.99/mo</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-            Our Pro plan gives you <span className="text-yellow-400 font-bold">500 ELITE queries</span> ranked
-            <span className="text-yellow-400 font-bold"> #1 in ALL categories</span> — powered by GPT-5.2,
+            Our Pro plan gives you <span className="text-yellow-400 font-bold">500 ELITE queries</span> with{" "}
+            <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by GPT-5.2,
             Claude Opus 4.5 & Gemini 3 Pro unified.
           </p>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto">
@@ -363,7 +364,7 @@ export default function PricingClient() {
           <div className="grid md:grid-cols-2 gap-6 text-center">
             <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
               <div className="text-3xl font-black text-yellow-400 mb-2">🏆 ELITE</div>
-              <div className="text-lg font-bold text-yellow-300">#1 in ALL 10 Categories</div>
+              <div className="text-lg font-bold text-yellow-300">{BENCHMARK_CLAIM_SHORT}</div>
               <div className="text-sm text-yellow-200/70 mt-1">GPT-5.2 + Claude Opus 4.5 + Gemini 3 Pro</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
@@ -525,31 +526,40 @@ export default function PricingClient() {
           })}
         </div>
 
-        {/* Social Proof / Why #1 */}
+        {/* Social proof — benchmark positioning */}
         <div className="max-w-4xl mx-auto mb-16 text-center">
           <div className="p-8 rounded-2xl bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-yellow-500/10 border border-yellow-500/30">
             <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
             <h2 className="text-2xl font-display font-bold mb-4 text-yellow-400">
-              Why We're #1 in ALL 10 Categories
+              Industry benchmarks (April 2026)
             </h2>
-            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Our patented orchestration technology combines the best of GPT-5.2, Claude Opus 4.5, and
-              Gemini 3 Pro with consensus voting, challenge-refine workflows, and tool integration.
+            <p className="text-muted-foreground mb-4 max-w-2xl mx-auto font-medium text-foreground/90">
+              {BENCHMARK_CLAIM_SHORT}.
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
-              {["GPQA Diamond", "SWE-Bench", "AIME 2024", "MMMLU", "ARC-AGI 2"].map((bench) => (
-                <div key={bench} className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                  <div className="text-yellow-400 font-bold">#1</div>
-                  <div className="text-muted-foreground">{bench}</div>
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs mt-4">
-              {["Tool Use", "RAG", "Multimodal", "Dialogue EQ", "Long Context"].map((bench) => (
-                <div key={bench} className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                  <div className="text-yellow-400 font-bold">#1</div>
-                  <div className="text-muted-foreground">{bench}</div>
-                </div>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto text-sm">
+              Our orchestration combines GPT-5.2, Claude Opus 4.5, and Gemini 3 Pro with consensus voting,
+              challenge-refine workflows, and tool integration — competing across GPQA Diamond, SWE-Bench,
+              AIME 2024, MMMLU, tool use, RAG, and more.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
+              {[
+                "GPQA Diamond",
+                "SWE-Bench",
+                "AIME 2024",
+                "MMMLU",
+                "ARC-AGI 2",
+                "Tool use",
+                "RAG",
+                "Multimodal",
+                "Dialogue",
+                "Long context",
+              ].map((bench) => (
+                <span
+                  key={bench}
+                  className="px-2 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/20"
+                >
+                  {bench}
+                </span>
               ))}
             </div>
           </div>
@@ -566,8 +576,9 @@ export default function PricingClient() {
               <div>
                 <h3 className="font-semibold text-yellow-400">Get 500 ELITE queries with Pro</h3>
                 <p className="text-sm text-muted-foreground">
-                  Each ELITE query uses our #1 ranked orchestration with GPT-5.2, Claude Opus 4.5 &
-                  Gemini 3 Pro. Perfect for professional work, coding, research, and critical tasks.
+                  Each ELITE query uses our top-tier orchestration with GPT-5.2, Claude Opus 4.5 &
+                  Gemini 3 Pro ({BENCHMARK_CLAIM_SHORT}). Perfect for professional work, coding, research,
+                  and critical tasks.
                 </p>
               </div>
             </div>
@@ -590,7 +601,7 @@ export default function PricingClient() {
               <div>
                 <h3 className="font-semibold">Upgrade anytime for more ELITE</h3>
                 <p className="text-sm text-muted-foreground">
-                  Need more #1 quality? Upgrade from Lite to Pro for 5x more ELITE queries. Or go
+                  Need more ELITE capacity? Upgrade from Lite to Pro for 5x more ELITE queries. Or go
                   Enterprise for team features and compliance.
                 </p>
               </div>
@@ -607,15 +618,15 @@ export default function PricingClient() {
               <p className="text-muted-foreground text-sm">
                 You get <strong>UNLIMITED FREE queries</strong> for the rest of the month. There&apos;s no
                 cap — our FREE orchestration beats most single paid models, so you still get great
-                quality. Want #1 quality back? Just upgrade for more ELITE queries.
+                quality. Want ELITE benchmark coverage back? Just upgrade for more ELITE queries.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
               <h3 className="font-semibold mb-2">How is ELITE different from FREE?</h3>
               <p className="text-muted-foreground text-sm">
-                ELITE uses premium models (GPT-5.2, Claude Opus 4.5, Gemini 3 Pro) to rank #1 in ALL 10
-                benchmarks. FREE uses free models in consensus — still excellent, but not #1 in all
-                categories.
+                ELITE uses premium models (GPT-5.2, Claude Opus 4.5, Gemini 3 Pro) for{" "}
+                {BENCHMARK_CLAIM_SHORT}. FREE uses free models in consensus — still strong for everyday
+                work, with different cost–quality tradeoffs.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
@@ -633,11 +644,11 @@ export default function PricingClient() {
           <div className="p-8 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/10 to-amber-500/10 border border-amber-600/40">
             <Trophy className="h-10 w-10 text-amber-500 mx-auto mb-4" />
             <h2 className="text-3xl font-display font-bold mb-4 text-amber-500">
-              Get #1 AI Quality Today
+              Get ELITE benchmark quality today
             </h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              500 ELITE queries. UNLIMITED FREE after. Full API access. The world&apos;s best AI
-              orchestration for just $29.99/month.
+              500 ELITE queries. UNLIMITED FREE after. Full API access. Premium orchestration for
+              $29.99/month.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button
