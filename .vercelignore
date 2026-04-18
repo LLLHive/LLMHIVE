@@ -1,0 +1,14 @@
+artifacts/
+benchmark_reports/
+coverage/
+playwright-report/
+blob-report/
+test-results/
+backups/
+.venv/
+llmhive/.venv/
+node_modules/
+.next/
+out/
+build/
+dist/
