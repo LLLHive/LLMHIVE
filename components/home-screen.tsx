@@ -318,13 +318,14 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   return (
     <div
       className={cn(
-        "relative flex h-full min-h-0 max-h-full flex-col items-stretch justify-between gap-2 overflow-x-hidden overflow-y-hidden px-3 pb-[max(4.25rem,calc(env(safe-area-inset-bottom,0px)+3.75rem))] pt-2 sm:px-4 sm:pt-3 sm:pb-[max(4.5rem,calc(env(safe-area-inset-bottom,0px)+4rem))]",
-        "[@media(max-height:720px)]:gap-1 [@media(max-height:720px)]:pt-1 [@media(max-height:720px)]:pb-[max(4rem,calc(env(safe-area-inset-bottom,0px)+3.25rem))]",
+        /* gap-1 = half of gap-2: tighter banner↔CTA and CTA↔options */
+        "relative flex h-full min-h-0 max-h-full flex-col items-stretch gap-1 overflow-x-hidden overflow-y-hidden px-3 pb-[max(4.25rem,calc(env(safe-area-inset-bottom,0px)+3.75rem))] pt-2 sm:px-4 sm:pt-3 sm:pb-[max(4.5rem,calc(env(safe-area-inset-bottom,0px)+4rem))]",
+        "[@media(max-height:720px)]:gap-0.5 [@media(max-height:720px)]:pt-1 [@media(max-height:720px)]:pb-[max(4rem,calc(env(safe-area-inset-bottom,0px)+3.25rem))]",
       )}
     >
-      {/* Hero Section with 3D Logo — sized to fit above the fold with bottom nav */}
-      <div className="llmhive-fade-in flex shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
-        <div className="relative mx-auto h-[min(26vh,9.5rem)] w-[min(26vh,9.5rem)] sm:h-[min(24vh,10.5rem)] sm:w-[min(24vh,10.5rem)] md:h-[min(22vh,11.5rem)] md:w-[min(22vh,11.5rem)] lg:h-[min(20vh,12.5rem)] lg:w-[min(20vh,12.5rem)] -mb-5 sm:-mb-6 md:-mb-7 llmhive-float">
+      {/* Hero Section with 3D Logo — +50% vs prior caps; fits with tighter vertical rhythm */}
+      <div className="llmhive-fade-in flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
+        <div className="relative mx-auto h-[min(39vh,14.25rem)] w-[min(39vh,14.25rem)] sm:h-[min(36vh,15.75rem)] sm:w-[min(36vh,15.75rem)] md:h-[min(33vh,17.25rem)] md:w-[min(33vh,17.25rem)] lg:h-[min(30vh,18.75rem)] lg:w-[min(30vh,18.75rem)] -mb-7 sm:-mb-8 md:-mb-9 llmhive-float">
           <Image
             src="/logo.png"
             alt="LLMHive"
@@ -342,10 +343,10 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           Patented multi-agent orchestration for enhanced accuracy and performance.
         </p>
 
-        {/* #1 Benchmark Badge */}
+        {/* #1 Benchmark Badge — circular badge +50% vs previous */}
         <div className="mb-0 flex max-w-[min(100%,40rem)] items-center justify-center gap-2 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-3 py-2 shadow-lg shadow-yellow-500/10 sm:gap-2.5 sm:px-4 sm:py-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-9 sm:w-9 md:h-10 md:w-10">
-            <span className="text-sm font-bold text-white sm:text-base">#1</span>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-14 sm:w-14 md:h-[3.75rem] md:w-[3.75rem]">
+            <span className="text-base font-bold text-white sm:text-lg md:text-xl">#1</span>
           </div>
           <p className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[11px] font-semibold leading-tight text-transparent sm:text-xs md:text-sm">
             {BENCHMARK_CLAIM_BANNER}
@@ -353,8 +354,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </div>
       </div>
 
-      {/* Main CTA */}
-      <div className="flex shrink-0 justify-center px-1">
+      {/* Main CTA — tight vertical rhythm with hero + grid (half prior flex gap) */}
+      <div className="flex shrink-0 justify-center px-1 pt-0.5">
         <Button
           onClick={onNewChat}
           size="lg"
@@ -365,8 +366,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </Button>
       </div>
 
-      {/* Template Cards — bottom row stays in view (no page scroll) */}
-      <div className="llmhive-fade-in w-full max-w-3xl shrink-0 self-center" style={{ animationDelay: "0.1s" }}>
+      {/* Template Cards */}
+      <div className="llmhive-fade-in w-full max-w-3xl shrink-0 self-center pt-0.5" style={{ animationDelay: "0.1s" }}>
         <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4 lg:gap-3">
           {templates.map((template, index) => {
             const Icon = template.icon
