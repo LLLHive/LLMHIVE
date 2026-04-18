@@ -23,11 +23,15 @@ interface SupportWidgetProps {
 }
 
 /**
- * Bottom-right anchor (over the decorative star in `bg-desktop.png` / main column).
- * Generous safe-area padding so the full circle stays inside the viewport (not clipped).
+ * Bottom-right anchor (over the decorative star in `bg-desktop.png`).
+ * Generous safe-area padding so the full circle stays visible.
+ *
+ * Do not add `touch-target` here: globals.css gives `.touch-target { position: relative }`,
+ * which overrides `fixed` and makes the button behave like in-flow content (often stuck
+ * bottom-left after portaling to body).
  */
 const supportAnchorClass =
-  "fixed z-[300] pointer-events-auto left-auto " +
+  "!fixed z-[300] pointer-events-auto left-auto " +
   "right-[max(1.25rem,calc(env(safe-area-inset-right,0px)+1rem))] " +
   "bottom-[max(2rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))]"
 
@@ -95,7 +99,7 @@ export function SupportWidget({ userEmail, userName }: SupportWidgetProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={`${supportAnchorClass} bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap touch-target`}
+        className={`${supportAnchorClass} min-h-12 min-w-12 inline-flex items-center justify-center bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all premium-tap`}
         aria-label="Open support"
       >
         <MessageCircle className="h-6 w-6" />
