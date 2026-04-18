@@ -318,14 +318,14 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   return (
     <div
       className={cn(
-        /* gap-1 = half of gap-2: tighter banner↔CTA and CTA↔options */
-        "relative flex h-full min-h-0 max-h-full flex-col items-stretch gap-1 overflow-x-hidden overflow-y-hidden px-3 pb-[max(4.25rem,calc(env(safe-area-inset-bottom,0px)+3.75rem))] pt-2 sm:px-4 sm:pt-3 sm:pb-[max(4.5rem,calc(env(safe-area-inset-bottom,0px)+4rem))]",
-        "[@media(max-height:720px)]:gap-0.5 [@media(max-height:720px)]:pt-1 [@media(max-height:720px)]:pb-[max(4rem,calc(env(safe-area-inset-bottom,0px)+3.25rem))]",
+        /* Tight vertical stack: hero / CTA / tiles */
+        "relative flex h-full min-h-0 max-h-full flex-col items-stretch gap-0 overflow-x-hidden overflow-y-hidden px-3 pb-[max(4rem,calc(env(safe-area-inset-bottom,0px)+3.5rem))] pt-1 sm:px-4 sm:pt-2 sm:pb-[max(4.25rem,calc(env(safe-area-inset-bottom,0px)+3.75rem))]",
+        "[@media(max-height:720px)]:pt-0.5 [@media(max-height:720px)]:pb-[max(3.75rem,calc(env(safe-area-inset-bottom,0px)+3rem))]",
       )}
     >
-      {/* Hero Section: sphere −15% vs prior; tighter gap to wordmark (~½ prior gap) */}
+      {/* Hero: ~½ remaining gap sphere ↔ LLMHive vs prior; tighter block below */}
       <div className="llmhive-fade-in flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
-        <div className="relative mx-auto h-[min(66.3vh,24.25rem)] w-[min(66.3vh,24.25rem)] sm:h-[min(61.2vh,26.75rem)] sm:w-[min(61.2vh,26.75rem)] md:h-[min(56.1vh,29.25rem)] md:w-[min(56.1vh,29.25rem)] lg:h-[min(51vh,31.875rem)] lg:w-[min(51vh,31.875rem)] -mb-[4.5rem] sm:-mb-[5rem] md:-mb-[5.5rem] llmhive-float">
+        <div className="relative mx-auto h-[min(66.3vh,24.25rem)] w-[min(66.3vh,24.25rem)] sm:h-[min(61.2vh,26.75rem)] sm:w-[min(61.2vh,26.75rem)] md:h-[min(56.1vh,29.25rem)] md:w-[min(56.1vh,29.25rem)] lg:h-[min(51vh,31.875rem)] lg:w-[min(51vh,31.875rem)] -mb-[5.5rem] sm:-mb-[6rem] md:-mb-[6.5rem] lg:-mb-[6.75rem] llmhive-float">
           <Image
             src="/logo.png"
             alt="LLMHive"
@@ -335,16 +335,16 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           />
         </div>
 
-        <LogoText height={66} className="relative z-10 mx-auto mb-0.5 md:hidden" />
-        <LogoText height={84} className="relative z-10 mx-auto mb-0.5 hidden md:block lg:hidden" />
-        <LogoText height={102} className="relative z-10 mx-auto mb-0.5 hidden lg:block" />
+        <LogoText height={66} className="relative z-10 -mt-1 mx-auto mb-0 md:hidden" />
+        <LogoText height={84} className="relative z-10 -mt-1.5 mx-auto mb-0 hidden md:block lg:hidden" />
+        <LogoText height={102} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
 
-        <p className="llmhive-subtitle-3d mx-auto mb-1.5 max-w-[min(100%,42rem)] whitespace-normal px-1 text-[11px] leading-snug sm:text-xs md:mb-2 md:text-sm md:leading-tight">
+        <p className="llmhive-subtitle-3d mx-auto mb-1 max-w-[min(100%,42rem)] whitespace-normal px-1 text-[11px] leading-snug sm:text-xs md:mb-1 md:text-sm md:leading-tight">
           Patented multi-agent orchestration for enhanced accuracy and performance.
         </p>
 
-        {/* #1 Benchmark Badge — circular badge +50% vs previous */}
-        <div className="mb-0 flex max-w-[min(100%,40rem)] items-center justify-center gap-2 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-3 py-2 shadow-lg shadow-yellow-500/10 sm:gap-2.5 sm:px-4 sm:py-2.5">
+        {/* #1 Benchmark Badge */}
+        <div className="mb-0 flex max-w-[min(100%,40rem)] items-center justify-center gap-2 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2.5 py-1.5 shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-3 sm:py-2">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-14 sm:w-14 md:h-[3.75rem] md:w-[3.75rem]">
             <span className="text-base font-bold text-white sm:text-lg md:text-xl">#1</span>
           </div>
@@ -354,8 +354,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         </div>
       </div>
 
-      {/* Main CTA — tight vertical rhythm with hero + grid (half prior flex gap) */}
-      <div className="flex shrink-0 justify-center px-1 pt-0.5">
+      {/* Main CTA */}
+      <div className="flex shrink-0 justify-center px-1 pt-0">
         <Button
           onClick={onNewChat}
           size="lg"
@@ -367,7 +367,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
       </div>
 
       {/* Template Cards */}
-      <div className="llmhive-fade-in w-full max-w-3xl shrink-0 self-center pt-0.5" style={{ animationDelay: "0.1s" }}>
+      <div className="llmhive-fade-in w-full max-w-3xl shrink-0 self-center pt-0" style={{ animationDelay: "0.1s" }}>
         <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4 lg:gap-3">
           {templates.map((template, index) => {
             const Icon = template.icon
