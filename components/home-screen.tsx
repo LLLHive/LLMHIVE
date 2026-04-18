@@ -323,9 +323,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         "[@media(max-height:720px)]:gap-0.5 [@media(max-height:720px)]:pt-1 [@media(max-height:720px)]:pb-[max(4rem,calc(env(safe-area-inset-bottom,0px)+3.25rem))]",
       )}
     >
-      {/* Hero Section: sphere 2× prior size; Wordmark +50% via LogoText heights */}
+      {/* Hero Section: sphere −15% vs prior; tighter gap to wordmark (~½ prior gap) */}
       <div className="llmhive-fade-in flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
-        <div className="relative mx-auto h-[min(78vh,28.5rem)] w-[min(78vh,28.5rem)] sm:h-[min(72vh,31.5rem)] sm:w-[min(72vh,31.5rem)] md:h-[min(66vh,34.5rem)] md:w-[min(66vh,34.5rem)] lg:h-[min(60vh,37.5rem)] lg:w-[min(60vh,37.5rem)] -mb-14 sm:-mb-16 md:-mb-[4.5rem] llmhive-float">
+        <div className="relative mx-auto h-[min(66.3vh,24.25rem)] w-[min(66.3vh,24.25rem)] sm:h-[min(61.2vh,26.75rem)] sm:w-[min(61.2vh,26.75rem)] md:h-[min(56.1vh,29.25rem)] md:w-[min(56.1vh,29.25rem)] lg:h-[min(51vh,31.875rem)] lg:w-[min(51vh,31.875rem)] -mb-[4.5rem] sm:-mb-[5rem] md:-mb-[5.5rem] llmhive-float">
           <Image
             src="/logo.png"
             alt="LLMHive"
@@ -335,9 +335,9 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           />
         </div>
 
-        <LogoText height={66} className="mx-auto mb-0.5 md:hidden" />
-        <LogoText height={84} className="mx-auto mb-0.5 hidden md:block lg:hidden" />
-        <LogoText height={102} className="mx-auto mb-0.5 hidden lg:block" />
+        <LogoText height={66} className="relative z-10 mx-auto mb-0.5 md:hidden" />
+        <LogoText height={84} className="relative z-10 mx-auto mb-0.5 hidden md:block lg:hidden" />
+        <LogoText height={102} className="relative z-10 mx-auto mb-0.5 hidden lg:block" />
 
         <p className="llmhive-subtitle-3d mx-auto mb-1.5 max-w-[min(100%,42rem)] whitespace-normal px-1 text-[11px] leading-snug sm:text-xs md:mb-2 md:text-sm md:leading-tight">
           Patented multi-agent orchestration for enhanced accuracy and performance.
