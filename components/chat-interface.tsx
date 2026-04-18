@@ -460,7 +460,7 @@ export function ChatInterface() {
       <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-hidden md:pt-0 pt-14">
         {!currentConversationId && !initialQuery ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-hidden">
               <HomeScreen onNewChat={handleNewChat} onStartFromTemplate={handleStartFromTemplate} />
             </div>
           </div>

@@ -433,6 +433,20 @@ export function Sidebar({
             
             {/* Orchestration and Settings at the bottom */}
             <div className="px-3 py-3 border-t border-border/50 mt-auto space-y-1">
+              <Link href={ROUTES.DISCOVER} className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start text-sm transition-all",
+                    isActiveRoute(ROUTES.DISCOVER) && "bg-secondary text-[var(--bronze)]",
+                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                  )}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Discover
+                </Button>
+              </Link>
               <Link href={ROUTES.BUSINESS_OPS} className="w-full">
                 <Button
                   variant="ghost"

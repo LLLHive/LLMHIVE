@@ -268,9 +268,9 @@ export default function DiscoverPage() {
               <LogoText height={64} className="md:hidden mb-2 mx-auto" />
               <LogoText height={92} className="hidden md:block lg:hidden mb-2 mx-auto" />
               <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
-              <h2 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
+              <h1 className="text-xl md:text-2xl lg:text-3xl llmhive-subtitle mb-2">
                 Discover
-              </h2>
+              </h1>
               <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto whitespace-nowrap">
                 Explore AI-powered search, knowledge resources, and templates
               </p>

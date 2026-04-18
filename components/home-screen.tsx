@@ -316,67 +316,72 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   const currentTemplate = templates.find(t => t.id === activeDrawer)
 
   return (
-    <div className="min-h-full flex flex-col items-center justify-start px-4 pt-4 pb-[max(6rem,calc(env(safe-area-inset-bottom,0px)+5rem))] overflow-x-hidden relative">
-      {/* Hero Section with 3D Logo */}
-      <div className="text-center mb-6 llmhive-fade-in">
-        <div className="relative w-52 h-52 md:w-[340px] md:h-[340px] lg:w-[378px] lg:h-[378px] mx-auto -mb-14 md:-mb-24 llmhive-float">
-          <Image 
-            src="/logo.png" 
-            alt="LLMHive" 
-            fill 
-            className="object-contain drop-shadow-2xl" 
-            priority 
+    <div
+      className={cn(
+        "relative flex h-full min-h-0 max-h-full flex-col items-stretch justify-between gap-2 overflow-x-hidden overflow-y-hidden px-3 pb-[max(4.25rem,calc(env(safe-area-inset-bottom,0px)+3.75rem))] pt-2 sm:px-4 sm:pt-3 sm:pb-[max(4.5rem,calc(env(safe-area-inset-bottom,0px)+4rem))]",
+        "[@media(max-height:720px)]:gap-1 [@media(max-height:720px)]:pt-1 [@media(max-height:720px)]:pb-[max(4rem,calc(env(safe-area-inset-bottom,0px)+3.25rem))]",
+      )}
+    >
+      {/* Hero Section with 3D Logo — sized to fit above the fold with bottom nav */}
+      <div className="llmhive-fade-in flex shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
+        <div className="relative mx-auto h-[min(26vh,9.5rem)] w-[min(26vh,9.5rem)] sm:h-[min(24vh,10.5rem)] sm:w-[min(24vh,10.5rem)] md:h-[min(22vh,11.5rem)] md:w-[min(22vh,11.5rem)] lg:h-[min(20vh,12.5rem)] lg:w-[min(20vh,12.5rem)] -mb-5 sm:-mb-6 md:-mb-7 llmhive-float">
+          <Image
+            src="/logo.png"
+            alt="LLMHive"
+            fill
+            className="object-contain drop-shadow-2xl"
+            priority
           />
         </div>
-        
-        {/* 3D Metallic Title - Using actual rendered image for exact match */}
-        <LogoText height={64} className="md:hidden mb-2 mx-auto" />
-        <LogoText height={92} className="hidden md:block lg:hidden mb-2 mx-auto" />
-        <LogoText height={110} className="hidden lg:block mb-2 mx-auto" />
-        
-        <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto mb-3 whitespace-nowrap">
+
+        <LogoText height={44} className="mx-auto mb-0.5 md:hidden" />
+        <LogoText height={56} className="mx-auto mb-0.5 hidden md:block lg:hidden" />
+        <LogoText height={68} className="mx-auto mb-0.5 hidden lg:block" />
+
+        <p className="llmhive-subtitle-3d mx-auto mb-1.5 max-w-[min(100%,42rem)] whitespace-normal px-1 text-[11px] leading-snug sm:text-xs md:mb-2 md:text-sm md:leading-tight">
           Patented multi-agent orchestration for enhanced accuracy and performance.
         </p>
-        
-        {/* #1 Benchmark Badge - Large & Centered */}
-        <div className="flex items-center justify-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 border-2 border-yellow-500/40 mb-6 shadow-lg shadow-yellow-500/10">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] flex items-center justify-center shadow-lg">
-            <span className="text-base md:text-lg font-bold text-white">#1</span>
+
+        {/* #1 Benchmark Badge */}
+        <div className="mb-0 flex max-w-[min(100%,40rem)] items-center justify-center gap-2 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-3 py-2 shadow-lg shadow-yellow-500/10 sm:gap-2.5 sm:px-4 sm:py-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-9 sm:w-9 md:h-10 md:w-10">
+            <span className="text-sm font-bold text-white sm:text-base">#1</span>
           </div>
-          <p className="text-sm md:text-lg font-semibold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+          <p className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[11px] font-semibold leading-tight text-transparent sm:text-xs md:text-sm">
             {BENCHMARK_CLAIM_BANNER}
           </p>
         </div>
       </div>
 
-      {/* Main CTA Button */}
-      <Button
-        onClick={onNewChat}
-        size="lg"
-        className="bronze-gradient mb-6 md:mb-8 h-12 md:h-14 px-8 md:px-10 text-base md:text-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
-      >
-        <MessageSquarePlus className="h-5 w-5 md:h-6 md:w-6" />
-        Start Chatting
-      </Button>
+      {/* Main CTA */}
+      <div className="flex shrink-0 justify-center px-1">
+        <Button
+          onClick={onNewChat}
+          size="lg"
+          className="bronze-gradient h-11 gap-2 px-6 text-sm shadow-lg transition-shadow hover:shadow-xl sm:h-12 sm:px-8 sm:text-base md:h-12 md:px-10 md:text-lg"
+        >
+          <MessageSquarePlus className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+          Start Chatting
+        </Button>
+      </div>
 
-      {/* Template Cards - Glass Cards */}
-      <div className="w-full max-w-3xl mx-auto llmhive-fade-in" style={{ animationDelay: '0.1s' }}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      {/* Template Cards — bottom row stays in view (no page scroll) */}
+      <div className="llmhive-fade-in w-full max-w-3xl shrink-0 self-center" style={{ animationDelay: "0.1s" }}>
+        <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4 lg:gap-3">
           {templates.map((template, index) => {
             const Icon = template.icon
             const cardContent = (
               <>
                 {/* Icon Badge */}
-                <div className={`icon-badge ${template.badgeClass}`}>
-                  <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                <div className={`icon-badge ${template.badgeClass} !h-9 !w-9 sm:!h-10 sm:!w-10`}>
+                  <Icon className="h-4 w-4 text-white sm:h-5 sm:w-5" />
                 </div>
-                
-                {/* Card Text */}
+
                 <div className="space-y-0.5 text-center">
-                  <h3 className="font-semibold text-sm md:text-base text-foreground group-hover:text-[var(--gold)] transition-colors">
+                  <h3 className="text-xs font-semibold text-foreground transition-colors group-hover:text-[var(--gold)] sm:text-sm md:text-base">
                     {template.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                  <p className="line-clamp-2 text-[10px] leading-tight text-muted-foreground sm:text-xs">
                     {template.description}
                   </p>
                 </div>
@@ -393,7 +398,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                   e.stopPropagation()
                   openDrawer(template.id)
                 }}
-                className="settings-card group llmhive-fade-in"
+                className="settings-card group llmhive-fade-in !gap-2 !p-2.5 sm:!gap-2.5 sm:!p-3 md:!p-3.5"
                 style={{ animationDelay: `${0.15 + index * 0.05}s` }}
               >
                 {cardContent}

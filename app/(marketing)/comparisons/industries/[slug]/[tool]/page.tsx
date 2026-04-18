@@ -4,19 +4,20 @@ import Link from "next/link"
 import { industryToolComparisons } from "../../tools"
 
 type PageProps = {
-  params: { industry: string; tool: string }
+  params: Promise<{ slug: string; tool: string }>
 }
 
 export function generateStaticParams() {
   return industryToolComparisons.map((item) => ({
-    industry: item.industry,
+    slug: item.industry,
     tool: item.tool,
   }))
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const routeParams = await params
   const page = industryToolComparisons.find(
-    (item) => item.industry === params.industry && item.tool === params.tool
+    (item) => item.industry === routeParams.slug && item.tool === routeParams.tool
   )
   if (!page) {
     return { title: "LLMHive" }
@@ -108,9 +109,10 @@ function renderStructuredData(
   )
 }
 
-export default function IndustryToolComparisonPage({ params }: PageProps) {
+export default async function IndustryToolComparisonPage({ params }: PageProps) {
+  const routeParams = await params
   const page = industryToolComparisons.find(
-    (item) => item.industry === params.industry && item.tool === params.tool
+    (item) => item.industry === routeParams.slug && item.tool === routeParams.tool
   )
   if (!page) {
     notFound()
