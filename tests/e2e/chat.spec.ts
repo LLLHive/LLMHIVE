@@ -1,5 +1,9 @@
 import { test, expect, helpers, MOCK_RESPONSES } from './fixtures'
 
+/** Enough words to skip the clarification gate and exercise /api/chat in E2E. */
+const E2E_DIRECT_PROMPT =
+  'What is the capital of France? Please answer in one short sentence for this test.'
+
 /**
  * Chat Functionality Tests for LLMHive
  * 
@@ -18,6 +22,7 @@ test.describe('Chat Input', () => {
     await mockApi.mockAllApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('chat input textarea is visible', async ({ page }) => {
@@ -52,7 +57,7 @@ test.describe('Chat Input', () => {
     const textarea = page.locator('textarea').first()
     await expect(textarea).toBeVisible({ timeout: 15000 })
     
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Input should clear after sending
@@ -62,9 +67,10 @@ test.describe('Chat Input', () => {
 
 test.describe('Chat Message Sending', () => {
   test.beforeEach(async ({ page, mockApi }) => {
-    await mockApi.mockAllApisSuccess()
+    await mockApi.mockCoreApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('Enter key sends message', async ({ page, mockApi }) => {
@@ -79,7 +85,7 @@ test.describe('Chat Message Sending', () => {
     })
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Wait for the request
@@ -91,18 +97,18 @@ test.describe('Chat Message Sending', () => {
     await mockApi.mockChatSuccess('Test response from AI')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Hello AI')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // User message should appear
-    await expect(page.getByText('Hello AI')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText(/capital of France/i)).toBeVisible({ timeout: 15000 })
   })
 
   test('AI response appears after user message', async ({ page, mockApi }) => {
     await mockApi.mockChatSuccess('This is the AI response.')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Hello AI')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Wait for response
@@ -110,27 +116,25 @@ test.describe('Chat Message Sending', () => {
   })
 
   test('request includes orchestrator settings', async ({ page }) => {
-    let capturedRequest: any = null
-    
     await page.route('/api/chat', (route) => {
-      const postData = route.request().postData()
-      if (postData) {
-        capturedRequest = JSON.parse(postData)
-      }
       route.fulfill({
         status: 200,
         contentType: 'text/plain',
         body: 'Response',
       })
     })
-    
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test')
+    const responsePromise = page.waitForResponse(
+      (r) => r.url().includes('/api/chat') && r.request().method() === 'POST',
+    )
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
-    
-    expect(capturedRequest).toBeDefined()
+
+    const response = await responsePromise
+    const postData = response.request().postData()
+    expect(postData).toBeTruthy()
+    const capturedRequest = JSON.parse(postData!)
     expect(capturedRequest.orchestratorSettings).toBeDefined()
   })
 })
@@ -143,19 +147,15 @@ test.describe('Chat Templates', () => {
   })
 
   test('template cards are visible on home page', async ({ page }) => {
-    // At least one template should be visible
-    const hasTemplate = await page.getByText('General').or(page.getByText('Code')).isVisible()
-    expect(hasTemplate).toBe(true)
+    await expect(page.getByText('Industry Packs')).toBeVisible()
+    await expect(page.getByText('LLMHive Technology')).toBeVisible()
   })
 
   test('clicking template card prepares chat', async ({ page }) => {
-    const codeTemplate = page.getByText('Code').first()
-    if (await codeTemplate.isVisible()) {
-      await codeTemplate.click()
-    }
-    
-    // Chat interface should remain visible
-    await expect(page.locator('textarea').first()).toBeVisible()
+    await page.getByText('Industry Packs').first().click()
+    await page.getByRole('button', { name: /Coding Pack/i }).click()
+    await page.getByRole('button', { name: /Start Coding Pack Chat/i }).click()
+    await expect(page.locator('textarea').first()).toBeVisible({ timeout: 15000 })
   })
 })
 
@@ -163,13 +163,14 @@ test.describe('Chat Error Handling - Server Errors', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('shows error on 500 Internal Server Error', async ({ page, mockApi }) => {
     await mockApi.mockChatError(500, 'Internal server error')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Page should still be functional
@@ -185,7 +186,7 @@ test.describe('Chat Error Handling - Server Errors', () => {
     await mockApi.mockChatError(503, 'Service temporarily unavailable')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Page should remain functional
@@ -197,7 +198,7 @@ test.describe('Chat Error Handling - Server Errors', () => {
     await mockApi.mockChatError(400, 'Invalid request format')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     await page.waitForTimeout(2000)
@@ -208,7 +209,7 @@ test.describe('Chat Error Handling - Server Errors', () => {
     await mockApi.mockChatError(401, 'Unauthorized')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     await page.waitForTimeout(2000)
@@ -219,7 +220,7 @@ test.describe('Chat Error Handling - Server Errors', () => {
     await mockApi.mockChatError(429, 'Too many requests')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     await page.waitForTimeout(2000)
@@ -231,6 +232,7 @@ test.describe('Chat Error Handling - Network Errors', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('handles network failure gracefully', async ({ page }) => {
@@ -239,7 +241,7 @@ test.describe('Chat Error Handling - Network Errors', () => {
     })
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Page should not crash
@@ -253,7 +255,7 @@ test.describe('Chat Error Handling - Network Errors', () => {
     })
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     await page.waitForTimeout(3000)
@@ -266,7 +268,7 @@ test.describe('Chat Error Handling - Network Errors', () => {
     })
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     await page.waitForTimeout(3000)
@@ -281,6 +283,7 @@ test.describe('Chat Error Handling - Timeouts', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('handles slow response gracefully', async ({ page }) => {
@@ -295,7 +298,7 @@ test.describe('Chat Error Handling - Timeouts', () => {
     })
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Should eventually show response
@@ -310,7 +313,7 @@ test.describe('Chat Error Handling - Timeouts', () => {
     })
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Page should remain functional
@@ -320,16 +323,18 @@ test.describe('Chat Error Handling - Timeouts', () => {
 })
 
 test.describe('Chat Retry Logic', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, mockApi }) => {
+    await mockApi.mockCoreApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('retries on transient error and succeeds', async ({ page, mockApi }) => {
     await mockApi.mockChatRetrySuccess(2) // Fail twice, then succeed
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     // Should eventually succeed after retries
@@ -339,9 +344,10 @@ test.describe('Chat Retry Logic', () => {
 
 test.describe('Chat Message Display', () => {
   test.beforeEach(async ({ page, mockApi }) => {
-    await mockApi.mockAllApisSuccess()
-    await page.goto('/')
+    await mockApi.mockCoreApisSuccess()
+    await page.goto('/', { timeout: 60000 })
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('messages are displayed in order', async ({ page, mockApi }) => {
@@ -350,9 +356,9 @@ test.describe('Chat Message Display', () => {
     const textarea = page.locator('textarea').first()
     
     // Send first message
-    await textarea.fill('First message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
-    await expect(page.getByText('First message')).toBeVisible()
+    await expect(page.getByText(/capital of France/i)).toBeVisible()
     await expect(page.getByText('First response')).toBeVisible()
   })
 
@@ -372,18 +378,18 @@ test.describe('Chat Message Display', () => {
     await mockApi.mockChatSuccess('Here is some **bold** and *italic* text.')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test markdown')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
-    // Response should appear (markdown rendering may vary)
-    await expect(page.getByText(/bold|italic/)).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('strong')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('em')).toBeVisible({ timeout: 15000 })
   })
 
   test('code blocks in responses are displayed', async ({ page, mockApi }) => {
     await mockApi.mockChatSuccess('Here is code:\n```python\nprint("Hello")\n```')
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Show me code')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Enter')
     
     await expect(page.getByText('print')).toBeVisible({ timeout: 15000 })
@@ -395,6 +401,7 @@ test.describe('Chat Keyboard Shortcuts', () => {
     await mockApi.mockAllApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('Ctrl+Enter (or Cmd+Enter) sends message', async ({ page, mockApi }) => {
@@ -405,7 +412,7 @@ test.describe('Chat Keyboard Shortcuts', () => {
     })
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Control+Enter')
     
     await page.waitForTimeout(2000)
@@ -414,7 +421,7 @@ test.describe('Chat Keyboard Shortcuts', () => {
 
   test('Escape clears the input', async ({ page }) => {
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test message')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     await textarea.press('Escape')
     
     // Escape might clear or might not - depends on implementation
@@ -433,6 +440,7 @@ test.describe('Chat Performance', () => {
     // Page should load within 10 seconds
     expect(loadTime).toBeLessThan(10000)
     
+    await helpers.ensureChatComposerVisible(page)
     await expect(page.locator('textarea').first()).toBeVisible({ timeout: 15000 })
   })
 
@@ -440,6 +448,7 @@ test.describe('Chat Performance', () => {
     await mockApi.mockAllApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
     
     const textarea = page.locator('textarea').first()
     await expect(textarea).toBeVisible({ timeout: 15000 })
@@ -458,9 +467,10 @@ test.describe('Chat Performance', () => {
     await mockApi.mockChatSuccess('Quick response')
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
     
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test')
+    await textarea.fill(E2E_DIRECT_PROMPT)
     
     const startTime = Date.now()
     await textarea.press('Enter')
@@ -477,6 +487,7 @@ test.describe('Chat Accessibility', () => {
     await mockApi.mockAllApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('chat input is focusable', async ({ page }) => {

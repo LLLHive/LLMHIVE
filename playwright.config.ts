@@ -28,10 +28,10 @@ export default defineConfig({
   // Limit workers on CI for stability
   workers: process.env.CI ? 1 : undefined,
   
-  // Reporter configuration
-  reporter: process.env.CI 
+  // Reporter configuration (line = one line per test locally so the terminal does not look "stuck")
+  reporter: process.env.CI
     ? [['list'], ['html', { outputFolder: 'playwright-report' }]]
-    : [['list']],
+    : [['line'], ['list']],
   
   // Output directory for test artifacts
   outputDir: 'test-results/',
@@ -70,8 +70,10 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 240 * 1000, // 4 minutes for CI (increased for stability)
-    stdout: 'pipe',
-    stderr: 'pipe',
+    // Piped dev-server logs can fill OS buffers and deadlock `next dev` (hours-long hang, no test output).
+    // CI keeps pipe for Action logs; local discards server stdio so the runner stays healthy.
+    stdout: process.env.CI ? 'pipe' : 'ignore',
+    stderr: process.env.CI ? 'pipe' : 'ignore',
     // Increase retry interval and count for CI stability
     ignoreHTTPSErrors: true,
     // Pass environment variables to the server

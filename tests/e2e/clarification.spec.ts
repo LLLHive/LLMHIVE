@@ -1,11 +1,11 @@
-import { test, expect, helpers, MOCK_RESPONSES } from './fixtures'
+import { test, expect, helpers, E2E_CHAT_PROMPT } from './fixtures'
 
 /**
  * Clarifying Questions Regression Tests
- * 
+ *
  * CRITICAL: These tests ensure the clarifying questions feature continues working.
  * DO NOT remove or disable these tests.
- * 
+ *
  * The clarifying questions flow:
  * 1. User sends an ambiguous query
  * 2. Backend detects ambiguity and returns clarifying questions
@@ -16,13 +16,13 @@ import { test, expect, helpers, MOCK_RESPONSES } from './fixtures'
 
 test.describe('Clarifying Questions - Regression Tests', () => {
   test.beforeEach(async ({ page, mockApi }) => {
-    await mockApi.mockAllApisSuccess()
+    await mockApi.mockCoreApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('clarifying questions are displayed for ambiguous queries', async ({ page }) => {
-    // Mock a response that might trigger clarification UI
     await page.route('/api/chat', async (route) => {
       route.fulfill({
         status: 200,
@@ -36,17 +36,14 @@ test.describe('Clarifying Questions - Regression Tests', () => {
         body: 'To give you a better answer, could you please clarify what you mean by "the best"?',
       })
     })
-    
-    // Send an ambiguous query
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('What is the best one?')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    // Wait for response
-    await page.waitForResponse('/api/chat')
+    await chatResp
     await page.waitForTimeout(500)
-    
-    // Should show some response
+
     const bodyText = await page.locator('body').textContent()
     expect(bodyText).toBeTruthy()
   })
@@ -54,16 +51,15 @@ test.describe('Clarifying Questions - Regression Tests', () => {
   test('user can answer clarification and get complete response', async ({ page }) => {
     let requestCount = 0
     let lastRequest: any = null
-    
+
     await page.route('/api/chat', async (route) => {
       requestCount++
       const postData = route.request().postData()
       if (postData) {
         lastRequest = JSON.parse(postData)
       }
-      
+
       if (requestCount === 1) {
-        // First request: return clarifying question
         route.fulfill({
           status: 200,
           contentType: 'text/plain',
@@ -74,7 +70,6 @@ test.describe('Clarifying Questions - Regression Tests', () => {
           body: 'Are you asking about programming languages or spoken languages?',
         })
       } else {
-        // Second request: complete answer
         route.fulfill({
           status: 200,
           contentType: 'text/plain',
@@ -85,36 +80,33 @@ test.describe('Clarifying Questions - Regression Tests', () => {
         })
       }
     })
-    
-    // Send initial query
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Which language is the best?')
+    const firstResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
+    await firstResp
     await page.waitForTimeout(1000)
-    
-    // If there's a way to answer clarification, do it
-    // Otherwise, just send a follow-up
+
+    const secondResp = helpers.waitForNextChatPostResponse(page)
     await textarea.fill('I meant programming languages')
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
+    await secondResp
     await page.waitForTimeout(500)
-    
-    // Should have made 2 requests
+
     expect(requestCount).toBe(2)
+    expect(lastRequest).toBeDefined()
   })
 
   test('clarification context is passed to backend', async ({ page }) => {
     let capturedRequest: any = null
-    
+
     await page.route('/api/chat', async (route) => {
       const postData = route.request().postData()
       if (postData) {
         capturedRequest = JSON.parse(postData)
       }
-      
+
       route.fulfill({
         status: 200,
         contentType: 'text/plain',
@@ -124,24 +116,25 @@ test.describe('Clarifying Questions - Regression Tests', () => {
         body: 'Here is the information you requested.',
       })
     })
-    
-    // Send a query with context
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Tell me more about that')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
-    
+    await chatResp
+
     expect(capturedRequest).toBeDefined()
-    expect(capturedRequest.message || capturedRequest.prompt).toBeTruthy()
+    const msgs = capturedRequest.messages as Array<{ role?: string; content?: string }> | undefined
+    const lastUser = msgs?.filter((m) => m.role === 'user').pop()
+    expect(lastUser?.content?.length).toBeGreaterThan(10)
   })
 
   test('skip clarification and proceed works', async ({ page }) => {
     let requestCount = 0
-    
+
     await page.route('/api/chat', async (route) => {
       requestCount++
-      
+
       route.fulfill({
         status: 200,
         contentType: 'text/plain',
@@ -151,15 +144,13 @@ test.describe('Clarifying Questions - Regression Tests', () => {
         body: 'Based on general context, here is a comprehensive answer...',
       })
     })
-    
-    // Send a query
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Compare them')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
-    
-    // Should have made at least one request
+    await chatResp
+
     expect(requestCount).toBeGreaterThan(0)
   })
 
@@ -176,26 +167,24 @@ test.describe('Clarifying Questions - Regression Tests', () => {
         body: 'The capital of France is Paris.',
       })
     })
-    
-    // Send a clear, unambiguous query
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('What is the capital of France?')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
+    await chatResp
     await page.waitForTimeout(500)
-    
-    // Should show the answer
+
     const bodyText = await page.locator('body').textContent()
     expect(bodyText?.toLowerCase()).toContain('paris')
   })
 
   test('multiple clarification rounds work correctly', async ({ page }) => {
     let requestCount = 0
-    
+
     await page.route('/api/chat', async (route) => {
       requestCount++
-      
+
       route.fulfill({
         status: 200,
         contentType: 'text/plain',
@@ -206,33 +195,34 @@ test.describe('Clarifying Questions - Regression Tests', () => {
         body: `Response ${requestCount}: Here is the information.`,
       })
     })
-    
+
     const textarea = page.locator('textarea').first()
-    
-    // Round 1
-    await textarea.fill('First question')
+
+    const r1 = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(`${E2E_CHAT_PROMPT} (round 1)`)
     await textarea.press('Enter')
-    await page.waitForResponse('/api/chat')
-    
-    // Round 2
-    await textarea.fill('Follow up question')
+    await r1
+
+    const r2 = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(`${E2E_CHAT_PROMPT} (round 2)`)
     await textarea.press('Enter')
-    await page.waitForResponse('/api/chat')
-    
-    // Round 3
-    await textarea.fill('Another follow up')
+    await r2
+
+    const r3 = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(`${E2E_CHAT_PROMPT} (round 3)`)
     await textarea.press('Enter')
-    await page.waitForResponse('/api/chat')
-    
+    await r3
+
     expect(requestCount).toBe(3)
   })
 })
 
 test.describe('Clarifying Questions - Edge Cases', () => {
   test.beforeEach(async ({ page, mockApi }) => {
-    await mockApi.mockAllApisSuccess()
+    await mockApi.mockCoreApisSuccess()
     await page.goto('/')
     await helpers.waitForPageReady(page)
+    await helpers.ensureChatComposerVisible(page)
   })
 
   test('handles empty clarification response gracefully', async ({ page }) => {
@@ -246,105 +236,105 @@ test.describe('Clarifying Questions - Edge Cases', () => {
         body: '',
       })
     })
-    
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('What?')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
+    await chatResp
     await page.waitForTimeout(500)
-    
-    // Should not crash
+
     await expect(page.locator('textarea').first()).toBeVisible()
   })
 
   test('handles clarification with special characters', async ({ page }) => {
     let capturedMessage = ''
-    
+
     await page.route('/api/chat', async (route) => {
       const postData = route.request().postData()
       if (postData) {
-        const parsed = JSON.parse(postData)
-        capturedMessage = parsed.message || parsed.prompt || ''
+        const parsed = JSON.parse(postData) as {
+          message?: string
+          prompt?: string
+          messages?: Array<{ role?: string; content?: string }>
+        }
+        const lastUser = parsed.messages?.filter((m) => m.role === 'user').pop()
+        capturedMessage = parsed.message || parsed.prompt || lastUser?.content || ''
       }
-      
+
       route.fulfill({
         status: 200,
         contentType: 'text/plain',
         body: 'Processed your question with special characters.',
       })
     })
-    
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('What about "quotes" & <tags> and emoji 🎉?')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill('What about "quotes" & <tags> and emoji 🎉? Please answer briefly for testing.')
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
-    
-    // Should have preserved special characters
+    await chatResp
+
     expect(capturedMessage).toContain('quotes')
   })
 
   test('clarification timeout is handled', async ({ page }) => {
     await page.route('/api/chat', async (route) => {
-      // Delay but eventually respond
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000))
       route.fulfill({
         status: 200,
         contentType: 'text/plain',
         body: 'Delayed response received.',
       })
     })
-    
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Slow question')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    // Wait for the delayed response
-    await page.waitForResponse('/api/chat', { timeout: 10000 })
-    
-    // Should show some response
+    await chatResp
+
     const bodyText = await page.locator('body').textContent()
     expect(bodyText).toBeTruthy()
   })
 })
 
 test.describe('Clarifying Questions - API Integration', () => {
-  test('orchestration settings include clarification context', async ({ page }) => {
+  test('orchestration settings include clarification context', async ({ page, mockApi }) => {
     let capturedRequest: any = null
-    
+
+    await mockApi.mockCoreApisSuccess()
     await page.route('/api/chat', async (route) => {
       const postData = route.request().postData()
       if (postData) {
         capturedRequest = JSON.parse(postData)
       }
-      
+
       route.fulfill({
         status: 200,
         contentType: 'text/plain',
         body: 'Response with orchestration.',
       })
     })
-    
+
     await page.goto('/')
     await helpers.waitForPageReady(page)
-    
+    await helpers.ensureChatComposerVisible(page)
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Test query')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    await page.waitForResponse('/api/chat')
-    
+    await chatResp
+
     expect(capturedRequest).toBeDefined()
     if (capturedRequest) {
-      // Should have orchestratorSettings
       expect(capturedRequest.orchestratorSettings).toBeDefined()
     }
   })
 
-  test('clarification metadata is included in response headers', async ({ page }) => {
-    let responseHeaders: Record<string, string> = {}
-    
+  test('clarification metadata is included in response headers', async ({ page, mockApi }) => {
+    await mockApi.mockCoreApisSuccess()
     await page.route('/api/chat', async (route) => {
       route.fulfill({
         status: 200,
@@ -359,18 +349,17 @@ test.describe('Clarifying Questions - API Integration', () => {
         body: 'Multi-model response.',
       })
     })
-    
+
     await page.goto('/')
     await helpers.waitForPageReady(page)
-    
+    await helpers.ensureChatComposerVisible(page)
+
     const textarea = page.locator('textarea').first()
-    await textarea.fill('Clear and specific question')
+    const chatResp = helpers.waitForNextChatPostResponse(page)
+    await textarea.fill(E2E_CHAT_PROMPT)
     await textarea.press('Enter')
-    
-    const response = await page.waitForResponse('/api/chat')
-    
-    // Verify response headers are accessible
+    const response = await chatResp
+
     expect(response.headers()['x-models-used']).toBeDefined()
   })
 })
-

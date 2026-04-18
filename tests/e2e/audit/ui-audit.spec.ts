@@ -100,7 +100,7 @@ async function takeScreenshot(page: Page, name: string): Promise<string> {
   }
   const filename = `${name.replace(/[^a-z0-9]/gi, '_')}.png`
   const filepath = path.join(dir, filename)
-  await page.screenshot({ path: filepath, fullPage: true })
+  await page.screenshot({ path: filepath, fullPage: true, timeout: 60000 })
   return filepath
 }
 
@@ -158,7 +158,7 @@ test.describe('UI Audit - Route Discovery', () => {
     test(`Route loads without errors: ${route.name} (${route.path})`, async ({ page }) => {
       setupListeners(page, route.path)
       
-      const response = await page.goto(route.path, { waitUntil: 'networkidle' })
+      const response = await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 60000 })
       expect(response?.status()).toBeLessThan(400)
       
       // Wait for React hydration
@@ -199,7 +199,7 @@ test.describe('UI Audit - OpenRouter Rankings Correctness', () => {
   })
 
   test('Models page: Category list is complete', async ({ page }) => {
-    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.goto('/models', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(1000)
     
     // Take screenshot
@@ -266,7 +266,7 @@ test.describe('UI Audit - OpenRouter Rankings Correctness', () => {
   })
 
   test('Models page: Top 10 rankings match API order', async ({ page }) => {
-    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.goto('/models', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(1000)
     
     // Click on programming tab if available
@@ -313,7 +313,7 @@ test.describe('UI Audit - OpenRouter Rankings Correctness', () => {
   })
 
   test('Models page: Last synced timestamp is displayed', async ({ page }) => {
-    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.goto('/models', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(1000)
     
     // Look for timestamp indicator
@@ -348,7 +348,7 @@ test.describe('UI Audit - OpenRouter Rankings Correctness', () => {
   })
 
   test('Models page: Provider logos render for models', async ({ page }) => {
-    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.goto('/models', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(1000)
     
     await takeScreenshot(page, 'models_logos')
@@ -384,7 +384,7 @@ test.describe('UI Audit - Category Parity', () => {
 
   test('Categories match between Models page and Chat dropdown', async ({ page }) => {
     // Step 1: Go to Models page and collect categories
-    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.goto('/models', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(1000)
     
     const modelsCategoryElements = page.locator('[role="tab"]')
@@ -401,7 +401,7 @@ test.describe('UI Audit - Category Parity', () => {
     await takeScreenshot(page, 'parity_models_categories')
     
     // Step 2: Go to home and open chat model dropdown
-    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(500)
     
     // Look for the Models button in toolbar (with Cpu icon)
@@ -469,7 +469,7 @@ test.describe('UI Audit - Category Parity', () => {
   })
 
   test('Top-10 rankings order matches between Models page and API', async ({ page }) => {
-    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.goto('/models', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(1000)
     
     // Click programming category
@@ -531,7 +531,7 @@ test.describe('UI Audit - Chat UI', () => {
   })
 
   test('Chat page: Model dropdown has categories', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.waitForTimeout(500)
     
     // Look for model selector dropdown
@@ -566,7 +566,7 @@ test.describe('UI Audit - Chat UI', () => {
 
   test('Chat page: Clarifying questions flow works', async ({ page }) => {
     await setupClarifyingQuestionsMock(page)
-    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 })
     
     // The home screen shows a "Start Chatting" button - need to click it first
     const startChatButton = page.locator('button:has-text("Start Chatting"), button:has-text("New Chat")').first()
@@ -638,22 +638,22 @@ test.describe('UI Audit - Chat UI', () => {
 })
 
 test.describe('UI Audit - Click Crawler', () => {
-  // Click crawlers need extra time
-  test.setTimeout(120000)
+  // Click crawlers need extra time (Settings has many interactive controls)
+  test.setTimeout(180000)
   
   test.beforeEach(async ({ page }) => {
     await setupOpenRouterMocks(page)
   })
 
   test('Safe click crawl on Home page', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 })
     setupListeners(page, '/')
     
     await crawlPage(page, '/')
   })
 
   test('Safe click crawl on Models page', async ({ page }) => {
-    await page.goto('/models', { waitUntil: 'networkidle' })
+    await page.goto('/models', { waitUntil: 'domcontentloaded', timeout: 60000 })
     setupListeners(page, '/models')
     
     // Models page has 300+ model cards, so we limit to 25 clicks to avoid timeout
@@ -661,17 +661,17 @@ test.describe('UI Audit - Click Crawler', () => {
   })
 
   test('Safe click crawl on Orchestration page', async ({ page }) => {
-    await page.goto('/orchestration', { waitUntil: 'networkidle' })
+    await page.goto('/orchestration', { waitUntil: 'domcontentloaded', timeout: 60000 })
     setupListeners(page, '/orchestration')
     
     await crawlPage(page, '/orchestration')
   })
 
   test('Safe click crawl on Settings page', async ({ page }) => {
-    await page.goto('/settings', { waitUntil: 'networkidle' })
+    await page.goto('/settings', { waitUntil: 'domcontentloaded', timeout: 60000 })
     setupListeners(page, '/settings')
     
-    await crawlPage(page, '/settings')
+    await crawlPage(page, '/settings', 25)
   })
 })
 
@@ -746,7 +746,7 @@ async function crawlPage(page: Page, route: string, maxClicks?: number) {
           ? (currentUrl.endsWith('/') || currentUrl.endsWith(':3000'))
           : currentUrl.includes(route)
         if (!isOnCorrectPage) {
-          await page.goto(route, { waitUntil: 'networkidle' })
+          await page.goto(route, { waitUntil: 'domcontentloaded', timeout: 60000 })
         }
       }
       
@@ -776,7 +776,7 @@ test.describe('UI Audit - Accessibility', () => {
 
   for (const route of ROUTES_TO_AUDIT) {
     test(`Basic a11y check: ${route.name}`, async ({ page }) => {
-      await page.goto(route.path, { waitUntil: 'networkidle' })
+      await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 60000 })
       
       // Check for basic a11y issues
       const violations: string[] = []

@@ -12,6 +12,10 @@ import { test as base, expect as baseExpect, Page, Route } from '@playwright/tes
  * })
  */
 
+/** Long-enough prompt for E2E so client-side clarification does not block /api/chat. */
+export const E2E_CHAT_PROMPT =
+  'What is the capital of France? Please answer in one short sentence for this test.'
+
 // Standard mock responses
 export const MOCK_RESPONSES = {
   chat: {
@@ -64,6 +68,7 @@ interface MockApiHelpers {
   
   // Generic helpers
   mockAllApisSuccess: () => Promise<void>
+  mockCoreApisSuccess: () => Promise<void>
   clearAllMocks: () => Promise<void>
 }
 
@@ -277,6 +282,13 @@ export const test = base.extend<{
         await helpers.mockReasoningConfigSuccess()
       },
 
+      /** Agents, settings, reasoning — not chat (lets tests own /api/chat routing). */
+      mockCoreApisSuccess: async () => {
+        await helpers.mockAgentsSuccess()
+        await helpers.mockSettingsSuccess()
+        await helpers.mockReasoningConfigSuccess()
+      },
+
       /**
        * Clear all route handlers
        */
@@ -298,10 +310,28 @@ export const helpers = {
    */
   async waitForPageReady(page: Page) {
     await page.waitForLoadState('domcontentloaded')
-    // Wait for React hydration
-    await page.waitForFunction(() => {
-      return document.readyState === 'complete'
+    await page.waitForFunction(() => document.readyState === 'complete', undefined, {
+      timeout: 60000,
     })
+  },
+
+  /**
+   * Home shows HomeScreen until a conversation exists; open New Chat so ChatArea (textarea) mounts.
+   */
+  async ensureChatComposerVisible(page: Page) {
+    const textarea = page.locator('textarea').first()
+    if (await textarea.isVisible().catch(() => false)) {
+      return
+    }
+    await page.getByRole('button', { name: /New Chat/i }).click()
+    await textarea.waitFor({ state: 'visible', timeout: 15000 })
+  },
+
+  /** Call before sending a message; await after press — avoids missing fast /api/chat responses. */
+  waitForNextChatPostResponse(page: Page) {
+    return page.waitForResponse(
+      (r) => r.url().includes('/api/chat') && r.request().method() === 'POST',
+    )
   },
 
   /**
@@ -357,7 +387,7 @@ export const helpers = {
    */
   async openDrawer(page: Page, buttonName: string) {
     await page.getByRole('button', { name: new RegExp(buttonName, 'i') }).click()
-    await page.waitForSelector('[role="dialog"], [data-state="open"]', { state: 'visible', timeout: 5000 })
+    await page.waitForSelector('[role="dialog"]', { state: 'visible', timeout: 5000 })
   },
 
   /**
