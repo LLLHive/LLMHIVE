@@ -51,7 +51,10 @@ import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequired
 import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+import {
+  BENCHMARK_CLAIM_PILL_TEXT,
+  BENCHMARK_CLAIM_SHORT,
+} from "@/lib/benchmark-claim"
 
 interface HomeScreenProps {
   onNewChat: () => void
@@ -343,13 +346,13 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
           Patented multi-agent orchestration for enhanced accuracy and performance.
         </p>
 
-        {/* #1 Benchmark: shorter pill (~75% prior vertical padding); claim 2× type size; my = inset */}
-        <div className="my-3 flex w-full max-w-[min(100%,calc(100vw-1rem))] items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2 py-[0.2rem] shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-2.5 sm:py-1 md:gap-2.5 md:px-3">
+        {/* #1 Benchmark pill: shrink-to-fit, centered; type −10% vs prior step */}
+        <div className="my-3 mx-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2 py-[0.2rem] shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-2.5 sm:py-1 md:gap-2.5 md:px-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-10 sm:w-10 md:h-11 md:w-11">
             <span className="text-sm font-bold text-white sm:text-base md:text-lg">#1</span>
           </div>
-          <p className="min-w-0 flex-1 bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[22px] font-semibold leading-[1.1] text-transparent sm:text-[26px] md:text-[28px] lg:text-[30px]">
-            {BENCHMARK_CLAIM_BANNER}
+          <p className="shrink-0 whitespace-nowrap bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[19.8px] font-semibold leading-[1.1] text-transparent sm:text-[23.4px] md:text-[25.2px] lg:text-[27px]">
+            {BENCHMARK_CLAIM_PILL_TEXT}
           </p>
         </div>
       </div>
