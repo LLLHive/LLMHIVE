@@ -668,10 +668,10 @@ test.describe('PR8: Strategy Selection', () => {
   })
 
   test('elite strategy can be selected', async ({ page }) => {
-    const eliteCard = page.locator('button.settings-card').filter({ hasText: 'Elite Mode' })
+    const eliteCard = page.locator('button.settings-card').filter({ hasText: 'Premium Mode' })
     await eliteCard.scrollIntoViewIfNeeded()
     await eliteCard.click({ timeout: 15000 })
-    await expect(page.getByRole('dialog', { name: /Elite Mode/i })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('dialog', { name: /Premium Mode/i })).toBeVisible({ timeout: 15000 })
     await expect(page.getByText('Orchestration Strategy').first()).toBeVisible()
   })
 

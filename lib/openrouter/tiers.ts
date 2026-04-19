@@ -38,7 +38,7 @@ const DEV_MODE = false
 export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   free: {
     name: 'free',
-    displayName: 'Free',
+    displayName: 'Standard',
     description: 'Basic access to get started',
     maxModelsInTeam: 2,
     maxConcurrentRequests: 1,
@@ -449,9 +449,9 @@ export function canAccessModel(userTier: UserTier, modelId: string): boolean {
 /**
  * Get tier badge color for display
  * 
- * NOTE: We now only display 2 tiers to users: "Elite" and "Free"
- * - Free: Green badge (free models)
- * - Elite: Gold/amber badge (all paid tier models - starter, pro, enterprise)
+ * NOTE: We display 2 tiers to users: "Premium" and "Standard"
+ * - Standard: Green badge (free-tier models)
+ * - Premium: Gold/amber badge (all paid tier models - starter, pro, enterprise)
  */
 export function getTierBadgeColor(tier: ModelAccessLevel): string {
   switch (tier) {
@@ -460,7 +460,7 @@ export function getTierBadgeColor(tier: ModelAccessLevel): string {
     case 'starter':
     case 'pro':
     case 'enterprise':
-      // All paid tiers display as "Elite" with gold/amber styling
+      // All paid tiers display as "Premium" with gold/amber styling
       return 'bg-amber-500/10 text-amber-500 border-amber-500/30'
     default: 
       return 'bg-gray-500/10 text-gray-600 border-gray-500/20'
@@ -470,19 +470,18 @@ export function getTierBadgeColor(tier: ModelAccessLevel): string {
 /**
  * Get tier display name
  * 
- * NOTE: We now only display 2 tiers to users: "Elite" and "Free"
- * - Free tier models → "Free"
- * - All other tiers (starter, pro, enterprise) → "Elite"
+ * NOTE: We display 2 tiers to users: "Premium" and "Standard"
+ * - Free tier models → "Standard"
+ * - All other tiers (starter, pro, enterprise) → "Premium"
  */
 export function getTierDisplayName(tier: ModelAccessLevel): string {
   switch (tier) {
     case 'free': 
-      return 'Free'
+      return 'Standard'
     case 'starter':
     case 'pro':
     case 'enterprise':
-      // All paid tiers display as "Elite"
-      return 'Elite'
+      return 'Premium'
     default: 
       return 'Unknown'
   }

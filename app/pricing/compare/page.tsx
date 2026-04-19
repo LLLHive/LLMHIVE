@@ -17,7 +17,7 @@ export default function PricingComparePage() {
         {
           title: "Feature Highlights",
           items: [
-            "ELITE query quotas and unlimited FREE usage.",
+            "Premium query quotas and unlimited Standard usage.",
             "Memory retention differences by plan.",
             "Support SLAs and response times.",
           ],

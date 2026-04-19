@@ -161,24 +161,26 @@ export async function GET() {
     // Enterprise tier with perSeat quotas
     if (isUnlimited) {
       status = "normal"
-      statusMessage = "Enterprise tier - ELITE orchestration active"
+      statusMessage = "Enterprise tier — Premium orchestration active"
     } else if (tierName === "free") {
       status = "normal"
-      statusMessage = "Free tier active - upgrade for ELITE queries"
+      statusMessage = "Standard plan active — upgrade for Premium queries"
       showUpgradePrompt = true
-      upgradeMessage = "Upgrade to Lite for ELITE queries and higher limits"
+      upgradeMessage = "Upgrade to Lite for Premium queries and higher limits"
     } else if (eliteRemaining === 0) {
       status = "throttled"
       const afterTier = quotas.afterQuotaTier
-      statusMessage = `ELITE quota exhausted. Using ${afterTier.toUpperCase()} mode (still great quality!)`
+      const afterLabel =
+        afterTier === "free" ? "Standard" : afterTier === "standard" ? "Balanced" : afterTier === "budget" ? "Budget" : afterTier
+      statusMessage = `Premium quota exhausted. Using ${afterLabel} mode (still great quality!)`
       showUpgradePrompt = true
-      upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more ELITE queries" : "Upgrade to Enterprise for team features"
+      upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more Premium queries" : "Upgrade to Enterprise for team features"
     } else if (elitePercentUsed >= 0.8) {
       status = "warning"
-      statusMessage = `${eliteRemaining} ELITE queries remaining. They'll reset in ${getDaysUntilReset()} days.`
+      statusMessage = `${eliteRemaining} Premium queries remaining. They'll reset in ${getDaysUntilReset()} days.`
       showUpgradePrompt = elitePercentUsed >= 0.9
       if (showUpgradePrompt) {
-        upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more ELITE queries" : "Upgrade for unlimited ELITE queries"
+        upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more Premium queries" : "Upgrade for unlimited Premium queries"
       }
     }
     

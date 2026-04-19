@@ -49,7 +49,7 @@ export function StrategyDropdown({
       <DropdownMenuContent align="start" className="w-80 p-3">
         {/* Header */}
         <div className="mb-2">
-          <span className="text-sm font-medium">Elite Strategy</span>
+          <span className="text-sm font-medium">Premium strategy</span>
           <p className="text-[10px] text-muted-foreground">Configure how models collaborate</p>
         </div>
         

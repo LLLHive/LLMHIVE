@@ -17,7 +17,7 @@ export default function UsageDashboardPage() {
         {
           title: "Usage Insights",
           items: [
-            "ELITE vs FREE query utilization trends.",
+            "Premium vs Standard query utilization trends.",
             "Model routing distribution and success rates.",
             "Cost per workflow and per team breakdowns.",
           ],

@@ -92,7 +92,7 @@ export const businessPages: Record<string, PageContent> = {
       {
         title: "Uptime Commitments",
         items: [
-          "99.5% availability for ELITE orchestration.",
+          "99.5% availability for Premium orchestration.",
           "Service credit policy tied to monthly uptime.",
           "Transparent maintenance communications.",
         ],
@@ -325,7 +325,7 @@ export const businessPages: Record<string, PageContent> = {
         title: "Product",
         items: [
           "How orchestration selects the right model.",
-          "What happens after ELITE query limits.",
+          "What happens after Premium query limits.",
           "How to use tool verification features.",
         ],
       },

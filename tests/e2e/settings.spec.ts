@@ -125,14 +125,14 @@ test.describe('Billing Settings', () => {
 
     const dialog = page.getByRole('dialog', { name: 'Billing' })
     await expect(dialog.getByText('Current Plan')).toBeVisible()
-    await expect(dialog.getByText('Free').first()).toBeVisible()
+    await expect(dialog.getByText('Standard').first()).toBeVisible()
   })
 
   test('Billing drawer shows upgrade action', async ({ page }) => {
     await page.locator('button.settings-card').filter({ hasText: 'Billing' }).click()
     await page.waitForTimeout(500)
 
-    await expect(page.getByRole('button', { name: /Upgrade to ELITE/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Upgrade to Premium/i })).toBeVisible()
   })
 })
 

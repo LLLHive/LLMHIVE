@@ -19,7 +19,7 @@ export default function IntegrationsQuickBooksPage() {
           items: [
             "Auto-sync invoices and billing history.",
             "Tag usage by team and cost center.",
-            "Track ELITE overages in QuickBooks.",
+            "Track Premium overages in QuickBooks.",
           ],
         },
         {

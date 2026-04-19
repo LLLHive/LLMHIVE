@@ -72,17 +72,17 @@ const features = [
 
 const tiers = [
   {
-    name: "Free",
+    name: "Standard",
     price: "$0",
     period: "/forever",
     description: "BEATS most paid models",
     features: [
-      "UNLIMITED FREE queries",
+      "Unlimited Standard queries",
       "Patented AI orchestration",
       "Outperforms single models",
       "Knowledge Base access"
     ],
-    cta: "Start Free",
+    cta: "Get started",
     href: "/sign-up",
     highlighted: false,
     isFree: true
@@ -93,7 +93,7 @@ const tiers = [
     period: "/month",
     description: "#1 in 5 out of 8 benchmark categories",
     features: [
-      "100 ELITE queries (ELITE tier: 5/8 categories #1)",
+      "100 Premium queries (5/8 categories #1)",
       "Premium AI orchestration",
       "Knowledge Base access",
       "Email support"
@@ -108,7 +108,7 @@ const tiers = [
     period: "/month",
     description: "Full power for professionals",
     features: [
-      "500 ELITE queries (ELITE tier: 5/8 categories #1)",
+      "500 Premium queries (5/8 categories #1)",
       "Full API access",
       "DeepConf & Prompt Diffusion",
       "Priority support"
@@ -124,7 +124,7 @@ const tiers = [
     description: "For teams with compliance needs",
     features: [
       "Min 5 seats ($175+/mo)",
-      "400 ELITE/seat",
+      "400 Premium/seat",
       "SSO & SAML integration",
       "Dedicated support manager"
     ],
@@ -190,7 +190,7 @@ function renderStructuredData() {
           "@type": "Offer",
           priceCurrency: "USD",
           price: "0",
-          category: "Free",
+          category: "Standard",
           url: "https://www.llmhive.ai/pricing",
         },
         featureList: features.map((feature) => feature.title),

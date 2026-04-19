@@ -163,7 +163,7 @@ export default function PromoClient() {
               </Link>
               <Link href="/sign-up">
                 <Button size="sm" className="bronze-gradient text-white">
-                  Start Free
+                  Get started
                 </Button>
               </Link>
             </div>
@@ -209,8 +209,8 @@ export default function PromoClient() {
           </h1>
 
           <p className="text-base md:text-lg text-white/80 mb-6 max-w-2xl mx-auto">
-            <strong className="text-yellow-400">500 ELITE queries</strong> with {BENCHMARK_CLAIM_SHORT}.
-            Then <strong className="text-green-400">UNLIMITED FREE</strong> queries that still beat most
+            <strong className="text-yellow-400">500 Premium queries</strong> with {BENCHMARK_CLAIM_SHORT}.
+            Then <strong className="text-green-400">unlimited Standard</strong> queries that still beat most
             paid models.
           </p>
 
@@ -230,7 +230,7 @@ export default function PromoClient() {
                 className="border-2 border-green-500/50 text-green-400 hover:bg-green-500/10 text-lg px-8 h-14"
               >
                 <Star className="h-5 w-5 mr-2" />
-                Try Free
+                Try Standard
               </Button>
             </Link>
           </div>
@@ -321,19 +321,19 @@ export default function PromoClient() {
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Free */}
+            {/* Standard ($0) */}
             <div className="p-4 rounded-xl llmhive-glass border border-[var(--bronze)]/30 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
                 <Star className="h-4 w-4 text-[var(--bronze)]" />
-                <h3 className="text-base font-bold text-white">Free</h3>
+                <h3 className="text-base font-bold text-white">Standard</h3>
               </div>
               <div className="text-xl font-bold text-white mb-0.5">$0</div>
-              <p className="text-[10px] text-white/60 mb-2">Forever free</p>
+              <p className="text-[10px] text-white/60 mb-2">Forever</p>
 
               {/* Quota highlight */}
               <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/30 mb-2">
                 <div className="flex items-center gap-1.5 text-green-400 text-[11px] font-semibold">
-                  <span>🆓</span> UNLIMITED FREE queries
+                  <span>🆓</span> Unlimited Standard queries
                 </div>
               </div>
 
@@ -357,7 +357,7 @@ export default function PromoClient() {
               </ul>
               <Link href="/sign-up" className="mt-auto">
                 <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white text-xs h-9">
-                  Start Free <ArrowRight className="h-3 w-3 ml-1" />
+                  Get started <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </Link>
             </div>
@@ -374,15 +374,15 @@ export default function PromoClient() {
               {/* Quota highlight */}
               <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 mb-2">
                 <div className="flex items-center gap-1.5 text-blue-400 text-[11px] font-semibold">
-                  <Zap className="h-3 w-3" /> 100 ELITE queries
+                  <Zap className="h-3 w-3" /> 100 Premium queries
                 </div>
-                <div className="text-green-400 text-[10px]">Then UNLIMITED FREE</div>
+                <div className="text-green-400 text-[10px]">Then unlimited Standard</div>
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
                 <li className="flex items-center gap-1.5 text-white/80">
                   <Check className="h-2.5 w-2.5 text-blue-400" />
-                  #1 quality when using ELITE
+                  #1 quality when using Premium
                 </li>
                 <li className="flex items-center gap-1.5 text-white/80">
                   <Check className="h-2.5 w-2.5 text-blue-400" />
@@ -419,9 +419,9 @@ export default function PromoClient() {
               {/* Quota highlight */}
               <div className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 mb-2">
                 <div className="flex items-center gap-1.5 text-yellow-400 text-[11px] font-semibold">
-                  <Trophy className="h-3 w-3" /> 500 ELITE queries
+                  <Trophy className="h-3 w-3" /> 500 Premium queries
                 </div>
-                <div className="text-green-400 text-[10px]">Then UNLIMITED FREE</div>
+                <div className="text-green-400 text-[10px]">Then unlimited Standard</div>
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
@@ -461,9 +461,9 @@ export default function PromoClient() {
               {/* Quota highlight */}
               <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 mb-2">
                 <div className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-semibold">
-                  <Zap className="h-3 w-3" /> 400 ELITE/seat
+                  <Zap className="h-3 w-3" /> 400 Premium/seat
                 </div>
-                <div className="text-green-400 text-[10px]">Then UNLIMITED FREE</div>
+                <div className="text-green-400 text-[10px]">Then unlimited Standard</div>
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
@@ -501,10 +501,10 @@ export default function PromoClient() {
             <Image src="/logo.png" alt="LLMHive" fill className="object-contain drop-shadow-2xl" />
           </div>
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-            Ready for <span className="text-yellow-400">ELITE benchmark quality</span>?
+            Ready for <span className="text-yellow-400">Premium benchmark quality</span>?
           </h2>
           <p className="text-white/70 mb-6">
-            500 ELITE queries. UNLIMITED FREE after. Just{" "}
+            500 Premium queries. Unlimited Standard after. Just{" "}
             <strong className="text-yellow-400">$29.99/month</strong>.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -520,7 +520,7 @@ export default function PromoClient() {
                 variant="outline"
                 className="border-white/30 text-white hover:bg-white/10 text-lg px-8 h-12"
               >
-                Try Free
+                Try Standard
               </Button>
             </Link>
           </div>

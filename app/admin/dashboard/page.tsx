@@ -106,7 +106,7 @@ const TIER_COLORS: Record<string, string> = {
 }
 
 const TIER_LABELS: Record<string, string> = {
-  free: "Free",
+  free: "Standard",
   lite: "Lite",
   pro: "Pro",
   enterprise: "Enterprise",
@@ -314,9 +314,9 @@ export default function AdminDashboardPage() {
   }))
 
   const usageData = [
-    { name: "ELITE", used: stats.usage.eliteQueriesUsed, fill: "#10b981" },
-    { name: "STANDARD", used: stats.usage.standardQueriesUsed, fill: "#eab308" },
-    { name: "BUDGET", used: stats.usage.budgetQueriesUsed, fill: "#f97316" },
+    { name: "Premium", used: stats.usage.eliteQueriesUsed, fill: "#10b981" },
+    { name: "Balanced", used: stats.usage.standardQueriesUsed, fill: "#eab308" },
+    { name: "Budget", used: stats.usage.budgetQueriesUsed, fill: "#f97316" },
   ]
 
   return (
@@ -435,7 +435,7 @@ export default function AdminDashboardPage() {
                   <TabsList className="mb-4">
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="revenue">Revenue</TabsTrigger>
-                    <TabsTrigger value="usage">ELITE Usage</TabsTrigger>
+                    <TabsTrigger value="usage">Premium usage</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="users">
@@ -528,7 +528,7 @@ export default function AdminDashboardPage() {
                         <th className="text-right py-3 px-2 font-medium">Users</th>
                         <th className="text-right py-3 px-2 font-medium">MRR</th>
                         <th className="text-right py-3 px-2 font-medium">ARPU</th>
-                        <th className="text-right py-3 px-2 font-medium">ELITE Used</th>
+                        <th className="text-right py-3 px-2 font-medium">Premium used</th>
                         <th className="text-right py-3 px-2 font-medium">Utilization</th>
                       </tr>
                     </thead>
@@ -585,7 +585,7 @@ export default function AdminDashboardPage() {
               <CardContent className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-muted-foreground">ELITE Utilization</span>
+                    <span className="text-sm text-muted-foreground">Premium utilization</span>
                     <span className="text-sm font-medium">{stats.efficiency.eliteUtilization.toFixed(1)}%</span>
                   </div>
                   <Progress value={stats.efficiency.eliteUtilization} className="h-2" />
@@ -598,7 +598,7 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                   <Progress value={stats.efficiency.throttleRate} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">Users hitting ELITE quota limits</p>
+                  <p className="text-xs text-muted-foreground mt-1">Users hitting Premium quota limits</p>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -606,7 +606,7 @@ export default function AdminDashboardPage() {
                     <span className="text-sm font-medium text-green-500">{stats.efficiency.upgradeConversion.toFixed(1)}%</span>
                   </div>
                   <Progress value={stats.efficiency.upgradeConversion} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">Free → Paid conversion this month</p>
+                  <p className="text-xs text-muted-foreground mt-1">Standard → Paid conversion this month</p>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1">

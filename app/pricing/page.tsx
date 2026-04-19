@@ -4,21 +4,21 @@ import PricingClient from "./PricingClient"
 export const metadata: Metadata = {
   title: "LLMHive Pricing",
   description:
-    "Compare LLMHive pricing tiers, ELITE query limits, and enterprise features.",
+    "Compare LLMHive pricing tiers, Premium query limits, and enterprise features.",
   alternates: {
     canonical: "https://www.llmhive.ai/pricing",
   },
   openGraph: {
     title: "LLMHive Pricing",
     description:
-      "Compare LLMHive pricing tiers, ELITE query limits, and enterprise features.",
+      "Compare LLMHive pricing tiers, Premium query limits, and enterprise features.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "LLMHive Pricing",
     description:
-      "Compare LLMHive pricing tiers, ELITE query limits, and enterprise features.",
+      "Compare LLMHive pricing tiers, Premium query limits, and enterprise features.",
   },
 }
 

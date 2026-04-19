@@ -54,14 +54,21 @@ interface QuotaUsage {
 }
 
 const ORCHESTRATION_MODE_LABELS = {
-  elite: { label: "ELITE", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "GPT-5, Claude & Gemini unified — #1 in 5 out of 8 benchmark categories" },
-  standard: { label: "STANDARD", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "Premium routing & verification — Top 3 quality" },
-  budget: { label: "BUDGET", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "Claude Sonnet optimized — Excellent quality" },
-  free: { label: "FREE", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patented AI ensemble — BEATS most paid models" },
+  elite: { label: "Premium", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "GPT-5, Claude & Gemini unified — #1 in 5 out of 8 benchmark categories" },
+  standard: { label: "Balanced", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "Premium routing & verification — Top 3 quality" },
+  budget: { label: "Budget", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "Claude Sonnet optimized — Excellent quality" },
+  free: { label: "Standard", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patented AI ensemble — BEATS most paid models" },
+}
+
+/** User-facing label when showing raw after-quota tier keys from the API */
+const AFTER_QUOTA_TIER_LABELS: Record<string, string> = {
+  free: "Standard",
+  standard: "Balanced",
+  budget: "Budget",
 }
 
 const TIER_DISPLAY_NAMES: Record<string, string> = {
-  free: "Free",
+  free: "Standard",
   lite: "Lite",
   pro: "Pro",
   enterprise: "Enterprise",
@@ -184,7 +191,7 @@ export default function BillingPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold mb-2">Billing & Quota</h1>
           <p className="text-muted-foreground">
-            Track your ELITE queries, manage subscription, and upgrade for more.
+            Track your Premium queries, manage subscription, and upgrade for more.
           </p>
         </div>
 
@@ -220,11 +227,11 @@ export default function BillingPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-green-500" />
-                  ELITE Quota
+                  Premium Quota
                 </CardTitle>
                 <CardDescription>
                   {isFreeTier
-                    ? "Upgrade to unlock ELITE queries (#1 in 5 out of 8 benchmark categories)"
+                    ? "Upgrade to unlock Premium queries (#1 in 5 out of 8 benchmark categories)"
                     : "Your best-quality queries (#1 in 5 out of 8 benchmark categories)"
                   }
                 </CardDescription>
@@ -240,11 +247,11 @@ export default function BillingPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* ELITE Progress */}
+            {/* Premium quota progress */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium flex items-center gap-2">
-                  🟢 ELITE Queries
+                  🟢 Premium queries
                   <Badge variant="outline" className="text-green-500 text-xs">5/8 categories #1</Badge>
                 </span>
                 <span className="text-sm font-mono">
@@ -258,7 +265,7 @@ export default function BillingPage() {
               {!isFreeTier && usage && usage.elite.percentUsed >= 0.8 && (
                 <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
-                  {usage.elite.remaining} ELITE queries left this month
+                  {usage.elite.remaining} Premium queries left this month
                 </p>
               )}
             </div>
@@ -271,18 +278,22 @@ export default function BillingPage() {
                     <Zap className={`h-4 w-4 ${ORCHESTRATION_MODE_LABELS[usage.afterQuotaTier as keyof typeof ORCHESTRATION_MODE_LABELS]?.color || ''}`} />
                   </div>
                   <div>
-                    <p className="font-medium text-sm">Using {usage.afterQuotaTier.toUpperCase()} mode</p>
+                    <p className="font-medium text-sm">
+                      Using {AFTER_QUOTA_TIER_LABELS[usage.afterQuotaTier] ?? usage.afterQuotaTier} mode
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      ELITE quota exhausted. Still getting great quality — 
+                      Premium quota exhausted. Still getting great quality — 
                       {usage.afterQuotaTier === "standard"
                         ? " #1 in 8 categories!"
                         : usage.afterQuotaTier === "budget"
                         ? " #1 in 6 categories!"
-                        : " Free model orchestration"}
+                        : " Standard orchestration"}
                     </p>
                     {usage.afterQuotaQueries && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        {usage.afterQuotaQueries} {usage.afterQuotaTier.toUpperCase()} queries available
+                        {usage.afterQuotaQueries}{" "}
+                        {AFTER_QUOTA_TIER_LABELS[usage.afterQuotaTier] ?? usage.afterQuotaTier} queries
+                        available
                       </p>
                     )}
                   </div>
@@ -326,7 +337,7 @@ export default function BillingPage() {
                 <h3 className="text-2xl font-bold">{TIER_DISPLAY_NAMES[currentTier] || currentTier}</h3>
                 <p className="text-muted-foreground">
                   {isFreeTier 
-                    ? "Free tier • Upgrade anytime"
+                    ? "Standard plan • Upgrade anytime"
                     : `${subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing`
                   }
                 </p>

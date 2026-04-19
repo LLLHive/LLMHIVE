@@ -17,7 +17,7 @@ export default function UsageOveragePolicyPage() {
         {
           title: "Overage Handling",
           items: [
-            "Automatic downgrade to FREE tier after ELITE limits.",
+            "Automatic downgrade to Standard orchestration after Premium limits.",
             "Optional overage approvals for enterprise plans.",
             "Notifications when approaching thresholds.",
           ],

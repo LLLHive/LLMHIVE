@@ -236,7 +236,7 @@ export function OrchestrationStudio({
               <div className="space-y-2">
                 <Label className="text-xs flex items-center gap-2">
                   <TrendingUp className="h-3 w-3 text-[var(--bronze)]" />
-                  Elite Strategy
+                  Premium strategy
                 </Label>
                 <Select 
                   value={eliteStrategy} 

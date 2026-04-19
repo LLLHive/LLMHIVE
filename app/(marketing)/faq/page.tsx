@@ -46,17 +46,17 @@ const faqItems = [
   {
     question: "What pricing plans are available?",
     answer:
-      "LLMHive offers Free, Lite, Pro, and Enterprise plans. Each plan includes multi-model orchestration with different ELITE query limits and enterprise controls.",
+      "LLMHive offers Standard, Lite, Pro, and Enterprise plans. Each plan includes multi-model orchestration with different Premium query limits and enterprise controls.",
   },
   {
-    question: "What happens after I use my ELITE queries?",
+    question: "What happens after I use my Premium queries?",
     answer:
-      "Once ELITE queries are exhausted, LLMHive continues running on free-tier orchestration so work never stops.",
+      "Once Premium queries are exhausted, LLMHive continues running on Standard orchestration so work never stops.",
   },
   {
     question: "Do you offer a free plan?",
     answer:
-      "Yes. The Free plan includes multi-model orchestration and unlimited queries on the free tier.",
+      "Yes. The Standard plan includes multi-model orchestration and unlimited queries on Standard routing.",
   },
   {
     question: "Can I change plans any time?",

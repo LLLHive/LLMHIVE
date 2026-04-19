@@ -4,21 +4,21 @@ import DemoClient from "./DemoClient"
 export const metadata: Metadata = {
   title: "LLMHive Product Demo",
   description:
-    "Watch a full product demo of LLMHive multi-model orchestration, ELITE mode, and analytics.",
+    "Watch a full product demo of LLMHive multi-model orchestration, Premium mode, and analytics.",
   alternates: {
     canonical: "https://www.llmhive.ai/demo",
   },
   openGraph: {
     title: "LLMHive Product Demo",
     description:
-      "Watch a full product demo of LLMHive multi-model orchestration, ELITE mode, and analytics.",
+      "Watch a full product demo of LLMHive multi-model orchestration, Premium mode, and analytics.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "LLMHive Product Demo",
     description:
-      "Watch a full product demo of LLMHive multi-model orchestration, ELITE mode, and analytics.",
+      "Watch a full product demo of LLMHive multi-model orchestration, Premium mode, and analytics.",
   },
 }
 

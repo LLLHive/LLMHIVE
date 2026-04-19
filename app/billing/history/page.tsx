@@ -17,7 +17,7 @@ export default function BillingHistoryPage() {
         {
           title: "History Overview",
           items: [
-            "Monthly billing summaries with ELITE usage totals.",
+            "Monthly billing summaries with Premium usage totals.",
             "Downloadable receipts and payment confirmations.",
             "Filter by workspace, team, or cost center.",
           ],

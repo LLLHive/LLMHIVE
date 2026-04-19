@@ -529,17 +529,17 @@ export default function SettingsPage() {
               {/* Current Plan */}
               <div className="p-4 rounded-lg glass-card border border-[var(--bronze)]/30">
                 <p className="text-xs text-muted-foreground mb-1">Current Plan</p>
-                <p className="text-lg font-semibold text-[var(--gold)]">Free</p>
-                <p className="text-xs text-muted-foreground">Forever free with multi-model orchestration</p>
+                <p className="text-lg font-semibold text-[var(--gold)]">Standard</p>
+                <p className="text-xs text-muted-foreground">$0 forever with multi-model orchestration</p>
               </div>
 
-              {/* FREE Tier Marketing */}
+              {/* Standard plan marketing */}
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                     <Check className="h-3 w-3 text-white" />
                   </div>
-                  <span className="text-sm font-semibold text-green-400">FREE tier BEATS most paid models</span>
+                  <span className="text-sm font-semibold text-green-400">Standard beats most paid models</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Our patented multi-model orchestration delivers exceptional quality at no cost.
@@ -555,7 +555,7 @@ export default function SettingsPage() {
                 }}
               >
                 <Zap className="h-4 w-4 mr-2" />
-                Upgrade to ELITE (#1 in 5 out of 8 benchmark categories)
+                Upgrade to Premium (#1 in 5 out of 8 benchmark categories)
               </Button>
 
               {/* Manage Billing */}
@@ -588,7 +588,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Orchestration</span>
-                    <span className="text-green-400">FREE</span>
+                    <span className="text-green-400">Standard</span>
                   </div>
                 </div>
               </div>
@@ -598,7 +598,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground mb-3">Available Plans</p>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-green-400 font-medium">Free</span>
+                    <span className="text-green-400 font-medium">Standard</span>
                     <span className="text-muted-foreground">$0/mo</span>
                   </div>
                   <div className="flex justify-between">

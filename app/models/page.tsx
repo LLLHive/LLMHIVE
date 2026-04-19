@@ -107,7 +107,7 @@ function ModelCard({
   if (model.capabilities?.supports_tools) strengths.push('Tool calling')
   if (model.capabilities?.multimodal_input) strengths.push('Vision')
   if (model.capabilities?.supports_structured) strengths.push('JSON output')
-  if (promptCost === 0) strengths.push('Free')
+  if (promptCost === 0) strengths.push('Zero API cost')
   else if (promptCost < 1) strengths.push('Budget-friendly')
   
   if (!model.capabilities?.supports_tools) weaknesses.push('No tools')

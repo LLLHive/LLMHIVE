@@ -17,7 +17,7 @@ export default function UsageLimitsPage() {
         {
           title: "Limit Controls",
           items: [
-            "Per-team and per-workspace ELITE caps.",
+            "Per-team and per-workspace Premium caps.",
             "Daily and monthly budget ceilings.",
             "Automatic throttling and notifications.",
           ],

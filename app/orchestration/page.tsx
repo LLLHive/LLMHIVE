@@ -54,7 +54,7 @@ const responseFormats = [
 const orchestrationCards = [
   {
     id: "elite",
-    title: "Elite Mode",
+    title: "Premium Mode",
     description: "Industry-leading orchestration strategies",
     icon: Crown,
     color: "from-yellow-500 to-amber-600",
@@ -125,7 +125,7 @@ const orchestrationCards = [
   },
 ]
 
-// Elite Mode strategies
+// Premium Mode strategies
 const eliteStrategies = [
   { id: "fast", label: "Fast", description: "Quick single-model responses", confidence: "70%" },
   { id: "standard", label: "Standard", description: "Multi-model with verification", confidence: "80%" },
@@ -1073,7 +1073,7 @@ export default function OrchestrationPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Elite Mode Drawer */}
+      {/* Premium Mode Drawer */}
       <Sheet open={activeDrawer === "elite"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
         <SheetContent
           side="right"
@@ -1085,7 +1085,7 @@ export default function OrchestrationPage() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500/20 to-amber-500/20 flex items-center justify-center">
                   <Crown className="h-4 w-4 text-yellow-400" />
                 </div>
-                Elite Mode
+                Premium Mode
                 <Badge className="ml-auto bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[10px]">
                   PRO
                 </Badge>

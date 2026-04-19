@@ -33,7 +33,7 @@ const WELCOME_FEATURES = [
   },
   {
     icon: Zap,
-    title: "ELITE Orchestration",
+    title: "Premium orchestration",
     description: "Advanced reasoning with HRM, DeepConf, and adaptive ensemble methods",
     color: "text-yellow-400",
   },
@@ -60,7 +60,7 @@ const TOUR_STEPS = [
   },
   {
     title: "Customize Orchestration",
-    description: "Access the Orchestration panel to choose accuracy levels, enable ELITE mode, and configure reasoning strategies.",
+    description: "Access the Orchestration panel to choose accuracy levels, enable Premium mode, and configure reasoning strategies.",
     icon: Settings,
     highlight: "orchestration-panel",
   },
@@ -152,7 +152,7 @@ export function OnboardingModal({ userName = "there" }: OnboardingModalProps) {
                   Welcome to LLMHive 🐝
                 </h1>
                 <p className="text-[#0a0a0a]/80 mt-1">
-                  Elite Multi-Model AI Orchestration
+                  Premium multi-model AI orchestration
                 </p>
               </div>
             </div>

@@ -455,7 +455,7 @@ export function getPriceTier(pricePerMillion?: number): PriceTier {
 }
 
 export function formatPrice(pricePerMillion?: number): string {
-  if (!pricePerMillion || pricePerMillion === 0) return 'Free'
+  if (!pricePerMillion || pricePerMillion === 0) return 'No charge'
   if (pricePerMillion < 0.01) return `$${(pricePerMillion * 1000).toFixed(3)}/1K tokens`
   return `$${pricePerMillion.toFixed(2)}/M tokens`
 }

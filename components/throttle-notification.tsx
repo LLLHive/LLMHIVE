@@ -76,8 +76,8 @@ export function ThrottleNotification({
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 shrink-0" />
             <p className="text-sm font-medium">
-              <span className="font-semibold">ELITE quota exhausted.</span>{" "}
-              You're now using FREE orchestration. 
+              <span className="font-semibold">Premium quota exhausted.</span>{" "}
+              You&apos;re now using Standard orchestration. 
               <span className="hidden sm:inline"> Upgrade to restore #1 quality.</span>
             </p>
           </div>
@@ -114,11 +114,11 @@ export function ThrottleNotification({
           <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="flex-1 space-y-2">
             <p className="text-sm font-medium text-amber-200">
-              ELITE Quota Exhausted
+              Premium quota exhausted
             </p>
             <p className="text-sm text-muted-foreground">
-              You've used all {throttleStatus.elite_queries_used} of your ELITE queries. 
-              You're now using FREE orchestration, which still beats most single models!
+              You&apos;ve used all {throttleStatus.elite_queries_used} of your Premium queries. 
+              You&apos;re now using Standard orchestration, which still beats most single models!
             </p>
             <Link href="/pricing">
               <Button 
@@ -126,7 +126,7 @@ export function ThrottleNotification({
                 variant="outline"
                 className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
               >
-                Upgrade for More ELITE Queries
+                Upgrade for more Premium queries
                 <ArrowUpRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
@@ -155,9 +155,9 @@ export function ThrottleNotification({
             <AlertTriangle className="h-4 w-4 text-amber-500" />
           </div>
           <div className="flex-1 space-y-1">
-            <p className="text-sm font-semibold">ELITE Quota Exhausted</p>
+            <p className="text-sm font-semibold">Premium quota exhausted</p>
             <p className="text-xs text-muted-foreground">
-              Using FREE orchestration. Upgrade for #1 quality.
+              Using Standard orchestration. Upgrade for #1 quality.
             </p>
           </div>
           <button
@@ -218,12 +218,12 @@ export function QuotaIndicator({ className }: { className?: string }) {
   const limit = throttleStatus.elite_queries_limit
   const tier = throttleStatus.subscription_tier
 
-  // FREE tier doesn't show quota (they don't have ELITE)
+  // Standard plan doesn't show Premium quota
   if (tier === "free") {
     return (
       <div className={cn("flex items-center gap-2 text-xs", className)}>
         <div className="w-2 h-2 rounded-full bg-green-500" />
-        <span className="text-muted-foreground">FREE tier</span>
+        <span className="text-muted-foreground">Standard</span>
       </div>
     )
   }
@@ -237,7 +237,7 @@ export function QuotaIndicator({ className }: { className?: string }) {
           className
         )}>
           <AlertTriangle className="h-3 w-3" />
-          <span>ELITE exhausted</span>
+          <span>Premium exhausted</span>
           <ArrowUpRight className="h-3 w-3" />
         </div>
       </Link>
@@ -255,7 +255,7 @@ export function QuotaIndicator({ className }: { className?: string }) {
         isLow ? "bg-yellow-500" : "bg-green-500"
       )} />
       <span className="text-muted-foreground">
-        {remaining === -1 ? "Unlimited" : `${remaining}/${limit}`} ELITE
+        {remaining === -1 ? "Unlimited" : `${remaining}/${limit}`} Premium
       </span>
     </div>
   )

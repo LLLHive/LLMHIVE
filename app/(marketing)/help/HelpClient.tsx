@@ -47,7 +47,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "How do I get started with LLMHive?",
         answer:
-          "Simply sign up for a FREE account, which gives you UNLIMITED queries using our patented orchestration that beats most paid models. Once logged in, you can start chatting immediately. For top benchmark results (#1 in 5 out of 8 categories with ELITE), upgrade to Lite ($14.99/mo), Pro ($29.99/mo), or Enterprise.",
+          "Simply sign up for a Standard account ($0), which gives you UNLIMITED queries using our patented orchestration that beats most paid models. Once logged in, you can start chatting immediately. For top benchmark results (#1 in 5 out of 8 categories with Premium), upgrade to Lite ($14.99/mo), Pro ($29.99/mo), or Enterprise.",
       },
       {
         question: "What makes LLMHive different from using ChatGPT or Claude directly?",
@@ -69,12 +69,12 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What plans are available?",
         answer:
-          "We offer FREE (forever, UNLIMITED queries with patented orchestration that beats most paid models), Lite ($14.99/month, 100 ELITE queries — #1 in 5 out of 8 benchmark categories), Pro ($29.99/month, 500 ELITE queries + API access), and Enterprise ($35/seat/month, min 5 seats, SSO & compliance).",
+          "We offer Standard ($0 forever, UNLIMITED queries with patented orchestration that beats most paid models), Lite ($14.99/month, 100 Premium queries — #1 in 5 out of 8 benchmark categories), Pro ($29.99/month, 500 Premium queries + API access), and Enterprise ($35/seat/month, min 5 seats, SSO & compliance).",
       },
       {
-        question: "What happens when I reach my ELITE query limit?",
+        question: "What happens when I reach my Premium query limit?",
         answer:
-          "When you exhaust your ELITE queries, you'll automatically be throttled to our FREE tier orchestration. Our FREE tier still beats most single paid models thanks to our patented multi-model orchestration. You can upgrade your plan anytime to get more ELITE queries.",
+          "When you exhaust your Premium queries, you'll automatically switch to our Standard orchestration. Standard still beats most single paid models thanks to our patented multi-model orchestration. You can upgrade your plan anytime to get more Premium queries.",
       },
       {
         question: "Can I upgrade or downgrade my plan at any time?",
@@ -126,9 +126,9 @@ const faqCategories: FAQCategory[] = [
     icon: <Settings className="h-5 w-5" />,
     faqs: [
       {
-        question: "What is 'ELITE' orchestration?",
+        question: "What is Premium orchestration?",
         answer:
-          "ELITE orchestration uses our most sophisticated routing algorithm to select from top-tier models (GPT-4o, Claude 3.5 Sonnet, Gemini Pro, etc.) based on your specific query type. It is designed for leading benchmark results (#1 in 5 out of 8 tracked categories as of April 2026).",
+          "Premium orchestration uses our most sophisticated routing algorithm to select from top-tier models (GPT-4o, Claude 3.5 Sonnet, Gemini Pro, etc.) based on your specific query type. It is designed for leading benchmark results (#1 in 5 out of 8 tracked categories as of April 2026).",
       },
       {
         question: "How does the model routing work?",
@@ -148,7 +148,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What's the maximum context length?",
         answer:
-          "Context limits vary by plan: Free (8K tokens), Lite (25K tokens), Pro (100K tokens), Enterprise (200K+ tokens with extended context models).",
+          "Context limits vary by plan: Standard (8K tokens), Lite (25K tokens), Pro (100K tokens), Enterprise (200K+ tokens with extended context models).",
       },
     ],
   },
@@ -160,7 +160,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What's included in the Enterprise plan?",
         answer:
-          "Enterprise includes team management, SSO integration, dedicated support, custom SLAs, audit logs, compliance features, and 300 ELITE queries per seat per month. Minimum 5 seats required.",
+          "Enterprise includes team management, SSO integration, dedicated support, custom SLAs, audit logs, compliance features, and 300 Premium queries per seat per month. Minimum 5 seats required.",
       },
       {
         question: "Can we get a custom contract?",

@@ -30,7 +30,7 @@ const DEMO_SECTIONS = [
   { id: "intro", title: "Introduction", timestamp: "0:00", icon: Circle },
   { id: "chat", title: "Starting a Chat", timestamp: "0:45", icon: MessageSquare },
   { id: "orchestration", title: "Orchestration Modes", timestamp: "2:15", icon: Brain },
-  { id: "elite", title: "ELITE Mode Deep Dive", timestamp: "4:30", icon: Zap },
+  { id: "elite", title: "Premium Mode Deep Dive", timestamp: "4:30", icon: Zap },
   { id: "templates", title: "Templates & Presets", timestamp: "6:00", icon: Lightbulb },
   { id: "analytics", title: "Analytics & Usage", timestamp: "7:30", icon: BarChart3 },
 ]
@@ -47,7 +47,7 @@ const KEY_FEATURES = [
   },
   {
     icon: Zap,
-    title: "ELITE Mode Performance",
+    title: "Premium Mode Performance",
     description: "How advanced reasoning methods (HRM, DeepConf, Adaptive Ensemble) work in LLMHive.",
     color: "text-yellow-400",
     bgColor: "bg-yellow-400/10",
@@ -262,7 +262,7 @@ export default function DemoClient() {
       <section className="py-20 border-t border-[#262626]">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Ready to Experience ELITE AI?</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">Ready to experience Premium AI?</h2>
             <p className="text-muted-foreground mb-8">
               Join thousands of professionals who&apos;ve upgraded their AI workflow with LLMHive. Start
               free, no credit card required.

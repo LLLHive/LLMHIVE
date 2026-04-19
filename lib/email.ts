@@ -98,7 +98,7 @@ export async function sendWelcomeEmail(options: {
           <tr>
             <td style="background: linear-gradient(135deg, #C48E48 0%, #8B6914 100%); padding: 32px; text-align: center;">
               <h1 style="margin: 0; color: #0a0a0a; font-size: 28px; font-weight: 700;">🐝 LLMHive</h1>
-              <p style="margin: 8px 0 0 0; color: #0a0a0a; font-size: 14px; opacity: 0.8;">Elite Multi-Model AI Orchestration</p>
+              <p style="margin: 8px 0 0 0; color: #0a0a0a; font-size: 14px; opacity: 0.8;">Premium multi-model AI orchestration</p>
             </td>
           </tr>
           
@@ -138,7 +138,7 @@ export async function sendWelcomeEmail(options: {
                           <span style="font-size: 24px;">⚡</span>
                         </td>
                         <td style="padding-left: 12px;">
-                          <h4 style="margin: 0 0 4px 0; color: #f5f5f5; font-size: 14px;">ELITE Mode Orchestration</h4>
+                          <h4 style="margin: 0 0 4px 0; color: #f5f5f5; font-size: 14px;">Premium Mode orchestration</h4>
                           <p style="margin: 0; color: #737373; font-size: 13px;">Advanced reasoning with HRM, DeepConf, and ensemble methods</p>
                         </td>
                       </tr>
@@ -206,7 +206,7 @@ You've just unlocked access to the most powerful AI orchestration platform avail
 
 What you can do:
 - Multi-Model Intelligence: GPT-4, Claude, Gemini, and more working together
-- ELITE Mode Orchestration: Advanced reasoning with HRM, DeepConf, and ensemble methods  
+- Premium Mode orchestration: Advanced reasoning with HRM, DeepConf, and ensemble methods  
 - Top-Ranked Performance: ${BENCHMARK_CLAIM_SHORT} — strong results vs. single-model baselines
 
 Get started: ${APP_URL}
@@ -242,9 +242,9 @@ export async function sendSubscriptionEmail(options: {
 
   const tierFeatures: Record<string, string[]> = {
     lite: ["500 queries/month", "Standard orchestration", "Email support"],
-    pro: ["5,000 queries/month", "ELITE orchestration", "Priority support", "Advanced analytics"],
-    enterprise: ["Unlimited queries", "ELITE orchestration", "Dedicated support", "Custom integrations", "Team management"],
-    maximum: ["Unlimited everything", "ELITE orchestration", "24/7 support", "White-glove onboarding", "Custom model training"],
+    pro: ["5,000 queries/month", "Premium orchestration", "Priority support", "Advanced analytics"],
+    enterprise: ["Unlimited queries", "Premium orchestration", "Dedicated support", "Custom integrations", "Team management"],
+    maximum: ["Unlimited everything", "Premium orchestration", "24/7 support", "White-glove onboarding", "Custom model training"],
   }
 
   const features = tierFeatures[tier.toLowerCase()] || tierFeatures.pro

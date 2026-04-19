@@ -25,7 +25,7 @@ export default function OrgRolesPage() {
         {
           title: "Permission Audits",
           items: [
-            "Review who has access to ELITE workflows.",
+            "Review who has access to Premium workflows.",
             "Track permission changes in audit logs.",
             "Set approval workflows for privilege escalation.",
           ],

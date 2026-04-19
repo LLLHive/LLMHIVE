@@ -53,18 +53,18 @@ interface PricingTier {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 4-TIER PRICING - PRO IS THE HERO (January 2026)
-// Sales Psychology: Pro should pop, Free should be an entry point only
+// Sales Psychology: Pro should pop, Standard should be an entry point only
 // ═══════════════════════════════════════════════════════════════════════════════
 const pricingTiers: PricingTier[] = [
   {
-    name: "Free",
+    name: "Standard",
     description: "Try our orchestration technology",
     monthlyPrice: 0,
     annualPrice: 0,
     tier: "free",
     icon: <Star className="h-5 w-5 text-[var(--bronze)]" />,
     quotas: {
-      eliteQueries: "🆓 FREE Orchestration",
+      eliteQueries: "🆓 Standard orchestration",
       afterQuota: "UNLIMITED queries",
       totalQueries: "Basic features",
     },
@@ -76,24 +76,24 @@ const pricingTiers: PricingTier[] = [
       "3-day memory",
       "Community support",
     ],
-    cta: "Start Free",
+    cta: "Get started",
   },
   {
     name: "Lite",
-    description: "Unlock ELITE benchmark quality",
+    description: "Unlock Premium benchmark quality",
     monthlyPrice: 14.99,
     annualPrice: 149.99,
     tier: "lite",
     icon: <Zap className="h-5 w-5 text-blue-400" />,
     quotas: {
-      eliteQueries: "100 ELITE queries",
-      afterQuota: "Then UNLIMITED FREE",
+      eliteQueries: "100 Premium queries",
+      afterQuota: "Then unlimited Standard",
       totalQueries: BENCHMARK_CLAIM_SHORT,
     },
     features: [
-      "100 ELITE queries/month",
-      "Then UNLIMITED FREE queries",
-      "Top benchmark results when using ELITE",
+      "100 Premium queries/month",
+      "Then unlimited Standard queries",
+      "Top benchmark results when using Premium",
       "Knowledge Base access",
       "7-day memory retention",
       "Consensus voting",
@@ -111,14 +111,14 @@ const pricingTiers: PricingTier[] = [
     icon: <Rocket className="h-5 w-5 text-yellow-500" />,
     badge: "BEST VALUE",
     quotas: {
-      eliteQueries: "500 ELITE queries",
-      afterQuota: "Then UNLIMITED FREE",
+      eliteQueries: "500 Premium queries",
+      afterQuota: "Then unlimited Standard",
       totalQueries: `${BENCHMARK_CLAIM_SHORT} + Full API`,
     },
     features: [
-      "500 ELITE queries/month",
-      "Then UNLIMITED FREE queries",
-      "Top benchmark results when using ELITE",
+      "500 Premium queries/month",
+      "Then unlimited Standard queries",
+      "Top benchmark results when using Premium",
       "Full API access",
       "DeepConf debate system",
       "Prompt Diffusion",
@@ -137,13 +137,13 @@ const pricingTiers: PricingTier[] = [
     icon: <Building2 className="h-5 w-5 text-emerald-400" />,
     badge: "Per Seat",
     quotas: {
-      eliteQueries: "400 ELITE/seat",
-      afterQuota: "Then UNLIMITED FREE",
+      eliteQueries: "400 Premium/seat",
+      afterQuota: "Then unlimited Standard",
       totalQueries: "SSO + Compliance",
     },
     features: [
-      "400 ELITE per seat/month",
-      "Then UNLIMITED FREE queries",
+      "400 Premium per seat/month",
+      "Then unlimited Standard queries",
       "Min 5 seats ($175+/mo)",
       "SSO / SAML authentication",
       "SOC 2 Type II compliance",
@@ -158,14 +158,14 @@ const pricingTiers: PricingTier[] = [
 
 const pricingFaq = [
   {
-    question: "What is included in the Free plan?",
+    question: "What is included in the Standard plan?",
     answer:
-      "The Free plan includes multi-model orchestration, knowledge base access, and unlimited queries with our free-tier routing.",
+      "The Standard plan includes multi-model orchestration, knowledge base access, and unlimited queries with our Standard routing.",
   },
   {
-    question: "What happens after I use my ELITE queries?",
+    question: "What happens after I use my Premium queries?",
     answer:
-      "After you reach your ELITE limit, LLMHive automatically switches to free-tier orchestration so your usage never stops.",
+      "After you reach your Premium limit, LLMHive automatically switches to Standard orchestration so your usage never stops.",
   },
   {
     question: "Can I upgrade or downgrade any time?",
@@ -233,7 +233,7 @@ export default function PricingClient() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
 
   const handleSubscribe = async (tier: PricingTier) => {
-    // FREE tier just needs sign-up
+    // Standard tier just needs sign-up
     if (tier.tier === "free") {
       if (!isSignedIn) {
         openSignIn({
@@ -342,19 +342,19 @@ export default function PricingClient() {
           </div>
         </div>
 
-        {/* Hero - SELL PRO, not give away Free */}
+        {/* Hero - SELL PRO */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
             The World's Best AI Quality at <span className="text-yellow-400">$29.99/mo</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-            Our Pro plan gives you <span className="text-yellow-400 font-bold">500 ELITE queries</span> with{" "}
+            Our Pro plan gives you <span className="text-yellow-400 font-bold">500 Premium queries</span> with{" "}
             <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by GPT-5.2,
             Claude Opus 4.5 & Gemini 3 Pro unified.
           </p>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            After your ELITE queries, enjoy{" "}
-            <span className="font-semibold text-green-400">UNLIMITED FREE queries</span> — our patented
+            After your Premium queries, enjoy{" "}
+            <span className="font-semibold text-green-400">unlimited Standard queries</span> — our patented
             orchestration still beats most single paid models.
           </p>
         </div>
@@ -363,13 +363,13 @@ export default function PricingClient() {
         <div className="max-w-4xl mx-auto mb-10 p-6 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border-2 border-yellow-500/50">
           <div className="grid md:grid-cols-2 gap-6 text-center">
             <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-              <div className="text-3xl font-black text-yellow-400 mb-2">🏆 ELITE</div>
+              <div className="text-3xl font-black text-yellow-400 mb-2">🏆 Premium</div>
               <div className="text-lg font-bold text-yellow-300">{BENCHMARK_CLAIM_SHORT}</div>
               <div className="text-sm text-yellow-200/70 mt-1">GPT-5.2 + Claude Opus 4.5 + Gemini 3 Pro</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-              <div className="text-3xl font-black text-green-400 mb-2">🆓 FREE</div>
-              <div className="text-lg font-bold text-green-300">UNLIMITED After ELITE</div>
+              <div className="text-3xl font-black text-green-400 mb-2">🆓 Standard</div>
+              <div className="text-lg font-bold text-green-300">Unlimited after Premium</div>
               <div className="text-sm text-muted-foreground mt-1">Still beats most single paid models</div>
             </div>
           </div>
@@ -457,7 +457,7 @@ export default function PricingClient() {
                   <div className="mb-4 flex-shrink-0">
                     <div className="flex items-baseline gap-1">
                       <span className="font-bold text-3xl">
-                        {price === 0 ? "Free" : `$${price.toFixed(2)}`}
+                        {price === 0 ? "$0" : `$${price.toFixed(2)}`}
                       </span>
                       {price > 0 && <span className="text-sm text-muted-foreground">{period}</span>}
                     </div>
@@ -574,9 +574,9 @@ export default function PricingClient() {
                 <span className="text-yellow-400 font-bold">1</span>
               </div>
               <div>
-                <h3 className="font-semibold text-yellow-400">Get 500 ELITE queries with Pro</h3>
+                <h3 className="font-semibold text-yellow-400">Get 500 Premium queries with Pro</h3>
                 <p className="text-sm text-muted-foreground">
-                  Each ELITE query uses our top-tier orchestration with GPT-5.2, Claude Opus 4.5 &
+                  Each Premium query uses our top-tier orchestration with GPT-5.2, Claude Opus 4.5 &
                   Gemini 3 Pro ({BENCHMARK_CLAIM_SHORT}). Perfect for professional work, coding, research,
                   and critical tasks.
                 </p>
@@ -587,9 +587,9 @@ export default function PricingClient() {
                 <span className="text-green-400 font-bold">2</span>
               </div>
               <div>
-                <h3 className="font-semibold text-green-400">UNLIMITED FREE queries after</h3>
+                <h3 className="font-semibold text-green-400">Unlimited Standard queries after</h3>
                 <p className="text-sm text-muted-foreground">
-                  After your ELITE quota, you get <strong>unlimited</strong> FREE tier queries. Our FREE
+                  After your Premium quota, you get <strong>unlimited</strong> Standard queries. Our Standard
                   orchestration still beats most single paid models — no caps, no limits.
                 </p>
               </div>
@@ -599,9 +599,9 @@ export default function PricingClient() {
                 <span className="text-[var(--bronze)] font-bold">3</span>
               </div>
               <div>
-                <h3 className="font-semibold">Upgrade anytime for more ELITE</h3>
+                <h3 className="font-semibold">Upgrade anytime for more Premium</h3>
                 <p className="text-sm text-muted-foreground">
-                  Need more ELITE capacity? Upgrade from Lite to Pro for 5x more ELITE queries. Or go
+                  Need more Premium capacity? Upgrade from Lite to Pro for 5x more Premium queries. Or go
                   Enterprise for team features and compliance.
                 </p>
               </div>
@@ -614,25 +614,25 @@ export default function PricingClient() {
           <h2 className="text-2xl font-display font-bold text-center mb-8">Frequently Asked Questions</h2>
           <div className="space-y-4">
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">What happens after I use my ELITE queries?</h3>
+              <h3 className="font-semibold mb-2">What happens after I use my Premium queries?</h3>
               <p className="text-muted-foreground text-sm">
-                You get <strong>UNLIMITED FREE queries</strong> for the rest of the month. There&apos;s no
-                cap — our FREE orchestration beats most single paid models, so you still get great
-                quality. Want ELITE benchmark coverage back? Just upgrade for more ELITE queries.
+                You get <strong>unlimited Standard queries</strong> for the rest of the month. There&apos;s no
+                cap — our Standard orchestration beats most single paid models, so you still get great
+                quality. Want Premium benchmark coverage back? Just upgrade for more Premium queries.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">How is ELITE different from FREE?</h3>
+              <h3 className="font-semibold mb-2">How is Premium different from Standard?</h3>
               <p className="text-muted-foreground text-sm">
-                ELITE uses premium models (GPT-5.2, Claude Opus 4.5, Gemini 3 Pro) for{" "}
-                {BENCHMARK_CLAIM_SHORT}. FREE uses free models in consensus — still strong for everyday
+                Premium uses top models (GPT-5.2, Claude Opus 4.5, Gemini 3 Pro) for{" "}
+                {BENCHMARK_CLAIM_SHORT}. Standard uses efficient models in consensus — still strong for everyday
                 work, with different cost–quality tradeoffs.
               </p>
             </div>
             <div className="p-6 rounded-lg bg-card/50 border border-border/50">
               <h3 className="font-semibold mb-2">Why is Pro the best value?</h3>
               <p className="text-muted-foreground text-sm">
-                Pro gives you 5x more ELITE queries than Lite (500 vs 100) for only 2x the price ($29.99
+                Pro gives you 5x more Premium queries than Lite (500 vs 100) for only 2x the price ($29.99
                 vs $14.99). Plus you get full API access, advanced features, and 30-day memory.
               </p>
             </div>
@@ -644,10 +644,10 @@ export default function PricingClient() {
           <div className="p-8 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/10 to-amber-500/10 border border-amber-600/40">
             <Trophy className="h-10 w-10 text-amber-500 mx-auto mb-4" />
             <h2 className="text-3xl font-display font-bold mb-4 text-amber-500">
-              Get ELITE benchmark quality today
+              Get Premium benchmark quality today
             </h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              500 ELITE queries. UNLIMITED FREE after. Full API access. Premium orchestration for
+              500 Premium queries. Unlimited Standard after. Full API access. Top orchestration for
               $29.99/month.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
@@ -662,7 +662,7 @@ export default function PricingClient() {
               </Button>
               <Link href="/sign-up">
                 <Button size="lg" variant="outline" className="border-white/20 text-muted-foreground hover:bg-white/5">
-                  Try Free First
+                  Try Standard first
                 </Button>
               </Link>
             </div>

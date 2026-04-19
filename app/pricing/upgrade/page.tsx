@@ -18,7 +18,7 @@ export default function PricingUpgradePage() {
           title: "Upgrade Options",
           items: [
             "Recommended plan based on usage trends.",
-            "Immediate access to higher ELITE quotas.",
+            "Immediate access to higher Premium quotas.",
             "Pro-rated billing adjustments.",
           ],
         },
