@@ -1,4 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
+import { NextResponse } from "next/server"
+import {
+  BUSINESS_OPS_GATE_COOKIE,
+  businessOpsGateConfigured,
+  isBusinessOpsProtectedPath,
+  verifyBusinessOpsGateCookie,
+} from "@/lib/business-ops-gate"
 
 // =============================================================================
 // Route Configuration
@@ -50,10 +57,23 @@ export const proxy = clerkMiddleware(async (auth, request) => {
   if (isE2ETest) {
     return
   }
-  
+
   // Protect all routes except public ones
   if (!isPublicRoute(request)) {
     await auth.protect()
+  }
+
+  const { userId } = await auth()
+  const pathname = request.nextUrl.pathname
+  if (
+    businessOpsGateConfigured() &&
+    userId &&
+    isBusinessOpsProtectedPath(pathname) &&
+    !verifyBusinessOpsGateCookie(request.cookies.get(BUSINESS_OPS_GATE_COOKIE)?.value)
+  ) {
+    const gate = new URL("/business-ops/gate", request.url)
+    gate.searchParams.set("returnTo", pathname + request.nextUrl.search)
+    return NextResponse.redirect(gate)
   }
 })
 

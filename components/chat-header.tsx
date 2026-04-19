@@ -10,8 +10,6 @@ import { AVAILABLE_MODELS, getModelLogo } from "@/lib/models"
 import type { CriteriaSettings } from "@/lib/types"
 import { CriteriaEqualizer } from "./criteria-equalizer"
 import { Checkbox } from "@/components/ui/checkbox"
-import Link from "next/link"
-
 type OrchestrationEngine = "hrm" | "prompt-diffusion" | "deep-conf" | "adaptive-ensemble"
 type AdvancedFeature = "vector-db" | "rag" | "shared-memory" | "loop-back" | "live-data"
 
@@ -88,18 +86,6 @@ export function ChatHeader({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <div className="ml-auto flex items-center gap-2">
-          <Link href="/business-ops">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-[10px] sm:h-7 sm:px-3 sm:text-[11px] border border-border rounded-md text-foreground transition-all duration-300 premium-tap touch-target hover:bg-[var(--bronze)] hover:text-black"
-            >
-              Business Ops
-            </Button>
-          </Link>
-        </div>
 
         {/* ... existing code for other dropdowns ... */}
         <DropdownMenu>

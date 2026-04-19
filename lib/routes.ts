@@ -10,7 +10,9 @@ export const ROUTES = {
   MODELS: "/models",
   ORCHESTRATION: "/orchestration",
   SETTINGS: "/settings",
+  /** Management hub; not linked in the public product UI. Use `/business-ops/gate` after sign-in. */
   BUSINESS_OPS: "/business-ops",
+  BUSINESS_OPS_GATE: "/business-ops/gate",
 } as const
 
 export const API_ROUTES = {

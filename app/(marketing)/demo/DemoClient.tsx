@@ -88,11 +88,6 @@ export default function DemoClient() {
             <LogoText className="h-8" />
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/business-ops">
-              <Button variant="ghost" size="sm">
-                Business Ops
-              </Button>
-            </Link>
             <Link href="/pricing">
               <Button variant="ghost" size="sm">
                 Pricing
@@ -302,9 +297,6 @@ export default function DemoClient() {
               <span>© {new Date().getFullYear()} LLMHive</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/business-ops" className="hover:text-foreground transition-colors">
-                Business Ops
-              </Link>
               <Link href="/privacy" className="hover:text-foreground transition-colors">
                 Privacy
               </Link>

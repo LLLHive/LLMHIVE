@@ -156,11 +156,6 @@ export default function PromoClient() {
               <LogoText height={28} variant="nav" />
             </Link>
             <div className="flex items-center gap-3">
-              <Link href="/business-ops">
-                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
-                  Business Ops
-                </Button>
-              </Link>
               <Link href="/sign-in">
                 <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
                   Sign In
@@ -552,9 +547,6 @@ export default function PromoClient() {
             </Link>
             <Link href="/contact" className="hover:text-white">
               Contact
-            </Link>
-            <Link href="/business-ops" className="hover:text-white">
-              Business Ops
             </Link>
           </div>
           <p className="text-xs text-white/50">© 2026 LLMHive</p>

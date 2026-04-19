@@ -36,7 +36,6 @@ import {
   Share,
   Archive,
   UserPlus,
-  Building2,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -407,20 +406,6 @@ export function Sidebar({
             
             {/* Orchestration and Settings at the bottom */}
             <div className="px-3 py-3 border-t border-border/50 mt-auto space-y-1">
-              <Link href={ROUTES.BUSINESS_OPS} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.BUSINESS_OPS) && "bg-secondary text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Business Ops
-                </Button>
-              </Link>
               {/* Orchestration link */}
               <Link href={ROUTES.ORCHESTRATION} className="w-full">
                 <Button
@@ -497,22 +482,6 @@ export function Sidebar({
               >
                 <FolderOpen className="h-5 w-5" />
               </Button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href={ROUTES.BUSINESS_OPS}>
-                      <Button
-                        variant={isActiveRoute(ROUTES.BUSINESS_OPS) ? "secondary" : "ghost"}
-                        size="icon"
-                        className={cn("w-10 h-10", isActiveRoute(ROUTES.BUSINESS_OPS) && "text-[var(--bronze)]")}
-                      >
-                        <Building2 className="h-5 w-5" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">Business Ops</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
               {/* Collapsed Models icon moved to Settings page */}
               {/* Collapsed Orchestration icon moved to bottom */}
             </div>

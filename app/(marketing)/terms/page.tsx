@@ -60,11 +60,6 @@ export default function TermsOfServicePage() {
               Back to Home
             </Button>
           </Link>
-          <Link href="/business-ops">
-            <Button variant="outline" size="sm">
-              Business Ops
-            </Button>
-          </Link>
         </div>
       </header>
 
@@ -202,7 +197,6 @@ export default function TermsOfServicePage() {
       </main>
       <footer className="border-t border-border/60 py-6">
         <div className="max-w-4xl mx-auto px-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          <Link href="/business-ops" className="hover:text-foreground">Business Ops</Link>
           <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
           <Link href="/terms" className="hover:text-foreground">Terms</Link>
           <Link href="/cookies" className="hover:text-foreground">Cookies</Link>

@@ -244,9 +244,6 @@ export default function LandingPage() {
               <Link href="/case-studies" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 Case Studies
               </Link>
-              <Link href="/business-ops" className="text-sm text-zinc-400 hover:text-white transition-colors">
-                Business Ops
-              </Link>
               <Link href="/about" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 About
               </Link>
@@ -545,7 +542,6 @@ export default function LandingPage() {
                 <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
                 <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
                 <li><Link href="/demo" className="hover:text-white transition-colors">Demo</Link></li>
-                <li><Link href="/business-ops" className="hover:text-white transition-colors">Business Ops</Link></li>
                 <li><Link href="/case-studies" className="hover:text-white transition-colors">Case Studies</Link></li>
               </ul>
             </div>

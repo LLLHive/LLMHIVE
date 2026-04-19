@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import { 
   Brain, 
   Zap, 
@@ -17,7 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  Building2,
+  HelpCircle,
 } from "lucide-react"
 import { useOnboarding } from "@/lib/hooks/use-onboarding"
 
@@ -78,10 +77,10 @@ const TOUR_STEPS = [
     highlight: "billing",
   },
   {
-    title: "Run Business Ops",
-    description: "Access security, billing, org management, and integrations from the Business Ops hub.",
-    icon: Building2,
-    highlight: "business-ops",
+    title: "Get help anytime",
+    description: "Open Settings → Help for guides, billing FAQs, and security information.",
+    icon: HelpCircle,
+    highlight: "settings",
   },
 ]
 
@@ -203,11 +202,6 @@ export function OnboardingModal({ userName = "there" }: OnboardingModalProps) {
                 Take a Quick Tour
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Link href="/business-ops" className="flex-1">
-                <Button variant="outline" className="w-full">
-                  Business Ops Hub
-                </Button>
-              </Link>
               <Button
                 onClick={skipTour}
                 variant="outline"

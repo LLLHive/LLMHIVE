@@ -18,7 +18,6 @@ import {
   ExternalLink,
   HelpCircle,
   ArrowRight,
-  Building2,
   Receipt,
 } from "lucide-react"
 
@@ -91,23 +90,6 @@ const faqCategories: FAQCategory[] = [
         question: "What payment methods do you accept?",
         answer:
           "We accept all major credit cards (Visa, MasterCard, American Express, Discover) through our secure Stripe payment processing. Enterprise customers can also pay via invoice.",
-      },
-    ],
-  },
-  {
-    id: "business-ops",
-    name: "Business Ops",
-    icon: <Building2 className="h-5 w-5" />,
-    faqs: [
-      {
-        question: "Where can I access business operations pages?",
-        answer:
-          "Visit the Business Ops Hub for security, compliance, billing, org management, and integrations: https://www.llmhive.ai/business-ops",
-      },
-      {
-        question: "What lives in Business Ops?",
-        answer:
-          "Business Ops includes security, compliance, usage, billing history, invoices, org management, integrations, and support resources.",
       },
     ],
   },
