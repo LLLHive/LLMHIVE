@@ -15,7 +15,6 @@ import {
   MessageSquare,
   Search,
   Settings,
-  Sparkles,
   FolderOpen,
   Folder,
   FolderPlus,
@@ -24,8 +23,6 @@ import {
   PinOff,
   Trash2,
   MoreHorizontal,
-  Globe,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -51,7 +48,6 @@ import {
 import type { Conversation, Project } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { ProjectsPanel } from "./projects-panel"
-import { DiscoverCard } from "./discover-card"
 import { CollaborationPanel } from "./collaboration-panel"
 
 interface SidebarProps {
@@ -101,7 +97,7 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState<"chats" | "projects" | "discover" | null>("chats")
+  const [activeTab, setActiveTab] = useState<"chats" | "projects" | null>("chats")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
   const [showAllProjects, setShowAllProjects] = useState(false)
@@ -159,7 +155,7 @@ export function Sidebar({
     onMoveToProject(id)
   }
 
-  const handleTabChange = (tab: "chats" | "projects" | "discover") => {
+  const handleTabChange = (tab: "chats" | "projects") => {
     if (activeTab === tab) {
       setActiveTab(null)
     } else {
@@ -232,7 +228,7 @@ export function Sidebar({
             >
               {/* Inner wrapper with relative positioning for dropdown portal */}
               <div className="relative">
-              {/* Collaborate Section - Links to Settings/Collaboration */}
+              {/* Collaborate Section */}
               <div className="py-2">
                 <button
                   onClick={() => setCollaborateExpanded(!collaborateExpanded)}
@@ -406,47 +402,11 @@ export function Sidebar({
                 )}
               </div>
 
-              {activeTab === "discover" && (
-                <div className="space-y-3 py-4">
-                  <DiscoverCard
-                    icon={Globe}
-                    title="Web Search"
-                    description="Search the web with AI"
-                    color="from-blue-500 to-cyan-500"
-                  />
-                  <DiscoverCard
-                    icon={BookOpen}
-                    title="Knowledge Base"
-                    description="Explore AI prompts and guides"
-                    color="from-purple-500 to-pink-500"
-                  />
-                  <DiscoverCard
-                    icon={Sparkles}
-                    title="AI Templates"
-                    description="Pre-built prompts"
-                    color="from-orange-500 to-red-500"
-                  />
-                </div>
-              )}
               </div>{/* Close inner wrapper */}
             </div>{/* Close scrollable container */}
             
             {/* Orchestration and Settings at the bottom */}
             <div className="px-3 py-3 border-t border-border/50 mt-auto space-y-1">
-              <Link href={ROUTES.DISCOVER} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.DISCOVER) && "bg-secondary text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Discover
-                </Button>
-              </Link>
               <Link href={ROUTES.BUSINESS_OPS} className="w-full">
                 <Button
                   variant="ghost"
@@ -511,21 +471,22 @@ export function Sidebar({
               >
                 <MessageSquare className="h-5 w-5" />
               </Button>
-              {/* Collapsed Collaborate - links to Settings */}
+              {/* Collapsed: expand sidebar to use Collaborate (same section as when expanded) */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link href={ROUTES.SETTINGS}>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="w-10 h-10 hover:text-[var(--bronze)]"
-                      >
-                        <Users className="h-5 w-5" />
-                      </Button>
-                    </Link>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="w-10 h-10 hover:text-[var(--bronze)]"
+                      onClick={onToggleCollapse}
+                      aria-label="Expand sidebar for Collaborate"
+                    >
+                      <Users className="h-5 w-5" />
+                    </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="right">Collaborate (Coming Soon) - Go to Settings</TooltipContent>
+                  <TooltipContent side="right">Expand sidebar to open Collaborate</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               <Button
@@ -536,22 +497,6 @@ export function Sidebar({
               >
                 <FolderOpen className="h-5 w-5" />
               </Button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href={ROUTES.DISCOVER}>
-                      <Button 
-                        variant={isActiveRoute(ROUTES.DISCOVER) ? "secondary" : "ghost"} 
-                        size="icon" 
-                        className={cn("w-10 h-10", isActiveRoute(ROUTES.DISCOVER) && "text-[var(--bronze)]")}
-                      >
-                        <Sparkles className="h-5 w-5" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">Discover</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

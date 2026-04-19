@@ -7,7 +7,6 @@ sitemap: https://www.llmhive.ai/sitemap.xml
 - https://www.llmhive.ai/pricing
 - https://www.llmhive.ai/models
 - https://www.llmhive.ai/orchestration
-- https://www.llmhive.ai/discover
 
 ## Comparisons and Guides
 - https://www.llmhive.ai/comparisons

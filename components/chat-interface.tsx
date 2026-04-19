@@ -75,7 +75,8 @@ export function ChatInterface() {
   
   // Initial query from URL (for deep linking from Discover, templates, etc.)
   const [initialQuery, setInitialQuery] = useState<string | null>(null)
-  const queryProcessedRef = useRef(false)
+  /** Last `q` value we applied — avoids a single boolean blocking a second `?q=` in the same session. */
+  const lastAppliedUrlQueryRef = useRef<string | null>(null)
   
   // Load orchestrator settings on mount
   useEffect(() => {
@@ -93,18 +94,25 @@ export function ChatInterface() {
   
   // Handle URL query parameter (e.g., ?q=search+query)
   useEffect(() => {
-    const queryParam = searchParams.get('q')
-    if (queryParam && !queryProcessedRef.current) {
-      queryProcessedRef.current = true
-      setInitialQuery(queryParam)
-      // Clear the URL parameter without triggering a navigation
-      if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href)
-        url.searchParams.delete('q')
-        window.history.replaceState({}, '', url.toString())
-      }
+    const queryParam = searchParams.get("q")
+    if (!queryParam || lastAppliedUrlQueryRef.current === queryParam) return
+    lastAppliedUrlQueryRef.current = queryParam
+    setInitialQuery(queryParam)
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.delete("q")
+      window.history.replaceState({}, "", url.toString())
     }
   }, [searchParams])
+
+  // Clear deep-link `initialQuery` only after a conversation exists. If we clear it
+  // immediately in ChatArea, the home vs chat branch flips back to HomeScreen before
+  // auto-send runs (Discover / templates would appear to do nothing).
+  useEffect(() => {
+    if (currentConversationId != null && initialQuery != null) {
+      setInitialQuery(null)
+    }
+  }, [currentConversationId, initialQuery])
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -198,18 +206,20 @@ export function ChatInterface() {
       targetConversationId = await handleNewChat()
     }
 
-    const conv = conversations.find(c => c.id === targetConversationId)
-    if (conv) {
-      const updatedMessages = [...conv.messages, message]
-      const newTitle = conv.title === "New Chat" && message.role === "user" 
-        ? message.content.slice(0, 50) 
-        : conv.title
-      
-      await updateConversation(targetConversationId, {
-        messages: updatedMessages,
-        title: newTitle,
-      })
-    }
+    // After `handleNewChat`, `conversations` in this closure can still be stale (React batching),
+    // so `find` fails and messages were never persisted — Discover / deep links looked broken.
+    const conv = conversations.find((c) => c.id === targetConversationId)
+    const baseMessages = conv?.messages ?? []
+    const updatedMessages = [...baseMessages, message]
+    const newTitle =
+      message.role === "user" && (!conv || conv.title === "New Chat")
+        ? message.content.slice(0, 50)
+        : (conv?.title ?? "New Chat")
+
+    await updateConversation(targetConversationId, {
+      messages: updatedMessages,
+      title: newTitle,
+    })
 
     if (message.artifact) {
       setCurrentArtifact(message.artifact)
@@ -476,7 +486,6 @@ export function ChatInterface() {
               orchestratorSettings={orchestratorSettings}
               onOrchestratorSettingsChange={updateOrchestratorSettings}
               initialQuery={initialQuery}
-              onInitialQueryProcessed={() => setInitialQuery(null)}
             />
             {showArtifact && currentArtifact && (
               <ArtifactPanel artifact={currentArtifact} onClose={() => setShowArtifact(false)} />

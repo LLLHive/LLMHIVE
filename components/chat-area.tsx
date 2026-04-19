@@ -71,7 +71,6 @@ interface ChatAreaProps {
   // onOpenAdvancedSettings removed - Advanced is now inline dropdown in ChatToolbar
   userAccountMenu?: React.ReactNode
   initialQuery?: string | null
-  onInitialQueryProcessed?: () => void
 }
 
 export function ChatArea({
@@ -83,10 +82,10 @@ export function ChatArea({
   // onOpenAdvancedSettings removed
   userAccountMenu,
   initialQuery,
-  onInitialQueryProcessed,
 }: ChatAreaProps) {
   const [input, setInput] = useState("")
-  const initialQueryProcessedRef = useRef(false)
+  /** Match auto-send to each distinct `initialQuery` string (not a one-shot boolean). */
+  const lastAutoSentInitialQueryRef = useRef<string | null>(null)
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInsights, setShowInsights] = useState(false)
   const [selectedMessageForInsights, setSelectedMessageForInsights] = useState<Message | null>(null)
@@ -192,23 +191,17 @@ export function ChatArea({
   
   // Handle initial query from URL (deep linking from Discover, templates, etc.)
   useEffect(() => {
-    if (initialQuery && !initialQueryProcessedRef.current) {
-      initialQueryProcessedRef.current = true
-      // Set the input to the initial query
-      setInput(initialQuery)
-      // Notify parent that query has been processed
-      onInitialQueryProcessed?.()
-      // Auto-submit after a short delay to allow UI to render
-      const timer = setTimeout(() => {
-        // Trigger the send by simulating form submission
-        const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement
-        if (sendButton) {
-          sendButton.click()
-        }
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [initialQuery, onInitialQueryProcessed])
+    if (!initialQuery || lastAutoSentInitialQueryRef.current === initialQuery) return
+    lastAutoSentInitialQueryRef.current = initialQuery
+    setInput(initialQuery)
+    const timer = window.setTimeout(() => {
+      const sendButton = document.querySelector("[data-send-button]") as HTMLButtonElement | null
+      if (sendButton && !sendButton.disabled) {
+        sendButton.click()
+      }
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [initialQuery])
   
   // Auto-scroll to bottom when new messages arrive (unless user has scrolled up)
   useEffect(() => {

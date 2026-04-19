@@ -371,10 +371,9 @@ export const helpers = {
   /**
    * Navigate to a route and wait for it to load
    */
-  async navigateTo(page: Page, route: 'home' | 'discover' | 'orchestration' | 'settings') {
+  async navigateTo(page: Page, route: 'home' | 'orchestration' | 'settings') {
     const routes: Record<string, string> = {
       home: '/',
-      discover: '/discover',
       orchestration: '/orchestration',
       settings: '/settings',
     }

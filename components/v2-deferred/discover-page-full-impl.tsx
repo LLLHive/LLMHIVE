@@ -1,3 +1,8 @@
+/**
+ * Full Discover hub UI (cards + side sheets) — deferred to Version 2.0.
+ * Not used in production; wire back into `app/discover/page.tsx` when ready.
+ * @see docs/version-2/README.md
+ */
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -22,12 +27,10 @@ import {
   Users,
   Check,
   ArrowRight,
-  ExternalLink,
 } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
-import { useAuth } from "@/lib/auth-context"
 import { useConversationsContext } from "@/lib/conversations-context"
 import { toast } from "@/lib/toast"
 
@@ -143,9 +146,8 @@ const aiTemplates = [
 
 type DrawerId = "web-search" | "knowledge-base" | "ai-templates" | null
 
-export default function DiscoverPage() {
+export function DiscoverPageFullImpl() {
   const router = useRouter()
-  const auth = useAuth()
   const { conversations, projects, deleteConversation, updateConversation } = useConversationsContext()
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -230,7 +232,7 @@ export default function DiscoverPage() {
   return (
     <div className="flex h-screen overflow-hidden relative">
       {/* Sign In Button - Top Right (fixed position) */}
-      <div className="hidden md:block fixed top-3 right-3 z-50">
+      <div className="hidden md:block fixed top-3 right-3 z-40">
         <UserAccountMenu />
       </div>
 
@@ -320,8 +322,8 @@ export default function DiscoverPage() {
       </div>
 
       {/* Web Search Drawer */}
-      <Sheet open={activeDrawer === "web-search"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
+      <Sheet open={activeDrawer === "web-search"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="z-[100] w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
@@ -383,8 +385,8 @@ export default function DiscoverPage() {
       </Sheet>
 
       {/* Knowledge Base Drawer */}
-      <Sheet open={activeDrawer === "knowledge-base"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0 flex flex-col">
+      <Sheet open={activeDrawer === "knowledge-base"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="z-[100] w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0 flex flex-col">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -465,8 +467,8 @@ export default function DiscoverPage() {
       </Sheet>
 
       {/* AI Templates Drawer */}
-      <Sheet open={activeDrawer === "ai-templates"} onOpenChange={() => setActiveDrawer(null)}>
-        <SheetContent className="w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0 flex flex-col">
+      <Sheet open={activeDrawer === "ai-templates"} onOpenChange={(open) => !open && setActiveDrawer(null)}>
+        <SheetContent className="z-[100] w-[260px] sm:w-[280px] bg-card/95 backdrop-blur-xl border-l border-border p-0 flex flex-col">
           <SheetHeader className="p-4 pb-3 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">

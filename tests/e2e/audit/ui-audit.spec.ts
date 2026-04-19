@@ -139,7 +139,6 @@ function setupListeners(page: Page, route: string) {
 
 const ROUTES_TO_AUDIT = [
   { path: '/', name: 'Home' },
-  { path: '/discover', name: 'Discover' },
   { path: '/models', name: 'Models' },
   { path: '/orchestration', name: 'Orchestration' },
   { path: '/settings', name: 'Settings' },

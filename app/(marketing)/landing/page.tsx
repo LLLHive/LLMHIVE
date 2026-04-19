@@ -536,7 +536,6 @@ export default function LandingPage() {
                 <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/models" className="hover:text-white transition-colors">Models</Link></li>
-                <li><Link href="/discover" className="hover:text-white transition-colors">Discover</Link></li>
                 <li><Link href="/comparisons" className="hover:text-white transition-colors">Comparisons</Link></li>
               </ul>
             </div>
@@ -560,7 +559,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-zinc-400">
-                <li><Link href="/contact" className="hover:text-white transition-colors">Help Center</Link></li>
+                <li><Link href="/help" className="hover:text-white transition-colors">Help Center</Link></li>
                 <li><a href="mailto:info@llmhive.ai" className="hover:text-white transition-colors">info@llmhive.ai</a></li>
               </ul>
             </div>

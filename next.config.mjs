@@ -24,6 +24,13 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Discover hub deferred to v2 — old URL must not serve the retired UI (bookmarks, CDN, SEO).
+  async redirects() {
+    return [
+      { source: "/discover", destination: "/", permanent: true },
+      { source: "/discover/:path*", destination: "/", permanent: true },
+    ];
+  },
   // Note: instrumentationHook is now available by default in Next.js 16+
   // No experimental config needed
 };

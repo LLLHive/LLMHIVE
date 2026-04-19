@@ -19,6 +19,7 @@ import {
   HelpCircle,
   ArrowRight,
   Building2,
+  Receipt,
 } from "lucide-react"
 
 interface FAQItem {
@@ -422,15 +423,15 @@ export default function HelpClient() {
             href="/billing"
             className="group bg-card border border-border rounded-xl p-6 hover:border-[var(--bronze)]/50 transition-colors"
           >
-            <Settings className="h-8 w-8 text-[var(--bronze)] mb-4" />
+            <Receipt className="h-8 w-8 text-[var(--bronze)] mb-4" />
             <h3 className="font-semibold mb-2 group-hover:text-[var(--bronze)] transition-colors">
-              Account Settings
+              Billing & subscription
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Manage your subscription, usage, and preferences.
+              Manage your plan, payment methods, invoices, and usage.
             </p>
             <span className="text-sm text-[var(--bronze)] flex items-center gap-1">
-              Manage Account <ArrowRight className="h-4 w-4" />
+              Open billing <ArrowRight className="h-4 w-4" />
             </span>
           </Link>
         </div>

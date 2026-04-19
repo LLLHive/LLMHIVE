@@ -6,8 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { LogoText } from "@/components/branding"
 import {
-  Play,
-  Pause,
+  Film,
   Brain,
   Zap,
   Shield,
@@ -23,11 +22,12 @@ import {
   Users,
   Clock,
   Award,
+  Circle,
 } from "lucide-react"
 
-// Demo sections with timestamps
+// Planned chapters (outline — full video embed coming later)
 const DEMO_SECTIONS = [
-  { id: "intro", title: "Introduction", timestamp: "0:00", icon: Play },
+  { id: "intro", title: "Introduction", timestamp: "0:00", icon: Circle },
   { id: "chat", title: "Starting a Chat", timestamp: "0:45", icon: MessageSquare },
   { id: "orchestration", title: "Orchestration Modes", timestamp: "2:15", icon: Brain },
   { id: "elite", title: "ELITE Mode Deep Dive", timestamp: "4:30", icon: Zap },
@@ -48,7 +48,7 @@ const KEY_FEATURES = [
   {
     icon: Zap,
     title: "ELITE Mode Performance",
-    description: "Watch our advanced reasoning methods (HRM, DeepConf, Adaptive Ensemble) in action.",
+    description: "How advanced reasoning methods (HRM, DeepConf, Adaptive Ensemble) work in LLMHive.",
     color: "text-yellow-400",
     bgColor: "bg-yellow-400/10",
   },
@@ -77,7 +77,6 @@ const USE_CASES = [
 ]
 
 export default function DemoClient() {
-  const [isPlaying, setIsPlaying] = useState(false)
   const [activeSection, setActiveSection] = useState("intro")
 
   return (
@@ -113,65 +112,48 @@ export default function DemoClient() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#C48E48]/10 border border-[#C48E48]/20 text-[#C48E48] text-sm mb-6">
-              <Play className="h-4 w-4" />
-              Product Demo
+              <Film className="h-4 w-4" />
+              Demo preview
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">See LLMHive in Action</h1>
             <p className="text-xl text-muted-foreground">
-              Watch how our multi-model orchestration delivers consistently superior AI results across
-              coding, research, analysis, and more.
+              Full video walkthrough coming soon. Meanwhile, explore the chapter outline and feature highlights below.
             </p>
           </div>
 
-          {/* Video Player Placeholder */}
+          {/* Video placeholder — embed when asset is ready */}
           <div className="max-w-4xl mx-auto">
-            <div
-              className="relative aspect-video rounded-2xl overflow-hidden border border-[#262626] bg-[#171717]"
-              onClick={() => setIsPlaying(!isPlaying)}
-            >
-              {/* Video Placeholder - Replace with actual video embed */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#171717] to-[#0a0a0a]">
-                {/* Decorative background */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-[#262626] bg-[#171717]">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#171717] to-[#0a0a0a] px-6 text-center">
                 <div className="absolute inset-0 opacity-20">
                   <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#C48E48] blur-[100px]" />
                   <div className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-purple-500 blur-[80px]" />
                 </div>
 
-                {/* Play button */}
-                <button
-                  className="relative z-10 w-24 h-24 rounded-full bg-[#C48E48] flex items-center justify-center shadow-lg shadow-[#C48E48]/20 hover:scale-105 transition-transform"
-                  aria-label={isPlaying ? "Pause video" : "Play video"}
+                <div
+                  className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full border-2 border-[#C48E48]/40 bg-[#C48E48]/10"
+                  role="img"
+                  aria-label="Demo video not yet available"
                 >
-                  {isPlaying ? (
-                    <Pause className="h-10 w-10 text-[#0a0a0a]" />
-                  ) : (
-                    <Play className="h-10 w-10 text-[#0a0a0a] ml-1" />
-                  )}
-                </button>
+                  <Film className="h-10 w-10 text-[#C48E48]" />
+                </div>
 
-                <p className="relative z-10 mt-6 text-muted-foreground">
-                  {isPlaying ? "Demo playing..." : "Click to play demo video"}
+                <p className="relative z-10 mt-6 max-w-md text-sm text-muted-foreground">
+                  Video embed coming soon. Planned runtime ~8:30; chapters below match the intended structure.
                 </p>
 
-                {/* Duration badge */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-sm text-white/80">
-                  <Clock className="h-4 w-4" />
-                  8:30
+                <div className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-xs text-white/70">
+                  <Clock className="h-3.5 w-3.5" />
+                  Preview
                 </div>
               </div>
 
-              {/* Video element placeholder - uncomment when video is ready
-              <video 
-                className="w-full h-full object-cover"
-                poster="/demo-thumbnail.jpg"
-                controls
-              >
+              {/* <video className="w-full h-full object-cover" poster="/demo-thumbnail.jpg" controls>
                 <source src="/demo-video.mp4" type="video/mp4" />
-              </video>
-              */}
+              </video> */}
             </div>
 
-            {/* Video chapters */}
+            {/* Chapter outline (not interactive playback) */}
             <div className="mt-6 flex flex-wrap gap-2 justify-center">
               {DEMO_SECTIONS.map((section) => (
                 <button
