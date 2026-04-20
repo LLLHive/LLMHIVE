@@ -19,7 +19,7 @@
     "test:e2e:all": "playwright test",
     "test:e2e:update-snapshots": "playwright test --update-snapshots",
     "ui:audit": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium",
-    "ui:audit:quick": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium -g 'Route loads'",
+    "ui:audit:quick": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium -g 'Route loads without errors'",
     "ui:audit:headed": "playwright test tests/e2e/audit/ui-audit.spec.ts --project=chromium --headed",
     "ui:audit:report": "cat docs/ui_audit/reports/latest/report.md",
     "weekly:improve": "python scripts/weekly_improve.py",

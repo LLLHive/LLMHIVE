@@ -1215,6 +1215,7 @@ export function ChatArea({
           <div className="relative chat-input-container rounded-2xl bg-gradient-to-r from-white/10 via-white/5 to-white/10 p-[1px]">
             <div className="rounded-2xl bg-white/5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),inset_0_-8px_24px_rgba(0,0,0,0.35)]">
               <Textarea
+                data-testid="chat-composer"
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => {

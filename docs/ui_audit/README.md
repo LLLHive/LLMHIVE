@@ -17,7 +17,7 @@ The UI Audit tool performs:
 # Run full UI audit
 npm run ui:audit
 
-# Run quick smoke test
+# Run quick smoke test (Route Discovery only: 4 routes)
 npm run ui:audit:quick
 
 # Run with visible browser
@@ -70,6 +70,8 @@ docs/ui_audit/reports/
     ├── issues.json
     └── screenshots/
 ```
+
+The `latest/` folder is **gitignored** so automated runs do not constantly rewrite screenshots and machine output in the repo. Commit a **timestamped** folder under `reports/` only when you want a frozen snapshot for review.
 
 ### Report Format
 

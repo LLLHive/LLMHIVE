@@ -104,13 +104,51 @@ async function takeScreenshot(page: Page, name: string): Promise<string> {
   return filepath
 }
 
+/** Expected noise when E2E runs without a signed-in session or full Clerk test keys. */
+function shouldIgnoreNetworkFailure(url: string, status: number): boolean {
+  try {
+    const parsed = new URL(url)
+    const path = parsed.pathname
+    if (path.includes('/api/billing/subscription') && status === 401) return true
+    if (path.includes('/api/billing/') && status === 401) return true
+    const host = parsed.hostname
+    if (host.includes('clerk.') || host.includes('clerk.com') || host.includes('clerk.accounts')) {
+      if (status >= 400 && status < 500) return true
+    }
+  } catch {
+    return false
+  }
+  return false
+}
+
 // Helper: Setup error/network listeners
+/** From marketing home, start a chat and wait for ChatArea composer (toolbar is not on HomeScreen). */
+async function openChatFromHome(page: Page) {
+  await page.waitForLoadState('load')
+  await page.waitForFunction(() => document.readyState === 'complete', undefined, { timeout: 60000 })
+
+  const start = page.getByRole('button', { name: /Start Chatting/i })
+  await expect(start).toBeVisible({ timeout: 20000 })
+  await expect(start).toBeEnabled({ timeout: 15000 })
+  await start.scrollIntoViewIfNeeded()
+  await start.click()
+
+  const composer = page.getByTestId('chat-composer')
+  if (!(await composer.isVisible().catch(() => false))) {
+    await start.click()
+  }
+  await expect(composer).toBeVisible({ timeout: 25000 })
+}
+
 function setupListeners(page: Page, route: string) {
   page.on('console', msg => {
     if (msg.type() === 'error') {
+      const text = msg.text()
+      // Benign browser / layout noise seen in headless runs
+      if (text.includes('ResizeObserver loop limit exceeded')) return
       auditResult.consoleErrors.push({
         route,
-        message: msg.text(),
+        message: text,
         type: msg.type(),
       })
     }
@@ -122,6 +160,7 @@ function setupListeners(page: Page, route: string) {
       const url = response.url()
       // Ignore expected 404s for non-existent resources
       if (!url.includes('_next/static') && !url.includes('favicon')) {
+        if (shouldIgnoreNetworkFailure(url, status)) return
         auditResult.networkFailures.push({
           route,
           url,
@@ -171,8 +210,10 @@ test.describe('UI Audit - Route Discovery', () => {
         auditResult.routesVisited.push(route.path)
       }
       
-      // Check for visible error indicators
-      const errorBanner = page.locator('[role="alert"], .error, .error-message')
+      // Visible only: hidden [role="alert"] (e.g. Radix/Clerk) is not a page error
+      const errorBanner = page
+        .locator('[role="alert"], .error, .error-message')
+        .filter({ visible: true })
       const errorCount = await errorBanner.count()
       
       if (errorCount > 0) {
@@ -525,72 +566,33 @@ test.describe('UI Audit - Category Parity', () => {
 })
 
 test.describe('UI Audit - Chat UI', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.beforeEach(async ({ page }) => {
     await setupOpenRouterMocks(page)
   })
 
   test('Chat page: Model dropdown has categories', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 })
-    await page.waitForTimeout(500)
-    
-    // Look for model selector dropdown
-    const modelSelector = page.locator('[data-testid="model-selector"], select[name="model"], button:has-text("Model")')
-    
-    if (await modelSelector.first().isVisible().catch(() => false)) {
-      await modelSelector.first().click()
-      await page.waitForTimeout(300)
-      await takeScreenshot(page, 'chat_model_dropdown')
-      
-      // Check for category options
-      const dropdownContent = page.locator('[role="listbox"], [role="menu"], .dropdown-content')
-      const hasCategories = await dropdownContent.locator('text=/Programming|Science|Marketing/i').first().isVisible().catch(() => false)
-      
-      if (!hasCategories) {
-        auditResult.issues.push({
-          id: 'chat_no_categories_dropdown',
-          severity: 'P1',
-          type: 'correctness',
-          title: 'Chat model dropdown missing categories',
-          description: 'Model selector should show categories matching Models page',
-          route: '/',
-          reproSteps: ['Navigate to /', 'Click model selector dropdown', 'Check for category list'],
-          suspectedFiles: ['components/chat-area.tsx', 'components/model-selector.tsx'],
-          suggestedFix: 'Add category-based model selection to chat dropdown',
-        })
-      }
-    }
-    
+    await openChatFromHome(page)
+
+    await page.getByTestId('model-selector-trigger').filter({ visible: true }).click()
+
+    const menu = page.getByRole('menu').filter({ hasText: 'Browse by Category' })
+    await expect(menu).toBeVisible({ timeout: 10000 })
+    await expect(menu.getByText('Programming', { exact: true })).toBeVisible({ timeout: 15000 })
+
+    await takeScreenshot(page, 'chat_model_dropdown')
     await takeScreenshot(page, 'chat_page')
   })
 
   test('Chat page: Clarifying questions flow works', async ({ page }) => {
     await setupClarifyingQuestionsMock(page)
     await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 })
-    
-    // The home screen shows a "Start Chatting" button - need to click it first
-    const startChatButton = page.locator('button:has-text("Start Chatting"), button:has-text("New Chat")').first()
-    if (await startChatButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await startChatButton.click()
-      await page.waitForTimeout(500)
-    }
-    
-    // Find chat input (after starting a new chat)
-    const chatInput = page.locator('textarea, input[type="text"]').first()
-    if (!await chatInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      auditResult.issues.push({
-        id: 'chat_no_input',
-        severity: 'P0',
-        type: 'ux',
-        title: 'Chat input not visible',
-        description: 'Cannot find chat input field after clicking Start Chat',
-        route: '/',
-        reproSteps: ['Navigate to /', 'Click Start Chatting', 'Look for chat input'],
-        suspectedFiles: ['components/chat-area.tsx', 'components/chat-interface.tsx'],
-        suggestedFix: 'Ensure chat input is rendered after starting a chat',
-      })
-      return
-    }
-    
+    await openChatFromHome(page)
+
+    const chatInput = page.getByTestId('chat-composer')
+
     // Send ambiguous message
     await chatInput.fill('Tell me about this ambiguous topic')
     await chatInput.press('Enter')

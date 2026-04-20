@@ -506,6 +506,8 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         }}>
           <SheetTrigger asChild>
             <Button
+              type="button"
+              data-testid="model-selector-trigger"
               variant="ghost"
               size="sm"
               className="gap-1.5 h-7 px-2 text-[11px] bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
@@ -530,6 +532,8 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         }}>
           <DropdownMenuTrigger asChild>
             <Button
+              type="button"
+              data-testid="model-selector-trigger"
               variant="ghost"
               size="sm"
               className="gap-1.5 h-7 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all duration-150 active:scale-[0.98] touch-target"

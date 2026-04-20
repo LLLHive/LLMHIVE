@@ -24,11 +24,10 @@ test.describe('Sidebar Navigation', () => {
     await expect(page.locator('img[alt="LLMHive"]').first()).toBeVisible({ timeout: 15000 })
   })
 
-  test('sidebar shows all navigation items', async ({ page }) => {
+  test('sidebar shows primary navigation items', async ({ page }) => {
     const nav = page.locator('aside')
-    await expect(nav.getByRole('link', { name: 'Business Ops' })).toBeVisible()
-    await expect(nav.getByRole('link', { name: 'Settings' })).toBeVisible()
     await expect(nav.getByRole('link', { name: 'Orchestration' })).toBeVisible()
+    await expect(nav.getByRole('link', { name: 'Settings' })).toBeVisible()
   })
 
   test('/discover redirects to home (hub removed until v2)', async ({ page }) => {

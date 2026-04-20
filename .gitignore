@@ -119,6 +119,9 @@ test-results/
 /test-results/
 .env*.local
 
+# UI audit outputs (regenerate with npm run ui:audit — see docs/ui_audit/README.md)
+docs/ui_audit/reports/latest/
+
 # ===========================================
 # BACKUPS (contains sensitive env files)
 # ===========================================
