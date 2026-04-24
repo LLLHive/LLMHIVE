@@ -1,0 +1,105 @@
+# Review-only monthly pack: copies weekly improvement artifacts into a dated folder
+# under artifacts/weekly_improvement_review/ and opens a PR to main (no OpenRouter sync, no auto-apply).
+#
+# Cron runs from the repository default branch only. Enable Actions in repo settings.
+# After merge, history stays on main under artifacts/weekly_improvement_review/YYYY-MM-DD/.
+name: Monthly improvement reports
+
+on:
+  schedule:
+    - cron: "0 6 1 * *" # 06:00 UTC on the 1st of each month
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "If true, skip git branch + PR (pack step still runs; use workflow artifact)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: monthly-improvement-reports-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package-reports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Assemble dated review pack
+        id: pack
+        run: |
+          set -euo pipefail
+          DATE=$(date -u +%Y-%m-%d)
+          DEST="artifacts/weekly_improvement_review/${DATE}"
+          mkdir -p "$DEST"
+          shopt -s nullglob || true
+          for f in llmhive/src/llmhive/app/weekly/reports/*.md llmhive/src/llmhive/app/weekly/reports/*.json; do
+            [ -e "$f" ] && cp "$f" "$DEST/" || true
+          done
+          for f in llmhive/src/llmhive/app/weekly/plans/*.json; do
+            [ -e "$f" ] && cp "$f" "$DEST/" || true
+          done
+          {
+            echo "# Improvement report pack (${DATE})"
+            echo ""
+            echo "Produced by \`monthly-improvement-reports.yml\` (review-only)."
+            echo ""
+            echo "- Sources: \`llmhive/src/llmhive/app/weekly/reports/\`, \`llmhive/src/llmhive/app/weekly/plans/\`"
+            echo "- No catalog sync and no auto-apply in this workflow."
+            echo ""
+            echo "## Human review"
+            echo ""
+            echo "1. Inspect JSON/Markdown in this folder."
+            echo "2. Apply gated upgrades manually if appropriate."
+          } > "$DEST/README.md"
+          echo "date=${DATE}" >> "$GITHUB_OUTPUT"
+          echo "Pack at ${DEST}"
+          ls -la "$DEST" || true
+
+      - name: Upload pack as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monthly-improvement-pack-${{ steps.pack.outputs.date }}
+          path: artifacts/weekly_improvement_review/${{ steps.pack.outputs.date }}/
+          retention-days: 180
+
+      - name: Open pull request (review pack on main)
+        # `inputs` exists only for workflow_dispatch; on schedule, skip PR only when dry_run was requested.
+        # Boolean dispatch inputs may surface as booleans or strings depending on runner.
+        if: >-
+          github.event_name == 'schedule' ||
+          (github.event_name == 'workflow_dispatch' && inputs.dry_run != true && inputs.dry_run != 'true')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          DATE="${{ steps.pack.outputs.date }}"
+          RID="${{ github.run_id }}"
+          BR="chore/monthly-improvement-pack-${DATE}-${RID}"
+          DEST="artifacts/weekly_improvement_review/${DATE}"
+          if [ ! -d "$DEST" ] || [ -z "$(ls -A "$DEST" 2>/dev/null || true)" ]; then
+            echo "Pack directory missing or empty; skipping PR."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BR"
+          git add "$DEST"
+          if git diff --staged --quiet; then
+            echo "Nothing staged."
+            exit 0
+          fi
+          git commit -m "chore: monthly improvement report pack ${DATE} (run ${RID})"
+          git push -u origin "$BR"
+          gh pr create --base main --head "$BR" \
+            --title "chore: monthly improvement report pack ${DATE}" \
+            --body "Review-only pack from \`monthly-improvement-reports.yml\` (run ${RID}). Merge if the artifacts look correct. **Does not** run OpenRouter sync or auto-apply upgrades." \
+            || echo "PR creation skipped or failed; check with gh pr list"

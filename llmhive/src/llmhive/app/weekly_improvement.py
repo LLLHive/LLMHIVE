@@ -389,9 +389,9 @@ class WeeklyImprovementOrchestrator:
         
         try:
             # Import sync modules
+            from .db import get_db_session
             from .openrouter.rankings_sync import RankingsSync
             from .openrouter.sync import OpenRouterModelSync
-            from .db import get_db_session
             
             db_session = get_db_session()
             
@@ -404,13 +404,12 @@ class WeeklyImprovementOrchestrator:
                     enrich_endpoints=True,
                 )
                 
-                # Track model changes
-                for model_id in getattr(model_report, 'new_model_ids', []):
+                # Track model changes (SyncReport lists populated by OpenRouterModelSync)
+                for model_id in model_report.new_model_ids:
                     self._report.models_added.append(
                         ModelChange(model_id=model_id, change_type="added")
                     )
-                
-                for model_id in getattr(model_report, 'inactive_model_ids', []):
+                for model_id in model_report.inactive_model_ids:
                     self._report.models_removed.append(
                         ModelChange(model_id=model_id, change_type="removed")
                     )

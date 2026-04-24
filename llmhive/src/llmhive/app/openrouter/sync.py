@@ -54,6 +54,10 @@ class SyncReport:
     
     # Dry run flag
     dry_run: bool = False
+
+    # Per-model audit (populated during sync for weekly improvement reports)
+    new_model_ids: List[str] = field(default_factory=list)
+    inactive_model_ids: List[str] = field(default_factory=list)
     
     @property
     def success(self) -> bool:
@@ -80,6 +84,8 @@ class SyncReport:
                 "updated": self.models_updated,
                 "unchanged": self.models_unchanged,
                 "marked_inactive": self.models_marked_inactive,
+                "new_model_ids": self.new_model_ids[:500],
+                "inactive_model_ids": self.inactive_model_ids[:500],
             },
             "endpoints": {
                 "fetched": self.endpoints_fetched,
@@ -213,6 +219,7 @@ class OpenRouterModelSync:
                         if not dry_run:
                             self.db.add(new_model)
                         report.models_added += 1
+                        report.new_model_ids.append(model_id)
                         logger.debug("Added model: %s", model_id)
                         
                 except Exception as e:
@@ -225,6 +232,7 @@ class OpenRouterModelSync:
                     if not dry_run:
                         existing.is_active = False
                     report.models_marked_inactive += 1
+                    report.inactive_model_ids.append(model_id)
                     logger.info("Marked model inactive: %s", model_id)
             
             # Step 4: Enrich with endpoints (if enabled)
