@@ -26,7 +26,7 @@ const faqItems = [
   {
     question: "What is LLMHive?",
     answer:
-      "LLMHive is a multi-model AI orchestration platform that routes each request to the best AI model for accuracy, speed, and cost. Teams get one interface to 400+ models with enterprise security and usage controls.",
+      "LLMHive is a multi-model AI orchestration platform that routes each request to the best AI model for accuracy, speed, and cost. Teams get one interface to 350+ OpenRouter models with enterprise security and usage controls.",
   },
   {
     question: "How is LLMHive different from ChatGPT or Claude?",

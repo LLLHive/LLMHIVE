@@ -24,21 +24,21 @@ import {
 export const metadata: Metadata = {
   title: "LLMHive - Multi-Model AI Orchestration Platform",
   description:
-    "LLMHive routes every request to the best AI model for accuracy, speed, and cost. One interface for 400+ models with enterprise security.",
+    "LLMHive routes every request to the best AI model for accuracy, speed, and cost. One interface for 350+ OpenRouter models with enterprise security.",
   alternates: {
     canonical: "https://llmhive.ai/landing",
   },
   openGraph: {
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 400+ models with enterprise security.",
+      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 350+ OpenRouter models with enterprise security.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 400+ models with enterprise security.",
+      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 350+ OpenRouter models with enterprise security.",
   },
 }
 
@@ -46,7 +46,8 @@ const features = [
   {
     icon: Brain,
     title: "Multi-Model Orchestration",
-    description: "Route queries to the best AI model automatically. GPT-5.2, Claude 4.5, Gemini 3, DeepSeek V3.2, and 400+ more—all in one place."
+    description:
+      "Route queries to the best AI model automatically. GPT-5.4, Claude Sonnet 4.6 / Opus 4.7, Gemini 3.1, Grok 4.2, Llama 4, DeepSeek V3.2, and 350+ OpenRouter models—all in one place.",
   },
   {
     icon: Layers,
@@ -70,7 +71,7 @@ const features = [
   },
   {
     icon: Globe,
-    title: "400+ Models",
+    title: "350+ OpenRouter models",
     description: "Access to every major AI provider including OpenAI, Anthropic, Google, Meta, Mistral, and more through a single interface."
   }
 ]
@@ -115,14 +116,14 @@ const stats = [
   { value: "10M+", label: "Messages Processed" },
   { value: "99.9%", label: "Uptime" },
   { value: "150ms", label: "Avg Response Time" },
-  { value: "400+", label: "AI Models" },
+  { value: "350+", label: "OpenRouter models" },
 ]
 
 const faqItems = [
   {
     question: "What is LLMHive?",
     answer:
-      "LLMHive is a multi-model AI orchestration platform that routes each request to the best AI model for accuracy, speed, and cost. Teams get one interface to access 400+ models with enterprise security, usage controls, and cost optimization.",
+      "LLMHive is a multi-model AI orchestration platform that routes each request to the best AI model for accuracy, speed, and cost. Teams get one interface to access 350+ OpenRouter models with enterprise security, usage controls, and cost optimization.",
   },
   {
     question: "How does multi-model routing work?",
@@ -250,7 +251,7 @@ export default function LandingPage() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm mb-8">
               <Sparkles className="h-4 w-4" />
-              <span>Now with GPT-5.2, Claude 4.5 Opus, Gemini 3 & Llama 4</span>
+              <span>Now with GPT-5.4, Claude Sonnet 4.6 / Opus 4.7, Gemini 3.1, Grok 4.2 & Llama 4</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
               One Interface.<br />Every AI Model.
@@ -291,7 +292,7 @@ export default function LandingPage() {
             </h2>
             <p className="mt-3 text-base md:text-lg text-zinc-400 leading-relaxed">
               LLMHive is a multi-model AI orchestration platform that routes each request to the
-              best model for accuracy, speed, and cost. Teams get one interface to 400+ models
+              best model for accuracy, speed, and cost. Teams get one interface to 350+ OpenRouter models
               with enterprise security, usage controls, and cost optimization.
             </p>
           </div>

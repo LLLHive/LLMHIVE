@@ -174,8 +174,8 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-[var(--bronze)] mb-2">400+</div>
-              <div className="text-sm text-muted-foreground">AI Models</div>
+              <div className="text-4xl font-bold text-[var(--bronze)] mb-2">350+</div>
+              <div className="text-sm text-muted-foreground">OpenRouter models</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-[var(--bronze)] mb-2">10M+</div>

@@ -63,7 +63,7 @@ LLMHive combines ALL major AI models through intelligent orchestration. Instead 
 
 **Quick Numbers:**
 - Beats ChatGPT Pro by 5% on composite scores
-- 400+ models available
+- 350+ OpenRouter models available
 - #1 ranking in General Reasoning, Coding, Math, Multilingual, and more
 
 **Try It Free:**
@@ -79,7 +79,7 @@ Would love to hear your feedback! Happy to answer any questions. 🙏
 > Great question! OpenRouter is fantastic for model routing, but LLMHive goes further with intelligent orchestration. We don't just route to one model—we combine outputs from multiple models, run consensus voting, and use proprietary methods like HRM and DeepConf to synthesize the best possible answer. Think of it as the difference between a solo musician and an orchestra.
 
 ### "What models are included?"
-> We support 400+ models through multiple providers: OpenAI (GPT-4, GPT-4 Turbo), Anthropic (Claude 3 Opus, Sonnet, Haiku), Google (Gemini Pro, Ultra), DeepSeek, Mistral, Meta Llama, and many more. Our ELITE mode uses the top 5 models in consensus for maximum accuracy.
+> We route across 350+ OpenRouter models (OpenAI GPT-5.x, Anthropic Claude 4.x, Google Gemini 3.x, DeepSeek V4, xAI Grok, Meta Llama 4, and more). ELITE mode uses a consensus team for maximum accuracy.
 
 ### "How does pricing compare to ChatGPT Pro?"
 > ChatGPT Pro is $20/month for one model. Our Pro tier is $29.99/month and gives you access to ALL models plus our orchestration engine that consistently outperforms single-model solutions. The extra $10/month gets you significantly better results across all categories.
@@ -162,7 +162,7 @@ https://producthunt.com/posts/llmhive
 ```
 Excited to announce LLMHive is now live on Product Hunt! 🚀
 
-After months of development, we've built an AI orchestration platform that combines the best of GPT-4, Claude, Gemini, and 400+ models into a single, powerful interface.
+After months of development, we've built an AI orchestration platform that combines frontier models (GPT-5.4, Claude 4.6/4.7, Gemini 3.1, and 350+ OpenRouter models) into a single, powerful interface.
 
 The results speak for themselves: #1 rankings across all 10 benchmark categories.
 

@@ -237,7 +237,7 @@ export const comparisons: ComparisonItem[] = [
       {
         title: "Model Flexibility",
         points: [
-          "LLMHive supports 400+ models.",
+          "LLMHive supports 350+ OpenRouter models.",
           "Copilot uses Microsoft‑selected models.",
           "LLMHive can route to the best model per task.",
         ],
@@ -337,7 +337,7 @@ export const comparisons: ComparisonItem[] = [
       {
         title: "Model Access",
         points: [
-          "LLMHive provides access to 400+ models.",
+          "LLMHive provides access to 350+ OpenRouter models.",
           "Notion AI uses a limited model set.",
           "LLMHive can optimize for quality and cost.",
         ],
@@ -689,7 +689,7 @@ export const comparisons: ComparisonItem[] = [
       {
         title: "Flexibility",
         points: [
-          "LLMHive supports 400+ models across providers.",
+          "LLMHive supports 350+ OpenRouter models across providers.",
           "Gemini Advanced focuses on Google models.",
           "LLMHive routes to the best model per task.",
         ],
@@ -873,7 +873,7 @@ export const comparisons: ComparisonItem[] = [
       {
         title: "Model Choice",
         points: [
-          "LLMHive supports 400+ models.",
+          "LLMHive supports 350+ OpenRouter models.",
           "Cohere provides its own models.",
           "LLMHive selects the best model per request.",
         ],
@@ -966,7 +966,7 @@ export const comparisons: ComparisonItem[] = [
         title: "Provider Scope",
         points: [
           "Azure OpenAI focuses on OpenAI models in Azure.",
-          "LLMHive supports 400+ models across providers.",
+          "LLMHive supports 350+ OpenRouter models across providers.",
           "LLMHive enables task-aware routing.",
         ],
       },

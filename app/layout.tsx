@@ -72,7 +72,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 400+ models in one interface.",
+      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 350+ OpenRouter models in one interface.",
     url: siteUrl,
     siteName: "LLMHive",
     type: "website",
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 400+ models in one interface.",
+      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 350+ OpenRouter models in one interface.",
   },
   icons: {
     icon: [
