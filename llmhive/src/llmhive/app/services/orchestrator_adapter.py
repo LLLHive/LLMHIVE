@@ -316,6 +316,30 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
+def _is_benchmark_mcq_prompt(prompt: str) -> bool:
+    """Return True if ``prompt`` looks like a structured benchmark MCQ rubric.
+
+    Used to tune orchestration for lettered multiple-choice tasks with a fixed
+    answer line (FINAL_ANSWER / CONFIDENCE), without flagging ordinary Q&A.
+    """
+    if not prompt or len(prompt) < 40:
+        return False
+    upper = prompt.upper()
+    if "FINAL_ANSWER" not in upper or "CONFIDENCE" not in upper:
+        return False
+    lower = prompt.lower()
+    if "multiple-choice" in lower or "multiple choice" in lower:
+        return bool(
+            re.search(r"(?m)^\s*[ABCD][\).]\s", prompt)
+            or re.search(r"(?m)^\s*[ABCD]\.\s", prompt)
+        )
+    return bool(
+        re.search(r"(?m)^\s*[ABCD]\)\s", prompt)
+        or re.search(r"(?m)^\s*[ABCD]\.\s", prompt)
+    )
+
+
 # Configuration
 MAX_CHALLENGE_LOOPS = 2  # Max retry attempts on verification failure
 VERIFICATION_ENABLED = True  # Enable verification gate
