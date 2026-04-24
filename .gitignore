@@ -128,3 +128,6 @@ docs/ui_audit/reports/latest/
 backups/
 .env.local.backup
 .env.certification
+
+# Local backend SQLite scratch (dev)
+llmhive/test.db
