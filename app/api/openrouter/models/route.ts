@@ -3,6 +3,13 @@ import { NextResponse } from "next/server"
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-792354158895.us-east1.run.app"
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/models"
 
+/** OpenRouter `architecture` fields are loosely typed; coerce so merged rows stay `{ string, string, string }`. */
+function architectureStringField(value: unknown, fallback: string): string {
+  if (typeof value === "string" && value.trim().length > 0) return value
+  if (typeof value === "number" || typeof value === "boolean") return String(value)
+  return fallback
+}
+
 // Transform OpenRouter model to our format
 function transformModel(model: Record<string, unknown>) {
   const pricing = model.pricing as Record<string, string> | undefined
@@ -15,9 +22,9 @@ function transformModel(model: Record<string, unknown>) {
     description: model.description || "",
     context_length: model.context_length || 4096,
     architecture: {
-      modality: architecture?.modality || "text->text",
-      tokenizer: architecture?.tokenizer || "unknown",
-      instruct_type: architecture?.instruct_type || "none",
+      modality: architectureStringField(architecture?.modality, "text->text"),
+      tokenizer: architectureStringField(architecture?.tokenizer, "unknown"),
+      instruct_type: architectureStringField(architecture?.instruct_type, "none"),
     },
     pricing: {
       prompt: pricing?.prompt ? parseFloat(pricing.prompt) : 0,
