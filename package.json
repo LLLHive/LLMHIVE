@@ -9,6 +9,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
+    "verify:openrouter": "node scripts/verify-openrouter-catalog-ids.mjs",
     "start": "next start",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:ui": "playwright test --ui",

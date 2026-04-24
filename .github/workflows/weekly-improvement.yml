@@ -1,3 +1,5 @@
+# Cron runs from the repository default branch only. Enable Actions in repo settings.
+# Schedule: weekly. Manual: Actions → Weekly Improvement Cycle → Run workflow.
 name: Weekly Improvement Cycle
 
 on:
@@ -83,15 +85,8 @@ jobs:
           # Note: Firestore access uses the WIF service account credentials (ADC)
           # No DATABASE_URL needed - the service account has Firestore access
       
-      - name: Run OpenRouter Sync
-        run: |
-          cd llmhive
-          if [ -z "$OPENROUTER_API_KEY" ]; then
-            echo "::warning::OPENROUTER_API_KEY not available, skipping sync"
-            exit 0
-          fi
-          python -m llmhive.app.openrouter.scheduler --sync ${{ inputs.dry_run == 'true' && '--dry-run' || '' }}
-      
+      # OpenRouter catalog sync runs inside weekly_improvement Phase 1 (OpenRouterModelSync).
+      # Avoid a duplicate scheduler --sync here to cut CI time and double OpenRouter traffic.
       - name: Run Weekly Improvement Cycle
         run: |
           cd llmhive
@@ -99,8 +94,8 @@ jobs:
             echo "::warning::OPENROUTER_API_KEY not available, running in limited mode"
           fi
           python -m llmhive.app.weekly_improvement --run \
-            ${{ inputs.dry_run == 'true' && '--dry-run' || '' }} \
-            ${{ inputs.skip_benchmarks == 'true' && '--no-benchmarks' || '' }} \
+            ${{ (github.event_name == 'workflow_dispatch' && (inputs.dry_run == true || inputs.dry_run == 'true')) && '--dry-run' || '' }} \
+            ${{ (github.event_name == 'workflow_dispatch' && (inputs.skip_benchmarks == true || inputs.skip_benchmarks == 'true')) && '--no-benchmarks' || '' }} \
             --verbose
       
       - name: Run E2E Tests
@@ -139,7 +134,10 @@ jobs:
       
       - name: Commit Weekly Reports to automation branch
         id: weekly-pr
-        if: inputs.dry_run != 'true' && steps.safety.outputs.safe_to_deploy == 'true'
+        # `inputs` is only defined for workflow_dispatch; always allow scheduled runs unless not SAFE.
+        if: >-
+          (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true && inputs.dry_run != 'true')) &&
+          steps.safety.outputs.safe_to_deploy == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
