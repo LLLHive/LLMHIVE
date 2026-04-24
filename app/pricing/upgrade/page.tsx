@@ -19,7 +19,7 @@ export default function PricingUpgradePage() {
           items: [
             "Recommended plan based on usage trends.",
             "Immediate access to higher Premium quotas.",
-            "Pro-rated billing adjustments.",
+            "Prorated billing adjustments.",
           ],
         },
         {

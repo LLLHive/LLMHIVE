@@ -4,8 +4,8 @@ import { auth } from "@clerk/nextjs/server"
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 
 // =============================================================================
-// 5-TIER QUOTA SYSTEM (January 2026)
-// Free, Lite, Pro, Enterprise
+// Quotas (April 2026 GTM): Standard (Stripe key "lite"), Premium ("pro"), Enterprise
+// Unauthenticated / no sub: "free" (displayed as Standard in UI)
 // =============================================================================
 interface TierQuota {
   eliteQueries: number
@@ -26,20 +26,20 @@ const TIER_QUOTAS: Record<string, TierQuota> = {
     tokens: 100_000,
   },
   lite: {
-    eliteQueries: 100,
-    afterQuotaTier: "free",
-    totalQueries: 500,
+    eliteQueries: 0,
+    afterQuotaTier: "standard",
+    totalQueries: 999_999,
     tokens: 500_000,
   },
   pro: {
     eliteQueries: 500,
-    afterQuotaTier: "free",
+    afterQuotaTier: "standard",
     totalQueries: 2000,
     tokens: 4_000_000,
   },
   enterprise: {
     eliteQueries: 400,  // Per seat
-    afterQuotaTier: "free",
+    afterQuotaTier: "standard",
     totalQueries: 800,  // Per seat
     tokens: 2_000_000,  // Per seat
     perSeat: true,
@@ -47,6 +47,15 @@ const TIER_QUOTAS: Record<string, TierQuota> = {
 }
 
 type TierKey = keyof typeof TIER_QUOTAS
+
+/** Map API/marketing tier names onto internal quota keys */
+function resolveInternalTierKey(raw: string): TierKey {
+  const t = raw.toLowerCase()
+  if (t === "standard") return "lite"
+  if (t === "premium") return "pro"
+  if (t in TIER_QUOTAS) return t as TierKey
+  return "free"
+}
 
 export interface QuotaUsageResponse {
   // Core quota info
@@ -94,17 +103,20 @@ function getOrchestrationMode(
 ): "elite" | "standard" | "budget" | "free" {
   const quotas = TIER_QUOTAS[tier]
 
-  // Free tier: Always free orchestration
   if (tier === "free") {
     return "free"
   }
-  
-  // Check ELITE quota
+
+  // Standard product (internal key "lite"): Standard orchestration only
+  if (tier === "lite") {
+    return "standard"
+  }
+
+  // Premium / Enterprise: in Premium quota → elite orchestration
   if (quotas.eliteQueries === 0 || eliteUsed < quotas.eliteQueries) {
     return "elite"
   }
-  
-  // ELITE exhausted - use after-quota tier
+
   return quotas.afterQuotaTier as "standard" | "budget" | "free"
 }
 
@@ -136,8 +148,8 @@ export async function GET() {
       console.warn("Could not fetch usage from backend, using defaults:", fetchError)
     }
     
-    // Extract tier name (default to free for new signups)
-    const tierName = ((data.tier_name || data.tier || "free") as string).toLowerCase() as TierKey
+    const tierRaw = ((data.tier_name || data.tier || "free") as string).toLowerCase()
+    const tierName = resolveInternalTierKey(tierRaw)
     const quotas = TIER_QUOTAS[tierName] || TIER_QUOTAS.free
     
     // Extract usage counts
@@ -150,7 +162,11 @@ export async function GET() {
     // Calculate quotas
     const isUnlimited = quotas.neverThrottle
     const eliteRemaining = isUnlimited ? Infinity : Math.max(0, quotas.eliteQueries - eliteUsed)
-    const elitePercentUsed = isUnlimited ? 0 : (quotas.eliteQueries > 0 ? eliteUsed / quotas.eliteQueries : 0)
+    const elitePercentUsed = isUnlimited
+      ? 0
+      : quotas.eliteQueries > 0
+        ? eliteUsed / quotas.eliteQueries
+        : 0
     
     // Determine status
     let status: QuotaUsageResponse["status"] = "normal"
@@ -164,23 +180,29 @@ export async function GET() {
       statusMessage = "Enterprise tier — Premium orchestration active"
     } else if (tierName === "free") {
       status = "normal"
-      statusMessage = "Standard plan active — upgrade for Premium queries"
+      statusMessage = "No active subscription — Standard routing on applicable trials"
       showUpgradePrompt = true
-      upgradeMessage = "Upgrade to Lite for Premium queries and higher limits"
-    } else if (eliteRemaining === 0) {
+      upgradeMessage = "Subscribe to Standard ($10/mo) or Premium ($20/mo) for full access"
+    } else if (eliteRemaining === 0 && quotas.eliteQueries > 0) {
       status = "throttled"
       const afterTier = quotas.afterQuotaTier
       const afterLabel =
-        afterTier === "free" ? "Standard" : afterTier === "standard" ? "Balanced" : afterTier === "budget" ? "Budget" : afterTier
-      statusMessage = `Premium quota exhausted. Using ${afterLabel} mode (still great quality!)`
+        afterTier === "free" ? "Standard" : afterTier === "standard" ? "Standard" : afterTier === "budget" ? "Budget" : afterTier
+      statusMessage = `Premium quota exhausted. Using ${afterLabel} orchestration (still great quality!)`
       showUpgradePrompt = true
-      upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more Premium queries" : "Upgrade to Enterprise for team features"
-    } else if (elitePercentUsed >= 0.8) {
+      upgradeMessage =
+        tierName === "pro"
+          ? "Upgrade to Enterprise for higher per-seat Premium quotas and team controls"
+          : "Upgrade to Premium for more Premium queries"
+    } else if (elitePercentUsed >= 0.8 && quotas.eliteQueries > 0) {
       status = "warning"
       statusMessage = `${eliteRemaining} Premium queries remaining. They'll reset in ${getDaysUntilReset()} days.`
       showUpgradePrompt = elitePercentUsed >= 0.9
       if (showUpgradePrompt) {
-        upgradeMessage = tierName === "lite" ? "Upgrade to Pro for 5x more Premium queries" : "Upgrade for unlimited Premium queries"
+        upgradeMessage =
+          tierName === "lite"
+            ? "Move up to Premium ($20/mo) for 500 Premium queries / month"
+            : "Upgrade to Enterprise for team features and higher quotas"
       }
     }
     

@@ -150,7 +150,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "anthropic/claude-opus-4.5",  # NEW: Best overall Anthropic
         "openai/gpt-5.2-pro",         # Latest OpenAI flagship
         "anthropic/claude-opus-4.1",  # Strong medical reasoning
-        "google/gemini-3-pro-preview", # NEW: Latest Google
+        "google/gemini-3.1-pro-preview", # NEW: Latest Google
         "openai/o3-deep-research",    # NEW: Deep research for complex cases
         "anthropic/claude-sonnet-4.5", # Good balance speed/quality
         "openai/gpt-5.2",             # Strong baseline
@@ -164,7 +164,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "openai/o1-pro",              # Strong reasoning
         "anthropic/claude-opus-4.5",  # NEW: Top Anthropic
         "deepseek/deepseek-v3.2-speciale", # NEW: Enhanced DeepSeek
-        "google/gemini-3-pro-preview", # NEW: Latest Google
+        "google/gemini-3.1-pro-preview", # NEW: Latest Google
         "openai/gpt-5.2-pro",         # Strong math
         "qwen/qwen3-max",             # NEW: Strong on math benchmarks
     ],
@@ -184,7 +184,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
     # Research/Analysis: Prioritize long context and accuracy
     "research_analysis": [
         "openai/o3-deep-research",    # NEW: Purpose-built for research
-        "google/gemini-3-pro-preview", # NEW: Best long context
+        "google/gemini-3.1-pro-preview", # NEW: Best long context
         "anthropic/claude-opus-4.5",  # NEW: Excellent analysis
         "openai/gpt-5.2-pro",         # Strong research
         "anthropic/claude-sonnet-4.5", # Good balance
@@ -197,7 +197,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "anthropic/claude-opus-4.5",  # NEW: Best legal reasoning
         "anthropic/claude-opus-4.1",  # Strong legal
         "openai/gpt-5.2-pro",         # Strong accuracy
-        "google/gemini-3-pro-preview", # NEW: Good for documents
+        "google/gemini-3.1-pro-preview", # NEW: Good for documents
         "openai/o3-deep-research",    # Complex reasoning
         "mistralai/mistral-large-2512", # NEW: Latest Mistral
     ],
@@ -207,14 +207,14 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "openai/gpt-5.2-pro",         # Strong quantitative
         "openai/o3-deep-research",    # Complex calculations
         "anthropic/claude-opus-4.5",  # NEW: Best analysis
-        "google/gemini-3-pro-preview", # NEW: Strong on numbers
+        "google/gemini-3.1-pro-preview", # NEW: Strong on numbers
         "deepseek/deepseek-v3.2-speciale", # Strong reasoning
         "qwen/qwen3-max",             # NEW: Strong math
     ],
     
     # Science: Prioritize accuracy and knowledge
     "science_research": [
-        "google/gemini-3-pro-preview", # NEW: Latest scientific knowledge
+        "google/gemini-3.1-pro-preview", # NEW: Latest scientific knowledge
         "openai/o3-deep-research",    # NEW: Deep scientific analysis
         "anthropic/claude-opus-4.5",  # NEW: Excellent reasoning
         "openai/gpt-5.2-pro",         # Excellent accuracy
@@ -228,7 +228,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "anthropic/claude-sonnet-4.5", # NEW: Good creative
         "openai/gpt-5.2",             # Strong creative
         "anthropic/claude-3.7-sonnet", # NEW: Good creative flow
-        "google/gemini-3-pro-preview", # NEW: Good variety
+        "google/gemini-3.1-pro-preview", # NEW: Good variety
         "meta-llama/llama-4-maverick", # NEW: Creative experiments
     ],
     
@@ -237,7 +237,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "anthropic/claude-opus-4.5",  # NEW: Best overall Anthropic
         "openai/gpt-5.2-pro",         # Best overall OpenAI
         "openai/o3-deep-research",    # NEW: Deep reasoning
-        "google/gemini-3-pro-preview", # NEW: Latest Google
+        "google/gemini-3.1-pro-preview", # NEW: Latest Google
         "openai/gpt-5-pro",       # Quality focused
     ],
 }

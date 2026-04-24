@@ -91,7 +91,16 @@ export interface ProjectFile {
   type: string
 }
 
-export type ModelProvider = "openai" | "anthropic" | "google" | "xai" | "deepseek" | "meta" | "orchestrator"
+export type ModelProvider =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "xai"
+  | "deepseek"
+  | "meta"
+  | "orchestrator"
+  | "mistralai"
+  | "qwen"
 
 export interface Model {
   id: string

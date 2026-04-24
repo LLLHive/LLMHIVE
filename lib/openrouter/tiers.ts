@@ -39,10 +39,10 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   free: {
     name: 'free',
     displayName: 'Standard',
-    description: 'Basic access to get started',
+    description: 'No active subscription — Standard unlimited orchestration from $10/mo',
     maxModelsInTeam: 2,
     maxConcurrentRequests: 1,
-    monthlyTokenLimit: null,  // UNLIMITED for Free tier (Jan 2026)
+    monthlyTokenLimit: null,  // Unlimited Standard orchestration cap (product policy)
     features: {
       canUseTeams: false,
       canUseAdvancedReasoning: false,
@@ -54,8 +54,8 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   },
   starter: {
     name: 'starter',
-    displayName: 'Starter',
-    description: 'For individuals getting serious ($15/mo)',
+    displayName: 'Standard',
+    description: 'Paid Standard — unlimited Standard orchestration ($10/mo)',
     maxModelsInTeam: 5,
     maxConcurrentRequests: 3,
     monthlyTokenLimit: DEV_MODE ? null : 500_000,  // 500K tokens
@@ -70,8 +70,8 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   },
   pro: {
     name: 'pro',
-    displayName: 'Pro',
-    description: 'For power users and small teams ($29.99/mo)',
+    displayName: 'Premium',
+    description: 'Premium orchestration — 500 Premium queries/mo, then unlimited Standard ($20/mo)',
     maxModelsInTeam: 10,
     maxConcurrentRequests: 10,
     monthlyTokenLimit: DEV_MODE ? null : 1_000_000,  // 1M tokens (reduced from 3M!)
@@ -87,7 +87,7 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   enterprise: {
     name: 'enterprise',
     displayName: 'Enterprise',
-    description: 'For organizations with advanced needs ($199.99/mo)',
+    description: 'Teams — $35/seat/mo (min 5 seats), SSO, compliance, 400 Premium/seat',
     maxModelsInTeam: 20,
     maxConcurrentRequests: 50,
     monthlyTokenLimit: DEV_MODE ? null : 5_000_000,  // 5M base (was unlimited!)
@@ -346,7 +346,7 @@ const FREE_TIER_PATTERNS = [
   'mimo-v2-flash',  // Xiaomi free model
 ]
 
-// Models that require at least Starter tier (Standard tier - ~$2-10/1M)
+// Models that require at least Standard (paid) access (~$2–10/1M OpenRouter)
 const STARTER_TIER_PATTERNS = [
   'gemini-2.5-flash',
   'gemini-flash',
@@ -391,7 +391,8 @@ const ENTERPRISE_TIER_PATTERNS = [
   'claude-opus-4.5',  // $25/1M but heavy usage
   'claude-opus-4',
   'claude-4',
-  'gemini-3-pro',   // Gemini 3 Pro is Enterprise
+  'gemini-3.1-pro', // Gemini 3.1 Pro (preview) — flagship Google
+  'gemini-3-pro',   // Legacy pattern for older slugs
 ]
 
 /**

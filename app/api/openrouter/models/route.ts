@@ -99,59 +99,196 @@ function transformPineconeModel(model: Record<string, unknown>) {
   }
 }
 
+type TransformedProfile = ReturnType<typeof transformPineconeModel>
+type TransformedOpenRouter = ReturnType<typeof transformModel>
+
+/** Overlay live OpenRouter pricing and modality fields onto a Firestore-backed profile row. */
+function mergeProfileWithOpenRouter(
+  profile: TransformedProfile,
+  orModel: TransformedOpenRouter,
+): TransformedProfile {
+  return {
+    ...profile,
+    context_length: orModel.context_length || profile.context_length,
+    architecture: orModel.architecture,
+    pricing: orModel.pricing,
+    is_free: orModel.is_free,
+    capabilities: {
+      ...profile.capabilities,
+      supports_tools: orModel.capabilities.supports_tools,
+      supports_structured: orModel.capabilities.supports_structured,
+      supports_streaming: orModel.capabilities.supports_streaming,
+      multimodal_input: orModel.capabilities.multimodal_input,
+      multimodal_output: orModel.capabilities.multimodal_output,
+    },
+    top_provider_max_tokens: orModel.top_provider_max_tokens,
+    data_source: `${profile.data_source}+openrouter_pricing`,
+  }
+}
+
+/** Prefer Firestore (and Pinecone fallback) profiles; append OpenRouter-only slugs; overlay OR pricing when ids match. */
+function buildFirestoreFirstModelList(
+  profileRows: Record<string, unknown>[],
+  openRouterRows: Record<string, unknown>[],
+  searchLower: string,
+): TransformedProfile[] {
+  const orById = new Map<string, TransformedOpenRouter>()
+  for (const row of openRouterRows) {
+    const id = typeof row.id === "string" ? row.id : ""
+    if (id) orById.set(id, transformModel(row))
+  }
+
+  const merged: TransformedProfile[] = []
+  const seen = new Set<string>()
+
+  for (const raw of profileRows) {
+    const id = typeof raw.id === "string" ? raw.id : ""
+    if (!id) continue
+    if (searchLower) {
+      const name = String(raw.name || "").toLowerCase()
+      const prov = String(raw.provider || "").toLowerCase()
+      if (
+        !id.toLowerCase().includes(searchLower) &&
+        !name.includes(searchLower) &&
+        !prov.includes(searchLower)
+      ) {
+        continue
+      }
+    }
+    seen.add(id)
+    const base = transformPineconeModel(raw)
+    const orHit = orById.get(id)
+    merged.push(orHit ? mergeProfileWithOpenRouter(base, orHit) : base)
+  }
+
+  for (const row of openRouterRows) {
+    const id = typeof row.id === "string" ? row.id : ""
+    if (!id || seen.has(id)) continue
+    if (searchLower) {
+      const name = String(row.name || "").toLowerCase()
+      const desc = String(row.description || "").toLowerCase()
+      if (!id.toLowerCase().includes(searchLower) && !name.includes(searchLower) && !desc.includes(searchLower)) {
+        continue
+      }
+    }
+    const om = transformModel(row)
+    const shell = transformPineconeModel({
+      id,
+      name: om.name,
+      provider: (id.split("/")[0] || "openrouter").replace(/:$/, ""),
+      capabilities: {},
+      features: {
+        context_length: om.context_length,
+        supports_tools: om.capabilities.supports_tools,
+        supports_vision: om.capabilities.multimodal_input,
+      },
+      strengths: [],
+      weaknesses: [],
+      best_for: ["general use"],
+      source: "openrouter_only",
+    })
+    merged.push({
+      ...shell,
+      description: om.description,
+      architecture: om.architecture,
+      pricing: om.pricing,
+      is_free: om.is_free,
+      capabilities: { ...shell.capabilities, ...om.capabilities },
+      top_provider_max_tokens: om.top_provider_max_tokens,
+      data_source: "openrouter_catalog",
+    })
+  }
+
+  return merged
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const search = searchParams.get("search") || ""
   const limit = parseInt(searchParams.get("limit") || "50")
   const offset = parseInt(searchParams.get("offset") || "0")
-  
-  // PRIORITY 1: OpenRouter API (source of truth for available models)
-  // This ensures we always show the LATEST models (GPT-5.2, Claude 4.5, Gemini 3, etc.)
-  try {
-    const openRouterResponse = await fetch(OPENROUTER_API_URL, {
+  const searchLower = search.toLowerCase()
+
+  const profilesUrl = `${BACKEND_URL}/api/v1/models/profiles?limit=500&search=${encodeURIComponent(search)}`
+
+  const [profilesResult, openRouterResult] = await Promise.allSettled([
+    fetch(profilesUrl, {
       headers: {
         "Content-Type": "application/json",
+        "X-API-Key": process.env.LLMHIVE_API_KEY || "",
       },
-      next: { revalidate: 300 }, // Cache for 5 minutes (was 1 hour - too stale)
-    })
-    
-    if (openRouterResponse.ok) {
-      const openRouterData = await openRouterResponse.json()
-      const rawModels = openRouterData.data || []
-      
-      // Transform models to our format
-      let models = rawModels.map(transformModel)
-      
-      // Apply search filter
-      if (search) {
-        const searchLower = search.toLowerCase()
-        models = models.filter((m: { id: string; name: string; description: string }) => 
-          m.id.toLowerCase().includes(searchLower) ||
-          m.name.toLowerCase().includes(searchLower) ||
-          (m.description && m.description.toLowerCase().includes(searchLower))
-        )
+      signal: AbortSignal.timeout(8000),
+    }),
+    fetch(OPENROUTER_API_URL, {
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 300 },
+    }),
+  ])
+
+  let profileModels: Record<string, unknown>[] = []
+  let profilesMeta: { data_source?: string; last_updated?: string } = {}
+  if (profilesResult.status === "fulfilled" && profilesResult.value.ok) {
+    try {
+      const data = await profilesResult.value.json()
+      if (data.models?.length) {
+        profileModels = data.models
+        profilesMeta = { data_source: data.data_source, last_updated: data.last_updated }
       }
-      
-      // Get total before pagination
-      const total = models.length
-      
-      // Apply pagination
-      models = models.slice(offset, offset + limit)
-      
-      return NextResponse.json({
-        models,
-        total,
-        limit,
-        offset,
-        data_source: "OpenRouter API (live)",
-        last_sync: new Date().toISOString(),
-      })
+    } catch {
+      /* ignore */
     }
-  } catch (err) {
-    console.log("OpenRouter API unavailable, trying backend:", err)
+  }
+
+  let openRouterRaw: Record<string, unknown>[] = []
+  if (openRouterResult.status === "fulfilled" && openRouterResult.value.ok) {
+    try {
+      const openRouterData = await openRouterResult.value.json()
+      openRouterRaw = openRouterData.data || []
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // PRIORITY 1: Firestore/Pinecone profiles when available (superset vs OpenRouter catalog), merged with OR pricing
+  if (profileModels.length > 0) {
+    const full = buildFirestoreFirstModelList(profileModels, openRouterRaw, searchLower)
+    const total = full.length
+    const models = full.slice(offset, offset + limit)
+    return NextResponse.json({
+      models,
+      total,
+      limit,
+      offset,
+      data_source: openRouterRaw.length
+        ? `${profilesMeta.data_source || "model_profiles"} + OpenRouter pricing overlay`
+        : profilesMeta.data_source || "model_profiles",
+      last_sync: profilesMeta.last_updated || new Date().toISOString(),
+    })
+  }
+
+  // PRIORITY 2: OpenRouter-only when profiles unavailable
+  if (openRouterRaw.length > 0) {
+    let models = openRouterRaw.map(transformModel)
+    if (search) {
+      models = models.filter((m: { id: string; name: string; description: string }) =>
+        m.id.toLowerCase().includes(searchLower) ||
+        m.name.toLowerCase().includes(searchLower) ||
+        (m.description && m.description.toLowerCase().includes(searchLower)),
+      )
+    }
+    const total = models.length
+    models = models.slice(offset, offset + limit)
+    return NextResponse.json({
+      models,
+      total,
+      limit,
+      offset,
+      data_source: "OpenRouter API (live)",
+      last_sync: new Date().toISOString(),
+    })
   }
   
-  // PRIORITY 2: Try SQLite backend (has synced OpenRouter data)
+  // PRIORITY 3: SQLite backend (synced OpenRouter data)
   try {
     const query = searchParams.toString()
     const url = `${BACKEND_URL}/api/v1/openrouter/models${query ? `?${query}` : ""}`
@@ -183,7 +320,7 @@ export async function GET(request: Request) {
     // Backend unavailable, will fallback to Pinecone
   }
   
-  // PRIORITY 3: Try Pinecone-backed API (may have enriched metadata but older model list)
+  // PRIORITY 4: Model profiles again (smaller limit) if initial parallel fetch missed
   try {
     const pineconeUrl = `${BACKEND_URL}/api/v1/models/profiles?limit=${limit}&search=${encodeURIComponent(search)}`
     

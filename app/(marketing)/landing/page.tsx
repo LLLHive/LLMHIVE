@@ -1,6 +1,11 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
+import {
+  OFFER_ENTERPRISE_FEATURES,
+  OFFER_PREMIUM_FEATURES,
+  OFFER_STANDARD_FEATURES,
+} from "@/lib/marketing/pricing-offers"
 import { 
   Sparkles, 
   Zap, 
@@ -21,7 +26,7 @@ export const metadata: Metadata = {
   description:
     "LLMHive routes every request to the best AI model for accuracy, speed, and cost. One interface for 400+ models with enterprise security.",
   alternates: {
-    canonical: "https://www.llmhive.ai/landing",
+    canonical: "https://llmhive.ai/landing",
   },
   openGraph: {
     title: "LLMHive - Multi-Model AI Orchestration Platform",
@@ -73,65 +78,37 @@ const features = [
 const tiers = [
   {
     name: "Standard",
-    price: "$0",
-    period: "/forever",
-    description: "BEATS most paid models",
-    features: [
-      "Unlimited Standard queries",
-      "Patented AI orchestration",
-      "Outperforms single models",
-      "Knowledge Base access"
-    ],
-    cta: "Get started",
-    href: "/sign-up",
+    price: "$10",
+    period: "/month",
+    description: "Unlimited Standard orchestration",
+    features: [...OFFER_STANDARD_FEATURES],
+    cta: "Subscribe",
+    href: "/pricing",
     highlighted: false,
-    isFree: true
+    accent: "bronze" as const,
   },
   {
-    name: "Lite",
-    price: "$14.99",
+    name: "Premium",
+    price: "$20",
     period: "/month",
-    description: "#1 in 5 out of 8 benchmark categories",
-    features: [
-      "100 Premium queries (5/8 categories #1)",
-      "Premium AI orchestration",
-      "Knowledge Base access",
-      "Email support"
-    ],
-    cta: "Get Started",
-    href: "/sign-up",
-    highlighted: false
-  },
-  {
-    name: "Pro",
-    price: "$29.99",
-    period: "/month",
-    description: "Full power for professionals",
-    features: [
-      "500 Premium queries (5/8 categories #1)",
-      "Full API access",
-      "DeepConf & Prompt Diffusion",
-      "Priority support"
-    ],
-    cta: "Upgrade to Pro",
-    href: "/sign-up",
-    highlighted: true
+    description: "500 Premium queries, then unlimited Standard",
+    features: [...OFFER_PREMIUM_FEATURES],
+    cta: "Subscribe",
+    href: "/pricing",
+    highlighted: true,
+    accent: "amber" as const,
   },
   {
     name: "Enterprise",
     price: "$35",
     period: "/seat/mo",
     description: "For teams with compliance needs",
-    features: [
-      "Min 5 seats ($175+/mo)",
-      "400 Premium/seat",
-      "SSO & SAML integration",
-      "Dedicated support manager"
-    ],
-    cta: "Contact Sales",
+    features: [...OFFER_ENTERPRISE_FEATURES],
+    cta: "Contact sales",
     href: "/contact",
-    highlighted: false
-  }
+    highlighted: false,
+    accent: "emerald" as const,
+  },
 ]
 
 const stats = [
@@ -176,8 +153,8 @@ function renderStructuredData() {
       {
         "@type": "Organization",
         name: "LLMHive",
-        url: "https://www.llmhive.ai",
-        logo: "https://www.llmhive.ai/logo.png",
+        url: "https://llmhive.ai",
+        logo: "https://llmhive.ai/logo.png",
       },
       {
         "@type": "SoftwareApplication",
@@ -189,9 +166,9 @@ function renderStructuredData() {
         offers: {
           "@type": "Offer",
           priceCurrency: "USD",
-          price: "0",
+          price: "10",
           category: "Standard",
-          url: "https://www.llmhive.ai/pricing",
+          url: "https://llmhive.ai/pricing",
         },
         featureList: features.map((feature) => feature.title),
       },
@@ -285,7 +262,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/sign-up">
                 <Button size="lg" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 text-lg px-8 h-14">
-                  Start for Free
+                  Get started
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -401,30 +378,25 @@ export default function LandingPage() {
               Simple, Transparent Pricing
             </h2>
             <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-              Start free, scale as you grow. No hidden fees.
+              Standard, Premium, and Enterprise — annual billing saves about 17%.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {tiers.map((tier) => (
-              <div 
+              <div
                 key={tier.name}
                 className={`relative p-6 rounded-2xl ${
-                  tier.highlighted 
-                    ? "bg-gradient-to-b from-amber-500/10 to-orange-600/5 border-2 border-amber-500/50" 
-                    : (tier as any).isFree
-                    ? "bg-gradient-to-b from-green-500/10 to-emerald-600/5 border-2 border-green-500/50"
-                    : "bg-zinc-900/50 border border-zinc-800"
+                  tier.highlighted
+                    ? "bg-gradient-to-b from-amber-500/10 to-orange-600/5 border-2 border-amber-500/50"
+                    : tier.accent === "bronze"
+                      ? "bg-zinc-900/50 border border-amber-700/40"
+                      : "bg-zinc-900/50 border border-emerald-700/40"
                 }`}
               >
                 {tier.highlighted && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full text-sm font-medium">
-                    Most Popular
-                  </div>
-                )}
-                {(tier as any).isFree && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full text-sm font-medium text-white">
-                    Forever Free
+                    Most popular
                   </div>
                 )}
                 <div className="mb-4">
@@ -438,19 +410,23 @@ export default function LandingPage() {
                 <ul className="space-y-2 mb-6">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-2 text-xs">
-                      <Check className={`h-3 w-3 flex-shrink-0 ${(tier as any).isFree ? "text-green-500" : "text-amber-500"}`} />
+                      <Check
+                        className={`h-3 w-3 flex-shrink-0 ${
+                          tier.highlighted ? "text-amber-500" : tier.accent === "emerald" ? "text-emerald-500" : "text-amber-600"
+                        }`}
+                      />
                       <span className="text-zinc-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 <Link href={tier.href}>
-                  <Button 
+                  <Button
                     className={`w-full ${
-                      tier.highlighted 
-                        ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" 
-                        : (tier as any).isFree
-                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0"
-                        : "bg-zinc-800 hover:bg-zinc-700 text-white"
+                      tier.highlighted
+                        ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0"
+                        : tier.accent === "emerald"
+                          ? "bg-emerald-700 hover:bg-emerald-600 text-white"
+                          : "bg-zinc-800 hover:bg-zinc-700 text-white"
                     }`}
                   >
                     {tier.cta}
@@ -514,9 +490,9 @@ export default function LandingPage() {
           <p className="text-xl text-zinc-400 mb-10">
             Join thousands of developers and teams using LLMHive to build smarter, faster.
           </p>
-          <Link href="/sign-up">
+          <Link href="/pricing">
             <Button size="lg" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 text-lg px-8 h-14">
-              Get Started for Free
+              View plans
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>

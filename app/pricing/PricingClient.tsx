@@ -4,15 +4,11 @@ import { useState } from "react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import {
   Check,
-  Zap,
   Building2,
-  Sparkles,
   ArrowRight,
   Loader2,
   Home,
   Crown,
-  Users,
-  Rocket,
   Star,
   Trophy,
 } from "lucide-react"
@@ -29,8 +25,16 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+import {
+  OFFER_ENTERPRISE_FEATURES,
+  OFFER_PREMIUM_FEATURES,
+  OFFER_STANDARD_FEATURES,
+} from "@/lib/marketing/pricing-offers"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+
+/** Stripe / backend tier keys (legacy ids: lite = Standard product, pro = Premium product) */
+export type CheckoutTierKey = "lite" | "pro" | "enterprise"
 
 interface PricingTier {
   name: string
@@ -39,143 +43,89 @@ interface PricingTier {
   annualPrice: number
   features: string[]
   quotas: {
-    eliteQueries: string
+    headline: string
     afterQuota: string
-    totalQueries: string
+    detail: string
   }
   popular?: boolean
   cta: string
-  tier: "free" | "lite" | "pro" | "enterprise"
+  tier: CheckoutTierKey
   badge?: string
   icon: React.ReactNode
-  highlight?: string
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 4-TIER PRICING - PRO IS THE HERO (January 2026)
-// Sales Psychology: Pro should pop, Standard should be an entry point only
-// ═══════════════════════════════════════════════════════════════════════════════
+// GTM April 2026: three offers — Standard ($10), Premium ($20), Enterprise (unchanged).
+// Checkout still uses Stripe price IDs keyed as lite / pro for backwards compatibility.
 const pricingTiers: PricingTier[] = [
   {
     name: "Standard",
-    description: "Try our orchestration technology",
-    monthlyPrice: 0,
-    annualPrice: 0,
-    tier: "free",
+    description: "Standard orchestration for everyday work",
+    monthlyPrice: 10,
+    annualPrice: 100,
+    tier: "lite",
     icon: <Star className="h-5 w-5 text-[var(--bronze)]" />,
     quotas: {
-      eliteQueries: "🆓 Standard orchestration",
-      afterQuota: "UNLIMITED queries",
-      totalQueries: "Basic features",
+      headline: "Standard orchestration",
+      afterQuota: "Unlimited included",
+      detail: "Powered by our Standard routing — strong quality vs. single-model apps",
     },
-    features: [
-      "Multi-model orchestration",
-      "Beats most single models",
-      "Knowledge Base access",
-      "Calculator & Reranker",
-      "3-day memory",
-      "Community support",
-    ],
-    cta: "Get started",
+    features: [...OFFER_STANDARD_FEATURES],
+    cta: "Subscribe — Standard",
   },
   {
-    name: "Lite",
-    description: "Unlock Premium benchmark quality",
-    monthlyPrice: 14.99,
-    annualPrice: 149.99,
-    tier: "lite",
-    icon: <Zap className="h-5 w-5 text-blue-400" />,
-    quotas: {
-      eliteQueries: "100 Premium queries",
-      afterQuota: "Then unlimited Standard",
-      totalQueries: BENCHMARK_CLAIM_SHORT,
-    },
-    features: [
-      "100 Premium queries/month",
-      "Then unlimited Standard queries",
-      "Top benchmark results when using Premium",
-      "Knowledge Base access",
-      "7-day memory retention",
-      "Consensus voting",
-      "Email support",
-    ],
-    cta: "Get Lite",
-  },
-  {
-    name: "Pro",
-    description: "Maximum power for professionals",
-    monthlyPrice: 29.99,
-    annualPrice: 299.99,
+    name: "Premium",
+    description: "Premium orchestration for benchmark-grade answers",
+    monthlyPrice: 20,
+    annualPrice: 200,
     tier: "pro",
     popular: true,
-    icon: <Rocket className="h-5 w-5 text-yellow-500" />,
+    icon: <Crown className="h-5 w-5 text-yellow-500" />,
     badge: "BEST VALUE",
     quotas: {
-      eliteQueries: "500 Premium queries",
+      headline: "500 Premium queries / month",
       afterQuota: "Then unlimited Standard",
-      totalQueries: `${BENCHMARK_CLAIM_SHORT} + Full API`,
+      detail: BENCHMARK_CLAIM_SHORT,
     },
-    features: [
-      "500 Premium queries/month",
-      "Then unlimited Standard queries",
-      "Top benchmark results when using Premium",
-      "Full API access",
-      "DeepConf debate system",
-      "Prompt Diffusion",
-      "Web research & fact-checking",
-      "30-day memory retention",
-      "Priority support",
-    ],
-    cta: "Get Pro — Best Value",
+    features: [...OFFER_PREMIUM_FEATURES],
+    cta: "Subscribe — Premium",
   },
   {
     name: "Enterprise",
-    description: "Teams & compliance",
+    description: "Teams, SSO, and compliance",
     monthlyPrice: 35,
     annualPrice: 350,
     tier: "enterprise",
     icon: <Building2 className="h-5 w-5 text-emerald-400" />,
-    badge: "Per Seat",
+    badge: "Per seat",
     quotas: {
-      eliteQueries: "400 Premium/seat",
+      headline: "400 Premium queries / seat",
       afterQuota: "Then unlimited Standard",
-      totalQueries: "SSO + Compliance",
+      detail: "SSO, audit logs, SLA",
     },
-    features: [
-      "400 Premium per seat/month",
-      "Then unlimited Standard queries",
-      "Min 5 seats ($175+/mo)",
-      "SSO / SAML authentication",
-      "SOC 2 Type II compliance",
-      "Audit logs & dashboard",
-      "99.5% SLA guarantee",
-      "1-year memory retention",
-      "Dedicated support manager",
-    ],
-    cta: "Contact Sales",
+    features: [...OFFER_ENTERPRISE_FEATURES],
+    cta: "Contact sales",
   },
 ]
 
 const pricingFaq = [
   {
-    question: "What is included in the Standard plan?",
+    question: "What is included in Standard?",
     answer:
-      "The Standard plan includes multi-model orchestration, knowledge base access, and unlimited queries with our Standard routing.",
+      "Standard is $10/month and includes unlimited Standard orchestration — multi-model routing tuned for cost and quality for everyday tasks.",
+  },
+  {
+    question: "What is Premium?",
+    answer:
+      "Premium is $20/month and includes 500 Premium queries per month using our top orchestration stack, then unlimited Standard orchestration after the quota.",
   },
   {
     question: "What happens after I use my Premium queries?",
     answer:
-      "After you reach your Premium limit, LLMHive automatically switches to Standard orchestration so your usage never stops.",
+      "LLMHive switches you to unlimited Standard orchestration for the rest of the billing period — no hard stop.",
   },
   {
-    question: "Can I upgrade or downgrade any time?",
-    answer:
-      "Yes. Plan changes take effect immediately with prorated billing. You can change plans at any time from Billing.",
-  },
-  {
-    question: "Is enterprise security included?",
-    answer:
-      "Enterprise plans include advanced controls like SSO, audit logs, and dedicated support. Contact sales for details.",
+    question: "Can I change plans later?",
+    answer: "Yes. Upgrade or downgrade from Billing; changes are prorated where Stripe applies proration.",
   },
 ]
 
@@ -186,8 +136,8 @@ function renderPricingStructuredData() {
       {
         "@type": "Organization",
         name: "LLMHive",
-        url: "https://www.llmhive.ai",
-        logo: "https://www.llmhive.ai/logo.png",
+        url: "https://llmhive.ai",
+        logo: "https://llmhive.ai/logo.png",
       },
       {
         "@type": "Product",
@@ -200,7 +150,7 @@ function renderPricingStructuredData() {
           name: tier.name,
           priceCurrency: "USD",
           price: tier.monthlyPrice,
-          url: `https://www.llmhive.ai/pricing#${tier.tier}`,
+          url: `https://llmhive.ai/pricing#${tier.tier}`,
           availability: "https://schema.org/InStock",
         })),
       },
@@ -233,19 +183,6 @@ export default function PricingClient() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
 
   const handleSubscribe = async (tier: PricingTier) => {
-    // Standard tier just needs sign-up
-    if (tier.tier === "free") {
-      if (!isSignedIn) {
-        openSignIn({
-          redirectUrl: "/",
-        })
-      } else {
-        window.location.href = "/"
-      }
-      return
-    }
-
-    // Enterprise goes to contact sales
     if (tier.tier === "enterprise") {
       window.location.href = "mailto:info@llmhive.ai?subject=Enterprise Inquiry - LLMHive"
       return
@@ -285,12 +222,9 @@ export default function PricingClient() {
     }
   }
 
-  const mainTiers = pricingTiers
-
   return (
     <div className="min-h-screen bg-background">
       {renderPricingStructuredData()}
-      {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -324,10 +258,6 @@ export default function PricingClient() {
       </header>
 
       <main className="container mx-auto px-4 py-12">
-        {/* ══════════════════════════════════════════════════════════════════════
-            #1 BENCHMARK HERO BADGE - HUGE, YELLOW, PROMINENT
-            This is what builds credibility - it MUST pop
-        ══════════════════════════════════════════════════════════════════════ */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-yellow-500/30 border-2 border-yellow-400 shadow-lg shadow-yellow-500/20 mb-6">
             <Trophy className="h-10 w-10 text-yellow-400" />
@@ -342,40 +272,39 @@ export default function PricingClient() {
           </div>
         </div>
 
-        {/* Hero - SELL PRO */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            The World's Best AI Quality at <span className="text-yellow-400">$29.99/mo</span>
+            Premium quality from <span className="text-yellow-400">$20/mo</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-            Our Pro plan gives you <span className="text-yellow-400 font-bold">500 Premium queries</span> with{" "}
+            <span className="text-yellow-400 font-bold">Premium</span> includes{" "}
+            <span className="text-yellow-400 font-bold">500 Premium queries</span> with{" "}
             <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by GPT-5.2,
-            Claude Opus 4.5 & Gemini 3 Pro unified.
+            Claude Opus 4.5 & Gemini 3 Pro.
           </p>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            After your Premium queries, enjoy{" "}
-            <span className="font-semibold text-green-400">unlimited Standard queries</span> — our patented
-            orchestration still beats most single paid models.
+            <span className="font-semibold text-[var(--bronze)]">Standard</span> at $10/mo is unlimited{" "}
+            <strong>Standard orchestration</strong>. After Premium quota, Premium subscribers get{" "}
+            <span className="font-semibold text-emerald-400">unlimited Standard</span> for the rest of the
+            period.
           </p>
         </div>
 
-        {/* Quality Explanation Banner - PRO FOCUSED */}
         <div className="max-w-4xl mx-auto mb-10 p-6 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border-2 border-yellow-500/50">
           <div className="grid md:grid-cols-2 gap-6 text-center">
             <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-              <div className="text-3xl font-black text-yellow-400 mb-2">🏆 Premium</div>
+              <div className="text-3xl font-black text-yellow-400 mb-2">Premium</div>
               <div className="text-lg font-bold text-yellow-300">{BENCHMARK_CLAIM_SHORT}</div>
               <div className="text-sm text-yellow-200/70 mt-1">GPT-5.2 + Claude Opus 4.5 + Gemini 3 Pro</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-              <div className="text-3xl font-black text-green-400 mb-2">🆓 Standard</div>
-              <div className="text-lg font-bold text-green-300">Unlimited after Premium</div>
-              <div className="text-sm text-muted-foreground mt-1">Still beats most single paid models</div>
+              <div className="text-3xl font-black text-[var(--bronze)] mb-2">Standard</div>
+              <div className="text-lg font-bold text-zinc-200">Standard orchestration</div>
+              <div className="text-sm text-muted-foreground mt-1">Unlimited on the Standard plan; included after Premium quota on Premium</div>
             </div>
           </div>
         </div>
 
-        {/* Billing Toggle */}
         <div className="flex items-center justify-center gap-4 mb-10">
           <Label
             htmlFor="billing-toggle"
@@ -396,44 +325,39 @@ export default function PricingClient() {
             Annual
           </Label>
           {isAnnual && (
-            <Badge className="bg-yellow-500 text-black font-bold border-0">Save 17%</Badge>
+            <Badge className="bg-yellow-500 text-black font-bold border-0">Save ~17%</Badge>
           )}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════════
-            PRICING CARDS - All same size, Pro highlighted with subtle amber
-        ══════════════════════════════════════════════════════════════════════ */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mb-16">
-          {mainTiers.map((tier) => {
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto mb-16">
+          {pricingTiers.map((tier) => {
             const price = isAnnual ? tier.annualPrice : tier.monthlyPrice
             const period = isAnnual ? "/year" : "/month"
-            const isPro = tier.tier === "pro"
-            const isFree = tier.tier === "free"
+            const isPremium = tier.tier === "pro"
 
             return (
               <Card
                 key={tier.name}
                 className={cn(
                   "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300 h-[580px]",
-                  isPro
+                  isPremium
                     ? "border-2 border-yellow-500 shadow-lg shadow-yellow-500/20"
                     : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
                 )}
               >
-                {/* Badge */}
                 {tier.badge && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge
                       className={cn(
                         "border-0 px-4 py-1.5 font-bold",
-                        isPro
+                        isPremium
                           ? "bg-amber-600 text-white text-sm"
                           : tier.tier === "enterprise"
-                          ? "bg-emerald-500 text-white"
-                          : "bg-[var(--bronze)] text-white"
+                            ? "bg-emerald-500 text-white"
+                            : "bg-[var(--bronze)] text-white"
                       )}
                     >
-                      {isPro && <Trophy className="h-4 w-4 mr-1" />}
+                      {isPremium && <Trophy className="h-4 w-4 mr-1" />}
                       {tier.badge}
                     </Badge>
                   </div>
@@ -443,7 +367,7 @@ export default function PricingClient() {
                   <div className="flex items-center gap-2 mb-1">
                     {tier.icon}
                     <CardTitle className="text-xl">{tier.name}</CardTitle>
-                    {isPro && (
+                    {isPremium && (
                       <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-xs">
                         RECOMMENDED
                       </Badge>
@@ -453,38 +377,33 @@ export default function PricingClient() {
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-hidden flex flex-col py-2">
-                  {/* Price - All same style */}
                   <div className="mb-4 flex-shrink-0">
                     <div className="flex items-baseline gap-1">
-                      <span className="font-bold text-3xl">
-                        {price === 0 ? "$0" : `$${price.toFixed(2)}`}
-                      </span>
-                      {price > 0 && <span className="text-sm text-muted-foreground">{period}</span>}
+                      <span className="font-bold text-3xl">${price.toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground">{period}</span>
                     </div>
                   </div>
 
-                  {/* Quotas */}
                   <div
                     className={cn(
                       "mb-4 p-3 rounded-lg flex-shrink-0",
-                      isPro ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-muted/30"
+                      isPremium ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-muted/30"
                     )}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span
                         className={cn(
                           "font-bold text-sm",
-                          isPro ? "text-yellow-500" : isFree ? "text-green-400" : "text-[var(--bronze)]"
+                          isPremium ? "text-yellow-500" : "text-[var(--bronze)]"
                         )}
                       >
-                        {isPro ? "🏆" : isFree ? "🆓" : "⚡"} {tier.quotas.eliteQueries}
+                        {isPremium ? "🏆" : "✦"} {tier.quotas.headline}
                       </span>
                     </div>
-                    <div className="text-xs font-semibold text-green-400">{tier.quotas.afterQuota}</div>
-                    <div className="text-xs mt-1 text-muted-foreground">{tier.quotas.totalQueries}</div>
+                    <div className="text-xs font-semibold text-emerald-400">{tier.quotas.afterQuota}</div>
+                    <div className="text-xs mt-1 text-muted-foreground">{tier.quotas.detail}</div>
                   </div>
 
-                  {/* Features */}
                   <div className="flex-1 overflow-y-auto min-h-0">
                     <ul className="space-y-1.5 pr-1">
                       {tier.features.map((feature, index) => (
@@ -501,7 +420,7 @@ export default function PricingClient() {
                   <Button
                     className={cn(
                       "w-full font-bold transition-all duration-300",
-                      isPro
+                      isPremium
                         ? "bg-amber-600 hover:bg-amber-700 text-white"
                         : "bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white"
                     )}
@@ -526,7 +445,6 @@ export default function PricingClient() {
           })}
         </div>
 
-        {/* Social proof — benchmark positioning */}
         <div className="max-w-4xl mx-auto mb-16 text-center">
           <div className="p-8 rounded-2xl bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-yellow-500/10 border border-yellow-500/30">
             <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
@@ -538,59 +456,35 @@ export default function PricingClient() {
             </p>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto text-sm">
               Our orchestration combines GPT-5.2, Claude Opus 4.5, and Gemini 3 Pro with consensus voting,
-              challenge-refine workflows, and tool integration — competing across GPQA Diamond, SWE-Bench,
-              AIME 2024, MMMLU, tool use, RAG, and more.
+              challenge-refine workflows, and tool integration.
             </p>
-            <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
-              {[
-                "GPQA Diamond",
-                "SWE-Bench",
-                "AIME 2024",
-                "MMMLU",
-                "ARC-AGI 2",
-                "Tool use",
-                "RAG",
-                "Multimodal",
-                "Dialogue",
-                "Long context",
-              ].map((bench) => (
-                <span
-                  key={bench}
-                  className="px-2 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/20"
-                >
-                  {bench}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* How It Works - Upsell focused */}
         <div className="max-w-3xl mx-auto mb-16 p-8 rounded-2xl bg-card/50 border border-border/50">
-          <h2 className="text-2xl font-display font-bold text-center mb-6">How It Works</h2>
+          <h2 className="text-2xl font-display font-bold text-center mb-6">How it works</h2>
           <div className="space-y-4">
             <div className="flex items-start gap-4">
               <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
                 <span className="text-yellow-400 font-bold">1</span>
               </div>
               <div>
-                <h3 className="font-semibold text-yellow-400">Get 500 Premium queries with Pro</h3>
+                <h3 className="font-semibold text-yellow-400">Choose Standard or Premium</h3>
                 <p className="text-sm text-muted-foreground">
-                  Each Premium query uses our top-tier orchestration with GPT-5.2, Claude Opus 4.5 &
-                  Gemini 3 Pro ({BENCHMARK_CLAIM_SHORT}). Perfect for professional work, coding, research,
-                  and critical tasks.
+                  Standard ($10/mo) is unlimited Standard orchestration. Premium ($20/mo) adds 500 Premium
+                  queries with {BENCHMARK_CLAIM_SHORT}, then unlimited Standard.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-green-400 font-bold">2</span>
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-emerald-400 font-bold">2</span>
               </div>
               <div>
-                <h3 className="font-semibold text-green-400">Unlimited Standard queries after</h3>
+                <h3 className="font-semibold text-emerald-400">After Premium quota</h3>
                 <p className="text-sm text-muted-foreground">
-                  After your Premium quota, you get <strong>unlimited</strong> Standard queries. Our Standard
-                  orchestration still beats most single paid models — no caps, no limits.
+                  Premium subscribers keep working on unlimited Standard orchestration until the next billing
+                  cycle resets Premium queries.
                 </p>
               </div>
             </div>
@@ -599,70 +493,48 @@ export default function PricingClient() {
                 <span className="text-[var(--bronze)] font-bold">3</span>
               </div>
               <div>
-                <h3 className="font-semibold">Upgrade anytime for more Premium</h3>
+                <h3 className="font-semibold">Need teams & compliance?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Need more Premium capacity? Upgrade from Lite to Pro for 5x more Premium queries. Or go
-                  Enterprise for team features and compliance.
+                  Enterprise adds per-seat Premium quotas, SSO, and procurement-friendly controls — contact
+                  sales for a quote.
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* FAQ Section */}
         <div className="max-w-3xl mx-auto mb-16">
-          <h2 className="text-2xl font-display font-bold text-center mb-8">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-display font-bold text-center mb-8">Frequently asked questions</h2>
           <div className="space-y-4">
-            <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">What happens after I use my Premium queries?</h3>
-              <p className="text-muted-foreground text-sm">
-                You get <strong>unlimited Standard queries</strong> for the rest of the month. There&apos;s no
-                cap — our Standard orchestration beats most single paid models, so you still get great
-                quality. Want Premium benchmark coverage back? Just upgrade for more Premium queries.
-              </p>
-            </div>
-            <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">How is Premium different from Standard?</h3>
-              <p className="text-muted-foreground text-sm">
-                Premium uses top models (GPT-5.2, Claude Opus 4.5, Gemini 3 Pro) for{" "}
-                {BENCHMARK_CLAIM_SHORT}. Standard uses efficient models in consensus — still strong for everyday
-                work, with different cost–quality tradeoffs.
-              </p>
-            </div>
-            <div className="p-6 rounded-lg bg-card/50 border border-border/50">
-              <h3 className="font-semibold mb-2">Why is Pro the best value?</h3>
-              <p className="text-muted-foreground text-sm">
-                Pro gives you 5x more Premium queries than Lite (500 vs 100) for only 2x the price ($29.99
-                vs $14.99). Plus you get full API access, advanced features, and 30-day memory.
-              </p>
-            </div>
+            {pricingFaq.map((item) => (
+              <div key={item.question} className="p-6 rounded-lg bg-card/50 border border-border/50">
+                <h3 className="font-semibold mb-2">{item.question}</h3>
+                <p className="text-muted-foreground text-sm">{item.answer}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* CTA - SELL PRO */}
         <div className="text-center">
           <div className="p-8 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/10 to-amber-500/10 border border-amber-600/40">
             <Trophy className="h-10 w-10 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-3xl font-display font-bold mb-4 text-amber-500">
-              Get Premium benchmark quality today
-            </h2>
+            <h2 className="text-3xl font-display font-bold mb-4 text-amber-500">Ready to subscribe?</h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              500 Premium queries. Unlimited Standard after. Full API access. Top orchestration for
-              $29.99/month.
+              Premium: $20/mo or $200/yr — 500 Premium queries, then unlimited Standard.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button
                 size="lg"
                 className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-lg px-8"
-                onClick={() => handleSubscribe(pricingTiers[2])} // Pro tier
+                onClick={() => handleSubscribe(pricingTiers[1])}
               >
                 <Trophy className="h-5 w-5 mr-2" />
-                Get Pro — $29.99/mo
+                Get Premium — $20/mo
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               <Link href="/sign-up">
                 <Button size="lg" variant="outline" className="border-white/20 text-muted-foreground hover:bg-white/5">
-                  Try Standard first
+                  Create account
                 </Button>
               </Link>
             </div>
@@ -670,7 +542,6 @@ export default function PricingClient() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-border/50 mt-24 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>© 2026 LLMHive. All rights reserved.</p>

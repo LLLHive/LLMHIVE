@@ -170,12 +170,12 @@ class TestPricingTierManager:
         manager = PricingTierManager()
         
         lite = manager.get_tier(TierName.LITE)
-        assert lite.monthly_price_usd == 14.99
-        assert lite.annual_price_usd == 149.99
+        assert lite.monthly_price_usd == 10.0
+        assert lite.annual_price_usd == 100.0
         
         pro = manager.get_tier(TierName.PRO)
-        assert pro.monthly_price_usd == 29.99
-        assert pro.annual_price_usd == 299.99
+        assert pro.monthly_price_usd == 20.0
+        assert pro.annual_price_usd == 200.0
         
         # Enterprise is $35/seat (min 5 seats = $175 min)
         enterprise = manager.get_tier(TierName.ENTERPRISE)
@@ -379,8 +379,7 @@ class TestCostEstimator:
             avg_tokens_per_request=500,
         )
         
-        # Lite tier costs $14.99/mo
-        assert result.get("subscription_cost", result.get("base_cost", 14.99)) == pytest.approx(14.99, rel=0.01)
+        assert result.get("subscription_cost", result.get("base_cost", 10.0)) == pytest.approx(10.0, rel=0.01)
         assert result.get("tier", "lite") == "lite"
     
     def test_estimate_monthly_cost_pro(self):
@@ -391,7 +390,7 @@ class TestCostEstimator:
             avg_tokens_per_request=1000,
         )
         
-        assert result["subscription_cost"] == 29.99
+        assert result["subscription_cost"] == 20.0
         assert "estimated_usage_cost" in result
         assert "total_estimated_cost" in result
 
@@ -496,9 +495,9 @@ class TestPricingTier:
         """Test has_feature method."""
         tier = PricingTier(
             name=TierName.PRO,
-            display_name="Pro",
-            monthly_price_usd=29.99,
-            annual_price_usd=299.99,
+            display_name="Premium",
+            monthly_price_usd=20.0,
+            annual_price_usd=200.0,
             limits=TierLimits(),
             features={"api_access", "hrm", "web_research"},
         )
@@ -510,9 +509,9 @@ class TestPricingTier:
         """Test can_use_feature for included feature."""
         tier = PricingTier(
             name=TierName.PRO,
-            display_name="Pro",
-            monthly_price_usd=29.99,
-            annual_price_usd=299.99,
+            display_name="Premium",
+            monthly_price_usd=20.0,
+            annual_price_usd=200.0,
             limits=TierLimits(enable_advanced_features=True),
             features={"api_access"},
         )
@@ -523,9 +522,9 @@ class TestPricingTier:
         """Test can_use_feature for advanced feature with advanced flag."""
         tier = PricingTier(
             name=TierName.PRO,
-            display_name="Pro",
-            monthly_price_usd=29.99,
-            annual_price_usd=299.99,
+            display_name="Premium",
+            monthly_price_usd=20.0,
+            annual_price_usd=200.0,
             limits=TierLimits(enable_advanced_features=True),
             features=set(),  # No features, but advanced enabled
         )

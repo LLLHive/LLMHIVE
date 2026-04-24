@@ -190,42 +190,42 @@ export function getRecommendedTeam(
     coding: {
       keywords: ['code', 'programming', 'developer', 'engineer'],
       preferred: [
-        'anthropic/claude-3.5-sonnet',
-        'openai/gpt-4o',
-        'deepseek/deepseek-chat',
-        'meta-llama/llama-3.3-70b-instruct',
+        'openai/gpt-5.2-codex',
+        'anthropic/claude-sonnet-4.5',
+        'deepseek/deepseek-v3.2',
+        'mistralai/codestral-2508',
       ],
     },
     research: {
       keywords: ['research', 'analysis', 'academic'],
       preferred: [
-        'openai/gpt-5.2',
-        'anthropic/claude-3.5-sonnet',
-        'google/gemini-1.5-pro',
+        'openai/gpt-5.2-pro',
+        'anthropic/claude-opus-4.5',
+        'google/gemini-3.1-pro-preview',
       ],
     },
     creative: {
       keywords: ['creative', 'writing', 'story'],
       preferred: [
-        'anthropic/claude-3.5-sonnet',
-        'openai/gpt-4o',
-        'meta-llama/llama-3.3-70b-instruct',
+        'anthropic/claude-sonnet-4.5',
+        'openai/gpt-5.2',
+        'google/gemini-2.5-pro',
       ],
     },
     analysis: {
       keywords: ['analyze', 'data', 'reasoning'],
       preferred: [
         'openai/gpt-5.2-pro',
-        'anthropic/claude-3.5-sonnet',
-        'openai/o1-preview',
+        'anthropic/claude-opus-4.5',
+        'openai/o3',
       ],
     },
     chat: {
       keywords: ['chat', 'conversation', 'assistant'],
       preferred: [
         'openai/gpt-4o-mini',
-        'anthropic/claude-3-haiku',
-        'meta-llama/llama-3.2-3b-instruct:free',
+        'anthropic/claude-haiku-4.5',
+        'google/gemini-2.5-flash',
       ],
     },
   }

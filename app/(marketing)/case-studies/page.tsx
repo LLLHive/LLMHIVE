@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Industry case studies showing how LLMHive delivers measurable results with AI orchestration.",
   alternates: {
-    canonical: "https://www.llmhive.ai/case-studies",
+    canonical: "https://llmhive.ai/case-studies",
   },
   openGraph: {
     title: "LLMHive Case Studies",
@@ -34,7 +34,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://www.llmhive.ai/case-studies/${item.slug}`,
+          url: `https://llmhive.ai/case-studies/${item.slug}`,
         })),
       },
       {
@@ -53,7 +53,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Case Studies",
-            item: "https://www.llmhive.ai/case-studies",
+            item: "https://llmhive.ai/case-studies",
           },
         ],
       },

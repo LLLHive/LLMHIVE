@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
+import { getSiteUrl } from "@/lib/site-url"
 
-const baseUrl = "https://www.llmhive.ai"
+const baseUrl = getSiteUrl()
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [

@@ -111,8 +111,8 @@ BOOTSTRAP_FALLBACK_MODELS = [
         "tier": 1,
     },
     {
-        "id": "google/gemini-3-pro-preview",
-        "name": "Gemini 3 Pro",
+        "id": "google/gemini-3-flash-preview",
+        "name": "Gemini 3 Flash",
         "family": "gemini-3",
         "author": "google",
         "context_length": 1000000,
@@ -120,9 +120,9 @@ BOOTSTRAP_FALLBACK_MODELS = [
         "supports_reasoning": True,
         "supports_structured": True,
         "multimodal_input": True,
-        "price_per_1m_prompt": 1.25,
-        "price_per_1m_completion": 5.00,
-        "tier": 1,
+        "price_per_1m_prompt": 0.35,
+        "price_per_1m_completion": 1.40,
+        "tier": 2,
     },
 ]
 

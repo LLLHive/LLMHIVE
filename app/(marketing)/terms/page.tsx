@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Terms of Service - LLMHive",
   description: "Review the LLMHive terms of service and acceptable use guidelines.",
   alternates: {
-    canonical: "https://www.llmhive.ai/terms",
+    canonical: "https://llmhive.ai/terms",
   },
   openGraph: {
     title: "LLMHive Terms of Service",
@@ -32,7 +32,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Terms of Service",
-            item: "https://www.llmhive.ai/terms",
+            item: "https://llmhive.ai/terms",
           },
         ],
       },
@@ -115,13 +115,12 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">5. Subscription and Payments</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              We offer a Standard ($0) plan and three paid subscription tiers designed to meet different needs:
+              We offer three subscription tiers:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-              <li><strong>Standard ($0/mo):</strong> UNLIMITED queries with our patented Standard orchestration that beats most paid models</li>
-              <li><strong>Lite ($14.99/mo):</strong> 100 Premium queries (#1 in 5 out of 8 benchmark categories), then Standard after quota</li>
-              <li><strong>Pro ($29.99/mo):</strong> 500 Premium queries (#1 in 5 out of 8 benchmark categories), then Standard after quota</li>
-              <li><strong>Enterprise ($35/seat/mo, min 5 seats):</strong> 400 Premium/seat, SSO &amp; compliance</li>
+              <li><strong>Standard ($10/mo, $100/yr):</strong> Unlimited Standard orchestration</li>
+              <li><strong>Premium ($20/mo, $200/yr):</strong> 500 Premium queries per month, then unlimited Standard orchestration</li>
+              <li><strong>Enterprise ($35/seat/mo, min 5 seats):</strong> 400 Premium queries per seat per month, then unlimited Standard; SSO and compliance options</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-4">
               Payment terms:

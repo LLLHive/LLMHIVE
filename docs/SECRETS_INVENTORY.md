@@ -52,10 +52,14 @@ This document lists all secrets required for the application to function correct
 | `STRIPE_SECRET_KEY` | `stripe-secret-key` | Yes | Backend API key |
 | `STRIPE_WEBHOOK_SECRET` | `stripe-webhook-secret` | Yes | Webhook verification |
 | `STRIPE_PUBLISHABLE_KEY` | `stripe-publishable-key` | Yes | Frontend key |
-| `STRIPE_PRICE_ID_BASIC_MONTHLY` | `stripe-price-id-basic-monthly` | Yes | Pricing |
-| `STRIPE_PRICE_ID_BASIC_ANNUAL` | `stripe-price-id-basic-annual` | Yes | Pricing |
-| `STRIPE_PRICE_ID_PRO_MONTHLY` | `stripe-price-id-pro-monthly` | Yes | Pricing |
-| `STRIPE_PRICE_ID_PRO_ANNUAL` | `stripe-price-id-pro-annual` | Yes | Pricing |
+| `STRIPE_PRICE_ID_STANDARD_MONTHLY` | `stripe-price-id-standard-monthly` | Yes | LLMHive Standard ($10/mo) — preferred |
+| `STRIPE_PRICE_ID_STANDARD_ANNUAL` | `stripe-price-id-standard-annual` | Yes | LLMHive Standard ($100/yr) — preferred |
+| `STRIPE_PRICE_ID_PREMIUM_MONTHLY` | `stripe-price-id-premium-monthly` | Yes | LLMHive Premium ($20/mo) — preferred |
+| `STRIPE_PRICE_ID_PREMIUM_ANNUAL` | `stripe-price-id-premium-annual` | Yes | LLMHive Premium ($200/yr) — preferred |
+| `STRIPE_PRICE_ID_BASIC_MONTHLY` | `stripe-price-id-basic-monthly` | Fallback | Legacy env name; same as Standard if new vars unset |
+| `STRIPE_PRICE_ID_BASIC_ANNUAL` | `stripe-price-id-basic-annual` | Fallback | Legacy |
+| `STRIPE_PRICE_ID_PRO_MONTHLY` | `stripe-price-id-pro-monthly` | Fallback | Legacy env name; same as Premium if new vars unset |
+| `STRIPE_PRICE_ID_PRO_ANNUAL` | `stripe-price-id-pro-annual` | Fallback | Legacy |
 | `STRIPE_PRICE_ID_ENTERPRISE_MONTHLY` | `stripe-price-id-enterprise-monthly` | Yes | Pricing |
 | `STRIPE_PRICE_ID_ENTERPRISE_ANNUAL` | `stripe-price-id-enterprise-annual` | Yes | Pricing |
 | `STRIPE_PRICE_ID_MAXIMUM_MONTHLY` | `stripe-price-id-maximum-monthly` | Yes | Pricing |

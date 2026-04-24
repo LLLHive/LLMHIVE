@@ -11,7 +11,7 @@ LLMHive reports #1 performance across major benchmark categories including Gener
 
 “When my daughter’s health was on the line, I couldn’t trust a single model,” Diaz said. “LLMHive exists so people never have to gamble with the truth. We orchestrate the best, verify the outputs, and deliver answers you can rely on.”
 
-LLMHive is live today at https://www.llmhive.ai/landing. Users can see the platform’s orchestration approach at https://www.llmhive.ai/orchestration, explore real outcomes at https://www.llmhive.ai/case-studies, and compare LLMHive against alternatives at https://www.llmhive.ai/comparisons.
+LLMHive is live today at https://llmhive.ai/landing. Users can see the platform’s orchestration approach at https://llmhive.ai/orchestration, explore real outcomes at https://llmhive.ai/case-studies, and compare LLMHive against alternatives at https://llmhive.ai/comparisons.
 
 About LLMHive
 Founded in 2025 and based in Miami, LLMHive orchestrates multiple AI models to deliver superior, trustworthy results at dramatically lower cost.

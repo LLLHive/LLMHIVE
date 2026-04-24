@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "See how LLMHive compares to leading AI assistants and platforms for quality, cost, and enterprise readiness.",
   alternates: {
-    canonical: "https://www.llmhive.ai/comparisons",
+    canonical: "https://llmhive.ai/comparisons",
   },
   openGraph: {
     title: "LLMHive Comparisons",
@@ -34,7 +34,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://www.llmhive.ai/comparisons/${item.slug}`,
+          url: `https://llmhive.ai/comparisons/${item.slug}`,
         })),
       },
       {
@@ -70,7 +70,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://www.llmhive.ai/comparisons",
+            item: "https://llmhive.ai/comparisons",
           },
         ],
       },

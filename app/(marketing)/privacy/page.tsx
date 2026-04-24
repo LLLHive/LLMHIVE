@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy - LLMHive",
   description: "Read the LLMHive privacy policy and data protection practices.",
   alternates: {
-    canonical: "https://www.llmhive.ai/privacy",
+    canonical: "https://llmhive.ai/privacy",
   },
   openGraph: {
     title: "LLMHive Privacy Policy",
@@ -32,7 +32,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Privacy Policy",
-            item: "https://www.llmhive.ai/privacy",
+            item: "https://llmhive.ai/privacy",
           },
         ],
       },

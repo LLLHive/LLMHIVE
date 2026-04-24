@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Industry-specific AI FAQs for legal, finance, healthcare, support, and SaaS teams.",
   alternates: {
-    canonical: "https://www.llmhive.ai/industries",
+    canonical: "https://llmhive.ai/industries",
   },
   openGraph: {
     title: "Industry AI FAQs",
@@ -62,7 +62,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://www.llmhive.ai/industries/${item.slug}`,
+          url: `https://llmhive.ai/industries/${item.slug}`,
         })),
       },
       {
@@ -84,7 +84,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Industries",
-            item: "https://www.llmhive.ai/industries",
+            item: "https://llmhive.ai/industries",
           },
         ],
       },

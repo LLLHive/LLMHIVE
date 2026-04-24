@@ -530,7 +530,7 @@ export default function SettingsPage() {
               <div className="p-4 rounded-lg glass-card border border-[var(--bronze)]/30">
                 <p className="text-xs text-muted-foreground mb-1">Current Plan</p>
                 <p className="text-lg font-semibold text-[var(--gold)]">Standard</p>
-                <p className="text-xs text-muted-foreground">$0 forever with multi-model orchestration</p>
+                <p className="text-xs text-muted-foreground">$10/month Standard — unlimited Standard orchestration</p>
               </div>
 
               {/* Standard plan marketing */}
@@ -542,7 +542,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-semibold text-green-400">Standard beats most paid models</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Our patented multi-model orchestration delivers exceptional quality at no cost.
+                  Our patented multi-model orchestration delivers strong quality on the Standard plan.
                 </p>
               </div>
 
@@ -599,15 +599,11 @@ export default function SettingsPage() {
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-green-400 font-medium">Standard</span>
-                    <span className="text-muted-foreground">$0/mo</span>
+                    <span className="text-muted-foreground">$10/mo</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Lite</span>
-                    <span className="text-muted-foreground">$14.99/mo</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--bronze)] font-medium">Pro</span>
-                    <span className="text-muted-foreground">$29.99/mo</span>
+                    <span className="text-[var(--bronze)] font-medium">Premium</span>
+                    <span className="text-muted-foreground">$20/mo</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Enterprise</span>

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Explore LLMHive alternatives and understand when multi-model orchestration outperforms single-model assistants.",
   alternates: {
-    canonical: "https://www.llmhive.ai/alternatives",
+    canonical: "https://llmhive.ai/alternatives",
   },
   openGraph: {
     title: "LLMHive Alternatives",
@@ -73,7 +73,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Alternatives",
-            item: "https://www.llmhive.ai/alternatives",
+            item: "https://llmhive.ai/alternatives",
           },
         ],
       },

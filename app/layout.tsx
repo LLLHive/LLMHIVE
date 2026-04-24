@@ -12,6 +12,9 @@ import { AppearanceSettingsLoader } from "@/components/appearance-settings-loade
 import AppBackground from "@/components/branding/AppBackground"
 import { ForestBackgroundWrapper } from "@/components/forest-background-wrapper"
 import { SupportWidget } from "@/components/support-widget"
+import { getSiteUrl } from "@/lib/site-url"
+
+const siteUrl = getSiteUrl()
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -45,14 +48,14 @@ const verification = (() => {
 })()
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.llmhive.ai"),
+  metadataBase: new URL(siteUrl),
   title: "LLMHive - Multi-Model AI Orchestration Platform",
   description:
     "LLMHive is a multi-model AI orchestration platform that routes every request to the best model for accuracy, speed, and cost. Built for teams and enterprises.",
   applicationName: "LLMHive",
   generator: "v0.app",
   alternates: {
-    canonical: "https://www.llmhive.ai",
+    canonical: siteUrl,
   },
   keywords: [
     "AI orchestration",
@@ -70,7 +73,7 @@ export const metadata: Metadata = {
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
       "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 400+ models in one interface.",
-    url: "https://www.llmhive.ai",
+    url: siteUrl,
     siteName: "LLMHive",
     type: "website",
   },
@@ -94,7 +97,7 @@ const websiteStructuredData = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "LLMHive",
-  url: "https://www.llmhive.ai",
+  url: siteUrl,
 }
 
 export default function RootLayout({

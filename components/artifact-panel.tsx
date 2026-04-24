@@ -158,7 +158,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                 <div className="flex-1 flex items-center justify-center bg-secondary/30">
                   <div className="text-center text-muted-foreground">
                     <Play className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">Click "Run" to execute code</p>
+                    <p className="text-sm">Click &quot;Run&quot; to execute code</p>
                     <p className="text-xs mt-1">Supports JavaScript and TypeScript</p>
                   </div>
                 </div>

@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth, currentUser } from "@clerk/nextjs/server"
 import Stripe from "stripe"
+import {
+  stripeEnterpriseAnnualPriceId,
+  stripeEnterpriseMonthlyPriceId,
+  stripeMaximumAnnualPriceId,
+  stripeMaximumMonthlyPriceId,
+  stripePremiumAnnualPriceId,
+  stripePremiumMonthlyPriceId,
+  stripeStandardAnnualPriceId,
+  stripeStandardMonthlyPriceId,
+} from "@/lib/billing/stripe-price-ids"
 
 // Lazy initialize Stripe
 function getStripe(): Stripe | null {
@@ -13,24 +23,26 @@ function getStripe(): Stripe | null {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMPLIFIED 4-TIER PRICING (January 2026)
 // ═══════════════════════════════════════════════════════════════════════════════
-const PRICE_IDS: Record<string, Record<string, string | undefined>> = {
-  lite: {
-    // Note: "Lite" tier uses BASIC env vars for backwards compatibility
-    monthly: process.env.STRIPE_PRICE_ID_BASIC_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_BASIC_ANNUAL,
-  },
-  pro: {
-    monthly: process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_PRO_ANNUAL,
-  },
-  enterprise: {
-    monthly: process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_ENTERPRISE_ANNUAL,
-  },
-  maximum: {
-    monthly: process.env.STRIPE_PRICE_ID_MAXIMUM_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_MAXIMUM_ANNUAL,
-  },
+function getCheckoutPriceIds(): Record<string, Record<string, string | undefined>> {
+  return {
+    // "lite" / "pro" = internal tier keys; Stripe products are LLMHive Standard / Premium
+    lite: {
+      monthly: stripeStandardMonthlyPriceId(),
+      annual: stripeStandardAnnualPriceId(),
+    },
+    pro: {
+      monthly: stripePremiumMonthlyPriceId(),
+      annual: stripePremiumAnnualPriceId(),
+    },
+    enterprise: {
+      monthly: stripeEnterpriseMonthlyPriceId(),
+      annual: stripeEnterpriseAnnualPriceId(),
+    },
+    maximum: {
+      monthly: stripeMaximumMonthlyPriceId(),
+      annual: stripeMaximumAnnualPriceId(),
+    },
+  }
 }
 
 // Tier quotas and constraints - SIMPLIFIED 4 TIERS
@@ -41,19 +53,21 @@ const TIER_CONFIG: Record<string, {
   minSeats: number  // 0 = not seat-based
   isPerSeat: boolean
 }> = {
-  lite: { 
-    eliteQueries: 100, 
-    afterQuotaTier: "budget", 
-    totalQueries: 500, 
-    minSeats: 0, 
-    isPerSeat: false 
+  // "lite" = Standard product in Stripe (marketing: Standard, $10/mo, Standard orchestration only)
+  lite: {
+    eliteQueries: 0,
+    afterQuotaTier: "standard",
+    totalQueries: 999_999,
+    minSeats: 0,
+    isPerSeat: false,
   },
-  pro: { 
-    eliteQueries: 500, 
-    afterQuotaTier: "standard", 
-    totalQueries: 2000, 
-    minSeats: 0, 
-    isPerSeat: false 
+  // "pro" = Premium product in Stripe (marketing: Premium, $20/mo, Premium query quota)
+  pro: {
+    eliteQueries: 500,
+    afterQuotaTier: "standard",
+    totalQueries: 2000,
+    minSeats: 0,
+    isPerSeat: false,
   },
   enterprise: { 
     eliteQueries: 400,  // Per seat
@@ -105,20 +119,21 @@ export async function POST(request: NextRequest) {
     }
 
     const tierLower = tier.toLowerCase()
-    const priceId = PRICE_IDS[tierLower]?.[billingCycle.toLowerCase()]
+    const priceIds = getCheckoutPriceIds()
+    const priceId = priceIds[tierLower]?.[billingCycle.toLowerCase()]
 
     if (!priceId) {
       console.error(`Price ID not found for tier: ${tier}, cycle: ${billingCycle}`)
-      console.error("Available PRICE_IDS:", Object.keys(PRICE_IDS))
-      console.error("Stripe env vars configured:", {
-        lite_monthly: !!process.env.STRIPE_PRICE_ID_BASIC_MONTHLY,  // Uses BASIC for backwards compat
-        lite_annual: !!process.env.STRIPE_PRICE_ID_BASIC_ANNUAL,    // Uses BASIC for backwards compat
-        pro_monthly: !!process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
-        pro_annual: !!process.env.STRIPE_PRICE_ID_PRO_ANNUAL,
-        enterprise_monthly: !!process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY,
-        enterprise_annual: !!process.env.STRIPE_PRICE_ID_ENTERPRISE_ANNUAL,
-        maximum_monthly: !!process.env.STRIPE_PRICE_ID_MAXIMUM_MONTHLY,
-        maximum_annual: !!process.env.STRIPE_PRICE_ID_MAXIMUM_ANNUAL,
+      console.error("Available tiers:", Object.keys(priceIds))
+      console.error("Stripe price ids resolved:", {
+        lite_monthly: !!stripeStandardMonthlyPriceId(),
+        lite_annual: !!stripeStandardAnnualPriceId(),
+        pro_monthly: !!stripePremiumMonthlyPriceId(),
+        pro_annual: !!stripePremiumAnnualPriceId(),
+        enterprise_monthly: !!stripeEnterpriseMonthlyPriceId(),
+        enterprise_annual: !!stripeEnterpriseAnnualPriceId(),
+        maximum_monthly: !!stripeMaximumMonthlyPriceId(),
+        maximum_annual: !!stripeMaximumAnnualPriceId(),
       })
       return NextResponse.json(
         { error: `Price not configured for ${tier} (${billingCycle}). Please contact support.` },

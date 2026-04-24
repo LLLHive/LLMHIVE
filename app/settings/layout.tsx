@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "LLMHive Settings",
   description: "Manage account, billing, and preferences in LLMHive settings.",
   alternates: {
-    canonical: "https://www.llmhive.ai/settings",
+    canonical: "https://llmhive.ai/settings",
   },
   robots: {
     index: false,
@@ -32,7 +32,7 @@ const structuredData = {
           "@type": "ListItem",
           position: 1,
           name: "Settings",
-          item: "https://www.llmhive.ai/settings",
+          item: "https://llmhive.ai/settings",
         },
       ],
     },

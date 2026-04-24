@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { sendSubscriptionNotification } from "@/lib/slack";
+import { buildStripePriceIdToTierMap } from "@/lib/billing/stripe-price-ids";
 
 // Lazy initialize Stripe
 function getStripe(): Stripe | null {
@@ -12,16 +13,8 @@ function getStripe(): Stripe | null {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-// Subscription tier mapping from Stripe price IDs
-// Note: "Lite" tier uses BASIC env vars for backwards compatibility
-const PRICE_TO_TIER: Record<string, string> = {
-  [process.env.STRIPE_PRICE_ID_BASIC_MONTHLY || ""]: "lite",
-  [process.env.STRIPE_PRICE_ID_BASIC_ANNUAL || ""]: "lite",
-  [process.env.STRIPE_PRICE_ID_PRO_MONTHLY || ""]: "pro",
-  [process.env.STRIPE_PRICE_ID_PRO_ANNUAL || ""]: "pro",
-  [process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY || ""]: "enterprise",
-  [process.env.STRIPE_PRICE_ID_ENTERPRISE_ANNUAL || ""]: "enterprise",
-};
+// Subscription tier mapping from Stripe price IDs (STANDARD_/PREMIUM_ + legacy BASIC/PRO)
+const PRICE_TO_TIER: Record<string, string> = buildStripePriceIdToTierMap();
 
 // Map Stripe status to our status
 const STATUS_MAP: Record<string, string> = {

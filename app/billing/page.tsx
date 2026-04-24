@@ -69,9 +69,11 @@ const AFTER_QUOTA_TIER_LABELS: Record<string, string> = {
 
 const TIER_DISPLAY_NAMES: Record<string, string> = {
   free: "Standard",
-  lite: "Lite",
-  pro: "Pro",
+  lite: "Standard",
+  pro: "Premium",
   enterprise: "Enterprise",
+  standard: "Standard",
+  premium: "Premium",
 }
 
 export default function BillingPage() {
@@ -162,7 +164,7 @@ export default function BillingPage() {
   }
 
   const currentTier = usage?.tier || subscription?.tier || "free"
-  // "free" = free tier/unsubscribed, "lite" = paid Lite tier
+  // "free" = no paid subscription yet (UI: Standard)
   const isFreeTier = currentTier === "free"
   const modeInfo = ORCHESTRATION_MODE_LABELS[usage?.orchestrationMode || "elite"]
   const ModeIcon = modeInfo.icon
@@ -439,7 +441,7 @@ export default function BillingPage() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Click "View All" to access your complete billing history in the Stripe customer portal.
+                Click &quot;View All&quot; to access your complete billing history in the Stripe customer portal.
               </p>
             )}
           </CardContent>
@@ -451,7 +453,7 @@ export default function BillingPage() {
             <CardHeader>
               <CardTitle className="text-red-500">Cancel Subscription</CardTitle>
               <CardDescription>
-                Cancel your subscription. You'll retain access until the end of your current billing period.
+                Cancel your subscription. You&apos;ll retain access until the end of your current billing period.
               </CardDescription>
             </CardHeader>
             <CardContent>

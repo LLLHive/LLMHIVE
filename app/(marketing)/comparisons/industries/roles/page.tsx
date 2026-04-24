@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Role-based, industry-specific comparisons between LLMHive and leading tools.",
   alternates: {
-    canonical: "https://www.llmhive.ai/comparisons/industries/roles",
+    canonical: "https://llmhive.ai/comparisons/industries/roles",
   },
   openGraph: {
     title: "Industry Role Tool Comparisons",
@@ -34,7 +34,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://www.llmhive.ai/comparisons/industries/roles/${item.slug}`,
+          url: `https://llmhive.ai/comparisons/industries/roles/${item.slug}`,
         })),
       },
       {
@@ -53,19 +53,19 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://www.llmhive.ai/comparisons",
+            item: "https://llmhive.ai/comparisons",
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Industry Comparisons",
-            item: "https://www.llmhive.ai/comparisons/industries",
+            item: "https://llmhive.ai/comparisons/industries",
           },
           {
             "@type": "ListItem",
             position: 3,
             name: "Industry Role Tool Comparisons",
-            item: "https://www.llmhive.ai/comparisons/industries/roles",
+            item: "https://llmhive.ai/comparisons/industries/roles",
           },
         ],
       },

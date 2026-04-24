@@ -7,8 +7,6 @@
  * Generated from: llmhive/src/llmhive/app/models/orchestration.py
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // ============================================================
 // Enums
 // ============================================================

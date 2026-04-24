@@ -55,8 +55,8 @@ interface AdminStats {
 function generateMockStats(): AdminStats {
   const tiers: TierStats[] = [
     { tier: "free", count: 847, mrr: 0, eliteQueriesUsed: 31250, eliteQueriesLimit: 42350 },
-    { tier: "lite", count: 234, mrr: Math.round(234 * 14.99), eliteQueriesUsed: 18720, eliteQueriesLimit: 23400 },
-    { tier: "pro", count: 156, mrr: Math.round(156 * 29.99), eliteQueriesUsed: 62400, eliteQueriesLimit: 78000 },
+    { tier: "lite", count: 234, mrr: Math.round(234 * 10), eliteQueriesUsed: 18720, eliteQueriesLimit: 23400 },
+    { tier: "pro", count: 156, mrr: Math.round(156 * 20), eliteQueriesUsed: 62400, eliteQueriesLimit: 78000 },
     { tier: "enterprise", count: 23, mrr: 23 * 5 * 35, eliteQueriesUsed: 115000, eliteQueriesLimit: 184000 },
   ];
 
@@ -99,10 +99,10 @@ function generateMockStats(): AdminStats {
     },
     recentActivity: [
       { type: "subscription", description: "New Pro subscription", timestamp: new Date().toISOString(), tier: "pro" },
-      { type: "upgrade", description: "User upgraded from Lite to Pro", timestamp: new Date(Date.now() - 3600000).toISOString(), tier: "pro" },
+      { type: "upgrade", description: "User upgraded from Standard to Premium", timestamp: new Date(Date.now() - 3600000).toISOString(), tier: "pro" },
       { type: "subscription", description: "New Enterprise (8 seats)", timestamp: new Date(Date.now() - 7200000).toISOString(), tier: "enterprise" },
-      { type: "cancel", description: "Lite subscription cancelled", timestamp: new Date(Date.now() - 14400000).toISOString(), tier: "lite" },
-      { type: "upgrade", description: "User upgraded from Free to Lite", timestamp: new Date(Date.now() - 28800000).toISOString(), tier: "lite" },
+      { type: "cancel", description: "Standard subscription cancelled", timestamp: new Date(Date.now() - 14400000).toISOString(), tier: "lite" },
+      { type: "upgrade", description: "User subscribed to Standard", timestamp: new Date(Date.now() - 28800000).toISOString(), tier: "lite" },
     ],
   };
 }

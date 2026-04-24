@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${page.title} | LLMHive`,
     description: page.subtitle,
     alternates: {
-      canonical: `https://www.llmhive.ai/${slug}`,
+      canonical: `https://llmhive.ai/${slug}`,
     },
     openGraph: {
       title: `${page.title} | LLMHive`,

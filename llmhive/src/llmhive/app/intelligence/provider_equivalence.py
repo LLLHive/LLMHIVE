@@ -54,7 +54,7 @@ _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
         "gemini":     "gemini-3.1-pro",
     },
     "gemini-3-pro": {
-        "openrouter": "google/gemini-3-pro-preview",
+        "openrouter": "google/gemini-3.1-pro-preview",
         "gemini":     "gemini-3-pro",
     },
     "gemini-2.5-pro": {

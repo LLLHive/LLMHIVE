@@ -1,7 +1,11 @@
 import type { Model } from "./types"
 
+/**
+ * Curated models for chat header / toolbar dropdowns.
+ * IDs are OpenRouter slugs (provider/model) so the orchestrator receives the same
+ * identifiers as category rankings and the Python stack, except `automatic`.
+ */
 export const AVAILABLE_MODELS: Model[] = [
-  // Automatic - Let the orchestrator decide
   {
     id: "automatic",
     name: "Automatic",
@@ -14,12 +18,11 @@ export const AVAILABLE_MODELS: Model[] = [
       reasoning: true,
     },
   },
-  // OpenAI Models
   {
-    id: "o1",
-    name: "o1",
+    id: "openai/gpt-5.2-pro",
+    name: "GPT-5.2 Pro",
     provider: "openai",
-    description: "OpenAI's most advanced reasoning model",
+    description: "OpenAI flagship for hardest reasoning and production workloads",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -28,22 +31,46 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "o1-pro",
+    id: "openai/gpt-5.2",
+    name: "GPT-5.2",
+    provider: "openai",
+    description: "High-capability general model with strong multimodal support",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "openai/gpt-5.2-codex",
+    name: "GPT-5.2 Codex",
+    provider: "openai",
+    description: "Coding-optimized GPT-5.2 variant",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "openai/o3",
+    name: "OpenAI o3",
+    provider: "openai",
+    description: "Deep reasoning specialist",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "openai/o1-pro",
     name: "o1 Pro",
     provider: "openai",
-    description: "o1 with extended thinking for complex problems",
-    capabilities: {
-      vision: true,
-      codeExecution: true,
-      webSearch: true,
-      reasoning: true,
-    },
-  },
-  {
-    id: "o3-mini",
-    name: "o3 Mini",
-    provider: "openai",
-    description: "Fast reasoning model with high efficiency",
+    description: "Extended thinking for math, logic, and long chains",
     capabilities: {
       vision: false,
       codeExecution: true,
@@ -52,22 +79,22 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "gpt-4.5-preview",
-    name: "GPT-4.5 Preview",
+    id: "openai/o4-mini",
+    name: "o4-mini",
     provider: "openai",
-    description: "Next-gen GPT with enhanced capabilities",
+    description: "Fast OpenAI reasoning at lower cost",
     capabilities: {
-      vision: true,
+      vision: false,
       codeExecution: true,
       webSearch: true,
       reasoning: true,
     },
   },
   {
-    id: "gpt-4o",
+    id: "openai/gpt-4o",
     name: "GPT-4o",
     provider: "openai",
-    description: "OpenAI's flagship multimodal model",
+    description: "Proven multimodal flagship",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -76,10 +103,10 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "gpt-4o-mini",
+    id: "openai/gpt-4o-mini",
     name: "GPT-4o Mini",
     provider: "openai",
-    description: "Fast and cost-effective OpenAI model",
+    description: "Fast, cost-efficient OpenAI model",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -87,12 +114,11 @@ export const AVAILABLE_MODELS: Model[] = [
       reasoning: false,
     },
   },
-  // Anthropic Claude Models
   {
-    id: "claude-opus-4",
-    name: "Claude Opus 4",
+    id: "anthropic/claude-opus-4.5",
+    name: "Claude Opus 4.5",
     provider: "anthropic",
-    description: "Anthropic's most powerful model for complex tasks",
+    description: "Anthropic’s strongest model for complex analysis and writing",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -101,10 +127,10 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "claude-sonnet-4",
-    name: "Claude Sonnet 4",
+    id: "anthropic/claude-sonnet-4.5",
+    name: "Claude Sonnet 4.5",
     provider: "anthropic",
-    description: "Best balance of speed and intelligence",
+    description: "Best balance of speed, quality, and coding",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -113,48 +139,46 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "claude-3.5-haiku",
-    name: "Claude 3.5 Haiku",
+    id: "anthropic/claude-haiku-4.5",
+    name: "Claude Haiku 4.5",
     provider: "anthropic",
-    description: "Fast and efficient Claude model",
+    description: "Low-latency Claude for high-throughput workflows",
     capabilities: {
       vision: true,
       codeExecution: false,
       webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "google/gemini-3.1-pro-preview",
+    name: "Gemini 3.1 Pro",
+    provider: "google",
+    description: "Google’s latest long-context multimodal flagship (preview)",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "google/gemini-3-flash-preview",
+    name: "Gemini 3 Flash",
+    provider: "google",
+    description: "Fast Gemini 3-class model for everyday tasks",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
       reasoning: false,
     },
   },
-  // xAI Grok Models
   {
-    id: "grok-3",
-    name: "Grok 3",
-    provider: "xai",
-    description: "xAI's most advanced model with real-time knowledge",
-    capabilities: {
-      vision: true,
-      codeExecution: true,
-      webSearch: true,
-      reasoning: true,
-    },
-  },
-  {
-    id: "grok-2",
-    name: "Grok 2",
-    provider: "xai",
-    description: "xAI's conversational AI with real-time knowledge",
-    capabilities: {
-      vision: true,
-      codeExecution: false,
-      webSearch: true,
-      reasoning: true,
-    },
-  },
-  // Google Gemini Models
-  {
-    id: "gemini-2.5-pro",
+    id: "google/gemini-2.5-pro",
     name: "Gemini 2.5 Pro",
     provider: "google",
-    description: "Google's most capable multimodal model",
+    description: "Stable, high-quality Google multimodal model",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -163,10 +187,10 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "gemini-2.5-flash",
+    id: "google/gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
     provider: "google",
-    description: "Fast and efficient Gemini model",
+    description: "Very fast Gemini for latency-sensitive use",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -174,12 +198,23 @@ export const AVAILABLE_MODELS: Model[] = [
       reasoning: false,
     },
   },
-  // DeepSeek Models
   {
-    id: "deepseek-r1",
+    id: "deepseek/deepseek-v3.2",
+    name: "DeepSeek V3.2",
+    provider: "deepseek",
+    description: "Excellent coding and math at aggressive pricing",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "deepseek/deepseek-r1-0528",
     name: "DeepSeek R1",
     provider: "deepseek",
-    description: "Advanced reasoning model rivaling o1",
+    description: "Open-style reasoning model competitive with o-series",
     capabilities: {
       vision: false,
       codeExecution: true,
@@ -188,23 +223,58 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "deepseek-chat",
-    name: "DeepSeek V3",
-    provider: "deepseek",
-    description: "DeepSeek's flagship conversational AI",
+    id: "x-ai/grok-4",
+    name: "Grok 4",
+    provider: "xai",
+    description: "xAI flagship with strong real-time and general knowledge",
     capabilities: {
-      vision: false,
+      vision: true,
       codeExecution: true,
-      webSearch: false,
+      webSearch: true,
       reasoning: true,
     },
   },
-  // Meta Llama Models
   {
-    id: "llama-3.3-70b",
-    name: "Llama 3.3 70B",
+    id: "x-ai/grok-4.1-fast",
+    name: "Grok 4.1 Fast",
+    provider: "xai",
+    description: "Lower-latency Grok for interactive workloads",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "meta-llama/llama-4-maverick",
+    name: "Llama 4 Maverick",
     provider: "meta",
-    description: "Meta's powerful open-source model",
+    description: "Meta’s latest open-weights class model on OpenRouter",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "qwen/qwen3-max",
+    name: "Qwen3 Max",
+    provider: "qwen",
+    description: "Alibaba flagship for multilingual and STEM tasks",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "mistralai/mistral-large-2512",
+    name: "Mistral Large 2512",
+    provider: "mistralai",
+    description: "Mistral’s latest large instruct model",
     capabilities: {
       vision: false,
       codeExecution: true,
@@ -215,84 +285,96 @@ export const AVAILABLE_MODELS: Model[] = [
 ]
 
 /**
- * Normalize API model name to frontend model ID.
- * Maps full API names to our simplified frontend IDs.
+ * Normalize saved or API model identifiers to canonical OpenRouter IDs
+ * (or `automatic`) for lookup in AVAILABLE_MODELS.
  */
 function normalizeModelId(apiModelName: string): string {
-  const name = apiModelName.toLowerCase()
-  
-  // OpenAI reasoning models (o-series)
-  if (name.includes("o1-pro") || name.includes("o1pro")) {
-    return "o1-pro"
+  const raw = apiModelName.trim()
+  const name = raw.toLowerCase()
+
+  if (name === "automatic" || name === "orchestrator") {
+    return "automatic"
   }
-  if (name.includes("o3-mini") || name.includes("o3mini")) {
-    return "o3-mini"
+
+  // Already using OpenRouter-style IDs
+  if (
+    name.startsWith("openai/") ||
+    name.startsWith("anthropic/") ||
+    name.startsWith("google/") ||
+    name.startsWith("deepseek/") ||
+    name.startsWith("x-ai/") ||
+    name.startsWith("meta-llama/") ||
+    name.startsWith("qwen/") ||
+    name.startsWith("mistralai/")
+  ) {
+    return raw
   }
-  if (name.includes("o1") && !name.includes("o1-pro")) {
-    return "o1"
+
+  // Legacy short IDs and older UI labels → OpenRouter
+  if (name.includes("o1-pro") || name.includes("o1pro")) return "openai/o1-pro"
+  if (name.includes("o3-mini") || name.includes("o3mini")) return "openai/o3-mini"
+  if (name.includes("o4-mini")) return "openai/o4-mini"
+  if (name === "o1" || (name.includes("o1") && !name.includes("o1-pro"))) return "openai/o1"
+  if (name.includes("o3")) return "openai/o3"
+
+  if (name.includes("gpt-5.2-pro") || name.includes("gpt-5-2-pro")) return "openai/gpt-5.2-pro"
+  if (name.includes("gpt-5.2-codex") || name.includes("gpt-5-2-codex")) return "openai/gpt-5.2-codex"
+  if (name.includes("gpt-5.2")) return "openai/gpt-5.2"
+  if (name.includes("gpt-5.1")) return "openai/gpt-5.1"
+  if (name.includes("gpt-5")) return "openai/gpt-5"
+
+  if (name.includes("gpt-4o-mini") || name.includes("gpt-4-mini")) return "openai/gpt-4o-mini"
+  if (name.includes("gpt-4o") || name === "gpt-4") return "openai/gpt-4o"
+  if (name.includes("gpt-4.5") || name.includes("gpt-4-5")) return "openai/gpt-4o"
+
+  if (name.includes("claude-opus-4.5") || name.includes("claude-opus-4")) {
+    return name.includes("4.5") ? "anthropic/claude-opus-4.5" : "anthropic/claude-opus-4"
   }
-  
-  // GPT models
-  if (name.includes("gpt-4.5") || name.includes("gpt-4-5")) {
-    return "gpt-4.5-preview"
+  if (name.includes("claude-sonnet-4.5") || name.includes("claude-sonnet-4")) {
+    return name.includes("4.5") ? "anthropic/claude-sonnet-4.5" : "anthropic/claude-sonnet-4"
   }
-  if (name.includes("gpt-4o-mini") || name.includes("gpt-4-mini")) {
-    return "gpt-4o-mini"
+  if (name.includes("claude-haiku-4.5")) return "anthropic/claude-haiku-4.5"
+  if (name.includes("claude-haiku") || name.includes("claude-3.5-haiku") || name.includes("claude-3.5-haiku")) {
+    return "anthropic/claude-haiku-4.5"
   }
-  if (name.includes("gpt-4o") || name.includes("gpt-4")) {
-    return "gpt-4o"
+  if (name.includes("claude-3-5-sonnet") || name.includes("claude-sonnet")) {
+    return "anthropic/claude-sonnet-4"
   }
-  
-  // Claude models - map full API names to simplified IDs
-  if (name.includes("claude-opus-4") || name.includes("claude-4-opus")) {
-    return "claude-opus-4"
-  }
-  if (name.includes("claude-sonnet-4") || name.includes("claude-3-5-sonnet") || name.includes("claude-sonnet")) {
-    return "claude-sonnet-4"
-  }
-  if (name.includes("claude-haiku") || name.includes("claude-3-5-haiku") || name.includes("claude-3.5-haiku")) {
-    return "claude-3.5-haiku"
-  }
-  
-  // Gemini models
-  if (name.includes("gemini-2.5-flash") || name.includes("gemini-flash")) {
-    return "gemini-2.5-flash"
-  }
+
+  if (name.includes("gemini-3.1")) return "google/gemini-3.1-pro-preview"
+  if (name.includes("gemini-3-flash")) return "google/gemini-3-flash-preview"
+  if (name.includes("gemini-3")) return "google/gemini-3.1-pro-preview"
+  if (name.includes("gemini-2.5-flash")) return "google/gemini-2.5-flash"
   if (name.includes("gemini-2.5-pro") || name.includes("gemini-pro") || name.includes("gemini-2.5")) {
-    return "gemini-2.5-pro"
+    return "google/gemini-2.5-pro"
   }
-  
-  // Grok models
-  if (name.includes("grok-3") || name.includes("grok3")) {
-    return "grok-3"
+
+  if (name.includes("grok-4.1")) return "x-ai/grok-4.1-fast"
+  if (name.includes("grok-4")) return "x-ai/grok-4"
+  if (name.includes("grok-3") || name.includes("grok3")) return "x-ai/grok-4"
+  if (name.includes("grok-2") || name.includes("grok")) return "x-ai/grok-4"
+
+  if (name.includes("deepseek-r1")) return "deepseek/deepseek-r1-0528"
+  if (name.includes("deepseek-v3.2") || name.includes("deepseek-chat") || name.includes("deepseek")) {
+    return "deepseek/deepseek-v3.2"
   }
-  if (name.includes("grok-2") || name.includes("grok")) {
-    return "grok-2"
-  }
-  
-  // DeepSeek models
-  if (name.includes("deepseek-r1") || name.includes("deepseek-reasoner")) {
-    return "deepseek-r1"
-  }
-  if (name.includes("deepseek-chat") || name.includes("deepseek-v3") || name.includes("deepseek")) {
-    return "deepseek-chat"
-  }
-  
-  // Llama models
+
+  if (name.includes("llama-4")) return "meta-llama/llama-4-maverick"
   if (name.includes("llama-3.3") || name.includes("llama-3-3") || name.includes("llama3.3")) {
-    return "llama-3.3-70b"
+    return "meta-llama/llama-4-maverick"
   }
-  
-  // Return original if no mapping found
-  return apiModelName
+
+  if (name.includes("qwen3") || name.includes("qwen-3")) return "qwen/qwen3-max"
+
+  if (name.includes("mistral-large")) return "mistralai/mistral-large-2512"
+
+  return raw
 }
 
 export function getModelById(id: string): Model | undefined {
-  // First try exact match
   const exactMatch = AVAILABLE_MODELS.find((model) => model.id === id)
   if (exactMatch) return exactMatch
-  
-  // Try normalized match
+
   const normalizedId = normalizeModelId(id)
   return AVAILABLE_MODELS.find((model) => model.id === normalizedId)
 }
@@ -303,19 +385,25 @@ export function getModelsByProvider(provider: string): Model[] {
 
 /**
  * Get display-friendly model name from any API model identifier.
- * Always returns a nice UI name, falling back to a formatted version of the ID.
  */
 export function getModelDisplayName(apiModelName: string): string {
   const model = getModelById(apiModelName)
   if (model) return model.name
-  
-  // Format the API name to be more readable
-  // e.g., "claude-sonnet-4-20250514" -> "Claude Sonnet 4"
-  return apiModelName
-    .replace(/-\d{8}$/, '') // Remove date suffix like -20250514
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
+
+  const cleaned = apiModelName.replace(/:free$/i, "").replace(/-\d{8}$/, "")
+  if (cleaned.includes("/")) {
+    const slug = cleaned.split("/").slice(1).join("/")
+    return slug
+      .split(/[-_]/g)
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ")
+  }
+
+  return cleaned
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
 }
 
 // Provider logo paths - all hosted locally in /public/logos/ for reliability
@@ -325,17 +413,17 @@ const PROVIDER_LOGOS: Record<string, string> = {
   orchestrator: "/logos/llmhive.png",
   llmhive: "/logos/llmhive.png",
   automatic: "/logos/llmhive.png",
-  
+
   // OpenAI
   openai: "/logos/openai.svg",
   "gpt-4": "/logos/openai.svg",
   "gpt-4o": "/logos/openai.svg",
   "gpt-4.5": "/logos/openai.svg",
   "gpt-5": "/logos/openai.svg",
-  "o1": "/logos/openai.svg",
-  "o3": "/logos/openai.svg",
-  "chatgpt": "/logos/openai.svg",
-  
+  o1: "/logos/openai.svg",
+  o3: "/logos/openai.svg",
+  chatgpt: "/logos/openai.svg",
+
   // Anthropic / Claude
   anthropic: "/logos/anthropic.png",
   claude: "/logos/anthropic.png",
@@ -343,7 +431,7 @@ const PROVIDER_LOGOS: Record<string, string> = {
   "claude-sonnet": "/logos/anthropic.png",
   "claude-opus": "/logos/anthropic.png",
   "claude-haiku": "/logos/anthropic.png",
-  
+
   // Google / Gemini
   google: "/logos/google.svg",
   gemini: "/logos/google.svg",
@@ -351,29 +439,29 @@ const PROVIDER_LOGOS: Record<string, string> = {
   "gemini-flash": "/logos/google.svg",
   "gemini-2": "/logos/google.svg",
   palm: "/logos/google.svg",
-  
+
   // xAI / Grok
   xai: "/logos/xai.png",
   "x-ai": "/logos/xai.png",
   grok: "/logos/xai.png",
   "grok-2": "/logos/xai.png",
   "grok-3": "/logos/xai.png",
-  
+
   // DeepSeek
   deepseek: "/logos/deepseek.svg",
   "deepseek-v3": "/logos/deepseek.svg",
   "deepseek-r1": "/logos/deepseek.svg",
   "deepseek-chat": "/logos/deepseek.svg",
   "deepseek-coder": "/logos/deepseek.svg",
-  
+
   // Meta / Llama
   meta: "/logos/meta.svg",
   "meta-llama": "/logos/meta.svg",
   llama: "/logos/meta.svg",
   "llama-3": "/logos/meta.svg",
   "llama-4": "/logos/meta.svg",
-  "llama3": "/logos/meta.svg",
-  
+  llama3: "/logos/meta.svg",
+
   // Mistral
   mistralai: "/logos/mistral.png",
   mistral: "/logos/mistral.png",
@@ -383,25 +471,25 @@ const PROVIDER_LOGOS: Record<string, string> = {
   codestral: "/logos/mistral.png",
   mixtral: "/logos/mistral.png",
   pixtral: "/logos/mistral.png",
-  
+
   // Cohere
   cohere: "/logos/cohere.png",
   command: "/logos/cohere.png",
   "command-r": "/logos/cohere.png",
   "command-a": "/logos/cohere.png",
-  
+
   // Perplexity
   perplexity: "/logos/perplexity.svg",
-  "pplx": "/logos/perplexity.svg",
-  "sonar": "/logos/perplexity.svg",
-  
+  pplx: "/logos/perplexity.svg",
+  sonar: "/logos/perplexity.svg",
+
   // Qwen / Alibaba
   qwen: "/logos/alibaba.svg",
   alibaba: "/logos/alibaba.svg",
   "qwen-2": "/logos/alibaba.svg",
-  "qwen2": "/logos/alibaba.svg",
+  qwen2: "/logos/alibaba.svg",
   "qwen-max": "/logos/alibaba.svg",
-  
+
   // Microsoft / Azure
   microsoft: "/logos/microsoft.png",
   azure: "/logos/microsoft.png",
@@ -410,52 +498,52 @@ const PROVIDER_LOGOS: Record<string, string> = {
   "phi-4": "/logos/microsoft.png",
   orca: "/logos/microsoft.png",
   wizardlm: "/logos/microsoft.png",
-  
+
   // Amazon
   amazon: "/logos/amazon.png",
   aws: "/logos/amazon.png",
   titan: "/logos/amazon.png",
   nova: "/logos/amazon.png",
-  
+
   // Nvidia
   nvidia: "/logos/nvidia.svg",
   nemotron: "/logos/nvidia.svg",
-  
+
   // Groq (inference platform)
   groq: "/logos/groq.png",
-  
+
   // Together AI
   together: "/logos/together.png",
-  "togethercomputer": "/logos/together.png",
-  
+  togethercomputer: "/logos/together.png",
+
   // Replicate
   replicate: "/logos/replicate.png",
-  
+
   // Fireworks
   fireworks: "/logos/fireworks.png",
   "fireworks-ai": "/logos/fireworks.png",
-  
+
   // AI21 Labs
   ai21: "/logos/ai21.png",
   jamba: "/logos/ai21.png",
   jurassic: "/logos/ai21.png",
-  
+
   // Hugging Face
   huggingface: "/logos/huggingface.svg",
   "hugging-face": "/logos/huggingface.svg",
   hf: "/logos/huggingface.svg",
-  
+
   // Cerebras
   cerebras: "/logos/cerebras.png",
-  
+
   // Lepton
   lepton: "/logos/lepton.png",
-  
+
   // Anyscale
   anyscale: "/logos/anyscale.png",
-  
+
   // Other common model names
-  yi: "/logos/alibaba.svg",  // Yi models (01.AI)
+  yi: "/logos/alibaba.svg", // Yi models (01.AI)
   databricks: "/logos/unknown.svg",
   dbrx: "/logos/unknown.svg",
   nousresearch: "/logos/unknown.svg",
@@ -470,40 +558,33 @@ const PROVIDER_LOGOS: Record<string, string> = {
 
 export function getModelLogo(providerOrModelId: string): string {
   if (!providerOrModelId) return "/logos/unknown.svg"
-  
-  // Normalize to lowercase
+
   const normalized = providerOrModelId.toLowerCase().trim()
-  
-  // Direct match
+
   if (PROVIDER_LOGOS[normalized]) {
     return PROVIDER_LOGOS[normalized]
   }
-  
-  // Extract provider from model ID (e.g., "openai/gpt-4o" -> "openai")
-  const parts = normalized.split('/')
+
+  const parts = normalized.split("/")
   const provider = parts[0]
   if (PROVIDER_LOGOS[provider]) {
     return PROVIDER_LOGOS[provider]
   }
-  
-  // Check model name part (e.g., "openai/gpt-4o" -> "gpt-4o")
+
   if (parts.length > 1) {
     const modelName = parts[1]
-    // Check for known model prefixes
     for (const [key, url] of Object.entries(PROVIDER_LOGOS)) {
       if (modelName.startsWith(key) || modelName.includes(key)) {
         return url
       }
     }
   }
-  
-  // Try partial match on whole string
+
   for (const [key, url] of Object.entries(PROVIDER_LOGOS)) {
     if (normalized.includes(key)) {
       return url
     }
   }
-  
-  // Return placeholder for unknown providers
+
   return "/logos/unknown.svg"
 }

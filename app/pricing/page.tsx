@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Compare LLMHive pricing tiers, Premium query limits, and enterprise features.",
   alternates: {
-    canonical: "https://www.llmhive.ai/pricing",
+    canonical: "https://llmhive.ai/pricing",
   },
   openGraph: {
     title: "LLMHive Pricing",
@@ -33,7 +33,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Pricing",
-            item: "https://www.llmhive.ai/pricing",
+            item: "https://llmhive.ai/pricing",
           },
         ],
       },

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Discover the best LLMHive use cases for teams, enterprises, developers, and research workflows.",
   alternates: {
-    canonical: "https://www.llmhive.ai/best-for",
+    canonical: "https://llmhive.ai/best-for",
   },
   openGraph: {
     title: "LLMHive Best For",
@@ -70,7 +70,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Best For",
-            item: "https://www.llmhive.ai/best-for",
+            item: "https://llmhive.ai/best-for",
           },
         ],
       },

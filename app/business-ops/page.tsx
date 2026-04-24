@@ -103,7 +103,7 @@ export default function BusinessOpsHubPage() {
                     "@type": "ListItem",
                     position: 1,
                     name: "Business Ops Hub",
-                    item: "https://www.llmhive.ai/business-ops",
+                    item: "https://llmhive.ai/business-ops",
                   },
                 ],
               },

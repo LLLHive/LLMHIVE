@@ -21,7 +21,7 @@ Typical Use Cases
 - Software development and code review
 
 Availability
-Public access: https://www.llmhive.ai/landing
+Public access: https://llmhive.ai/landing
 
 Contact
 press@llmhive.ai

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Cookie Policy - LLMHive",
   description: "Review the LLMHive cookie policy and how we use cookies on our site.",
   alternates: {
-    canonical: "https://www.llmhive.ai/cookies",
+    canonical: "https://llmhive.ai/cookies",
   },
   openGraph: {
     title: "LLMHive Cookie Policy",
@@ -32,7 +32,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Cookie Policy",
-            item: "https://www.llmhive.ai/cookies",
+            item: "https://llmhive.ai/cookies",
           },
         ],
       },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 // Vercel serverless function configuration
-// Extend timeout for multi-model orchestration (Pro plan: up to 300s)
+// Extend timeout for multi-model orchestration (Premium: up to 300s)
 export const maxDuration = 300 // 5 minutes max - world-class AI needs time
 export const dynamic = "force-dynamic"
 

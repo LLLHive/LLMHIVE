@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Get clear answers on LLMHive pricing, security, comparisons, and how multi-model AI orchestration works.",
   alternates: {
-    canonical: "https://www.llmhive.ai/faq",
+    canonical: "https://llmhive.ai/faq",
   },
   openGraph: {
     title: "LLMHive FAQ",
@@ -46,17 +46,12 @@ const faqItems = [
   {
     question: "What pricing plans are available?",
     answer:
-      "LLMHive offers Standard, Lite, Pro, and Enterprise plans. Each plan includes multi-model orchestration with different Premium query limits and enterprise controls.",
+      "LLMHive offers three subscriptions: Standard ($10/mo or $100/yr) with unlimited Standard orchestration, Premium ($20/mo or $200/yr) with 500 Premium queries per month then unlimited Standard, and Enterprise (per seat, min 5) with team controls and compliance features.",
   },
   {
     question: "What happens after I use my Premium queries?",
     answer:
-      "Once Premium queries are exhausted, LLMHive continues running on Standard orchestration so work never stops.",
-  },
-  {
-    question: "Do you offer a free plan?",
-    answer:
-      "Yes. The Standard plan includes multi-model orchestration and unlimited queries on Standard routing.",
+      "Once Premium queries are exhausted, LLMHive continues on unlimited Standard orchestration for the rest of the billing period.",
   },
   {
     question: "Can I change plans any time?",
@@ -107,7 +102,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "FAQ",
-            item: "https://www.llmhive.ai/faq",
+            item: "https://llmhive.ai/faq",
           },
         ],
       },

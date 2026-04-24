@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "Configure LLMHive orchestration, models, reasoning methods, and quality controls.",
   alternates: {
-    canonical: "https://www.llmhive.ai/orchestration",
+    canonical: "https://llmhive.ai/orchestration",
   },
   openGraph: {
     title: "LLMHive Orchestration",
@@ -31,7 +31,7 @@ const structuredData = {
           "@type": "ListItem",
           position: 1,
           name: "Orchestration",
-          item: "https://www.llmhive.ai/orchestration",
+          item: "https://llmhive.ai/orchestration",
         },
       ],
     },

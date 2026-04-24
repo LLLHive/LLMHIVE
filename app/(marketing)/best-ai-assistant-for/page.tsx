@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Role-based guidance for choosing the best AI assistant across engineering, marketing, research, support, and executive teams.",
   alternates: {
-    canonical: "https://www.llmhive.ai/best-ai-assistant-for",
+    canonical: "https://llmhive.ai/best-ai-assistant-for",
   },
   openGraph: {
     title: "Best AI Assistant For",
@@ -34,7 +34,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://www.llmhive.ai/best-ai-assistant-for/${item.slug}`,
+          url: `https://llmhive.ai/best-ai-assistant-for/${item.slug}`,
         })),
       },
       {
@@ -44,7 +44,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Best AI Assistant For",
-            item: "https://www.llmhive.ai/best-ai-assistant-for",
+            item: "https://llmhive.ai/best-ai-assistant-for",
           },
         ],
       },

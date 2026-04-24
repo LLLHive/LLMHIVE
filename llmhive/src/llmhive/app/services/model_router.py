@@ -70,7 +70,7 @@ FALLBACK_CLAUDE_3_HAIKU = "anthropic/claude-3-5-haiku-20241022"  # Legacy
 
 # Google - Top tier
 FALLBACK_GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"  # ✓ Verified - newest Google
-FALLBACK_GEMINI_3_PRO = "google/gemini-3-pro-preview"    # ✓ Verified
+FALLBACK_GEMINI_3_PRO = "google/gemini-3-flash-preview"  # Live OR slug (text Gemini 3)
 FALLBACK_GEMINI_2_5 = "google/gemini-2.5-pro"            # ✓ Verified
 FALLBACK_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"    # ✓ Verified
 
@@ -295,14 +295,14 @@ MODEL_CAPABILITIES = {
         "overall": 94,
     },
     FALLBACK_GEMINI_3_PRO: {
-        "coding": 92,
-        "math": 91,
-        "reasoning": 92,
-        "creative": 82,
-        "factual": 92,
-        "analysis": 92,
-        "speed": 78,
-        "overall": 92,
+        "coding": 88,
+        "math": 88,
+        "reasoning": 88,
+        "creative": 80,
+        "factual": 88,
+        "analysis": 86,
+        "speed": 94,
+        "overall": 88,
     },
     FALLBACK_GEMINI_2_5: {
         "coding": 90,

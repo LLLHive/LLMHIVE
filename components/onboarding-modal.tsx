@@ -46,7 +46,7 @@ const WELCOME_FEATURES = [
   {
     icon: Layers,
     title: "Customizable Accuracy",
-    description: "Choose from Standard to Maximum accuracy levels for your needs",
+    description: "Tune response quality from Standard up to the highest accuracy presets for your workload",
     color: "text-green-400",
   },
 ]
@@ -165,8 +165,8 @@ export function OnboardingModal({ userName = "there" }: OnboardingModalProps) {
                 Hi {firstName}! 👋
               </h2>
               <p className="text-muted-foreground mb-6">
-                You've just unlocked access to the most powerful AI orchestration platform. 
-                Here's what makes LLMHive special:
+                You&apos;ve just unlocked access to the most powerful AI orchestration platform.{" "}
+                Here&apos;s what makes LLMHive special:
               </p>
             </div>
 

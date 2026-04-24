@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Role-based comparisons to determine the best AI assistant for engineers, marketers, researchers, support teams, and executives.",
   alternates: {
-    canonical: "https://www.llmhive.ai/comparisons/best-ai-assistant-for",
+    canonical: "https://llmhive.ai/comparisons/best-ai-assistant-for",
   },
   openGraph: {
     title: "Best AI Assistant Comparisons",
@@ -34,7 +34,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://www.llmhive.ai/comparisons/best-ai-assistant-for/${item.slug}`,
+          url: `https://llmhive.ai/comparisons/best-ai-assistant-for/${item.slug}`,
         })),
       },
       {
@@ -44,13 +44,13 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://www.llmhive.ai/comparisons",
+            item: "https://llmhive.ai/comparisons",
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Best AI Assistant Comparisons",
-            item: "https://www.llmhive.ai/comparisons/best-ai-assistant-for",
+            item: "https://llmhive.ai/comparisons/best-ai-assistant-for",
           },
         ],
       },

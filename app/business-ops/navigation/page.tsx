@@ -109,7 +109,7 @@ export default function BusinessOpsNavigationPage() {
                     "@type": "ListItem",
                     position: 1,
                     name: "Business Ops Navigation",
-                    item: "https://www.llmhive.ai/business-ops/navigation",
+                    item: "https://llmhive.ai/business-ops/navigation",
                   },
                 ],
               },

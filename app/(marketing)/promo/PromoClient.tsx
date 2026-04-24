@@ -22,10 +22,15 @@ import {
   Trophy,
   Zap,
   Star,
-  Rocket,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+import {
+  OFFER_ENTERPRISE_FEATURES,
+  OFFER_PREMIUM_FEATURES,
+  OFFER_STANDARD_FEATURES,
+  offerPromoBullets,
+} from "@/lib/marketing/pricing-offers"
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TECHNOLOGY SECTIONS - Organized in rows of 3 for synchronized expansion
@@ -204,7 +209,7 @@ export default function PromoClient() {
             GPT-5.2 + Claude Opus 4.5 + Gemini 3 Pro
             <br />
             <span className="bg-gradient-to-r from-yellow-300 via-amber-400 to-[var(--bronze)] bg-clip-text text-transparent">
-              Unified. For $29.99/month.
+              Unified. From $10/month Standard, $20/month Premium.
             </span>
           </h1>
 
@@ -216,21 +221,21 @@ export default function PromoClient() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <Link href="/sign-up">
+            <Link href="/pricing">
               <Button size="lg" className="bronze-gradient text-white text-lg px-8 h-14 shadow-xl font-bold">
                 <Trophy className="h-5 w-5 mr-2" />
-                Get Pro — $29.99/mo
+                Subscribe — Premium $20/mo
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/sign-up">
+            <Link href="/pricing">
               <Button
                 size="lg"
                 variant="outline"
                 className="border-2 border-green-500/50 text-green-400 hover:bg-green-500/10 text-lg px-8 h-14"
               >
                 <Star className="h-5 w-5 mr-2" />
-                Try Standard
+                Standard — $10/mo
               </Button>
             </Link>
           </div>
@@ -239,7 +244,7 @@ export default function PromoClient() {
           <div className="flex flex-wrap items-center justify-center gap-6 text-white/60 text-sm">
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-400" />
-              <span>No credit card required</span>
+              <span>Annual billing saves about 17%</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-400" />
@@ -317,106 +322,50 @@ export default function PromoClient() {
         </div>
       </section>
 
-      {/* Pricing - All 4 Tiers with more info and aligned buttons */}
+      {/* Pricing — Standard, Premium, Enterprise */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Standard ($0) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Standard */}
             <div className="p-4 rounded-xl llmhive-glass border border-[var(--bronze)]/30 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
                 <Star className="h-4 w-4 text-[var(--bronze)]" />
                 <h3 className="text-base font-bold text-white">Standard</h3>
               </div>
-              <div className="text-xl font-bold text-white mb-0.5">$0</div>
-              <p className="text-[10px] text-white/60 mb-2">Forever</p>
+              <div className="text-xl font-bold text-white mb-0.5">$10</div>
+              <p className="text-[10px] text-white/60 mb-2">/month · $100/year</p>
 
-              {/* Quota highlight */}
               <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/30 mb-2">
-                <div className="flex items-center gap-1.5 text-green-400 text-[11px] font-semibold">
-                  <span>🆓</span> Unlimited Standard queries
-                </div>
+                <div className="text-green-400 text-[11px] font-semibold">Unlimited Standard orchestration</div>
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-green-400" />
-                  Multi-model orchestration
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-green-400" />
-                  Beats most single models
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-green-400" />
-                  Knowledge Base access
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-green-400" />
-                  3-day memory
-                </li>
+                {offerPromoBullets(OFFER_STANDARD_FEATURES).map((line) => (
+                  <li key={line} className="flex items-center gap-1.5 text-white/80">
+                    <Check className="h-2.5 w-2.5 shrink-0 text-green-400" />
+                    {line}
+                  </li>
+                ))}
               </ul>
-              <Link href="/sign-up" className="mt-auto">
+              <Link href="/pricing" className="mt-auto">
                 <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white text-xs h-9">
-                  Get started <ArrowRight className="h-3 w-3 ml-1" />
+                  Subscribe — Standard <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </Link>
             </div>
 
-            {/* Lite */}
-            <div className="p-4 rounded-xl llmhive-glass border border-[var(--bronze)]/30 flex flex-col">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-4 w-4 text-blue-400" />
-                <h3 className="text-base font-bold text-white">Lite</h3>
-              </div>
-              <div className="text-xl font-bold text-white mb-0.5">$14.99</div>
-              <p className="text-[10px] text-white/60 mb-2">/month</p>
-
-              {/* Quota highlight */}
-              <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 mb-2">
-                <div className="flex items-center gap-1.5 text-blue-400 text-[11px] font-semibold">
-                  <Zap className="h-3 w-3" /> 100 Premium queries
-                </div>
-                <div className="text-green-400 text-[10px]">Then unlimited Standard</div>
-              </div>
-
-              <ul className="space-y-1 mb-3 text-[11px] flex-1">
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-blue-400" />
-                  #1 quality when using Premium
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-blue-400" />
-                  7-day memory retention
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-blue-400" />
-                  Consensus voting
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-blue-400" />
-                  Email support
-                </li>
-              </ul>
-              <Link href="/sign-up" className="mt-auto">
-                <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white text-xs h-9">
-                  Get Lite <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Pro - Featured */}
+            {/* Premium — Featured */}
             <div className="p-4 rounded-xl llmhive-glass border-2 border-yellow-500/50 relative shadow-lg shadow-yellow-500/10 flex flex-col">
               <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full text-[10px] font-bold text-white">
                 BEST VALUE
               </div>
               <div className="flex items-center gap-2 mb-2 mt-1">
-                <Rocket className="h-4 w-4 text-yellow-400" />
-                <h3 className="text-base font-bold text-white">Pro</h3>
+                <Crown className="h-4 w-4 text-yellow-400" />
+                <h3 className="text-base font-bold text-white">Premium</h3>
               </div>
-              <div className="text-xl font-bold text-white mb-0.5">$29.99</div>
-              <p className="text-[10px] text-white/60 mb-2">/month</p>
+              <div className="text-xl font-bold text-white mb-0.5">$20</div>
+              <p className="text-[10px] text-white/60 mb-2">/month · $200/year</p>
 
-              {/* Quota highlight */}
               <div className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 mb-2">
                 <div className="flex items-center gap-1.5 text-yellow-400 text-[11px] font-semibold">
                   <Trophy className="h-3 w-3" /> 500 Premium queries
@@ -425,26 +374,16 @@ export default function PromoClient() {
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-yellow-400" />
-                  {BENCHMARK_CLAIM_SHORT}
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-yellow-400" />
-                  Full API access
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-yellow-400" />
-                  30-day memory
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-yellow-400" />
-                  Priority support
-                </li>
+                {offerPromoBullets(OFFER_PREMIUM_FEATURES).map((line) => (
+                  <li key={line} className="flex items-center gap-1.5 text-white/80">
+                    <Check className="h-2.5 w-2.5 shrink-0 text-yellow-400" />
+                    {line}
+                  </li>
+                ))}
               </ul>
-              <Link href="/sign-up" className="mt-auto">
+              <Link href="/pricing" className="mt-auto">
                 <Button className="w-full bronze-gradient text-white text-xs h-9 font-bold">
-                  Get Pro — Best Value <ArrowRight className="h-3 w-3 ml-1" />
+                  Subscribe — Premium <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </Link>
             </div>
@@ -467,22 +406,12 @@ export default function PromoClient() {
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-emerald-400" />
-                  Min 5 seats ($175+/mo)
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-emerald-400" />
-                  SSO / SAML auth
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-emerald-400" />
-                  SOC 2 Type II
-                </li>
-                <li className="flex items-center gap-1.5 text-white/80">
-                  <Check className="h-2.5 w-2.5 text-emerald-400" />
-                  1-year memory
-                </li>
+                {offerPromoBullets(OFFER_ENTERPRISE_FEATURES).map((line) => (
+                  <li key={line} className="flex items-center gap-1.5 text-white/80">
+                    <Check className="h-2.5 w-2.5 shrink-0 text-emerald-400" />
+                    {line}
+                  </li>
+                ))}
               </ul>
               <Link href="/contact" className="mt-auto">
                 <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9">
@@ -504,23 +433,23 @@ export default function PromoClient() {
             Ready for <span className="text-yellow-400">Premium benchmark quality</span>?
           </h2>
           <p className="text-white/70 mb-6">
-            500 Premium queries. Unlimited Standard after. Just{" "}
-            <strong className="text-yellow-400">$29.99/month</strong>.
+            500 Premium queries. Unlimited Standard after. Premium from{" "}
+            <strong className="text-yellow-400">$20/month</strong> (annual saves about 17%).
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/sign-up">
+            <Link href="/pricing">
               <Button size="lg" className="bronze-gradient text-white text-lg px-8 h-12 font-bold">
                 <Trophy className="h-5 w-5 mr-2" />
-                Get Pro
+                View pricing
               </Button>
             </Link>
-            <Link href="/sign-up">
+            <Link href="/pricing">
               <Button
                 size="lg"
                 variant="outline"
                 className="border-white/30 text-white hover:bg-white/10 text-lg px-8 h-12"
               >
-                Try Standard
+                Standard — $10/mo
               </Button>
             </Link>
           </div>

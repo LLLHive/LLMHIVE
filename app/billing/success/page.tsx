@@ -48,6 +48,15 @@ export default function BillingSuccessPage() {
     }
   }
 
+  const planDisplayName = (tier: string | undefined) => {
+    if (!tier) return "Your"
+    const t = tier.toLowerCase()
+    if (t === "lite") return "Standard"
+    if (t === "pro") return "Premium"
+    if (t === "enterprise") return "Enterprise"
+    return tier.charAt(0).toUpperCase() + tier.slice(1)
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-lg w-full bg-card/50 backdrop-blur-sm border-border/50">
@@ -78,7 +87,7 @@ export default function BillingSuccessPage() {
                 <div className="p-4 rounded-lg bg-[var(--bronze)]/10 border border-[var(--bronze)]/20">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Sparkles className="h-5 w-5 text-[var(--bronze)]" />
-                    <span className="font-semibold capitalize">{subscription.tier} Plan</span>
+                    <span className="font-semibold">{planDisplayName(subscription.tier)} plan</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {subscription.billingCycle === "annual" ? "Annual" : "Monthly"} subscription activated
@@ -88,7 +97,15 @@ export default function BillingSuccessPage() {
 
               <div className="space-y-3">
                 <p className="text-muted-foreground">
-                  Your subscription is now active. You have access to all {subscription?.tier || "Pro"} features.
+                  Your subscription is now active. You have access to all{" "}
+                  {subscription?.tier === "lite"
+                    ? "Standard"
+                    : subscription?.tier === "pro"
+                      ? "Premium"
+                      : subscription?.tier === "enterprise"
+                        ? "Enterprise"
+                        : "plan"}{" "}
+                  features.
                 </p>
 
                 <div className="text-sm text-muted-foreground space-y-1">

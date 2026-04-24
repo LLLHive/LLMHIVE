@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "LLMHive Support Tickets",
   description: "Manage support tickets and request updates in LLMHive.",
   alternates: {
-    canonical: "https://www.llmhive.ai/support/tickets",
+    canonical: "https://llmhive.ai/support/tickets",
   },
   robots: {
     index: false,
@@ -32,7 +32,7 @@ const structuredData = {
           "@type": "ListItem",
           position: 1,
           name: "Support Tickets",
-          item: "https://www.llmhive.ai/support/tickets",
+          item: "https://llmhive.ai/support/tickets",
         },
       ],
     },

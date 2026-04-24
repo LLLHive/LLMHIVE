@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Explore LLMHive use cases for enterprise, engineering, research, marketing, and support teams.",
   alternates: {
-    canonical: "https://www.llmhive.ai/use-cases",
+    canonical: "https://llmhive.ai/use-cases",
   },
   openGraph: {
     title: "LLMHive Use Cases",
@@ -62,7 +62,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://www.llmhive.ai/use-cases/${item.slug}`,
+          url: `https://llmhive.ai/use-cases/${item.slug}`,
         })),
       },
       {
@@ -84,7 +84,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Use Cases",
-            item: "https://www.llmhive.ai/use-cases",
+            item: "https://llmhive.ai/use-cases",
           },
         ],
       },

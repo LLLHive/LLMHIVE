@@ -635,7 +635,7 @@ OPENROUTER_DEEPSEEK = "deepseek/deepseek-v3.2"           # ✓ Verified - COST-E
 OPENROUTER_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"     # ✓ Verified - COST-EFFECTIVE
 OPENROUTER_GROK_4 = "x-ai/grok-4"                        # ✓ Verified
 OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"  # ✓ Verified - VERY CHEAP
-OPENROUTER_GEMINI_3_PRO = "google/gemini-3-pro-preview"  # ✓ Verified
+OPENROUTER_GEMINI_3_PRO = "google/gemini-3-flash-preview"  # Fast Gemini 3 class (live OR slug)
 OPENROUTER_GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"  # ✓ Verified (newest Google)
 
 # Budget-aware flag - set to True to use cost-effective models only
@@ -692,8 +692,8 @@ MODEL_STRENGTHS = {
         "provider": "google", "tier": "flagship", "rank": 3
     },
     OPENROUTER_GEMINI_3_PRO: {
-        "strengths": ["reasoning", "factual", "analysis", "multimodal", "research", "medical"],
-        "provider": "google", "tier": "flagship", "rank": 5
+        "strengths": ["speed", "factual", "multimodal", "general", "research"],
+        "provider": "google", "tier": "fast", "rank": 8
     },
     OPENROUTER_CLAUDE_SONNET_4: {
         "strengths": ["reasoning", "creative", "coding", "analysis"],

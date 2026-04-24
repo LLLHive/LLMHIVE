@@ -7,11 +7,11 @@ from typing import Dict, List, Optional, Set
 
 
 class TierName(str, Enum):
-    """Pricing tier names - 4-tier structure with FREE tier (January 2026)."""
+    """Pricing tier names (internal keys). UI: Standard / Premium / Enterprise."""
 
-    FREE = "free"           # Forever free: $0/mo - Free model orchestration
-    LITE = "lite"           # Entry-level: $14.99/mo
-    PRO = "pro"             # Power users: $29.99/mo  
+    FREE = "free"           # No paid subscription (internal key; not a Stripe product)
+    LITE = "lite"           # Standard paid plan (Stripe: LLMHive Standard, ~$10/mo)
+    PRO = "pro"             # Premium paid plan (Stripe: LLMHive Premium, ~$20/mo)
     ENTERPRISE = "enterprise"  # Organizations: $35/seat/mo (min 5 seats)
 
 
@@ -159,17 +159,13 @@ class PricingTierManager:
         )
         
         # ═══════════════════════════════════════════════════════════════════════════
-        # LITE TIER ($14.99/mo) - Entry Level
+        # LITE / Standard ($10/mo, $100/yr in Stripe)
         # ═══════════════════════════════════════════════════════════════════════════
-        # Target: Casual users, trying out paid features
-        # Quota: 100 ELITE → throttle to FREE (400 more)
-        # Cost: 100×$0.012 + 400×$0.00 = $1.20 + $0 = $1.20
-        # Profit: $14.99 - $1.20 = $13.79 (92% margin) ✅
         lite_tier = PricingTier(
             name=TierName.LITE,
-            display_name="Lite",
-            monthly_price_usd=14.99,
-            annual_price_usd=149.99,  # ~17% discount
+            display_name="Standard",
+            monthly_price_usd=10.0,
+            annual_price_usd=100.0,
             limits=TierLimits(
                 max_requests_per_month=500,  # 100 ELITE + 400 BUDGET
                 max_tokens_per_month=500_000,
@@ -201,23 +197,17 @@ class PricingTierManager:
                 "calculator", "reranker", "consensus_voting",
                 "elite_orchestration", "quota_tracking"
             },
-            description="100 #1-quality queries, then 400 good-quality queries",
+            description="Standard paid — unlimited Standard orchestration (see product docs for quotas)",
         )
 
         # ═══════════════════════════════════════════════════════════════════════════
-        # PRO TIER ($29.99/mo) - Power Users
+        # PRO / Premium ($20/mo, $200/yr in Stripe)
         # ═══════════════════════════════════════════════════════════════════════════
-        # Target: Professionals, freelancers, developers
-        # Quota: 500 ELITE → throttle to STANDARD (1500 more)
-        # Cost: 500×$0.015 + 1500×$0.006 = $7.50 + $9.00 = $16.50
-        # Profit: $29.99 - $16.50 = $13.49 (45% margin)
-        # Adjusted: 400 ELITE + 600 STANDARD = $6.00 + $3.60 = $9.60
-        # Profit: $29.99 - $9.60 = $20.39 (68% margin) ✅
         pro_tier = PricingTier(
             name=TierName.PRO,
-            display_name="Pro",
-            monthly_price_usd=29.99,
-            annual_price_usd=299.99,  # ~17% discount
+            display_name="Premium",
+            monthly_price_usd=20.0,
+            annual_price_usd=200.0,
             limits=TierLimits(
                 max_requests_per_month=2_000,  # 500 ELITE + 1500 STANDARD
                 max_tokens_per_month=4_000_000,

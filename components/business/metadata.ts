@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { getSiteUrl } from "@/lib/site-url"
 
 export function buildBusinessMetadata(
   title: string,
@@ -10,7 +11,7 @@ export function buildBusinessMetadata(
     description,
     alternates: canonicalPath
       ? {
-          canonical: `https://www.llmhive.ai${canonicalPath}`,
+          canonical: `${getSiteUrl()}${canonicalPath}`,
         }
       : undefined,
     openGraph: {

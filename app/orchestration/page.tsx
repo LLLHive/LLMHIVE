@@ -1087,7 +1087,7 @@ export default function OrchestrationPage() {
                 </div>
                 Premium Mode
                 <Badge className="ml-auto bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[10px]">
-                  PRO
+                  PREMIUM
                 </Badge>
               </SheetTitle>
               <p className="text-xs text-muted-foreground">Industry-leading orchestration strategies</p>

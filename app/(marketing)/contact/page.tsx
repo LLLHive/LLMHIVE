@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Contact the LLMHive team for support, partnerships, or enterprise inquiries.",
   alternates: {
-    canonical: "https://www.llmhive.ai/contact",
+    canonical: "https://llmhive.ai/contact",
   },
   openGraph: {
     title: "Contact LLMHive",
@@ -33,7 +33,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Contact",
-            item: "https://www.llmhive.ai/contact",
+            item: "https://llmhive.ai/contact",
           },
         ],
       },

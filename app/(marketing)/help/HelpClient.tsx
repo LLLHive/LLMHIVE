@@ -47,7 +47,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "How do I get started with LLMHive?",
         answer:
-          "Simply sign up for a Standard account ($0), which gives you UNLIMITED queries using our patented orchestration that beats most paid models. Once logged in, you can start chatting immediately. For top benchmark results (#1 in 5 out of 8 categories with Premium), upgrade to Lite ($14.99/mo), Pro ($29.99/mo), or Enterprise.",
+          "Create an account, then subscribe to Standard ($10/mo) for unlimited Standard orchestration, or Premium ($20/mo) for 500 Premium queries per month plus unlimited Standard after quota. Enterprise is available for teams (per seat). Once subscribed, you can start chatting immediately.",
       },
       {
         question: "What makes LLMHive different from using ChatGPT or Claude directly?",
@@ -69,7 +69,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What plans are available?",
         answer:
-          "We offer Standard ($0 forever, UNLIMITED queries with patented orchestration that beats most paid models), Lite ($14.99/month, 100 Premium queries — #1 in 5 out of 8 benchmark categories), Pro ($29.99/month, 500 Premium queries + API access), and Enterprise ($35/seat/month, min 5 seats, SSO & compliance).",
+          "We offer Standard ($10/month or $100/year) with unlimited Standard orchestration, Premium ($20/month or $200/year) with 500 Premium queries per month then unlimited Standard, and Enterprise ($35/seat/month, min 5 seats) with SSO and compliance features.",
       },
       {
         question: "What happens when I reach my Premium query limit?",
@@ -138,17 +138,17 @@ const faqCategories: FAQCategory[] = [
       {
         question: "Can I specify which model to use?",
         answer:
-          "Pro and higher plans allow model preferences. However, we recommend using our intelligent routing for best results—that's the core value of LLMHive!",
+          "Premium and Enterprise plans allow more model preferences and controls. However, we recommend using our intelligent routing for best results—that is the core value of LLMHive.",
       },
       {
         question: "Do you support image and file uploads?",
         answer:
-          "Yes! Pro and higher plans support multimodal inputs including images, PDFs, and documents. The orchestrator automatically routes to vision-capable models when needed.",
+          "Yes. Premium and Enterprise plans support multimodal inputs including images, PDFs, and documents. The orchestrator automatically routes to vision-capable models when needed.",
       },
       {
         question: "What's the maximum context length?",
         answer:
-          "Context limits vary by plan: Standard (8K tokens), Lite (25K tokens), Pro (100K tokens), Enterprise (200K+ tokens with extended context models).",
+          "Context limits vary by plan and model. Standard and Premium include generous defaults; Enterprise supports extended context options for teams.",
       },
     ],
   },
@@ -160,7 +160,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What's included in the Enterprise plan?",
         answer:
-          "Enterprise includes team management, SSO integration, dedicated support, custom SLAs, audit logs, compliance features, and 300 Premium queries per seat per month. Minimum 5 seats required.",
+          "Enterprise includes team management, SSO integration, dedicated support, custom SLAs, audit logs, compliance features, and 400 Premium orchestration queries per seat per month (then unlimited Standard). Minimum 5 seats required.",
       },
       {
         question: "Can we get a custom contract?",

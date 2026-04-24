@@ -453,7 +453,7 @@ export function ModelExplorer({
           <div className="flex flex-wrap gap-2">
             {filters.is_free && (
               <Badge variant="secondary" className="gap-1">
-                Free only
+                No OpenRouter API cost
                 <X
                   className="w-3 h-3 cursor-pointer"
                   onClick={() => setFilters({ ...filters, is_free: undefined })}

@@ -4,7 +4,7 @@ import { AlertCircle, ExternalLink } from "lucide-react"
 
 /** Shown on /sign-in and /sign-up when pk_live_ is used on localhost (Clerk blocks the embedded UI). */
 export function ClerkLocalhostBlockedMessage({ mode }: { mode: "sign-in" | "sign-up" }) {
-  const prodUrl = mode === "sign-in" ? "https://www.llmhive.ai/sign-in" : "https://www.llmhive.ai/sign-up"
+  const prodUrl = mode === "sign-in" ? "https://llmhive.ai/sign-in" : "https://llmhive.ai/sign-up"
   const headline = mode === "sign-in" ? "Sign in to LLMHive" : "Create your LLMHive account"
 
   return (

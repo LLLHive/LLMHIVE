@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next"
+import { getSiteUrl } from "@/lib/site-url"
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -23,6 +24,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://www.llmhive.ai/sitemap.xml",
+    sitemap: `${getSiteUrl()}/sitemap.xml`,
   }
 }

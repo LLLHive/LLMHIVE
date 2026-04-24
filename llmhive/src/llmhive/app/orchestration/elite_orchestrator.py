@@ -836,6 +836,18 @@ MODEL_CAPABILITIES: Dict[str, Dict[ModelCapability, float]] = {
         ModelCapability.SPEED: 0.72,
         ModelCapability.QUALITY: 0.91,
     },
+    "llama-4-scout": {
+        ModelCapability.CODING: 0.88,
+        ModelCapability.REASONING: 0.87,
+        ModelCapability.MATH: 0.86,
+        ModelCapability.CREATIVE: 0.84,
+        ModelCapability.FACTUAL: 0.87,
+        ModelCapability.ANALYSIS: 0.86,
+        ModelCapability.SUMMARIZATION: 0.85,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.88,
+        ModelCapability.SPEED: 0.78,
+        ModelCapability.QUALITY: 0.87,
+    },
     # Llama 3.3 Nemotron Super: NVIDIA optimized
     "llama-3.3-nemotron-super-49b": {
         ModelCapability.CODING: 0.90,
@@ -913,9 +925,9 @@ _MODEL_ALIASES = {
     # Gemini 3.1 series (NEWEST)
     "google/gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
     # Gemini 3 series
-    "google/gemini-3-pro-preview": "gemini-3-pro-preview",
+    "google/gemini-3-pro-preview": "gemini-3.1-pro-preview",
     "google/gemini-3-flash-preview": "gemini-3-flash-preview",
-    "google/gemini-3-pro-image-preview": "gemini-3-pro-preview",
+    "google/gemini-3-pro-image-preview": "gemini-3.1-pro-preview",
     # Gemini 2.5 series
     "google/gemini-2.5-pro": "gemini-2.5-pro",
     "google/gemini-2.5-flash": "gemini-2.5-flash",
@@ -958,10 +970,11 @@ _MODEL_ALIASES = {
     # Meta Llama Models (January 2026 Latest)
     # ==========================================================================
     "meta-llama/llama-4-maverick": "llama-4-maverick",  # NEW: Experimental flagship
-    "meta-llama/llama-4-70b": "llama-4-70b",
-    "meta-llama/llama-4-405b": "llama-4-405b",
-    "meta-llama/llama-4-70b-instruct": "llama-4-70b",
-    "meta-llama/llama-4-405b-instruct": "llama-4-405b",
+    "meta-llama/llama-4-scout": "llama-4-scout",
+    "meta-llama/llama-4-70b": "llama-4-maverick",
+    "meta-llama/llama-4-405b": "llama-4-scout",
+    "meta-llama/llama-4-70b-instruct": "llama-4-maverick",
+    "meta-llama/llama-4-405b-instruct": "llama-4-scout",
     "nvidia/llama-3.3-nemotron-super-49b-v1.5": "llama-3.3-nemotron-super-49b",  # NEW: NVIDIA
     "nvidia/llama-3.1-nemotron-ultra-253b-v1": "llama-4-405b",
     

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Official LLMHive press release, media kit, and assets for journalists, bloggers, and influencers.",
   alternates: {
-    canonical: "https://www.llmhive.ai/press",
+    canonical: "https://llmhive.ai/press",
   },
   openGraph: {
     title: "LLMHive Press & Media Kit",
@@ -56,7 +56,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: asset.name,
-          url: `https://www.llmhive.ai${asset.href}`,
+          url: `https://llmhive.ai${asset.href}`,
         })),
       },
       {
@@ -66,7 +66,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Press",
-            item: "https://www.llmhive.ai/press",
+            item: "https://llmhive.ai/press",
           },
         ],
       },

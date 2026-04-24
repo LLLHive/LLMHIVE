@@ -48,7 +48,7 @@ function renderStructuredData(
           "@type": "Organization",
           name: "LLMHive",
         },
-        mainEntityOfPage: `https://www.llmhive.ai/comparisons/${page.slug}`,
+        mainEntityOfPage: `https://llmhive.ai/comparisons/${page.slug}`,
       },
       {
         "@type": "FAQPage",
@@ -77,13 +77,13 @@ function renderStructuredData(
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://www.llmhive.ai/comparisons",
+            item: "https://llmhive.ai/comparisons",
           },
           {
             "@type": "ListItem",
             position: 2,
             name: page.title,
-            item: `https://www.llmhive.ai/comparisons/${page.slug}`,
+            item: `https://llmhive.ai/comparisons/${page.slug}`,
           },
         ],
       },
@@ -108,7 +108,7 @@ export default function ComparisonDetailPage({ params }: PageProps) {
     {
       question: "How much does LLMHive cost?",
       answer:
-        "LLMHive offers Free, Lite, Pro, and Enterprise plans. Pricing is designed to scale with team usage and includes multi-model orchestration.",
+        "LLMHive offers Standard, Premium, and Enterprise plans. Pricing is designed to scale with team usage and includes multi-model orchestration.",
     },
     {
       question: "Is LLMHive secure for enterprise use?",

@@ -37,7 +37,7 @@ export default function PageShell({
                 "@type": "ListItem",
                 position: 1,
                 name: breadcrumb.name,
-                item: `https://www.llmhive.ai${breadcrumb.path}`,
+                item: `https://llmhive.ai${breadcrumb.path}`,
               },
             ],
           },

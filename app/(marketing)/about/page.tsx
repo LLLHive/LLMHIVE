@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description:
     "Learn about LLMHive's mission, patented orchestration, and team building the future of AI.",
   alternates: {
-    canonical: "https://www.llmhive.ai/about",
+    canonical: "https://llmhive.ai/about",
   },
   openGraph: {
     title: "About LLMHive",
@@ -44,7 +44,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "About",
-            item: "https://www.llmhive.ai/about",
+            item: "https://llmhive.ai/about",
           },
         ],
       },
@@ -226,10 +226,10 @@ export default function AboutPage() {
             Join thousands of users who are already supercharging their AI workflow.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/sign-up">
+            <Link href="/pricing">
               <Button size="lg" className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white">
                 <Zap className="h-5 w-5 mr-2" />
-                Start for Free
+                View plans
               </Button>
             </Link>
             <Link href="/contact">

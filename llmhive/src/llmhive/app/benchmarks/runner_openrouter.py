@@ -47,7 +47,7 @@ class OpenRouterRunner(RunnerBase):
         # Google Gemini 2.5/3 Series
         "gemini-2.5-pro": "google/gemini-2.5-pro",
         "gemini-2.5-flash": "google/gemini-2.5-flash",
-        "gemini-3-pro": "google/gemini-3-pro-preview",
+        "gemini-3-pro": "google/gemini-3.1-pro-preview",
         "gemini-3-flash": "google/gemini-3-flash-preview",
         
         # DeepSeek R1 (Reasoning)
@@ -140,7 +140,7 @@ class OpenRouterRunner(RunnerBase):
         "google/gemini-2.5-pro": (0.00125, 0.005),
         "google/gemini-2.5-flash": (0.0001, 0.0004),
         "google/gemini-2.5-pro-preview": (0.00125, 0.005),
-        "google/gemini-3-pro-preview": (0.0015, 0.006),
+        "google/gemini-3.1-pro-preview": (0.0015, 0.006),
         "google/gemini-3-flash-preview": (0.0001, 0.0004),
         # Meta
         "meta-llama/llama-3.1-70b-instruct": (0.0009, 0.0009),

@@ -76,7 +76,7 @@ interface MockApiHelpers {
 export const test = base.extend<{
   mockApi: MockApiHelpers
 }>({
-  mockApi: async ({ page }, use) => {
+  mockApi: async ({ page }, fixtureUse) => {
     const activeRoutes: Array<() => Promise<void>> = []
     
     const helpers: MockApiHelpers = {
@@ -297,7 +297,7 @@ export const test = base.extend<{
       },
     }
 
-    await use(helpers)
+    await fixtureUse(helpers)
   },
 })
 

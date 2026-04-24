@@ -33,6 +33,8 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional, TypeVar
 
 import httpx
 
+from .model_slug_remap import remap_openrouter_model
+
 logger = logging.getLogger(__name__)
 
 # Type for retry callback
@@ -393,6 +395,7 @@ class OpenRouterClient:
         Returns:
             Completion response or stream
         """
+        model = remap_openrouter_model(model)
         payload = {
             "model": model,
             "messages": messages,
@@ -424,6 +427,9 @@ class OpenRouterClient:
         Yields:
             Parsed SSE chunks
         """
+        mid = payload.get("model")
+        if isinstance(mid, str) and mid:
+            payload["model"] = remap_openrouter_model(mid)
         client = await self._ensure_client()
         await self._rate_limiter.acquire()
         
@@ -464,6 +470,7 @@ class OpenRouterClient:
         Returns:
             Completion response
         """
+        model = remap_openrouter_model(model)
         payload = {
             "model": model,
             "prompt": prompt,

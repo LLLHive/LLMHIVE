@@ -62,7 +62,7 @@ const KEY_FEATURES = [
   {
     icon: Layers,
     title: "Accuracy Levels",
-    description: "Understand the difference between Standard, High, and Maximum accuracy modes.",
+    description: "See how Standard, higher, and top accuracy presets change depth, latency, and cost.",
     color: "text-green-400",
     bgColor: "bg-green-400/10",
   },
@@ -93,9 +93,9 @@ export default function DemoClient() {
                 Pricing
               </Button>
             </Link>
-            <Link href="/sign-up">
+            <Link href="/pricing">
               <Button size="sm" className="bronze-gradient text-[#0a0a0a]">
-                Get Started Free
+                Get started
               </Button>
             </Link>
           </div>
@@ -174,7 +174,7 @@ export default function DemoClient() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">What You'll Learn</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">What you will learn</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               This demo covers all the key features that make LLMHive the most powerful AI orchestration
               platform available.
@@ -264,13 +264,13 @@ export default function DemoClient() {
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-foreground mb-4">Ready to experience Premium AI?</h2>
             <p className="text-muted-foreground mb-8">
-              Join thousands of professionals who&apos;ve upgraded their AI workflow with LLMHive. Start
-              free, no credit card required.
+              Join thousands of professionals who use LLMHive. Plans start at $10/month for Standard
+              orchestration; Premium is $20/month with annual discounts.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/sign-up">
+              <Link href="/pricing">
                 <Button size="lg" className="bronze-gradient text-[#0a0a0a] font-semibold w-full sm:w-auto">
-                  Get Started Free
+                  View plans
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -282,7 +282,7 @@ export default function DemoClient() {
               </Link>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              ✓ 100 free queries · ✓ No credit card · ✓ Cancel anytime
+              ✓ Standard &amp; Premium · ✓ Annual saves ~17% · ✓ Cancel anytime
             </p>
           </div>
         </div>

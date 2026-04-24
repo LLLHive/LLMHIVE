@@ -106,11 +106,11 @@ const TIER_COLORS: Record<string, string> = {
 }
 
 const TIER_LABELS: Record<string, string> = {
-  free: "Standard",
-  lite: "Lite",
-  pro: "Pro",
+  free: "None",
+  lite: "Standard",
+  pro: "Premium",
   enterprise: "Enterprise",
-  maximum: "Maximum",
+  maximum: "Other",
 }
 
 function formatCurrency(amount: number): string {
