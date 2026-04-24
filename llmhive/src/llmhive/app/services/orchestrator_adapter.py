@@ -637,6 +637,21 @@ OPENROUTER_GROK_4 = "x-ai/grok-4"                        # ✓ Verified
 OPENROUTER_GEMINI_2_5_FLASH = "google/gemini-2.5-flash"  # ✓ Verified - VERY CHEAP
 OPENROUTER_GEMINI_3_PRO = "google/gemini-3-flash-preview"  # Fast Gemini 3 class (live OR slug)
 OPENROUTER_GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"  # ✓ Verified (newest Google)
+OPENROUTER_GEMINI_31_FLASH_LITE = "google/gemini-3.1-flash-lite-preview"  # ✓ Verified — low-cost Gemini 3.1
+# Additional slugs verified on OpenRouter catalog (see /api/v1/models)
+OPENROUTER_GPT_5_4 = "openai/gpt-5.4"
+OPENROUTER_GPT_5_4_PRO = "openai/gpt-5.4-pro"
+OPENROUTER_CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
+OPENROUTER_CLAUDE_OPUS_4_7 = "anthropic/claude-opus-4.7"
+OPENROUTER_GROK_4_20 = "x-ai/grok-4.20"
+OPENROUTER_GROK_4_FAST = "x-ai/grok-4-fast"
+OPENROUTER_LLAMA_4_SCOUT = "meta-llama/llama-4-scout"
+OPENROUTER_DEEPSEEK_V4_PRO = "deepseek/deepseek-v4-pro"
+OPENROUTER_DEEPSEEK_V4_FLASH = "deepseek/deepseek-v4-flash"
+OPENROUTER_KIMI_K26 = "moonshotai/kimi-k2.6"
+OPENROUTER_QWEN36_PLUS = "qwen/qwen3.6-plus"
+OPENROUTER_GLM_47 = "z-ai/glm-4.7"
+OPENROUTER_MISTRAL_MEDIUM_31 = "mistralai/mistral-medium-3.1"
 
 # Budget-aware flag - set to True to use cost-effective models only
 BUDGET_MODE = os.getenv("BUDGET_MODE", "true").lower() == "true"
@@ -661,25 +676,45 @@ COST_EFFECTIVE_MODELS = [
     OPENROUTER_CLAUDE_SONNET_4,  # ~$3/1M tokens - good balance
     OPENROUTER_LLAMA_4,          # ~$0.20/1M tokens - open source
     OPENROUTER_MISTRAL_LARGE,    # ~$2/1M tokens - good for coding
+    OPENROUTER_DEEPSEEK_V4_FLASH,
+    OPENROUTER_GEMINI_31_FLASH_LITE,
 ]
 
 # Premium models (require more credits)
 PREMIUM_MODELS = [
     OPENROUTER_GPT_5,            # ~$15/1M tokens
+    OPENROUTER_GPT_5_4_PRO,
     OPENROUTER_CLAUDE_OPUS_4,    # ~$15/1M tokens
+    OPENROUTER_CLAUDE_OPUS_4_7,
     OPENROUTER_O3,               # ~$20/1M tokens
     OPENROUTER_O1,               # ~$15/1M tokens
+    OPENROUTER_DEEPSEEK_V4_PRO,
 ]
 
 # Define model strengths for complementary selection (matching ACTUAL OpenRouter models)
+# Numeric benchmark scores change frequently; OpenRouter publishes Artificial Analysis
+# benchmark panels per model at https://openrouter.ai/<author>/<slug>/benchmarks — use
+# those for human-facing claims. This table encodes stable routing tags only.
 MODEL_STRENGTHS = {
     # ===== TOP TIER (verified December 2025) =====
     OPENROUTER_GPT_5: {
         "strengths": ["reasoning", "coding", "analysis", "general", "factual"],
         "provider": "openai", "tier": "flagship", "rank": 1
     },
+    OPENROUTER_GPT_5_4_PRO: {
+        "strengths": ["reasoning", "coding", "analysis", "general", "factual", "agentic", "tool_use"],
+        "provider": "openai", "tier": "flagship", "rank": 1
+    },
+    OPENROUTER_GPT_5_4: {
+        "strengths": ["reasoning", "coding", "analysis", "general", "factual", "multimodal"],
+        "provider": "openai", "tier": "flagship", "rank": 2
+    },
     OPENROUTER_CLAUDE_OPUS_4: {
         "strengths": ["reasoning", "creative", "analysis", "medical", "legal"],
+        "provider": "anthropic", "tier": "flagship", "rank": 2
+    },
+    OPENROUTER_CLAUDE_OPUS_4_7: {
+        "strengths": ["reasoning", "creative", "analysis", "medical", "legal", "coding", "agentic"],
         "provider": "anthropic", "tier": "flagship", "rank": 2
     },
     OPENROUTER_GEMINI_2_PRO: {
@@ -698,6 +733,10 @@ MODEL_STRENGTHS = {
     OPENROUTER_CLAUDE_SONNET_4: {
         "strengths": ["reasoning", "creative", "coding", "analysis"],
         "provider": "anthropic", "tier": "flagship", "rank": 6
+    },
+    OPENROUTER_CLAUDE_SONNET_4_6: {
+        "strengths": ["reasoning", "creative", "coding", "analysis", "tool_use"],
+        "provider": "anthropic", "tier": "flagship", "rank": 5
     },
     
     # ===== REASONING SPECIALISTS =====
@@ -719,6 +758,10 @@ MODEL_STRENGTHS = {
         "strengths": ["reasoning", "coding", "general", "open-source"],
         "provider": "meta", "tier": "flagship", "rank": 10
     },
+    OPENROUTER_LLAMA_4_SCOUT: {
+        "strengths": ["reasoning", "coding", "general", "open-source", "research"],
+        "provider": "meta", "tier": "specialized", "rank": 11
+    },
     OPENROUTER_MISTRAL_LARGE: {
         "strengths": ["reasoning", "coding", "multilingual", "analysis"],
         "provider": "mistral", "tier": "flagship", "rank": 11
@@ -733,15 +776,51 @@ MODEL_STRENGTHS = {
         "strengths": ["coding", "math", "reasoning"],
         "provider": "deepseek", "tier": "specialized", "rank": 13
     },
+    OPENROUTER_DEEPSEEK_V4_PRO: {
+        "strengths": ["coding", "math", "reasoning", "analysis", "agentic"],
+        "provider": "deepseek", "tier": "flagship", "rank": 4
+    },
+    OPENROUTER_DEEPSEEK_V4_FLASH: {
+        "strengths": ["coding", "math", "reasoning", "speed"],
+        "provider": "deepseek", "tier": "fast", "rank": 14
+    },
     OPENROUTER_GROK_4: {
         "strengths": ["factual", "realtime", "creative", "reasoning"],
-        "provider": "xai", "tier": "flagship", "rank": 14
+        "provider": "xai", "tier": "flagship", "rank": 16
+    },
+    OPENROUTER_GROK_4_FAST: {
+        "strengths": ["factual", "realtime", "creative", "reasoning", "speed"],
+        "provider": "xai", "tier": "fast", "rank": 15
+    },
+    OPENROUTER_GROK_4_20: {
+        "strengths": ["factual", "realtime", "creative", "reasoning", "coding"],
+        "provider": "xai", "tier": "flagship", "rank": 5
     },
     
     # ===== FAST MODELS =====
     OPENROUTER_GEMINI_2_5_FLASH: {
         "strengths": ["speed", "factual", "general"],
         "provider": "google", "tier": "fast", "rank": 20
+    },
+    OPENROUTER_GEMINI_31_FLASH_LITE: {
+        "strengths": ["speed", "factual", "general", "multimodal"],
+        "provider": "google", "tier": "fast", "rank": 19
+    },
+    OPENROUTER_KIMI_K26: {
+        "strengths": ["reasoning", "coding", "analysis", "agentic", "tool_use"],
+        "provider": "moonshot", "tier": "flagship", "rank": 7
+    },
+    OPENROUTER_QWEN36_PLUS: {
+        "strengths": ["reasoning", "coding", "multilingual", "math"],
+        "provider": "qwen", "tier": "flagship", "rank": 8
+    },
+    OPENROUTER_GLM_47: {
+        "strengths": ["reasoning", "coding", "math", "analysis", "multilingual"],
+        "provider": "zhipu", "tier": "flagship", "rank": 9
+    },
+    OPENROUTER_MISTRAL_MEDIUM_31: {
+        "strengths": ["reasoning", "coding", "analysis", "multilingual"],
+        "provider": "mistral", "tier": "specialized", "rank": 12
     },
 }
 
@@ -785,6 +864,7 @@ DOMAIN_TOP_MODELS_BUDGET = {
     ],
     "code_generation": [
         OPENROUTER_CLAUDE_SONNET_4, # Best for coding
+        OPENROUTER_DEEPSEEK_V4_FLASH,
         OPENROUTER_DEEPSEEK,        # Excellent for coding, very cheap
         OPENROUTER_GPT_4O,
     ],
@@ -795,8 +875,8 @@ DOMAIN_TOP_MODELS_BUDGET = {
     ],
     "math_problem": [
         OPENROUTER_DEEPSEEK_R1,     # Reasoning model, cheap
+        OPENROUTER_DEEPSEEK_V4_FLASH,
         OPENROUTER_GPT_4O,
-        OPENROUTER_GEMINI_2_PRO,
     ],
     "creative_writing": [
         OPENROUTER_CLAUDE_SONNET_4, # Good for creative
@@ -806,6 +886,11 @@ DOMAIN_TOP_MODELS_BUDGET = {
     "factual_question": [
         OPENROUTER_GPT_4O,
         OPENROUTER_GEMINI_2_5_FLASH, # Very fast and cheap
+        OPENROUTER_DEEPSEEK,
+    ],
+    "research_analysis": [
+        OPENROUTER_GEMINI_2_PRO,
+        OPENROUTER_GPT_4O,
         OPENROUTER_DEEPSEEK,
     ],
     "general": [
@@ -818,68 +903,93 @@ DOMAIN_TOP_MODELS_BUDGET = {
 # Domain-specific top models - PREMIUM versions (for when credits available)
 DOMAIN_TOP_MODELS_PREMIUM = {
     "health_medical": [
+        OPENROUTER_GPT_5_4_PRO,
         OPENROUTER_GPT_5,
+        OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_CLAUDE_OPUS_4,
         OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_GEMINI_3_PRO,
-        OPENROUTER_GEMINI_2_PRO,
+        OPENROUTER_CLAUDE_SONNET_4_6,
     ],
     "legal_analysis": [
+        OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_GPT_5_4_PRO,
         OPENROUTER_GPT_5,
         OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_O3,
     ],
     "financial_analysis": [
         OPENROUTER_O3,
+        OPENROUTER_GPT_5_4_PRO,
         OPENROUTER_GPT_5,
         OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_CLAUDE_OPUS_4_7,
+        OPENROUTER_DEEPSEEK_V4_PRO,
         OPENROUTER_DEEPSEEK_R1,
     ],
     "science_research": [
         OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_GPT_5_4,
+        OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_GEMINI_3_PRO,
         OPENROUTER_GEMINI_2_PRO,
-        OPENROUTER_CLAUDE_OPUS_4,
-        OPENROUTER_GPT_5,
+        OPENROUTER_DEEPSEEK_V4_PRO,
     ],
     "code_generation": [
+        OPENROUTER_GPT_5_4,
+        OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_CLAUDE_SONNET_4,
-        OPENROUTER_GPT_5,
+        OPENROUTER_DEEPSEEK_V4_PRO,
         OPENROUTER_DEEPSEEK,
         OPENROUTER_DEEPSEEK_R1,
     ],
     "debugging": [
-        OPENROUTER_CLAUDE_SONNET_4,
+        OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_DEEPSEEK_V4_PRO,
         OPENROUTER_DEEPSEEK,
-        OPENROUTER_GPT_5,
+        OPENROUTER_GPT_5_4,
     ],
     "math_problem": [
         OPENROUTER_O3,
-        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_GPT_5_4_PRO,
+        OPENROUTER_DEEPSEEK_V4_PRO,
         OPENROUTER_DEEPSEEK_R1,
+        OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_GPT_5,
-        OPENROUTER_GEMINI_2_PRO,
     ],
     "creative_writing": [
+        OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_CLAUDE_OPUS_4,
-        OPENROUTER_CLAUDE_SONNET_4,
-        OPENROUTER_GPT_5,
+        OPENROUTER_CLAUDE_SONNET_4_6,
+        OPENROUTER_GPT_5_4,
+        OPENROUTER_KIMI_K26,
         OPENROUTER_GEMINI_3_1_PRO,
     ],
     "factual_question": [
+        OPENROUTER_GPT_5_4,
         OPENROUTER_GPT_5,
         OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_GEMINI_3_PRO,
         OPENROUTER_GROK_4,
+        OPENROUTER_CLAUDE_SONNET_4_6,
+    ],
+    "research_analysis": [
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_GPT_5_4,
+        OPENROUTER_CLAUDE_OPUS_4_7,
+        OPENROUTER_CLAUDE_SONNET_4_6,
+        OPENROUTER_DEEPSEEK_V4_PRO,
     ],
     "general": [
         OPENROUTER_GPT_5,
+        OPENROUTER_GPT_5_4,
         OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_GEMINI_2_PRO,
     ],
 }
@@ -890,19 +1000,33 @@ DOMAIN_TOP_MODELS = DOMAIN_TOP_MODELS_BUDGET if BUDGET_MODE else DOMAIN_TOP_MODE
 # Models with tool/function calling support (VERIFIED against OpenRouter)
 TOOL_CAPABLE_MODELS = {
     OPENROUTER_GPT_5,
+    OPENROUTER_GPT_5_4,
+    OPENROUTER_GPT_5_4_PRO,
     OPENROUTER_GPT_4O,
     OPENROUTER_O3,
     OPENROUTER_O1,
     OPENROUTER_CLAUDE_OPUS_4,
+    OPENROUTER_CLAUDE_OPUS_4_7,
     OPENROUTER_CLAUDE_SONNET_4,
+    OPENROUTER_CLAUDE_SONNET_4_6,
     OPENROUTER_GEMINI_3_1_PRO,
     OPENROUTER_GEMINI_3_PRO,
     OPENROUTER_GEMINI_2_PRO,
     OPENROUTER_GEMINI_2_5_FLASH,
+    OPENROUTER_GEMINI_31_FLASH_LITE,
     OPENROUTER_LLAMA_4,
+    OPENROUTER_LLAMA_4_SCOUT,
     OPENROUTER_MISTRAL_LARGE,
+    OPENROUTER_MISTRAL_MEDIUM_31,
     OPENROUTER_GROK_4,
+    OPENROUTER_GROK_4_FAST,
+    OPENROUTER_GROK_4_20,
     OPENROUTER_DEEPSEEK,
+    OPENROUTER_DEEPSEEK_V4_PRO,
+    OPENROUTER_DEEPSEEK_V4_FLASH,
+    OPENROUTER_KIMI_K26,
+    OPENROUTER_QWEN36_PLUS,
+    OPENROUTER_GLM_47,
 }
 
 

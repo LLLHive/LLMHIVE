@@ -348,6 +348,8 @@ const FREE_TIER_PATTERNS = [
 
 // Models that require at least Standard (paid) access (~$2–10/1M OpenRouter)
 const STARTER_TIER_PATTERNS = [
+  'deepseek-v4-flash',
+  'grok-4-fast',
   'gemini-2.5-flash',
   'gemini-flash',
   'claude-3-haiku',
@@ -356,16 +358,18 @@ const STARTER_TIER_PATTERNS = [
   'mistral-small',
   'qwen2.5-72b',
   'qwen3-72b',
-  'glm-4.7',
   'grok-4.1-fast',  // Fast variant
 ]
 
 // Models that require Pro tier (Premium tier - ~$10-50/1M)
 const PRO_TIER_PATTERNS = [
+  'mistral-medium-3.1',
+  'gemini-3.1-flash-lite',
   'gpt-4o',
   'gpt-4-turbo',
   'o3',  // OpenAI o3
   'claude-3.5-sonnet',
+  'claude-sonnet-4.6',
   'claude-sonnet-4.5',
   'claude-3-opus',
   'gemini-1.5-pro',
@@ -381,6 +385,12 @@ const PRO_TIER_PATTERNS = [
 
 // Models that require Enterprise tier (Flagship tier - ~$50-600+/1M)
 const ENTERPRISE_TIER_PATTERNS = [
+  'gpt-5.4-pro',
+  'gpt-5.4',
+  'deepseek-v4-pro',
+  'kimi-k2.6',
+  'qwen3.6-plus',
+  'glm-4.7',
   'gpt-5.2-pro',    // $168/1M output!
   'gpt-5.2-codex',
   'gpt-5.1',
@@ -388,11 +398,13 @@ const ENTERPRISE_TIER_PATTERNS = [
   'o1-preview',
   'o1-pro',         // $600/1M output! DANGER
   'o3-deep-research',
+  'claude-opus-4.7',
   'claude-opus-4.5',  // $25/1M but heavy usage
   'claude-opus-4',
   'claude-4',
   'gemini-3.1-pro', // Gemini 3.1 Pro (preview) — flagship Google
   'gemini-3-pro',   // Legacy pattern for older slugs
+  'grok-4.20',      // xAI Grok 4.2-class (OpenRouter slug)
 ]
 
 /**

@@ -19,6 +19,42 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
+    id: "openai/gpt-5.4-pro",
+    name: "GPT-5.4 Pro",
+    provider: "openai",
+    description: "OpenAI’s top GPT-5.4 tier on OpenRouter for the hardest agent and reasoning workloads",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "openai/gpt-5.4",
+    name: "GPT-5.4",
+    provider: "openai",
+    description: "Full GPT-5.4 flagship on OpenRouter with strong multimodal and tool use",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "openai/gpt-5.4-mini",
+    name: "GPT-5.4 Mini",
+    provider: "openai",
+    description: "Lower-cost GPT-5.4 class model for high-volume tasks",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
     id: "openai/gpt-5.2-pro",
     name: "GPT-5.2 Pro",
     provider: "openai",
@@ -115,10 +151,34 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
+    id: "anthropic/claude-opus-4.7",
+    name: "Claude Opus 4.7",
+    provider: "anthropic",
+    description: "Anthropic’s latest Opus on OpenRouter for maximum quality on long, difficult tasks",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
     id: "anthropic/claude-opus-4.5",
     name: "Claude Opus 4.5",
     provider: "anthropic",
     description: "Anthropic’s strongest model for complex analysis and writing",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "anthropic/claude-sonnet-4.6",
+    name: "Claude Sonnet 4.6",
+    provider: "anthropic",
+    description: "Newer Sonnet generation on OpenRouter with improved coding and reasoning",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -160,6 +220,18 @@ export const AVAILABLE_MODELS: Model[] = [
       codeExecution: true,
       webSearch: true,
       reasoning: true,
+    },
+  },
+  {
+    id: "google/gemini-3.1-flash-lite-preview",
+    name: "Gemini 3.1 Flash Lite",
+    provider: "google",
+    description: "Low-cost Gemini 3.1 flash-lite preview on OpenRouter",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: false,
     },
   },
   {
@@ -223,10 +295,46 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
+    id: "deepseek/deepseek-v4-pro",
+    name: "DeepSeek V4 Pro",
+    provider: "deepseek",
+    description: "DeepSeek V4 flagship on OpenRouter — strong agent, math, and coding",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "deepseek/deepseek-v4-flash",
+    name: "DeepSeek V4 Flash",
+    provider: "deepseek",
+    description: "Fast, cost-efficient DeepSeek V4 tier for high-volume coding and math",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
     id: "x-ai/grok-4",
     name: "Grok 4",
     provider: "xai",
     description: "xAI flagship with strong real-time and general knowledge",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "x-ai/grok-4-fast",
+    name: "Grok 4 Fast",
+    provider: "xai",
+    description: "Faster xAI Grok 4 variant on OpenRouter for latency-sensitive workloads",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -247,12 +355,60 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
+    id: "x-ai/grok-4.20",
+    name: "Grok 4.2",
+    provider: "xai",
+    description: "xAI Grok 4.20 on OpenRouter (marketed as Grok 4.2-class flagship)",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
     id: "meta-llama/llama-4-maverick",
     name: "Llama 4 Maverick",
     provider: "meta",
     description: "Meta’s latest open-weights class model on OpenRouter",
     capabilities: {
       vision: true,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "meta-llama/llama-4-scout",
+    name: "Llama 4 Scout",
+    provider: "meta",
+    description: "Meta Llama 4 Scout on OpenRouter — efficient long-context variant",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "moonshotai/kimi-k2.6",
+    name: "Kimi K2.6",
+    provider: "moonshot",
+    description: "Moonshot Kimi K2.6 on OpenRouter — long-context agent and coding",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "qwen/qwen3.6-plus",
+    name: "Qwen3.6 Plus",
+    provider: "qwen",
+    description: "Qwen 3.6 Plus on OpenRouter for multilingual STEM and coding",
+    capabilities: {
+      vision: false,
       codeExecution: true,
       webSearch: false,
       reasoning: true,
@@ -275,6 +431,30 @@ export const AVAILABLE_MODELS: Model[] = [
     name: "Mistral Large 2512",
     provider: "mistralai",
     description: "Mistral’s latest large instruct model",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "mistralai/mistral-medium-3.1",
+    name: "Mistral Medium 3.1",
+    provider: "mistralai",
+    description: "Mistral Medium 3.1 on OpenRouter — balanced quality and cost",
+    capabilities: {
+      vision: false,
+      codeExecution: true,
+      webSearch: false,
+      reasoning: true,
+    },
+  },
+  {
+    id: "z-ai/glm-4.7",
+    name: "GLM 4.7",
+    provider: "zhipu",
+    description: "Zhipu GLM 4.7 on OpenRouter for math, coding, and multilingual tasks",
     capabilities: {
       vision: false,
       codeExecution: true,
@@ -305,7 +485,9 @@ function normalizeModelId(apiModelName: string): string {
     name.startsWith("x-ai/") ||
     name.startsWith("meta-llama/") ||
     name.startsWith("qwen/") ||
-    name.startsWith("mistralai/")
+    name.startsWith("mistralai/") ||
+    name.startsWith("moonshotai/") ||
+    name.startsWith("z-ai/")
   ) {
     return raw
   }
@@ -317,6 +499,9 @@ function normalizeModelId(apiModelName: string): string {
   if (name === "o1" || (name.includes("o1") && !name.includes("o1-pro"))) return "openai/o1"
   if (name.includes("o3")) return "openai/o3"
 
+  if (name.includes("gpt-5.4-pro") || name.includes("gpt-5-4-pro")) return "openai/gpt-5.4-pro"
+  if (name.includes("gpt-5.4-mini") || name.includes("gpt-5-4-mini")) return "openai/gpt-5.4-mini"
+  if (name.includes("gpt-5.4")) return "openai/gpt-5.4"
   if (name.includes("gpt-5.2-pro") || name.includes("gpt-5-2-pro")) return "openai/gpt-5.2-pro"
   if (name.includes("gpt-5.2-codex") || name.includes("gpt-5-2-codex")) return "openai/gpt-5.2-codex"
   if (name.includes("gpt-5.2")) return "openai/gpt-5.2"
@@ -327,12 +512,12 @@ function normalizeModelId(apiModelName: string): string {
   if (name.includes("gpt-4o") || name === "gpt-4") return "openai/gpt-4o"
   if (name.includes("gpt-4.5") || name.includes("gpt-4-5")) return "openai/gpt-4o"
 
-  if (name.includes("claude-opus-4.5") || name.includes("claude-opus-4")) {
-    return name.includes("4.5") ? "anthropic/claude-opus-4.5" : "anthropic/claude-opus-4"
-  }
-  if (name.includes("claude-sonnet-4.5") || name.includes("claude-sonnet-4")) {
-    return name.includes("4.5") ? "anthropic/claude-sonnet-4.5" : "anthropic/claude-sonnet-4"
-  }
+  if (name.includes("claude-opus-4.7")) return "anthropic/claude-opus-4.7"
+  if (name.includes("claude-opus-4.5")) return "anthropic/claude-opus-4.5"
+  if (name.includes("claude-opus-4")) return "anthropic/claude-opus-4"
+  if (name.includes("claude-sonnet-4.6")) return "anthropic/claude-sonnet-4.6"
+  if (name.includes("claude-sonnet-4.5")) return "anthropic/claude-sonnet-4.5"
+  if (name.includes("claude-sonnet-4")) return "anthropic/claude-sonnet-4"
   if (name.includes("claude-haiku-4.5")) return "anthropic/claude-haiku-4.5"
   if (name.includes("claude-haiku") || name.includes("claude-3.5-haiku") || name.includes("claude-3.5-haiku")) {
     return "anthropic/claude-haiku-4.5"
@@ -341,6 +526,9 @@ function normalizeModelId(apiModelName: string): string {
     return "anthropic/claude-sonnet-4"
   }
 
+  if (name.includes("gemini-3.1-flash-lite") || name.includes("gemini 3.1 flash lite")) {
+    return "google/gemini-3.1-flash-lite-preview"
+  }
   if (name.includes("gemini-3.1")) return "google/gemini-3.1-pro-preview"
   if (name.includes("gemini-3-flash")) return "google/gemini-3-flash-preview"
   if (name.includes("gemini-3")) return "google/gemini-3.1-pro-preview"
@@ -349,23 +537,50 @@ function normalizeModelId(apiModelName: string): string {
     return "google/gemini-2.5-pro"
   }
 
+  if (name.includes("grok-4.2") || name.includes("grok-4.20") || name.includes("grok-420"))
+    return "x-ai/grok-4.20"
+  if (name.includes("grok-4-fast") || name.includes("grok 4 fast")) return "x-ai/grok-4-fast"
   if (name.includes("grok-4.1")) return "x-ai/grok-4.1-fast"
   if (name.includes("grok-4")) return "x-ai/grok-4"
   if (name.includes("grok-3") || name.includes("grok3")) return "x-ai/grok-4"
   if (name.includes("grok-2") || name.includes("grok")) return "x-ai/grok-4"
 
   if (name.includes("deepseek-r1")) return "deepseek/deepseek-r1-0528"
-  if (name.includes("deepseek-v3.2") || name.includes("deepseek-chat") || name.includes("deepseek")) {
+  if (name.includes("deepseek-v4-pro") || name.includes("deepseek v4 pro")) return "deepseek/deepseek-v4-pro"
+  if (name.includes("deepseek-v4-flash") || name.includes("deepseek v4 flash")) {
+    return "deepseek/deepseek-v4-flash"
+  }
+  if (
+    name.includes("deepseek-v3.2") ||
+    name.includes("deepseek-chat") ||
+    (name.includes("deepseek") && !name.includes("v4"))
+  ) {
     return "deepseek/deepseek-v3.2"
   }
 
+  if (name.includes("llama-4-scout") || (name.includes("scout") && name.includes("llama-4"))) {
+    return "meta-llama/llama-4-scout"
+  }
   if (name.includes("llama-4")) return "meta-llama/llama-4-maverick"
   if (name.includes("llama-3.3") || name.includes("llama-3-3") || name.includes("llama3.3")) {
     return "meta-llama/llama-4-maverick"
   }
 
+  if (name.includes("qwen3.6") || name.includes("qwen 3.6")) return "qwen/qwen3.6-plus"
   if (name.includes("qwen3") || name.includes("qwen-3")) return "qwen/qwen3-max"
 
+  if (name.includes("kimi-k2.6") || name.includes("kimi k2.6")) return "moonshotai/kimi-k2.6"
+  if (name.includes("kimi-k2.5") || name.includes("kimi k2.5")) return "moonshotai/kimi-k2.5"
+  if (name.includes("kimi-k2-thinking") || name.includes("kimi k2 thinking")) {
+    return "moonshotai/kimi-k2-thinking"
+  }
+  if (name.includes("kimi-k2") || name.includes("kimi k2")) return "moonshotai/kimi-k2"
+
+  if (name.includes("glm-4.7") || name.includes("glm 4.7")) return "z-ai/glm-4.7"
+
+  if (name.includes("mistral-medium-3.1") || name.includes("mistral medium 3.1")) {
+    return "mistralai/mistral-medium-3.1"
+  }
   if (name.includes("mistral-large")) return "mistralai/mistral-large-2512"
 
   return raw
