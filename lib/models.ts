@@ -701,6 +701,16 @@ const PROVIDER_LOGOS: Record<string, string> = {
   // Qwen / Alibaba
   qwen: "/logos/alibaba.svg",
   alibaba: "/logos/alibaba.svg",
+
+  // Moonshot (Kimi) — dedicated asset can replace unknown.svg later
+  moonshot: "/logos/unknown.svg",
+  moonshotai: "/logos/unknown.svg",
+  kimi: "/logos/unknown.svg",
+
+  // Zhipu (GLM)
+  zhipu: "/logos/unknown.svg",
+  "z-ai": "/logos/unknown.svg",
+  glm: "/logos/unknown.svg",
   "qwen-2": "/logos/alibaba.svg",
   qwen2: "/logos/alibaba.svg",
   "qwen-max": "/logos/alibaba.svg",

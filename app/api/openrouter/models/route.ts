@@ -17,9 +17,10 @@ function transformModel(model: Record<string, unknown>) {
   const topProvider = model.top_provider as Record<string, unknown> | undefined
   
   return {
-    id: model.id,
-    name: model.name,
-    description: model.description || "",
+    id: typeof model.id === "string" ? model.id : String(model.id ?? ""),
+    name: typeof model.name === "string" ? model.name : String(model.name ?? ""),
+    description:
+      typeof model.description === "string" ? model.description : String(model.description ?? ""),
     context_length: model.context_length || 4096,
     architecture: {
       modality: architectureStringField(architecture?.modality, "text->text"),
@@ -109,11 +110,14 @@ function transformPineconeModel(model: Record<string, unknown>) {
 type TransformedProfile = ReturnType<typeof transformPineconeModel>
 type TransformedOpenRouter = ReturnType<typeof transformModel>
 
+/** Profile row after overlaying OpenRouter fields (may add provider token cap). */
+type CatalogModelRow = TransformedProfile & { top_provider_max_tokens?: number }
+
 /** Overlay live OpenRouter pricing and modality fields onto a Firestore-backed profile row. */
 function mergeProfileWithOpenRouter(
   profile: TransformedProfile,
   orModel: TransformedOpenRouter,
-): TransformedProfile {
+): CatalogModelRow {
   return {
     ...profile,
     context_length: orModel.context_length || profile.context_length,
@@ -138,14 +142,14 @@ function buildFirestoreFirstModelList(
   profileRows: Record<string, unknown>[],
   openRouterRows: Record<string, unknown>[],
   searchLower: string,
-): TransformedProfile[] {
+): CatalogModelRow[] {
   const orById = new Map<string, TransformedOpenRouter>()
   for (const row of openRouterRows) {
     const id = typeof row.id === "string" ? row.id : ""
     if (id) orById.set(id, transformModel(row))
   }
 
-  const merged: TransformedProfile[] = []
+  const merged: CatalogModelRow[] = []
   const seen = new Set<string>()
 
   for (const raw of profileRows) {

@@ -101,6 +101,8 @@ export type ModelProvider =
   | "orchestrator"
   | "mistralai"
   | "qwen"
+  | "moonshot"
+  | "zhipu"
 
 export interface Model {
   id: string
