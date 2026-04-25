@@ -55,6 +55,30 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
+    id: "openai/gpt-5.5-pro",
+    name: "GPT-5.5 Pro",
+    provider: "openai",
+    description: "OpenAI’s top GPT-5.5 tier on OpenRouter — long context, tools, and multimodal",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "openai/gpt-5.5",
+    name: "GPT-5.5",
+    provider: "openai",
+    description: "OpenAI GPT-5.5 on OpenRouter — flagship-class general, coding, and agent workloads",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
     id: "openai/gpt-5.2-pro",
     name: "GPT-5.2 Pro",
     provider: "openai",
@@ -499,6 +523,8 @@ function normalizeModelId(apiModelName: string): string {
   if (name === "o1" || (name.includes("o1") && !name.includes("o1-pro"))) return "openai/o1"
   if (name.includes("o3")) return "openai/o3"
 
+  if (name.includes("gpt-5.5-pro") || name.includes("gpt-5-5-pro")) return "openai/gpt-5.5-pro"
+  if (name.includes("gpt-5.5")) return "openai/gpt-5.5"
   if (name.includes("gpt-5.4-pro") || name.includes("gpt-5-4-pro")) return "openai/gpt-5.4-pro"
   if (name.includes("gpt-5.4-mini") || name.includes("gpt-5-4-mini")) return "openai/gpt-5.4-mini"
   if (name.includes("gpt-5.4")) return "openai/gpt-5.4"
