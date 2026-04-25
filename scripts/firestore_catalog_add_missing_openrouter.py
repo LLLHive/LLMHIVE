@@ -3,7 +3,9 @@
 Gap-fill Firestore model_catalog with OpenRouter models that are missing.
 
 - Compares: GET https://openrouter.ai/api/v1/models (public) vs Firestore collection model_catalog.
-- Writes ONLY new documents (merge on deterministic doc id). Does not delete or rewrite existing rows.
+- Writes ONLY new documents (merge on deterministic doc id). Does not delete unrelated rows.
+- Does **not** set reasoning/coding/creative/accuracy capability scores (those come from ModelDB/LMSYS).
+  Merge writes delete those four fields if present so old heuristic placeholders are removed.
 - Does NOT touch: orchestration code, Next.js, SQLite, Pinecone ModelDB index.
 
 Requirements:
@@ -33,6 +35,28 @@ logger = logging.getLogger("gap_fill")
 OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
 COLLECTION = "model_catalog"
 UUID_NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # same as ModelDB pipeline
+
+# ModelDB / LMSYS pipeline owns these; gap-fill must not persist fake values.
+_CAPABILITY_SCORE_FIELDS = ("reasoning_score", "coding_score", "creative_score", "accuracy_score")
+
+
+def firestore_write_body(firestore_mod: Any, body: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge payload with DELETE_FIELD for ModelDB-owned scores so stale placeholders are removed."""
+    merged = dict(body)
+    for k in _CAPABILITY_SCORE_FIELDS:
+        merged[k] = firestore_mod.DELETE_FIELD
+    return merged
+
+
+def resolve_merge_body(firestore_mod: Any, doc_ref: Any, body: Dict[str, Any]) -> Dict[str, Any]:
+    """Apply score-field deletes only for new docs or existing gap-fill rows; never strip ModelDB scores."""
+    snap = doc_ref.get()
+    if not snap.exists:
+        return firestore_write_body(firestore_mod, body)
+    existing = snap.to_dict() or {}
+    if existing.get("catalog_gap_fill") is True:
+        return firestore_write_body(firestore_mod, body)
+    return body
 
 
 def generate_model_id(openrouter_slug: str) -> str:
@@ -103,23 +127,6 @@ def _architecture_modality_string(architecture: Optional[Dict[str, Any]]) -> str
         return "text->text"
     mod = architecture.get("modality")
     return str(mod) if mod else "text->text"
-
-
-def _heuristic_benchmark_scores(slug: str) -> Dict[str, int]:
-    """Conservative placeholders until ModelDB / LMSYS enrichment runs.
-
-    Not real arena Elo — avoids fabricating external benchmark numbers.
-    """
-    s = slug.lower()
-    if "gpt-5.5-pro" in s:
-        return {"reasoning_score": 94, "coding_score": 93, "creative_score": 88, "accuracy_score": 91}
-    if "gpt-5.5" in s:
-        return {"reasoning_score": 92, "coding_score": 91, "creative_score": 86, "accuracy_score": 89}
-    if "v4-pro" in s:
-        return {"reasoning_score": 88, "coding_score": 90, "creative_score": 76, "accuracy_score": 86}
-    if "v4-flash" in s:
-        return {"reasoning_score": 80, "coding_score": 88, "creative_score": 72, "accuracy_score": 82}
-    return {"reasoning_score": 75, "coding_score": 75, "creative_score": 70, "accuracy_score": 75}
 
 
 def compute_openrouter_snapshot_ranks(or_models: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
@@ -232,7 +239,6 @@ def build_gap_document(
     now = datetime.now(timezone.utc)
     mid = generate_model_id(slug)
     ranks = rank_by_slug.get(slug, {})
-    bench = _heuristic_benchmark_scores(slug)
     tool_sc = _tool_score(or_model)
     mm_sc = _multimodal_score(arch)
     desc = str(or_model.get("description") or "")[:8000]
@@ -292,7 +298,11 @@ def build_gap_document(
         "arena_match_status": "unmatched",
         "arena_match_score": 0.0,
         "catalog_gap_fill": True,
-        "catalog_gap_fill_note": "Heuristic reasoning/coding/accuracy scores are placeholders until ModelDB enrichment.",
+        "catalog_gap_fill_note": (
+            "OpenRouter snapshot only. Top-level reasoning/coding/creative/accuracy scores are unset here; "
+            "ModelDB/LMSYS enrichment adds them. Clients use neutral defaults when absent."
+        ),
+        "capability_scores_status": "pending_modeldb",
     }
 
     return {
@@ -318,10 +328,6 @@ def build_gap_document(
         "source_excel_path": "scripts/firestore_catalog_add_missing_openrouter.py",
         "schema_version": "1.0.0",
         "catalog_gap_fill": True,
-        "reasoning_score": bench["reasoning_score"],
-        "coding_score": bench["coding_score"],
-        "creative_score": bench["creative_score"],
-        "accuracy_score": bench["accuracy_score"],
         "payload": payload,
         "payload_overflow": len(json.dumps(payload, default=str)) > 850000,
     }
@@ -339,7 +345,8 @@ def main() -> int:
         default="",
         help=(
             "Comma-separated OpenRouter slugs: merge-update existing model_catalog docs "
-            "with derived ranks + heuristic scores (no deletes). Use with --apply."
+            "with OpenRouter-derived ranks (removes any stale top-level capability score fields). "
+            "Use with --apply."
         ),
     )
     args = parser.parse_args()
@@ -376,7 +383,8 @@ def main() -> int:
             for slug in missing:
                 doc_id = generate_model_id(slug)
                 body = build_gap_document(by_slug[slug], rank_by_slug, len(or_models))
-                batch.set(db.collection(COLLECTION).document(doc_id), body, merge=True)
+                doc_ref = db.collection(COLLECTION).document(doc_id)
+                batch.set(doc_ref, resolve_merge_body(firestore, doc_ref, body), merge=True)
                 count += 1
                 if count % 400 == 0:
                     batch.commit()
@@ -401,7 +409,8 @@ def main() -> int:
                     continue
                 doc_id = generate_model_id(slug)
                 body = build_gap_document(om, rank_by_slug, len(or_models))
-                batch.set(db.collection(COLLECTION).document(doc_id), body, merge=True)
+                doc_ref = db.collection(COLLECTION).document(doc_id)
+                batch.set(doc_ref, resolve_merge_body(firestore, doc_ref, body), merge=True)
                 n_en += 1
             batch.commit()
             logger.info("Merge-enriched %d existing catalog document(s).", n_en)
