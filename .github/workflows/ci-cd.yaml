@@ -84,28 +84,30 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+    env:
+      # Must match Secret Manager + Cloud Run project (see cloudbuild.yaml).
+      GCP_DEPLOY_PROJECT: llmhive-orchestrator
+
     permissions:
       contents: read
       id-token: write  # Required for OIDC authentication
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      # Same WIF secrets as smoke-tests / benchmarks (GCP_SA_KEY is brittle when rotated).
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-          # Alternative: Use Workload Identity Federation (recommended for production)
-          # workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          # service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-      
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ env.GCP_DEPLOY_PROJECT }}
       
       - name: Configure Docker for GCR
         run: |
@@ -113,7 +115,7 @@ jobs:
       
       - name: Build Docker image
         run: |
-          IMAGE="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          IMAGE="gcr.io/${GCP_DEPLOY_PROJECT}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
           echo "Building $IMAGE ..."
           docker build -t "$IMAGE" .
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV

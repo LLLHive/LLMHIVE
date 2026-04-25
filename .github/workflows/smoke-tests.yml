@@ -7,7 +7,8 @@ on:
   
   # Run after successful deployment to main
   workflow_run:
-    workflows: ["ci-cd.yaml", "Deploy to Production"]
+    # workflow_run matches the `name:` field of the workflow file, not the filename.
+    workflows: ["CI/CD Pipeline", "Deploy to Production"]
     types:
       - completed
     branches:
