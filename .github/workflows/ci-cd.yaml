@@ -1,3 +1,6 @@
+# Pushing to GitHub is not the same as updating the live app:
+# - Next.js: Vercel build on main (separate from this file).
+# - Python API: this workflow's "Build and Deploy to Cloud Run" job (needs passing tests).
 name: CI/CD Pipeline
 
 on:
@@ -96,13 +99,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Same WIF secrets as smoke-tests / benchmarks (GCP_SA_KEY is brittle when rotated).
-      - name: Authenticate to Google Cloud
-        id: auth
+      # Prefer WIF (same as smoke-tests / benchmarks). Fall back to legacy GCP_SA_KEY so
+      # deploy does not regress if only the JSON key is configured.
+      - id: auth_wif
+        name: Authenticate to Google Cloud (Workload Identity)
+        continue-on-error: true
+        if: ${{ secrets.WIF_PROVIDER != '' && secrets.WIF_SERVICE_ACCOUNT != '' }}
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - id: auth_sa
+        name: Authenticate to Google Cloud (service account JSON)
+        continue-on-error: true
+        if: >-
+          ${{ secrets.GCP_SA_KEY != '' &&
+          (steps.auth_wif.outcome == 'skipped' || steps.auth_wif.outcome == 'failure') }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Ensure GCP authentication succeeded
+        if: >-
+          ${{ always() &&
+          !((steps.auth_wif.outcome == 'success') || (steps.auth_sa.outcome == 'success')) }}
+        run: |
+          echo "::error::Cloud Run deploy needs Actions secrets: either (WIF_PROVIDER + WIF_SERVICE_ACCOUNT) or GCP_SA_KEY."
+          exit 1
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
