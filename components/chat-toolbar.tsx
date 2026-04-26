@@ -150,6 +150,7 @@ const advancedFeatures: { value: AdvancedFeature; label: string; description: st
 
 export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: ChatToolbarProps) {
   const [modelsOpen, setModelsOpen] = useState(false)
+  const [formatOpen, setFormatOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [myTeamModels, setMyTeamModels] = useState<string[]>([])
   
@@ -266,18 +267,6 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <span className="text-[13px] sm:text-sm truncate leading-tight">{entry.model_name}</span>
-                      {!hasAccess && (
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-[7px] sm:text-[8px] px-1 h-3.5 sm:h-4",
-                            getTierBadgeColor(requiredTier)
-                          )}
-                        >
-                          <Lock className="w-2 h-2 mr-0.5" />
-                          {getTierDisplayName(requiredTier)}
-                        </Badge>
-                      )}
                     </div>
                     <span className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight">
                       {entry.author || entry.model_id?.split('/')[0]}
@@ -528,6 +517,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
       <div className="hidden sm:block">
         <DropdownMenu open={modelsOpen} onOpenChange={(open) => {
           setModelsOpen(open)
+          if (open) setFormatOpen(false)
           if (!open) setActiveCategory(null)
         }}>
           <DropdownMenuTrigger asChild>
@@ -579,7 +569,13 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
       </div>
 
       <div className="hidden sm:block">
-        <DropdownMenu>
+        <DropdownMenu open={formatOpen} onOpenChange={(open) => {
+          setFormatOpen(open)
+          if (open) {
+            setModelsOpen(false)
+            setActiveCategory(null)
+          }
+        }}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"

@@ -102,7 +102,6 @@ function useModelPreferences(userId: string = 'default') {
 
 function SelectedModelCard({ model, config, userTier, onUpdate, onRemove }: SelectedModelCardProps) {
   const [showSettings, setShowSettings] = React.useState(false)
-  const requiredTier = getModelRequiredTier(model.id)
 
   return (
     <Card className="relative group">
@@ -120,12 +119,6 @@ function SelectedModelCard({ model, config, userTier, onUpdate, onRemove }: Sele
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h4 className="font-medium text-sm truncate">{model.name}</h4>
-              <Badge 
-                variant="outline" 
-                className={cn("text-[10px] px-1.5", getTierBadgeColor(requiredTier))}
-              >
-                {getTierDisplayName(requiredTier)}
-              </Badge>
             </div>
             <p className="text-xs text-muted-foreground truncate mt-0.5">
               {model.id}
@@ -419,7 +412,6 @@ export function ModelSelection({
                 </p>
               ) : (
                 filteredModels.map((model) => {
-                  const requiredTier = getModelRequiredTier(model.id)
                   return (
                     <Card
                       key={model.id}
@@ -430,12 +422,6 @@ export function ModelSelection({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm truncate">{model.name}</span>
-                            <Badge 
-                              variant="outline" 
-                              className={cn("text-[10px] shrink-0", getTierBadgeColor(requiredTier))}
-                            >
-                              {getTierDisplayName(requiredTier)}
-                            </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">{model.id}</p>
                         </div>
@@ -460,26 +446,17 @@ export function ModelSelection({
               {lockedModels.length > 0 && (
                 <div className="pt-4 border-t mt-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Lock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-muted-foreground">
-                      Upgrade to access premium models
+                      Unavailable models
                     </span>
                   </div>
                   {lockedModels.map((model) => {
-                    const requiredTier = getModelRequiredTier(model.id)
                     return (
                       <Card key={model.id} className="opacity-50 cursor-not-allowed mb-2">
                         <CardContent className="p-3 flex items-center gap-3">
-                          <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm truncate">{model.name}</span>
-                              <Badge 
-                                variant="outline" 
-                                className={cn("text-[10px] shrink-0", getTierBadgeColor(requiredTier))}
-                              >
-                                {getTierDisplayName(requiredTier)} required
-                              </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{model.id}</p>
                           </div>

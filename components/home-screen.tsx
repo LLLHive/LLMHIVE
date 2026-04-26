@@ -726,12 +726,6 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                                             <span className={cn("truncate", isSelected && "text-[var(--bronze)]")}>
                                               {entry.model_name}
                                             </span>
-                                            {!hasAccess && (
-                                              <Badge variant="outline" className={cn("text-[6px] px-0.5 h-3", getTierBadgeColor(requiredTier))}>
-                                                <Lock className="w-1.5 h-1.5 mr-0.5" />
-                                                {getTierDisplayName(requiredTier)}
-                                              </Badge>
-                                            )}
                                           </div>
                                           {isSelected && <Check className="h-2.5 w-2.5 text-[var(--bronze)] shrink-0" />}
                                         </button>
