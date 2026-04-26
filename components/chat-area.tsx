@@ -25,6 +25,11 @@ import { HiveActivityIndicator } from "./hive-activity-indicator"
 import { AgentInsightsPanel } from "./agent-insights-panel"
 import { ChatToolbar } from "./chat-toolbar"
 import { PoweredByDropdown } from "./powered-by-dropdown"
+import {
+  ToolbarDropdownExclusiveProvider,
+  useToolbarDropdownExclusive,
+} from "@/components/toolbar-dropdown-exclusive-context"
+import { useBreakpointSm } from "@/hooks/use-breakpoint-sm"
 // OrchestrationStudio moved to toolbar dropdown (OrchestrationStudioDropdown)
 import { LiveStatusPanel } from "./live-status-panel"
 import { ModelsUsedDisplay } from "./models-used-display"
@@ -73,6 +78,94 @@ interface ChatAreaProps {
   initialQuery?: string | null
 }
 
+type ChatHeaderToolbarStripProps = {
+  activeModeInfo: { label: string; icon: React.ElementType; color: string }
+  orchestratorSettings: OrchestratorSettings
+  onOrchestratorSettingsChange: (settings: Partial<OrchestratorSettings>) => void
+  userAccountMenu?: React.ReactNode
+  showMobileToolbar: boolean
+  setShowMobileToolbar: React.Dispatch<React.SetStateAction<boolean>>
+  /** True at Tailwind `sm` and up — only one `ChatToolbar` mounts to avoid duplicate Radix menus. */
+  isSmUp: boolean
+}
+
+function ChatHeaderToolbarStrip({
+  activeModeInfo,
+  orchestratorSettings,
+  onOrchestratorSettingsChange,
+  userAccountMenu,
+  showMobileToolbar,
+  setShowMobileToolbar,
+  isSmUp,
+}: ChatHeaderToolbarStripProps) {
+  const gate = useToolbarDropdownExclusive()
+  const ActiveIcon = activeModeInfo.icon
+
+  return (
+    <div className="flex items-center gap-2 sm:gap-4 flex-wrap w-full">
+      <div className="shrink-0">
+        <PoweredByDropdown compact />
+      </div>
+
+      <DropdownMenu
+        open={gate.isOpen("industry")}
+        onOpenChange={(open) => gate.setDropdownOpen("industry", open)}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 h-7 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-lg hover:from-orange-500/30 hover:to-amber-500/30 hover:border-orange-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
+          >
+            <ActiveIcon className="h-3.5 w-3.5 text-orange-400" />
+            <span className="hidden sm:inline font-medium bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent">
+              Industry Pack
+            </span>
+            <ChevronDown className="h-3 w-3 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48 sm:w-52 p-1 sm:p-2">
+          {domainPacks.map((pack) => {
+            const Icon = pack.icon
+            const isSelected =
+              orchestratorSettings.domainPack === pack.value ||
+              (pack.value === "default" && !orchestratorSettings.domainPack)
+            return (
+              <DropdownMenuItem
+                key={pack.value}
+                onClick={() => onOrchestratorSettingsChange({ domainPack: pack.value as any })}
+                className="gap-2 cursor-pointer"
+              >
+                <Icon className={`h-4 w-4 ${pack.color}`} />
+                <span className="flex-1">{pack.label}</span>
+                {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+              </DropdownMenuItem>
+            )
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {isSmUp ? (
+        <div className="flex shrink-0 items-center">
+          <ChatToolbar settings={orchestratorSettings} onSettingsChange={onOrchestratorSettingsChange} />
+        </div>
+      ) : null}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="sm:hidden h-7 px-2 text-[11px] transition-transform duration-150 active:scale-[0.98] font-display touch-target"
+        onClick={() => setShowMobileToolbar((prev) => !prev)}
+      >
+        <span className="text-white/80">Controls</span>
+        {showMobileToolbar ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
+      </Button>
+
+      <div className="ml-auto flex items-center">{userAccountMenu}</div>
+    </div>
+  )
+}
+
 export function ChatArea({
   conversation,
   onSendMessage,
@@ -111,7 +204,8 @@ export function ChatArea({
   const [lastLatencyMs, setLastLatencyMs] = useState<number>(0)
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null)
   const [showMobileToolbar, setShowMobileToolbar] = useState(false)
-  
+  const isSmUp = useBreakpointSm()
+
   // Active prompt display - shows the current prompt being processed
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
   const [isPromptExpanded, setIsPromptExpanded] = useState(false)
@@ -952,82 +1046,27 @@ export function ChatArea({
       />
 
       <header className="shrink-0 border-b border-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.25)] sm:shadow-none p-2 sm:p-3 glass-content glass-header z-40 space-y-2 sm:space-y-3">
-        <div className="flex items-center gap-2 sm:gap-4 flex-wrap w-full">
-          {/* Powered By LLMHive - Marketing showcase dropdown - FIRST */}
-          <div className="shrink-0">
-            <PoweredByDropdown compact />
-          </div>
-          
-          {/* Industry Pack Dropdown - Styled with orange/amber gradient */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 h-7 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-lg hover:from-orange-500/30 hover:to-amber-500/30 hover:border-orange-400/50 transition-all duration-150 active:scale-[0.98] touch-target"
-              >
-                <activeModeInfo.icon className="h-3.5 w-3.5 text-orange-400" />
-                <span className="hidden sm:inline font-medium bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent">
-                  Industry Pack
-                </span>
-                <ChevronDown className="h-3 w-3 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 sm:w-52 p-1 sm:p-2">
-              {domainPacks.map((pack) => {
-                const Icon = pack.icon
-                const isSelected = orchestratorSettings.domainPack === pack.value || 
-                  (pack.value === "default" && !orchestratorSettings.domainPack)
-                return (
-                  <DropdownMenuItem
-                    key={pack.value}
-                    onClick={() => onOrchestratorSettingsChange({ domainPack: pack.value as any })}
-                    className="gap-2 cursor-pointer"
-                  >
-                    <Icon className={`h-4 w-4 ${pack.color}`} />
-                    <span className="flex-1">{pack.label}</span>
-                    {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}
-                  </DropdownMenuItem>
-                )
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          {/* Models and Format dropdowns - right next to Industry Pack */}
-          <div className="hidden sm:flex">
-            <ChatToolbar
-              settings={orchestratorSettings}
-              onSettingsChange={onOrchestratorSettingsChange}
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="sm:hidden h-7 px-2 text-[11px] transition-transform duration-150 active:scale-[0.98] font-display touch-target"
-            onClick={() => setShowMobileToolbar((prev) => !prev)}
-          >
-            <span className="text-white/80">Controls</span>
-            {showMobileToolbar ? (
-              <ChevronUp className="ml-2 h-3 w-3" />
-            ) : (
-              <ChevronDown className="ml-2 h-3 w-3" />
-            )}
-          </Button>
-          
-          <div className="ml-auto flex items-center">
-            {userAccountMenu}
-          </div>
-        </div>
-        {showMobileToolbar && (
-          <div className="sm:hidden w-full rounded-lg border border-white/10 bg-white/5 p-2">
-            <div className="overflow-x-auto pb-1">
-              <ChatToolbar
-                settings={orchestratorSettings}
-                onSettingsChange={onOrchestratorSettingsChange}
-              />
+        <ToolbarDropdownExclusiveProvider>
+          <ChatHeaderToolbarStrip
+            activeModeInfo={activeModeInfo}
+            orchestratorSettings={orchestratorSettings}
+            onOrchestratorSettingsChange={onOrchestratorSettingsChange}
+            userAccountMenu={userAccountMenu}
+            showMobileToolbar={showMobileToolbar}
+            setShowMobileToolbar={setShowMobileToolbar}
+            isSmUp={isSmUp}
+          />
+          {!isSmUp && showMobileToolbar && (
+            <div className="sm:hidden w-full rounded-lg border border-white/10 bg-white/5 p-2">
+              <div className="overflow-x-auto pb-1">
+                <ChatToolbar
+                  settings={orchestratorSettings}
+                  onSettingsChange={onOrchestratorSettingsChange}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </ToolbarDropdownExclusiveProvider>
         <div className="sm:hidden h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         {/* Orchestration Studio moved to toolbar dropdown */}
       </header>

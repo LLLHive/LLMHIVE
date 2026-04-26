@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+import { useToolbarDropdownExclusive } from "@/components/toolbar-dropdown-exclusive-context"
 
 // Feature sections data - Ordered for marketing impact
 const featureSections = [
@@ -174,8 +175,16 @@ type PoweredByDropdownProps = {
 }
 
 export function PoweredByDropdown({ compact = false }: PoweredByDropdownProps) {
-  const [open, setOpen] = useState(false)
+  const gate = useToolbarDropdownExclusive()
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
+
+  // Keep mobile sheet in sync with exclusive gate (other menus close this sheet).
+  useEffect(() => {
+    if (gate.openKey !== null && gate.openKey !== "powered-by-mobile") {
+      setSheetOpen(false)
+    }
+  }, [gate.openKey])
 
   const content = (
     <>
@@ -272,7 +281,13 @@ export function PoweredByDropdown({ compact = false }: PoweredByDropdownProps) {
   return (
     <>
       <div className="sm:hidden">
-        <Sheet>
+        <Sheet
+          open={sheetOpen}
+          onOpenChange={(open) => {
+            setSheetOpen(open)
+            gate.setDropdownOpen("powered-by-mobile", open)
+          }}
+        >
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -298,7 +313,10 @@ export function PoweredByDropdown({ compact = false }: PoweredByDropdownProps) {
       </div>
 
       <div className="hidden sm:block">
-        <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenu
+          open={gate.isOpen("powered-by")}
+          onOpenChange={(open) => gate.setDropdownOpen("powered-by", open)}
+        >
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"

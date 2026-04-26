@@ -6,8 +6,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
-import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, Lock, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2, ListTree, List, ListOrdered, LayoutGrid } from "lucide-react"
+import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2, ListTree, List, ListOrdered, LayoutGrid } from "lucide-react"
 import type {
   ReasoningMode,
   DomainPack,
@@ -21,7 +20,7 @@ import { getModelLogo } from "@/lib/models"
 // OrchestrationDropdown moved to Settings page
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
-import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
+import { canAccessModel, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
 import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { cn } from "@/lib/utils"
 import { 
@@ -32,6 +31,7 @@ import {
   type CategoryWithIcon,
 } from "@/hooks/use-openrouter-categories"
 import type { OpenRouterRankingEntry } from "@/lib/openrouter/api"
+import { useToolbarDropdownExclusive } from "@/components/toolbar-dropdown-exclusive-context"
 
 interface ChatToolbarProps {
   settings: OrchestratorSettings
@@ -149,8 +149,7 @@ const advancedFeatures: { value: AdvancedFeature; label: string; description: st
 ]
 
 export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: ChatToolbarProps) {
-  const [modelsOpen, setModelsOpen] = useState(false)
-  const [formatOpen, setFormatOpen] = useState(false)
+  const gate = useToolbarDropdownExclusive()
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [myTeamModels, setMyTeamModels] = useState<string[]>([])
   
@@ -233,8 +232,6 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
               const modelId = entry.model_id || ''
               const isSelected = selectedModels.includes(modelId)
               const hasAccess = canAccessModel(userTier, modelId)
-              const requiredTier = getModelRequiredTier(modelId)
-              
               return (
                 <DropdownMenuItem
                   key={modelId}
@@ -489,10 +486,13 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
     <div className="flex items-center gap-2 flex-wrap">
       {/* Models Dropdown with Ranking Categories */}
       <div className="sm:hidden">
-        <Sheet onOpenChange={(open) => {
-          setModelsOpen(open)
-          if (!open) setActiveCategory(null)
-        }}>
+        <Sheet
+          open={gate.isOpen("models-mobile")}
+          onOpenChange={(open) => {
+            gate.setDropdownOpen("models-mobile", open)
+            if (!open) setActiveCategory(null)
+          }}
+        >
           <SheetTrigger asChild>
             <Button
               type="button"
@@ -515,11 +515,13 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
       </div>
 
       <div className="hidden sm:block">
-        <DropdownMenu open={modelsOpen} onOpenChange={(open) => {
-          setModelsOpen(open)
-          if (open) setFormatOpen(false)
-          if (!open) setActiveCategory(null)
-        }}>
+        <DropdownMenu
+          open={gate.isOpen("models")}
+          onOpenChange={(open) => {
+            gate.setDropdownOpen("models", open)
+            if (!open) setActiveCategory(null)
+          }}
+        >
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
@@ -548,7 +550,10 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
 
       {/* Response Format */}
       <div className="sm:hidden">
-        <Sheet>
+        <Sheet
+          open={gate.isOpen("format-mobile")}
+          onOpenChange={(open) => gate.setDropdownOpen("format-mobile", open)}
+        >
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -569,13 +574,13 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
       </div>
 
       <div className="hidden sm:block">
-        <DropdownMenu open={formatOpen} onOpenChange={(open) => {
-          setFormatOpen(open)
-          if (open) {
-            setModelsOpen(false)
-            setActiveCategory(null)
-          }
-        }}>
+        <DropdownMenu
+          open={gate.isOpen("format")}
+          onOpenChange={(open) => {
+            gate.setDropdownOpen("format", open)
+            if (open) setActiveCategory(null)
+          }}
+        >
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
