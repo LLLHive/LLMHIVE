@@ -6,7 +6,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { ChevronDown, Zap, Brain, Rocket, Users, User, Settings2, Cpu, Sparkles, Check, Wrench, ArrowLeft, BarChart3, TrendingUp, DollarSign, Code, PieChart, MessageSquare, Image as ImageIcon, Wrench as ToolIcon, Languages, Clock, ChevronRight, Crown, FlaskConical, Heart, Scale, Megaphone, Search, Landmark, GraduationCap, Loader2, ListTree, List, ListOrdered, LayoutGrid } from "lucide-react"
+import { ChevronDown, Zap, Brain, Rocket, Users, User, Cpu, Sparkles, Check, ArrowLeft, MessageSquare, ChevronRight, Crown, Loader2, ListTree, List, ListOrdered, LayoutGrid, GraduationCap } from "lucide-react"
 import type {
   ReasoningMode,
   DomainPack,
@@ -26,45 +26,15 @@ import { cn } from "@/lib/utils"
 import { 
   useOpenRouterCategories, 
   useCategoryRankings, 
-  CATEGORY_ICON_MAP,
   CATEGORY_COLOR_MAP,
-  type CategoryWithIcon,
 } from "@/hooks/use-openrouter-categories"
-import type { OpenRouterRankingEntry } from "@/lib/openrouter/api"
+import { getOpenRouterCategoryIcon } from "@/lib/openrouter/category-icons"
 import { useToolbarDropdownExclusive } from "@/components/toolbar-dropdown-exclusive-context"
 
 interface ChatToolbarProps {
   settings: OrchestratorSettings
   onSettingsChange: (settings: Partial<OrchestratorSettings>) => void
   onOpenAdvanced?: () => void  // Optional - kept for backwards compatibility
-}
-
-// Category icon resolver using Lucide components
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  'programming': Code,
-  'science': FlaskConical,
-  'health': Heart,
-  'legal': Scale,
-  'marketing': Megaphone,
-  'marketing/seo': Search,
-  'marketing/content': MessageSquare,
-  'marketing/social-media': Users,
-  'technology': Cpu,
-  'finance': Landmark,
-  'academia': GraduationCap,
-  'roleplay': Users,
-  'creative-writing': MessageSquare,
-  'customer-support': Users,
-  'translation': Languages,
-  'data-analysis': BarChart3,
-  'long-context': MessageSquare,
-  'tool-use': ToolIcon,
-  'vision': ImageIcon,
-  'reasoning': FlaskConical,
-}
-
-function getCategoryIcon(slug: string): React.ElementType {
-  return CATEGORY_ICONS[slug] || BarChart3
 }
 
 const reasoningModes: { value: ReasoningMode; label: string; icon: React.ElementType }[] = [
@@ -403,7 +373,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             </div>
           ) : (
             categories.map((cat) => {
-              const Icon = getCategoryIcon(cat.slug)
+              const Icon = getOpenRouterCategoryIcon(cat.slug)
               return (
                 <DropdownMenuItem
                   key={cat.slug}

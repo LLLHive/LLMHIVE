@@ -11,7 +11,7 @@
  */
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { LogoText } from "@/components/branding"
@@ -21,19 +21,17 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
-  BarChart3, TrendingUp, DollarSign, Code, Users, Megaphone, Search, Cpu, 
-  FlaskConical, Languages, Scale, Landmark, Heart, GraduationCap, PieChart, 
-  Wrench, MessageSquare, Image as ImageIcon, Clock, Shield, Zap, Check, Plus,
-  ChevronRight, ExternalLink
-} from "lucide-react"
+import { Check, Plus, ChevronRight } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { UserAccountMenu } from "@/components/user-account-menu"
 import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 import { useConversationsContext } from "@/lib/conversations-context"
-import { listModels, getRankings } from "@/lib/openrouter/api"
-import type { OpenRouterModel, RankingDimension } from "@/lib/openrouter/types"
+import { listModels } from "@/lib/openrouter/api"
+import type { OpenRouterModel } from "@/lib/openrouter/types"
+import { mergeRankingEntryWithCatalog } from "@/lib/openrouter/merge-ranking-entry-model"
+import { getOpenRouterCategoryGradient, getOpenRouterCategoryIcon } from "@/lib/openrouter/category-icons"
+import { useOpenRouterCategories, useCategoryRankings } from "@/hooks/use-openrouter-categories"
 import { 
   type UserTier, type SelectedModelConfig, 
   canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier,
@@ -42,33 +40,6 @@ import {
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { getModelLogo } from "@/lib/models"
-
-// Ranking categories matching OpenRouter - includes all categories from dropdown menu
-const RANKING_CATEGORIES: Array<{
-  id: RankingDimension
-  name: string
-  icon: React.ElementType
-  color: string
-}> = [
-  { id: 'leaderboard', name: 'Leaderboard', icon: BarChart3, color: 'from-blue-500 to-cyan-500' },
-  { id: 'market_share', name: 'Market Share', icon: PieChart, color: 'from-indigo-500 to-purple-500' },
-  { id: 'trending', name: 'Trending', icon: TrendingUp, color: 'from-green-500 to-emerald-500' },
-  { id: 'programming', name: 'Programming', icon: Code, color: 'from-violet-500 to-purple-500' },
-  { id: 'roleplay', name: 'Roleplay', icon: Users, color: 'from-pink-500 to-rose-500' },
-  { id: 'marketing', name: 'Marketing', icon: Megaphone, color: 'from-orange-500 to-amber-500' },
-  { id: 'science', name: 'Science', icon: FlaskConical, color: 'from-cyan-500 to-teal-500' },
-  { id: 'translation', name: 'Translation', icon: Languages, color: 'from-sky-500 to-blue-500' },
-  { id: 'legal', name: 'Legal', icon: Scale, color: 'from-gray-500 to-slate-500' },
-  { id: 'finance', name: 'Finance', icon: Landmark, color: 'from-emerald-500 to-green-500' },
-  { id: 'health', name: 'Health', icon: Heart, color: 'from-red-500 to-rose-500' },
-  { id: 'technology', name: 'Technology', icon: Cpu, color: 'from-slate-500 to-gray-500' },
-  { id: 'academia', name: 'Academia', icon: GraduationCap, color: 'from-amber-500 to-yellow-500' },
-  { id: 'tools_agents', name: 'Tool Calls', icon: Wrench, color: 'from-orange-500 to-red-500' },
-  { id: 'images', name: 'Images', icon: ImageIcon, color: 'from-fuchsia-500 to-pink-500' },
-  { id: 'long_context', name: 'Long Context', icon: MessageSquare, color: 'from-purple-500 to-violet-500' },
-  { id: 'fastest', name: 'Fastest', icon: Zap, color: 'from-yellow-500 to-amber-500' },
-  { id: 'lowest_cost', name: 'Lowest Cost', icon: DollarSign, color: 'from-lime-500 to-green-500' },
-]
 
 interface RankedModelData {
   model: OpenRouterModel & { author?: string; tokens_used?: string }
@@ -121,6 +92,7 @@ function ModelCard({
         !canAccess && "opacity-60"
       )}
       onClick={onViewDetails}
+      data-rank={rank !== undefined && rank > 0 ? rank : undefined}
     >
       <CardContent className="p-2">
         <div className="flex items-center gap-2">
@@ -197,13 +169,42 @@ export default function ModelsPage() {
   const auth = useAuth()
   const { conversations, projects, deleteConversation, updateConversation } = useConversationsContext()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [activeCategory, setActiveCategory] = useState<RankingDimension | null>(null)
-  const [rankedModels, setRankedModels] = useState<RankedModelData[]>([])
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [allModels, setAllModels] = useState<OpenRouterModel[]>([])
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(false)
   const [showDetails, setShowDetails] = useState<OpenRouterModel | null>(null)
   const [userTier, setUserTier] = useState<UserTier>('free')
+
+  const { categories, loading: categoriesLoading, error: categoriesError } = useOpenRouterCategories({
+    group: "usecase",
+  })
+  const {
+    rankings,
+    loading: rankingsLoading,
+    error: rankingsError,
+    lastSynced,
+  } = useCategoryRankings(activeCategory, { limit: 10, view: "week" })
+
+  const modelById = useMemo(() => {
+    const m = new Map<string, OpenRouterModel>()
+    for (const model of allModels) {
+      m.set(model.id, model)
+    }
+    return m
+  }, [allModels])
+
+  const rankedFromApi = useMemo((): RankedModelData[] => {
+    if (!activeCategory) return []
+    return rankings.map((entry) => {
+      const model = mergeRankingEntryWithCatalog(entry, modelById)
+      return {
+        model: { ...model, author: entry.author } as RankedModelData["model"],
+        rank: entry.rank,
+        score: entry.share_pct ?? 0,
+        metrics: { share_pct: entry.share_pct ?? 0 } as Record<string, number | string>,
+      }
+    })
+  }, [activeCategory, rankings, modelById])
   
   // Fetch user's subscription tier from billing API
   useEffect(() => {
@@ -257,28 +258,6 @@ export default function ModelsPage() {
     }
   }, [])
   
-  // Load rankings when category changes
-  useEffect(() => {
-    if (!activeCategory) {
-      setRankedModels([])
-      return
-    }
-    
-    async function loadRankings() {
-      setLoading(true)
-      try {
-        const result = await getRankings(activeCategory as RankingDimension)
-        setRankedModels(result.models || [])
-      } catch (e) {
-        console.error('Failed to load rankings:', e)
-        setRankedModels([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadRankings()
-  }, [activeCategory])
-  
   const toggleModelSelection = (modelId: string) => {
     const newSelected = new Set(selectedModelIds)
     if (newSelected.has(modelId)) {
@@ -313,14 +292,18 @@ export default function ModelsPage() {
     }
   }
   
-  // Get models to display
-  const displayModels = activeCategory ? rankedModels : allModels.slice(0, 50).map(m => ({ 
-    model: m, 
-    rank: 0, 
-    score: 0, 
-    metrics: {} 
-  }))
-  
+  const displayModels: RankedModelData[] = activeCategory
+    ? rankedFromApi
+    : allModels.slice(0, 50).map((m) => ({
+        model: m,
+        rank: 0,
+        score: 0,
+        metrics: {},
+      }))
+
+  const listLoading = Boolean(activeCategory && rankingsLoading)
+  const activeDisplayName = categories.find((c) => c.slug === activeCategory)?.displayName ?? activeCategory
+
   return (
     <div className="flex h-screen overflow-hidden relative">
       {/* Sign In Button - Top Right (fixed position) */}
@@ -389,56 +372,90 @@ export default function ModelsPage() {
               </div>
             )}
 
-            {/* Ranking Categories - Wrapped grid to prevent overflow */}
+            {/* Same category list as chat → Models → Browse by Category (listCategories + getCategoryRankings) */}
             <div className="w-full max-w-5xl mb-6">
               <p className="llmhive-subtitle-3d text-sm text-center mb-3">Select a ranking category</p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                {RANKING_CATEGORIES.map((cat) => {
-                  const Icon = cat.icon
-                  const isActive = activeCategory === cat.id
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(isActive ? null : cat.id)}
-                      className={cn(
-                        "group flex flex-col items-center gap-1.5 p-2 md:p-3 rounded-xl border transition-all duration-200",
-                        isActive 
-                          ? "border-[var(--bronze)] bg-[var(--bronze)]/10" 
-                          : "border-border hover:border-[var(--bronze)]/50 bg-card/50 hover:bg-card/80"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center",
-                        cat.color
-                      )}>
-                        <Icon className="h-4 w-4 text-white" />
-                      </div>
-                      <span className={cn(
-                        "text-[10px] md:text-xs font-medium text-center leading-tight",
-                        isActive && "text-[var(--bronze)]"
-                      )}>
-                        {cat.name}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+              {categoriesError && (
+                <p className="text-center text-sm text-destructive mb-2">{categoriesError}</p>
+              )}
+              {categoriesLoading ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="h-20 rounded-xl border border-border/50 bg-muted/30 animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2"
+                  role="tablist"
+                  aria-label="OpenRouter ranking categories"
+                >
+                  {categories.map((cat) => {
+                    const Icon = getOpenRouterCategoryIcon(cat.slug)
+                    const isActive = activeCategory === cat.slug
+                    return (
+                      <button
+                        key={cat.slug}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        data-category-slug={cat.slug}
+                        onClick={() => setActiveCategory(isActive ? null : cat.slug)}
+                        className={cn(
+                          "group flex flex-col items-center gap-1.5 p-2 md:p-3 rounded-xl border transition-all duration-200",
+                          isActive
+                            ? "border-[var(--bronze)] bg-[var(--bronze)]/10"
+                            : "border-border hover:border-[var(--bronze)]/50 bg-card/50 hover:bg-card/80"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center",
+                            getOpenRouterCategoryGradient(cat.slug)
+                          )}
+                        >
+                          <Icon className="h-4 w-4 text-white" />
+                        </div>
+                        <span
+                          className={cn(
+                            "text-[10px] md:text-xs font-medium text-center leading-tight",
+                            isActive && "text-[var(--bronze)]"
+                          )}
+                        >
+                          {cat.displayName}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Models Grid */}
             <div className="w-full max-w-5xl">
               {activeCategory && (
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold">
-                    Top {rankedModels.length} in {RANKING_CATEGORIES.find(c => c.id === activeCategory)?.name}
-                  </h2>
-                  <Badge variant="secondary" className="text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                  <div>
+                    <h2 className="text-lg font-semibold">
+                      Top {rankedFromApi.length} in {activeDisplayName}
+                    </h2>
+                    {lastSynced && (
+                      <p className="text-xs text-muted-foreground" data-synced>
+                        Last synced: {new Date(lastSynced).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant="secondary" className="text-xs shrink-0">
                     Click to select for orchestration
                   </Badge>
                 </div>
               )}
-              
-              {loading ? (
+
+              {rankingsError && activeCategory && (
+                <p className="text-sm text-destructive mb-2">{rankingsError}</p>
+              )}
+
+              {listLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                   {[...Array(12)].map((_, i) => (
                     <Card key={i} className="animate-pulse">
@@ -449,7 +466,7 @@ export default function ModelsPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                   {displayModels.map((item) => {
-                    const modelData = 'model' in item ? item.model : item
+                    const modelData = item.model
                     return (
                       <ModelCard
                         key={modelData.id}
@@ -465,8 +482,14 @@ export default function ModelsPage() {
                   })}
                 </div>
               )}
-              
-              {!activeCategory && !loading && (
+
+              {activeCategory && !listLoading && !rankingsError && rankedFromApi.length === 0 && (
+                <p className="text-center text-muted-foreground mt-4 text-sm">
+                  No ranked models in this category yet.
+                </p>
+              )}
+
+              {!activeCategory && !listLoading && (
                 <p className="text-center llmhive-subtitle-3d mt-4 text-sm">
                   Select a ranking category above to see top models
                 </p>
