@@ -311,8 +311,9 @@ def get_orchestration_tier(user_id: str) -> str:
     """Return ``elite`` or ``free`` orchestration for this user.
 
     When ``ELITE_SPEND_GUARD`` is on (default), paid users use **elite** only while
-    cumulative provider spend in the billing period is below **25%** (configurable) of
-    recognized monthly subscription revenue; otherwise **free** (certified free stack).
+    cumulative provider spend in the billing period is below the configured share of
+    recognized monthly subscription revenue (nominal default **25%**, tightened by
+    ``ELITE_SPEND_HEADROOM_FRACTION``); otherwise **free** (certified free stack).
 
     When the guard is off, falls back to legacy **elite query count** quotas.
     """
@@ -404,11 +405,16 @@ def get_throttle_status(user_id: str) -> dict:
     spend_block: Dict[str, Any] = {}
     try:
         from ..billing.spend_guard import get_spend_status, is_spend_guard_enabled
-
-        if tier != TierName.FREE and is_spend_guard_enabled():
-            spend_block = get_spend_status(user_id, tier, subscription)
     except Exception as exc:
-        logger.warning("get_throttle_status: spend snapshot failed: %s", exc)
+        logger.warning("get_throttle_status: spend_guard import failed: %s", exc)
+    else:
+        try:
+            if tier != TierName.FREE and is_spend_guard_enabled():
+                spend_block = get_spend_status(user_id, tier, subscription)
+        except Exception as exc:
+            logger.warning("get_throttle_status: spend snapshot failed: %s", exc)
+            if tier != TierName.FREE:
+                spend_block = {"guard_active": True, "fail_closed": True}
 
     throttle_message = None
     if is_throttled:
