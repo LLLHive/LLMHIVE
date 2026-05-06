@@ -3,6 +3,8 @@ name: Verify WIF
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -24,9 +26,9 @@ jobs:
       - name: Verify WIF (read-only)
         run: |
           set -euo pipefail
-          gcloud config set project llmhive-orchestrator
           echo "=== Active GCP account (should match WIF_SERVICE_ACCOUNT) ==="
           gcloud auth list --filter=status:ACTIVE --format='table(account,status)'
-          echo "=== Project access ==="
-          gcloud projects describe llmhive-orchestrator --format='value(projectId,name)'
-          echo "OK — WIF_PROVIDER + WIF_SERVICE_ACCOUNT authenticated to GCP."
+          echo "=== Access token (OIDC → WIF → GCP; no Cloud Resource Manager API required) ==="
+          tok="$(gcloud auth print-access-token)"
+          test -n "$tok"
+          echo "OK — WIF_PROVIDER + WIF_SERVICE_ACCOUNT work; GCP accepted the workload identity token."
