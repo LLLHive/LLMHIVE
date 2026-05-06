@@ -1,0 +1,32 @@
+# Manual check: GitHub OIDC → WIF_PROVIDER + WIF_SERVICE_ACCOUNT → GCP
+name: Verify WIF
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify WIF (read-only)
+        run: |
+          set -euo pipefail
+          gcloud config set project llmhive-orchestrator
+          echo "=== Active GCP account (should match WIF_SERVICE_ACCOUNT) ==="
+          gcloud auth list --filter=status:ACTIVE --format='table(account,status)'
+          echo "=== Project access ==="
+          gcloud projects describe llmhive-orchestrator --format='value(projectId,name)'
+          echo "OK — WIF_PROVIDER + WIF_SERVICE_ACCOUNT authenticated to GCP."
