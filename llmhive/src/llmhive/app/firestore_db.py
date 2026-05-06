@@ -71,6 +71,8 @@ class FirestoreSubscriptionService:
         billing_cycle: str = "monthly",
         stripe_customer_id: Optional[str] = None,
         stripe_subscription_id: Optional[str] = None,
+        current_period_start: Optional[datetime] = None,
+        current_period_end: Optional[datetime] = None,
     ) -> Optional[Dict[str, Any]]:
         """Create a new subscription."""
         if not self.db:
@@ -88,8 +90,8 @@ class FirestoreSubscriptionService:
                 "billing_cycle": billing_cycle,
                 "stripe_customer_id": stripe_customer_id,
                 "stripe_subscription_id": stripe_subscription_id,
-                "current_period_start": datetime.now(timezone.utc),
-                "current_period_end": None,
+                "current_period_start": current_period_start or datetime.now(timezone.utc),
+                "current_period_end": current_period_end,
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
                 "cancelled_at": None,

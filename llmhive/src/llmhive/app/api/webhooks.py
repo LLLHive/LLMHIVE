@@ -28,6 +28,16 @@ def get_subscription_service() -> FirestoreSubscriptionService:
     return FirestoreSubscriptionService()
 
 
+def _utc_from_stripe_unix(ts: object) -> Optional[dt.datetime]:
+    """Convert Stripe ``current_period_*`` unix seconds to timezone-aware UTC."""
+    if ts is None:
+        return None
+    try:
+        return dt.datetime.fromtimestamp(int(ts), tz=dt.timezone.utc)
+    except (TypeError, ValueError, OSError):
+        return None
+
+
 @router.post("/stripe-webhook", status_code=status.HTTP_200_OK)
 async def stripe_webhook(request: Request) -> dict:
     """Stripe webhook handling: Process Stripe webhook events.
@@ -116,6 +126,8 @@ async def stripe_webhook(request: Request) -> dict:
             try:
                 stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
                 stripe_customer_id = stripe_subscription.customer
+                period_start = _utc_from_stripe_unix(stripe_subscription.get("current_period_start"))
+                period_end = _utc_from_stripe_unix(stripe_subscription.get("current_period_end"))
                 
                 # Stripe webhook handling: Get tier from metadata or price
                 metadata = session.get("metadata", {})
@@ -127,12 +139,17 @@ async def stripe_webhook(request: Request) -> dict:
                 
                 if existing:
                     # Update existing subscription
-                    service.update_subscription(existing["id"], {
+                    upd_checkout: dict = {
                         "status": "active",
                         "tier_name": tier_name,
                         "billing_cycle": billing_cycle,
                         "stripe_customer_id": stripe_customer_id,
-                    })
+                    }
+                    if period_start:
+                        upd_checkout["current_period_start"] = period_start
+                    if period_end:
+                        upd_checkout["current_period_end"] = period_end
+                    service.update_subscription(existing["id"], upd_checkout)
                     logger.info(
                         "Stripe webhook handling: Updated subscription for user %s (tier: %s)",
                         user_id,
@@ -146,6 +163,8 @@ async def stripe_webhook(request: Request) -> dict:
                         billing_cycle=billing_cycle,
                         stripe_customer_id=stripe_customer_id,
                         stripe_subscription_id=stripe_subscription_id,
+                        current_period_start=period_start,
+                        current_period_end=period_end,
                     )
                     
                     if subscription:
@@ -181,10 +200,14 @@ async def stripe_webhook(request: Request) -> dict:
                 }
                 stripe_status = event_data.get("status")
                 our_status = status_map.get(stripe_status, "active")
-                
-                service.update_subscription(subscription["id"], {
-                    "status": our_status,
-                })
+                period_start = _utc_from_stripe_unix(event_data.get("current_period_start"))
+                period_end = _utc_from_stripe_unix(event_data.get("current_period_end"))
+                upd_sub: dict = {"status": our_status}
+                if period_start:
+                    upd_sub["current_period_start"] = period_start
+                if period_end:
+                    upd_sub["current_period_end"] = period_end
+                service.update_subscription(subscription["id"], upd_sub)
                 
                 logger.info(
                     "Stripe webhook handling: Updated subscription %s status to %s",
