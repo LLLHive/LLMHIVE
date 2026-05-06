@@ -379,9 +379,21 @@ def get_config_diagnostics() -> Dict[str, Any]:
                 stripe_mod.api_key = settings.stripe_api_key
                 acct = stripe_mod.Account.retrieve()
                 stripe_api_probe["reachable"] = True
-                stripe_api_probe["livemode"] = bool(acct.get("livemode"))
-                aid = acct.get("id") or ""
-                stripe_api_probe["account_id"] = aid if len(aid) <= 32 else f"{aid[:10]}…"
+                # StripeObject is dict-like via [] but may not implement ``.get``.
+                livemode = getattr(acct, "livemode", None)
+                if livemode is None and hasattr(acct, "__getitem__"):
+                    try:
+                        livemode = acct["livemode"]
+                    except Exception:
+                        livemode = None
+                stripe_api_probe["livemode"] = bool(livemode)
+                aid = getattr(acct, "id", None) or ""
+                if not aid and hasattr(acct, "__getitem__"):
+                    try:
+                        aid = acct["id"] or ""
+                    except Exception:
+                        aid = ""
+                stripe_api_probe["account_id"] = aid if len(str(aid)) <= 32 else f"{str(aid)[:10]}…"
             except Exception as exc:
                 stripe_api_probe["reachable"] = False
                 stripe_api_probe["error_type"] = type(exc).__name__
