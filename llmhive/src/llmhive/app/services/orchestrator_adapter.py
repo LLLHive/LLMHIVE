@@ -2110,6 +2110,47 @@ def _auto_select_reasoning_method(prompt: str, domain_pack: str) -> RouterReason
         return None
 
 
+def _resolve_request_model_tier_from_subscription(request: ChatRequest) -> ChatRequest:
+    """Resolve ``ModelTier.auto`` using subscription + elite quota (server-side).
+
+    Clients often omit ``tier`` (defaults to ``auto``). Map ``auto`` + ``metadata.user_id``
+    to ``free`` or ``elite`` via :func:`get_orchestration_tier` so routing matches billing.
+
+    If ``user_id`` is absent, or resolution fails, the request is unchanged (legacy behavior).
+
+    Set ``ORCH_RESOLVE_TIER_FROM_USER=0`` to skip (e.g. isolated tests).
+    """
+    if request.tier != RequestModelTier.auto:
+        return request
+    if os.getenv("ORCH_RESOLVE_TIER_FROM_USER", "1").lower() in ("0", "false", "no"):
+        return request
+    uid = None
+    if request.metadata and request.metadata.user_id:
+        uid = str(request.metadata.user_id).strip()
+    if not uid:
+        return request
+    try:
+        from ..middleware.tier_check import get_orchestration_tier
+
+        orch = (get_orchestration_tier(uid) or "free").lower().strip()
+    except Exception as exc:
+        logger.warning("Tier resolution skipped for user_id=%s: %s", uid, exc)
+        return request
+    if orch == "free":
+        new_tier = RequestModelTier.free
+    elif orch == "elite":
+        new_tier = RequestModelTier.elite
+    else:
+        logger.warning("Unknown orchestration tier %r for user_id=%s", orch, uid)
+        return request
+    logger.info(
+        "ModelTier.auto -> %s via get_orchestration_tier(user_id=%s)",
+        new_tier.value,
+        uid,
+    )
+    return request.model_copy(update={"tier": new_tier})
+
+
 async def run_orchestration(request: ChatRequest) -> ChatResponse:
     """
     Run orchestration with ChatRequest and return ChatResponse.
@@ -2120,6 +2161,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
     start_time = time.perf_counter()
     
     try:
+        request = _resolve_request_model_tier_from_subscription(request)
+
         # Profile defaults (format/tone/show_confidence)
         user_profile = None
         try:

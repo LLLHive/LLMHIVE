@@ -275,7 +275,11 @@ class ChatRequest(BaseModel):
     )
     tier: ModelTier = Field(
         default=ModelTier.auto,
-        description="Model tier: 'auto' (from subscription), 'free' (free models only), 'elite' (premium models). All tiers get FULL orchestration - only the models differ."
+        description=(
+            "Model tier: 'free' (free models only), 'elite' (premium models), or 'auto'. "
+            "When 'auto', the server resolves free vs elite from metadata.user_id and billing "
+            "quota (get_orchestration_tier) when user_id is set; otherwise legacy default applies."
+        ),
     )
     domain_pack: DomainPack = Field(default=DomainPack.default, description="Domain specialization pack")
     agent_mode: AgentMode = Field(default=AgentMode.team, description="Agent collaboration mode")
