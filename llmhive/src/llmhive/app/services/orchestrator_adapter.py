@@ -4218,6 +4218,30 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             agent_traces=traces,
             extra=extra,
         )
+
+        # Profit guard: record provider spend toward 25% of subscription revenue cap (paid + elite path only)
+        try:
+            from ..billing import spend_guard as _spend_guard
+
+            if (
+                user_id
+                and not use_free_models
+                and _spend_guard.is_spend_guard_enabled()
+            ):
+                _ct = (response.extra or {}).get("cost_tracking")
+                _cost_dict = _ct if isinstance(_ct, dict) else None
+                _elite_toks = getattr(elite_result, "total_tokens", None) if elite_result else None
+                _cusd = _spend_guard.extract_request_cost_usd(
+                    cost_info=_cost_dict,
+                    elite_total_tokens=_elite_toks,
+                )
+                if _cusd > 0.0:
+                    from ..firestore_db import FirestoreSubscriptionService
+
+                    _sub = FirestoreSubscriptionService().get_user_subscription(str(user_id))
+                    _spend_guard.record_elite_spend(str(user_id), _cusd, _sub)
+        except Exception as _spend_exc:
+            logger.warning("record_elite_spend skipped: %s", _spend_exc)
         
         logger.info(
             "Orchestration completed: latency=%dms, tokens=%s",

@@ -768,6 +768,10 @@ class ThrottleStatusResponse(BaseModel):
     elite_queries_remaining: int  # -1 for unlimited
     throttle_message: str | None
     upgrade_url: str
+    spend_guard_active: bool = False
+    elite_spend_cap_usd: float | None = None
+    elite_spend_used_usd: float | None = None
+    monthly_revenue_usd: float | None = None
 
 
 @router.get("/throttle-status/{user_id}", response_model=ThrottleStatusResponse)
@@ -785,7 +789,8 @@ def get_throttle_status_endpoint(
         from ..middleware.tier_check import get_throttle_status
         
         status = get_throttle_status(user_id)
-        
+        spend = status.get("spend") or {}
+
         return ThrottleStatusResponse(
             is_throttled=status["is_throttled"],
             subscription_tier=status["subscription_tier"],
@@ -795,6 +800,12 @@ def get_throttle_status_endpoint(
             elite_queries_remaining=status["elite_queries"]["remaining"],
             throttle_message=status["throttle_message"],
             upgrade_url=status["upgrade_url"],
+            spend_guard_active=bool(spend.get("guard_active")),
+            elite_spend_cap_usd=float(spend["cap_usd"]) if spend.get("cap_usd") is not None else None,
+            elite_spend_used_usd=float(spend["spent_usd"]) if spend.get("spent_usd") is not None else None,
+            monthly_revenue_usd=float(spend["monthly_revenue_usd"])
+            if spend.get("monthly_revenue_usd") is not None
+            else None,
         )
     except Exception as exc:
         logger.exception("Failed to get throttle status for user %s: %s", user_id, exc)
@@ -808,5 +819,9 @@ def get_throttle_status_endpoint(
             elite_queries_remaining=0,
             throttle_message=None,
             upgrade_url="/pricing",
+            spend_guard_active=False,
+            elite_spend_cap_usd=None,
+            elite_spend_used_usd=None,
+            monthly_revenue_usd=None,
         )
 

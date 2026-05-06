@@ -61,6 +61,7 @@ class TierQuota:
     after_quota_tier: str       # "standard", "budget", or "free"
     total_queries: int          # Total queries per month (0 = unlimited)
     team_members: int           # Number of team members included
+    never_throttle: bool = False  # Reserved (e.g. unlimited enterprise); used by QuotaTracker
 
 
 # Tier quota definitions - 4 TIERS with FREE tier
@@ -307,56 +308,73 @@ def get_user_tier(user_id: str) -> TierName:
 
 
 def get_orchestration_tier(user_id: str) -> str:
-    """Get the appropriate orchestration tier based on user's quota.
-    
-    This determines whether to use MAXIMUM, ELITE, or FREE orchestration.
-    
-    IMPORTANT: Paid tiers now throttle to FREE (not BUDGET/STANDARD) when quota exceeded.
-    This means they use only free models from OpenRouter.
-    
-    Args:
-        user_id: User identifier
-        
-    Returns:
-        Orchestration tier: "elite" or "free"
+    """Return ``elite`` or ``free`` orchestration for this user.
+
+    When ``ELITE_SPEND_GUARD`` is on (default), paid users use **elite** only while
+    cumulative provider spend in the billing period is below **25%** (configurable) of
+    recognized monthly subscription revenue; otherwise **free** (certified free stack).
+
+    When the guard is off, falls back to legacy **elite query count** quotas.
     """
     tier = get_user_tier(user_id)
-    
-    # FREE tier: Always use FREE orchestration
+
     if tier == TierName.FREE:
         return "free"
-    
-    # Check ELITE quota
+
+    subscription: Optional[Dict[str, Any]] = None
+    if is_firestore_available():
+        try:
+            subscription = FirestoreSubscriptionService().get_user_subscription(user_id)
+        except Exception as exc:
+            logger.error("get_orchestration_tier: subscription load failed: %s", exc)
+
+    try:
+        from ..billing.spend_guard import is_spend_guard_enabled, spend_cap_exceeded
+
+        if is_spend_guard_enabled():
+            if spend_cap_exceeded(user_id, tier, subscription):
+                return "free"
+            return "elite"
+    except Exception as exc:
+        logger.exception("spend guard failed user_id=%s: %s", user_id, exc)
+        return "free"
+
     tracker = QuotaTracker(user_id)
     remaining = tracker.get_remaining_elite()
-    
-    if remaining == -1 or remaining > 0:  # -1 = unlimited
+
+    if remaining == -1 or remaining > 0:
         return "elite"
-    
-    # ELITE exhausted - throttle to FREE (uses only free models)
+
     return "free"
 
 
 def is_user_throttled(user_id: str) -> bool:
-    """Check if user is currently throttled (using FREE orchestration).
-    
-    Args:
-        user_id: User identifier
-        
-    Returns:
-        True if user is throttled to FREE tier
-    """
+    """True if a paid user is on FREE orchestration (spend cap or legacy elite quota)."""
     tier = get_user_tier(user_id)
-    
-    # FREE tier users are not "throttled" - they're just on FREE tier
+
     if tier == TierName.FREE:
         return False
-    
-    # Check if ELITE quota is exhausted
+
+    subscription: Optional[Dict[str, Any]] = None
+    if is_firestore_available():
+        try:
+            subscription = FirestoreSubscriptionService().get_user_subscription(user_id)
+        except Exception:
+            subscription = None
+
+    try:
+        from ..billing.spend_guard import is_spend_guard_enabled, spend_cap_exceeded
+
+        if is_spend_guard_enabled():
+            return spend_cap_exceeded(user_id, tier, subscription)
+    except Exception as exc:
+        logger.exception("is_user_throttled spend guard failed user_id=%s: %s", user_id, exc)
+        return True
+
     tracker = QuotaTracker(user_id)
     remaining = tracker.get_remaining_elite()
-    
-    return remaining == 0  # Throttled if no ELITE queries remaining
+
+    return remaining == 0
 
 
 def get_throttle_status(user_id: str) -> dict:
@@ -375,7 +393,43 @@ def get_throttle_status(user_id: str) -> dict:
     is_throttled = is_user_throttled(user_id)
     remaining_elite = tracker.get_remaining_elite()
     usage = tracker.get_usage()
-    
+
+    subscription: Optional[Dict[str, Any]] = None
+    if is_firestore_available():
+        try:
+            subscription = FirestoreSubscriptionService().get_user_subscription(user_id)
+        except Exception:
+            subscription = None
+
+    spend_block: Dict[str, Any] = {}
+    try:
+        from ..billing.spend_guard import get_spend_status, is_spend_guard_enabled
+
+        if tier != TierName.FREE and is_spend_guard_enabled():
+            spend_block = get_spend_status(user_id, tier, subscription)
+    except Exception as exc:
+        logger.warning("get_throttle_status: spend snapshot failed: %s", exc)
+
+    throttle_message = None
+    if is_throttled:
+        if spend_block.get("guard_active") and not spend_block.get("fail_closed"):
+            cap = float(spend_block.get("cap_usd") or 0.0)
+            spent = float(spend_block.get("spent_usd") or 0.0)
+            throttle_message = (
+                f"Your premium orchestration budget for this billing period is exhausted "
+                f"(provider spend about ${spent:.2f} of ${cap:.2f} cap, capped at 25% of subscription). "
+                "You are on free orchestration until the period resets."
+            )
+        elif spend_block.get("fail_closed"):
+            throttle_message = (
+                "We could not verify your usage budget; you are on free orchestration to protect service availability."
+            )
+        else:
+            throttle_message = (
+                "Your ELITE quota is exhausted. You're now using FREE orchestration. "
+                "Upgrade to restore full power."
+            )
+
     return {
         "is_throttled": is_throttled,
         "subscription_tier": tier.value,
@@ -385,10 +439,8 @@ def get_throttle_status(user_id: str) -> dict:
             "used": usage.get("elite_used", 0),
             "remaining": remaining_elite if remaining_elite >= 0 else -1,
         },
-        "throttle_message": (
-            "Your ELITE quota is exhausted. You're now using FREE orchestration. "
-            "Upgrade to restore full power."
-        ) if is_throttled else None,
+        "spend": spend_block,
+        "throttle_message": throttle_message,
         "upgrade_url": "/pricing",
     }
 
