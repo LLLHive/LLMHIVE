@@ -62,7 +62,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          # Shallow clones often break `git push --force-with-lease` for long-lived automation branches.
+          fetch-depth: 0
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -121,8 +122,14 @@ jobs:
             echo "telemetry=true" >> $GITHUB_OUTPUT
           else
             echo "mode=daily" >> $GITHUB_OUTPUT
-            echo "evals=${{ inputs.evals_enabled || 'false' }}" >> $GITHUB_OUTPUT
-            echo "telemetry=${{ inputs.telemetry_enabled || 'false' }}" >> $GITHUB_OUTPUT
+            # `inputs` is only populated for workflow_dispatch; avoid bogus "true" from empty expressions on schedule.
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "evals=${{ inputs.evals_enabled }}" >> $GITHUB_OUTPUT
+              echo "telemetry=${{ inputs.telemetry_enabled }}" >> $GITHUB_OUTPUT
+            else
+              echo "evals=false" >> $GITHUB_OUTPUT
+              echo "telemetry=false" >> $GITHUB_OUTPUT
+            fi
           fi
       
       - name: Fetch secrets from GCP Secret Manager
@@ -251,6 +258,15 @@ jobs:
             echo "branch=$BRANCH" >> $GITHUB_OUTPUT
             echo "date=$DATE" >> $GITHUB_OUTPUT
           fi
+
+      - name: Ensure GitHub CLI is available
+        if: steps.modeldb-pr.outputs.has_changes == 'true'
+        run: |
+          if ! command -v gh >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq gh
+          fi
+          gh --version
 
       - name: Open or update ModelDB refresh PR
         if: steps.modeldb-pr.outputs.has_changes == 'true'
