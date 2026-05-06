@@ -148,6 +148,8 @@ class Settings(BaseSettings):
     stripe_price_id_pro_annual: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_PRO_ANNUAL")
     stripe_price_id_enterprise_monthly: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_ENTERPRISE_MONTHLY")
     stripe_price_id_enterprise_annual: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_ENTERPRISE_ANNUAL")
+    stripe_price_id_maximum_monthly: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_MAXIMUM_MONTHLY")
+    stripe_price_id_maximum_annual: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_MAXIMUM_ANNUAL")
     
     # Stripe Redirect URLs
     stripe_success_url: str = Field(

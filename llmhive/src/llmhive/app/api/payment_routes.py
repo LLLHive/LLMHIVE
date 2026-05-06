@@ -144,32 +144,27 @@ def create_checkout_session(
                 # Continue without customer - Stripe will create one during checkout
         
         # Stripe webhook handling: Create checkout session
-        # Use client_reference_id to link session to our user
-        checkout_session = stripe.checkout.Session.create(
-            customer=customer_id,  # Optional - Stripe will create if not provided
-            customer_email=request.user_email,  # Pre-fill email if customer not created
-            payment_method_types=["card"],
-            mode="subscription",
-            line_items=[
-                {
-                    "price": price_id,
-                    "quantity": 1,
-                }
-            ],
-            # Stripe webhook handling: Link session to user via client_reference_id
-            client_reference_id=request.user_id,
-            # Stripe webhook handling: Pass metadata for webhook processing
-            metadata={
+        # Stripe rejects passing both ``customer`` and ``customer_email`` on the same session.
+        session_kwargs: dict = {
+            "payment_method_types": ["card"],
+            "mode": "subscription",
+            "line_items": [{"price": price_id, "quantity": 1}],
+            "client_reference_id": request.user_id,
+            "metadata": {
                 "user_id": request.user_id,
                 "tier": request.tier.lower(),
                 "billing_cycle": request.billing_cycle,
             },
-            # Stripe webhook handling: Redirect URLs
-            success_url=settings.stripe_success_url + f"?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=settings.stripe_cancel_url,
-            # Stripe webhook handling: Allow promotion codes
-            allow_promotion_codes=True,
-        )
+            "success_url": settings.stripe_success_url + f"?session_id={{CHECKOUT_SESSION_ID}}",
+            "cancel_url": settings.stripe_cancel_url,
+            "allow_promotion_codes": True,
+        }
+        if customer_id:
+            session_kwargs["customer"] = customer_id
+        elif request.user_email:
+            session_kwargs["customer_email"] = request.user_email
+
+        checkout_session = stripe.checkout.Session.create(**session_kwargs)
         
         logger.info(
             "Stripe webhook handling: Created checkout session %s for user %s (tier: %s, cycle: %s)",

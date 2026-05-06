@@ -356,7 +356,36 @@ def get_config_diagnostics() -> Dict[str, Any]:
     # Force fresh load to test current environment state
     reset_settings()
     settings = get_settings()
-    
+
+    price_id_checks = {
+        "basic_monthly": bool(settings.stripe_price_id_basic_monthly),
+        "basic_annual": bool(settings.stripe_price_id_basic_annual),
+        "pro_monthly": bool(settings.stripe_price_id_pro_monthly),
+        "pro_annual": bool(settings.stripe_price_id_pro_annual),
+        "enterprise_monthly": bool(settings.stripe_price_id_enterprise_monthly),
+        "enterprise_annual": bool(settings.stripe_price_id_enterprise_annual),
+        "maximum_monthly": bool(settings.stripe_price_id_maximum_monthly),
+        "maximum_annual": bool(settings.stripe_price_id_maximum_annual),
+    }
+    stripe_api_probe: Dict[str, Any] = {"reachable": False}
+    if settings.stripe_api_key:
+        try:
+            import stripe as stripe_mod
+        except ImportError:
+            stripe_api_probe["reachable"] = False
+            stripe_api_probe["error_type"] = "ImportError"
+        else:
+            try:
+                stripe_mod.api_key = settings.stripe_api_key
+                acct = stripe_mod.Account.retrieve()
+                stripe_api_probe["reachable"] = True
+                stripe_api_probe["livemode"] = bool(acct.get("livemode"))
+                aid = acct.get("id") or ""
+                stripe_api_probe["account_id"] = aid if len(aid) <= 32 else f"{aid[:10]}…"
+            except Exception as exc:
+                stripe_api_probe["reachable"] = False
+                stripe_api_probe["error_type"] = type(exc).__name__
+
     diagnostics = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "config_system": "Pydantic BaseSettings (lazy loading)",
@@ -374,6 +403,19 @@ def get_config_diagnostics() -> Dict[str, Any]:
             "pinecone": bool(settings.pinecone_api_key),
             "stripe": bool(settings.stripe_api_key),
             "llmhive_auth": bool(settings.api_key),
+        },
+        "stripe": {
+            "secret_key_configured": bool(settings.stripe_api_key),
+            "webhook_secret_configured": bool(settings.stripe_webhook_secret),
+            "publishable_key_configured": bool(settings.stripe_publishable_key),
+            "price_ids_configured": price_id_checks,
+            "all_checkout_price_ids_configured": all(price_id_checks.values()),
+            "stripe_success_url_host": (
+                (settings.stripe_success_url or "").split("/")[2]
+                if settings.stripe_success_url and "://" in settings.stripe_success_url
+                else None
+            ),
+            "api_probe": stripe_api_probe,
         },
         "provider_count": len([k for k, v in {
             "openai": settings.openai_api_key,
@@ -430,6 +472,14 @@ def get_config_diagnostics() -> Dict[str, Any]:
     if not settings.stripe_api_key:
         diagnostics["recommendations"].append(
             "ℹ️ STRIPE_SECRET_KEY not set - billing features disabled"
+        )
+    elif not diagnostics["stripe"]["all_checkout_price_ids_configured"]:
+        diagnostics["recommendations"].append(
+            "⚠️ One or more STRIPE_PRICE_ID_* vars are missing — checkout may fail for some tiers/cycles."
+        )
+    elif not diagnostics["stripe"]["webhook_secret_configured"]:
+        diagnostics["recommendations"].append(
+            "⚠️ STRIPE_WEBHOOK_SECRET not set — signed webhooks from Stripe will fail."
         )
     
     if settings.debug and settings.environment == "production":
