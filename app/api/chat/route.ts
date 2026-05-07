@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@clerk/nextjs/server"
+import { getPaidEntitlement, paymentRequiredResponse } from "@/lib/billing/entitlement"
 
 // Vercel serverless function configuration
 // Extend timeout for multi-model orchestration (Premium: up to 300s)
@@ -111,6 +113,16 @@ async function fetchWithRetry(
  */
 
 export async function POST(req: NextRequest) {
+  const { userId: clerkUserId } = await auth()
+  if (!clerkUserId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const entitlement = await getPaidEntitlement(clerkUserId)
+  if (!entitlement.hasPaidAccess) {
+    return NextResponse.json(paymentRequiredResponse(), { status: 402 })
+  }
+
   // Debug: Log environment variable status at the start of every request
   // Use fallback URL for Cloud Run backend
   const apiBase = process.env.ORCHESTRATOR_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"

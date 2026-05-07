@@ -46,8 +46,7 @@ function mapToUserTier(subscriptionTier: string): UserTier {
     case "maximum":
       return "enterprise"
     default:
-      // Default to starter for unknown tiers (safer than free)
-      return "starter"
+      return "free"
   }
 }
 
@@ -107,8 +106,8 @@ export function useUserTier(): UseUserTierReturn {
 
 /**
  * Get a static tier for server components or when hook can't be used
- * Returns 'starter' as a safe default that allows basic model access
+ * Returns 'free' unless billing proves an active paid subscription.
  */
 export function getDefaultTier(): UserTier {
-  return "starter"
+  return "free"
 }

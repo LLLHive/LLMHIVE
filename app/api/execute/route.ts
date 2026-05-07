@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+import { auth } from "@clerk/nextjs/server"
+import { getPaidEntitlement, paymentRequiredResponse } from "@/lib/billing/entitlement"
 
 export const runtime = "nodejs"
 
@@ -14,6 +16,16 @@ export const runtime = "nodejs"
  */
 export async function POST(req: Request) {
   try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const entitlement = await getPaidEntitlement(userId)
+    if (!entitlement.hasPaidAccess) {
+      return NextResponse.json(paymentRequiredResponse(), { status: 402 })
+    }
+
     const { code, language } = await req.json()
 
     console.log("[execute] Executing code:", { language, codeLength: code.length })

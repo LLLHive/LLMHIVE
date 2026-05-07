@@ -1,7 +1,10 @@
 import { Suspense } from "react"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 import { ChatInterface } from "@/components/chat-interface"
 import { Skeleton } from "@/components/loading-skeleton"
 import { OnboardingWrapper } from "@/components/onboarding-wrapper"
+import { getPaidEntitlement } from "@/lib/billing/entitlement"
 
 // Loading skeleton for the chat interface
 function ChatInterfaceLoading() {
@@ -21,7 +24,17 @@ function ChatInterfaceLoading() {
   )
 }
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth()
+  if (!userId) {
+    redirect("/sign-in")
+  }
+
+  const entitlement = await getPaidEntitlement(userId)
+  if (!entitlement.hasPaidAccess) {
+    redirect("/pricing?subscribe=pro&cycle=monthly&payment_required=1")
+  }
+
   return (
     <main className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none">
       <Suspense fallback={<ChatInterfaceLoading />}>

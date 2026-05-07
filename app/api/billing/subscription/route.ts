@@ -31,7 +31,7 @@ export async function GET() {
       return NextResponse.json({
         subscription: {
           tier: "free",
-          status: "active",
+          status: "inactive",
           billingCycle: null,
           currentPeriodEnd: null,
           cancelAtPeriodEnd: false,
@@ -47,7 +47,7 @@ export async function GET() {
         return NextResponse.json({
           subscription: {
             tier: "free",
-            status: "active",
+            status: "inactive",
             billingCycle: null,
             currentPeriodEnd: null,
             cancelAtPeriodEnd: false,
@@ -79,7 +79,7 @@ export async function GET() {
     return NextResponse.json({
       subscription: {
         tier: "free",
-        status: "active",
+        status: "inactive",
         billingCycle: null,
         currentPeriodEnd: null,
         cancelAtPeriodEnd: false,
