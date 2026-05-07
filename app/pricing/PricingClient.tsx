@@ -264,6 +264,9 @@ export default function PricingClient() {
     const cycle = searchParams.get("cycle") === "annual" ? "annual" : "monthly"
     const storageKey = `llmhive_pricing_autoco_v1_${user.id}_${sub}_${cycle}`
     if (typeof window !== "undefined") {
+      if (searchParams.get("payment_required") === "1") {
+        sessionStorage.removeItem(storageKey)
+      }
       const state = sessionStorage.getItem(storageKey)
       if (state === "done" || state === "pending") return
       sessionStorage.setItem(storageKey, "pending")
