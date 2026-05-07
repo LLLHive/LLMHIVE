@@ -358,10 +358,10 @@ def get_config_diagnostics() -> Dict[str, Any]:
     settings = get_settings()
 
     price_id_checks = {
-        "basic_monthly": bool(settings.stripe_price_id_basic_monthly),
-        "basic_annual": bool(settings.stripe_price_id_basic_annual),
-        "pro_monthly": bool(settings.stripe_price_id_pro_monthly),
-        "pro_annual": bool(settings.stripe_price_id_pro_annual),
+        "standard_monthly": bool(settings.stripe_price_id_standard_monthly),
+        "standard_annual": bool(settings.stripe_price_id_standard_annual),
+        "premium_monthly": bool(settings.stripe_price_id_premium_monthly),
+        "premium_annual": bool(settings.stripe_price_id_premium_annual),
         "enterprise_monthly": bool(settings.stripe_price_id_enterprise_monthly),
         "enterprise_annual": bool(settings.stripe_price_id_enterprise_annual),
         "maximum_monthly": bool(settings.stripe_price_id_maximum_monthly),

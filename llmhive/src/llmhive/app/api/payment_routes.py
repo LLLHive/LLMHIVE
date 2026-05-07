@@ -22,6 +22,24 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _price_id_for_checkout(tier_lower: str, billing_cycle: str) -> Optional[str]:
+    """Resolve current customer-facing Stripe price IDs.
+
+    Standard/Premium must use current env vars, not legacy BASIC/PRO fallbacks,
+    because those can point at retired $9.99/$29.99 products.
+    """
+    monthly = billing_cycle == "monthly"
+    if tier_lower in ("lite", "standard"):
+        return settings.stripe_price_id_standard_monthly if monthly else settings.stripe_price_id_standard_annual
+    if tier_lower in ("pro", "premium"):
+        return settings.stripe_price_id_premium_monthly if monthly else settings.stripe_price_id_premium_annual
+    if tier_lower == "enterprise":
+        return settings.stripe_price_id_enterprise_monthly if monthly else settings.stripe_price_id_enterprise_annual
+    if tier_lower == "maximum":
+        return settings.stripe_price_id_maximum_monthly if monthly else settings.stripe_price_id_maximum_annual
+    return None
+
+
 class CreateCheckoutRequest(BaseModel):
     """Request to create a Stripe checkout session."""
     
@@ -86,34 +104,14 @@ def create_checkout_session(
         # Stripe webhook handling: Get Stripe Price ID for the tier
         # SIMPLIFIED 4-TIER STRUCTURE (January 2026)
         tier_lower = request.tier.lower()
-        price_id = None
-        
+        price_id = _price_id_for_checkout(tier_lower, request.billing_cycle)
+
         if tier_lower == "free":
             # Free tier doesn't require payment
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Free tier does not require payment. Use subscription creation endpoint instead.",
             )
-        elif tier_lower in ("lite", "basic"):  # "basic" for backwards compatibility
-            if request.billing_cycle == "monthly":
-                price_id = settings.stripe_price_id_basic_monthly
-            else:
-                price_id = settings.stripe_price_id_basic_annual
-        elif tier_lower == "pro":
-            if request.billing_cycle == "monthly":
-                price_id = settings.stripe_price_id_pro_monthly
-            else:
-                price_id = settings.stripe_price_id_pro_annual
-        elif tier_lower == "enterprise":
-            if request.billing_cycle == "monthly":
-                price_id = settings.stripe_price_id_enterprise_monthly
-            else:
-                price_id = settings.stripe_price_id_enterprise_annual
-        elif tier_lower == "maximum":
-            if request.billing_cycle == "monthly":
-                price_id = settings.stripe_price_id_maximum_monthly
-            else:
-                price_id = settings.stripe_price_id_maximum_annual
         
         if not price_id:
             raise HTTPException(

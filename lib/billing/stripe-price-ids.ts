@@ -1,7 +1,9 @@
 /**
  * Resolves Stripe Price IDs from environment variables.
  *
- * Precedence: STANDARD_* / PREMIUM_* → legacy BASIC/PRO.
+ * Customer-facing checkout must use the current product price IDs.
+ * Do not fall back to legacy BASIC/PRO for Standard/Premium: those may point
+ * at old price points and silently overcharge.
  */
 
 function pickFirstPriceId(...candidates: (string | undefined)[]): string | undefined {
@@ -12,31 +14,19 @@ function pickFirstPriceId(...candidates: (string | undefined)[]): string | undef
 }
 
 export function stripeStandardMonthlyPriceId(): string | undefined {
-  return pickFirstPriceId(
-    process.env.STRIPE_PRICE_ID_STANDARD_MONTHLY,
-    process.env.STRIPE_PRICE_ID_BASIC_MONTHLY,
-  )
+  return pickFirstPriceId(process.env.STRIPE_PRICE_ID_STANDARD_MONTHLY)
 }
 
 export function stripeStandardAnnualPriceId(): string | undefined {
-  return pickFirstPriceId(
-    process.env.STRIPE_PRICE_ID_STANDARD_ANNUAL,
-    process.env.STRIPE_PRICE_ID_BASIC_ANNUAL,
-  )
+  return pickFirstPriceId(process.env.STRIPE_PRICE_ID_STANDARD_ANNUAL)
 }
 
 export function stripePremiumMonthlyPriceId(): string | undefined {
-  return pickFirstPriceId(
-    process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY,
-    process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
-  )
+  return pickFirstPriceId(process.env.STRIPE_PRICE_ID_PREMIUM_MONTHLY)
 }
 
 export function stripePremiumAnnualPriceId(): string | undefined {
-  return pickFirstPriceId(
-    process.env.STRIPE_PRICE_ID_PREMIUM_ANNUAL,
-    process.env.STRIPE_PRICE_ID_PRO_ANNUAL,
-  )
+  return pickFirstPriceId(process.env.STRIPE_PRICE_ID_PREMIUM_ANNUAL)
 }
 
 export function stripeEnterpriseMonthlyPriceId(): string | undefined {

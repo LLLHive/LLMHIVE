@@ -5,7 +5,7 @@ import Stripe from "stripe"
  * Diagnostic endpoint to verify Stripe configuration
  * GET /api/billing/verify-config
  *
- * Resolves each logical price slot: canonical STANDARD_/PREMIUM_* first, then legacy BASIC_/PRO_*.
+ * Verifies each current customer-facing Stripe price slot.
  */
 
 function getStripe(): Stripe | null {
@@ -19,6 +19,8 @@ type PriceSlot = {
   id: string
   description: string
   keys: string[]
+  expectedUnitAmount: number
+  expectedInterval: "month" | "year"
   requireEnterpriseMeta?: boolean
 }
 
@@ -26,44 +28,60 @@ const PRICE_SLOTS: PriceSlot[] = [
   {
     id: "standard_monthly",
     description: "Standard — monthly",
-    keys: ["STRIPE_PRICE_ID_STANDARD_MONTHLY", "STRIPE_PRICE_ID_BASIC_MONTHLY"],
+    keys: ["STRIPE_PRICE_ID_STANDARD_MONTHLY"],
+    expectedUnitAmount: 1000,
+    expectedInterval: "month",
   },
   {
     id: "standard_annual",
     description: "Standard — annual",
-    keys: ["STRIPE_PRICE_ID_STANDARD_ANNUAL", "STRIPE_PRICE_ID_BASIC_ANNUAL"],
+    keys: ["STRIPE_PRICE_ID_STANDARD_ANNUAL"],
+    expectedUnitAmount: 10000,
+    expectedInterval: "year",
   },
   {
     id: "premium_monthly",
     description: "Premium — monthly",
-    keys: ["STRIPE_PRICE_ID_PREMIUM_MONTHLY", "STRIPE_PRICE_ID_PRO_MONTHLY"],
+    keys: ["STRIPE_PRICE_ID_PREMIUM_MONTHLY"],
+    expectedUnitAmount: 2000,
+    expectedInterval: "month",
   },
   {
     id: "premium_annual",
     description: "Premium — annual",
-    keys: ["STRIPE_PRICE_ID_PREMIUM_ANNUAL", "STRIPE_PRICE_ID_PRO_ANNUAL"],
+    keys: ["STRIPE_PRICE_ID_PREMIUM_ANNUAL"],
+    expectedUnitAmount: 20000,
+    expectedInterval: "year",
   },
   {
     id: "enterprise_monthly",
     description: "Enterprise — monthly",
     keys: ["STRIPE_PRICE_ID_ENTERPRISE_MONTHLY"],
+    expectedUnitAmount: 3500,
+    expectedInterval: "month",
     requireEnterpriseMeta: true,
   },
   {
     id: "enterprise_annual",
     description: "Enterprise — annual",
     keys: ["STRIPE_PRICE_ID_ENTERPRISE_ANNUAL"],
+    expectedUnitAmount: 35000,
+    expectedInterval: "year",
     requireEnterpriseMeta: true,
   },
   {
     id: "maximum_monthly",
     description: "Maximum — monthly",
     keys: ["STRIPE_PRICE_ID_MAXIMUM_MONTHLY"],
+    expectedUnitAmount: 0,
+    expectedInterval: "month",
   },
   {
     id: "maximum_annual",
     description: "Maximum — annual",
     keys: ["STRIPE_PRICE_ID_MAXIMUM_ANNUAL"],
+    expectedUnitAmount: 0,
+    expectedInterval: "year",
   },
 ]
 
@@ -135,6 +153,21 @@ export async function GET() {
         },
       }
 
+      const amountMatches = slot.expectedUnitAmount === 0 || price.unit_amount === slot.expectedUnitAmount
+      const intervalMatches = price.recurring?.interval === slot.expectedInterval
+      if (!amountMatches) {
+        results.price_validation[slot.id].valid = false
+        results.summary.issues.push(
+          `${slot.description}: expected ${slot.expectedUnitAmount} cents, got ${price.unit_amount ?? "null"}`
+        )
+      }
+      if (!intervalMatches) {
+        results.price_validation[slot.id].valid = false
+        results.summary.issues.push(
+          `${slot.description}: expected interval ${slot.expectedInterval}, got ${price.recurring?.interval ?? "null"}`
+        )
+      }
+
       if (typeof price.product === "object") {
         const product = price.product as Stripe.Product
         results.metadata_check[slot.id] = {
@@ -144,15 +177,19 @@ export async function GET() {
 
         if (slot.requireEnterpriseMeta) {
           if (!product.metadata?.min_seats) {
+            results.price_validation[slot.id].valid = false
             results.summary.issues.push(`${slot.description}: Missing 'min_seats' metadata`)
           }
           if (!product.metadata?.tier) {
+            results.price_validation[slot.id].valid = false
             results.summary.issues.push(`${slot.description}: Missing 'tier' metadata`)
           }
         }
       }
 
-      results.summary.valid++
+      if (results.price_validation[slot.id].valid) {
+        results.summary.valid++
+      }
     } catch (error) {
       results.price_validation[slot.id] = {
         valid: false,
