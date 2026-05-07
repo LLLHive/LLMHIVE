@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from ..auth import verify_api_key
+from ..billing.access_guard import require_active_paid_subscription
 from ..mcp2.sandbox import CodeSandbox, SandboxConfig
 
 logger = logging.getLogger(__name__)
@@ -15,10 +16,17 @@ router = APIRouter(prefix="/v1", tags=["execute"])
 
 class ExecuteRequest(BaseModel):
     """Request model for code execution."""
-    
+
     code: str = Field(..., description="Code to execute")
     language: str = Field(default="python", description="Programming language")
     session_token: str = Field(..., description="Session token for sandbox isolation")
+    user_id: str | None = Field(
+        default=None,
+        description=(
+            "Authenticated user identifier (required when the paid-access "
+            "backend guard is enabled)."
+        ),
+    )
 
 
 class ExecuteResponse(BaseModel):
@@ -45,6 +53,9 @@ async def execute_python(
     - Restricted imports
     """
     try:
+        # Defense-in-depth: enforce active paid subscription at the sandbox layer.
+        require_active_paid_subscription(payload.user_id)
+
         if payload.language != "python":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -94,6 +105,8 @@ async def execute_python(
                 metadata={"execution_result": result},
             )
             
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.exception("Python execution error: %s", exc)
         raise HTTPException(

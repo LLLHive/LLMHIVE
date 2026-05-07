@@ -94,7 +94,8 @@ export async function POST(req: Request) {
           headers,
           body: JSON.stringify({
             code,
-            session_token: `session_${Date.now()}`, // Generate session token
+            session_token: `session_${Date.now()}`,
+            user_id: userId,
           }),
         })
 
