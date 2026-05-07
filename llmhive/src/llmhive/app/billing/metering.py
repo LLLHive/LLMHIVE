@@ -115,15 +115,16 @@ MODEL_PRICING = {
     "default": {"input": 0.002, "output": 0.006},
 }
 
-# Overage rates per tier (price per 1K tokens above limit) - 4 TIERS (Jan 2026)
+# Overage rates per tier (price per 1K tokens above limit).
+# Standard/Premium are protected by spend guard, not fixed token overages.
 OVERAGE_RATES = {
     TierName.FREE.value: 0.0,  # No overage for Free (throttle to free models)
     TierName.LITE.value: 0.0,  # No overage for Lite (throttle to free)
-    TierName.PRO.value: 0.01,  # $0.01 per 1K tokens
+    TierName.PRO.value: 0.0,
     TierName.ENTERPRISE.value: 0.005,  # $0.005 per 1K tokens (discounted)
     "free": 0.0,
     "lite": 0.0,
-    "pro": 0.01,
+    "pro": 0.0,
     "enterprise": 0.005,
 }
 
@@ -246,8 +247,8 @@ class UsageMeter:
         """
         tier = self.pricing_manager.get_tier(tier_name)
         if tier is None:
-            tier = self.pricing_manager.get_tier(TierName.LITE)
-            tier_name = TierName.LITE.value
+            tier = self.pricing_manager.get_tier(TierName.FREE)
+            tier_name = TierName.FREE.value
         
         # Get current usage from cache
         with self._lock:

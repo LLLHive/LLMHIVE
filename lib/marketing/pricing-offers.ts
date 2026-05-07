@@ -4,21 +4,18 @@
  */
 
 export const OFFER_STANDARD_FEATURES: readonly string[] = [
-  "Unlimited Standard orchestration",
+  "Elite orchestration while the spend guard allows, then free orchestration",
   "Multi-model consensus routing",
   "Knowledge Base access",
   "Calculator & hosted reranker",
-  "7-day conversation memory",
-  "Community support",
+  "90-day conversation memory",
 ]
 
 export const OFFER_PREMIUM_FEATURES: readonly string[] = [
-  "500 Premium orchestration queries / month, then unlimited Standard",
+  "Elite orchestration while the spend guard allows, then free orchestration",
   "Benchmark-leading routing on Premium workloads",
-  "Full API access",
   "DeepConf, adaptive ensemble & advanced strategies",
-  "30-day conversation memory",
-  "Priority support",
+  "90-day conversation memory",
 ]
 
 export const OFFER_ENTERPRISE_FEATURES: readonly string[] = [

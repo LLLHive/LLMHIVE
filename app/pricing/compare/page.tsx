@@ -17,9 +17,9 @@ export default function PricingComparePage() {
         {
           title: "Feature Highlights",
           items: [
-            "Premium query quotas and unlimited Standard usage.",
-            "Memory retention differences by plan.",
-            "Support SLAs and response times.",
+            "Spend-guarded elite orchestration for paid plans.",
+            "90-day conversation memory on Standard and Premium.",
+            "Enterprise support and team controls.",
           ],
         },
         {

@@ -530,7 +530,7 @@ export default function SettingsPage() {
               <div className="p-4 rounded-lg glass-card border border-[var(--bronze)]/30">
                 <p className="text-xs text-muted-foreground mb-1">Current Plan</p>
                 <p className="text-lg font-semibold text-[var(--gold)]">Standard</p>
-                <p className="text-xs text-muted-foreground">$10/month Standard — unlimited Standard orchestration</p>
+                <p className="text-xs text-muted-foreground">$10/month Standard — spend-guarded elite orchestration</p>
               </div>
 
               {/* Standard plan marketing */}

@@ -118,8 +118,8 @@ export default function TermsOfServicePage() {
               We offer three subscription tiers:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-              <li><strong>Standard ($10/mo, $100/yr):</strong> Unlimited Standard orchestration</li>
-              <li><strong>Premium ($20/mo, $200/yr):</strong> 500 Premium queries per month, then unlimited Standard orchestration</li>
+              <li><strong>Standard ($10/mo, $100/yr):</strong> Spend-guarded elite orchestration and 90-day memory</li>
+              <li><strong>Premium ($20/mo, $200/yr):</strong> Spend-guarded elite orchestration and 90-day memory</li>
               <li><strong>Enterprise ($35/seat/mo, min 5 seats):</strong> 400 Premium queries per seat per month, then unlimited Standard; SSO and compliance options</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-4">

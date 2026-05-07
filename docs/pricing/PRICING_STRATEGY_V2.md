@@ -84,12 +84,12 @@ Instead of confusing "OT/PBT/FB" budgets, we simplify to:
 
 | Feature | Allowance |
 |---------|-----------|
-| Queries | 500/month |
-| Default Quality | BUDGET (#1 in 6 categories) |
-| Escalation to PREMIUM | 50 queries/month |
-| Escalation to ELITE | 10 queries/month |
+| Queries | Spend guard controlled |
+| Default Quality | ELITE while spend guard allows, then FREE |
+| Escalation to PREMIUM | Not marketed as a fixed quota |
+| Escalation to ELITE | Spend guard controlled |
 | Max Passes | 25/month |
-| Memory | 7-day retention |
+| Memory | 90-day retention |
 | Calculator/Reranker | ✅ Always on |
 | Consensus Voting | On Max Passes |
 | Advanced Reasoning | Light (on-demand) |
@@ -108,18 +108,18 @@ Instead of confusing "OT/PBT/FB" budgets, we simplify to:
 
 ---
 
-## C) Pro — $29.99/mo (Power User Tier)
+## C) Premium — $20/mo
 
 **Goal**: Full orchestration power, #1 in ALL categories
 
 | Feature | Allowance |
 |---------|-----------|
-| Queries | 2,000/month |
-| Default Quality | STANDARD (#1 in 8 categories) |
-| Escalation to PREMIUM | 500 queries/month |
-| Escalation to ELITE | 100 queries/month |
+| Queries | Spend guard controlled |
+| Default Quality | ELITE while spend guard allows, then FREE |
+| Escalation to PREMIUM | Not marketed as a fixed quota |
+| Escalation to ELITE | Spend guard controlled |
 | Max Passes | 200/month |
-| Memory | 30-day retention + vector storage |
+| Memory | 90-day retention + vector storage |
 | Calculator/Reranker | ✅ Always on |
 | Consensus Voting | ✅ Always on |
 | Advanced Reasoning | ✅ Full access |

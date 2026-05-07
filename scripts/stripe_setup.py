@@ -6,8 +6,8 @@ This script creates all necessary Stripe products and prices for LLMHive subscri
 Run this once to set up your Stripe account, then copy the price IDs to your environment variables.
 
 PAID PRICING STRUCTURE:
-- Lite ($9.99): 100 ELITE + 400 BUDGET = 500 total
-- Pro ($29.99): 500 ELITE + 1,500 STANDARD = 2,000 total
+- Standard ($10): elite orchestration while spend guard allows, then free
+- Premium ($20): elite orchestration while spend guard allows, then free
 - Enterprise ($35/seat, min 5): 400 ELITE + 400 STANDARD = 800/seat
 - Maximum ($499): UNLIMITED (never throttle)
 
@@ -34,54 +34,52 @@ except ImportError:
 # PAID TIERS ONLY (FREE tier is not billed)
 PRODUCTS = [
     {
-        "name": "LLMHive Lite",
-        "description": "#1 AI quality at $14.99/month. 100 ELITE queries (#1 in ALL), then FREE tier.",
+        "name": "LLMHive Standard",
+        "description": "Standard plan at $10/month. Elite orchestration while the spend guard allows, then free orchestration.",
         "metadata": {
             "tier": "lite",
-            "elite_queries": "100",
+            "spend_guard": "enabled",
             "after_quota": "free",
-            "total_queries": "500",
         },
         "prices": [
             {
-                "nickname": "Lite Monthly",
-                "unit_amount": 1499,  # $14.99 in cents
+                "nickname": "Standard Monthly",
+                "unit_amount": 1000,  # $10.00 in cents
                 "currency": "usd",
                 "recurring": {"interval": "month"},
-                "env_var": "STRIPE_PRICE_ID_BASIC_MONTHLY",  # Uses BASIC for backwards compatibility
+                "env_var": "STRIPE_PRICE_ID_STANDARD_MONTHLY",
             },
             {
-                "nickname": "Lite Annual",
-                "unit_amount": 14999,  # $149.99 in cents
+                "nickname": "Standard Annual",
+                "unit_amount": 10000,  # $100.00 in cents
                 "currency": "usd",
                 "recurring": {"interval": "year"},
-                "env_var": "STRIPE_PRICE_ID_BASIC_ANNUAL",  # Uses BASIC for backwards compatibility
+                "env_var": "STRIPE_PRICE_ID_STANDARD_ANNUAL",
             },
         ],
     },
     {
-        "name": "LLMHive Pro",
-        "description": "Power user plan with API access. 500 ELITE queries (#1 in ALL), then 1,500 STANDARD queries.",
+        "name": "LLMHive Premium",
+        "description": "Premium plan at $20/month. Elite orchestration while the spend guard allows, then free orchestration.",
         "metadata": {
             "tier": "pro",
-            "elite_queries": "500",
-            "standard_queries": "1500",
-            "total_queries": "2000",
+            "spend_guard": "enabled",
+            "after_quota": "free",
         },
         "prices": [
             {
-                "nickname": "Pro Monthly",
-                "unit_amount": 2999,  # $29.99 in cents
+                "nickname": "Premium Monthly",
+                "unit_amount": 2000,  # $20.00 in cents
                 "currency": "usd",
                 "recurring": {"interval": "month"},
-                "env_var": "STRIPE_PRICE_ID_PRO_MONTHLY",
+                "env_var": "STRIPE_PRICE_ID_PREMIUM_MONTHLY",
             },
             {
-                "nickname": "Pro Annual",
-                "unit_amount": 29999,  # $299.99 in cents
+                "nickname": "Premium Annual",
+                "unit_amount": 20000,  # $200.00 in cents
                 "currency": "usd",
                 "recurring": {"interval": "year"},
-                "env_var": "STRIPE_PRICE_ID_PRO_ANNUAL",
+                "env_var": "STRIPE_PRICE_ID_PREMIUM_ANNUAL",
             },
         ],
     },

@@ -26,10 +26,10 @@ class TierLimits:
 # 4-TIER STRUCTURE (January 2026): Free, Lite, Pro, Enterprise
 # Stage 3: Added multimodal features (image_analysis, audio_transcription, etc.)
 TIER_LIMITS: Dict[str, TierLimits] = {
-    # Lite tier ($14.99/mo) - Entry level, 500 queries/mo
+    # Lite / Standard tier ($10/mo) - spend guard controls elite access
     "lite": TierLimits(
         requests_per_minute=10,
-        requests_per_day=50,  # ~500 per month
+        requests_per_day=None,
         enabled_features={
             "basic_orchestration",
             "standard_models",
@@ -40,10 +40,10 @@ TIER_LIMITS: Dict[str, TierLimits] = {
         },
         allowed_domain_presets={"general", "coding", "creative"},
     ),
-    # Pro tier ($29.99/mo) - Power users, 2000 queries/mo
+    # Pro / Premium tier ($20/mo) - spend guard controls elite access
     "pro": TierLimits(
         requests_per_minute=30,
-        requests_per_day=200,  # ~2000 per month
+        requests_per_day=None,
         enabled_features={
             "basic_orchestration",
             "standard_models",
@@ -51,7 +51,6 @@ TIER_LIMITS: Dict[str, TierLimits] = {
             "advanced_orchestration",
             "deep_verification",
             "enhanced_memory",
-            "api_access",
             "deep_conf",
             "prompt_diffusion",
             # Multimodal features for Pro tier

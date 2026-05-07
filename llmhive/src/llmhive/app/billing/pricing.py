@@ -99,17 +99,15 @@ class PricingTierManager:
         self._initialize_default_tiers()
 
     def _initialize_default_tiers(self) -> None:
-        """Initialize 5-tier pricing structure with FREE tier (January 2026).
+        """Initialize current pricing structure with FREE tier.
         
-        NEW STRUCTURE:
         - Free ($0) - Forever free with free-model orchestration
-        - Lite ($9.99) - Entry-level individuals
-        - Pro ($29.99) - Power users & freelancers  
+        - Standard ($10) - Paid access with spend-guarded elite orchestration
+        - Premium ($20) - Advanced paid access with spend-guarded elite orchestration
         - Enterprise ($35/seat, min 5) - Organizations with SSO/compliance
-        - Maximum ($499) - Mission-critical, never throttle
         
-        KEY CHANGE: No more 7-day trial. Instead, FREE tier is permanent.
-        Paid tiers throttle to FREE (not BUDGET) when quota exceeded.
+        Paid Standard and Premium use elite orchestration while the spend guard
+        allows, then throttle to FREE orchestration for margin protection.
         """
         
         # ═══════════════════════════════════════════════════════════════════════════
@@ -167,8 +165,8 @@ class PricingTierManager:
             monthly_price_usd=10.0,
             annual_price_usd=100.0,
             limits=TierLimits(
-                max_requests_per_month=500,  # 100 ELITE + 400 BUDGET
-                max_tokens_per_month=500_000,
+                max_requests_per_month=0,
+                max_tokens_per_month=0,
                 max_models_per_request=3,
                 max_concurrent_requests=2,
                 max_storage_mb=500,
@@ -183,21 +181,21 @@ class PricingTierManager:
                 allow_hrm=True,
                 allow_loopback_refinement=False,
                 max_tokens_per_query=25_000,
-                # QUOTA: 100 ELITE, then BUDGET
+                # Spend guard controls paid elite access: elite until margin cap, then free.
                 default_orchestration_tier="elite",
                 premium_escalation_budget=0,
-                elite_escalation_budget=100,
-                max_passes_per_month=50,
-                memory_retention_days=7,
+                elite_escalation_budget=0,
+                max_passes_per_month=0,
+                memory_retention_days=90,
                 calculator_enabled=True,
                 reranker_enabled=True,
             ),
             features={
                 "basic_orchestration", "memory", "knowledge_base",
                 "calculator", "reranker", "consensus_voting",
-                "elite_orchestration", "quota_tracking"
+                "elite_orchestration", "spend_guard"
             },
-            description="Standard paid — unlimited Standard orchestration (see product docs for quotas)",
+            description="Standard paid — elite orchestration while the spend guard allows, then free orchestration",
         )
 
         # ═══════════════════════════════════════════════════════════════════════════
@@ -209,13 +207,13 @@ class PricingTierManager:
             monthly_price_usd=20.0,
             annual_price_usd=200.0,
             limits=TierLimits(
-                max_requests_per_month=2_000,  # 500 ELITE + 1500 STANDARD
-                max_tokens_per_month=4_000_000,
+                max_requests_per_month=0,
+                max_tokens_per_month=0,
                 max_models_per_request=5,
                 max_concurrent_requests=10,
                 max_storage_mb=10_000,  # 10GB
                 enable_advanced_features=True,
-                enable_api_access=True,  # API access included
+                enable_api_access=False,
                 enable_priority_support=False,
                 max_team_members=1,
                 allow_parallel_retrieval=True,
@@ -225,23 +223,23 @@ class PricingTierManager:
                 allow_hrm=True,
                 allow_loopback_refinement=True,
                 max_tokens_per_query=100_000,
-                # QUOTA: 500 ELITE, then STANDARD
+                # Spend guard controls paid elite access: elite until margin cap, then free.
                 default_orchestration_tier="elite",
                 premium_escalation_budget=0,
-                elite_escalation_budget=500,
-                max_passes_per_month=300,
-                memory_retention_days=30,
+                elite_escalation_budget=0,
+                max_passes_per_month=0,
+                memory_retention_days=90,
                 calculator_enabled=True,
                 reranker_enabled=True,
             ),
             features={
                 "basic_orchestration", "memory", "knowledge_base",
                 "advanced_orchestration", "hrm", "prompt_diffusion",
-                "deepconf", "adaptive_ensemble", "api_access",
+                "deepconf", "adaptive_ensemble",
                 "web_research", "fact_checking", "calculator", "reranker",
-                "vector_storage", "full_consensus", "quota_tracking"
+                "vector_storage", "full_consensus", "spend_guard"
             },
-            description="500 #1-quality queries + API access + all advanced features",
+            description="Premium paid — elite orchestration while the spend guard allows, then free orchestration",
         )
 
         # ═══════════════════════════════════════════════════════════════════════════

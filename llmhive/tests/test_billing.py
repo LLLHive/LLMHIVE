@@ -81,31 +81,32 @@ class TestPricingTierManager:
         assert len(tiers) == 4  # 4 tiers with FREE tier
     
     def test_lite_tier_limits(self):
-        """Test Lite tier has correct limits (quota-based)."""
+        """Test Lite tier uses spend-guarded paid limits."""
         manager = PricingTierManager()
         tier = manager.get_tier(TierName.LITE)
         
-        # Lite: 100 ELITE + 400 BUDGET = 500 total
-        assert tier.limits.max_requests_per_month == 500
-        assert tier.limits.max_tokens_per_month == 500_000
+        assert tier.limits.max_requests_per_month == 0
+        assert tier.limits.max_tokens_per_month == 0
         assert tier.limits.max_models_per_request == 3
         assert tier.limits.enable_advanced_features is False
         assert tier.limits.allow_hrm is True
         assert tier.limits.allow_deep_conf is False
+        assert tier.limits.memory_retention_days == 90
     
     def test_pro_tier_limits(self):
-        """Test Pro tier has correct limits (quota-based)."""
+        """Test Pro tier uses spend-guarded paid limits."""
         manager = PricingTierManager()
         tier = manager.get_tier(TierName.PRO)
         
-        # Pro: 500 ELITE + 1500 STANDARD = 2000 total
-        assert tier.limits.max_requests_per_month == 2_000
-        assert tier.limits.max_tokens_per_month == 4_000_000
+        assert tier.limits.max_requests_per_month == 0
+        assert tier.limits.max_tokens_per_month == 0
         assert tier.limits.max_models_per_request == 5
         assert tier.limits.enable_advanced_features is True
+        assert tier.limits.enable_api_access is False
         assert tier.limits.allow_hrm is True
         assert tier.limits.allow_deep_conf is True
         assert tier.limits.allow_prompt_diffusion is True
+        assert tier.limits.memory_retention_days == 90
     
     def test_enterprise_tier_limits(self):
         """Test Enterprise tier has per-seat limits (quota-based)."""
@@ -127,21 +128,22 @@ class TestPricingTierManager:
         # Lite tier can access HRM (light version)
         assert manager.can_access_feature(TierName.LITE, "elite_orchestration") is True
         
-        # Pro tier can access advanced features
-        assert manager.can_access_feature(TierName.PRO, "api_access") is True
+        # Premium does not market self-service API access; advanced orchestration remains enabled
+        assert manager.can_access_feature(TierName.PRO, "api_access") is False
+        assert manager.can_access_feature(TierName.PRO, "deepconf") is True
         
         # Enterprise can access SSO
         assert manager.can_access_feature(TierName.ENTERPRISE, "sso") is True
     
     def test_check_limits_within_limits(self):
-        """Test check_limits returns True when within limits (quota-based)."""
+        """Test check_limits returns True when within limits."""
         manager = PricingTierManager()
         
-        # Lite tier has 500 queries, 500K tokens, 3 models
+        # Standard/Premium request and token limits are spend-guarded, not fixed quotas.
         result = manager.check_limits(
             TierName.LITE,
-            requests_this_month=100,  # Within 500 limit
-            tokens_this_month=100_000,  # Within 500K limit
+            requests_this_month=100,
+            tokens_this_month=100_000,
             models_in_request=2,  # Within 3 limit
         )
         
@@ -154,10 +156,10 @@ class TestPricingTierManager:
         """Test check_limits returns False when limits exceeded."""
         manager = PricingTierManager()
         
-        # Lite tier has 500 queries limit
+        # Free still has a fixed request limit.
         result = manager.check_limits(
-            TierName.LITE,
-            requests_this_month=600,  # Over 500 limit
+            TierName.FREE,
+            requests_this_month=60,
             tokens_this_month=50_000,
         )
         
@@ -247,8 +249,8 @@ class TestUsageMeter:
     
     def test_check_quota_alerts(self):
         """Test quota check generates alerts at high usage."""
-        # Simulate 95% usage of Lite tier (500 requests = 475 requests for 95%)
-        for _ in range(475):
+        # Simulate 95% usage of Free tier (50 requests = 48 requests for 96%)
+        for _ in range(48):
             self.meter.record_usage(
                 user_id="user_high",
                 usage_type=UsageType.REQUEST,
@@ -258,7 +260,7 @@ class TestUsageMeter:
         # Now check quota
         result = self.meter.check_quota(
             user_id="user_high",
-            tier_name="lite",
+            tier_name="free",
             requested_requests=1,
         )
         

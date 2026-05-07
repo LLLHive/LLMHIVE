@@ -114,11 +114,11 @@ export function ThrottleNotification({
           <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="flex-1 space-y-2">
             <p className="text-sm font-medium text-amber-200">
-              Premium quota exhausted
+              Spend guard reached
             </p>
             <p className="text-sm text-muted-foreground">
-              You&apos;ve used all {throttleStatus.elite_queries_used} of your Premium queries. 
-              You&apos;re now using Standard orchestration, which still beats most single models!
+              Provider spend reached the protected cap for this billing period. 
+              You&apos;re now using free orchestration until the next billing period.
             </p>
             <Link href="/pricing">
               <Button 
@@ -126,7 +126,7 @@ export function ThrottleNotification({
                 variant="outline"
                 className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
               >
-                Upgrade for more Premium queries
+                Upgrade plan
                 <ArrowUpRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>

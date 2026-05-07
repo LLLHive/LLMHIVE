@@ -47,7 +47,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "How do I get started with LLMHive?",
         answer:
-          "Create an account, then subscribe to Standard ($10/mo) for unlimited Standard orchestration, or Premium ($20/mo) for 500 Premium queries per month plus unlimited Standard after quota. Enterprise is available for teams (per seat). Once subscribed, you can start chatting immediately.",
+          "Create an account, then subscribe to Standard ($10/mo) or Premium ($20/mo). Paid plans use elite orchestration while the spend guard allows, then free orchestration. Enterprise is available for teams (per seat). Once subscribed, you can start chatting immediately.",
       },
       {
         question: "What makes LLMHive different from using ChatGPT or Claude directly?",
@@ -69,12 +69,12 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What plans are available?",
         answer:
-          "We offer Standard ($10/month or $100/year) with unlimited Standard orchestration, Premium ($20/month or $200/year) with 500 Premium queries per month then unlimited Standard, and Enterprise ($35/seat/month, min 5 seats) with SSO and compliance features.",
+          "We offer Standard ($10/month or $100/year), Premium ($20/month or $200/year), and Enterprise ($35/seat/month, min 5 seats). Standard and Premium include 90-day conversation memory and spend-guarded elite orchestration.",
       },
       {
-        question: "What happens when I reach my Premium query limit?",
+        question: "What happens when the spend guard is reached?",
         answer:
-          "When you exhaust your Premium queries, you'll automatically switch to our Standard orchestration. Standard still beats most single paid models thanks to our patented multi-model orchestration. You can upgrade your plan anytime to get more Premium queries.",
+          "When provider spend reaches the protected cap for the billing period, paid accounts switch to free orchestration until the next billing period. You can upgrade your plan anytime.",
       },
       {
         question: "Can I upgrade or downgrade my plan at any time?",

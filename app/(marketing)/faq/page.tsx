@@ -46,12 +46,12 @@ const faqItems = [
   {
     question: "What pricing plans are available?",
     answer:
-      "LLMHive offers three subscriptions: Standard ($10/mo or $100/yr) with unlimited Standard orchestration, Premium ($20/mo or $200/yr) with 500 Premium queries per month then unlimited Standard, and Enterprise (per seat, min 5) with team controls and compliance features.",
+      "LLMHive offers three subscriptions: Standard ($10/mo or $100/yr), Premium ($20/mo or $200/yr), and Enterprise (per seat, min 5) with team controls and compliance features. Standard and Premium include 90-day memory and spend-guarded elite orchestration.",
   },
   {
-    question: "What happens after I use my Premium queries?",
+    question: "What happens when the spend guard is reached?",
     answer:
-      "Once Premium queries are exhausted, LLMHive continues on unlimited Standard orchestration for the rest of the billing period.",
+      "When provider spend reaches the protected cap, paid accounts switch to free orchestration until the next billing period.",
   },
   {
     question: "Can I change plans any time?",

@@ -108,7 +108,7 @@
 **Visual:** Pricing page, comparison chart
 
 **Script:**
-> "LLMHive starts at just $9.99/month for Lite—that's 100 ELITE queries that consistently beat single-model solutions. Pro users get 500 ELITE queries plus full API access. And Maximum tier? Unlimited ELITE power that NEVER throttles."
+> "LLMHive starts at $10/month for Standard and $20/month for Premium. Paid plans use elite orchestration while the spend guard allows, then switch to free orchestration to protect margins."
 
 **Key Points:**
 - Show the 4-tier pricing

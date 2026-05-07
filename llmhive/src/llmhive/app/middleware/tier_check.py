@@ -1,9 +1,9 @@
-"""Subscription Tier Check Middleware with Quota Tracking.
+"""Subscription Tier Check Middleware with Spend-Guarded Routing.
 
-Quota-Based Pricing System (Jan 2026):
-- ALL tiers get ELITE quality (#1 in ALL 10 categories)
-- Quota determines how many ELITE queries before throttling
-- When ELITE exhausted → throttle to STANDARD/BUDGET (still great quality)
+Paid Routing System:
+- Paid Standard and Premium use ELITE while the spend guard allows it
+- When protected provider spend is reached, paid tiers route to FREE orchestration
+- Free accounts always route to FREE orchestration
 
 Usage:
     from ..middleware.tier_check import get_user_tier, get_orchestration_tier, QuotaTracker
@@ -11,8 +11,8 @@ Usage:
     # Get user's subscription tier
     tier = get_user_tier(user_id)
     
-    # Get appropriate orchestration tier based on quota
-    orch_tier = get_orchestration_tier(user_id)  # Returns "elite", "standard", or "budget"
+    # Get appropriate orchestration tier based on subscription and spend guard
+    orch_tier = get_orchestration_tier(user_id)  # Returns "elite" or "free"
 """
 from __future__ import annotations
 
@@ -64,8 +64,9 @@ class TierQuota:
     never_throttle: bool = False  # Reserved (e.g. unlimited enterprise); used by QuotaTracker
 
 
-# Tier quota definitions - 4 TIERS with FREE tier
-# IMPORTANT: All paid tiers throttle to FREE when quota exceeded
+# Tier quota definitions - 4 TIERS with FREE tier.
+# Paid tier access is controlled by the spend guard (elite until cap, then free),
+# not a fixed monthly Premium-query quota.
 TIER_QUOTAS: Dict[TierName, TierQuota] = {
     TierName.FREE: TierQuota(
         elite_queries=0,  # No ELITE, always FREE orchestration
@@ -74,16 +75,18 @@ TIER_QUOTAS: Dict[TierName, TierQuota] = {
         team_members=1,
     ),
     TierName.LITE: TierQuota(
-        elite_queries=100,
-        after_quota_tier="free",  # Throttle to FREE when exhausted
-        total_queries=500,
+        elite_queries=0,
+        after_quota_tier="free",
+        total_queries=0,
         team_members=1,
+        never_throttle=True,
     ),
     TierName.PRO: TierQuota(
-        elite_queries=500,
-        after_quota_tier="free",  # Throttle to FREE when exhausted
-        total_queries=2000,
+        elite_queries=0,
+        after_quota_tier="free",
+        total_queries=0,
         team_members=1,
+        never_throttle=True,
     ),
     TierName.ENTERPRISE: TierQuota(
         elite_queries=400,  # Per seat
@@ -114,10 +117,10 @@ class TierConfig:
             "free_models_only": True,  # NEW: Flag for free-only models
         },
         TierName.LITE: {
-            "queries_per_month": 500,
+            "queries_per_month": 0,
             "tokens_per_request": 25000,
             "max_models": 3,
-            "elite_queries": 100,
+            "elite_queries": 0,
             "image_generation": False,
             "audio_processing": False,
             "fine_tuning": False,
@@ -128,15 +131,15 @@ class TierConfig:
             "rlhf_feedback": True,
         },
         TierName.PRO: {
-            "queries_per_month": 2000,
+            "queries_per_month": 0,
             "tokens_per_request": 100000,
             "max_models": 5,
-            "elite_queries": 500,
+            "elite_queries": 0,
             "image_generation": True,
             "audio_processing": True,
             "fine_tuning": False,
-            "priority_support": True,
-            "api_access": True,
+            "priority_support": False,
+            "api_access": False,
             "knowledge_base": True,
             "deep_conf": True,
             "rlhf_feedback": True,

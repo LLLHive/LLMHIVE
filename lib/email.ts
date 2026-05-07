@@ -241,8 +241,8 @@ export async function sendSubscriptionEmail(options: {
   const tierDisplay = tier.charAt(0).toUpperCase() + tier.slice(1)
 
   const tierFeatures: Record<string, string[]> = {
-    lite: ["500 queries/month", "Standard orchestration", "Email support"],
-    pro: ["5,000 queries/month", "Premium orchestration", "Priority support", "Advanced analytics"],
+    lite: ["Spend-guarded elite orchestration", "90-day conversation memory", "Knowledge base access"],
+    pro: ["Spend-guarded elite orchestration", "90-day conversation memory", "Advanced orchestration"],
     enterprise: ["Unlimited queries", "Premium orchestration", "Dedicated support", "Custom integrations", "Team management"],
     maximum: ["Unlimited everything", "Premium orchestration", "24/7 support", "White-glove onboarding", "Custom model training"],
   }

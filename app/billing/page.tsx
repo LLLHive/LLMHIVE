@@ -169,6 +169,7 @@ export default function BillingPage() {
   const modeInfo = ORCHESTRATION_MODE_LABELS[usage?.orchestrationMode || "elite"]
   const ModeIcon = modeInfo.icon
   const statusLabel = subscription?.status === "trialing" ? "active" : subscription?.status
+  const hasFixedEliteQuota = Boolean(usage && usage.elite.limit > 0)
 
   return (
     <div className="min-h-screen bg-background">
@@ -191,9 +192,9 @@ export default function BillingPage() {
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold mb-2">Billing & Quota</h1>
+          <h1 className="text-3xl font-display font-bold mb-2">Billing & Usage</h1>
           <p className="text-muted-foreground">
-            Track your Premium queries, manage subscription, and upgrade for more.
+            Track spend-guarded orchestration, manage subscription, and upgrade when needed.
           </p>
         </div>
 
@@ -229,12 +230,12 @@ export default function BillingPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-green-500" />
-                  Premium Quota
+                  Spend Guard
                 </CardTitle>
                 <CardDescription>
                   {isFreeTier
-                    ? "Upgrade to unlock Premium queries (#1 in 5 out of 8 benchmark categories)"
-                    : "Your best-quality queries (#1 in 5 out of 8 benchmark categories)"
+                    ? "Upgrade to unlock paid orchestration (#1 in 5 out of 8 benchmark categories)"
+                    : "Elite orchestration while the spend guard allows"
                   }
                 </CardDescription>
               </div>
@@ -253,21 +254,21 @@ export default function BillingPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium flex items-center gap-2">
-                  🟢 Premium queries
+                  Spend-guarded elite orchestration
                   <Badge variant="outline" className="text-green-500 text-xs">5/8 categories #1</Badge>
                 </span>
                 <span className="text-sm font-mono">
-                  {usage?.elite.remaining || 0} / {usage?.elite.limit || 0} remaining
+                  {hasFixedEliteQuota ? `${usage?.elite.remaining || 0} / ${usage?.elite.limit || 0} remaining` : "Spend guard active"}
                 </span>
               </div>
               <Progress 
-                value={Math.min((usage?.elite.percentUsed || 0) * 100, 100)} 
+                value={hasFixedEliteQuota ? Math.min((usage?.elite.percentUsed || 0) * 100, 100) : 0} 
                 className="h-3"
               />
-              {!isFreeTier && usage && usage.elite.percentUsed >= 0.8 && (
+              {!isFreeTier && hasFixedEliteQuota && usage && usage.elite.percentUsed >= 0.8 && (
                 <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
-                  {usage.elite.remaining} Premium queries left this month
+                  Spend guard is approaching the protected cap for this billing period
                 </p>
               )}
             </div>

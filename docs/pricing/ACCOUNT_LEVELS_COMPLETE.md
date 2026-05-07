@@ -54,7 +54,7 @@
 | Setting | Value |
 |---------|-------|
 | Default tier | **PREMIUM** (to show the magic) |
-| Premium queries | 50 |
+| Premium allowance | 50 |
 | Elite queries | 10 |
 | Deep reasoning passes | 5 |
 | Memory retention | Session only |
@@ -85,16 +85,16 @@
 
 ---
 
-## 💡 Lite ($9.99/month)
-### #1 AI Quality for Everyone
+## 💡 Standard ($10/month)
+### Spend-Guarded Elite Orchestration
 
-**Price**: $9.99/month | $99.99/year (17% off)
+**Price**: $10/month | $100/year (17% off)
 
 ### Usage Limits
 | Limit | Value |
 |-------|-------|
-| Queries | 800/month |
-| Tokens | 1,000,000/month |
+| Queries | Spend guard controlled |
+| Tokens | Spend guard controlled |
 | Tokens per query | 25,000 |
 | Models per request | 5 |
 | Concurrent requests | 2 |
@@ -104,17 +104,17 @@
 ### Orchestration
 | Setting | Value |
 |---------|-------|
-| Default tier | **ELITE** (#1 quality!) |
-| Premium queries | 200 |
-| Elite queries | 100 |
+| Default tier | **ELITE** while spend guard allows, then FREE |
+| Premium allowance | Not marketed as a fixed quota |
+| Elite queries | Spend guard controlled |
 | Deep reasoning passes | 50 |
-| Memory retention | 7 days |
+| Memory retention | 90 days |
 
 ### Features
 - ✅ Basic orchestration
 - ✅ Elite orchestration
 - ✅ Multi-model routing
-- ✅ Persistent memory (7 days)
+- ✅ Persistent memory (90 days)
 - ✅ Knowledge base
 - ✅ Calculator (authoritative)
 - ✅ Pinecone reranker
@@ -142,16 +142,16 @@
 
 ---
 
-## ⚡ Pro ($29.99/month)
-### AI Command Center - Full Power
+## ⚡ Premium ($20/month)
+### Advanced Orchestration
 
-**Price**: $29.99/month | $299.99/year (17% off)
+**Price**: $20/month | $200/year (17% off)
 
 ### Usage Limits
 | Limit | Value |
 |-------|-------|
-| Queries | 2,000/month |
-| Tokens | 5,000,000/month |
+| Queries | Spend guard controlled |
+| Tokens | Spend guard controlled |
 | Tokens per query | 100,000 |
 | Models per request | 5 |
 | Concurrent requests | 5 |
@@ -161,15 +161,14 @@
 ### Orchestration
 | Setting | Value |
 |---------|-------|
-| Default tier | STANDARD |
-| Premium queries | 500 |
-| Elite queries | 100 |
+| Default tier | **ELITE** while spend guard allows, then FREE |
+| Premium allowance | Not marketed as a fixed quota |
+| Elite queries | Spend guard controlled |
 | Deep reasoning passes | 200 |
-| Memory retention | 30 days |
+| Memory retention | 90 days |
 
 ### Features
 - ✅ All Lite features
-- ✅ **API access**
 - ✅ Advanced orchestration
 - ✅ Full HRM
 - ✅ **DeepConf debate**
@@ -186,13 +185,12 @@
 | Category | LLMHive Pro | Claude Pro ($20) | GPT-5.2 API |
 |----------|-------------|------------------|-------------|
 | Quality | 92.5% avg | 87-89% | 92.4% |
-| Price | **$29.99** | $20.00 | ~$60+/mo |
-| API | ✅ | ❌ | ✅ |
+| Price | **$20.00** | $20.00 | Usage-based |
+| API | Not marketed | ❌ | ✅ |
 | Rankings | **#1 ALL** | #2-5 | #1-2 |
 
 ### Best For
 - Power users
-- Developers needing API access
 - Content creators
 - Small business owners
 
@@ -218,7 +216,7 @@
 | Setting | Value |
 |---------|-------|
 | Default tier | STANDARD |
-| Premium queries | 1,000 (pooled) |
+| Premium allowance | 1,000 (pooled) |
 | Elite queries | 200 (pooled) |
 | Deep reasoning passes | 500 |
 | Memory retention | 90 days |
@@ -270,7 +268,7 @@
 | Setting | Value |
 |---------|-------|
 | Default tier | **PREMIUM** |
-| Premium queries | Unlimited |
+| Premium allowance | Unlimited |
 | Elite queries | 200/seat |
 | Deep reasoning passes | Unlimited |
 | Memory retention | 365 days |
@@ -323,7 +321,7 @@
 | Setting | Value |
 |---------|-------|
 | Default tier | **ELITE** |
-| Premium queries | Unlimited |
+| Premium allowance | Unlimited |
 | Elite queries | **Unlimited** |
 | Deep reasoning passes | Unlimited |
 | Memory retention | Compliance-defined |
@@ -375,7 +373,7 @@
 | Setting | Value |
 |---------|-------|
 | Default tier | **MAXIMUM** |
-| Premium queries | Unlimited |
+| Premium allowance | Unlimited |
 | Elite queries | Unlimited |
 | Maximum queries | **1,000** |
 | Deep reasoning passes | Unlimited |

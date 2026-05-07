@@ -136,7 +136,7 @@ Per your research, these are the current top models by category:
 | | Image Generation | ❌ | Pro+ only |
 | **Memory** | | | |
 | | Session Memory | ✅ | Full session |
-| | Persistent Memory | ✅ | 7-day retention |
+| | Persistent Memory | ✅ | 90-day retention |
 | | Conversation History | ✅ | Last 50 conversations |
 | | Vector Knowledge Base | ❌ | Pro+ only |
 | **Models Used** | | | |
@@ -157,22 +157,20 @@ Per your research, these are the current top models by category:
 | | Export Conversations | ✅ | JSON/Markdown |
 | **Support** | | | |
 | | Documentation | ✅ | Full access |
-| | Community | ✅ | Priority in Discord |
+| | Documentation | ✅ | Full access |
 | | Email Support | ✅ | 48-hour response |
 | | Priority Support | ❌ | Team+ only |
 
 ---
 
-### TIER 3: PRO ($29.99/month)
+### TIER 3: PREMIUM ($20/month)
 
 | Category | Feature | Allowance | Notes |
 |----------|---------|-----------|-------|
 | **Orchestration** | | | |
 | | Default Quality | ELITE | #1 quality always |
-| | ELITE Queries | 500/month | Full pipeline |
-| | PREMIUM Queries | 1,000/month | High-quality |
-| | STANDARD Queries | 2,000/month | Smart routing |
-| | BUDGET Queries | Unlimited | Overflow |
+| | ELITE Access | Spend guard controlled | Full pipeline while protected spend allows |
+| | Fallback | Free orchestration | Used after spend guard cap |
 | | Max Passes | 300/month | Deep reasoning |
 | | Multi-model Consensus | ✅ | 5-model voting |
 | | Self-Consistency | ✅ Always | Multiple attempts |
@@ -186,7 +184,7 @@ Per your research, these are the current top models by category:
 | | Document Analysis | ✅ | PDF, DOCX, etc. |
 | **Memory** | | | |
 | | Session Memory | ✅ | Full session |
-| | Persistent Memory | ✅ | 30-day retention |
+| | Persistent Memory | ✅ | 90-day retention |
 | | Conversation History | ✅ | Unlimited |
 | | Vector Knowledge Base | ✅ | 100MB storage |
 | | Custom Knowledge Upload | ✅ | PDF, TXT, MD |

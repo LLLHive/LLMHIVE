@@ -67,8 +67,8 @@ const pricingTiers: PricingTier[] = [
     icon: <Star className="h-5 w-5 text-[var(--bronze)]" />,
     quotas: {
       headline: "Standard orchestration",
-      afterQuota: "Unlimited included",
-      detail: "Powered by our Standard routing — strong quality vs. single-model apps",
+      afterQuota: "Spend guard protected",
+      detail: "Elite orchestration while the spend guard allows, then free orchestration",
     },
     features: [...OFFER_STANDARD_FEATURES],
     cta: "Subscribe — Standard",
@@ -83,8 +83,8 @@ const pricingTiers: PricingTier[] = [
     icon: <Crown className="h-5 w-5 text-yellow-500" />,
     badge: "BEST VALUE",
     quotas: {
-      headline: "500 Premium queries / month",
-      afterQuota: "Then unlimited Standard",
+      headline: "Premium orchestration",
+      afterQuota: "Spend guard protected",
       detail: BENCHMARK_CLAIM_SHORT,
     },
     features: [...OFFER_PREMIUM_FEATURES],
@@ -112,17 +112,17 @@ const pricingFaq = [
   {
     question: "What is included in Standard?",
     answer:
-      "Standard is $10/month and includes unlimited Standard orchestration — multi-model routing tuned for cost and quality for everyday tasks.",
+      "Standard is $10/month and includes multi-model orchestration, knowledge base access, calculator and reranker tools, and 90-day conversation memory.",
   },
   {
     question: "What is Premium?",
     answer:
-      "Premium is $20/month and includes 500 Premium queries per month using our top orchestration stack, then unlimited Standard orchestration after the quota.",
+      "Premium is $20/month and uses our top orchestration stack while the spend guard allows, then switches to free orchestration for margin protection.",
   },
   {
-    question: "What happens after I use my Premium queries?",
+    question: "What happens when the spend guard is reached?",
     answer:
-      "LLMHive switches you to unlimited Standard orchestration for the rest of the billing period — no hard stop.",
+      "LLMHive switches paid accounts to free orchestration for the rest of the billing period when provider spend reaches the protected cap.",
   },
   {
     question: "Can I change plans later?",
@@ -333,16 +333,15 @@ export default function PricingClient() {
             Premium quality from <span className="text-yellow-400">$20/mo</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-            <span className="text-yellow-400 font-bold">Premium</span> includes{" "}
-            <span className="text-yellow-400 font-bold">500 Premium queries</span> with{" "}
+            <span className="text-yellow-400 font-bold">Premium</span> uses{" "}
+            <span className="text-yellow-400 font-bold">elite orchestration</span> with{" "}
             <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by GPT-5.2,
             Claude Opus 4.5 & Gemini 3 Pro.
           </p>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            <span className="font-semibold text-[var(--bronze)]">Standard</span> at $10/mo is unlimited{" "}
-            <strong>Standard orchestration</strong>. After Premium quota, Premium subscribers get{" "}
-            <span className="font-semibold text-emerald-400">unlimited Standard</span> for the rest of the
-            period.
+            <span className="font-semibold text-[var(--bronze)]">Standard</span> and{" "}
+            <span className="font-semibold text-yellow-400">Premium</span> use elite orchestration while the
+            spend guard allows, then switch to free orchestration for margin protection.
           </p>
         </div>
 
@@ -356,7 +355,7 @@ export default function PricingClient() {
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="text-3xl font-black text-[var(--bronze)] mb-2">Standard</div>
               <div className="text-lg font-bold text-zinc-200">Standard orchestration</div>
-              <div className="text-sm text-muted-foreground mt-1">Unlimited on the Standard plan; included after Premium quota on Premium</div>
+              <div className="text-sm text-muted-foreground mt-1">90-day memory with spend-guarded elite access</div>
             </div>
           </div>
         </div>
@@ -527,8 +526,8 @@ export default function PricingClient() {
               <div>
                 <h3 className="font-semibold text-yellow-400">Choose Standard or Premium</h3>
                 <p className="text-sm text-muted-foreground">
-                  Standard ($10/mo) is unlimited Standard orchestration. Premium ($20/mo) adds 500 Premium
-                  queries with {BENCHMARK_CLAIM_SHORT}, then unlimited Standard.
+                  Standard ($10/mo) and Premium ($20/mo) use elite orchestration while the spend guard allows,
+                  then switch to free orchestration.
                 </p>
               </div>
             </div>
@@ -537,10 +536,10 @@ export default function PricingClient() {
                 <span className="text-emerald-400 font-bold">2</span>
               </div>
               <div>
-                <h3 className="font-semibold text-emerald-400">After Premium quota</h3>
+                <h3 className="font-semibold text-emerald-400">Spend guard protection</h3>
                 <p className="text-sm text-muted-foreground">
-                  Premium subscribers keep working on unlimited Standard orchestration until the next billing
-                  cycle resets Premium queries.
+                  Provider spend is capped against subscription revenue. When that cap is reached, the account
+                  uses free orchestration until the next billing period.
                 </p>
               </div>
             </div>
@@ -576,7 +575,7 @@ export default function PricingClient() {
             <Trophy className="h-10 w-10 text-amber-500 mx-auto mb-4" />
             <h2 className="text-3xl font-display font-bold mb-4 text-amber-500">Ready to subscribe?</h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              Premium: $20/mo or $200/yr — 500 Premium queries, then unlimited Standard.
+              Premium: $20/mo or $200/yr — elite orchestration while the spend guard allows.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button
