@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { useUser, useClerk } from "@clerk/nextjs"
 import {
   Check,
@@ -177,10 +178,63 @@ function renderPricingStructuredData() {
 }
 
 export default function PricingClient() {
-  const { isSignedIn, isLoaded } = useUser()
+  const searchParams = useSearchParams()
+  const { isSignedIn, isLoaded, user } = useUser()
   const { openSignIn } = useClerk()
   const [isAnnual, setIsAnnual] = useState(false)
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
+  const autoCheckoutAttempted = useRef(false)
+
+  const startCheckout = useCallback(
+    async (
+      tier: PricingTier,
+      billingCycle: "monthly" | "annual",
+      opts?: { dedupeStorageKey?: string },
+    ) => {
+      if (tier.tier === "enterprise") {
+        window.location.href = "mailto:info@llmhive.ai?subject=Enterprise Inquiry - LLMHive"
+        return
+      }
+
+      const clearDedupe = () => {
+        if (opts?.dedupeStorageKey && typeof window !== "undefined") {
+          sessionStorage.removeItem(opts.dedupeStorageKey)
+        }
+      }
+
+      setLoadingTier(tier.tier)
+      try {
+        const response = await fetch("/api/billing/create-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tier: tier.tier,
+            billingCycle,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (data.url) {
+          if (opts?.dedupeStorageKey && typeof window !== "undefined") {
+            sessionStorage.setItem(opts.dedupeStorageKey, "done")
+          }
+          window.location.href = data.url
+        } else {
+          console.error("Failed to create checkout session:", data.error)
+          clearDedupe()
+          alert(`Failed to create checkout: ${data.error || "Unknown error"}`)
+        }
+      } catch (error) {
+        console.error("Error creating checkout session:", error)
+        clearDedupe()
+        alert(`An error occurred: ${error instanceof Error ? error.message : "Unknown error"}`)
+      } finally {
+        setLoadingTier(null)
+      }
+    },
+    [],
+  )
 
   const handleSubscribe = async (tier: PricingTier) => {
     if (tier.tier === "enterprise") {
@@ -195,32 +249,31 @@ export default function PricingClient() {
       return
     }
 
-    setLoadingTier(tier.tier)
-    try {
-      const response = await fetch("/api/billing/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tier: tier.tier,
-          billingCycle: isAnnual ? "annual" : "monthly",
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        console.error("Failed to create checkout session:", data.error)
-        alert(`Failed to create checkout: ${data.error || "Unknown error"}`)
-      }
-    } catch (error) {
-      console.error("Error creating checkout session:", error)
-      alert(`An error occurred: ${error instanceof Error ? error.message : "Unknown error"}`)
-    } finally {
-      setLoadingTier(null)
-    }
+    await startCheckout(tier, isAnnual ? "annual" : "monthly")
   }
+
+  // After Clerk sign-up/sign-in, land on /pricing?subscribe=…&cycle=… and redirect to Stripe once.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user?.id) return
+    const sub = searchParams.get("subscribe")
+    if (!sub) return
+
+    const tier = pricingTiers.find((t) => t.tier === sub)
+    if (!tier || tier.tier === "enterprise") return
+
+    const cycle = searchParams.get("cycle") === "annual" ? "annual" : "monthly"
+    const storageKey = `llmhive_pricing_autoco_v1_${user.id}_${sub}_${cycle}`
+    if (typeof window !== "undefined") {
+      const state = sessionStorage.getItem(storageKey)
+      if (state === "done" || state === "pending") return
+      sessionStorage.setItem(storageKey, "pending")
+    }
+    if (autoCheckoutAttempted.current) return
+    autoCheckoutAttempted.current = true
+
+    setIsAnnual(cycle === "annual")
+    void startCheckout(tier, cycle, { dedupeStorageKey: storageKey })
+  }, [isLoaded, isSignedIn, user?.id, searchParams, startCheckout])
 
   return (
     <div className="min-h-screen bg-background">
