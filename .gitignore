@@ -131,3 +131,9 @@ backups/
 
 # Local backend SQLite scratch (dev)
 llmhive/test.db
+
+# Regenerated benchmark + checkpoint artifacts (do not commit)
+benchmark_reports/
+artifacts/checkpoints/
+artifacts/snapshots/
+artifacts/benchmarks/debug_*/
