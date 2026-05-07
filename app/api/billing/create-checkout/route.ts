@@ -20,6 +20,11 @@ function getStripe(): Stripe | null {
   return new Stripe(process.env.STRIPE_SECRET_KEY)
 }
 
+const BACKEND_URL =
+  process.env.ORCHESTRATOR_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMPLIFIED 4-TIER PRICING (January 2026)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -87,15 +92,6 @@ const TIER_CONFIG: Record<string, {
 
 export async function POST(request: NextRequest) {
   try {
-    const stripe = getStripe()
-    if (!stripe) {
-      console.error("STRIPE_SECRET_KEY not configured")
-      return NextResponse.json(
-        { error: "Stripe not configured. Please contact support." },
-        { status: 500 }
-      )
-    }
-
     const { userId } = await auth()
     
     if (!userId) {
@@ -119,8 +115,42 @@ export async function POST(request: NextRequest) {
     }
 
     const tierLower = tier.toLowerCase()
+    const cycleLower = billingCycle.toLowerCase()
+
+    const stripe = getStripe()
+    if (!stripe) {
+      console.warn("STRIPE_SECRET_KEY not configured on frontend; using orchestrator checkout fallback")
+      const backendResponse = await fetch(`${BACKEND_URL}/api/v1/payments/create-checkout-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(process.env.LLMHIVE_API_KEY ? { "X-API-Key": process.env.LLMHIVE_API_KEY } : {}),
+        },
+        body: JSON.stringify({
+          tier: tierLower,
+          billing_cycle: cycleLower,
+          user_id: userId,
+          user_email: userEmail,
+        }),
+      })
+
+      const backendData = await backendResponse.json().catch(() => ({}))
+      if (!backendResponse.ok || !backendData.url) {
+        console.error("Orchestrator checkout fallback failed:", backendData)
+        return NextResponse.json(
+          { error: backendData.detail || backendData.error || "Stripe checkout is temporarily unavailable." },
+          { status: backendResponse.status || 500 }
+        )
+      }
+
+      return NextResponse.json({
+        url: backendData.url,
+        sessionId: backendData.session_id,
+      })
+    }
+
     const priceIds = getCheckoutPriceIds()
-    const priceId = priceIds[tierLower]?.[billingCycle.toLowerCase()]
+    const priceId = priceIds[tierLower]?.[cycleLower]
 
     if (!priceId) {
       console.error(`Price ID not found for tier: ${tier}, cycle: ${billingCycle}`)
@@ -191,7 +221,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         user_id: userId,
         tier: tierLower,
-        billing_cycle: billingCycle.toLowerCase(),
+        billing_cycle: cycleLower,
         elite_queries: String(tierConfig.eliteQueries * finalQuantity),  // Scale with seats
         after_quota_tier: tierConfig.afterQuotaTier,
         total_queries: String(tierConfig.totalQueries * finalQuantity),  // Scale with seats
