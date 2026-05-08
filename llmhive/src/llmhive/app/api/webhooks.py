@@ -17,6 +17,10 @@ from ..firestore_db import (
     is_firestore_available,
 )
 from ..billing.payments import get_payment_processor, STRIPE_AVAILABLE
+from ..services.email import (
+    send_payment_failed_email,
+    send_subscription_cancelled_email,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +39,61 @@ def _utc_from_stripe_unix(ts: object) -> Optional[dt.datetime]:
     try:
         return dt.datetime.fromtimestamp(int(ts), tz=dt.timezone.utc)
     except (TypeError, ValueError, OSError):
+        return None
+
+
+def _resolve_customer_email(stripe_module: object, event_data: dict) -> Optional[str]:
+    """Best-effort resolution of the customer's email from a Stripe event.
+
+    Tries (in order): ``customer_email`` on the invoice/session, ``customer_details.email``,
+    ``receipt_email``, and finally a ``Customer.retrieve`` lookup. Returns ``None`` if every
+    source is missing or fails.
+    """
+    for key in ("customer_email", "receipt_email"):
+        value = event_data.get(key)
+        if value:
+            return str(value)
+
+    details = event_data.get("customer_details") or {}
+    if isinstance(details, dict) and details.get("email"):
+        return str(details["email"])
+
+    customer_id = event_data.get("customer")
+    if not customer_id:
+        return None
+
+    try:
+        customer = stripe_module.Customer.retrieve(customer_id)
+        email = (
+            getattr(customer, "email", None)
+            or (customer.get("email") if hasattr(customer, "get") else None)
+        )
+        return str(email) if email else None
+    except Exception as exc:
+        logger.warning(
+            "stripe webhook: could not resolve customer email for %s: %s",
+            customer_id,
+            exc,
+        )
+        return None
+
+
+def _resolve_customer_name(stripe_module: object, event_data: dict) -> Optional[str]:
+    details = event_data.get("customer_details") or {}
+    if isinstance(details, dict) and details.get("name"):
+        return str(details["name"])
+
+    customer_id = event_data.get("customer")
+    if not customer_id:
+        return None
+    try:
+        customer = stripe_module.Customer.retrieve(customer_id)
+        name = (
+            getattr(customer, "name", None)
+            or (customer.get("name") if hasattr(customer, "get") else None)
+        )
+        return str(name) if name else None
+    except Exception:
         return None
 
 
@@ -219,15 +278,37 @@ async def stripe_webhook(request: Request) -> dict:
         elif event_type == "customer.subscription.deleted":
             stripe_subscription_id = event_data.get("id")
             subscription = service.get_subscription_by_stripe_id(stripe_subscription_id)
-            
+
             if subscription:
                 service.cancel_subscription(subscription["id"])
                 logger.info(
                     "Stripe webhook handling: Cancelled subscription %s (user: %s)",
                     subscription["id"],
-                    subscription.get("user_id")
+                    subscription.get("user_id"),
                 )
-        
+
+                # Notify the user via email (never raises into the webhook).
+                try:
+                    customer_email = _resolve_customer_email(stripe, event_data)
+                    if customer_email:
+                        period_end_dt = _utc_from_stripe_unix(
+                            event_data.get("current_period_end")
+                        )
+                        period_end_iso = (
+                            period_end_dt.date().isoformat()
+                            if period_end_dt
+                            else None
+                        )
+                        send_subscription_cancelled_email(
+                            to=customer_email,
+                            customer_name=_resolve_customer_name(stripe, event_data),
+                            period_end_iso=period_end_iso,
+                        )
+                except Exception as exc:
+                    logger.warning(
+                        "stripe webhook: cancellation email send failed: %s", exc
+                    )
+
         # Stripe webhook handling: Handle invoice.payment_failed
         elif event_type == "invoice.payment_failed":
             stripe_subscription_id = event_data.get("subscription")
@@ -237,8 +318,26 @@ async def stripe_webhook(request: Request) -> dict:
                     service.update_subscription_status(subscription["id"], "past_due")
                     logger.warning(
                         "Stripe webhook handling: Payment failed for subscription %s",
-                        subscription["id"]
+                        subscription["id"],
                     )
+
+                    try:
+                        customer_email = _resolve_customer_email(stripe, event_data)
+                        if customer_email:
+                            invoice_url = (
+                                event_data.get("hosted_invoice_url")
+                                or event_data.get("invoice_pdf")
+                            )
+                            send_payment_failed_email(
+                                to=customer_email,
+                                customer_name=_resolve_customer_name(stripe, event_data),
+                                invoice_url=invoice_url,
+                            )
+                    except Exception as exc:
+                        logger.warning(
+                            "stripe webhook: payment_failed email send failed: %s",
+                            exc,
+                        )
         
         return {"received": True, "processed": True, "event_type": event_type}
         

@@ -127,6 +127,15 @@ async def lifespan(app: FastAPI):
     logger.info("LLMHive Orchestrator API is ready")
     validate_startup_config()
     log_feature_states()  # Log which features are enabled/disabled
+
+    # Optional Sentry error reporting; dormant unless SENTRY_DSN is set.
+    try:
+        from .monitoring.sentry_init import init_sentry_if_configured
+
+        if init_sentry_if_configured():
+            logger.info("✓ Sentry error reporting active")
+    except Exception as exc:
+        logger.warning("sentry init failed (non-fatal): %s", exc)
     
     # Initialize OpenTelemetry tracing (SDK only, not middleware)
     # NOTE: Middleware cannot be added during lifespan in newer FastAPI versions
@@ -459,16 +468,40 @@ if engine is not None:
 HEALTH_PAYLOAD = {"status": "ok"}
 
 
+def _build_health_payload() -> dict[str, str]:
+    """Augment the basic health payload with build-identification info.
+
+    Returns ``status``, ``commit`` (git SHA injected at build time), and
+    ``revision`` (Cloud Run revision name injected by the platform). This lets
+    operators ``curl /healthz`` and immediately know which build is serving
+    without having to call ``gcloud`` or ``/build-info`` separately.
+    """
+    payload: dict[str, str] = {"status": "ok"}
+    commit = os.getenv("BUILD_COMMIT") or os.getenv("GIT_SHA")
+    if commit:
+        payload["commit"] = commit[:12]
+    revision = os.getenv("K_REVISION")
+    if revision:
+        payload["revision"] = revision
+    service = os.getenv("K_SERVICE")
+    if service:
+        payload["service"] = service
+    return payload
+
+
 @app.get("/healthz", summary="Health check", include_in_schema=False)
 async def health_check() -> dict[str, str]:
     """Health check endpoint required by Cloud Run.
+
+    Returns ``{status, commit, revision, service}`` so operators can verify
+    which build is currently serving traffic without needing ``gcloud``.
 
     Note: This is a root-level health check endpoint (/healthz) separate from
     the API-level health check (/api/v1/healthz). Cloud Run and other
     infrastructure components typically expect health checks at the root level.
     """
     logger.info("Health check endpoint called")
-    return HEALTH_PAYLOAD
+    return _build_health_payload()
 
 
 @app.head("/healthz", summary="Health check (HEAD)", include_in_schema=False)
@@ -481,7 +514,7 @@ async def health_check_head() -> Response:
 async def health_alias() -> dict[str, str]:
     """Backward compatible alias for legacy health checks."""
     logger.info("Health alias endpoint called")
-    return HEALTH_PAYLOAD
+    return _build_health_payload()
 
 
 @app.head("/health", include_in_schema=False)

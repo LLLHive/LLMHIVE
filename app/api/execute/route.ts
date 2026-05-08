@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     const entitlement = await getPaidEntitlement(userId)
     if (!entitlement.hasPaidAccess) {
-      return NextResponse.json(paymentRequiredResponse(), { status: 402 })
+      return NextResponse.json(paymentRequiredResponse(entitlement.status), { status: 402 })
     }
 
     const { code, language } = await req.json()

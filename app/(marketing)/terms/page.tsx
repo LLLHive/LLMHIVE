@@ -66,7 +66,7 @@ export default function TermsOfServicePage() {
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-2">Terms of Service</h1>
-        <p className="text-muted-foreground mb-8">Last updated: January 7, 2026</p>
+        <p className="text-muted-foreground mb-8">Last updated: May 7, 2026</p>
 
         <div className="prose prose-invert max-w-none space-y-8">
           <section>
@@ -115,81 +115,94 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">5. Subscription and Payments</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              We offer three subscription tiers:
+              We offer the following subscription tiers:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-              <li><strong>Standard ($10/mo, $100/yr):</strong> Spend-guarded elite orchestration and 90-day memory</li>
-              <li><strong>Premium ($20/mo, $200/yr):</strong> Spend-guarded elite orchestration and 90-day memory</li>
-              <li><strong>Enterprise ($35/seat/mo, min 5 seats):</strong> 400 Premium queries per seat per month, then unlimited Standard; SSO and compliance options</li>
+              <li><strong>Standard ($10/mo, $100/yr):</strong> Spend-guarded elite orchestration and 90-day conversation memory</li>
+              <li><strong>Premium ($20/mo, $200/yr):</strong> Spend-guarded elite orchestration and 90-day conversation memory</li>
+              <li><strong>Enterprise (custom):</strong> SSO, dedicated capacity, and compliance options under a separate agreement</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-4">
               Payment terms:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-              <li>Paid subscriptions are billed in advance on a monthly or annual basis</li>
-              <li>Annual subscriptions receive approximately 17% discount</li>
-              <li>You may cancel your subscription at any time</li>
-              <li>Refunds are provided at our discretion</li>
-              <li>Prices may change with 30 days notice</li>
-              <li>Premium query quotas reset monthly; unused queries do not roll over</li>
-              <li>Enterprise seats can be adjusted with billing prorated accordingly</li>
+              <li>Paid subscriptions are billed in advance on a monthly or annual basis through Stripe</li>
+              <li>Annual subscriptions receive approximately 17% discount versus monthly billing</li>
+              <li>Subscriptions automatically renew at the end of each billing period until cancelled</li>
+              <li>Prices may change with at least 30 days notice; existing prepaid periods are honored at the original price</li>
+              <li>Applicable taxes (sales tax, VAT, GST) are calculated by Stripe and added at checkout where required</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">6. Intellectual Property</h2>
+            <h2 className="text-2xl font-semibold mb-4">6. Cancellation and Refunds</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              <strong>Cancellation.</strong> You may cancel your subscription at any time from the billing portal in your account settings. Cancellation takes effect at the end of the then-current billing period, and you retain paid access until that date. We will not bill you again for that subscription unless you re-subscribe.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              <strong>Refunds.</strong> Subscription fees are generally non-refundable, including for partial billing periods, unused capacity, or after a renewal has charged. We may, at our sole discretion, issue a prorated refund in cases of (a) duplicate charges, (b) extended Service unavailability that materially impairs use, or (c) clear billing errors. Refund requests must be submitted to <strong>info@llmhive.ai</strong> within 14 days of the charge.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              <strong>Failed payments.</strong> If a renewal payment fails, we will retry per Stripe&apos;s standard schedule. After repeated failure your subscription will be set to <em>past due</em> and access to paid features will be suspended until billing is restored. You will receive an email notification before access is suspended.
+            </p>
             <p className="text-muted-foreground leading-relaxed">
-              You retain ownership of content you create using the Service. You grant us a 
-              limited license to process your content to provide the Service. The Service 
+              <strong>Chargebacks.</strong> Initiating a chargeback before contacting us at <strong>info@llmhive.ai</strong> is a violation of these Terms and may result in immediate account termination and forfeiture of any data export window described in Section 10.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">7. Intellectual Property</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              You retain ownership of content you create using the Service. You grant us a
+              limited license to process your content to provide the Service. The Service
               itself, including its design, features, and code, is owned by LLMHive.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">7. AI Output Disclaimer</h2>
+            <h2 className="text-2xl font-semibold mb-4">8. AI Output Disclaimer</h2>
             <p className="text-muted-foreground leading-relaxed">
-              AI-generated content may contain errors, biases, or inaccuracies. You are 
-              responsible for reviewing and verifying any AI output before use. The Service 
-              should not be used as a substitute for professional advice (legal, medical, 
+              AI-generated content may contain errors, biases, or inaccuracies. You are
+              responsible for reviewing and verifying any AI output before use. The Service
+              should not be used as a substitute for professional advice (legal, medical,
               financial, etc.).
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">8. Limitation of Liability</h2>
+            <h2 className="text-2xl font-semibold mb-4">9. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed">
-              THE SERVICE IS PROVIDED &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND. WE ARE NOT 
-              LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. 
+              THE SERVICE IS PROVIDED &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND. WE ARE NOT
+              LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES.
               OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE PAST 12 MONTHS.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">9. Termination</h2>
+            <h2 className="text-2xl font-semibold mb-4">10. Termination and Data Export</h2>
             <p className="text-muted-foreground leading-relaxed">
-              We may terminate or suspend your account at any time for violations of these 
-              terms. Upon termination, your right to use the Service ceases immediately. 
-              You may export your data before account closure.
+              We may terminate or suspend your account at any time for violations of these
+              terms. Upon termination, your right to use the Service ceases immediately.
+              You may request a data export of your conversations within 30 days of account
+              closure by emailing <strong>info@llmhive.ai</strong>.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">10. Changes to Terms</h2>
+            <h2 className="text-2xl font-semibold mb-4">11. Changes to Terms</h2>
             <p className="text-muted-foreground leading-relaxed">
-              We may update these Terms from time to time. We will notify you of material 
-              changes via email or in-app notification. Continued use after changes constitutes 
-              acceptance of the new terms.
+              We may update these Terms from time to time. We will notify you of material
+              changes via email or in-app notification at least 15 days before they take effect.
+              Continued use after the effective date constitutes acceptance of the new terms.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">11. Contact</h2>
+            <h2 className="text-2xl font-semibold mb-4">12. Contact</h2>
             <p className="text-muted-foreground leading-relaxed">
               For questions about these Terms, contact us at:
               <br /><br />
               <strong>Email:</strong> info@llmhive.ai
-              <br />
-              <strong>Address:</strong> [Your Business Address]
             </p>
           </section>
         </div>

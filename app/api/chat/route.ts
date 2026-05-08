@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
 
   const entitlement = await getPaidEntitlement(clerkUserId)
   if (!entitlement.hasPaidAccess) {
-    return NextResponse.json(paymentRequiredResponse(), { status: 402 })
+    return NextResponse.json(paymentRequiredResponse(entitlement.status), { status: 402 })
   }
 
   // Debug: Log environment variable status at the start of every request

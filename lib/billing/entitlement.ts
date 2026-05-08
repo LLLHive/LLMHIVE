@@ -40,10 +40,27 @@ export async function getPaidEntitlement(userId: string): Promise<EntitlementRes
   }
 }
 
-export function paymentRequiredResponse() {
+export function paymentRequiredResponse(status?: string) {
+  const statusLower = (status || "").toLowerCase()
+  const isPastDue = statusLower === "past_due"
+  const checkoutUrl = isPastDue
+    ? "/pricing?payment_required=1&reason=past_due"
+    : "/pricing?subscribe=pro&cycle=monthly&payment_required=1"
+
   return {
     error: "Payment required",
-    details: "Your account is not active yet. Complete checkout to use LLMHive.",
-    checkoutUrl: "/pricing?subscribe=pro&cycle=monthly&payment_required=1",
+    details: isPastDue
+      ? "Your latest renewal payment failed. Update your payment method to restore access."
+      : "Your account is not active yet. Complete checkout to use LLMHive.",
+    checkoutUrl,
+    status: statusLower || "none",
   }
+}
+
+export function paidAccessRedirectUrl(status?: string): string {
+  const statusLower = (status || "").toLowerCase()
+  if (statusLower === "past_due") {
+    return "/pricing?payment_required=1&reason=past_due"
+  }
+  return "/pricing?subscribe=pro&cycle=monthly&payment_required=1"
 }

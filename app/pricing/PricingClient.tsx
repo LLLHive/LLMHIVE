@@ -314,6 +314,31 @@ export default function PricingClient() {
       </header>
 
       <main className="container mx-auto px-4 py-12">
+        {searchParams.get("payment_required") === "1" && (
+          <div
+            role="alert"
+            className={
+              searchParams.get("reason") === "past_due"
+                ? "max-w-3xl mx-auto mb-8 rounded-xl border border-red-500/60 bg-red-500/10 px-5 py-4 text-sm text-red-100"
+                : "max-w-3xl mx-auto mb-8 rounded-xl border border-amber-500/60 bg-amber-500/10 px-5 py-4 text-sm text-amber-100"
+            }
+          >
+            {searchParams.get("reason") === "past_due" ? (
+              <>
+                <strong className="font-semibold">Your last renewal payment failed.</strong>{" "}
+                Update your payment method to restore access. We&apos;ll resume immediately
+                once the new charge succeeds.
+              </>
+            ) : (
+              <>
+                <strong className="font-semibold">Subscription required.</strong>{" "}
+                Pick a plan below to start using LLMHive — you&apos;ll be redirected to
+                Stripe to complete checkout.
+              </>
+            )}
+          </div>
+        )}
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-yellow-500/30 border-2 border-yellow-400 shadow-lg shadow-yellow-500/20 mb-6">
             <Trophy className="h-10 w-10 text-yellow-400" />

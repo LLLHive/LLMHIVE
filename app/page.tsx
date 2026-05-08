@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { ChatInterface } from "@/components/chat-interface"
 import { Skeleton } from "@/components/loading-skeleton"
 import { OnboardingWrapper } from "@/components/onboarding-wrapper"
-import { getPaidEntitlement } from "@/lib/billing/entitlement"
+import { getPaidEntitlement, paidAccessRedirectUrl } from "@/lib/billing/entitlement"
 
 // Loading skeleton for the chat interface
 function ChatInterfaceLoading() {
@@ -32,7 +32,7 @@ export default async function Home() {
 
   const entitlement = await getPaidEntitlement(userId)
   if (!entitlement.hasPaidAccess) {
-    redirect("/pricing?subscribe=pro&cycle=monthly&payment_required=1")
+    redirect(paidAccessRedirectUrl(entitlement.status))
   }
 
   return (
