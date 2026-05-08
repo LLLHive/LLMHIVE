@@ -227,6 +227,115 @@ async def test_invoice_payment_failed_flips_status_and_emails(
 
 
 @pytest.mark.asyncio
+async def test_checkout_completed_creates_subscription_and_emails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """checkout.session.completed creates a subscription and fires the welcome-paid email."""
+    fake = _FakeService()  # no existing subscription -> create path
+
+    event = {
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "id": "cs_test_1",
+                "client_reference_id": "user_new_1",
+                "subscription": "sub_stripe_new_1",
+                "customer": "cus_test_new",
+                "customer_email": "newuser@example.com",
+                "amount_total": 2000,
+                "metadata": {
+                    "tier": "premium",
+                    "billing_cycle": "monthly",
+                    "user_id": "user_new_1",
+                },
+            }
+        },
+    }
+    fake_stripe = _patch_environment(
+        monkeypatch, fake, event, customer_email="newuser@example.com"
+    )
+
+    # Stripe.Subscription.retrieve must look like the real object.
+    stripe_sub = MagicMock()
+    stripe_sub.customer = "cus_test_new"
+    stripe_sub.get = lambda key, default=None: {
+        "current_period_start": 1_790_000_000,
+        "current_period_end": 1_792_500_000,
+    }.get(key, default)
+    fake_stripe.Subscription.retrieve = MagicMock(return_value=stripe_sub)
+
+    # Replace create_subscription on the fake service so we can assert it was called.
+    created: Dict[str, Any] = {}
+
+    def _fake_create(**kwargs):
+        created.update(kwargs)
+        return {"id": "sub_local_new_1", **kwargs}
+
+    fake.create_subscription = _fake_create  # type: ignore[attr-defined]
+
+    sent: Dict[str, Any] = {}
+
+    def _fake_confirm(**kwargs):
+        sent.update(kwargs)
+        return {"sent": True, "skipped": False, "id": "msg_confirm"}
+
+    monkeypatch.setattr(
+        webhooks_mod, "send_subscription_confirmed_email", _fake_confirm
+    )
+
+    with patch.dict("sys.modules", {"stripe": fake_stripe}):
+        result = await webhooks_mod.stripe_webhook(_build_request())
+
+    assert result["processed"] is True
+    assert created["user_id"] == "user_new_1"
+    assert created["tier_name"] == "premium"
+    assert created["billing_cycle"] == "monthly"
+    assert sent.get("to") == "newuser@example.com"
+    assert sent.get("tier") == "premium"
+    assert sent.get("amount_cents") == 2000
+
+
+@pytest.mark.asyncio
+async def test_checkout_completed_email_failure_does_not_5xx(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failing confirmation email must not break the webhook."""
+    fake = _FakeService()
+    event = {
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "id": "cs_test_2",
+                "client_reference_id": "user_new_2",
+                "subscription": "sub_stripe_new_2",
+                "customer": "cus_test_new_2",
+                "customer_email": "boom@example.com",
+                "metadata": {"tier": "standard", "billing_cycle": "annual", "user_id": "user_new_2"},
+            }
+        },
+    }
+    fake_stripe = _patch_environment(monkeypatch, fake, event)
+    stripe_sub = MagicMock()
+    stripe_sub.customer = "cus_test_new_2"
+    stripe_sub.get = lambda *_a, **_k: None
+    fake_stripe.Subscription.retrieve = MagicMock(return_value=stripe_sub)
+
+    fake.create_subscription = lambda **kw: {"id": "sub_local_new_2"}  # type: ignore[attr-defined]
+
+    def _exploder(**_kwargs):
+        raise RuntimeError("resend exploded")
+
+    monkeypatch.setattr(
+        webhooks_mod, "send_subscription_confirmed_email", _exploder
+    )
+
+    with patch.dict("sys.modules", {"stripe": fake_stripe}):
+        result = await webhooks_mod.stripe_webhook(_build_request())
+
+    assert result["processed"] is True
+
+
+@pytest.mark.asyncio
 async def test_invoice_payment_failed_email_failure_does_not_5xx(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

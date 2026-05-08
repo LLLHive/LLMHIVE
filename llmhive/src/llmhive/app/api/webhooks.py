@@ -20,6 +20,7 @@ from ..billing.payments import get_payment_processor, STRIPE_AVAILABLE
 from ..services.email import (
     send_payment_failed_email,
     send_subscription_cancelled_email,
+    send_subscription_confirmed_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -235,7 +236,31 @@ async def stripe_webhook(request: Request) -> dict:
                         )
                     else:
                         logger.error("Failed to create subscription in Firestore")
-                
+
+                # Confirmation email (never raises into the webhook).
+                try:
+                    customer_email = _resolve_customer_email(stripe, session)
+                    if customer_email:
+                        amount_cents = (
+                            session.get("amount_total")
+                            or session.get("amount_subtotal")
+                        )
+                        next_iso = (
+                            period_end.date().isoformat() if period_end else None
+                        )
+                        send_subscription_confirmed_email(
+                            to=customer_email,
+                            customer_name=_resolve_customer_name(stripe, session),
+                            tier=tier_name,
+                            billing_cycle=billing_cycle,
+                            amount_cents=int(amount_cents) if amount_cents else None,
+                            next_billing_iso=next_iso,
+                        )
+                except Exception as exc:
+                    logger.warning(
+                        "stripe webhook: confirmation email send failed: %s", exc
+                    )
+
             except Exception as exc:
                 logger.exception(
                     "Stripe webhook handling: Failed to process checkout.session.completed: %s",

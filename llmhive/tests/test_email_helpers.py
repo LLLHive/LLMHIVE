@@ -142,3 +142,57 @@ def test_subscription_cancelled_email_skips_with_no_recipient(
         result = email_module.send_subscription_cancelled_email(to=None)  # type: ignore[arg-type]
     assert result == {"sent": False, "skipped": True, "reason": "no_recipient"}
     mock_post.assert_not_called()
+
+
+def test_subscription_confirmed_email_renders_amount_and_cycle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_xyz")
+
+    with patch.object(
+        email_module.httpx, "post", return_value=_FakeResponse(200)
+    ) as mock_post:
+        result = email_module.send_subscription_confirmed_email(
+            to="user@example.com",
+            customer_name="Test User",
+            tier="premium",
+            billing_cycle="annual",
+            amount_cents=20000,
+            next_billing_iso="2027-05-08",
+        )
+
+    assert result["sent"] is True
+    body = mock_post.call_args.kwargs["json"]
+    assert "Premium" in body["html"]
+    assert "annual" in body["html"]
+    assert "$200.00" in body["html"]
+    assert "2027-05-08" in body["html"]
+    assert "$200.00" in body["text"]
+    assert "Premium" in body["text"]
+
+
+def test_subscription_confirmed_email_omits_optional_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Email still sends with only the recipient and a default tier."""
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_xyz")
+
+    with patch.object(
+        email_module.httpx, "post", return_value=_FakeResponse(200)
+    ) as mock_post:
+        result = email_module.send_subscription_confirmed_email(to="user@example.com")
+
+    assert result["sent"] is True
+    body = mock_post.call_args.kwargs["json"]
+    assert "$" not in body["text"]  # no amount line
+    assert "Next billing" not in body["text"]
+
+
+def test_subscription_confirmed_email_no_recipient_skips(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_xyz")
+    with patch.object(email_module.httpx, "post") as mock_post:
+        result = email_module.send_subscription_confirmed_email(to="")
+    assert result == {"sent": False, "skipped": True, "reason": "no_recipient"}
+    mock_post.assert_not_called()

@@ -164,6 +164,85 @@ def send_payment_failed_email(
     return _post_email(to=to, subject=subject, html=html, text=text)
 
 
+def send_subscription_confirmed_email(
+    *,
+    to: str,
+    customer_name: Optional[str] = None,
+    tier: Optional[str] = None,
+    billing_cycle: Optional[str] = None,
+    amount_cents: Optional[int] = None,
+    next_billing_iso: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Confirm a successful checkout. Sent when ``checkout.session.completed`` arrives."""
+    if not to:
+        logger.warning("email.subscription_confirmed: no recipient address")
+        return {"sent": False, "skipped": True, "reason": "no_recipient"}
+
+    first_name = (customer_name or "").split(" ")[0] or "there"
+    app_url = _app_url()
+    tier_display = (tier or "Premium").strip().title()
+    cycle_display = (billing_cycle or "monthly").strip().lower()
+    amount_str = (
+        f"${amount_cents / 100:.2f}" if isinstance(amount_cents, int) else None
+    )
+
+    subject = f"Welcome to LLMHive {tier_display}"
+    rows = [
+        f"<tr><td style=\"color:#a3a3a3;\">Plan</td><td align=\"right\" style=\"color:#f5f5f5;font-weight:600;\">{tier_display} ({cycle_display})</td></tr>"
+    ]
+    if amount_str:
+        rows.append(
+            f"<tr><td style=\"color:#a3a3a3;padding-top:6px;\">Amount</td><td align=\"right\" style=\"color:#22c55e;font-weight:600;padding-top:6px;\">{amount_str}</td></tr>"
+        )
+    if next_billing_iso:
+        rows.append(
+            f"<tr><td style=\"color:#a3a3a3;padding-top:6px;\">Next billing</td><td align=\"right\" style=\"color:#f5f5f5;padding-top:6px;\">{next_billing_iso}</td></tr>"
+        )
+    summary_rows = "".join(rows)
+
+    html = f"""<!DOCTYPE html>
+<html><head><meta charset=\"utf-8\"><title>{subject}</title></head>
+<body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0a0a0a;color:#e5e5e5;margin:0;padding:24px;\">
+  <div style=\"max-width:560px;margin:0 auto;background:#171717;border:1px solid #262626;border-radius:12px;padding:32px;\">
+    <h2 style=\"margin:0 0 16px 0;color:#f5f5f5;\">Hi {first_name},</h2>
+    <p style=\"color:#a3a3a3;line-height:1.6;\">
+      Your <strong style=\"color:#C48E48;\">{tier_display}</strong> subscription is active. Thanks for joining
+      LLMHive — your account now has full paid access.
+    </p>
+    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:18px 0;background:#0f0f0f;border:1px solid #262626;border-radius:8px;padding:14px 16px;font-size:14px;\">
+      <tbody>{summary_rows}</tbody>
+    </table>
+    <p style=\"text-align:center;margin:24px 0;\">
+      <a href=\"{app_url}\" style=\"display:inline-block;background:linear-gradient(135deg,#C48E48,#A67C3D);color:#0a0a0a;padding:12px 24px;border-radius:8px;font-weight:600;text-decoration:none;\">Open LLMHive</a>
+    </p>
+    <p style=\"color:#737373;font-size:13px;line-height:1.5;\">
+      Manage billing anytime at <a href=\"{app_url}/billing\" style=\"color:#C48E48;\">{app_url}/billing</a>.
+      Questions? Reply to this email.
+    </p>
+  </div>
+</body></html>
+"""
+    text_lines = [
+        f"Hi {first_name},",
+        "",
+        f"Your {tier_display} subscription is active.",
+        f"Plan: {tier_display} ({cycle_display})",
+    ]
+    if amount_str:
+        text_lines.append(f"Amount: {amount_str}")
+    if next_billing_iso:
+        text_lines.append(f"Next billing: {next_billing_iso}")
+    text_lines.extend(
+        [
+            "",
+            f"Open LLMHive: {app_url}",
+            f"Manage billing: {app_url}/billing",
+        ]
+    )
+    text = "\n".join(text_lines) + "\n"
+    return _post_email(to=to, subject=subject, html=html, text=text)
+
+
 def send_subscription_cancelled_email(
     *,
     to: str,

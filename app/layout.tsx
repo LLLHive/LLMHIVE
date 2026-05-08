@@ -1,9 +1,11 @@
 import type React from "react"
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono, Orbitron } from "next/font/google"
 import "./globals.css"
 import { ClerkProvider } from "@clerk/nextjs"
 import { AnalyticsWrapper } from "@/components/analytics"
+import { AnalyticsPageview } from "@/components/observability/analytics-pageview"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
@@ -235,6 +237,9 @@ export default function RootLayout({
                   }}
                 />
                 <AnalyticsWrapper />
+                <Suspense fallback={null}>
+                  <AnalyticsPageview />
+                </Suspense>
                 <SupportWidget />
               </ConversationsProvider>
             </AuthProvider>
