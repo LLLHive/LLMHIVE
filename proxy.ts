@@ -16,11 +16,15 @@ import {
  * These routes are accessible to everyone including non-logged-in users.
  */
 const isPublicRoute = createRouteMatcher([
+  // Public marketing landing — root must be reachable by anonymous traffic.
+  "/",
+
   // Auth routes
   "/sign-in(.*)",
   "/sign-up(.*)",
-  
-  // Marketing/public pages (must be accessible for SEO and conversions)
+
+  // Marketing / SEO pages — every directory under app/(marketing)/* needs to
+  // be reachable without auth or visitors get bounced to /sign-in.
   "/landing(.*)",
   "/pricing(.*)",
   "/about(.*)",
@@ -30,7 +34,22 @@ const isPublicRoute = createRouteMatcher([
   "/contact(.*)",
   "/demo(.*)",
   "/help(.*)",
-  
+  "/faq(.*)",
+  "/press(.*)",
+  "/promo(.*)",
+  "/comparisons(.*)",
+  "/case-studies(.*)",
+  "/use-cases(.*)",
+  "/industries(.*)",
+  "/alternatives(.*)",
+  "/best-ai-assistant-for(.*)",
+  "/best-for(.*)",
+
+  // SEO-discoverable utility files served by app/.
+  "/sitemap.xml",
+  "/robots.txt",
+  "/llms.txt",
+
   // API routes that should be public
   "/api/webhooks(.*)",
   "/api/health",
