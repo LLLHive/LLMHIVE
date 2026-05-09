@@ -32,7 +32,11 @@ import {
   OFFER_STANDARD_FEATURES,
 } from "@/lib/marketing/pricing-offers"
 import { cn } from "@/lib/utils"
+import { track } from "@/lib/observability/analytics"
 import Link from "next/link"
+
+const SIGNUP_TRACKED_STORAGE_KEY = "llmhive_signup_tracked_v1"
+const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000
 
 /** Stripe / backend tier keys (legacy ids: lite = Standard product, pro = Premium product) */
 export type CheckoutTierKey = "lite" | "pro" | "enterprise"
@@ -203,6 +207,12 @@ export default function PricingClient() {
       }
 
       setLoadingTier(tier.tier)
+      void track("checkout_started", {
+        tier: tier.tier,
+        tier_name: tier.name,
+        billing_cycle: billingCycle,
+        price_usd: billingCycle === "annual" ? tier.annualPrice : tier.monthlyPrice,
+      })
       try {
         const response = await fetch("/api/billing/create-checkout", {
           method: "POST",
@@ -251,6 +261,31 @@ export default function PricingClient() {
 
     await startCheckout(tier, isAnnual ? "annual" : "monthly")
   }
+
+  // Fire `signup_completed` once per Clerk user when they first land here
+  // right after creating their account (Clerk redirects to /pricing with
+  // ?subscribe=…). Dedup via localStorage so reloads / re-visits don't refire.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user?.id) return
+    if (typeof window === "undefined") return
+
+    const createdAtMs = user.createdAt ? new Date(user.createdAt).getTime() : NaN
+    const isFreshSignup =
+      Number.isFinite(createdAtMs) && Date.now() - createdAtMs < FRESH_SIGNUP_WINDOW_MS
+    if (!isFreshSignup) return
+
+    try {
+      const trackedKey = `${SIGNUP_TRACKED_STORAGE_KEY}_${user.id}`
+      if (window.localStorage.getItem(trackedKey)) return
+      window.localStorage.setItem(trackedKey, "1")
+    } catch {
+      // localStorage disabled — skip dedup, only fire if first effect run.
+    }
+    void track("signup_completed", {
+      user_id: user.id,
+      via: searchParams.get("subscribe") ? "pricing_redirect" : "direct",
+    })
+  }, [isLoaded, isSignedIn, user?.id, user?.createdAt, searchParams])
 
   // After Clerk sign-up/sign-in, land on /pricing?subscribe=…&cycle=… and redirect to Stripe once.
   useEffect(() => {
