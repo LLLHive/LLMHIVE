@@ -39,13 +39,46 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    
+    const isPaid = data.status === "paid" || data.status === "complete"
+
+    // Synchronously upsert the Firestore subscription so the entitlement gate on /
+    // sees status=active immediately, instead of waiting for the Stripe webhook
+    // to fire. The webhook still runs (idempotent), this just closes the race.
+    let ensured = false
+    if (isPaid) {
+      try {
+        const ensureRes = await fetch(
+          `${BACKEND_URL}/api/v1/payments/checkout-session/${sessionId}/ensure-subscription`,
+          {
+            method: "POST",
+            headers: {
+              "X-API-Key": process.env.LLMHIVE_API_KEY || "",
+              "Content-Type": "application/json",
+            },
+          }
+        )
+        if (ensureRes.ok) {
+          ensured = true
+        } else {
+          const body = await ensureRes.text().catch(() => "")
+          console.warn(
+            "[verify-session] ensure-subscription returned",
+            ensureRes.status,
+            body.slice(0, 200)
+          )
+        }
+      } catch (err) {
+        console.warn("[verify-session] ensure-subscription request failed:", err)
+      }
+    }
+
     return NextResponse.json({
-      success: data.status === "paid" || data.status === "complete",
+      success: isPaid,
+      ensured,
       subscription: {
         tier: data.metadata?.tier || "pro",
         billingCycle: data.metadata?.billing_cycle || "monthly",
-      }
+      },
     })
   } catch (error) {
     console.error("Error verifying session:", error)

@@ -11,7 +11,7 @@ export interface EntitlementResult {
   status: string
 }
 
-export async function getPaidEntitlement(userId: string): Promise<EntitlementResult> {
+async function fetchEntitlementOnce(userId: string): Promise<EntitlementResult> {
   try {
     const response = await fetch(`${BACKEND_URL}/api/v1/billing/subscription/${encodeURIComponent(userId)}`, {
       headers: {
@@ -38,6 +38,25 @@ export async function getPaidEntitlement(userId: string): Promise<EntitlementRes
     console.error("[Entitlement] Failed to verify paid access:", error)
     return { hasPaidAccess: false, tier: "free", status: "unknown" }
   }
+}
+
+// Webhook delivery from Stripe is async and can lag the user's redirect back
+// to the app by a few seconds. The synchronous "ensure-subscription" call on
+// the success page closes most of that gap, but a single short retry here is a
+// cheap safety net that prevents any residual race from bouncing a paying user
+// to /pricing. Cost: only paid loads with a stale Firestore read hit the
+// retry; unpaid users hit it once before being redirected, which is fine.
+export async function getPaidEntitlement(userId: string): Promise<EntitlementResult> {
+  const first = await fetchEntitlementOnce(userId)
+  if (first.hasPaidAccess) return first
+
+  // Only retry when the failure looks like "subscription not visible yet",
+  // not when the user has an explicit paid-but-bad status (past_due, canceled).
+  const racey = first.status === "none" || first.status === "inactive" || first.status === "unknown"
+  if (!racey) return first
+
+  await new Promise((r) => setTimeout(r, 1500))
+  return fetchEntitlementOnce(userId)
 }
 
 export function paymentRequiredResponse(status?: string) {

@@ -16,6 +16,7 @@ from ..config import settings
 from ..database import get_db
 from ..billing.pricing import TierName, get_pricing_manager
 from ..billing.payments import get_payment_processor, STRIPE_AVAILABLE
+from ..billing.subscription_sync import upsert_subscription_from_checkout_session
 
 logger = logging.getLogger(__name__)
 
@@ -231,4 +232,72 @@ def get_checkout_session(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve checkout session",
         ) from exc
+
+
+@router.post(
+    "/checkout-session/{session_id}/ensure-subscription",
+    status_code=status.HTTP_200_OK,
+)
+def ensure_subscription_from_session(session_id: str) -> dict:
+    """Synchronously upsert the Firestore subscription for a paid checkout session.
+
+    Called by the frontend success page so the user's entitlement is active in
+    Firestore before they click through to the app, eliminating the redirect
+    loop that previously occurred while waiting for the Stripe webhook.
+
+    Idempotent: if the webhook already created the row, this updates it with
+    the latest fields. Returns ``{"created": bool, "updated": bool, ...}``.
+
+    Final path: /api/v1/payments/checkout-session/{session_id}/ensure-subscription
+    """
+    if not STRIPE_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stripe integration not available",
+        )
+
+    processor = get_payment_processor()
+    if processor is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stripe payment processor not configured",
+        )
+
+    try:
+        import stripe
+
+        session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as exc:
+        logger.exception("ensure_subscription: failed to retrieve session %s: %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Checkout session not found",
+        ) from exc
+
+    try:
+        result = upsert_subscription_from_checkout_session(stripe, session)
+    except ValueError as exc:
+        # Surface session-not-paid / missing-fields as 409 so the client can
+        # distinguish them from server errors and retry / abandon as needed.
+        logger.info("ensure_subscription: session %s not eligible: %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        logger.exception("ensure_subscription: upsert failed for %s: %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to ensure subscription",
+        ) from exc
+
+    return {
+        "session_id": session_id,
+        "created": result.created,
+        "updated": result.updated,
+        "user_id": result.user_id,
+        "tier_name": result.tier_name,
+        "billing_cycle": result.get("billing_cycle"),
+        "stripe_subscription_id": result.get("stripe_subscription_id"),
+    }
 
