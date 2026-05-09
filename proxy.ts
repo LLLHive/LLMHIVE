@@ -55,6 +55,15 @@ const isPublicRoute = createRouteMatcher([
   "/api/health",
   "/api/openrouter(.*)",  // OpenRouter API routes for model catalog
   "/api/settings(.*)",    // Settings API for loading user preferences
+
+  // Stripe webhook handler (singular + plural URLs both registered in
+  // Stripe Dashboard). MUST be public — Stripe authenticates with the
+  // signed payload, not a Clerk session. Without this exemption, Clerk
+  // intercepts every Stripe POST and returns its sign-in HTML, which is
+  // exactly what was producing the 404/405 errors in Stripe's
+  // event-deliveries log even though the route file existed.
+  "/api/billing/webhook",
+  "/api/billing/webhooks",
 ])
 
 // Check if running in E2E test mode
