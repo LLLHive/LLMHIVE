@@ -1,7 +1,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { auth } from "@clerk/nextjs/server"
-import { ArrowRight, LogIn } from "lucide-react"
+import { SignOutButton } from "@clerk/nextjs"
+import { ArrowRight, LogIn, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
 
@@ -9,23 +10,26 @@ import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
  * Shared marketing-site header.
  *
  * Renders on every public page (`/`, `/pricing`, `/about`, all of
- * `app/(marketing)/*`) so anonymous visitors always have a clear way to sign
- * in or sign up — and signed-in visitors always have a clear way back into
- * the app without bouncing through the entitlement gate.
+ * `app/(marketing)/*`) so the top-right always has two clearly-visible
+ * action buttons:
  *
- * Auth-state behaviour:
- *  - Not signed in     -> Signup (-> /pricing) + Signin (-> /sign-in)
- *  - Signed in + paid  -> Open app (-> /app)
- *  - Signed in + unpaid -> Choose your plan (-> /pricing)
- *    (We never link signed-in unpaid users back to /sign-in or /app, because
- *    Clerk would force-redirect them to /app and the gate would bounce them
- *    to /pricing — visually a redirect loop.)
+ *  - Anonymous:        Signup (-> /pricing)   + Signin (-> /sign-in)
+ *  - Signed-in PAID:   Open app (-> /app)     + Sign out
+ *  - Signed-in UNPAID: Choose plan (-> /pricing) + Sign out
+ *
+ * Two buttons always — never one — so the layout never collapses and
+ * returning visitors can always log out to become anonymous again. Signed-in
+ * users never see "Signin" (which would force-redirect through Clerk and
+ * bounce off the /app entitlement gate to /pricing).
  */
 export async function MarketingNav() {
   const { userId } = await auth()
   const isSignedIn = Boolean(userId)
 
-  let signedInPrimary: { href: string; label: string } | null = null
+  let signedInPrimary: { href: string; label: string } = {
+    href: "/pricing",
+    label: "Choose your plan",
+  }
   if (isSignedIn && userId) {
     const ent = await getPaidEntitlementFast(userId)
     signedInPrimary = ent.hasPaidAccess
@@ -69,10 +73,9 @@ export async function MarketingNav() {
         <div className="flex items-center gap-2 sm:gap-3">
           {!isSignedIn ? (
             <>
-              {/* Signup goes to /pricing (the user picks a plan first); Signin
-                  goes to /sign-in (existing customers). Both are filled
-                  buttons of equal weight so neither disappears against the
-                  dark nav. */}
+              {/* Signup -> /pricing (visitor picks a plan first). Signin ->
+                  /sign-in (existing customers). Two filled buttons of equal
+                  weight so neither disappears against the dark nav. */}
               <Link href="/pricing">
                 <Button
                   size="sm"
@@ -92,17 +95,29 @@ export async function MarketingNav() {
               </Link>
             </>
           ) : (
-            signedInPrimary && (
+            <>
+              {/* Signed-in: keep TWO buttons. Primary goes into the app or
+                  to plan selection; secondary signs the user out so they
+                  can become anonymous and see the Signup/Signin pair again. */}
               <Link href={signedInPrimary.href}>
                 <Button
                   size="sm"
-                  className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
+                  className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
                 >
                   {signedInPrimary.label}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
               </Link>
-            )
+              <SignOutButton redirectUrl="/">
+                <Button
+                  size="sm"
+                  className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
+                >
+                  <LogOut className="mr-1.5 h-4 w-4" />
+                  Sign out
+                </Button>
+              </SignOutButton>
+            </>
           )}
         </div>
       </div>
