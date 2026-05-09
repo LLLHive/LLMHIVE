@@ -2,40 +2,27 @@ import Image from "next/image"
 import Link from "next/link"
 import { auth } from "@clerk/nextjs/server"
 import { SignOutButton } from "@clerk/nextjs"
-import { ArrowRight, LogIn, LogOut } from "lucide-react"
+import { LogIn, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
 
 /**
  * Shared marketing-site header.
  *
  * Renders on every public page (`/`, `/pricing`, `/about`, all of
- * `app/(marketing)/*`) so the top-right always has two clearly-visible
- * action buttons:
+ * `app/(marketing)/*`). The top-right shows auth controls only — no
+ * "Choose your plan" / "Open app" CTA there. Plan-selection lives in the
+ * hero, the pricing teaser, and the dedicated `/pricing` page; this nav
+ * only handles "are you logged in or not".
  *
- *  - Anonymous:        Signup (-> /pricing)   + Signin (-> /sign-in)
- *  - Signed-in PAID:   Open app (-> /app)     + Sign out
- *  - Signed-in UNPAID: Choose plan (-> /pricing) + Sign out
+ *  - Anonymous:  Signup (-> /pricing)  + Signin (-> /sign-in)
+ *  - Signed-in:  Sign out (returns to /)
  *
- * Two buttons always — never one — so the layout never collapses and
- * returning visitors can always log out to become anonymous again. Signed-in
- * users never see "Signin" (which would force-redirect through Clerk and
- * bounce off the /app entitlement gate to /pricing).
+ * Signed-in users never see "Signin" — that link would force-redirect
+ * through Clerk and bounce off the /app entitlement gate to /pricing.
  */
 export async function MarketingNav() {
   const { userId } = await auth()
   const isSignedIn = Boolean(userId)
-
-  let signedInPrimary: { href: string; label: string } = {
-    href: "/pricing",
-    label: "Choose your plan",
-  }
-  if (isSignedIn && userId) {
-    const ent = await getPaidEntitlementFast(userId)
-    signedInPrimary = ent.hasPaidAccess
-      ? { href: "/app", label: "Open app" }
-      : { href: "/pricing", label: "Choose your plan" }
-  }
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-black/60 backdrop-blur-xl">
@@ -95,29 +82,17 @@ export async function MarketingNav() {
               </Link>
             </>
           ) : (
-            <>
-              {/* Signed-in: keep TWO buttons. Primary goes into the app or
-                  to plan selection; secondary signs the user out so they
-                  can become anonymous and see the Signup/Signin pair again. */}
-              <Link href={signedInPrimary.href}>
-                <Button
-                  size="sm"
-                  className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
-                >
-                  {signedInPrimary.label}
-                  <ArrowRight className="ml-1.5 h-4 w-4" />
-                </Button>
-              </Link>
-              <SignOutButton redirectUrl="/">
-                <Button
-                  size="sm"
-                  className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
-                >
-                  <LogOut className="mr-1.5 h-4 w-4" />
-                  Sign out
-                </Button>
-              </SignOutButton>
-            </>
+            // Signed-in: only Sign out. Drops the visitor back at "/" as
+            // anonymous so the Signup/Signin pair reappears.
+            <SignOutButton redirectUrl="/">
+              <Button
+                size="sm"
+                className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
+              >
+                <LogOut className="mr-1.5 h-4 w-4" />
+                Sign out
+              </Button>
+            </SignOutButton>
           )}
         </div>
       </div>
