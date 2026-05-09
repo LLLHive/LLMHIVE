@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
+import { MarketingNav } from "@/components/marketing/MarketingNav"
 
 export const metadata: Metadata = {
   title: {
@@ -34,6 +35,10 @@ export default function MarketingLayout({
       enableSystem
       disableTransitionOnChange
     >
+      {/* Shared marketing header — Signup/Signin until the user signs in. */}
+      <MarketingNav />
+      {/* h-16 spacer so content doesn't sit underneath the fixed nav. */}
+      <div className="h-16" aria-hidden />
       {children}
     </ThemeProvider>
   )

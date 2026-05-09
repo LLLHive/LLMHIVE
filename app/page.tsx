@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MarketingNav } from "@/components/marketing/MarketingNav"
 import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
 import {
   OFFER_ENTERPRISE_FEATURES,
@@ -261,85 +262,8 @@ export default async function Home() {
         <div className="absolute left-[-200px] top-[200px] h-[500px] w-[500px] rounded-full bg-amber-700/10 blur-[140px]" />
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Nav                                                                 */}
-      {/* ------------------------------------------------------------------ */}
-      <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-black/60 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image
-              src="/logo.png"
-              alt="LLMHive"
-              width={32}
-              height={32}
-              priority
-              className="h-8 w-8"
-            />
-            <Image
-              src="/brand/llmhive-wordmark-nav.png"
-              alt="LLMHive"
-              width={140}
-              height={30}
-              priority
-              className="hidden h-6 w-auto sm:block"
-            />
-          </Link>
-          <div className="hidden items-center gap-7 md:flex">
-            <Link href="#features" className="text-sm text-zinc-400 transition-colors hover:text-white">
-              Features
-            </Link>
-            <Link href="#how-it-works" className="text-sm text-zinc-400 transition-colors hover:text-white">
-              How it works
-            </Link>
-            <Link href="#pricing" className="text-sm text-zinc-400 transition-colors hover:text-white">
-              Pricing
-            </Link>
-            <Link href="/about" className="text-sm text-zinc-400 transition-colors hover:text-white">
-              About
-            </Link>
-            <Link href="/contact" className="text-sm text-zinc-400 transition-colors hover:text-white">
-              Contact
-            </Link>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {!isSignedIn ? (
-              <>
-                {/* Two equally-bold filled buttons in nav, ordered Signup
-                    first (conversion goal) then Signin (returning users).
-                    Signup is the gradient primary; Signin is solid amber so
-                    it never visually disappears against the dark nav. */}
-                <Link href="/sign-up">
-                  <Button
-                    size="sm"
-                    className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
-                  >
-                    Signup
-                  </Button>
-                </Link>
-                <Link href="/sign-in">
-                  <Button
-                    size="sm"
-                    className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
-                  >
-                    <LogIn className="mr-1.5 h-4 w-4" />
-                    Signin
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <Link href={primary.href}>
-                <Button
-                  size="sm"
-                  className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
-                >
-                  {primary.label}
-                  <ArrowRight className="ml-1.5 h-4 w-4" />
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
+      {/* Shared site-wide nav: Signup/Signin top-right until logged in. */}
+      <MarketingNav />
 
       {/* ------------------------------------------------------------------ */}
       {/* Hero                                                                */}

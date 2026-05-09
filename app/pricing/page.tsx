@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import PricingClient from "./PricingClient"
+import { MarketingNav } from "@/components/marketing/MarketingNav"
 
 export const metadata: Metadata = {
   title: "LLMHive Pricing",
@@ -62,6 +63,9 @@ export default function PricingPage() {
   return (
     <>
       {renderStructuredData()}
+      {/* Shared marketing nav: Signup/Signin top-right until logged in. */}
+      <MarketingNav />
+      <div className="h-16" aria-hidden />
       <Suspense fallback={<PricingFallback />}>
         <PricingClient />
       </Suspense>
