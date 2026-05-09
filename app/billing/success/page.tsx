@@ -116,7 +116,7 @@ export default function BillingSuccessPage() {
               </div>
 
               <div className="flex flex-col gap-3 pt-4">
-                <Link href="/">
+                <Link href="/app">
                   <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
                     Start Using LLMHive
                     <ArrowRight className="h-4 w-4 ml-2" />

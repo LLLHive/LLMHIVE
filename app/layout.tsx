@@ -125,7 +125,8 @@ export default function RootLayout({
     <ClerkProvider
       signUpForceRedirectUrl="/pricing"
       signUpFallbackRedirectUrl="/pricing"
-      signInFallbackRedirectUrl="/"
+      signInForceRedirectUrl="/app"
+      signInFallbackRedirectUrl="/app"
       appearance={{
         variables: {
           colorPrimary: "#cd7f32", // Bronze/gold brand color
