@@ -46,6 +46,9 @@ faiss-cpu>=1.7.4
 # Web Search (Tavily)
 tavily-python>=0.3.0
 
+# Error monitoring (dormant unless SENTRY_DSN is set)
+sentry-sdk[fastapi]>=1.25.0
+
 # OpenTelemetry for distributed tracing
 opentelemetry-api>=1.21.0
 opentelemetry-sdk>=1.21.0
