@@ -155,6 +155,94 @@ def test_endpoint_returns_404_when_neither_store_has_user(app_with_billing):
     assert resp.status_code == 404
 
 
+def test_sync_endpoint_creates_when_not_in_firestore(app_with_billing):
+    """The Vercel webhook calls this endpoint after verifying Stripe's
+    signature. If Firestore has no doc for the Stripe subscription id, we
+    must CREATE one in active state.
+    """
+    fake_service = MagicMock()
+    fake_service.get_subscription_by_stripe_id.return_value = None
+    fake_service.create_subscription.return_value = {
+        "id": "fs_doc_new",
+        "user_id": "user_paid_today",
+    }
+
+    payload = {
+        "userId": "user_paid_today",
+        "stripeCustomerId": "cus_live_1",
+        "stripeSubscriptionId": "sub_live_1",
+        "tier": "premium",
+        "status": "active",
+        "billingCycle": "monthly",
+        "currentPeriodStart": "2026-05-01T00:00:00+00:00",
+        "currentPeriodEnd": "2026-06-01T00:00:00+00:00",
+        "cancelAtPeriodEnd": False,
+    }
+
+    with (
+        patch.object(billing_api, "is_firestore_available", return_value=True),
+        patch.object(billing_api, "FirestoreSubscriptionService", return_value=fake_service),
+    ):
+        client = TestClient(app_with_billing)
+        resp = client.post("/subscription/sync", json=payload)
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body == {
+        "ok": True,
+        "created": True,
+        "updated": False,
+        "user_id": "user_paid_today",
+        "tier_name": "premium",
+        "status": "active",
+    }
+    fake_service.create_subscription.assert_called_once()
+    create_kwargs = fake_service.create_subscription.call_args.kwargs
+    assert create_kwargs["user_id"] == "user_paid_today"
+    assert create_kwargs["tier_name"] == "premium"
+    assert create_kwargs["stripe_subscription_id"] == "sub_live_1"
+
+
+def test_sync_endpoint_updates_existing_doc_idempotently(app_with_billing):
+    """If a Firestore doc already exists (the synchronous ensure-subscription
+    helper won the race), the webhook delivery must update the SAME doc, not
+    create a duplicate.
+    """
+    fake_service = MagicMock()
+    fake_service.get_subscription_by_stripe_id.return_value = {
+        "id": "fs_doc_existing",
+        "user_id": "user_paid_today",
+        "status": "active",
+    }
+
+    payload = {
+        "userId": "user_paid_today",
+        "stripeCustomerId": "cus_live_1",
+        "stripeSubscriptionId": "sub_live_1",
+        "tier": "premium",
+        "status": "active",
+        "billingCycle": "monthly",
+    }
+
+    with (
+        patch.object(billing_api, "is_firestore_available", return_value=True),
+        patch.object(billing_api, "FirestoreSubscriptionService", return_value=fake_service),
+    ):
+        client = TestClient(app_with_billing)
+        resp = client.post("/subscription/sync", json=payload)
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["created"] is False
+    assert body["updated"] is True
+    fake_service.create_subscription.assert_not_called()
+    fake_service.update_subscription.assert_called_once()
+    update_args = fake_service.update_subscription.call_args
+    assert update_args.args[0] == "fs_doc_existing"
+    assert update_args.args[1]["status"] == "active"
+    assert update_args.args[1]["tier_name"] == "premium"
+
+
 def test_endpoint_falls_back_when_firestore_lookup_raises(app_with_billing):
     """Defence-in-depth: if Firestore raises (network blip, bad creds, etc.)
     the endpoint must fall through to SQL rather than 500.

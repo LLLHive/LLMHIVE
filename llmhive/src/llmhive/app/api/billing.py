@@ -749,6 +749,155 @@ def get_subscription_by_user_id(
         ) from exc
 
 
+class SubscriptionSyncRequest(BaseModel):
+    """Payload posted by the Vercel webhook handler.
+
+    Fields use camelCase because that's what the Next.js webhook's
+    ``upsertSubscription`` helper sends today; we accept both shapes so a
+    backend or frontend rename doesn't silently regress the integration.
+    """
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    user_id: str = Field(..., alias="userId")
+    stripe_customer_id: str | None = Field(default=None, alias="stripeCustomerId")
+    stripe_subscription_id: str | None = Field(default=None, alias="stripeSubscriptionId")
+    tier: str = Field(default="free")
+    tier_name: str | None = Field(default=None, alias="tierName")
+    status: str = Field(default="active")
+    billing_cycle: str = Field(default="monthly", alias="billingCycle")
+    current_period_start: datetime | None = Field(default=None, alias="currentPeriodStart")
+    current_period_end: datetime | None = Field(default=None, alias="currentPeriodEnd")
+    cancel_at_period_end: bool = Field(default=False, alias="cancelAtPeriodEnd")
+    seats: int | None = Field(default=None)
+
+
+@router.post("/subscription/sync", status_code=status.HTTP_200_OK)
+def sync_subscription_to_firestore(payload: SubscriptionSyncRequest) -> dict:
+    """Idempotent upsert from the Vercel Stripe webhook into Firestore.
+
+    Final path: ``/api/v1/billing/subscription/sync``
+
+    This is the missing half of the webhook chain that was silently
+    dropping paid users on the floor. The Next.js webhook at
+    ``app/api/billing/webhook(s)/route.ts`` verifies the Stripe signature,
+    normalises the event into a ``SubscriptionData`` shape, and POSTs it
+    here. Without this endpoint, the Vercel handler hit a 404 and the
+    Firestore write never happened — even though Stripe charged the card
+    and dispatched the event successfully.
+
+    Idempotency: if a Firestore doc already exists for ``stripe_subscription_id``,
+    we update it; otherwise we create a new one. The Stripe webhook + the
+    synchronous post-checkout ``ensure-subscription`` helper now share this
+    write path, so two simultaneous deliveries can't produce duplicate docs.
+    """
+    if not is_firestore_available():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Firestore is not configured on this service",
+        )
+
+    user_id = payload.user_id.strip()
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user_id is required",
+        )
+
+    tier_name = (payload.tier_name or payload.tier or "free").lower()
+    billing_cycle = (payload.billing_cycle or "monthly").lower()
+    status_value = (payload.status or "active").lower()
+
+    service = FirestoreSubscriptionService()
+
+    existing = None
+    if payload.stripe_subscription_id:
+        try:
+            existing = service.get_subscription_by_stripe_id(payload.stripe_subscription_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "subscription/sync: get_subscription_by_stripe_id failed (will create): %s",
+                exc,
+            )
+
+    if existing:
+        update_payload: dict = {
+            "status": status_value,
+            "tier_name": tier_name,
+            "billing_cycle": billing_cycle,
+            "stripe_customer_id": payload.stripe_customer_id,
+            "cancel_at_period_end": payload.cancel_at_period_end,
+        }
+        if payload.current_period_start:
+            update_payload["current_period_start"] = payload.current_period_start
+        if payload.current_period_end:
+            update_payload["current_period_end"] = payload.current_period_end
+
+        try:
+            service.update_subscription(existing["id"], update_payload)
+        except Exception as exc:
+            logger.exception("subscription/sync: update_subscription failed: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update subscription",
+            ) from exc
+
+        logger.info(
+            "subscription/sync: updated existing user=%s tier=%s status=%s",
+            user_id,
+            tier_name,
+            status_value,
+        )
+        return {
+            "ok": True,
+            "created": False,
+            "updated": True,
+            "user_id": user_id,
+            "tier_name": tier_name,
+            "status": status_value,
+        }
+
+    try:
+        created = service.create_subscription(
+            user_id=user_id,
+            tier_name=tier_name,
+            billing_cycle=billing_cycle,
+            stripe_customer_id=payload.stripe_customer_id,
+            stripe_subscription_id=payload.stripe_subscription_id,
+            current_period_start=payload.current_period_start,
+            current_period_end=payload.current_period_end,
+        )
+    except Exception as exc:
+        logger.exception("subscription/sync: create_subscription failed: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create subscription",
+        ) from exc
+
+    if status_value != "active" and isinstance(created, dict) and created.get("id"):
+        try:
+            service.update_subscription(created["id"], {"status": status_value})
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "subscription/sync: post-create status patch failed: %s", exc
+            )
+
+    logger.info(
+        "subscription/sync: created user=%s tier=%s status=%s sub_id=%s",
+        user_id,
+        tier_name,
+        status_value,
+        payload.stripe_subscription_id,
+    )
+    return {
+        "ok": True,
+        "created": True,
+        "updated": False,
+        "user_id": user_id,
+        "tier_name": tier_name,
+        "status": status_value,
+    }
+
+
 @router.post("/subscription/{user_id}/cancel", status_code=status.HTTP_200_OK)
 def cancel_subscription_by_user_id(
     user_id: str,
