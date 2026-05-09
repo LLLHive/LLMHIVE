@@ -13,6 +13,7 @@ from ..billing.subscription import SubscriptionService
 from ..billing.payments import get_payment_processor, STRIPE_AVAILABLE
 from ..billing.usage import UsageTracker, BillingCalculator
 from ..database import get_db
+from ..firestore_db import FirestoreSubscriptionService, is_firestore_available
 from ..models import Subscription, SubscriptionStatus
 
 logger = logging.getLogger(__name__)
@@ -651,25 +652,80 @@ def create_billing_portal(
         ) from exc
 
 
+def _firestore_subscription_response(user_id: str, sub: dict) -> dict:
+    """Normalise a Firestore subscription doc to the public response shape.
+
+    Firestore stores datetimes as native ``datetime`` objects (the webhook /
+    ensure-subscription writers go through ``_utc_from_unix``), but a few
+    legacy rows may still hold ISO strings. Coerce both to ISO strings so the
+    frontend's entitlement check sees a stable contract.
+    """
+    def _iso(value: object) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return str(value)
+
+    return {
+        "user_id": user_id,
+        "tier_name": sub.get("tier_name") or sub.get("tier") or "free",
+        "tier": sub.get("tier_name") or sub.get("tier") or "free",
+        "status": sub.get("status") or "none",
+        "billing_cycle": sub.get("billing_cycle"),
+        "current_period_start": _iso(sub.get("current_period_start")),
+        "current_period_end": _iso(sub.get("current_period_end")),
+        "cancel_at_period_end": bool(sub.get("cancel_at_period_end", False)),
+        "stripe_customer_id": sub.get("stripe_customer_id"),
+        "stripe_subscription_id": sub.get("stripe_subscription_id"),
+        "source": "firestore",
+    }
+
+
 @router.get("/subscription/{user_id}", status_code=status.HTTP_200_OK)
 def get_subscription_by_user_id(
     user_id: str,
     db: Session = Depends(get_db),
 ) -> dict:
     """Get subscription details for a user by user_id.
-    
+
     Final path: /api/v1/billing/subscription/{user_id}
+
+    Reads from Firestore first because that is where the Stripe webhook and
+    the synchronous post-checkout ``ensure-subscription`` helper persist
+    completed purchases. Falls back to the SQL ``SubscriptionService`` only
+    so any legacy rows from before the Firestore migration still resolve.
+
+    Without this, paid users created via the Stripe flow read as 404 here
+    and the frontend entitlement gate bounces them to ``/pricing`` — which
+    is exactly the regression a customer just reported after paying today.
     """
+    # Firestore first: this is where new paid subscriptions are written.
+    if is_firestore_available():
+        try:
+            firestore_service = FirestoreSubscriptionService()
+            firestore_sub = firestore_service.get_user_subscription(user_id)
+            if firestore_sub:
+                return _firestore_subscription_response(user_id, firestore_sub)
+        except Exception as exc:  # noqa: BLE001 - logged + falls through to SQL
+            logger.exception(
+                "Firestore subscription lookup failed for user %s: %s",
+                user_id,
+                exc,
+            )
+
+    # SQL fallback for any subscription that was created before the
+    # Firestore migration. Still 404 if neither store has the user.
     try:
         service = SubscriptionService(db)
         subscription = service.get_user_subscription(user_id)
-        
+
         if subscription is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No subscription found for user",
             )
-        
+
         return {
             "user_id": user_id,
             "tier_name": subscription.tier_name,
@@ -681,6 +737,7 @@ def get_subscription_by_user_id(
             "cancel_at_period_end": subscription.cancel_at_period_end,
             "stripe_customer_id": subscription.stripe_customer_id,
             "stripe_subscription_id": subscription.stripe_subscription_id,
+            "source": "sql",
         }
     except HTTPException:
         raise
