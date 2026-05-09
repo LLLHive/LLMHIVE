@@ -35,10 +35,14 @@ class TestTierLimitsConfig:
         assert "advanced_orchestration" not in limits.enabled_features
 
     def test_pro_tier_limits(self) -> None:
-        """Test Pro tier limits are configured correctly."""
+        """Test Pro tier limits are configured correctly.
+
+        Pro is spend-guard protected: there is no fixed daily request cap
+        because provider spend (not request count) is what we throttle on.
+        """
         limits = get_tier_limits("pro")
-        assert limits.requests_per_minute == 30  # Updated to match actual implementation
-        assert limits.requests_per_day == 200  # Updated to match actual implementation
+        assert limits.requests_per_minute == 30
+        assert limits.requests_per_day is None  # Spend-guard protected, not request-capped
         assert "advanced_orchestration" in limits.enabled_features
         assert "deep_verification" in limits.enabled_features
 
@@ -121,16 +125,20 @@ class TestProTierRateLimiting:
             assert allowed, f"Request {i+1} should be allowed for Pro tier"
 
     def test_pro_tier_rate_limit_info(self, rate_limiter: TierRateLimiter) -> None:
-        """Test rate limit info for Pro tier."""
+        """Test rate limit info for Pro tier.
+
+        Pro is spend-guard protected so ``daily_limit`` is ``None`` (no fixed
+        request cap; provider-spend caps fairness instead).
+        """
         identifier = "test_pro_user_info"
         tier = "pro"
-        
+
         allowed, limit_info = rate_limiter.check_rate_limit(identifier, tier)
-        
+
         assert allowed
         assert limit_info["tier"] == "pro"
-        assert limit_info["limit"] == 30  # Updated to match actual implementation
-        assert limit_info["daily_limit"] == 200  # Updated to match actual implementation
+        assert limit_info["limit"] == 30
+        assert limit_info["daily_limit"] is None
 
 
 class TestEnterpriseTierRateLimiting:
