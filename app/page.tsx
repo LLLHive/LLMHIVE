@@ -32,7 +32,7 @@ import {
 export const metadata: Metadata = {
   title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
   description:
-    "LLMHive routes every request to the best AI model — GPT-5, Claude, Gemini, Grok, Llama, DeepSeek and 350+ more — for accuracy, speed and cost. Built for teams and enterprises.",
+    "LLMHive routes every request to the best AI model — GPT-5.2 Pro, Claude Sonnet 4.6, Gemini 3.1 Pro, Grok 4, DeepSeek V3.2 and 350+ more — for accuracy, speed and cost. Built for teams and enterprises.",
   alternates: { canonical: "https://llmhive.ai/" },
   openGraph: {
     title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
@@ -77,7 +77,7 @@ const FEATURES = [
   {
     icon: Network,
     title: "Multi-model routing in one call",
-    body: "GPT-5, Claude Opus 4.7, Gemini 3.1, Grok 4.2, Llama 4, DeepSeek V3.2 and 350+ more — accessed through one interface and one bill.",
+    body: "GPT-5.2 Pro, Claude Sonnet 4.6, Claude Opus 4.5, Gemini 3.1 Pro, Grok 4, DeepSeek V3.2 and 350+ more — accessed through one interface and one bill.",
   },
   {
     icon: Brain,
@@ -149,7 +149,7 @@ const FAQ = [
   },
   {
     q: "How is this different from using ChatGPT or Claude directly?",
-    a: "Single-model tools commit you to one company's strengths and weaknesses. LLMHive lets the right model handle each task — GPT-5 for reasoning, Claude for writing, Gemini for long context, DeepSeek for cheap throughput — so quality goes up and cost goes down without you thinking about it.",
+    a: "Single-model tools commit you to one company's strengths and weaknesses. LLMHive lets the right model handle each task — GPT-5.2 Pro for reasoning, Claude Sonnet 4.6 for writing, Gemini 3.1 Pro for long context, DeepSeek V3.2 for cheap throughput — so quality goes up and cost goes down without you thinking about it.",
   },
   {
     q: "Can I trust the orchestrator to pick the right model?",
@@ -304,11 +304,15 @@ export default async function Home() {
           <div className="flex items-center gap-2 sm:gap-3">
             {!isSignedIn ? (
               <>
+                {/* Login is the highest-priority action for returning visitors,
+                    so we make it bold and visually equal to "Get started".
+                    Two filled buttons side by side; "Get started" stays the
+                    primary gradient, "Sign in" is solid amber so it never
+                    visually disappears against the dark nav. */}
                 <Link href="/sign-in">
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="border-amber-500/40 bg-transparent font-semibold text-amber-300 hover:border-amber-500/70 hover:bg-amber-500/10 hover:text-amber-200"
+                    className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
                   >
                     <LogIn className="mr-1.5 h-4 w-4" />
                     Sign in
@@ -317,7 +321,7 @@ export default async function Home() {
                 <Link href="/sign-up">
                   <Button
                     size="sm"
-                    className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
+                    className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
                   >
                     Get started
                   </Button>
@@ -344,17 +348,20 @@ export default async function Home() {
       <section className="relative px-4 pb-16 pt-28 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Round mark + metallic wordmark — primary brand expression. */}
+            {/* Round mark + metallic wordmark — primary brand expression.
+                Sized for impact: the round logo is the visual anchor and the
+                metallic wordmark sits below, both with an amber glow that
+                ties them to the hero gradient backdrop. */}
             <div className="flex flex-col items-center">
               <div className="relative">
-                <div className="absolute inset-0 -z-10 scale-150 rounded-full bg-amber-500/20 blur-2xl" />
+                <div className="absolute inset-0 -z-10 scale-[1.7] rounded-full bg-gradient-to-br from-amber-500/25 via-orange-500/20 to-amber-700/15 blur-3xl" />
                 <Image
                   src="/logo.png"
                   alt="LLMHive logo"
-                  width={120}
-                  height={120}
+                  width={200}
+                  height={200}
                   priority
-                  className="h-24 w-24 drop-shadow-[0_0_30px_rgba(245,158,11,0.35)] sm:h-28 sm:w-28"
+                  className="h-32 w-32 drop-shadow-[0_0_40px_rgba(245,158,11,0.45)] sm:h-40 sm:w-40 md:h-44 md:w-44"
                 />
               </div>
               <Image
@@ -363,13 +370,15 @@ export default async function Home() {
                 width={3000}
                 height={700}
                 priority
-                className="mt-5 h-auto w-auto max-h-14 sm:max-h-20 md:max-h-24"
+                className="mt-4 h-auto w-auto max-h-16 drop-shadow-[0_4px_20px_rgba(245,158,11,0.25)] sm:mt-6 sm:max-h-24 md:max-h-32"
               />
             </div>
 
-            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 sm:text-sm">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>GPT-5, Claude Opus 4.7, Gemini 3.1, Grok 4.2 & 350+ more — one interface</span>
+            <div className="mt-6 inline-flex max-w-full items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 sm:text-sm">
+              <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="truncate">
+                GPT-5.2 Pro · Claude Sonnet 4.6 · Gemini 3.1 Pro · Grok 4 · DeepSeek V3.2 · 350+ more
+              </span>
             </div>
 
             <h1 className="mt-6 text-balance text-4xl font-extrabold leading-[1.07] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
@@ -381,8 +390,8 @@ export default async function Home() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 sm:text-xl">
-              LLMHive routes every request to the optimal model from a pool of 350+ — GPT-5, Claude, Gemini, Grok,
-              Llama, DeepSeek and more — so you stop guessing, stop tab-hopping, and stop overpaying.
+              LLMHive routes every request to the optimal model — GPT-5.2 Pro, Claude Sonnet 4.6, Gemini 3.1 Pro,
+              Grok 4, DeepSeek V3.2 and 350+ more — so you stop guessing, stop tab-hopping, and stop overpaying.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
@@ -437,24 +446,28 @@ export default async function Home() {
             </p>
           </div>
 
-          {/* Provider strip — above-fold trust */}
+          {/* Provider strip — above-fold trust.
+              Each logo sits on a subtle white-tinted card so it's always
+              legible regardless of native colour (most provider marks are
+              dark, which becomes invisible on a black page). Pattern used
+              by Stripe / Linear / Vercel landing pages. */}
           <div className="mt-16">
-            <p className="text-center text-xs uppercase tracking-[0.18em] text-zinc-500">
+            <p className="text-center text-xs uppercase tracking-[0.2em] text-zinc-500">
               One subscription. Every leading model.
             </p>
-            <div className="mt-6 grid grid-cols-3 items-center gap-x-8 gap-y-6 sm:grid-cols-5 md:flex md:flex-wrap md:justify-center md:gap-x-10 md:gap-y-6">
+            <div className="mx-auto mt-7 grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
               {PROVIDER_LOGOS.map((logo) => (
                 <div
                   key={logo.name}
-                  className="flex h-8 items-center justify-center grayscale transition-all hover:grayscale-0 md:h-10"
+                  className="group flex h-16 items-center justify-center rounded-xl border border-white/10 bg-white/95 px-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-amber-500/10 sm:h-[68px]"
                   title={logo.name}
                 >
                   <Image
                     src={logo.src}
                     alt={logo.name}
-                    width={120}
-                    height={32}
-                    className="max-h-7 w-auto object-contain opacity-70 hover:opacity-100 md:max-h-8"
+                    width={140}
+                    height={36}
+                    className="max-h-7 w-auto object-contain sm:max-h-8"
                   />
                 </div>
               ))}
@@ -539,9 +552,9 @@ export default async function Home() {
 
                 <div className="space-y-2.5">
                   {[
-                    { name: "Claude Opus 4.7", note: "Pedagogical clarity", pick: false },
-                    { name: "GPT-5", note: "Best reasoning + code", pick: true },
-                    { name: "Gemini 3.1", note: "Long-context fallback", pick: false },
+                    { name: "Claude Sonnet 4.6", note: "Pedagogical clarity", pick: false },
+                    { name: "GPT-5.2 Pro", note: "Best reasoning + code", pick: true },
+                    { name: "Gemini 3.1 Pro", note: "Long-context fallback", pick: false },
                   ].map((m) => (
                     <div
                       key={m.name}
