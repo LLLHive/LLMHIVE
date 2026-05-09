@@ -304,26 +304,25 @@ export default async function Home() {
           <div className="flex items-center gap-2 sm:gap-3">
             {!isSignedIn ? (
               <>
-                {/* Login is the highest-priority action for returning visitors,
-                    so we make it bold and visually equal to "Get started".
-                    Two filled buttons side by side; "Get started" stays the
-                    primary gradient, "Sign in" is solid amber so it never
-                    visually disappears against the dark nav. */}
+                {/* Two equally-bold filled buttons in nav, ordered Signup
+                    first (conversion goal) then Signin (returning users).
+                    Signup is the gradient primary; Signin is solid amber so
+                    it never visually disappears against the dark nav. */}
+                <Link href="/sign-up">
+                  <Button
+                    size="sm"
+                    className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
+                  >
+                    Signup
+                  </Button>
+                </Link>
                 <Link href="/sign-in">
                   <Button
                     size="sm"
                     className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
                   >
                     <LogIn className="mr-1.5 h-4 w-4" />
-                    Sign in
-                  </Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button
-                    size="sm"
-                    className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
-                  >
-                    Get started
+                    Signin
                   </Button>
                 </Link>
               </>
