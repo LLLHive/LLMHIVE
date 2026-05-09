@@ -45,7 +45,7 @@ export function paymentRequiredResponse(status?: string) {
   const isPastDue = statusLower === "past_due"
   const checkoutUrl = isPastDue
     ? "/pricing?payment_required=1&reason=past_due"
-    : "/pricing?subscribe=pro&cycle=monthly&payment_required=1"
+    : "/pricing?payment_required=1"
 
   return {
     error: "Payment required",
@@ -62,5 +62,5 @@ export function paidAccessRedirectUrl(status?: string): string {
   if (statusLower === "past_due") {
     return "/pricing?payment_required=1&reason=past_due"
   }
-  return "/pricing?subscribe=pro&cycle=monthly&payment_required=1"
+  return "/pricing?payment_required=1"
 }

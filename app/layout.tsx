@@ -123,8 +123,8 @@ export default function RootLayout({
 
   return (
     <ClerkProvider
-      signUpForceRedirectUrl="/pricing?subscribe=pro&cycle=monthly"
-      signUpFallbackRedirectUrl="/pricing?subscribe=pro&cycle=monthly"
+      signUpForceRedirectUrl="/pricing"
+      signUpFallbackRedirectUrl="/pricing"
       signInFallbackRedirectUrl="/"
       appearance={{
         variables: {
