@@ -12,6 +12,7 @@ import {
   Cpu,
   Layers,
   Lock,
+  LogIn,
   MessageSquare,
   Network,
   Quote,
@@ -21,6 +22,7 @@ import {
   Zap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
 import {
   OFFER_ENTERPRISE_FEATURES,
   OFFER_PREMIUM_FEATURES,
@@ -229,8 +231,24 @@ function StructuredData() {
 export default async function Home() {
   const { userId } = await auth()
   const isSignedIn = Boolean(userId)
-  const primaryHref = isSignedIn ? "/app" : "/sign-up"
-  const primaryLabel = isSignedIn ? "Open the app" : "Get started free"
+
+  // For signed-in users we look up paid status so the primary CTA never
+  // points them at a route that will bounce them right back here. Without
+  // this, a signed-in unpaid user clicks "Open app" -> /app gate -> /pricing,
+  // returns to /, sees "Open app" again, and ends up in a loop. The fast
+  // variant has a short timeout and fails open ("no paid access"), so an
+  // unreachable backend never blocks the marketing page from rendering.
+  let hasPaidAccess = false
+  if (isSignedIn && userId) {
+    const entitlement = await getPaidEntitlementFast(userId)
+    hasPaidAccess = entitlement.hasPaidAccess
+  }
+
+  const primary: { href: string; label: string } = !isSignedIn
+    ? { href: "/sign-up", label: "Get started free" }
+    : hasPaidAccess
+      ? { href: "/app", label: "Open the app" }
+      : { href: "/pricing", label: "Choose your plan" }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-zinc-100">
@@ -287,7 +305,12 @@ export default async function Home() {
             {!isSignedIn ? (
               <>
                 <Link href="/sign-in">
-                  <Button variant="ghost" size="sm" className="text-zinc-300 hover:bg-white/5 hover:text-white">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-amber-500/40 bg-transparent font-semibold text-amber-300 hover:border-amber-500/70 hover:bg-amber-500/10 hover:text-amber-200"
+                  >
+                    <LogIn className="mr-1.5 h-4 w-4" />
                     Sign in
                   </Button>
                 </Link>
@@ -301,12 +324,12 @@ export default async function Home() {
                 </Link>
               </>
             ) : (
-              <Link href="/app">
+              <Link href={primary.href}>
                 <Button
                   size="sm"
                   className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
                 >
-                  Open app
+                  {primary.label}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
               </Link>
@@ -318,15 +341,38 @@ export default async function Home() {
       {/* ------------------------------------------------------------------ */}
       {/* Hero                                                                */}
       {/* ------------------------------------------------------------------ */}
-      <section className="relative px-4 pb-16 pt-32 sm:px-6 sm:pt-36 lg:px-8 lg:pt-40">
+      <section className="relative px-4 pb-16 pt-28 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 sm:text-sm">
+            {/* Round mark + metallic wordmark — primary brand expression. */}
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <div className="absolute inset-0 -z-10 scale-150 rounded-full bg-amber-500/20 blur-2xl" />
+                <Image
+                  src="/logo.png"
+                  alt="LLMHive logo"
+                  width={120}
+                  height={120}
+                  priority
+                  className="h-24 w-24 drop-shadow-[0_0_30px_rgba(245,158,11,0.35)] sm:h-28 sm:w-28"
+                />
+              </div>
+              <Image
+                src="/brand/llmhive-wordmark-hero.png"
+                alt="LLMHive"
+                width={3000}
+                height={700}
+                priority
+                className="mt-5 h-auto w-auto max-h-14 sm:max-h-20 md:max-h-24"
+              />
+            </div>
+
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 sm:text-sm">
               <Sparkles className="h-3.5 w-3.5" />
               <span>GPT-5, Claude Opus 4.7, Gemini 3.1, Grok 4.2 & 350+ more — one interface</span>
             </div>
 
-            <h1 className="text-balance text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl">
+            <h1 className="mt-6 text-balance text-4xl font-extrabold leading-[1.07] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
               Ask once.{" "}
               <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent">
                 The best AI model
@@ -340,12 +386,12 @@ export default async function Home() {
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link href={primaryHref} className="w-full sm:w-auto">
+              <Link href={primary.href} className="w-full sm:w-auto">
                 <Button
                   size="lg"
                   className="h-14 w-full border-0 bg-gradient-to-r from-amber-500 to-orange-600 px-8 text-base font-semibold text-white shadow-lg shadow-amber-500/20 hover:from-amber-600 hover:to-orange-700 sm:w-auto sm:text-lg"
                 >
-                  {primaryLabel}
+                  {primary.label}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -359,6 +405,21 @@ export default async function Home() {
                 </Button>
               </Link>
             </div>
+
+            {/* Secondary auth link directly under the primary CTA so users who
+                already have an account never have to hunt for the login. */}
+            {!isSignedIn && (
+              <p className="mt-5 text-center text-sm text-zinc-400">
+                Already have an account?{" "}
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center gap-1 font-semibold text-amber-400 underline-offset-4 hover:text-amber-300 hover:underline"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  Sign in
+                </Link>
+              </p>
+            )}
 
             <p className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-zinc-500 sm:text-sm">
               <span className="flex items-center gap-1.5">
@@ -779,12 +840,12 @@ export default async function Home() {
               Subscribe in under a minute. Cancel anytime. Your spend is guarded — your output isn't.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link href={primaryHref}>
+              <Link href={primary.href}>
                 <Button
                   size="lg"
                   className="h-14 border-0 bg-gradient-to-r from-amber-500 to-orange-600 px-9 text-base font-semibold text-white shadow-lg shadow-amber-500/20 hover:from-amber-600 hover:to-orange-700 sm:text-lg"
                 >
-                  {primaryLabel}
+                  {primary.label}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -798,6 +859,17 @@ export default async function Home() {
                 </Button>
               </Link>
             </div>
+            {!isSignedIn && (
+              <p className="mt-6 text-center text-sm text-zinc-400">
+                Already have an account?{" "}
+                <Link
+                  href="/sign-in"
+                  className="font-semibold text-amber-400 underline-offset-4 hover:text-amber-300 hover:underline"
+                >
+                  Sign in
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -835,8 +907,20 @@ export default async function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white">Support</h4>
+              <h4 className="text-sm font-semibold text-white">Account</h4>
               <ul className="mt-4 space-y-2 text-sm text-zinc-400">
+                {isSignedIn ? (
+                  <li>
+                    <Link href={primary.href} className="hover:text-white">
+                      {primary.label}
+                    </Link>
+                  </li>
+                ) : (
+                  <>
+                    <li><Link href="/sign-in" className="hover:text-white">Sign in</Link></li>
+                    <li><Link href="/sign-up" className="hover:text-white">Create account</Link></li>
+                  </>
+                )}
                 <li><Link href="/help" className="hover:text-white">Help center</Link></li>
                 <li><Link href="/faq" className="hover:text-white">FAQ</Link></li>
                 <li>
