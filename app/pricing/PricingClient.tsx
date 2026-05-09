@@ -8,7 +8,6 @@ import {
   Building2,
   ArrowRight,
   Loader2,
-  Home,
   Crown,
   Star,
   Trophy,
@@ -316,37 +315,11 @@ export default function PricingClient() {
   return (
     <div className="min-h-screen bg-background">
       {renderPricingStructuredData()}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="LLMHive" className="h-8 w-8" />
-            <span className="font-display text-xl font-bold text-[var(--bronze)]">LLMHive</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            {!isLoaded ? (
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            ) : isSignedIn ? (
-              <Link href="/">
-                <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
-                  <Home className="h-4 w-4 mr-2" />
-                  Go to App
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link href="/sign-in">
-                  <Button variant="ghost">Sign In</Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
-                    Get Started
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      {/* The shared <MarketingNav /> rendered by app/pricing/page.tsx is the
+          single nav for this page. The previous internal header duplicated
+          it visually and shipped a buggy "Go to App" link pointing at "/"
+          instead of "/app", so it has been removed. Anonymous Sign in /
+          Sign up and signed-in Sign out controls all live in MarketingNav. */}
 
       <main className="container mx-auto px-4 py-12">
         {searchParams.get("payment_required") === "1" && (
