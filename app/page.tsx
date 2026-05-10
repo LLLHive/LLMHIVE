@@ -286,38 +286,40 @@ export default async function Home() {
       <section className="relative px-4 pb-16 pt-24 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-4xl text-center">
-            <div className="llmhive-fade-in flex flex-col items-center">
-              {/* Round honeycomb sphere — same asset, same float animation
-                  the /app home screen uses (see components/home-screen.tsx). */}
-              <div className="llmhive-float relative h-44 w-44 sm:h-56 sm:w-56 md:h-64 md:w-64 lg:h-72 lg:w-72">
+            {/* Hero composition copied 1:1 from components/home-screen.tsx
+                (the /app home screen) so the round sphere, the metallic
+                LLMHive wordmark, the aluminum subtitle and the #1
+                benchmark pill render at IDENTICAL sizes, spacing and
+                negative-margin overlap on / as they do on /app. The
+                only thing the landing wraps around it is the marketing
+                section padding above (so the fixed MarketingNav does
+                not occlude the sphere). Do not adjust these sizes here
+                without also updating home-screen.tsx — they are kept
+                in lockstep on purpose. */}
+            <div className="llmhive-fade-in flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
+              <div className="relative mx-auto h-[min(66.3vh,24.25rem)] w-[min(66.3vh,24.25rem)] sm:h-[min(61.2vh,26.75rem)] sm:w-[min(61.2vh,26.75rem)] md:h-[min(56.1vh,29.25rem)] md:w-[min(56.1vh,29.25rem)] lg:h-[min(51vh,31.875rem)] lg:w-[min(51vh,31.875rem)] -mb-[5.5rem] sm:-mb-[6rem] md:-mb-[6.5rem] lg:-mb-[6.75rem] llmhive-float">
                 <Image
                   src="/logo.png"
                   alt="LLMHive"
                   fill
-                  priority
                   className="object-contain drop-shadow-2xl"
+                  priority
                 />
               </div>
 
-              {/* Metallic gold wordmark via the shared LogoText component.
-                  This is the SAME asset rendered on /app — sourced from
-                  /llmhive/llmhive-wordmark-hero.png, not the legacy
-                  /brand/ copy that drifted out of sync. */}
-              <LogoText height={66} variant="hero" className="relative z-10 -mt-4 mx-auto md:hidden" />
-              <LogoText height={84} variant="hero" className="relative z-10 -mt-5 mx-auto hidden md:block lg:hidden" />
-              <LogoText height={102} variant="hero" className="relative z-10 -mt-6 mx-auto hidden lg:block" />
+              <LogoText height={66} className="relative z-10 -mt-1 mx-auto mb-0 md:hidden" />
+              <LogoText height={84} className="relative z-10 -mt-1.5 mx-auto mb-0 hidden md:block lg:hidden" />
+              <LogoText height={102} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
 
-              {/* Aluminum subtitle: same .llmhive-subtitle-3d style as /app. */}
-              <p className="llmhive-subtitle-3d mx-auto mt-2 max-w-2xl px-2 text-center text-sm leading-normal sm:text-base md:text-lg">
+              <p className="llmhive-subtitle-3d mx-auto mb-0 w-full max-w-[min(100%,calc(100vw-1.5rem))] whitespace-nowrap overflow-x-auto overflow-y-hidden px-2 text-center text-[clamp(0.65rem,2vw,0.9375rem)] leading-normal [-ms-overflow-style:none] [scrollbar-width:none] sm:text-sm md:text-base [&::-webkit-scrollbar]:hidden">
                 Patented multi-agent orchestration for enhanced accuracy and performance.
               </p>
 
-              {/* #1 benchmark pill: identical to the one on /app. */}
-              <div className="my-5 mx-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center justify-center gap-2 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-3 py-1 shadow-lg shadow-yellow-500/10">
+              <div className="my-3 mx-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2 py-[0.2rem] shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-2.5 sm:py-1 md:gap-2.5 md:px-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-10 sm:w-10 md:h-11 md:w-11">
                   <span className="text-sm font-bold text-white sm:text-base md:text-lg">#1</span>
                 </div>
-                <p className="shrink-0 whitespace-nowrap bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-base font-semibold leading-tight text-transparent sm:text-lg md:text-xl">
+                <p className="shrink-0 whitespace-nowrap bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[19.8px] font-semibold leading-[1.1] text-transparent sm:text-[23.4px] md:text-[25.2px] lg:text-[27px]">
                   {BENCHMARK_CLAIM_PILL_TEXT}
                 </p>
               </div>
