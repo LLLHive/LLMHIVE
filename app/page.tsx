@@ -1,5 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import type { Metadata } from "next"
 import { auth } from "@clerk/nextjs/server"
 import {
@@ -245,6 +246,16 @@ export default async function Home() {
   if (isSignedIn && userId) {
     const entitlement = await getPaidEntitlementFast(userId)
     hasPaidAccess = entitlement.hasPaidAccess
+  }
+
+  // Auto-route already-signed-in paying customers straight into the app.
+  // Without this, a returning paid user (cookie still valid from a previous
+  // session) lands on the marketing page every time they reopen llmhive.ai
+  // and has to find the CTA — that's the bug the user reported. Anonymous
+  // visitors and signed-in *unpaid* users still see the landing page so we
+  // don't reintroduce the prior /pricing <-> / loop for unpaid accounts.
+  if (isSignedIn && hasPaidAccess) {
+    redirect("/app")
   }
 
   const primary: { href: string; label: string } = !isSignedIn
