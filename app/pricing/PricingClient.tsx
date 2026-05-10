@@ -328,48 +328,44 @@ export default function PricingClient() {
           Sign up and signed-in Sign out controls all live in MarketingNav. */}
 
       <main className="container mx-auto px-4 py-12">
-        {searchParams.get("payment_required") === "1" && (
-          <div
-            role="alert"
-            className={
-              searchParams.get("reason") === "past_due"
-                ? "max-w-3xl mx-auto mb-8 rounded-xl border border-red-500/60 bg-red-500/10 px-5 py-4 text-sm text-red-100"
-                : "max-w-3xl mx-auto mb-8 rounded-xl border border-amber-500/60 bg-amber-500/10 px-5 py-4 text-sm text-amber-100"
-            }
-          >
-            {searchParams.get("reason") === "past_due" ? (
-              <>
-                <strong className="font-semibold">Your last renewal payment failed.</strong>{" "}
-                Update your payment method to restore access. We&apos;ll resume immediately
-                once the new charge succeeds.
-              </>
-            ) : (
-              <>
-                <strong className="font-semibold">Subscription required.</strong>{" "}
-                Pick a plan below to start using LLMHive — you&apos;ll be redirected to
-                Stripe to complete checkout.
-              </>
-            )}
-          </div>
-        )}
+        {/* Past-due banner is intentionally preserved: it signals a real
+            billing failure to existing paying customers and is a different
+            audience from the generic "Subscription required" banner that
+            user-feedback asked us to remove. The amber generic variant
+            previously rendered for any ?payment_required=1 hit was
+            removed — see commit message for context. */}
+        {searchParams.get("payment_required") === "1" &&
+          searchParams.get("reason") === "past_due" && (
+            <div
+              role="alert"
+              className="max-w-3xl mx-auto mb-8 rounded-xl border border-red-500/60 bg-red-500/10 px-5 py-4 text-sm text-red-100"
+            >
+              <strong className="font-semibold">Your last renewal payment failed.</strong>{" "}
+              Update your payment method to restore access. We&apos;ll resume immediately
+              once the new charge succeeds.
+            </div>
+          )}
 
-        {/* Brand hero: same composition as /app and / — round honeycomb
-            sphere with the same float animation, the SHARED LogoText
-            wordmark from /llmhive/llmhive-wordmark-hero.png (not the
-            legacy /brand/ copy that drifted out of sync). Keeps every
-            public surface visually identical. */}
-        <div className="mx-auto mb-8 flex max-w-3xl flex-col items-center justify-center text-center">
-          <div className="llmhive-float relative h-32 w-32 sm:h-40 sm:w-40 md:h-44 md:w-44">
+        {/* Brand hero — copied 1:1 from app/page.tsx (which itself mirrors
+            components/home-screen.tsx). Identical viewport-based sphere
+            sizing, identical negative-margin overlap, identical LogoText
+            heights. Keeps /, /pricing and /app visually indistinguishable
+            on the brand mark. Do not adjust here without also updating
+            home-screen.tsx and app/page.tsx — they are kept in lockstep. */}
+        <div className="llmhive-fade-in mx-auto mb-8 flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
+          <div className="relative mx-auto h-[min(66.3vh,24.25rem)] w-[min(66.3vh,24.25rem)] sm:h-[min(61.2vh,26.75rem)] sm:w-[min(61.2vh,26.75rem)] md:h-[min(56.1vh,29.25rem)] md:w-[min(56.1vh,29.25rem)] lg:h-[min(51vh,31.875rem)] lg:w-[min(51vh,31.875rem)] -mb-[5.5rem] sm:-mb-[6rem] md:-mb-[6.5rem] lg:-mb-[6.75rem] llmhive-float">
             <Image
               src="/logo.png"
               alt="LLMHive"
               fill
-              priority
               className="object-contain drop-shadow-2xl"
+              priority
             />
           </div>
-          <LogoText height={56} variant="hero" className="relative z-10 -mt-3 mx-auto md:hidden" />
-          <LogoText height={72} variant="hero" className="relative z-10 -mt-4 mx-auto hidden md:block" />
+
+          <LogoText height={66} className="relative z-10 -mt-1 mx-auto mb-0 md:hidden" />
+          <LogoText height={84} className="relative z-10 -mt-1.5 mx-auto mb-0 hidden md:block lg:hidden" />
+          <LogoText height={102} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
         </div>
 
         <div className="text-center mb-8">
