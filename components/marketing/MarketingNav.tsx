@@ -15,10 +15,10 @@ import LogoText from "@/components/branding/LogoText"
  * hero, the pricing teaser, and the dedicated `/pricing` page; this nav
  * only handles "are you logged in or not".
  *
- *  - Anonymous:  Signup (-> /pricing)  + Signin (-> /sign-in)
- *  - Signed-in:  Sign out (returns to /)
+ *  - Anonymous:  Sign Up (-> /pricing)  + Sign In (-> /sign-in)
+ *  - Signed-in:  Sign Out (returns to /)
  *
- * Signed-in users never see "Signin" — that link would force-redirect
+ * Signed-in users never see "Sign In" — that link would force-redirect
  * through Clerk and bounce off the /app entitlement gate to /pricing.
  */
 export async function MarketingNav() {
@@ -58,7 +58,7 @@ export async function MarketingNav() {
         <div className="flex items-center gap-2 sm:gap-3">
           {!isSignedIn ? (
             <>
-              {/* Signup -> /pricing (visitor picks a plan first). Signin ->
+              {/* Sign Up -> /pricing (visitor picks a plan first). Sign In ->
                   /sign-in (existing customers). Two filled buttons of equal
                   weight so neither disappears against the dark nav. */}
               <Link href="/pricing">
@@ -66,7 +66,7 @@ export async function MarketingNav() {
                   size="sm"
                   className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
                 >
-                  Signup
+                  Sign Up
                 </Button>
               </Link>
               <Link href="/sign-in">
@@ -75,20 +75,20 @@ export async function MarketingNav() {
                   className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
                 >
                   <LogIn className="mr-1.5 h-4 w-4" />
-                  Signin
+                  Sign In
                 </Button>
               </Link>
             </>
           ) : (
-            // Signed-in: only Sign out. Drops the visitor back at "/" as
-            // anonymous so the Signup/Signin pair reappears.
+            // Signed-in: only Sign Out. Drops the visitor back at "/" as
+            // anonymous so the Sign Up / Sign In pair reappears.
             <SignOutButton redirectUrl="/">
               <Button
                 size="sm"
                 className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
               >
                 <LogOut className="mr-1.5 h-4 w-4" />
-                Sign out
+                Sign Out
               </Button>
             </SignOutButton>
           )}
