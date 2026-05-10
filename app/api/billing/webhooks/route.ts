@@ -73,6 +73,36 @@ async function upsertSubscription(data: SubscriptionData): Promise<void> {
  * Handle checkout.session.completed
  * User has successfully subscribed
  */
+/**
+ * Read period bounds from a subscription regardless of Stripe API version.
+ *
+ * Stripe API 2024-09-30+ removed `current_period_start` / `current_period_end`
+ * from the subscription object and put them on each subscription item. The
+ * old fields still exist on older API versions. Try item-level first, fall
+ * back to subscription-level so the handler works on every account.
+ *
+ * Returns ISO strings (or null) — never throws on missing/invalid values.
+ */
+function readPeriodBounds(subscription: Stripe.Subscription): {
+  startIso: string | null
+  endIso: string | null
+} {
+  const subAny = subscription as unknown as Record<string, unknown>
+  const item = subscription.items?.data?.[0] as unknown as Record<string, unknown> | undefined
+  const itemStart = item?.current_period_start as number | undefined
+  const itemEnd = item?.current_period_end as number | undefined
+  const subStart = subAny.current_period_start as number | undefined
+  const subEnd = subAny.current_period_end as number | undefined
+  const start = (itemStart ?? subStart) || null
+  const end = (itemEnd ?? subEnd) || null
+  const toIso = (n: number | null): string | null => {
+    if (typeof n !== "number" || !Number.isFinite(n)) return null
+    const d = new Date(n * 1000)
+    return Number.isNaN(d.getTime()) ? null : d.toISOString()
+  }
+  return { startIso: toIso(start), endIso: toIso(end) }
+}
+
 async function handleCheckoutCompleted(
   stripe: Stripe,
   session: Stripe.Checkout.Session
@@ -93,18 +123,15 @@ async function handleCheckoutCompleted(
   const subscription = await stripe.subscriptions.retrieve(
     session.subscription as string
   );
-  
-  const priceId = subscription.items.data[0]?.price.id;
-  const tier = session.metadata?.tier || PRICE_TO_TIER[priceId] || "pro";
-  const billingCycle = session.metadata?.billing_cycle || 
-    (subscription.items.data[0]?.price.recurring?.interval === "year" ? "annual" : "monthly");
-  const seats = subscription.items.data[0]?.quantity || 1;
-  
-  // Access period fields safely
-  const subAny = subscription as unknown as Record<string, unknown>;
-  const periodStart = subAny.current_period_start as number;
-  const periodEnd = subAny.current_period_end as number;
-  
+
+  const priceId = subscription.items?.data?.[0]?.price?.id;
+  const tier = session.metadata?.tier || (priceId && PRICE_TO_TIER[priceId]) || "pro";
+  const billingCycle = session.metadata?.billing_cycle ||
+    (subscription.items?.data?.[0]?.price?.recurring?.interval === "year" ? "annual" : "monthly");
+  const seats = subscription.items?.data?.[0]?.quantity || 1;
+
+  const { startIso, endIso } = readPeriodBounds(subscription);
+
   await upsertSubscription({
     userId,
     stripeCustomerId: subscription.customer as string,
@@ -112,13 +139,13 @@ async function handleCheckoutCompleted(
     tier,
     status: "active",
     billingCycle: billingCycle as "monthly" | "annual",
-    currentPeriodStart: new Date(periodStart * 1000),
-    currentPeriodEnd: new Date(periodEnd * 1000),
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    currentPeriodStart: startIso ? new Date(startIso) : new Date(),
+    currentPeriodEnd: endIso ? new Date(endIso) : new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+    cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
     seats,
     updatedAt: new Date(),
   });
-  
+
   console.log(`Subscription created for user ${userId}: ${tier} (${billingCycle})`);
   
   // Send Slack notification for new subscription
@@ -151,31 +178,28 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
     console.warn("No user_id in subscription metadata:", subscription.id);
     return;
   }
-  
-  const priceId = subscription.items.data[0]?.price.id;
-  const tier = metadata.tier || PRICE_TO_TIER[priceId] || "pro";
+
+  const priceId = subscription.items?.data?.[0]?.price?.id;
+  const tier = metadata.tier || (priceId && PRICE_TO_TIER[priceId]) || "pro";
   const status = STATUS_MAP[subscription.status] || "active";
-  const seats = subscription.items.data[0]?.quantity || 1;
-  
-  // Access period fields safely
-  const subAny = subscription as unknown as Record<string, unknown>;
-  const periodStart = subAny.current_period_start as number;
-  const periodEnd = subAny.current_period_end as number;
-  
+  const seats = subscription.items?.data?.[0]?.quantity || 1;
+
+  const { startIso, endIso } = readPeriodBounds(subscription);
+
   await upsertSubscription({
     userId,
     stripeCustomerId: subscription.customer as string,
     stripeSubscriptionId: subscription.id,
     tier,
     status,
-    billingCycle: subscription.items.data[0]?.price.recurring?.interval === "year" ? "annual" : "monthly",
-    currentPeriodStart: new Date(periodStart * 1000),
-    currentPeriodEnd: new Date(periodEnd * 1000),
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    billingCycle: subscription.items?.data?.[0]?.price?.recurring?.interval === "year" ? "annual" : "monthly",
+    currentPeriodStart: startIso ? new Date(startIso) : new Date(),
+    currentPeriodEnd: endIso ? new Date(endIso) : new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+    cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
     seats,
     updatedAt: new Date(),
   });
-  
+
   console.log(`Subscription updated for user ${userId}: ${tier}, status: ${status}`);
 }
 
@@ -191,21 +215,18 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
     console.warn("No user_id in deleted subscription:", subscription.id);
     return;
   }
-  
-  // Access period fields safely
-  const subAny = subscription as unknown as Record<string, unknown>;
-  const periodStart = subAny.current_period_start as number;
-  const periodEnd = subAny.current_period_end as number;
-  
+
+  const { startIso, endIso } = readPeriodBounds(subscription);
+
   await upsertSubscription({
     userId,
     stripeCustomerId: subscription.customer as string,
     stripeSubscriptionId: subscription.id,
-    tier: "free", // Downgrade to free
+    tier: "free",
     status: "cancelled",
     billingCycle: "monthly",
-    currentPeriodStart: new Date(periodStart * 1000),
-    currentPeriodEnd: new Date(periodEnd * 1000),
+    currentPeriodStart: startIso ? new Date(startIso) : new Date(),
+    currentPeriodEnd: endIso ? new Date(endIso) : new Date(),
     cancelAtPeriodEnd: true,
     updatedAt: new Date(),
   });
@@ -252,20 +273,17 @@ async function handlePaymentFailed(
     const userId = metadata.user_id;
     
     if (userId) {
-      const subAny = subscription as unknown as Record<string, unknown>;
-      const periodStart = subAny.current_period_start as number;
-      const periodEnd = subAny.current_period_end as number;
-      
+      const { startIso, endIso } = readPeriodBounds(subscription);
       await upsertSubscription({
         userId,
         stripeCustomerId: subscription.customer as string,
         stripeSubscriptionId: subscription.id,
         tier: metadata.tier || "pro",
         status: "past_due",
-        billingCycle: subscription.items.data[0]?.price.recurring?.interval === "year" ? "annual" : "monthly",
-        currentPeriodStart: new Date(periodStart * 1000),
-        currentPeriodEnd: new Date(periodEnd * 1000),
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        billingCycle: subscription.items?.data?.[0]?.price?.recurring?.interval === "year" ? "annual" : "monthly",
+        currentPeriodStart: startIso ? new Date(startIso) : new Date(),
+        currentPeriodEnd: endIso ? new Date(endIso) : new Date(),
+        cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
         updatedAt: new Date(),
       });
     }
@@ -355,9 +373,19 @@ export async function POST(request: NextRequest) {
       event_type: event.type 
     });
   } catch (error) {
-    console.error("Error processing webhook:", error);
+    // Surface the actual error message + a short stack so the cause is
+    // visible in the Stripe Dashboard event-deliveries panel; otherwise
+    // every retry is a generic 500 with no clue what failed.
+    const msg = error instanceof Error ? error.message : String(error)
+    const stack = error instanceof Error ? (error.stack ?? "").split("\n").slice(0, 4).join("\n") : ""
+    console.error("Error processing webhook:", error)
     return NextResponse.json(
-      { error: "Webhook processing failed" },
+      {
+        error: "Webhook processing failed",
+        event_type: event?.type ?? "unknown",
+        message: msg,
+        stack: stack || undefined,
+      },
       { status: 500 }
     );
   }
