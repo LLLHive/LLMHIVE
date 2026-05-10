@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils"
 import { track } from "@/lib/observability/analytics"
 import Link from "next/link"
 import Image from "next/image"
+import LogoText from "@/components/branding/LogoText"
 
 const SIGNUP_TRACKED_STORAGE_KEY = "llmhive_signup_tracked_v1"
 const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000
@@ -314,7 +315,11 @@ export default function PricingClient() {
   }, [isLoaded, isSignedIn, user?.id, searchParams, startCheckout])
 
   return (
-    <div className="min-h-screen bg-background">
+    // Transparent root: same reasoning as app/page.tsx — let the global
+    // <AppBackground /> from app/layout.tsx (forest + warm light) show
+    // through so /pricing matches /  and /app instead of painting solid
+    // color over the corporate scene.
+    <div className="relative min-h-screen">
       {renderPricingStructuredData()}
       {/* The shared <MarketingNav /> rendered by app/pricing/page.tsx is the
           single nav for this page. The previous internal header duplicated
@@ -348,32 +353,23 @@ export default function PricingClient() {
           </div>
         )}
 
-        {/* Brand hero: round honeycomb sphere logo + metallic LLMHive
-            wordmark, mirroring the landing page so the pricing page reads
-            as part of the same product, not a generic checkout screen. */}
-        <div className="mx-auto mb-10 flex max-w-3xl flex-col items-center justify-center text-center">
-          <div className="relative mb-3">
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-10 rounded-full bg-amber-500/25 blur-3xl"
-            />
+        {/* Brand hero: same composition as /app and / — round honeycomb
+            sphere with the same float animation, the SHARED LogoText
+            wordmark from /llmhive/llmhive-wordmark-hero.png (not the
+            legacy /brand/ copy that drifted out of sync). Keeps every
+            public surface visually identical. */}
+        <div className="mx-auto mb-8 flex max-w-3xl flex-col items-center justify-center text-center">
+          <div className="llmhive-float relative h-32 w-32 sm:h-40 sm:w-40 md:h-44 md:w-44">
             <Image
               src="/logo.png"
-              alt="LLMHive logo"
-              width={180}
-              height={180}
+              alt="LLMHive"
+              fill
               priority
-              className="h-28 w-28 sm:h-36 sm:w-36 md:h-40 md:w-40 drop-shadow-[0_8px_30px_rgba(245,158,11,0.45)]"
+              className="object-contain drop-shadow-2xl"
             />
           </div>
-          <Image
-            src="/brand/llmhive-wordmark-hero.png"
-            alt="LLMHive"
-            width={520}
-            height={140}
-            priority
-            className="h-auto w-[260px] sm:w-[320px] md:w-[380px] drop-shadow-[0_4px_22px_rgba(245,158,11,0.35)]"
-          />
+          <LogoText height={56} variant="hero" className="relative z-10 -mt-3 mx-auto md:hidden" />
+          <LogoText height={72} variant="hero" className="relative z-10 -mt-4 mx-auto hidden md:block" />
         </div>
 
         <div className="text-center mb-8">

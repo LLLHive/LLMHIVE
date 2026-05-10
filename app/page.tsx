@@ -23,7 +23,9 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MarketingNav } from "@/components/marketing/MarketingNav"
+import LogoText from "@/components/branding/LogoText"
 import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
+import { BENCHMARK_CLAIM_PILL_TEXT } from "@/lib/benchmark-claim"
 import {
   OFFER_ENTERPRISE_FEATURES,
   OFFER_PREMIUM_FEATURES,
@@ -252,59 +254,72 @@ export default async function Home() {
       : { href: "/pricing", label: "Choose your plan" }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black text-zinc-100">
+    // Transparent root: the global <AppBackground /> rendered by
+    // app/layout.tsx paints the redwoods + warm light scene used across
+    // /app and /pricing. We were wrapping the whole landing in `bg-black`,
+    // which painted over that scene — that's why /  looked nothing like
+    // the rest of the build. Removing the solid fill lets the same
+    // forest backdrop come through here too.
+    <div className="relative min-h-screen overflow-hidden text-zinc-100">
       <StructuredData />
-
-      {/* Animated brand glow background */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[680px]">
-        <div className="absolute left-1/2 top-[-200px] h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-amber-500/20 blur-[160px]" />
-        <div className="absolute right-[-200px] top-[100px] h-[500px] w-[500px] rounded-full bg-orange-600/15 blur-[140px]" />
-        <div className="absolute left-[-200px] top-[200px] h-[500px] w-[500px] rounded-full bg-amber-700/10 blur-[140px]" />
-      </div>
 
       {/* Shared site-wide nav: Signup/Signin top-right until logged in. */}
       <MarketingNav />
 
       {/* ------------------------------------------------------------------ */}
-      {/* Hero                                                                */}
+      {/* Hero — mirrors the /app home composition (round honeycomb sphere   */}
+      {/* + metallic LLMHive wordmark + aluminum subtitle + #1 benchmark     */}
+      {/* pill) so visitors see the same brand the moment they land,        */}
+      {/* whether on /, /pricing, or /app.                                   */}
       {/* ------------------------------------------------------------------ */}
-      <section className="relative px-4 pb-16 pt-28 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
+      <section className="relative px-4 pb-16 pt-24 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Round mark + metallic wordmark — primary brand expression.
-                Sized for impact: the round logo is the visual anchor and the
-                metallic wordmark sits below, both with an amber glow that
-                ties them to the hero gradient backdrop. */}
-            <div className="flex flex-col items-center">
-              <div className="relative">
-                <div className="absolute inset-0 -z-10 scale-[1.7] rounded-full bg-gradient-to-br from-amber-500/25 via-orange-500/20 to-amber-700/15 blur-3xl" />
+            <div className="llmhive-fade-in flex flex-col items-center">
+              {/* Round honeycomb sphere — same asset, same float animation
+                  the /app home screen uses (see components/home-screen.tsx). */}
+              <div className="llmhive-float relative h-44 w-44 sm:h-56 sm:w-56 md:h-64 md:w-64 lg:h-72 lg:w-72">
                 <Image
                   src="/logo.png"
-                  alt="LLMHive logo"
-                  width={200}
-                  height={200}
+                  alt="LLMHive"
+                  fill
                   priority
-                  className="h-32 w-32 drop-shadow-[0_0_40px_rgba(245,158,11,0.45)] sm:h-40 sm:w-40 md:h-44 md:w-44"
+                  className="object-contain drop-shadow-2xl"
                 />
               </div>
-              <Image
-                src="/brand/llmhive-wordmark-hero.png"
-                alt="LLMHive"
-                width={3000}
-                height={700}
-                priority
-                className="mt-4 h-auto w-auto max-h-16 drop-shadow-[0_4px_20px_rgba(245,158,11,0.25)] sm:mt-6 sm:max-h-24 md:max-h-32"
-              />
+
+              {/* Metallic gold wordmark via the shared LogoText component.
+                  This is the SAME asset rendered on /app — sourced from
+                  /llmhive/llmhive-wordmark-hero.png, not the legacy
+                  /brand/ copy that drifted out of sync. */}
+              <LogoText height={66} variant="hero" className="relative z-10 -mt-4 mx-auto md:hidden" />
+              <LogoText height={84} variant="hero" className="relative z-10 -mt-5 mx-auto hidden md:block lg:hidden" />
+              <LogoText height={102} variant="hero" className="relative z-10 -mt-6 mx-auto hidden lg:block" />
+
+              {/* Aluminum subtitle: same .llmhive-subtitle-3d style as /app. */}
+              <p className="llmhive-subtitle-3d mx-auto mt-2 max-w-2xl px-2 text-center text-sm leading-normal sm:text-base md:text-lg">
+                Patented multi-agent orchestration for enhanced accuracy and performance.
+              </p>
+
+              {/* #1 benchmark pill: identical to the one on /app. */}
+              <div className="my-5 mx-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center justify-center gap-2 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-3 py-1 shadow-lg shadow-yellow-500/10">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-10 sm:w-10 md:h-11 md:w-11">
+                  <span className="text-sm font-bold text-white sm:text-base md:text-lg">#1</span>
+                </div>
+                <p className="shrink-0 whitespace-nowrap bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-base font-semibold leading-tight text-transparent sm:text-lg md:text-xl">
+                  {BENCHMARK_CLAIM_PILL_TEXT}
+                </p>
+              </div>
             </div>
 
-            <div className="mt-6 inline-flex max-w-full items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 sm:text-sm">
+            <div className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 backdrop-blur-sm sm:text-sm">
               <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="truncate">
                 GPT-5.2 Pro · Claude Sonnet 4.6 · Gemini 3.1 Pro · Grok 4 · DeepSeek V3.2 · 350+ more
               </span>
             </div>
 
-            <h1 className="mt-6 text-balance text-4xl font-extrabold leading-[1.07] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="mt-6 text-balance text-4xl font-extrabold leading-[1.07] tracking-tight text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.7)] sm:text-5xl md:text-6xl lg:text-7xl">
               Ask once.{" "}
               <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent">
                 The best AI model
@@ -312,7 +327,7 @@ export default async function Home() {
               answers — every time.
             </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 sm:text-xl">
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-100/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)] sm:text-xl">
               LLMHive routes every request to the optimal model — GPT-5.2 Pro, Claude Sonnet 4.6, Gemini 3.1 Pro,
               Grok 4, DeepSeek V3.2 and 350+ more — so you stop guessing, stop tab-hopping, and stop overpaying.
             </p>

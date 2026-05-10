@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server"
 import { SignOutButton } from "@clerk/nextjs"
 import { LogIn, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import LogoText from "@/components/branding/LogoText"
 
 /**
  * Shared marketing-site header.
@@ -29,14 +30,11 @@ export async function MarketingNav() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <Image src="/logo.png" alt="LLMHive" width={32} height={32} priority className="h-8 w-8" />
-          <Image
-            src="/brand/llmhive-wordmark-nav.png"
-            alt="LLMHive"
-            width={140}
-            height={30}
-            priority
-            className="hidden h-6 w-auto sm:block"
-          />
+          {/* Same wordmark asset the rest of the site uses (LogoText →
+              /llmhive/llmhive-wordmark-nav.png), so the corner brand
+              matches /app exactly instead of pulling a different file
+              from /brand/. */}
+          <LogoText height={26} variant="nav" className="hidden sm:block" />
         </Link>
 
         <div className="hidden items-center gap-7 md:flex">
