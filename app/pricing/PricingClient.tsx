@@ -33,6 +33,7 @@ import {
 import { cn } from "@/lib/utils"
 import { track } from "@/lib/observability/analytics"
 import Link from "next/link"
+import Image from "next/image"
 
 const SIGNUP_TRACKED_STORAGE_KEY = "llmhive_signup_tracked_v1"
 const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000
@@ -346,6 +347,34 @@ export default function PricingClient() {
             )}
           </div>
         )}
+
+        {/* Brand hero: round honeycomb sphere logo + metallic LLMHive
+            wordmark, mirroring the landing page so the pricing page reads
+            as part of the same product, not a generic checkout screen. */}
+        <div className="mx-auto mb-10 flex max-w-3xl flex-col items-center justify-center text-center">
+          <div className="relative mb-3">
+            <div
+              aria-hidden
+              className="absolute inset-0 -z-10 rounded-full bg-amber-500/25 blur-3xl"
+            />
+            <Image
+              src="/logo.png"
+              alt="LLMHive logo"
+              width={180}
+              height={180}
+              priority
+              className="h-28 w-28 sm:h-36 sm:w-36 md:h-40 md:w-40 drop-shadow-[0_8px_30px_rgba(245,158,11,0.45)]"
+            />
+          </div>
+          <Image
+            src="/brand/llmhive-wordmark-hero.png"
+            alt="LLMHive"
+            width={520}
+            height={140}
+            priority
+            className="h-auto w-[260px] sm:w-[320px] md:w-[380px] drop-shadow-[0_4px_22px_rgba(245,158,11,0.35)]"
+          />
+        </div>
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-yellow-500/30 border-2 border-yellow-400 shadow-lg shadow-yellow-500/20 mb-6">
