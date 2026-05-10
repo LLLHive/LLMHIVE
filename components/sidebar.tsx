@@ -23,8 +23,6 @@ import {
   PinOff,
   Trash2,
   MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
   CreditCard,
   ChevronDown,
   ChevronUp,
@@ -36,6 +34,7 @@ import {
   Share,
   Archive,
   UserPlus,
+  PanelLeftClose,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -170,12 +169,17 @@ export function Sidebar({
           collapsed ? "w-16" : "w-60",
         )}
       >
-        {/* Logo */}
+        {/* Logo + close-panel button (right side, ChatGPT-style).
+            Replaces the old centered chevron-toggle. The panel-close icon
+            is only visible while the sidebar is expanded. When collapsed
+            the entire sidebar is hidden by chat-interface.tsx and a
+            floating logo-button takes its place. */}
         <div className="p-4 pb-2 border-b border-border flex items-center justify-between">
           {!collapsed && (
             <button
               onClick={onGoHome}
               className="flex items-center gap-0 cursor-pointer hover:opacity-80 transition-opacity"
+              aria-label="Go to LLMHive home"
             >
               <div className="relative w-12 h-12">
                 <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
@@ -187,9 +191,22 @@ export function Sidebar({
             <button
               onClick={onGoHome}
               className="relative w-10 h-10 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
+              aria-label="Go to LLMHive home"
             >
               <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
             </button>
+          )}
+          {!collapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-[var(--bronze)]"
+              aria-label="Close sidebar"
+              title="Close sidebar"
+            >
+              <PanelLeftClose className="h-5 w-5" />
+            </Button>
           )}
         </div>
 
@@ -530,15 +547,11 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Collapse Toggle Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-border bg-sidebar hover:bg-secondary shadow-md z-50 touch-target premium-tap"
-        >
-          {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-        </Button>
+        {/* The old centered chevron toggle was removed in favor of the
+            ChatGPT-style header pattern: a "PanelLeftClose" icon at the
+            top-right of the sidebar header (when expanded) and a
+            floating logo-button at the top-left of the chat area (when
+            collapsed) implemented in chat-interface.tsx. */}
       </aside>
     </>
   )

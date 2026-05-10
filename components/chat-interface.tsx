@@ -15,7 +15,8 @@ import { MoveToProjectModal } from "./move-to-project-modal"
 import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal"
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog"
 import { Button } from "@/components/ui/button"
-import { Menu, Keyboard } from "lucide-react"
+import { Menu, Keyboard, PanelLeftOpen } from "lucide-react"
+import Image from "next/image"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import type { Conversation, Message, Artifact, Project, OrchestratorSettings } from "@/lib/types"
 import { 
@@ -423,8 +424,37 @@ export function ChatInterface() {
         <UserAccountMenu />
       </div>
 
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block h-full shrink-0">{sidebarContent}</div>
+      {/* Desktop Sidebar — hidden entirely when collapsed; the floating
+          logo button below replaces it. */}
+      {!sidebarCollapsed && (
+        <div className="hidden md:block h-full shrink-0">{sidebarContent}</div>
+      )}
+
+      {/* Floating "open sidebar" button (desktop only).
+          Default: shows the LLMHive round logo.
+          Hover:   morphs into the PanelLeftOpen icon, ChatGPT-style.
+          Click:   reopens the sidebar.
+          The CSS-only swap (group-hover) avoids any extra state and keeps
+          the morph snappy without re-renders. */}
+      {sidebarCollapsed && (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(false)}
+          className="hidden md:flex group fixed top-3 left-3 z-50 h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-black/40 backdrop-blur-md shadow-md hover:bg-black/60 transition-colors"
+          aria-label="Open sidebar"
+          title="Open sidebar"
+        >
+          {/* Logo: visible by default, fades out on hover */}
+          <span className="relative h-7 w-7 transition-opacity duration-150 group-hover:opacity-0">
+            <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+          </span>
+          {/* Panel-open icon: hidden by default, fades in on hover */}
+          <PanelLeftOpen
+            className="absolute h-5 w-5 text-[var(--bronze)] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+            aria-hidden
+          />
+        </button>
+      )}
 
       {/* Mobile Header with Hamburger - Glassmorphism */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] border-b border-white/10 shadow-[0_6px_18px_rgba(0,0,0,0.25)] llmhive-glass-sidebar glass-header flex items-center justify-between px-3">
