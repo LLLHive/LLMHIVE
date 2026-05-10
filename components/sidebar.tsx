@@ -35,6 +35,7 @@ import {
   Archive,
   UserPlus,
   PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -188,12 +189,25 @@ export function Sidebar({
             </button>
           )}
           {collapsed && (
+            // ChatGPT-style hover-morph trigger: round logo by default,
+            // PanelLeftOpen icon on hover, click expands the sidebar.
+            // We deliberately use onToggleCollapse here (not onGoHome) so
+            // the collapsed top slot acts as the open-panel control just
+            // like the screenshot the user shared.
             <button
-              onClick={onGoHome}
-              className="relative w-10 h-10 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
-              aria-label="Go to LLMHive home"
+              type="button"
+              onClick={onToggleCollapse}
+              className="group relative w-10 h-10 mx-auto cursor-pointer flex items-center justify-center rounded-md hover:bg-secondary transition-colors"
+              aria-label="Open sidebar"
+              title="Open sidebar"
             >
-              <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+              <span className="relative w-10 h-10 transition-opacity duration-150 group-hover:opacity-0">
+                <Image src="/logo.png" alt="LLMHive" fill className="object-contain" priority />
+              </span>
+              <PanelLeftOpen
+                className="absolute h-5 w-5 text-[var(--bronze)] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                aria-hidden
+              />
             </button>
           )}
           {!collapsed && (
