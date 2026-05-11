@@ -452,7 +452,7 @@ export default async function Home() {
                 The single-model trap
               </span>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-                You're paying for{" "}
+                You&apos;re paying for{" "}
                 <span className="text-zinc-500 line-through decoration-zinc-700">four AIs</span>
                 <span className="block text-white sm:inline"> and still getting the wrong one.</span>
               </h2>
@@ -491,7 +491,7 @@ export default async function Home() {
                 <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
                   <div className="text-xs uppercase tracking-wider text-amber-300/70">Your prompt</div>
                   <div className="mt-1.5 text-sm text-white">
-                    "Explain attention mechanisms and write a PyTorch implementation."
+                    &ldquo;Explain attention mechanisms and write a PyTorch implementation.&rdquo;
                   </div>
                 </div>
 
@@ -768,7 +768,7 @@ export default async function Home() {
               Questions
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-              Everything you'd ask in a sales call.
+              Everything you&apos;d ask in a sales call.
             </h2>
           </div>
           <div className="space-y-3">
@@ -801,7 +801,7 @@ export default async function Home() {
               Stop choosing models. Start shipping answers.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-zinc-300">
-              Subscribe in under a minute. Cancel anytime. Your spend is guarded — your output isn't.
+              Subscribe in under a minute. Cancel anytime. Your spend is guarded — your output isn&apos;t.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Link href={primary.href}>

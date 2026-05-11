@@ -290,11 +290,23 @@ class LLMHiveRunner(RunnerBase):
             "history": [],
         }
         
+        # Production /v1/chat is gated by ApiKey auth (see app/auth.py).
+        # The benchmark workflow exports the key as LLMHIVE_API_KEY (preferred) or API_KEY.
+        # Without this header every request would 401 and the entire run would fail.
+        headers: Dict[str, str] = {"Content-Type": "application/json"}
+        api_key = (
+            os.environ.get("LLMHIVE_API_KEY")
+            or os.environ.get("API_KEY")
+            or os.environ.get("LLMHIVE_BENCHMARK_API_KEY")
+        )
+        if api_key:
+            headers["x-api-key"] = api_key
+
         async with httpx.AsyncClient(timeout=config.timeout_seconds) as client:
             response = await client.post(
                 f"{self.base_url}/v1/chat",
                 json=payload,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
             response.raise_for_status()
             data = response.json()
