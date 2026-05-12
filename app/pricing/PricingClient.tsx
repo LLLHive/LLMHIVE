@@ -10,6 +10,7 @@ import {
   Loader2,
   Crown,
   Star,
+  Sparkles,
   Trophy,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,10 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+import {
+  BENCHMARK_CLAIM_PILL_TEXT,
+  BENCHMARK_CLAIM_SHORT,
+} from "@/lib/benchmark-claim"
 import {
   OFFER_ENTERPRISE_FEATURES,
   OFFER_PREMIUM_FEATURES,
@@ -347,12 +351,14 @@ export default function PricingClient() {
           )}
 
         {/* Brand hero — copied 1:1 from app/page.tsx (which itself mirrors
-            components/home-screen.tsx). Identical viewport-based sphere
-            sizing, identical negative-margin overlap, identical LogoText
-            heights. Keeps /, /pricing and /app visually indistinguishable
+            components/home-screen.tsx). Identical sphere sizing, identical
+            negative-margin overlap, identical LogoText heights, identical
+            metallic subtitle, identical #1 benchmark pill, and the same
+            "GPT-5.2 Pro · …" models pill that lives directly under the
+            hero on /. Keeps /, /pricing and /app visually indistinguishable
             on the brand mark. Do not adjust here without also updating
-            home-screen.tsx and app/page.tsx — they are kept in lockstep. */}
-        <div className="llmhive-fade-in mx-auto mb-8 flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
+            home-screen.tsx and app/page.tsx — kept in lockstep. */}
+        <div className="llmhive-fade-in mx-auto mb-2 flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
           <div className="relative mx-auto h-[min(66.3vh,24.25rem)] w-[min(66.3vh,24.25rem)] sm:h-[min(61.2vh,26.75rem)] sm:w-[min(61.2vh,26.75rem)] md:h-[min(56.1vh,29.25rem)] md:w-[min(56.1vh,29.25rem)] lg:h-[min(51vh,31.875rem)] lg:w-[min(51vh,31.875rem)] -mb-[5.5rem] sm:-mb-[6rem] md:-mb-[6.5rem] lg:-mb-[6.75rem] llmhive-float">
             <Image
               src="/logo.png"
@@ -366,19 +372,27 @@ export default function PricingClient() {
           <LogoText height={66} className="relative z-10 -mt-1 mx-auto mb-0 md:hidden" />
           <LogoText height={84} className="relative z-10 -mt-1.5 mx-auto mb-0 hidden md:block lg:hidden" />
           <LogoText height={102} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
+
+          <p className="llmhive-subtitle-3d mx-auto mb-0 w-full max-w-[min(100%,calc(100vw-1.5rem))] whitespace-nowrap overflow-x-auto overflow-y-hidden px-2 text-center text-[clamp(0.65rem,2vw,0.9375rem)] leading-normal [-ms-overflow-style:none] [scrollbar-width:none] sm:text-sm md:text-base [&::-webkit-scrollbar]:hidden">
+            Patented multi-agent orchestration for enhanced accuracy and performance.
+          </p>
+
+          <div className="my-3 mx-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2 py-[0.2rem] shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-2.5 sm:py-1 md:gap-2.5 md:px-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-10 sm:w-10 md:h-11 md:w-11">
+              <span className="text-sm font-bold text-white sm:text-base md:text-lg">#1</span>
+            </div>
+            <p className="shrink-0 whitespace-nowrap bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-left text-[19.8px] font-semibold leading-[1.1] text-transparent sm:text-[23.4px] md:text-[25.2px] lg:text-[27px]">
+              {BENCHMARK_CLAIM_PILL_TEXT}
+            </p>
+          </div>
         </div>
 
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-yellow-500/30 border-2 border-yellow-400 shadow-lg shadow-yellow-500/20 mb-6">
-            <Trophy className="h-10 w-10 text-yellow-400" />
-            <div className="text-left">
-              <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 bg-clip-text text-transparent">
-                {BENCHMARK_CLAIM_BANNER}
-              </div>
-              <div className="text-sm md:text-base text-yellow-200/80 font-medium">
-                GPQA Diamond, SWE-Bench, AIME 2024, MMMLU & more
-              </div>
-            </div>
+        <div className="mb-10 flex justify-center">
+          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 backdrop-blur-sm sm:text-sm">
+            <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="truncate">
+              GPT-5.2 Pro · Claude Sonnet 4.6 · Gemini 3.1 Pro · Grok 4 · DeepSeek V3.2 · 350+ more
+            </span>
           </div>
         </div>
 
