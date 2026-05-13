@@ -173,9 +173,22 @@ export async function POST(req: NextRequest) {
       orchestratorSettings,
       orchestrationEngine,  // Direct orchestration engine selection (hrm, prompt-diffusion, deep-conf, adaptive-ensemble)
       chatId,
-      userId,
+      userId: bodyUserId,  // legacy/optional: only used to log mismatches
       projectId,
     } = body
+
+    // Defense: the authenticated Clerk userId from auth() is the ONLY source of
+    // truth for the orchestrator's access guard. The chat client (chat-area.tsx)
+    // does not always include userId in the body, and a stale or spoofed body
+    // userId must never be forwarded — that bug previously caused the backend
+    // to reject paying users with 402 "Active paid subscription required.
+    // Sign in and complete checkout." (access_guard.py _DETAIL_NO_USER).
+    if (bodyUserId && bodyUserId !== clerkUserId) {
+      console.warn("[Chat API] body.userId mismatch with authenticated user", {
+        bodyUserId: String(bodyUserId).slice(0, 12) + "...",
+        clerkUserId: clerkUserId.slice(0, 12) + "...",
+      })
+    }
 
     // Detailed logging for debugging
     console.log("[Chat API] Request received:", {
@@ -399,7 +412,10 @@ export async function POST(req: NextRequest) {
       },
       metadata: {
         chat_id: chatId || null,
-        user_id: userId || null,
+        // Always the authenticated Clerk user id — the backend access guard
+        // requires a non-empty user_id to verify the active paid subscription.
+        // Never trust the request body's userId here.
+        user_id: clerkUserId,
         project_id: projectId || null,
         // Dynamic Criteria Equalizer settings
         criteria: settings.criteria || { accuracy: 70, speed: 70, creativity: 50 },
