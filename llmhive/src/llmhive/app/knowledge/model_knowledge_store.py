@@ -597,36 +597,42 @@ considered for future improvements to the system.
                 if filter_criteria:
                     search_query["filter"] = filter_criteria
                 
-                results = self.index.search(
+                from .pinecone_integrated_search import hits_from_search_payload, integrated_search_to_dict
+
+                payload = integrated_search_to_dict(
+                    self.index,
                     namespace=namespace,
-                    query=search_query,
+                    search_query=search_query,
                     rerank={
                         "model": self.RERANKER_MODEL,
                         "top_n": top_k,
                         "rank_fields": ["content"],
-                    }
+                    },
                 )
-                
-                records = []
-                for hit in results.get("result", {}).get("hits", []):
-                    fields = hit.get("fields", {})
-                    records.append(ModelKnowledgeRecord(
-                        id=hit.get("_id", ""),
-                        knowledge_type=ModelKnowledgeType(
-                            fields.get("knowledge_type", "model_profile")
-                        ),
-                        content=fields.get("content", ""),
-                        model_id=fields.get("model_id"),
-                        category=fields.get("category"),
-                        metadata={k: v for k, v in fields.items()
-                                  if k not in ["content", "_id", "knowledge_type"]},
-                        score=hit.get("_score", 0.0),
-                    ))
-                
-                return records
+                if payload is not None:
+                    records = []
+                    for hit in hits_from_search_payload(payload):
+                        h = hit.to_dict() if hasattr(hit, "to_dict") else hit
+                        if not isinstance(h, dict):
+                            continue
+                        fields = h.get("fields") or {}
+                        records.append(ModelKnowledgeRecord(
+                            id=h.get("_id", ""),
+                            knowledge_type=ModelKnowledgeType(
+                                fields.get("knowledge_type", "model_profile")
+                            ),
+                            content=fields.get("content", ""),
+                            model_id=fields.get("model_id"),
+                            category=fields.get("category"),
+                            metadata={k: v for k, v in fields.items()
+                                      if k not in ["content", "_id", "knowledge_type"]},
+                            score=h.get("_score", 0.0),
+                        ))
+                    
+                    return records
                 
             except Exception as e:
-                logger.error(f"Pinecone search failed: {e}")
+                logger.warning("Pinecone model knowledge search failed: %s", e)
         
         # Fallback to local cache search
         return self._local_search(query, namespace, top_k, filter_criteria)

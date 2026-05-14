@@ -263,6 +263,50 @@ Quality: {quality_score:.2f}
             }
         )
     
+    def _integrated_pinecone_vector_search(
+        self,
+        *,
+        namespace: str,
+        search_query: Dict[str, Any],
+        rerank: Optional[Dict[str, Any]],
+    ) -> Optional[List[KnowledgeRecord]]:
+        """Run Pinecone integrated embedding search when the installed SDK supports it.
+        
+        Returns a list of records on success, empty list when search returns no hits,
+        or None when the SDK/index does not support this call (fall back to FAISS/local).
+        """
+        from .pinecone_integrated_search import hits_from_search_payload, integrated_search_to_dict
+
+        payload = integrated_search_to_dict(
+            self.index,
+            namespace=namespace,
+            search_query=search_query,
+            rerank=rerank,
+        )
+        if payload is None:
+            return None
+        hits = hits_from_search_payload(payload)
+        records: List[KnowledgeRecord] = []
+        for hit in hits:
+            h = hit.to_dict() if hasattr(hit, "to_dict") else hit
+            if not isinstance(h, dict):
+                continue
+            fields = h.get("fields") or {}
+            records.append(
+                KnowledgeRecord(
+                    id=h.get("_id", ""),
+                    content=fields.get("content", ""),
+                    record_type=RecordType(fields.get("record_type", "final_answer")),
+                    metadata={
+                        k: v
+                        for k, v in fields.items()
+                        if k not in ["content", "_id"]
+                    },
+                    score=h.get("_score", 0.0),
+                )
+            )
+        return records
+    
     async def retrieve_context(
         self,
         query: str,
@@ -296,7 +340,7 @@ Quality: {quality_score:.2f}
         if self._initialized and self.index:
             try:
                 # Build filter criteria
-                filter_criteria = {}
+                filter_criteria: Dict[str, Any] = {}
                 if record_types:
                     filter_criteria["record_type"] = {"$in": [rt.value for rt in record_types]}
                 if domain:
@@ -305,51 +349,33 @@ Quality: {quality_score:.2f}
                     filter_criteria["quality_score"] = {"$gte": min_quality_score}
                 
                 # Build query
-                search_query = {
+                search_query: Dict[str, Any] = {
                     "top_k": top_k * 2 if rerank else top_k,
-                    "inputs": {"text": query}
+                    "inputs": {"text": query},
                 }
                 
                 if filter_criteria:
                     search_query["filter"] = filter_criteria
                 
-                # Execute search with optional reranking
+                rerank_kw: Optional[Dict[str, Any]] = None
                 if rerank:
-                    results = self.index.search(
-                        namespace=namespace,
-                        query=search_query,
-                        rerank={
-                            "model": self.RERANKER_MODEL,
-                            "top_n": top_k,
-                            "rank_fields": ["content"]
-                        }
-                    )
-                else:
-                    results = self.index.search(
-                        namespace=namespace,
-                        query=search_query
-                    )
+                    rerank_kw = {
+                        "model": self.RERANKER_MODEL,
+                        "top_n": top_k,
+                        "rank_fields": ["content"],
+                    }
                 
-                # Convert to KnowledgeRecord objects
-                records = []
-                for hit in results.get("result", {}).get("hits", []):
-                    fields = hit.get("fields", {})
-                    records.append(KnowledgeRecord(
-                        id=hit.get("_id", ""),
-                        content=fields.get("content", ""),
-                        record_type=RecordType(fields.get("record_type", "final_answer")),
-                        metadata={
-                            k: v for k, v in fields.items() 
-                            if k not in ["content", "_id"]
-                        },
-                        score=hit.get("_score", 0.0)
-                    ))
-                
-                records.sort(key=lambda r: r.score, reverse=True)
-                return records[:top_k]
+                pine_hits = self._integrated_pinecone_vector_search(
+                    namespace=namespace,
+                    search_query=search_query,
+                    rerank=rerank_kw,
+                )
+                if pine_hits is not None:
+                    pine_hits.sort(key=lambda r: r.score, reverse=True)
+                    return pine_hits[:top_k]
                 
             except Exception as e:
-                logger.error(f"Failed to retrieve from Pinecone: {e}")
+                logger.warning("Failed to retrieve from Pinecone: %s", e)
         
         # Try FAISS store first
         faiss_records = self._faiss_store.search(

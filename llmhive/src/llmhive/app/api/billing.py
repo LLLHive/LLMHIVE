@@ -16,6 +16,11 @@ from ..database import get_db
 from ..firestore_db import FirestoreSubscriptionService, is_firestore_available
 from ..models import Subscription, SubscriptionStatus
 
+if STRIPE_AVAILABLE:
+    import stripe
+else:
+    stripe = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -480,6 +485,15 @@ async def stripe_webhook(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:
+        if STRIPE_AVAILABLE and stripe is not None and isinstance(
+            exc, stripe.error.SignatureVerificationError
+        ):
+            logger.warning("Stripe billing webhook: invalid signature: %s", exc)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid webhook signature",
+            ) from exc
         logger.exception("Failed to process Stripe webhook: %s", exc)
         db.rollback()
         raise HTTPException(

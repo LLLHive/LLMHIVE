@@ -492,8 +492,19 @@ class CalculatorTool(BaseTool):
                     status=ToolStatus.FAILED,
                 )
             
-            # Evaluate safely
-            result = self._safe_eval(sanitized)
+            # Evaluate safely (user-supplied text often is not a valid math expression)
+            try:
+                result = self._safe_eval(sanitized)
+            except (SyntaxError, ValueError, ZeroDivisionError, OverflowError) as e:
+                logger.warning("Calculation not evaluable: %s", e)
+                return ToolResult(
+                    tool_type=self.tool_type,
+                    success=False,
+                    data=None,
+                    error_message="Could not evaluate as a mathematical expression.",
+                    latency_ms=(time.time() - start_time) * 1000,
+                    status=ToolStatus.FAILED,
+                )
             
             return ToolResult(
                 tool_type=self.tool_type,

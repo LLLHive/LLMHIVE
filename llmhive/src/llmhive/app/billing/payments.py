@@ -265,10 +265,10 @@ class StripePaymentProcessor:
         try:
             event = stripe.Webhook.construct_event(payload, signature, webhook_secret)
         except ValueError as exc:
-            logger.error("Invalid webhook payload: %s", exc)
+            logger.warning("Invalid webhook payload: %s", exc)
             raise
         except stripe.error.SignatureVerificationError as exc:
-            logger.error("Invalid webhook signature: %s", exc)
+            logger.warning("Invalid webhook signature: %s", exc)
             raise
 
         event_type = event["type"]

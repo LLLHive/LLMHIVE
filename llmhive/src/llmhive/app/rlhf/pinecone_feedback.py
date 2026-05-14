@@ -304,39 +304,50 @@ class PineconeFeedbackStore:
             if filter_dict:
                 query_params["filter"] = filter_dict
             
-            # Search with reranking
-            results = self._index.search(
+            from ..knowledge.pinecone_integrated_search import (
+                hits_from_search_payload,
+                integrated_search_to_dict,
+            )
+
+            payload = integrated_search_to_dict(
+                self._index,
                 namespace=self.NAMESPACE,
-                query=query_params,
+                search_query=query_params,
                 rerank={
                     "model": "bge-reranker-v2-m3",
                     "top_n": limit,
                     "rank_fields": ["content"],
-                }
+                },
             )
+            if payload is None:
+                return []
             
             # Convert to FeedbackRecord
             records = []
-            for hit in results.get("result", {}).get("hits", []):
-                if hit.get("_score", 0) >= min_score:
-                    fields = hit.get("fields", {})
-                    records.append(FeedbackRecord(
-                        id=hit.get("_id", ""),
-                        query=fields.get("query", ""),
-                        answer=fields.get("answer", ""),
-                        feedback_type=fields.get("feedback_type", "rating"),
-                        rating=fields.get("rating", 0.5),
-                        user_id=fields.get("user_id"),
-                        model_used=fields.get("model_used"),
-                        created_at=fields.get("created_at", ""),
-                        is_positive=fields.get("is_positive", False),
-                    ))
+            for hit in hits_from_search_payload(payload):
+                h = hit.to_dict() if hasattr(hit, "to_dict") else hit
+                if not isinstance(h, dict):
+                    continue
+                if h.get("_score", 0) < min_score:
+                    continue
+                fields = h.get("fields") or {}
+                records.append(FeedbackRecord(
+                    id=h.get("_id", ""),
+                    query=fields.get("query", ""),
+                    answer=fields.get("answer", ""),
+                    feedback_type=fields.get("feedback_type", "rating"),
+                    rating=fields.get("rating", 0.5),
+                    user_id=fields.get("user_id"),
+                    model_used=fields.get("model_used"),
+                    created_at=fields.get("created_at", ""),
+                    is_positive=fields.get("is_positive", False),
+                ))
             
             logger.debug("Found %d similar feedback records", len(records))
             return records
             
         except Exception as e:
-            logger.error("Failed to search feedback: %s", e)
+            logger.warning("Failed to search feedback: %s", e)
             return []
     
     async def get_training_examples(

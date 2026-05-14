@@ -133,9 +133,9 @@ async def stripe_webhook(request: Request) -> dict:
     # Stripe webhook handling: Get raw payload
     payload = await request.body()
     
+    import stripe
+    
     try:
-        import stripe
-        
         # Stripe webhook handling: Verify webhook signature and construct event
         webhook_secret = settings.stripe_webhook_secret
         if not webhook_secret:
@@ -366,19 +366,22 @@ async def stripe_webhook(request: Request) -> dict:
         
         return {"received": True, "processed": True, "event_type": event_type}
         
+    except stripe.error.SignatureVerificationError as exc:
+        logger.warning(
+            "Stripe webhook handling: Invalid webhook signature (wrong secret, replay, or non-Stripe client): %s",
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid webhook signature",
+        ) from exc
     except ValueError as exc:
-        logger.error("Stripe webhook handling: Invalid webhook payload: %s", exc)
+        logger.warning("Stripe webhook handling: Invalid webhook payload: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid webhook payload",
         ) from exc
     except Exception as exc:
-        if "SignatureVerificationError" in str(type(exc).__name__):
-            logger.error("Stripe webhook handling: Invalid webhook signature: %s", exc)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid webhook signature",
-            ) from exc
         logger.exception("Stripe webhook handling: Failed to process webhook: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

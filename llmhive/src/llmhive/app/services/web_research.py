@@ -17,6 +17,9 @@ from typing import List, Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+# Tavily rejects queries over ~400 characters (Sentry: "Query is too long").
+TAVILY_MAX_QUERY_CHARS = 400
+
 # Check for Tavily availability
 try:
     from tavily import TavilyClient
@@ -25,6 +28,16 @@ except ImportError:
     TAVILY_AVAILABLE = False
     TavilyClient = None
     logger.warning("Tavily not installed. Run: pip install tavily-python")
+
+
+def _clip_tavily_query(query: str, max_chars: int = TAVILY_MAX_QUERY_CHARS) -> str:
+    """Tavily enforces a short query length; clip to avoid hard failures on long prompts."""
+    q = (query or "").strip()
+    if len(q) <= max_chars:
+        return q
+    clipped = q[: max_chars - 1].rstrip() + "…"
+    logger.debug("Tavily query clipped from %d to %d characters", len(q), len(clipped))
+    return clipped
 
 
 @dataclass
@@ -97,11 +110,18 @@ class WebResearchClient:
             return []
         
         try:
-            logger.info(f"Web search: query='{query[:50]}...', max_results={max_results}, days={days}, topic={topic}")
+            safe_query = _clip_tavily_query(query)
+            logger.info(
+                "Web search: query='%s...', max_results=%s, days=%s, topic=%s",
+                safe_query[:50],
+                max_results,
+                days,
+                topic,
+            )
             
             # Build search params
             search_params = {
-                "query": query,
+                "query": safe_query,
                 "max_results": max_results,
                 "search_depth": search_depth,
                 "include_domains": include_domains or [],
@@ -144,7 +164,7 @@ class WebResearchClient:
             return results
             
         except Exception as e:
-            logger.error(f"Web search failed: {e}")
+            logger.warning("Web search failed: %s", e)
             return []
     
     async def search_news(
@@ -167,15 +187,16 @@ class WebResearchClient:
             return []
         
         try:
-            # Add time context to query for recency
-            enhanced_query = f"{query} latest news {days} days"
+            # Add time context to query for recency (keep under Tavily length cap)
+            base = _clip_tavily_query(query, max_chars=TAVILY_MAX_QUERY_CHARS - 40)
+            enhanced_query = f"{base} latest news {days} days"
             return await self.search(
                 query=enhanced_query,
                 max_results=max_results,
                 search_depth="advanced",
             )
         except Exception as e:
-            logger.error(f"News search failed: {e}")
+            logger.warning("News search failed: %s", e)
             return []
     
     async def get_answer(
@@ -200,7 +221,7 @@ class WebResearchClient:
         
         try:
             response = self._client.search(
-                query=query,
+                query=_clip_tavily_query(query),
                 max_results=max_results,
                 search_depth="advanced",
                 include_answer=True,
@@ -214,7 +235,7 @@ class WebResearchClient:
                 ],
             }
         except Exception as e:
-            logger.error(f"Answer search failed: {e}")
+            logger.warning("Answer search failed: %s", e)
             return {"answer": None, "sources": [], "error": str(e)}
 
 
