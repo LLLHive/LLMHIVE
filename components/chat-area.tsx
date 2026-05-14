@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useAuth as useClerkAuth } from "@clerk/nextjs"
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -205,6 +206,12 @@ export function ChatArea({
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null)
   const [showMobileToolbar, setShowMobileToolbar] = useState(false)
   const isSmUp = useBreakpointSm()
+
+  const { getToken } = useClerkAuth()
+  /** One-shot Clerk JWT refresh before retrying `/api/chat` on 401 (stale session cookie). */
+  const refreshClerkSessionForChat = useCallback(async () => {
+    await getToken({ skipCache: true })
+  }, [getToken])
 
   // Active prompt display - shows the current prompt being processed
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
@@ -754,7 +761,8 @@ export function ChatArea({
           },
           chatId: conversation?.id,
         },
-        handleRetry
+        handleRetry,
+        refreshClerkSessionForChat
       )
       
       // Clear retry status on success
@@ -972,7 +980,9 @@ export function ChatArea({
             selectedModels: actualModels,
           },
           chatId: conversation?.id,
-        }
+        },
+        undefined,
+        refreshClerkSessionForChat
       )
 
       const { content: assistantContent, modelsUsed, tokensUsed, latencyMs } = chatResponse
@@ -1033,7 +1043,7 @@ export function ChatArea({
       setRegeneratingMessageId(null)
       // NOTE: Keep activePrompt visible after regeneration
     }
-  }, [isLoading, regeneratingMessageId, orchestratorSettings, conversation?.id, onSendMessage])
+  }, [isLoading, regeneratingMessageId, orchestratorSettings, conversation?.id, onSendMessage, refreshClerkSessionForChat])
 
   const displayMessages = conversation?.messages || []
 

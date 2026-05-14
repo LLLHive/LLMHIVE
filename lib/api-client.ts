@@ -511,6 +511,9 @@ async function fetchWithTimeout(
  * 
  * @param request - Chat request containing messages, models, and settings
  * @param onRetry - Optional callback for retry status updates
+ * @param refreshSession - Optional: after a single `401`, call this (e.g.
+ *   `() => getToken({ skipCache: true })` from Clerk) then retry the chat POST
+ *   once. Fixes stale JWT cookies without a full page reload.
  * @returns Chat response with content, models used, metrics, and retry info
  * @throws ApiError if the request fails
  * @throws NetworkError if unable to connect
@@ -518,38 +521,57 @@ async function fetchWithTimeout(
  */
 export async function sendChat(
   request: ChatRequest,
-  onRetry?: RetryStatusCallback
+  onRetry?: RetryStatusCallback,
+  refreshSession?: () => Promise<void>
 ): Promise<ChatResponse> {
   const { result, retryInfo } = await withRetry(
     async () => {
       const startTime = Date.now()
 
-      const response = await fetchWithTimeout(
-        API_ROUTES.CHAT,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: request.messages.map((m) => ({
-              role: m.role,
-              content: m.content,
-            })),
-            models: request.models,
-            model: request.models[0],
-            orchestratorSettings: {
-              ...request.orchestratorSettings,
-              selectedModels: request.models,
-            },
-            chatId: request.chatId,
-            userId: request.userId,
-            projectId: request.projectId,
-          }),
+      const body = JSON.stringify({
+        messages: request.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        models: request.models,
+        model: request.models[0],
+        orchestratorSettings: {
+          ...request.orchestratorSettings,
+          selectedModels: request.models,
         },
-        120000 // 2 minute timeout for chat
-      )
+        chatId: request.chatId,
+        userId: request.userId,
+        projectId: request.projectId,
+      })
+
+      const postChat = () =>
+        fetchWithTimeout(
+          API_ROUTES.CHAT,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+          },
+          120000 // 2 minute timeout for chat
+        )
+
+      let response = await postChat()
 
       if (!response.ok) {
-        throw await parseErrorResponse(response)
+        const err = await parseErrorResponse(response)
+        if (
+          err instanceof ApiError &&
+          err.status === 401 &&
+          typeof refreshSession === "function"
+        ) {
+          await refreshSession()
+          response = await postChat()
+          if (!response.ok) {
+            throw await parseErrorResponse(response)
+          }
+        } else {
+          throw err
+        }
       }
 
       // Extract metadata from headers
