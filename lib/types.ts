@@ -53,6 +53,10 @@ export interface Attachment {
   type: string
   size: number
   url: string
+  /** Plain text sent to the model (from OCR or text file read). */
+  textExcerpt?: string
+  /** Set when we could not produce textExcerpt (PDF, Word, etc.). */
+  inlineNote?: string
 }
 
 export interface Artifact {

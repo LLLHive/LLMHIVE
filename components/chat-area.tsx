@@ -12,6 +12,11 @@ import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown, ChevronUp, Check, Scale, Stethoscope, Megaphone, GraduationCap, Landmark, Building2, MessageSquare, Home } from "lucide-react"
 import { getModelById, AVAILABLE_MODELS } from "@/lib/models"
+import {
+  buildOutboundUserContent,
+  extractTextExcerptForAttachment,
+  isTextLikeFile,
+} from "@/lib/chat-attachments"
 import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
 import { toast } from "@/lib/toast"
 import { processImageForOCR } from "@/lib/ocr"
@@ -382,35 +387,40 @@ export function ChatArea({
   }, [isListening])
   
   // Enhanced OCR processing for images using our OCR utility
-  const processImageWithOCR = useCallback(async (file: File): Promise<{ dataUrl: string; prompt: string } | null> => {
-    try {
-      setIsProcessingOCR(true)
-      
-      const toastId = toast.loading("Analyzing image...")
-      
-      // Use our enhanced OCR utility
-      const result = await processImageForOCR(file)
-      
-      toast.dismiss(toastId)
-      
-      if (result.analysis.hasText) {
-        toast.success(`Image processed (${result.analysis.width}x${result.analysis.height}px)`)
-      } else {
-        toast.info("Image processed. Note: Limited text detected.")
+  const processImageWithOCR = useCallback(
+    async (file: File, options?: { silent?: boolean }): Promise<{ dataUrl: string; prompt: string } | null> => {
+      const silent = options?.silent === true
+      try {
+        setIsProcessingOCR(true)
+
+        const toastId = silent ? null : toast.loading("Analyzing image...")
+
+        const result = await processImageForOCR(file)
+
+        if (toastId) toast.dismiss(toastId)
+
+        if (!silent) {
+          if (result.analysis.hasText) {
+            toast.success(`Image processed (${result.analysis.width}x${result.analysis.height}px)`)
+          } else {
+            toast.info("Image processed. Note: Limited text detected.")
+          }
+        }
+
+        return {
+          dataUrl: result.processedDataUrl,
+          prompt: result.suggestedPrompt,
+        }
+      } catch (error) {
+        console.error("OCR processing error:", error)
+        if (!silent) toast.error("Failed to process image for OCR")
+        return null
+      } finally {
+        setIsProcessingOCR(false)
       }
-      
-      return {
-        dataUrl: result.processedDataUrl,
-        prompt: result.suggestedPrompt,
-      }
-    } catch (error) {
-      console.error('OCR processing error:', error)
-      toast.error("Failed to process image for OCR")
-      return null
-    } finally {
-      setIsProcessingOCR(false)
-    }
-  }, [])
+    },
+    []
+  )
   
   const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -432,6 +442,7 @@ export function ChatArea({
         type: file.type,
         size: file.size,
         url: result.dataUrl,
+        textExcerpt: `[Image: ${file.name || "camera"}. Raster pixels are not sent to the chat API as vision input in this flow — describe the image or paste any text you need quoted.]\n\nSuggested starter: ${result.prompt}`,
       }
       setAttachments(prev => [...prev, newAttachment])
       
@@ -589,16 +600,85 @@ export function ChatArea({
     }
   }, [addOrchestrationEvent])
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const newAttachments: Attachment[] = files.map((file) => ({
-      id: `att-${Date.now()}-${Math.random()}`,
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: URL.createObjectURL(file),
-    }))
-    setAttachments([...attachments, ...newAttachments])
+    e.target.value = ""
+    if (files.length === 0) return
+
+    const toastId = toast.loading(
+      files.length === 1 ? "Reading attachment…" : `Reading ${files.length} attachments…`
+    )
+
+    try {
+      const built: Attachment[] = []
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const id = `att-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 9)}`
+        const baseUrl = URL.createObjectURL(file)
+
+        if (file.type.startsWith("image/")) {
+          const result = await processImageWithOCR(file, { silent: true })
+          if (result) {
+            built.push({
+              id,
+              name: file.name || "Image",
+              type: file.type,
+              size: file.size,
+              url: result.dataUrl,
+              textExcerpt: `[Image: ${file.name || "upload"}. Raster pixels are not sent to the chat API as vision input in this flow — describe the image or paste any text you need quoted.]\n\nSuggested starter: ${result.prompt}`,
+            })
+          } else {
+            built.push({
+              id,
+              name: file.name || "Image",
+              type: file.type,
+              size: file.size,
+              url: baseUrl,
+              inlineNote: "Image analysis failed; the model has no image data.",
+            })
+          }
+        } else if (isTextLikeFile(file)) {
+          try {
+            const { textExcerpt, inlineNote } = await extractTextExcerptForAttachment(file)
+            built.push({
+              id,
+              name: file.name,
+              type: file.type || "text/plain",
+              size: file.size,
+              url: baseUrl,
+              textExcerpt,
+              inlineNote,
+            })
+          } catch {
+            built.push({
+              id,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              url: baseUrl,
+              inlineNote: "Could not read this file as text.",
+            })
+          }
+        } else {
+          built.push({
+            id,
+            name: file.name,
+            type: file.type || "application/octet-stream",
+            size: file.size,
+            url: baseUrl,
+            inlineNote:
+              "PDF/Word and other binary types are not parsed in the browser yet. Export as .txt/.md or paste an excerpt into your message.",
+          })
+        }
+      }
+      setAttachments((prev) => [...prev, ...built])
+      toast.dismiss(toastId)
+      toast.success(built.length === 1 ? `Attached: ${built[0].name}` : `${built.length} files attached`)
+    } catch (err) {
+      console.error(err)
+      toast.dismiss(toastId)
+      toast.error("Failed to read attachment")
+    }
   }
 
   const removeAttachment = (id: string) => {
@@ -748,10 +828,15 @@ export function ChatArea({
       // Get actual models to use (expand "automatic")
       const actualModels = getActualModels()
       
+      const augmentedUserMessage: Message = {
+        ...userMessage,
+        content: buildOutboundUserContent(userMessage.content, userMessage.attachments),
+      }
+
       // Use typed API client with retry callback
       const chatResponse = await sendChat(
         {
-          messages: [...(conversation?.messages || []), userMessage],
+          messages: [...(conversation?.messages || []), augmentedUserMessage],
           models: actualModels,
           orchestratorSettings: {
             ...orchestratorSettings,
