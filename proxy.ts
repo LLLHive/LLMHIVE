@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 import {
   BUSINESS_OPS_GATE_COOKIE,
   businessOpsGateConfigured,
@@ -73,22 +74,48 @@ const isE2ETest = process.env.PLAYWRIGHT_TEST === "true" || process.env.CI === "
 // Clerk Auth Middleware
 // =============================================================================
 
+/** True when the request targets an `/api/...` route. */
+function isApiRequest(request: NextRequest): boolean {
+  return request.nextUrl.pathname.startsWith("/api/")
+}
+
 /**
  * Clerk proxy for authentication (Next.js 16+).
- * 
- * - Public routes are accessible to everyone
- * - All other routes require authentication
- * - E2E tests bypass authentication
+ *
+ * - Public routes are accessible to everyone.
+ * - HTML routes that require auth get redirected to /sign-in via
+ *   `auth.protect()` (Clerk's default behaviour).
+ * - API routes that require auth get a JSON `401 Unauthorized` instead of
+ *   Clerk's default `notFound()` (which renders Next.js's 404 HTML page).
+ *   The 404 fallback was surfacing in the chat UI as the opaque
+ *   "Request failed: 404" error whenever a session token went stale.
+ * - E2E tests bypass authentication.
  */
 export const proxy = clerkMiddleware(async (auth, request) => {
-  // Skip auth in E2E test mode to allow automated testing
+  // Skip auth in E2E test mode to allow automated testing.
   if (isE2ETest) {
     return
   }
 
-  // Protect all routes except public ones
   if (!isPublicRoute(request)) {
-    await auth.protect()
+    const { userId } = await auth()
+
+    if (!userId) {
+      if (isApiRequest(request)) {
+        // Return a real 401 with a JSON body so client-side fetch wrappers
+        // (lib/api-client.ts -> parseErrorResponse) can show "Please sign
+        // in to continue" instead of "Request failed: 404".
+        return NextResponse.json(
+          {
+            error: "Authentication required. Please sign in to continue.",
+            code: "session_required",
+          },
+          { status: 401 },
+        )
+      }
+      // HTML route — let Clerk handle the sign-in redirect as before.
+      await auth.protect()
+    }
   }
 
   const { userId } = await auth()

@@ -861,10 +861,13 @@ export function ChatArea({
           errorDetail = `Server error: ${error.status}${retryInfo}`
           toast.error(`API Error (${error.status}): ${error.message}`)
         } else if (error.status === 401) {
-          errorContent = `Authentication error: ${error.message}. Please sign in to continue.`
+          // Middleware (proxy.ts) returns 401 JSON with a friendly message
+          // when a Clerk session expires. Surface it verbatim and prompt a
+          // refresh so the user can grab a new token without confusion.
+          errorContent = `${error.message} Try refreshing the page.`
           errorDetail = `Auth error: ${error.status}`
           canRetry = false
-          toast.error(`Please sign in to continue`)
+          toast.error("Session expired. Refresh the page to sign in again.")
         } else if (error.status === 403) {
           // Check if it's a subscription/plan limit error
           const isLimitError = error.message?.toLowerCase().includes('limit') || 
