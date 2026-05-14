@@ -57,6 +57,10 @@ export interface Attachment {
   textExcerpt?: string
   /** Set when we could not produce textExcerpt (PDF, Word, etc.). */
   inlineNote?: string
+  /** GCS URI after server-side PDF/binary upload (optional). */
+  remoteGsUri?: string
+  /** Short-lived HTTPS read URL from the orchestrator (optional). */
+  signedReadUrl?: string
 }
 
 export interface Artifact {

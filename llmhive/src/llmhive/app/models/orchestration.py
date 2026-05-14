@@ -257,8 +257,8 @@ class ChatRequest(BaseModel):
     prompt: str = Field(
         ...,
         min_length=1,
-        max_length=10000,
-        description="User prompt/question (1-10000 chars)"
+        max_length=120_000,
+        description="User prompt/question (up to 120000 chars; large pasted docs + attachment excerpts)"
     )
     models: Optional[List[str]] = Field(
         default=None,

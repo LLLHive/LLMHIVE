@@ -17,6 +17,7 @@ import {
   extractTextExcerptForAttachment,
   isTextLikeFile,
 } from "@/lib/chat-attachments"
+import { uploadChatDocument } from "@/lib/upload-chat-document"
 import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
 import { toast } from "@/lib/toast"
 import { processImageForOCR } from "@/lib/ocr"
@@ -212,7 +213,7 @@ export function ChatArea({
   const [showMobileToolbar, setShowMobileToolbar] = useState(false)
   const isSmUp = useBreakpointSm()
 
-  const { getToken } = useClerkAuth()
+  const { getToken, userId } = useClerkAuth()
   /** One-shot Clerk JWT refresh before retrying `/api/chat` on 401 (stale session cookie). */
   const refreshClerkSessionForChat = useCallback(async () => {
     await getToken({ skipCache: true })
@@ -659,6 +660,58 @@ export function ChatArea({
               inlineNote: "Could not read this file as text.",
             })
           }
+        } else if (
+          file.type === "application/pdf" ||
+          file.name.toLowerCase().endsWith(".pdf")
+        ) {
+          const maxPdfBytes = 25 * 1024 * 1024
+          if (!userId) {
+            built.push({
+              id,
+              name: file.name,
+              type: file.type || "application/pdf",
+              size: file.size,
+              url: baseUrl,
+              inlineNote:
+                "Sign in to upload PDFs to secure cloud storage, or export as .txt/.md and attach.",
+            })
+          } else if (file.size > maxPdfBytes) {
+            built.push({
+              id,
+              name: file.name,
+              type: file.type || "application/pdf",
+              size: file.size,
+              url: baseUrl,
+              inlineNote: `PDF exceeds server limit (${Math.floor(maxPdfBytes / (1024 * 1024))} MB). Split the file or paste excerpts.`,
+            })
+          } else {
+            try {
+              const meta = await uploadChatDocument(file, refreshClerkSessionForChat)
+              const linkLine = meta.signed_read_url
+                ? ` Time-limited HTTPS link: ${meta.signed_read_url}`
+                : ""
+              built.push({
+                id,
+                name: file.name,
+                type: "application/pdf",
+                size: file.size,
+                url: baseUrl,
+                remoteGsUri: meta.gs_uri,
+                signedReadUrl: meta.signed_read_url ?? undefined,
+                textExcerpt: `[PDF "${file.name}" (${meta.size} bytes) stored at ${meta.gs_uri}.${linkLine} The chat model does not automatically fetch or parse this object; paste quoted pages in your message for verbatim answers.]`,
+              })
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : "Upload failed"
+              built.push({
+                id,
+                name: file.name,
+                type: file.type || "application/pdf",
+                size: file.size,
+                url: baseUrl,
+                inlineNote: `PDF cloud upload failed (${msg}). Try again, use a smaller file, or paste text from the PDF.`,
+              })
+            }
+          }
         } else {
           built.push({
             id,
@@ -667,7 +720,7 @@ export function ChatArea({
             size: file.size,
             url: baseUrl,
             inlineNote:
-              "PDF/Word and other binary types are not parsed in the browser yet. Export as .txt/.md or paste an excerpt into your message.",
+              "This binary type is not parsed in the browser yet. For PDFs while signed in, attach again; otherwise export as .txt/.md or paste an excerpt.",
           })
         }
       }

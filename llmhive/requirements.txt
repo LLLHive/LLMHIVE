@@ -8,6 +8,7 @@ torch>=2.0.0
 # Core API framework
 fastapi>=0.111,<0.116
 uvicorn[standard]==0.30.6
+python-multipart>=0.0.9
 gunicorn>=21.2.0,<23.0.0
 pydantic>=2.6
 pydantic-settings>=2.1
@@ -33,6 +34,7 @@ tenacity>=8.2
 # External services
 stripe>=14.0.0
 google-cloud-firestore>=2.16.0
+google-cloud-storage>=2.14.0
 pinecone>=5.0.0
 
 # Utilities

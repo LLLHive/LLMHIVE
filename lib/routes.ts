@@ -17,6 +17,7 @@ export const ROUTES = {
 
 export const API_ROUTES = {
   CHAT: "/api/chat",
+  UPLOAD_CHAT_DOCUMENT: "/api/uploads/chat-document",
   AGENTS: "/api/agents",
   EXECUTE: "/api/execute",
   SETTINGS: "/api/settings",

@@ -608,6 +608,10 @@ app.include_router(stubs_router.router)
 from .routers import chat as chat_router
 app.include_router(chat_router.router)
 
+# Optional chat document uploads to GCS (at /v1/uploads/chat-document)
+from .routers import uploads_chat as uploads_chat_router
+app.include_router(uploads_chat_router.router)
+
 # Include agents router (at /v1/agents)
 from .routers import agents as agents_router
 app.include_router(agents_router.router)

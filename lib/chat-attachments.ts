@@ -9,7 +9,7 @@
 import type { Attachment } from "@/lib/types"
 
 /** FastAPI ChatRequest.prompt max_length (orchestration.py) minus safety margin */
-const OUTBOUND_PROMPT_MAX = 9500
+const OUTBOUND_PROMPT_MAX = 115_000
 
 const GROUNDING_SUFFIX = `
 
@@ -21,7 +21,7 @@ Instructions: Base your answer only on the message and any attached excerpts abo
 const MAX_TEXT_FILE_READ_BYTES = 512 * 1024
 
 /** Max characters kept per file before global merge (second truncation in merge). */
-const MAX_EXCERPT_PER_FILE = 32_000
+const MAX_EXCERPT_PER_FILE = 80_000
 
 const TEXT_LIKE_MIME = new Set([
   "text/plain",
