@@ -463,7 +463,7 @@ class AnswerRefiner:
         cleaned = self._fix_format_edge_cases(cleaned)
         
         # Step 3: Apply format transformation
-        formatted = self._apply_format(cleaned, config.output_format)
+        formatted = self._apply_format(cleaned, config.output_format, query=query)
         if formatted != cleaned:
             improvements_made.append(f"Applied {config.output_format.value} format")
         
@@ -673,6 +673,14 @@ class AnswerRefiner:
         """Remove content that repeats recent history."""
         if not history:
             return content, 0
+
+        try:
+            from .list_formatter import looks_like_markdown_list
+
+            if looks_like_markdown_list(content):
+                return content, 0
+        except ImportError:
+            pass
         
         removed = 0
         sentences = re.split(r'(?<=[.!?])\s+', content)
@@ -813,12 +821,14 @@ Output ONLY the refined text, no commentary."""
         self,
         content: str,
         output_format: OutputFormat,
+        *,
+        query: str = "",
     ) -> str:
         """Apply the requested output format."""
         if output_format == OutputFormat.BULLET:
-            return self._format_as_bullets(content)
+            return self._format_as_bullets(content, query=query)
         elif output_format == OutputFormat.NUMBERED:
-            return self._format_as_numbered(content)
+            return self._format_as_numbered(content, query=query)
         elif output_format == OutputFormat.JSON:
             return self._format_as_json(content)
         elif output_format == OutputFormat.MARKDOWN:
@@ -836,34 +846,24 @@ Output ONLY the refined text, no commentary."""
         else:
             return self._format_as_paragraph(content)
     
-    def _format_as_bullets(self, content: str) -> str:
-        """Format content as bullet points."""
-        lines = content.split('\n')
-        bullets = []
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            
-            # If already a bullet, keep it
-            if re.match(r'^[-*•]\s+', line):
-                bullets.append(line)
-            # If numbered, convert to bullet
-            elif re.match(r'^\d+[.)]\s+', line):
-                bullets.append(re.sub(r'^\d+[.)]\s+', '• ', line))
-            else:
-                # Split sentences into bullets
-                sentences = re.split(r'(?<=[.!?])\s+', line)
-                for s in sentences:
-                    s = s.strip()
-                    if s and len(s) > 10:
-                        bullets.append(f"• {s}")
-        
-        return '\n'.join(bullets) if bullets else f"• {content}"
+    def _format_as_bullets(self, content: str, *, query: str = "") -> str:
+        """Format content as Markdown bullet list (one item per line)."""
+        try:
+            from .list_formatter import format_as_markdown_bullets
+
+            return format_as_markdown_bullets(content, query)
+        except ImportError:
+            pass
+        return f"- {content.strip()}"
     
-    def _format_as_numbered(self, content: str) -> str:
+    def _format_as_numbered(self, content: str, *, query: str = "") -> str:
         """Format content as numbered list, extracting embedded inline lists."""
+        try:
+            from .list_formatter import format_as_markdown_numbered
+
+            return format_as_markdown_numbered(content, query)
+        except ImportError:
+            pass
         # Pattern to find inline numbered items (e.g., "1. Item 2. Item 3. Item")
         # Matches: number + dot + content until next number or end
         inline_pattern = r'(?:^|[\s:])(\d{1,2})\.\s*([A-Z][^0-9\n]*?)(?=\s+\d{1,2}\.|$)'

@@ -2120,6 +2120,20 @@ def _resolve_request_model_tier_from_subscription(request: ChatRequest) -> ChatR
 
     Set ``ORCH_RESOLVE_TIER_FROM_USER=0`` to skip (e.g. isolated tests).
     """
+    try:
+        from ..billing.scheduled_benchmark import is_internal_scheduled_benchmark
+
+        if is_internal_scheduled_benchmark():
+            if request.tier != RequestModelTier.elite:
+                logger.info(
+                    "Internal scheduled benchmark: forcing ModelTier.elite (was %s)",
+                    request.tier.value,
+                )
+                return request.model_copy(update={"tier": RequestModelTier.elite})
+            return request
+    except Exception:
+        pass
+
     if request.tier != RequestModelTier.auto:
         return request
     if os.getenv("ORCH_RESOLVE_TIER_FROM_USER", "1").lower() in ("0", "false", "no"):
@@ -2684,6 +2698,18 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     logger.info("PromptOps detected ambiguities: %s", prompt_spec.analysis.ambiguities[:3])
                 if prompt_spec.safety_flags:
                     logger.warning("PromptOps safety flags: %s", prompt_spec.safety_flags)
+
+                try:
+                    from ..orchestration.list_formatter import format_style_prompt_instructions
+
+                    fmt_hint = format_style_prompt_instructions(
+                        request.format_style or "automatic",
+                        request.prompt,
+                    )
+                    if fmt_hint and fmt_hint not in base_prompt:
+                        base_prompt = f"{base_prompt}\n\n{fmt_hint}"
+                except ImportError:
+                    pass
                     
             except Exception as e:
                 logger.warning("PromptOps failed, using raw prompt: %s", e)
@@ -3665,24 +3691,38 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     requested_format = requested_format or prompt_spec.analysis.output_format
                 
                 if requested_format:
-                    fmt = requested_format
+                    fmt = str(requested_format).lower().replace("-", "_")
                     # Check for strict format (e.g., "json_strict" means output ONLY JSON)
                     if fmt.endswith("_strict"):
                         is_strict_format = True
                         fmt = fmt.replace("_strict", "")
+
+                    if fmt == "automatic":
+                        try:
+                            from ..orchestration.list_formatter import infer_format_from_query
+
+                            inferred = infer_format_from_query(base_prompt)
+                            fmt = (inferred or "paragraph").replace("-", "_")
+                        except ImportError:
+                            fmt = "paragraph"
                     
                     format_map = {
                         "json": OutputFormat.JSON,
                         "markdown": OutputFormat.MARKDOWN,
                         "code": OutputFormat.CODE,
-                        "list": OutputFormat.NUMBERED,  # "list" should be numbered (1, 2, 3...)
+                        "list": OutputFormat.BULLET,
                         "numbered": OutputFormat.NUMBERED,
+                        "step_by_step": OutputFormat.NUMBERED,
                         "bullet": OutputFormat.BULLET,
                         "bullet_points": OutputFormat.BULLET,
+                        "structured": OutputFormat.MARKDOWN,
                         "table": OutputFormat.TABLE,
                         "executive_summary": OutputFormat.EXEC_SUMMARY,
                         "exec_summary": OutputFormat.EXEC_SUMMARY,
+                        "concise": OutputFormat.EXEC_SUMMARY,
+                        "academic": OutputFormat.MARKDOWN,
                         "qa": OutputFormat.QA,
+                        "default": OutputFormat.PARAGRAPH,
                         "paragraph": OutputFormat.PARAGRAPH,
                     }
                     output_format = format_map.get(fmt, OutputFormat.PARAGRAPH)
@@ -4222,11 +4262,13 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # Profit guard: record provider spend toward 25% of subscription revenue cap (paid + elite path only)
         try:
             from ..billing import spend_guard as _spend_guard
+            from ..billing.scheduled_benchmark import is_internal_scheduled_benchmark
 
             if (
                 user_id
                 and not use_free_models
                 and _spend_guard.is_spend_guard_enabled()
+                and not is_internal_scheduled_benchmark()
             ):
                 _ct = (response.extra or {}).get("cost_tracking")
                 _cost_dict = _ct if isinstance(_ct, dict) else None

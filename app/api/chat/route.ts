@@ -354,7 +354,7 @@ export async function POST(req: NextRequest) {
       "automatic": "automatic",  // Let backend choose best format
       "default": "paragraph",    // Natural conversational = paragraph
       "structured": "structured", // Headers and sections
-      "bullet-points": "bullet", // Bullet list
+      "bullet-points": "bullet_points", // Bullet list (Markdown)
       "step-by-step": "numbered", // Numbered steps
       "academic": "markdown",     // Formal with citations = markdown
       "concise": "executive_summary", // Brief = executive summary

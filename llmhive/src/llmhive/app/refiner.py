@@ -53,7 +53,12 @@ def format_answer(
     # Apply format style
     style = (format_style or "paragraph").lower()
     if style in ("bullet", "bullets", "bullet_points"):
-        formatted = _format_as_bullets(formatted)
+        try:
+            from .orchestration.list_formatter import format_as_markdown_bullets
+
+            formatted = format_as_markdown_bullets(formatted)
+        except ImportError:
+            formatted = _format_as_bullets(formatted)
     elif style in ("paragraph", "para"):
         formatted = _format_as_paragraph(formatted)
     elif style in ("markdown", "md"):
