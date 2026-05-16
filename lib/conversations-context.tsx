@@ -2,6 +2,7 @@
 
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { mergeByTimestampSafe } from "@/lib/conversations-sync-guard"
 import type { Conversation, Project } from "@/lib/types"
 
 const CONVERSATIONS_KEY = "llmhive-conversations"
@@ -69,6 +70,12 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
   
   // Ref to track pending changes for smart sync
   const pendingChangesRef = useRef<{ conversations: boolean; projects: boolean }>({
+    conversations: false,
+    projects: false,
+  })
+
+  // Set when server returned 0 items but the browser still had data (misread / wrong backend)
+  const riskyEmptyServerReadRef = useRef<{ conversations: boolean; projects: boolean }>({
     conversations: false,
     projects: false,
   })
@@ -148,10 +155,29 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
               }))
 
               console.log(`[ConversationsContext] API returned: ${apiConvs.length} conversations, ${apiProjects.length} projects (storage: ${convData.storage})`)
-              
-              // Merge strategy: Combine local and remote, keeping the most recent version of each
-              const mergedConvs = mergeByTimestamp(localConvs, apiConvs)
-              const mergedProjects = mergeByTimestamp(localProjects, apiProjects)
+
+              if (apiConvs.length === 0 && localConvs.length > 0) {
+                riskyEmptyServerReadRef.current.conversations = true
+                console.warn(
+                  "[ConversationsContext] Server returned 0 conversations but browser has %d — keeping local (sync guard)",
+                  localConvs.length
+                )
+              } else if (apiConvs.length > 0) {
+                riskyEmptyServerReadRef.current.conversations = false
+              }
+
+              if (apiProjects.length === 0 && localProjects.length > 0) {
+                riskyEmptyServerReadRef.current.projects = true
+                console.warn(
+                  "[ConversationsContext] Server returned 0 projects but browser has %d — keeping local (sync guard)",
+                  localProjects.length
+                )
+              } else if (apiProjects.length > 0) {
+                riskyEmptyServerReadRef.current.projects = false
+              }
+
+              const mergedConvs = mergeByTimestampSafe(localConvs, apiConvs)
+              const mergedProjects = mergeByTimestampSafe(localProjects, apiProjects)
               
               // Update state and localStorage with merged data
               setConversations(mergedConvs)
@@ -225,9 +251,24 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
             createdAt: new Date(p.createdAt),
           }))
 
-          // Merge with current state (API is source of truth for deletes)
-          const mergedConvs = mergeByTimestamp(conversations, apiConvs)
-          const mergedProjects = mergeByTimestamp(projects, apiProjects)
+          if (apiConvs.length === 0 && conversations.length > 0) {
+            riskyEmptyServerReadRef.current.conversations = true
+            console.warn(
+              "[ConversationsContext] Poll: server 0 conversations, keeping %d local (sync guard)",
+              conversations.length
+            )
+          } else if (apiConvs.length > 0) {
+            riskyEmptyServerReadRef.current.conversations = false
+          }
+
+          if (apiProjects.length === 0 && projects.length > 0) {
+            riskyEmptyServerReadRef.current.projects = true
+          } else if (apiProjects.length > 0) {
+            riskyEmptyServerReadRef.current.projects = false
+          }
+
+          const mergedConvs = mergeByTimestampSafe(conversations, apiConvs)
+          const mergedProjects = mergeByTimestampSafe(projects, apiProjects)
           
           // Only update if data actually changed
           const convsChanged = JSON.stringify(mergedConvs.map(c => c.id).sort()) !== JSON.stringify(conversations.map(c => c.id).sort())
@@ -298,8 +339,26 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       
       try {
         const promises: Promise<Response>[] = []
+
+        const blockConvSync =
+          conversations.length === 0 && riskyEmptyServerReadRef.current.conversations
+        const blockProjSync =
+          projects.length === 0 && riskyEmptyServerReadRef.current.projects
+
+        if (blockConvSync) {
+          console.error(
+            "[ConversationsContext] Blocked empty conversation sync after suspicious empty server read. Check ORCHESTRATOR_API_BASE_URL / Firestore."
+          )
+          pendingChangesRef.current.conversations = false
+        }
+        if (blockProjSync) {
+          console.error(
+            "[ConversationsContext] Blocked empty project sync after suspicious empty server read."
+          )
+          pendingChangesRef.current.projects = false
+        }
         
-        if (pendingChangesRef.current.conversations) {
+        if (pendingChangesRef.current.conversations && !blockConvSync) {
           promises.push(
             fetchWithRetry("/api/conversations", {
               method: "POST",
@@ -320,7 +379,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
           )
         }
         
-        if (pendingChangesRef.current.projects) {
+        if (pendingChangesRef.current.projects && !blockProjSync) {
           promises.push(
             fetchWithRetry("/api/projects", {
               method: "POST",
@@ -336,6 +395,11 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
           )
         }
         
+        if (promises.length === 0) {
+          setIsSyncing(false)
+          return
+        }
+
         const results = await Promise.all(promises)
         
         // Check if all syncs succeeded
@@ -378,18 +442,31 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
-  const deleteConversation = useCallback(async (id: string) => {
-    setConversations(prev => prev.filter(c => c.id !== id))
-    // Also remove from all projects
-    setProjects(prev =>
-      prev.map(p => ({
-        ...p,
-        conversations: p.conversations.filter(cid => cid !== id),
-      }))
-    )
-    // Clear current if deleted
-    setCurrentConversation(prev => prev?.id === id ? null : prev)
-  }, [])
+  const deleteConversation = useCallback(
+    async (id: string) => {
+      setConversations((prev) => prev.filter((c) => c.id !== id))
+      setProjects((prev) =>
+        prev.map((p) => ({
+          ...p,
+          conversations: p.conversations.filter((cid) => cid !== id),
+        }))
+      )
+      setCurrentConversation((prev) => (prev?.id === id ? null : prev))
+
+      if (auth?.isAuthenticated) {
+        try {
+          await fetchWithRetry("/api/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", conversationId: id }),
+          })
+        } catch (e) {
+          console.warn("[ConversationsContext] Server delete conversation failed:", e)
+        }
+      }
+    },
+    [auth?.isAuthenticated]
+  )
 
   // Project actions
   const createProject = useCallback(async (project: Project) => {
@@ -402,9 +479,24 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
-  const deleteProject = useCallback(async (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id))
-  }, [])
+  const deleteProject = useCallback(
+    async (id: string) => {
+      setProjects((prev) => prev.filter((p) => p.id !== id))
+
+      if (auth?.isAuthenticated) {
+        try {
+          await fetchWithRetry("/api/projects", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", projectId: id }),
+          })
+        } catch (e) {
+          console.warn("[ConversationsContext] Server delete project failed:", e)
+        }
+      }
+    },
+    [auth?.isAuthenticated]
+  )
 
   const addConversationToProject = useCallback(async (conversationId: string, projectId: string) => {
     setProjects(prev =>
@@ -445,35 +537,51 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     setIsSyncing(true)
     
     try {
-      const results = await Promise.all([
+      if (
+        (conversations.length === 0 && riskyEmptyServerReadRef.current.conversations) ||
+        (projects.length === 0 && riskyEmptyServerReadRef.current.projects)
+      ) {
+        throw new Error(
+          "Cannot sync an empty list after the server returned no data while your browser still had chats. Contact support if this persists."
+        )
+      }
+
+      const syncCalls: Promise<Response>[] = []
+
+      syncCalls.push(
         fetchWithRetry("/api/conversations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            action: "sync", 
-            conversations: conversations.map(c => ({
+          body: JSON.stringify({
+            action: "sync",
+            conversations: conversations.map((c) => ({
               ...c,
               createdAt: c.createdAt.toISOString(),
               updatedAt: c.updatedAt.toISOString(),
-              messages: c.messages.map(m => ({
+              messages: c.messages.map((m) => ({
                 ...m,
                 timestamp: m.timestamp.toISOString(),
               })),
             })),
           }),
-        }),
+        })
+      )
+
+      syncCalls.push(
         fetchWithRetry("/api/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            action: "sync", 
-            projects: projects.map(p => ({
+          body: JSON.stringify({
+            action: "sync",
+            projects: projects.map((p) => ({
               ...p,
               createdAt: p.createdAt.toISOString(),
             })),
           }),
-        }),
-      ])
+        })
+      )
+
+      const results = await Promise.all(syncCalls)
       
       const allSucceeded = results.every(r => r.ok)
       
@@ -557,51 +665,3 @@ async function fetchWithRetry(
   throw lastError || new Error("Max retries exceeded")
 }
 
-/**
- * Merge two arrays of items by ID, preferring the more recently updated item.
- * 
- * IMPORTANT: This merge strategy prioritizes the REMOTE (API) as the source of truth for deletions.
- * - If an item exists in remote, it will be included (using the most recent version)
- * - If an item exists ONLY in local (not in remote), it's considered deleted on the server
- *   and will NOT be included in the result
- * 
- * This ensures that deletions in one browser sync to all other browsers.
- */
-function mergeByTimestamp<T extends { id: string; updatedAt?: Date }>(
-  local: T[],
-  remote: T[]
-): T[] {
-  const map = new Map<string, T>()
-  const remoteIds = new Set(remote.map(item => item.id))
-  
-  // Start with remote items (API is source of truth)
-  for (const item of remote) {
-    map.set(item.id, item)
-  }
-  
-  // Add local items that are also in remote (prefer more recent)
-  for (const localItem of local) {
-    if (!remoteIds.has(localItem.id)) {
-      // Item exists locally but not in remote - it was deleted, skip it
-      continue
-    }
-    
-    const remoteItem = map.get(localItem.id)
-    if (remoteItem && localItem.updatedAt && remoteItem.updatedAt) {
-      const localTime = new Date(localItem.updatedAt).getTime()
-      const remoteTime = new Date(remoteItem.updatedAt).getTime()
-      
-      // If local is more recent, use local version
-      if (localTime > remoteTime) {
-        map.set(localItem.id, localItem)
-      }
-    }
-  }
-  
-  // Sort by updatedAt descending
-  return Array.from(map.values()).sort((a, b) => {
-    const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
-    const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
-    return bTime - aTime
-  })
-}

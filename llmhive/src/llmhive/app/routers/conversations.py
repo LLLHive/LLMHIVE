@@ -212,6 +212,11 @@ async def sync_conversations(
             success=True,
             message=f"Synced {count} conversations"
         )
+
+    except ValueError as e:
+        if "destructive empty sync" in str(e).lower():
+            raise HTTPException(status_code=409, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e)) from e
         
     except Exception as e:
         logger.error("Failed to sync conversations: %s", e)
@@ -334,6 +339,11 @@ async def sync_projects(
             success=True,
             message=f"Synced {count} projects"
         )
+
+    except ValueError as e:
+        if "destructive empty sync" in str(e).lower():
+            raise HTTPException(status_code=409, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e)) from e
         
     except Exception as e:
         logger.error("Failed to sync projects: %s", e)

@@ -17,6 +17,10 @@ from ..firestore_db import get_firestore_client
 
 logger = logging.getLogger(__name__)
 
+DESTRUCTIVE_EMPTY_SYNC_MSG = (
+    "Refusing destructive empty sync: server has existing records"
+)
+
 
 class ConversationsFirestoreService:
     """Manage conversations in Firestore with Pinecone indexing."""
@@ -168,6 +172,14 @@ class ConversationsFirestoreService:
             # Get existing conversation IDs
             existing_docs = collection.stream()
             existing_ids = {doc.id for doc in existing_docs}
+
+            if not conversations and existing_ids:
+                logger.error(
+                    "Refusing destructive empty conversation sync for user %s (%d existing)",
+                    user_id[:8],
+                    len(existing_ids),
+                )
+                raise ValueError(DESTRUCTIVE_EMPTY_SYNC_MSG)
             
             # Add/update new conversations
             new_ids = set()
@@ -193,6 +205,9 @@ class ConversationsFirestoreService:
             logger.info("Synced %d conversations for user %s", len(conversations), user_id[:8])
             
             return len(conversations)
+
+        except ValueError:
+            raise
             
         except Exception as e:
             logger.error("Failed to sync conversations: %s", e)
@@ -324,6 +339,14 @@ class ProjectsFirestoreService:
             # Get existing project IDs
             existing_docs = collection.stream()
             existing_ids = {doc.id for doc in existing_docs}
+
+            if not projects and existing_ids:
+                logger.error(
+                    "Refusing destructive empty project sync for user %s (%d existing)",
+                    user_id[:8],
+                    len(existing_ids),
+                )
+                raise ValueError(DESTRUCTIVE_EMPTY_SYNC_MSG)
             
             # Add/update new projects
             new_ids = set()
@@ -347,6 +370,9 @@ class ProjectsFirestoreService:
             logger.info("Synced %d projects for user %s", len(projects), user_id[:8])
             
             return len(projects)
+
+        except ValueError:
+            raise
             
         except Exception as e:
             logger.error("Failed to sync projects: %s", e)
