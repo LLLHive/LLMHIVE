@@ -343,34 +343,10 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
-    id: "x-ai/grok-4",
-    name: "Grok 4",
+    id: "x-ai/grok-4.3",
+    name: "Grok 4.3",
     provider: "xai",
-    description: "xAI flagship with strong real-time and general knowledge",
-    capabilities: {
-      vision: true,
-      codeExecution: true,
-      webSearch: true,
-      reasoning: true,
-    },
-  },
-  {
-    id: "x-ai/grok-4-fast",
-    name: "Grok 4 Fast",
-    provider: "xai",
-    description: "Faster xAI Grok 4 variant on OpenRouter for latency-sensitive workloads",
-    capabilities: {
-      vision: true,
-      codeExecution: true,
-      webSearch: true,
-      reasoning: true,
-    },
-  },
-  {
-    id: "x-ai/grok-4.1-fast",
-    name: "Grok 4.1 Fast",
-    provider: "xai",
-    description: "Lower-latency Grok for interactive workloads",
+    description: "xAI flagship Grok on OpenRouter (current catalog slug)",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -382,7 +358,7 @@ export const AVAILABLE_MODELS: Model[] = [
     id: "x-ai/grok-4.20",
     name: "Grok 4.2",
     provider: "xai",
-    description: "xAI Grok 4.20 on OpenRouter (marketed as Grok 4.2-class flagship)",
+    description: "xAI Grok 4.20 on OpenRouter for latency-sensitive and coding workloads",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -565,11 +541,12 @@ function normalizeModelId(apiModelName: string): string {
 
   if (name.includes("grok-4.2") || name.includes("grok-4.20") || name.includes("grok-420"))
     return "x-ai/grok-4.20"
-  if (name.includes("grok-4-fast") || name.includes("grok 4 fast")) return "x-ai/grok-4-fast"
-  if (name.includes("grok-4.1")) return "x-ai/grok-4.1-fast"
-  if (name.includes("grok-4")) return "x-ai/grok-4"
-  if (name.includes("grok-3") || name.includes("grok3")) return "x-ai/grok-4"
-  if (name.includes("grok-2") || name.includes("grok")) return "x-ai/grok-4"
+  if (name.includes("grok-4-fast") || name.includes("grok 4 fast") || name.includes("grok-code"))
+    return "x-ai/grok-4.20"
+  if (name.includes("grok-4.1") || name.includes("grok-4.3")) return "x-ai/grok-4.3"
+  if (name.includes("grok-4") || name.includes("grok-3") || name.includes("grok3"))
+    return "x-ai/grok-4.3"
+  if (name.includes("grok-2") || name.includes("grok")) return "x-ai/grok-4.3"
 
   if (name.includes("deepseek-r1")) return "deepseek/deepseek-r1-0528"
   if (name.includes("deepseek-v4-pro") || name.includes("deepseek v4 pro")) return "deepseek/deepseek-v4-pro"
