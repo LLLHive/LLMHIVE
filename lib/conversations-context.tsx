@@ -3,7 +3,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { mergeByTimestampSafe } from "@/lib/conversations-sync-guard"
-import type { Conversation, Project } from "@/lib/types"
+import type { Conversation, Message, Project } from "@/lib/types"
 
 const CONVERSATIONS_KEY = "llmhive-conversations"
 const PROJECTS_KEY = "llmhive-projects"
@@ -25,6 +25,14 @@ interface ConversationsContextValue {
   // Conversation actions
   createConversation: (conv: Conversation) => Promise<void>
   updateConversation: (id: string, updates: Partial<Conversation>) => Promise<void>
+  /** Append one message without reading stale closure state (user then assistant). */
+  appendConversationMessage: (id: string, message: Message) => Promise<void>
+  /** Replace an existing message by id (regenerate). */
+  replaceConversationMessage: (
+    id: string,
+    messageId: string,
+    message: Message
+  ) => Promise<void>
   deleteConversation: (id: string) => Promise<void>
   // Project actions
   createProject: (project: Project) => Promise<void>
@@ -442,6 +450,33 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
+  const appendConversationMessage = useCallback(async (id: string, message: Message) => {
+    const touch = (c: Conversation): Conversation => ({
+      ...c,
+      messages: [...(c.messages || []), message],
+      updatedAt: new Date(),
+      title:
+        message.role === "user" && c.title === "New Chat"
+          ? message.content.slice(0, 50)
+          : c.title,
+    })
+    setConversations((prev) => prev.map((c) => (c.id === id ? touch(c) : c)))
+    setCurrentConversation((prev) => (prev?.id === id && prev ? touch(prev) : prev))
+  }, [])
+
+  const replaceConversationMessage = useCallback(
+    async (id: string, messageId: string, message: Message) => {
+      const touch = (c: Conversation): Conversation => ({
+        ...c,
+        messages: (c.messages || []).map((m) => (m.id === messageId ? message : m)),
+        updatedAt: new Date(),
+      })
+      setConversations((prev) => prev.map((c) => (c.id === id ? touch(c) : c)))
+      setCurrentConversation((prev) => (prev?.id === id && prev ? touch(prev) : prev))
+    },
+    []
+  )
+
   const deleteConversation = useCallback(
     async (id: string) => {
       setConversations((prev) => prev.filter((c) => c.id !== id))
@@ -611,6 +646,8 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     setCurrentConversation,
     createConversation,
     updateConversation,
+    appendConversationMessage,
+    replaceConversationMessage,
     deleteConversation,
     createProject,
     updateProject,

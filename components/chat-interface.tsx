@@ -38,6 +38,8 @@ export function ChatInterface() {
     setCurrentConversation,
     createConversation,
     updateConversation,
+    appendConversationMessage,
+    replaceConversationMessage,
     deleteConversation,
     createProject,
     updateProject,
@@ -206,20 +208,7 @@ export function ChatInterface() {
       targetConversationId = await handleNewChat()
     }
 
-    // After `handleNewChat`, `conversations` in this closure can still be stale (React batching),
-    // so `find` fails and messages were never persisted — Discover / deep links looked broken.
-    const conv = conversations.find((c) => c.id === targetConversationId)
-    const baseMessages = conv?.messages ?? []
-    const updatedMessages = [...baseMessages, message]
-    const newTitle =
-      message.role === "user" && (!conv || conv.title === "New Chat")
-        ? message.content.slice(0, 50)
-        : (conv?.title ?? "New Chat")
-
-    await updateConversation(targetConversationId, {
-      messages: updatedMessages,
-      title: newTitle,
-    })
+    await appendConversationMessage(targetConversationId, message)
 
     if (message.artifact) {
       setCurrentArtifact(message.artifact)
@@ -482,6 +471,10 @@ export function ChatInterface() {
             <ChatArea
               conversation={currentConv ?? undefined}
               onSendMessage={handleSendMessage}
+              onReplaceMessage={(messageId, message) => {
+                if (!currentConversationId) return
+                void replaceConversationMessage(currentConversationId, messageId, message)
+              }}
               onShowArtifact={(artifact) => {
                 setCurrentArtifact(artifact)
                 setShowArtifact(true)

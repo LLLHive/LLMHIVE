@@ -77,6 +77,7 @@ const domainPacks = [
 interface ChatAreaProps {
   conversation?: Conversation
   onSendMessage: (message: Message) => void
+  onReplaceMessage?: (messageId: string, message: Message) => void
   onShowArtifact: (artifact: Artifact) => void
   orchestratorSettings: OrchestratorSettings
   onOrchestratorSettingsChange: (settings: Partial<OrchestratorSettings>) => void
@@ -173,9 +174,49 @@ function ChatHeaderToolbarStrip({
   )
 }
 
+/** Prompt text to resend when the user bubble was lost from persisted messages. */
+function resolveRegeneratePrompt(
+  message: Message,
+  index: number,
+  messages: Message[],
+  activePrompt: string | null
+): string | undefined {
+  if (message.role !== "assistant" || message.isClarificationRequest) {
+    return undefined
+  }
+
+  const priorUser = messages
+    .slice(0, index)
+    .reverse()
+    .find((m) => m.role === "user" && !m.isClarificationRequest)
+  if (priorUser?.content?.trim()) {
+    return priorUser.content.trim()
+  }
+
+  const lastAssistantIdx = messages.reduce(
+    (last, m, i) => (m.role === "assistant" && !m.isClarificationRequest ? i : last),
+    -1
+  )
+  if (index !== lastAssistantIdx) {
+    return undefined
+  }
+
+  const trimmedActive = (activePrompt ?? "").trim()
+  if (trimmedActive) {
+    return trimmedActive
+  }
+
+  // Recovery when history was saved as assistant-only (stale closure / sync bug).
+  const anyUser = [...messages]
+    .reverse()
+    .find((m) => m.role === "user" && !m.isClarificationRequest)
+  return anyUser?.content?.trim() || undefined
+}
+
 export function ChatArea({
   conversation,
   onSendMessage,
+  onReplaceMessage,
   onShowArtifact,
   orchestratorSettings,
   onOrchestratorSettingsChange,
@@ -222,6 +263,21 @@ export function ChatArea({
   // Active prompt display - shows the current prompt being processed
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
   const [isPromptExpanded, setIsPromptExpanded] = useState(false)
+
+  // Reset in-session prompt when switching chats; hydrate from history after refresh.
+  useEffect(() => {
+    setActivePrompt(null)
+  }, [conversation?.id])
+
+  useEffect(() => {
+    if (!conversation?.id || activePrompt) return
+    const lastUser = [...(conversation.messages ?? [])]
+      .reverse()
+      .find((m) => m.role === "user" && !m.isClarificationRequest && m.content?.trim())
+    if (lastUser?.content?.trim()) {
+      setActivePrompt(lastUser.content.trim())
+    }
+  }, [conversation?.id, conversation?.messages, activePrompt])
   
   // Answer comparison for A/B testing
   const { comparisonData, showComparison, hideComparison, isComparing } = useAnswerComparison()
@@ -1139,7 +1195,7 @@ export function ChatArea({
       })
 
       const newAssistantMessage: Message = {
-        id: `msg-${Date.now()}`,
+        id: messageId,
         role: "assistant",
         content: assistantContent || "I apologize, but I couldn't regenerate a response.",
         timestamp: new Date(),
@@ -1151,7 +1207,11 @@ export function ChatArea({
         isRegenerated: true,
       }
 
-      onSendMessage(newAssistantMessage)
+      if (onReplaceMessage) {
+        onReplaceMessage(messageId, newAssistantMessage)
+      } else {
+        onSendMessage(newAssistantMessage)
+      }
       
       setLastModelsUsed(modelsUsed)
       setLastLatencyMs(latencyMs)
@@ -1181,7 +1241,15 @@ export function ChatArea({
       setRegeneratingMessageId(null)
       // NOTE: Keep activePrompt visible after regeneration
     }
-  }, [isLoading, regeneratingMessageId, orchestratorSettings, conversation?.id, onSendMessage, refreshClerkSessionForChat])
+  }, [
+    isLoading,
+    regeneratingMessageId,
+    orchestratorSettings,
+    conversation?.id,
+    onSendMessage,
+    onReplaceMessage,
+    refreshClerkSessionForChat,
+  ])
 
   const displayMessages = conversation?.messages || []
 
@@ -1273,11 +1341,12 @@ export function ChatArea({
         <ScrollArea className="h-full min-h-0 flex-1 basis-0" ref={scrollAreaRef}>
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
           {displayMessages.map((message, index) => {
-            // Find the previous user message for context (for RLHF training)
-            const previousUserMessage = message.role === "assistant" 
-              ? displayMessages.slice(0, index).reverse().find(m => m.role === "user")
+            const previousUserMessage = message.role === "assistant"
+              ? displayMessages.slice(0, index).reverse().find((m) => m.role === "user")
               : undefined
-            
+            const canRegenerate =
+              message.role === "assistant" && !message.isClarificationRequest
+
             return (
               <MessageBubble
                 key={message.id}
@@ -1291,7 +1360,23 @@ export function ChatArea({
                 }}
                 incognitoMode={incognitoMode}
                 onToggleIncognito={() => setIncognitoMode(!incognitoMode)}
-                onRegenerate={previousUserMessage ? () => handleRegenerate(message.id, previousUserMessage.content) : undefined}
+                onRegenerate={
+                  canRegenerate
+                    ? () => {
+                        const prompt = resolveRegeneratePrompt(
+                          message,
+                          index,
+                          displayMessages,
+                          activePrompt
+                        )
+                        if (prompt) {
+                          void handleRegenerate(message.id, prompt)
+                        } else {
+                          toast.info("Regeneration not available for this message")
+                        }
+                      }
+                    : undefined
+                }
               />
             )
           })}
