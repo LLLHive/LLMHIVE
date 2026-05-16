@@ -54,13 +54,31 @@ function preprocessContent(content: string): string {
     }
   }
   
-  // STEP 2: Handle simpler inline bullet patterns like "• Item • Item"
-  if (processed.includes("•") && !processed.includes("\n•")) {
-    processed = processed.replace(/\s*•\s*/g, '\n• ').trim()
-    if (processed.startsWith('\n')) {
-      processed = processed.slice(1)
+  // STEP 2: Inline bullets / numbered lists → proper Markdown lists (GFM needs "- " not "•")
+  if (/[•·▪]/.test(processed) && !/^[-*+]\s/m.test(processed)) {
+    processed = processed.replace(/\s*[•·▪]\s+/g, "\n- ").trim()
+  }
+
+  // "1. Foo 2. Bar 3. Baz" on one line
+  if (/\d+\.\s+[A-Z]/.test(processed) && (processed.match(/\d+\.\s+/g)?.length ?? 0) >= 3) {
+    const items: string[] = []
+    const re = /(\d+)\.\s+([^0-9]+?)(?=\s+\d+\.|$)/g
+    let m: RegExpExecArray | null
+    while ((m = re.exec(processed)) !== null) {
+      items.push(`${m[1]}. ${m[2].trim().replace(/\s+/g, " ")}`)
+    }
+    if (items.length >= 3) {
+      const firstIdx = processed.search(/\d+\.\s+[A-Z]/)
+      const intro = firstIdx > 0 ? processed.slice(0, firstIdx).trim() : ""
+      processed = intro ? `${intro}\n\n${items.join("\n")}` : items.join("\n")
     }
   }
+
+  // Normalize lines that start with • to Markdown "- "
+  processed = processed
+    .split("\n")
+    .map((line) => line.replace(/^\s*[•·▪]\s+/, "- "))
+    .join("\n")
   
   // STEP 3: If content already has proper code blocks, don't process further
   if (processed.includes("```")) {
