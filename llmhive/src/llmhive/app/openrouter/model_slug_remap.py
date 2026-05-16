@@ -19,6 +19,11 @@ OPENROUTER_MODEL_SLUG_REMAP: dict[str, str] = {
     "qwen/qwen3-72b-instruct": "qwen/qwen3-next-80b-a3b-instruct",
     "cohere/command-r-plus": "cohere/command-r-plus-08-2024",
     "google/med-palm-3": "google/gemini-2.5-pro",
+    # Retired on OpenRouter catalog (May 2026) — map to current x-ai slugs
+    "x-ai/grok-4": "x-ai/grok-4.3",
+    "x-ai/grok-4-fast": "x-ai/grok-4.20",
+    "x-ai/grok-4.1-fast": "x-ai/grok-4.20",
+    "x-ai/grok-code-fast-1": "x-ai/grok-4.20",
 }
 
 
