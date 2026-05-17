@@ -190,6 +190,8 @@ export function getRecommendedTeam(
     coding: {
       keywords: ['code', 'programming', 'developer', 'engineer'],
       preferred: [
+        'openai/gpt-5.5-pro',
+        'openai/gpt-5.3-codex',
         'openai/gpt-5.2-codex',
         'anthropic/claude-sonnet-4.5',
         'deepseek/deepseek-v3.2',
@@ -199,6 +201,7 @@ export function getRecommendedTeam(
     research: {
       keywords: ['research', 'analysis', 'academic'],
       preferred: [
+        'openai/gpt-5.5-pro',
         'openai/gpt-5.2-pro',
         'anthropic/claude-opus-4.5',
         'google/gemini-3.1-pro-preview',
@@ -208,6 +211,7 @@ export function getRecommendedTeam(
       keywords: ['creative', 'writing', 'story'],
       preferred: [
         'anthropic/claude-sonnet-4.5',
+        'openai/gpt-5.5',
         'openai/gpt-5.2',
         'google/gemini-2.5-pro',
       ],
@@ -215,6 +219,7 @@ export function getRecommendedTeam(
     analysis: {
       keywords: ['analyze', 'data', 'reasoning'],
       preferred: [
+        'openai/gpt-5.5-pro',
         'openai/gpt-5.2-pro',
         'anthropic/claude-opus-4.5',
         'openai/o3',

@@ -72,7 +72,7 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
   
   // Programming Category - Updated January 2026
   programming: [
-    { model: mockModel("openai/gpt-5.2-codex", "GPT-5.2 Codex", "openai", 256000, 1.75, "2.1T"), rank: 1, score: 52.0, metrics: { share: "52.0%", tokens: "2.1T" } },
+    { model: mockModel("openai/gpt-5.5-pro", "GPT-5.5 Pro", "openai", 1000000, 5.5, "2.1T"), rank: 1, score: 52.0, metrics: { share: "52.0%", tokens: "2.1T" } },
     { model: mockModel("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5", "anthropic", 200000, 3, "450B"), rank: 2, score: 15.5, metrics: { share: "15.5%", tokens: "450B" } },
     { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "280B"), rank: 3, score: 9.8, metrics: { share: "9.8%", tokens: "280B" } },
     { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "195B"), rank: 4, score: 6.7, metrics: { share: "6.7%", tokens: "195B" } },
@@ -118,7 +118,7 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
   
   // Science Category - Updated January 2026
   science: [
-    { model: mockModel("openai/gpt-5.2-pro", "GPT-5.2 Pro", "openai", 256000, 21, "180B"), rank: 1, score: 38, metrics: { share: "38%", tokens: "180B" } },
+    { model: mockModel("openai/gpt-5.5-pro", "GPT-5.5 Pro", "openai", 1000000, 22, "180B"), rank: 1, score: 38, metrics: { share: "38%", tokens: "180B" } },
     { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "150B"), rank: 2, score: 32, metrics: { share: "32%", tokens: "150B" } },
     { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "85B"), rank: 3, score: 18, metrics: { share: "18%", tokens: "85B" } },
     { model: mockModel("openai/o3", "OpenAI o3", "openai", 128000, 2, "45B"), rank: 4, score: 9, metrics: { share: "9%", tokens: "45B" } },
@@ -135,7 +135,7 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
   // Legal Category - Updated January 2026
   legal: [
     { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "125B"), rank: 1, score: 45, metrics: { share: "45%", tokens: "125B" } },
-    { model: mockModel("openai/gpt-5.2-pro", "GPT-5.2 Pro", "openai", 256000, 21, "85B"), rank: 2, score: 31, metrics: { share: "31%", tokens: "85B" } },
+    { model: mockModel("openai/gpt-5.5-pro", "GPT-5.5 Pro", "openai", 1000000, 22, "85B"), rank: 2, score: 31, metrics: { share: "31%", tokens: "85B" } },
     { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "45B"), rank: 3, score: 16, metrics: { share: "16%", tokens: "45B" } },
     { model: mockModel("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5", "anthropic", 200000, 3, "25B"), rank: 4, score: 9, metrics: { share: "9%", tokens: "25B" } },
   ],
@@ -149,7 +149,7 @@ const MOCK_RANKINGS: Record<string, MockRanking[]> = {
   
   // Health Category - Updated January 2026
   health: [
-    { model: mockModel("openai/gpt-5.2-pro", "GPT-5.2 Pro", "openai", 256000, 21, "95B"), rank: 1, score: 42, metrics: { share: "42%", tokens: "95B" } },
+    { model: mockModel("openai/gpt-5.5-pro", "GPT-5.5 Pro", "openai", 1000000, 22, "95B"), rank: 1, score: 42, metrics: { share: "42%", tokens: "95B" } },
     { model: mockModel("anthropic/claude-opus-4.5", "Claude Opus 4.5", "anthropic", 200000, 5, "75B"), rank: 2, score: 33, metrics: { share: "33%", tokens: "75B" } },
     { model: mockModel("google/gemini-3-pro-preview", "Gemini 3 Pro Preview", "google", 2000000, 5, "40B"), rank: 3, score: 18, metrics: { share: "18%", tokens: "40B" } },
     { model: mockModel("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5", "anthropic", 200000, 3, "18B"), rank: 4, score: 8, metrics: { share: "8%", tokens: "18B" } },

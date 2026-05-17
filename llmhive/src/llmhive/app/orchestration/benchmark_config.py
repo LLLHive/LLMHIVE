@@ -44,7 +44,8 @@ def is_benchmark_mode() -> bool:
 FRONTIER_MODEL_BENCHMARKS_2026 = {
     "MMLU": {
         "openai/o3": 94.2,                    # Latest reasoning model
-        "openai/gpt-5.2": 92.8,               # Latest GPT (was gpt-5)
+        "openai/gpt-5.5-pro": 93.5,
+        "openai/gpt-5.2": 92.8,
         "anthropic/claude-opus-4": 91.5,
         "anthropic/claude-sonnet-4": 90.2,
         "google/gemini-2.5-pro": 90.0,
@@ -53,6 +54,7 @@ FRONTIER_MODEL_BENCHMARKS_2026 = {
     },
     "GSM8K": {
         "anthropic/claude-opus-4": 95.8,
+        "openai/gpt-5.5-pro": 96.0,
         "openai/gpt-5.2": 95.2,
         "openai/o3-mini": 94.8,               # Cost-effective reasoning
         "google/gemini-2.5-pro": 94.0,
@@ -68,6 +70,7 @@ FRONTIER_MODEL_BENCHMARKS_2026 = {
         "Target LLMHive (Historical)": 73.2,
     },
     "MS MARCO (MRR@10)": {
+        "openai/gpt-5.5-pro": 0.44,
         "openai/gpt-5.2": 0.42,
         "anthropic/claude-opus-4": 0.40,
         "google/gemini-2.5-pro": 0.38,
@@ -83,13 +86,15 @@ FRONTIER_MODEL_BENCHMARKS_2026 = {
 BENCHMARK_ELITE_MODELS = {
     "math": [
         "openai/o3-mini",          # 94.8% GSM8K, cost-effective
-        "openai/gpt-5.2",          # Latest version (was gpt-5)
+        "openai/gpt-5.5-pro",
+        "openai/gpt-5.2",
         "anthropic/claude-opus-4", # 100% AIME with tools
         "anthropic/claude-sonnet-4", # Fast, 90%+
         "deepseek/deepseek-v3",    # Budget option, 92.5%
     ],
     "reasoning": [
         "openai/o3",               # 94.2% MMLU, native reasoning
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2",          # 92.8% MMLU
         "anthropic/claude-opus-4", # 91.5% MMLU, best logic
         "anthropic/claude-sonnet-4", # 90.2% MMLU
@@ -102,6 +107,7 @@ BENCHMARK_ELITE_MODELS = {
         "qwen/qwen3-coder",          # 76%, fast
     ],
     "rag": [
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2",          # 95% RAG-Eval
         "anthropic/claude-opus-4", # 94% RAG-Eval
         "google/gemini-2.5-pro",   # 90% RAG-Eval, 2M context

@@ -24,7 +24,7 @@ const PROVIDER_PREFIX =
 const FILES = [
   path.join(ROOT, "lib", "models.ts"),
   path.join(ROOT, "lib", "openrouter", "orchestrator-integration.ts"),
-  path.join(ROOT, "app", "api", "openrouter", "category-rankings", "route.ts"),
+  path.join(ROOT, "lib", "marketing", "usecase-category-rankings.ts"),
   path.join(ROOT, "llmhive", "src", "llmhive", "app", "openrouter", "model_slug_remap.py"),
 ]
 
@@ -41,8 +41,8 @@ function collectIdsFromText(filePath, text) {
     return ids
   }
 
-  if (base === "route.ts") {
-    const re = new RegExp(`model_id:\\s*'(${PROVIDER_PREFIX}/[^']+)'`, "g")
+  if (base === "usecase-category-rankings.ts") {
+    const re = new RegExp(`'(${PROVIDER_PREFIX}/[^']+)'`, "g")
     let m
     while ((m = re.exec(text)) !== null) {
       ids.add(m[1])

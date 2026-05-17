@@ -125,9 +125,16 @@ export const PREMIUM_MODEL_LIMITS: PremiumModelLimits[] = [
     requiredTier: 'enterprise',
   },
   {
-    modelPattern: 'gpt-5.2-pro',
+    modelPattern: 'gpt-5.5-pro',
     dailyTokenLimit: 25_000,      // ~$4.20/day
     monthlyTokenLimit: 250_000,   // ~$42/month max
+    costPer1MTokens: 168,
+    requiredTier: 'enterprise',
+  },
+  {
+    modelPattern: 'gpt-5.2-pro',
+    dailyTokenLimit: 25_000,
+    monthlyTokenLimit: 250_000,
     costPer1MTokens: 168,
     requiredTier: 'enterprise',
   },
@@ -243,6 +250,7 @@ export const MODEL_COST_TIERS: ModelCostTier[] = [
     tier: 'flagship',
     costPer1MRange: [50, 1000],
     models: [
+      'openai/gpt-5.5-pro',
       'openai/gpt-5.2-pro',
       'openai/o1-pro',
     ],
@@ -293,6 +301,7 @@ export function canUseModelWithUsage(
   if (!allowedTiers.includes(modelCostTier)) {
     // Find alternative model
     const budgetAlternatives: Record<string, string> = {
+      'gpt-5.5-pro': 'openai/gpt-4o-mini',
       'gpt-5.2-pro': 'openai/gpt-4o-mini',
       'o1-pro': 'openai/o3',
       'claude-opus-4.5': 'anthropic/claude-haiku-4.5',
@@ -391,6 +400,8 @@ const ENTERPRISE_TIER_PATTERNS = [
   'kimi-k2.6',
   'qwen3.6-plus',
   'glm-4.7',
+  'gpt-5.5-pro',
+  'gpt-5.5',
   'gpt-5.2-pro',    // $168/1M output!
   'gpt-5.2-codex',
   'gpt-5.1',
@@ -562,7 +573,7 @@ export const MODEL_RECOMMENDATIONS: ModelRecommendation[] = [
     taskType: 'research',
     description: 'Deep research and analysis',
     recommendedModels: {
-      primary: ['openai/gpt-5.2', 'anthropic/claude-3.5-sonnet'],
+      primary: ['openai/gpt-5.5-pro', 'openai/gpt-5.2', 'anthropic/claude-3.5-sonnet'],
       validator: ['google/gemini-1.5-pro'],
       fallback: ['openai/gpt-4o'],
     },
@@ -590,7 +601,7 @@ export const MODEL_RECOMMENDATIONS: ModelRecommendation[] = [
     taskType: 'analysis',
     description: 'Data analysis and reasoning',
     recommendedModels: {
-      primary: ['openai/gpt-5.2-pro', 'anthropic/claude-3.5-sonnet'],
+      primary: ['openai/gpt-5.5-pro', 'openai/gpt-5.2-pro', 'anthropic/claude-3.5-sonnet'],
       validator: ['google/gemini-1.5-pro'],
       fallback: ['openai/gpt-4o'],
     },

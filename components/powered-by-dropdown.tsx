@@ -198,7 +198,7 @@ export function PoweredByDropdown({ compact = false }: PoweredByDropdownProps) {
             <h3 className="font-bold text-sm sm:text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
               {BENCHMARK_CLAIM_SHORT}
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground">April 2026 rankings</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">May 2026 rankings</p>
           </div>
         </div>
       </div>

@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 # NO weaker substitutes. Order = failover priority.
 
 SAME_MODEL_PROVIDER_MATRIX: Dict[str, List[str]] = {
+    "gpt-5.5-pro":       ["openrouter", "openai"],
+    "gpt-5.5":           ["openrouter", "openai"],
     "gpt-5.2-pro":       ["openrouter", "openai"],
     "gpt-5.2":           ["openrouter", "openai"],
     "claude-sonnet-4.6": ["openrouter", "anthropic"],
@@ -37,6 +39,14 @@ SAME_MODEL_PROVIDER_MATRIX: Dict[str, List[str]] = {
 # "openrouter" entry uses the OpenRouter model slug;
 # direct-API entry uses the provider's native model name.
 _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
+    "gpt-5.5-pro": {
+        "openrouter": "openai/gpt-5.5-pro",
+        "openai":     "gpt-5.5-pro",
+    },
+    "gpt-5.5": {
+        "openrouter": "openai/gpt-5.5",
+        "openai":     "gpt-5.5",
+    },
     "gpt-5.2-pro": {
         "openrouter": "openai/gpt-5.2-pro",
         "openai":     "gpt-5.2-pro",

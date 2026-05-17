@@ -9,7 +9,10 @@ from __future__ import annotations
 
 # Keys verified missing or replaced on OpenRouter catalog (see /api/v1/models).
 OPENROUTER_MODEL_SLUG_REMAP: dict[str, str] = {
+    "google/gemini-3-pro": "google/gemini-3.1-pro-preview",
     "google/gemini-3-pro-preview": "google/gemini-3.1-pro-preview",
+    "meta/muse-spark": "meta-llama/llama-4-maverick",
+    "meta-llama/muse-spark": "meta-llama/llama-4-maverick",
     "meta-llama/llama-4-70b": "meta-llama/llama-4-maverick",
     "meta-llama/llama-4-405b": "meta-llama/llama-4-scout",
     "meta-llama/llama-4-70b-instruct": "meta-llama/llama-4-maverick",

@@ -255,11 +255,12 @@ BUDGET_MODELS = {
 MAXIMUM_MODELS = {
     "math": [
         "openai/o3",               # 98.4% AIME
-        "openai/gpt-5",            # 100% AIME
+        "openai/gpt-5.5-pro",
+        "openai/gpt-5",
         # Calculator is AUTHORITATIVE - these just verify/explain
     ],
     "reasoning": [
-        "openai/gpt-5",            # 92.4% GPQA
+        "openai/gpt-5.5-pro",
         "openai/o3",               # Native reasoning
         # 2-model consensus = 95%+ expected
     ],
@@ -269,13 +270,13 @@ MAXIMUM_MODELS = {
         # 3-round challenge-refine = 97%+ expected
     ],
     "rag": [
-        "openai/gpt-5",            # 95% RAG-Eval
+        "openai/gpt-5.5-pro",
         "anthropic/claude-opus-4", # 94%
         # With Pinecone rerank = 97%+ expected
     ],
     "multilingual": [
         "anthropic/claude-opus-4", # 90.8% MMMLU
-        "openai/gpt-5",            # Best reasoning
+        "openai/gpt-5.5-pro",
         # 2-model consensus = 93%+ expected
     ],
     "long_context": [
@@ -287,12 +288,12 @@ MAXIMUM_MODELS = {
         # Parallel execution = 2200+ tok/s expected
     ],
     "dialogue": [
-        "openai/gpt-5",            # 95% Alignment
+        "openai/gpt-5.5-pro",
         # + Reflection loop = 97%+ expected
     ],
     "multimodal": [
         "anthropic/claude-opus-4", # 378 ARC-AGI 2 - ALREADY #1!
-        "openai/gpt-5",            # Cross-validation
+        "openai/gpt-5.5-pro",
     ],
     "tool_use": [
         "anthropic/claude-sonnet-4", # 82% SWE-Bench
@@ -304,33 +305,44 @@ MAXIMUM_MODELS = {
 # NOTE: Model IDs must match the constants in model_router.py for consistency
 ELITE_MODELS = {
     "math": [
-        "zhipuai/glm-4.7",         # 98% GSM8K - CHAMPION
-        "google/gemini-3.1-pro-preview", # 97%+ GSM8K - newest Google
-        "moonshot/kimi-k2.5-thinking", # 96.8% GSM8K
-        "google/gemini-3-pro",     # 96% GSM8K - 1M context
-        "anthropic/claude-opus-4.6", # 95.8% GSM8K - Feb 2026
-        "openai/gpt-5.2",          # 95.2% GSM8K
-        "x-ai/grok-3-mini",        # Built-in CoT reasoning, fast math
+        "openai/gpt-5.2",
+        "google/gemini-3.1-pro-preview",
+        "moonshotai/kimi-k2.5",
+        "anthropic/claude-opus-4.7",
+        "deepseek/deepseek-v4-pro",
+        "qwen/qwen3.6-plus",
+        "openai/gpt-5.5-pro",
+        "openai/gpt-5.5",
+        "openai/o4-mini",
+        "deepseek/deepseek-r1",
     ],
     "reasoning": [
-        "google/gemini-3.1-pro-preview", # Newest Google flagship
-        "google/gemini-3-pro",     # 91.8% MMLU, 91.9% GPQA Diamond
-        "openai/gpt-5.2",          # 92.8% MMLU
-        "anthropic/claude-opus-4.6", # 90% MMLU - Precision
-        "moonshot/kimi-k2.5-thinking", # 88% MMLU - Thinking mode
-        "x-ai/grok-3-mini",        # 89% MMLU - Native chain-of-thought
+        "openai/gpt-5.5-pro",
+        "openai/o3",
+        "openai/o1-pro",
+        "openai/gpt-5.4-pro",
+        "anthropic/claude-opus-4.7",
+        "deepseek/deepseek-r1",
+        "deepseek/deepseek-v4-pro",
+        "openai/o4-mini",
+        "anthropic/claude-sonnet-4.6",
+        "google/gemini-3.1-pro-preview",
     ],
     "coding": [
-        "google/gemini-3.1-pro-preview", # Top coding scores
-        "alibaba/qwen3-max",       # 92.7% HumanEval
-        "openai/gpt-5.3-codex",    # 92% HumanEval (estimated)
-        "moonshot/kimi-k2.5-thinking", # 92% accuracy - Visual coding
-        "anthropic/claude-opus-4.6", # 87% (79.2% SWE-Bench)
-        "google/gemini-3-pro",     # 85% (76.2% SWE-Bench)
-        "x-ai/grok-3-mini",        # Good code generation, fast
+        "openai/gpt-5.5",
+        "anthropic/claude-opus-4.7",
+        "openai/gpt-5.3-codex",
+        "anthropic/claude-opus-4.5",
+        "anthropic/claude-opus-4.6",
+        "deepseek/deepseek-v4-pro",
+        "google/gemini-3.1-pro-preview",
+        "moonshotai/kimi-k2.6",
+        "minimax/minimax-m2.5",
+        "openai/gpt-5.2",
     ],
     "rag": [
-        "openai/gpt-5.2",          # 95% RAG-Eval
+        "openai/gpt-5.5-pro",
+        "openai/gpt-5.2",
         "google/gemini-3.1-pro-preview", # Strong retrieval + 1M context
         "anthropic/claude-opus-4.6", # 94% RAG-Eval
         "google/gemini-3-pro",     # Multimodal, 1M context
@@ -356,14 +368,15 @@ ELITE_MODELS = {
         "anthropic/claude-3-haiku", # Fast variant
     ],
     "dialogue": [
-        "openai/gpt-5.2",          # 95% alignment - Latest
+        "openai/gpt-5.5-pro",
         "anthropic/claude-opus-4", # 94% alignment
         "anthropic/claude-sonnet-4", # 92% alignment
         "x-ai/grok-3-mini",        # Direct, engaging conversational style
     ],
     "multimodal": [
         "anthropic/claude-opus-4", # 378 ARC-AGI2
-        "openai/gpt-5.2",          # Latest - Vision capable
+        "openai/gpt-5.5-pro",
+        "openai/gpt-5.2",
         "openai/gpt-4o",           # Vision capable
     ],
 }

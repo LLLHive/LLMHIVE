@@ -26,14 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 ELITE_POLICY: Dict[str, str] = {
-    "reasoning":    "gpt-5.2-pro",
-    "coding":       "gpt-5.2-pro",
-    "math":         "gpt-5.2-pro",
+    "reasoning":    "gpt-5.5-pro",
+    "coding":       "gpt-5.5-pro",
+    "math":         "gpt-5.5-pro",
     "multilingual": "claude-sonnet-4.6",
-    "long_context": "gemini-2.5-pro",
-    "tool_use":     "gpt-5.2-pro",
-    "rag":          "gpt-5.2-pro",
-    "dialogue":     "gpt-5.2-pro",
+    "long_context": "gemini-3.1-pro",
+    "tool_use":     "gpt-5.5-pro",
+    "rag":          "gpt-5.5-pro",
+    "dialogue":     "gpt-5.5-pro",
 }
 
 VERIFY_MODEL = "deepseek-reasoner"

@@ -435,7 +435,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                       <h3 className="font-bold text-base bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
                         {BENCHMARK_CLAIM_SHORT}
                       </h3>
-                      <p className="text-[10px] text-muted-foreground">April 2026 rankings</p>
+                      <p className="text-[10px] text-muted-foreground">May 2026 rankings</p>
                     </div>
                   </div>
                   <button 

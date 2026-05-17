@@ -139,7 +139,7 @@ export function UsageAlert() {
                 <>Premium models temporarily unavailable to preserve your allowance</>
               )}
               {usageData.modelRestriction === "premium_blocked" && (
-                <>Flagship models (GPT-5.2 Pro, o1-pro) unavailable until next cycle</>
+                <>Flagship models (GPT-5.5 Pro, o1-pro) unavailable until next cycle</>
               )}
             </p>
           )}

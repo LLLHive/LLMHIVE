@@ -134,6 +134,8 @@ BOOTSTRAP_FALLBACK_MODELS = [
 # Ordered by priority (more specific patterns first)
 FAMILY_PATTERNS: List[Tuple[str, str]] = [
     # OpenAI newest
+    ("gpt-5.5", r"openai/gpt-5\.5"),
+    ("gpt-5.4", r"openai/gpt-5\.4"),
     ("gpt-5.2", r"openai/gpt-5\.2"),
     ("o3-pro", r"openai/o3-pro"),
     ("o3", r"openai/o3[^-]"),
@@ -203,7 +205,7 @@ AUTHOR_LOGOS: Dict[str, str] = {
 
 # Known high-accuracy model families (frontier models)
 HIGH_ACCURACY_FAMILIES: Set[str] = {
-    "gpt-5.2", "o3-pro", "o3", "o1-pro", "o1", "gpt-4o",
+    "gpt-5.5", "gpt-5.4", "gpt-5.2", "o3-pro", "o3", "o1-pro", "o1", "gpt-4o",
     "claude-4.5", "claude-4",
     "gemini-3.1", "gemini-3", "gemini-2.5",
     "grok-4", "grok-3",

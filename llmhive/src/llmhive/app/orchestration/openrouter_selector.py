@@ -148,7 +148,8 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
     # These models have shown best performance on MedQA, PubMedQA, clinical tasks
     "health_medical": [
         "anthropic/claude-opus-4.5",  # NEW: Best overall Anthropic
-        "openai/gpt-5.2-pro",         # Latest OpenAI flagship
+        "openai/gpt-5.5-pro",         # OpenAI flagship (Apr 2026)
+        "openai/gpt-5.2-pro",
         "anthropic/claude-opus-4.1",  # Strong medical reasoning
         "google/gemini-3.1-pro-preview", # NEW: Latest Google
         "openai/o3-deep-research",    # NEW: Deep research for complex cases
@@ -165,13 +166,16 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "anthropic/claude-opus-4.5",  # NEW: Top Anthropic
         "deepseek/deepseek-v3.2-speciale", # NEW: Enhanced DeepSeek
         "google/gemini-3.1-pro-preview", # NEW: Latest Google
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2-pro",         # Strong math
         "qwen/qwen3-max",             # NEW: Strong on math benchmarks
     ],
     
     # Code Generation: Prioritize coding specialists
     "code_generation": [
-        "openai/gpt-5.2-codex",       # NEW: Best coding model
+        "openai/gpt-5.5-pro",
+        "openai/gpt-5.3-codex",
+        "openai/gpt-5.2-codex",
         "anthropic/claude-sonnet-4.5", # NEW: Excellent coding
         "mistralai/devstral-2512",    # NEW: Developer specialist
         "deepseek/deepseek-v3.2-speciale", # NEW: Top coder
@@ -186,6 +190,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "openai/o3-deep-research",    # NEW: Purpose-built for research
         "google/gemini-3.1-pro-preview", # NEW: Best long context
         "anthropic/claude-opus-4.5",  # NEW: Excellent analysis
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2-pro",         # Strong research
         "anthropic/claude-sonnet-4.5", # Good balance
         "openai/o4-mini-deep-research", # NEW: Faster research option
@@ -196,6 +201,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
     "legal_analysis": [
         "anthropic/claude-opus-4.5",  # NEW: Best legal reasoning
         "anthropic/claude-opus-4.1",  # Strong legal
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2-pro",         # Strong accuracy
         "google/gemini-3.1-pro-preview", # NEW: Good for documents
         "openai/o3-deep-research",    # Complex reasoning
@@ -204,6 +210,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
     
     # Financial: Prioritize accuracy and calculation
     "financial_analysis": [
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2-pro",         # Strong quantitative
         "openai/o3-deep-research",    # Complex calculations
         "anthropic/claude-opus-4.5",  # NEW: Best analysis
@@ -217,6 +224,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
         "google/gemini-3.1-pro-preview", # NEW: Latest scientific knowledge
         "openai/o3-deep-research",    # NEW: Deep scientific analysis
         "anthropic/claude-opus-4.5",  # NEW: Excellent reasoning
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2-pro",         # Excellent accuracy
         "anthropic/claude-opus-4.1",  # Strong scientific
         "google/gemini-2.5-pro",      # Proven
@@ -226,6 +234,7 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
     "creative_writing": [
         "anthropic/claude-opus-4.5",  # NEW: Most creative
         "anthropic/claude-sonnet-4.5", # NEW: Good creative
+        "openai/gpt-5.5-pro",
         "openai/gpt-5.2",             # Strong creative
         "anthropic/claude-3.7-sonnet", # NEW: Good creative flow
         "google/gemini-3.1-pro-preview", # NEW: Good variety
@@ -235,7 +244,8 @@ QUALITY_MODEL_PREFERENCES: Dict[str, List[str]] = {
     # High Quality (explicit quality mode): Use best available
     "high_quality": [
         "anthropic/claude-opus-4.5",  # NEW: Best overall Anthropic
-        "openai/gpt-5.2-pro",         # Best overall OpenAI
+        "openai/gpt-5.5-pro",
+        "openai/gpt-5.2-pro",
         "openai/o3-deep-research",    # NEW: Deep reasoning
         "google/gemini-3.1-pro-preview", # NEW: Latest Google
         "openai/gpt-5-pro",       # Quality focused

@@ -500,10 +500,17 @@ class AdaptiveModelRouter:
         
         try:
             records = await store.get_category_rankings(category=category, top_k=top_k)
-            return [r.model_id for r in records if r.model_id]
-            
+            model_ids = [r.model_id for r in records if r.model_id]
+            if model_ids:
+                return model_ids
         except Exception as e:
             logger.warning("Failed to get category rankings: %s", e)
+
+        try:
+            from ..knowledge.usecase_category_rankings import get_usecase_category_rankings
+            return get_usecase_category_rankings(category, top_k=top_k)
+        except Exception as e:
+            logger.warning("Usecase category ranking fallback failed: %s", e)
             return []
     
     def _get_openrouter_selector(self) -> Optional["OpenRouterModelSelector"]:

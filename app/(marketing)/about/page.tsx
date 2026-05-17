@@ -129,7 +129,7 @@ export default function AboutPage() {
           <div className="prose prose-invert max-w-none">
             <h2 className="text-2xl font-semibold mb-6">The Problem We Solve</h2>
             <p className="text-muted-foreground leading-relaxed mb-6">
-              The AI landscape is fragmented. GPT-5.2 excels at creative writing, Claude 4.5 shines in 
+              The AI landscape is fragmented. GPT-5.5 Pro excels at creative writing, Claude 4.5 shines in 
               analysis, Gemini 3 dominates in multimodal tasks, and DeepSeek V3.2 offers incredible value. 
               But switching between these tools is tedious, expensive, and time-consuming.
             </p>

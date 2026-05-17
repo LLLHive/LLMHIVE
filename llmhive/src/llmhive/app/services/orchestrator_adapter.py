@@ -641,6 +641,12 @@ OPENROUTER_GEMINI_31_FLASH_LITE = "google/gemini-3.1-flash-lite-preview"  # ✓ 
 # Additional slugs verified on OpenRouter catalog (see /api/v1/models)
 OPENROUTER_GPT_5_4 = "openai/gpt-5.4"
 OPENROUTER_GPT_5_4_PRO = "openai/gpt-5.4-pro"
+OPENROUTER_GPT_5_5 = "openai/gpt-5.5"
+OPENROUTER_GPT_5_5_PRO = "openai/gpt-5.5-pro"
+OPENROUTER_GPT_5_2 = "openai/gpt-5.2"
+OPENROUTER_GPT_5_3_CODEX = "openai/gpt-5.3-codex"
+OPENROUTER_O1_PRO = "openai/o1-pro"
+OPENROUTER_O4_MINI = "openai/o4-mini"
 OPENROUTER_CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
 OPENROUTER_CLAUDE_OPUS_4_7 = "anthropic/claude-opus-4.7"
 OPENROUTER_GROK_4_20 = "x-ai/grok-4.20"
@@ -649,6 +655,7 @@ OPENROUTER_LLAMA_4_SCOUT = "meta-llama/llama-4-scout"
 OPENROUTER_DEEPSEEK_V4_PRO = "deepseek/deepseek-v4-pro"
 OPENROUTER_DEEPSEEK_V4_FLASH = "deepseek/deepseek-v4-flash"
 OPENROUTER_KIMI_K26 = "moonshotai/kimi-k2.6"
+OPENROUTER_KIMI_K25 = "moonshotai/kimi-k2.5"
 OPENROUTER_QWEN36_PLUS = "qwen/qwen3.6-plus"
 OPENROUTER_GLM_47 = "z-ai/glm-4.7"
 OPENROUTER_MISTRAL_MEDIUM_31 = "mistralai/mistral-medium-3.1"
@@ -682,12 +689,14 @@ COST_EFFECTIVE_MODELS = [
 
 # Premium models (require more credits)
 PREMIUM_MODELS = [
-    OPENROUTER_GPT_5,            # ~$15/1M tokens
+    OPENROUTER_GPT_5_5_PRO,
+    OPENROUTER_GPT_5_5,
+    OPENROUTER_GPT_5,
     OPENROUTER_GPT_5_4_PRO,
-    OPENROUTER_CLAUDE_OPUS_4,    # ~$15/1M tokens
+    OPENROUTER_CLAUDE_OPUS_4,
     OPENROUTER_CLAUDE_OPUS_4_7,
-    OPENROUTER_O3,               # ~$20/1M tokens
-    OPENROUTER_O1,               # ~$15/1M tokens
+    OPENROUTER_O3,
+    OPENROUTER_O1,
     OPENROUTER_DEEPSEEK_V4_PRO,
 ]
 
@@ -697,6 +706,14 @@ PREMIUM_MODELS = [
 # those for human-facing claims. This table encodes stable routing tags only.
 MODEL_STRENGTHS = {
     # ===== TOP TIER (verified December 2025) =====
+    OPENROUTER_GPT_5_5_PRO: {
+        "strengths": ["reasoning", "coding", "analysis", "general", "factual", "agentic", "tool_use", "math"],
+        "provider": "openai", "tier": "flagship", "rank": 1
+    },
+    OPENROUTER_GPT_5_5: {
+        "strengths": ["reasoning", "coding", "analysis", "general", "factual", "multimodal", "agentic"],
+        "provider": "openai", "tier": "flagship", "rank": 1
+    },
     OPENROUTER_GPT_5: {
         "strengths": ["reasoning", "coding", "analysis", "general", "factual"],
         "provider": "openai", "tier": "flagship", "rank": 1
@@ -903,94 +920,90 @@ DOMAIN_TOP_MODELS_BUDGET = {
 # Domain-specific top models - PREMIUM versions (for when credits available)
 DOMAIN_TOP_MODELS_PREMIUM = {
     "health_medical": [
+        OPENROUTER_GPT_5_5_PRO,
         OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_GPT_5,
         OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_CLAUDE_OPUS_4,
         OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_CLAUDE_SONNET_4_6,
+        OPENROUTER_O1_PRO,
     ],
     "legal_analysis": [
         OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_GPT_5_5_PRO,
         OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_GPT_5,
-        OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_CLAUDE_SONNET_4_6,
+        OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_O3,
     ],
     "financial_analysis": [
-        OPENROUTER_O3,
-        OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_GPT_5,
+        OPENROUTER_GPT_5_2,
         OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_KIMI_K25,
         OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_DEEPSEEK_V4_PRO,
-        OPENROUTER_DEEPSEEK_R1,
+        OPENROUTER_QWEN36_PLUS,
     ],
     "science_research": [
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_GPT_5_4,
+        OPENROUTER_GPT_5_5_PRO,
+        OPENROUTER_GPT_5_4_PRO,
         OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_GEMINI_3_PRO,
-        OPENROUTER_GEMINI_2_PRO,
-        OPENROUTER_DEEPSEEK_V4_PRO,
+        OPENROUTER_O3,
+        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_CLAUDE_SONNET_4_6,
     ],
     "code_generation": [
-        OPENROUTER_GPT_5_4,
+        OPENROUTER_GPT_5_5,
+        OPENROUTER_CLAUDE_OPUS_4_7,
+        OPENROUTER_GPT_5_3_CODEX,
+        OPENROUTER_CLAUDE_OPUS_4,
         OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_CLAUDE_SONNET_4,
-        OPENROUTER_DEEPSEEK_V4_PRO,
-        OPENROUTER_DEEPSEEK,
-        OPENROUTER_DEEPSEEK_R1,
     ],
     "debugging": [
+        OPENROUTER_GPT_5_5,
         OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_DEEPSEEK_V4_PRO,
-        OPENROUTER_DEEPSEEK,
         OPENROUTER_GPT_5_4,
     ],
     "math_problem": [
+        OPENROUTER_GPT_5_5_PRO,
         OPENROUTER_O3,
+        OPENROUTER_O1_PRO,
         OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_DEEPSEEK_V4_PRO,
+        OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_DEEPSEEK_R1,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_GPT_5,
     ],
     "creative_writing": [
         OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_CLAUDE_OPUS_4,
-        OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_GPT_5_4,
-        OPENROUTER_KIMI_K26,
+        OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_KIMI_K26,
     ],
     "factual_question": [
-        OPENROUTER_GPT_5_4,
-        OPENROUTER_GPT_5,
+        OPENROUTER_GPT_5_5_PRO,
+        OPENROUTER_GPT_5_4_PRO,
         OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_GEMINI_3_PRO,
-        OPENROUTER_GROK_4,
+        OPENROUTER_CLAUDE_OPUS_4_7,
         OPENROUTER_CLAUDE_SONNET_4_6,
     ],
     "research_analysis": [
+        OPENROUTER_GPT_5_5,
+        OPENROUTER_GEMINI_2_PRO,
+        OPENROUTER_GPT_5_5_PRO,
         OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_GPT_5_4,
         OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_CLAUDE_SONNET_4_6,
         OPENROUTER_DEEPSEEK_V4_PRO,
     ],
     "general": [
-        OPENROUTER_GPT_5,
-        OPENROUTER_GPT_5_4,
-        OPENROUTER_GEMINI_3_1_PRO,
+        OPENROUTER_GPT_5_5_PRO,
+        OPENROUTER_GPT_5_4_PRO,
         OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_CLAUDE_OPUS_4,
+        OPENROUTER_GPT_5_5,
+        OPENROUTER_GEMINI_3_1_PRO,
         OPENROUTER_CLAUDE_SONNET_4_6,
-        OPENROUTER_GEMINI_2_PRO,
     ],
 }
 
@@ -1000,6 +1013,8 @@ DOMAIN_TOP_MODELS = DOMAIN_TOP_MODELS_BUDGET if BUDGET_MODE else DOMAIN_TOP_MODE
 # Models with tool/function calling support (VERIFIED against OpenRouter)
 TOOL_CAPABLE_MODELS = {
     OPENROUTER_GPT_5,
+    OPENROUTER_GPT_5_5,
+    OPENROUTER_GPT_5_5_PRO,
     OPENROUTER_GPT_5_4,
     OPENROUTER_GPT_5_4_PRO,
     OPENROUTER_GPT_4O,
@@ -1212,6 +1227,32 @@ async def get_intelligent_models(
                     )
         except Exception as e:
             logger.warning("Pinecone model selection failed, using fallback: %s", e)
+
+    # Step 1b: May 2026 use-case rankings when Pinecone did not fill the slate
+    if len(selected) < num_models:
+        try:
+            from ..knowledge.usecase_category_rankings import get_usecase_category_rankings
+            for model_id in get_usecase_category_rankings(task_type, top_k=num_models * 2):
+                if len(selected) >= num_models:
+                    break
+                if require_tools and model_id not in TOOL_CAPABLE_MODELS:
+                    continue
+                if available_models is not None and model_id not in available_models:
+                    continue
+                if model_id in selected:
+                    continue
+                model_info = MODEL_STRENGTHS.get(model_id, {})
+                provider = model_info.get("provider", "unknown")
+                if provider not in used_providers or len(used_providers) >= 3:
+                    selected.append(model_id)
+                    used_providers.add(provider)
+            if selected:
+                logger.info(
+                    "Usecase May-2026 rankings supplemented models for %s: %s",
+                    task_type, selected
+                )
+        except Exception as e:
+            logger.warning("Usecase category ranking fallback failed: %s", e)
     
     # Step 2: Add complementary models based on required strengths
     required_strengths = DOMAIN_REQUIRED_STRENGTHS.get(task_type, ["reasoning", "general"])

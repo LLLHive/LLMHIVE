@@ -154,7 +154,50 @@ FRONTIER_MODELS = {
     ),
     
     # =========================================================================
-    # OPENAI GPT-5.2 - Flagship General Purpose
+    # OPENAI GPT-5.5 - Current flagship (Apr 2026)
+    # =========================================================================
+    "openai/gpt-5.5-pro": ModelSpecs(
+        name="GPT-5.5 Pro",
+        provider="OpenAI",
+        tier=ModelTier.FRONTIER,
+        context_window=1_000_000,
+        max_output=32_000,
+        cost_input_per_1m=5.50,
+        cost_output_per_1m=22.00,
+        mmlu=93.5,
+        gsm8k=96.0,
+        humaneval=82.0,
+        swe_bench=78.0,
+        gpqa_diamond=92.0,
+        aime=94.0,
+        multimodal=True,
+        thinking_mode=False,
+        agentic=True,
+        function_calling=True,
+        specialties=["general", "reasoning", "math", "rag", "agentic", "coding"],
+    ),
+    "openai/gpt-5.5": ModelSpecs(
+        name="GPT-5.5",
+        provider="OpenAI",
+        tier=ModelTier.FRONTIER,
+        context_window=1_000_000,
+        max_output=32_000,
+        cost_input_per_1m=4.00,
+        cost_output_per_1m=16.00,
+        mmlu=92.5,
+        gsm8k=95.0,
+        humaneval=80.0,
+        swe_bench=76.0,
+        gpqa_diamond=91.0,
+        multimodal=True,
+        thinking_mode=False,
+        agentic=True,
+        function_calling=True,
+        specialties=["general", "reasoning", "math"],
+    ),
+
+    # =========================================================================
+    # OPENAI GPT-5.2 - Previous flagship
     # =========================================================================
     "openai/gpt-5.2": ModelSpecs(
         name="GPT-5.2",
@@ -323,58 +366,27 @@ FRONTIER_MODELS = {
 
 
 # =============================================================================
-# CATEGORY-SPECIFIC MODEL RANKINGS
+# CATEGORY-SPECIFIC MODEL RANKINGS (May 2026 — mirrors UI use-case tables)
 # =============================================================================
 
-CATEGORY_RANKINGS_2026 = {
-    "coding": [
-        ("openai/gpt-5.3-codex", 92.0),         # Specialized extreme coding
-        ("anthropic/claude-opus-4.6", 87.0),    # SWE-Bench champion
-        ("alibaba/qwen3-max", 92.7),            # HumanEval leader
-        ("moonshot/kimi-k2.5-thinking", 92.0),  # Visual coding
-        ("google/gemini-3-pro", 85.0),
-    ],
-    
-    "reasoning": [
-        ("google/gemini-3-pro", 91.9),          # GPQA Diamond
-        ("openai/gpt-5.2", 91.0),
-        ("anthropic/claude-opus-4.6", 90.0),
-        ("xai/grok-4.1-thinking", 86.0),
-        ("moonshot/kimi-k2.5-thinking", 88.0),
-    ],
-    
-    "math": [
-        ("zhipuai/glm-4.7", 98.0),              # GSM8K champion
-        ("moonshot/kimi-k2.5-thinking", 96.8),
-        ("google/gemini-3-pro", 96.0),
-        ("anthropic/claude-opus-4.6", 95.8),
-        ("openai/gpt-5.2", 95.2),
-    ],
-    
-    "agentic": [
-        ("moonshot/kimi-k2.5-thinking", 100),   # 100 sub-agents
-        ("anthropic/claude-opus-4.6", 95),      # Long-horizon tasks
-        ("openai/gpt-5.3-codex", 95),           # Native agentic
-        ("zhipuai/glm-4.7", 90),                # Agentic workflows
-        ("google/gemini-3-pro", 85),
-    ],
-    
-    "multimodal": [
-        ("google/gemini-3-pro", 95),            # Best overall
-        ("xai/grok-4.1-thinking", 90),          # Best visual
-        ("moonshot/kimi-k2.5-thinking", 85),    # Visual coding
-        ("openai/gpt-5.2", 80),
-        ("anthropic/claude-opus-4.6", 75),
-    ],
-    
-    "long_context": [
-        ("google/gemini-3-pro", 1_000_000),
-        ("anthropic/claude-opus-4.6", 1_000_000),
-        ("moonshot/kimi-k2.5-thinking", 256_000),
-        ("openai/gpt-5.2", 256_000),
-        ("alibaba/qwen3-max", 262_144),
-    ],
-}
+def _build_category_rankings_2026() -> Dict[str, List[Tuple[str, float]]]:
+    from ..knowledge.usecase_category_rankings import get_usecase_category_rankings
+    out: Dict[str, List[Tuple[str, float]]] = {}
+    for slug in (
+        "programming", "science", "health", "legal", "marketing", "technology",
+        "finance", "academia", "roleplay", "creative-writing", "translation", "reasoning",
+    ):
+        models = get_usecase_category_rankings(slug, top_k=10)
+        out[slug] = [(m, float(10 - i)) for i, m in enumerate(models)]
+    out["coding"] = out["programming"]
+    out["math"] = out["reasoning"]
+    out["agentic"] = out["technology"]
+    out["multimodal"] = out["science"]
+    out["long_context"] = out["academia"]
+    return out
+
+
+CATEGORY_RANKINGS_2026 = _build_category_rankings_2026()
 
 
 # =============================================================================
@@ -428,7 +440,7 @@ def get_best_model_for_task(
         return model_id
     
     # Fallback to first candidate
-    return candidates[0] if candidates else "openai/gpt-5.2"
+    return candidates[0] if candidates else "openai/gpt-5.5-pro"
 
 
 def compare_models(model_ids: List[str], benchmark: str = "mmlu") -> Dict[str, float]:

@@ -882,6 +882,8 @@ _MODEL_ALIASES = {
     "openai/gpt-5.1-codex": "gpt-5.1",
     "openai/gpt-5.1-codex-max": "gpt-5.1",
     "openai/gpt-5.1-codex-mini": "gpt-5.1",
+    "openai/gpt-5.5": "gpt-5.5",
+    "openai/gpt-5.5-pro": "gpt-5.5-pro",
     "openai/gpt-5.2": "gpt-5.2",
     "openai/gpt-5.2-pro": "gpt-5.2-pro",
     "openai/gpt-5.2-chat": "gpt-5.2",

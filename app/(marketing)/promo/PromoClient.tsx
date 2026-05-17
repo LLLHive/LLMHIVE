@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BENCHMARK_CLAIM_BANNER, BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+import { MARKETING_FEATURED_ORCHESTRATION_STACK } from "@/lib/marketing/featured-models"
 import {
   OFFER_ENTERPRISE_FEATURES,
   OFFER_PREMIUM_FEATURES,
@@ -206,7 +207,7 @@ export default function PromoClient() {
 
           {/* Value Hook */}
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-            GPT-5.2 + Claude Opus 4.5 + Gemini 3 Pro
+            {MARKETING_FEATURED_ORCHESTRATION_STACK}
             <br />
             <span className="bg-gradient-to-r from-yellow-300 via-amber-400 to-[var(--bronze)] bg-clip-text text-transparent">
               Unified. From $10/month Standard, $20/month Premium.

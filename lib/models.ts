@@ -19,6 +19,30 @@ export const AVAILABLE_MODELS: Model[] = [
     },
   },
   {
+    id: "openai/gpt-5.5-pro",
+    name: "GPT-5.5 Pro",
+    provider: "openai",
+    description: "OpenAI’s current flagship on OpenRouter — long context, tools, and multimodal",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
+    id: "openai/gpt-5.5",
+    name: "GPT-5.5",
+    provider: "openai",
+    description: "OpenAI GPT-5.5 on OpenRouter — flagship-class general, coding, and agent workloads",
+    capabilities: {
+      vision: true,
+      codeExecution: true,
+      webSearch: true,
+      reasoning: true,
+    },
+  },
+  {
     id: "openai/gpt-5.4-pro",
     name: "GPT-5.4 Pro",
     provider: "openai",
@@ -47,30 +71,6 @@ export const AVAILABLE_MODELS: Model[] = [
     name: "GPT-5.4 Mini",
     provider: "openai",
     description: "Lower-cost GPT-5.4 class model for high-volume tasks",
-    capabilities: {
-      vision: true,
-      codeExecution: true,
-      webSearch: true,
-      reasoning: true,
-    },
-  },
-  {
-    id: "openai/gpt-5.5-pro",
-    name: "GPT-5.5 Pro",
-    provider: "openai",
-    description: "OpenAI’s top GPT-5.5 tier on OpenRouter — long context, tools, and multimodal",
-    capabilities: {
-      vision: true,
-      codeExecution: true,
-      webSearch: true,
-      reasoning: true,
-    },
-  },
-  {
-    id: "openai/gpt-5.5",
-    name: "GPT-5.5",
-    provider: "openai",
-    description: "OpenAI GPT-5.5 on OpenRouter — flagship-class general, coding, and agent workloads",
     capabilities: {
       vision: true,
       codeExecution: true,
@@ -533,7 +533,10 @@ function normalizeModelId(apiModelName: string): string {
   }
   if (name.includes("gemini-3.1")) return "google/gemini-3.1-pro-preview"
   if (name.includes("gemini-3-flash")) return "google/gemini-3-flash-preview"
+  if (name.includes("gemini-3-pro") || name.includes("gemini 3 pro")) return "google/gemini-3.1-pro-preview"
   if (name.includes("gemini-3")) return "google/gemini-3.1-pro-preview"
+
+  if (name.includes("muse-spark") || name.includes("muse spark")) return "meta-llama/llama-4-maverick"
   if (name.includes("gemini-2.5-flash")) return "google/gemini-2.5-flash"
   if (name.includes("gemini-2.5-pro") || name.includes("gemini-pro") || name.includes("gemini-2.5")) {
     return "google/gemini-2.5-pro"

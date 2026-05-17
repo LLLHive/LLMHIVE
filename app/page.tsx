@@ -32,11 +32,16 @@ import {
   OFFER_PREMIUM_FEATURES,
   OFFER_STANDARD_FEATURES,
 } from "@/lib/marketing/pricing-offers"
+import {
+  MARKETING_FEATURED_LINE,
+  MARKETING_META_DESCRIPTION_MODELS,
+  MARKETING_OPENAI_FLAGSHIP,
+} from "@/lib/marketing/featured-models"
 
 export const metadata: Metadata = {
   title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
   description:
-    "LLMHive routes every request to the best AI model — GPT-5.2 Pro, Claude Sonnet 4.6, Gemini 3.1 Pro, Grok 4, DeepSeek V3.2 and 350+ more — for accuracy, speed and cost. Built for teams and enterprises.",
+    `LLMHive routes every request to the best AI model — ${MARKETING_META_DESCRIPTION_MODELS} — for accuracy, speed and cost. Built for teams and enterprises.`,
   alternates: { canonical: "https://llmhive.ai/" },
   openGraph: {
     title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
@@ -81,7 +86,7 @@ const FEATURES = [
   {
     icon: Network,
     title: "Multi-model routing in one call",
-    body: "GPT-5.2 Pro, Claude Sonnet 4.6, Claude Opus 4.5, Gemini 3.1 Pro, Grok 4, DeepSeek V3.2 and 350+ more — accessed through one interface and one bill.",
+    body: `${MARKETING_FEATURED_LINE} — accessed through one interface and one bill.`,
   },
   {
     icon: Brain,
@@ -153,7 +158,7 @@ const FAQ = [
   },
   {
     q: "How is this different from using ChatGPT or Claude directly?",
-    a: "Single-model tools commit you to one company's strengths and weaknesses. LLMHive lets the right model handle each task — GPT-5.2 Pro for reasoning, Claude Sonnet 4.6 for writing, Gemini 3.1 Pro for long context, DeepSeek V3.2 for cheap throughput — so quality goes up and cost goes down without you thinking about it.",
+    a: `Single-model tools commit you to one company's strengths and weaknesses. LLMHive lets the right model handle each task — ${MARKETING_OPENAI_FLAGSHIP} for reasoning, Claude Sonnet 4.6 for writing, Gemini 3.1 Pro for long context, DeepSeek V3.2 for cheap throughput — so quality goes up and cost goes down without you thinking about it.`,
   },
   {
     q: "Can I trust the orchestrator to pick the right model?",
@@ -328,7 +333,7 @@ export default async function Home() {
             <div className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 backdrop-blur-sm sm:text-sm">
               <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="truncate">
-                GPT-5.2 Pro · Claude Sonnet 4.6 · Gemini 3.1 Pro · Grok 4 · DeepSeek V3.2 · 350+ more
+                {MARKETING_FEATURED_LINE}
               </span>
             </div>
 
@@ -341,7 +346,7 @@ export default async function Home() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-100/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)] sm:text-xl">
-              LLMHive routes every request to the optimal model — GPT-5.2 Pro, Claude Sonnet 4.6, Gemini 3.1 Pro,
+              LLMHive routes every request to the optimal model — {MARKETING_OPENAI_FLAGSHIP}, Claude Sonnet 4.6, Gemini 3.1 Pro,
               Grok 4, DeepSeek V3.2 and 350+ more — so you stop guessing, stop tab-hopping, and stop overpaying.
             </p>
 
@@ -504,7 +509,7 @@ export default async function Home() {
                 <div className="space-y-2.5">
                   {[
                     { name: "Claude Sonnet 4.6", note: "Pedagogical clarity", pick: false },
-                    { name: "GPT-5.2 Pro", note: "Best reasoning + code", pick: true },
+                    { name: MARKETING_OPENAI_FLAGSHIP, note: "Best reasoning + code", pick: true },
                     { name: "Gemini 3.1 Pro", note: "Long-context fallback", pick: false },
                   ].map((m) => (
                     <div

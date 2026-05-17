@@ -26,6 +26,11 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import {
+  MARKETING_FEATURED_LINE,
+  MARKETING_FEATURED_ORCHESTRATION_STACK,
+  MARKETING_OPENAI_FLAGSHIP,
+} from "@/lib/marketing/featured-models"
+import {
   BENCHMARK_CLAIM_PILL_TEXT,
   BENCHMARK_CLAIM_SHORT,
 } from "@/lib/benchmark-claim"
@@ -354,7 +359,7 @@ export default function PricingClient() {
             components/home-screen.tsx). Identical sphere sizing, identical
             negative-margin overlap, identical LogoText heights, identical
             metallic subtitle, identical #1 benchmark pill, and the same
-            "GPT-5.2 Pro · …" models pill that lives directly under the
+            `${MARKETING_OPENAI_FLAGSHIP} · …` models pill that lives directly under the
             hero on /. Keeps /, /pricing and /app visually indistinguishable
             on the brand mark. Do not adjust here without also updating
             home-screen.tsx and app/page.tsx — kept in lockstep. */}
@@ -391,7 +396,7 @@ export default function PricingClient() {
           <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 backdrop-blur-sm sm:text-sm">
             <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">
-              GPT-5.2 Pro · Claude Sonnet 4.6 · Gemini 3.1 Pro · Grok 4 · DeepSeek V3.2 · 350+ more
+              {MARKETING_FEATURED_LINE}
             </span>
           </div>
         </div>
@@ -403,7 +408,7 @@ export default function PricingClient() {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             <span className="text-yellow-400 font-bold">Premium</span> uses{" "}
             <span className="text-yellow-400 font-bold">elite orchestration</span> with{" "}
-            <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by GPT-5.2,
+            <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by {MARKETING_OPENAI_FLAGSHIP},
             Claude Opus 4.5 & Gemini 3 Pro.
           </p>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto">
@@ -418,7 +423,7 @@ export default function PricingClient() {
             <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
               <div className="text-3xl font-black text-yellow-400 mb-2">Premium</div>
               <div className="text-lg font-bold text-yellow-300">{BENCHMARK_CLAIM_SHORT}</div>
-              <div className="text-sm text-yellow-200/70 mt-1">GPT-5.2 + Claude Opus 4.5 + Gemini 3 Pro</div>
+              <div className="text-sm text-yellow-200/70 mt-1">{MARKETING_FEATURED_ORCHESTRATION_STACK}</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="text-3xl font-black text-[var(--bronze)] mb-2">Standard</div>
@@ -578,7 +583,7 @@ export default function PricingClient() {
               {BENCHMARK_CLAIM_SHORT}.
             </p>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto text-sm">
-              Our orchestration combines GPT-5.2, Claude Opus 4.5, and Gemini 3 Pro with consensus voting,
+              Our orchestration combines {MARKETING_FEATURED_ORCHESTRATION_STACK} with consensus voting,
               challenge-refine workflows, and tool integration.
             </p>
           </div>

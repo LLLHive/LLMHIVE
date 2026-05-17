@@ -112,6 +112,7 @@ const FALLBACK_CATEGORIES: CategoryWithIcon[] = [
   { slug: 'roleplay', displayName: 'Roleplay', group: 'usecase', depth: 0, isActive: true },
   { slug: 'creative-writing', displayName: 'Creative Writing', group: 'usecase', depth: 0, isActive: true },
   { slug: 'translation', displayName: 'Translation', group: 'usecase', depth: 0, isActive: true },
+  { slug: 'reasoning', displayName: 'Reasoning', group: 'usecase', depth: 0, isActive: true },
 ]
 
 // =============================================================================
