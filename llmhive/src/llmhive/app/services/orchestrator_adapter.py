@@ -2700,7 +2700,7 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     logger.warning("PromptOps safety flags: %s", prompt_spec.safety_flags)
 
                 try:
-                    from ..orchestration.list_formatter import format_style_prompt_instructions
+                    from ..orchestration.answer_format import format_style_prompt_instructions
 
                     fmt_hint = format_style_prompt_instructions(
                         request.format_style or "automatic",
@@ -3699,7 +3699,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
 
                     if fmt == "automatic":
                         try:
-                            from ..orchestration.list_formatter import infer_format_from_query
+                            from ..orchestration.answer_format import infer_format_from_query
 
                             inferred = infer_format_from_query(base_prompt)
                             fmt = (inferred or "paragraph").replace("-", "_")
@@ -3798,6 +3798,16 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                         len(refined_answer.improvements_made),
                         refined_answer.format_applied.value,
                     )
+
+                try:
+                    from ..orchestration.answer_format import apply_answer_format
+
+                    style_key = request.format_style or (
+                        user_profile.default_format_style if user_profile else None
+                    ) or "automatic"
+                    final_text = apply_answer_format(final_text, style_key, base_prompt)
+                except ImportError:
+                    pass
                 
                 # Final safeguard for strict JSON output
                 if is_strict_format and (prompt_spec and prompt_spec.analysis.output_format and prompt_spec.analysis.output_format.startswith("json")):

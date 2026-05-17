@@ -36,14 +36,14 @@ class TestHealthEndpoints:
         http_client: requests.Session,
         timer: type[ResponseTimer],
     ) -> None:
-        """Test /health endpoint returns 200 (primary health check)."""
-        url = f"{smoke_config.base_url}/health"
+        """Test /healthz returns 200 (lightweight probe for CI cold starts)."""
+        url = f"{smoke_config.base_url}/healthz"
         
-        with timer("GET /health"):
+        with timer("GET /healthz"):
             response = http_client.get(url, timeout=smoke_config.timeout)
         
-        assert response.status_code == 200, f"Health check failed: {response.text}"
-        logger.info(f"✅ /health returned {response.status_code}")
+        assert response.status_code == 200, f"Healthz check failed: {response.text}"
+        logger.info(f"✅ /healthz returned {response.status_code}")
     
     def test_health_endpoint(
         self,

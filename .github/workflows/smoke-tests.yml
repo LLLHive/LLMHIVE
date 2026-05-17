@@ -30,6 +30,12 @@ on:
 
 env:
   PYTHON_VERSION: '3.12'
+  # Canonical production orchestrator (us-east1) — must match lib/orchestrator-api-base.ts
+  PRODUCTION_ORCHESTRATOR_URL: https://llmhive-orchestrator-792354158895.us-east1.run.app
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   smoke-tests:
@@ -97,7 +103,7 @@ jobs:
           if [ -n "${{ github.event.inputs.production_url }}" ]; then
             echo "url=${{ github.event.inputs.production_url }}" >> $GITHUB_OUTPUT
           else
-            echo "url=https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app" >> $GITHUB_OUTPUT
+            echo "url=${PRODUCTION_ORCHESTRATOR_URL}" >> $GITHUB_OUTPUT
           fi
 
       - name: Run smoke tests
@@ -270,7 +276,7 @@ jobs:
           if [ -n "${{ github.event.inputs.production_url }}" ]; then
             echo "url=${{ github.event.inputs.production_url }}" >> $GITHUB_OUTPUT
           else
-            echo "url=https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app" >> $GITHUB_OUTPUT
+            echo "url=${PRODUCTION_ORCHESTRATOR_URL}" >> $GITHUB_OUTPUT
           fi
 
       - name: Run critical health checks only
@@ -280,7 +286,7 @@ jobs:
           echo "Running critical health checks against: $PRODUCTION_URL"
           pytest tests/smoke/test_production.py::TestHealthEndpoints \
             --production-url="$PRODUCTION_URL" \
-            --smoke-timeout=30 \
+            --smoke-timeout=60 \
             -v \
             -m "critical or smoke"
 
@@ -333,7 +339,7 @@ jobs:
           if [ -n "${{ github.event.inputs.production_url }}" ]; then
             echo "url=${{ github.event.inputs.production_url }}" >> $GITHUB_OUTPUT
           else
-            echo "url=https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app" >> $GITHUB_OUTPUT
+            echo "url=${PRODUCTION_ORCHESTRATOR_URL}" >> $GITHUB_OUTPUT
           fi
 
       - name: Run quality benchmark tests

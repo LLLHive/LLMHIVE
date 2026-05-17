@@ -534,6 +534,18 @@ class AnswerRefiner:
         
         # Step 12: Final formatting check
         styled = self._final_format_check(styled, config.output_format)
+
+        # Step 13: Enterprise markdown pass (lists, sections, paragraph breaks)
+        try:
+            from .answer_format import apply_answer_format
+
+            fmt_slug = self._output_format_to_style(config.output_format)
+            polished = apply_answer_format(styled, fmt_slug, query)
+            if polished != styled:
+                styled = polished
+                improvements_made.append("Applied enterprise answer formatting")
+        except ImportError:
+            pass
         
         refinement_notes.append(f"Final format: {config.output_format.value}")
         refinement_notes.append(f"Tone: {config.tone.value}")
@@ -720,6 +732,14 @@ class AnswerRefiner:
         """Apply tone and style adjustments using LLM."""
         if not self.providers or len(content) < 50:
             return content
+
+        try:
+            from .list_formatter import looks_like_markdown_list
+
+            if looks_like_markdown_list(content):
+                return content
+        except ImportError:
+            pass
         
         # Only apply for significant tone changes
         if tone == ToneStyle.PROFESSIONAL:
@@ -825,6 +845,14 @@ Output ONLY the refined text, no commentary."""
         query: str = "",
     ) -> str:
         """Apply the requested output format."""
+        fmt_slug = self._output_format_to_style(output_format)
+        try:
+            from .answer_format import apply_answer_format
+
+            return apply_answer_format(content, fmt_slug, query)
+        except ImportError:
+            pass
+
         if output_format == OutputFormat.BULLET:
             return self._format_as_bullets(content, query=query)
         elif output_format == OutputFormat.NUMBERED:
@@ -845,6 +873,20 @@ Output ONLY the refined text, no commentary."""
             return self._format_as_qa(content)
         else:
             return self._format_as_paragraph(content)
+
+    @staticmethod
+    def _output_format_to_style(output_format: OutputFormat) -> str:
+        mapping = {
+            OutputFormat.BULLET: "bullet",
+            OutputFormat.NUMBERED: "numbered",
+            OutputFormat.JSON: "json",
+            OutputFormat.MARKDOWN: "structured",
+            OutputFormat.TABLE: "table",
+            OutputFormat.EXEC_SUMMARY: "concise",
+            OutputFormat.ESSAY: "academic",
+            OutputFormat.PARAGRAPH: "conversational",
+        }
+        return mapping.get(output_format, "conversational")
     
     def _format_as_bullets(self, content: str, *, query: str = "") -> str:
         """Format content as Markdown bullet list (one item per line)."""
@@ -1042,13 +1084,23 @@ Output ONLY the refined text, no commentary."""
         return "Q: (original question)\nA:\n" + "\n".join(f"- {l}" for l in lines)
     
     def _format_as_paragraph(self, content: str) -> str:
-        """Format content as clean paragraphs."""
-        # Remove excessive whitespace
-        formatted = re.sub(r'\s+', ' ', content)
-        
-        # Restore paragraph breaks (after period + double newline)
+        """Format content as clean paragraphs without destroying lists."""
+        try:
+            from .answer_format import apply_answer_format
+
+            return apply_answer_format(content, "conversational")
+        except ImportError:
+            pass
+        try:
+            from .list_formatter import looks_like_markdown_list
+
+            if looks_like_markdown_list(content):
+                return content.strip()
+        except ImportError:
+            pass
+        formatted = re.sub(r'[^\S\n]+', ' ', content)
+        formatted = re.sub(r'\n{3,}', '\n\n', formatted)
         formatted = re.sub(r'([.!?])\s+([A-Z])', r'\1\n\n\2', formatted)
-        
         return formatted.strip()
     
     def _detect_code_language(self, content: str) -> str:

@@ -1108,6 +1108,39 @@ button[aria-label*="Hide"] svg path {
   font-size: 0.9375rem;
   line-height: 1.7;
   color: var(--foreground);
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Assistant answer container */
+.assistant-answer-card .assistant-answer-body {
+  max-width: 72ch;
+}
+
+.assistant-answer-card .llmhive-markdown > *:first-child {
+  margin-top: 0;
+}
+
+/* Opening paragraph — slightly stronger lead for scanability */
+.llmhive-markdown > p:first-of-type {
+  color: var(--foreground);
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+/* Entity labels in list items (e.g. **Facebook** — detail) */
+.llmhive-markdown li > strong:first-child,
+.llmhive-markdown li > p > strong:first-child {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+/* Tighten spacing when a heading follows a paragraph */
+.llmhive-markdown p + h2,
+.llmhive-markdown p + h3,
+.llmhive-markdown p + h4 {
+  margin-top: 1.75rem;
 }
 
 /* Code block syntax highlighting - GitHub Dark style */
@@ -1165,21 +1198,22 @@ button[aria-label*="Hide"] svg path {
   color: #7ee787;
 }
 
-/* Ordered list counter styling */
-.llmhive-markdown ol {
-  counter-reset: list-counter;
+/* List markers — bronze brand accent via native ::marker (no flex badges) */
+.llmhive-markdown ul > li::marker {
+  color: var(--bronze);
+  font-size: 0.85em;
 }
 
-.llmhive-markdown ol > li {
-  counter-increment: list-counter;
+.llmhive-markdown ol > li::marker {
+  color: var(--bronze);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-.llmhive-markdown ol > li::before {
-  content: none;
-}
-
-.llmhive-markdown ol > li > span:first-child::before {
-  content: counter(list-counter);
+.llmhive-markdown li > ul,
+.llmhive-markdown li > ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
 }
 
 /* Smooth scrollbar for code blocks */
@@ -1238,27 +1272,63 @@ button[aria-label*="Hide"] svg path {
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-/* Animated gradient border for focused elements */
-.llmhive-markdown blockquote {
+/* Callout panels (Note / Tip / Warning / Summary) */
+.llmhive-markdown .callout {
+  font-style: normal;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.llmhive-markdown .callout-note {
+  border-color: color-mix(in srgb, var(--bronze) 35%, transparent);
+  background: color-mix(in srgb, var(--bronze) 6%, transparent);
+}
+
+.llmhive-markdown .callout-tip {
+  border-color: color-mix(in srgb, var(--gold) 35%, transparent);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+}
+
+.llmhive-markdown .callout-important,
+.llmhive-markdown .callout-summary {
+  border-color: color-mix(in srgb, var(--bronze) 45%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--bronze) 8%, transparent),
+    color-mix(in srgb, var(--gold) 5%, transparent)
+  );
+}
+
+.llmhive-markdown .callout-warning {
+  border-color: color-mix(in srgb, #e8a838 50%, transparent);
+  background: color-mix(in srgb, #e8a838 8%, transparent);
+}
+
+.llmhive-markdown .callout-icon {
+  color: var(--bronze);
+}
+
+.llmhive-markdown .callout-icon-warning {
+  color: #d4a017;
+}
+
+.llmhive-markdown .callout-body strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Standard blockquote accent (non-callout) */
+.llmhive-markdown blockquote:not(.callout) {
   position: relative;
 }
 
-.llmhive-markdown blockquote::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--bronze), var(--gold), var(--bronze));
-  background-size: 100% 200%;
-  animation: gradientShift 3s ease infinite;
-  border-radius: 2px;
+/* Task lists */
+.llmhive-markdown .task-list {
+  padding-left: 0.25rem;
 }
 
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 0%; }
-  50% { background-position: 0% 100%; }
+.llmhive-markdown .task-list li {
+  list-style: none;
 }
 
 /* Selection highlighting */

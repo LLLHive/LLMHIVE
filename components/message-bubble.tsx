@@ -247,21 +247,27 @@ export function MessageBubble({
           </div>
         )}
 
-        <div className="rounded-2xl bg-card border border-border p-4 md:p-5 shadow-sm">
-          {/* World-class markdown rendering for AI responses */}
-          <MarkdownRenderer content={message.content} />
+        <div className="assistant-answer-card rounded-2xl bg-card border border-border p-4 md:p-5 shadow-sm">
+          <MarkdownRenderer content={message.content} className="assistant-answer-body" />
 
           {message.citations && message.citations.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-border space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Sources:</p>
+            <div className="mt-5 pt-4 border-t border-border/80 space-y-2.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Sources
+              </p>
               {message.citations.map((citation, idx) => (
-                <div key={citation.id} className="text-xs flex items-start gap-2">
-                  <span className="font-mono text-[var(--bronze)]">[{idx + 1}]</span>
+                <div
+                  key={citation.id}
+                  className="flex items-start gap-2.5 rounded-md px-2 py-1.5 text-xs hover:bg-muted/40 transition-colors"
+                >
+                  <span className="mt-px font-mono text-[var(--bronze)] tabular-nums">
+                    [{idx + 1}]
+                  </span>
                   <a
                     href={citation.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[var(--bronze)] hover:underline flex-1"
+                    className="flex-1 text-foreground/80 hover:text-[var(--bronze)] underline-offset-2 hover:underline"
                   >
                     {citation.source}
                   </a>

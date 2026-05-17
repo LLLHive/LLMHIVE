@@ -52,28 +52,33 @@ def format_answer(
     
     # Apply format style
     style = (format_style or "paragraph").lower()
-    if style in ("bullet", "bullets", "bullet_points"):
-        try:
-            from .orchestration.list_formatter import format_as_markdown_bullets
+    try:
+        from .orchestration.answer_format import apply_answer_format
 
-            formatted = format_as_markdown_bullets(formatted)
-        except ImportError:
-            formatted = _format_as_bullets(formatted)
-    elif style in ("paragraph", "para"):
-        formatted = _format_as_paragraph(formatted)
-    elif style in ("markdown", "md"):
-        formatted = _format_as_markdown(formatted)
-    elif style == "table":
-        formatted = _format_as_table(formatted)
-    elif style == "json":
-        formatted = _format_as_json(formatted)
-    elif style in ("executive_summary", "exec_summary"):
-        formatted = _format_as_executive_summary(formatted)
-    elif style in ("qa", "q&a"):
-        formatted = _format_as_qa(formatted)
-    else:
-        logger.warning("Unknown format_style '%s', defaulting to paragraph", format_style)
-        formatted = _format_as_paragraph(formatted)
+        formatted = apply_answer_format(formatted, format_style, "")
+    except ImportError:
+        if style in ("bullet", "bullets", "bullet_points"):
+            try:
+                from .orchestration.list_formatter import format_as_markdown_bullets
+
+                formatted = format_as_markdown_bullets(formatted)
+            except ImportError:
+                formatted = _format_as_bullets(formatted)
+        elif style in ("paragraph", "para"):
+            formatted = _format_as_paragraph(formatted)
+        elif style in ("markdown", "md"):
+            formatted = _format_as_markdown(formatted)
+        elif style == "table":
+            formatted = _format_as_table(formatted)
+        elif style == "json":
+            formatted = _format_as_json(formatted)
+        elif style in ("executive_summary", "exec_summary"):
+            formatted = _format_as_executive_summary(formatted)
+        elif style in ("qa", "q&a"):
+            formatted = _format_as_qa(formatted)
+        else:
+            logger.warning("Unknown format_style '%s', defaulting to paragraph", format_style)
+            formatted = _format_as_paragraph(formatted)
     
     # Add confidence indicator if provided (skip for JSON to avoid breaking syntax)
     if show_confidence and style != "json" and (confidence_score is not None or confidence_level is not None):

@@ -84,6 +84,14 @@ def require_active_paid_subscription(user_id: Optional[str]) -> None:
     No-op when :func:`is_paid_access_required` is ``False`` (kill switch off).
     Fail-closed on Firestore errors.
     """
+    try:
+        from .scheduled_benchmark import is_internal_scheduled_benchmark
+
+        if is_internal_scheduled_benchmark():
+            return
+    except ImportError:
+        pass
+
     if not is_paid_access_required():
         return
 

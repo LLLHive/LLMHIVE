@@ -302,6 +302,12 @@ class LLMHiveRunner(RunnerBase):
         if api_key:
             headers["x-api-key"] = api_key
 
+        bench_secret = os.environ.get("LLMHIVE_SCHEDULED_BENCHMARK_SECRET", "").strip()
+        if bench_secret:
+            from ..billing.scheduled_benchmark import SCHEDULED_BENCHMARK_HEADER_NAME
+
+            headers[SCHEDULED_BENCHMARK_HEADER_NAME] = bench_secret
+
         async with httpx.AsyncClient(timeout=config.timeout_seconds) as client:
             response = await client.post(
                 f"{self.base_url}/v1/chat",

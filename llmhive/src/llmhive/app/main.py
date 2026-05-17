@@ -428,6 +428,13 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
 # Add middleware (order matters - error handling should be first)
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(RequestTrackingMiddleware)
+try:
+    from .billing.scheduled_benchmark import ScheduledBenchmarkMiddleware
+
+    app.add_middleware(ScheduledBenchmarkMiddleware)
+    logger.info("Scheduled benchmark middleware enabled")
+except ImportError:
+    pass
 
 # Set up OpenTelemetry tracing middleware (must be done before app starts)
 if TRACING_AVAILABLE:

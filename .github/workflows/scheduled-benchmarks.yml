@@ -157,6 +157,7 @@ jobs:
         env:
           API_KEY: ${{ env.API_KEY }}
           LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
+          LLMHIVE_SCHEDULED_BENCHMARK_SECRET: ${{ secrets.LLMHIVE_SCHEDULED_BENCHMARK_SECRET }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
@@ -198,6 +199,7 @@ jobs:
         env:
           API_KEY: ${{ env.API_KEY }}
           LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
+          LLMHIVE_SCHEDULED_BENCHMARK_SECRET: ${{ secrets.LLMHIVE_SCHEDULED_BENCHMARK_SECRET }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
