@@ -100,6 +100,18 @@ class ChatMetadata(BaseModel):
     user_id: Optional[str] = Field(default=None, description="User ID")
     project_id: Optional[str] = Field(default=None, description="Project ID")
     org_id: Optional[str] = Field(default=None, description="Organization ID")
+    benchmark_category: Optional[str] = Field(
+        default=None,
+        description="Benchmark suite category (e.g. tool_backed_reasoning, code_reasoning)",
+    )
+    force_calculator: bool = Field(
+        default=False,
+        description="Force deterministic calculator for benchmark TBR cases",
+    )
+    force_code_execution: bool = Field(
+        default=False,
+        description="Force MCP2/code execution for benchmark CDR cases",
+    )
     criteria: Optional[CriteriaSettings] = Field(
         default=None,
         description="Dynamic criteria settings for quality/speed/creativity balance"

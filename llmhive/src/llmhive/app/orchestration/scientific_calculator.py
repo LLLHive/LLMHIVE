@@ -637,6 +637,7 @@ class ScientificCalculator:
         expr = expr.replace("^", "**")
         expr = expr.replace("²", "**2")
         expr = expr.replace("³", "**3")
+        expr = re.sub(r"(\d+)\s*!", r"factorial(\1)", expr)
         
         # Handle implicit multiplication: 2x -> 2*x, 3pi -> 3*pi
         expr = re.sub(r'(\d)([a-zA-Z_])', r'\1*\2', expr)

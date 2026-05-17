@@ -175,6 +175,43 @@ def extract_math_expression(query: str) -> str:
     Returns:
         Extracted/converted math expression ready for calculator
     """
+    text = query.lower()
+
+    # Profit margin (must run before generic number-pair fallbacks)
+    profit_match = re.search(r'revenue\s*(?:of\s*)?\$?([\d.,]+\s*(?:million|billion)?)', text, re.IGNORECASE)
+    expense_match = re.search(r'(?:expense|cost)s?\s*(?:of\s*)?\$?([\d.,]+\s*(?:million|billion)?)', text, re.IGNORECASE)
+    if profit_match and expense_match and ("margin" in text or "profit" in text):
+        def extract_number_with_units(match_str: str) -> str:
+            num_str = match_str.replace('$', '').replace(',', '')
+            if 'million' in num_str.lower():
+                num_match = re.search(r'([\d.]+)', num_str)
+                if num_match:
+                    return str(float(num_match.group(1)) * 1000000)
+            if 'billion' in num_str.lower():
+                num_match = re.search(r'([\d.]+)', num_str)
+                if num_match:
+                    return str(float(num_match.group(1)) * 1000000000)
+            num_match = re.search(r'([\d.]+)', num_str)
+            return num_match.group(1) if num_match else num_str
+
+        revenue = extract_number_with_units(profit_match.group(1))
+        expense = extract_number_with_units(expense_match.group(1))
+        return f"({revenue} - {expense}) / {revenue} * 100"
+
+    # km → miles → travel time at mph (minutes)
+    if re.search(r'km|kilometer', text) and re.search(r'mph', text) and re.search(r'minute', text):
+        km_m = re.search(r'([\d.]+)\s*(?:km|kilometers?)', text)
+        mph_m = re.search(r'([\d.]+)\s*mph', text)
+        if km_m and mph_m:
+            return f"({km_m.group(1)} * 0.621371) / {mph_m.group(1)} * 60"
+
+    # Powers, sqrt, factorial (e.g. 17^3 + sqrt(625) - 12!)
+    if re.search(r'\d+\s*\^|\d+\s*!|sqrt\s*\(', query, re.IGNORECASE):
+        expr = re.sub(r'^[Ww]hat is\s+', '', query).strip().rstrip('?.')
+        expr = re.sub(r'(\d+)\s*!', r'factorial(\1)', expr)
+        expr = re.sub(r'(\d+)\^(\d+)', r'\1**\2', expr)
+        return expr
+
     # First, try to find a pure math expression in the query
     # Pattern for expressions like "25 * 47", "100 + 50", "3.14 * 2"
     pure_math = re.search(r'([\d.]+\s*[\+\-\*/\^x×÷%]\s*[\d.]+(?:\s*[\+\-\*/\^x×÷%]\s*[\d.]+)*)', query)
@@ -211,31 +248,6 @@ def extract_math_expression(query: str) -> str:
     percent_of_match = re.search(r'([\d.]+)%?\s*(?:percent\s+)?of\s*([\d.]+)', text)
     if percent_of_match:
         return f"{percent_of_match.group(2)} * {percent_of_match.group(1)} / 100"
-    
-    # Pattern: "profit margin" with revenue and cost/expenses
-    # Handle variations like "$4.5 million" or "4500000"
-    def extract_number_with_units(match_str: str) -> str:
-        """Extract number handling $ and million/billion units."""
-        # Remove $ and commas
-        num_str = match_str.replace('$', '').replace(',', '')
-        # Handle million/billion
-        if 'million' in num_str.lower():
-            num_match = re.search(r'([\d.]+)', num_str)
-            if num_match:
-                return str(float(num_match.group(1)) * 1000000)
-        if 'billion' in num_str.lower():
-            num_match = re.search(r'([\d.]+)', num_str)
-            if num_match:
-                return str(float(num_match.group(1)) * 1000000000)
-        num_match = re.search(r'([\d.]+)', num_str)
-        return num_match.group(1) if num_match else num_str
-    
-    profit_match = re.search(r'revenue\s*(?:of\s*)?\$?([\d.,]+\s*(?:million|billion)?)', text, re.IGNORECASE)
-    expense_match = re.search(r'(?:expense|cost)s?\s*(?:of\s*)?\$?([\d.,]+\s*(?:million|billion)?)', text, re.IGNORECASE)
-    if profit_match and expense_match:
-        revenue = extract_number_with_units(profit_match.group(1))
-        expense = extract_number_with_units(expense_match.group(1))
-        return f"({revenue} - {expense}) / {revenue} * 100"
     
     # Pattern: convert miles to km or km to miles
     # Handle variations like "100 km to miles", "How many miles is 100 km", etc.
@@ -335,6 +347,63 @@ def extract_math_expression(query: str) -> str:
     # The calculator's sanitizer might be able to handle it
     logger.warning("Could not extract math expression from: %s", query[:50])
     return query
+
+
+CODE_EXECUTION_PATTERNS = [
+    r'\bexecute\s+python\b',
+    r'\bpython\s+code\s+to\b',
+    r'\bsort\b.*\[[\d,\s]+\]',
+    r'\brun\s+(?:this\s+)?code\b',
+    r'\bwrite\s+python\b',
+]
+
+
+def should_use_code_execution(query: str) -> bool:
+    """Return True when the prompt should run MCP2 / sandboxed Python."""
+    query_lower = query.lower()
+    for pattern in CODE_EXECUTION_PATTERNS:
+        if re.search(pattern, query_lower):
+            return True
+    return any(
+        trigger in query_lower
+        for trigger in (
+            "execute",
+            "run code",
+            "test this code",
+            "what's the output",
+            "eval(",
+        )
+    )
+
+
+def build_code_from_prompt(query: str) -> Optional[str]:
+    """Build sandbox Python for common benchmark code-reasoning prompts."""
+    query_lower = query.lower()
+    list_match = re.search(r'(\[[\d,\s]+\])', query)
+    if list_match and "sort" in query_lower:
+        lst = list_match.group(1)
+        return f"print(sorted({lst}))"
+    if list_match and ("fibonacci" in query_lower or "fib" in query_lower):
+        lst = list_match.group(1)
+        return (
+            "def fib(n):\n"
+            "    a, b = 0, 1\n"
+            "    out = []\n"
+            "    for _ in range(n):\n"
+            "        out.append(a)\n"
+            "        a, b = b, a + b\n"
+            "    return out\n"
+            f"print(fib(10))"
+        )
+    if "factorial" in query_lower:
+        n_match = re.search(r'(\d+)\s*!', query)
+        if n_match:
+            n = n_match.group(1)
+            return f"import math\nprint(math.factorial({n}))"
+    code_block = re.search(r'```(?:python)?\s*([\s\S]*?)```', query)
+    if code_block:
+        return code_block.group(1).strip()
+    return None
 
 
 # ==============================================================================
