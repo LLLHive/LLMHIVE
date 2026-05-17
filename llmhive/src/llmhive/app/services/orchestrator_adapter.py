@@ -917,95 +917,27 @@ DOMAIN_TOP_MODELS_BUDGET = {
     ],
 }
 
-# Domain-specific top models - PREMIUM versions (for when credits available)
-DOMAIN_TOP_MODELS_PREMIUM = {
-    "health_medical": [
-        OPENROUTER_GPT_5_5_PRO,
-        OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-        OPENROUTER_O1_PRO,
-    ],
-    "legal_analysis": [
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_GPT_5_5_PRO,
-        OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_O3,
-    ],
-    "financial_analysis": [
-        OPENROUTER_GPT_5_2,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_KIMI_K25,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_DEEPSEEK_V4_PRO,
-        OPENROUTER_QWEN36_PLUS,
-    ],
-    "science_research": [
-        OPENROUTER_GPT_5_5_PRO,
-        OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_O3,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-    ],
-    "code_generation": [
-        OPENROUTER_GPT_5_5,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_GPT_5_3_CODEX,
-        OPENROUTER_CLAUDE_OPUS_4,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-        OPENROUTER_GEMINI_3_1_PRO,
-    ],
-    "debugging": [
-        OPENROUTER_GPT_5_5,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_DEEPSEEK_V4_PRO,
-        OPENROUTER_GPT_5_4,
-    ],
-    "math_problem": [
-        OPENROUTER_GPT_5_5_PRO,
-        OPENROUTER_O3,
-        OPENROUTER_O1_PRO,
-        OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_DEEPSEEK_R1,
-    ],
-    "creative_writing": [
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_CLAUDE_OPUS_4,
-        OPENROUTER_GPT_5_4,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_KIMI_K26,
-    ],
-    "factual_question": [
-        OPENROUTER_GPT_5_5_PRO,
-        OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-    ],
-    "research_analysis": [
-        OPENROUTER_GPT_5_5,
-        OPENROUTER_GEMINI_2_PRO,
-        OPENROUTER_GPT_5_5_PRO,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_DEEPSEEK_V4_PRO,
-    ],
-    "general": [
-        OPENROUTER_GPT_5_5_PRO,
-        OPENROUTER_GPT_5_4_PRO,
-        OPENROUTER_CLAUDE_OPUS_4_7,
-        OPENROUTER_GPT_5_5,
-        OPENROUTER_GEMINI_3_1_PRO,
-        OPENROUTER_CLAUDE_SONNET_4_6,
-    ],
-}
+# Domain-specific top models - PREMIUM versions (benchmark score order)
+def _build_domain_top_models_premium() -> Dict[str, List[str]]:
+    from ..knowledge.usecase_category_rankings import domain_models_from_usecase
+
+    task_types = [
+        "health_medical",
+        "legal_analysis",
+        "financial_analysis",
+        "science_research",
+        "code_generation",
+        "debugging",
+        "math_problem",
+        "creative_writing",
+        "factual_question",
+        "research_analysis",
+        "general",
+    ]
+    return {task: domain_models_from_usecase(task, limit=6) for task in task_types}
+
+
+DOMAIN_TOP_MODELS_PREMIUM = _build_domain_top_models_premium()
 
 # Select domain models based on budget mode
 DOMAIN_TOP_MODELS = DOMAIN_TOP_MODELS_BUDGET if BUDGET_MODE else DOMAIN_TOP_MODELS_PREMIUM

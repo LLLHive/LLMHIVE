@@ -1,0 +1,1245 @@
+{
+  "generated_at": "2026-05-17T20:29:25.927073+00:00",
+  "source": "benchmark_rankings_jan2026.py::RANKINGS_MAY_2026",
+  "description": "Top 10 per UI category, sorted strictly by benchmark score (API-available models only).",
+  "benchmark_mapping": {
+    "programming": "coding",
+    "science": "general_reasoning",
+    "health": "general_reasoning",
+    "legal": "general_reasoning",
+    "marketing": "dialogue",
+    "technology": "tool_use",
+    "finance": "math",
+    "academia": "rag",
+    "roleplay": "dialogue",
+    "creative-writing": "dialogue",
+    "translation": "multilingual",
+    "reasoning": "math"
+  },
+  "categories": {
+    "programming": [
+      {
+        "rank": 1,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 88.7,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 87.6,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "openai/gpt-5.3-codex",
+        "model_name": "GPT-5.3 Codex",
+        "author": "OpenAI",
+        "score": 85.0,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "anthropic/claude-opus-4.5",
+        "model_name": "Claude Opus 4.5",
+        "author": "Anthropic",
+        "score": 80.9,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 80.8,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 80.6,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 80.6,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "moonshotai/kimi-k2.6",
+        "model_name": "Kimi K2.6",
+        "author": "Moonshot",
+        "score": 80.2,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "minimax/minimax-m2.5",
+        "model_name": "MiniMax M2.5",
+        "author": "MiniMax",
+        "score": 80.2,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "openai/gpt-5.2",
+        "model_name": "GPT-5.2",
+        "author": "OpenAI",
+        "score": 80.0,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      }
+    ],
+    "science": [
+      {
+        "rank": 1,
+        "model_id": "openai/gpt-5.5-pro",
+        "model_name": "GPT-5.5 Pro",
+        "author": "OpenAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "openai/gpt-5.4-pro",
+        "model_name": "GPT-5.4 Pro",
+        "author": "OpenAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 94.3,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 94.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 93.6,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "openai/gpt-5.2-pro",
+        "model_name": "GPT-5.2 Pro",
+        "author": "OpenAI",
+        "score": 93.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "openai/gpt-5.4",
+        "model_name": "GPT-5.4",
+        "author": "OpenAI",
+        "score": 92.8,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 91.3,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 89.9,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 89.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      }
+    ],
+    "health": [
+      {
+        "rank": 1,
+        "model_id": "openai/gpt-5.5-pro",
+        "model_name": "GPT-5.5 Pro",
+        "author": "OpenAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "openai/gpt-5.4-pro",
+        "model_name": "GPT-5.4 Pro",
+        "author": "OpenAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 94.3,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 94.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 93.6,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "openai/gpt-5.2-pro",
+        "model_name": "GPT-5.2 Pro",
+        "author": "OpenAI",
+        "score": 93.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "openai/gpt-5.4",
+        "model_name": "GPT-5.4",
+        "author": "OpenAI",
+        "score": 92.8,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 91.3,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 89.9,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 89.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      }
+    ],
+    "legal": [
+      {
+        "rank": 1,
+        "model_id": "openai/gpt-5.5-pro",
+        "model_name": "GPT-5.5 Pro",
+        "author": "OpenAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "openai/gpt-5.4-pro",
+        "model_name": "GPT-5.4 Pro",
+        "author": "OpenAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 94.3,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 94.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 93.6,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "openai/gpt-5.2-pro",
+        "model_name": "GPT-5.2 Pro",
+        "author": "OpenAI",
+        "score": 93.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "openai/gpt-5.4",
+        "model_name": "GPT-5.4",
+        "author": "OpenAI",
+        "score": 92.8,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 91.3,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 89.9,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 89.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      }
+    ],
+    "marketing": [
+      {
+        "rank": 1,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 1504.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 1493.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "openai/gpt-5.4",
+        "model_name": "GPT-5.4",
+        "author": "OpenAI",
+        "score": 1484.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "x-ai/grok-4.20",
+        "model_name": "Grok 4 Fast",
+        "author": "xAI",
+        "score": 1471.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 1462.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 1460.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 1458.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "google/gemini-2.5-pro-preview",
+        "model_name": "Gemini 2.5 Pro",
+        "author": "Google",
+        "score": 1449.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "qwen/qwen3.6-plus",
+        "model_name": "Qwen3.6 Plus",
+        "author": "Alibaba",
+        "score": 1447.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "meta-llama/llama-4-maverick",
+        "model_name": "Llama 4 Maverick",
+        "author": "Meta",
+        "score": 1441.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      }
+    ],
+    "technology": [
+      {
+        "rank": 1,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 79.1,
+        "benchmark": "MCP-Atlas",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "anthropic/claude-opus-4.5",
+        "model_name": "Claude Opus 4.5",
+        "author": "Anthropic",
+        "score": 79.0,
+        "benchmark": "Tau2-Bench",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 75.3,
+        "benchmark": "MCP-Atlas",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "openai/gpt-5.2",
+        "model_name": "GPT-5.2",
+        "author": "OpenAI",
+        "score": 73.0,
+        "benchmark": "Tau2-Bench",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 69.0,
+        "benchmark": "Tau2-Bench",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "anthropic/claude-sonnet-4.5",
+        "model_name": "Claude Sonnet 4.5",
+        "author": "Anthropic",
+        "score": 63.0,
+        "benchmark": "Tau2-Bench",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "openai/gpt-5.1",
+        "model_name": "GPT-5.1",
+        "author": "OpenAI",
+        "score": 59.0,
+        "benchmark": "Tau2-Bench",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "openai/gpt-5.3-codex",
+        "model_name": "GPT-5.3 Codex",
+        "author": "OpenAI",
+        "score": 56.8,
+        "benchmark": "SWE-Bench-Pro",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 55.0,
+        "benchmark": "Tau2-Bench",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "google/gemini-2.5-pro-preview",
+        "model_name": "Gemini 2.5 Pro",
+        "author": "Google",
+        "score": 54.0,
+        "benchmark": "Tau2-Bench",
+        "benchmark_category": "tool_use",
+        "is_others_bucket": false
+      }
+    ],
+    "finance": [
+      {
+        "rank": 1,
+        "model_id": "openai/gpt-5.2",
+        "model_name": "GPT-5.2",
+        "author": "OpenAI",
+        "score": 100.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 100.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "moonshotai/kimi-k2.5",
+        "model_name": "Kimi K2.5",
+        "author": "Moonshot",
+        "score": 100.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 99.8,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 99.7,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "qwen/qwen3.6-plus",
+        "model_name": "Qwen3.6 Plus",
+        "author": "Alibaba",
+        "score": 99.2,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "openai/gpt-5.5-pro",
+        "model_name": "GPT-5.5 Pro",
+        "author": "OpenAI",
+        "score": 99.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 98.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "openai/o4-mini",
+        "model_name": "o4-mini",
+        "author": "OpenAI",
+        "score": 92.7,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "deepseek/deepseek-r1",
+        "model_name": "DeepSeek R1",
+        "author": "DeepSeek",
+        "score": 72.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      }
+    ],
+    "academia": [
+      {
+        "rank": 1,
+        "model_id": "google/gemini-2.5-pro-preview",
+        "model_name": "Gemini 2.5 Pro",
+        "author": "Google",
+        "score": 93.0,
+        "benchmark": "MRCR",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 74.0,
+        "benchmark": "MRCR-v2",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "openai/gpt-5.5-pro",
+        "model_name": "GPT-5.5 Pro",
+        "author": "OpenAI",
+        "score": 72.0,
+        "benchmark": "MRCR-v2",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 70.0,
+        "benchmark": "RAG-Eval",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 68.0,
+        "benchmark": "RAG-Eval",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "openai/gpt-5.4-pro",
+        "model_name": "GPT-5.4 Pro",
+        "author": "OpenAI",
+        "score": 66.0,
+        "benchmark": "RAG-Eval",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 65.0,
+        "benchmark": "RAG-Eval",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 64.0,
+        "benchmark": "RAG-Eval",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "meta-llama/llama-4-maverick",
+        "model_name": "Llama 4 Maverick",
+        "author": "Meta",
+        "score": 62.0,
+        "benchmark": "RAG-Eval",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "qwen/qwen3.6-plus",
+        "model_name": "Qwen3.6 Plus",
+        "author": "Alibaba",
+        "score": 60.0,
+        "benchmark": "RAG-Eval",
+        "benchmark_category": "rag",
+        "is_others_bucket": false
+      }
+    ],
+    "roleplay": [
+      {
+        "rank": 1,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 1504.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 1493.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "openai/gpt-5.4",
+        "model_name": "GPT-5.4",
+        "author": "OpenAI",
+        "score": 1484.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "x-ai/grok-4.20",
+        "model_name": "Grok 4 Fast",
+        "author": "xAI",
+        "score": 1471.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 1462.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 1460.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 1458.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "google/gemini-2.5-pro-preview",
+        "model_name": "Gemini 2.5 Pro",
+        "author": "Google",
+        "score": 1449.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "qwen/qwen3.6-plus",
+        "model_name": "Qwen3.6 Plus",
+        "author": "Alibaba",
+        "score": 1447.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "meta-llama/llama-4-maverick",
+        "model_name": "Llama 4 Maverick",
+        "author": "Meta",
+        "score": 1441.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      }
+    ],
+    "creative-writing": [
+      {
+        "rank": 1,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 1504.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 1493.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "openai/gpt-5.4",
+        "model_name": "GPT-5.4",
+        "author": "OpenAI",
+        "score": 1484.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "x-ai/grok-4.20",
+        "model_name": "Grok 4 Fast",
+        "author": "xAI",
+        "score": 1471.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 1462.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 1460.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 1458.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "google/gemini-2.5-pro-preview",
+        "model_name": "Gemini 2.5 Pro",
+        "author": "Google",
+        "score": 1449.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "qwen/qwen3.6-plus",
+        "model_name": "Qwen3.6 Plus",
+        "author": "Alibaba",
+        "score": 1447.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "meta-llama/llama-4-maverick",
+        "model_name": "Llama 4 Maverick",
+        "author": "Meta",
+        "score": 1441.0,
+        "benchmark": "Arena-Elo",
+        "benchmark_category": "dialogue",
+        "is_others_bucket": false
+      }
+    ],
+    "translation": [
+      {
+        "rank": 1,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 92.6,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 91.5,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "anthropic/claude-opus-4.6",
+        "model_name": "Claude Opus 4.6",
+        "author": "Anthropic",
+        "score": 91.1,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "anthropic/claude-opus-4.5",
+        "model_name": "Claude Opus 4.5",
+        "author": "Anthropic",
+        "score": 90.8,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "openai/gpt-5.2",
+        "model_name": "GPT-5.2",
+        "author": "OpenAI",
+        "score": 89.6,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "qwen/qwen3.6-plus",
+        "model_name": "Qwen3.6 Plus",
+        "author": "Alibaba",
+        "score": 89.5,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "model_name": "Claude Sonnet 4.6",
+        "author": "Anthropic",
+        "score": 89.3,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "openai/gpt-5.4",
+        "model_name": "GPT-5.4",
+        "author": "OpenAI",
+        "score": 89.0,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "openai/gpt-5.5-pro",
+        "model_name": "GPT-5.5 Pro",
+        "author": "OpenAI",
+        "score": 88.5,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "z-ai/glm-4.7",
+        "model_name": "GLM 4.7",
+        "author": "Z.ai",
+        "score": 87.5,
+        "benchmark": "MMMLU",
+        "benchmark_category": "multilingual",
+        "is_others_bucket": false
+      }
+    ],
+    "reasoning": [
+      {
+        "rank": 1,
+        "model_id": "openai/gpt-5.2",
+        "model_name": "GPT-5.2",
+        "author": "OpenAI",
+        "score": 100.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "model_name": "Gemini 3.1 Pro",
+        "author": "Google",
+        "score": 100.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
+        "model_id": "moonshotai/kimi-k2.5",
+        "model_name": "Kimi K2.5",
+        "author": "Moonshot",
+        "score": 100.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 4,
+        "model_id": "anthropic/claude-opus-4.7",
+        "model_name": "Claude Opus 4.7",
+        "author": "Anthropic",
+        "score": 99.8,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "model_name": "DeepSeek V4 Pro",
+        "author": "DeepSeek",
+        "score": 99.7,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 6,
+        "model_id": "qwen/qwen3.6-plus",
+        "model_name": "Qwen3.6 Plus",
+        "author": "Alibaba",
+        "score": 99.2,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
+        "model_id": "openai/gpt-5.5-pro",
+        "model_name": "GPT-5.5 Pro",
+        "author": "OpenAI",
+        "score": 99.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 8,
+        "model_id": "openai/gpt-5.5",
+        "model_name": "GPT-5.5",
+        "author": "OpenAI",
+        "score": 98.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
+        "model_id": "openai/o4-mini",
+        "model_name": "o4-mini",
+        "author": "OpenAI",
+        "score": 92.7,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 10,
+        "model_id": "deepseek/deepseek-r1",
+        "model_name": "DeepSeek R1",
+        "author": "DeepSeek",
+        "score": 72.0,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      }
+    ]
+  }
+}

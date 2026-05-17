@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server"
+import {
+  getUsecaseCategoryRankings,
+  UI_USECASE_CATEGORIES,
+} from "@/lib/marketing/usecase-category-rankings"
 
 // Create a mock model with realistic data
 function mockModel(
@@ -43,7 +47,29 @@ type MockRanking = {
   metrics: Record<string, number | string>
 }
 
-// Mock rankings data reflecting OpenRouter's actual leaderboard
+const USECASE_DIMENSIONS = new Set<string>(UI_USECASE_CATEGORIES)
+
+function buildUsecaseRankings(dimension: string): MockRanking[] {
+  const entries = getUsecaseCategoryRankings(dimension)
+  return entries.map((entry) => ({
+    model: mockModel(
+      entry.model_id,
+      entry.model_name,
+      entry.author.toLowerCase().replace(/\s+/g, "-"),
+      128000,
+      5,
+      entry.benchmark ?? "benchmark"
+    ),
+    rank: entry.rank,
+    score: entry.score ?? 0,
+    metrics: {
+      benchmark_score: entry.score ?? 0,
+      benchmark: entry.benchmark ?? "LLMHive benchmark",
+    },
+  }))
+}
+
+// Mock rankings for non–use-case dimensions (token share, tools, images, etc.)
 const MOCK_RANKINGS: Record<string, MockRanking[]> = {
   // Main Leaderboard - Token usage across models
   leaderboard: [
@@ -262,9 +288,10 @@ export async function GET(
   { params }: { params: Promise<{ dimension: string }> }
 ) {
   const { dimension } = await params
-  
-  // Return mock data in proper RankedModel format
-  const rankings = MOCK_RANKINGS[dimension as DimensionKey] || MOCK_RANKINGS.leaderboard
+
+  const rankings = USECASE_DIMENSIONS.has(dimension)
+    ? buildUsecaseRankings(dimension)
+    : MOCK_RANKINGS[dimension as DimensionKey] || MOCK_RANKINGS.leaderboard
   
   // Transform to the format expected by the hook (entries with model_id, model_name)
   const entries = rankings.map(r => ({
@@ -285,7 +312,9 @@ export async function GET(
     models: rankings,
     entries: entries,  // Hook expects this
     count: rankings.length,
-    data_source: "OpenRouter Rankings (derived)",
+    data_source: USECASE_DIMENSIONS.has(dimension)
+      ? "LLMHive Rankings (May 2026)"
+      : "OpenRouter Rankings (derived)",
     generated_at: new Date().toISOString(),
     metric_definitions: {
       score: "Overall ranking score",

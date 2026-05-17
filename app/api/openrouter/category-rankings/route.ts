@@ -2,7 +2,7 @@
  * GET /api/openrouter/category-rankings
  *
  * Returns top 10 models for a use-case category.
- * Rankings source: lib/marketing/usecase-category-rankings.ts (May 2026 benchmarks).
+ * Rankings source: benchmark_rankings_jan2026.py via usecase-category-rankings.generated.json
  */
 
 import { NextRequest, NextResponse } from 'next/server'

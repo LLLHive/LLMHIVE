@@ -13,7 +13,13 @@ def test_all_twelve_ui_categories_have_ten_models():
     for slug in categories:
         rows = get_usecase_category_rankings(slug, top_k=10)
         assert len(rows) == 10, slug
-        assert rows[0].startswith(("openai/", "anthropic/", "google/", "deepseek/", "meta-llama/"))
+
+
+def test_scores_are_strictly_descending():
+    for slug in ("programming", "science", "academia", "finance"):
+        entries = get_usecase_category_rankings_detailed(slug, top_k=10)
+        scores = [float(e["score"]) for e in entries]
+        assert scores == sorted(scores, reverse=True), slug
 
 
 def test_science_leader_is_gpt_55_pro():
@@ -25,6 +31,11 @@ def test_science_leader_is_gpt_55_pro():
 def test_programming_leader_is_gpt_55():
     rows = get_usecase_category_rankings("programming", top_k=1)
     assert rows[0] == "openai/gpt-5.5"
+
+
+def test_academia_leader_is_gemini_25_pro_by_mrcr_score():
+    rows = get_usecase_category_rankings("academia", top_k=1)
+    assert rows[0] == "google/gemini-2.5-pro-preview"
 
 
 def test_detailed_entries_have_contiguous_ranks():

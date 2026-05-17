@@ -64,6 +64,7 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
         ModelBenchmark("openai/gpt-5.4", "OpenAI", 92.8, "GPQA", 4.00, 16.00, True),
         ModelBenchmark("anthropic/claude-opus-4.6", "Anthropic", 91.3, "GPQA", 5.00, 25.00, True),
         ModelBenchmark("anthropic/claude-sonnet-4.6", "Anthropic", 89.9, "GPQA", 3.00, 15.00, True),
+        ModelBenchmark("deepseek/deepseek-v4-pro", "DeepSeek", 89.0, "GPQA", 1.74, 3.48, True),
     ],
 
     # =========================================================================
@@ -112,6 +113,8 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
         ModelBenchmark("anthropic/claude-sonnet-4.6", "Anthropic", 89.3, "MMMLU", 3.00, 15.00, True),
         ModelBenchmark("openai/gpt-5.4", "OpenAI", 89.0, "MMMLU", 4.00, 16.00, True),
         ModelBenchmark("openai/gpt-5.5-pro", "OpenAI", 88.5, "MMMLU", 5.50, 22.00, True),
+        ModelBenchmark("z-ai/glm-4.7", "Z.ai", 87.5, "MMMLU", 1.00, 4.00, True),
+        ModelBenchmark("moonshotai/kimi-k2.5", "Moonshot", 87.0, "MMMLU", 0.95, 4.00, True),
     ],
 
     # =========================================================================
@@ -188,7 +191,7 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
         ModelBenchmark("x-ai/grok-4.20", "xAI", 1471.0, "Arena-Elo", 5.00, 15.00, True),
         ModelBenchmark("deepseek/deepseek-v4-pro", "DeepSeek", 1462.0, "Arena-Elo", 1.74, 3.48, True),
         ModelBenchmark("anthropic/claude-sonnet-4.6", "Anthropic", 1458.0, "Arena-Elo", 3.00, 15.00, True),
-        ModelBenchmark("openai/gpt-5.4", "OpenAI", 1455.0, "Arena-Elo", 5.00, 20.00, True, "Standard tier"),
+        ModelBenchmark("openai/gpt-5.5", "OpenAI", 1460.0, "Arena-Elo", 4.00, 16.00, True),
         ModelBenchmark("google/gemini-2.5-pro-preview", "Google", 1449.0, "Arena-Elo", 2.50, 12.00, True),
         ModelBenchmark("qwen/qwen3.6-plus", "Alibaba", 1447.0, "Arena-Elo", 2.40, 9.60, True),
         ModelBenchmark("meta-llama/llama-4-maverick", "Meta", 1441.0, "Arena-Elo", 0.95, 3.80, True, "Muse Spark fallback"),
@@ -396,6 +399,155 @@ LLMHIVE_BUDGET_RESULTS = {
 def get_category_rankings(category: BenchmarkCategory) -> List[ModelBenchmark]:
     """Get rankings for a specific category."""
     return RANKINGS_MAY_2026.get(category, [])
+
+
+# =============================================================================
+# UI USE-CASE CATEGORIES → BENCHMARK TABLES (score-sorted, API-available only)
+# =============================================================================
+
+USECASE_TO_BENCHMARK: Dict[str, BenchmarkCategory] = {
+    "programming": BenchmarkCategory.CODING,
+    "science": BenchmarkCategory.GENERAL_REASONING,
+    "health": BenchmarkCategory.GENERAL_REASONING,
+    "legal": BenchmarkCategory.GENERAL_REASONING,
+    "marketing": BenchmarkCategory.DIALOGUE,
+    "technology": BenchmarkCategory.TOOL_USE,
+    "finance": BenchmarkCategory.MATH,
+    "academia": BenchmarkCategory.RAG,
+    "roleplay": BenchmarkCategory.DIALOGUE,
+    "creative-writing": BenchmarkCategory.DIALOGUE,
+    "translation": BenchmarkCategory.MULTILINGUAL,
+    "reasoning": BenchmarkCategory.MATH,
+}
+
+USECASE_CATEGORY_ALIASES: Dict[str, str] = {
+    "coding": "programming",
+    "math": "reasoning",
+    "analysis": "science",
+    "code_generation": "programming",
+    "debugging": "programming",
+    "health_medical": "health",
+    "legal_analysis": "legal",
+    "financial_analysis": "finance",
+    "science_research": "science",
+    "creative_writing": "creative-writing",
+    "research_analysis": "academia",
+    "math_problem": "reasoning",
+}
+
+# OpenRouter slug fallbacks applied at routing time (not when building leaderboards)
+_BENCHMARK_SLUG_FALLBACKS: Dict[str, str] = {
+    "anthropic/claude-sonnet-4.5": "anthropic/claude-sonnet-4.6",
+}
+
+_MODEL_DISPLAY_NAMES: Dict[str, str] = {
+    "openai/gpt-5.5-pro": "GPT-5.5 Pro",
+    "openai/gpt-5.5": "GPT-5.5",
+    "openai/gpt-5.4-pro": "GPT-5.4 Pro",
+    "openai/gpt-5.4": "GPT-5.4",
+    "openai/gpt-5.3-codex": "GPT-5.3 Codex",
+    "openai/gpt-5.2-pro": "GPT-5.2 Pro",
+    "openai/gpt-5.2": "GPT-5.2",
+    "openai/gpt-5.1": "GPT-5.1",
+    "openai/o3": "OpenAI o3",
+    "openai/o1-pro": "o1-pro",
+    "openai/o4-mini": "o4-mini",
+    "anthropic/claude-opus-4.7": "Claude Opus 4.7",
+    "anthropic/claude-opus-4.6": "Claude Opus 4.6",
+    "anthropic/claude-opus-4.5": "Claude Opus 4.5",
+    "anthropic/claude-sonnet-4.6": "Claude Sonnet 4.6",
+    "anthropic/claude-sonnet-4.5": "Claude Sonnet 4.5",
+    "google/gemini-3.1-pro-preview": "Gemini 3.1 Pro",
+    "google/gemini-2.5-pro": "Gemini 2.5 Pro",
+    "google/gemini-2.5-pro-preview": "Gemini 2.5 Pro",
+    "google/gemini-2.5-flash": "Gemini 2.5 Flash",
+    "deepseek/deepseek-v4-pro": "DeepSeek V4 Pro",
+    "deepseek/deepseek-r1": "DeepSeek R1",
+    "deepseek/deepseek-v3.2": "DeepSeek V3.2",
+    "meta-llama/llama-4-scout": "Llama 4 Scout",
+    "meta-llama/llama-4-maverick": "Llama 4 Maverick",
+    "moonshotai/kimi-k2.6": "Kimi K2.6",
+    "moonshotai/kimi-k2.5": "Kimi K2.5",
+    "minimax/minimax-m2.5": "MiniMax M2.5",
+    "qwen/qwen3.6-plus": "Qwen3.6 Plus",
+    "mistralai/mistral-medium-3.1": "Mistral Medium 3.1",
+    "mistralai/mistral-large-2512": "Mistral Large 2512",
+    "x-ai/grok-4.20": "Grok 4 Fast",
+    "cohere/command-r-plus-08-2024": "Command R+",
+    "z-ai/glm-4.7": "GLM 4.7",
+    "moonshotai/kimi-k2.5": "Kimi K2.5",
+}
+
+
+def _resolve_usecase_slug(category: str) -> str:
+    slug = (category or "programming").strip().lower()
+    return USECASE_CATEGORY_ALIASES.get(slug, slug)
+
+
+def _display_name(model_id: str) -> str:
+    if model_id in _MODEL_DISPLAY_NAMES:
+        return _MODEL_DISPLAY_NAMES[model_id]
+    tail = model_id.split("/")[-1].replace("-", " ").title()
+    return tail
+
+
+def get_benchmark_leaderboard(
+    category: BenchmarkCategory,
+    top_k: int = 10,
+    *,
+    api_only: bool = True,
+) -> List[ModelBenchmark]:
+    """Return models sorted strictly by benchmark score (highest first)."""
+    rows = list(get_category_rankings(category))
+    if api_only:
+        rows = [r for r in rows if r.has_api]
+
+    # Deduplicate by model_id, keeping the highest score per slug
+    best: Dict[str, ModelBenchmark] = {}
+    for row in rows:
+        existing = best.get(row.model_id)
+        if existing is None or row.score > existing.score:
+            best[row.model_id] = row
+
+    ordered = sorted(best.values(), key=lambda m: m.score, reverse=True)
+    return ordered[:top_k]
+
+
+def resolve_routable_slug(model_id: str) -> str:
+    """Map benchmark slugs to OpenRouter-routable slugs."""
+    return _BENCHMARK_SLUG_FALLBACKS.get(model_id, model_id)
+
+
+def get_usecase_benchmark_rankings(
+    usecase_slug: str,
+    top_k: int = 10,
+) -> List[Dict[str, object]]:
+    """Top models for a UI use-case category, ordered by benchmark score."""
+    slug = _resolve_usecase_slug(usecase_slug)
+    benchmark = USECASE_TO_BENCHMARK.get(slug, BenchmarkCategory.GENERAL_REASONING)
+    leaderboard = get_benchmark_leaderboard(benchmark, top_k=top_k)
+
+    out: List[Dict[str, object]] = []
+    for i, row in enumerate(leaderboard, start=1):
+        out.append({
+            "rank": i,
+            "model_id": row.model_id,
+            "model_name": _display_name(row.model_id),
+            "author": row.provider,
+            "score": row.score,
+            "benchmark": row.benchmark_name,
+            "benchmark_category": benchmark.value,
+            "is_others_bucket": False,
+        })
+    return out
+
+
+def get_all_usecase_benchmark_rankings(top_k: int = 10) -> Dict[str, List[Dict[str, object]]]:
+    """All 12 UI categories keyed by slug."""
+    return {
+        slug: get_usecase_benchmark_rankings(slug, top_k=top_k)
+        for slug in USECASE_TO_BENCHMARK
+    }
 
 
 def get_llmhive_rank(category: BenchmarkCategory) -> int:

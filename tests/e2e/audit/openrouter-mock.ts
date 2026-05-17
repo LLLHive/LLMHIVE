@@ -6,6 +6,51 @@
  */
 
 import { Page, Route } from '@playwright/test'
+import {
+  getUsecaseCategoryRankings,
+  UI_USECASE_CATEGORIES,
+} from '@/lib/marketing/usecase-category-rankings'
+
+function buildBenchmarkRankings(category: string, displayName: string) {
+  const entries = getUsecaseCategoryRankings(category).map((entry) => ({
+    rank: entry.rank,
+    model_id: entry.model_id,
+    model_name: entry.model_name,
+    author: entry.author.toLowerCase(),
+    score: entry.score,
+    benchmark: entry.benchmark,
+    is_others_bucket: false,
+  }))
+
+  return {
+    category: {
+      slug: category,
+      display_name: displayName,
+      group: 'usecase',
+      depth: category.includes('/') ? 1 : 0,
+    },
+    view: 'week',
+    entries,
+    entry_count: entries.length,
+    last_synced: new Date().toISOString(),
+    data_source: 'LLMHive Rankings (May 2026)',
+  }
+}
+
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  programming: 'Programming',
+  science: 'Science',
+  health: 'Health',
+  legal: 'Legal',
+  marketing: 'Marketing',
+  technology: 'Technology',
+  finance: 'Finance',
+  academia: 'Academia',
+  roleplay: 'Roleplay',
+  'creative-writing': 'Creative Writing',
+  translation: 'Translation',
+  reasoning: 'Reasoning',
+}
 
 // Complete category list matching OpenRouter
 export const MOCK_CATEGORIES = {
@@ -40,101 +85,19 @@ export const EXPECTED_CATEGORY_SLUGS = [
   'customer-support', 'data-analysis',
 ]
 
-// Top 10 rankings for each category
-export const MOCK_RANKINGS: Record<string, any> = {
-  programming: {
-    category: { slug: 'programming', display_name: 'Programming', group: 'usecase', depth: 0 },
-    view: 'week',
-    entries: [
-      { rank: 1, model_id: 'anthropic/claude-sonnet-4-20250514', model_name: 'Claude Sonnet 4', author: 'anthropic', share_pct: 18.5, tokens: 15234567890, tokens_display: '15.2B' },
-      { rank: 2, model_id: 'openai/gpt-4o', model_name: 'GPT-4o', author: 'openai', share_pct: 15.2, tokens: 12345678901, tokens_display: '12.3B' },
-      { rank: 3, model_id: 'anthropic/claude-3-5-sonnet-20241022', model_name: 'Claude 3.5 Sonnet', author: 'anthropic', share_pct: 12.1, tokens: 9876543210 },
-      { rank: 4, model_id: 'openai/gpt-4o-mini', model_name: 'GPT-4o Mini', author: 'openai', share_pct: 10.8, tokens: 8765432109 },
-      { rank: 5, model_id: 'deepseek/deepseek-chat', model_name: 'DeepSeek Chat', author: 'deepseek', share_pct: 8.0, tokens: 6543210987 },
-      { rank: 6, model_id: 'google/gemini-2.5-pro', model_name: 'Gemini 2.5 Pro', author: 'google', share_pct: 6.7, tokens: 5432109876 },
-      { rank: 7, model_id: 'openai/o1', model_name: 'o1', author: 'openai', share_pct: 5.3, tokens: 4321098765 },
-      { rank: 8, model_id: 'anthropic/claude-3-opus-20240229', model_name: 'Claude 3 Opus', author: 'anthropic', share_pct: 3.9, tokens: 3210987654 },
-      { rank: 9, model_id: 'meta/llama-3.3-70b-instruct', model_name: 'Llama 3.3 70B', author: 'meta', share_pct: 2.6, tokens: 2109876543 },
-      { rank: 10, model_id: 'qwen/qwen-2.5-coder-32b-instruct', model_name: 'Qwen 2.5 Coder 32B', author: 'qwen', share_pct: 1.3, tokens: 1098765432 },
-    ],
-    entry_count: 10,
-    last_synced: new Date().toISOString(),
-    data_source: 'openrouter_rankings',
-  },
-  science: {
-    category: { slug: 'science', display_name: 'Science', group: 'usecase', depth: 0 },
-    view: 'week',
-    entries: [
-      { rank: 1, model_id: 'openai/o1', model_name: 'o1', author: 'openai', share_pct: 22.5, tokens: 8765432109 },
-      { rank: 2, model_id: 'anthropic/claude-sonnet-4-20250514', model_name: 'Claude Sonnet 4', author: 'anthropic', share_pct: 19.7, tokens: 7654321098 },
-      { rank: 3, model_id: 'openai/gpt-4o', model_name: 'GPT-4o', author: 'openai', share_pct: 16.8, tokens: 6543210987 },
-      { rank: 4, model_id: 'google/gemini-2.5-pro', model_name: 'Gemini 2.5 Pro', author: 'google', share_pct: 11.1, tokens: 4321098765 },
-      { rank: 5, model_id: 'anthropic/claude-3-5-sonnet-20241022', model_name: 'Claude 3.5 Sonnet', author: 'anthropic', share_pct: 8.2, tokens: 3210987654 },
-      { rank: 6, model_id: 'deepseek/deepseek-reasoner', model_name: 'DeepSeek Reasoner', author: 'deepseek', share_pct: 5.4, tokens: 2109876543 },
-      { rank: 7, model_id: 'openai/o1-mini', model_name: 'o1 Mini', author: 'openai', share_pct: 5.1, tokens: 1987654321 },
-      { rank: 8, model_id: 'anthropic/claude-3-opus-20240229', model_name: 'Claude 3 Opus', author: 'anthropic', share_pct: 4.2, tokens: 1654321098 },
-      { rank: 9, model_id: 'openai/gpt-4o-mini', model_name: 'GPT-4o Mini', author: 'openai', share_pct: 3.4, tokens: 1321098765 },
-      { rank: 10, model_id: 'meta/llama-3.3-70b-instruct', model_name: 'Llama 3.3 70B', author: 'meta', share_pct: 2.5, tokens: 987654321 },
-    ],
-    entry_count: 10,
-    last_synced: new Date().toISOString(),
-    data_source: 'openrouter_rankings',
-  },
-  health: {
-    category: { slug: 'health', display_name: 'Health', group: 'usecase', depth: 0 },
-    view: 'week',
-    entries: [
-      { rank: 1, model_id: 'openai/gpt-4o', model_name: 'GPT-4o', author: 'openai', share_pct: 24.3, tokens: 5432109876 },
-      { rank: 2, model_id: 'anthropic/claude-sonnet-4-20250514', model_name: 'Claude Sonnet 4', author: 'anthropic', share_pct: 20.1, tokens: 4321098765 },
-      { rank: 3, model_id: 'google/gemini-2.5-pro', model_name: 'Gemini 2.5 Pro', author: 'google', share_pct: 15.5, tokens: 3210987654 },
-      { rank: 4, model_id: 'openai/o1', model_name: 'o1', author: 'openai', share_pct: 12.2, tokens: 2109876543 },
-      { rank: 5, model_id: 'anthropic/claude-3-5-sonnet-20241022', model_name: 'Claude 3.5 Sonnet', author: 'anthropic', share_pct: 9.1, tokens: 1876543210 },
-      { rank: 6, model_id: 'openai/gpt-4o-mini', model_name: 'GPT-4o Mini', author: 'openai', share_pct: 6.8, tokens: 1543210987 },
-      { rank: 7, model_id: 'anthropic/claude-3-opus-20240229', model_name: 'Claude 3 Opus', author: 'anthropic', share_pct: 4.5, tokens: 1210987654 },
-      { rank: 8, model_id: 'meta/llama-3.3-70b-instruct', model_name: 'Llama 3.3 70B', author: 'meta', share_pct: 3.2, tokens: 876543210 },
-      { rank: 9, model_id: 'deepseek/deepseek-chat', model_name: 'DeepSeek Chat', author: 'deepseek', share_pct: 2.4, tokens: 543210987 },
-      { rank: 10, model_id: 'mistralai/mistral-large', model_name: 'Mistral Large', author: 'mistralai', share_pct: 1.9, tokens: 210987654 },
-    ],
-    entry_count: 10,
-    last_synced: new Date().toISOString(),
-    data_source: 'openrouter_rankings',
-  },
-}
+// Top 10 rankings for each category (benchmark score order)
+export const MOCK_RANKINGS: Record<string, any> = Object.fromEntries(
+  UI_USECASE_CATEGORIES.map((slug) => [
+    slug,
+    buildBenchmarkRankings(slug, CATEGORY_DISPLAY_NAMES[slug] ?? slug),
+  ])
+)
 
-// Generate rankings for remaining categories
-const defaultRankings = (category: string, displayName: string) => ({
-  category: { slug: category, display_name: displayName, group: 'usecase', depth: category.includes('/') ? 1 : 0 },
-  view: 'week',
-  entries: [
-    { rank: 1, model_id: 'openai/gpt-4o', model_name: 'GPT-4o', author: 'openai', share_pct: 20.0 + Math.random() * 5 },
-    { rank: 2, model_id: 'anthropic/claude-sonnet-4-20250514', model_name: 'Claude Sonnet 4', author: 'anthropic', share_pct: 18.0 + Math.random() * 3 },
-    { rank: 3, model_id: 'google/gemini-2.5-pro', model_name: 'Gemini 2.5 Pro', author: 'google', share_pct: 14.0 + Math.random() * 3 },
-    { rank: 4, model_id: 'anthropic/claude-3-5-sonnet-20241022', model_name: 'Claude 3.5 Sonnet', author: 'anthropic', share_pct: 10.0 + Math.random() * 3 },
-    { rank: 5, model_id: 'openai/gpt-4o-mini', model_name: 'GPT-4o Mini', author: 'openai', share_pct: 8.0 + Math.random() * 2 },
-    { rank: 6, model_id: 'deepseek/deepseek-chat', model_name: 'DeepSeek Chat', author: 'deepseek', share_pct: 6.0 + Math.random() * 2 },
-    { rank: 7, model_id: 'openai/o1', model_name: 'o1', author: 'openai', share_pct: 4.0 + Math.random() * 2 },
-    { rank: 8, model_id: 'meta/llama-3.3-70b-instruct', model_name: 'Llama 3.3 70B', author: 'meta', share_pct: 3.0 + Math.random() * 1 },
-    { rank: 9, model_id: 'mistralai/mistral-large', model_name: 'Mistral Large', author: 'mistralai', share_pct: 2.0 + Math.random() * 1 },
-    { rank: 10, model_id: 'qwen/qwen-2.5-72b-instruct', model_name: 'Qwen 2.5 72B', author: 'qwen', share_pct: 1.0 + Math.random() * 1 },
-  ],
-  entry_count: 10,
-  last_synced: new Date().toISOString(),
-  data_source: 'openrouter_rankings',
-})
-
-// Add default rankings for remaining categories
-MOCK_RANKINGS.legal = defaultRankings('legal', 'Legal')
-MOCK_RANKINGS.marketing = defaultRankings('marketing', 'Marketing')
-MOCK_RANKINGS['marketing/seo'] = defaultRankings('marketing/seo', 'SEO')
-MOCK_RANKINGS['marketing/content'] = defaultRankings('marketing/content', 'Content')
-MOCK_RANKINGS.technology = defaultRankings('technology', 'Technology')
-MOCK_RANKINGS.finance = defaultRankings('finance', 'Finance')
-MOCK_RANKINGS.academia = defaultRankings('academia', 'Academia')
-MOCK_RANKINGS.roleplay = defaultRankings('roleplay', 'Roleplay')
-MOCK_RANKINGS['creative-writing'] = defaultRankings('creative-writing', 'Creative Writing')
-MOCK_RANKINGS.translation = defaultRankings('translation', 'Translation')
-MOCK_RANKINGS['customer-support'] = defaultRankings('customer-support', 'Customer Support')
-MOCK_RANKINGS['data-analysis'] = defaultRankings('data-analysis', 'Data Analysis')
+// Sub-categories inherit parent marketing benchmark order
+MOCK_RANKINGS['marketing/seo'] = buildBenchmarkRankings('marketing', 'SEO')
+MOCK_RANKINGS['marketing/content'] = buildBenchmarkRankings('marketing', 'Content')
+MOCK_RANKINGS['customer-support'] = buildBenchmarkRankings('roleplay', 'Customer Support')
+MOCK_RANKINGS['data-analysis'] = buildBenchmarkRankings('science', 'Data Analysis')
 
 // Mock models list
 export const MOCK_MODELS = {

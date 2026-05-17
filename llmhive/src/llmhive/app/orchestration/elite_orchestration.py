@@ -302,58 +302,24 @@ MAXIMUM_MODELS = {
 }
 
 # These are the TOP models per category - use when quality is paramount
-# NOTE: Model IDs must match the constants in model_router.py for consistency
+# Derived from benchmark scores (see usecase_category_rankings.py)
+def _build_elite_models() -> Dict[str, List[str]]:
+    from ..knowledge.usecase_category_rankings import get_usecase_category_rankings
+
+    return {
+        "math": get_usecase_category_rankings("reasoning", top_k=10),
+        "reasoning": get_usecase_category_rankings("science", top_k=10),
+        "coding": get_usecase_category_rankings("programming", top_k=10),
+        "rag": get_usecase_category_rankings("academia", top_k=10),
+        "multilingual": get_usecase_category_rankings("translation", top_k=10),
+        "dialogue": get_usecase_category_rankings("roleplay", top_k=10),
+    }
+
+
+_ELITE_BENCHMARK_MODELS = _build_elite_models()
+
 ELITE_MODELS = {
-    "math": [
-        "openai/gpt-5.2",
-        "google/gemini-3.1-pro-preview",
-        "moonshotai/kimi-k2.5",
-        "anthropic/claude-opus-4.7",
-        "deepseek/deepseek-v4-pro",
-        "qwen/qwen3.6-plus",
-        "openai/gpt-5.5-pro",
-        "openai/gpt-5.5",
-        "openai/o4-mini",
-        "deepseek/deepseek-r1",
-    ],
-    "reasoning": [
-        "openai/gpt-5.5-pro",
-        "openai/o3",
-        "openai/o1-pro",
-        "openai/gpt-5.4-pro",
-        "anthropic/claude-opus-4.7",
-        "deepseek/deepseek-r1",
-        "deepseek/deepseek-v4-pro",
-        "openai/o4-mini",
-        "anthropic/claude-sonnet-4.6",
-        "google/gemini-3.1-pro-preview",
-    ],
-    "coding": [
-        "openai/gpt-5.5",
-        "anthropic/claude-opus-4.7",
-        "openai/gpt-5.3-codex",
-        "anthropic/claude-opus-4.5",
-        "anthropic/claude-opus-4.6",
-        "deepseek/deepseek-v4-pro",
-        "google/gemini-3.1-pro-preview",
-        "moonshotai/kimi-k2.6",
-        "minimax/minimax-m2.5",
-        "openai/gpt-5.2",
-    ],
-    "rag": [
-        "openai/gpt-5.5-pro",
-        "openai/gpt-5.2",
-        "google/gemini-3.1-pro-preview", # Strong retrieval + 1M context
-        "anthropic/claude-opus-4.6", # 94% RAG-Eval
-        "google/gemini-3-pro",     # Multimodal, 1M context
-        "x-ai/grok-3-mini",        # Fast extraction, good comprehension
-    ],
-    "multilingual": [
-        "google/gemini-3.1-pro-preview", # Multilingual champion
-        "google/gemini-3-pro",     # Multimodal, multilingual
-        "anthropic/claude-opus-4.6", # 90.8% MMMLU (estimated)
-        "alibaba/qwen3-max",       # Strong Chinese + multilingual
-    ],
+    **_ELITE_BENCHMARK_MODELS,
     "long_context": [
         "google/gemini-3.1-pro-preview", # 1M+ tokens - LATEST
         "google/gemini-3-pro",     # 1M tokens
@@ -367,12 +333,7 @@ ELITE_MODELS = {
         "google/gemini-2.5-flash", # Fast, API available
         "anthropic/claude-3-haiku", # Fast variant
     ],
-    "dialogue": [
-        "openai/gpt-5.5-pro",
-        "anthropic/claude-opus-4", # 94% alignment
-        "anthropic/claude-sonnet-4", # 92% alignment
-        "x-ai/grok-3-mini",        # Direct, engaging conversational style
-    ],
+    "dialogue": _ELITE_BENCHMARK_MODELS["dialogue"],
     "multimodal": [
         "anthropic/claude-opus-4", # 378 ARC-AGI2
         "openai/gpt-5.5-pro",

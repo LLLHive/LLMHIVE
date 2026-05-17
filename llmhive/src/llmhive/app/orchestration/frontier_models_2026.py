@@ -370,14 +370,14 @@ FRONTIER_MODELS = {
 # =============================================================================
 
 def _build_category_rankings_2026() -> Dict[str, List[Tuple[str, float]]]:
-    from ..knowledge.usecase_category_rankings import get_usecase_category_rankings
+    from ..knowledge.usecase_category_rankings import get_usecase_category_rankings_detailed
     out: Dict[str, List[Tuple[str, float]]] = {}
     for slug in (
         "programming", "science", "health", "legal", "marketing", "technology",
         "finance", "academia", "roleplay", "creative-writing", "translation", "reasoning",
     ):
-        models = get_usecase_category_rankings(slug, top_k=10)
-        out[slug] = [(m, float(10 - i)) for i, m in enumerate(models)]
+        detailed = get_usecase_category_rankings_detailed(slug, top_k=10)
+        out[slug] = [(str(row["model_id"]), float(row["score"])) for row in detailed]
     out["coding"] = out["programming"]
     out["math"] = out["reasoning"]
     out["agentic"] = out["technology"]
