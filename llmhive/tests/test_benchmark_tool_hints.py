@@ -72,3 +72,29 @@ def test_should_use_calculator_tbr() -> None:
         "Calculate: If a company has revenue of $4.5 million and expenses of $3.2 million, "
         "what is the profit margin as a percentage?"
     )
+
+
+def test_benchmark_code_short_circuit() -> None:
+    from types import SimpleNamespace
+
+    from llmhive.app.orchestration.benchmark_tool_forcing import (
+        try_benchmark_tool_short_circuit,
+    )
+
+    metadata = SimpleNamespace(
+        chat_id="benchmark-cdr_002",
+        benchmark_category="code_reasoning",
+        force_code_execution=True,
+        force_calculator=False,
+    )
+    prompt = (
+        "Execute Python code to sort the list [64, 34, 25, 12, 22, 11, 90] "
+        "in ascending order and return the sorted list."
+    )
+    answer = try_benchmark_tool_short_circuit(
+        metadata,
+        {"used": True, "code_output": "[11, 12, 22, 25, 34, 64, 90]\n"},
+        prompt,
+    )
+    assert answer is not None
+    assert "[11, 12, 22, 25, 34, 64, 90]" in answer

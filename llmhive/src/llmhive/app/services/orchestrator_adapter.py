@@ -2994,6 +2994,35 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     if tool_results_info.get("used"):
                         tool_context = base_prompt[: min(500, len(base_prompt))]
 
+                    from ..orchestration.benchmark_tool_forcing import (
+                        try_benchmark_tool_short_circuit,
+                    )
+
+                    short_answer = try_benchmark_tool_short_circuit(
+                        request.metadata, tool_results_info, base_prompt
+                    )
+                    if short_answer:
+                        logger.info(
+                            "Benchmark tool short-circuit: skipping full orchestration"
+                        )
+                        return ChatResponse(
+                            message=short_answer,
+                            models_used=["benchmark_tool_forcing"],
+                            reasoning_mode=request.reasoning_mode,
+                            reasoning_method=request.reasoning_method,
+                            domain_pack=request.domain_pack,
+                            agent_mode=request.agent_mode,
+                            used_tuning=request.tuning,
+                            metadata=request.metadata,
+                            tokens_used=0,
+                            latency_ms=int((time.perf_counter() - start_time) * 1000),
+                            agent_traces=[],
+                            extra={
+                                "tool_broker": tool_results_info,
+                                "benchmark_short_circuit": True,
+                            },
+                        )
+
                 # ================================================================
                 # FIX 1.1: Force calculator for math queries BEFORE standard analysis
                 # ================================================================

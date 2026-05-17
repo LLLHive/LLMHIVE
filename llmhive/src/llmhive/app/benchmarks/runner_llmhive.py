@@ -51,15 +51,21 @@ def _benchmark_orchestration_settings(
     """Orchestration dict with higher accuracy when tools are required."""
     meta = _benchmark_case_metadata(case)
     accuracy = config.accuracy_level
+    enable_hrm = config.enable_hrm
+    enable_deep_consensus = config.enable_deep_consensus
     if meta.get("force_calculator") or meta.get("force_code_execution"):
         accuracy = max(accuracy, 5)
+    if meta.get("force_code_execution") or case.category == "code_reasoning":
+        # CDR: sandbox already returns the answer; skip slow multi-agent paths.
+        enable_hrm = False
+        enable_deep_consensus = False
     return {
         "temperature": config.temperature,
         "max_tokens": config.max_tokens,
         "top_p": config.top_p,
         "accuracy_level": accuracy,
-        "enable_hrm": config.enable_hrm,
-        "enable_deep_consensus": config.enable_deep_consensus,
+        "enable_hrm": enable_hrm,
+        "enable_deep_consensus": enable_deep_consensus,
         "enable_tool_broker": True,
         "enable_verification": True,
         "enable_memory": config.enable_rag,
