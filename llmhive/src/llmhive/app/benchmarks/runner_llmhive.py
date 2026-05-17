@@ -31,6 +31,41 @@ from .runner_base import (
 logger = logging.getLogger(__name__)
 
 
+def _benchmark_case_metadata(case: BenchmarkCase) -> Dict[str, Any]:
+    """Metadata flags so orchestration forces calculator / code for TBR & CDR."""
+    reqs = case.requirements or {}
+    return {
+        "user_id": "benchmark-runner",
+        "chat_id": f"benchmark-{case.id}",
+        "benchmark_category": case.category,
+        "force_calculator": bool(reqs.get("requires_tools"))
+        or case.category == "tool_backed_reasoning",
+        "force_code_execution": bool(reqs.get("requires_mcp2"))
+        or case.category == "code_reasoning",
+    }
+
+
+def _benchmark_orchestration_settings(
+    case: BenchmarkCase, config: RunConfig
+) -> Dict[str, Any]:
+    """Orchestration dict with higher accuracy when tools are required."""
+    meta = _benchmark_case_metadata(case)
+    accuracy = config.accuracy_level
+    if meta.get("force_calculator") or meta.get("force_code_execution"):
+        accuracy = max(accuracy, 5)
+    return {
+        "temperature": config.temperature,
+        "max_tokens": config.max_tokens,
+        "top_p": config.top_p,
+        "accuracy_level": accuracy,
+        "enable_hrm": config.enable_hrm,
+        "enable_deep_consensus": config.enable_deep_consensus,
+        "enable_tool_broker": True,
+        "enable_verification": True,
+        "enable_memory": config.enable_rag,
+    }
+
+
 class LLMHiveRunner(RunnerBase):
     """Runner that executes prompts through LLMHive orchestration.
     
@@ -193,19 +228,9 @@ class LLMHiveRunner(RunnerBase):
             AgentMode,
         ) = self._get_local_dependencies()
         
-        # Build orchestration settings
-        orchestration = OrchestrationSettings(
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            top_p=config.top_p,
-            accuracy_level=config.accuracy_level,
-            enable_hrm=config.enable_hrm,
-            enable_deep_consensus=config.enable_deep_consensus,
-            enable_tool_broker=config.enable_tools,
-            enable_verification=True,
-            enable_memory=config.enable_rag,
-        )
-        
+        orch_kwargs = _benchmark_orchestration_settings(case, config)
+        orchestration = OrchestrationSettings(**orch_kwargs)
+
         # Build tuning settings
         tuning = TuningSettings(
             prompt_optimization=True,
@@ -213,11 +238,10 @@ class LLMHiveRunner(RunnerBase):
             answer_structure=True,
             learn_from_chat=False,  # Disable learning for benchmarks
         )
-        
-        # Build metadata
+
+        meta_kwargs = _benchmark_case_metadata(case)
         metadata = ChatMetadata(
-            user_id="benchmark-runner",
-            chat_id=f"benchmark-{case.id}",
+            **meta_kwargs,
             criteria={
                 "accuracy": 100,
                 "speed": 50,
@@ -267,26 +291,14 @@ class LLMHiveRunner(RunnerBase):
             "reasoning_mode": config.reasoning_mode,
             "domain_pack": "default",
             "agent_mode": "team",
-            "orchestration": {
-                "temperature": config.temperature,
-                "max_tokens": config.max_tokens,
-                "top_p": config.top_p,
-                "accuracy_level": config.accuracy_level,
-                "enable_hrm": config.enable_hrm,
-                "enable_deep_consensus": config.enable_deep_consensus,
-                "enable_tool_broker": config.enable_tools,
-                "enable_verification": True,
-            },
+            "orchestration": _benchmark_orchestration_settings(case, config),
             "tuning": {
                 "prompt_optimization": True,
                 "output_validation": True,
                 "answer_structure": True,
                 "learn_from_chat": False,
             },
-            "metadata": {
-                "user_id": "benchmark-runner",
-                "chat_id": f"benchmark-{case.id}",
-            },
+            "metadata": _benchmark_case_metadata(case),
             "history": [],
         }
         

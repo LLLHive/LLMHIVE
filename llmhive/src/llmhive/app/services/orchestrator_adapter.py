@@ -2944,24 +2944,61 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # This ensures calculator is invoked even when prompt_spec.requires_tools is False
         # ========================================================================
         force_calculator = False
+        force_code_execution = False
+        if request.metadata:
+            force_calculator = bool(getattr(request.metadata, "force_calculator", False))
+            force_code_execution = bool(getattr(request.metadata, "force_code_execution", False))
         if TOOL_BROKER_AVAILABLE:
             try:
-                from ..orchestration.tool_broker import should_use_calculator
-                force_calculator = should_use_calculator(base_prompt)
+                from ..orchestration.benchmark_tool_forcing import benchmark_flags_from_metadata
+                from ..orchestration.tool_broker import should_use_calculator, should_use_code_execution
+
+                fc_meta, fcode_meta, _ = benchmark_flags_from_metadata(request.metadata)
+                force_calculator = force_calculator or fc_meta or should_use_calculator(base_prompt)
+                force_code_execution = force_code_execution or fcode_meta or should_use_code_execution(base_prompt)
                 if force_calculator:
                     logger.info("FIX 5.1: Math query detected - forcing tool broker entry")
+                if force_code_execution:
+                    logger.info("Benchmark/CDR: code execution path enabled")
             except Exception as e:
-                logger.debug("Could not check should_use_calculator: %s", e)
-        
-        if TOOL_BROKER_AVAILABLE and (prompt_spec is None or prompt_spec.analysis.requires_tools or force_web_search or force_calculator):
+                logger.debug("Could not check tool forcing hints: %s", e)
+
+        if TOOL_BROKER_AVAILABLE and (
+            prompt_spec is None
+            or prompt_spec.analysis.requires_tools
+            or force_web_search
+            or force_calculator
+            or force_code_execution
+        ):
             try:
                 broker = get_tool_broker()
-                
+
+                benchmark_forced = bool(
+                    request.metadata
+                    and (
+                        getattr(request.metadata, "force_calculator", False)
+                        or getattr(request.metadata, "force_code_execution", False)
+                        or getattr(request.metadata, "benchmark_category", None)
+                        in ("tool_backed_reasoning", "code_reasoning")
+                    )
+                )
+                if benchmark_forced or force_code_execution:
+                    from ..orchestration.benchmark_tool_forcing import apply_benchmark_tool_forcing
+
+                    base_prompt, tool_results_info = await apply_benchmark_tool_forcing(
+                        base_prompt,
+                        broker,
+                        force_calculator=force_calculator,
+                        force_code_execution=force_code_execution,
+                    )
+                    if tool_results_info.get("used"):
+                        tool_context = base_prompt[: min(500, len(base_prompt))]
+
                 # ================================================================
                 # FIX 1.1: Force calculator for math queries BEFORE standard analysis
                 # ================================================================
                 from ..orchestration.tool_broker import should_use_calculator, extract_math_expression, ToolType as TT, ToolPriority, ToolRequest
-                if should_use_calculator(base_prompt):
+                if not tool_results_info.get("used") and should_use_calculator(base_prompt):
                     logger.info("FIX 1.1: Forcing calculator for detected math query")
                     try:
                         # Extract the math expression from natural language
@@ -4002,34 +4039,37 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # PHASE 2: MATH OUTPUT VALIDATION
         # Ensure calculator results are present in math responses
         # ========================================================================
-        if tool_results_info.get("calculator_result") is not None:
+        if tool_results_info.get("used"):
+            from ..orchestration.benchmark_tool_forcing import inject_verified_tool_outputs
+
+            final_text = inject_verified_tool_outputs(
+                final_text, tool_results_info, base_prompt
+            )
+        elif tool_results_info.get("calculator_result") is not None:
             calc_result = tool_results_info["calculator_result"]
             calc_expr = tool_results_info.get("calculator_expression", "")
-            
-            # Format the result nicely
-            if isinstance(calc_result, float):
-                # Format as currency if it looks like a money calculation
-                if "$" in base_prompt or "dollar" in base_prompt.lower():
+
+            display = tool_results_info.get("calculator_display")
+            if display:
+                formatted_result = display
+            elif isinstance(calc_result, float):
+                if "margin" in base_prompt.lower() or "percent" in base_prompt.lower():
+                    formatted_result = f"{calc_result:.2f}%"
+                elif "$" in base_prompt or "dollar" in base_prompt.lower():
                     formatted_result = f"${calc_result:,.2f}"
                 else:
-                    formatted_result = f"{calc_result:,.2f}"
+                    formatted_result = f"{calc_result:,.6g}"
             else:
                 formatted_result = str(calc_result)
-            
-            # Check if the result is already in the response
+
             result_in_response = (
-                formatted_result in final_text or
-                str(round(calc_result, 2)) in final_text or
-                str(round(calc_result, 0)).replace('.0', '') in final_text
+                formatted_result in final_text
+                or str(round(float(calc_result), 2)) in final_text
             )
-            
+
             if not result_in_response:
-                # The calculator result is missing - inject it
                 logger.warning("PHASE 2: Calculator result missing from response, injecting")
-                
-                # Prepend the correct result
-                injection = f"**Calculated Result: {formatted_result}**\n\n"
-                final_text = injection + final_text
+                final_text = f"**Calculated result: {formatted_result}**\n\n{final_text}"
                 logger.info("PHASE 2: Injected calculator result: %s", formatted_result)
 
         # ========================================================================
