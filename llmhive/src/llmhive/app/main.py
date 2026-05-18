@@ -504,8 +504,9 @@ async def health_check() -> dict[str, str]:
     which build is currently serving traffic without needing ``gcloud``.
 
     Note: This is a root-level health check endpoint (/healthz) separate from
-    the API-level health check (/api/v1/healthz). Cloud Run and other
-    infrastructure components typically expect health checks at the root level.
+    the API-level health check (/api/v1/healthz). On Google Cloud Run, bare paths
+    ending in ``z`` (including ``/healthz``) are reserved at the edge and never
+    reach the container; use ``/health`` or ``/_ah/health`` for production probes.
     """
     logger.info("Health check endpoint called")
     return _build_health_payload()

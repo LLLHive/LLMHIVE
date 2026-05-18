@@ -22,6 +22,39 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Pinecone metadata limits (conservative; avoids 400s on upsert_records).
+_MAX_METADATA_STRING_LEN = 512
+_MAX_METADATA_LIST_ITEMS = 32
+_MAX_METADATA_LIST_ITEM_LEN = 128
+
+
+def _sanitize_pinecone_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
+    """Flatten and truncate metadata so Pinecone upserts do not return 400."""
+    sanitized: Dict[str, Any] = {}
+    for key, value in metadata.items():
+        if value is None:
+            continue
+        if isinstance(value, bool):
+            sanitized[key] = value
+        elif isinstance(value, int):
+            sanitized[key] = value
+        elif isinstance(value, float):
+            if value == value:  # skip NaN
+                sanitized[key] = value
+        elif isinstance(value, str):
+            sanitized[key] = value[:_MAX_METADATA_STRING_LEN]
+        elif isinstance(value, list):
+            items = [
+                str(item)[:_MAX_METADATA_LIST_ITEM_LEN]
+                for item in value[:_MAX_METADATA_LIST_ITEMS]
+                if item is not None
+            ]
+            if items and all(isinstance(item, str) for item in items):
+                sanitized[key] = items
+        else:
+            sanitized[key] = str(value)[:_MAX_METADATA_STRING_LEN]
+    return sanitized
+
 
 @dataclass(slots=True)
 class MemoryRecord:
@@ -401,7 +434,11 @@ class PineconeVectorStore(VectorStore):
             else:
                 return self._upsert_with_vectors(records, namespace)
         except Exception as e:
-            logger.error("Pinecone upsert failed: %s", e)
+            err = str(e).lower()
+            if "400" in err or "bad request" in err or "invalid" in err:
+                logger.warning("Pinecone upsert rejected metadata: %s", e)
+            else:
+                logger.error("Pinecone upsert failed: %s", e)
             return 0
     
     def _upsert_with_integrated_embeddings(
@@ -420,15 +457,8 @@ class PineconeVectorStore(VectorStore):
                 "created_at": str(time.time()),
             }
             
-            # Add metadata (flattened - no nested objects!)
-            for key, value in record.metadata.items():
-                if isinstance(value, (str, int, float, bool)):
-                    pc_record[key] = value
-                elif isinstance(value, list) and all(isinstance(v, str) for v in value):
-                    pc_record[key] = value  # String lists are OK
-                else:
-                    # Skip nested objects (not allowed in Pinecone)
-                    logger.debug("Skipping nested metadata field: %s", key)
+            for key, value in _sanitize_pinecone_metadata(record.metadata).items():
+                pc_record[key] = value
             
             pinecone_records.append(pc_record)
         
@@ -464,8 +494,8 @@ class PineconeVectorStore(VectorStore):
                 "id": record.id,
                 "values": record.embedding,
                 "metadata": {
-                    **record.metadata,
-                    "text": record.text,
+                    **_sanitize_pinecone_metadata(record.metadata),
+                    "text": record.text[:_MAX_METADATA_STRING_LEN],
                     "created_at": str(time.time()),
                 },
             })

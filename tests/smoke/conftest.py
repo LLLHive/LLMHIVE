@@ -22,6 +22,40 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Cloud Run reserves URL paths ending in "z" (e.g. /healthz) at the edge; probes must use /health.
+HEALTH_PROBE_PATHS = ("/health", "/_ah/health")
+HEALTH_PROBE_RETRIES = 3
+HEALTH_PROBE_RETRY_DELAY_S = 2.0
+
+
+def probe_health_endpoint(
+    session: requests.Session,
+    base_url: str,
+    *,
+    timeout: int,
+    retries: int = HEALTH_PROBE_RETRIES,
+) -> tuple[Optional[requests.Response], str]:
+    """Return the first successful health response, or the last attempt."""
+    last_response: Optional[requests.Response] = None
+    last_path = HEALTH_PROBE_PATHS[0]
+
+    for attempt in range(retries):
+        for path in HEALTH_PROBE_PATHS:
+            url = f"{base_url.rstrip('/')}{path}"
+            try:
+                response = session.get(url, timeout=timeout)
+            except requests.RequestException as exc:
+                logger.warning("Health probe %s failed (attempt %s): %s", path, attempt + 1, exc)
+                continue
+            last_response = response
+            last_path = path
+            if response.status_code == 200:
+                return response, path
+        if attempt + 1 < retries:
+            time.sleep(HEALTH_PROBE_RETRY_DELAY_S)
+
+    return last_response, last_path
+
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add custom command line options for smoke tests."""

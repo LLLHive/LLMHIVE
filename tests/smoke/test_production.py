@@ -16,7 +16,12 @@ from typing import Any, Dict
 import pytest
 import requests
 
-from .conftest import SmokeTestConfig, ResponseTimer
+from .conftest import (
+    HEALTH_PROBE_PATHS,
+    SmokeTestConfig,
+    ResponseTimer,
+    probe_health_endpoint,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,39 +35,35 @@ logger = logging.getLogger(__name__)
 class TestHealthEndpoints:
     """Test health check endpoints - these must always pass."""
     
-    def test_healthz_endpoint(
+    def test_health_probe(
         self,
         smoke_config: SmokeTestConfig,
         http_client: requests.Session,
         timer: type[ResponseTimer],
     ) -> None:
-        """Test /healthz returns 200 (lightweight probe for CI cold starts)."""
-        url = f"{smoke_config.base_url}/healthz"
-        
-        with timer("GET /healthz"):
-            response = http_client.get(url, timeout=smoke_config.timeout)
-        
-        assert response.status_code == 200, f"Healthz check failed: {response.text}"
-        logger.info(f"✅ /healthz returned {response.status_code}")
-    
-    def test_health_endpoint(
-        self,
-        smoke_config: SmokeTestConfig,
-        http_client: requests.Session,
-        timer: type[ResponseTimer],
-    ) -> None:
-        """Test /health endpoint returns 200."""
-        url = f"{smoke_config.base_url}/health"
-        
-        with timer("GET /health"):
-            response = http_client.get(url, timeout=smoke_config.timeout)
-        
-        # Accept 200 or 404 (endpoint may not exist in all deployments)
-        assert response.status_code in [200, 404], f"Unexpected status: {response.status_code}"
-        if response.status_code == 200:
-            logger.info(f"✅ /health returned 200")
-        else:
-            logger.warning(f"⚠️  /health returned 404 (endpoint may not exist)")
+        """Production health must respond on /health (Cloud Run blocks bare /healthz)."""
+        with timer("GET health probe"):
+            response, path = probe_health_endpoint(
+                http_client,
+                smoke_config.base_url,
+                timeout=smoke_config.timeout,
+            )
+
+        assert response is not None, "Health probe did not return a response"
+        assert response.status_code == 200, (
+            f"Health probe failed via {path}: {response.status_code} {response.text[:200]}"
+        )
+        logger.info("✅ Health probe passed via %s", path)
+
+        # Document Cloud Run reserved-path behavior without failing the suite.
+        healthz_url = f"{smoke_config.base_url}/healthz"
+        healthz_response = http_client.get(healthz_url, timeout=smoke_config.timeout)
+        if healthz_response.status_code != 200:
+            logger.warning(
+                "⚠️  /healthz returned %s (expected on Cloud Run; use %s)",
+                healthz_response.status_code,
+                ", ".join(HEALTH_PROBE_PATHS),
+            )
     
     def test_api_v1_health(
         self,
@@ -242,8 +243,11 @@ class TestAuthenticatedEndpoints:
                 f"Unexpected chat response format: {list(data.keys())}"
             logger.info(f"✅ Chat completion successful")
             logger.info(f"   Response: {str(data)[:200]}...")
-        elif response.status_code == 401:
-            logger.warning("⚠️  Chat endpoint requires valid authentication")
+        elif response.status_code in (401, 402):
+            pytest.skip(
+                f"Chat smoke skipped: {response.status_code} "
+                "(auth or subscription required for smoke API key)"
+            )
         elif response.status_code == 429:
             logger.warning("⚠️  Rate limited - try again later")
         else:
@@ -281,10 +285,16 @@ class TestAuthenticatedEndpoints:
             # Check for orchestration metadata
             if "models_used" in data or "extra" in data:
                 logger.info(f"   Orchestration metadata present")
-        elif response.status_code in [401, 429]:
-            logger.warning(f"⚠️  Request returned {response.status_code}")
+        elif response.status_code in (401, 402):
+            pytest.skip(
+                f"Orchestrated chat smoke skipped: {response.status_code} "
+                "(auth or subscription required for smoke API key)"
+            )
+        elif response.status_code == 429:
+            logger.warning("⚠️  Rate limited - try again later")
         else:
             logger.error(f"❌ Orchestrated chat failed: {response.status_code}")
+            pytest.fail(f"Orchestrated chat failed: {response.status_code}")
 
 
 # =============================================================================
@@ -302,16 +312,21 @@ class TestPerformance:
         timer: type[ResponseTimer],
     ) -> None:
         """Verify health endpoint responds within acceptable time."""
-        url = f"{smoke_config.base_url}/health"
         max_response_time_ms = 1000  # 1 second max
         
-        with timer("GET /health (performance)") as t:
-            response = http_client.get(url, timeout=smoke_config.timeout)
+        with timer("GET health probe (performance)") as t:
+            response, path = probe_health_endpoint(
+                http_client,
+                smoke_config.base_url,
+                timeout=smoke_config.timeout,
+            )
         
-        if response.status_code == 200:
+        if response and response.status_code == 200:
             assert t.duration_ms < max_response_time_ms, \
                 f"Health check too slow: {t.duration_ms:.0f}ms (max: {max_response_time_ms}ms)"
-            logger.info(f"✅ Health check response time OK: {t.duration_ms:.0f}ms")
+            logger.info(f"✅ Health check via {path} OK: {t.duration_ms:.0f}ms")
+        else:
+            pytest.skip("Health probe unavailable for performance check")
     
     def test_multiple_health_checks(
         self,
@@ -319,16 +334,21 @@ class TestPerformance:
         http_client: requests.Session,
     ) -> None:
         """Run multiple health checks and measure consistency."""
-        url = f"{smoke_config.base_url}/health"
         num_requests = 5
         response_times: list[float] = []
         
         for i in range(num_requests):
             start = time.perf_counter()
             try:
-                response = http_client.get(url, timeout=smoke_config.timeout)
+                response, _path = probe_health_endpoint(
+                    http_client,
+                    smoke_config.base_url,
+                    timeout=smoke_config.timeout,
+                    retries=1,
+                )
                 duration_ms = (time.perf_counter() - start) * 1000
-                response_times.append(duration_ms)
+                if response and response.status_code == 200:
+                    response_times.append(duration_ms)
             except requests.RequestException as e:
                 logger.warning(f"Request {i+1} failed: {e}")
         
