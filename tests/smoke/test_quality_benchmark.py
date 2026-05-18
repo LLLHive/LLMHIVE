@@ -154,8 +154,11 @@ class TestQualityBenchmarks:
         
         # Check response status
         if response.status_code != 200:
-            if response.status_code in [401, 403]:
-                pytest.skip(f"Authentication issue: {response.status_code}")
+            if response.status_code in (401, 402, 403):
+                pytest.skip(
+                    f"Chat quality check skipped: {response.status_code} "
+                    "(auth or subscription required for smoke API key)"
+                )
             elif response.status_code == 429:
                 pytest.skip("Rate limited")
             else:
