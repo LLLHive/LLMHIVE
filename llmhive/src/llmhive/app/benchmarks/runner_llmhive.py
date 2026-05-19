@@ -53,6 +53,8 @@ def _benchmark_orchestration_settings(
     accuracy = config.accuracy_level
     if meta.get("force_calculator") or meta.get("force_code_execution"):
         accuracy = max(accuracy, 5)
+    reqs = case.requirements or {}
+    needs_live_research = bool(reqs.get("requires_rag")) or case.category == "multi_hop_reasoning"
     return {
         "temperature": config.temperature,
         "max_tokens": config.max_tokens,
@@ -63,6 +65,7 @@ def _benchmark_orchestration_settings(
         "enable_tool_broker": True,
         "enable_verification": True,
         "enable_memory": config.enable_rag,
+        "enable_live_research": needs_live_research,
     }
 
 

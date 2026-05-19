@@ -4,15 +4,16 @@ import Link from "next/link"
 import { industryFaqs } from "../content"
 
 type PageProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export function generateStaticParams() {
   return industryFaqs.map((item) => ({ slug: item.slug }))
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const page = industryFaqs.find((item) => item.slug === params.slug)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const page = industryFaqs.find((item) => item.slug === slug)
   if (!page) {
     return { title: "LLMHive" }
   }
@@ -75,8 +76,9 @@ function renderStructuredData(page: (typeof industryFaqs)[number]) {
   )
 }
 
-export default function IndustryFaqPage({ params }: PageProps) {
-  const page = industryFaqs.find((item) => item.slug === params.slug)
+export default async function IndustryFaqPage({ params }: PageProps) {
+  const { slug } = await params
+  const page = industryFaqs.find((item) => item.slug === slug)
   if (!page) {
     notFound()
   }

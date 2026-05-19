@@ -44,6 +44,7 @@ import { track } from "@/lib/observability/analytics"
 import Link from "next/link"
 import Image from "next/image"
 import LogoText from "@/components/branding/LogoText"
+import { buildProductStructuredData, organizationNode } from "@/lib/marketing/structured-data"
 
 const SIGNUP_TRACKED_STORAGE_KEY = "llmhive_signup_tracked_v1"
 const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000
@@ -148,27 +149,16 @@ function renderPricingStructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "Organization",
-        name: "LLMHive",
-        url: "https://llmhive.ai",
-        logo: "https://llmhive.ai/logo.png",
-      },
-      {
-        "@type": "Product",
-        name: "LLMHive",
+      organizationNode(),
+      buildProductStructuredData({
         description:
           "Multi-model AI orchestration platform that routes every request to the best model for accuracy, speed, and cost.",
-        brand: "LLMHive",
         offers: pricingTiers.map((tier) => ({
-          "@type": "Offer",
           name: tier.name,
-          priceCurrency: "USD",
-          price: tier.monthlyPrice,
+          price: String(tier.monthlyPrice),
           url: `https://llmhive.ai/pricing#${tier.tier}`,
-          availability: "https://schema.org/InStock",
         })),
-      },
+      }),
       {
         "@type": "FAQPage",
         mainEntity: pricingFaq.map((item) => ({

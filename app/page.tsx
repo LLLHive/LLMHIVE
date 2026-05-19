@@ -33,6 +33,11 @@ import {
   OFFER_STANDARD_FEATURES,
 } from "@/lib/marketing/pricing-offers"
 import {
+  buildProductStructuredData,
+  organizationNode,
+  PRODUCT_IMAGE_URL,
+} from "@/lib/marketing/structured-data"
+import {
   MARKETING_FEATURED_LINE,
   MARKETING_META_DESCRIPTION_MODELS,
   MARKETING_OPENAI_FLAGSHIP,
@@ -193,17 +198,21 @@ function StructuredData() {
   const data = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "Organization",
-        name: "LLMHive",
-        url: "https://llmhive.ai",
-        logo: "https://llmhive.ai/logo.png",
-      },
+      organizationNode(),
+      buildProductStructuredData({
+        description:
+          "Multi-model AI orchestration platform. One interface routes every request to the best of 350+ AI models for accuracy, speed and cost.",
+        offers: [
+          { name: "Standard", price: "10", url: "https://llmhive.ai/pricing#lite" },
+          { name: "Premium", price: "20", url: "https://llmhive.ai/pricing#pro" },
+        ],
+      }),
       {
         "@type": "SoftwareApplication",
         name: "LLMHive",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
+        image: PRODUCT_IMAGE_URL,
         description:
           "Multi-model AI orchestration platform. One interface routes every request to the best of 350+ AI models for accuracy, speed and cost.",
         offers: {

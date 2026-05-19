@@ -126,7 +126,7 @@ spec:
         
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: /health
             port: http
           initialDelaySeconds: 10
           periodSeconds: 15

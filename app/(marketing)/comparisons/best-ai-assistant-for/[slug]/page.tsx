@@ -4,15 +4,16 @@ import Link from "next/link"
 import { roles } from "@/app/(marketing)/best-ai-assistant-for/content"
 
 type PageProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export function generateStaticParams() {
   return roles.map((item) => ({ slug: item.slug }))
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const page = roles.find((item) => item.slug === params.slug)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const page = roles.find((item) => item.slug === slug)
   if (!page) {
     return { title: "LLMHive" }
   }
@@ -103,8 +104,9 @@ function renderStructuredData(
   )
 }
 
-export default function BestAssistantComparisonPage({ params }: PageProps) {
-  const page = roles.find((item) => item.slug === params.slug)
+export default async function BestAssistantComparisonPage({ params }: PageProps) {
+  const { slug } = await params
+  const page = roles.find((item) => item.slug === slug)
   if (!page) {
     notFound()
   }

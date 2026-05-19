@@ -4,15 +4,16 @@ import Link from "next/link"
 import { roleIndustryTools } from "../../roles"
 
 type PageProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export function generateStaticParams() {
   return roleIndustryTools.map((item) => ({ slug: item.slug }))
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const page = roleIndustryTools.find((item) => item.slug === params.slug)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const page = roleIndustryTools.find((item) => item.slug === slug)
   if (!page) {
     return { title: "LLMHive" }
   }
@@ -110,8 +111,9 @@ function renderStructuredData(
   )
 }
 
-export default function IndustryRoleToolPage({ params }: PageProps) {
-  const page = roleIndustryTools.find((item) => item.slug === params.slug)
+export default async function IndustryRoleToolPage({ params }: PageProps) {
+  const { slug } = await params
+  const page = roleIndustryTools.find((item) => item.slug === slug)
   if (!page) {
     notFound()
   }

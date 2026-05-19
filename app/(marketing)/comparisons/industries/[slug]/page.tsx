@@ -5,15 +5,16 @@ import { industryRoles } from "../content"
 import { industryToolComparisons } from "../tools"
 
 type PageProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export function generateStaticParams() {
   return industryRoles.map((item) => ({ slug: item.slug }))
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const page = industryRoles.find((item) => item.slug === params.slug)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const page = industryRoles.find((item) => item.slug === slug)
   if (!page) {
     return { title: "LLMHive" }
   }
@@ -92,14 +93,15 @@ function renderStructuredData(page: (typeof industryRoles)[number]) {
   )
 }
 
-export default function IndustryRolePage({ params }: PageProps) {
-  const page = industryRoles.find((item) => item.slug === params.slug)
+export default async function IndustryRolePage({ params }: PageProps) {
+  const { slug } = await params
+  const page = industryRoles.find((item) => item.slug === slug)
   if (!page) {
     notFound()
   }
 
   const relatedTools = industryToolComparisons.filter(
-    (item) => item.industry === params.slug.replace("-teams", "")
+    (item) => item.industry === slug.replace("-teams", "")
   )
 
   return (

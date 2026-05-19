@@ -72,3 +72,12 @@ def test_should_use_calculator_tbr() -> None:
         "Calculate: If a company has revenue of $4.5 million and expenses of $3.2 million, "
         "what is the profit margin as a percentage?"
     )
+
+
+def test_calculator_display_large_integer_matches_benchmark_regex() -> None:
+    from llmhive.app.orchestration.benchmark_tool_forcing import _format_calculator_display
+    import re
+
+    display = _format_calculator_display(-478996662, "What is 17^3 + sqrt(625) - 12!")
+    assert re.search(r"-?478,?996,?662", display)
+    assert ".00" not in display

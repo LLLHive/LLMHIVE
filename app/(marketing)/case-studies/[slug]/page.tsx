@@ -4,15 +4,16 @@ import Link from "next/link"
 import { caseStudies } from "../content"
 
 type PageProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export function generateStaticParams() {
   return caseStudies.map((item) => ({ slug: item.slug }))
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const page = caseStudies.find((item) => item.slug === params.slug)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const page = caseStudies.find((item) => item.slug === slug)
   if (!page) {
     return { title: "LLMHive" }
   }
@@ -94,8 +95,9 @@ function renderStructuredData(page: (typeof caseStudies)[number]) {
   )
 }
 
-export default function CaseStudyPage({ params }: PageProps) {
-  const page = caseStudies.find((item) => item.slug === params.slug)
+export default async function CaseStudyPage({ params }: PageProps) {
+  const { slug } = await params
+  const page = caseStudies.find((item) => item.slug === slug)
   if (!page) {
     notFound()
   }

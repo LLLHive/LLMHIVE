@@ -4,7 +4,7 @@
 The `/healthz` endpoint returns 404, while `/health` works correctly. Both endpoints are defined identically in the code.
 
 ## Root Cause
-Unknown - possibly a FastAPI route registration order issue or Cloud Run configuration. The route is defined correctly in code but not being matched.
+Google Cloud Run reserves certain URL paths at the edge (including many ending in `z`). Requests to `/healthz` never reach the FastAPI app and return a Google Frontend 404 HTML page. `/health` and `/_ah/health` are not reserved and work normally.
 
 ## Solution: Use `/health` Endpoint
 

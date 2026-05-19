@@ -4,15 +4,16 @@ import type { Metadata } from "next"
 import { useCases } from "../content"
 
 type PageProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export function generateStaticParams() {
   return useCases.map((item) => ({ slug: item.slug }))
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const page = useCases.find((item) => item.slug === params.slug)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const page = useCases.find((item) => item.slug === slug)
   if (!page) {
     return { title: "LLMHive" }
   }
@@ -85,8 +86,9 @@ function renderStructuredData(page: (typeof useCases)[number]) {
   )
 }
 
-export default function UseCaseDetailPage({ params }: PageProps) {
-  const page = useCases.find((item) => item.slug === params.slug)
+export default async function UseCaseDetailPage({ params }: PageProps) {
+  const { slug } = await params
+  const page = useCases.find((item) => item.slug === slug)
   if (!page) {
     notFound()
   }
