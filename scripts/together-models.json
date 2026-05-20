@@ -1,0 +1,20 @@
+{
+  "base_url": "https://api.together.ai/v1",
+  "default_chat": "llama_33_70b_turbo",
+  "chat": {
+    "llama_33_70b_turbo": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "qwen25_72b_turbo": "Qwen/Qwen2.5-72B-Instruct-Turbo",
+    "qwen3_next_80b": "Qwen/Qwen3-Next-80B-A3B-Instruct"
+  },
+  "openrouter_map": {
+    "meta-llama/llama-3.3-70b-instruct:free": "llama_33_70b_turbo",
+    "meta-llama/llama-3.3-70b-instruct": "llama_33_70b_turbo",
+    "meta-llama/llama-3.1-70b-instruct:free": "llama_33_70b_turbo",
+    "qwen/qwen3-next-80b-a3b-instruct:free": "qwen3_next_80b",
+    "qwen/qwen-2.5-72b-instruct:free": "qwen25_72b_turbo"
+  },
+  "deprecated_non_serverless": [
+    "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+  ]
+}

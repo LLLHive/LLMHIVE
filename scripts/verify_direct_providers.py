@@ -138,23 +138,37 @@ async def probe_anthropic(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
         "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
     }
-    model = "claude-3-5-haiku-20241022"
-    if not chat:
-        return ProbeResult("Anthropic", "direct", env, True, "skip", None, None, "chat-only probe", model)
-    code, body, ms = await _post_json(
-        client,
-        "https://api.anthropic.com/v1/messages",
-        headers,
-        {
-            "model": model,
-            "max_tokens": 1,
-            "messages": [{"role": "user", "content": "ping"}],
-        },
+    candidates = (
+        "claude-3-5-haiku-latest",
+        "claude-3-5-haiku-20241022",
+        "claude-3-5-sonnet-latest",
     )
-    st = _classify_http(code, body)
+    if not chat:
+        return ProbeResult("Anthropic", "direct", env, True, "skip", None, None, "chat-only probe", candidates[0])
+    last_code, last_body, last_ms, last_model = 404, "", 0.0, candidates[0]
+    for model in candidates:
+        code, body, ms = await _post_json(
+            client,
+            "https://api.anthropic.com/v1/messages",
+            headers,
+            {
+                "model": model,
+                "max_tokens": 1,
+                "messages": [{"role": "user", "content": "ping"}],
+            },
+        )
+        if code == 200:
+            return ProbeResult(
+                "Anthropic", "direct", env, True, "ok", code, ms,
+                f"messages ok ({model})", model,
+            )
+        last_code, last_body, last_ms, last_model = code, body, ms, model
+    st = _classify_http(last_code, last_body)
+    if last_code == 404:
+        st = "model_error"
     return ProbeResult(
-        "Anthropic", "direct", env, True, st, code, ms,
-        "messages ok" if st == "ok" else body[:200], model,
+        "Anthropic", "direct", env, True, st, last_code, last_ms,
+        last_body[:200], last_model,
     )
 
 
@@ -289,21 +303,29 @@ async def probe_openrouter(client: httpx.AsyncClient, chat: bool) -> ProbeResult
         return ProbeResult(
             "OpenRouter", "aggregator", env, True, "ok", code, ms, "models list (auth OK)", None,
         )
-    model = "meta-llama/llama-3.3-70b-instruct:free"
+    paid_model = "openai/gpt-4o-mini"
     code2, body2, ms2 = await _post_json(
         client,
         "https://openrouter.ai/api/v1/chat/completions",
         {**headers, "Content-Type": "application/json", "HTTP-Referer": "https://llmhive.ai"},
-        {"model": model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
+        {"model": paid_model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
     )
     st = _classify_http(code2, body2, list_ok=True)
-    if st == "fail" and code2 == 429:
-        st = "throttled"
-    detail = f"chat {model}" if st == "ok" else body2[:200]
-    if st in ("throttled", "model_error") and code == 200:
-        detail = f"API reachable; chat: {detail}"
+    detail = f"paid chat ({paid_model})" if st == "ok" else body2[:120]
+    if st == "ok":
+        free_model = "meta-llama/llama-3.3-70b-instruct:free"
+        code3, body3, _ = await _post_json(
+            client,
+            "https://openrouter.ai/api/v1/chat/completions",
+            {**headers, "Content-Type": "application/json", "HTTP-Referer": "https://llmhive.ai"},
+            {"model": free_model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
+        )
+        if code3 == 429:
+            detail += "; :free upstream throttled (expected)"
+        elif code3 == 200:
+            detail += "; :free ok"
     return ProbeResult(
-        "OpenRouter", "aggregator", env, True, st, code2, ms2, detail, model,
+        "OpenRouter", "aggregator", env, True, st, code2, ms2, detail, paid_model,
     )
 
 
@@ -313,28 +335,39 @@ async def probe_together(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
     if not key:
         return ProbeResult("Together AI", "aggregator", env, False, "skip", None, None, "no key")
     headers = {"Authorization": f"Bearer {key}"}
-    model = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+    serverless_candidates = (
+        "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        "Qwen/Qwen2.5-72B-Instruct-Turbo",
+        "Qwen/Qwen3-Next-80B-A3B-Instruct",
+    )
     if not chat:
         code, body, ms = await _get(client, "https://api.together.ai/v1/models", headers)
         ok = code == 200
         return ProbeResult(
             "Together AI", "aggregator", env, True,
             "ok" if ok else "fail", code, ms,
-            "models list" if ok else body[:200], model,
+            "models list" if ok else body[:200], serverless_candidates[0],
         )
-    code, body, ms = await _post_json(
-        client,
-        "https://api.together.ai/v1/chat/completions",
-        {**headers, "Content-Type": "application/json"},
-        {"model": model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
-    )
-    ok = code == 200
-    st = "ok" if ok else _classify_http(code, body)
-    if not ok and "unable to access" in body.lower():
-        st = "model_error"  # key valid; account/tier or model access
+    last_code, last_body, last_ms, last_model = 400, "", 0.0, serverless_candidates[0]
+    for model in serverless_candidates:
+        code, body, ms = await _post_json(
+            client,
+            "https://api.together.ai/v1/chat/completions",
+            {**headers, "Content-Type": "application/json"},
+            {"model": model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
+        )
+        if code == 200:
+            return ProbeResult(
+                "Together AI", "aggregator", env, True, "ok", code, ms,
+                f"serverless chat ({model})", model,
+            )
+        last_code, last_body, last_ms, last_model = code, body, ms, model
+    st = _classify_http(last_code, last_body)
+    if "non-serverless" in last_body.lower() or "unable to access" in last_body.lower():
+        st = "model_error"
     return ProbeResult(
-        "Together AI", "aggregator", env, True, st, code, ms,
-        "chat ok" if ok else body[:200], model,
+        "Together AI", "aggregator", env, True, st, last_code, last_ms,
+        last_body[:200], last_model,
     )
 
 

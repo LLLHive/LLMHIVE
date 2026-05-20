@@ -194,10 +194,25 @@ def build_provider_chain(
                 chain.append((p, None))
                 seen.add(p)
 
+    # Paid / elite paths: Together + OpenRouter as primary routers (funded accounts)
+    if not is_free_tier_slug(model_id):
+        paid_primary: List[Tuple[str, Optional[str]]] = []
+        if provider_available(P_TOGETHER):
+            paid_primary.append((P_TOGETHER, None))
+        if provider_available(P_OPENROUTER):
+            paid_primary.append((P_OPENROUTER, None))
+        # Prepend without duplicating providers already in chain
+        for item in reversed(paid_primary):
+            if item[0] not in seen:
+                chain.insert(0, item)
+                seen.add(item[0])
+
     if provider_available(P_OPENROUTER):
         if routing_v2_enabled() and is_free_tier_slug(model_id):
-            chain.append((P_OPENROUTER, None))
-        elif not routing_v2_enabled():
+            if P_OPENROUTER not in seen:
+                chain.append((P_OPENROUTER, None))
+                seen.add(P_OPENROUTER)
+        elif not routing_v2_enabled() and P_OPENROUTER not in seen:
             chain.insert(0, (P_OPENROUTER, None))
 
     return chain

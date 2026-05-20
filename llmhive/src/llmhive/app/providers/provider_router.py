@@ -351,15 +351,21 @@ class ProviderRouter:
         return (Provider.OPENROUTER, None)
     
     # Model mapping: OpenRouter model IDs → Together.ai equivalents for fallback
+    # Serverless-only IDs (Meta-Llama-3.1-*-Turbo → 400 on funded serverless accounts)
+    TOGETHER_SERVERLESS_DEFAULT = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+
     OPENROUTER_TO_TOGETHER_MAP = {
-        "openai/gpt-4o-mini": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        "openai/gpt-4o": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        "meta-llama/llama-3.3-70b-instruct:free": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        "meta-llama/llama-3.1-8b-instruct:free": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        "openai/gpt-4o-mini": TOGETHER_SERVERLESS_DEFAULT,
+        "openai/gpt-4o": TOGETHER_SERVERLESS_DEFAULT,
+        "meta-llama/llama-3.3-70b-instruct:free": TOGETHER_SERVERLESS_DEFAULT,
+        "meta-llama/llama-3.3-70b-instruct": TOGETHER_SERVERLESS_DEFAULT,
+        "meta-llama/llama-3.1-70b-instruct:free": TOGETHER_SERVERLESS_DEFAULT,
+        "meta-llama/llama-3.1-8b-instruct:free": TOGETHER_SERVERLESS_DEFAULT,
         "qwen/qwen-2.5-72b-instruct:free": "Qwen/Qwen2.5-72B-Instruct-Turbo",
         "qwen/qwen-2.5-7b-instruct:free": "Qwen/Qwen2.5-7B-Instruct-Turbo",
-        "google/gemini-2.0-flash-exp:free": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        "mistralai/mistral-small-3.1-24b-instruct:free": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "qwen/qwen3-next-80b-a3b-instruct:free": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+        "google/gemini-2.0-flash-exp:free": TOGETHER_SERVERLESS_DEFAULT,
+        "mistralai/mistral-small-3.1-24b-instruct:free": TOGETHER_SERVERLESS_DEFAULT,
     }
 
     async def _dispatch_provider(
@@ -463,7 +469,7 @@ class ProviderRouter:
         together_model = self.OPENROUTER_TO_TOGETHER_MAP.get(model_id)
         if not together_model:
             # Default fallback: use Llama 3.1 70B as general-purpose replacement
-            together_model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+            together_model = self.TOGETHER_SERVERLESS_DEFAULT
         
         try:
             logger.info("FALLBACK → Together.ai (%s) for failed %s", together_model, model_id)
