@@ -1,0 +1,15 @@
+{
+  "base_url": "https://api.deepinfra.com/v1/openai",
+  "default_chat": "llama_33_70b",
+  "chat": {
+    "llama_33_70b": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "llama_31_70b": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    "llama_31_8b": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    "qwen25_72b": "Qwen/Qwen2.5-72B-Instruct",
+    "qwen3_next_80b": "Qwen/Qwen3-Next-80B-A3B-Instruct"
+  },
+  "openrouter_map": {
+    "meta-llama/llama-3.3-70b-instruct:free": "llama_33_70b",
+    "qwen/qwen3-next-80b-a3b-instruct:free": "qwen3_next_80b"
+  }
+}

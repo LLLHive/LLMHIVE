@@ -26,6 +26,19 @@ from .together_client import TogetherClient, get_together_client
 from .groq_client import GroqClient, get_groq_client
 from .cerebras_client import CerebrasClient, get_cerebras_client
 from .hf_client import HuggingFaceClient, get_hf_client
+from .fireworks_client import FireworksClient, get_fireworks_client
+from .hyperbolic_client import HyperbolicClient, get_hyperbolic_client
+from .dashscope_client import get_dashscope_client
+from .deepinfra_client import get_deepinfra_client
+from .azure_foundry_client import AzureFoundryClient, get_azure_foundry_client
+from .cloudflare_client import CloudflareClient, get_cloudflare_client
+from .kimi_client import get_kimi_client
+from .provider_chain import (
+    build_provider_chain,
+    primary_provider_name,
+    routing_v2_enabled,
+    is_free_tier_slug,
+)
 from .provider_router import (
     ProviderRouter,
     Provider,
@@ -46,6 +59,21 @@ __all__ = [
     "get_cerebras_client",
     "HuggingFaceClient",
     "get_hf_client",
+    "FireworksClient",
+    "get_fireworks_client",
+    "HyperbolicClient",
+    "get_hyperbolic_client",
+    "get_dashscope_client",
+    "get_deepinfra_client",
+    "AzureFoundryClient",
+    "get_azure_foundry_client",
+    "CloudflareClient",
+    "get_cloudflare_client",
+    "get_kimi_client",
+    "build_provider_chain",
+    "primary_provider_name",
+    "routing_v2_enabled",
+    "is_free_tier_slug",
     "ProviderRouter",
     "Provider",
     "get_provider_router",

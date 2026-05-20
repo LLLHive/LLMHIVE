@@ -39,9 +39,10 @@ class GoogleAIClient:
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = (
-            api_key 
-            or os.getenv("GOOGLE_AI_API_KEY") 
+            api_key
+            or os.getenv("GOOGLE_AI_API_KEY")
             or os.getenv("GEMINI_API_KEY")
+            or os.getenv("GEMINI_API_KEY_2")
         )
         if not self.api_key:
             raise ValueError(

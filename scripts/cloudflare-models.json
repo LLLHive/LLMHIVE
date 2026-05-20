@@ -1,0 +1,10 @@
+{
+  "default_chat": "llama_31_8b",
+  "chat": {
+    "llama_31_8b": "@cf/meta/llama-3.1-8b-instruct",
+    "llama_33_70b": "@cf/meta/llama-3.3-70b-instruct"
+  },
+  "openrouter_map": {
+    "meta-llama/llama-3.3-70b-instruct:free": "llama_33_70b"
+  }
+}

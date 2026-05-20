@@ -1,0 +1,10 @@
+{
+  "deepseek_flash": "DeepSeek-V4-Flash",
+  "deepseek_pro": "DeepSeek-V4-Pro",
+  "gpt_oss_120b": "FW-GPT-OSS-120B",
+  "kimi_k25": "Kimi-K2.5",
+  "kimi_k26": "Kimi-K2.6",
+  "llama4_maverick": "Llama-4-Maverick-17B-128E-Instruct-FP8",
+  "llama4_scout": "Llama-4-Scout-17B-16E-Instruct",
+  "mistral_large_3": "Mistral-Large-3"
+}

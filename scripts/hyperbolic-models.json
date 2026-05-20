@@ -1,0 +1,13 @@
+{
+  "base_url": "https://api.hyperbolic.xyz/v1",
+  "default_chat": "llama_33_70b",
+  "chat": {
+    "qwen_coder_480b": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+    "llama_33_70b": "meta-llama/Llama-3.3-70B-Instruct"
+  },
+  "openrouter_map": {
+    "qwen/qwen3-coder:free": "qwen_coder_480b",
+    "qwen/qwen3-next-80b-a3b-instruct:free": "llama_33_70b",
+    "meta-llama/llama-3.3-70b-instruct:free": "llama_33_70b"
+  }
+}

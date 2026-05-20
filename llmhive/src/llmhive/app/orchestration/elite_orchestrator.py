@@ -1237,11 +1237,33 @@ class EliteOrchestrator:
             "Qwen/Qwen2.5-72B-Instruct-Turbo",
         ]
         
+        try:
+            from ..providers.provider_chain import (
+                routing_v2_enabled,
+                is_free_tier_slug,
+                primary_provider_name,
+            )
+            from .free_models_database import FREE_MODELS_DB
+        except ImportError:
+            routing_v2_enabled = lambda: False  # type: ignore
+            is_free_tier_slug = lambda _m: False  # type: ignore
+            primary_provider_name = lambda _m: "openrouter"  # type: ignore
+            FREE_MODELS_DB = {}
+
         if openrouter_available:
-            # Route ALL models through OpenRouter (PRIMARY)
             for model in all_models:
-                mapping[model] = "openrouter"
-            logger.info("OpenRouter is PRIMARY - routing all models through it")
+                if (
+                    routing_v2_enabled()
+                    and (is_free_tier_slug(model) or model in FREE_MODELS_DB)
+                    and primary_provider_name(model) in self.providers
+                ):
+                    mapping[model] = primary_provider_name(model)
+                else:
+                    mapping[model] = "openrouter"
+            if routing_v2_enabled():
+                logger.info("ROUTING_V2: free slugs use direct-first; elite/paid stay on OpenRouter")
+            else:
+                logger.info("OpenRouter is PRIMARY - routing all models through it")
             
             # Route Together.ai models directly when available
             if together_available:

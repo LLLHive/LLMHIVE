@@ -54,7 +54,7 @@ class FreeModelInfo:
     notes: str = ""                  # Additional notes
     verified_working: bool = True    # Has been tested and works
     # NEW (Jan 31, 2026): Multi-provider routing
-    preferred_api: str = "openrouter"  # "google" | "deepseek" | "openrouter"
+    preferred_api: str = "openrouter"  # direct API id: google, groq, dashscope, ...
     native_model_id: Optional[str] = None  # ID for direct API (if different)
     # NEW (Jan 31, 2026): OpenRouter benchmark scores
     performance_score: float = 0.0   # OpenRouter performance score (0-100)
@@ -76,7 +76,7 @@ class FreeModelInfo:
     @property
     def uses_direct_api(self) -> bool:
         """Whether this model routes to a direct API (not OpenRouter)."""
-        return self.preferred_api in ("google", "deepseek")
+        return self.preferred_api not in ("openrouter", "", "unknown")
 
 
 # =============================================================================
@@ -133,6 +133,8 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         best_for=["Math", "Chinese language", "Long context tasks"],
         notes="Strong math and multilingual support, 262K context",
         verified_working=True,
+        preferred_api="dashscope",
+        native_model_id="qwen3-next-80b-a3b-instruct",
     ),
     
     "qwen/qwen3-coder:free": FreeModelInfo(
@@ -152,6 +154,8 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         performance_score=74.2,
         capability_score=67.9,
         supports_tools=True,
+        preferred_api="dashscope",
+        native_model_id="qwen3-coder-plus",
     ),
     
     # =========================================================================
@@ -296,7 +300,8 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         best_for=["General reasoning", "Dialogue", "Multilingual tasks"],
         notes="GPT-4 level, 131K context — rate-limited upstream Feb 28 2026",
         verified_working=True,
-        preferred_api="openrouter",
+        preferred_api="groq",
+        native_model_id="llama-3.3-70b-versatile",
         performance_score=68.0,
         capability_score=60.0,
         supports_tools=False,
@@ -316,7 +321,8 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         best_for=["Multilingual (140+ languages)", "Reasoning", "Math"],
         notes="Google Gemma 3, 131K context — rate-limited upstream Feb 28 2026",
         verified_working=True,
-        preferred_api="openrouter",
+        preferred_api="google",
+        native_model_id="gemma-3-27b-it",
         performance_score=65.0,
         capability_score=58.0,
         supports_tools=False,

@@ -2699,20 +2699,33 @@ Please provide an accurate, well-verified response."""
         models_to_use = selected_models
         
         # Map model names to provider names
-        # PRIORITY: OpenRouter FIRST (400+ models), direct APIs as FALLBACK
+        # Elite/paid: OpenRouter primary. Free + ROUTING_V2: direct APIs first.
         model_to_provider = {}
         openrouter_available = "openrouter" in self.providers
-        
+        try:
+            from .providers.provider_chain import (
+                routing_v2_enabled,
+                is_free_tier_slug,
+                primary_provider_name,
+            )
+        except ImportError:
+            routing_v2_enabled = lambda: False  # type: ignore
+            is_free_tier_slug = lambda _m: False  # type: ignore
+            primary_provider_name = lambda _m: "openrouter"  # type: ignore
+
         for model in models_to_use:
             model_lower = model.lower()
-            
-            # Use OpenRouter for ALL models if available (PRIMARY)
-            if openrouter_available:
+
+            if (
+                routing_v2_enabled()
+                and is_free_tier_slug(model)
+                and primary_provider_name(model) in self.providers
+            ):
+                model_to_provider[model] = primary_provider_name(model)
+            elif openrouter_available:
                 if "/" in model:
-                    # Already in OpenRouter format (e.g., "openai/gpt-4o")
                     model_to_provider[model] = "openrouter"
                 else:
-                    # Route through OpenRouter regardless of model type
                     model_to_provider[model] = "openrouter"
             else:
                 # FALLBACK: Direct providers only when OpenRouter unavailable
@@ -2729,8 +2742,12 @@ Please provide an accurate, well-verified response."""
                 else:
                     model_to_provider[model] = model
         
-        if openrouter_available:
+        if openrouter_available and not any(
+            routing_v2_enabled() and is_free_tier_slug(m) for m in models_to_use
+        ):
             logger.info("Using OpenRouter as PRIMARY provider for %d models", len(models_to_use))
+        elif any(routing_v2_enabled() and is_free_tier_slug(m) for m in models_to_use):
+            logger.info("ROUTING_V2: direct-first provider map for %d free models", len(models_to_use))
         
         # Consensus result tracking
         consensus_result: Optional[Any] = None

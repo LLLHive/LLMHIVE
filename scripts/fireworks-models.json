@@ -1,0 +1,24 @@
+{
+  "base_url": "https://api.fireworks.ai/inference/v1",
+  "default_chat": "deepseek_v4_flash",
+  "chat": {
+    "deepseek_v4_flash": "accounts/fireworks/models/deepseek-v4-flash",
+    "gpt_oss_20b": "accounts/fireworks/models/gpt-oss-20b",
+    "minimax_m27": "accounts/fireworks/models/minimax-m2p7",
+    "minimax_m25": "accounts/fireworks/models/minimax-m2p5",
+    "qwen36_plus": "accounts/fireworks/models/qwen3p6-plus",
+    "kimi_k26": "accounts/fireworks/models/kimi-k2p6"
+  },
+  "utility": {
+    "qwen3_embedding_8b": "accounts/fireworks/models/qwen3-embedding-8b",
+    "qwen3_reranker_8b": "accounts/fireworks/models/qwen3-reranker-8b"
+  },
+  "openrouter_map": {
+    "deepseek/deepseek-chat": "deepseek_v4_flash",
+    "qwen/qwen3-next-80b-a3b-instruct:free": "qwen36_plus",
+    "qwen/qwen3-coder:free": "minimax_m27",
+    "moonshotai/kimi-k2:free": "kimi_k26",
+    "moonshotai/kimi-k2.5:free": "kimi_k26",
+    "moonshotai/kimi-k2.6:free": "kimi_k26"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "default_chat": "qwen_plus",
+  "chat": {
+    "qwen_plus": "qwen-plus",
+    "qwen_flash": "qwen-flash",
+    "qwen3_next_80b": "qwen3-next-80b-a3b-instruct",
+    "qwen3_coder_plus": "qwen3-coder-plus"
+  },
+  "openrouter_map": {
+    "qwen/qwen3-next-80b-a3b-instruct:free": "qwen3_next_80b",
+    "qwen/qwen3-coder:free": "qwen3_coder_plus"
+  }
+}

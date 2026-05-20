@@ -10,11 +10,11 @@ Benefits:
 - OpenAI-compatible API format
 - Ideal for: fast fallback, classification, extraction
 
-Available Free Models:
-- llama-3.3-70b: Llama 3.3 70B (best quality)
-- llama3.1-8b: Llama 3.1 8B (ultra-fast)
-- qwen-3-32b: Qwen 3 32B
-- qwen-3-235b-a22b: Qwen 3 235B (MoE, high quality)
+Available models (live /v1/models, Feb 2026):
+- llama3.1-8b: Llama 3.1 8B (fast default)
+- qwen-3-235b-a22b-instruct-2507: Qwen 3 235B MoE
+- gpt-oss-120b: GPT-OSS 120B
+- zai-glm-4.7: GLM 4.7
 
 Rate Limits (Free Tier):
 - 30 RPM per model
@@ -41,16 +41,16 @@ class CerebrasClient:
     """Client for Cerebras Inference API (ultra-fast wafer-scale inference)."""
 
     BASE_URL = "https://api.cerebras.ai/v1"
-    DEFAULT_MODEL = "llama-3.3-70b"
+    DEFAULT_MODEL = "llama3.1-8b"
 
-    # Map OpenRouter model IDs to Cerebras native IDs
+    # Map OpenRouter model IDs to Cerebras native IDs (see GET /v1/models)
     MODEL_MAP = {
-        "meta-llama/llama-3.3-70b-instruct:free": "llama-3.3-70b",
-        "meta-llama/llama-3.3-70b-instruct": "llama-3.3-70b",
+        "meta-llama/llama-3.3-70b-instruct:free": "llama3.1-8b",
+        "meta-llama/llama-3.3-70b-instruct": "qwen-3-235b-a22b-instruct-2507",
         "meta-llama/llama-3.1-8b-instruct:free": "llama3.1-8b",
         "meta-llama/llama-3.1-8b-instruct": "llama3.1-8b",
-        "qwen/qwen3-next-80b-a3b-instruct:free": "qwen-3-32b",
-        "qwen/qwen2.5-72b-instruct": "qwen-3-235b-a22b",
+        "qwen/qwen3-next-80b-a3b-instruct:free": "qwen-3-235b-a22b-instruct-2507",
+        "qwen/qwen2.5-72b-instruct": "qwen-3-235b-a22b-instruct-2507",
     }
 
     def __init__(self, api_key: Optional[str] = None):
