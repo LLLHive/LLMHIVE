@@ -50,6 +50,7 @@ class Provider(str, Enum):
     AZURE_FOUNDRY = "azure_foundry"
     CLOUDFLARE = "cloudflare"
     KIMI = "kimi"
+    MISTRAL = "mistral"
 
 
 @dataclass
@@ -125,6 +126,10 @@ PROVIDER_ROUTING = {
     "groq/llama-3.3-70b": (Provider.GROQ, "llama-3.3-70b-versatile"),
     "groq/llama-4-maverick": (Provider.GROQ, "meta-llama/llama-4-maverick-17b-128e-instruct"),
 
+    # Mistral → Mistral direct (catalog maps OpenRouter slugs to native IDs)
+    "mistralai/mistral-small-3.1-24b-instruct:free": (Provider.MISTRAL, "mistral_small"),
+    "mistralai/mistral-small-3.1-24b-instruct": (Provider.MISTRAL, "mistral_small"),
+
     # Everything else → OpenRouter (includes Llama, Qwen, and all other models)
 }
 
@@ -155,6 +160,7 @@ class ProviderRouter:
         from .azure_foundry_client import get_azure_foundry_client
         from .cloudflare_client import get_cloudflare_client
         from .kimi_client import get_kimi_client
+        from .mistral_client import get_mistral_client
 
         self.google_client = get_google_client()
         self.deepseek_client = get_deepseek_client()
@@ -170,6 +176,7 @@ class ProviderRouter:
         self.azure_foundry_client = get_azure_foundry_client()
         self.cloudflare_client = get_cloudflare_client()
         self.kimi_client = get_kimi_client()
+        self.mistral_client = get_mistral_client()
 
         # Initialize capacity tracking
         self.capacity = {
@@ -248,6 +255,11 @@ class ProviderRouter:
                 window_start=time.time(),
                 requests_in_window=0
             ),
+            Provider.MISTRAL: ProviderCapacity(
+                rpm_limit=30,
+                window_start=time.time(),
+                requests_in_window=0
+            ),
         }
         
         # Log availability
@@ -280,6 +292,8 @@ class ProviderRouter:
             providers_available.append("Cloudflare Workers AI (20 RPM est.)")
         if self.kimi_client:
             providers_available.append("Kimi/Moonshot (20 RPM est.)")
+        if self.mistral_client:
+            providers_available.append("Mistral direct (30 RPM est.)")
         providers_available.append("OpenRouter (20 RPM)")
         
         logger.info(
@@ -292,7 +306,9 @@ class ProviderRouter:
     def _provider_chain_for_model(self, model_id: str) -> list:
         from .provider_chain import build_provider_chain, routing_v2_enabled, is_free_tier_slug
 
-        if routing_v2_enabled() and is_free_tier_slug(model_id):
+        if routing_v2_enabled() and (
+            is_free_tier_slug(model_id) or "mistral" in model_id.lower()
+        ):
             return build_provider_chain(model_id)
         if model_id in PROVIDER_ROUTING:
             p, native = PROVIDER_ROUTING[model_id]
@@ -314,6 +330,7 @@ class ProviderRouter:
             Provider.AZURE_FOUNDRY: self.azure_foundry_client,
             Provider.CLOUDFLARE: self.cloudflare_client,
             Provider.KIMI: self.kimi_client,
+            Provider.MISTRAL: self.mistral_client,
             Provider.OPENROUTER: True,
             Provider.GROK: self.grok_client,
         }.get(provider)
@@ -402,6 +419,8 @@ class ProviderRouter:
             return await self.cloudflare_client.generate_with_retry(prompt, model_id)
         if provider == Provider.KIMI and self.kimi_client:
             return await self.kimi_client.generate_with_retry(prompt, model_id)
+        if provider == Provider.MISTRAL and self.mistral_client:
+            return await self.mistral_client.generate_with_retry(prompt, model_id)
         if provider == Provider.HUGGINGFACE and self.hf_client:
             return await self.hf_client.generate_with_retry(
                 prompt, target or "meta-llama/Llama-3.3-70B-Instruct"
@@ -570,6 +589,7 @@ class ProviderRouter:
                 self._try_azure_foundry_fallback,
                 self._try_cloudflare_fallback,
                 self._try_kimi_fallback,
+                self._try_mistral_fallback,
                 self._try_together_fallback,
                 self._try_cerebras_fallback,
                 self._try_hf_fallback,
@@ -664,6 +684,19 @@ class ProviderRouter:
             return result
         except Exception as e:
             logger.error("Kimi fallback failed for %s: %s", model_id, e)
+            return None
+
+    async def _try_mistral_fallback(self, model_id: str, prompt: str) -> Optional[str]:
+        if not self.mistral_client:
+            return None
+        try:
+            self.capacity[Provider.MISTRAL].record_request()
+            result = await self.mistral_client.generate_with_retry(prompt, model_id)
+            if result:
+                logger.info("Mistral fallback SUCCESS for %s", model_id)
+            return result
+        except Exception as e:
+            logger.error("Mistral fallback failed for %s: %s", model_id, e)
             return None
     
     def get_capacity_status(self) -> Dict[str, Dict]:

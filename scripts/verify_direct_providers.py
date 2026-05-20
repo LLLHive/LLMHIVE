@@ -139,9 +139,11 @@ async def probe_anthropic(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
         "Content-Type": "application/json",
     }
     candidates = (
+        "claude-haiku-4-5",
+        "claude-sonnet-4-6",
+        "claude-sonnet-4-20250514",
         "claude-3-5-haiku-latest",
         "claude-3-5-haiku-20241022",
-        "claude-3-5-sonnet-latest",
     )
     if not chat:
         return ProbeResult("Anthropic", "direct", env, True, "skip", None, None, "chat-only probe", candidates[0])
@@ -266,7 +268,7 @@ async def probe_mistral(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
     env = "MISTRAL_API_KEY"
     key = _key(env)
     if not key:
-        return ProbeResult("Mistral", "direct", env, False, "skip", None, None, "not wired in repo yet")
+        return ProbeResult("Mistral", "direct", env, False, "skip", None, None, "no key")
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     model = "mistral-small-latest"
     code, body, ms = await _post_json(

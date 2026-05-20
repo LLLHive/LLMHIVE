@@ -33,6 +33,7 @@ from .deepinfra_client import get_deepinfra_client
 from .azure_foundry_client import AzureFoundryClient, get_azure_foundry_client
 from .cloudflare_client import CloudflareClient, get_cloudflare_client
 from .kimi_client import get_kimi_client
+from .mistral_client import get_mistral_client
 from .provider_chain import (
     build_provider_chain,
     primary_provider_name,
@@ -70,6 +71,7 @@ __all__ = [
     "CloudflareClient",
     "get_cloudflare_client",
     "get_kimi_client",
+    "get_mistral_client",
     "build_provider_chain",
     "primary_provider_name",
     "routing_v2_enabled",

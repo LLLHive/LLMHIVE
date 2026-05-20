@@ -34,6 +34,7 @@ load DASHSCOPE_BASE_URL Dashscope-base-url
 load Cloudflare_Api_Key cloudflare-api-key
 load Cloudflare_Account_ID cloudflare-account-id
 load Kimi_K26_Api_Key kimi-k26-api-key
+load MISTRAL_API_KEY mistral-api-key
 load AZURE_FOUNDRY_API_KEY azure-foundry-api-key
 load AZURE_FOUNDRY_ENDPOINT azure-foundry-endpoint
 load AZURE_FOUNDRY_DEPLOYMENTS azure-foundry-deployments

@@ -1250,11 +1250,18 @@ class EliteOrchestrator:
             primary_provider_name = lambda _m: "openrouter"  # type: ignore
             FREE_MODELS_DB = {}
 
+        def _use_direct_routing(slug: str) -> bool:
+            return (
+                is_free_tier_slug(slug)
+                or slug in FREE_MODELS_DB
+                or "mistral" in slug.lower()
+            )
+
         if openrouter_available:
             for model in all_models:
                 if (
                     routing_v2_enabled()
-                    and (is_free_tier_slug(model) or model in FREE_MODELS_DB)
+                    and _use_direct_routing(model)
                     and primary_provider_name(model) in self.providers
                 ):
                     mapping[model] = primary_provider_name(model)

@@ -1,0 +1,19 @@
+{
+  "base_url": "https://api.mistral.ai/v1",
+  "default_chat": "mistral_small",
+  "chat": {
+    "mistral_small": "mistral-small-latest",
+    "mistral_large": "mistral-large-latest",
+    "codestral": "codestral-latest",
+    "devstral_small": "devstral-small-latest",
+    "devstral_medium": "devstral-medium-latest"
+  },
+  "openrouter_map": {
+    "mistralai/mistral-small-3.1-24b-instruct:free": "mistral_small",
+    "mistralai/mistral-small-3.1-24b-instruct": "mistral_small",
+    "mistralai/mistral-large-2512": "mistral_large",
+    "mistralai/devstral-2512": "devstral_medium",
+    "mistralai/devstral-2512:free": "devstral_medium",
+    "mistralai/codestral-2512": "codestral"
+  }
+}

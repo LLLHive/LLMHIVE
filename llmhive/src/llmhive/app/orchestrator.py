@@ -1356,6 +1356,16 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
             except Exception as e:
                 logger.warning(f"Failed to initialize DeepSeek provider: {e}")
 
+        # Initialize Mistral direct provider (ROUTING_V2 — before OpenRouter for Mistral slugs)
+        if os.getenv("MISTRAL_API_KEY"):
+            try:
+                from .providers.mistral_provider import MistralProvider
+
+                self.providers["mistral"] = MistralProvider()
+                logger.info("Mistral provider initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize Mistral provider: %s", e)
+
         # Initialize Together.ai provider
         if os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY"):
             try:
@@ -2713,12 +2723,15 @@ Please provide an accurate, well-verified response."""
             is_free_tier_slug = lambda _m: False  # type: ignore
             primary_provider_name = lambda _m: "openrouter"  # type: ignore
 
+        def _use_direct_routing(slug: str) -> bool:
+            return is_free_tier_slug(slug) or "mistral" in slug.lower()
+
         for model in models_to_use:
             model_lower = model.lower()
 
             if (
                 routing_v2_enabled()
-                and is_free_tier_slug(model)
+                and _use_direct_routing(model)
                 and primary_provider_name(model) in self.providers
             ):
                 model_to_provider[model] = primary_provider_name(model)
@@ -2743,11 +2756,11 @@ Please provide an accurate, well-verified response."""
                     model_to_provider[model] = model
         
         if openrouter_available and not any(
-            routing_v2_enabled() and is_free_tier_slug(m) for m in models_to_use
+            routing_v2_enabled() and _use_direct_routing(m) for m in models_to_use
         ):
             logger.info("Using OpenRouter as PRIMARY provider for %d models", len(models_to_use))
-        elif any(routing_v2_enabled() and is_free_tier_slug(m) for m in models_to_use):
-            logger.info("ROUTING_V2: direct-first provider map for %d free models", len(models_to_use))
+        elif any(routing_v2_enabled() and _use_direct_routing(m) for m in models_to_use):
+            logger.info("ROUTING_V2: direct-first provider map for %d models", len(models_to_use))
         
         # Consensus result tracking
         consensus_result: Optional[Any] = None

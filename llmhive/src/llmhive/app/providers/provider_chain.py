@@ -20,6 +20,7 @@ P_GROQ = "groq"
 P_CEREBRAS = "cerebras"
 P_GROK = "grok"
 P_KIMI = "kimi"
+P_MISTRAL = "mistral"
 P_DASHSCOPE = "dashscope"
 P_CLOUDFLARE = "cloudflare"
 P_DEEPINFRA = "deepinfra"
@@ -36,6 +37,7 @@ PROVIDER_COST_SCORE: Dict[str, float] = {
     P_GROQ: 0.2,
     P_CEREBRAS: 0.25,
     P_GROK: 0.5,
+    P_MISTRAL: 0.45,
     P_KIMI: 0.55,
     P_DASHSCOPE: 0.6,
     P_CLOUDFLARE: 0.65,
@@ -81,6 +83,7 @@ def provider_available(provider: str) -> bool:
         P_CEREBRAS: ("CEREBRAS_API_KEY",),
         P_GROK: ("GROK_API_KEY",),
         P_KIMI: ("Kimi_K26_Api_Key", "KIMI_API_KEY", "MOONSHOT_API_KEY"),
+        P_MISTRAL: ("MISTRAL_API_KEY",),
         P_DASHSCOPE: ("DASHSCOPE_API_KEY",),
         P_CLOUDFLARE: ("Cloudflare_Api_Key", "CLOUDFLARE_API_KEY"),
         P_DEEPINFRA: ("DeepInfra_Api_Key", "DEEPINFRA_API_KEY"),
@@ -109,7 +112,7 @@ def _family_providers(model_id: str) -> List[str]:
     if "grok" in m or "x-ai" in m:
         return [P_GROK]
     if "mistral" in m:
-        return [P_AZURE_FOUNDRY, P_FIREWORKS, P_DEEPINFRA]
+        return [P_MISTRAL, P_AZURE_FOUNDRY, P_FIREWORKS, P_DEEPINFRA]
     return []
 
 
@@ -132,6 +135,7 @@ def get_explicit_routing() -> Dict[str, Tuple[str, Optional[str]]]:
         "azure_foundry": P_AZURE_FOUNDRY,
         "cloudflare": P_CLOUDFLARE,
         "kimi": P_KIMI,
+        "mistral": P_MISTRAL,
         "openrouter": P_OPENROUTER,
     }
     try:
@@ -243,5 +247,6 @@ def _provider_to_orchestrator_key(provider: str) -> str:
         P_AZURE_FOUNDRY: "azure_foundry",
         P_CLOUDFLARE: "cloudflare",
         P_KIMI: "kimi",
+        P_MISTRAL: "mistral",
     }
     return mapping.get(provider, provider)

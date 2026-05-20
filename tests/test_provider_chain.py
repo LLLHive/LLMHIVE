@@ -70,3 +70,35 @@ def test_provider_router_chain_for_free(monkeypatch):
     provider, native = router.get_provider_for_model("meta-llama/llama-3.3-70b-instruct:free")
     assert provider == Provider.GROQ
     assert native == "llama-3.3-70b-versatile"
+
+
+def test_mistral_free_slug_routes_direct_first(monkeypatch):
+    monkeypatch.setenv("MISTRAL_API_KEY", "ms-test")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from llmhive.app.providers.provider_chain import (
+        build_provider_chain,
+        primary_provider_name,
+        P_MISTRAL,
+        P_OPENROUTER,
+    )
+
+    slug = "mistralai/mistral-small-3.1-24b-instruct:free"
+    chain = build_provider_chain(slug)
+    assert chain[0][0] == P_MISTRAL
+    assert primary_provider_name(slug) == "mistral"
+    providers = [p for p, _ in chain]
+    if P_OPENROUTER in providers:
+        assert providers.index(P_OPENROUTER) == len(providers) - 1
+
+
+def test_provider_router_mistral_direct(monkeypatch):
+    monkeypatch.setenv("MISTRAL_API_KEY", "ms-test")
+    from llmhive.app.providers.provider_router import reset_provider_router, get_provider_router, Provider
+
+    reset_provider_router()
+    router = get_provider_router()
+    provider, native = router.get_provider_for_model(
+        "mistralai/mistral-small-3.1-24b-instruct:free"
+    )
+    assert provider == Provider.MISTRAL
+    assert native == "mistral_small"
