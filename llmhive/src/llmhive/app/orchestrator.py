@@ -1366,6 +1366,16 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
             except Exception as e:
                 logger.warning("Failed to initialize Mistral provider: %s", e)
 
+        # Initialize HuggingFace Inference provider (ROUTING_V2 spillover + explicit HF slugs)
+        if os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN"):
+            try:
+                from .providers.hf_provider import HuggingFaceProvider
+
+                self.providers["huggingface"] = HuggingFaceProvider()
+                logger.info("HuggingFace provider initialized")
+            except Exception as e:
+                logger.warning("Failed to initialize HuggingFace provider: %s", e)
+
         # Initialize Together.ai provider
         if os.getenv("TOGETHERAI_API_KEY") or os.getenv("TOGETHER_API_KEY"):
             try:
@@ -2724,7 +2734,17 @@ Please provide an accurate, well-verified response."""
             primary_provider_name = lambda _m: "openrouter"  # type: ignore
 
         def _use_direct_routing(slug: str) -> bool:
-            return is_free_tier_slug(slug) or "mistral" in slug.lower()
+            if is_free_tier_slug(slug) or "mistral" in slug.lower():
+                return True
+            if "huggingface" in self.providers:
+                try:
+                    from .providers.hf_client import HuggingFaceClient
+
+                    if slug in HuggingFaceClient.MODEL_MAP:
+                        return True
+                except ImportError:
+                    pass
+            return False
 
         for model in models_to_use:
             model_lower = model.lower()

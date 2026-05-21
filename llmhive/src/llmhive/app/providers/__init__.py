@@ -26,6 +26,7 @@ from .together_client import TogetherClient, get_together_client
 from .groq_client import GroqClient, get_groq_client
 from .cerebras_client import CerebrasClient, get_cerebras_client
 from .hf_client import HuggingFaceClient, get_hf_client
+from .hf_provider import HuggingFaceProvider
 from .fireworks_client import FireworksClient, get_fireworks_client
 from .hyperbolic_client import HyperbolicClient, get_hyperbolic_client
 from .dashscope_client import get_dashscope_client
@@ -60,6 +61,7 @@ __all__ = [
     "get_cerebras_client",
     "HuggingFaceClient",
     "get_hf_client",
+    "HuggingFaceProvider",
     "FireworksClient",
     "get_fireworks_client",
     "HyperbolicClient",

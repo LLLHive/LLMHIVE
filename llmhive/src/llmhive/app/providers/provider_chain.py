@@ -100,7 +100,7 @@ def provider_available(provider: str) -> bool:
 def _family_providers(model_id: str) -> List[str]:
     m = model_id.lower()
     if m.startswith("google/") or "gemini" in m or "gemma" in m:
-        return [P_GOOGLE]
+        return [P_GOOGLE, P_HUGGINGFACE]
     if "deepseek" in m:
         return [P_DEEPSEEK]
     if "qwen" in m:

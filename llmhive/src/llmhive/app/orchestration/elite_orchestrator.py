@@ -1251,11 +1251,21 @@ class EliteOrchestrator:
             FREE_MODELS_DB = {}
 
         def _use_direct_routing(slug: str) -> bool:
-            return (
+            if (
                 is_free_tier_slug(slug)
                 or slug in FREE_MODELS_DB
                 or "mistral" in slug.lower()
-            )
+            ):
+                return True
+            if "huggingface" in self.providers:
+                try:
+                    from ..providers.hf_client import HuggingFaceClient
+
+                    if slug in HuggingFaceClient.MODEL_MAP:
+                        return True
+                except ImportError:
+                    pass
+            return False
 
         if openrouter_available:
             for model in all_models:
@@ -1296,6 +1306,12 @@ class EliteOrchestrator:
                 "grok": ["grok-2", "grok-4", "x-ai/grok-2", "x-ai/grok-4"],
                 "together": together_models,
             }
+            try:
+                from ..providers.hf_client import HuggingFaceClient
+
+                provider_models["huggingface"] = list(HuggingFaceClient.MODEL_MAP.keys())
+            except ImportError:
+                pass
             for provider, models in provider_models.items():
                 if provider in self.providers:
                     for model in models:

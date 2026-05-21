@@ -38,5 +38,6 @@ load MISTRAL_API_KEY mistral-api-key
 load AZURE_FOUNDRY_API_KEY azure-foundry-api-key
 load AZURE_FOUNDRY_ENDPOINT azure-foundry-endpoint
 load AZURE_FOUNDRY_DEPLOYMENTS azure-foundry-deployments
+load HF_TOKEN Hf-token
 
 exec python3 "${ROOT}/scripts/verify_direct_providers.py" "$@"

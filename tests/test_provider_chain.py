@@ -102,3 +102,34 @@ def test_provider_router_mistral_direct(monkeypatch):
     )
     assert provider == Provider.MISTRAL
     assert native == "mistral_small"
+
+
+def test_gemma_free_slug_routes_hf_when_token_set(monkeypatch):
+    monkeypatch.setenv("HF_TOKEN", "hf-test")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from llmhive.app.providers.provider_chain import (
+        build_provider_chain,
+        primary_provider_name,
+        P_HUGGINGFACE,
+    )
+
+    # 12b not in FREE_MODELS_DB — explicit PROVIDER_ROUTING → HF first
+    slug = "google/gemma-3-12b-it:free"
+    chain = build_provider_chain(slug)
+    assert chain[0][0] == P_HUGGINGFACE
+    assert primary_provider_name(slug) == "huggingface"
+
+    # 27b prefers Google in free_models_database; HF still on chain as spillover
+    slug27 = "google/gemma-3-27b-it:free"
+    chain27 = build_provider_chain(slug27)
+    providers = [p for p, _ in chain27]
+    assert providers[0] == "google"
+    assert P_HUGGINGFACE in providers
+
+
+def test_hf_provider_registered_with_token(monkeypatch):
+    monkeypatch.setenv("HF_TOKEN", "hf-test-key")
+    from llmhive.app.providers.hf_provider import HuggingFaceProvider
+
+    p = HuggingFaceProvider()
+    assert p.name == "huggingface"

@@ -130,6 +130,10 @@ PROVIDER_ROUTING = {
     "mistralai/mistral-small-3.1-24b-instruct:free": (Provider.MISTRAL, "mistral_small"),
     "mistralai/mistral-small-3.1-24b-instruct": (Provider.MISTRAL, "mistral_small"),
 
+    # HuggingFace Inference (when HF_TOKEN set; gemma free slugs prefer HF before spillover pool)
+    "google/gemma-3-27b-it:free": (Provider.HUGGINGFACE, "google/gemma-3-27b-it"),
+    "google/gemma-3-12b-it:free": (Provider.HUGGINGFACE, "google/gemma-3-12b-it"),
+
     # Everything else → OpenRouter (includes Llama, Qwen, and all other models)
 }
 
