@@ -28,20 +28,28 @@ This checklist is intentionally operational. It does not authorize any new runti
 
 ### Remaining launch blockers
 
-- workflow-only safety fixes not yet pushed from the protected branch
-- launch ownership not yet explicitly assigned
-- benchmark/pricing freeze not yet copied and acknowledged across all launch surfaces
+- [ ] Fill `artifacts/launch_freeze/launch_owners.yaml` (item 4)
+- [ ] Run `python3 scripts/verify_launch_automation_guards.py` on the branch you will merge (item 1)
+- [ ] Run `python3 scripts/verify_benchmark_claim_freeze.py` before publishing claims (item 3)
+- [ ] Sprint 2 marketplace submissions (item 5 — non-code; see `marketplace_listing_prep_sprint2.md`)
+
+Resolved in-repo (2026-05-18):
+
+- Workflow guard verifier aligned with `automation/weekly-improvement` (item 1)
+- `/v1/chat` launch latency decision + smoke budget (item 2) — `v1_chat_latency_launch_decision.md`
+- Benchmark claim manifest (item 3) — `benchmark_claim_basis.json`
 
 ## Owner Slots
 
-Fill these before launch:
+Fill `artifacts/launch_freeze/launch_owners.yaml` first, then mirror here:
 
-- Launch approver: `________________`
-- Support owner: `________________`
-- Production monitoring owner: `________________`
-- Benchmark source-of-truth owner: `________________`
-- Pricing/package owner: `________________`
-- Rollback executor: `________________`
+- Launch approver: `________________` (yaml: `owners.launch_approver`)
+- Support owner: `________________` (yaml: `owners.support`)
+- Production monitoring owner: `________________` (yaml: `owners.production_monitoring`)
+- Benchmark source-of-truth owner: `________________` (yaml: `owners.benchmark_source_of_truth`)
+- Pricing/package owner: `________________` (yaml: `owners.pricing_package`)
+- Rollback executor: `________________` (yaml: `owners.rollback_executor`)
+- Marketplace Sprint 2: `________________` (yaml: `marketplace_sprint2`)
 
 ## Go/No-Go Gates
 
@@ -109,11 +117,12 @@ Gate owner: `________________`
 
 Complete these before public launch:
 
-1. Push the workflow-only safety fixes from the protected launch branch.
-2. Freeze all market-facing benchmark tables to the approved artifact basis.
-3. Freeze package/pricing wording to the live pricing surface.
-4. Fill the owner slots above.
+1. Confirm workflow guards pass: `python3 scripts/verify_launch_automation_guards.py`.
+2. Confirm benchmark freeze: `python3 scripts/verify_benchmark_claim_freeze.py` (basis: `benchmark_claim_basis.json`).
+3. Freeze package/pricing wording to the live pricing surface (owner sign-off).
+4. Fill `launch_owners.yaml` and owner slots above.
 5. Share rollback references and launch-day contacts.
+6. `/v1/chat`: use smoke chat budget (`SMOKE_CHAT_MAX_MS=55000`); see `v1_chat_latency_launch_decision.md`.
 
 ## Launch Day Sequence
 

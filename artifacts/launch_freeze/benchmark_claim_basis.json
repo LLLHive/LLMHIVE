@@ -1,0 +1,28 @@
+{
+  "version": "2026-05-18",
+  "purpose": "Single approved benchmark basis for all launch-facing claims (website, press, investor, internal).",
+  "free": {
+    "json": "benchmark_reports/category_benchmarks_free_20260331.json",
+    "summary_md": "benchmark_reports/category_benchmarks_free_20260331.md"
+  },
+  "elite": {
+    "json": "benchmark_reports/category_benchmarks_elite_20260401.json",
+    "summary_md": "benchmark_reports/category_benchmarks_elite_20260401.md"
+  },
+  "leaders_optional": "benchmark_configs/category_leaders_llmhive.json",
+  "claim_rules": [
+    "Do not cite benchmark_reports files with dates other than 20260331 (free) or 20260401 (elite) in launch materials.",
+    "Keep RAG claims in native MRR@10 / MS MARCO framing.",
+    "Do not describe dialogue cost telemetry as confirmed zero-spend unless re-certified in the locked elite artifact.",
+    "Runtime orchestrator selection uses benchmark_rankings_jan2026.RANKINGS_MAY_2026; marketing tables must stay consistent with this freeze."
+  ],
+  "surfaces": [
+    "artifacts/category_gap_table_marketing.md",
+    "artifacts/category_gap_table_website.md",
+    "artifacts/category_gap_table_press.md",
+    "artifacts/category_gap_table_investor.md",
+    "artifacts/launch_freeze/launch_source_of_truth_packet_20260405.md",
+    "artifacts/launch_freeze/final_go_to_market_plan_20260404.md",
+    "lib/marketing/usecase-category-rankings.generated.json"
+  ]
+}

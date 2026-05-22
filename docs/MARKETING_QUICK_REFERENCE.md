@@ -240,7 +240,7 @@ A: Not at current pricing. We're optimized for the 80/20 rule: deliver 82% of th
 
 ## 📞 Contact for Questions
 
-**Technical Claims:** Reference `benchmark_reports/elite_tier_launch_report_20260201.md`  
+**Technical Claims:** Reference only the frozen launch basis — `benchmark_reports/category_benchmarks_free_20260331.json` and `benchmark_reports/category_benchmarks_elite_20260401.json` (see `artifacts/launch_freeze/benchmark_claim_basis.json`).  
 **Data Verification:** Use `scripts/run_real_industry_benchmarks.py`  
 **Media Inquiries:** Use approved statements above
 

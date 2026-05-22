@@ -77,6 +77,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=os.environ.get("SMOKE_TIMEOUT", "60"),
         help="Timeout in seconds for smoke test requests",
     )
+    parser.addoption(
+        "--smoke-chat-max-ms",
+        action="store",
+        default=os.environ.get("SMOKE_CHAT_MAX_MS", "55000"),
+        help="Max allowed /v1/chat latency in ms for launch smoke (below request timeout)",
+    )
 
 
 @dataclass
@@ -85,6 +91,7 @@ class SmokeTestConfig:
     base_url: str
     api_key: str
     timeout: int
+    chat_max_ms: int
     
     @property
     def headers(self) -> dict:
@@ -105,16 +112,19 @@ def smoke_config(request: pytest.FixtureRequest) -> SmokeTestConfig:
     base_url = request.config.getoption("--production-url").rstrip("/")
     api_key = request.config.getoption("--api-key")
     timeout = int(request.config.getoption("--smoke-timeout"))
+    chat_max_ms = int(request.config.getoption("--smoke-chat-max-ms"))
     
     logger.info(f"Smoke test configuration:")
     logger.info(f"  Base URL: {base_url}")
     logger.info(f"  API Key: {'***' + api_key[-4:] if api_key else 'Not provided'}")
     logger.info(f"  Timeout: {timeout}s")
+    logger.info(f"  Chat max latency: {chat_max_ms}ms")
     
     return SmokeTestConfig(
         base_url=base_url,
         api_key=api_key,
         timeout=timeout,
+        chat_max_ms=chat_max_ms,
     )
 
 

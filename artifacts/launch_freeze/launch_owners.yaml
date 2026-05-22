@@ -1,0 +1,45 @@
+# Fill all fields before public launch. Do not commit personal emails if policy forbids;
+# use role aliases + on-call rotation links instead.
+version: "2026-05-18"
+
+owners:
+  launch_approver:
+    name: ""
+    contact: ""
+    backup: ""
+  support:
+    name: ""
+    contact: ""
+    hours: "Launch week: extended coverage"
+    escalation: ""
+  production_monitoring:
+    name: ""
+    contact: ""
+    dashboards:
+      - "Cloud Run llmhive-orchestrator metrics"
+      - "GitHub Production Smoke Tests (daily + post-deploy)"
+    alerts:
+      - "Slack via smoke-tests failure webhook"
+  benchmark_source_of_truth:
+    name: ""
+    contact: ""
+    artifacts:
+      - "artifacts/launch_freeze/benchmark_claim_basis.json"
+      - "benchmark_reports/category_benchmarks_free_20260331.json"
+      - "benchmark_reports/category_benchmarks_elite_20260401.json"
+  pricing_package:
+    name: ""
+    contact: ""
+    live_surface: "https://www.llmhive.ai/pricing"
+  rollback_executor:
+    name: ""
+    contact: ""
+    references:
+      - "artifacts/launch_freeze/launch_source_of_truth_packet_20260405.md"
+      - "artifacts/launch_freeze/final_launch_readiness_checklist_20260405.md"
+
+marketplace_sprint2:
+  owner: ""
+  contact: ""
+  target: "AWS Marketplace + GCP Marketplace listing prep (Sprint 2, days 31–60)"
+  checklist: "artifacts/launch_freeze/marketplace_listing_prep_sprint2.md"
