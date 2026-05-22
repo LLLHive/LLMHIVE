@@ -87,6 +87,16 @@ jobs:
           else
             echo "::warning::api-key not found in Secret Manager"
           fi
+
+          # Scheduled benchmark secret — bypasses paid-subscription gate on /v1/chat (same as scheduled-benchmarks.yml)
+          BENCH_SECRET=$(gcloud secrets versions access latest --secret="scheduled-benchmark-secret" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$BENCH_SECRET" ]; then
+            echo "::add-mask::$BENCH_SECRET"
+            echo "LLMHIVE_SCHEDULED_BENCHMARK_SECRET=$BENCH_SECRET" >> $GITHUB_ENV
+            echo "✅ Retrieved scheduled-benchmark-secret from Secret Manager"
+          else
+            echo "::warning::scheduled-benchmark-secret not found; chat smoke needs SMOKE_TEST_USER_ID repo secret"
+          fi
           
           # Slack webhook URL for failure notifications
           SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
@@ -113,6 +123,8 @@ jobs:
           PRODUCTION_URL: ${{ steps.url.outputs.url }}
           SMOKE_TIMEOUT: '60'
           SMOKE_CHAT_MAX_MS: '55000'
+          LLMHIVE_SCHEDULED_BENCHMARK_SECRET: ${{ env.LLMHIVE_SCHEDULED_BENCHMARK_SECRET }}
+          SMOKE_TEST_USER_ID: ${{ secrets.SMOKE_TEST_USER_ID }}
         run: |
           echo "Running smoke tests against: $PRODUCTION_URL"
           pytest tests/smoke/ \
@@ -336,6 +348,12 @@ jobs:
             echo "QUALITY_TEST_API_KEY=$API_KEY" >> $GITHUB_ENV
           fi
 
+          BENCH_SECRET=$(gcloud secrets versions access latest --secret="scheduled-benchmark-secret" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$BENCH_SECRET" ]; then
+            echo "::add-mask::$BENCH_SECRET"
+            echo "LLMHIVE_SCHEDULED_BENCHMARK_SECRET=$BENCH_SECRET" >> $GITHUB_ENV
+          fi
+
       - name: Determine production URL
         id: url
         run: |
@@ -349,6 +367,8 @@ jobs:
         id: quality
         env:
           PRODUCTION_URL: ${{ steps.url.outputs.url }}
+          LLMHIVE_SCHEDULED_BENCHMARK_SECRET: ${{ env.LLMHIVE_SCHEDULED_BENCHMARK_SECRET }}
+          SMOKE_TEST_USER_ID: ${{ secrets.SMOKE_TEST_USER_ID }}
         run: |
           echo "Running quality benchmarks against: $PRODUCTION_URL"
           pytest tests/smoke/test_quality_benchmark.py \

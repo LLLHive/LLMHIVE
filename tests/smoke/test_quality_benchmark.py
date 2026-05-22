@@ -15,7 +15,12 @@ from typing import Any, Dict, List
 import pytest
 import requests
 
-from .conftest import SmokeTestConfig, ResponseTimer
+from .conftest import (
+    SmokeTestConfig,
+    ResponseTimer,
+    build_smoke_chat_payload,
+    require_chat_smoke_gate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -126,18 +131,18 @@ class TestQualityBenchmarks:
         timer: type[ResponseTimer],
     ) -> None:
         """Test individual quality benchmark."""
+        require_chat_smoke_gate(smoke_config)
         url = f"{smoke_config.base_url}/v1/chat"
-        
-        payload = {
-            "prompt": benchmark["prompt"],
-            "reasoning_mode": "standard",
-            "domain_pack": "default",
-            "max_tokens": 500,
-            "stream": False,
-            "orchestration": {
-                "accuracy_level": 3,
-            },
-        }
+
+        payload = build_smoke_chat_payload(
+            smoke_config,
+            prompt=benchmark["prompt"],
+            reasoning_mode="standard",
+            domain_pack="default",
+            max_tokens=500,
+            stream=False,
+            orchestration={"accuracy_level": 3},
+        )
         
         test_id = benchmark["id"]
         category = benchmark["category"]
@@ -155,9 +160,9 @@ class TestQualityBenchmarks:
         # Check response status
         if response.status_code != 200:
             if response.status_code in (401, 402, 403):
-                pytest.skip(
-                    f"Chat quality check skipped: {response.status_code} "
-                    "(auth or subscription required for smoke API key)"
+                pytest.fail(
+                    f"Chat quality check failed: {response.status_code} "
+                    f"{response.text[:200]}"
                 )
             elif response.status_code == 429:
                 pytest.skip("Rate limited")
@@ -202,20 +207,22 @@ class TestQualityBenchmarks:
         timer: type[ResponseTimer],
     ) -> None:
         """Verify we never return empty responses."""
+        require_chat_smoke_gate(smoke_config)
         url = f"{smoke_config.base_url}/v1/chat"
-        
+
         test_prompts = [
             "Hello, how are you?",
             "What is 2 + 2?",
             "Explain photosynthesis briefly.",
         ]
-        
+
         for prompt in test_prompts:
-            payload = {
-                "prompt": prompt,
-                "max_tokens": 100,
-                "stream": False,
-            }
+            payload = build_smoke_chat_payload(
+                smoke_config,
+                prompt=prompt,
+                max_tokens=100,
+                stream=False,
+            )
             
             with timer(f"Empty response check"):
                 response = http_client.post(
