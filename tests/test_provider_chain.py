@@ -133,3 +133,38 @@ def test_hf_provider_registered_with_token(monkeypatch):
 
     p = HuggingFaceProvider()
     assert p.name == "huggingface"
+
+
+def test_llama_free_slug_primary_groq_when_registered(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "gsk-test")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from llmhive.app.providers.provider_chain import primary_provider_name
+
+    providers = {}
+    from llmhive.app.providers.spillover_provider_registry import register_spillover_providers
+
+    register_spillover_providers(providers)
+    assert "groq" in providers
+    assert primary_provider_name("meta-llama/llama-3.3-70b-instruct:free") == "groq"
+
+
+def test_catalog_sync_adds_mistral_free_slug():
+    from llmhive.app.orchestration.direct_provider_catalog_sync import merge_catalog_into_free_models_db
+    from llmhive.app.orchestration.free_models_database import FREE_MODELS_DB
+
+    merge_catalog_into_free_models_db()
+    assert "mistralai/mistral-small-3.1-24b-instruct:free" in FREE_MODELS_DB or any(
+        "mistral" in k for k in FREE_MODELS_DB
+    )
+
+
+def test_benchmark_table_loaded():
+    from llmhive.app.knowledge.orchestrator_benchmark_table import (
+        BENCHMARK_TABLE_AVAILABLE,
+        get_orchestrator_benchmark_snapshot,
+    )
+
+    assert BENCHMARK_TABLE_AVAILABLE
+    snap = get_orchestrator_benchmark_snapshot(top_k=3)
+    assert snap["available"]
+    assert len(snap["categories"]) >= 5

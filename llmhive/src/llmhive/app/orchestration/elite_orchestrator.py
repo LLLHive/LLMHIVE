@@ -1250,31 +1250,14 @@ class EliteOrchestrator:
             primary_provider_name = lambda _m: "openrouter"  # type: ignore
             FREE_MODELS_DB = {}
 
-        def _use_direct_routing(slug: str) -> bool:
-            if (
-                is_free_tier_slug(slug)
-                or slug in FREE_MODELS_DB
-                or "mistral" in slug.lower()
-            ):
-                return True
-            if "huggingface" in self.providers:
-                try:
-                    from ..providers.hf_client import HuggingFaceClient
-
-                    if slug in HuggingFaceClient.MODEL_MAP:
-                        return True
-                except ImportError:
-                    pass
-            return False
-
         if openrouter_available:
             for model in all_models:
-                if (
-                    routing_v2_enabled()
-                    and _use_direct_routing(model)
-                    and primary_provider_name(model) in self.providers
-                ):
-                    mapping[model] = primary_provider_name(model)
+                if routing_v2_enabled():
+                    pname = primary_provider_name(model)
+                    if pname in self.providers:
+                        mapping[model] = pname
+                    else:
+                        mapping[model] = "openrouter"
                 else:
                     mapping[model] = "openrouter"
             if routing_v2_enabled():
@@ -1310,6 +1293,22 @@ class EliteOrchestrator:
                 from ..providers.hf_client import HuggingFaceClient
 
                 provider_models["huggingface"] = list(HuggingFaceClient.MODEL_MAP.keys())
+            except ImportError:
+                pass
+            try:
+                from ..providers.groq_client import GroqClient
+                from ..providers.cerebras_client import CerebrasClient
+
+                provider_models["groq"] = list(GroqClient.MODEL_MAP.keys())
+                provider_models["cerebras"] = list(CerebrasClient.MODEL_MAP.keys())
+            except ImportError:
+                pass
+            try:
+                from ..orchestration.direct_provider_catalog_sync import load_catalog_openrouter_maps
+
+                for or_slug, (api, _) in load_catalog_openrouter_maps().items():
+                    if api in self.providers:
+                        provider_models.setdefault(api, []).append(or_slug)
             except ImportError:
                 pass
             for provider, models in provider_models.items():
@@ -2362,6 +2361,23 @@ Provide the improved answer:"""
         """Call a model and return structured response."""
         provider_name = self.model_providers.get(model)
         if not provider_name or provider_name not in self.providers:
+            try:
+                from ..providers import get_provider_router
+                from ..providers.provider_chain import routing_v2_enabled
+
+                if routing_v2_enabled():
+                    router = get_provider_router()
+                    text = await router.generate(model, prompt, orchestrator=None)
+                    if text:
+                        return ModelResponse(
+                            model=model,
+                            content=text,
+                            latency_ms=0.0,
+                            tokens_used=0,
+                            quality_score=self._estimate_quality(text),
+                        )
+            except Exception as exc:
+                logger.debug("Provider router fallback failed for %s: %s", model, exc)
             raise ValueError(f"No provider for model: {model}")
         
         provider = self.providers[provider_name]

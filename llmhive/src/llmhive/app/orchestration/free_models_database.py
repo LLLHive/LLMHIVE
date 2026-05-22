@@ -307,6 +307,38 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         supports_tools=False,
     ),
 
+    "mistralai/mistral-small-3.1-24b-instruct:free": FreeModelInfo(
+        model_id="mistralai/mistral-small-3.1-24b-instruct:free",
+        display_name="Mistral Small 3.1 24B",
+        provider="Mistral",
+        context_window=96000,
+        speed_tier=SpeedTier.FAST,
+        strengths=[ModelStrength.REASONING, ModelStrength.SPEED],
+        best_for=["Fast reasoning", "General tasks"],
+        notes="Mistral direct API — avoids OpenRouter :free throttle",
+        verified_working=True,
+        preferred_api="mistral",
+        native_model_id="mistral_small",
+        performance_score=67.9,
+        capability_score=60.0,
+    ),
+
+    "google/gemma-3-12b-it:free": FreeModelInfo(
+        model_id="google/gemma-3-12b-it:free",
+        display_name="Gemma 3 12B IT",
+        provider="Google",
+        context_window=131072,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[ModelStrength.MULTILINGUAL, ModelStrength.REASONING],
+        best_for=["Efficient multilingual tasks"],
+        notes="HF Inference or Google direct via ROUTING_V2",
+        verified_working=True,
+        preferred_api="huggingface",
+        native_model_id="google/gemma-3-12b-it",
+        performance_score=60.0,
+        capability_score=55.0,
+    ),
+
     "google/gemma-3-27b-it:free": FreeModelInfo(
         model_id="google/gemma-3-27b-it:free",
         display_name="Gemma 3 27B IT",

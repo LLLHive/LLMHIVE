@@ -576,6 +576,8 @@ class Orchestrator:
     def __init__(self):
         """Initialize orchestrator with available providers."""
         self.providers: Dict[str, Any] = {}
+        self.benchmark_table_available = False
+        self.benchmark_snapshot: Dict[str, Any] = {}
         self.mcp_client = None  # MCP client (optional)
         
         # Initialize HRM planner and executor if available
@@ -1122,10 +1124,15 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
             except Exception as e:
                 logger.warning(f"Failed to initialize Grok provider: {e}")
         
-        # Initialize Gemini provider
-        if os.getenv("GEMINI_API_KEY") and GEMINI_AVAILABLE:
+        # Initialize Gemini provider (GEMINI_API_KEY or GOOGLE_AI_API_KEY for AI Studio)
+        _gemini_key = (
+            os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_AI_API_KEY")
+            or os.getenv("GEMINI_API_KEY_2")
+        )
+        if _gemini_key and GEMINI_AVAILABLE:
             try:
-                self.providers["gemini"] = GeminiProvider(api_key=os.getenv("GEMINI_API_KEY"))
+                self.providers["gemini"] = GeminiProvider(api_key=_gemini_key)
                 logger.info("Gemini provider initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize Gemini provider: {e}")
@@ -1422,6 +1429,46 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                     logger.info("Together.ai provider initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize Together.ai provider: {e}")
+
+        # ROUTING_V2: Groq, Cerebras, Fireworks, Hyperbolic, DashScope, DeepInfra, Azure, Cloudflare, Kimi
+        try:
+            from .providers.spillover_provider_registry import register_spillover_providers
+
+            registered = register_spillover_providers(self.providers)
+            if registered:
+                logger.info(
+                    "ROUTING_V2 spillover providers registered: %s",
+                    ", ".join(registered),
+                )
+        except Exception as e:
+            logger.warning("Spillover provider registration failed: %s", e)
+
+        try:
+            from .orchestration.direct_provider_catalog_sync import merge_catalog_into_free_models_db
+
+            merge_catalog_into_free_models_db()
+        except Exception as e:
+            logger.debug("Catalog sync into FREE_MODELS_DB skipped: %s", e)
+
+        try:
+            from .knowledge.orchestrator_benchmark_table import (
+                BENCHMARK_TABLE_AVAILABLE,
+                get_orchestrator_benchmark_snapshot,
+            )
+
+            self.benchmark_table_available = BENCHMARK_TABLE_AVAILABLE
+            if BENCHMARK_TABLE_AVAILABLE:
+                self.benchmark_snapshot = get_orchestrator_benchmark_snapshot(top_k=5)
+                logger.info(
+                    "Benchmark leaderboard loaded (%d categories)",
+                    len(self.benchmark_snapshot.get("categories", {})),
+                )
+            else:
+                self.benchmark_snapshot = {}
+        except Exception as e:
+            self.benchmark_table_available = False
+            self.benchmark_snapshot = {}
+            logger.debug("Benchmark table not loaded: %s", e)
         
         # Always add stub provider as fallback
         if STUB_AVAILABLE and StubProvider:
@@ -2733,28 +2780,17 @@ Please provide an accurate, well-verified response."""
             is_free_tier_slug = lambda _m: False  # type: ignore
             primary_provider_name = lambda _m: "openrouter"  # type: ignore
 
-        def _use_direct_routing(slug: str) -> bool:
-            if is_free_tier_slug(slug) or "mistral" in slug.lower():
-                return True
-            if "huggingface" in self.providers:
-                try:
-                    from .providers.hf_client import HuggingFaceClient
-
-                    if slug in HuggingFaceClient.MODEL_MAP:
-                        return True
-                except ImportError:
-                    pass
-            return False
-
         for model in models_to_use:
             model_lower = model.lower()
 
-            if (
-                routing_v2_enabled()
-                and _use_direct_routing(model)
-                and primary_provider_name(model) in self.providers
-            ):
-                model_to_provider[model] = primary_provider_name(model)
+            if routing_v2_enabled():
+                pname = primary_provider_name(model)
+                if pname in self.providers:
+                    model_to_provider[model] = pname
+                elif openrouter_available:
+                    model_to_provider[model] = "openrouter"
+                else:
+                    model_to_provider[model] = pname if pname in self.providers else model
             elif openrouter_available:
                 if "/" in model:
                     model_to_provider[model] = "openrouter"
@@ -2775,12 +2811,17 @@ Please provide an accurate, well-verified response."""
                 else:
                     model_to_provider[model] = model
         
-        if openrouter_available and not any(
-            routing_v2_enabled() and _use_direct_routing(m) for m in models_to_use
-        ):
+        if routing_v2_enabled():
+            direct_count = sum(
+                1 for m in models_to_use if model_to_provider.get(m) != "openrouter"
+            )
+            logger.info(
+                "ROUTING_V2: %d/%d models mapped to direct providers",
+                direct_count,
+                len(models_to_use),
+            )
+        elif openrouter_available:
             logger.info("Using OpenRouter as PRIMARY provider for %d models", len(models_to_use))
-        elif any(routing_v2_enabled() and _use_direct_routing(m) for m in models_to_use):
-            logger.info("ROUTING_V2: direct-first provider map for %d models", len(models_to_use))
         
         # Consensus result tracking
         consensus_result: Optional[Any] = None
