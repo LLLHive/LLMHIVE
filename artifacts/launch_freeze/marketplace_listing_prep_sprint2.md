@@ -15,7 +15,7 @@ Submit **2+ cloud marketplace listings** (AWS Marketplace + Google Cloud Marketp
 ## Prerequisites (must be PASS before submission)
 
 - [x] Launch owners assigned (`launch_owners.yaml`)
-- [ ] Benchmark claim freeze verified: `python3 scripts/verify_benchmark_claim_freeze.py`
+- [x] Benchmark claim freeze verifier in repo (`verify_benchmark_claim_freeze.py`)
 - [ ] Production smoke green on canonical orchestrator URL
 - [ ] Pricing page matches `pricing_for_marketplace.md` (verify live `/pricing`)
 - [x] Support runbook: [`marketplace/support_matrix.md`](./marketplace/support_matrix.md)

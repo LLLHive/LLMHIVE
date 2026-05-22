@@ -1,6 +1,7 @@
 # Launch Source-of-Truth Packet
 
-Date: `2026-04-05`
+Date: `2026-04-05`  
+**Addendum (current prod + pricing):** [`launch_baseline_20260522.md`](./launch_baseline_20260522.md) — serving revision `02451-4fq`, Standard/Premium pricing.
 
 ## Purpose
 
@@ -122,23 +123,17 @@ Public pricing/package wording currently exposed on the live pricing surface:
   - `UNLIMITED queries`
   - `Basic features`
 
-### Lite
+### Standard (was “Lite” in older copy)
 
-- Price: `$14.99/month`
-- Positioning: `Unlock #1 AI quality`
-- Core quotas:
-  - `100 ELITE queries`
-  - `Then UNLIMITED FREE`
-  - `#1 in ALL categories`
+- Price: **`$10/month`** (see `launch_baseline_20260522.md`)
+- Positioning: Standard orchestration for everyday work
+- Core quotas: spend-guard protected elite orchestration, then free tier
 
-### Pro
+### Premium (was “Pro” in older copy)
 
-- Price: `$29.99/month`
-- Positioning: `Maximum power for professionals`
-- Core quotas:
-  - `500 ELITE queries`
-  - `Then UNLIMITED FREE`
-  - `#1 in ALL + Full API`
+- Price: **`$20/month`**
+- Positioning: Premium / benchmark-grade orchestration
+- Core quotas: higher orchestration depth while spend guard allows
 
 ### Enterprise
 

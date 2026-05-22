@@ -2,7 +2,9 @@
 
 Date: `2026-05-18`  
 Item 6 (Kimi): **done** — account funded, GCP secret rotated, direct API verified.  
-Item 8 (Marketplace launch): **pending** — non-code; see Sprint 2 checklist.
+Item 8 (Marketplace launch): **pack ready** — portal submit Sprint 2; see `marketplace/`.
+
+**2026-05-22 follow-up:** `launch_baseline_20260522.md`, `verify_launch_gates.py`, smoke job split (`-m "not quality"`), revision `02451-4fq`.
 
 ## Summary
 

@@ -53,7 +53,7 @@ const isPublicRoute = createRouteMatcher([
 
   // API routes that should be public
   "/api/webhooks(.*)",
-  "/api/health",
+  "/api/health(.*)",
   "/api/openrouter(.*)",  // OpenRouter API routes for model catalog
   "/api/settings(.*)",    // Settings API for loading user preferences
 

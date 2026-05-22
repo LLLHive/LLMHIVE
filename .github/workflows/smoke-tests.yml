@@ -127,11 +127,13 @@ jobs:
           SMOKE_TEST_USER_ID: ${{ secrets.SMOKE_TEST_USER_ID }}
         run: |
           echo "Running smoke tests against: $PRODUCTION_URL"
+          # Blocking job: health + chat latency; quality benchmarks run in quality-benchmarks job.
           pytest tests/smoke/ \
             --production-url="$PRODUCTION_URL" \
             --api-key="${SMOKE_TEST_API_KEY:-}" \
             --smoke-timeout=60 \
             --smoke-chat-max-ms="${SMOKE_CHAT_MAX_MS}" \
+            -m "smoke and not quality" \
             -v \
             --tb=short \
             --junit-xml=smoke-test-results.xml \
