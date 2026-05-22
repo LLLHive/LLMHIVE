@@ -52,16 +52,17 @@ def run_checks() -> dict[str, object]:
     checks.append(
         _check(
             "weekly_improvement_routes_to_pr_branch",
-            "automation/improvement-reports" in weekly
+            'BRANCH="automation/weekly-improvement"' in weekly
             and "gh pr create --base main --head" in weekly,
-            "Improvement reports workflow must push to an automation branch and open/update a PR.",
+            "Weekly improvement must push to automation/weekly-improvement and open/update a PR.",
         )
     )
     checks.append(
         _check(
-            "weekly_improvement_no_force_push",
-            "force-with-lease" not in weekly.lower(),
-            "Improvement reports workflow must not force-push (report history must accumulate).",
+            "weekly_improvement_uses_safe_automation_push",
+            "git push --force-with-lease origin" in weekly
+            and 'git push origin main' not in weekly,
+            "Weekly improvement must force-with-lease to its automation branch only (never main).",
         )
     )
     checks.append(

@@ -112,12 +112,14 @@ jobs:
         env:
           PRODUCTION_URL: ${{ steps.url.outputs.url }}
           SMOKE_TIMEOUT: '60'
+          SMOKE_CHAT_MAX_MS: '55000'
         run: |
           echo "Running smoke tests against: $PRODUCTION_URL"
           pytest tests/smoke/ \
             --production-url="$PRODUCTION_URL" \
             --api-key="${SMOKE_TEST_API_KEY:-}" \
             --smoke-timeout=60 \
+            --smoke-chat-max-ms="${SMOKE_CHAT_MAX_MS}" \
             -v \
             --tb=short \
             --junit-xml=smoke-test-results.xml \

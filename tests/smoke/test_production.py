@@ -230,7 +230,7 @@ class TestAuthenticatedEndpoints:
             "stream": False,
         }
         
-        with timer("POST /v1/chat (simple)"):
+        with timer("POST /v1/chat (simple)") as chat_timer:
             response = http_client.post(
                 url,
                 json=payload,
@@ -241,8 +241,14 @@ class TestAuthenticatedEndpoints:
             data = response.json()
             assert "message" in data or "content" in data or "response" in data, \
                 f"Unexpected chat response format: {list(data.keys())}"
+            assert chat_timer.duration_ms <= smoke_config.chat_max_ms, (
+                f"Chat latency {chat_timer.duration_ms:.0f}ms exceeds launch budget "
+                f"{smoke_config.chat_max_ms}ms (see artifacts/launch_freeze/"
+                f"v1_chat_latency_launch_decision.md)"
+            )
             logger.info(f"✅ Chat completion successful")
             logger.info(f"   Response: {str(data)[:200]}...")
+            logger.info(f"   Latency: {chat_timer.duration_ms:.0f}ms")
         elif response.status_code in (401, 402):
             pytest.skip(
                 f"Chat smoke skipped: {response.status_code} "
