@@ -19,7 +19,9 @@ Status: **Launch-acceptable with monitoring**
 
 ## What we did (no runtime routing change)
 
-- Smoke tests record chat latency and assert the **55s** budget on successful simple chat (`tests/smoke/test_production.py`).
+- Smoke tests send `api-key` + `X-LLMHIVE-Scheduled-Benchmark-Secret` (from GCP `scheduled-benchmark-secret`, same as scheduled benchmarks) so `/v1/chat` returns 200 in CI.
+- Optional fallback: `SMOKE_TEST_USER_ID` repo secret → `metadata.user_id` for a paid subscriber.
+- On 200, smoke asserts the **55s** budget (`tests/smoke/test_production.py`).
 - Failed smoke runs upload Cloud Run `/v1/chat` latency diagnostics (`.github/workflows/smoke-tests.yml`).
 
 ## What we did not change (avoid regressions)

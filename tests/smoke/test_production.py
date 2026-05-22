@@ -20,7 +20,10 @@ from .conftest import (
     HEALTH_PROBE_PATHS,
     SmokeTestConfig,
     ResponseTimer,
+    assert_chat_latency,
+    build_smoke_chat_payload,
     probe_health_endpoint,
+    require_chat_smoke_gate,
 )
 
 logger = logging.getLogger(__name__)
@@ -222,37 +225,35 @@ class TestAuthenticatedEndpoints:
         timer: type[ResponseTimer],
     ) -> None:
         """Test simple chat completion."""
+        require_chat_smoke_gate(smoke_config)
         url = f"{smoke_config.base_url}/v1/chat"
-        
-        payload = {
-            "prompt": "Say 'Hello, smoke test!' and nothing else.",
-            "max_tokens": 50,
-            "stream": False,
-        }
-        
+
+        payload = build_smoke_chat_payload(
+            smoke_config,
+            prompt="Say 'Hello, smoke test!' and nothing else.",
+            max_tokens=50,
+            stream=False,
+        )
+
         with timer("POST /v1/chat (simple)") as chat_timer:
             response = http_client.post(
                 url,
                 json=payload,
                 timeout=smoke_config.timeout,
             )
-        
+
         if response.status_code == 200:
             data = response.json()
             assert "message" in data or "content" in data or "response" in data, \
                 f"Unexpected chat response format: {list(data.keys())}"
-            assert chat_timer.duration_ms <= smoke_config.chat_max_ms, (
-                f"Chat latency {chat_timer.duration_ms:.0f}ms exceeds launch budget "
-                f"{smoke_config.chat_max_ms}ms (see artifacts/launch_freeze/"
-                f"v1_chat_latency_launch_decision.md)"
-            )
-            logger.info(f"✅ Chat completion successful")
+            assert_chat_latency(chat_timer, smoke_config)
+            logger.info("✅ Chat completion successful")
             logger.info(f"   Response: {str(data)[:200]}...")
             logger.info(f"   Latency: {chat_timer.duration_ms:.0f}ms")
         elif response.status_code in (401, 402):
-            pytest.skip(
-                f"Chat smoke skipped: {response.status_code} "
-                "(auth or subscription required for smoke API key)"
+            pytest.fail(
+                f"Chat smoke failed: {response.status_code} {response.text[:200]} "
+                "(check api-key + scheduled-benchmark-secret or SMOKE_TEST_USER_ID)"
             )
         elif response.status_code == 429:
             logger.warning("⚠️  Rate limited - try again later")
@@ -267,34 +268,37 @@ class TestAuthenticatedEndpoints:
         timer: type[ResponseTimer],
     ) -> None:
         """Test chat with orchestration settings."""
+        require_chat_smoke_gate(smoke_config)
         url = f"{smoke_config.base_url}/v1/chat"
-        
-        payload = {
-            "prompt": "What is 2 + 2?",
-            "reasoning_mode": "standard",
-            "domain_pack": "default",
-            "agent_mode": "single",
-            "max_tokens": 100,
-            "stream": False,
-        }
-        
-        with timer("POST /v1/chat (orchestrated)"):
+
+        payload = build_smoke_chat_payload(
+            smoke_config,
+            prompt="What is 2 + 2?",
+            reasoning_mode="standard",
+            domain_pack="default",
+            agent_mode="single",
+            max_tokens=100,
+            stream=False,
+        )
+
+        with timer("POST /v1/chat (orchestrated)") as chat_timer:
             response = http_client.post(
                 url,
                 json=payload,
                 timeout=smoke_config.timeout,
             )
-        
+
         if response.status_code == 200:
             data = response.json()
-            logger.info(f"✅ Orchestrated chat successful")
-            # Check for orchestration metadata
+            assert_chat_latency(chat_timer, smoke_config)
+            logger.info("✅ Orchestrated chat successful")
             if "models_used" in data or "extra" in data:
-                logger.info(f"   Orchestration metadata present")
+                logger.info("   Orchestration metadata present")
+            logger.info(f"   Latency: {chat_timer.duration_ms:.0f}ms")
         elif response.status_code in (401, 402):
-            pytest.skip(
-                f"Orchestrated chat smoke skipped: {response.status_code} "
-                "(auth or subscription required for smoke API key)"
+            pytest.fail(
+                f"Orchestrated chat smoke failed: {response.status_code} "
+                f"{response.text[:200]}"
             )
         elif response.status_code == 429:
             logger.warning("⚠️  Rate limited - try again later")
