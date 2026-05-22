@@ -37,7 +37,7 @@ See `launch_owners.yaml` — Camilo Diaz / cdiaz@llmhive.ai (backup Paulina for 
 
 ## Go/No-Go Gates
 
-Run: `python3 scripts/verify_launch_gates.py` (with GCP secrets for full chat probe).
+Run: `./scripts/run_verify_launch_gates.sh` (loads GCP secrets + runs probes). Expect `"passed": true`.
 
 ### 1. Live identity gate
 
@@ -95,10 +95,7 @@ Gate owner: **Camilo Diaz**
 ```bash
 python3 scripts/verify_launch_automation_guards.py
 python3 scripts/verify_benchmark_claim_freeze.py
-export API_KEY=$(gcloud secrets versions access latest --secret=api-key --project=llmhive-orchestrator)
-export LLMHIVE_SCHEDULED_BENCHMARK_SECRET=$(gcloud secrets versions access latest --secret=scheduled-benchmark-secret --project=llmhive-orchestrator)
-export CLOUD_RUN_REVISION=llmhive-orchestrator-02451-4fq
-python3 scripts/verify_launch_gates.py
+./scripts/run_verify_launch_gates.sh
 ```
 
 ## Go/No-Go decision

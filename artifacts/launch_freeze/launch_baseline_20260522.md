@@ -31,18 +31,25 @@ Do **not** use Lite $14.99 / Pro $29.99 in new external copy.
 - Latency budget: `SMOKE_CHAT_MAX_MS=55000`
 - Quality benchmarks: separate job (`continue-on-error`)
 
-## Automated gate verify
+## Automated gate verify (step 2)
+
+From repo root — **do not** run `verify_launch_gates.py` alone (not on PATH):
 
 ```bash
-export API_KEY=$(gcloud secrets versions access latest --secret=api-key --project=llmhive-orchestrator)
-export LLMHIVE_SCHEDULED_BENCHMARK_SECRET=$(gcloud secrets versions access latest --secret=scheduled-benchmark-secret --project=llmhive-orchestrator)
-export CLOUD_RUN_REVISION=llmhive-orchestrator-02451-4fq
-python3 scripts/verify_launch_gates.py
+./scripts/run_verify_launch_gates.sh
 ```
 
-## Pending frontend deploy (one route)
+Or manually:
 
-- `proxy.ts`: allow public `/api/health(.*)` so `/api/health/integrations` is not Clerk-gated (was HTTP 401 on live until redeploy).
+```bash
+python3 scripts/verify_launch_gates.py   # after exporting secrets (see script above)
+```
+
+Expect `"passed": true` on all checks after Vercel deploy `a2757ad` (proxy health fix).
+
+## Frontend deploy (done)
+
+- `proxy.ts`: `/api/health(.*)` public — deployed to production (`a2757ad`).
 
 ## Sign-off
 
