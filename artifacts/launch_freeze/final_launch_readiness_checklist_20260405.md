@@ -28,7 +28,7 @@ This checklist is intentionally operational. It does not authorize any new runti
 
 ### Remaining launch blockers
 
-- [ ] Fill `artifacts/launch_freeze/launch_owners.yaml` (item 4)
+- [x] Fill `artifacts/launch_freeze/launch_owners.yaml` (item 4) — done 2026-05-18
 - [ ] Run `python3 scripts/verify_launch_automation_guards.py` on the branch you will merge (item 1)
 - [ ] Run `python3 scripts/verify_benchmark_claim_freeze.py` before publishing claims (item 3)
 - [ ] Sprint 2 marketplace submissions (item 5 — non-code; see `marketplace_listing_prep_sprint2.md`)
@@ -41,15 +41,15 @@ Resolved in-repo (2026-05-18):
 
 ## Owner Slots
 
-Fill `artifacts/launch_freeze/launch_owners.yaml` first, then mirror here:
+Mirrors `artifacts/launch_freeze/launch_owners.yaml` (updated 2026-05-18):
 
-- Launch approver: `________________` (yaml: `owners.launch_approver`)
-- Support owner: `________________` (yaml: `owners.support`)
-- Production monitoring owner: `________________` (yaml: `owners.production_monitoring`)
-- Benchmark source-of-truth owner: `________________` (yaml: `owners.benchmark_source_of_truth`)
-- Pricing/package owner: `________________` (yaml: `owners.pricing_package`)
-- Rollback executor: `________________` (yaml: `owners.rollback_executor`)
-- Marketplace Sprint 2: `________________` (yaml: `marketplace_sprint2`)
+- Launch approver: **Camilo Diaz** — cdiaz@llmhive.ai (backup: Paulina Diaz — pdiaz@llmhive.ai)
+- Support owner: **Camilo Diaz** — cdiaz@llmhive.ai (hours: Launch week 8am–10pm ET; escalation: cdiaz@llmhive.ai)
+- Production monitoring owner: **Camilo Diaz** — cdiaz@llmhive.ai
+- Benchmark source-of-truth owner: **Camilo Diaz** — cdiaz@llmhive.ai
+- Pricing/package owner: **Camilo Diaz** — cdiaz@llmhive.ai
+- Rollback executor: **Camilo Diaz** — cdiaz@llmhive.ai
+- Marketplace Sprint 2: **Camilo Diaz** — cdiaz@llmhive.ai
 
 ## Go/No-Go Gates
 
@@ -64,7 +64,7 @@ Each gate must be marked `PASS`, `FAIL`, or `N/A`.
 - [ ] PASS / FAIL: `/llms.txt` returns `200`
 - [ ] PASS / FAIL: `/api/health/integrations` returns `200`
 
-Gate owner: `________________`
+Gate owner: **Camilo Diaz** (cdiaz@llmhive.ai)
 
 ### 2. Backend serving gate
 
@@ -73,7 +73,7 @@ Gate owner: `________________`
 - [ ] PASS / FAIL: authenticated `/v1/chat` returns `200`
 - [ ] PASS / FAIL: no new runtime deploy has replaced the serving revision
 
-Gate owner: `________________`
+Gate owner: **Camilo Diaz** (cdiaz@llmhive.ai)
 
 ### 3. Production freeze gate
 
@@ -82,7 +82,7 @@ Gate owner: `________________`
 - [ ] PASS / FAIL: Vercel remains in manual deploy posture
 - [ ] PASS / FAIL: no unapproved runtime change is queued for deployment
 
-Gate owner: `________________`
+Gate owner: **Camilo Diaz** (cdiaz@llmhive.ai)
 
 ### 4. Benchmark claim gate
 
@@ -92,7 +92,7 @@ Gate owner: `________________`
 - [ ] PASS / FAIL: Elite cost wording does not overclaim disputed zero-cost telemetry
 - [ ] PASS / FAIL: `RAG` wording stays in native retrieval/benchmark framing
 
-Gate owner: `________________`
+Gate owner: **Camilo Diaz** (cdiaz@llmhive.ai)
 
 ### 5. Pricing/package gate
 
@@ -101,7 +101,7 @@ Gate owner: `________________`
 - [ ] PASS / FAIL: ELITE query quotas match the live pricing page
 - [ ] PASS / FAIL: no contradictory package wording exists in launch materials
 
-Gate owner: `________________`
+Gate owner: **Camilo Diaz** (cdiaz@llmhive.ai)
 
 ### 6. Launch operations gate
 
@@ -111,7 +111,7 @@ Gate owner: `________________`
 - [ ] PASS / FAIL: rollback executor assigned
 - [ ] PASS / FAIL: rollback references distributed to launch owners
 
-Gate owner: `________________`
+Gate owner: **Camilo Diaz** (cdiaz@llmhive.ai)
 
 ## Required Pre-Launch Actions
 
@@ -120,7 +120,7 @@ Complete these before public launch:
 1. Confirm workflow guards pass: `python3 scripts/verify_launch_automation_guards.py`.
 2. Confirm benchmark freeze: `python3 scripts/verify_benchmark_claim_freeze.py` (basis: `benchmark_claim_basis.json`).
 3. Freeze package/pricing wording to the live pricing surface (owner sign-off).
-4. Fill `launch_owners.yaml` and owner slots above.
+4. ~~Fill `launch_owners.yaml` and owner slots above.~~ Done — see Owner Slots.
 5. Share rollback references and launch-day contacts.
 6. `/v1/chat`: use smoke chat budget (`SMOKE_CHAT_MAX_MS=55000`); see `v1_chat_latency_launch_decision.md`.
 
