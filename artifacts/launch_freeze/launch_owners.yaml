@@ -48,3 +48,5 @@ marketplace_sprint2:
   contact: "cdiaz@llmhive.ai"
   target: "AWS Marketplace + GCP Marketplace listing prep (Sprint 2, days 31–60)"
   checklist: "artifacts/launch_freeze/marketplace_listing_prep_sprint2.md"
+  submission_pack: "artifacts/launch_freeze/marketplace/"
+  tracker: "artifacts/launch_freeze/marketplace/submission_tracker.md"
