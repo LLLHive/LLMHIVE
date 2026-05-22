@@ -4,42 +4,47 @@ version: "2026-05-18"
 
 owners:
   launch_approver:
-    name: ""
-    contact: ""
-    backup: ""
+    name: "Camilo Diaz"
+    contact: "cdiaz@llmhive.ai"
+    backup: "Paulina Diaz / pdiaz@llmhive.ai"
+
   support:
-    name: ""
-    contact: ""
-    hours: "Launch week: extended coverage"
-    escalation: ""
+    name: "Camilo Diaz"
+    contact: "cdiaz@llmhive.ai"
+    hours: "Launch week: 8am–10pm ET"
+    escalation: "cdiaz@llmhive.ai"
+
   production_monitoring:
-    name: ""
-    contact: ""
+    name: "Camilo Diaz"
+    contact: "cdiaz@llmhive.ai"
     dashboards:
       - "Cloud Run llmhive-orchestrator metrics"
       - "GitHub Production Smoke Tests (daily + post-deploy)"
     alerts:
       - "Slack via smoke-tests failure webhook"
+
   benchmark_source_of_truth:
-    name: ""
-    contact: ""
+    name: "Camilo Diaz"
+    contact: "cdiaz@llmhive.ai"
     artifacts:
       - "artifacts/launch_freeze/benchmark_claim_basis.json"
       - "benchmark_reports/category_benchmarks_free_20260331.json"
       - "benchmark_reports/category_benchmarks_elite_20260401.json"
+
   pricing_package:
-    name: ""
-    contact: ""
+    name: "Camilo Diaz"
+    contact: "cdiaz@llmhive.ai"
     live_surface: "https://www.llmhive.ai/pricing"
+
   rollback_executor:
-    name: ""
-    contact: ""
+    name: "Camilo Diaz"
+    contact: "cdiaz@llmhive.ai"
     references:
       - "artifacts/launch_freeze/launch_source_of_truth_packet_20260405.md"
       - "artifacts/launch_freeze/final_launch_readiness_checklist_20260405.md"
 
 marketplace_sprint2:
-  owner: ""
-  contact: ""
+  owner: "Camilo Diaz"
+  contact: "cdiaz@llmhive.ai"
   target: "AWS Marketplace + GCP Marketplace listing prep (Sprint 2, days 31–60)"
   checklist: "artifacts/launch_freeze/marketplace_listing_prep_sprint2.md"
