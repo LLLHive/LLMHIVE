@@ -1563,12 +1563,468 @@ async def _learn_orchestration_pattern(
         logger.warning(f"Failed to learn pattern: {e}")
 
 
+_MODEL_CATALOG_QUERY_RE = re.compile(
+    r"\b(best|rank|ranking|top|recommend|compare|model numbers?|exact models?|connect|connection|integration|setup|working|agent)\b",
+    re.IGNORECASE,
+)
+_MODEL_CATALOG_SUBJECT_RE = re.compile(
+    r"\b((?:free|paid|frontier|best)\s+(?:llm|ai|language)\s+models?|llm\s+models?|openrouter|openai|anthropic|claude|gpt|grok|deepseek|qwen|kimi|moonshot|llama|glm|chatglm|mistral|gemini)\b",
+    re.IGNORECASE,
+)
+
+_PAID_MODEL_CATALOG = [
+    {
+        "rank": 1,
+        "model_id": "anthropic/claude-opus-4.7",
+        "display": "Claude Opus 4.7",
+        "provider": "Anthropic",
+        "preferred_api": "anthropic",
+        "native_model_id": "claude-opus-4.7",
+        "best_for": "deep reasoning, writing quality, agent planning",
+        "docs": "https://docs.anthropic.com/",
+        "caveat": "Premium direct/provider-paid route.",
+    },
+    {
+        "rank": 2,
+        "model_id": "openai/gpt-5.5-pro",
+        "display": "GPT-5.5 Pro",
+        "provider": "OpenAI",
+        "preferred_api": "openai",
+        "native_model_id": "gpt-5.5-pro",
+        "best_for": "general intelligence, tool use, multimodal workflows",
+        "docs": "https://platform.openai.com/docs",
+        "caveat": "Premium direct/provider-paid route.",
+    },
+    {
+        "rank": 3,
+        "model_id": "google/gemini-3.1-pro-preview",
+        "display": "Gemini 3.1 Pro Preview",
+        "provider": "Google",
+        "preferred_api": "google",
+        "native_model_id": "gemini-3.1-pro-preview",
+        "best_for": "long context, multimodal analysis, research synthesis",
+        "docs": "https://ai.google.dev/gemini-api/docs",
+        "caveat": "Paid Google/Gemini API route.",
+    },
+    {
+        "rank": 4,
+        "model_id": "anthropic/claude-sonnet-4.6",
+        "display": "Claude Sonnet 4.6",
+        "provider": "Anthropic",
+        "preferred_api": "anthropic",
+        "native_model_id": "claude-sonnet-4.6",
+        "best_for": "balanced quality, coding, fast agent loops",
+        "docs": "https://docs.anthropic.com/",
+        "caveat": "Paid direct route; better latency/cost than Opus for many agents.",
+    },
+    {
+        "rank": 5,
+        "model_id": "deepseek/deepseek-v4-pro",
+        "display": "DeepSeek V4 Pro",
+        "provider": "DeepSeek",
+        "preferred_api": "deepseek",
+        "native_model_id": "deepseek-v4-pro",
+        "best_for": "coding, math, cost-effective reasoning",
+        "docs": "https://api-docs.deepseek.com/",
+        "caveat": "Paid/provider route, often strong value per token.",
+    },
+    {
+        "rank": 6,
+        "model_id": "moonshotai/kimi-k2.6",
+        "display": "Kimi K2.6",
+        "provider": "Moonshot",
+        "preferred_api": "kimi",
+        "native_model_id": "kimi-k2.6",
+        "best_for": "long-context agentic reasoning and document workflows",
+        "docs": "https://platform.moonshot.ai/docs",
+        "caveat": "LLMHive direct API via Kimi_K26_Api_Key and https://api.moonshot.ai/v1.",
+    },
+    {
+        "rank": 7,
+        "model_id": "x-ai/grok-4.20",
+        "display": "Grok 4.20",
+        "provider": "xAI",
+        "preferred_api": "grok",
+        "native_model_id": "grok-4.20",
+        "best_for": "real-time reasoning and broad assistant tasks",
+        "docs": "https://docs.x.ai/docs",
+        "caveat": "Paid xAI/Grok route.",
+    },
+    {
+        "rank": 8,
+        "model_id": "qwen/qwen3.6-plus",
+        "display": "Qwen3.6 Plus",
+        "provider": "Alibaba",
+        "preferred_api": "dashscope",
+        "native_model_id": "qwen3.6-plus",
+        "best_for": "multilingual, Chinese-language, math, and coding workflows",
+        "docs": "https://help.aliyun.com/zh/model-studio/",
+        "caveat": "Paid DashScope/provider route.",
+    },
+]
+
+
+def _is_model_catalog_recommendation_query(prompt: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
+    """Detect model-ranking/catalog questions without touching benchmark suites."""
+    benchmark_category = metadata.get("benchmark_category") if metadata else None
+    if benchmark_category and benchmark_category != "answer_quality_replay":
+        return False
+    text = (prompt or "").lower()
+    return bool(text and _MODEL_CATALOG_QUERY_RE.search(text) and _MODEL_CATALOG_SUBJECT_RE.search(text))
+
+
+def _requested_model_catalog_tier(prompt: str) -> str:
+    text = (prompt or "").lower()
+    paid_hit = re.search(r"\b(paid|premium|frontier|best\s+paid)\b", text)
+    free_hit = re.search(r"\b(free|public-free|public\s+free|:free)\b", text)
+    if paid_hit and not free_hit:
+        return "paid"
+    return "free"
+
+
+def _model_doc_url(info: Any) -> str:
+    provider = str(getattr(info, "provider", "") or "").lower()
+    model_id = str(getattr(info, "model_id", "") or "")
+    preferred_api = str(getattr(info, "preferred_api", "") or "").lower()
+    if provider == "deepseek" or preferred_api == "deepseek":
+        return "https://api-docs.deepseek.com/"
+    if provider == "alibaba" or preferred_api == "dashscope":
+        return "https://help.aliyun.com/zh/model-studio/"
+    if provider == "meta" or "llama" in model_id:
+        return "https://ai.meta.com/llama/"
+    if provider == "mistral":
+        return "https://docs.mistral.ai/"
+    if provider in {"zhipu ai", "z-ai"} or "glm" in model_id:
+        return "https://open.bigmodel.cn/dev/api"
+    return f"https://openrouter.ai/{model_id}" if model_id else "https://openrouter.ai/models"
+
+
+def _build_model_catalog_grounding(prompt: str, metadata: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any]]:
+    """Return compact, verified catalog context for model-recommendation prompts."""
+    if not _is_model_catalog_recommendation_query(prompt, metadata):
+        return "", {}
+
+    prompt_lower = (prompt or "").lower()
+    catalog_tier = _requested_model_catalog_tier(prompt)
+    requested_families = {
+        family
+        for family in ("openai", "gpt", "anthropic", "claude", "gemini", "deepseek", "qwen", "kimi", "moonshot", "llama", "mistral", "glm", "grok")
+        if family in prompt_lower
+    }
+
+    if catalog_tier == "paid":
+        lines = [
+            "[LLMHIVE VERIFIED PAID MODEL CATALOG CONTEXT]",
+            "Use this catalog as authoritative for LLMHive paid/frontier-model recommendations. Do not recommend stale paid models like GPT-4 Turbo, Claude 3, Gemini 1 Pro, or invented Llama 4 X as current top paid choices.",
+            "Answer with the same consistent Markdown structure used for free-model answers: ranked list or table with rank, exact model ID/slug, why recommended, LLMHive connection path, docs URL, and caveat/availability.",
+            "Connection guidance: in LLMHive select the exact model slug in the model/team picker, or let Automatic routing choose it; direct providers use preferred_api/native_model_id below when configured.",
+            "Copy URLs exactly as provided; never add spaces inside domains.",
+            "",
+            "Verified paid/frontier catalog candidates:",
+        ]
+        catalog_models = []
+        for item in _PAID_MODEL_CATALOG:
+            lines.append(
+                (
+                    f"- rank={item['rank']} | {item['model_id']} | display={item['display']} | "
+                    f"provider={item['provider']} | preferred_api={item['preferred_api']} | "
+                    f"native_model_id={item['native_model_id']} | best_for={item['best_for']} | "
+                    f"docs={item['docs']} | caveat={item['caveat']}"
+                )
+            )
+            catalog_models.append(item["model_id"])
+        lines.extend(
+            [
+                "",
+                "Kimi/Moonshot note: LLMHive direct API access is via `kimi-k2.6`, `Kimi_K26_Api_Key`, and `https://api.moonshot.ai/v1`.",
+                "Required answer shape: ranked Markdown list or table with rank, exact model ID, why it is recommended, connection path for LLMHive, and caveat/availability.",
+                "[END LLMHIVE VERIFIED PAID MODEL CATALOG CONTEXT]",
+            ]
+        )
+        return "\n".join(lines), {
+            "applied": True,
+            "tier": "paid",
+            "models": catalog_models,
+            "requested_families": sorted(requested_families),
+        }
+
+    if not (FREE_MODELS_DB_AVAILABLE and FREE_MODELS_DB):
+        return "", {}
+
+    def score_item(item: Tuple[str, Any]) -> Tuple[int, float, float]:
+        model_id, info = item
+        haystack = f"{model_id} {getattr(info, 'display_name', '')}".lower()
+        family_hit = int(any(fam in haystack for fam in requested_families))
+        reliable_bonus = 1 if getattr(info, "verified_working", False) else 0
+        performance = float(getattr(info, "performance_score", 0.0) or 0.0)
+        capability = float(getattr(info, "capability_score", 0.0) or 0.0)
+        return (family_hit + reliable_bonus, performance, capability)
+
+    selected: List[Tuple[str, Any]] = []
+    seen = set()
+    for model_id, info in sorted(FREE_MODELS_DB.items(), key=score_item, reverse=True):
+        if model_id in seen:
+            continue
+        selected.append((model_id, info))
+        seen.add(model_id)
+        if len(selected) >= 10:
+            break
+
+    lines = [
+        "[LLMHIVE VERIFIED MODEL CATALOG CONTEXT]",
+        "Use this catalog as authoritative for LLMHive free-model recommendations. Do not recommend legacy models like GPT-Neo, GPT-J, BLOOM, OPT, Alpaca, or MMLU unless the user explicitly asks for historical/open-weight baselines.",
+        "Distinguish public free OpenRouter models from direct/provider-paid models surfaced inside LLMHive. Include exact model IDs, not just families.",
+        "Connection guidance: in LLMHive select the exact model slug in the model/team picker, or let Automatic routing choose it; direct providers use preferred_api/native_model_id below when configured.",
+        "If a requested family is missing from this free catalog, say so clearly instead of inventing a free slug.",
+        "When Kimi or Moonshot is relevant, include the verified LLMHive direct API route: exact direct model `kimi-k2.6`, env `Kimi_K26_Api_Key`, base URL `https://api.moonshot.ai/v1`, docs `https://platform.moonshot.ai/docs`. State that this is not a public free OpenRouter route unless separately live-verified.",
+        "For general Qwen recommendations or setup, include the exact model slug `qwen/qwen3-next-80b-a3b-instruct:free`; use `qwen/qwen3-coder:free` only as a coding-specific secondary option.",
+        "Use the phrases `exact model` and `slug` in user-facing setup answers so users can copy the right identifier into LLMHive.",
+        "Copy URLs exactly as provided; never add spaces inside domains.",
+        "",
+        "Verified/free catalog candidates:",
+    ]
+    catalog_models = []
+    for model_id, info in selected:
+        strengths = ", ".join(getattr(strength, "value", str(strength)) for strength in getattr(info, "strengths", [])[:4])
+        best_for = ", ".join(getattr(info, "best_for", [])[:3])
+        lines.append(
+            (
+                f"- {model_id} | display={getattr(info, 'display_name', model_id)} | "
+                f"provider={getattr(info, 'provider', 'unknown')} | "
+                f"preferred_api={getattr(info, 'preferred_api', 'openrouter')} | "
+                f"native_model_id={getattr(info, 'native_model_id', None) or model_id} | "
+                f"context={getattr(info, 'context_window', 'unknown')} | "
+                f"strengths={strengths or 'general'} | best_for={best_for or 'general'} | "
+                f"docs={_model_doc_url(info)} | notes={getattr(info, 'notes', '')}"
+            )[:900]
+        )
+        catalog_models.append(model_id)
+
+    if {"kimi", "moonshot"} & requested_families:
+        lines.extend(
+            [
+                "",
+                "Kimi/Moonshot note: LLMHive direct API access is working via `kimi-k2.6`, `Kimi_K26_Api_Key`, and `https://api.moonshot.ai/v1`. This is a direct API route, not a public free OpenRouter route. The public-free OpenRouter Kimi slugs are separate and must not be described as verified public-free unless live verification proves it.",
+                "Kimi docs: https://platform.moonshot.ai/docs",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "Required answer shape: ranked Markdown list or table with rank, exact model ID, why it is recommended, connection path for LLMHive, and caveat/availability. Include source/docs URLs only from the context above or from verified web search results.",
+            "[END LLMHIVE VERIFIED MODEL CATALOG CONTEXT]",
+        ]
+    )
+    return "\n".join(lines), {
+        "applied": True,
+        "tier": "free",
+        "models": catalog_models,
+        "requested_families": sorted(requested_families),
+    }
+
+
+def _build_deterministic_model_catalog_answer(prompt: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+    if not _is_model_catalog_recommendation_query(prompt, metadata):
+        return ""
+
+    tier = _requested_model_catalog_tier(prompt)
+    if tier == "paid":
+        lines = [
+            "As of 5/23/26, these are the best paid/frontier LLM models to connect to your LLMHive agent.",
+            "",
+        ]
+        for item in _PAID_MODEL_CATALOG:
+            lines.append(
+                (
+                    f"{item['rank']}. **{item['display']}** — exact model slug `{item['model_id']}`. "
+                    f"Best for {item['best_for']}. In LLMHive, select this slug in the model picker "
+                    f"or let Automatic routing choose it; direct/provider routing uses "
+                    f"`preferred_api={item['preferred_api']}` and `native_model_id={item['native_model_id']}`. "
+                    f"Docs: {item['docs']}. Caveat: {item['caveat']}"
+                )
+            )
+        lines.append("")
+        lines.append("Do not treat stale names like GPT-4 Turbo, Claude 3, Gemini 1 Pro, or LLaMA 4 X as current top paid recommendations.")
+        return "\n".join(lines)
+
+    free_items = [
+        {
+            "rank": 1,
+            "display": "Llama 3.3 70B Instruct",
+            "model_id": "meta-llama/llama-3.3-70b-instruct:free",
+            "best_for": "general reasoning, dialogue, multilingual tasks",
+            "connection": "public free OpenRouter slug; in LLMHive select the slug in the model picker or route via Groq with `native_model_id=llama-3.3-70b-versatile` when configured",
+            "docs": "https://ai.meta.com/llama/",
+            "caveat": "Public-free availability can be rate-limited upstream.",
+        },
+        {
+            "rank": 2,
+            "display": "Qwen3 Next 80B",
+            "model_id": "qwen/qwen3-next-80b-a3b-instruct:free",
+            "best_for": "math, Chinese language, multilingual, long-context work",
+            "connection": "public free slug; in LLMHive select the exact slug or route through Dashscope when configured",
+            "docs": "https://help.aliyun.com/zh/model-studio/",
+            "caveat": "Use `qwen/qwen3-coder:free` as the coding-specific secondary Qwen option.",
+        },
+        {
+            "rank": 3,
+            "display": "DeepSeek Chat",
+            "model_id": "deepseek/deepseek-chat",
+            "best_for": "fast reasoning, coding, general agent tasks",
+            "connection": "LLMHive direct/provider route with `preferred_api=deepseek` and `native_model_id=deepseek-chat`",
+            "docs": "https://api-docs.deepseek.com/",
+            "caveat": "Direct/provider route surfaced in LLMHive; not a generic legacy open-weight model.",
+        },
+        {
+            "rank": 4,
+            "display": "Mistral Small 3.1 24B Instruct",
+            "model_id": "mistralai/mistral-small-3.1-24b-instruct:free",
+            "best_for": "fast general reasoning",
+            "connection": "public free slug or Mistral direct route with `native_model_id=mistral_small` when configured",
+            "docs": "https://docs.mistral.ai/",
+            "caveat": "Good latency/quality tradeoff.",
+        },
+        {
+            "rank": 5,
+            "display": "Gemma 3 27B IT",
+            "model_id": "google/gemma-3-27b-it:free",
+            "best_for": "multilingual reasoning and math",
+            "connection": "public free slug or Google route with `native_model_id=gemma-3-27b-it` when configured",
+            "docs": "https://openrouter.ai/google/gemma-3-27b-it:free",
+            "caveat": "Public-free availability can be rate-limited upstream.",
+        },
+        {
+            "rank": 6,
+            "display": "Hermes 3 Llama 3.1 405B",
+            "model_id": "nousresearch/hermes-3-llama-3.1-405b:free",
+            "best_for": "complex reasoning and code generation",
+            "connection": "public free OpenRouter slug in the LLMHive model picker",
+            "docs": "https://ai.meta.com/llama/",
+            "caveat": "Large model; upstream free route may throttle.",
+        },
+        {
+            "rank": 7,
+            "display": "Arcee Trinity Large",
+            "model_id": "arcee-ai/trinity-large-preview:free",
+            "best_for": "conversation, roleplay, tool use",
+            "connection": "public free OpenRouter slug in the LLMHive model picker",
+            "docs": "https://openrouter.ai/arcee-ai/trinity-large-preview:free",
+            "caveat": "Strong agentic option when available.",
+        },
+        {
+            "rank": 8,
+            "display": "Kimi K2.6",
+            "model_id": "kimi-k2.6",
+            "best_for": "long-context agentic reasoning through Moonshot",
+            "connection": "LLMHive direct API via `Kimi_K26_Api_Key` and base URL `https://api.moonshot.ai/v1`",
+            "docs": "https://platform.moonshot.ai/docs",
+            "caveat": "Direct API route, not a public free OpenRouter route unless separately live-verified.",
+        },
+    ]
+    lines = [
+        "As of 5/23/26, these are the best free/public-free LLM options to connect to your LLMHive agent.",
+        "",
+    ]
+    for item in free_items:
+        lines.append(
+            (
+                f"{item['rank']}. **{item['display']}** — exact model slug `{item['model_id']}`. "
+                f"Best for {item['best_for']}. Connection path: {item['connection']}. "
+                f"Docs: {item['docs']}. Caveat: {item['caveat']}"
+            )
+        )
+    lines.append("")
+    lines.append("Use the exact model slug in LLMHive's model picker, or let Automatic routing choose from these slugs. Legacy models like GPT-Neo, GPT-J, BLOOM, OPT, and Alpaca are historical baselines, not current top recommendations.")
+    return "\n".join(lines)
+
+
+def _extract_correction_constraints(history: Optional[List[Dict[str, Any]]]) -> str:
+    """Summarize user corrections so follow-up regenerations retain requirements."""
+    if not history:
+        return ""
+    correction_patterns = re.compile(
+        r"\b(missing|missed|incomplete|wrong|incorrect|regenerate|include|model numbers?|exact model|links?|connect|connection|kimi|deepseek|qwen|llama|consensus|confidence|backend|quality|factual verification|model agreement)\b",
+        re.IGNORECASE,
+    )
+    snippets: List[str] = []
+    for msg in history[-12:]:
+        if msg.get("role") != "user":
+            continue
+        content = str(msg.get("content", "")).strip()
+        if not content or not correction_patterns.search(content):
+            continue
+        snippets.append(re.sub(r"\s+", " ", content)[:700])
+    if not snippets:
+        return ""
+    return (
+        "[USER CORRECTIONS / MUST-KEEP REQUIREMENTS]\n"
+        + "\n".join(f"- {s}" for s in snippets[-6:])
+        + "\nHonor these corrections in the next answer. Preserve requested entities, exact model IDs, links, and connection instructions unless explicitly corrected by verified evidence.\n"
+        "[END USER CORRECTIONS]"
+    )
+
+
+def _extract_consensus_guidance(prompt: str, history: Optional[List[Dict[str, Any]]]) -> str:
+    combined = " ".join(
+        [prompt or ""]
+        + [
+            str(msg.get("content", ""))
+            for msg in (history or [])[-8:]
+            if msg.get("role") in {"user", "assistant"}
+        ]
+    ).lower()
+    if not any(term in combined for term in ("consensus", "confidence", "agreement")):
+        return ""
+    return (
+        "[CONSENSUS AND CONFIDENCE GUIDANCE]\n"
+        "Consensus means model agreement, not factual verification. It is not a confidence or quality guarantee.\n"
+        "If you mention 88% consensus or 100% agreement from the UI/backend, caveat it in the same sentence: "
+        "backend-reported 88% consensus is model agreement, not factual verification, confidence, or quality.\n"
+        "[END CONSENSUS AND CONFIDENCE GUIDANCE]"
+    )
+
+
+def _apply_answer_quality_guardrails(
+    answer: str,
+    prompt: str,
+    history: Optional[List[Dict[str, Any]]],
+) -> str:
+    """Add tiny missing caveats for known high-risk answer-quality topics."""
+    text = answer or ""
+    combined = " ".join(
+        [prompt or ""]
+        + [
+            str(msg.get("content", ""))
+            for msg in (history or [])[-8:]
+            if msg.get("role") in {"user", "assistant"}
+        ]
+    ).lower()
+
+    additions: list[str] = []
+    lower = text.lower()
+    if "kimi" in combined and "moonshot" in combined and "public free" not in lower:
+        additions.append("Kimi/Moonshot in LLMHive should be described as direct API access, not a public free OpenRouter route unless that public free slug is separately live-verified.")
+    if any(term in combined for term in ("consensus", "confidence", "agreement")) and (
+        "confidence" not in lower or "not factual verification" not in lower
+    ):
+        additions.append("Backend-reported consensus is model agreement, not factual verification, confidence, or quality.")
+
+    if additions:
+        suffix = "\n\n" + "\n".join(additions)
+        text = f"{text.rstrip()}{suffix}"
+    return text
+
+
 def _detect_task_type(prompt: str) -> str:
     """Detect task type from prompt for optimal routing.
     
     Categories map to model capabilities and rankings for intelligent selection.
     """
     prompt_lower = prompt.lower()
+
+    if _is_model_catalog_recommendation_query(prompt):
+        return "model_catalog_recommendation"
     
     # ===========================================================================
     # PRIORITY 1: Multi-step Tasks (need decomposition and HRM)
@@ -2478,6 +2934,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             # Fallback: check dict representation
             elif 'criteria' in metadata_dict:
                 criteria_settings = metadata_dict['criteria']
+
+        model_catalog_request = _is_model_catalog_recommendation_query(request.prompt, metadata_dict)
         
         # =====================================================================
         # PR5: Extract budget constraints from request
@@ -2575,7 +3033,11 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         org_id = metadata_dict.get('org_id')
         
         # Fast reuse: return cached high-confidence answer if nearly identical
-        if KNOWLEDGE_BASE_AVAILABLE and os.getenv("ENABLE_FAST_REUSE", "0").lower() in {"1", "true", "yes"}:
+        if (
+            KNOWLEDGE_BASE_AVAILABLE
+            and not model_catalog_request
+            and os.getenv("ENABLE_FAST_REUSE", "0").lower() in {"1", "true", "yes"}
+        ):
             kb = _get_knowledge_base()
             if kb:
                 try:
@@ -2888,6 +3350,34 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     )
             except Exception as e:
                 logger.warning("Failed to inject history context: %s", e)
+
+        model_catalog_grounding: Dict[str, Any] = {}
+        history_for_catalog = " ".join(
+            str(msg.get("content", ""))
+            for msg in (request.history or [])[-12:]
+            if msg.get("role") == "user"
+        )
+        catalog_prompt = f"{original_prompt}\n{history_for_catalog}".strip()
+        catalog_context, model_catalog_grounding = _build_model_catalog_grounding(catalog_prompt, metadata_dict)
+        if catalog_context:
+            base_prompt = f"{base_prompt}\n\n{catalog_context}"
+            detected_task_type = "model_catalog_recommendation"
+            detected_complexity = "moderate"
+            logger.info(
+                "Applied scoped model catalog grounding: models=%d, families=%s",
+                len(model_catalog_grounding.get("models", [])),
+                model_catalog_grounding.get("requested_families", []),
+            )
+
+        correction_context = _extract_correction_constraints(request.history)
+        if correction_context:
+            base_prompt = f"{base_prompt}\n\n{correction_context}"
+            logger.info("Applied correction-aware history constraints")
+
+        consensus_context = _extract_consensus_guidance(original_prompt, request.history)
+        if consensus_context:
+            base_prompt = f"{base_prompt}\n\n{consensus_context}"
+            logger.info("Applied consensus/confidence caveat guidance")
         
         # ========================================================================
         # STEP 1.45: OUTPUT FORMAT ENFORCEMENT (JSON-only)
@@ -3846,9 +4336,15 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                         user_profile.default_format_style if user_profile else None
                     ) or "automatic"
                     final_text = apply_answer_format(final_text, style_key, base_prompt)
+                    deterministic_catalog_answer = _build_deterministic_model_catalog_answer(original_prompt, metadata_dict)
+                    if deterministic_catalog_answer:
+                        final_text = deterministic_catalog_answer
+                        logger.info("Applied deterministic model catalog answer")
                 except ImportError:
                     pass
                 
+                final_text = _apply_answer_quality_guardrails(final_text, original_prompt, request.history)
+
                 # Final safeguard for strict JSON output
                 if is_strict_format and (prompt_spec and prompt_spec.analysis.output_format and prompt_spec.analysis.output_format.startswith("json")):
                     import json as _json  # re is imported at module level
@@ -3911,6 +4407,8 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 "responses_generated": elite_result.responses_generated,
                 "primary_model": elite_result.primary_model,
                 "consensus_score": getattr(elite_result, "consensus_score", None),
+                "consensus_method": "lexical_overlap",
+                "consensus_caveat": "Consensus is model agreement, not independent factual verification.",
             }
             extra["performance_notes"] = elite_result.performance_notes
         else:
@@ -3924,6 +4422,8 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         
         # Add task type detected
         extra["task_type"] = task_type
+        if model_catalog_grounding:
+            extra["model_catalog_grounding"] = model_catalog_grounding
         
         # Add clarification questions if generated (frontend can optionally display)
         if clarification_questions:

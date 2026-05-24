@@ -224,6 +224,12 @@ class ObjectiveScorer:
             checks["asked_clarification"] = asked_clarification
             if not asked_clarification:
                 details["asked_clarification"] = "Should have asked for clarification"
+
+        quality_replay = requirements.get("quality_replay")
+        if quality_replay:
+            replay_checks, replay_details = self._score_quality_replay(answer, quality_replay)
+            checks.update(replay_checks)
+            details.update(replay_details)
         
         # Calculate overall score
         if not checks:
@@ -298,6 +304,149 @@ class ObjectiveScorer:
             return True, ""
         else:
             return False, f"Value {extracted_value} not within tolerance of {expected_value} (±{tolerance})"
+
+    def _score_quality_replay(
+        self,
+        answer: str,
+        config: Dict[str, Any],
+    ) -> Tuple[Dict[str, bool], Dict[str, str]]:
+        """Deterministic checks for real-product answer quality replay cases."""
+        checks: Dict[str, bool] = {}
+        details: Dict[str, str] = {}
+        lower = answer.lower()
+
+        required_model_ids = config.get("required_model_ids") or []
+        if required_model_ids:
+            missing = [model_id for model_id in required_model_ids if model_id.lower() not in lower]
+            checks["exact_model_ids"] = not missing
+            if missing:
+                details["exact_model_ids"] = f"Missing exact model IDs: {', '.join(missing)}"
+
+        required_terms = config.get("required_terms") or []
+        if required_terms:
+            missing_terms = [term for term in required_terms if term.lower() not in lower]
+            checks["correction_following"] = not missing_terms
+            if missing_terms:
+                details["correction_following"] = f"Missing correction terms: {', '.join(missing_terms)}"
+
+        legacy_models = config.get("legacy_models") or []
+        if legacy_models:
+            unframed = [term for term in legacy_models if self._legacy_model_unframed(answer, term)]
+            checks["legacy_hallucinations_framed"] = not unframed
+            if unframed:
+                details["legacy_hallucinations_framed"] = (
+                    "Legacy models mentioned without legacy/not recommended framing: "
+                    + ", ".join(unframed)
+                )
+
+        if config.get("require_llmhive_connection"):
+            connection_terms = config.get("connection_terms") or [
+                "llmhive",
+                "model picker",
+                "automatic routing",
+                "direct api",
+                "preferred_api",
+                "native_model_id",
+                "slug",
+            ]
+            hits = [term for term in connection_terms if term.lower() in lower]
+            min_terms = int(config.get("min_connection_terms", 3))
+            checks["grounded_connection_instructions"] = len(hits) >= min_terms
+            if not checks["grounded_connection_instructions"]:
+                details["grounded_connection_instructions"] = (
+                    f"Expected at least {min_terms} connection terms; found {hits}"
+                )
+
+        if config.get("require_valid_links"):
+            invalid_links = self._invalid_links(answer)
+            checks["valid_links_only"] = not invalid_links
+            if invalid_links:
+                details["valid_links_only"] = f"Invalid links: {', '.join(invalid_links)}"
+
+        if config.get("require_clean_markdown"):
+            markdown_issues = self._markdown_issues(answer)
+            checks["clean_markdown"] = not markdown_issues
+            if markdown_issues:
+                details["clean_markdown"] = "; ".join(markdown_issues)
+
+        if config.get("require_honest_confidence"):
+            dishonest = self._dishonest_confidence_claims(answer)
+            checks["honest_consensus_confidence"] = not dishonest
+            if dishonest:
+                details["honest_consensus_confidence"] = (
+                    "Unsupported consensus/confidence claims: " + ", ".join(dishonest)
+                )
+
+        return checks, details
+
+    def _legacy_model_unframed(self, answer: str, term: str) -> bool:
+        pattern = re.compile(rf"(?<![A-Za-z0-9]){re.escape(term)}(?![A-Za-z0-9])", re.IGNORECASE)
+        framing = re.compile(
+            r"\b(legacy|historical|stale|not\s+recommended|outdated|baseline|not\s+a\s+top|current\s+top|avoid)\b",
+            re.IGNORECASE,
+        )
+        for match in pattern.finditer(answer):
+            window = answer[max(0, match.start() - 90): match.end() + 140]
+            if not framing.search(window):
+                return True
+        return False
+
+    def _invalid_links(self, answer: str) -> List[str]:
+        invalid: List[str] = []
+        for raw in re.findall(r"https?://[^\s)\]>]+", answer):
+            url = raw.rstrip(".,;:")
+            if " " in url or "%20" in url:
+                invalid.append(raw)
+                continue
+            host = re.sub(r"^https?://", "", url).split("/", 1)[0]
+            if "." not in host or host.startswith(".") or host.endswith("."):
+                invalid.append(raw)
+        spaced = re.findall(r"https?://[A-Za-z0-9.-]+\s+\.\s+[A-Za-z]{2,}", answer)
+        invalid.extend(spaced)
+        return sorted(set(invalid))
+
+    def _markdown_issues(self, answer: str) -> List[str]:
+        issues: List[str] = []
+        if answer.count("**") % 2 != 0:
+            issues.append("unbalanced bold markers")
+        broken_patterns = [
+            r"\b[A-Z][A-Za-z0-9.-]{1,20}\*\*\s+[–—-]\s+[A-Z][A-Za-z0-9.-]{1,20}\*\*",
+            r"\*\*[ \t]+[–—-][ \t]+\*\*",
+            r"\bcode\s+Copy\b",
+            r"\.[0-9]{1,2}[.)]\s+[A-Z]",
+            r"\bGPT\*\*\s+[–—-]\s+Neo\*\*",
+            r"\bFLAN\*\*\s+[–—-]\s+T5\*\*",
+        ]
+        for pattern in broken_patterns:
+            if re.search(pattern, answer, re.IGNORECASE):
+                issues.append(f"broken markdown pattern: {pattern}")
+        return issues
+
+    def _dishonest_confidence_claims(self, answer: str) -> List[str]:
+        claims: List[str] = []
+        for match in re.finditer(
+            r"\b(?:8[5-9]|9[0-9]|100)%\s+(?:consensus|confidence|accurate|certain)",
+            answer,
+            re.IGNORECASE,
+        ):
+            window = answer[max(0, match.start() - 120): match.end() + 160].lower()
+            if not any(
+                term in window
+                for term in (
+                    "reported by",
+                    "backend",
+                    "not independently verified",
+                    "agreement among",
+                    "model agreement",
+                    "not factual verification",
+                    "does not inherently reflect",
+                )
+            ):
+                claims.append(match.group(0))
+        for phrase in ("100% accurate", "guaranteed accurate", "definitely current"):
+            if phrase in answer.lower():
+                claims.append(phrase)
+        return sorted(set(claims))
     
     def _check_jsonschema(
         self,

@@ -7,7 +7,7 @@ Benchmark claim basis is **unchanged** (still 20260331 free / 20260401 elite).
 
 | Component | Value |
 |-----------|--------|
-| Frontend | https://www.llmhive.ai (verify Vercel deploy id before major launch) |
+| Frontend | https://www.llmhive.ai (canonical host redirects to `https://llmhive.ai`) |
 | Orchestrator URL | `https://llmhive-orchestrator-792354158895.us-east1.run.app` |
 | Cloud Run service | `llmhive-orchestrator` (us-east1) |
 | **Serving revision** | **`llmhive-orchestrator-02451-4fq`** (100% traffic) |
@@ -30,6 +30,7 @@ Do **not** use Lite $14.99 / Pro $29.99 in new external copy.
 - Chat probe: `api-key` + `scheduled-benchmark-secret` header
 - Latency budget: `SMOKE_CHAT_MAX_MS=55000`
 - Quality benchmarks: separate job (`continue-on-error`)
+- **Latest green run:** [Production Smoke Tests #26316889891](https://github.com/LLLHive/LLMHIVE/actions/runs/26316889891) — `main` @ `2705c7c80` (2026-05-22T23:30:14Z)
 
 ## Automated gate verify (step 2)
 
@@ -49,11 +50,13 @@ Expect `"passed": true` on all checks after Vercel deploy `a2757ad` (proxy healt
 
 ## Frontend deploy (done)
 
-- `proxy.ts`: `/api/health(.*)` public — deployed to production (`a2757ad`).
+- `proxy.ts`: `/api/health(.*)` public — deployed to production (`a2757ad`, latest `2705c7c80`).
+- Vercel build warnings (e.g. env hints) are **non-blocking** unless a user-facing route or API regresses.
 
 ## Sign-off
 
 | Role | Name | Date | Notes |
 |------|------|------|-------|
-| Launch approver | Camilo Diaz | | Revision 02451-4fq accepted |
-| Pricing | Camilo Diaz | | Standard/Premium per live `/pricing` |
+| Launch approver | Camilo Diaz | 2026-05-22 | Revision `02451-4fq` accepted for launch; gates PASS in checklist |
+| Pricing | Camilo Diaz | 2026-05-22 | Free $0 / Standard $10 / Premium $20 / Enterprise $35 seat — matches live `/pricing` |
+| Benchmark claims | Camilo Diaz | 2026-05-22 | Basis 20260331 + 20260401 only; `verify_benchmark_claim_freeze.py` passed |

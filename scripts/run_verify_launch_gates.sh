@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PROJECT="${GCP_PROJECT:-llmhive-orchestrator}"
-export CLOUD_RUN_REVISION="${CLOUD_RUN_REVISION:-llmhive-orchestrator-02451-4fq}"
+export CLOUD_RUN_REVISION="${CLOUD_RUN_REVISION:-llmhive-orchestrator-02461-2h4}"
 
 echo "Loading secrets from GCP (${PROJECT})..."
 export API_KEY

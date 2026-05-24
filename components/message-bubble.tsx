@@ -214,7 +214,7 @@ export function MessageBubble({
       </div>
 
       <div className="flex-1 max-w-[85%]">
-        {message.consensus && (
+        {message.consensus && message.consensus.confidence >= 0 && (
           <div className="mb-2 inline-flex items-center gap-2 px-2 py-1 rounded-full bg-[var(--bronze)]/10 border border-[var(--bronze)]/20">
             <div
               className={cn(

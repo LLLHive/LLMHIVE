@@ -12,6 +12,15 @@ export function preprocessMarkdown(content: string): string {
 
   let text = content.replace(/\r\n/g, "\n")
 
+  // Remove UI leakage from copied code blocks that models sometimes echo.
+  text = text.replace(/\s*\bcode\s+Copy\s*/gi, " ")
+
+  // Repair flattened numbered/list output such as "... Documentation.2. Next".
+  text = text
+    .replace(/([.!?])(\d+\.)\s+(?=[A-Z])/g, "$1\n\n$2 ")
+    .replace(/(\))\.(\d+\.)\s+(?=[A-Z])/g, "$1.\n\n$2 ")
+    .replace(/(\S)\.-\s+/g, "$1.\n\n- ")
+
   // Line-start bullets before inline (same order as backend)
   text = text
     .split("\n")

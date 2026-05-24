@@ -18,13 +18,13 @@ import {
   isTextLikeFile,
 } from "@/lib/chat-attachments"
 import { uploadChatDocument } from "@/lib/upload-chat-document"
-import { sendChat, ApiError, NetworkError, TimeoutError, type RetryStatusCallback } from "@/lib/api-client"
+import { sendChat, ApiError, NetworkError, TimeoutError, type QualityMetadata, type RetryStatusCallback } from "@/lib/api-client"
 import { toast } from "@/lib/toast"
 import { processImageForOCR } from "@/lib/ocr"
 import { voiceRecognition } from "@/lib/voice"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { Skeleton, AIProcessingIndicator } from "@/components/loading-skeleton"
-import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType, ClarificationQuestion } from "@/lib/types"
+import type { Conversation, Message, Attachment, Artifact, OrchestratorSettings, OrchestrationStatus, OrchestrationEventType, ClarificationQuestion, ConsensusInfo } from "@/lib/types"
 import { shouldAskClarification, formatClarificationMessage, type ClarificationDecision } from "@/lib/answer-quality/clarification-detector"
 import { analyzeQuery } from "@/lib/answer-quality/prompt-optimizer"
 import { MessageBubble } from "./message-bubble"
@@ -59,6 +59,26 @@ interface ErrorState {
   message: string
   canRetry: boolean
   lastInput?: string
+}
+
+function normalizeScoreToPercent(score?: number): number | undefined {
+  if (typeof score !== "number" || Number.isNaN(score)) return undefined
+  const percent = score <= 1 ? score * 100 : score
+  return Math.max(0, Math.min(100, Math.round(percent)))
+}
+
+function buildConsensusInfo(modelsUsed: string[], qualityMetadata?: QualityMetadata): ConsensusInfo | undefined {
+  const consensusPercent = normalizeScoreToPercent(qualityMetadata?.consensusScore)
+  if (consensusPercent !== undefined) {
+    const method = qualityMetadata?.consensusMethod
+    return {
+      confidence: consensusPercent,
+      debateOccurred: modelsUsed.length > 1,
+      consensusNote: `${modelsUsed.length || 1} model${modelsUsed.length === 1 ? "" : "s"} participated; backend consensus score reported${method ? ` (${method})` : ""}.`,
+    }
+  }
+
+  return undefined
 }
 
 // Domain pack options with icons and colors
@@ -986,9 +1006,7 @@ export function ChatArea({
         agents: agentContributions.length > 0 ? agentContributions : [
           { agentId: "agent-1", agentName: "General Agent", agentType: "general", contribution: "Primary response", confidence: 0.9 },
         ],
-        consensus: modelsUsed.length > 1 
-          ? { confidence: 88, debateOccurred: true, consensusNote: `${modelsUsed.length} models reached consensus` }
-          : { confidence: 95, debateOccurred: false, consensusNote: "Single model response" },
+        consensus: buildConsensusInfo(modelsUsed, qualityMetadata),
         // Quality metadata from backend
         qualityMetadata: qualityMetadata ? {
           traceId: qualityMetadata.traceId,
@@ -999,6 +1017,7 @@ export function ChatArea({
           correctionsApplied: qualityMetadata.correctionsApplied,
           eliteStrategy: qualityMetadata.eliteStrategy,
           consensusScore: qualityMetadata.consensusScore,
+          consensusMethod: qualityMetadata.consensusMethod,
           taskType: qualityMetadata.taskType,
           cached: qualityMetadata.cached,
         } : undefined,
@@ -1179,7 +1198,7 @@ export function ChatArea({
         refreshClerkSessionForChat
       )
 
-      const { content: assistantContent, modelsUsed, tokensUsed, latencyMs } = chatResponse
+      const { content: assistantContent, modelsUsed, tokensUsed, latencyMs, qualityMetadata } = chatResponse
 
       // Build agent info
       const agentContributions = modelsUsed.slice(0, 3).map((modelId, index) => {
@@ -1201,9 +1220,20 @@ export function ChatArea({
         timestamp: new Date(),
         model: modelsUsed[0] || actualModels[0],
         agents: agentContributions,
-        consensus: modelsUsed.length > 1 
-          ? { confidence: 88, debateOccurred: true, consensusNote: `${modelsUsed.length} models collaborated` }
-          : { confidence: 95, debateOccurred: false, consensusNote: "Regenerated response" },
+        consensus: buildConsensusInfo(modelsUsed, qualityMetadata),
+        qualityMetadata: qualityMetadata ? {
+          traceId: qualityMetadata.traceId,
+          confidence: qualityMetadata.confidence,
+          confidenceLabel: qualityMetadata.confidenceLabel,
+          verificationScore: qualityMetadata.verificationScore,
+          issuesFound: qualityMetadata.issuesFound,
+          correctionsApplied: qualityMetadata.correctionsApplied,
+          eliteStrategy: qualityMetadata.eliteStrategy,
+          consensusScore: qualityMetadata.consensusScore,
+          consensusMethod: qualityMetadata.consensusMethod,
+          taskType: qualityMetadata.taskType,
+          cached: qualityMetadata.cached,
+        } : undefined,
         isRegenerated: true,
       }
 

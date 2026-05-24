@@ -67,3 +67,58 @@ def test_concise_lead_plus_bullets():
         "concise",
     )
     assert looks_like_markdown_list(out)
+
+
+def test_hyphenated_model_names_are_not_split():
+    raw = (
+        "Best current free models:\n"
+        "- GPT-Neo — legacy baseline, not a top 2026 choice\n"
+        "- DeepSeek-V3.2 — strong reasoning and coding\n"
+        "- Qwen3-Coder — best for code-heavy agents\n"
+        "- Llama-3.3-70B — broad general-purpose fallback"
+    )
+
+    out = format_as_markdown_bullets(raw, "rank the best free LLM models")
+
+    assert "**GPT-Neo** — legacy baseline" in out
+    assert "**DeepSeek-V3.2** — strong reasoning" in out
+    assert "**Qwen3-Coder** — best for code-heavy agents" in out
+    assert "**Llama-3.3-70B** — broad general-purpose" in out
+    assert "GPT** — Neo" not in out
+    assert "DeepSeek** — V3.2" not in out
+
+
+def test_existing_balanced_markdown_bold_is_preserved():
+    raw = "- **DeepSeek-V3.2** — direct DeepSeek API\n- **Qwen3-Coder** — Dashscope"
+
+    out = format_as_markdown_bullets(raw, "list models")
+
+    assert out.count("**DeepSeek-V3.2**") == 1
+    assert out.count("**Qwen3-Coder**") == 1
+
+
+def test_spaced_urls_are_repaired():
+    raw = (
+        "Docs: https://api-docs. deepseek. com/ and "
+        "https://platform. moonshot. ai/docs"
+    )
+
+    out = apply_answer_format(raw, "conversational")
+
+    assert "https://api-docs.deepseek.com/" in out
+    assert "https://platform.moonshot.ai/docs" in out
+    assert "api-docs. deepseek" not in out
+    assert "platform. moonshot" not in out
+
+
+def test_code_copy_and_flattened_numbering_are_repaired():
+    raw = (
+        "Meta Llama — use slug code Copy meta-llama/llama-3.3-70b-instruct:free.2. "
+        "Qwen — use slug code Copy qwen/qwen3-next-80b-a3b-instruct:free."
+    )
+
+    out = apply_answer_format(raw, "automatic", "rank the best free LLM models")
+
+    assert "code Copy" not in out
+    assert ".2. Qwen" not in out
+    assert "\n\n2. Qwen" in out

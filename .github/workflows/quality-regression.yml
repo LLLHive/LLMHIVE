@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'llmhive/**'
+      - 'benchmarks/suites/answer_quality_replay_v1.yaml'
       - 'tests/quality_eval/**'
       - '.github/workflows/quality-regression.yml'
   
@@ -20,6 +21,7 @@ on:
       - main
     paths:
       - 'llmhive/**'
+      - 'benchmarks/suites/answer_quality_replay_v1.yaml'
       - 'tests/quality_eval/**'
   
   # Allow manual triggering
@@ -35,6 +37,11 @@ on:
         required: false
         default: '20'
         type: string
+      run_answer_replay:
+        description: 'Run live answer quality replay benchmark'
+        required: false
+        default: false
+        type: boolean
 
 env:
   PYTHON_VERSION: '3.12'
@@ -83,6 +90,107 @@ jobs:
           files: quality-test-results.xml
           check_name: "Quality Test Results"
           comment_mode: "off"
+
+  answer-quality-replay:
+    name: Answer Quality Replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pyyaml requests aiohttp httpx
+
+      - name: Validate replay suite and deterministic graders
+        run: |
+          python -m pytest \
+            llmhive/tests/test_answer_quality_replay_scoring.py \
+            llmhive/tests/test_model_catalog_grounding.py \
+            llmhive/tests/test_answer_format.py \
+            -v --tb=short \
+            --junit-xml=answer-quality-replay-tests.xml \
+            2>&1 | tee answer-quality-replay-test-output.txt
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        if: |
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.run_answer_replay == 'true') ||
+          (github.event_name == 'schedule' && github.repository_owner == 'LLMHive')
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Fetch replay secrets
+        id: fetch-replay-secrets
+        if: steps['gcp-auth'].outcome == 'success'
+        run: |
+          API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$API_KEY" ]; then
+            echo "::add-mask::$API_KEY"
+            echo "LLMHIVE_API_KEY=$API_KEY" >> $GITHUB_ENV
+            echo "secrets_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::api-key not found; live answer replay will be skipped"
+            echo "secrets_available=false" >> $GITHUB_OUTPUT
+          fi
+
+          BENCH_SECRET=$(gcloud secrets versions access latest --secret="scheduled-benchmark-secret" --project=llmhive-orchestrator 2>/dev/null || echo "")
+          if [ -n "$BENCH_SECRET" ]; then
+            echo "::add-mask::$BENCH_SECRET"
+            echo "LLMHIVE_SCHEDULED_BENCHMARK_SECRET=$BENCH_SECRET" >> $GITHUB_ENV
+          else
+            echo "::warning::scheduled-benchmark-secret not found; live answer replay may be gated"
+          fi
+
+      - name: Run live answer quality replay benchmark
+        id: live-replay
+        if: |
+          steps.fetch-replay-secrets.outputs.secrets_available == 'true' &&
+          (
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.run_answer_replay == 'true') ||
+            (github.event_name == 'schedule' && github.repository_owner == 'LLMHive')
+          )
+        env:
+          LLMHIVE_BENCHMARK_URL: https://llmhive-orchestrator-792354158895.us-east1.run.app
+          LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
+          LLMHIVE_SCHEDULED_BENCHMARK_SECRET: ${{ env.LLMHIVE_SCHEDULED_BENCHMARK_SECRET }}
+        run: |
+          mkdir -p artifacts/benchmarks/answer_quality_replay
+          python -m llmhive.app.benchmarks.cli \
+            --suite benchmarks/suites/answer_quality_replay_v1.yaml \
+            --systems llmhive \
+            --mode http \
+            --outdir artifacts/benchmarks/answer_quality_replay \
+            --timeout 180 \
+            2>&1 | tee answer-quality-replay-live-output.txt
+
+      - name: Upload answer replay artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: answer-quality-replay-results
+          path: |
+            answer-quality-replay-tests.xml
+            answer-quality-replay-test-output.txt
+            answer-quality-replay-live-output.txt
+            artifacts/benchmarks/answer_quality_replay/
+          retention-days: 30
 
   live-audit:
     name: Live Prompt Audit
@@ -205,7 +313,7 @@ jobs:
   summary:
     name: Quality Summary
     runs-on: ubuntu-latest
-    needs: [unit-quality-tests, live-audit]
+    needs: [unit-quality-tests, answer-quality-replay, live-audit]
     if: always()
     
     steps:
@@ -219,6 +327,15 @@ jobs:
             echo "✅ Unit Quality Tests: **Passed**" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Unit Quality Tests: **Failed**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Answer quality replay (non-blocking)
+          if [ "${{ needs.answer-quality-replay.result }}" == "success" ]; then
+            echo "✅ Answer Quality Replay: **Passed** (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.answer-quality-replay.result }}" == "skipped" ]; then
+            echo "⏭️ Answer Quality Replay: **Skipped**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Answer Quality Replay: **Needs review** (non-blocking)" >> $GITHUB_STEP_SUMMARY
           fi
           
           # Live audit

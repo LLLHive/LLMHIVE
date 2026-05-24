@@ -16,10 +16,11 @@ _INLINE_NUMBERED_RE = re.compile(
     r"(?:^|[\s:;])(\d{1,2})[.)]\s+([A-Za-z0-9][^•\n]*?)(?=\s+\d{1,2}[.)]\s+|$)",
     re.MULTILINE,
 )
+_NAMED_ITEM_SEPARATOR_RE = r"(?:\s+[–—-]\s+|:\s+)"
 _NAMED_ITEM_RE = re.compile(
     r"(?:^|[\n•])\s*"
-    r"([A-Z][A-Za-z0-9 .&'\-]{1,60}?)"
-    r"\s*[-–—:]\s*"
+    r"([A-Z][A-Za-z0-9 .&'()/+\-]{1,80}?)"
+    + _NAMED_ITEM_SEPARATOR_RE +
     r"(.+?)"
     r"(?=\n[A-Z][A-Za-z]|\n[-•]|\s+[•·]|\Z)",
     re.MULTILINE,
@@ -346,7 +347,42 @@ def _derive_section_title(para: str, index: int) -> str:
 
 def _finalize_document(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text.strip())
-    return text
+    text = _repair_code_copy_leakage(text)
+    text = _repair_flattened_list_boundaries(text)
+    text = _repair_spaced_urls(text)
+    return re.sub(r"\n{3,}", "\n\n", text.strip())
+
+
+def _repair_code_copy_leakage(text: str) -> str:
+    return re.sub(r"\s*\bcode\s+Copy\s*", " ", text, flags=re.IGNORECASE)
+
+
+def _repair_flattened_list_boundaries(text: str) -> str:
+    repaired = text
+    repaired = re.sub(r"([.!?])(\d+[.)])\s+(?=[A-Z])", r"\1\n\n\2 ", repaired)
+    repaired = re.sub(r"(\))\.(\d+[.)])\s+(?=[A-Z])", r"\1.\n\n\2 ", repaired)
+    repaired = re.sub(r"(\S)\.-\s+", r"\1.\n\n- ", repaired)
+    return repaired
+
+
+def _repair_spaced_urls(text: str) -> str:
+    """Repair common model-generated URL spacing like ``https://foo. bar. com``."""
+    repaired = text
+    for _ in range(8):
+        updated = re.sub(
+            r"(https?://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+)\s+\.\s+([A-Za-z0-9-])",
+            r"\1.\2",
+            repaired,
+        )
+        updated = re.sub(
+            r"(https?://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+)\.\s+([A-Za-z0-9-])",
+            r"\1.\2",
+            updated,
+        )
+        if updated == repaired:
+            break
+        repaired = updated
+    return repaired
 
 
 def _split_intro(text: str) -> Tuple[str, str]:
@@ -400,10 +436,15 @@ def _extract_list_items(body: str, query: str) -> List[str]:
 
 def _format_named_item(raw: str) -> str:
     s = raw.strip()
-    s = re.sub(r"^[•·▪\-*]+\s*", "", s)
+    s = re.sub(r"^[•·▪\-]+\s*", "", s)
     s = re.sub(r"^\d+[.)]\s+", "", s)
-    m = re.match(r"^([A-Z][A-Za-z0-9 .&'\-]{1,50}?)\s*[-–—:]\s*(.+)$", s)
-    if m and len(m.group(1)) < 40:
+    if _has_balanced_bold(s):
+        return s
+    m = re.match(
+        rf"^([A-Z][A-Za-z0-9 .&'()/+\-]{{1,80}}?){_NAMED_ITEM_SEPARATOR_RE}(.+)$",
+        s,
+    )
+    if m and len(m.group(1)) < 80:
         name, detail = m.group(1).strip(), m.group(2).strip()
         if not name.startswith("**"):
             return f"**{name}** — {detail}"
@@ -417,7 +458,17 @@ def _clean_item(s: str) -> str:
 def _looks_like_item_line(line: str) -> bool:
     if re.match(r"^[-*+•·▪\d]", line):
         return True
-    return bool(re.match(r"^[A-Z][A-Za-z0-9 .&'\-]{1,50}\s*[-–—:]", line))
+    return bool(
+        re.match(
+            rf"^[A-Z][A-Za-z0-9 .&'()/+\-]{{1,80}}{_NAMED_ITEM_SEPARATOR_RE}",
+            line,
+        )
+    )
+
+
+def _has_balanced_bold(text: str) -> bool:
+    """Return True when the item already has complete Markdown bold spans."""
+    return text.count("**") >= 2 and text.count("**") % 2 == 0
 
 
 def _dedupe_items(items: List[str]) -> List[str]:

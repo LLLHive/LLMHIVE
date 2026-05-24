@@ -84,6 +84,7 @@ class BenchmarkCase:
     id: str
     category: str
     prompt: str
+    history: List[Dict[str, Any]] = field(default_factory=list)
     expected: Dict[str, Any] = field(default_factory=dict)
     requirements: Dict[str, Any] = field(default_factory=dict)
     scoring: Dict[str, Any] = field(default_factory=dict)
@@ -96,6 +97,7 @@ class BenchmarkCase:
             id=data["id"],
             category=data["category"],
             prompt=data["prompt"],
+            history=data.get("history", []),
             expected=data.get("expected", {}),
             requirements=data.get("requirements", {}),
             scoring=data.get("scoring", {}),
@@ -107,6 +109,7 @@ class BenchmarkCase:
             "id": self.id,
             "category": self.category,
             "prompt": self.prompt,
+            "history": self.history,
             "expected": self.expected,
             "requirements": self.requirements,
             "scoring": self.scoring,

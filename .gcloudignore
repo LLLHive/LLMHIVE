@@ -1,0 +1,37 @@
+.git/
+.gitignore
+.gcloudignore
+
+# Local dependencies and build output
+node_modules/
+.next/
+out/
+build/
+dist/
+.venv/
+llmhive/.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local/editor/runtime files
+.DS_Store
+.vercel/
+.cursor/
+*.log
+.env
+.env.local
+.env.*.local
+llmhive/.env
+llmhive/.env.*
+
+# Generated benchmark and launch artifacts are not needed in the backend image.
+artifacts/
+benchmark_reports/
+coverage/
+test-results/
+playwright-report/

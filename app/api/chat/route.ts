@@ -290,10 +290,13 @@ export async function POST(req: NextRequest) {
 
     // Detect if the query needs real-time data (temporal indicators)
     const TEMPORAL_PATTERNS = [
-      /\b(today|now|current|currently|latest|recent|newest|as of|this year|this month|this week|2024|2025)\b/i,
+      /\b(today|now|current|currently|latest|recent|newest|as of|this year|this month|this week|2024|2025|2026)\b/i,
       /\b(right now|at the moment|presently|these days)\b/i,
     ]
     const needsRealtimeData = TEMPORAL_PATTERNS.some(p => p.test(prompt))
+    const needsModelCatalogGrounding =
+      /\b(best|rank|ranking|top|recommend|compare|model numbers?|exact models?|connect|connection|integration|setup|agent)\b/i.test(prompt) &&
+      /\b((?:free|paid|frontier|best)\s+(?:llm|ai|language)\s+models?|llm\s+models?|openrouter|openai|anthropic|claude|gpt|grok|deepseek|qwen|kimi|moonshot|llama|glm|chatglm|mistral|gemini)\b/i.test(prompt)
     
     if (needsRealtimeData) {
       console.log("[Chat API] Temporal query detected, enabling live research:", prompt.slice(0, 50))
@@ -400,7 +403,7 @@ export async function POST(req: NextRequest) {
         enable_vector_rag: settings.advancedFeatures?.includes("vector-rag") || false,
         enable_memory: settings.advancedFeatures?.includes("memory-augmentation") || false,
         // Real-time data: auto-enabled for temporal queries, or manually via settings
-        enable_live_research: needsRealtimeData || settings.enableLiveResearch || false,
+        enable_live_research: needsRealtimeData || needsModelCatalogGrounding || settings.enableLiveResearch || false,
         // PR5 & PR6: Budget-aware routing
         max_cost_usd: maxCostUsd,
         prefer_cheaper_models: preferCheaper,
@@ -552,16 +555,24 @@ export async function POST(req: NextRequest) {
     
     // Extract quality metadata from backend response
     const extra = data.extra || {}
+    const reportedConfidence =
+      typeof extra.elite_orchestration?.confidence === "number"
+        ? extra.elite_orchestration.confidence
+        : typeof extra.verification?.confidence === "number"
+          ? extra.verification.confidence
+          : undefined
     const qualityMetadata = {
       traceId: extra.trace_id || `trace-${Date.now()}`,
-      confidence: extra.elite_orchestration?.confidence ?? extra.verification?.confidence ?? 0.85,
-      confidenceLabel: extra.verification?.confidence >= 0.9 ? "high" : 
-                       extra.verification?.confidence >= 0.7 ? "medium" : "low",
+      confidence: reportedConfidence,
+      confidenceLabel: reportedConfidence === undefined ? undefined :
+                       reportedConfidence >= 0.9 ? "high" :
+                       reportedConfidence >= 0.7 ? "medium" : "low",
       verificationScore: extra.verification?.confidence,
       issuesFound: extra.verification?.issues_found || 0,
       correctionsApplied: extra.verification?.corrected || false,
       eliteStrategy: extra.elite_orchestration?.strategy,
       consensusScore: extra.elite_orchestration?.consensus_score,
+      consensusMethod: extra.elite_orchestration?.consensus_method,
       taskType: extra.task_type,
       cached: extra.source === "knowledge_base_cache",
     }

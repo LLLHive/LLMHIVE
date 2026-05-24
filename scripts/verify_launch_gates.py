@@ -19,7 +19,7 @@ ORCHESTRATOR_URL = os.environ.get(
 WWW_BASE = os.environ.get("LAUNCH_WWW_BASE", "https://www.llmhive.ai").rstrip("/")
 
 # Certified serving revision — update when intentionally changing launch basis.
-EXPECTED_REVISION = os.environ.get("LAUNCH_CERTIFIED_REVISION", "llmhive-orchestrator-02451-4fq")
+EXPECTED_REVISION = os.environ.get("LAUNCH_CERTIFIED_REVISION", "llmhive-orchestrator-02461-2h4")
 
 PUBLIC_PATHS = (
     "/",

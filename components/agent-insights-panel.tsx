@@ -44,6 +44,9 @@ const agentColors = {
 }
 
 export function AgentInsightsPanel({ agents, consensus, citations, onClose }: AgentInsightsPanelProps) {
+  const hasReportedConsensus = consensus.confidence >= 0
+  const displayedConfidence = hasReportedConsensus ? consensus.confidence : 0
+
   return (
     <div className="absolute top-0 right-0 h-full w-96 bg-background border-l border-border shadow-2xl flex flex-col z-50 animate-in slide-in-from-right duration-300">
       {/* Header */}
@@ -63,18 +66,20 @@ export function AgentInsightsPanel({ agents, consensus, citations, onClose }: Ag
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Consensus Confidence</span>
             <div className="flex items-center gap-1">
-              {consensus.confidence >= 80 ? (
+              {hasReportedConsensus && consensus.confidence >= 80 ? (
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
               ) : (
                 <AlertCircle className="h-4 w-4 text-yellow-500" />
               )}
-              <span className="text-lg font-bold text-[var(--bronze)]">{consensus.confidence}%</span>
+              <span className="text-lg font-bold text-[var(--bronze)]">
+                {hasReportedConsensus ? `${consensus.confidence}%` : "Not reported"}
+              </span>
             </div>
           </div>
           <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
             <div
               className="h-full bronze-gradient transition-all duration-500"
-              style={{ width: `${consensus.confidence}%` }}
+              style={{ width: `${displayedConfidence}%` }}
             />
           </div>
           {consensus.debateOccurred && consensus.consensusNote && (

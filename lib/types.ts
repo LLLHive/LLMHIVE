@@ -19,6 +19,7 @@ export interface QualityMetadata {
   correctionsApplied?: boolean
   eliteStrategy?: string
   consensusScore?: number
+  consensusMethod?: string
   taskType?: string
   cached?: boolean
 }

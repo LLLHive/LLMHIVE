@@ -261,7 +261,7 @@ class LLMHiveRunner(RunnerBase):
             orchestration=orchestration,
             tuning=tuning,
             metadata=metadata,
-            history=[],
+            history=case.history or [],
         )
         
         # Run orchestration with timeout
@@ -302,7 +302,7 @@ class LLMHiveRunner(RunnerBase):
                 "learn_from_chat": False,
             },
             "metadata": _benchmark_case_metadata(case),
-            "history": [],
+            "history": case.history or [],
         }
         
         # Production /v1/chat is gated by ApiKey auth (see app/auth.py).
