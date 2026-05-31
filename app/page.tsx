@@ -355,8 +355,7 @@ export default async function Home() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-100/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)] sm:text-xl">
-              LLMHive routes every request to the optimal model — {MARKETING_OPENAI_FLAGSHIP}, Claude Sonnet 4.6, Gemini 3.1 Pro,
-              Grok 4, DeepSeek V3.2 and 350+ more — so you stop guessing, stop tab-hopping, and stop overpaying.
+              LLMHive routes every request to the optimal model — {MARKETING_FEATURED_LINE} — so you stop guessing, stop tab-hopping, and stop overpaying.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">

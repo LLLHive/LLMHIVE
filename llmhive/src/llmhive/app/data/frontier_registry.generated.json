@@ -1,0 +1,45 @@
+{
+  "_generated": true,
+  "_source": "data/generated/frontier_roster.json",
+  "registry_additions": [
+    {
+      "registry_key": "claude-opus-4.8",
+      "provider": "anthropic",
+      "model_id": "claude-opus-4.8",
+      "openrouter_slug": "anthropic/claude-opus-4.8",
+      "display_name": "Claude Opus 4.8",
+      "release_date": "2026-05",
+      "context_window": 1000000,
+      "reasoning_strength": 0.98,
+      "coding_strength": 0.98,
+      "math_strength": 0.96,
+      "rag_strength": 0.88,
+      "dialogue_strength": 0.93,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic",
+        "long_context"
+      ]
+    },
+    {
+      "registry_key": "claude-opus-4.7",
+      "provider": "anthropic",
+      "model_id": "claude-opus-4.7",
+      "openrouter_slug": "anthropic/claude-opus-4.7",
+      "display_name": "Claude Opus 4.7",
+      "release_date": "2026-04",
+      "context_window": 1000000,
+      "reasoning_strength": 0.97,
+      "coding_strength": 0.97,
+      "math_strength": 0.95,
+      "rag_strength": 0.87,
+      "dialogue_strength": 0.92,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic"
+      ]
+    }
+  ]
+}

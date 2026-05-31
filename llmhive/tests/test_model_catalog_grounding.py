@@ -55,7 +55,7 @@ def test_paid_model_catalog_grounding_uses_frontier_slugs():
 
     assert info["applied"] is True
     assert info["tier"] == "paid"
-    assert "anthropic/claude-opus-4.7" in context
+    assert "anthropic/claude-opus-4.8" in context
     assert "openai/gpt-5.5-pro" in context
     assert "google/gemini-3.1-pro-preview" in context
     assert "moonshotai/kimi-k2.6" in context
@@ -68,7 +68,7 @@ def test_deterministic_paid_catalog_answer_uses_current_frontier_models():
         {},
     )
 
-    assert "anthropic/claude-opus-4.7" in answer
+    assert "anthropic/claude-opus-4.8" in answer
     assert "openai/gpt-5.5-pro" in answer
     assert "google/gemini-3.1-pro-preview" in answer
     assert "moonshotai/kimi-k2.6" in answer

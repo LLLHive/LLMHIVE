@@ -176,7 +176,7 @@ def test_paid_model_replay_passes_with_frontier_catalog():
     answer = """
 For LLMHive paid/frontier routing, use these exact model slugs in the model picker or let Automatic routing choose them:
 
-- **Claude Opus 4.7** — exact model slug `anthropic/claude-opus-4.7`; best for deep reasoning and writing quality. Connect with `preferred_api=anthropic` and `native_model_id=claude-opus-4.7`. Docs: https://docs.anthropic.com/
+- **Claude Opus 4.8** — exact model slug `anthropic/claude-opus-4.8`; best for deep reasoning and writing quality. Connect with `preferred_api=anthropic` and `native_model_id=claude-opus-4.8`. Docs: https://docs.anthropic.com/
 - **GPT-5.5 Pro** — exact model slug `openai/gpt-5.5-pro`; best for broad agent tasks and tool use. Connect with `preferred_api=openai` and `native_model_id=gpt-5.5-pro`. Docs: https://platform.openai.com/docs
 - **Gemini 3.1 Pro Preview** — exact model slug `google/gemini-3.1-pro-preview`; best for long context and multimodal work. Connect with `preferred_api=google`. Docs: https://ai.google.dev/gemini-api/docs
 - **Kimi K2.6** — exact model slug `moonshotai/kimi-k2.6`; LLMHive direct API uses `kimi-k2.6`, `Kimi_K26_Api_Key`, and https://api.moonshot.ai/v1. Docs: https://platform.moonshot.ai/docs

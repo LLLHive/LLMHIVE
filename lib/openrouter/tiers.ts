@@ -146,7 +146,7 @@ export const PREMIUM_MODEL_LIMITS: PremiumModelLimits[] = [
     requiredTier: 'pro',
   },
   {
-    modelPattern: 'claude-opus-4.5',
+    modelPattern: 'claude-opus-4.8',
     dailyTokenLimit: 100_000,
     monthlyTokenLimit: 1_000_000,
     costPer1MTokens: 25,
@@ -242,6 +242,8 @@ export const MODEL_COST_TIERS: ModelCostTier[] = [
     models: [
       'anthropic/claude-sonnet-4.5',
       'anthropic/claude-3.5-sonnet',
+      'anthropic/claude-opus-4.8',
+      'anthropic/claude-opus-4.7',
       'anthropic/claude-opus-4.5',
       'google/gemini-3-pro-preview',
     ],
@@ -253,6 +255,7 @@ export const MODEL_COST_TIERS: ModelCostTier[] = [
       'openai/gpt-5.5-pro',
       'openai/gpt-5.2-pro',
       'openai/o1-pro',
+      'anthropic/claude-opus-4.8',
     ],
   },
 ]
@@ -409,6 +412,7 @@ const ENTERPRISE_TIER_PATTERNS = [
   'o1-preview',
   'o1-pro',         // $600/1M output! DANGER
   'o3-deep-research',
+  'claude-opus-4.8',
   'claude-opus-4.7',
   'claude-opus-4.5',  // $25/1M but heavy usage
   'claude-opus-4',

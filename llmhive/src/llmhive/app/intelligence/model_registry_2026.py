@@ -366,7 +366,38 @@ class ModelRegistry2026:
 
     def __init__(self) -> None:
         self._models: Dict[str, ModelEntry] = dict(CANONICAL_MODELS)
+        self._merge_frontier_registry_additions()
         self._enriched = False
+
+    def _merge_frontier_registry_additions(self) -> None:
+        """Merge generated frontier registry entries (from frontier_roster.json)."""
+        try:
+            from ..data.frontier_roster_loader import load_registry_additions
+        except ImportError:
+            return
+
+        for row in load_registry_additions():
+            key = str(row.get("registry_key") or row.get("model_id") or "").strip()
+            if not key or key in self._models:
+                continue
+            self._models[key] = ModelEntry(
+                provider=str(row.get("provider") or ""),
+                model_id=str(row.get("model_id") or key),
+                display_name=str(row.get("display_name") or key),
+                release_date=str(row.get("release_date") or ""),
+                context_window=int(row.get("context_window") or 128_000),
+                reasoning_strength=float(row.get("reasoning_strength") or 0.85),
+                coding_strength=float(row.get("coding_strength") or 0.85),
+                math_strength=float(row.get("math_strength") or 0.85),
+                rag_strength=float(row.get("rag_strength") or 0.80),
+                dialogue_strength=float(row.get("dialogue_strength") or 0.85),
+                multilingual_strength=float(row.get("multilingual_strength") or 0.80),
+                long_context_strength=float(row.get("long_context_strength") or 0.85),
+                tool_use_strength=float(row.get("tool_use_strength") or 0.85),
+                supports_tools=bool(row.get("supports_tools", True)),
+                supports_multimodal=bool(row.get("supports_multimodal", False)),
+                capability_tags=list(row.get("capability_tags") or []),
+            )
 
     # ── queries ────────────────────────────────────────────────────────
 

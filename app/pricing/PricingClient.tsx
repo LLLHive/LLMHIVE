@@ -398,8 +398,8 @@ export default function PricingClient() {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             <span className="text-yellow-400 font-bold">Premium</span> uses{" "}
             <span className="text-yellow-400 font-bold">elite orchestration</span> with{" "}
-            <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by {MARKETING_OPENAI_FLAGSHIP},
-            Claude Opus 4.5 & Gemini 3 Pro.
+            <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by{" "}
+            {MARKETING_FEATURED_ORCHESTRATION_STACK}.
           </p>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto">
             <span className="font-semibold text-[var(--bronze)]">Standard</span> and{" "}

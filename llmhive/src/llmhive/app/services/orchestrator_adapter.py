@@ -37,6 +37,7 @@ except ImportError:
     get_profile = lambda x: None  # type: ignore
     PROFILES_AVAILABLE = False
 from ..audit_log import log_audit_event
+from ..data.frontier_roster_loader import load_paid_model_catalog
 from .model_router import (
     get_models_for_reasoning_method,
     map_reasoning_mode_to_method,
@@ -648,6 +649,7 @@ OPENROUTER_GPT_5_3_CODEX = "openai/gpt-5.3-codex"
 OPENROUTER_O1_PRO = "openai/o1-pro"
 OPENROUTER_O4_MINI = "openai/o4-mini"
 OPENROUTER_CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
+OPENROUTER_CLAUDE_OPUS_4_8 = "anthropic/claude-opus-4.8"
 OPENROUTER_CLAUDE_OPUS_4_7 = "anthropic/claude-opus-4.7"
 OPENROUTER_GROK_4_20 = "x-ai/grok-4.20"
 OPENROUTER_GROK_4_FAST = "x-ai/grok-4-fast"
@@ -1572,94 +1574,17 @@ _MODEL_CATALOG_SUBJECT_RE = re.compile(
     re.IGNORECASE,
 )
 
-_PAID_MODEL_CATALOG = [
+_PAID_MODEL_CATALOG = load_paid_model_catalog() or [
     {
         "rank": 1,
-        "model_id": "anthropic/claude-opus-4.7",
-        "display": "Claude Opus 4.7",
+        "model_id": "anthropic/claude-opus-4.8",
+        "display": "Claude Opus 4.8",
         "provider": "Anthropic",
         "preferred_api": "anthropic",
-        "native_model_id": "claude-opus-4.7",
-        "best_for": "deep reasoning, writing quality, agent planning",
+        "native_model_id": "claude-opus-4.8",
+        "best_for": "agentic orchestration, complex coding, long-horizon knowledge work",
         "docs": "https://docs.anthropic.com/",
         "caveat": "Premium direct/provider-paid route.",
-    },
-    {
-        "rank": 2,
-        "model_id": "openai/gpt-5.5-pro",
-        "display": "GPT-5.5 Pro",
-        "provider": "OpenAI",
-        "preferred_api": "openai",
-        "native_model_id": "gpt-5.5-pro",
-        "best_for": "general intelligence, tool use, multimodal workflows",
-        "docs": "https://platform.openai.com/docs",
-        "caveat": "Premium direct/provider-paid route.",
-    },
-    {
-        "rank": 3,
-        "model_id": "google/gemini-3.1-pro-preview",
-        "display": "Gemini 3.1 Pro Preview",
-        "provider": "Google",
-        "preferred_api": "google",
-        "native_model_id": "gemini-3.1-pro-preview",
-        "best_for": "long context, multimodal analysis, research synthesis",
-        "docs": "https://ai.google.dev/gemini-api/docs",
-        "caveat": "Paid Google/Gemini API route.",
-    },
-    {
-        "rank": 4,
-        "model_id": "anthropic/claude-sonnet-4.6",
-        "display": "Claude Sonnet 4.6",
-        "provider": "Anthropic",
-        "preferred_api": "anthropic",
-        "native_model_id": "claude-sonnet-4.6",
-        "best_for": "balanced quality, coding, fast agent loops",
-        "docs": "https://docs.anthropic.com/",
-        "caveat": "Paid direct route; better latency/cost than Opus for many agents.",
-    },
-    {
-        "rank": 5,
-        "model_id": "deepseek/deepseek-v4-pro",
-        "display": "DeepSeek V4 Pro",
-        "provider": "DeepSeek",
-        "preferred_api": "deepseek",
-        "native_model_id": "deepseek-v4-pro",
-        "best_for": "coding, math, cost-effective reasoning",
-        "docs": "https://api-docs.deepseek.com/",
-        "caveat": "Paid/provider route, often strong value per token.",
-    },
-    {
-        "rank": 6,
-        "model_id": "moonshotai/kimi-k2.6",
-        "display": "Kimi K2.6",
-        "provider": "Moonshot",
-        "preferred_api": "kimi",
-        "native_model_id": "kimi-k2.6",
-        "best_for": "long-context agentic reasoning and document workflows",
-        "docs": "https://platform.moonshot.ai/docs",
-        "caveat": "LLMHive direct API via Kimi_K26_Api_Key and https://api.moonshot.ai/v1.",
-    },
-    {
-        "rank": 7,
-        "model_id": "x-ai/grok-4.20",
-        "display": "Grok 4.20",
-        "provider": "xAI",
-        "preferred_api": "grok",
-        "native_model_id": "grok-4.20",
-        "best_for": "real-time reasoning and broad assistant tasks",
-        "docs": "https://docs.x.ai/docs",
-        "caveat": "Paid xAI/Grok route.",
-    },
-    {
-        "rank": 8,
-        "model_id": "qwen/qwen3.6-plus",
-        "display": "Qwen3.6 Plus",
-        "provider": "Alibaba",
-        "preferred_api": "dashscope",
-        "native_model_id": "qwen3.6-plus",
-        "best_for": "multilingual, Chinese-language, math, and coding workflows",
-        "docs": "https://help.aliyun.com/zh/model-studio/",
-        "caveat": "Paid DashScope/provider route.",
     },
 ]
 

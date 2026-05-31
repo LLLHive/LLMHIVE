@@ -216,6 +216,12 @@ jobs:
           
           echo "Running: python run_modeldb_refresh.py $ARGS --verbose"
           python run_modeldb_refresh.py $ARGS --verbose
+
+      - name: Verify frontier roster surfaces (weekly)
+        if: steps.run-mode.outputs.mode == 'weekly'
+        run: |
+          python scripts/sync_frontier_surfaces.py --check
+          python scripts/check_frontier_surface_drift.py --strict --verify-openrouter
       
       - name: Upload run logs
         uses: actions/upload-artifact@v4
