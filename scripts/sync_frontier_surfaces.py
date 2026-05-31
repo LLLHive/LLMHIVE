@@ -4,6 +4,7 @@
 Outputs (do not edit by hand):
   - lib/models.generated.ts
   - lib/marketing/featured-models.generated.ts
+  - lib/marketing/usecase-category-rankings.generated.json
   - llmhive/src/llmhive/app/data/frontier_paid_catalog.generated.json
   - llmhive/src/llmhive/app/data/frontier_registry.generated.json
 
@@ -25,9 +26,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "llmhive" / "src"))
+
+from llmhive.app.knowledge.usecase_category_rankings import (  # noqa: E402
+    build_category_rankings_json,
+)
+
 ROSTER_PATH = ROOT / "data" / "generated" / "frontier_roster.json"
 OUT_MODELS_TS = ROOT / "lib" / "models.generated.ts"
 OUT_MARKETING_TS = ROOT / "lib" / "marketing" / "featured-models.generated.ts"
+OUT_CATEGORY_RANKINGS_JSON = ROOT / "lib" / "marketing" / "usecase-category-rankings.generated.json"
 OUT_PAID_JSON = ROOT / "llmhive" / "src" / "llmhive" / "app" / "data" / "frontier_paid_catalog.generated.json"
 OUT_REGISTRY_JSON = ROOT / "llmhive" / "src" / "llmhive" / "app" / "data" / "frontier_registry.generated.json"
 
@@ -156,6 +164,15 @@ def _write_if_changed(path: Path, content: str) -> bool:
     return True
 
 
+def _category_rankings_stable_json(text: str) -> str:
+    """Compare category rankings ignoring volatile generated_at timestamp."""
+    if not text.strip():
+        return ""
+    payload = json.loads(text)
+    payload.pop("generated_at", None)
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
 def generate_all(roster: Dict[str, Any]) -> Dict[str, bool]:
     changed: Dict[str, bool] = {}
     changed["models_ts"] = _write_if_changed(
@@ -163,6 +180,9 @@ def generate_all(roster: Dict[str, Any]) -> Dict[str, bool]:
     )
     changed["marketing_ts"] = _write_if_changed(
         OUT_MARKETING_TS, _generate_marketing_ts(roster.get("marketing") or {})
+    )
+    changed["category_rankings_json"] = _write_if_changed(
+        OUT_CATEGORY_RANKINGS_JSON, build_category_rankings_json()
     )
     changed["paid_json"] = _write_if_changed(
         OUT_PAID_JSON, _generate_paid_catalog_json(roster.get("paid_catalog") or [])
@@ -206,12 +226,18 @@ def main() -> int:
     expected = {
         "models_ts": _generate_models_ts(roster.get("ui_models") or []),
         "marketing_ts": _generate_marketing_ts(roster.get("marketing") or {}),
+        "category_rankings_json": _category_rankings_stable_json(build_category_rankings_json()),
         "paid_json": _generate_paid_catalog_json(roster.get("paid_catalog") or []),
         "registry_json": _generate_registry_json(roster.get("registry_additions") or []),
     }
     actual = {
         "models_ts": OUT_MODELS_TS.read_text(encoding="utf-8") if OUT_MODELS_TS.is_file() else "",
         "marketing_ts": OUT_MARKETING_TS.read_text(encoding="utf-8") if OUT_MARKETING_TS.is_file() else "",
+        "category_rankings_json": _category_rankings_stable_json(
+            OUT_CATEGORY_RANKINGS_JSON.read_text(encoding="utf-8")
+            if OUT_CATEGORY_RANKINGS_JSON.is_file()
+            else ""
+        ),
         "paid_json": OUT_PAID_JSON.read_text(encoding="utf-8") if OUT_PAID_JSON.is_file() else "",
         "registry_json": OUT_REGISTRY_JSON.read_text(encoding="utf-8") if OUT_REGISTRY_JSON.is_file() else "",
     }

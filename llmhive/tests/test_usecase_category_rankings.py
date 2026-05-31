@@ -29,8 +29,14 @@ def test_science_leader_is_gpt_55_pro():
 
 
 def test_programming_leader_is_gpt_55():
-    rows = get_usecase_category_rankings("programming", top_k=1)
+    rows = get_usecase_category_rankings("programming", top_k=3)
     assert rows[0] == "openai/gpt-5.5"
+    assert rows[1] == "anthropic/claude-opus-4.8"
+
+
+def test_reasoning_includes_opus_48():
+    rows = get_usecase_category_rankings("reasoning", top_k=5)
+    assert "anthropic/claude-opus-4.8" in rows
 
 
 def test_academia_leader_is_gemini_25_pro_by_mrcr_score():

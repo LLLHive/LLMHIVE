@@ -40,3 +40,18 @@ def test_paid_catalog_generated_loads_in_python():
     catalog = load_paid_model_catalog()
     assert catalog
     assert catalog[0]["model_id"] == "anthropic/claude-opus-4.8"
+
+
+def test_category_rankings_include_opus_48():
+    payload = json.loads(
+        (ROOT / "lib" / "marketing" / "usecase-category-rankings.generated.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    programming = [
+        row["model_id"] for row in (payload.get("categories") or {}).get("programming") or []
+    ]
+    assert "anthropic/claude-opus-4.8" in programming
+    assert programming.index("anthropic/claude-opus-4.8") < programming.index(
+        "anthropic/claude-opus-4.7"
+    )

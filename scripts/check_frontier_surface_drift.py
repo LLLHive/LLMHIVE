@@ -24,6 +24,15 @@ from typing import Any, Dict, List, Set
 ROOT = Path(__file__).resolve().parents[1]
 ROSTER_PATH = ROOT / "data" / "generated" / "frontier_roster.json"
 SYNC_SCRIPT = ROOT / "scripts" / "sync_frontier_surfaces.py"
+CATEGORY_RANKINGS_PATH = ROOT / "lib" / "marketing" / "usecase-category-rankings.generated.json"
+
+# UI categories that must surface the top paid roster model when benchmarks include it.
+_CATEGORY_RANKINGS_REQUIRED_SLUGS: Dict[str, List[str]] = {
+    "programming": ["anthropic/claude-opus-4.8"],
+    "science": ["anthropic/claude-opus-4.8"],
+    "reasoning": ["anthropic/claude-opus-4.8"],
+    "technology": ["anthropic/claude-opus-4.8"],
+}
 
 
 def _fetch_openrouter_ids() -> Set[str]:
@@ -58,6 +67,53 @@ def _latest_family_slug(or_ids: Set[str], prefix: str) -> str | None:
         return tuple(nums or [0])
 
     return sorted(candidates, key=sort_key)[-1]
+
+
+def _category_rankings_model_ids(payload: Dict[str, Any], category: str) -> List[str]:
+    rows = (payload.get("categories") or {}).get(category) or []
+    return [
+        str(row.get("model_id", "")).lower()
+        for row in rows
+        if isinstance(row, dict) and row.get("model_id")
+    ]
+
+
+def _check_category_rankings(roster: Dict[str, Any]) -> List[str]:
+    errors: List[str] = []
+    if not CATEGORY_RANKINGS_PATH.is_file():
+        return ["Missing category rankings JSON — run scripts/sync_frontier_surfaces.py"]
+
+    try:
+        payload = json.loads(CATEGORY_RANKINGS_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [f"Invalid category rankings JSON: {exc}"]
+
+    top_paid = (roster.get("paid_catalog") or [{}])[0]
+    flagship_slug = str(top_paid.get("model_id") or "").lower()
+    if flagship_slug:
+        all_ranked: Set[str] = set()
+        for cat_rows in (payload.get("categories") or {}).values():
+            if isinstance(cat_rows, list):
+                for row in cat_rows:
+                    if isinstance(row, dict) and row.get("model_id"):
+                        all_ranked.add(str(row["model_id"]).lower())
+        if flagship_slug not in all_ranked:
+            errors.append(
+                f"Category rankings missing top paid roster model {flagship_slug!r}"
+            )
+
+    for category, required_slugs in _CATEGORY_RANKINGS_REQUIRED_SLUGS.items():
+        ranked = _category_rankings_model_ids(payload, category)
+        if len(ranked) < 10:
+            errors.append(f"Category {category!r} has fewer than 10 ranked models")
+            continue
+        for slug in required_slugs:
+            if slug.lower() not in ranked:
+                errors.append(
+                    f"Category {category!r} rankings missing required model {slug!r}"
+                )
+
+    return errors
 
 
 def _read_text(path: Path) -> str:
@@ -121,6 +177,8 @@ def main() -> int:
                         warnings.append(
                             f"Newest Opus slug {latest} not in paid_catalog top tier (ui only)"
                         )
+
+        errors.extend(_check_category_rankings(roster))
 
     proc = subprocess.run(
         [sys.executable, str(SYNC_SCRIPT), "--check"],
