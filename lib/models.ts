@@ -25,6 +25,7 @@ export const AVAILABLE_MODELS: Model[] = [
   ...CURATED_MODEL_ENTRIES,
 ]
 
+/**
  * Normalize saved or API model identifiers to canonical OpenRouter IDs
  * (or `automatic`) for lookup in AVAILABLE_MODELS.
  */
