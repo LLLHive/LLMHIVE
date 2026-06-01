@@ -304,7 +304,13 @@ MAXIMUM_MODELS = {
 # These are the TOP models per category - use when quality is paramount
 # Derived from benchmark scores (see usecase_category_rankings.py)
 def _build_elite_models() -> Dict[str, List[str]]:
+    from ..knowledge.benchmark_rankings_jan2026 import BenchmarkCategory, get_benchmark_leaderboard
     from ..knowledge.usecase_category_rankings import get_usecase_category_rankings
+
+    multimodal = [
+        row.model_id
+        for row in get_benchmark_leaderboard(BenchmarkCategory.MULTIMODAL, top_k=10)
+    ]
 
     return {
         "math": get_usecase_category_rankings("reasoning", top_k=10),
@@ -313,6 +319,7 @@ def _build_elite_models() -> Dict[str, List[str]]:
         "rag": get_usecase_category_rankings("academia", top_k=10),
         "multilingual": get_usecase_category_rankings("translation", top_k=10),
         "dialogue": get_usecase_category_rankings("roleplay", top_k=10),
+        "multimodal": multimodal,
     }
 
 
@@ -334,12 +341,7 @@ ELITE_MODELS = {
         "anthropic/claude-3-haiku", # Fast variant
     ],
     "dialogue": _ELITE_BENCHMARK_MODELS["dialogue"],
-    "multimodal": [
-        "anthropic/claude-opus-4", # 378 ARC-AGI2
-        "openai/gpt-5.5-pro",
-        "openai/gpt-5.2",
-        "openai/gpt-4o",           # Vision capable
-    ],
+    "multimodal": _ELITE_BENCHMARK_MODELS["multimodal"],
 }
 
 

@@ -955,6 +955,7 @@ TOOL_CAPABLE_MODELS = {
     OPENROUTER_O3,
     OPENROUTER_O1,
     OPENROUTER_CLAUDE_OPUS_4,
+    OPENROUTER_CLAUDE_OPUS_4_8,
     OPENROUTER_CLAUDE_OPUS_4_7,
     OPENROUTER_CLAUDE_SONNET_4,
     OPENROUTER_CLAUDE_SONNET_4_6,
@@ -1228,19 +1229,21 @@ async def get_intelligent_models(
         selected.append(model_id)
         used_providers.add(provider)
     
-    # Step 3: Fallback to OpenRouter top-ranked models (updated February 2026)
+    # Step 3: Fallback to OpenRouter top-ranked models (May 2026 frontier order)
     if len(selected) < num_models:
         fallback_order = [
             OPENROUTER_GPT_5,           # #1
-            OPENROUTER_CLAUDE_OPUS_4,   # #2
-            OPENROUTER_GEMINI_3_1_PRO,  # #3 newest Google
-            OPENROUTER_GEMINI_3_PRO,    # #4
-            OPENROUTER_GEMINI_2_PRO,    # #5
-            OPENROUTER_CLAUDE_SONNET_4, # #6
-            OPENROUTER_O3,              # #7 reasoning
-            OPENROUTER_GROK_4,          # #8
-            OPENROUTER_LLAMA_4,         # #9
-            OPENROUTER_MISTRAL_LARGE,   # #10
+            OPENROUTER_CLAUDE_OPUS_4_8, # #2 latest Anthropic
+            OPENROUTER_CLAUDE_OPUS_4_7, # #3
+            OPENROUTER_GEMINI_3_1_PRO,  # #4 newest Google
+            OPENROUTER_GEMINI_3_PRO,    # #5
+            OPENROUTER_GEMINI_2_PRO,    # #6
+            OPENROUTER_CLAUDE_SONNET_4, # #7
+            OPENROUTER_O3,              # #8 reasoning
+            OPENROUTER_GROK_4,          # #9
+            OPENROUTER_LLAMA_4,         # #10
+            OPENROUTER_MISTRAL_LARGE,   # #11
+            OPENROUTER_CLAUDE_OPUS_4,   # legacy Opus fallback
             OPENROUTER_GPT_4O,          # fallback
         ]
         for model_id in fallback_order:
@@ -1405,14 +1408,17 @@ def _get_intelligent_models_local(
             selected.append(model_id)
             used_providers.add(provider)
     
-    # Fallback - use actual OpenRouter top-ranked models
+    # Fallback - use actual OpenRouter top-ranked models (May 2026 frontier order)
     if len(selected) < num_models:
         fallback_order = [
             OPENROUTER_GPT_5,
-            OPENROUTER_CLAUDE_OPUS_4,
+            OPENROUTER_CLAUDE_OPUS_4_8,
+            OPENROUTER_CLAUDE_OPUS_4_7,
+            OPENROUTER_GEMINI_3_1_PRO,
             OPENROUTER_GEMINI_2_PRO,
             OPENROUTER_CLAUDE_SONNET_4,
             OPENROUTER_O1,
+            OPENROUTER_CLAUDE_OPUS_4,
         ]
         for model_id in fallback_order:
             if model_id not in selected and len(selected) < num_models:
