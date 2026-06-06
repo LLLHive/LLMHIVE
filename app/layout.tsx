@@ -13,6 +13,7 @@ import { ConversationsProvider } from "@/lib/conversations-context"
 import { AppearanceSettingsLoader } from "@/components/appearance-settings-loader"
 import AppBackground from "@/components/branding/AppBackground"
 import { ForestBackgroundWrapper } from "@/components/forest-background-wrapper"
+import { GoogleTagManagerHead, GoogleTagManagerNoScript } from "@/components/google-tag-manager"
 import { SupportWidget } from "@/components/support-widget"
 import { getSiteUrl } from "@/lib/site-url"
 
@@ -158,6 +159,7 @@ export default function RootLayout({
             name="viewport"
             content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
           />
+          <GoogleTagManagerHead />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
@@ -216,6 +218,7 @@ export default function RootLayout({
           />
         </head>
         <body className={`min-h-screen bg-transparent text-foreground font-sans antialiased ${orbitron.variable}`}>
+          <GoogleTagManagerNoScript />
           <AppBackground />
           <ForestBackgroundWrapper />
           <ThemeProvider
