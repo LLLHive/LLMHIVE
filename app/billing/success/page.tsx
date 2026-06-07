@@ -7,15 +7,19 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import confetti from "canvas-confetti"
+import { BillingPurchaseTracking } from "@/components/marketing/billing-purchase-tracking"
+import type { GtmPurchasePayload } from "@/lib/marketing/gtm-events"
 
 export default function BillingSuccessPage() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get("session_id")
   const [loading, setLoading] = useState(true)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [subscription, setSubscription] = useState<{
     tier: string
     billingCycle: string
   } | null>(null)
+  const [purchase, setPurchase] = useState<GtmPurchasePayload | null>(null)
 
   useEffect(() => {
     // Trigger confetti animation
@@ -39,7 +43,9 @@ export default function BillingSuccessPage() {
       const response = await fetch(`/api/billing/verify-session?session_id=${sessionId}`)
       if (response.ok) {
         const data = await response.json()
+        setPaymentSuccess(Boolean(data.success))
         setSubscription(data.subscription)
+        setPurchase(data.purchase ?? null)
       }
     } catch (error) {
       console.error("Error verifying session:", error)
@@ -59,6 +65,7 @@ export default function BillingSuccessPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <BillingPurchaseTracking purchase={purchase} enabled={paymentSuccess} />
       <Card className="max-w-lg w-full bg-card/50 backdrop-blur-sm border-border/50">
         <CardHeader className="text-center pb-2">
           {loading ? (

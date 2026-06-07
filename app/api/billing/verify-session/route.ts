@@ -1,7 +1,55 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
+import Stripe from "stripe"
 
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
+
+/** List-price fallback (USD) when Stripe session amount is unavailable. */
+const LIST_PRICES_USD: Record<string, Record<string, number>> = {
+  lite: { monthly: 10, annual: 100 },
+  pro: { monthly: 20, annual: 200 },
+  enterprise: { monthly: 35, annual: 350 },
+  maximum: { monthly: 0, annual: 0 },
+}
+
+function getStripe(): Stripe | null {
+  if (!process.env.STRIPE_SECRET_KEY) return null
+  return new Stripe(process.env.STRIPE_SECRET_KEY)
+}
+
+async function buildPurchasePayload(
+  sessionId: string,
+  tier: string,
+  billingCycle: string,
+  isPaid: boolean
+) {
+  if (!isPaid) return null
+
+  const stripe = getStripe()
+  if (stripe) {
+    try {
+      const session = await stripe.checkout.sessions.retrieve(sessionId)
+      return {
+        transactionId: session.id,
+        value: (session.amount_total ?? 0) / 100,
+        currency: (session.currency ?? "usd").toUpperCase(),
+        tier,
+        billingCycle,
+      }
+    } catch (err) {
+      console.warn("[verify-session] Stripe session retrieve failed:", err)
+    }
+  }
+
+  const value = LIST_PRICES_USD[tier]?.[billingCycle] ?? 0
+  return {
+    transactionId: sessionId,
+    value,
+    currency: "USD",
+    tier,
+    billingCycle,
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -72,13 +120,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const tier = data.metadata?.tier || "pro"
+    const billingCycle = data.metadata?.billing_cycle || "monthly"
+    const purchase = await buildPurchasePayload(sessionId, tier, billingCycle, isPaid)
+
     return NextResponse.json({
       success: isPaid,
       ensured,
       subscription: {
-        tier: data.metadata?.tier || "pro",
-        billingCycle: data.metadata?.billing_cycle || "monthly",
+        tier,
+        billingCycle,
       },
+      purchase,
     })
   } catch (error) {
     console.error("Error verifying session:", error)
