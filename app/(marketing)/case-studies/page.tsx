@@ -1,13 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { caseStudies } from "./content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Case Studies",
   description:
     "Industry case studies showing how LLMHive delivers measurable results with AI orchestration.",
   alternates: {
-    canonical: "https://llmhive.ai/case-studies",
+    canonical: sitePath('/case-studies'),
   },
   openGraph: {
     title: "LLMHive Case Studies",
@@ -34,7 +35,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/case-studies/${item.slug}`,
+          url: sitePath(`/case-studies/${item.slug}`),
         })),
       },
       {
@@ -53,7 +54,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Case Studies",
-            item: "https://llmhive.ai/case-studies",
+            item: sitePath('/case-studies'),
           },
         ],
       },

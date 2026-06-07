@@ -200,12 +200,12 @@ export default function AdminSupportPage() {
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard">
-              <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link href="/admin/dashboard">
                 <ArrowLeft className="h-4 w-4" />
                 Dashboard
-              </Button>
-            </Link>
+              </Link>
+            </Button>
             <h1 className="text-xl font-semibold">Support Tickets</h1>
           </div>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => setLoading(true)}>

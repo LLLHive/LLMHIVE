@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { roles } from "../content"
+import { sitePath } from "@/lib/site-url"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -44,7 +45,7 @@ function renderStructuredData(page: (typeof roles)[number]) {
           "@type": "Organization",
           name: "LLMHive",
         },
-        mainEntityOfPage: `https://llmhive.ai/best-ai-assistant-for/${page.slug}`,
+        mainEntityOfPage: sitePath(`/best-ai-assistant-for/${page.slug}`),
       },
       {
         "@type": "FAQPage",
@@ -64,13 +65,13 @@ function renderStructuredData(page: (typeof roles)[number]) {
             "@type": "ListItem",
             position: 1,
             name: "Best AI Assistant For",
-            item: "https://llmhive.ai/best-ai-assistant-for",
+            item: sitePath('/best-ai-assistant-for'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: page.title,
-            item: `https://llmhive.ai/best-ai-assistant-for/${page.slug}`,
+            item: sitePath(`/best-ai-assistant-for/${page.slug}`),
           },
         ],
       },

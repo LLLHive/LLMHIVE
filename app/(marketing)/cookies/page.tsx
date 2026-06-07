@@ -2,12 +2,13 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Cookie Policy - LLMHive",
   description: "Review the LLMHive cookie policy and how we use cookies on our site.",
   alternates: {
-    canonical: "https://llmhive.ai/cookies",
+    canonical: sitePath('/cookies'),
   },
   openGraph: {
     title: "LLMHive Cookie Policy",
@@ -32,7 +33,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Cookie Policy",
-            item: "https://llmhive.ai/cookies",
+            item: sitePath('/cookies'),
           },
         ],
       },
@@ -54,12 +55,12 @@ export default function CookiePolicyPage() {
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2" asChild>
+            <Link href="/">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </header>
 

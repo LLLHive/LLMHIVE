@@ -716,13 +716,13 @@ export default function OrchestrationPage() {
                   )}
                   
                   {/* Manage Team Link */}
-                  <Link href={ROUTES.MODELS}>
-                    <Button variant="outline" size="sm" className="w-full gap-2 mt-2">
+                  <Button variant="outline" size="sm" className="w-full gap-2 mt-2" asChild>
+                    <Link href={ROUTES.MODELS}>
                       <Plus className="h-3.5 w-3.5" />
                       {openRouterModels.length > 0 ? "Manage Team" : "Build Your AI Team"}
                       <ArrowRight className="h-3.5 w-3.5 ml-auto" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </>
               )}
             </div>

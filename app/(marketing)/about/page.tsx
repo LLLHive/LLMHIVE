@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
 import { 
+import { sitePath } from "@/lib/site-url"
   ArrowLeft, 
   Sparkles,
   Target,
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   description:
     "Learn about LLMHive's mission, patented orchestration, and team building the future of AI.",
   alternates: {
-    canonical: "https://llmhive.ai/about",
+    canonical: sitePath('/about'),
   },
   openGraph: {
     title: "About LLMHive",
@@ -44,7 +45,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "About",
-            item: "https://llmhive.ai/about",
+            item: sitePath('/about'),
           },
         ],
       },
@@ -97,12 +98,12 @@ export default function AboutPage() {
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2" asChild>
+            <Link href="/">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </header>
 
@@ -226,17 +227,15 @@ export default function AboutPage() {
             Join thousands of users who are already supercharging their AI workflow.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/pricing">
-              <Button size="lg" className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white">
+            <Button size="lg" className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white" asChild>
+              <Link href="/pricing">
                 <Zap className="h-5 w-5 mr-2" />
                 View plans
-              </Button>
-            </Link>
-            <Link href="/contact">
-              <Button size="lg" variant="outline">
-                Contact Us
-              </Button>
-            </Link>
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/contact">Contact Us</Link>
+            </Button>
           </div>
         </div>
       </section>

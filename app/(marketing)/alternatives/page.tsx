@@ -1,12 +1,13 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Alternatives",
   description:
     "Explore LLMHive alternatives and understand when multi-model orchestration outperforms single-model assistants.",
   alternates: {
-    canonical: "https://llmhive.ai/alternatives",
+    canonical: sitePath('/alternatives'),
   },
   openGraph: {
     title: "LLMHive Alternatives",
@@ -73,7 +74,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Alternatives",
-            item: "https://llmhive.ai/alternatives",
+            item: sitePath('/alternatives'),
           },
         ],
       },

@@ -1,13 +1,14 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { comparisons } from "./content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Comparisons",
   description:
     "See how LLMHive compares to leading AI assistants and platforms for quality, cost, and enterprise readiness.",
   alternates: {
-    canonical: "https://llmhive.ai/comparisons",
+    canonical: sitePath('/comparisons'),
   },
   openGraph: {
     title: "LLMHive Comparisons",
@@ -34,7 +35,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/comparisons/${item.slug}`,
+          url: sitePath(`/comparisons/${item.slug}`),
         })),
       },
       {
@@ -70,7 +71,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://llmhive.ai/comparisons",
+            item: sitePath('/comparisons'),
           },
         ],
       },

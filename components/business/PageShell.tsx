@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { sitePath } from "@/lib/site-url"
 
 type PageSection = {
   title: string
@@ -37,7 +38,7 @@ export default function PageShell({
                 "@type": "ListItem",
                 position: 1,
                 name: breadcrumb.name,
-                item: `https://llmhive.ai${breadcrumb.path}`,
+                item: sitePath(`${breadcrumb.path}`),
               },
             ],
           },

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { industryRoles } from "../content"
 import { industryToolComparisons } from "../tools"
+import { sitePath } from "@/lib/site-url"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -46,7 +47,7 @@ function renderStructuredData(page: (typeof industryRoles)[number]) {
           "@type": "Organization",
           name: "LLMHive",
         },
-        mainEntityOfPage: `https://llmhive.ai/comparisons/industries/${page.slug}`,
+        mainEntityOfPage: sitePath(`/comparisons/industries/${page.slug}`),
       },
       {
         "@type": "FAQPage",
@@ -66,19 +67,19 @@ function renderStructuredData(page: (typeof industryRoles)[number]) {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://llmhive.ai/comparisons",
+            item: sitePath('/comparisons'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Industry Comparisons",
-            item: "https://llmhive.ai/comparisons/industries",
+            item: sitePath('/comparisons/industries'),
           },
           {
             "@type": "ListItem",
             position: 3,
             name: page.title,
-            item: `https://llmhive.ai/comparisons/industries/${page.slug}`,
+            item: sitePath(`/comparisons/industries/${page.slug}`),
           },
         ],
       },

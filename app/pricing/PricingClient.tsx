@@ -45,6 +45,7 @@ import Link from "next/link"
 import Image from "next/image"
 import LogoText from "@/components/branding/LogoText"
 import { buildProductStructuredData, organizationNode } from "@/lib/marketing/structured-data"
+import { sitePath } from "@/lib/site-url"
 
 const SIGNUP_TRACKED_STORAGE_KEY = "llmhive_signup_tracked_v1"
 const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000
@@ -156,7 +157,7 @@ function renderPricingStructuredData() {
         offers: pricingTiers.map((tier) => ({
           name: tier.name,
           price: String(tier.monthlyPrice),
-          url: `https://llmhive.ai/pricing#${tier.tier}`,
+          url: sitePath(`/pricing#${tier.tier}`),
         })),
       }),
       {

@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Settings",
   description: "Manage account, billing, and preferences in LLMHive settings.",
   alternates: {
-    canonical: "https://llmhive.ai/settings",
+    canonical: sitePath('/settings'),
   },
   robots: {
     index: false,
@@ -32,7 +33,7 @@ const structuredData = {
           "@type": "ListItem",
           position: 1,
           name: "Settings",
-          item: "https://llmhive.ai/settings",
+          item: sitePath('/settings'),
         },
       ],
     },

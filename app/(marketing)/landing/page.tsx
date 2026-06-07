@@ -7,6 +7,7 @@ import {
   OFFER_STANDARD_FEATURES,
 } from "@/lib/marketing/pricing-offers"
 import { 
+import { getSiteUrl, sitePath } from "@/lib/site-url"
   Sparkles, 
   Zap, 
   Shield, 
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
   description:
     "LLMHive routes every request to the best AI model for accuracy, speed, and cost. One interface for 350+ OpenRouter models with enterprise security.",
   alternates: {
-    canonical: "https://llmhive.ai/landing",
+    canonical: sitePath('/landing'),
   },
   openGraph: {
     title: "LLMHive - Multi-Model AI Orchestration Platform",
@@ -154,8 +155,8 @@ function renderStructuredData() {
       {
         "@type": "Organization",
         name: "LLMHive",
-        url: "https://llmhive.ai",
-        logo: "https://llmhive.ai/logo.png",
+        url: getSiteUrl(),
+        logo: sitePath('/logo.png'),
       },
       {
         "@type": "SoftwareApplication",
@@ -169,7 +170,7 @@ function renderStructuredData() {
           priceCurrency: "USD",
           price: "10",
           category: "Standard",
-          url: "https://llmhive.ai/pricing",
+          url: sitePath('/pricing'),
         },
         featureList: features.map((feature) => feature.title),
       },

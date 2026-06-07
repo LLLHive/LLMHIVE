@@ -250,12 +250,12 @@ export default function HelpClient() {
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2" asChild>
+            <Link href="/">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </header>
 
@@ -352,12 +352,12 @@ export default function HelpClient() {
             Our support team is here to assist you. Get a response within 24 hours.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/contact">
-              <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 gap-2">
+            <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 gap-2" asChild>
+              <Link href="/contact">
                 <MessageSquare className="h-4 w-4" />
                 Contact Support
-              </Button>
-            </Link>
+              </Link>
+            </Button>
             <a href="mailto:info@llmhive.ai">
               <Button variant="outline" className="gap-2">
                 <ExternalLink className="h-4 w-4" />

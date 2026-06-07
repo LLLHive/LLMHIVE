@@ -1,12 +1,13 @@
 import type { Metadata } from "next"
 import DemoClient from "./DemoClient"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Product Demo",
   description:
     "Watch a full product demo of LLMHive multi-model orchestration, Premium mode, and analytics.",
   alternates: {
-    canonical: "https://llmhive.ai/demo",
+    canonical: sitePath('/demo'),
   },
   openGraph: {
     title: "LLMHive Product Demo",
@@ -33,7 +34,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Demo",
-            item: "https://llmhive.ai/demo",
+            item: sitePath('/demo'),
           },
         ],
       },

@@ -1,12 +1,13 @@
 import type { Metadata } from "next"
 import HelpClient from "./HelpClient"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Help Center",
   description:
     "Get answers on pricing, security, billing, and product usage in the LLMHive help center.",
   alternates: {
-    canonical: "https://llmhive.ai/help",
+    canonical: sitePath('/help'),
   },
   openGraph: {
     title: "LLMHive Help Center",
@@ -33,7 +34,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Help Center",
-            item: "https://llmhive.ai/help",
+            item: sitePath('/help'),
           },
         ],
       },

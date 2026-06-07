@@ -1,13 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { useCases } from "./content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Use Cases",
   description:
     "Explore LLMHive use cases for enterprise, engineering, research, marketing, and support teams.",
   alternates: {
-    canonical: "https://llmhive.ai/use-cases",
+    canonical: sitePath('/use-cases'),
   },
   openGraph: {
     title: "LLMHive Use Cases",
@@ -62,7 +63,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/use-cases/${item.slug}`,
+          url: sitePath(`/use-cases/${item.slug}`),
         })),
       },
       {
@@ -84,7 +85,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Use Cases",
-            item: "https://llmhive.ai/use-cases",
+            item: sitePath('/use-cases'),
           },
         ],
       },

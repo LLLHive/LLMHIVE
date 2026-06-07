@@ -3,13 +3,14 @@ import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import PricingClient from "./PricingClient"
 import { MarketingNav } from "@/components/marketing/MarketingNav"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Pricing",
   description:
     "Compare LLMHive pricing tiers, Premium query limits, and enterprise features.",
   alternates: {
-    canonical: "https://llmhive.ai/pricing",
+    canonical: sitePath('/pricing'),
   },
   openGraph: {
     title: "LLMHive Pricing",
@@ -36,7 +37,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Pricing",
-            item: "https://llmhive.ai/pricing",
+            item: sitePath('/pricing'),
           },
         ],
       },

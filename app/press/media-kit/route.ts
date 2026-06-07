@@ -1,29 +1,30 @@
+import { getSiteUrl, sitePath } from "@/lib/site-url"
 const content = {
   company: {
     name: "LLMHive",
     founded: 2025,
     headquarters: "Miami, Florida",
-    website: "https://llmhive.ai",
+    website: getSiteUrl(),
     contact_email: "press@llmhive.ai",
     contact_phone: "305-555-0160",
   },
   quick_links: {
-    landing: "https://llmhive.ai/landing",
-    orchestration: "https://llmhive.ai/orchestration",
-    models: "https://llmhive.ai/models",
-    comparisons: "https://llmhive.ai/comparisons",
-    case_studies: "https://llmhive.ai/case-studies",
-    demo: "https://llmhive.ai/demo",
+    landing: sitePath('/landing'),
+    orchestration: sitePath('/orchestration'),
+    models: sitePath('/models'),
+    comparisons: sitePath('/comparisons'),
+    case_studies: sitePath('/case-studies'),
+    demo: sitePath('/demo'),
   },
   press_assets: {
-    logo: "https://llmhive.ai/logo.png",
-    placeholder_logo: "https://llmhive.ai/placeholder-logo.svg",
+    logo: sitePath('/logo.png'),
+    placeholder_logo: sitePath('/placeholder-logo.svg'),
   },
   press_releases: {
-    long: "https://llmhive.ai/press/press-release-long",
-    wire: "https://llmhive.ai/press/press-release-wire",
+    long: sitePath('/press/press-release-long'),
+    wire: sitePath('/press/press-release-wire'),
   },
-  fact_sheet: "https://llmhive.ai/press/fact-sheet",
+  fact_sheet: sitePath('/press/fact-sheet'),
   notes: [
     "Benchmark claims are reported by LLMHive and available on request.",
     "Please use official logos without altering brand colors.",

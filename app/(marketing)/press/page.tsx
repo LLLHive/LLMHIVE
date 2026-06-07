@@ -1,12 +1,13 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Press & Media Kit - LLMHive",
   description:
     "Official LLMHive press release, media kit, and assets for journalists, bloggers, and influencers.",
   alternates: {
-    canonical: "https://llmhive.ai/press",
+    canonical: sitePath('/press'),
   },
   openGraph: {
     title: "LLMHive Press & Media Kit",
@@ -56,7 +57,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: asset.name,
-          url: `https://llmhive.ai${asset.href}`,
+          url: sitePath(`${asset.href}`),
         })),
       },
       {
@@ -66,7 +67,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Press",
-            item: "https://llmhive.ai/press",
+            item: sitePath('/press'),
           },
         ],
       },

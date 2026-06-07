@@ -95,20 +95,20 @@ export default function UserTicketsPage() {
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link href="/">
                 <ArrowLeft className="h-4 w-4" />
                 Back
-              </Button>
-            </Link>
+              </Link>
+            </Button>
             <h1 className="text-xl font-semibold">My Support Tickets</h1>
           </div>
-          <Link href="/contact">
-            <Button size="sm" className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 gap-2">
+          <Button size="sm" className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 gap-2" asChild>
+            <Link href="/contact">
               <Plus className="h-4 w-4" />
               New Ticket
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </header>
 
@@ -121,9 +121,9 @@ export default function UserTicketsPage() {
           <div className="bg-card border border-border rounded-xl p-8 text-center">
             <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Link href="/sign-in">
-              <Button variant="outline">Sign In</Button>
-            </Link>
+            <Button variant="outline" asChild>
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
           </div>
         ) : tickets.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
@@ -136,18 +136,18 @@ export default function UserTicketsPage() {
               Our team is here to assist you.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/contact">
-                <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 gap-2">
+              <Button className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 gap-2" asChild>
+                <Link href="/contact">
                   <MessageSquare className="h-4 w-4" />
                   Contact Support
-                </Button>
-              </Link>
-              <Link href="/help">
-                <Button variant="outline" className="gap-2">
+                </Link>
+              </Button>
+              <Button variant="outline" className="gap-2" asChild>
+                <Link href="/help">
                   <HelpCircle className="h-4 w-4" />
                   Help Center
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         ) : (

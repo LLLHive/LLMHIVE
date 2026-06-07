@@ -438,36 +438,38 @@ export function Sidebar({
             {/* Orchestration and Settings at the bottom */}
             <div className="px-3 py-3 border-t border-border/50 mt-auto space-y-1">
               {/* Orchestration link */}
-              <Link href={ROUTES.ORCHESTRATION} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.ORCHESTRATION) && "bg-secondary text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className={cn(
+                  "w-full justify-start text-sm transition-all",
+                  isActiveRoute(ROUTES.ORCHESTRATION) && "bg-secondary text-[var(--bronze)]",
+                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                )}
+              >
+                <Link href={ROUTES.ORCHESTRATION}>
                   <Workflow className="h-4 w-4 mr-2" />
                   Orchestration
-                </Button>
-              </Link>
+                </Link>
+              </Button>
               
               {/* Settings link */}
-              <Link href={ROUTES.SETTINGS} className="w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm transition-all",
-                    isActiveRoute(ROUTES.SETTINGS) && "bg-secondary text-[var(--bronze)]",
-                    "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
-                  )}
-                >
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className={cn(
+                  "w-full justify-start text-sm transition-all",
+                  isActiveRoute(ROUTES.SETTINGS) && "bg-secondary text-[var(--bronze)]",
+                  "hover:bg-[var(--bronze)]/20 hover:text-[var(--bronze)]",
+                )}
+              >
+                <Link href={ROUTES.SETTINGS}>
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </>
         )}
@@ -526,15 +528,16 @@ export function Sidebar({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link href={ROUTES.ORCHESTRATION}>
-                      <Button 
-                        variant={isActiveRoute(ROUTES.ORCHESTRATION) ? "secondary" : "ghost"} 
-                        size="icon" 
-                        className={cn("w-10 h-10", isActiveRoute(ROUTES.ORCHESTRATION) && "text-[var(--bronze)]")}
-                      >
+                    <Button
+                      variant={isActiveRoute(ROUTES.ORCHESTRATION) ? "secondary" : "ghost"}
+                      size="icon"
+                      asChild
+                      className={cn("w-10 h-10", isActiveRoute(ROUTES.ORCHESTRATION) && "text-[var(--bronze)]")}
+                    >
+                      <Link href={ROUTES.ORCHESTRATION}>
                         <Workflow className="h-5 w-5" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent side="right">Orchestration</TooltipContent>
                 </Tooltip>
@@ -544,15 +547,16 @@ export function Sidebar({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link href={ROUTES.SETTINGS}>
-                      <Button 
-                        variant={isActiveRoute(ROUTES.SETTINGS) ? "secondary" : "ghost"} 
-                        size="icon" 
-                        className={cn("w-10 h-10 touch-target premium-tap", isActiveRoute(ROUTES.SETTINGS) && "text-[var(--bronze)]")}
-                      >
+                    <Button
+                      variant={isActiveRoute(ROUTES.SETTINGS) ? "secondary" : "ghost"}
+                      size="icon"
+                      asChild
+                      className={cn("w-10 h-10 touch-target premium-tap", isActiveRoute(ROUTES.SETTINGS) && "text-[var(--bronze)]")}
+                    >
+                      <Link href={ROUTES.SETTINGS}>
                         <Settings className="h-5 w-5" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent side="right">Settings</TooltipContent>
                 </Tooltip>

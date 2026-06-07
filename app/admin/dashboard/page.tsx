@@ -288,9 +288,9 @@ export default function AdminDashboardPage() {
               <p className="text-muted-foreground text-center">
                 You need admin privileges to access this dashboard.
               </p>
-              <Link href="/">
-                <Button>Return to Home</Button>
-              </Link>
+              <Button asChild>
+                <Link href="/">Return to Home</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -344,17 +344,17 @@ export default function AdminDashboardPage() {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Link href="/analytics">
-              <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/analytics">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Analytics
-              </Button>
-            </Link>
-            <Link href="/settings">
-              <Button variant="ghost" size="icon">
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/settings">
                 <Settings className="h-5 w-5" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -645,24 +645,24 @@ export default function AdminDashboardPage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Link href="/analytics" className="block">
-                  <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/analytics">
                     <BarChart3 className="h-4 w-4 mr-2" />
                     View Detailed Analytics
-                  </Button>
-                </Link>
-                <Link href="/admin/benchmarks" className="block">
-                  <Button variant="outline" className="w-full justify-start">
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/admin/benchmarks">
                     <Zap className="h-4 w-4 mr-2" />
                     Run Benchmarks
-                  </Button>
-                </Link>
-                <Link href="/admin/support" className="block">
-                  <Button variant="outline" className="w-full justify-start">
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/admin/support">
                     <AlertCircle className="h-4 w-4 mr-2" />
                     Support Tickets
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 <a 
                   href="https://dashboard.stripe.com" 
                   target="_blank" 

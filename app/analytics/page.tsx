@@ -268,11 +268,11 @@ export default function FeedbackAnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/settings">
-            <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/settings">
               <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div>
             <h1 className="text-2xl font-bold">Feedback Analytics</h1>
             <p className="text-muted-foreground">User satisfaction and engagement trends</p>

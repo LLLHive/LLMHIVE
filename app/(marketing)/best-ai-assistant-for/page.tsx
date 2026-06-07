@@ -1,13 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { roles } from "./content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Best AI Assistant For",
   description:
     "Role-based guidance for choosing the best AI assistant across engineering, marketing, research, support, and executive teams.",
   alternates: {
-    canonical: "https://llmhive.ai/best-ai-assistant-for",
+    canonical: sitePath('/best-ai-assistant-for'),
   },
   openGraph: {
     title: "Best AI Assistant For",
@@ -34,7 +35,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/best-ai-assistant-for/${item.slug}`,
+          url: sitePath(`/best-ai-assistant-for/${item.slug}`),
         })),
       },
       {
@@ -44,7 +45,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Best AI Assistant For",
-            item: "https://llmhive.ai/best-ai-assistant-for",
+            item: sitePath('/best-ai-assistant-for'),
           },
         ],
       },

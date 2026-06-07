@@ -2,12 +2,13 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Terms of Service - LLMHive",
   description: "Review the LLMHive terms of service and acceptable use guidelines.",
   alternates: {
-    canonical: "https://llmhive.ai/terms",
+    canonical: sitePath('/terms'),
   },
   openGraph: {
     title: "LLMHive Terms of Service",
@@ -32,7 +33,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Terms of Service",
-            item: "https://llmhive.ai/terms",
+            item: sitePath('/terms'),
           },
         ],
       },
@@ -54,12 +55,12 @@ export default function TermsOfServicePage() {
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2" asChild>
+            <Link href="/">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </header>
 

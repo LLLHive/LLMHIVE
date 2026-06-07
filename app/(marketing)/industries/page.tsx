@@ -1,13 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { industryFaqs } from "./content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Industry AI FAQs",
   description:
     "Industry-specific AI FAQs for legal, finance, healthcare, support, and SaaS teams.",
   alternates: {
-    canonical: "https://llmhive.ai/industries",
+    canonical: sitePath('/industries'),
   },
   openGraph: {
     title: "Industry AI FAQs",
@@ -62,7 +63,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/industries/${item.slug}`,
+          url: sitePath(`/industries/${item.slug}`),
         })),
       },
       {
@@ -84,7 +85,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Industries",
-            item: "https://llmhive.ai/industries",
+            item: sitePath('/industries'),
           },
         ],
       },

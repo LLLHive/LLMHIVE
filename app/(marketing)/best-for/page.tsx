@@ -1,12 +1,13 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Best For",
   description:
     "Discover the best LLMHive use cases for teams, enterprises, developers, and research workflows.",
   alternates: {
-    canonical: "https://llmhive.ai/best-for",
+    canonical: sitePath('/best-for'),
   },
   openGraph: {
     title: "LLMHive Best For",
@@ -70,7 +71,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Best For",
-            item: "https://llmhive.ai/best-for",
+            item: sitePath('/best-for'),
           },
         ],
       },

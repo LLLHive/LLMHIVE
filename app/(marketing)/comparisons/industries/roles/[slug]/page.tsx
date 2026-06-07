@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { roleIndustryTools } from "../../roles"
+import { sitePath } from "@/lib/site-url"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -49,7 +50,7 @@ function renderStructuredData(
           "@type": "Organization",
           name: "LLMHive",
         },
-        mainEntityOfPage: `https://llmhive.ai/comparisons/industries/roles/${page.slug}`,
+        mainEntityOfPage: sitePath(`/comparisons/industries/roles/${page.slug}`),
       },
       {
         "@type": "FAQPage",
@@ -78,25 +79,25 @@ function renderStructuredData(
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://llmhive.ai/comparisons",
+            item: sitePath('/comparisons'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Industry Comparisons",
-            item: "https://llmhive.ai/comparisons/industries",
+            item: sitePath('/comparisons/industries'),
           },
           {
             "@type": "ListItem",
             position: 3,
             name: "Industry Role Tool Comparisons",
-            item: "https://llmhive.ai/comparisons/industries/roles",
+            item: sitePath('/comparisons/industries/roles'),
           },
           {
             "@type": "ListItem",
             position: 4,
             name: page.title,
-            item: `https://llmhive.ai/comparisons/industries/roles/${page.slug}`,
+            item: sitePath(`/comparisons/industries/roles/${page.slug}`),
           },
         ],
       },

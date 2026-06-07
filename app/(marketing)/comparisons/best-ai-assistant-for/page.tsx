@@ -1,13 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { roles } from "@/app/(marketing)/best-ai-assistant-for/content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Best AI Assistant Comparisons",
   description:
     "Role-based comparisons to determine the best AI assistant for engineers, marketers, researchers, support teams, and executives.",
   alternates: {
-    canonical: "https://llmhive.ai/comparisons/best-ai-assistant-for",
+    canonical: sitePath('/comparisons/best-ai-assistant-for'),
   },
   openGraph: {
     title: "Best AI Assistant Comparisons",
@@ -34,7 +35,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/comparisons/best-ai-assistant-for/${item.slug}`,
+          url: sitePath(`/comparisons/best-ai-assistant-for/${item.slug}`),
         })),
       },
       {
@@ -44,13 +45,13 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://llmhive.ai/comparisons",
+            item: sitePath('/comparisons'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Best AI Assistant Comparisons",
-            item: "https://llmhive.ai/comparisons/best-ai-assistant-for",
+            item: sitePath('/comparisons/best-ai-assistant-for'),
           },
         ],
       },

@@ -1,11 +1,12 @@
 import type { Metadata } from "next"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "LLMHive Orchestration",
   description:
     "Configure LLMHive orchestration, models, reasoning methods, and quality controls.",
   alternates: {
-    canonical: "https://llmhive.ai/orchestration",
+    canonical: sitePath('/orchestration'),
   },
   openGraph: {
     title: "LLMHive Orchestration",
@@ -31,7 +32,7 @@ const structuredData = {
           "@type": "ListItem",
           position: 1,
           name: "Orchestration",
-          item: "https://llmhive.ai/orchestration",
+          item: sitePath('/orchestration'),
         },
       ],
     },

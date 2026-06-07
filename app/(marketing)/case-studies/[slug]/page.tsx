@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { caseStudies } from "../content"
+import { sitePath } from "@/lib/site-url"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -45,7 +46,7 @@ function renderStructuredData(page: (typeof caseStudies)[number]) {
           "@type": "Organization",
           name: "LLMHive",
         },
-        mainEntityOfPage: `https://llmhive.ai/case-studies/${page.slug}`,
+        mainEntityOfPage: sitePath(`/case-studies/${page.slug}`),
       },
       {
         "@type": "FAQPage",
@@ -74,13 +75,13 @@ function renderStructuredData(page: (typeof caseStudies)[number]) {
             "@type": "ListItem",
             position: 1,
             name: "Case Studies",
-            item: "https://llmhive.ai/case-studies",
+            item: sitePath('/case-studies'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: page.title,
-            item: `https://llmhive.ai/case-studies/${page.slug}`,
+            item: sitePath(`/case-studies/${page.slug}`),
           },
         ],
       },

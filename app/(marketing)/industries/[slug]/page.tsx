@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { industryFaqs } from "../content"
+import { sitePath } from "@/lib/site-url"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -55,13 +56,13 @@ function renderStructuredData(page: (typeof industryFaqs)[number]) {
             "@type": "ListItem",
             position: 1,
             name: "Industries",
-            item: "https://llmhive.ai/industries",
+            item: sitePath('/industries'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: page.title,
-            item: `https://llmhive.ai/industries/${page.slug}`,
+            item: sitePath(`/industries/${page.slug}`),
           },
         ],
       },

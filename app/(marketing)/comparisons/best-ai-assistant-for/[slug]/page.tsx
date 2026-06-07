@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { roles } from "@/app/(marketing)/best-ai-assistant-for/content"
+import { sitePath } from "@/lib/site-url"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -48,7 +49,7 @@ function renderStructuredData(
           "@type": "Organization",
           name: "LLMHive",
         },
-        mainEntityOfPage: `https://llmhive.ai/comparisons/best-ai-assistant-for/${page.slug}`,
+        mainEntityOfPage: sitePath(`/comparisons/best-ai-assistant-for/${page.slug}`),
       },
       {
         "@type": "FAQPage",
@@ -77,19 +78,19 @@ function renderStructuredData(
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://llmhive.ai/comparisons",
+            item: sitePath('/comparisons'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Best AI Assistant For",
-            item: "https://llmhive.ai/comparisons/best-ai-assistant-for",
+            item: sitePath('/comparisons/best-ai-assistant-for'),
           },
           {
             "@type": "ListItem",
             position: 3,
             name: page.title,
-            item: `https://llmhive.ai/comparisons/best-ai-assistant-for/${page.slug}`,
+            item: sitePath(`/comparisons/best-ai-assistant-for/${page.slug}`),
           },
         ],
       },

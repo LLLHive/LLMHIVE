@@ -116,17 +116,15 @@ export default function BillingSuccessPage() {
               </div>
 
               <div className="flex flex-col gap-3 pt-4">
-                <Link href="/app">
-                  <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
+                <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white" asChild>
+                  <Link href="/app">
                     Start Using LLMHive
                     <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
-                <Link href="/billing">
-                  <Button variant="outline" className="w-full">
-                    View Billing Details
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/billing">View Billing Details</Link>
+                </Button>
               </div>
             </>
           )}

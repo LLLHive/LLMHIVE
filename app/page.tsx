@@ -38,6 +38,7 @@ import {
   PRODUCT_IMAGE_URL,
 } from "@/lib/marketing/structured-data"
 import {
+import { sitePath } from "@/lib/site-url"
   MARKETING_FEATURED_LINE,
   MARKETING_META_DESCRIPTION_MODELS,
   MARKETING_OPENAI_FLAGSHIP,
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
   title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
   description:
     `LLMHive routes every request to the best AI model — ${MARKETING_META_DESCRIPTION_MODELS} — for accuracy, speed and cost. Built for teams and enterprises.`,
-  alternates: { canonical: "https://llmhive.ai/" },
+  alternates: { canonical: sitePath('/') },
   openGraph: {
     title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
     description:
@@ -203,8 +204,8 @@ function StructuredData() {
         description:
           "Multi-model AI orchestration platform. One interface routes every request to the best of 350+ AI models for accuracy, speed and cost.",
         offers: [
-          { name: "Standard", price: "10", url: "https://llmhive.ai/pricing#lite" },
-          { name: "Premium", price: "20", url: "https://llmhive.ai/pricing#pro" },
+          { name: "Standard", price: "10", url: sitePath('/pricing#lite') },
+          { name: "Premium", price: "20", url: sitePath('/pricing#pro') },
         ],
       }),
       {
@@ -220,7 +221,7 @@ function StructuredData() {
           priceCurrency: "USD",
           price: "10",
           category: "Standard",
-          url: "https://llmhive.ai/pricing",
+          url: sitePath('/pricing'),
         },
         featureList: FEATURES.map((f) => f.title),
       },

@@ -1,4 +1,7 @@
-const content = `LLMHive Fact Sheet
+import { sitePath } from "@/lib/site-url"
+
+function buildContent(): string {
+  return `LLMHive Fact Sheet
 
 Overview
 LLMHive is a multi-model AI orchestration platform that routes complex tasks to specialized models, cross-verifies outputs, and returns a single, coherent response.
@@ -21,14 +24,15 @@ Typical Use Cases
 - Software development and code review
 
 Availability
-Public access: https://llmhive.ai/landing
+Public access: ${sitePath("/landing")}
 
 Contact
 press@llmhive.ai
 `
+}
 
 export async function GET(): Promise<Response> {
-  return new Response(content, {
+  return new Response(buildContent(), {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "public, max-age=3600",

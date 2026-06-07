@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { buildBusinessMetadata } from "@/components/business/metadata"
 import { businessPages } from "@/app/(business)/content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata = buildBusinessMetadata(
   "Business Ops Navigation",
@@ -109,7 +110,7 @@ export default function BusinessOpsNavigationPage() {
                     "@type": "ListItem",
                     position: 1,
                     name: "Business Ops Navigation",
-                    item: "https://llmhive.ai/business-ops/navigation",
+                    item: sitePath('/business-ops/navigation'),
                   },
                 ],
               },

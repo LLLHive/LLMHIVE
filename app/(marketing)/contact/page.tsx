@@ -1,12 +1,13 @@
 import type { Metadata } from "next"
 import ContactClient from "./ContactClient"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Contact LLMHive",
   description:
     "Contact the LLMHive team for support, partnerships, or enterprise inquiries.",
   alternates: {
-    canonical: "https://llmhive.ai/contact",
+    canonical: sitePath('/contact'),
   },
   openGraph: {
     title: "Contact LLMHive",
@@ -33,7 +34,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Contact",
-            item: "https://llmhive.ai/contact",
+            item: sitePath('/contact'),
           },
         ],
       },

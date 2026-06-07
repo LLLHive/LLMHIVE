@@ -136,12 +136,12 @@ User Agent: ${typeof navigator !== "undefined" ? navigator.userAgent : "Unknown"
             <RefreshCw className="h-4 w-4" />
             Try Again
           </Button>
-          <Link href="/">
-            <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto" asChild>
+            <Link href="/">
               <Home className="h-4 w-4" />
               Return Home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Technical Details (Collapsible) */}

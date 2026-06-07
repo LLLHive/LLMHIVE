@@ -1,13 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { industryRoles } from "./content"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Industry AI Comparisons",
   description:
     "See how LLMHive compares for industry-specific AI use cases across legal, finance, healthcare, support, and SaaS.",
   alternates: {
-    canonical: "https://llmhive.ai/comparisons/industries",
+    canonical: sitePath('/comparisons/industries'),
   },
   openGraph: {
     title: "Industry AI Comparisons",
@@ -62,7 +63,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai${item.href}`,
+          url: sitePath(`${item.href}`),
         })),
       },
       {
@@ -72,7 +73,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/comparisons/industries/${item.slug}`,
+          url: sitePath(`/comparisons/industries/${item.slug}`),
         })),
       },
       {
@@ -83,31 +84,31 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Legal Tool Comparisons",
-            url: "https://llmhive.ai/comparisons/industries/legal-teams",
+            url: sitePath('/comparisons/industries/legal-teams'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Finance Tool Comparisons",
-            url: "https://llmhive.ai/comparisons/industries/finance-teams",
+            url: sitePath('/comparisons/industries/finance-teams'),
           },
           {
             "@type": "ListItem",
             position: 3,
             name: "Healthcare Tool Comparisons",
-            url: "https://llmhive.ai/comparisons/industries/healthcare-teams",
+            url: sitePath('/comparisons/industries/healthcare-teams'),
           },
           {
             "@type": "ListItem",
             position: 4,
             name: "Support Tool Comparisons",
-            url: "https://llmhive.ai/comparisons/industries/support-teams",
+            url: sitePath('/comparisons/industries/support-teams'),
           },
           {
             "@type": "ListItem",
             position: 5,
             name: "SaaS Tool Comparisons",
-            url: "https://llmhive.ai/comparisons/industries/saas-teams",
+            url: sitePath('/comparisons/industries/saas-teams'),
           },
         ],
       },
@@ -149,13 +150,13 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://llmhive.ai/comparisons",
+            item: sitePath('/comparisons'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Industry Comparisons",
-            item: "https://llmhive.ai/comparisons/industries",
+            item: sitePath('/comparisons/industries'),
           },
         ],
       },

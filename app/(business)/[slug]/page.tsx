@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import PageShell from "@/components/business/PageShell"
 import { businessPages } from "../content"
+import { sitePath } from "@/lib/site-url"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${page.title} | LLMHive`,
     description: page.subtitle,
     alternates: {
-      canonical: `https://llmhive.ai/${slug}`,
+      canonical: sitePath(`/${slug}`),
     },
     openGraph: {
       title: `${page.title} | LLMHive`,

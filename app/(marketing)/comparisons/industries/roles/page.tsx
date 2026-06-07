@@ -1,13 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { roleIndustryTools } from "../roles"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "Industry Role Tool Comparisons",
   description:
     "Role-based, industry-specific comparisons between LLMHive and leading tools.",
   alternates: {
-    canonical: "https://llmhive.ai/comparisons/industries/roles",
+    canonical: sitePath('/comparisons/industries/roles'),
   },
   openGraph: {
     title: "Industry Role Tool Comparisons",
@@ -34,7 +35,7 @@ function renderStructuredData() {
           "@type": "ListItem",
           position: index + 1,
           name: item.title,
-          url: `https://llmhive.ai/comparisons/industries/roles/${item.slug}`,
+          url: sitePath(`/comparisons/industries/roles/${item.slug}`),
         })),
       },
       {
@@ -53,19 +54,19 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "Comparisons",
-            item: "https://llmhive.ai/comparisons",
+            item: sitePath('/comparisons'),
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Industry Comparisons",
-            item: "https://llmhive.ai/comparisons/industries",
+            item: sitePath('/comparisons/industries'),
           },
           {
             "@type": "ListItem",
             position: 3,
             name: "Industry Role Tool Comparisons",
-            item: "https://llmhive.ai/comparisons/industries/roles",
+            item: sitePath('/comparisons/industries/roles'),
           },
         ],
       },

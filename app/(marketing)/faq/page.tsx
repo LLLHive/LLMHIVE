@@ -1,12 +1,13 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import { sitePath } from "@/lib/site-url"
 
 export const metadata: Metadata = {
   title: "FAQ - LLMHive",
   description:
     "Get clear answers on LLMHive pricing, security, comparisons, and how multi-model AI orchestration works.",
   alternates: {
-    canonical: "https://llmhive.ai/faq",
+    canonical: sitePath('/faq'),
   },
   openGraph: {
     title: "LLMHive FAQ",
@@ -102,7 +103,7 @@ function renderStructuredData() {
             "@type": "ListItem",
             position: 1,
             name: "FAQ",
-            item: "https://llmhive.ai/faq",
+            item: sitePath('/faq'),
           },
         ],
       },
