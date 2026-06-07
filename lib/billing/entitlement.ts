@@ -72,10 +72,9 @@ export async function getPaidEntitlement(userId: string): Promise<EntitlementRes
  * fails open as "no paid access" so the page always renders quickly.
  *
  * Use this on `/` (landing) so the CTA can be tailored:
- *   - signed-in + paid   -> "Open app"
- *   - signed-in + unpaid -> "Choose a plan" (avoids the /app -> /pricing
- *     bounce-loop when a signed-in user clicks "Open app")
- *   - not signed-in      -> "Get started"
+ *   - signed-in + app access (paid or free) -> "Open app" / redirect to /app
+ *   - signed-in + no subscription -> "Choose a plan"
+ *   - not signed-in -> "Get started"
  */
 export async function getPaidEntitlementFast(userId: string): Promise<EntitlementResult> {
   try {

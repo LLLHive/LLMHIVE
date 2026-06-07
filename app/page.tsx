@@ -251,31 +251,21 @@ export default async function Home() {
   const { userId } = await auth()
   const isSignedIn = Boolean(userId)
 
-  // For signed-in users we look up paid status so the primary CTA never
-  // points them at a route that will bounce them right back here. Without
-  // this, a signed-in unpaid user clicks "Open app" -> /app gate -> /pricing,
-  // returns to /, sees "Open app" again, and ends up in a loop. The fast
-  // variant has a short timeout and fails open ("no paid access"), so an
-  // unreachable backend never blocks the marketing page from rendering.
-  let hasPaidAccess = false
+  // Signed-in: paid or provisioned free tier -> app; otherwise pricing CTA.
+  let hasAppAccess = false
   if (isSignedIn && userId) {
     const entitlement = await getPaidEntitlementFast(userId)
-    hasPaidAccess = entitlement.hasPaidAccess
+    hasAppAccess = entitlement.hasAppAccess
   }
 
-  // Auto-route already-signed-in paying customers straight into the app.
-  // Without this, a returning paid user (cookie still valid from a previous
-  // session) lands on the marketing page every time they reopen llmhive.ai
-  // and has to find the CTA — that's the bug the user reported. Anonymous
-  // visitors and signed-in *unpaid* users still see the landing page so we
-  // don't reintroduce the prior /pricing <-> / loop for unpaid accounts.
-  if (isSignedIn && hasPaidAccess) {
+  // Auto-route signed-in users with app access (paid or free orchestration) into /app.
+  if (isSignedIn && hasAppAccess) {
     redirect("/app")
   }
 
   const primary: { href: string; label: string } = !isSignedIn
     ? { href: "/sign-up", label: "Get started free" }
-    : hasPaidAccess
+    : hasAppAccess
       ? { href: "/app", label: "Open the app" }
       : { href: "/pricing", label: "Choose your plan" }
 

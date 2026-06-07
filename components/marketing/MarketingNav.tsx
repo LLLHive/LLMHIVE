@@ -3,6 +3,7 @@ import Link from "next/link"
 import { auth } from "@clerk/nextjs/server"
 import LogoText from "@/components/branding/LogoText"
 import { MarketingNavAuthButtons } from "@/components/marketing/MarketingNavAuthButtons"
+import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
 
 /**
  * Shared marketing-site header.
@@ -22,6 +23,11 @@ import { MarketingNavAuthButtons } from "@/components/marketing/MarketingNavAuth
 export async function MarketingNav() {
   const { userId } = await auth()
   const isSignedIn = Boolean(userId)
+  let hasAppAccess = false
+  if (isSignedIn && userId) {
+    const entitlement = await getPaidEntitlementFast(userId)
+    hasAppAccess = entitlement.hasAppAccess
+  }
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-black/60 backdrop-blur-xl">
@@ -54,7 +60,7 @@ export async function MarketingNav() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <MarketingNavAuthButtons isSignedIn={isSignedIn} />
+          <MarketingNavAuthButtons isSignedIn={isSignedIn} hasAppAccess={hasAppAccess} />
         </div>
       </div>
     </nav>
