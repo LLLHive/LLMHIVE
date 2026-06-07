@@ -1,10 +1,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { auth } from "@clerk/nextjs/server"
-import { SignOutButton } from "@clerk/nextjs"
-import { LogIn, LogOut } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import LogoText from "@/components/branding/LogoText"
+import { MarketingNavAuthButtons } from "@/components/marketing/MarketingNavAuthButtons"
 
 /**
  * Shared marketing-site header.
@@ -56,42 +54,7 @@ export async function MarketingNav() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {!isSignedIn ? (
-            <>
-              {/* Sign Up -> /pricing (visitor picks a plan first). Sign In ->
-                  /sign-in (existing customers). Two filled buttons of equal
-                  weight so neither disappears against the dark nav. */}
-              <Link href="/pricing">
-                <Button
-                  size="sm"
-                  className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
-                >
-                  Sign Up
-                </Button>
-              </Link>
-              <Link href="/sign-in">
-                <Button
-                  size="sm"
-                  className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
-                >
-                  <LogIn className="mr-1.5 h-4 w-4" />
-                  Sign In
-                </Button>
-              </Link>
-            </>
-          ) : (
-            // Signed-in: only Sign Out. Drops the visitor back at "/" as
-            // anonymous so the Sign Up / Sign In pair reappears.
-            <SignOutButton redirectUrl="/">
-              <Button
-                size="sm"
-                className="border-0 bg-amber-500 font-semibold text-zinc-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
-              >
-                <LogOut className="mr-1.5 h-4 w-4" />
-                Sign Out
-              </Button>
-            </SignOutButton>
-          )}
+          <MarketingNavAuthButtons isSignedIn={isSignedIn} />
         </div>
       </div>
     </nav>

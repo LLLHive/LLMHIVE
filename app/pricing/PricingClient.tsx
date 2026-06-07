@@ -184,7 +184,7 @@ function renderPricingStructuredData() {
 export default function PricingClient() {
   const searchParams = useSearchParams()
   const { isSignedIn, isLoaded, user } = useUser()
-  const { openSignIn } = useClerk()
+  const { openSignUp } = useClerk()
   const [isAnnual, setIsAnnual] = useState(false)
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
   const autoCheckoutAttempted = useRef(false)
@@ -253,7 +253,7 @@ export default function PricingClient() {
     }
 
     if (!isSignedIn) {
-      openSignIn({
+      openSignUp({
         redirectUrl: `/pricing?subscribe=${tier.tier}&cycle=${isAnnual ? "annual" : "monthly"}`,
       })
       return
@@ -650,11 +650,14 @@ export default function PricingClient() {
                 Get Premium — $20/mo
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
-              <Link href="/sign-up">
-                <Button size="lg" variant="outline" className="border-white/20 text-muted-foreground hover:bg-white/5">
-                  Create account
-                </Button>
-              </Link>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-white/20 text-muted-foreground hover:bg-white/5"
+              >
+                <Link href="/sign-up">Create account</Link>
+              </Button>
             </div>
           </div>
         </div>
