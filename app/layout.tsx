@@ -14,6 +14,7 @@ import { AppearanceSettingsLoader } from "@/components/appearance-settings-loade
 import AppBackground from "@/components/branding/AppBackground"
 import { ForestBackgroundWrapper } from "@/components/forest-background-wrapper"
 import { GoogleTagManagerHead, GoogleTagManagerNoScript } from "@/components/google-tag-manager"
+import { MetaPixelHead, MetaPixelNoScript } from "@/components/meta-pixel"
 import { SupportWidget } from "@/components/support-widget"
 import { getSiteUrl } from "@/lib/site-url"
 
@@ -160,6 +161,7 @@ export default function RootLayout({
             content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
           />
           <GoogleTagManagerHead />
+          <MetaPixelHead />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
@@ -181,24 +183,6 @@ export default function RootLayout({
               />
             </>
           ) : null}
-          {process.env.NEXT_PUBLIC_META_PIXEL_ID ? (
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  !function(f,b,e,v,n,t,s)
-                  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                  n.queue=[];t=b.createElement(e);t.async=!0;
-                  t.src=v;s=b.getElementsByTagName(e)[0];
-                  s.parentNode.insertBefore(t,s)}(window, document,'script',
-                  'https://connect.facebook.net/en_US/fbevents.js');
-                  fbq('init', '${process.env.NEXT_PUBLIC_META_PIXEL_ID}');
-                  fbq('track', 'PageView');
-                `,
-              }}
-            />
-          ) : null}
           <script
             dangerouslySetInnerHTML={{
               __html: `
@@ -219,6 +203,7 @@ export default function RootLayout({
         </head>
         <body className={`min-h-screen bg-transparent text-foreground font-sans antialiased ${orbitron.variable}`}>
           <GoogleTagManagerNoScript />
+          <MetaPixelNoScript />
           <AppBackground />
           <ForestBackgroundWrapper />
           <ThemeProvider
