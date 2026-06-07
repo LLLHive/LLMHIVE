@@ -1,7 +1,6 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { MarketingNav } from "@/components/marketing/MarketingNav"
 
 /** Pages that ship their own sticky header — skip the shared MarketingNav. */
 const STANDALONE_MARKETING_PATHS = ["/landing", "/promo", "/demo"] as const
@@ -12,7 +11,13 @@ function isStandaloneMarketingPath(pathname: string): boolean {
   )
 }
 
-export function MarketingLayoutChrome({ children }: { children: React.ReactNode }) {
+type Props = {
+  children: React.ReactNode
+  /** Server-rendered <MarketingNav /> passed from the marketing layout. */
+  nav: React.ReactNode
+}
+
+export function MarketingLayoutChrome({ children, nav }: Props) {
   const pathname = usePathname() ?? ""
   const standalone = isStandaloneMarketingPath(pathname)
 
@@ -20,7 +25,7 @@ export function MarketingLayoutChrome({ children }: { children: React.ReactNode 
     <>
       {!standalone ? (
         <>
-          <MarketingNav />
+          {nav}
           <div className="h-16" aria-hidden />
         </>
       ) : null}

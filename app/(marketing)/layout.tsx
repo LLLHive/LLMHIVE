@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { MarketingLayoutChrome } from "@/components/marketing/MarketingLayoutChrome"
+import { MarketingNav } from "@/components/marketing/MarketingNav"
 
 export const metadata: Metadata = {
   title: {
@@ -35,7 +36,7 @@ export default function MarketingLayout({
       enableSystem
       disableTransitionOnChange
     >
-      <MarketingLayoutChrome>{children}</MarketingLayoutChrome>
+      <MarketingLayoutChrome nav={<MarketingNav />}>{children}</MarketingLayoutChrome>
     </ThemeProvider>
   )
 }
