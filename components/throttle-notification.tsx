@@ -82,15 +82,12 @@ export function ThrottleNotification({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/pricing">
-              <Button 
-                size="sm" 
-                className="bg-white text-amber-600 hover:bg-white/90 font-semibold"
-              >
-                <Zap className="h-4 w-4 mr-1" />
+            <Button asChild size="sm" className="bg-white text-xs font-semibold text-amber-600 hover:bg-white/90">
+              <Link href="/pricing">
+                <Zap className="mr-1 h-4 w-4" />
                 Upgrade Now
-              </Button>
-            </Link>
+              </Link>
+            </Button>
             <button
               onClick={handleDismiss}
               className="p-1 hover:bg-white/20 rounded transition-colors"
@@ -120,16 +117,17 @@ export function ThrottleNotification({
               Provider spend reached the protected cap for this billing period. 
               You&apos;re now using free orchestration until the next billing period.
             </p>
-            <Link href="/pricing">
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
-              >
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="border-amber-500/50 text-xs text-amber-400 hover:bg-amber-500/10"
+            >
+              <Link href="/pricing">
                 Upgrade plan
-                <ArrowUpRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
+                <ArrowUpRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
           <button
             onClick={handleDismiss}
@@ -169,11 +167,9 @@ export function ThrottleNotification({
           </button>
         </div>
         <div className="mt-3 flex gap-2">
-          <Link href="/pricing" className="flex-1">
-            <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-black">
-              Upgrade Now
-            </Button>
-          </Link>
+          <Button asChild size="sm" className="h-8 flex-1 bg-amber-500 text-black hover:bg-amber-600">
+            <Link href="/pricing">Upgrade Now</Link>
+          </Button>
           <Button 
             size="sm" 
             variant="ghost" 

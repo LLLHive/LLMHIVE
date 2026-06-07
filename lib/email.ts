@@ -9,11 +9,12 @@
  */
 
 import { BENCHMARK_CLAIM_SHORT } from "@/lib/benchmark-claim"
+import { getSiteUrl } from "@/lib/site-url"
 
 // Email configuration
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const EMAIL_FROM = process.env.EMAIL_FROM || "LLMHive <noreply@contact.llmhive.ai>"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai"
+const APP_URL = getSiteUrl()
 
 export interface EmailResult {
   success: boolean

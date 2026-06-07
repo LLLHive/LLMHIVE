@@ -359,24 +359,26 @@ export default async function Home() {
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link href={primary.href} className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="h-14 w-full border-0 bg-gradient-to-r from-amber-500 to-orange-600 px-8 text-base font-semibold text-white shadow-lg shadow-amber-500/20 hover:from-amber-600 hover:to-orange-700 sm:w-auto sm:text-lg"
-                >
+              <Button
+                asChild
+                size="lg"
+                className="h-14 w-full border-0 bg-gradient-to-r from-amber-500 to-orange-600 px-8 text-base font-semibold text-white shadow-lg shadow-amber-500/20 hover:from-amber-600 hover:to-orange-700 sm:w-auto sm:text-lg"
+              >
+                <Link href={primary.href} className="w-full sm:w-auto">
                   {primary.label}
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/pricing" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-14 w-full border-zinc-700 bg-zinc-950/40 px-8 text-base text-white backdrop-blur hover:bg-zinc-900 sm:w-auto sm:text-lg"
-                >
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-14 w-full border-zinc-700 bg-zinc-950/40 px-8 text-base text-white backdrop-blur hover:bg-zinc-900 sm:w-auto sm:text-lg"
+              >
+                <Link href="/pricing" className="w-full sm:w-auto">
                   See pricing
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
 
             {/* Secondary auth link directly under the primary CTA so users who
@@ -724,19 +726,18 @@ export default async function Home() {
                     </li>
                   ))}
                 </ul>
-                <Link href={t.href} className="mt-6 block">
-                  <Button
-                    className={`w-full ${
-                      t.highlighted
-                        ? "border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
-                        : t.accent === "emerald"
-                          ? "bg-emerald-700 text-white hover:bg-emerald-600"
-                          : "bg-zinc-800 text-white hover:bg-zinc-700"
-                    }`}
-                  >
-                    {t.cta}
-                  </Button>
-                </Link>
+                <Button
+                  asChild
+                  className={`mt-6 w-full ${
+                    t.highlighted
+                      ? "border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
+                      : t.accent === "emerald"
+                        ? "bg-emerald-700 text-white hover:bg-emerald-600"
+                        : "bg-zinc-800 text-white hover:bg-zinc-700"
+                  }`}
+                >
+                  <Link href={t.href}>{t.cta}</Link>
+                </Button>
               </div>
             ))}
           </div>
@@ -817,24 +818,24 @@ export default async function Home() {
               Subscribe in under a minute. Cancel anytime. Your spend is guarded — your output isn&apos;t.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link href={primary.href}>
-                <Button
-                  size="lg"
-                  className="h-14 border-0 bg-gradient-to-r from-amber-500 to-orange-600 px-9 text-base font-semibold text-white shadow-lg shadow-amber-500/20 hover:from-amber-600 hover:to-orange-700 sm:text-lg"
-                >
+              <Button
+                asChild
+                size="lg"
+                className="h-14 border-0 bg-gradient-to-r from-amber-500 to-orange-600 px-9 text-base font-semibold text-white shadow-lg shadow-amber-500/20 hover:from-amber-600 hover:to-orange-700 sm:text-lg"
+              >
+                <Link href={primary.href}>
                   {primary.label}
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-14 border-zinc-700 bg-zinc-950/40 px-9 text-base text-white hover:bg-zinc-900 sm:text-lg"
-                >
-                  Compare plans
-                </Button>
-              </Link>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-14 border-zinc-700 bg-zinc-950/40 px-9 text-base text-white hover:bg-zinc-900 sm:text-lg"
+              >
+                <Link href="/pricing">Compare plans</Link>
+              </Button>
             </div>
             {!isSignedIn && (
               <p className="mt-6 text-center text-sm text-zinc-400">

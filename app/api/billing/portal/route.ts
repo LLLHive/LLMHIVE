@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
+import { getSiteUrl } from "@/lib/site-url"
 
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 
@@ -23,7 +24,7 @@ export async function POST() {
       },
       body: JSON.stringify({
         user_id: userId,
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai"}/billing`,
+        return_url: `${getSiteUrl()}/billing`,
       }),
     })
 

@@ -1,4 +1,5 @@
 // Comprehensive reasoning methods data model with reference links
+import { getSiteUrl } from "@/lib/site-url"
 export interface ReasoningMethodData {
   id: string
   name: string
@@ -46,7 +47,7 @@ export const REASONING_METHODS: ReasoningMethodData[] = [
     weaknesses: [
       "Less control over specific method used",
     ],
-    referenceUrl: "https://llmhive.ai/docs/automatic-reasoning",
+    referenceUrl: `${getSiteUrl()}/docs`,
     benchmarkResults: "Achieves best average performance across all benchmarks by dynamically selecting optimal methods",
   },
   // General Reasoning

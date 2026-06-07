@@ -230,16 +230,16 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/sign-in">
-                <Button variant="ghost" size="sm" className="text-zinc-300 hover:text-white">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0">
-                  Get Started
-                </Button>
-              </Link>
+              <Button asChild variant="ghost" size="sm" className="text-zinc-300 hover:text-white">
+                <Link href="/sign-in">Sign In</Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+              >
+                <Link href="/sign-up">Get Started</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -261,18 +261,27 @@ export default function LandingPage() {
               your queries to the best AI model for each task—automatically.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/sign-up">
-                <Button size="lg" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 text-lg px-8 h-14">
+              <Button
+                asChild
+                size="lg"
+                className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-lg px-8 h-14 text-white hover:from-amber-600 hover:to-orange-700"
+              >
+                <Link href="/sign-up">
                   Get started
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/">
-                <Button size="lg" variant="outline" className="border-zinc-700 text-white hover:bg-zinc-900 text-lg px-8 h-14">
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-zinc-700 text-lg px-8 h-14 text-white hover:bg-zinc-900"
+              >
+                <Link href="/demo">
                   <MessageSquare className="mr-2 h-5 w-5" />
                   Try Demo
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
 
@@ -420,19 +429,18 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href={tier.href}>
-                  <Button
-                    className={`w-full ${
-                      tier.highlighted
-                        ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0"
-                        : tier.accent === "emerald"
-                          ? "bg-emerald-700 hover:bg-emerald-600 text-white"
-                          : "bg-zinc-800 hover:bg-zinc-700 text-white"
-                    }`}
-                  >
-                    {tier.cta}
-                  </Button>
-                </Link>
+                <Button
+                  asChild
+                  className={`w-full ${
+                    tier.highlighted
+                      ? "border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
+                      : tier.accent === "emerald"
+                        ? "bg-emerald-700 text-white hover:bg-emerald-600"
+                        : "bg-zinc-800 text-white hover:bg-zinc-700"
+                  }`}
+                >
+                  <Link href={tier.href}>{tier.cta}</Link>
+                </Button>
               </div>
             ))}
           </div>
@@ -491,12 +499,16 @@ export default function LandingPage() {
           <p className="text-xl text-zinc-400 mb-10">
             Join thousands of developers and teams using LLMHive to build smarter, faster.
           </p>
-          <Link href="/pricing">
-            <Button size="lg" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 text-lg px-8 h-14">
+          <Button
+            asChild
+            size="lg"
+            className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 text-lg px-8 h-14 text-white hover:from-amber-600 hover:to-orange-700"
+          >
+            <Link href="/pricing">
               View plans
               <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </section>
 

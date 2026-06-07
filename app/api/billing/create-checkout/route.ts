@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth, currentUser } from "@clerk/nextjs/server"
 import Stripe from "stripe"
+import { getSiteUrl } from "@/lib/site-url"
 import {
   stripeEnterpriseAnnualPriceId,
   stripeEnterpriseMonthlyPriceId,
@@ -230,8 +231,8 @@ export async function POST(request: NextRequest) {
         min_seats_required: String(tierConfig.minSeats),
         pricing_version: "quota_based_jan2026",
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai"}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai"}/pricing`,
+      success_url: `${getSiteUrl()}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${getSiteUrl()}/pricing`,
       allow_promotion_codes: true,
       subscription_data: {
         metadata: {

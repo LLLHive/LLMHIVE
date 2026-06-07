@@ -88,16 +88,12 @@ export default function DemoClient() {
             <LogoText className="h-8" />
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/pricing">
-              <Button variant="ghost" size="sm">
-                Pricing
-              </Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button size="sm" className="bronze-gradient text-[#0a0a0a]">
-                Get started
-              </Button>
-            </Link>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/pricing">Pricing</Link>
+            </Button>
+            <Button asChild size="sm" className="bronze-gradient text-[#0a0a0a]">
+              <Link href="/sign-up">Get started</Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -268,18 +264,18 @@ export default function DemoClient() {
               orchestration; Premium is $20/month with annual discounts.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/pricing">
-                <Button size="lg" className="bronze-gradient text-[#0a0a0a] font-semibold w-full sm:w-auto">
+              <Button asChild size="lg" className="bronze-gradient w-full font-semibold text-[#0a0a0a] sm:w-auto">
+                <Link href="/pricing">
                   View plans
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+                <Link href="/pricing">
                   View Pricing
                   <ChevronRight className="ml-1 h-5 w-5" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               ✓ Standard &amp; Premium · ✓ Annual saves ~17% · ✓ Cancel anytime

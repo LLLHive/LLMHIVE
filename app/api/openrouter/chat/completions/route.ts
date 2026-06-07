@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getSiteUrl } from "@/lib/site-url"
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai",
+        "HTTP-Referer": getSiteUrl(),
         "X-Title": "LLMHive",
       },
       body: JSON.stringify(body),

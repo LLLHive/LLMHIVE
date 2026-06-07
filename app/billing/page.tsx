@@ -181,11 +181,11 @@ export default function BillingPage() {
             <span className="font-display text-xl font-bold text-[var(--bronze)]">LLMHive</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/settings">
-              <Button variant="ghost" size="icon">
+            <Button asChild variant="ghost" size="icon">
+              <Link href="/settings">
                 <Settings className="h-5 w-5" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -240,12 +240,12 @@ export default function BillingPage() {
                 </CardDescription>
               </div>
               {usage?.showUpgradePrompt && (
-                <Link href="/pricing">
-                  <Button size="sm" className="bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
-                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                <Button asChild size="sm" className="bg-[var(--bronze)] text-white hover:bg-[var(--bronze-dark)]">
+                  <Link href="/pricing">
+                    <ArrowUpRight className="mr-1 h-4 w-4" />
                     Upgrade
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               )}
             </div>
           </CardHeader>
@@ -375,12 +375,12 @@ export default function BillingPage() {
 
             <div className="flex gap-4">
               {isFreeTier ? (
-                <Link href="/pricing" className="flex-1">
-                  <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white">
-                    <ArrowUpRight className="h-4 w-4 mr-2" />
+                <Button asChild className="flex-1 w-full bg-[var(--bronze)] text-white hover:bg-[var(--bronze-dark)]">
+                  <Link href="/pricing">
+                    <ArrowUpRight className="mr-2 h-4 w-4" />
                     Upgrade Plan
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               ) : (
                 <>
                   <Button 
@@ -396,12 +396,12 @@ export default function BillingPage() {
                     )}
                     Manage Payment
                   </Button>
-                  <Link href="/pricing" className="flex-1">
-                    <Button variant="outline" className="w-full">
-                      <ArrowUpRight className="h-4 w-4 mr-2" />
+                  <Button asChild variant="outline" className="w-full flex-1">
+                    <Link href="/pricing">
+                      <ArrowUpRight className="mr-2 h-4 w-4" />
                       Change Plan
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </>
               )}
             </div>

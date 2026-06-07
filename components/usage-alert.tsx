@@ -165,15 +165,9 @@ export function UsageAlert() {
           {/* Upgrade CTA */}
           {(usageData.status === "warning" || usageData.status === "throttled" || usageData.status === "blocked") && (
             <div className="mt-3 flex gap-2">
-              <Link href="/pricing">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="text-xs"
-                >
-                  Upgrade Plan
-                </Button>
-              </Link>
+              <Button asChild size="sm" variant="secondary" className="text-xs">
+                <Link href="/pricing">Upgrade Plan</Link>
+              </Button>
               {usageData.status === "blocked" && (
                 <Button
                   size="sm"

@@ -388,3 +388,6 @@ export const businessPages: Record<string, PageContent> = {
     ctaHref: "/contact",
   },
 }
+
+/** Public marketing/business stub slugs (used by proxy.ts for auth exemptions). */
+export const BUSINESS_PAGE_SLUGS = Object.keys(businessPages)

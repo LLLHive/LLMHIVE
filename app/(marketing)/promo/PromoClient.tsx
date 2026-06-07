@@ -162,16 +162,12 @@ export default function PromoClient() {
               <LogoText height={28} variant="nav" />
             </Link>
             <div className="flex items-center gap-3">
-              <Link href="/sign-in">
-                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button size="sm" className="bronze-gradient text-white">
-                  Get started
-                </Button>
-              </Link>
+              <Button asChild variant="ghost" size="sm" className="text-white/80 hover:bg-white/10 hover:text-white">
+                <Link href="/sign-in">Sign In</Link>
+              </Button>
+              <Button asChild size="sm" className="bronze-gradient text-white">
+                <Link href="/sign-up">Get started</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -221,23 +217,24 @@ export default function PromoClient() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <Link href="/pricing">
-              <Button size="lg" className="bronze-gradient text-white text-lg px-8 h-14 shadow-xl font-bold">
+            <Button asChild size="lg" className="bronze-gradient h-14 px-8 text-lg font-bold text-white shadow-xl">
+              <Link href="/pricing">
                 <Trophy className="h-5 w-5 mr-2" />
                 Subscribe — Premium $20/mo
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/pricing">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-green-500/50 text-green-400 hover:bg-green-500/10 text-lg px-8 h-14"
-              >
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-14 border-2 border-green-500/50 px-8 text-lg text-green-400 hover:bg-green-500/10"
+            >
+              <Link href="/pricing">
                 <Star className="h-5 w-5 mr-2" />
                 Standard — $10/mo
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Trust signals */}
@@ -347,11 +344,11 @@ export default function PromoClient() {
                   </li>
                 ))}
               </ul>
-              <Link href="/pricing" className="mt-auto">
-                <Button className="w-full bg-[var(--bronze)] hover:bg-[var(--bronze-dark)] text-white text-xs h-9">
+              <Button asChild className="mt-auto h-9 w-full bg-[var(--bronze)] text-xs text-white hover:bg-[var(--bronze-dark)]">
+                <Link href="/pricing">
                   Subscribe — Standard <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
 
             {/* Premium — Featured */}
@@ -381,11 +378,11 @@ export default function PromoClient() {
                   </li>
                 ))}
               </ul>
-              <Link href="/pricing" className="mt-auto">
-                <Button className="w-full bronze-gradient text-white text-xs h-9 font-bold">
+              <Button asChild className="mt-auto h-9 w-full bronze-gradient text-xs font-bold text-white">
+                <Link href="/pricing">
                   Subscribe — Premium <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
 
             {/* Enterprise */}
@@ -413,11 +410,11 @@ export default function PromoClient() {
                   </li>
                 ))}
               </ul>
-              <Link href="/contact" className="mt-auto">
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9">
+              <Button asChild className="mt-auto h-9 w-full bg-emerald-600 text-xs text-white hover:bg-emerald-700">
+                <Link href="/contact">
                   Contact Sales <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -437,21 +434,20 @@ export default function PromoClient() {
             <strong className="text-yellow-400">$20/month</strong> (annual saves about 17%).
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/pricing">
-              <Button size="lg" className="bronze-gradient text-white text-lg px-8 h-12 font-bold">
+            <Button asChild size="lg" className="bronze-gradient h-12 px-8 text-lg font-bold text-white">
+              <Link href="/pricing">
                 <Trophy className="h-5 w-5 mr-2" />
                 View pricing
-              </Button>
-            </Link>
-            <Link href="/pricing">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 text-lg px-8 h-12"
-              >
-                Standard — $10/mo
-              </Button>
-            </Link>
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-12 border-white/30 px-8 text-lg text-white hover:bg-white/10"
+            >
+              <Link href="/pricing">Standard — $10/mo</Link>
+            </Button>
           </div>
 
           <p className="mt-10 text-sm text-white/70 max-w-lg mx-auto">

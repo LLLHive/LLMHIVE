@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { BUSINESS_PAGE_SLUGS } from "@/app/(business)/content"
 import {
   BUSINESS_OPS_GATE_COOKIE,
   businessOpsGateConfigured,
@@ -54,6 +55,11 @@ const isPublicRoute = createRouteMatcher([
   // Deep links copied from in-app share buttons (redirect into /app after auth).
   "/chat(.*)",
   "/collaborate(.*)",
+
+  // Business / ops stub pages (security, docs, status, …) and campaign tooling.
+  ...BUSINESS_PAGE_SLUGS.map((slug) => `/${slug}`),
+  "/campaigns(.*)",
+  "/utm(.*)",
 
   // SEO-discoverable utility files served by app/.
   "/sitemap.xml",

@@ -5,6 +5,8 @@
  * Requires SLACK_WEBHOOK_URL environment variable to be set.
  */
 
+import { getSiteUrl } from "@/lib/site-url"
+
 export interface SlackMessage {
   text?: string
   blocks?: SlackBlock[]
@@ -157,7 +159,7 @@ export async function sendSupportTicketNotification(ticket: {
               text: "View in Dashboard",
               emoji: true,
             },
-            url: `${process.env.NEXT_PUBLIC_APP_URL || "https://llmhive.ai"}/admin/support`,
+            url: `${getSiteUrl()}/admin/support`,
             action_id: "view_dashboard",
           },
           {
