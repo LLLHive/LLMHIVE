@@ -31,7 +31,7 @@ export default async function AppHome() {
   }
 
   const entitlement = await getPaidEntitlement(userId)
-  if (!entitlement.hasPaidAccess) {
+  if (!entitlement.hasAppAccess) {
     redirect(paidAccessRedirectUrl(entitlement.status))
   }
 

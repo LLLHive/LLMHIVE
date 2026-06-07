@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from ..auth import verify_api_key
-from ..billing.access_guard import require_active_paid_subscription
+from ..billing.access_guard import require_app_access
 from ..mcp2.sandbox import CodeSandbox, SandboxConfig
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ async def execute_python(
     """
     try:
         # Defense-in-depth: enforce active paid subscription at the sandbox layer.
-        require_active_paid_subscription(payload.user_id)
+        require_app_access(payload.user_id)
 
         if payload.language != "python":
             raise HTTPException(

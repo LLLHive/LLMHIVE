@@ -24,7 +24,7 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from ..auth import verify_api_key
-from ..billing.access_guard import require_active_paid_subscription
+from ..billing.access_guard import require_app_access
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ async def upload_chat_document(
     _auth: str = Depends(verify_api_key),
 ) -> Dict[str, Any]:
     """Upload one file for chat context; returns GCS location when configured."""
-    require_active_paid_subscription(user_id.strip())
+    require_app_access(user_id.strip())
 
     bucket_name = (os.environ.get("LLMHIVE_CHAT_UPLOAD_BUCKET") or "").strip()
     if not bucket_name:

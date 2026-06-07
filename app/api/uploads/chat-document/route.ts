@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   const entitlement = await getPaidEntitlement(clerkUserId)
-  if (!entitlement.hasPaidAccess) {
+  if (!entitlement.hasAppAccess) {
     return NextResponse.json(paymentRequiredResponse(entitlement.status), { status: 402 })
   }
 

@@ -8,7 +8,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth import verify_api_key
-from ..billing.access_guard import require_active_paid_subscription
+from ..billing.access_guard import require_app_access
 from ..models.orchestration import ChatRequest, ChatResponse
 from ..services.orchestrator_adapter import run_orchestration
 
@@ -50,7 +50,7 @@ async def chat_endpoint(
         # Defense-in-depth: enforce active paid subscription at the orchestrator layer.
         # Frontend already gates this, but a stale API key or internal caller
         # must not be able to use paid orchestration without an active subscription.
-        require_active_paid_subscription(
+        require_app_access(
             payload.metadata.user_id if payload.metadata else None
         )
 

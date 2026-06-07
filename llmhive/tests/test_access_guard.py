@@ -109,7 +109,7 @@ def test_inactive_subscription_rejects(
     assert exc.value.status_code == 402
 
 
-def test_free_tier_rejects_even_if_active(
+def test_free_tier_rejects_paid_only_guard(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _enable_guard(monkeypatch)
@@ -121,6 +121,18 @@ def test_free_tier_rejects_even_if_active(
     with pytest.raises(HTTPException) as exc:
         access_guard.require_active_paid_subscription("user_123")
     assert exc.value.status_code == 402
+
+
+def test_free_tier_allows_app_access_guard(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _enable_guard(monkeypatch)
+    _patch_firestore(
+        monkeypatch,
+        subscription={"status": "active", "tier_name": "free"},
+    )
+
+    access_guard.require_app_access("user_123")
 
 
 @pytest.mark.parametrize(

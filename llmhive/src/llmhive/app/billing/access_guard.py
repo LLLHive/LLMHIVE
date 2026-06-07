@@ -78,6 +78,19 @@ def _is_paid_subscription(sub: Optional[dict]) -> bool:
     return tier_name in PAID_TIER_NAMES
 
 
+def _has_app_access_subscription(sub: Optional[dict]) -> bool:
+    """Active paid plan or explicitly provisioned free tier (marketing / comp accounts)."""
+    if not sub:
+        return False
+    status_val = str(sub.get("status") or "").strip().lower()
+    if status_val != "active":
+        return False
+    tier_name = (
+        str(sub.get("tier_name") or sub.get("tier") or "").strip().lower()
+    )
+    return tier_name in PAID_TIER_NAMES or tier_name == "free"
+
+
 def require_active_paid_subscription(user_id: Optional[str]) -> None:
     """Raise HTTP 402 unless ``user_id`` has an active paid subscription.
 
@@ -145,6 +158,79 @@ def require_active_paid_subscription(user_id: Optional[str]) -> None:
     if not _is_paid_subscription(sub):
         logger.info(
             "paid_access_required: rejected user_id=%s (no active paid subscription)",
+            uid,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=_DETAIL_NO_SUB,
+        )
+
+
+def require_app_access(user_id: Optional[str]) -> None:
+    """Raise HTTP 402 unless ``user_id`` has app access (paid or provisioned free).
+
+    Used on chat/execute entry points so marketing and comp accounts with an
+    active ``free`` tier in Firestore can use free orchestration without Stripe.
+    """
+    try:
+        from .scheduled_benchmark import is_internal_scheduled_benchmark
+
+        if is_internal_scheduled_benchmark():
+            return
+    except ImportError:
+        pass
+
+    if not is_paid_access_required():
+        return
+
+    uid = (user_id or "").strip()
+    if not uid:
+        logger.warning("app_access_required: missing user_id; rejecting with 402")
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=_DETAIL_NO_USER,
+        )
+
+    try:
+        from ..firestore_db import (
+            FirestoreSubscriptionService,
+            is_firestore_available,
+        )
+    except Exception as exc:
+        logger.exception(
+            "app_access_required: firestore module import failed: %s", exc
+        )
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=_DETAIL_FAIL_CLOSED,
+        ) from exc
+
+    if not is_firestore_available():
+        logger.error(
+            "app_access_required: firestore unavailable, fail-closed for user_id=%s",
+            uid,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=_DETAIL_FAIL_CLOSED,
+        )
+
+    try:
+        sub = FirestoreSubscriptionService().get_user_subscription(uid)
+    except Exception as exc:
+        logger.exception(
+            "app_access_required: subscription read failed user_id=%s: %s",
+            uid,
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=_DETAIL_FAIL_CLOSED,
+        ) from exc
+
+    if not _has_app_access_subscription(sub):
+        logger.info(
+            "app_access_required: rejected user_id=%s (no active app subscription)",
             uid,
         )
         raise HTTPException(
