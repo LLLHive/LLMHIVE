@@ -316,52 +316,6 @@ export const businessPages: Record<string, PageContent> = {
       },
     ],
   },
-  faq: {
-    title: "FAQ",
-    subtitle:
-      "Frequently asked questions about LLMHive features, billing, and usage.",
-    sections: [
-      {
-        title: "Product",
-        items: [
-          "How orchestration selects the right model.",
-          "What happens after Premium query limits.",
-          "How to use tool verification features.",
-        ],
-      },
-      {
-        title: "Billing",
-        items: [
-          "Invoice delivery and payment schedules.",
-          "Tax/VAT handling by region.",
-          "How to upgrade or change plans.",
-        ],
-      },
-    ],
-  },
-  "case-studies": {
-    title: "Case Studies",
-    subtitle:
-      "Customer success stories showcasing measurable performance gains.",
-    sections: [
-      {
-        title: "Operational Impact",
-        items: [
-          "Reduced support response times by 45%.",
-          "Improved research accuracy with multi-model validation.",
-          "Lowered AI spend by optimizing model routing.",
-        ],
-      },
-      {
-        title: "Industry Highlights",
-        items: [
-          "Finance: audit-ready compliance workflows.",
-          "Healthcare: reliable summarization and QA.",
-          "Retail: personalized engagement at scale.",
-        ],
-      },
-    ],
-  },
   testimonials: {
     title: "Testimonials",
     subtitle:

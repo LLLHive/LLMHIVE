@@ -86,7 +86,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push("/sign-in?redirect_url=/billing")
+      router.push(`/sign-in?redirect_url=${encodeURIComponent("/billing")}`)
       return
     }
 

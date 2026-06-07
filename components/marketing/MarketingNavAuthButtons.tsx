@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { SignOutButton } from "@clerk/nextjs"
 import { LogIn, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,15 +8,10 @@ import { Button } from "@/components/ui/button"
 /**
  * Auth controls for MarketingNav.
  *
- * Sign Up on /pricing must go to /sign-up — linking to /pricing again is a
- * no-op and looks broken. Everywhere else, Sign Up routes to /pricing first
- * so visitors pick a plan before creating an account.
+ * Sign Up always routes to /sign-up. Clerk redirects new accounts to /pricing
+ * after registration (see ClerkProvider + sign-up page).
  */
 export function MarketingNavAuthButtons({ isSignedIn }: { isSignedIn: boolean }) {
-  const pathname = usePathname() ?? ""
-  const onPricing = pathname === "/pricing" || pathname.startsWith("/pricing/")
-  const signUpHref = onPricing ? "/sign-up" : "/pricing"
-
   if (isSignedIn) {
     return (
       <SignOutButton redirectUrl="/">
@@ -39,7 +33,7 @@ export function MarketingNavAuthButtons({ isSignedIn }: { isSignedIn: boolean })
         size="sm"
         className="border-0 bg-gradient-to-r from-amber-500 to-orange-600 font-semibold text-white hover:from-amber-600 hover:to-orange-700"
       >
-        <Link href={signUpHref}>Sign Up</Link>
+        <Link href="/sign-up">Sign Up</Link>
       </Button>
       <Button
         asChild

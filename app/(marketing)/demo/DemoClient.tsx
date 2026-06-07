@@ -93,7 +93,7 @@ export default function DemoClient() {
                 Pricing
               </Button>
             </Link>
-            <Link href="/pricing">
+            <Link href="/sign-up">
               <Button size="sm" className="bronze-gradient text-[#0a0a0a]">
                 Get started
               </Button>

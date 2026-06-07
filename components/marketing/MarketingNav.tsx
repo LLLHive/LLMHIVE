@@ -13,7 +13,7 @@ import { MarketingNavAuthButtons } from "@/components/marketing/MarketingNavAuth
  * hero, the pricing teaser, and the dedicated `/pricing` page; this nav
  * only handles "are you logged in or not".
  *
- *  - Anonymous:  Sign Up (-> /pricing)  + Sign In (-> /sign-in)
+ *  - Anonymous:  Sign Up (-> /sign-up)  + Sign In (-> /sign-in)
  *  - Signed-in:  Sign Out (returns to /)
  *
  * Signed-in users never see "Sign In" — that link would force-redirect

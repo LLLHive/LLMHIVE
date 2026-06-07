@@ -18,6 +18,7 @@ export function UsageAlert() {
   const [usageData, setUsageData] = useState<UsageData | null>(null)
   const [dismissed, setDismissed] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [portalLoading, setPortalLoading] = useState(false)
 
   useEffect(() => {
     async function fetchUsage() {
@@ -85,6 +86,23 @@ export function UsageAlert() {
   }
 
   const percentDisplay = Math.round(usageData.percentUsed * 100)
+
+  const handleOpenBillingPortal = async () => {
+    setPortalLoading(true)
+    try {
+      const response = await fetch("/api/billing/portal", { method: "POST" })
+      const data = await response.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        console.error("Failed to open billing portal:", data.error)
+      }
+    } catch (error) {
+      console.error("Failed to open billing portal:", error)
+    } finally {
+      setPortalLoading(false)
+    }
+  }
 
   return (
     <div
@@ -157,15 +175,15 @@ export function UsageAlert() {
                 </Button>
               </Link>
               {usageData.status === "blocked" && (
-                <Link href="/api/billing/portal">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    Add Overage
-                  </Button>
-                </Link>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  disabled={portalLoading}
+                  onClick={() => void handleOpenBillingPortal()}
+                >
+                  {portalLoading ? "Opening..." : "Add Overage"}
+                </Button>
               )}
             </div>
           )}

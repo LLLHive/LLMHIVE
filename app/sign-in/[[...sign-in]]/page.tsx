@@ -1,13 +1,9 @@
-import { SignIn } from "@clerk/nextjs"
+import { SignInClient } from "@/components/auth/sign-in-client"
 import AppBackground from "@/components/branding/AppBackground"
 import Image from "next/image"
 import LogoText from "@/components/branding/LogoText"
-import { ClerkLocalhostBlockedMessage } from "@/components/auth/clerk-localhost-blocked"
-import { isProductionClerkKeyOnLocalDev } from "@/lib/clerk-local-dev"
 
 export default function SignInPage() {
-  const clerkBlockedOnLocal = isProductionClerkKeyOnLocalDev()
-
   return (
     // Page-level scroll only (no nested scroll context). See sign-up/page.tsx
     // for the full layout strategy notes.
@@ -34,29 +30,7 @@ export default function SignInPage() {
           </div>
 
           <div className="w-full pb-2">
-            {clerkBlockedOnLocal ? (
-              <ClerkLocalhostBlockedMessage mode="sign-in" />
-            ) : (
-              <SignIn
-                appearance={{
-                  elements: {
-                    rootBox: "mx-auto w-full",
-                    card: "bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl",
-                    socialButtonsBlockButton: "flex-1",
-                    socialButtonsProviderIcon__apple: "!text-white !fill-white [&_path]:!fill-white",
-                    socialButtonsBlockButtonText__apple: "!text-white",
-                    socialButtonsIconButton: "hover:bg-white/10 [&_svg]:text-white",
-                    socialButtonsIconButton__apple: "[&_svg]:!text-white [&_svg]:!fill-white [&_path]:!fill-white",
-                    otpCodeFieldInput: "!border-2 !border-[#cd7f32] !bg-[#1a1a1a] !text-white",
-                    otpCodeField: "gap-2",
-                    formFieldInput: "border border-gray-600 bg-background/50",
-                  },
-                }}
-                routing="path"
-                path="/sign-in"
-                signUpUrl="/sign-up"
-              />
-            )}
+            <SignInClient />
           </div>
 
           <p className="mt-6 text-center text-xs text-zinc-500 sm:mt-8">

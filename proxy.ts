@@ -46,6 +46,15 @@ const isPublicRoute = createRouteMatcher([
   "/best-ai-assistant-for(.*)",
   "/best-for(.*)",
 
+  // Product marketing pages linked from /press and /landing (browse-only for
+  // anonymous visitors; model selection persists in localStorage until sign-in).
+  "/models(.*)",
+  "/orchestration(.*)",
+
+  // Deep links copied from in-app share buttons (redirect into /app after auth).
+  "/chat(.*)",
+  "/collaborate(.*)",
+
   // SEO-discoverable utility files served by app/.
   "/sitemap.xml",
   "/robots.txt",

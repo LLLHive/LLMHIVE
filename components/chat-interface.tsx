@@ -107,6 +107,24 @@ export function ChatInterface() {
     }
   }, [searchParams])
 
+  // Deep link from /chat/:id share URLs → /app?conversation=:id
+  useEffect(() => {
+    const conversationId = searchParams.get("conversation")
+    if (!conversationId) return
+
+    const conv = conversations.find((c) => c.id === conversationId)
+    if (!conv) return
+
+    setCurrentConversationId(conversationId)
+    setCurrentConversation(conv)
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.delete("conversation")
+      window.history.replaceState({}, "", url.toString())
+    }
+  }, [searchParams, conversations, setCurrentConversation])
+
   // Clear deep-link `initialQuery` only after a conversation exists. If we clear it
   // immediately in ChatArea, the home vs chat branch flips back to HomeScreen before
   // auto-send runs (Discover / templates would appear to do nothing).

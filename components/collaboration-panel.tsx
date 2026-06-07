@@ -27,6 +27,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/lib/toast"
 import { useCollaboration, CollaborationUser, CollaborationMessage } from "@/lib/hooks/use-collaboration"
+import { consumeCollaborateSession } from "@/lib/collaborate-deeplink"
 import { cn } from "@/lib/utils"
 
 export function CollaborationPanel() {
@@ -61,6 +62,16 @@ export function CollaborationPanel() {
   const [copiedLink, setCopiedLink] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingJoinAttempted = useRef(false)
+
+  // Auto-join when arriving from /collaborate?session=… deep link.
+  useEffect(() => {
+    if (pendingJoinAttempted.current || sessionId) return
+    const pendingSession = consumeCollaborateSession()
+    if (!pendingSession) return
+    pendingJoinAttempted.current = true
+    void connect(pendingSession)
+  }, [connect, sessionId])
 
   // Auto-scroll to new messages
   useEffect(() => {
