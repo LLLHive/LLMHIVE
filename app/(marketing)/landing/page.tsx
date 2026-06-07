@@ -6,12 +6,12 @@ import {
   OFFER_PREMIUM_FEATURES,
   OFFER_STANDARD_FEATURES,
 } from "@/lib/marketing/pricing-offers"
-import { 
 import { getSiteUrl, sitePath } from "@/lib/site-url"
-  Sparkles, 
-  Zap, 
-  Shield, 
-  BarChart3, 
+import {
+  Sparkles,
+  Zap,
+  Shield,
+  BarChart3,
   ArrowRight,
   Check,
   MessageSquare,
@@ -19,7 +19,7 @@ import { getSiteUrl, sitePath } from "@/lib/site-url"
   Layers,
   Globe,
   Clock,
-  Lock
+  Lock,
 } from "lucide-react"
 
 export const metadata: Metadata = {

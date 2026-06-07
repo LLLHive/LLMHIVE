@@ -37,8 +37,8 @@ import {
   organizationNode,
   PRODUCT_IMAGE_URL,
 } from "@/lib/marketing/structured-data"
-import {
 import { sitePath } from "@/lib/site-url"
+import {
   MARKETING_FEATURED_LINE,
   MARKETING_META_DESCRIPTION_MODELS,
   MARKETING_OPENAI_FLAGSHIP,

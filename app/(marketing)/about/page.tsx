@@ -1,16 +1,16 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
-import { 
 import { sitePath } from "@/lib/site-url"
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Sparkles,
   Target,
   Heart,
   Lightbulb,
   Users,
   Zap,
-  Shield
+  Shield,
 } from "lucide-react"
 
 export const metadata: Metadata = {
