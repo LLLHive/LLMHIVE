@@ -3676,6 +3676,16 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             actual_models = _filter_free_models(actual_models)
             user_model_names = list(actual_models)
             logger.info("FREE TIER: Re-filtered after intelligent selection -> models=%s", actual_models)
+
+        # Single agent mode: always orchestrate with exactly one model
+        if request.agent_mode.value == "single" and len(actual_models) > 1:
+            logger.info(
+                "Single agent mode: trimming %d models to 1 (%s)",
+                len(actual_models),
+                actual_models[0],
+            )
+            actual_models = actual_models[:1]
+            user_model_names = user_model_names[:1] if user_model_names else list(actual_models)
         
         # Enhance prompt with reasoning method template
         # NOTE: Only apply complex reasoning templates at accuracy_level >= 4 to avoid template echo issues
@@ -3927,6 +3937,13 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # If use_hrm=True (either explicitly set or auto-enabled for complex queries),
         # we skip elite orchestration and let the standard orchestrator run with HRM.
         use_hrm = orchestration_config.get("use_hrm", False)
+
+        # Final guard: KB/strategy overrides must not violate single-agent mode
+        if request.agent_mode.value == "single" and len(actual_models) > 1:
+            actual_models = actual_models[:1]
+            user_model_names = user_model_names[:1] if user_model_names else list(actual_models)
+
+        is_team_mode = orchestration_config.get("agent_mode", "team") == "team"
         use_elite = (
             ELITE_AVAILABLE and 
             is_team_mode and  # Only use elite in TEAM mode
@@ -3973,15 +3990,20 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                         actual_models = _filter_free_models(actual_models)
                         logger.info("TIER FILTERING (post-KB): FREE tier -> models=%s", actual_models)
                     
-                    # Select strategy based on accuracy, task, complexity, and user criteria
-                    strategy = selected_strategy or _select_elite_strategy(
-                        accuracy_level=accuracy_level,
-                        task_type=task_type,
-                        num_models=len(actual_models),
-                        complexity=detected_complexity,
-                        criteria=criteria_settings,
-                        prompt_spec=prompt_spec,
-                    )
+                    # User-selected elite strategy takes precedence when valid
+                    user_elite_strategy = getattr(request.orchestration, "elite_strategy", None)
+                    if user_elite_strategy and user_elite_strategy not in ("automatic", "auto", None):
+                        strategy = user_elite_strategy
+                        logger.info("Using user-selected elite strategy: %s", strategy)
+                    else:
+                        strategy = selected_strategy or _select_elite_strategy(
+                            accuracy_level=accuracy_level,
+                            task_type=task_type,
+                            num_models=len(actual_models),
+                            complexity=detected_complexity,
+                            criteria=criteria_settings,
+                            prompt_spec=prompt_spec,
+                        )
                     selected_strategy = strategy
                     
                     # For FREE tier: use "parallel_race" for speed, or let normal strategy work

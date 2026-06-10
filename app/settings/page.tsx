@@ -24,6 +24,16 @@ import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 import { useConversationsContext } from "@/lib/conversations-context"
 import { toast } from "@/lib/toast"
+import { useUserTier } from "@/lib/hooks/use-user-tier"
+
+function formatSubscriptionTierLabel(tier: string): string {
+  const t = tier.toLowerCase()
+  if (t === "free" || t === "trial") return "Free"
+  if (t === "standard" || t === "lite" || t === "starter" || t === "basic") return "Standard"
+  if (t === "premium" || t === "pro") return "Premium"
+  if (t === "enterprise" || t === "maximum") return "Enterprise"
+  return tier.charAt(0).toUpperCase() + tier.slice(1)
+}
 
 // LocalStorage keys for settings persistence
 const STORAGE_KEYS = {
@@ -144,6 +154,7 @@ export default function SettingsPage() {
     updateConversation 
   } = useConversationsContext()
   const { theme, setTheme, resolvedTheme } = useTheme()
+  const { subscriptionTier, isLoading: tierLoading } = useUserTier()
   const [mounted, setMounted] = useState(false)
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -529,8 +540,16 @@ export default function SettingsPage() {
               {/* Current Plan */}
               <div className="p-4 rounded-lg glass-card border border-[var(--bronze)]/30">
                 <p className="text-xs text-muted-foreground mb-1">Current Plan</p>
-                <p className="text-lg font-semibold text-[var(--gold)]">Standard</p>
-                <p className="text-xs text-muted-foreground">$10/month Standard — spend-guarded elite orchestration</p>
+                <p className="text-lg font-semibold text-[var(--gold)]">
+                  {tierLoading ? "Loading…" : formatSubscriptionTierLabel(subscriptionTier)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {tierLoading
+                    ? "Fetching subscription from billing…"
+                    : subscriptionTier === "free"
+                      ? "Free tier — upgrade for premium orchestration"
+                      : `${formatSubscriptionTierLabel(subscriptionTier)} plan — active subscription`}
+                </p>
               </div>
 
               {/* Standard plan marketing */}
@@ -588,7 +607,9 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Orchestration</span>
-                    <span className="text-green-400">Standard</span>
+                    <span className="text-green-400">
+                      {tierLoading ? "…" : formatSubscriptionTierLabel(subscriptionTier)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -626,7 +647,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <SheetTitle className="text-base font-semibold">Connections</SheetTitle>
-                <p className="text-xs text-muted-foreground">{connectedServices.length} services connected</p>
+                <p className="text-xs text-muted-foreground">{connectedServices.length} saved locally (OAuth not yet connected)</p>
               </div>
             </div>
           </SheetHeader>
@@ -679,7 +700,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <SheetTitle className="text-base font-semibold">Notifications</SheetTitle>
-                <p className="text-xs text-muted-foreground">{enabledNotifications.length} enabled</p>
+                <p className="text-xs text-muted-foreground">{enabledNotifications.length} saved locally (delivery not yet active)</p>
               </div>
             </div>
           </SheetHeader>
@@ -730,7 +751,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <SheetTitle className="text-base font-semibold">Privacy</SheetTitle>
-                <p className="text-xs text-muted-foreground">{privacySettings.length} settings enabled</p>
+                <p className="text-xs text-muted-foreground">{privacySettings.length} saved locally (not yet enforced server-side)</p>
               </div>
             </div>
           </SheetHeader>

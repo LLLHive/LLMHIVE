@@ -30,6 +30,14 @@ import {
 } from "@/hooks/use-openrouter-categories"
 import { getOpenRouterCategoryIcon } from "@/lib/openrouter/category-icons"
 import { useToolbarDropdownExclusive } from "@/components/toolbar-dropdown-exclusive-context"
+import { OrchestrationStudioDropdown } from "@/components/orchestration-studio-dropdown"
+
+/** Keep at most one explicit model when Single agent mode is active. */
+function constrainModelsForSingleMode(models: string[]): string[] {
+  const explicit = models.filter((id) => id !== "automatic")
+  if (explicit.length === 0) return ["automatic"]
+  return [explicit[0]]
+}
 
 interface ChatToolbarProps {
   settings: OrchestratorSettings
@@ -151,18 +159,22 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
 
   const toggleModel = (modelId: string) => {
     const currentModels = settings.selectedModels || []
+    const isSingleMode = settings.agentMode === "single"
+
     if (currentModels.includes(modelId)) {
       // Removing a model
       if (currentModels.length > 1) {
         const newModels = currentModels.filter((id) => id !== modelId)
-        // If only "automatic" remains, keep it; otherwise filter it out too
-        onSettingsChange({ selectedModels: newModels })
+        onSettingsChange({
+          selectedModels: isSingleMode ? constrainModelsForSingleMode(newModels) : newModels,
+        })
       } else {
-        // If removing the last model, switch back to automatic
         onSettingsChange({ selectedModels: ["automatic"] })
       }
+    } else if (isSingleMode) {
+      // Single mode: replace selection instead of accumulating models
+      onSettingsChange({ selectedModels: [modelId] })
     } else {
-      // Adding a model - remove "automatic" when adding specific models
       const modelsWithoutAutomatic = currentModels.filter((id) => id !== "automatic")
       onSettingsChange({ selectedModels: [...modelsWithoutAutomatic, modelId] })
     }
@@ -305,7 +317,10 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
-              onSettingsChange({ agentMode: "single" })
+              onSettingsChange({
+                agentMode: "single",
+                selectedModels: constrainModelsForSingleMode(settings.selectedModels || ["automatic"]),
+              })
             }}
             className="gap-2 cursor-pointer py-1.5 sm:py-2"
           >
@@ -512,7 +527,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
         </DropdownMenu>
       </div>
 
-      {/* Orchestration settings moved to Settings page */}
+      <OrchestrationStudioDropdown settings={settings} onSettingsChange={onSettingsChange} />
 
       {/* Features dropdown removed from chat page - available in Orchestration page */}
       {/* Speed dropdown removed from chat page - available in Orchestration page */}

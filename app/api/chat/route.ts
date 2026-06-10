@@ -325,13 +325,29 @@ export async function POST(req: NextRequest) {
       console.log("[Chat API] User-selected models:", selectedModels)
     }
 
+    const agentMode = settings.agentMode || "team"
+    if (agentMode === "single" && selectedModels.length > 1) {
+      selectedModels = [selectedModels[0]]
+      console.log("[Chat API] Single agent mode: trimmed to one model:", selectedModels[0])
+    }
+
     // Map advanced reasoning methods to the first non-automatic method selected
     // This connects the UI reasoning method selection to the backend
     const advancedMethods = settings.advancedReasoningMethods || []
     const selectedReasoningMethod = advancedMethods.find((m: string) => m !== "automatic") || null
     
-    // Determine elite strategy from settings (maps to backend orchestration strategy)
-    const eliteStrategy = settings.eliteStrategy !== "automatic" ? settings.eliteStrategy : null
+    // Map UI Premium Mode labels to backend EliteStrategy enum values
+    const eliteStrategyMap: Record<string, string> = {
+      fast: "single_best",
+      standard: "parallel_race",
+      thorough: "best_of_n",
+      exhaustive: "quality_weighted_fusion",
+    }
+    const rawEliteStrategy = settings.eliteStrategy
+    const eliteStrategy =
+      rawEliteStrategy && rawEliteStrategy !== "automatic"
+        ? eliteStrategyMap[rawEliteStrategy] || rawEliteStrategy
+        : null
     
     // Quality options selected by user
     const qualityOptions = settings.qualityOptions || []
@@ -371,7 +387,7 @@ export async function POST(req: NextRequest) {
       reasoning_mode: settings.reasoningMode || "standard",
       reasoning_method: selectedReasoningMethod, // Map from advancedReasoningMethods dropdown
       domain_pack: settings.domainPack || "default",
-      agent_mode: settings.agentMode || "team",
+      agent_mode: agentMode,
       format_style: formatStyle,  // Answer format: automatic, paragraph, bullet, numbered, structured, etc.
       tuning: {
         prompt_optimization: settings.promptOptimization !== false,
@@ -403,7 +419,12 @@ export async function POST(req: NextRequest) {
         enable_vector_rag: settings.advancedFeatures?.includes("vector-rag") || false,
         enable_memory: settings.advancedFeatures?.includes("memory-augmentation") || false,
         // Real-time data: auto-enabled for temporal queries, or manually via settings
-        enable_live_research: needsRealtimeData || needsModelCatalogGrounding || settings.enableLiveResearch || false,
+        enable_live_research:
+          needsRealtimeData ||
+          needsModelCatalogGrounding ||
+          settings.enableLiveResearch ||
+          settings.advancedFeatures?.includes("web-search") ||
+          false,
         // PR5 & PR6: Budget-aware routing
         max_cost_usd: maxCostUsd,
         prefer_cheaper_models: preferCheaper,

@@ -37,6 +37,8 @@ const domainPacks = [
   { value: "coding", label: "Coding", description: "Software development, debugging" },
   { value: "research", label: "Research", description: "Academic research, analysis" },
   { value: "finance", label: "Finance", description: "Financial analysis, compliance" },
+  { value: "education", label: "Education", description: "Curriculum, tutoring, grading" },
+  { value: "real_estate", label: "Real Estate", description: "Listings, valuations, contracts" },
 ]
 
 // Response format options (same as chat toolbar) - Enhanced with icons
@@ -267,7 +269,7 @@ export default function OrchestrationPage() {
   const [selectedEliteStrategy, setSelectedEliteStrategy] = useState<string>("standard")
   const [selectedQualityOptions, setSelectedQualityOptions] = useState<string[]>(["verification", "consensus"])
   const [selectedDomain, setSelectedDomain] = useState<string>("default")
-  const [selectedFormat, setSelectedFormat] = useState<string>("default")
+  const [selectedFormat, setSelectedFormat] = useState<string>("automatic")
   
   // Get user tier from subscription
   const { userTier, isLoading: tierLoading } = useUserTier()
@@ -323,6 +325,8 @@ export default function OrchestrationPage() {
     setSelectedSpeed(savedSettings.reasoningMode || "standard")
     setSelectedEliteStrategy(savedSettings.eliteStrategy || "standard")
     setSelectedQualityOptions(savedSettings.qualityOptions || ["verification", "consensus"])
+    setSelectedDomain(savedSettings.domainPack || "default")
+    setSelectedFormat(savedSettings.answerFormat || "automatic")
     // Load standard LLM values
     if (savedSettings.standardValues) {
       setStandardValues(savedSettings.standardValues)
@@ -361,8 +365,10 @@ export default function OrchestrationPage() {
       eliteStrategy: selectedEliteStrategy as any,
       qualityOptions: selectedQualityOptions as any,
       standardValues: standardValues,
+      domainPack: selectedDomain as any,
+      answerFormat: selectedFormat as any,
     })
-  }, [selectedModels, selectedMethods, selectedFeatures, selectedTools, tuningSettings, selectedSpeed, selectedEliteStrategy, selectedQualityOptions, standardValues, settingsLoaded])
+  }, [selectedModels, selectedMethods, selectedFeatures, selectedTools, tuningSettings, selectedSpeed, selectedEliteStrategy, selectedQualityOptions, selectedDomain, selectedFormat, standardValues, settingsLoaded])
 
   const toggleModel = (id: string) => {
     setSelectedModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]))

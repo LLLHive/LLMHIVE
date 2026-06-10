@@ -581,16 +581,17 @@ export function ChatArea({
   
   // Get actual models to send to backend
   const getActualModels = (): string[] => {
+    let models: string[]
     if (isAutomaticMode) {
-      // Return empty array - backend will intelligently select based on:
-      // - Query content analysis
-      // - Domain detection
-      // - Task type classification
-      // - Model rankings and capabilities
-      return []
+      // Empty array lets backend pick based on agent_mode (single vs team)
+      models = []
+    } else {
+      models = selectedModels.filter((m) => m !== "automatic")
     }
-    // Filter out "automatic" if mixed with other models
-    return selectedModels.filter(m => m !== "automatic")
+    if (orchestratorSettings.agentMode === "single" && models.length > 1) {
+      models = [models[0]]
+    }
+    return models
   }
   
   // Get active mode display info based on orchestrator settings
@@ -1027,7 +1028,8 @@ export function ChatArea({
       const { content: assistantContent, modelsUsed, tokensUsed, latencyMs, qualityMetadata } = chatResponse
 
       // Build agent info from actual models used
-      const agentContributions = modelsUsed.slice(0, 3).map((modelId, index) => {
+      const maxAgents = orchestratorSettings.agentMode === "single" ? 1 : 3
+      const agentContributions = modelsUsed.slice(0, maxAgents).map((modelId, index) => {
         const model = getModelById(modelId)
         const roles = ["Primary response", "Analysis and verification", "Cross-validation"]
         return {
@@ -1243,7 +1245,8 @@ export function ChatArea({
       const { content: assistantContent, modelsUsed, tokensUsed, latencyMs, qualityMetadata } = chatResponse
 
       // Build agent info
-      const agentContributions = modelsUsed.slice(0, 3).map((modelId, index) => {
+      const maxAgents = orchestratorSettings.agentMode === "single" ? 1 : 3
+      const agentContributions = modelsUsed.slice(0, maxAgents).map((modelId, index) => {
         const model = getModelById(modelId)
         const roles = ["Regenerated response", "Verification", "Quality check"]
         return {
