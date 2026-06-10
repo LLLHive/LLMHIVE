@@ -164,6 +164,33 @@ const toolsList = [
   { id: "api-integration", label: "API Integration", description: "Connect to external APIs" },
 ]
 
+const FEATURE_IDS = new Set(featuresList.map((f) => f.id))
+const TOOL_IDS = new Set(toolsList.map((t) => t.id))
+
+function splitAdvancedFeatures(stored: string[] | undefined): {
+  features: string[]
+  tools: string[]
+} {
+  const features: string[] = []
+  const tools: string[] = []
+  for (const id of stored ?? []) {
+    if (FEATURE_IDS.has(id) && !features.includes(id)) features.push(id)
+    else if (TOOL_IDS.has(id) && !tools.includes(id)) tools.push(id)
+  }
+  return { features, tools }
+}
+
+function mergeAdvancedFeatures(features: string[], tools: string[]): string[] {
+  const merged: string[] = []
+  for (const id of features) {
+    if (FEATURE_IDS.has(id) && !merged.includes(id)) merged.push(id)
+  }
+  for (const id of tools) {
+    if (TOOL_IDS.has(id) && !merged.includes(id)) merged.push(id)
+  }
+  return merged
+}
+
 // Tuning options
 const tuningOptions = [
   {
@@ -311,10 +338,11 @@ export default function OrchestrationPage() {
     const savedSettings = loadOrchestratorSettings()
     setSelectedModels(savedSettings.selectedModels || ["automatic"])
     setSelectedMethods(savedSettings.advancedReasoningMethods || [])
-    setSelectedFeatures(savedSettings.advancedFeatures || [])
-    setSelectedTools(savedSettings.advancedFeatures?.filter(f => 
-      ["web-search", "code-execution", "file-analysis", "image-generation", "data-visualization", "api-integration"].includes(f)
-    ) || [])
+    const { features: loadedFeatures, tools: loadedTools } = splitAdvancedFeatures(
+      savedSettings.advancedFeatures
+    )
+    setSelectedFeatures(loadedFeatures)
+    setSelectedTools(loadedTools)
     setTuningSettings({
       promptOptimization: savedSettings.promptOptimization,
       outputValidation: savedSettings.outputValidation,
@@ -355,7 +383,7 @@ export default function OrchestrationPage() {
     saveOrchestratorSettings({
       selectedModels,
       advancedReasoningMethods: selectedMethods as any,
-      advancedFeatures: [...selectedFeatures, ...selectedTools] as any,
+      advancedFeatures: mergeAdvancedFeatures(selectedFeatures, selectedTools) as any,
       promptOptimization: tuningSettings.promptOptimization,
       outputValidation: tuningSettings.outputValidation,
       answerStructure: tuningSettings.answerStructure,
@@ -399,9 +427,9 @@ export default function OrchestrationPage() {
       case "reasoning":
         return selectedMethods.length
       case "features":
-        return selectedFeatures.length
+        return selectedFeatures.filter((id) => FEATURE_IDS.has(id)).length
       case "tools":
-        return selectedTools.length
+        return selectedTools.filter((id) => TOOL_IDS.has(id)).length
       case "tuning":
         return Object.values(tuningSettings).filter(Boolean).length
       case "speed":
@@ -889,7 +917,7 @@ export default function OrchestrationPage() {
                 </div>
                 Features
                 <span className="ml-auto text-xs font-normal text-[var(--bronze)] bg-[var(--bronze)]/10 px-2 py-0.5 rounded-full">
-                  {selectedFeatures.length} enabled
+                  {selectedFeatures.filter((id) => FEATURE_IDS.has(id)).length} enabled
                 </span>
               </SheetTitle>
               <p className="text-xs text-muted-foreground">Advanced capabilities</p>
@@ -946,7 +974,7 @@ export default function OrchestrationPage() {
                 </div>
                 Tools
                 <span className="ml-auto text-xs font-normal text-[var(--bronze)] bg-[var(--bronze)]/10 px-2 py-0.5 rounded-full">
-                  {selectedTools.length} enabled
+                  {selectedTools.filter((id) => TOOL_IDS.has(id)).length} enabled
                 </span>
               </SheetTitle>
               <p className="text-xs text-muted-foreground">External integrations</p>
