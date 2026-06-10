@@ -68,17 +68,59 @@ function normalizeScoreToPercent(score?: number): number | undefined {
 }
 
 function buildConsensusInfo(modelsUsed: string[], qualityMetadata?: QualityMetadata): ConsensusInfo | undefined {
-  const consensusPercent = normalizeScoreToPercent(qualityMetadata?.consensusScore)
+  const consensusPercent =
+    normalizeScoreToPercent(qualityMetadata?.consensusScore) ??
+    normalizeScoreToPercent(qualityMetadata?.confidence)
+
   if (consensusPercent !== undefined) {
     const method = qualityMetadata?.consensusMethod
+    const usedConfidenceFallback = qualityMetadata?.consensusScore === undefined
     return {
       confidence: consensusPercent,
       debateOccurred: modelsUsed.length > 1,
-      consensusNote: `${modelsUsed.length || 1} model${modelsUsed.length === 1 ? "" : "s"} participated; backend consensus score reported${method ? ` (${method})` : ""}.`,
+      consensusNote: usedConfidenceFallback
+        ? `${modelsUsed.length || 1} model${modelsUsed.length === 1 ? "" : "s"} participated; confidence score from orchestration quality metadata.`
+        : `${modelsUsed.length || 1} model${modelsUsed.length === 1 ? "" : "s"} participated; backend consensus score reported${method ? ` (${method})` : ""}.`,
+    }
+  }
+
+  if (modelsUsed.length > 0) {
+    return {
+      confidence: -1,
+      debateOccurred: modelsUsed.length > 1,
+      consensusNote: `${modelsUsed.length} model${modelsUsed.length === 1 ? "" : "s"} participated; no consensus score was reported.`,
     }
   }
 
   return undefined
+}
+
+function resolveMessageConsensus(message: Message): ConsensusInfo {
+  if (message.consensus) return message.consensus
+
+  const modelsUsed =
+    message.modelsUsed ??
+    (message.agents?.map((agent) => agent.agentName) ?? (message.model ? [message.model] : []))
+
+  const qualityInput = message.qualityMetadata
+    ? {
+        consensusScore: message.qualityMetadata.consensusScore,
+        confidence: message.qualityMetadata.confidence,
+        consensusMethod: message.qualityMetadata.consensusMethod,
+      }
+    : undefined
+  const fromMetadata = buildConsensusInfo(modelsUsed, qualityInput)
+  if (fromMetadata) return fromMetadata
+
+  const agentCount = message.agents?.length ?? modelsUsed.length
+  return {
+    confidence: -1,
+    debateOccurred: agentCount > 1,
+    consensusNote:
+      agentCount > 0
+        ? `${agentCount} model${agentCount === 1 ? "" : "s"} participated; no consensus score was reported.`
+        : undefined,
+  }
 }
 
 // Domain pack options with icons and colors
@@ -1474,7 +1516,7 @@ export function ChatArea({
       {showInsights && selectedMessageForInsights?.agents && (
         <AgentInsightsPanel
           agents={selectedMessageForInsights.agents}
-          consensus={selectedMessageForInsights.consensus!}
+          consensus={resolveMessageConsensus(selectedMessageForInsights)}
           citations={selectedMessageForInsights.citations}
           onClose={() => setShowInsights(false)}
         />

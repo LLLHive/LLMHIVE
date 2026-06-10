@@ -18,9 +18,20 @@ import { Badge } from "@/components/ui/badge"
 import type { AgentContribution, Citation, ConsensusInfo } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
+const DEFAULT_CONSENSUS: ConsensusInfo = {
+  confidence: -1,
+  debateOccurred: false,
+}
+
+function formatConfidencePercent(confidence: number): number {
+  if (typeof confidence !== "number" || Number.isNaN(confidence)) return 0
+  const percent = confidence <= 1 ? confidence * 100 : confidence
+  return Math.max(0, Math.min(100, Math.round(percent)))
+}
+
 interface AgentInsightsPanelProps {
   agents: AgentContribution[]
-  consensus: ConsensusInfo
+  consensus?: ConsensusInfo
   citations?: Citation[]
   onClose: () => void
 }
@@ -43,7 +54,7 @@ const agentColors = {
   general: "from-gray-500 to-gray-600",
 }
 
-export function AgentInsightsPanel({ agents, consensus, citations, onClose }: AgentInsightsPanelProps) {
+export function AgentInsightsPanel({ agents, consensus = DEFAULT_CONSENSUS, citations, onClose }: AgentInsightsPanelProps) {
   const hasReportedConsensus = consensus.confidence >= 0
   const displayedConfidence = hasReportedConsensus ? consensus.confidence : 0
 
@@ -115,7 +126,7 @@ export function AgentInsightsPanel({ agents, consensus, citations, onClose }: Ag
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium text-sm">{agent.agentName}</span>
                         <Badge variant="outline" className="text-xs">
-                          {agent.confidence}% confidence
+                          {formatConfidencePercent(agent.confidence)}% confidence
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">{agent.contribution}</p>
