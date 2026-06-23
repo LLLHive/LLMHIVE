@@ -84,6 +84,7 @@ def test_trialing_standard_uses_fixed_trial_cap(monkeypatch):
     monkeypatch.setenv("ELITE_SPEND_GUARD", "1")
     monkeypatch.setenv("ELITE_SPEND_TRIAL_CAP_USD", "3.0")
     monkeypatch.setenv("ELITE_SPEND_HEADROOM_FRACTION", "0")
+    monkeypatch.setattr(spend_guard_mod, "is_firestore_available", lambda: True)
     monkeypatch.setattr(spend_guard_mod, "read_spend_document", lambda _uid: (True, None))
     sub = {
         "status": "trialing",
