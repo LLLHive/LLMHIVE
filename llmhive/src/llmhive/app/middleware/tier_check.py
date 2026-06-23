@@ -294,7 +294,7 @@ def get_user_tier(user_id: str) -> TierName:
         service = FirestoreSubscriptionService()
         subscription = service.get_user_subscription(user_id)
         
-        if subscription and subscription.get("status") == "active":
+        if subscription and subscription.get("status") in ("active", "trialing"):
             tier_name = subscription.get("tier_name", "free").lower()
             try:
                 return TierName(tier_name)

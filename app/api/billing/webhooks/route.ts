@@ -36,6 +36,8 @@ interface SubscriptionData {
   billingCycle: "monthly" | "annual";
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
+  trialStart?: Date | null;
+  trialEnd?: Date | null;
   cancelAtPeriodEnd: boolean;
   seats?: number;
   updatedAt: Date;
@@ -83,6 +85,22 @@ async function upsertSubscription(data: SubscriptionData): Promise<void> {
  *
  * Returns ISO strings (or null) — never throws on missing/invalid values.
  */
+function readTrialBounds(subscription: Stripe.Subscription): {
+  startIso: string | null
+  endIso: string | null
+} {
+  const subAny = subscription as unknown as Record<string, unknown>
+  const toIso = (n: unknown): string | null => {
+    if (typeof n !== "number" || !Number.isFinite(n)) return null
+    const d = new Date(n * 1000)
+    return Number.isNaN(d.getTime()) ? null : d.toISOString()
+  }
+  return {
+    startIso: toIso(subAny.trial_start),
+    endIso: toIso(subAny.trial_end),
+  }
+}
+
 function readPeriodBounds(subscription: Stripe.Subscription): {
   startIso: string | null
   endIso: string | null
@@ -131,16 +149,20 @@ async function handleCheckoutCompleted(
   const seats = subscription.items?.data?.[0]?.quantity || 1;
 
   const { startIso, endIso } = readPeriodBounds(subscription);
+  const { startIso: trialStartIso, endIso: trialEndIso } = readTrialBounds(subscription);
+  const status = STATUS_MAP[subscription.status] || "active";
 
   await upsertSubscription({
     userId,
     stripeCustomerId: subscription.customer as string,
     stripeSubscriptionId: subscription.id,
     tier,
-    status: "active",
+    status,
     billingCycle: billingCycle as "monthly" | "annual",
     currentPeriodStart: startIso ? new Date(startIso) : new Date(),
     currentPeriodEnd: endIso ? new Date(endIso) : new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+    trialStart: trialStartIso ? new Date(trialStartIso) : null,
+    trialEnd: trialEndIso ? new Date(trialEndIso) : null,
     cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
     seats,
     updatedAt: new Date(),
@@ -185,6 +207,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
   const seats = subscription.items?.data?.[0]?.quantity || 1;
 
   const { startIso, endIso } = readPeriodBounds(subscription);
+  const { startIso: trialStartIso, endIso: trialEndIso } = readTrialBounds(subscription);
 
   await upsertSubscription({
     userId,
@@ -195,6 +218,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
     billingCycle: subscription.items?.data?.[0]?.price?.recurring?.interval === "year" ? "annual" : "monthly",
     currentPeriodStart: startIso ? new Date(startIso) : new Date(),
     currentPeriodEnd: endIso ? new Date(endIso) : new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+    trialStart: trialStartIso ? new Date(trialStartIso) : null,
+    trialEnd: trialEndIso ? new Date(trialEndIso) : null,
     cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
     seats,
     updatedAt: new Date(),

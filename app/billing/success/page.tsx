@@ -18,6 +18,8 @@ export default function BillingSuccessPage() {
   const [subscription, setSubscription] = useState<{
     tier: string
     billingCycle: string
+    status?: string
+    isTrial?: boolean
   } | null>(null)
   const [purchase, setPurchase] = useState<GtmPurchasePayload | null>(null)
 
@@ -77,13 +79,18 @@ export default function BillingSuccessPage() {
             </div>
           )}
           <CardTitle className="text-2xl">
-            {loading ? "Processing..." : "Payment Successful!"}
+            {loading
+              ? "Processing..."
+              : subscription?.isTrial || subscription?.status === "trialing"
+                ? "Your free trial has started!"
+                : "Payment Successful!"}
           </CardTitle>
           <CardDescription>
-            {loading 
+            {loading
               ? "Please wait while we confirm your payment..."
-              : "Thank you for subscribing to LLMHive"
-            }
+              : subscription?.isTrial || subscription?.status === "trialing"
+                ? "Elite orchestration is active for 3 days (up to $3 provider spend). Your card will be charged $10/month after the trial unless you cancel."
+                : "Thank you for subscribing to LLMHive"}
           </CardDescription>
         </CardHeader>
 
@@ -97,7 +104,9 @@ export default function BillingSuccessPage() {
                     <span className="font-semibold">{planDisplayName(subscription.tier)} plan</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {subscription.billingCycle === "annual" ? "Annual" : "Monthly"} subscription activated
+                    {subscription.isTrial || subscription.status === "trialing"
+                      ? "3-day free trial — converts to monthly Standard automatically"
+                      : `${subscription.billingCycle === "annual" ? "Annual" : "Monthly"} subscription activated`}
                   </p>
                 </div>
               )}

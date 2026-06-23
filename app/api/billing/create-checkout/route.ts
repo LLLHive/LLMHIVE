@@ -26,6 +26,11 @@ const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 
+const STANDARD_TRIAL_DAYS = Math.max(
+  0,
+  parseInt(process.env.STANDARD_TRIAL_DAYS || "3", 10) || 3
+)
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMPLIFIED 4-TIER PRICING (January 2026)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -200,6 +205,23 @@ export async function POST(request: NextRequest) {
       : 1
 
     // Create Stripe checkout session
+    const isStandardMonthlyTrial =
+      tierLower === "lite" && cycleLower === "monthly" && STANDARD_TRIAL_DAYS > 0
+
+    const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
+      metadata: {
+        user_id: userId,
+        tier: tierLower,
+        elite_queries: String(tierConfig.eliteQueries * finalQuantity),
+        after_quota_tier: tierConfig.afterQuotaTier,
+        total_queries: String(tierConfig.totalQueries * finalQuantity),
+        seats: String(finalQuantity),
+        pricing_version: "quota_based_jan2026",
+        ...(isStandardMonthlyTrial ? { is_trial: "true", trial_cap_usd: "3" } : {}),
+      },
+      ...(isStandardMonthlyTrial ? { trial_period_days: STANDARD_TRIAL_DAYS } : {}),
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer_email: userEmail,
       payment_method_types: ["card"],
@@ -230,21 +252,12 @@ export async function POST(request: NextRequest) {
         is_per_seat: String(tierConfig.isPerSeat),
         min_seats_required: String(tierConfig.minSeats),
         pricing_version: "quota_based_jan2026",
+        ...(isStandardMonthlyTrial ? { is_trial: "true" } : {}),
       },
       success_url: `${getSiteUrl()}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${getSiteUrl()}/pricing`,
       allow_promotion_codes: true,
-      subscription_data: {
-        metadata: {
-          user_id: userId,
-          tier: tierLower,
-          elite_queries: String(tierConfig.eliteQueries * finalQuantity),
-          after_quota_tier: tierConfig.afterQuotaTier,
-          total_queries: String(tierConfig.totalQueries * finalQuantity),
-          seats: String(finalQuantity),
-          pricing_version: "quota_based_jan2026",
-        },
-      },
+      subscription_data: subscriptionData,
     })
 
     return NextResponse.json({

@@ -17,9 +17,9 @@ export interface EntitlementResult {
 function buildEntitlement(tier: string, status: string): EntitlementResult {
   const tierLower = tier.toLowerCase()
   const statusLower = status.toLowerCase()
-  const isActive = statusLower === "active"
-  const hasPaidAccess = isActive && PAID_TIERS.has(tierLower)
-  const hasAppAccess = isActive && (PAID_TIERS.has(tierLower) || tierLower === "free")
+  const grantsAccess = statusLower === "active" || statusLower === "trialing"
+  const hasPaidAccess = grantsAccess && PAID_TIERS.has(tierLower)
+  const hasAppAccess = grantsAccess && (PAID_TIERS.has(tierLower) || tierLower === "free")
   return { hasPaidAccess, hasAppAccess, tier: tierLower, status: statusLower }
 }
 

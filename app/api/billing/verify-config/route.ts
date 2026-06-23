@@ -1,18 +1,57 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@clerk/nextjs/server"
 import Stripe from "stripe"
 
 /**
- * Diagnostic endpoint to verify Stripe configuration
+ * Diagnostic endpoint to verify Stripe configuration.
  * GET /api/billing/verify-config
  *
- * Verifies each current customer-facing Stripe price slot.
+ * Auth: signed-in admin (ADMIN_USER_IDS) OR header `X-API-Key: <LLMHIVE_API_KEY>`.
+ * Verifies each current customer-facing Stripe price slot + trial env vars.
  */
+
+const ADMIN_USERS = (process.env.ADMIN_USER_IDS || "")
+  .split(",")
+  .map((id) => id.trim())
+  .filter(Boolean)
 
 function getStripe(): Stripe | null {
   if (!process.env.STRIPE_SECRET_KEY) {
     return null
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY)
+}
+
+async function authorize(request: NextRequest): Promise<boolean> {
+  const apiKey = request.headers.get("x-api-key")
+  const expectedKey = process.env.LLMHIVE_API_KEY
+  if (apiKey && expectedKey && apiKey === expectedKey) {
+    return true
+  }
+  const { userId } = await auth()
+  if (userId && (ADMIN_USERS.length === 0 || ADMIN_USERS.includes(userId))) {
+    return true
+  }
+  return false
+}
+
+function describeEnvValue(value: string | undefined): string | undefined {
+  if (!value) return undefined
+  const v = value.trim()
+  if (v.startsWith("price_")) return `${v.slice(0, 15)}... (price id)`
+  if (v.startsWith("sk_live_")) return `${v.slice(0, 15)}... (WRONG: secret key in price slot)`
+  if (v.startsWith("sk_test_")) return `${v.slice(0, 15)}... (WRONG: secret key in price slot)`
+  return `${v.slice(0, 15)}...`
+}
+
+function validatePriceIdFormat(envKey: string, value: string): string | null {
+  if (value.startsWith("sk_live_") || value.startsWith("sk_test_")) {
+    return `${envKey} contains a Stripe secret key (sk_...). Use a Price ID (price_...) from Stripe → Products → your Standard monthly price.`
+  }
+  if (!value.startsWith("price_")) {
+    return `${envKey} must start with price_ (got ${value.slice(0, 8)}...)`
+  }
+  return null
 }
 
 type PriceSlot = {
@@ -93,9 +132,20 @@ function resolveSlot(slot: PriceSlot): { envKey?: string; value?: string } {
   return {}
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!(await authorize(request))) {
+    return NextResponse.json(
+      {
+        error: "Authentication required. Sign in as admin or send X-API-Key header.",
+        code: "session_required",
+      },
+      { status: 401 },
+    )
+  }
+
   const results: {
     stripe_configured: boolean
+    trial_env: Record<string, { set: boolean; value?: string; ok?: boolean }>
     env_vars: Record<
       string,
       { set: boolean; resolvedFrom?: string; value?: string }
@@ -105,10 +155,35 @@ export async function GET() {
     summary: { total: number; configured: number; valid: number; issues: string[] }
   } = {
     stripe_configured: false,
+    trial_env: {
+      STANDARD_TRIAL_DAYS: {
+        set: Boolean(process.env.STANDARD_TRIAL_DAYS),
+        value: process.env.STANDARD_TRIAL_DAYS,
+        ok: Number(process.env.STANDARD_TRIAL_DAYS || "0") === 3,
+      },
+      ELITE_SPEND_TRIAL_CAP_USD: {
+        set: Boolean(process.env.ELITE_SPEND_TRIAL_CAP_USD),
+        value: process.env.ELITE_SPEND_TRIAL_CAP_USD,
+        ok: Number(process.env.ELITE_SPEND_TRIAL_CAP_USD || "0") === 3,
+      },
+    },
     env_vars: {},
     price_validation: {},
     metadata_check: {},
     summary: { total: PRICE_SLOTS.length, configured: 0, valid: 0, issues: [] },
+  }
+
+  if (!results.trial_env.STANDARD_TRIAL_DAYS.set) {
+    results.summary.issues.push("STANDARD_TRIAL_DAYS not set (expected 3 on Vercel)")
+  } else if (!results.trial_env.STANDARD_TRIAL_DAYS.ok) {
+    results.summary.issues.push(
+      `STANDARD_TRIAL_DAYS=${process.env.STANDARD_TRIAL_DAYS} (expected 3)`,
+    )
+  }
+  if (!results.trial_env.ELITE_SPEND_TRIAL_CAP_USD.set) {
+    results.summary.issues.push(
+      "ELITE_SPEND_TRIAL_CAP_USD not set on this runtime (set on Vercel + Cloud Run)",
+    )
   }
 
   const stripe = getStripe()
@@ -123,7 +198,7 @@ export async function GET() {
     results.env_vars[slot.id] = {
       set: !!value,
       resolvedFrom: envKey,
-      value: value ? `${value.substring(0, 15)}...` : undefined,
+      value: describeEnvValue(value),
     }
 
     if (!value) {
@@ -132,6 +207,13 @@ export async function GET() {
     }
 
     results.summary.configured++
+
+    const formatError = envKey ? validatePriceIdFormat(envKey, value) : null
+    if (formatError) {
+      results.price_validation[slot.id] = { valid: false, error: formatError }
+      results.summary.issues.push(formatError)
+      continue
+    }
 
     try {
       const price = await stripe.prices.retrieve(value, {
@@ -158,13 +240,13 @@ export async function GET() {
       if (!amountMatches) {
         results.price_validation[slot.id].valid = false
         results.summary.issues.push(
-          `${slot.description}: expected ${slot.expectedUnitAmount} cents, got ${price.unit_amount ?? "null"}`
+          `${slot.description}: expected ${slot.expectedUnitAmount} cents, got ${price.unit_amount ?? "null"}`,
         )
       }
       if (!intervalMatches) {
         results.price_validation[slot.id].valid = false
         results.summary.issues.push(
-          `${slot.description}: expected interval ${slot.expectedInterval}, got ${price.recurring?.interval ?? "null"}`
+          `${slot.description}: expected interval ${slot.expectedInterval}, got ${price.recurring?.interval ?? "null"}`,
         )
       }
 
@@ -195,18 +277,23 @@ export async function GET() {
         valid: false,
         error: error instanceof Error ? error.message : "Unknown error",
       }
-      results.summary.issues.push(`${slot.description}: Invalid price ID — ${value}`)
+      results.summary.issues.push(`${slot.description}: Stripe could not load price — ${value.slice(0, 12)}...`)
     }
   }
 
   const allConfigured = results.summary.configured === results.summary.total
   const allValid = results.summary.valid === results.summary.total
-  const status = allConfigured && allValid ? 200 : 400
+  const trialOk =
+    results.trial_env.STANDARD_TRIAL_DAYS.ok && results.trial_env.ELITE_SPEND_TRIAL_CAP_USD.set
+  const status = allConfigured && allValid && trialOk ? 200 : 400
 
   return NextResponse.json(
     {
       ...results,
-      overall_status: allConfigured && allValid ? "✅ All configured correctly" : "⚠️ Issues found",
+      overall_status:
+        allConfigured && allValid && trialOk
+          ? "✅ All configured correctly"
+          : "⚠️ Issues found",
     },
     { status },
   )

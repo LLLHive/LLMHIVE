@@ -122,6 +122,21 @@ def upsert_subscription_from_checkout_session(
     stripe_customer_id = _session_get(stripe_subscription, "customer")
     period_start = _utc_from_unix(_session_get(stripe_subscription, "current_period_start"))
     period_end = _utc_from_unix(_session_get(stripe_subscription, "current_period_end"))
+    trial_start = _utc_from_unix(_session_get(stripe_subscription, "trial_start"))
+    trial_end = _utc_from_unix(_session_get(stripe_subscription, "trial_end"))
+
+    stripe_status = str(_session_get(stripe_subscription, "status") or "active").lower()
+    status_map = {
+        "active": "active",
+        "trialing": "trialing",
+        "past_due": "past_due",
+        "canceled": "cancelled",
+        "cancelled": "cancelled",
+        "unpaid": "expired",
+        "incomplete": "pending",
+        "incomplete_expired": "expired",
+    }
+    firestore_status = status_map.get(stripe_status, "active")
 
     metadata = _session_get(session, "metadata") or {}
     if not isinstance(metadata, Mapping):
@@ -141,7 +156,7 @@ def upsert_subscription_from_checkout_session(
 
     if existing:
         update: dict = {
-            "status": "active",
+            "status": firestore_status,
             "tier_name": tier_name,
             "billing_cycle": billing_cycle,
             "stripe_customer_id": stripe_customer_id,
@@ -150,6 +165,10 @@ def upsert_subscription_from_checkout_session(
             update["current_period_start"] = period_start
         if period_end:
             update["current_period_end"] = period_end
+        if trial_start:
+            update["trial_start"] = trial_start
+        if trial_end:
+            update["trial_end"] = trial_end
         try:
             svc.update_subscription(existing["id"], update)
         except Exception as exc:
@@ -178,6 +197,9 @@ def upsert_subscription_from_checkout_session(
             stripe_subscription_id=stripe_subscription_id,
             current_period_start=period_start,
             current_period_end=period_end,
+            status=firestore_status,
+            trial_start=trial_start,
+            trial_end=trial_end,
         )
     except Exception as exc:
         logger.exception("ensure_subscription: create_subscription failed: %s", exc)

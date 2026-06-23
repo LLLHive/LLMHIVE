@@ -689,6 +689,8 @@ def _firestore_subscription_response(user_id: str, sub: dict) -> dict:
         "billing_cycle": sub.get("billing_cycle"),
         "current_period_start": _iso(sub.get("current_period_start")),
         "current_period_end": _iso(sub.get("current_period_end")),
+        "trial_start": _iso(sub.get("trial_start")),
+        "trial_end": _iso(sub.get("trial_end")),
         "cancel_at_period_end": bool(sub.get("cancel_at_period_end", False)),
         "stripe_customer_id": sub.get("stripe_customer_id"),
         "stripe_subscription_id": sub.get("stripe_subscription_id"),
@@ -781,6 +783,8 @@ class SubscriptionSyncRequest(BaseModel):
     billing_cycle: str = Field(default="monthly", alias="billingCycle")
     current_period_start: datetime | None = Field(default=None, alias="currentPeriodStart")
     current_period_end: datetime | None = Field(default=None, alias="currentPeriodEnd")
+    trial_start: datetime | None = Field(default=None, alias="trialStart")
+    trial_end: datetime | None = Field(default=None, alias="trialEnd")
     cancel_at_period_end: bool = Field(default=False, alias="cancelAtPeriodEnd")
     seats: int | None = Field(default=None)
 
@@ -845,6 +849,10 @@ def sync_subscription_to_firestore(payload: SubscriptionSyncRequest) -> dict:
             update_payload["current_period_start"] = payload.current_period_start
         if payload.current_period_end:
             update_payload["current_period_end"] = payload.current_period_end
+        if payload.trial_start:
+            update_payload["trial_start"] = payload.trial_start
+        if payload.trial_end:
+            update_payload["trial_end"] = payload.trial_end
 
         try:
             service.update_subscription(existing["id"], update_payload)
@@ -879,6 +887,9 @@ def sync_subscription_to_firestore(payload: SubscriptionSyncRequest) -> dict:
             stripe_subscription_id=payload.stripe_subscription_id,
             current_period_start=payload.current_period_start,
             current_period_end=payload.current_period_end,
+            status=status_value,
+            trial_start=payload.trial_start,
+            trial_end=payload.trial_end,
         )
     except Exception as exc:
         logger.exception("subscription/sync: create_subscription failed: %s", exc)
@@ -991,6 +1002,7 @@ class ThrottleStatusResponse(BaseModel):
     spend_guard_active: bool = False
     elite_spend_cap_usd: float | None = None
     elite_spend_used_usd: float | None = None
+    elite_spend_is_trial: bool = False
     monthly_revenue_usd: float | None = None
 
 
@@ -1023,6 +1035,7 @@ def get_throttle_status_endpoint(
             spend_guard_active=bool(spend.get("guard_active")),
             elite_spend_cap_usd=float(spend["cap_usd"]) if spend.get("cap_usd") is not None else None,
             elite_spend_used_usd=float(spend["spent_usd"]) if spend.get("spent_usd") is not None else None,
+            elite_spend_is_trial=bool(spend.get("is_trial")),
             monthly_revenue_usd=float(spend["monthly_revenue_usd"])
             if spend.get("monthly_revenue_usd") is not None
             else None,
@@ -1042,6 +1055,7 @@ def get_throttle_status_endpoint(
             spend_guard_active=False,
             elite_spend_cap_usd=None,
             elite_spend_used_usd=None,
+            elite_spend_is_trial=False,
             monthly_revenue_usd=None,
         )
 

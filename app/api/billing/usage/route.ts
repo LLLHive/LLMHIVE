@@ -90,6 +90,14 @@ export interface QuotaUsageResponse {
   // Upgrade prompt
   showUpgradePrompt: boolean
   upgradeMessage?: string
+
+  // Spend guard (from backend throttle-status when available)
+  spendGuard?: {
+    active: boolean
+    capUsd: number | null
+    spentUsd: number | null
+    isTrial: boolean
+  }
 }
 
 function getDaysUntilReset(): number {
@@ -136,6 +144,7 @@ export async function GET() {
 
     // Call backend to get usage data
     let data: Record<string, unknown> = {}
+    let throttleData: Record<string, unknown> = {}
     try {
       const response = await fetch(`${BACKEND_URL}/api/v1/billing/usage/${userId}`, {
         headers: {
@@ -149,6 +158,20 @@ export async function GET() {
       }
     } catch (fetchError) {
       console.warn("Could not fetch usage from backend, using defaults:", fetchError)
+    }
+
+    try {
+      const throttleRes = await fetch(`${BACKEND_URL}/api/v1/billing/throttle-status/${userId}`, {
+        headers: {
+          "X-API-Key": process.env.LLMHIVE_API_KEY || "",
+        },
+        signal: AbortSignal.timeout(5000),
+      })
+      if (throttleRes.ok) {
+        throttleData = await throttleRes.json()
+      }
+    } catch (fetchError) {
+      console.warn("Could not fetch throttle status from backend:", fetchError)
     }
     
     const tierRaw = ((data.tier_name || data.tier || "free") as string).toLowerCase()
@@ -178,7 +201,15 @@ export async function GET() {
     let upgradeMessage: string | undefined
     
     // Enterprise tier with perSeat quotas
-    if (isUnlimited) {
+    const spendCap = throttleData.elite_spend_cap_usd as number | undefined
+    const spendUsed = throttleData.elite_spend_used_usd as number | undefined
+    const spendGuardActive = Boolean(throttleData.spend_guard_active)
+    const isTrialSpend = Boolean(throttleData.elite_spend_is_trial)
+
+    if (isTrialSpend && spendCap != null) {
+      status = "normal"
+      statusMessage = `3-day trial — elite orchestration up to $${spendCap.toFixed(2)} provider spend`
+    } else if (isUnlimited) {
       status = "normal"
       statusMessage =
         tierName === "lite" || tierName === "pro"
@@ -233,6 +264,14 @@ export async function GET() {
       daysUntilReset: getDaysUntilReset(),
       showUpgradePrompt,
       upgradeMessage,
+      spendGuard: spendGuardActive
+        ? {
+            active: true,
+            capUsd: spendCap ?? null,
+            spentUsd: spendUsed ?? null,
+            isTrial: isTrialSpend,
+          }
+        : undefined,
     }
     
     return NextResponse.json(usageResponse)

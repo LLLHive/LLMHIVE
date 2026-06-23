@@ -28,6 +28,11 @@ from typing import Optional
 
 from fastapi import HTTPException, status
 
+from .subscription_access import (
+    subscription_grants_app_access,
+    subscription_grants_paid_access,
+)
+
 logger = logging.getLogger(__name__)
 
 PAID_TIER_NAMES = frozenset(
@@ -67,28 +72,11 @@ def is_paid_access_required() -> bool:
 
 
 def _is_paid_subscription(sub: Optional[dict]) -> bool:
-    if not sub:
-        return False
-    status_val = str(sub.get("status") or "").strip().lower()
-    if status_val != "active":
-        return False
-    tier_name = (
-        str(sub.get("tier_name") or sub.get("tier") or "").strip().lower()
-    )
-    return tier_name in PAID_TIER_NAMES
+    return subscription_grants_paid_access(sub)
 
 
 def _has_app_access_subscription(sub: Optional[dict]) -> bool:
-    """Active paid plan or explicitly provisioned free tier (marketing / comp accounts)."""
-    if not sub:
-        return False
-    status_val = str(sub.get("status") or "").strip().lower()
-    if status_val != "active":
-        return False
-    tier_name = (
-        str(sub.get("tier_name") or sub.get("tier") or "").strip().lower()
-    )
-    return tier_name in PAID_TIER_NAMES or tier_name == "free"
+    return subscription_grants_app_access(sub)
 
 
 def require_active_paid_subscription(user_id: Optional[str]) -> None:

@@ -69,7 +69,8 @@ export async function GET() {
         tier: data.tier_name || data.tier || "free",
         status: data.status || "active",
         billingCycle: data.billing_cycle || null,
-        currentPeriodEnd: data.current_period_end || null,
+        currentPeriodEnd: data.current_period_end || data.trial_end || null,
+        trialEnd: data.trial_end || null,
         cancelAtPeriodEnd: data.cancel_at_period_end || false,
       }
     })

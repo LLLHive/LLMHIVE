@@ -28,6 +28,7 @@ interface Subscription {
   status: "active" | "cancelled" | "past_due" | "trialing"
   billingCycle: "monthly" | "annual"
   currentPeriodEnd: string
+  trialEnd?: string | null
   cancelAtPeriodEnd: boolean
 }
 
@@ -51,6 +52,12 @@ interface QuotaUsage {
   daysUntilReset: number
   showUpgradePrompt: boolean
   upgradeMessage?: string
+  spendGuard?: {
+    active: boolean
+    capUsd: number | null
+    spentUsd: number | null
+    isTrial: boolean
+  }
 }
 
 const ORCHESTRATION_MODE_LABELS = {
@@ -168,8 +175,14 @@ export default function BillingPage() {
   const isFreeTier = currentTier === "free"
   const modeInfo = ORCHESTRATION_MODE_LABELS[usage?.orchestrationMode || "elite"]
   const ModeIcon = modeInfo.icon
-  const statusLabel = subscription?.status === "trialing" ? "active" : subscription?.status
-  const hasFixedEliteQuota = Boolean(usage && usage.elite.limit > 0)
+  const statusLabel =
+    subscription?.status === "trialing"
+      ? "trial"
+      : subscription?.status === "active"
+        ? "active"
+        : subscription?.status
+  const isTrialing = subscription?.status === "trialing"
+  const hasSpendGuardDisplay = Boolean(usage?.spendGuard?.active && usage.spendGuard.capUsd != null)
 
   return (
     <div className="min-h-screen bg-background">
@@ -235,7 +248,9 @@ export default function BillingPage() {
                 <CardDescription>
                   {isFreeTier
                     ? "Upgrade to unlock paid orchestration (#1 in 5 out of 8 benchmark categories)"
-                    : "Elite orchestration while the spend guard allows"
+                    : isTrialing || usage?.spendGuard?.isTrial
+                      ? "Trial period — elite orchestration with a $3 provider spend cap"
+                      : "Elite orchestration while the spend guard allows"
                   }
                 </CardDescription>
               </div>
@@ -258,19 +273,33 @@ export default function BillingPage() {
                   <Badge variant="outline" className="text-green-500 text-xs">5/8 categories #1</Badge>
                 </span>
                 <span className="text-sm font-mono">
-                  {hasFixedEliteQuota ? `${usage?.elite.remaining || 0} / ${usage?.elite.limit || 0} remaining` : "Spend guard active"}
+                  {hasSpendGuardDisplay
+                    ? `$${(usage?.spendGuard?.spentUsd ?? 0).toFixed(2)} / $${(usage?.spendGuard?.capUsd ?? 0).toFixed(2)}`
+                    : "Spend guard active"}
                 </span>
               </div>
               <Progress 
-                value={hasFixedEliteQuota ? Math.min((usage?.elite.percentUsed || 0) * 100, 100) : 0} 
+                value={
+                  hasSpendGuardDisplay && usage?.spendGuard?.capUsd
+                    ? Math.min(((usage.spendGuard.spentUsd ?? 0) / usage.spendGuard.capUsd) * 100, 100)
+                    : 0
+                } 
                 className="h-3"
               />
-              {!isFreeTier && hasFixedEliteQuota && usage && usage.elite.percentUsed >= 0.8 && (
-                <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Spend guard is approaching the protected cap for this billing period
-                </p>
+              {usage?.statusMessage && (
+                <p className="text-xs text-muted-foreground mt-2">{usage.statusMessage}</p>
               )}
+              {!isFreeTier &&
+                hasSpendGuardDisplay &&
+                usage?.spendGuard?.capUsd &&
+                (usage.spendGuard.spentUsd ?? 0) / usage.spendGuard.capUsd >= 0.8 && (
+                  <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {isTrialing
+                      ? "Approaching trial spend cap — free orchestration after $3"
+                      : "Spend guard is approaching the protected cap for this billing period"}
+                  </p>
+                )}
             </div>
 
             {/* After-Quota Info */}
@@ -323,14 +352,17 @@ export default function BillingPage() {
                 className={
                   subscription?.status === "active" 
                     ? "bg-green-500/10 text-green-500 border-green-500/20"
+                    : subscription?.status === "trialing"
+                    ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
                     : subscription?.status === "cancelled"
                     ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                     : "bg-red-500/10 text-red-500 border-red-500/20"
                 }
               >
                 {statusLabel === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
+                {statusLabel === "trial" && <Zap className="h-3 w-3 mr-1" />}
                 {statusLabel === "cancelled" && <AlertCircle className="h-3 w-3 mr-1" />}
-                {statusLabel || "Active"}
+                {statusLabel === "trial" ? "Trial" : statusLabel || "Active"}
               </Badge>
             </div>
           </CardHeader>
@@ -341,17 +373,19 @@ export default function BillingPage() {
                 <p className="text-muted-foreground">
                   {isFreeTier 
                     ? "Standard plan • Upgrade anytime"
-                    : `${subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing`
+                    : isTrialing
+                      ? "3-day free trial • Converts to $10/mo Standard"
+                      : `${subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing`
                   }
                 </p>
               </div>
               <div className="text-right">
-                {!isFreeTier && subscription?.currentPeriodEnd && (
+                {!isFreeTier && (subscription?.currentPeriodEnd || subscription?.trialEnd) && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {subscription.cancelAtPeriodEnd ? "Ends" : "Renews"} on{" "}
-                      {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                      {isTrialing ? "Trial ends" : subscription.cancelAtPeriodEnd ? "Ends" : "Renews"} on{" "}
+                      {new Date(subscription.trialEnd || subscription.currentPeriodEnd).toLocaleDateString()}
                     </span>
                   </div>
                 )}

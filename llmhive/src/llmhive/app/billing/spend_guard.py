@@ -26,6 +26,7 @@ Environment:
 - ``ELITE_SPEND_HEADROOM_FRACTION`` — default ``0.03`` (tightens cap downward).
 - ``ELITE_SPEND_ESTIMATE_USD_PER_MILLION`` — fallback cost when no ``cost_info`` (elite-only path); default ``10.0``.
 - ``ELITE_SPEND_WRITE_RETRIES`` — default ``3`` (Firestore transaction retries).
+- ``ELITE_SPEND_TRIAL_CAP_USD`` — fixed USD cap during Standard free trial (default ``3.0``).
 """
 from __future__ import annotations
 
@@ -40,6 +41,7 @@ from google.cloud import firestore
 
 from ..firestore_db import get_firestore_client, is_firestore_available
 from .pricing import PricingTierManager, TierName
+from .subscription_access import is_trialing_standard_subscription
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +103,25 @@ def spend_write_retries() -> int:
         return 3
 
 
+def trial_spend_cap_usd() -> float:
+    """Fixed elite orchestration cap during Standard 3-day trial."""
+    try:
+        return max(0.0, float(os.getenv("ELITE_SPEND_TRIAL_CAP_USD", "3.0")))
+    except ValueError:
+        return 3.0
+
+
+def resolve_effective_spend_cap_usd(
+    tier: TierName,
+    subscription: Optional[Dict[str, Any]],
+) -> Tuple[float, float]:
+    """Return ``(monthly_revenue_usd, effective_cap_usd)`` for gating/UI."""
+    if is_trialing_standard_subscription(subscription):
+        return (0.0, trial_spend_cap_usd())
+    rev = resolve_monthly_revenue_usd(tier, subscription)
+    return (rev, effective_spend_cap_usd(rev))
+
+
 def _pricing() -> PricingTierManager:
     return PricingTierManager()
 
@@ -132,6 +153,11 @@ def resolve_monthly_revenue_usd(tier: TierName, subscription: Optional[Dict[str,
 def compute_period_key(subscription: Optional[Dict[str, Any]]) -> str:
     """Stable key for the current Stripe / subscription billing window."""
     sub = subscription or {}
+    if is_trialing_standard_subscription(sub):
+        start = _as_utc_dt(sub.get("trial_start"))
+        end = _as_utc_dt(sub.get("trial_end"))
+        if start and end:
+            return f"trial_{start.date().isoformat()}_{end.date().isoformat()}"
     start = _as_utc_dt(sub.get("current_period_start"))
     end = _as_utc_dt(sub.get("current_period_end"))
     if start and end:
@@ -196,8 +222,7 @@ def get_spend_status(
         }
 
     if not is_firestore_available():
-        rev = resolve_monthly_revenue_usd(tier, subscription)
-        cap = effective_spend_cap_usd(rev)
+        rev, cap = resolve_effective_spend_cap_usd(tier, subscription)
         return {
             "guard_active": True,
             "monthly_revenue_usd": rev,
@@ -205,10 +230,10 @@ def get_spend_status(
             "spent_usd": cap,
             "period_key": compute_period_key(subscription),
             "fail_closed": True,
+            "is_trial": is_trialing_standard_subscription(subscription),
         }
 
-    rev = resolve_monthly_revenue_usd(tier, subscription)
-    cap = effective_spend_cap_usd(rev)
+    rev, cap = resolve_effective_spend_cap_usd(tier, subscription)
     expected_pk = compute_period_key(subscription)
     read_ok, doc = read_spend_document(user_id)
     if not read_ok:
@@ -220,6 +245,7 @@ def get_spend_status(
             "spent_usd": cap,
             "period_key": expected_pk,
             "fail_closed": True,
+            "is_trial": is_trialing_standard_subscription(subscription),
         }
 
     spent = 0.0
@@ -227,7 +253,6 @@ def get_spend_status(
     if doc:
         if doc.get("period_key") == expected_pk:
             spent = float(doc.get("spent_usd", 0.0) or 0.0)
-            # Never trust a stored cap looser than current effective cap (tier/price change).
             cap_doc = min(float(doc.get("cap_usd", cap) or cap), cap)
         else:
             spent = 0.0
@@ -238,6 +263,7 @@ def get_spend_status(
         "spent_usd": spent,
         "period_key": expected_pk,
         "fail_closed": False,
+        "is_trial": is_trialing_standard_subscription(subscription),
     }
 
 
@@ -285,8 +311,7 @@ def record_elite_spend(
     if tier == TierName.FREE:
         return
 
-    rev = resolve_monthly_revenue_usd(tier, subscription)
-    cap = effective_spend_cap_usd(rev)
+    rev, cap = resolve_effective_spend_cap_usd(tier, subscription)
     period_key = compute_period_key(subscription)
     doc_ref = _doc_ref(db, user_id)
     delta = float(cost_usd)

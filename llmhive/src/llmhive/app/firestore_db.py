@@ -73,6 +73,9 @@ class FirestoreSubscriptionService:
         stripe_subscription_id: Optional[str] = None,
         current_period_start: Optional[datetime] = None,
         current_period_end: Optional[datetime] = None,
+        status: str = "active",
+        trial_start: Optional[datetime] = None,
+        trial_end: Optional[datetime] = None,
     ) -> Optional[Dict[str, Any]]:
         """Create a new subscription."""
         if not self.db:
@@ -86,12 +89,14 @@ class FirestoreSubscriptionService:
                 "id": doc_ref.id,
                 "user_id": user_id,
                 "tier_name": tier_name,
-                "status": "active",
+                "status": status,
                 "billing_cycle": billing_cycle,
                 "stripe_customer_id": stripe_customer_id,
                 "stripe_subscription_id": stripe_subscription_id,
                 "current_period_start": current_period_start or datetime.now(timezone.utc),
                 "current_period_end": current_period_end,
+                "trial_start": trial_start,
+                "trial_end": trial_end,
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
                 "cancelled_at": None,
@@ -121,23 +126,22 @@ class FirestoreSubscriptionService:
             return None
     
     def get_user_subscription(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Get the active subscription for a user."""
+        """Get the active or trialing subscription for a user."""
         if not self.db:
             return None
         
         try:
-            query = (
-                self.db.collection(self.COLLECTION)
-                .where("user_id", "==", user_id)
-                .where("status", "==", "active")
-                .order_by("created_at", direction=firestore.Query.DESCENDING)
-                .limit(1)
-            )
-            
-            docs = query.stream()
-            for doc in docs:
-                return doc.to_dict()
-            
+            # Prefer active, then trialing (two queries avoid composite-index churn).
+            for status in ("active", "trialing"):
+                query = (
+                    self.db.collection(self.COLLECTION)
+                    .where("user_id", "==", user_id)
+                    .where("status", "==", status)
+                    .order_by("created_at", direction=firestore.Query.DESCENDING)
+                    .limit(1)
+                )
+                for doc in query.stream():
+                    return doc.to_dict()
             return None
             
         except Exception as e:

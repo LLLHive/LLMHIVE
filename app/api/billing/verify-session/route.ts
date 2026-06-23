@@ -87,13 +87,14 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    const isPaid = data.status === "paid" || data.status === "complete"
+    const paymentStatus = String(data.status || "").toLowerCase()
+    const checkoutComplete =
+      paymentStatus === "paid" || paymentStatus === "no_payment_required"
 
     // Synchronously upsert the Firestore subscription so the entitlement gate on /
-    // sees status=active immediately, instead of waiting for the Stripe webhook
-    // to fire. The webhook still runs (idempotent), this just closes the race.
+    // sees status=trialing|active immediately, instead of waiting for the Stripe webhook
     let ensured = false
-    if (isPaid) {
+    if (checkoutComplete) {
       try {
         const ensureRes = await fetch(
           `${BACKEND_URL}/api/v1/payments/checkout-session/${sessionId}/ensure-subscription`,
@@ -122,14 +123,23 @@ export async function GET(request: NextRequest) {
 
     const tier = data.metadata?.tier || "pro"
     const billingCycle = data.metadata?.billing_cycle || "monthly"
-    const purchase = await buildPurchasePayload(sessionId, tier, billingCycle, isPaid)
+    const isTrialStart =
+      checkoutComplete && paymentStatus === "no_payment_required" && tier === "lite"
+    const purchase = await buildPurchasePayload(
+      sessionId,
+      tier,
+      billingCycle,
+      paymentStatus === "paid"
+    )
 
     return NextResponse.json({
-      success: isPaid,
+      success: checkoutComplete,
       ensured,
       subscription: {
         tier,
         billingCycle,
+        status: isTrialStart ? "trialing" : checkoutComplete ? "active" : "pending",
+        isTrial: isTrialStart,
       },
       purchase,
     })

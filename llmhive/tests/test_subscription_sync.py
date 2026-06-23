@@ -162,6 +162,38 @@ def test_helper_rejects_session_without_user_id():
         sync_mod.upsert_subscription_from_checkout_session(MagicMock(), session, service=service)
 
 
+def test_helper_accepts_no_payment_required_trial_session():
+    """Trial checkout completes with payment_status=no_payment_required."""
+    service = _FakeService(existing=None)
+    session = {
+        "id": "cs_trial_1",
+        "client_reference_id": "user_trial",
+        "subscription": "sub_trial_1",
+        "payment_status": "no_payment_required",
+        "status": "complete",
+        "metadata": {"tier": "lite", "billing_cycle": "monthly", "user_id": "user_trial"},
+    }
+
+    fake_stripe = MagicMock()
+    fake_stripe.Subscription.retrieve.return_value = {
+        "customer": "cus_test_1",
+        "status": "trialing",
+        "current_period_start": 1_700_000_000,
+        "current_period_end": 1_702_592_000,
+        "trial_start": 1_700_000_000,
+        "trial_end": 1_700_259_200,
+    }
+
+    result = sync_mod.upsert_subscription_from_checkout_session(
+        fake_stripe, session, service=service
+    )
+
+    assert result.created is True
+    created = service.create_calls[0]
+    assert created["status"] == "trialing"
+    assert created["tier_name"] == "lite"
+
+
 def test_helper_rejects_unpaid_session():
     """Sessions not yet paid must NOT promote the user to active."""
     service = _FakeService(existing=None)

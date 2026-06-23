@@ -68,6 +68,7 @@ interface PricingTier {
   cta: string
   tier: CheckoutTierKey
   badge?: string
+  trialBadge?: string
   icon: React.ReactNode
 }
 
@@ -87,7 +88,8 @@ const pricingTiers: PricingTier[] = [
       detail: "Elite orchestration while the spend guard allows, then free orchestration",
     },
     features: [...OFFER_STANDARD_FEATURES],
-    cta: "Subscribe — Standard",
+    cta: "Start 3-day free trial",
+    trialBadge: "3 days free",
   },
   {
     name: "Premium",
@@ -125,6 +127,11 @@ const pricingTiers: PricingTier[] = [
 ]
 
 const pricingFaq = [
+  {
+    question: "How does the 3-day Standard trial work?",
+    answer:
+      "Start a free 3-day trial on Standard (monthly). You get elite orchestration during the trial with a $3 provider spend cap. After 3 days your card is charged $10/month automatically unless you cancel in Billing. Cancel anytime during the trial to avoid charges.",
+  },
   {
     question: "What is included in Standard?",
     answer:
@@ -464,6 +471,14 @@ export default function PricingClient() {
                     : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
                 )}
               >
+                {tier.trialBadge && !isAnnual && tier.tier === "lite" && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <Badge className="border-0 px-4 py-1.5 font-bold bg-[var(--bronze)] text-white">
+                      {tier.trialBadge}
+                    </Badge>
+                  </div>
+                )}
+
                 {tier.badge && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge
@@ -553,7 +568,7 @@ export default function PricingClient() {
                       </>
                     ) : (
                       <>
-                        {tier.cta}
+                        {tier.tier === "lite" && isAnnual ? "Subscribe — Standard" : tier.cta}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </>
                     )}

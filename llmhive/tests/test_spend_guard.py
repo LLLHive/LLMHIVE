@@ -78,3 +78,20 @@ def test_spend_cap_exceeded_on_read_failure(monkeypatch):
     monkeypatch.setenv("ELITE_SPEND_HEADROOM_FRACTION", "0")
     monkeypatch.setattr(spend_guard_mod, "read_spend_document", lambda _uid: (False, None))
     assert spend_cap_exceeded("u1", TierName.PRO, {"billing_cycle": "monthly"}) is True
+
+
+def test_trialing_standard_uses_fixed_trial_cap(monkeypatch):
+    monkeypatch.setenv("ELITE_SPEND_GUARD", "1")
+    monkeypatch.setenv("ELITE_SPEND_TRIAL_CAP_USD", "3.0")
+    monkeypatch.setenv("ELITE_SPEND_HEADROOM_FRACTION", "0")
+    monkeypatch.setattr(spend_guard_mod, "read_spend_document", lambda _uid: (True, None))
+    sub = {
+        "status": "trialing",
+        "tier_name": "lite",
+        "trial_start": "2026-06-10T00:00:00+00:00",
+        "trial_end": "2026-06-13T00:00:00+00:00",
+    }
+    status = spend_guard_mod.get_spend_status("u1", TierName.LITE, sub)
+    assert status["cap_usd"] == 3.0
+    assert status["is_trial"] is True
+    assert spend_cap_exceeded("u1", TierName.LITE, sub) is False

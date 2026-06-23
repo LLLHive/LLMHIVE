@@ -80,6 +80,8 @@ const isPublicRoute = createRouteMatcher([
   // event-deliveries log even though the route file existed.
   "/api/billing/webhook",
   "/api/billing/webhooks",
+  // Ops diagnostic — route enforces X-API-Key or admin Clerk session.
+  "/api/billing/verify-config",
 ])
 
 // Check if running in E2E test mode

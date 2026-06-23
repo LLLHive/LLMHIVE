@@ -15,6 +15,8 @@ interface UseUserTierReturn {
   userTier: UserTier
   /** The raw subscription tier from billing */
   subscriptionTier: string
+  /** Stripe/Firestore subscription status (active, trialing, …) */
+  subscriptionStatus: string
   /** Whether the tier is still loading */
   isLoading: boolean
   /** Any error that occurred */
@@ -53,6 +55,7 @@ function mapToUserTier(subscriptionTier: string): UserTier {
 export function useUserTier(): UseUserTierReturn {
   const { isSignedIn, isLoaded } = useUser()
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free")
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>("none")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,7 +81,9 @@ export function useUserTier(): UseUserTierReturn {
 
       const data = await response.json()
       const tier = data.subscription?.tier || "free"
+      const status = data.subscription?.status || "none"
       setSubscriptionTier(tier)
+      setSubscriptionStatus(status)
     } catch (err) {
       console.error("[useUserTier] Error fetching tier:", err)
       setError("Failed to fetch subscription tier")
@@ -98,6 +103,7 @@ export function useUserTier(): UseUserTierReturn {
   return {
     userTier: mapToUserTier(subscriptionTier),
     subscriptionTier,
+    subscriptionStatus,
     isLoading: !isLoaded || isLoading,
     error,
     refresh: fetchTier,

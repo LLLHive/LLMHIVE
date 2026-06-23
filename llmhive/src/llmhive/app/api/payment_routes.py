@@ -6,6 +6,7 @@ and handling payment flows.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -162,6 +163,20 @@ def create_checkout_session(
             session_kwargs["customer"] = customer_id
         elif request.user_email:
             session_kwargs["customer_email"] = request.user_email
+
+        subscription_data: dict = {
+            "metadata": {
+                "user_id": request.user_id,
+                "tier": tier_lower,
+                "billing_cycle": request.billing_cycle,
+            },
+        }
+        if tier_lower == "lite" and request.billing_cycle == "monthly":
+            trial_days = int(os.getenv("STANDARD_TRIAL_DAYS", "3"))
+            if trial_days > 0:
+                subscription_data["trial_period_days"] = trial_days
+                subscription_data["metadata"]["is_trial"] = "true"
+        session_kwargs["subscription_data"] = subscription_data
 
         checkout_session = stripe.checkout.Session.create(**session_kwargs)
         

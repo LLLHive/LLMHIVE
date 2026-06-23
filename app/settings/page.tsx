@@ -26,8 +26,13 @@ import { useConversationsContext } from "@/lib/conversations-context"
 import { toast } from "@/lib/toast"
 import { useUserTier } from "@/lib/hooks/use-user-tier"
 
-function formatSubscriptionTierLabel(tier: string): string {
+function formatSubscriptionTierLabel(tier: string, status?: string): string {
   const t = tier.toLowerCase()
+  const st = (status || "").toLowerCase()
+  if (st === "trialing") {
+    if (t === "lite" || t === "standard" || t === "basic" || t === "starter") return "Standard (Trial)"
+    return "Trial"
+  }
   if (t === "free" || t === "trial") return "Free"
   if (t === "standard" || t === "lite" || t === "starter" || t === "basic") return "Standard"
   if (t === "premium" || t === "pro") return "Premium"
@@ -154,7 +159,7 @@ export default function SettingsPage() {
     updateConversation 
   } = useConversationsContext()
   const { theme, setTheme, resolvedTheme } = useTheme()
-  const { subscriptionTier, isLoading: tierLoading } = useUserTier()
+  const { subscriptionTier, subscriptionStatus, isLoading: tierLoading } = useUserTier()
   const [mounted, setMounted] = useState(false)
   const [activeDrawer, setActiveDrawer] = useState<DrawerId>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -541,14 +546,16 @@ export default function SettingsPage() {
               <div className="p-4 rounded-lg glass-card border border-[var(--bronze)]/30">
                 <p className="text-xs text-muted-foreground mb-1">Current Plan</p>
                 <p className="text-lg font-semibold text-[var(--gold)]">
-                  {tierLoading ? "Loading…" : formatSubscriptionTierLabel(subscriptionTier)}
+                  {tierLoading ? "Loading…" : formatSubscriptionTierLabel(subscriptionTier, subscriptionStatus)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {tierLoading
                     ? "Fetching subscription from billing…"
                     : subscriptionTier === "free"
                       ? "Free tier — upgrade for premium orchestration"
-                      : `${formatSubscriptionTierLabel(subscriptionTier)} plan — active subscription`}
+                      : subscriptionStatus === "trialing"
+                        ? "3-day trial — elite orchestration (up to $3 spend), then $10/mo"
+                        : `${formatSubscriptionTierLabel(subscriptionTier, subscriptionStatus)} plan — active subscription`}
                 </p>
               </div>
 
