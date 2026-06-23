@@ -17,6 +17,46 @@ function getStripe(): Stripe | null {
   return new Stripe(process.env.STRIPE_SECRET_KEY)
 }
 
+function resolveTrialFromStripeSession(session: Stripe.Checkout.Session): {
+  isTrial: boolean
+  subscriptionStatus: "trialing" | "active" | "pending"
+  trialEnd: string | null
+} {
+  const metadata = session.metadata || {}
+  const tier = (metadata.tier || "").toLowerCase()
+  const billingCycle = (metadata.billing_cycle || "monthly").toLowerCase()
+  const paymentStatus = (session.payment_status || "").toLowerCase()
+
+  let subStatus: string | null = null
+  let trialEnd: string | null = null
+  const sub = session.subscription
+  if (sub && typeof sub === "object" && !("deleted" in sub && sub.deleted)) {
+    const subscription = sub as Stripe.Subscription
+    subStatus = subscription.status
+    if (subscription.trial_end) {
+      trialEnd = new Date(subscription.trial_end * 1000).toISOString()
+    }
+  }
+
+  const isStandardMonthlyTrial =
+    tier === "lite" &&
+    billingCycle === "monthly" &&
+    (metadata.is_trial === "true" ||
+      paymentStatus === "no_payment_required" ||
+      subStatus === "trialing" ||
+      (session.amount_total === 0 && paymentStatus !== "unpaid"))
+
+  const isTrial = isStandardMonthlyTrial && (subStatus === "trialing" || paymentStatus === "no_payment_required" || metadata.is_trial === "true")
+
+  const subscriptionStatus: "trialing" | "active" | "pending" = isTrial
+    ? "trialing"
+    : paymentStatus === "paid" || paymentStatus === "no_payment_required"
+      ? "active"
+      : "pending"
+
+  return { isTrial, subscriptionStatus, trialEnd }
+}
+
 async function buildPurchasePayload(
   sessionId: string,
   tier: string,
@@ -54,45 +94,47 @@ async function buildPurchasePayload(
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const sessionId = request.nextUrl.searchParams.get("session_id")
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "Missing session_id" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Missing session_id" }, { status: 400 })
     }
 
-    // Call backend to verify the checkout session
+    const stripe = getStripe()
+    let stripeSession: Stripe.Checkout.Session | null = null
+    if (stripe) {
+      try {
+        stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
+          expand: ["subscription"],
+        })
+      } catch (err) {
+        console.warn("[verify-session] Stripe retrieve failed:", err)
+      }
+    }
+
+    // Call backend for metadata fallback
     const response = await fetch(`${BACKEND_URL}/api/v1/payments/checkout-session/${sessionId}`, {
       headers: {
         "X-API-Key": process.env.LLMHIVE_API_KEY || "",
       },
     })
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: "Unknown error" }))
-      return NextResponse.json(
-        { error: error.detail || "Failed to verify session" },
-        { status: response.status }
-      )
+    let backendData: Record<string, unknown> = {}
+    if (response.ok) {
+      backendData = await response.json()
     }
 
-    const data = await response.json()
-    const paymentStatus = String(data.status || "").toLowerCase()
+    const paymentStatus = String(
+      stripeSession?.payment_status || backendData.status || ""
+    ).toLowerCase()
     const checkoutComplete =
       paymentStatus === "paid" || paymentStatus === "no_payment_required"
 
-    // Synchronously upsert the Firestore subscription so the entitlement gate on /
-    // sees status=trialing|active immediately, instead of waiting for the Stripe webhook
     let ensured = false
     if (checkoutComplete) {
       try {
@@ -121,15 +163,34 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const tier = data.metadata?.tier || "pro"
-    const billingCycle = data.metadata?.billing_cycle || "monthly"
-    const isTrialStart =
-      checkoutComplete && paymentStatus === "no_payment_required" && tier === "lite"
+    const metadata = (stripeSession?.metadata || backendData.metadata || {}) as Record<
+      string,
+      string
+    >
+    const tier = metadata.tier || "pro"
+    const billingCycle = metadata.billing_cycle || "monthly"
+
+    const trialInfo = stripeSession
+      ? resolveTrialFromStripeSession(stripeSession)
+      : {
+          isTrial:
+            checkoutComplete &&
+            paymentStatus === "no_payment_required" &&
+            tier === "lite" &&
+            billingCycle === "monthly",
+          subscriptionStatus: (checkoutComplete
+            ? paymentStatus === "no_payment_required"
+              ? "trialing"
+              : "active"
+            : "pending") as "trialing" | "active" | "pending",
+          trialEnd: null as string | null,
+        }
+
     const purchase = await buildPurchasePayload(
       sessionId,
       tier,
       billingCycle,
-      paymentStatus === "paid"
+      paymentStatus === "paid" && (stripeSession?.amount_total ?? 0) > 0
     )
 
     return NextResponse.json({
@@ -138,17 +199,15 @@ export async function GET(request: NextRequest) {
       subscription: {
         tier,
         billingCycle,
-        status: isTrialStart ? "trialing" : checkoutComplete ? "active" : "pending",
-        isTrial: isTrialStart,
+        status: trialInfo.subscriptionStatus,
+        isTrial: trialInfo.isTrial,
+        trialEnd: trialInfo.trialEnd,
+        amountDueToday: stripeSession ? (stripeSession.amount_total ?? 0) / 100 : null,
       },
       purchase,
     })
   } catch (error) {
     console.error("Error verifying session:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-

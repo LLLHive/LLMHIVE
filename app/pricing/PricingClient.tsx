@@ -399,7 +399,7 @@ export default function PricingClient() {
           </div>
         </div>
 
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
             Premium quality from <span className="text-yellow-400">$20/mo</span>
           </h1>
@@ -416,6 +416,17 @@ export default function PricingClient() {
           </p>
         </div>
 
+        {!isAnnual && (
+          <div className="max-w-3xl mx-auto mb-8 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-[var(--bronze)]/10 to-amber-500/15 px-6 py-5 text-center shadow-lg shadow-amber-500/10">
+            <p className="text-lg font-bold text-amber-300 mb-1">Try Standard free for 3 days</p>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+              <span className="text-foreground font-semibold">$0 today</span> — card required. Elite orchestration
+              during trial (up to $3 provider spend). Then{" "}
+              <span className="text-foreground font-semibold">$10/month</span> unless you cancel in Billing.
+            </p>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto mb-10 p-6 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border-2 border-yellow-500/50">
           <div className="grid md:grid-cols-2 gap-6 text-center">
             <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
@@ -425,8 +436,8 @@ export default function PricingClient() {
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="text-3xl font-black text-[var(--bronze)] mb-2">Standard</div>
-              <div className="text-lg font-bold text-zinc-200">Standard orchestration</div>
-              <div className="text-sm text-muted-foreground mt-1">90-day memory with spend-guarded elite access</div>
+              <div className="text-lg font-bold text-amber-300">3-day free trial on monthly</div>
+              <div className="text-sm text-muted-foreground mt-1">$0 today, then $10/mo — cancel anytime</div>
             </div>
           </div>
         </div>
@@ -472,9 +483,9 @@ export default function PricingClient() {
                 )}
               >
                 {tier.trialBadge && !isAnnual && tier.tier === "lite" && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="border-0 px-4 py-1.5 font-bold bg-[var(--bronze)] text-white">
-                      {tier.trialBadge}
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                    <Badge className="border-0 px-4 py-1.5 font-bold bg-amber-500 text-black shadow-md shadow-amber-500/30">
+                      {tier.trialBadge} · $0 today
                     </Badge>
                   </div>
                 )}
@@ -512,10 +523,25 @@ export default function PricingClient() {
 
                 <CardContent className="flex-1 overflow-hidden flex flex-col py-2">
                   <div className="mb-4 flex-shrink-0">
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-bold text-3xl">${price.toFixed(2)}</span>
-                      <span className="text-sm text-muted-foreground">{period}</span>
-                    </div>
+                    {tier.tier === "lite" && !isAnnual ? (
+                      <div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-bold text-4xl text-amber-300">$0</span>
+                          <span className="text-sm text-muted-foreground">for 3 days</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          then <span className="font-semibold text-foreground">${price.toFixed(2)}/month</span>
+                        </p>
+                        <p className="text-xs text-amber-400/90 mt-2 font-medium">
+                          Card required · Cancel anytime before day 4 to avoid charges
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-bold text-3xl">${price.toFixed(2)}</span>
+                        <span className="text-sm text-muted-foreground">{period}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div
