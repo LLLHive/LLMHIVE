@@ -410,37 +410,6 @@ export default function PricingClient() {
           </div>
         </div>
 
-        {/* Plan comparison — above headline so value props read first */}
-        <div className={cn("max-w-4xl mx-auto mb-10 p-6 md:p-8", panelClass)}>
-          <p className="text-center text-xs font-semibold uppercase tracking-widest text-amber-400/90 mb-6">
-            Compare plans
-          </p>
-          <div className="grid md:grid-cols-2 gap-5">
-            <div className="rounded-xl border border-amber-500/35 bg-zinc-900/90 p-5 text-center md:text-left">
-              <div className="text-2xl font-bold text-white mb-1">Premium</div>
-              <div className="text-base font-semibold text-amber-300 mb-2">{BENCHMARK_CLAIM_SHORT}</div>
-              <p className={cn("text-sm leading-relaxed", copyMuted)}>
-                {MARKETING_FEATURED_ORCHESTRATION_STACK} — benchmark-grade orchestration for teams that
-                need the highest accuracy.
-              </p>
-              <p className="mt-3 text-lg font-bold text-white">
-                $20<span className="text-sm font-normal text-zinc-400">/mo</span>
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-600/50 bg-zinc-900/90 p-5 text-center md:text-left">
-              <div className="text-2xl font-bold text-white mb-1">Standard</div>
-              <div className="text-base font-semibold text-amber-300 mb-2">3-day free trial on monthly</div>
-              <p className={cn("text-sm leading-relaxed", copyMuted)}>
-                Start with elite orchestration (up to $3 provider spend during trial). Full Standard access
-                after trial at $10/mo.
-              </p>
-              <p className="mt-3 text-lg font-bold text-white">
-                $0<span className="text-sm font-normal text-zinc-400"> today · then $10/mo</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
         {!isAnnual && (
           <div className="max-w-3xl mx-auto mb-10 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-6 py-5 text-center shadow-lg shadow-amber-900/20">
             <p className="text-lg font-bold text-white mb-1">Try Standard free for 3 days</p>
@@ -642,6 +611,36 @@ export default function PricingClient() {
               </Card>
             )
           })}
+        </div>
+
+        <div className={cn("max-w-4xl mx-auto mb-16 p-6 md:p-8", panelClass)}>
+          <p className="text-center text-xs font-semibold uppercase tracking-widest text-amber-400/90 mb-6">
+            Compare plans
+          </p>
+          <div className="grid md:grid-cols-2 gap-5">
+            <div className="rounded-xl border border-amber-500/35 bg-zinc-900/90 p-5 text-center md:text-left">
+              <div className="text-2xl font-bold text-white mb-1">Premium</div>
+              <div className="text-base font-semibold text-amber-300 mb-2">{BENCHMARK_CLAIM_SHORT}</div>
+              <p className={cn("text-sm leading-relaxed", copyMuted)}>
+                {MARKETING_FEATURED_ORCHESTRATION_STACK} — benchmark-grade orchestration for teams that
+                need the highest accuracy.
+              </p>
+              <p className="mt-3 text-lg font-bold text-white">
+                $20<span className="text-sm font-normal text-zinc-400">/mo</span>
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-600/50 bg-zinc-900/90 p-5 text-center md:text-left">
+              <div className="text-2xl font-bold text-white mb-1">Standard</div>
+              <div className="text-base font-semibold text-amber-300 mb-2">3-day free trial on monthly</div>
+              <p className={cn("text-sm leading-relaxed", copyMuted)}>
+                Start with elite orchestration (up to $3 provider spend during trial). Full Standard access
+                after trial at $10/mo.
+              </p>
+              <p className="mt-3 text-lg font-bold text-white">
+                $0<span className="text-sm font-normal text-zinc-400"> today · then $10/mo</span>
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto mb-16">
