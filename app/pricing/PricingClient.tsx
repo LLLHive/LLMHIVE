@@ -410,32 +410,6 @@ export default function PricingClient() {
           </div>
         </div>
 
-        {!isAnnual && (
-          <div className="max-w-3xl mx-auto mb-10 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-6 py-5 text-center shadow-lg shadow-amber-900/20">
-            <p className="text-lg font-bold text-white mb-1">Try Standard free for 3 days</p>
-            <p className={cn("text-sm max-w-xl mx-auto leading-relaxed", copyMuted)}>
-              <span className="text-white font-semibold">$0 today</span> — card required. Elite orchestration
-              during trial (up to $3 provider spend). Then{" "}
-              <span className="text-white font-semibold">$10/month</span> unless you cancel in Billing.
-            </p>
-          </div>
-        )}
-
-        <div className="text-center mb-10 max-w-3xl mx-auto">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4 text-white tracking-tight">
-            Premium quality from <span className="text-amber-400">$20/mo</span>
-          </h1>
-          <p className={cn("text-lg leading-relaxed mb-3", copyMuted)}>
-            <span className="text-amber-300 font-semibold">Premium</span> uses elite orchestration with{" "}
-            <span className="text-white font-medium">{BENCHMARK_CLAIM_SHORT}</span>, powered by{" "}
-            {MARKETING_FEATURED_ORCHESTRATION_STACK}.
-          </p>
-          <p className={cn("text-base leading-relaxed", copySubtle)}>
-            Standard and Premium include spend-guarded elite orchestration, then switch to free orchestration
-            when the protected cap is reached.
-          </p>
-        </div>
-
         <div className="flex items-center justify-center gap-4 mb-10">
           <Label
             htmlFor="billing-toggle"
@@ -611,6 +585,32 @@ export default function PricingClient() {
               </Card>
             )
           })}
+        </div>
+
+        {!isAnnual && (
+          <div className="max-w-3xl mx-auto mb-10 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-6 py-5 text-center shadow-lg shadow-amber-900/20">
+            <p className="text-lg font-bold text-white mb-1">Try Standard free for 3 days</p>
+            <p className={cn("text-sm max-w-xl mx-auto leading-relaxed", copyMuted)}>
+              <span className="text-white font-semibold">$0 today</span> — card required. Elite orchestration
+              during trial (up to $3 provider spend). Then{" "}
+              <span className="text-white font-semibold">$10/month</span> unless you cancel in Billing.
+            </p>
+          </div>
+        )}
+
+        <div className="text-center mb-16 max-w-3xl mx-auto">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4 text-white tracking-tight">
+            Premium quality from <span className="text-amber-400">$20/mo</span>
+          </h1>
+          <p className={cn("text-lg leading-relaxed mb-3", copyMuted)}>
+            <span className="text-amber-300 font-semibold">Premium</span> uses elite orchestration with{" "}
+            <span className="text-white font-medium">{BENCHMARK_CLAIM_SHORT}</span>, powered by{" "}
+            {MARKETING_FEATURED_ORCHESTRATION_STACK}.
+          </p>
+          <p className={cn("text-base leading-relaxed", copySubtle)}>
+            Standard and Premium include spend-guarded elite orchestration, then switch to free orchestration
+            when the protected cap is reached.
+          </p>
         </div>
 
         <div className={cn("max-w-4xl mx-auto mb-16 p-6 md:p-8", panelClass)}>
