@@ -16,6 +16,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from ..auth import verify_api_key
+from ..billing.openrouter_guard import (
+    enforce_openrouter_inference,
+    record_openrouter_spend,
+    resolve_openrouter_max_cost_usd,
+)
 from ..database import get_db
 from ..openrouter import (
     OpenRouterClient,
@@ -132,6 +138,10 @@ class ChatCompletionRequest(BaseModel):
     # Orchestrator constraints
     max_cost_usd: Optional[float] = None
     save_run: bool = False
+    user_id: Optional[str] = Field(
+        default=None,
+        description="Authenticated user ID (required for inference; also accepted as query param).",
+    )
 
 
 class CreateTemplateRequest(BaseModel):
@@ -470,8 +480,9 @@ async def list_ranking_dimensions() -> Dict[str, Any]:
 @router.post("/chat/completions")
 async def chat_completion(
     request: ChatCompletionRequest,
-    user_id: Optional[str] = None,
+    user_id: Optional[str] = Query(None, description="Authenticated user ID"),
     db = Depends(get_db),
+    _: str = Depends(verify_api_key),
 ) -> Dict[str, Any]:
     """Run chat completion through OpenRouter.
     
@@ -483,20 +494,31 @@ async def chat_completion(
     
     Falls back to direct OpenRouter API call if database is unavailable.
     """
+    effective_user_id = (user_id or request.user_id or "").strip() or None
+    enforce_openrouter_inference(effective_user_id)
+    max_cost = resolve_openrouter_max_cost_usd(effective_user_id, request.max_cost_usd)
+    request = request.model_copy(update={"max_cost_usd": max_cost})
+
     # If database is not available or has issues, use direct OpenRouter client
     if not db:
-        return await _direct_openrouter_chat(request, user_id)
+        result = await _direct_openrouter_chat(request, effective_user_id)
+        if not request.stream:
+            record_openrouter_spend(effective_user_id, result)
+        return result
     
     try:
         gateway = OpenRouterInferenceGateway(db)
     except Exception as e:
         logger.warning(f"Gateway init failed, using direct client: {e}")
-        return await _direct_openrouter_chat(request, user_id)
+        result = await _direct_openrouter_chat(request, effective_user_id)
+        if not request.stream:
+            record_openrouter_spend(effective_user_id, result)
+        return result
     
     # Build constraints
     constraints = GatewayConstraints(
         max_cost_usd=request.max_cost_usd,
-        tenant_id=user_id,
+        tenant_id=effective_user_id,
     )
     
     # Build params
@@ -527,7 +549,7 @@ async def chat_completion(
                         stream=True,
                         constraints=constraints,
                         save_run=request.save_run,
-                        user_id=user_id,
+                        user_id=effective_user_id,
                         **params,
                     ):
                         yield f"data: {chunk}\n\n"
@@ -551,12 +573,14 @@ async def chat_completion(
             stream=False,
             constraints=constraints,
             save_run=request.save_run,
-            user_id=user_id,
+            user_id=effective_user_id,
             **params,
         )
         
         await gateway.close()
-        return response.to_dict()
+        payload = response.to_dict()
+        record_openrouter_spend(effective_user_id, payload)
+        return payload
         
     except Exception as e:
         await gateway.close()
@@ -570,7 +594,10 @@ async def chat_completion(
         ]
         if any(trigger in error_msg for trigger in fallback_triggers):
             logger.warning("Gateway error '%s', falling back to direct OpenRouter client", error_msg[:100])
-            return await _direct_openrouter_chat(request, user_id)
+            result = await _direct_openrouter_chat(request, effective_user_id)
+            if not request.stream:
+                record_openrouter_spend(effective_user_id, result)
+            return result
         logger.error("Chat completion failed: %s", e, exc_info=True)
         raise HTTPException(500, str(e))
 

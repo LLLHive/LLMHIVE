@@ -436,6 +436,14 @@ try:
 except ImportError:
     pass
 
+try:
+    from .tier_rate_limiting import tier_rate_limit_middleware
+
+    app.middleware("http")(tier_rate_limit_middleware)
+    logger.info("Tier-aware HTTP rate limiting middleware enabled")
+except ImportError as exc:
+    logger.warning("Tier rate limiting middleware not enabled: %s", exc)
+
 # Set up OpenTelemetry tracing middleware (must be done before app starts)
 if TRACING_AVAILABLE:
     try:

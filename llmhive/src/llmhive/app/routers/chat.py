@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth import verify_api_key
 from ..billing.access_guard import require_app_access
+from ..billing.query_quota import enforce_monthly_query_quota, record_monthly_query
 from ..models.orchestration import ChatRequest, ChatResponse
 from ..services.orchestrator_adapter import run_orchestration
 
@@ -53,6 +54,17 @@ async def chat_endpoint(
         require_app_access(
             payload.metadata.user_id if payload.metadata else None
         )
+        try:
+            from ..billing.scheduled_benchmark import is_internal_scheduled_benchmark
+
+            if not is_internal_scheduled_benchmark():
+                enforce_monthly_query_quota(
+                    payload.metadata.user_id if payload.metadata else None
+                )
+        except ImportError:
+            enforce_monthly_query_quota(
+                payload.metadata.user_id if payload.metadata else None
+            )
 
         logger.info(
             "Chat request received: prompt_length=%d, reasoning_mode=%s, domain=%s, agent_mode=%s, safe_mode=%s, dev_mode=%s",
@@ -111,7 +123,19 @@ async def chat_endpoint(
             len(response.message),
             response.latency_ms or 0,
         )
-        
+
+        try:
+            from ..billing.scheduled_benchmark import is_internal_scheduled_benchmark
+
+            if not is_internal_scheduled_benchmark():
+                record_monthly_query(
+                    payload.metadata.user_id if payload.metadata else None
+                )
+        except ImportError:
+            record_monthly_query(
+                payload.metadata.user_id if payload.metadata else None
+            )
+
         return response
         
     except HTTPException:

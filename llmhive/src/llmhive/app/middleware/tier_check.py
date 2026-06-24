@@ -28,6 +28,21 @@ from ..firestore_db import FirestoreSubscriptionService, is_firestore_available
 
 logger = logging.getLogger(__name__)
 
+# Map legacy / marketing tier names to rate-limit buckets in tier_limits.TIER_LIMITS.
+_RATE_LIMIT_TIER_ALIASES: Dict[str, str] = {
+    "basic": "lite",
+    "starter": "lite",
+    "standard": "lite",
+    "premium": "pro",
+    "maximum": "pro",
+}
+
+
+def normalize_rate_limit_tier(tier: str) -> str:
+    """Normalize subscription tier name for rate-limit and per-request cost caps."""
+    key = (tier or "free").lower().strip()
+    return _RATE_LIMIT_TIER_ALIASES.get(key, key)
+
 
 class TierName(str, Enum):
     """Subscription tier names - 4-tier structure with FREE tier (January 2026)."""

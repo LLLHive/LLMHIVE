@@ -2494,8 +2494,6 @@ def _resolve_request_model_tier_from_subscription(request: ChatRequest) -> ChatR
     except Exception:
         pass
 
-    if request.tier != RequestModelTier.auto:
-        return request
     if os.getenv("ORCH_RESOLVE_TIER_FROM_USER", "1").lower() in ("0", "false", "no"):
         return request
     uid = None
@@ -2511,18 +2509,27 @@ def _resolve_request_model_tier_from_subscription(request: ChatRequest) -> ChatR
         logger.warning("Tier resolution skipped for user_id=%s: %s", uid, exc)
         return request
     if orch == "free":
-        new_tier = RequestModelTier.free
-    elif orch == "elite":
-        new_tier = RequestModelTier.elite
+        if request.tier != RequestModelTier.free:
+            logger.info(
+                "Orchestration tier free (spend/subscription); downgrading %s -> free user_id=%s",
+                request.tier.value,
+                uid,
+            )
+            return request.model_copy(update={"tier": RequestModelTier.free})
+        return request
+    if orch == "elite":
+        if request.tier == RequestModelTier.free:
+            return request
+        if request.tier != RequestModelTier.elite:
+            logger.info(
+                "ModelTier.%s -> elite via get_orchestration_tier(user_id=%s)",
+                request.tier.value,
+                uid,
+            )
+            return request.model_copy(update={"tier": RequestModelTier.elite})
     else:
         logger.warning("Unknown orchestration tier %r for user_id=%s", orch, uid)
-        return request
-    logger.info(
-        "ModelTier.auto -> %s via get_orchestration_tier(user_id=%s)",
-        new_tier.value,
-        uid,
-    )
-    return request.model_copy(update={"tier": new_tier})
+    return request
 
 
 async def run_orchestration(request: ChatRequest) -> ChatResponse:

@@ -184,6 +184,15 @@ async def tier_rate_limit_middleware(
     skip_paths = ["/healthz", "/health", "/_ah/health", "/api/v1/system/healthz"]
     if any(request.url.path.startswith(path) for path in skip_paths):
         return await call_next(request)
+
+    # Scheduled CI benchmarks must not be throttled (many cases per minute from one IP).
+    try:
+        from .billing.scheduled_benchmark import scheduled_benchmark_request_valid
+
+        if scheduled_benchmark_request_valid(request):
+            return await call_next(request)
+    except ImportError:
+        pass
     
     # Get user identifier and tier
     user_id: Optional[str] = None
@@ -204,7 +213,15 @@ async def tier_rate_limit_middleware(
                 import json
                 try:
                     body_data = json.loads(body)
-                    user_id = body_data.get("user_id") or body_data.get("userId")
+                    user_id = (
+                        body_data.get("user_id")
+                        or body_data.get("userId")
+                        or (
+                            body_data.get("metadata", {}).get("user_id")
+                            if isinstance(body_data.get("metadata"), dict)
+                            else None
+                        )
+                    )
                 except (json.JSONDecodeError, KeyError, TypeError):
                     pass
                 
@@ -215,51 +232,21 @@ async def tier_rate_limit_middleware(
         except Exception:
             pass
     
-    # If user_id is available, try to get tier from User model
+    # If user_id is available, resolve tier from Firestore subscriptions (production source of truth)
     if user_id:
         try:
-            from ..database import SessionLocal
-            from ..models import User, AccountTier
-            
-            with SessionLocal() as db_session:
-                user = db_session.query(User).filter_by(user_id=user_id).first()
-                if user:
-                    # Backwards compatibility: If account_tier is None or missing, default to Free
-                    try:
-                        if user.account_tier is None:
-                            tier = "free"
-                            logger.debug("Tier Rate Limiting: User %s has no tier, defaulting to Free", user_id)
-                        else:
-                            tier = user.account_tier.value
-                    except AttributeError:
-                        # Backwards compatibility: If account_tier attribute doesn't exist (old schema)
-                        tier = "free"
-                        logger.debug("Tier Rate Limiting: User %s missing account_tier attribute, defaulting to Free", user_id)
-                else:
-                    # User doesn't exist yet - create as Free tier
-                    # (This is a simple approach; in production you might want to create users differently)
-                    try:
-                        new_user = User(
-                            user_id=user_id,
-                            account_tier=AccountTier.FREE,
-                        )
-                        db_session.add(new_user)
-                        db_session.commit()
-                        tier = "free"
-                        logger.debug("Tier Rate Limiting: Created new user %s with Free tier", user_id)
-                    except Exception as exc:
-                        logger.warning("Tier Rate Limiting: Failed to create user %s: %s", user_id, exc)
-                        db_session.rollback()
-                        # Fall back to Free tier
-                        tier = "free"
+            from .middleware.tier_check import get_user_tier, normalize_rate_limit_tier
+
+            tier_enum = get_user_tier(user_id)
+            tier = normalize_rate_limit_tier(tier_enum.value)
         except Exception as exc:
             logger.warning(
-                "Tier Rate Limiting: Failed to get user tier for %s: %s. Using Free tier.",
+                "Tier Rate Limiting: Failed to get Firestore tier for %s: %s. Using Free tier.",
                 user_id,
-                exc
+                exc,
             )
             tier = "free"
-        
+
         identifier = user_id
     else:
         # Unauthenticated user: use IP address and Free tier

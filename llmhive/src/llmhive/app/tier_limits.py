@@ -102,12 +102,17 @@ def get_tier_limits(tier: str) -> TierLimits:
     """Get tier limits for a given tier name.
     
     Args:
-        tier: Tier name (free, pro, enterprise)
+        tier: Tier name (free, lite, pro, enterprise, or legacy aliases)
         
     Returns:
         TierLimits for the tier, or Free tier limits if tier not found
     """
-    tier_lower = tier.lower()
+    try:
+        from .middleware.tier_check import normalize_rate_limit_tier
+
+        tier_lower = normalize_rate_limit_tier(tier)
+    except Exception:
+        tier_lower = (tier or "free").lower()
     return TIER_LIMITS.get(tier_lower, TIER_LIMITS["free"])
 
 

@@ -355,12 +355,35 @@ export async function POST(req: NextRequest) {
     // PR6: Extract orchestration overrides from settings
     const orchestrationOverrides = settings.orchestrationOverrides || {}
     const modelTeam = settings.modelTeam || orchestrationOverrides.modelTeam || null
-    // Budget constraints DISABLED for now - preserves benchmark orchestration
-    // Will be enabled for specific account tiers in the future
-    // const maxCostUsd = settings.maxCostUsd || orchestrationOverrides.maxCostUsd || null
-    // const preferCheaper = settings.preferCheaper || orchestrationOverrides.preferCheaper || false
-    const maxCostUsd = null  // Disabled
-    const preferCheaper = false  // Disabled
+    // Tier-aware per-request budget caps (profit protection; orchestration still runs full pipeline)
+    const tierLower = entitlement.tier.toLowerCase()
+    const tierDefaultMaxCost: Record<string, number | null> = {
+      free: 0.10,
+      lite: 0.35,
+      basic: 0.35,
+      starter: 0.35,
+      standard: 0.35,
+      pro: 0.75,
+      premium: 0.75,
+      maximum: 0.75,
+      enterprise: 2.0,
+    }
+    const tierDefaultPreferCheaper: Record<string, boolean> = {
+      free: true,
+      lite: true,
+      basic: true,
+      starter: true,
+      standard: true,
+    }
+    const maxCostUsd =
+      settings.maxCostUsd ??
+      orchestrationOverrides.maxCostUsd ??
+      tierDefaultMaxCost[tierLower] ??
+      0.35
+    const preferCheaper =
+      settings.preferCheaper ??
+      orchestrationOverrides.preferCheaper ??
+      (tierDefaultPreferCheaper[tierLower] ?? false)
     
     // Map orchestration engine from UI to backend protocol
     // Supports: hrm, prompt-diffusion, deep-conf, adaptive-ensemble

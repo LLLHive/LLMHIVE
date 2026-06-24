@@ -1,12 +1,41 @@
 import { NextResponse } from "next/server"
+import { auth } from "@clerk/nextjs/server"
+import { getPaidEntitlement, paymentRequiredResponse } from "@/lib/billing/entitlement"
 import { getSiteUrl } from "@/lib/site-url"
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
+const TIER_MAX_COST_USD: Record<string, number> = {
+  free: 0.10,
+  lite: 0.35,
+  basic: 0.35,
+  starter: 0.35,
+  standard: 0.35,
+  pro: 0.75,
+  premium: 0.75,
+  maximum: 0.75,
+  enterprise: 2.0,
+}
+
 export async function POST(request: Request) {
   try {
+    const { userId: clerkUserId } = await auth()
+    if (!clerkUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const entitlement = await getPaidEntitlement(clerkUserId)
+    if (!entitlement.hasAppAccess) {
+      return NextResponse.json(paymentRequiredResponse(entitlement.status), { status: 402 })
+    }
+
     const body = await request.json()
-    
+    const tierKey = entitlement.tier.toLowerCase()
+    const maxCost =
+      typeof body.max_cost_usd === "number" && body.max_cost_usd > 0
+        ? body.max_cost_usd
+        : TIER_MAX_COST_USD[tierKey] ?? 0.35
+
     const apiKey = process.env.OPENROUTER_API_KEY
     if (!apiKey) {
       return NextResponse.json(
@@ -14,11 +43,14 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
-    
-    // Check if streaming is requested
+
     const isStreaming = body.stream === true
-    
-    // Forward request to OpenRouter
+    const forwardBody = {
+      ...body,
+      max_cost_usd: maxCost,
+      user: clerkUserId,
+    }
+
     const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
       headers: {
@@ -27,9 +59,9 @@ export async function POST(request: Request) {
         "HTTP-Referer": getSiteUrl(),
         "X-Title": "LLMHive",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(forwardBody),
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text()
       console.error("OpenRouter API error:", response.status, errorText)
@@ -38,10 +70,8 @@ export async function POST(request: Request) {
         { status: response.status }
       )
     }
-    
-    // Handle streaming response
+
     if (isStreaming) {
-      // Return the stream directly
       return new Response(response.body, {
         headers: {
           "Content-Type": "text/event-stream",
@@ -50,11 +80,9 @@ export async function POST(request: Request) {
         },
       })
     }
-    
-    // Handle regular response
+
     const data = await response.json()
     return NextResponse.json(data)
-    
   } catch (error) {
     console.error("OpenRouter chat completions error:", error)
     return NextResponse.json(
@@ -64,7 +92,6 @@ export async function POST(request: Request) {
   }
 }
 
-// Handle OPTIONS for CORS preflight
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
@@ -75,4 +102,3 @@ export async function OPTIONS() {
     },
   })
 }
-
