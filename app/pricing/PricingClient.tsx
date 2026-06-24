@@ -41,7 +41,6 @@ import {
 } from "@/lib/marketing/pricing-offers"
 import { cn } from "@/lib/utils"
 import { track } from "@/lib/observability/analytics"
-import Link from "next/link"
 import Image from "next/image"
 import LogoText from "@/components/branding/LogoText"
 import { buildProductStructuredData, organizationNode } from "@/lib/marketing/structured-data"
@@ -49,6 +48,14 @@ import { sitePath } from "@/lib/site-url"
 
 const SIGNUP_TRACKED_STORAGE_KEY = "llmhive_signup_tracked_v1"
 const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000
+
+/** High-contrast copy on the forest background — avoid `text-muted-foreground` here. */
+const copyMuted = "text-zinc-300"
+const copySubtle = "text-zinc-400"
+const panelClass =
+  "rounded-2xl border border-zinc-700/60 bg-zinc-950/80 backdrop-blur-md shadow-xl shadow-black/20"
+const tierCardClass =
+  "group relative flex flex-col rounded-2xl border bg-zinc-950/85 backdrop-blur-md shadow-lg shadow-black/25 transition-all duration-300"
 
 /** Stripe / backend tier keys (legacy ids: lite = Standard product, pro = Premium product) */
 export type CheckoutTierKey = "lite" | "pro" | "enterprise"
@@ -391,61 +398,82 @@ export default function PricingClient() {
         </div>
 
         <div className="mb-10 flex justify-center">
-          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-xs font-medium text-amber-300 backdrop-blur-sm sm:text-sm">
-            <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="truncate">
-              {MARKETING_FEATURED_LINE}
-            </span>
+          <div
+            className={cn(
+              "inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-600/50 px-4 py-2 text-sm font-medium backdrop-blur-sm",
+              copyMuted,
+              "bg-zinc-950/70",
+            )}
+          >
+            <Sparkles className="h-4 w-4 flex-shrink-0 text-amber-400" />
+            <span className="truncate">{MARKETING_FEATURED_LINE}</span>
           </div>
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            Premium quality from <span className="text-yellow-400">$20/mo</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-            <span className="text-yellow-400 font-bold">Premium</span> uses{" "}
-            <span className="text-yellow-400 font-bold">elite orchestration</span> with{" "}
-            <span className="text-yellow-400 font-bold">{BENCHMARK_CLAIM_SHORT}</span> — powered by{" "}
-            {MARKETING_FEATURED_ORCHESTRATION_STACK}.
+        {/* Plan comparison — above headline so value props read first */}
+        <div className={cn("max-w-4xl mx-auto mb-10 p-6 md:p-8", panelClass)}>
+          <p className="text-center text-xs font-semibold uppercase tracking-widest text-amber-400/90 mb-6">
+            Compare plans
           </p>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            <span className="font-semibold text-[var(--bronze)]">Standard</span> and{" "}
-            <span className="font-semibold text-yellow-400">Premium</span> use elite orchestration while the
-            spend guard allows, then switch to free orchestration for margin protection.
-          </p>
+          <div className="grid md:grid-cols-2 gap-5">
+            <div className="rounded-xl border border-amber-500/35 bg-zinc-900/90 p-5 text-center md:text-left">
+              <div className="text-2xl font-bold text-white mb-1">Premium</div>
+              <div className="text-base font-semibold text-amber-300 mb-2">{BENCHMARK_CLAIM_SHORT}</div>
+              <p className={cn("text-sm leading-relaxed", copyMuted)}>
+                {MARKETING_FEATURED_ORCHESTRATION_STACK} — benchmark-grade orchestration for teams that
+                need the highest accuracy.
+              </p>
+              <p className="mt-3 text-lg font-bold text-white">
+                $20<span className="text-sm font-normal text-zinc-400">/mo</span>
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-600/50 bg-zinc-900/90 p-5 text-center md:text-left">
+              <div className="text-2xl font-bold text-white mb-1">Standard</div>
+              <div className="text-base font-semibold text-amber-300 mb-2">3-day free trial on monthly</div>
+              <p className={cn("text-sm leading-relaxed", copyMuted)}>
+                Start with elite orchestration (up to $3 provider spend during trial). Full Standard access
+                after trial at $10/mo.
+              </p>
+              <p className="mt-3 text-lg font-bold text-white">
+                $0<span className="text-sm font-normal text-zinc-400"> today · then $10/mo</span>
+              </p>
+            </div>
+          </div>
         </div>
 
         {!isAnnual && (
-          <div className="max-w-3xl mx-auto mb-8 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-[var(--bronze)]/10 to-amber-500/15 px-6 py-5 text-center shadow-lg shadow-amber-500/10">
-            <p className="text-lg font-bold text-amber-300 mb-1">Try Standard free for 3 days</p>
-            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              <span className="text-foreground font-semibold">$0 today</span> — card required. Elite orchestration
+          <div className="max-w-3xl mx-auto mb-10 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-6 py-5 text-center shadow-lg shadow-amber-900/20">
+            <p className="text-lg font-bold text-white mb-1">Try Standard free for 3 days</p>
+            <p className={cn("text-sm max-w-xl mx-auto leading-relaxed", copyMuted)}>
+              <span className="text-white font-semibold">$0 today</span> — card required. Elite orchestration
               during trial (up to $3 provider spend). Then{" "}
-              <span className="text-foreground font-semibold">$10/month</span> unless you cancel in Billing.
+              <span className="text-white font-semibold">$10/month</span> unless you cancel in Billing.
             </p>
           </div>
         )}
 
-        <div className="max-w-4xl mx-auto mb-10 p-6 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border-2 border-yellow-500/50">
-          <div className="grid md:grid-cols-2 gap-6 text-center">
-            <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-              <div className="text-3xl font-black text-yellow-400 mb-2">Premium</div>
-              <div className="text-lg font-bold text-yellow-300">{BENCHMARK_CLAIM_SHORT}</div>
-              <div className="text-sm text-yellow-200/70 mt-1">{MARKETING_FEATURED_ORCHESTRATION_STACK}</div>
-            </div>
-            <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-              <div className="text-3xl font-black text-[var(--bronze)] mb-2">Standard</div>
-              <div className="text-lg font-bold text-amber-300">3-day free trial on monthly</div>
-              <div className="text-sm text-muted-foreground mt-1">$0 today, then $10/mo — cancel anytime</div>
-            </div>
-          </div>
+        <div className="text-center mb-10 max-w-3xl mx-auto">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4 text-white tracking-tight">
+            Premium quality from <span className="text-amber-400">$20/mo</span>
+          </h1>
+          <p className={cn("text-lg leading-relaxed mb-3", copyMuted)}>
+            <span className="text-amber-300 font-semibold">Premium</span> uses elite orchestration with{" "}
+            <span className="text-white font-medium">{BENCHMARK_CLAIM_SHORT}</span>, powered by{" "}
+            {MARKETING_FEATURED_ORCHESTRATION_STACK}.
+          </p>
+          <p className={cn("text-base leading-relaxed", copySubtle)}>
+            Standard and Premium include spend-guarded elite orchestration, then switch to free orchestration
+            when the protected cap is reached.
+          </p>
         </div>
 
         <div className="flex items-center justify-center gap-4 mb-10">
           <Label
             htmlFor="billing-toggle"
-            className={cn(!isAnnual && "text-foreground font-semibold", isAnnual && "text-muted-foreground")}
+            className={cn(
+              "text-sm",
+              !isAnnual ? "text-white font-semibold" : copySubtle,
+            )}
           >
             Monthly
           </Label>
@@ -453,16 +481,19 @@ export default function PricingClient() {
             id="billing-toggle"
             checked={isAnnual}
             onCheckedChange={setIsAnnual}
-            className="data-[state=checked]:bg-yellow-500"
+            className="data-[state=checked]:bg-amber-500"
           />
           <Label
             htmlFor="billing-toggle"
-            className={cn(isAnnual && "text-foreground font-semibold", !isAnnual && "text-muted-foreground")}
+            className={cn(
+              "text-sm",
+              isAnnual ? "text-white font-semibold" : copySubtle,
+            )}
           >
             Annual
           </Label>
           {isAnnual && (
-            <Badge className="bg-yellow-500 text-black font-bold border-0">Save ~17%</Badge>
+            <Badge className="bg-amber-500 text-black font-bold border-0">Save ~17%</Badge>
           )}
         </div>
 
@@ -475,11 +506,15 @@ export default function PricingClient() {
             return (
               <Card
                 key={tier.name}
+                id={tier.tier}
                 className={cn(
-                  "group relative flex flex-col bg-card/50 backdrop-blur-sm transition-all duration-300 h-[580px]",
+                  tierCardClass,
+                  "h-[580px]",
                   isPremium
-                    ? "border-2 border-yellow-500 shadow-lg shadow-yellow-500/20"
-                    : "border-2 border-[var(--bronze)]/30 hover:border-[var(--bronze)]"
+                    ? "border-amber-500/50 ring-1 ring-amber-500/20"
+                    : tier.tier === "enterprise"
+                      ? "border-emerald-600/40 hover:border-emerald-500/50"
+                      : "border-zinc-600/50 hover:border-[var(--bronze)]/60",
                 )}
               >
                 {tier.trialBadge && !isAnnual && tier.tier === "lite" && (
@@ -511,14 +546,16 @@ export default function PricingClient() {
                 <CardHeader className="pb-2 flex-shrink-0">
                   <div className="flex items-center gap-2 mb-1">
                     {tier.icon}
-                    <CardTitle className="text-xl">{tier.name}</CardTitle>
+                    <CardTitle className="text-xl text-white">{tier.name}</CardTitle>
                     {isPremium && (
-                      <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-xs">
+                      <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-xs">
                         RECOMMENDED
                       </Badge>
                     )}
                   </div>
-                  <CardDescription className="text-xs">{tier.description}</CardDescription>
+                  <CardDescription className={cn("text-sm leading-snug", copyMuted)}>
+                    {tier.description}
+                  </CardDescription>
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-hidden flex flex-col py-2">
@@ -527,49 +564,51 @@ export default function PricingClient() {
                       <div>
                         <div className="flex items-baseline gap-2">
                           <span className="font-bold text-4xl text-amber-300">$0</span>
-                          <span className="text-sm text-muted-foreground">for 3 days</span>
+                          <span className={cn("text-sm", copyMuted)}>for 3 days</span>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          then <span className="font-semibold text-foreground">${price.toFixed(2)}/month</span>
+                        <p className={cn("text-sm mt-1", copyMuted)}>
+                          then <span className="font-semibold text-white">${price.toFixed(2)}/month</span>
                         </p>
-                        <p className="text-xs text-amber-400/90 mt-2 font-medium">
-                          Card required · Cancel anytime before day 4 to avoid charges
+                        <p className="text-xs text-amber-300/95 mt-2 font-medium">
+                          Card required · Cancel before day 4 to avoid charges
                         </p>
                       </div>
                     ) : (
                       <div className="flex items-baseline gap-1">
-                        <span className="font-bold text-3xl">${price.toFixed(2)}</span>
-                        <span className="text-sm text-muted-foreground">{period}</span>
+                        <span className="font-bold text-3xl text-white">${price.toFixed(2)}</span>
+                        <span className={cn("text-sm", copySubtle)}>{period}</span>
                       </div>
                     )}
                   </div>
 
                   <div
                     className={cn(
-                      "mb-4 p-3 rounded-lg flex-shrink-0",
-                      isPremium ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-muted/30"
+                      "mb-4 p-3 rounded-lg flex-shrink-0 border",
+                      isPremium
+                        ? "bg-amber-500/10 border-amber-500/25"
+                        : "bg-zinc-900/80 border-zinc-700/50",
                     )}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span
                         className={cn(
                           "font-bold text-sm",
-                          isPremium ? "text-yellow-500" : "text-[var(--bronze)]"
+                          isPremium ? "text-amber-300" : "text-[var(--bronze)]",
                         )}
                       >
-                        {isPremium ? "🏆" : "✦"} {tier.quotas.headline}
+                        {isPremium ? "Premium orchestration" : "Standard orchestration"}
                       </span>
                     </div>
                     <div className="text-xs font-semibold text-emerald-400">{tier.quotas.afterQuota}</div>
-                    <div className="text-xs mt-1 text-muted-foreground">{tier.quotas.detail}</div>
+                    <div className={cn("text-xs mt-1 leading-relaxed", copyMuted)}>{tier.quotas.detail}</div>
                   </div>
 
                   <div className="flex-1 overflow-y-auto min-h-0">
-                    <ul className="space-y-1.5 pr-1">
+                    <ul className="space-y-2 pr-1">
                       {tier.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-1.5">
-                          <Check className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-green-500" />
-                          <span className="text-xs">{feature}</span>
+                        <li key={index} className="flex items-start gap-2">
+                          <Check className="h-4 w-4 mt-0.5 flex-shrink-0 text-emerald-400" />
+                          <span className={cn("text-sm leading-snug", copyMuted)}>{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -605,56 +644,56 @@ export default function PricingClient() {
           })}
         </div>
 
-        <div className="max-w-4xl mx-auto mb-16 text-center">
-          <div className="p-8 rounded-2xl bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-yellow-500/10 border border-yellow-500/30">
-            <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-display font-bold mb-4 text-yellow-400">
+        <div className="max-w-4xl mx-auto mb-16">
+          <div className={cn("p-8 md:p-10 text-center", panelClass)}>
+            <Trophy className="h-10 w-10 text-amber-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-display font-bold mb-3 text-white">
               Industry benchmarks (April 2026)
             </h2>
-            <p className="text-muted-foreground mb-4 max-w-2xl mx-auto font-medium text-foreground/90">
+            <p className={cn("mb-4 max-w-2xl mx-auto font-medium text-white/90", copyMuted)}>
               {BENCHMARK_CLAIM_SHORT}.
             </p>
-            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto text-sm">
+            <p className={cn("max-w-2xl mx-auto text-sm leading-relaxed", copySubtle)}>
               Our orchestration combines {MARKETING_FEATURED_ORCHESTRATION_STACK} with consensus voting,
               challenge-refine workflows, and tool integration.
             </p>
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto mb-16 p-8 rounded-2xl bg-card/50 border border-border/50">
-          <h2 className="text-2xl font-display font-bold text-center mb-6">How it works</h2>
-          <div className="space-y-4">
+        <div className={cn("max-w-3xl mx-auto mb-16 p-8 md:p-10", panelClass)}>
+          <h2 className="text-2xl font-display font-bold text-center mb-8 text-white">How it works</h2>
+          <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-yellow-400 font-bold">1</span>
+              <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 border border-amber-500/30">
+                <span className="text-amber-300 font-bold text-sm">1</span>
               </div>
               <div>
-                <h3 className="font-semibold text-yellow-400">Choose Standard or Premium</h3>
-                <p className="text-sm text-muted-foreground">
-                  Standard ($10/mo) and Premium ($20/mo) use elite orchestration while the spend guard allows,
-                  then switch to free orchestration.
+                <h3 className="font-semibold text-white">Choose Standard or Premium</h3>
+                <p className={cn("text-sm mt-1 leading-relaxed", copyMuted)}>
+                  Standard ($10/mo, 3-day trial on monthly) and Premium ($20/mo) use elite orchestration while
+                  the spend guard allows, then switch to free orchestration.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-emerald-400 font-bold">2</span>
+              <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+                <span className="text-emerald-300 font-bold text-sm">2</span>
               </div>
               <div>
-                <h3 className="font-semibold text-emerald-400">Spend guard protection</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold text-white">Spend guard protection</h3>
+                <p className={cn("text-sm mt-1 leading-relaxed", copyMuted)}>
                   Provider spend is capped against subscription revenue. When that cap is reached, the account
                   uses free orchestration until the next billing period.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-[var(--bronze)]/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-[var(--bronze)] font-bold">3</span>
+              <div className="w-9 h-9 rounded-full bg-zinc-700/50 flex items-center justify-center flex-shrink-0 border border-zinc-600">
+                <span className="text-zinc-200 font-bold text-sm">3</span>
               </div>
               <div>
-                <h3 className="font-semibold">Need teams & compliance?</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold text-white">Need teams & compliance?</h3>
+                <p className={cn("text-sm mt-1 leading-relaxed", copyMuted)}>
                   Enterprise adds per-seat Premium quotas, SSO, and procurement-friendly controls — contact
                   sales for a quote.
                 </p>
@@ -664,28 +703,32 @@ export default function PricingClient() {
         </div>
 
         <div className="max-w-3xl mx-auto mb-16">
-          <h2 className="text-2xl font-display font-bold text-center mb-8">Frequently asked questions</h2>
+          <h2 className="text-2xl font-display font-bold text-center mb-8 text-white">
+            Frequently asked questions
+          </h2>
           <div className="space-y-4">
             {pricingFaq.map((item) => (
-              <div key={item.question} className="p-6 rounded-lg bg-card/50 border border-border/50">
-                <h3 className="font-semibold mb-2">{item.question}</h3>
-                <p className="text-muted-foreground text-sm">{item.answer}</p>
+              <div key={item.question} className={cn("p-6", panelClass)}>
+                <h3 className="font-semibold mb-2 text-white">{item.question}</h3>
+                <p className={cn("text-sm leading-relaxed", copyMuted)}>{item.answer}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="text-center">
-          <div className="p-8 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/10 to-amber-500/10 border border-amber-600/40">
-            <Trophy className="h-10 w-10 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-3xl font-display font-bold mb-4 text-amber-500">Ready to subscribe?</h2>
-            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              Premium: $20/mo or $200/yr — elite orchestration while the spend guard allows.
+        <div className="text-center max-w-2xl mx-auto">
+          <div className={cn("p-8 md:p-10", panelClass)}>
+            <Trophy className="h-10 w-10 text-amber-400 mx-auto mb-4" />
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-3 text-white">
+              Ready to get started?
+            </h2>
+            <p className={cn("mb-6 leading-relaxed", copyMuted)}>
+              Premium from $20/mo, or start Standard with a 3-day free trial — $0 today on monthly billing.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button
                 size="lg"
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-lg px-8"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-8"
                 onClick={() => handleSubscribe(pricingTiers[1])}
               >
                 <Trophy className="h-5 w-5 mr-2" />
@@ -693,20 +736,20 @@ export default function PricingClient() {
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               <Button
-                asChild
                 size="lg"
                 variant="outline"
-                className="border-white/20 text-muted-foreground hover:bg-white/5"
+                className="border-zinc-500 text-zinc-200 hover:bg-zinc-800 hover:text-white"
+                onClick={() => handleSubscribe(pricingTiers[0])}
               >
-                <Link href="/sign-up">Create account</Link>
+                Start 3-day trial
               </Button>
             </div>
           </div>
         </div>
       </main>
 
-      <footer className="border-t border-border/50 mt-24 py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+      <footer className="border-t border-zinc-800/80 mt-24 py-8">
+        <div className={cn("container mx-auto px-4 text-center text-sm", copySubtle)}>
           <p>© 2026 LLMHive. All rights reserved.</p>
         </div>
       </footer>
