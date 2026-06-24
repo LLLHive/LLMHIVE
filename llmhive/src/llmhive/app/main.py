@@ -439,8 +439,11 @@ except ImportError:
 try:
     from .tier_rate_limiting import tier_rate_limit_middleware
 
-    app.middleware("http")(tier_rate_limit_middleware)
-    logger.info("Tier-aware HTTP rate limiting middleware enabled")
+    if os.getenv("ENVIRONMENT", "").lower() == "production":
+        app.middleware("http")(tier_rate_limit_middleware)
+        logger.info("Tier-aware HTTP rate limiting middleware enabled (production)")
+    else:
+        logger.info("Tier-aware HTTP rate limiting skipped (non-production ENVIRONMENT)")
 except ImportError as exc:
     logger.warning("Tier rate limiting middleware not enabled: %s", exc)
 

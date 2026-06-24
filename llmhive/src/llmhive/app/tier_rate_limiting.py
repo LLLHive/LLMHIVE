@@ -185,6 +185,15 @@ async def tier_rate_limit_middleware(
     if any(request.url.path.startswith(path) for path in skip_paths):
         return await call_next(request)
 
+    # Only throttle expensive inference entry points (not catalog, agents, contract probes).
+    rate_limited_prefixes = (
+        "/v1/chat",
+        "/v1/execute",
+        "/api/v1/openrouter/chat/completions",
+    )
+    if not any(request.url.path.startswith(p) for p in rate_limited_prefixes):
+        return await call_next(request)
+
     # Scheduled CI benchmarks must not be throttled (many cases per minute from one IP).
     try:
         from .billing.scheduled_benchmark import scheduled_benchmark_request_valid
