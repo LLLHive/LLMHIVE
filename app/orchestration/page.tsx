@@ -20,7 +20,8 @@ import { ROUTES } from "@/lib/routes"
 import { useAuth } from "@/lib/auth-context"
 import { useConversationsContext } from "@/lib/conversations-context"
 import { STORAGE_KEYS, type SelectedModelConfig, TIER_CONFIGS, getTierBadgeColor, getTierDisplayName, getModelRequiredTier, canAccessModel } from "@/lib/openrouter/tiers"
-import { useUserTier } from "@/lib/hooks/use-user-tier"
+import { canUseSingleFlagshipPick } from "@/lib/billing/enterprise-features"
+import { EnterpriseFlagshipPickHint } from "@/components/enterprise-flagship-pick-hint"
 import { 
   useOpenRouterCategories, 
   useCategoryRankings, 
@@ -299,7 +300,8 @@ export default function OrchestrationPage() {
   const [selectedFormat, setSelectedFormat] = useState<string>("automatic")
   
   // Get user tier from subscription
-  const { userTier, isLoading: tierLoading } = useUserTier()
+  const { userTier, subscriptionTier, isLoading: tierLoading } = useUserTier()
+  const flagshipPickAllowed = canUseSingleFlagshipPick(subscriptionTier)
   const tierConfig = TIER_CONFIGS[userTier]
   
   // Category-based model selection state
@@ -399,6 +401,7 @@ export default function OrchestrationPage() {
   }, [selectedModels, selectedMethods, selectedFeatures, selectedTools, tuningSettings, selectedSpeed, selectedEliteStrategy, selectedQualityOptions, selectedDomain, selectedFormat, standardValues, settingsLoaded])
 
   const toggleModel = (id: string) => {
+    if (!flagshipPickAllowed) return
     setSelectedModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]))
   }
 
@@ -565,6 +568,9 @@ export default function OrchestrationPage() {
                 </span>
               </SheetTitle>
               <p className="text-xs text-muted-foreground">Select AI models for orchestration</p>
+              {!flagshipPickAllowed && (
+                <EnterpriseFlagshipPickHint className="mt-2" />
+              )}
             </SheetHeader>
           </div>
           <ScrollArea className="h-[calc(100vh-100px)]">
@@ -595,7 +601,7 @@ export default function OrchestrationPage() {
                       {rankedEntries.map((entry) => {
                         const modelId = entry.model_id || ''
                         const isSelected = selectedModels.includes(modelId)
-                        const hasAccess = canAccessModel(userTier, modelId)
+                        const hasAccess = flagshipPickAllowed && canAccessModel(userTier, modelId)
                         const requiredTier = getModelRequiredTier(modelId)
                         
                         return (

@@ -19,6 +19,8 @@ export default function PricingComparePage() {
           items: [
             "Spend-guarded elite orchestration for paid plans.",
             "90-day conversation memory on Standard and Premium.",
+            "Automatic multi-model routing on Standard and Premium.",
+            "Single flagship model pick on Enterprise — choose one frontier model per request.",
             "Enterprise support and team controls.",
           ],
         },

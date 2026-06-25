@@ -78,6 +78,8 @@ from .model_router import (
     is_speed_critical,
 )
 from ..domain_presets import filter_models_by_domain, normalize_domain_pack
+from ..billing.flagship_pick import apply_flagship_pick_policy
+from ..middleware.tier_check import get_user_tier
 from .reasoning_prompts import get_reasoning_prompt_template, get_category_prompt
 
 # Import Clarification Manager for ambiguity detection
@@ -2584,6 +2586,17 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
     
     try:
         request = _resolve_request_model_tier_from_subscription(request)
+
+        _uid = request.metadata.user_id if request.metadata else None
+        if _uid:
+            try:
+                _sub_tier = get_user_tier(str(_uid)).value
+                request, _flagship_gated = apply_flagship_pick_policy(request, _sub_tier)
+            except Exception as _fp_exc:
+                logger.warning("flagship_pick policy skipped: %s", _fp_exc)
+                _flagship_gated = False
+        else:
+            request, _flagship_gated = apply_flagship_pick_policy(request, "free")
 
         # Profile defaults (format/tone/show_confidence)
         user_profile = None

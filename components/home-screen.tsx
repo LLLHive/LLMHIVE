@@ -48,6 +48,8 @@ import type { OrchestratorSettings, DomainPack, AnswerFormat } from "@/lib/types
 import { useOpenRouterCategories, useCategoryRankings, CATEGORY_COLOR_MAP } from "@/hooks/use-openrouter-categories"
 import { getModelLogo } from "@/lib/models"
 import { canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier } from "@/lib/openrouter/tiers"
+import { canUseSingleFlagshipPick } from "@/lib/billing/enterprise-features"
+import { EnterpriseFlagshipPickHint } from "@/components/enterprise-flagship-pick-hint"
 import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -283,7 +285,8 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
   // Hooks for category rankings (like chat-toolbar.tsx)
   const { categories, loading: categoriesLoading, error: categoriesError } = useOpenRouterCategories()
   const { rankings: rankedEntries, loading: loadingRankings, error: rankingsError } = useCategoryRankings(expandedCategory)
-  const { userTier } = useUserTier()
+  const { userTier, subscriptionTier } = useUserTier()
+  const flagshipPickAllowed = canUseSingleFlagshipPick(subscriptionTier)
 
   const openDrawer = (templateId: string) => {
     setActiveDrawer(templateId as DrawerId)
@@ -304,8 +307,12 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
     }
     
     if (activeDrawer === "models") {
-      finalPreset.selectedModels = selectedModel === "automatic" ? ["automatic"] : [selectedModel]
-      finalPreset.agentMode = agentMode
+      const modelsPreset =
+        selectedModel === "automatic" || !flagshipPickAllowed
+          ? ["automatic"]
+          : [selectedModel]
+      finalPreset.selectedModels = modelsPreset
+      finalPreset.agentMode = flagshipPickAllowed ? agentMode : "team"
     }
     
     if (activeDrawer === "format") {
@@ -603,15 +610,25 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                     <div className="ml-4 pl-4 border-l border-white/10 py-1 space-y-1">
                       {[
                         { id: "team", label: "Team Mode", desc: "Multi-model ensemble (recommended)" },
-                        { id: "single", label: "Single Mode", desc: "Use one model only" },
+                        {
+                          id: "single",
+                          label: "Single Mode",
+                          desc: flagshipPickAllowed
+                            ? "One flagship model (Enterprise)"
+                            : "Enterprise only",
+                        },
                       ].map((option) => (
                         <button
                           key={option.id}
                           type="button"
-                          onClick={() => setAgentMode(option.id as "team" | "single")}
+                          onClick={() => {
+                            if (option.id === "single" && !flagshipPickAllowed) return
+                            setAgentMode(option.id as "team" | "single")
+                          }}
+                          disabled={option.id === "single" && !flagshipPickAllowed}
                           className={`w-full flex items-start gap-2 py-1.5 px-2 rounded text-xs text-left transition-all ${
                             agentMode === option.id ? "bg-[var(--bronze)]/10" : "hover:bg-white/5"
-                          }`}
+                          } ${option.id === "single" && !flagshipPickAllowed ? "opacity-60 cursor-not-allowed" : ""}`}
                         >
                           <Check className={`h-3 w-3 mt-0.5 shrink-0 ${
                             agentMode === option.id ? "text-[var(--bronze)]" : "text-transparent"
@@ -624,6 +641,11 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                           </div>
                         </button>
                       ))}
+                      {!flagshipPickAllowed && (
+                        <div className="px-2 pt-1">
+                          <EnterpriseFlagshipPickHint />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -685,7 +707,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
                                   ) : rankedEntries.length > 0 ? (
                                     rankedEntries.slice(0, 10).map((entry) => {
                                       const modelId = entry.model_id || ''
-                                      const hasAccess = canAccessModel(userTier, modelId)
+                                      const hasAccess = flagshipPickAllowed && canAccessModel(userTier, modelId)
                                       const requiredTier = getModelRequiredTier(modelId)
                                       const isSelected = selectedModel === modelId
                                       

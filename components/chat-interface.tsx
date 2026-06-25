@@ -23,10 +23,16 @@ import {
   saveOrchestratorSettings, 
   DEFAULT_ORCHESTRATOR_SETTINGS 
 } from "@/lib/settings-storage"
+import {
+  canUseSingleFlagshipPick,
+  sanitizeModelSelectionForTier,
+} from "@/lib/billing/enterprise-features"
+import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { useConversationsContext } from "@/lib/conversations-context"
 import { toast } from "@/lib/toast"
 
 export function ChatInterface() {
+  const { subscriptionTier, isLoading: tierLoading } = useUserTier()
   // URL search params for deep linking (e.g., from Discover page)
   const searchParams = useSearchParams()
   
@@ -80,11 +86,23 @@ export function ChatInterface() {
   /** Last `q` value we applied — avoids a single boolean blocking a second `?q=` in the same session. */
   const lastAppliedUrlQueryRef = useRef<string | null>(null)
   
-  // Load orchestrator settings on mount
+  // Load orchestrator settings on mount; strip Enterprise-only picks for other tiers
   useEffect(() => {
+    if (tierLoading) return
     const savedSettings = loadOrchestratorSettings()
+    const sanitized = sanitizeModelSelectionForTier(savedSettings, subscriptionTier)
+    if (sanitized.gated) {
+      const next = {
+        ...savedSettings,
+        agentMode: sanitized.agentMode,
+        selectedModels: sanitized.selectedModels,
+      }
+      saveOrchestratorSettings(next)
+      setOrchestratorSettings(next)
+      return
+    }
     setOrchestratorSettings(savedSettings)
-  }, [])
+  }, [tierLoading, subscriptionTier])
 
   // Prevent the document from staying scrolled when switching chats (mobile Safari / focus quirks).
   useEffect(() => {

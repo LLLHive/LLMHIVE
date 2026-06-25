@@ -5,6 +5,7 @@ import {
   preferCheaperDefault,
   resolvePerRequestMaxCostUsd,
 } from "@/lib/billing/tier-cost-caps"
+import { sanitizeModelSelectionForTier, canUseSingleFlagshipPick } from "@/lib/billing/enterprise-features"
 
 // Vercel serverless function configuration
 // Extend timeout for multi-model orchestration (Premium: up to 300s)
@@ -242,7 +243,7 @@ export async function POST(req: NextRequest) {
     }))
 
     // Get orchestrator settings with defaults (must be before spell check)
-    const settings = orchestratorSettings || {
+    let settings = orchestratorSettings || {
       reasoningMode: "standard",
       domainPack: "default",
       agentMode: "team",
@@ -250,6 +251,19 @@ export async function POST(req: NextRequest) {
       outputValidation: true,
       answerStructure: true,
       learnFromChat: true,
+    }
+
+    const flagshipSelection = sanitizeModelSelectionForTier(settings, entitlement.tier)
+    if (flagshipSelection.gated) {
+      console.log(
+        "[Chat API] Single flagship pick gated for tier=%s — using team/automatic",
+        entitlement.tier,
+      )
+      settings = {
+        ...settings,
+        agentMode: flagshipSelection.agentMode,
+        selectedModels: flagshipSelection.selectedModels,
+      }
     }
 
     // Apply spell check to user prompt if enabled (default: true)
@@ -309,7 +323,10 @@ export async function POST(req: NextRequest) {
     // Build the ChatRequest payload matching FastAPI ChatRequest model
     // Include models selected by the user - these will be used for multi-model orchestration
     // When "automatic" is selected, pass empty/null to let backend do intelligent selection
-    let selectedModels = models || settings.selectedModels || []
+    let selectedModels =
+      !canUseSingleFlagshipPick(entitlement.tier)
+        ? []
+        : models || settings.selectedModels || []
     
     // Check if user wants automatic intelligent selection
     const isAutomaticMode = (

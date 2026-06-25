@@ -19,6 +19,7 @@ export const OFFER_PREMIUM_FEATURES: readonly string[] = [
 ]
 
 export const OFFER_ENTERPRISE_FEATURES: readonly string[] = [
+  "Single flagship model pick — choose one frontier model per request",
   "400 Premium orchestration queries / seat / month, then unlimited Standard",
   "Minimum 5 seats ($175+/mo)",
   "SSO / SAML & org-level admin",

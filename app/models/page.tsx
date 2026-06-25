@@ -37,6 +37,9 @@ import {
   canAccessModel, getTierBadgeColor, getTierDisplayName, getModelRequiredTier,
   STORAGE_KEYS, TIER_CONFIGS 
 } from "@/lib/openrouter/tiers"
+import { canUseSingleFlagshipPick } from "@/lib/billing/enterprise-features"
+import { EnterpriseFlagshipPickHint } from "@/components/enterprise-flagship-pick-hint"
+import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { getModelLogo } from "@/lib/models"
@@ -54,6 +57,7 @@ function ModelCard({
   rank, 
   metrics,
   userTier,
+  flagshipPickAllowed,
   isSelected,
   onToggleSelect,
   onViewDetails 
@@ -62,11 +66,12 @@ function ModelCard({
   rank?: number
   metrics?: Record<string, number | string>
   userTier: UserTier
+  flagshipPickAllowed: boolean
   isSelected: boolean
   onToggleSelect: () => void
   onViewDetails: () => void
 }) {
-  const canAccess = canAccessModel(userTier, model.id)
+  const canAccess = flagshipPickAllowed && canAccessModel(userTier, model.id)
   const requiredTier = getModelRequiredTier(model.id)
   const promptCost = model.pricing?.per_1m_prompt || model.pricing?.prompt || 0
   
@@ -174,6 +179,8 @@ export default function ModelsPage() {
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set())
   const [showDetails, setShowDetails] = useState<OpenRouterModel | null>(null)
   const [userTier, setUserTier] = useState<UserTier>('free')
+  const [subscriptionTier, setSubscriptionTier] = useState<string>("free")
+  const flagshipPickAllowed = canUseSingleFlagshipPick(subscriptionTier)
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useOpenRouterCategories({
     group: "usecase",
@@ -215,8 +222,13 @@ export default function ModelsPage() {
           const data = await response.json()
           // Map subscription tier to UserTier type
           const tier = data.subscription?.tier?.toLowerCase() || 'free'
-          if (tier === 'pro' || tier === 'enterprise') {
-            setUserTier(tier as UserTier)
+          setSubscriptionTier(tier)
+          if (tier === 'enterprise' || tier === 'maximum') {
+            setUserTier('enterprise')
+          } else if (tier === 'pro' || tier === 'premium') {
+            setUserTier('pro')
+          } else if (tier === 'lite' || tier === 'standard' || tier === 'starter' || tier === 'basic') {
+            setUserTier('starter')
           } else {
             setUserTier('free')
           }
@@ -259,6 +271,10 @@ export default function ModelsPage() {
   }, [])
   
   const toggleModelSelection = (modelId: string) => {
+    if (!flagshipPickAllowed) {
+      toast.message("Single flagship pick is available on Enterprise plans.")
+      return
+    }
     const newSelected = new Set(selectedModelIds)
     if (newSelected.has(modelId)) {
       newSelected.delete(modelId)
@@ -351,6 +367,9 @@ export default function ModelsPage() {
               <p className="llmhive-subtitle-3d text-sm md:text-base max-w-md mx-auto">
                 Browse {allModels.length}+ models by ranking category
               </p>
+              {!flagshipPickAllowed && (
+                <EnterpriseFlagshipPickHint className="mt-3 max-w-md mx-auto" subtle={false} />
+              )}
             </div>
 
             {/* Selection Status */}
@@ -474,6 +493,7 @@ export default function ModelsPage() {
                         rank={item.rank}
                         metrics={item.metrics}
                         userTier={userTier}
+                        flagshipPickAllowed={flagshipPickAllowed}
                         isSelected={selectedModelIds.has(modelData.id)}
                         onToggleSelect={() => toggleModelSelection(modelData.id)}
                         onViewDetails={() => setShowDetails(modelData)}

@@ -87,7 +87,7 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   enterprise: {
     name: 'enterprise',
     displayName: 'Enterprise',
-    description: 'Teams — $35/seat/mo (min 5 seats), SSO, compliance, 400 Premium/seat',
+    description: 'Teams — $35/seat/mo (min 5 seats), SSO, compliance, single flagship model pick',
     maxModelsInTeam: 20,
     maxConcurrentRequests: 50,
     monthlyTokenLimit: DEV_MODE ? null : 5_000_000,  // 5M base (was unlimited!)

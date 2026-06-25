@@ -21,6 +21,8 @@ import { getModelLogo } from "@/lib/models"
 import Image from "next/image"
 import type { OpenRouterModel } from "@/lib/openrouter/types"
 import { canAccessModel, STORAGE_KEYS, type SelectedModelConfig } from "@/lib/openrouter/tiers"
+import { canUseSingleFlagshipPick } from "@/lib/billing/enterprise-features"
+import { EnterpriseFlagshipPickHint } from "@/components/enterprise-flagship-pick-hint"
 import { useUserTier } from "@/lib/hooks/use-user-tier"
 import { cn } from "@/lib/utils"
 import { 
@@ -134,7 +136,8 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
   const [myTeamModels, setMyTeamModels] = useState<string[]>([])
   
   // Get user tier from subscription
-  const { userTier } = useUserTier()
+  const { userTier, subscriptionTier } = useUserTier()
+  const flagshipPickAllowed = canUseSingleFlagshipPick(subscriptionTier)
   
   // Use shared hooks for categories and rankings
   const { categories, loading: categoriesLoading, error: categoriesError } = useOpenRouterCategories({ group: 'usecase' })
@@ -160,6 +163,9 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
   const ReasoningIcon = currentReasoningMode.icon
 
   const toggleModel = (modelId: string) => {
+    if (!flagshipPickAllowed) {
+      return
+    }
     const currentModels = settings.selectedModels || []
     const isSingleMode = settings.agentMode === "single"
 
@@ -215,7 +221,7 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             rankedEntries.map((entry) => {
               const modelId = entry.model_id || ''
               const isSelected = selectedModels.includes(modelId)
-              const hasAccess = canAccessModel(userTier, modelId)
+              const hasAccess = flagshipPickAllowed && canAccessModel(userTier, modelId)
               return (
                 <DropdownMenuItem
                   key={modelId}
@@ -315,16 +321,21 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
             {settings.agentMode === "team" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
           </DropdownMenuItem>
           
-          {/* Single Mode Option */}
+          {/* Single Mode Option — Enterprise only */}
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
+              if (!flagshipPickAllowed) return
               onSettingsChange({
                 agentMode: "single",
                 selectedModels: constrainModelsForSingleMode(settings.selectedModels || ["automatic"]),
               })
             }}
-            className="gap-2 cursor-pointer py-1.5 sm:py-2"
+            disabled={!flagshipPickAllowed}
+            className={cn(
+              "gap-2 cursor-pointer py-1.5 sm:py-2",
+              !flagshipPickAllowed && "opacity-60 cursor-not-allowed",
+            )}
           >
             <div className={cn(
               "w-5 h-5 rounded-full flex items-center justify-center",
@@ -337,14 +348,25 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                 settings.agentMode === "single" ? "text-[var(--bronze)]" : "text-muted-foreground"
               )} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <span className={cn("font-medium", settings.agentMode === "single" && "text-[var(--bronze)]")}>
                 Single Mode
               </span>
-              <p className="text-[10px] text-muted-foreground">Use one model only</p>
+              <p className="text-[10px] text-muted-foreground">One flagship model (Enterprise)</p>
+              {!flagshipPickAllowed && (
+                <EnterpriseFlagshipPickHint className="mt-0.5" />
+              )}
             </div>
-            {settings.agentMode === "single" && <Check className="h-4 w-4 text-[var(--bronze)]" />}
+            {settings.agentMode === "single" && flagshipPickAllowed && (
+              <Check className="h-4 w-4 text-[var(--bronze)]" />
+            )}
           </DropdownMenuItem>
+
+          {!flagshipPickAllowed && (
+            <div className="px-2 pb-1">
+              <EnterpriseFlagshipPickHint />
+            </div>
+          )}
           
           <DropdownMenuSeparator />
           
@@ -364,7 +386,11 @@ export function ChatToolbar({ settings, onSettingsChange, onOpenAdvanced }: Chat
                       e.preventDefault()
                       toggleModel(modelId)
                     }}
-                    className="gap-2 cursor-pointer pl-6 py-1.5 sm:py-2"
+                    disabled={!flagshipPickAllowed}
+                    className={cn(
+                      "gap-2 cursor-pointer pl-6 py-1.5 sm:py-2",
+                      !flagshipPickAllowed && "opacity-50 cursor-not-allowed",
+                    )}
                   >
                     <span className="flex-1 text-[13px] sm:text-sm truncate">{modelId.split('/')[1] || modelId}</span>
                     {isSelected && <Check className="h-4 w-4 text-[var(--bronze)]" />}

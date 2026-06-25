@@ -39,6 +39,8 @@ import {
   OFFER_PREMIUM_FEATURES,
   OFFER_STANDARD_FEATURES,
 } from "@/lib/marketing/pricing-offers"
+import { ENTERPRISE_SINGLE_FLAGSHIP_PICK_LABEL } from "@/lib/billing/enterprise-features"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { track } from "@/lib/observability/analytics"
 import Image from "next/image"
@@ -153,6 +155,11 @@ const pricingFaq = [
     question: "What happens when the spend guard is reached?",
     answer:
       "LLMHive switches paid accounts to free orchestration for the rest of the billing period when provider spend reaches the protected cap.",
+  },
+  {
+    question: "Can I choose a specific flagship model?",
+    answer:
+      "Single flagship model pick (one explicit frontier model per request) is available on Enterprise. Standard and Premium use automatic multi-model orchestration within spend guardrails.",
   },
   {
     question: "Can I change plans later?",
@@ -555,6 +562,18 @@ export default function PricingClient() {
                         </li>
                       ))}
                     </ul>
+                    {tier.tier !== "enterprise" && (
+                      <p className={cn("text-xs mt-3 pt-3 border-t border-zinc-700/50 leading-relaxed", copySubtle)}>
+                        Automatic multi-model orchestration.{" "}
+                        <Link
+                          href="/pricing#enterprise"
+                          className="underline underline-offset-2 text-zinc-200 hover:text-white"
+                        >
+                          {ENTERPRISE_SINGLE_FLAGSHIP_PICK_LABEL}
+                        </Link>
+                        .
+                      </p>
+                    )}
                   </div>
                 </CardContent>
 

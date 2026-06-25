@@ -32,6 +32,7 @@ import {
   OFFER_STANDARD_FEATURES,
   offerPromoBullets,
 } from "@/lib/marketing/pricing-offers"
+import { ENTERPRISE_SINGLE_FLAGSHIP_PICK_LABEL } from "@/lib/billing/enterprise-features"
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TECHNOLOGY SECTIONS - Organized in rows of 3 for synchronized expansion
@@ -344,6 +345,13 @@ export default function PromoClient() {
                   </li>
                 ))}
               </ul>
+              <p className="text-[10px] text-white/50 mb-2 leading-relaxed">
+                Automatic multi-model orchestration.{" "}
+                <Link href="/pricing#enterprise" className="underline underline-offset-2 text-white/70 hover:text-white">
+                  {ENTERPRISE_SINGLE_FLAGSHIP_PICK_LABEL}
+                </Link>
+                .
+              </p>
               <Button asChild className="mt-auto h-9 w-full bg-[var(--bronze)] text-xs text-white hover:bg-[var(--bronze-dark)]">
                 <Link href="/pricing">
                   Subscribe — Standard <ArrowRight className="h-3 w-3 ml-1" />
@@ -378,6 +386,13 @@ export default function PromoClient() {
                   </li>
                 ))}
               </ul>
+              <p className="text-[10px] text-white/50 mb-2 leading-relaxed">
+                Automatic multi-model orchestration.{" "}
+                <Link href="/pricing#enterprise" className="underline underline-offset-2 text-white/70 hover:text-white">
+                  {ENTERPRISE_SINGLE_FLAGSHIP_PICK_LABEL}
+                </Link>
+                .
+              </p>
               <Button asChild className="mt-auto h-9 w-full bronze-gradient text-xs font-bold text-white">
                 <Link href="/pricing">
                   Subscribe — Premium <ArrowRight className="h-3 w-3 ml-1" />
