@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "description": "Per-request USD ceilings for OpenRouter and orchestration budget routing. Aligns LLMHive subscriber tiers with provider spend exposure.",
+  "per_request_max_cost_usd": {
+    "free": 0.1,
+    "lite": 0.35,
+    "basic": 0.35,
+    "starter": 0.35,
+    "standard": 0.35,
+    "pro": 0.75,
+    "premium": 0.75,
+    "maximum": 0.75,
+    "enterprise": 2.0
+  },
+  "prefer_cheaper_default": {
+    "free": true,
+    "lite": true,
+    "basic": true,
+    "starter": true,
+    "standard": true
+  },
+  "openrouter_production_key": {
+    "name": "open-router-key",
+    "guardrail_name": "llmhive-production-open-router-key",
+    "monthly_limit_usd": 900,
+    "reset_interval": "monthly",
+    "notes": "Monthly guardrail sits below the key TOTAL limit ($1,200). Lower limit wins. Raise key TOTAL in OpenRouter if monthly burn is legitimate."
+  }
+}

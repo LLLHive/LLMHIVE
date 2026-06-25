@@ -1,21 +1,10 @@
 import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { getPaidEntitlement, paymentRequiredResponse } from "@/lib/billing/entitlement"
+import { resolvePerRequestMaxCostUsd } from "@/lib/billing/tier-cost-caps"
 import { getSiteUrl } from "@/lib/site-url"
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-
-const TIER_MAX_COST_USD: Record<string, number> = {
-  free: 0.10,
-  lite: 0.35,
-  basic: 0.35,
-  starter: 0.35,
-  standard: 0.35,
-  pro: 0.75,
-  premium: 0.75,
-  maximum: 0.75,
-  enterprise: 2.0,
-}
 
 export async function POST(request: Request) {
   try {
@@ -31,10 +20,10 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const tierKey = entitlement.tier.toLowerCase()
-    const maxCost =
-      typeof body.max_cost_usd === "number" && body.max_cost_usd > 0
-        ? body.max_cost_usd
-        : TIER_MAX_COST_USD[tierKey] ?? 0.35
+    const maxCost = resolvePerRequestMaxCostUsd(
+      tierKey,
+      typeof body.max_cost_usd === "number" ? body.max_cost_usd : null,
+    )
 
     const apiKey = process.env.OPENROUTER_API_KEY
     if (!apiKey) {

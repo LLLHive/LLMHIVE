@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "name": "llmhive-production-open-router-key",
+  "description": "Platform-level guardrail for Cloud Run open-router-key. Complements LLMHive elite spend guard (per-subscriber 25% cap).",
+  "target_key_name": "open-router-key",
+  "limit_usd": 900,
+  "reset_interval": "monthly",
+  "enforce_zdr_openai": true,
+  "enforce_zdr_anthropic": true,
+  "enforce_zdr_google": true,
+  "enforce_zdr_other": false,
+  "content_filter_builtins": [
+    {
+      "slug": "regex-prompt-injection",
+      "action": "block",
+      "scan_scope": "all_messages"
+    },
+    {
+      "slug": "credit-card",
+      "action": "block"
+    },
+    {
+      "slug": "ssn",
+      "action": "redact"
+    }
+  ],
+  "model_allowlist_source": "data/generated/frontier_roster.json",
+  "extra_allowed_models": [
+    "openai/gpt-4o-mini",
+    "google/gemini-2.5-flash",
+    "google/gemini-3.1-flash-lite-preview",
+    "meta-llama/llama-3.3-70b-instruct",
+    "deepseek/deepseek-chat",
+    "deepseek/deepseek-v3.2",
+    "anthropic/claude-3.5-haiku",
+    "mistralai/mistral-small-3.1-24b-instruct"
+  ]
+}

@@ -8,22 +8,14 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException, status
 
 from ..billing.access_guard import require_app_access
+from ..billing.tier_cost_caps import per_request_max_cost_usd, resolve_per_request_max_cost_usd
 from ..middleware.tier_check import (
     TierName,
     get_user_tier,
     is_user_throttled,
-    normalize_rate_limit_tier,
 )
 
 logger = logging.getLogger(__name__)
-
-# Per-request USD ceiling when the client omits max_cost_usd (profit protection).
-_DEFAULT_MAX_COST_BY_TIER: Dict[str, float] = {
-    "free": 0.10,
-    "lite": 0.35,
-    "pro": 0.75,
-    "enterprise": 2.00,
-}
 
 
 def enforce_openrouter_inference(user_id: Optional[str]) -> None:
@@ -59,20 +51,16 @@ def enforce_openrouter_inference(user_id: Optional[str]) -> None:
 
 def default_max_cost_usd_for_user(user_id: str) -> float:
     tier = get_user_tier(user_id)
-    key = normalize_rate_limit_tier(tier.value)
-    return _DEFAULT_MAX_COST_BY_TIER.get(key, _DEFAULT_MAX_COST_BY_TIER["free"])
+    return per_request_max_cost_usd(tier.value)
 
 
 def resolve_openrouter_max_cost_usd(
     user_id: Optional[str],
     requested: Optional[float],
 ) -> float:
-    if requested is not None and requested > 0:
-        return float(requested)
     uid = (user_id or "").strip()
-    if not uid:
-        return _DEFAULT_MAX_COST_BY_TIER["free"]
-    return default_max_cost_usd_for_user(uid)
+    tier = get_user_tier(uid).value if uid else "free"
+    return resolve_per_request_max_cost_usd(tier, requested)
 
 
 def record_openrouter_spend(user_id: Optional[str], response: Dict[str, Any]) -> None:
