@@ -267,7 +267,7 @@ export function PoweredByDropdown({ compact = false }: PoweredByDropdownProps) {
       <div className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-purple-500/5 to-amber-500/5 border-t border-border/50">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-yellow-400 font-medium">
-            Patented orchestration technology
+            Patent Pending orchestration technology
           </span>
           <div className="flex items-center gap-1 text-[10px] text-[var(--bronze)]">
             <TrendingUp className="h-3 w-3" />

@@ -25,7 +25,7 @@ What he found devastated him: The most advanced AI models in the world—systems
 
 At 59 years old, with no coding background, Camilo made a decision that would change his life—and eventually, the entire AI industry. He taught himself to code. Not for profit. Not for fame. But because he needed an AI he could trust when the stakes were highest.
 
-Over countless sleepless nights, he developed, tested, patented, and built LLMHive: a revolutionary platform that doesn't rely on any single AI model. Instead, it orchestrates multiple frontier AI models, cross-verifies their outputs, eliminates hallucinations, and delivers answers you can actually trust.
+Over countless sleepless nights, he developed, tested, and built LLMHive (Patent Pending): a revolutionary platform that doesn't rely on any single AI model. Instead, it orchestrates multiple frontier AI models, cross-verifies their outputs, eliminates hallucinations, and delivers answers you can actually trust.
 
 What started as a father's desperate mission to help his daughter has become something extraordinary: **the only AI platform that ranks #1 in ALL 10 industry benchmark categories**—beating every single AI model from OpenAI, Google, Anthropic, and Meta.
 
@@ -52,7 +52,7 @@ A portion of all LLMHive proceeds will be donated to organizations helping child
 - Up to 1,575x cheaper per query than premium models
 - Enterprise-grade quality at startup-friendly prices
 
-**Patented Innovations (From Official Patent Drawings):**
+**Patent Pending Innovations (From Official Patent Drawings):**
 
 1. **Multi-Model Orchestration Architecture** (FIG. 1-2)
    - Dynamic model selection based on query type
@@ -154,7 +154,7 @@ A portion of all LLMHive proceeds will be donated to organizations helping child
 LLMHive's technology is protected by a comprehensive patent covering 12 technical figures:
 - The patent was filed after extensive development and testing
 - It covers novel approaches to multi-model orchestration that no major AI company has implemented
-- This isn't just software—it's patented intellectual property that represents a genuine breakthrough
+- This isn't just software—it's Patent Pending intellectual property that represents a genuine breakthrough
 - A 59-year-old self-taught programmer created patentable innovations that OpenAI, Google, and Anthropic haven't achieved
 
 ---

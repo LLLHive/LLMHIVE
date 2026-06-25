@@ -64,7 +64,7 @@ const ORCHESTRATION_MODE_LABELS = {
   elite: { label: "Premium", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "GPT-5, Claude & Gemini unified — #1 in 5 out of 8 benchmark categories" },
   standard: { label: "Balanced", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "Premium routing & verification — Top 3 quality" },
   budget: { label: "Budget", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "Claude Sonnet optimized — Excellent quality" },
-  free: { label: "Standard", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patented AI ensemble — BEATS most paid models" },
+  free: { label: "Standard", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patent Pending AI ensemble — BEATS most paid models" },
 }
 
 /** User-facing label when showing raw after-quota tier keys from the API */

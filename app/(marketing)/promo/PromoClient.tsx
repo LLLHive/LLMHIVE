@@ -189,7 +189,7 @@ export default function PromoClient() {
 
           {/* Subtitle */}
           <p className="llmhive-subtitle-3d text-sm md:text-base mx-auto mb-4 whitespace-nowrap">
-            Patented multi-agent orchestration for enhanced accuracy and performance.
+            Patent Pending multi-agent orchestration for enhanced accuracy and performance.
           </p>
 
           {/* #1 Benchmark Badge */}
@@ -261,7 +261,7 @@ export default function PromoClient() {
         <div className="max-w-6xl mx-auto">
           {/* Technology Grid - Rows expand together */}
           <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Patented Technology</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Patent Pending Technology</h2>
             <p className="text-white/60">9 breakthrough features no other AI platform can match</p>
           </div>
 

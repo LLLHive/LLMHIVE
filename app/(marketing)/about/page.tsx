@@ -16,21 +16,21 @@ import {
 export const metadata: Metadata = {
   title: "About LLMHive",
   description:
-    "Learn about LLMHive's mission, patented orchestration, and team building the future of AI.",
+    "Learn about LLMHive's mission, Patent Pending orchestration, and team building the future of AI.",
   alternates: {
     canonical: sitePath('/about'),
   },
   openGraph: {
     title: "About LLMHive",
     description:
-      "Learn about LLMHive's mission, patented orchestration, and team building the future of AI.",
+      "Learn about LLMHive's mission, Patent Pending orchestration, and team building the future of AI.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "About LLMHive",
     description:
-      "Learn about LLMHive's mission, patented orchestration, and team building the future of AI.",
+      "Learn about LLMHive's mission, Patent Pending orchestration, and team building the future of AI.",
   },
 }
 

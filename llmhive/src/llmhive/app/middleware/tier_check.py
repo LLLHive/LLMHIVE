@@ -57,7 +57,7 @@ class OrchestrationTier(str, Enum):
     ELITE = "elite"        # GPT-5, Claude & Gemini unified — #1 in ALL 10 categories
     STANDARD = "standard"  # Premium routing & verification — Top 3 quality
     BUDGET = "budget"      # Claude Sonnet optimized — Excellent quality
-    FREE = "free"          # Patented AI ensemble — BEATS most paid models!
+    FREE = "free"          # Patent Pending AI ensemble — BEATS most paid models!
 
 
 # Tier hierarchy (higher index = more permissions)

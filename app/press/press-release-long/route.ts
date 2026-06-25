@@ -4,14 +4,14 @@ function buildContent(): string {
   return `FOR IMMEDIATE RELEASE
 
 LLMHive, Born From a Father's Love, Unveils AI Orchestration Breakthrough That Outperforms GPT-5.5 and Claude at a 1,575x Cost Advantage
-Self-taught 59-year-old founder builds a patented multi-model system that LLMHive reports is #1 across 10 benchmark categories while slashing costs by up to 99.9%
+Self-taught 59-year-old founder builds a Patent Pending multi-model system that LLMHive reports is #1 across 10 benchmark categories while slashing costs by up to 99.9%
 
 Miami, FL – January 24, 2026 – When Camilo Diaz's teenage daughter began suffering from a severe neurological condition that triggered debilitating migraines, he turned to AI for answers. What he found instead were confident errors from the world's most advanced models. At 59, with no coding background, Diaz decided to build the trustworthy AI his family needed. Years of sleepless nights led to LLMHive—a new AI orchestration platform that reports top-ranked performance across 10 major AI benchmark categories while delivering massive cost savings.
 
 LLMHive's launch is live today at ${sitePath("/landing")}. Early adopters can explore Standard orchestration and learn how the platform routes every request to the best expert models in real time.
 
 A Hive of Specialized Intelligences
-LLMHive doesn't rely on a single model. Its patented orchestration framework breaks a complex request into sub-tasks, routes them to specialized models, and uses multi-model critique loops to cross-verify outputs before returning a final response. For example, a patent-grade prompt can route simultaneously to legal reasoning, technical writing, fact-checking, and style-editing experts—then consolidate the best evidence into a single, coherent answer.
+LLMHive doesn't rely on a single model. Its Patent Pending orchestration framework breaks a complex request into sub-tasks, routes them to specialized models, and uses multi-model critique loops to cross-verify outputs before returning a final response. For example, a patent-grade prompt can route simultaneously to legal reasoning, technical writing, fact-checking, and style-editing experts—then consolidate the best evidence into a single, coherent answer.
 
 This means organizations no longer have to manually choose between "the coding model," "the research model," or "the writing model." LLMHive selects the best expert models automatically, making advanced AI practical, consistent, and trustworthy for high-stakes decisions.
 
@@ -44,7 +44,7 @@ Availability and Next Steps
 LLMHive is available worldwide at ${sitePath("/landing")}. Readers can explore product demos at ${sitePath("/demo")}, compare LLMHive to alternatives at ${sitePath("/comparisons")}, and see real-world results at ${sitePath("/case-studies")}.
 
 About LLMHive
-LLMHive orchestrates multiple AI models to act as one. By combining specialized expert models, cross-verification, and a patented consensus framework, LLMHive delivers higher accuracy, better reliability, and lower costs than single-model approaches. Founded in 2025 and headquartered in Miami, Florida, LLMHive's mission is to make AI trustworthy, powerful, and accessible to all.
+LLMHive orchestrates multiple AI models to act as one. By combining specialized expert models, cross-verification, and a Patent Pending consensus framework, LLMHive delivers higher accuracy, better reliability, and lower costs than single-model approaches. Founded in 2025 and headquartered in Miami, Florida, LLMHive's mission is to make AI trustworthy, powerful, and accessible to all.
 
 Media Contact
 Camilo Diaz – Founder & CEO

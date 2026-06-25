@@ -48,7 +48,7 @@ class EnsembleResult:
 
 
 class AdaptiveEnsemble:
-    """Weighted ensemble aligned with the patented adaptive team architecture."""
+    """Weighted ensemble aligned with the Patent Pending adaptive team architecture."""
 
     CONSECUTIVE_INSTABILITY_THRESHOLD = 3
     ENTROPY_P95_REBALANCE_THRESHOLD = 0.85

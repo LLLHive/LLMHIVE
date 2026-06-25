@@ -244,7 +244,7 @@ const templates = [
   {
     id: "technology",
     title: "LLMHive Technology",
-    description: "Our patented orchestration features",
+    description: "Our Patent Pending orchestration features",
     icon: Cpu,
     badgeClass: "icon-badge-purple",
   },
@@ -350,7 +350,7 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
         <LogoText height={102} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
 
         <p className="llmhive-subtitle-3d mx-auto mb-0 w-full max-w-[min(100%,calc(100vw-1.5rem))] whitespace-nowrap overflow-x-auto overflow-y-hidden px-2 text-center text-[clamp(0.65rem,2vw,0.9375rem)] leading-normal [-ms-overflow-style:none] [scrollbar-width:none] sm:text-sm md:text-base [&::-webkit-scrollbar]:hidden">
-          Patented multi-agent orchestration for enhanced accuracy and performance.
+          Patent Pending multi-agent orchestration for enhanced accuracy and performance.
         </p>
 
         {/* #1 Benchmark pill: shrink-to-fit, centered; type −10% vs prior step */}
@@ -820,10 +820,10 @@ export function HomeScreen({ onNewChat, onStartFromTemplate }: HomeScreenProps) 
             <div className="p-4 border-t border-white/10">
               {activeDrawer === "technology" ? (
                 <div className="space-y-3">
-                  {/* Patented tech footer - matches dropdown */}
+                  {/* Patent Pending tech footer - matches dropdown */}
                   <div className="flex items-center justify-between px-2">
                     <span className="text-[10px] text-yellow-400 font-medium">
-                      Patented orchestration technology
+                      Patent Pending orchestration technology
                     </span>
                     <div className="flex items-center gap-1 text-[10px] text-[var(--bronze)]">
                       <RefreshCw className="h-3 w-3" />

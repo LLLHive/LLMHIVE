@@ -134,7 +134,7 @@ def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
 # =============================================================================
 
 # FREE TIER: Only free models from OpenRouter - $0 cost!
-# Marketing: "Our patented orchestration makes FREE models beat most single paid models"
+# Marketing: "Our Patent Pending orchestration makes FREE models beat most single paid models"
 # Key insight: Multi-model consensus + calculator + reranker = great quality even with free models
 # UPDATED: January 27, 2026 - Weekly optimization sync from OpenRouter API
 # =============================================================================

@@ -1,4 +1,4 @@
-"""Adaptive Team Composition Engine — Patented multi-model orchestration.
+"""Adaptive Team Composition Engine — Patent Pending multi-model orchestration.
 
 For each category, selects a team of 3 models ensuring:
   - Provider diversity

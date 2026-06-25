@@ -568,7 +568,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-semibold text-green-400">Standard beats most paid models</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Our patented multi-model orchestration delivers strong quality on the Standard plan.
+                  Our Patent Pending multi-model orchestration delivers strong quality on the Standard plan.
                 </p>
               </div>
 
