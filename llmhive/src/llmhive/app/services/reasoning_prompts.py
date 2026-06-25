@@ -29,22 +29,7 @@ def get_reasoning_prompt_template(
 
 """
     
-    # Domain fallback ensures models still answer questions outside their specialty
-    domain_fallback = """ For any question, whether or not it relates to your specialty, provide a complete and accurate answer using your full knowledge base. Never claim a topic is outside your scope.
-
-"""
-    
-    domain_prefixes = {
-        "medical": f"""{base_instruction}You have expertise in medical topics including clinical research, treatments, therapies, and evidence-based medicine.{domain_fallback}""",
-        "legal": f"""{base_instruction}You have expertise in legal topics including law, precedent, and legal analysis.{domain_fallback}""",
-        "marketing": f"""{base_instruction}You have expertise in marketing including strategy, campaigns, and best practices.{domain_fallback}""",
-        "coding": f"""{base_instruction}You have expertise in software engineering including code, algorithms, and best practices.{domain_fallback}""",
-        "general": f"""{base_instruction}You are a knowledgeable assistant. Provide clear, accurate, and helpful responses.
-
-""",
-    }
-    
-    domain_prefix = domain_prefixes.get(domain_pack or "", base_instruction)
+    domain_prefix = get_domain_instruction_prefix(domain_pack) or base_instruction
     
     templates: Dict[ReasoningMethod, str] = {
         ReasoningMethod.chain_of_thought: f"""{domain_prefix}Let's work this out step by step.
@@ -296,19 +281,53 @@ Include in your comparison:
 }
 
 
-def get_category_prompt(task_type: str, question: str) -> str:
+def get_domain_instruction_prefix(domain_pack: Optional[str] = None) -> str:
+    """Domain-specific system-style prefix for industry packs."""
+    base_instruction = """IMPORTANT: Answer the user's question directly and completely. Do NOT ask clarifying questions unless the query is genuinely incomprehensible. If the user specifies criteria (e.g., "by effectiveness", "top 10"), use those criteria. Do not ask about alternative criteria. NEVER refuse to answer a question by claiming it is outside your scope or specialty.
+
+"""
+    domain_fallback = """ For any question, whether or not it relates to your specialty, provide a complete and accurate answer using your full knowledge base. Never claim a topic is outside your scope.
+
+"""
+    if not domain_pack or domain_pack in ("default", "general"):
+        return ""
+
+    domain_prefixes = {
+        "medical": f"""{base_instruction}You have expertise in medical topics including clinical research, treatments, therapies, and evidence-based medicine.{domain_fallback}""",
+        "legal": f"""{base_instruction}You have expertise in legal topics including law, precedent, and legal analysis.{domain_fallback}""",
+        "marketing": f"""{base_instruction}You have expertise in marketing including strategy, campaigns, and best practices.{domain_fallback}""",
+        "coding": f"""{base_instruction}You have expertise in software engineering including code, algorithms, and best practices.{domain_fallback}""",
+        "research": f"""{base_instruction}You have expertise in research including literature review, methodology, and evidence synthesis.{domain_fallback}""",
+        "finance": f"""{base_instruction}You have expertise in finance including markets, valuation, accounting, and quantitative analysis.{domain_fallback}""",
+        "education": f"""{base_instruction}You have expertise in education including pedagogy, curriculum design, and clear explanations for learners.{domain_fallback}""",
+        "real_estate": f"""{base_instruction}You have expertise in real estate including property valuation, transactions, leasing, and market analysis.{domain_fallback}""",
+        "general": f"""{base_instruction}You are a knowledgeable assistant. Provide clear, accurate, and helpful responses.
+
+""",
+    }
+    return domain_prefixes.get(domain_pack, base_instruction)
+
+
+def get_category_prompt(
+    task_type: str,
+    question: str,
+    domain_pack: Optional[str] = None,
+) -> str:
     """
     Get an optimized prompt for a specific task category.
     
     Args:
         task_type: The detected task type
         question: The user's original question
+        domain_pack: Optional industry pack for domain-specific instructions
         
     Returns:
         Enhanced prompt optimized for the task category
     """
     template = CATEGORY_PROMPTS.get(task_type.lower())
-    if template:
-        return template.format(question=question)
-    return question  # Return original if no template
+    body = template.format(question=question) if template else question
+    prefix = get_domain_instruction_prefix(domain_pack)
+    if prefix:
+        return f"{prefix}{body}"
+    return body
 

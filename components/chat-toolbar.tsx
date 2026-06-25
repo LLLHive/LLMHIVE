@@ -59,6 +59,8 @@ const domainPacks: { value: DomainPack; label: string }[] = [
   { value: "coding", label: "Coding" },
   { value: "research", label: "Research" },
   { value: "finance", label: "Finance" },
+  { value: "education", label: "Education" },
+  { value: "real_estate", label: "Real Estate" },
 ]
 
 // Response format options - Enhanced with clear descriptions

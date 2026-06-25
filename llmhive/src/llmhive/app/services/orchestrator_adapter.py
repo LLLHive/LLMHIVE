@@ -77,6 +77,7 @@ from .model_router import (
     is_long_context_query,
     is_speed_critical,
 )
+from ..domain_presets import filter_models_by_domain, normalize_domain_pack
 from .reasoning_prompts import get_reasoning_prompt_template, get_category_prompt
 
 # Import Clarification Manager for ambiguity detection
@@ -2089,6 +2090,46 @@ def _detect_task_type(prompt: str) -> str:
         return "general"
 
 
+# When the user explicitly selects an industry pack, bias task routing unless the
+# query already triggered a specialized task type from keywords.
+_DOMAIN_PACK_TASK_MAP: Dict[str, str] = {
+    "medical": "health_medical",
+    "legal": "legal_analysis",
+    "finance": "financial_analysis",
+    "coding": "code_generation",
+    "research": "research_analysis",
+    "marketing": "research_analysis",
+    "education": "explanation",
+    "real_estate": "financial_analysis",
+}
+
+_GENERIC_TASK_TYPES = frozenset({
+    "general",
+    "factual_question",
+    "explanation",
+    "summarization",
+    "comparison",
+    "fast_response",
+    "high_quality",
+})
+
+
+def _resolve_task_type_for_domain_pack(
+    detected_task_type: str,
+    domain_pack: str,
+) -> str:
+    """Apply industry-pack task routing when the query is otherwise generic."""
+    normalized = normalize_domain_pack(domain_pack)
+    if not normalized:
+        return detected_task_type
+    pack_task = _DOMAIN_PACK_TASK_MAP.get(normalized)
+    if not pack_task:
+        return detected_task_type
+    if detected_task_type in _GENERIC_TASK_TYPES:
+        return pack_task
+    return detected_task_type
+
+
 def _select_elite_strategy(
     accuracy_level: int,
     task_type: str,
@@ -3049,12 +3090,15 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 prompt_ops = PromptOps(providers=_orchestrator.providers)
                 prompt_spec = await prompt_ops.process(
                     request.prompt,
-                    domain_hint=request.domain_pack.value,
+                    domain_hint=normalize_domain_pack(request.domain_pack.value) or None,
                 )
                 
                 # Use PromptOps analysis
                 base_prompt = prompt_spec.refined_query
-                detected_task_type = prompt_spec.analysis.task_type.value
+                detected_task_type = _resolve_task_type_for_domain_pack(
+                    prompt_spec.analysis.task_type.value,
+                    request.domain_pack.value,
+                )
                 detected_complexity = prompt_spec.analysis.complexity.value
                 requested_output_format = prompt_spec.analysis.output_format
                 
@@ -3086,6 +3130,12 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                     
             except Exception as e:
                 logger.warning("PromptOps failed, using raw prompt: %s", e)
+
+        if prompt_spec is None:
+            detected_task_type = _resolve_task_type_for_domain_pack(
+                _detect_task_type(base_prompt),
+                request.domain_pack.value,
+            )
         
         # ========================================================================
         # STEP 1.1: AUTO-ENABLE HRM FOR COMPLEX QUERIES
@@ -3684,6 +3734,13 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             user_model_names = list(actual_models)
             logger.info("FREE TIER: Re-filtered after intelligent selection -> models=%s", actual_models)
 
+        pack_key = normalize_domain_pack(request.domain_pack.value)
+        # Domain packs are quality tuners only: reorder within tier-allowed models.
+        # They must NOT bypass use_free_models, spend guard, access guard, or Safe Mode.
+        if pack_key and actual_models:
+            actual_models = filter_models_by_domain(actual_models, pack_key)
+            logger.info("Domain pack '%s': prioritized models=%s", pack_key, actual_models)
+
         # Single agent mode: always orchestrate with exactly one model
         if request.agent_mode.value == "single" and len(actual_models) > 1:
             logger.info(
@@ -3706,7 +3763,11 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         else:
             # PHASE 4: Use category-specific optimized prompts for lower accuracy levels
             # These are simpler and less likely to cause LLM echo issues
-            enhanced_prompt = get_category_prompt(detected_task_type, base_prompt)
+            enhanced_prompt = get_category_prompt(
+                detected_task_type,
+                base_prompt,
+                domain_pack=request.domain_pack.value,
+            )
             if enhanced_prompt != base_prompt:
                 logger.info("Phase4: Applied category prompt for task=%s", detected_task_type)
         

@@ -117,7 +117,81 @@ DOMAIN_PRESETS: Dict[str, DomainPreset] = {
         enable_fact_checking=False,
         enable_deep_verification=False,
     ),
+    "marketing": DomainPreset(
+        name="marketing",
+        display_name="Marketing",
+        description="Marketing strategy, campaigns, and brand positioning",
+        preferred_models=[
+            "gpt-4.1",
+            "claude-3-opus-20240229",
+            "gpt-4o",
+            "gemini-2.5-flash",
+        ],
+        required_capabilities={"reasoning", "analysis", "synthesis"},
+        security_level="standard",
+        enable_fact_checking=True,
+        enable_deep_verification=False,
+    ),
+    "finance": DomainPreset(
+        name="finance",
+        display_name="Finance",
+        description="Financial analysis, investing, and quantitative reasoning",
+        preferred_models=[
+            "gpt-4.1",
+            "claude-3-opus-20240229",
+            "gpt-4o",
+            "gemini-2.5-flash",
+        ],
+        required_capabilities={"reasoning", "analysis", "math"},
+        security_level="strict",
+        enable_fact_checking=True,
+        enable_deep_verification=True,
+    ),
+    "education": DomainPreset(
+        name="education",
+        display_name="Education",
+        description="Teaching, tutoring, and curriculum explanations",
+        preferred_models=[
+            "gpt-4o",
+            "gpt-4.1",
+            "claude-3-sonnet-20240229",
+            "gemini-2.5-flash",
+        ],
+        required_capabilities={"reasoning", "analysis", "synthesis"},
+        security_level="standard",
+        enable_fact_checking=True,
+        enable_deep_verification=False,
+    ),
+    "real_estate": DomainPreset(
+        name="real_estate",
+        display_name="Real Estate",
+        description="Property transactions, valuation, and market analysis",
+        preferred_models=[
+            "gpt-4.1",
+            "claude-3-opus-20240229",
+            "gpt-4o",
+        ],
+        required_capabilities={"reasoning", "analysis", "fact_checking"},
+        security_level="standard",
+        enable_fact_checking=True,
+        enable_deep_verification=False,
+    ),
 }
+
+# UI/API pack names that map to preset keys (e.g. "default" -> general).
+_DOMAIN_PACK_ALIASES: Dict[str, str] = {
+    "default": "general",
+}
+
+
+def normalize_domain_pack(domain: Optional[str]) -> Optional[str]:
+    """Map API domain_pack values to preset keys; None when no pack specialization."""
+    if not domain:
+        return None
+    key = domain.lower().strip()
+    if key in ("default", "general", ""):
+        return None
+    return _DOMAIN_PACK_ALIASES.get(key, key)
 
 
 def get_domain_preset(domain: Optional[str]) -> Optional[DomainPreset]:
@@ -133,7 +207,8 @@ def get_domain_preset(domain: Optional[str]) -> Optional[DomainPreset]:
         return None
     
     domain_lower = domain.lower().strip()
-    return DOMAIN_PRESETS.get(domain_lower)
+    preset_key = _DOMAIN_PACK_ALIASES.get(domain_lower, domain_lower)
+    return DOMAIN_PRESETS.get(preset_key)
 
 
 def list_available_domains() -> List[str]:

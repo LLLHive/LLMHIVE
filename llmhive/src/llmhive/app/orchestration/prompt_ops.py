@@ -977,6 +977,7 @@ Output ONLY the clarified query, nothing else."""
             "marketing": ["marketing", "brand", "advertising", "campaign", "customer", "sales"],
             "research": ["research", "study", "analysis", "academic", "paper", "thesis"],
             "education": ["learn", "teach", "study", "course", "student", "education"],
+            "real_estate": ["property", "real estate", "mortgage", "rent", "lease", "listing", "zoning"],
         }
         
         for domain, keywords in domain_keywords.items():
