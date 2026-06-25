@@ -20,8 +20,13 @@ from .conftest import (
     HEALTH_PROBE_PATHS,
     SmokeTestConfig,
     ResponseTimer,
+    STEADY_STATE_MULTI_MAX_MS,
+    STEADY_STATE_MULTI_MIN_SAMPLES,
+    STEADY_STATE_MULTI_SAMPLE_COUNT,
+    STEADY_STATE_SLO_MS,
     assert_chat_latency,
     build_smoke_chat_payload,
+    measure_steady_state_health_latency,
     probe_health_endpoint,
     require_chat_smoke_gate,
 )
@@ -313,66 +318,85 @@ class TestAuthenticatedEndpoints:
 
 @pytest.mark.smoke
 class TestPerformance:
-    """Test response time performance."""
-    
+    """Steady-state SLO checks (post warm-up — not cold-start)."""
+
     def test_health_response_time(
         self,
         smoke_config: SmokeTestConfig,
         http_client: requests.Session,
-        timer: type[ResponseTimer],
+        production_warmed: dict[str, float | str],
     ) -> None:
-        """Verify health endpoint responds within acceptable time."""
-        max_response_time_ms = 1000  # 1 second max
-        
-        with timer("GET health probe (performance)") as t:
-            response, path = probe_health_endpoint(
-                http_client,
-                smoke_config.base_url,
-                timeout=smoke_config.timeout,
-            )
-        
-        if response and response.status_code == 200:
-            assert t.duration_ms < max_response_time_ms, \
-                f"Health check too slow: {t.duration_ms:.0f}ms (max: {max_response_time_ms}ms)"
-            logger.info(f"✅ Health check via {path} OK: {t.duration_ms:.0f}ms")
-        else:
-            pytest.skip("Health probe unavailable for performance check")
-    
+        """Health must respond within SLO after production warm-up."""
+        _ = production_warmed
+        response, path, latency_ms = measure_steady_state_health_latency(
+            http_client,
+            smoke_config.base_url,
+        )
+
+        assert response.status_code == 200, (
+            f"Health probe failed via {path}: {response.status_code} {response.text[:200]}"
+        )
+        assert latency_ms < STEADY_STATE_SLO_MS, (
+            f"Health steady-state SLO breached: {latency_ms:.0f}ms "
+            f"(max: {STEADY_STATE_SLO_MS}ms via {path})"
+        )
+        logger.info("✅ Health steady-state SLO via %s: %.0fms", path, latency_ms)
+
     def test_multiple_health_checks(
         self,
         smoke_config: SmokeTestConfig,
         http_client: requests.Session,
+        production_warmed: dict[str, float | str],
     ) -> None:
-        """Run multiple health checks and measure consistency."""
-        num_requests = 5
+        """Repeated health probes must stay within enterprise latency bounds."""
+        _ = production_warmed
         response_times: list[float] = []
-        
-        for i in range(num_requests):
-            start = time.perf_counter()
+
+        for i in range(STEADY_STATE_MULTI_SAMPLE_COUNT):
             try:
-                response, _path = probe_health_endpoint(
+                response, path, duration_ms = measure_steady_state_health_latency(
                     http_client,
                     smoke_config.base_url,
-                    timeout=smoke_config.timeout,
-                    retries=1,
                 )
-                duration_ms = (time.perf_counter() - start) * 1000
-                if response and response.status_code == 200:
+                if response.status_code == 200:
                     response_times.append(duration_ms)
-            except requests.RequestException as e:
-                logger.warning(f"Request {i+1} failed: {e}")
-        
-        if response_times:
-            avg_time = sum(response_times) / len(response_times)
-            max_time = max(response_times)
-            min_time = min(response_times)
-            
-            logger.info(f"✅ Health check performance ({len(response_times)} requests):")
-            logger.info(f"   Avg: {avg_time:.0f}ms, Min: {min_time:.0f}ms, Max: {max_time:.0f}ms")
-            
-            # Warn if there's high variance
-            if max_time > avg_time * 3:
-                logger.warning(f"⚠️  High response time variance detected")
+                else:
+                    logger.warning(
+                        "Steady-state sample %s non-200 via %s: %s",
+                        i + 1,
+                        path,
+                        response.status_code,
+                    )
+            except (requests.RequestException, RuntimeError) as exc:
+                logger.warning("Steady-state sample %s failed: %s", i + 1, exc)
+
+        assert len(response_times) >= STEADY_STATE_MULTI_MIN_SAMPLES, (
+            f"Insufficient healthy samples: {len(response_times)}/"
+            f"{STEADY_STATE_MULTI_SAMPLE_COUNT} "
+            f"(need {STEADY_STATE_MULTI_MIN_SAMPLES})"
+        )
+
+        avg_time = sum(response_times) / len(response_times)
+        max_time = max(response_times)
+        min_time = min(response_times)
+
+        logger.info(
+            "Health steady-state samples (%s/%s ok): avg=%.0fms min=%.0fms max=%.0fms",
+            len(response_times),
+            STEADY_STATE_MULTI_SAMPLE_COUNT,
+            avg_time,
+            min_time,
+            max_time,
+        )
+
+        assert avg_time < STEADY_STATE_SLO_MS, (
+            f"Health avg steady-state SLO breached: {avg_time:.0f}ms "
+            f"(max avg: {STEADY_STATE_SLO_MS}ms)"
+        )
+        assert max_time < STEADY_STATE_MULTI_MAX_MS, (
+            f"Health peak steady-state SLO breached: {max_time:.0f}ms "
+            f"(max peak: {STEADY_STATE_MULTI_MAX_MS}ms)"
+        )
 
 
 # =============================================================================

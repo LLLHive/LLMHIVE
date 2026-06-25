@@ -117,6 +117,12 @@ jobs:
             echo "url=${PRODUCTION_ORCHESTRATOR_URL}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Wait for production readiness (post-deploy warm-up)
+        env:
+          PRODUCTION_URL: ${{ steps.url.outputs.url }}
+        run: |
+          python scripts/smoke_wait_for_production.py
+
       - name: Run smoke tests
         id: smoke
         env:
@@ -295,6 +301,12 @@ jobs:
           else
             echo "url=${PRODUCTION_ORCHESTRATOR_URL}" >> $GITHUB_OUTPUT
           fi
+
+      - name: Wait for production readiness (post-deploy warm-up)
+        env:
+          PRODUCTION_URL: ${{ steps.url.outputs.url }}
+        run: |
+          python scripts/smoke_wait_for_production.py
 
       - name: Run critical health checks only
         env:
