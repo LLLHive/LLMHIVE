@@ -26,6 +26,17 @@ def test_premium_monthly_cap_is_quarter_revenue(monkeypatch):
     assert effective_spend_cap_usd(rev) == 5.0
 
 
+def test_enterprise_single_seat_uses_same_spend_guard_math(monkeypatch):
+    monkeypatch.setenv("ELITE_SPEND_CAP_FRACTION", "0.25")
+    monkeypatch.setenv("ELITE_SPEND_HEADROOM_FRACTION", "0")
+    rev = resolve_monthly_revenue_usd(
+        TierName.ENTERPRISE,
+        {"billing_cycle": "monthly", "seats": 1},
+    )
+    assert rev == 35.0
+    assert compute_spend_cap_usd(rev) == pytest.approx(8.75)
+
+
 def test_effective_cap_default_headroom(monkeypatch):
     monkeypatch.setenv("ELITE_SPEND_CAP_FRACTION", "0.25")
     monkeypatch.setenv("ELITE_SPEND_HEADROOM_FRACTION", "0.03")

@@ -12,7 +12,7 @@ def test_per_request_caps_by_tier():
     assert per_request_max_cost_usd("free") == 0.1
     assert per_request_max_cost_usd("standard") == 0.35
     assert per_request_max_cost_usd("premium") == 0.75
-    assert per_request_max_cost_usd("enterprise") == 2.0
+    assert per_request_max_cost_usd("enterprise") == 0.75
 
 
 def test_prefer_cheaper_defaults():

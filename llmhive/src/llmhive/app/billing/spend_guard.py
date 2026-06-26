@@ -140,7 +140,7 @@ def resolve_monthly_revenue_usd(tier: TierName, subscription: Optional[Dict[str,
         seats = 1
 
     if tier == TierName.ENTERPRISE:
-        qty = max(seats, pt.limits.min_seats or 1)
+        qty = max(1, seats)
         if cycle == "annual":
             return (pt.annual_price_usd / 12.0) * qty
         return pt.monthly_price_usd * qty

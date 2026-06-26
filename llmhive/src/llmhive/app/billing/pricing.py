@@ -12,7 +12,7 @@ class TierName(str, Enum):
     FREE = "free"           # No paid subscription (internal key; not a Stripe product)
     LITE = "lite"           # Standard paid plan (Stripe: LLMHive Standard, ~$10/mo)
     PRO = "pro"             # Premium paid plan (Stripe: LLMHive Premium, ~$20/mo)
-    ENTERPRISE = "enterprise"  # Organizations: $35/seat/mo (min 5 seats)
+    ENTERPRISE = "enterprise"  # Organizations & power users: $35/seat/mo (1+ seats)
 
 
 class OrchestrationTier(str, Enum):
@@ -243,13 +243,11 @@ class PricingTierManager:
         )
 
         # ═══════════════════════════════════════════════════════════════════════════
-        # ENTERPRISE TIER ($35/seat/mo, min 5 seats = $175/mo minimum)
+        # ENTERPRISE TIER ($35/seat/mo, 1+ seats)
         # ═══════════════════════════════════════════════════════════════════════════
-        # Target: Organizations needing SSO, compliance, team management
+        # Target: Teams and solo power users needing SSO, compliance, flagship model pick
         # Quota per seat: 400 ELITE → throttle to STANDARD (400 more)
-        # Cost per seat: 400×$0.015 + 400×$0.006 = $6.00 + $2.40 = $8.40
-        # Profit per seat: $35 - $8.40 = $26.60 (76% margin) ✅
-        # Min 5 seats = $175/mo minimum, $26.60 × 5 = $133 profit
+        # Spend guard: same 25% of recognized subscription revenue as Standard/Premium
         enterprise_tier = PricingTier(
             name=TierName.ENTERPRISE,
             display_name="Enterprise",
@@ -280,8 +278,8 @@ class PricingTierManager:
                 memory_retention_days=365,
                 calculator_enabled=True,
                 reranker_enabled=True,
-                # SEAT-BASED: Minimum 5 seats required
-                min_seats=5,
+                # SEAT-BASED: 1+ seats (self-serve checkout)
+                min_seats=1,
                 is_per_seat=True,
             ),
             features={
@@ -292,9 +290,9 @@ class PricingTierManager:
                 "vector_storage", "full_consensus", "team_workspace",
                 "shared_memory", "team_projects", "admin_dashboard",
                 "sso", "audit_logs", "compliance", "sla_995",
-                "priority_support", "quota_tracking"
+                "priority_support", "quota_tracking", "spend_guard",
             },
-            description="400 #1-quality/seat + SSO + SOC 2 compliance + 99.5% SLA",
+            description="400 #1-quality/seat + SSO + compliance + spend-guarded orchestration",
         )
 
         # Register all 4 tiers

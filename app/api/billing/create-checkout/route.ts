@@ -84,7 +84,7 @@ const TIER_CONFIG: Record<string, {
     eliteQueries: 400,  // Per seat
     afterQuotaTier: "standard", 
     totalQueries: 800,  // Per seat
-    minSeats: 5, 
+    minSeats: 1, 
     isPerSeat: true 
   },
   maximum: { 
@@ -230,11 +230,11 @@ export async function POST(request: NextRequest) {
         {
           price: priceId,
           quantity: finalQuantity,
-          // For Enterprise: Allow quantity adjustment with minimum 5 seats
+          // Enterprise: per-seat quantity (minimum 1 seat)
           ...(tierConfig.isPerSeat && {
             adjustable_quantity: {
               enabled: true,
-              minimum: tierConfig.minSeats,  // 5 for Enterprise
+              minimum: tierConfig.minSeats,
               maximum: 500,
             },
           }),

@@ -47,7 +47,7 @@ const faqItems = [
   {
     question: "What pricing plans are available?",
     answer:
-      "LLMHive offers three subscriptions: Standard ($10/mo or $100/yr), Premium ($20/mo or $200/yr), and Enterprise (per seat, min 5) with team controls and compliance features. Standard and Premium include 90-day memory and spend-guarded elite orchestration.",
+      "LLMHive offers three subscriptions: Standard ($10/mo or $100/yr), Premium ($20/mo or $200/yr), and Enterprise ($35/seat/mo from a single seat) with flagship model pick, team controls, and compliance features. All paid plans use the same spend-guarded elite orchestration model.",
   },
   {
     question: "What happens when the spend guard is reached?",

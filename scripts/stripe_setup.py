@@ -8,7 +8,7 @@ Run this once to set up your Stripe account, then copy the price IDs to your env
 PAID PRICING STRUCTURE:
 - Standard ($10): elite orchestration while spend guard allows, then free
 - Premium ($20): elite orchestration while spend guard allows, then free
-- Enterprise ($35/seat, min 5): 400 ELITE + 400 STANDARD = 800/seat
+- Enterprise ($35/seat, 1+ seats): 400 ELITE + 400 STANDARD = 800/seat
 - Maximum ($499): UNLIMITED (never throttle)
 
 NOTE: The FREE tier is permanent and handled outside Stripe.
@@ -85,13 +85,14 @@ PRODUCTS = [
     },
     {
         "name": "LLMHive Enterprise",
-        "description": "For organizations with SSO, compliance needs. 400 ELITE per seat + 400 STANDARD per seat. Minimum 5 seats.",
+        "description": "Enterprise plan at $35/seat/month. SSO, compliance, flagship model pick. Same spend guard as Standard and Premium. 400 ELITE + 400 STANDARD per seat.",
         "metadata": {
             "tier": "enterprise",
             "elite_queries_per_seat": "400",
             "standard_queries_per_seat": "400",
             "total_queries_per_seat": "800",
-            "min_seats": "5",
+            "min_seats": "1",
+            "spend_guard": "enabled",
         },
         "prices": [
             {
@@ -186,7 +187,7 @@ def setup_stripe():
 | Pro        | $29.99   | $299.99   | 500           | → FREE       | API + All features  |
 | Enterprise | $35/seat | $350/seat | 400/seat      | → FREE       | SSO + Compliance    |
 
-Enterprise requires minimum 5 seats ($175/mo minimum).
+Enterprise is available from a single seat ($35/mo); add seats anytime in Stripe checkout.
 FREE tier is permanent (no Stripe product) with 50 queries/month using free models.
     """)
 

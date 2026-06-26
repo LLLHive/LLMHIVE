@@ -426,8 +426,8 @@ export default function PromoClient() {
                 ))}
               </ul>
               <Button asChild className="mt-auto h-9 w-full bg-emerald-600 text-xs text-white hover:bg-emerald-700">
-                <Link href="/contact">
-                  Contact Sales <ArrowRight className="h-3 w-3 ml-1" />
+                <Link href="/pricing?subscribe=enterprise&cycle=monthly">
+                  Subscribe — Enterprise <ArrowRight className="h-3 w-3 ml-1" />
                 </Link>
               </Button>
             </div>

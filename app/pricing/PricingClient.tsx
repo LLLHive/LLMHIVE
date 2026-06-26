@@ -119,7 +119,7 @@ const pricingTiers: PricingTier[] = [
   },
   {
     name: "Enterprise",
-    description: "Teams, SSO, and compliance",
+    description: "Single seat or teams — SSO, compliance, flagship model pick",
     monthlyPrice: 35,
     annualPrice: 350,
     tier: "enterprise",
@@ -128,10 +128,10 @@ const pricingTiers: PricingTier[] = [
     quotas: {
       headline: "400 Premium queries / seat",
       afterQuota: "Then unlimited Standard",
-      detail: "SSO, audit logs, SLA",
+      detail: "Spend-guarded orchestration · SSO · audit logs",
     },
     features: [...OFFER_ENTERPRISE_FEATURES],
-    cta: "Contact sales",
+    cta: "Subscribe — Enterprise",
   },
 ]
 
@@ -217,11 +217,6 @@ export default function PricingClient() {
       billingCycle: "monthly" | "annual",
       opts?: { dedupeStorageKey?: string },
     ) => {
-      if (tier.tier === "enterprise") {
-        window.location.href = "mailto:info@llmhive.ai?subject=Enterprise Inquiry - LLMHive"
-        return
-      }
-
       const clearDedupe = () => {
         if (opts?.dedupeStorageKey && typeof window !== "undefined") {
           sessionStorage.removeItem(opts.dedupeStorageKey)
@@ -269,11 +264,6 @@ export default function PricingClient() {
   )
 
   const handleSubscribe = async (tier: PricingTier) => {
-    if (tier.tier === "enterprise") {
-      window.location.href = "mailto:info@llmhive.ai?subject=Enterprise Inquiry - LLMHive"
-      return
-    }
-
     if (!isSignedIn) {
       openSignUp({
         redirectUrl: `/pricing?subscribe=${tier.tier}&cycle=${isAnnual ? "annual" : "monthly"}`,
@@ -316,7 +306,7 @@ export default function PricingClient() {
     if (!sub) return
 
     const tier = pricingTiers.find((t) => t.tier === sub)
-    if (!tier || tier.tier === "enterprise") return
+    if (!tier) return
 
     const cycle = searchParams.get("cycle") === "annual" ? "annual" : "monthly"
     const storageKey = `llmhive_pricing_autoco_v1_${user.id}_${sub}_${cycle}`

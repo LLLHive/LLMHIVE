@@ -34,7 +34,7 @@ def load_tier_cost_caps() -> Dict[str, Any]:
                 "free": 0.10,
                 "lite": 0.35,
                 "pro": 0.75,
-                "enterprise": 2.00,
+                "enterprise": 0.75,
             },
             "prefer_cheaper_default": {"free": True, "lite": True, "standard": True},
         }

@@ -49,7 +49,7 @@ class TierName(str, Enum):
     FREE = "free"           # Forever free: $0/mo - Free model orchestration
     LITE = "lite"           # Entry-level: $14.99/mo
     PRO = "pro"             # Power users: $29.99/mo
-    ENTERPRISE = "enterprise"  # Organizations: $35/seat/mo (min 5 seats)
+    ENTERPRISE = "enterprise"  # Organizations & power users: $35/seat/mo (1+ seats)
 
 
 class OrchestrationTier(str, Enum):

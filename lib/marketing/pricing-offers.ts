@@ -20,12 +20,12 @@ export const OFFER_PREMIUM_FEATURES: readonly string[] = [
 
 export const OFFER_ENTERPRISE_FEATURES: readonly string[] = [
   "Single flagship model pick — choose one frontier model per request",
+  "Elite orchestration while the spend guard allows, then free orchestration",
   "400 Premium orchestration queries / seat / month, then unlimited Standard",
-  "Minimum 5 seats ($175+/mo)",
+  "From $35/month for a single seat (scale seats anytime)",
   "SSO / SAML & org-level admin",
   "1-year retention, audit logs & compliance tooling",
   "Team workspaces, shared memory & admin tools",
-  "Dedicated account manager",
 ]
 
 /** Shorter lists for dense marketing cards (e.g. promo grid). */

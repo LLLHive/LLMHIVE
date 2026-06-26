@@ -118,7 +118,7 @@ class TestPricingTierManager:
         assert tier.limits.max_tokens_per_month == 2_000_000  # Per seat
         assert tier.limits.max_tokens_per_query == 0  # Unlimited per query
         assert tier.limits.enable_priority_support is True
-        assert tier.limits.min_seats == 5  # Min 5 seats required
+        assert tier.limits.min_seats == 1
         assert tier.limits.is_per_seat is True
     
     def test_can_access_feature(self):
@@ -179,7 +179,7 @@ class TestPricingTierManager:
         assert pro.monthly_price_usd == 20.0
         assert pro.annual_price_usd == 200.0
         
-        # Enterprise is $35/seat (min 5 seats = $175 min)
+        # Enterprise is $35/seat (1+ seats, self-serve)
         enterprise = manager.get_tier(TierName.ENTERPRISE)
         assert enterprise.monthly_price_usd == 35.0
         assert enterprise.annual_price_usd == 350.0

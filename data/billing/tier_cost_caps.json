@@ -10,7 +10,7 @@
     "pro": 0.75,
     "premium": 0.75,
     "maximum": 0.75,
-    "enterprise": 2.0
+    "enterprise": 0.75
   },
   "prefer_cheaper_default": {
     "free": true,
