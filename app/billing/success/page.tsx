@@ -108,7 +108,7 @@ export default function BillingSuccessPage() {
             {loading
               ? "Please wait while we confirm your subscription..."
               : isTrial
-                ? "You were not charged today. Enjoy elite orchestration for 3 days (up to $3 provider spend)."
+                ? "You were not charged today. Enjoy premium orchestration for 3 days."
                 : "Thank you for subscribing to LLMHive."}
           </CardDescription>
         </CardHeader>
@@ -147,7 +147,7 @@ export default function BillingSuccessPage() {
               <div className="space-y-3">
                 <p className="text-muted-foreground">
                   {isTrial
-                    ? "Your trial includes full Standard access with elite orchestration while the $3 trial spend cap allows."
+                    ? "Your trial includes full Standard access with premium orchestration."
                     : `Your subscription is active. You have access to all ${planDisplayName(subscription?.tier)} features.`}
                 </p>
 
@@ -155,7 +155,7 @@ export default function BillingSuccessPage() {
                   {isTrial ? (
                     <>
                       <p>✓ No charge today — card saved for after the trial</p>
-                      <p>✓ Elite orchestration during trial (up to $3 provider spend)</p>
+                      <p>✓ Premium orchestration during trial</p>
                       <p>✓ Cancel anytime in Billing before trial ends to avoid $10/mo</p>
                     </>
                   ) : (

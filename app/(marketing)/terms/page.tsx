@@ -119,8 +119,8 @@ export default function TermsOfServicePage() {
               We offer the following subscription tiers:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-              <li><strong>Standard ($10/mo, $100/yr):</strong> Spend-guarded elite orchestration and 90-day conversation memory</li>
-              <li><strong>Premium ($20/mo, $200/yr):</strong> Spend-guarded elite orchestration and 90-day conversation memory</li>
+              <li><strong>Standard ($10/mo, $100/yr):</strong> Premium orchestration and 90-day conversation memory</li>
+              <li><strong>Premium ($20/mo, $200/yr):</strong> Premium orchestration and 90-day conversation memory</li>
               <li><strong>Enterprise (custom):</strong> SSO, dedicated capacity, and compliance options under a separate agreement</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-4">

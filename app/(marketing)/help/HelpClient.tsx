@@ -47,7 +47,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "How do I get started with LLMHive?",
         answer:
-          "Create an account, then subscribe to Standard ($10/mo) or Premium ($20/mo). Paid plans use elite orchestration while the spend guard allows, then free orchestration. Enterprise is available for teams (per seat). Once subscribed, you can start chatting immediately.",
+          "Create an account, then subscribe to Standard ($10/mo) or Premium ($20/mo). Paid plans include premium orchestration. Enterprise is available for teams (per seat). Once subscribed, you can start chatting immediately.",
       },
       {
         question: "What makes LLMHive different from using ChatGPT or Claude directly?",
@@ -69,12 +69,12 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What plans are available?",
         answer:
-          "We offer Standard ($10/month or $100/year), Premium ($20/month or $200/year), and Enterprise ($35/seat/month from a single seat). All paid plans use the same spend-guarded elite orchestration model.",
+          "We offer Standard ($10/month or $100/year), Premium ($20/month or $200/year), and Enterprise ($35/seat/month from a single seat). All paid plans include premium orchestration.",
       },
       {
-        question: "What happens when the spend guard is reached?",
+        question: "What happens when premium orchestration isn't available?",
         answer:
-          "When provider spend reaches the protected cap for the billing period, paid accounts switch to free orchestration until the next billing period. You can upgrade your plan anytime.",
+          "If you reach your plan's premium orchestration allowance for the billing period, requests use standard orchestration until the period resets. Your subscription price does not change. You can upgrade your plan anytime.",
       },
       {
         question: "Can I upgrade or downgrade my plan at any time?",
@@ -160,7 +160,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What's included in the Enterprise plan?",
         answer:
-          "Enterprise includes single flagship model pick, team management, SSO, audit logs, compliance tooling, and 400 Premium orchestration queries per seat per month (then unlimited Standard). The same spend guard applies as on Standard and Premium. Subscribe from one seat or add more anytime.",
+          "Enterprise includes single flagship model pick, team management, SSO, audit logs, compliance tooling, and 400 Premium orchestration queries per seat per month (then unlimited Standard). Subscribe from one seat or add more anytime.",
       },
       {
         question: "Can we get a custom contract?",

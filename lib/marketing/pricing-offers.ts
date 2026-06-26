@@ -4,7 +4,7 @@
  */
 
 export const OFFER_STANDARD_FEATURES: readonly string[] = [
-  "Elite orchestration while the spend guard allows, then free orchestration",
+  "Premium orchestration included with your plan",
   "Multi-model consensus routing",
   "Knowledge Base access",
   "Calculator & hosted reranker",
@@ -12,7 +12,7 @@ export const OFFER_STANDARD_FEATURES: readonly string[] = [
 ]
 
 export const OFFER_PREMIUM_FEATURES: readonly string[] = [
-  "Elite orchestration while the spend guard allows, then free orchestration",
+  "Premium orchestration included with your plan",
   "Benchmark-leading routing on Premium workloads",
   "DeepConf, adaptive ensemble & advanced strategies",
   "90-day conversation memory",
@@ -20,7 +20,7 @@ export const OFFER_PREMIUM_FEATURES: readonly string[] = [
 
 export const OFFER_ENTERPRISE_FEATURES: readonly string[] = [
   "Single flagship model pick — choose one frontier model per request",
-  "Elite orchestration while the spend guard allows, then free orchestration",
+  "Premium orchestration included with your plan",
   "400 Premium orchestration queries / seat / month, then unlimited Standard",
   "From $35/month for a single seat (scale seats anytime)",
   "SSO / SAML & org-level admin",

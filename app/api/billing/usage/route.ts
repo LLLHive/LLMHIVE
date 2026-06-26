@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server"
 const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
 
 // =============================================================================
-// Spend guard display defaults (April 2026 GTM): Standard (Stripe key "lite"), Premium ("pro"), Enterprise
+// Tier quota display: Standard (Stripe key "lite"), Premium ("pro"), Enterprise
 // Unauthenticated / no sub: "free" (displayed as Standard in UI)
 // =============================================================================
 interface TierQuota {
@@ -90,14 +90,6 @@ export interface QuotaUsageResponse {
   // Upgrade prompt
   showUpgradePrompt: boolean
   upgradeMessage?: string
-
-  // Spend guard (from backend throttle-status when available)
-  spendGuard?: {
-    active: boolean
-    capUsd: number | null
-    spentUsd: number | null
-    isTrial: boolean
-  }
 }
 
 function getDaysUntilReset(): number {
@@ -117,8 +109,7 @@ function getOrchestrationMode(
     return "free"
   }
 
-  // Paid Standard/Premium nominally use elite orchestration; backend spend guard
-  // switches them to free orchestration once protected spend is reached.
+  // Paid Standard/Premium use elite orchestration unless throttled to standard.
   if (tier === "lite" || tier === "pro") {
     return "elite"
   }
@@ -182,8 +173,16 @@ export async function GET() {
     const eliteUsed = (data.elite_queries_used ?? data.elite_used ?? 0) as number
     const tokensUsed = (data.tokens_used ?? data.tokens_this_period ?? 0) as number
     
-    // Calculate current orchestration mode
-    const orchestrationMode = getOrchestrationMode(tierName, eliteUsed)
+    const isThrottled = Boolean(throttleData.is_throttled)
+    const backendOrchestration = throttleData.current_orchestration as string | undefined
+
+    // Calculate current orchestration mode (respect backend throttle when available)
+    let orchestrationMode = getOrchestrationMode(tierName, eliteUsed)
+    if (backendOrchestration === "free" || isThrottled) {
+      orchestrationMode = "free"
+    } else if (backendOrchestration === "elite") {
+      orchestrationMode = "elite"
+    }
     
     // Calculate quotas
     const isUnlimited = quotas.neverThrottle
@@ -200,32 +199,36 @@ export async function GET() {
     let showUpgradePrompt = false
     let upgradeMessage: string | undefined
     
-    // Enterprise tier with perSeat quotas
-    const spendCap = throttleData.elite_spend_cap_usd as number | undefined
-    const spendUsed = throttleData.elite_spend_used_usd as number | undefined
-    const spendGuardActive = Boolean(throttleData.spend_guard_active)
     const isTrialSpend = Boolean(throttleData.elite_spend_is_trial)
 
-    if (isTrialSpend && spendCap != null) {
+    if (isThrottled) {
+      status = "throttled"
+      statusMessage = `Premium orchestration limit reached for this billing period. Standard orchestration is active until reset in ${getDaysUntilReset()} days.`
+      showUpgradePrompt = true
+      upgradeMessage =
+        tierName === "pro"
+          ? "Upgrade to Enterprise for team controls and higher limits"
+          : "Upgrade your plan for more premium orchestration"
+    } else if (isTrialSpend) {
       status = "normal"
-      statusMessage = `3-day trial — elite orchestration up to $${spendCap.toFixed(2)} provider spend`
+      statusMessage = "Trial active — premium orchestration included"
     } else if (isUnlimited) {
       status = "normal"
       statusMessage =
         tierName === "lite" || tierName === "pro"
-          ? "Paid tier — elite orchestration active while the spend guard allows"
-          : "Enterprise tier — Premium orchestration active"
+          ? "Premium orchestration active"
+          : "Enterprise — premium orchestration active"
     } else if (tierName === "free") {
       status = "normal"
-      statusMessage = "No active subscription — Standard routing on applicable trials"
+      statusMessage = "No active subscription — standard orchestration"
       showUpgradePrompt = true
       upgradeMessage = "Subscribe to Standard ($10/mo) or Premium ($20/mo) for full access"
     } else if (eliteRemaining === 0 && quotas.eliteQueries > 0) {
       status = "throttled"
       const afterTier = quotas.afterQuotaTier
       const afterLabel =
-        afterTier === "free" ? "Standard" : afterTier === "standard" ? "Standard" : afterTier === "budget" ? "Budget" : afterTier
-      statusMessage = `Spend guard reached. Using ${afterLabel} orchestration until the next billing period.`
+        afterTier === "free" ? "Standard" : afterTier === "standard" ? "Balanced" : afterTier === "budget" ? "Budget" : afterTier
+      statusMessage = `Premium quota used for this period. Using ${afterLabel} orchestration until reset in ${getDaysUntilReset()} days.`
       showUpgradePrompt = true
       upgradeMessage =
         tierName === "pro"
@@ -233,7 +236,7 @@ export async function GET() {
           : "Upgrade to Premium for advanced orchestration"
     } else if (elitePercentUsed >= 0.8 && quotas.eliteQueries > 0) {
       status = "warning"
-      statusMessage = `Spend guard is approaching the protected cap. It resets in ${getDaysUntilReset()} days.`
+      statusMessage = `Approaching premium quota limit. Resets in ${getDaysUntilReset()} days.`
       showUpgradePrompt = elitePercentUsed >= 0.9
       if (showUpgradePrompt) {
         upgradeMessage =
@@ -264,14 +267,6 @@ export async function GET() {
       daysUntilReset: getDaysUntilReset(),
       showUpgradePrompt,
       upgradeMessage,
-      spendGuard: spendGuardActive
-        ? {
-            active: true,
-            capUsd: spendCap ?? null,
-            spentUsd: spendUsed ?? null,
-            isTrial: isTrialSpend,
-          }
-        : undefined,
     }
     
     return NextResponse.json(usageResponse)

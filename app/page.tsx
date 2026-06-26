@@ -106,8 +106,8 @@ const FEATURES = [
   },
   {
     icon: BarChart3,
-    title: "Spend guard, not surprise bills",
-    body: "Real-time per-user budget enforcement at the orchestrator level. The guard caps spend before you exceed it, transparently — never silently.",
+    title: "Predictable pricing, no surprise bills",
+    body: "Flat monthly subscriptions with clear plan limits. Your bill stays predictable — quality routing without usage surprises.",
   },
   {
     icon: Shield,
@@ -126,7 +126,7 @@ const TIERS = [
     name: "Standard",
     price: "$10",
     period: "/month",
-    description: "Spend-guarded elite orchestration for individuals.",
+    description: "Premium orchestration for individuals.",
     features: [...OFFER_STANDARD_FEATURES],
     cta: "Start with Standard",
     href: "/pricing",
@@ -172,7 +172,7 @@ const FAQ = [
   },
   {
     q: "How does pricing work? Will I get a surprise bill?",
-    a: "No. Every plan includes a real-time spend guard enforced at the orchestrator. Once your budget is consumed for the period, traffic transparently routes to free-tier models — the bill never moves on you.",
+    a: "No. Plans are flat monthly subscriptions. If you reach your plan's premium orchestration allowance for the period, requests use standard orchestration until reset — your subscription price does not change.",
   },
   {
     q: "Is LLMHive secure for business use?",
@@ -471,7 +471,7 @@ export default async function Home() {
                 {[
                   "Route by task: reasoning, code, retrieval, summarisation, vision",
                   "Score answers across providers with the consensus and DeepConf strategies",
-                  "Never overspend — the spend guard enforces budgets in real time",
+                  "Predictable monthly pricing — no usage surprises on your bill",
                   "Get the model name and rationale on every response",
                 ].map((line) => (
                   <li key={line} className="flex items-start gap-3">
@@ -671,7 +671,7 @@ export default async function Home() {
               Pricing
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-              Transparent. Spend-guarded. No surprise bills.
+              Transparent pricing. No surprise bills.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-400">
               Pick a plan, set a budget, and let LLMHive do the rest. Annual billing saves about 17%.
@@ -806,7 +806,7 @@ export default async function Home() {
               Stop choosing models. Start shipping answers.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-zinc-300">
-              Subscribe in under a minute. Cancel anytime. Your spend is guarded — your output isn&apos;t.
+              Subscribe in under a minute. Cancel anytime. Predictable pricing — uncompromised output.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Button

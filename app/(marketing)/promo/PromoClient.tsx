@@ -213,7 +213,7 @@ export default function PromoClient() {
 
           <p className="text-base md:text-lg text-white/80 mb-6 max-w-2xl mx-auto">
             <strong className="text-yellow-400">Premium orchestration</strong> with {BENCHMARK_CLAIM_SHORT}.
-            Spend-guarded elite access protects margins, then switches to free orchestration.
+            Predictable monthly pricing with premium orchestration included on paid plans.
           </p>
 
           {/* CTAs */}
@@ -334,7 +334,7 @@ export default function PromoClient() {
               <p className="text-[10px] text-white/60 mb-2">/month · $100/year</p>
 
               <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/30 mb-2">
-                <div className="text-green-400 text-[11px] font-semibold">Spend-guarded elite orchestration</div>
+                <div className="text-green-400 text-[11px] font-semibold">Premium orchestration included</div>
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
@@ -375,7 +375,7 @@ export default function PromoClient() {
                 <div className="flex items-center gap-1.5 text-yellow-400 text-[11px] font-semibold">
                   <Trophy className="h-3 w-3" /> Premium orchestration
                 </div>
-                <div className="text-green-400 text-[10px]">Spend guard protected</div>
+                <div className="text-green-400 text-[10px]">Included with plan</div>
               </div>
 
               <ul className="space-y-1 mb-3 text-[11px] flex-1">
@@ -445,7 +445,7 @@ export default function PromoClient() {
             Ready for <span className="text-yellow-400">Premium benchmark quality</span>?
           </h2>
           <p className="text-white/70 mb-6">
-            Premium orchestration while the spend guard allows. Premium from{" "}
+            Premium orchestration included on paid plans. Premium from{" "}
             <strong className="text-yellow-400">$20/month</strong> (annual saves about 17%).
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

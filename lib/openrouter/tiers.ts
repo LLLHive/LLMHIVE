@@ -55,7 +55,7 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   starter: {
     name: 'starter',
     displayName: 'Standard',
-    description: 'Paid Standard — elite orchestration while the spend guard allows ($10/mo)',
+    description: 'Paid Standard — premium orchestration included ($10/mo)',
     maxModelsInTeam: 5,
     maxConcurrentRequests: 3,
     monthlyTokenLimit: DEV_MODE ? null : 500_000,  // 500K tokens
@@ -71,7 +71,7 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
   pro: {
     name: 'pro',
     displayName: 'Premium',
-    description: 'Premium orchestration — elite while the spend guard allows, then free ($20/mo)',
+    description: 'Premium orchestration included with your plan ($20/mo)',
     maxModelsInTeam: 10,
     maxConcurrentRequests: 10,
     monthlyTokenLimit: DEV_MODE ? null : 1_000_000,  // 1M tokens (reduced from 3M!)

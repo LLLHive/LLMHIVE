@@ -111,11 +111,11 @@ export function ThrottleNotification({
           <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="flex-1 space-y-2">
             <p className="text-sm font-medium text-amber-200">
-              Spend guard reached
+              Premium orchestration limit reached
             </p>
             <p className="text-sm text-muted-foreground">
-              Provider spend reached the protected cap for this billing period. 
-              You&apos;re now using free orchestration until the next billing period.
+              You&apos;re on standard orchestration until your billing period resets.
+              Upgrade to restore premium quality.
             </p>
             <Button
               asChild

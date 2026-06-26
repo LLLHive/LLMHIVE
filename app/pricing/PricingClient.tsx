@@ -93,8 +93,8 @@ const pricingTiers: PricingTier[] = [
     icon: <Star className="h-5 w-5 text-[var(--bronze)]" />,
     quotas: {
       headline: "Standard orchestration",
-      afterQuota: "Spend guard protected",
-      detail: "Elite orchestration while the spend guard allows, then free orchestration",
+      afterQuota: "Included with plan",
+      detail: "Premium orchestration included with your subscription",
     },
     features: [...OFFER_STANDARD_FEATURES],
     cta: "Start 3-day free trial",
@@ -111,7 +111,7 @@ const pricingTiers: PricingTier[] = [
     badge: "BEST VALUE",
     quotas: {
       headline: "Premium orchestration",
-      afterQuota: "Spend guard protected",
+      afterQuota: "Included with plan",
       detail: BENCHMARK_CLAIM_SHORT,
     },
     features: [...OFFER_PREMIUM_FEATURES],
@@ -128,7 +128,7 @@ const pricingTiers: PricingTier[] = [
     quotas: {
       headline: "400 Premium queries / seat",
       afterQuota: "Then unlimited Standard",
-      detail: "Spend-guarded orchestration · SSO · audit logs",
+      detail: "Premium orchestration · SSO · audit logs",
     },
     features: [...OFFER_ENTERPRISE_FEATURES],
     cta: "Subscribe — Enterprise",
@@ -139,7 +139,7 @@ const pricingFaq = [
   {
     question: "How does the 3-day Standard trial work?",
     answer:
-      "Start a free 3-day trial on Standard (monthly). You get elite orchestration during the trial with a $3 provider spend cap. After 3 days your card is charged $10/month automatically unless you cancel in Billing. Cancel anytime during the trial to avoid charges.",
+      "Start a free 3-day trial on Standard (monthly). You get premium orchestration during the trial. After 3 days your card is charged $10/month automatically unless you cancel in Billing. Cancel anytime during the trial to avoid charges.",
   },
   {
     question: "What is included in Standard?",
@@ -149,17 +149,17 @@ const pricingFaq = [
   {
     question: "What is Premium?",
     answer:
-      "Premium is $20/month and uses our top orchestration stack while the spend guard allows, then switches to free orchestration for margin protection.",
+      "Premium is $20/month and uses our top orchestration stack with premium routing included in your plan.",
   },
   {
-    question: "What happens when the spend guard is reached?",
+    question: "What happens when premium orchestration isn't available?",
     answer:
-      "LLMHive switches paid accounts to free orchestration for the rest of the billing period when provider spend reaches the protected cap.",
+      "If you reach your plan's premium orchestration allowance for the billing period, requests use standard orchestration until the period resets. Your subscription price does not change.",
   },
   {
     question: "Can I choose a specific flagship model?",
     answer:
-      "Single flagship model pick (one explicit frontier model per request) is available on Enterprise. Standard and Premium use automatic multi-model orchestration within spend guardrails.",
+      "Single flagship model pick (one explicit frontier model per request) is available on Enterprise. Standard and Premium use automatic multi-model orchestration.",
   },
   {
     question: "Can I change plans later?",
@@ -600,8 +600,8 @@ export default function PricingClient() {
           <div className="max-w-3xl mx-auto mb-10 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-6 py-5 text-center shadow-lg shadow-amber-900/20">
             <p className="text-lg font-bold text-white mb-1">Try Standard free for 3 days</p>
             <p className={cn("text-sm max-w-xl mx-auto leading-relaxed", copyMuted)}>
-              <span className="text-white font-semibold">$0 today</span> — card required. Elite orchestration
-              during trial (up to $3 provider spend). Then{" "}
+              <span className="text-white font-semibold">$0 today</span> — card required. Premium orchestration
+              during trial. Then{" "}
               <span className="text-white font-semibold">$10/month</span> unless you cancel in Billing.
             </p>
           </div>
@@ -617,8 +617,8 @@ export default function PricingClient() {
             {MARKETING_FEATURED_ORCHESTRATION_STACK}.
           </p>
           <p className={cn("text-base leading-relaxed", copySubtle)}>
-            Standard and Premium include spend-guarded elite orchestration, then switch to free orchestration
-            when the protected cap is reached.
+            Standard and Premium include premium orchestration. If you reach your plan allowance for the
+            billing period, requests use standard orchestration until reset.
           </p>
         </div>
 
@@ -642,7 +642,7 @@ export default function PricingClient() {
               <div className="text-2xl font-bold text-white mb-1">Standard</div>
               <div className="text-base font-semibold text-amber-300 mb-2">3-day free trial on monthly</div>
               <p className={cn("text-sm leading-relaxed", copyMuted)}>
-                Start with elite orchestration (up to $3 provider spend during trial). Full Standard access
+                Start with premium orchestration during trial. Full Standard access
                 after trial at $10/mo.
               </p>
               <p className="mt-3 text-lg font-bold text-white">
@@ -678,8 +678,8 @@ export default function PricingClient() {
               <div>
                 <h3 className="font-semibold text-white">Choose Standard or Premium</h3>
                 <p className={cn("text-sm mt-1 leading-relaxed", copyMuted)}>
-                  Standard ($10/mo, 3-day trial on monthly) and Premium ($20/mo) use elite orchestration while
-                  the spend guard allows, then switch to free orchestration.
+                  Standard ($10/mo, 3-day trial on monthly) and Premium ($20/mo) include premium orchestration
+                  with your subscription.
                 </p>
               </div>
             </div>
@@ -688,10 +688,10 @@ export default function PricingClient() {
                 <span className="text-emerald-300 font-bold text-sm">2</span>
               </div>
               <div>
-                <h3 className="font-semibold text-white">Spend guard protection</h3>
+                <h3 className="font-semibold text-white">Predictable pricing</h3>
                 <p className={cn("text-sm mt-1 leading-relaxed", copyMuted)}>
-                  Provider spend is capped against subscription revenue. When that cap is reached, the account
-                  uses free orchestration until the next billing period.
+                  Flat monthly subscriptions with clear plan limits. Your bill stays predictable even when
+                  premium orchestration allowance is reached for the period.
                 </p>
               </div>
             </div>

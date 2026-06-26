@@ -437,20 +437,18 @@ def get_throttle_status(user_id: str) -> dict:
     throttle_message = None
     if is_throttled:
         if spend_block.get("guard_active") and not spend_block.get("fail_closed"):
-            cap = float(spend_block.get("cap_usd") or 0.0)
-            spent = float(spend_block.get("spent_usd") or 0.0)
             throttle_message = (
-                f"Your premium orchestration budget for this billing period is exhausted "
-                f"(provider spend about ${spent:.2f} of ${cap:.2f} cap, capped at 25% of subscription). "
-                "You are on free orchestration until the period resets."
+                "Your premium orchestration limit for this billing period has been reached. "
+                "You're on standard orchestration until it resets."
             )
         elif spend_block.get("fail_closed"):
             throttle_message = (
-                "We could not verify your usage budget; you are on free orchestration to protect service availability."
+                "We could not verify your usage allowance; standard orchestration is active "
+                "until we can confirm your plan status."
             )
         else:
             throttle_message = (
-                "Your ELITE quota is exhausted. You're now using FREE orchestration. "
+                "Your premium quota is exhausted. You're on standard orchestration. "
                 "Upgrade to restore full power."
             )
 

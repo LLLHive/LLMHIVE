@@ -554,7 +554,7 @@ export default function SettingsPage() {
                     : subscriptionTier === "free"
                       ? "Free tier — upgrade for premium orchestration"
                       : subscriptionStatus === "trialing"
-                        ? "3-day trial — elite orchestration (up to $3 spend), then $10/mo"
+                        ? "3-day trial — premium orchestration included, then $10/mo"
                         : `${formatSubscriptionTierLabel(subscriptionTier, subscriptionStatus)} plan — active subscription`}
                 </p>
               </div>

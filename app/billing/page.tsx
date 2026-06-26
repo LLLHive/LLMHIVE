@@ -52,12 +52,6 @@ interface QuotaUsage {
   daysUntilReset: number
   showUpgradePrompt: boolean
   upgradeMessage?: string
-  spendGuard?: {
-    active: boolean
-    capUsd: number | null
-    spentUsd: number | null
-    isTrial: boolean
-  }
 }
 
 const ORCHESTRATION_MODE_LABELS = {
@@ -182,7 +176,7 @@ export default function BillingPage() {
         ? "active"
         : subscription?.status
   const isTrialing = subscription?.status === "trialing"
-  const hasSpendGuardDisplay = Boolean(usage?.spendGuard?.active && usage.spendGuard.capUsd != null)
+  const showEliteQuota = Boolean(usage && !isFreeTier && usage.elite.limit > 0)
 
   return (
     <div className="min-h-screen bg-background">
@@ -207,7 +201,7 @@ export default function BillingPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold mb-2">Billing & Usage</h1>
           <p className="text-muted-foreground">
-            Track spend-guarded orchestration, manage subscription, and upgrade when needed.
+            Manage your subscription, view usage, and upgrade when needed.
           </p>
         </div>
 
@@ -236,22 +230,21 @@ export default function BillingPage() {
           </CardContent>
         </Card>
 
-        {/* Quota Status Card */}
+        {/* Usage & Orchestration Card */}
         <Card className="mb-8 bg-card/50 backdrop-blur-sm border-border/50">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-green-500" />
-                  Spend Guard
+                  Usage & Orchestration
                 </CardTitle>
                 <CardDescription>
                   {isFreeTier
-                    ? "Upgrade to unlock paid orchestration (#1 in 5 out of 8 benchmark categories)"
-                    : isTrialing || usage?.spendGuard?.isTrial
-                      ? "Trial period — elite orchestration with a $3 provider spend cap"
-                      : "Elite orchestration while the spend guard allows"
-                  }
+                    ? "Upgrade to unlock premium orchestration (#1 in 5 out of 8 benchmark categories)"
+                    : isTrialing
+                      ? "Trial period — premium orchestration included"
+                      : "Your orchestration level for this billing period"}
                 </CardDescription>
               </div>
               {usage?.showUpgradePrompt && (
@@ -265,42 +258,45 @@ export default function BillingPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Premium quota progress */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium flex items-center gap-2">
-                  Spend-guarded elite orchestration
-                  <Badge variant="outline" className="text-green-500 text-xs">5/8 categories #1</Badge>
-                </span>
-                <span className="text-sm font-mono">
-                  {hasSpendGuardDisplay
-                    ? `$${(usage?.spendGuard?.spentUsd ?? 0).toFixed(2)} / $${(usage?.spendGuard?.capUsd ?? 0).toFixed(2)}`
-                    : "Spend guard active"}
-                </span>
+            {usage?.status === "throttled" && (
+              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm text-amber-500">Premium orchestration limit reached</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Standard orchestration is active until your billing period resets
+                      {usage.daysUntilReset > 0 ? ` (${usage.daysUntilReset} days)` : ""}.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <Progress 
-                value={
-                  hasSpendGuardDisplay && usage?.spendGuard?.capUsd
-                    ? Math.min(((usage.spendGuard.spentUsd ?? 0) / usage.spendGuard.capUsd) * 100, 100)
-                    : 0
-                } 
-                className="h-3"
-              />
-              {usage?.statusMessage && (
-                <p className="text-xs text-muted-foreground mt-2">{usage.statusMessage}</p>
-              )}
-              {!isFreeTier &&
-                hasSpendGuardDisplay &&
-                usage?.spendGuard?.capUsd &&
-                (usage.spendGuard.spentUsd ?? 0) / usage.spendGuard.capUsd >= 0.8 && (
-                  <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
+            )}
+
+            {usage?.statusMessage && (
+              <p className="text-sm text-muted-foreground">{usage.statusMessage}</p>
+            )}
+
+            {showEliteQuota && usage && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    Premium orchestration queries
+                    <Badge variant="outline" className="text-green-500 text-xs">5/8 categories #1</Badge>
+                  </span>
+                  <span className="text-sm font-mono">
+                    {usage.elite.used} / {usage.elite.limit}
+                  </span>
+                </div>
+                <Progress value={Math.min(usage.elite.percentUsed * 100, 100)} className="h-3" />
+                {usage.status === "warning" && (
+                  <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    {isTrialing
-                      ? "Approaching trial spend cap — free orchestration after $3"
-                      : "Spend guard is approaching the protected cap for this billing period"}
+                    Approaching premium quota limit for this billing period
                   </p>
                 )}
-            </div>
+              </div>
+            )}
 
             {/* After-Quota Info */}
             {usage && !isFreeTier && usage.elite.remaining === 0 && usage.afterQuotaTier !== "end" && (

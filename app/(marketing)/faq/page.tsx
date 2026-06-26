@@ -47,12 +47,12 @@ const faqItems = [
   {
     question: "What pricing plans are available?",
     answer:
-      "LLMHive offers three subscriptions: Standard ($10/mo or $100/yr), Premium ($20/mo or $200/yr), and Enterprise ($35/seat/mo from a single seat) with flagship model pick, team controls, and compliance features. All paid plans use the same spend-guarded elite orchestration model.",
+      "LLMHive offers three subscriptions: Standard ($10/mo or $100/yr), Premium ($20/mo or $200/yr), and Enterprise ($35/seat/mo from a single seat) with flagship model pick, team controls, and compliance features. All paid plans include premium orchestration.",
   },
   {
-    question: "What happens when the spend guard is reached?",
+    question: "What happens when premium orchestration isn't available?",
     answer:
-      "When provider spend reaches the protected cap, paid accounts switch to free orchestration until the next billing period.",
+      "If you reach your plan's premium orchestration allowance for the billing period, requests use standard orchestration until the period resets. Your subscription price does not change.",
   },
   {
     question: "Can I change plans any time?",
