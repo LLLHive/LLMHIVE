@@ -54,6 +54,9 @@ function validatePriceIdFormat(envKey: string, value: string): string | null {
   return null
 }
 
+const EXPECTED_ENTERPRISE_MIN_SEATS = "1"
+const EXPECTED_ENTERPRISE_TIER = "enterprise"
+
 type PriceSlot = {
   id: string
   description: string
@@ -258,13 +261,25 @@ export async function GET(request: NextRequest) {
         }
 
         if (slot.requireEnterpriseMeta) {
-          if (!product.metadata?.min_seats) {
+          const minSeats = product.metadata?.min_seats
+          if (!minSeats) {
             results.price_validation[slot.id].valid = false
             results.summary.issues.push(`${slot.description}: Missing 'min_seats' metadata`)
+          } else if (minSeats !== EXPECTED_ENTERPRISE_MIN_SEATS) {
+            results.price_validation[slot.id].valid = false
+            results.summary.issues.push(
+              `${slot.description}: min_seats=${minSeats} (expected ${EXPECTED_ENTERPRISE_MIN_SEATS})`,
+            )
           }
-          if (!product.metadata?.tier) {
+          const tier = product.metadata?.tier
+          if (!tier) {
             results.price_validation[slot.id].valid = false
             results.summary.issues.push(`${slot.description}: Missing 'tier' metadata`)
+          } else if (tier !== EXPECTED_ENTERPRISE_TIER) {
+            results.price_validation[slot.id].valid = false
+            results.summary.issues.push(
+              `${slot.description}: tier=${tier} (expected ${EXPECTED_ENTERPRISE_TIER})`,
+            )
           }
         }
       }
