@@ -14,6 +14,8 @@ import { AppearanceSettingsLoader } from "@/components/appearance-settings-loade
 import AppBackground from "@/components/branding/AppBackground"
 import { ForestBackgroundWrapper } from "@/components/forest-background-wrapper"
 import { GoogleTagManagerHead, GoogleTagManagerNoScript } from "@/components/google-tag-manager"
+import { GoogleAnalyticsHead } from "@/components/google-analytics"
+import { GoogleAnalyticsPageview } from "@/components/google-analytics-pageview"
 import { MetaPixelHead, MetaPixelNoScript } from "@/components/meta-pixel"
 import { SupportWidget } from "@/components/support-widget"
 import { getSiteUrl } from "@/lib/site-url"
@@ -161,28 +163,12 @@ export default function RootLayout({
             content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
           />
           <GoogleTagManagerHead />
+          <GoogleAnalyticsHead />
           <MetaPixelHead />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
           />
-          {process.env.NEXT_PUBLIC_GA_ID ? (
-            <>
-              <script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} />
-              <script
-                dangerouslySetInnerHTML={{
-                  __html: `
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag(){dataLayer.push(arguments);}
-                    gtag('js', new Date());
-                    gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                      anonymize_ip: true,
-                    });
-                  `,
-                }}
-              />
-            </>
-          ) : null}
           <script
             dangerouslySetInnerHTML={{
               __html: `
@@ -228,6 +214,7 @@ export default function RootLayout({
                 <AnalyticsWrapper />
                 <Suspense fallback={null}>
                   <AnalyticsPageview />
+                  <GoogleAnalyticsPageview />
                 </Suspense>
                 <SupportWidget />
               </ConversationsProvider>
