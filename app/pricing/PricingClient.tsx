@@ -359,8 +359,8 @@ export default function PricingClient() {
 
         {/* Brand hero — 80% scale vs / and /app (pricing space optimization).
             Sphere sizing, overlap margins, and LogoText heights scaled together. */}
-        <div className="llmhive-fade-in mx-auto mb-2 flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
-          <div className="relative mx-auto h-[min(53.04vh,19.4rem)] w-[min(53.04vh,19.4rem)] sm:h-[min(48.96vh,21.4rem)] sm:w-[min(48.96vh,21.4rem)] md:h-[min(44.88vh,23.4rem)] md:w-[min(44.88vh,23.4rem)] lg:h-[min(40.8vh,25.5rem)] lg:w-[min(40.8vh,25.5rem)] -mb-[4.4rem] sm:-mb-[4.8rem] md:-mb-[5.2rem] lg:-mb-[5.4rem] llmhive-float">
+        <div className="llmhive-fade-in mx-auto mb-[0.45rem] flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
+          <div className="relative mx-auto h-[min(53.04vh,19.4rem)] w-[min(53.04vh,19.4rem)] sm:h-[min(48.96vh,21.4rem)] sm:w-[min(48.96vh,21.4rem)] md:h-[min(44.88vh,23.4rem)] md:w-[min(44.88vh,23.4rem)] lg:h-[min(40.8vh,25.5rem)] lg:w-[min(40.8vh,25.5rem)] -mb-[4.84rem] sm:-mb-[5.28rem] md:-mb-[5.72rem] lg:-mb-[5.94rem] llmhive-float">
             <Image
               src="/logo.png"
               alt="LLMHive"
@@ -378,7 +378,7 @@ export default function PricingClient() {
             Patent Pending multi-agent orchestration for enhanced accuracy and performance.
           </p>
 
-          <div className="my-3 mx-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2 py-[0.2rem] shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-2.5 sm:py-1 md:gap-2.5 md:px-3">
+          <div className="mt-3 mb-[0.675rem] mx-auto inline-flex w-fit max-w-[calc(100vw-2rem)] items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500/40 bg-gradient-to-r from-yellow-500/15 via-amber-500/15 to-[var(--bronze)]/15 px-2 py-[0.2rem] shadow-lg shadow-yellow-500/10 sm:gap-2 sm:px-2.5 sm:py-1 md:gap-2.5 md:px-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-[var(--bronze)] shadow-lg sm:h-10 sm:w-10 md:h-11 md:w-11">
               <span className="text-sm font-bold text-white sm:text-base md:text-lg">#1</span>
             </div>
@@ -388,7 +388,7 @@ export default function PricingClient() {
           </div>
         </div>
 
-        <div className="mb-10 flex justify-center">
+        <div className="mb-9 flex justify-center">
           <div
             className={cn(
               "inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-600/50 px-4 py-2 text-sm font-medium backdrop-blur-sm",
