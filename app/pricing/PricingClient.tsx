@@ -426,9 +426,9 @@ export default function PricingClient() {
           >
             Annual
           </Label>
-          {isAnnual && (
-            <Badge className="bg-amber-500 text-black font-bold border-0">Save ~17%</Badge>
-          )}
+          <Badge className="bg-amber-500 text-black font-bold border-0 shrink-0">
+            Save ~17%
+          </Badge>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto mb-16">
