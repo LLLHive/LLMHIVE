@@ -338,7 +338,7 @@ export default function PricingClient() {
           instead of "/app", so it has been removed. Anonymous Sign in /
           Sign up and signed-in Sign out controls all live in MarketingNav. */}
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 pt-6 pb-12">
         {/* Past-due banner is intentionally preserved: it signals a real
             billing failure to existing paying customers and is a different
             audience from the generic "Subscription required" banner that
@@ -357,16 +357,10 @@ export default function PricingClient() {
             </div>
           )}
 
-        {/* Brand hero — copied 1:1 from app/page.tsx (which itself mirrors
-            components/home-screen.tsx). Identical sphere sizing, identical
-            negative-margin overlap, identical LogoText heights, identical
-            metallic subtitle, identical #1 benchmark pill, and the same
-            `${MARKETING_OPENAI_FLAGSHIP} · …` models pill that lives directly under the
-            hero on /. Keeps /, /pricing and /app visually indistinguishable
-            on the brand mark. Do not adjust here without also updating
-            home-screen.tsx and app/page.tsx — kept in lockstep. */}
+        {/* Brand hero — 80% scale vs / and /app (pricing space optimization).
+            Sphere sizing, overlap margins, and LogoText heights scaled together. */}
         <div className="llmhive-fade-in mx-auto mb-2 flex min-h-0 shrink-0 flex-col items-center text-center [@media(max-height:720px)]:scale-[0.97] [@media(max-height:640px)]:scale-[0.94]">
-          <div className="relative mx-auto h-[min(66.3vh,24.25rem)] w-[min(66.3vh,24.25rem)] sm:h-[min(61.2vh,26.75rem)] sm:w-[min(61.2vh,26.75rem)] md:h-[min(56.1vh,29.25rem)] md:w-[min(56.1vh,29.25rem)] lg:h-[min(51vh,31.875rem)] lg:w-[min(51vh,31.875rem)] -mb-[5.5rem] sm:-mb-[6rem] md:-mb-[6.5rem] lg:-mb-[6.75rem] llmhive-float">
+          <div className="relative mx-auto h-[min(53.04vh,19.4rem)] w-[min(53.04vh,19.4rem)] sm:h-[min(48.96vh,21.4rem)] sm:w-[min(48.96vh,21.4rem)] md:h-[min(44.88vh,23.4rem)] md:w-[min(44.88vh,23.4rem)] lg:h-[min(40.8vh,25.5rem)] lg:w-[min(40.8vh,25.5rem)] -mb-[4.4rem] sm:-mb-[4.8rem] md:-mb-[5.2rem] lg:-mb-[5.4rem] llmhive-float">
             <Image
               src="/logo.png"
               alt="LLMHive"
@@ -376,9 +370,9 @@ export default function PricingClient() {
             />
           </div>
 
-          <LogoText height={66} className="relative z-10 -mt-1 mx-auto mb-0 md:hidden" />
-          <LogoText height={84} className="relative z-10 -mt-1.5 mx-auto mb-0 hidden md:block lg:hidden" />
-          <LogoText height={102} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
+          <LogoText height={53} className="relative z-10 -mt-1 mx-auto mb-0 md:hidden" />
+          <LogoText height={67} className="relative z-10 -mt-1.5 mx-auto mb-0 hidden md:block lg:hidden" />
+          <LogoText height={82} className="relative z-10 -mt-2 mx-auto mb-0 hidden lg:block" />
 
           <p className="llmhive-subtitle-3d mx-auto mb-0 w-full max-w-[min(100%,calc(100vw-1.5rem))] whitespace-nowrap overflow-x-auto overflow-y-hidden px-2 text-center text-[clamp(0.65rem,2vw,0.9375rem)] leading-normal [-ms-overflow-style:none] [scrollbar-width:none] sm:text-sm md:text-base [&::-webkit-scrollbar]:hidden">
             Patent Pending multi-agent orchestration for enhanced accuracy and performance.
