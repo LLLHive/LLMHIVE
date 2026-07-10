@@ -10,9 +10,8 @@ Benefits:
 - OpenAI-compatible API format
 - Ideal for: fast fallback, classification, extraction
 
-Available models (live /v1/models, Feb 2026):
-- llama3.1-8b: Llama 3.1 8B (fast default)
-- qwen-3-235b-a22b-instruct-2507: Qwen 3 235B MoE
+Available models (live /v1/models, Jul 2026):
+- gemma-4-31b: Gemma 4 31B (fast default)
 - gpt-oss-120b: GPT-OSS 120B
 - zai-glm-4.7: GLM 4.7
 
@@ -25,7 +24,7 @@ Setup:
 1. Get free API key from https://cloud.cerebras.ai
 2. Set CEREBRAS_API_KEY environment variable
 
-Last Updated: February 15, 2026
+Last Updated: July 10, 2026
 """
 
 import os
@@ -41,16 +40,16 @@ class CerebrasClient:
     """Client for Cerebras Inference API (ultra-fast wafer-scale inference)."""
 
     BASE_URL = "https://api.cerebras.ai/v1"
-    DEFAULT_MODEL = "llama3.1-8b"
+    DEFAULT_MODEL = "gemma-4-31b"
 
     # Map OpenRouter model IDs to Cerebras native IDs (see GET /v1/models)
     MODEL_MAP = {
-        "meta-llama/llama-3.3-70b-instruct:free": "llama3.1-8b",
-        "meta-llama/llama-3.3-70b-instruct": "qwen-3-235b-a22b-instruct-2507",
-        "meta-llama/llama-3.1-8b-instruct:free": "llama3.1-8b",
-        "meta-llama/llama-3.1-8b-instruct": "llama3.1-8b",
-        "qwen/qwen3-next-80b-a3b-instruct:free": "qwen-3-235b-a22b-instruct-2507",
-        "qwen/qwen2.5-72b-instruct": "qwen-3-235b-a22b-instruct-2507",
+        "meta-llama/llama-3.3-70b-instruct:free": "gpt-oss-120b",
+        "meta-llama/llama-3.3-70b-instruct": "gpt-oss-120b",
+        "meta-llama/llama-3.1-8b-instruct:free": "gemma-4-31b",
+        "meta-llama/llama-3.1-8b-instruct": "gemma-4-31b",
+        "qwen/qwen3-next-80b-a3b-instruct:free": "zai-glm-4.7",
+        "qwen/qwen2.5-72b-instruct": "zai-glm-4.7",
     }
 
     def __init__(self, api_key: Optional[str] = None):

@@ -465,7 +465,7 @@ async def probe_cerebras(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
     if not key:
         return ProbeResult("Cerebras", "aggregator", env, False, "skip", None, None, "no key")
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-    model = "llama3.1-8b"
+    model = "gemma-4-31b"
     code, body, ms = await _post_json(
         client,
         "https://api.cerebras.ai/v1/chat/completions",
@@ -711,7 +711,7 @@ async def probe_cloudflare(client: httpx.AsyncClient, chat: bool) -> ProbeResult
     chat_url = (
         f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions"
     )
-    model = "@cf/meta/llama-3.1-8b-instruct"
+    model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
     code2, body2, ms2 = await _post_json(
         client,
         chat_url,

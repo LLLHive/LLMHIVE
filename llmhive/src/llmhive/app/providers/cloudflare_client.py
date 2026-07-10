@@ -22,7 +22,7 @@ def _load_catalog() -> Dict[str, Any]:
         return json.loads(raw)
     if _DEFAULT_CATALOG.is_file():
         return json.loads(_DEFAULT_CATALOG.read_text())
-    return {"chat": {}, "openrouter_map": {}, "default_chat": "llama_31_8b"}
+    return {"chat": {}, "openrouter_map": {}, "default_chat": "llama_33_70b"}
 
 
 def _account_id() -> Optional[str]:
@@ -48,7 +48,7 @@ class CloudflareClient:
         self.catalog = _load_catalog()
         self.chat_models: Dict[str, str] = dict(self.catalog.get("chat") or {})
         self.openrouter_map: Dict[str, str] = dict(self.catalog.get("openrouter_map") or {})
-        default_key = self.catalog.get("default_chat") or "llama_31_8b"
+        default_key = self.catalog.get("default_chat") or "llama_33_70b"
         self.default_model = self.chat_models.get(default_key, default_key)
         self.base_url = (
             f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/ai/v1"
