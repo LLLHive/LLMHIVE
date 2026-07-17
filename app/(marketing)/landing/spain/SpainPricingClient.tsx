@@ -842,6 +842,23 @@ export default function SpainPricingClient() {
           </div>
         </section>
 
+        {/* ── Spain watch scene — above Why thousands choose LLMHive */}
+        <section className="border-t border-white/5 bg-[#050505] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <div className="mx-auto flex max-w-6xl justify-center">
+            <div className="relative w-full max-w-[1037px] overflow-hidden rounded-2xl border border-white/10 bg-[#050505]">
+              <Image
+                src="/campaigns/spain/why-watch.jpg"
+                alt="Grandmother and granddaughter cheering for Spain at the FIFA World Cup 2026"
+                width={1024}
+                height={576}
+                className="mx-auto h-auto w-full object-contain object-center"
+                sizes="(max-width: 1037px) 100vw, 1037px"
+                priority={false}
+              />
+            </div>
+          </div>
+        </section>
+
         {/* ── Features + how it works (from pricing + mockup) ─────────── */}
         <section id="features" className="scroll-mt-20 border-t border-white/5 px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
