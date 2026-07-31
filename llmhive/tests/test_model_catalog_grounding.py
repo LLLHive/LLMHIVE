@@ -55,10 +55,10 @@ def test_paid_model_catalog_grounding_uses_frontier_slugs():
 
     assert info["applied"] is True
     assert info["tier"] == "paid"
-    assert "anthropic/claude-opus-4.8" in context
-    assert "openai/gpt-5.5-pro" in context
+    assert "anthropic/claude-opus-5" in context
+    assert "openai/gpt-5.6-sol-pro" in context
     assert "google/gemini-3.1-pro-preview" in context
-    assert "moonshotai/kimi-k2.6" in context
+    assert "moonshotai/kimi-k3" in context
     assert "Do not recommend stale paid models like GPT-4 Turbo" in context
 
 
@@ -68,10 +68,10 @@ def test_deterministic_paid_catalog_answer_uses_current_frontier_models():
         {},
     )
 
-    assert "anthropic/claude-opus-4.8" in answer
-    assert "openai/gpt-5.5-pro" in answer
-    assert "google/gemini-3.1-pro-preview" in answer
-    assert "moonshotai/kimi-k2.6" in answer
+    assert "anthropic/claude-opus-5" in answer or "Claude Opus 5" in answer
+    assert "openai/gpt-5.6-sol-pro" in answer or "GPT-5.6 Sol Pro" in answer
+    assert "google/gemini-3.1-pro-preview" in answer or "Gemini 3.1" in answer
+    assert "moonshotai/kimi-k3" in answer or "Kimi K3" in answer
     assert "GPT-4 Turbo" in answer
     assert "stale" in answer
     assert ".Caveat" not in answer

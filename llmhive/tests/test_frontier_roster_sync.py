@@ -14,9 +14,10 @@ def test_frontier_roster_source_exists():
     assert roster.is_file()
     payload = json.loads(roster.read_text(encoding="utf-8"))
     ui_ids = [m["model_id"] for m in payload.get("ui_models") or []]
+    assert "anthropic/claude-opus-5" in ui_ids
     assert "anthropic/claude-opus-4.8" in ui_ids
     paid_ids = [m["model_id"] for m in payload.get("paid_catalog") or []]
-    assert paid_ids[0] == "anthropic/claude-opus-4.8"
+    assert paid_ids[0] == "anthropic/claude-opus-5"
 
 
 def test_generated_surfaces_are_current():
@@ -29,8 +30,9 @@ def test_generated_surfaces_are_current():
     assert proc.returncode == 0, proc.stderr or proc.stdout
 
 
-def test_models_generated_includes_opus_48():
+def test_models_generated_includes_opus_5():
     text = (ROOT / "lib" / "models.generated.ts").read_text(encoding="utf-8")
+    assert "anthropic/claude-opus-5" in text
     assert "anthropic/claude-opus-4.8" in text
 
 
@@ -39,10 +41,10 @@ def test_paid_catalog_generated_loads_in_python():
 
     catalog = load_paid_model_catalog()
     assert catalog
-    assert catalog[0]["model_id"] == "anthropic/claude-opus-4.8"
+    assert catalog[0]["model_id"] == "anthropic/claude-opus-5"
 
 
-def test_category_rankings_include_opus_48():
+def test_category_rankings_include_opus_5():
     payload = json.loads(
         (ROOT / "lib" / "marketing" / "usecase-category-rankings.generated.json").read_text(
             encoding="utf-8"
@@ -51,7 +53,7 @@ def test_category_rankings_include_opus_48():
     programming = [
         row["model_id"] for row in (payload.get("categories") or {}).get("programming") or []
     ]
-    assert "anthropic/claude-opus-4.8" in programming
-    assert programming.index("anthropic/claude-opus-4.8") < programming.index(
-        "anthropic/claude-opus-4.7"
+    assert "anthropic/claude-opus-5" in programming
+    assert programming.index("anthropic/claude-opus-5") < programming.index(
+        "anthropic/claude-opus-4.8"
     )

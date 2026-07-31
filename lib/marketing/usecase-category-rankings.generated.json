@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T18:17:15.216736+00:00",
+  "generated_at": "2026-07-31T18:28:38.000271+00:00",
   "source": "benchmark_rankings_jan2026.py::RANKINGS_MAY_2026",
   "description": "Top 10 per UI category, sorted strictly by benchmark score (API-available models only).",
   "benchmark_mapping": {

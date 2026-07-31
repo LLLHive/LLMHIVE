@@ -216,20 +216,19 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 8. MULTIMODAL (ARC-AGI-2)
     # =========================================================================
     BenchmarkCategory.MULTIMODAL: [
-        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 40.0, "ARC-AGI2", 5.00, 25.00, True),
-        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 39.0, "ARC-AGI2", 5.00, 30.00, True),
-        ModelBenchmark("google/gemini-3.6-flash", "Google", 37.5, "ARC-AGI2", 1.50, 7.50, True),
-        ModelBenchmark("x-ai/grok-4.5", "xAI", 37.0, "ARC-AGI2", 2.00, 6.00, True),
-
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 90.0, "ARC-AGI2", 5.00, 25.00, True, "Opus 5 multimodal"),
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 89.0, "ARC-AGI2", 5.00, 30.00, True),
+        ModelBenchmark("google/gemini-3.6-flash", "Google", 87.0, "ARC-AGI2", 1.50, 7.50, True),
+        ModelBenchmark("x-ai/grok-4.5", "xAI", 86.0, "ARC-AGI2", 2.00, 6.00, True),
         ModelBenchmark("openai/gpt-5.5", "OpenAI", 85.0, "ARC-AGI2", 4.00, 16.00, True),
         ModelBenchmark("google/gemini-3.1-pro-preview", "Google", 85.0, "ARC-AGI2", 2.00, 12.00, True, "Deep Think"),
         ModelBenchmark("openai/gpt-5.4-pro", "OpenAI", 83.0, "ARC-AGI2", 5.00, 20.00, True),
+        ModelBenchmark("anthropic/claude-opus-4.8", "Anthropic", 80.0, "ARC-AGI2", 5.00, 25.00, True),
         ModelBenchmark("anthropic/claude-opus-4.6", "Anthropic", 69.0, "ARC-AGI2", 5.00, 25.00, True),
         ModelBenchmark("openai/gpt-5.2", "OpenAI", 53.0, "ARC-AGI2", 1.75, 14.00, True),
         ModelBenchmark("x-ai/grok-4.20", "xAI", 45.0, "ARC-AGI2", 5.00, 15.00, True),
         ModelBenchmark("moonshotai/kimi-k2.6", "Moonshot", 40.0, "ARC-AGI2", 0.95, 4.00, True),
         ModelBenchmark("nvidia/nemotron-3-nano-30b-a3b", "NVIDIA", 38.0, "ARC-AGI2", 0.50, 1.20, True),
-        ModelBenchmark("anthropic/claude-opus-4.8", "Anthropic", 36.5, "ARC-AGI2", 5.00, 25.00, True),
         ModelBenchmark("anthropic/claude-opus-4.7", "Anthropic", 35.0, "ARC-AGI2", 5.00, 25.00, True),
         ModelBenchmark("deepseek/deepseek-v4-pro", "DeepSeek", 32.0, "ARC-AGI2", 1.74, 3.48, True),
     ],

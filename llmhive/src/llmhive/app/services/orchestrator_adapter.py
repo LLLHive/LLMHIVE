@@ -652,8 +652,13 @@ OPENROUTER_GPT_5_3_CODEX = "openai/gpt-5.3-codex"
 OPENROUTER_O1_PRO = "openai/o1-pro"
 OPENROUTER_O4_MINI = "openai/o4-mini"
 OPENROUTER_CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
+OPENROUTER_CLAUDE_OPUS_5 = "anthropic/claude-opus-5"
+OPENROUTER_CLAUDE_SONNET_5 = "anthropic/claude-sonnet-5"
 OPENROUTER_CLAUDE_OPUS_4_8 = "anthropic/claude-opus-4.8"
 OPENROUTER_CLAUDE_OPUS_4_7 = "anthropic/claude-opus-4.7"
+OPENROUTER_GPT_5_6_SOL_PRO = "openai/gpt-5.6-sol-pro"
+OPENROUTER_GROK_4_5 = "x-ai/grok-4.5"
+OPENROUTER_KIMI_K3 = "moonshotai/kimi-k3"
 OPENROUTER_GROK_4_20 = "x-ai/grok-4.20"
 OPENROUTER_GROK_4_FAST = "x-ai/grok-4-fast"
 OPENROUTER_LLAMA_4_SCOUT = "meta-llama/llama-4-scout"
@@ -950,6 +955,7 @@ DOMAIN_TOP_MODELS = DOMAIN_TOP_MODELS_BUDGET if BUDGET_MODE else DOMAIN_TOP_MODE
 # Models with tool/function calling support (VERIFIED against OpenRouter)
 TOOL_CAPABLE_MODELS = {
     OPENROUTER_GPT_5,
+    OPENROUTER_GPT_5_6_SOL_PRO,
     OPENROUTER_GPT_5_5,
     OPENROUTER_GPT_5_5_PRO,
     OPENROUTER_GPT_5_4,
@@ -957,6 +963,8 @@ TOOL_CAPABLE_MODELS = {
     OPENROUTER_GPT_4O,
     OPENROUTER_O3,
     OPENROUTER_O1,
+    OPENROUTER_CLAUDE_OPUS_5,
+    OPENROUTER_CLAUDE_SONNET_5,
     OPENROUTER_CLAUDE_OPUS_4,
     OPENROUTER_CLAUDE_OPUS_4_8,
     OPENROUTER_CLAUDE_OPUS_4_7,
@@ -972,11 +980,13 @@ TOOL_CAPABLE_MODELS = {
     OPENROUTER_MISTRAL_LARGE,
     OPENROUTER_MISTRAL_MEDIUM_31,
     OPENROUTER_GROK_4,
+    OPENROUTER_GROK_4_5,
     OPENROUTER_GROK_4_FAST,
     OPENROUTER_GROK_4_20,
     OPENROUTER_DEEPSEEK,
     OPENROUTER_DEEPSEEK_V4_PRO,
     OPENROUTER_DEEPSEEK_V4_FLASH,
+    OPENROUTER_KIMI_K3,
     OPENROUTER_KIMI_K26,
     OPENROUTER_QWEN36_PLUS,
     OPENROUTER_GLM_47,
@@ -1235,17 +1245,19 @@ async def get_intelligent_models(
     # Step 3: Fallback to OpenRouter top-ranked models (May 2026 frontier order)
     if len(selected) < num_models:
         fallback_order = [
-            OPENROUTER_GPT_5,           # #1
-            OPENROUTER_CLAUDE_OPUS_4_8, # #2 latest Anthropic
-            OPENROUTER_CLAUDE_OPUS_4_7, # #3
-            OPENROUTER_GEMINI_3_1_PRO,  # #4 newest Google
-            OPENROUTER_GEMINI_3_PRO,    # #5
-            OPENROUTER_GEMINI_2_PRO,    # #6
-            OPENROUTER_CLAUDE_SONNET_4, # #7
-            OPENROUTER_O3,              # #8 reasoning
-            OPENROUTER_GROK_4,          # #9
-            OPENROUTER_LLAMA_4,         # #10
-            OPENROUTER_MISTRAL_LARGE,   # #11
+            OPENROUTER_GPT_5_6_SOL_PRO, # #1
+            OPENROUTER_CLAUDE_OPUS_5,   # #2 latest Anthropic
+            OPENROUTER_CLAUDE_OPUS_4_8, # #3
+            OPENROUTER_CLAUDE_SONNET_5, # #4
+            OPENROUTER_GEMINI_3_1_PRO,  # #5 newest Google
+            OPENROUTER_GEMINI_3_PRO,    # #6
+            OPENROUTER_GEMINI_2_PRO,    # #7
+            OPENROUTER_CLAUDE_SONNET_4, # #8
+            OPENROUTER_O3,              # #9 reasoning
+            OPENROUTER_GROK_4_5,        # #10
+            OPENROUTER_GROK_4,          # #11
+            OPENROUTER_LLAMA_4,         # #12
+            OPENROUTER_MISTRAL_LARGE,   # #13
             OPENROUTER_CLAUDE_OPUS_4,   # legacy Opus fallback
             OPENROUTER_GPT_4O,          # fallback
         ]
@@ -1414,13 +1426,15 @@ def _get_intelligent_models_local(
     # Fallback - use actual OpenRouter top-ranked models (May 2026 frontier order)
     if len(selected) < num_models:
         fallback_order = [
-            OPENROUTER_GPT_5,
+            OPENROUTER_GPT_5_6_SOL_PRO,
+            OPENROUTER_CLAUDE_OPUS_5,
             OPENROUTER_CLAUDE_OPUS_4_8,
-            OPENROUTER_CLAUDE_OPUS_4_7,
+            OPENROUTER_CLAUDE_SONNET_5,
             OPENROUTER_GEMINI_3_1_PRO,
             OPENROUTER_GEMINI_2_PRO,
             OPENROUTER_CLAUDE_SONNET_4,
             OPENROUTER_O1,
+            OPENROUTER_GROK_4_5,
             OPENROUTER_CLAUDE_OPUS_4,
         ]
         for model_id in fallback_order:

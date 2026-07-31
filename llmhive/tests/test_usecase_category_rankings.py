@@ -1,4 +1,4 @@
-"""Tests for May 2026 use-case category rankings (UI + orchestrator parity)."""
+"""Tests for July 2026 use-case category rankings (UI + orchestrator parity)."""
 from llmhive.app.knowledge.usecase_category_rankings import (
     get_usecase_category_rankings,
     get_usecase_category_rankings_detailed,
@@ -22,21 +22,22 @@ def test_scores_are_strictly_descending():
         assert scores == sorted(scores, reverse=True), slug
 
 
-def test_science_leader_is_gpt_55_pro():
+def test_science_leader_is_claude_opus_5():
     rows = get_usecase_category_rankings("science", top_k=3)
-    assert rows[0] == "openai/gpt-5.5-pro"
-    assert rows[1] == "openai/gpt-5.4-pro"
+    assert rows[0] == "anthropic/claude-opus-5"
+    assert "openai/gpt-5.6-sol-pro" in rows
 
 
-def test_programming_leader_is_gpt_55():
+def test_programming_leader_is_claude_opus_5():
     rows = get_usecase_category_rankings("programming", top_k=3)
-    assert rows[0] == "openai/gpt-5.5"
-    assert rows[1] == "anthropic/claude-opus-4.8"
+    assert rows[0] == "anthropic/claude-opus-5"
+    assert "openai/gpt-5.6-sol-pro" in rows
 
 
-def test_reasoning_includes_opus_48():
+def test_reasoning_includes_sol_pro_and_opus_5():
     rows = get_usecase_category_rankings("reasoning", top_k=5)
-    assert "anthropic/claude-opus-4.8" in rows
+    assert rows[0] == "openai/gpt-5.6-sol-pro"
+    assert "anthropic/claude-opus-5" in rows
 
 
 def test_academia_leader_is_gemini_25_pro_by_mrcr_score():
@@ -52,4 +53,4 @@ def test_detailed_entries_have_contiguous_ranks():
 
 def test_orchestrator_task_alias_maps_to_programming():
     rows = get_usecase_category_rankings("code_generation", top_k=1)
-    assert rows[0] == "openai/gpt-5.5"
+    assert rows[0] == "anthropic/claude-opus-5"
